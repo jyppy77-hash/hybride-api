@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LotoIA - Plateforme de Moteurs de Loterie</title>
+    <style>
+        /* =================================================================
+           LAUNCHER - SELECTEUR DE MOTEURS
+           Fond bleu nuit style Matrix, plein écran, sans scroll
+           ================================================================= */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* Fond Matrix avec chiffres */
+        body::before {
+            content: '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 8px;
+            line-height: 2.5;
+            color: rgba(255, 255, 255, 0.03);
+            word-wrap: break-word;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Orbes lumineux animés */
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.12) 0%, transparent 35%),
+                radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
+            pointer-events: none;
+            animation: auraBreath 8s ease-in-out infinite;
+            z-index: 1;
+        }
+
+        @keyframes auraBreath {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Container principal */
+        .launcher-container {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 20px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        /* Titre discret */
+        .launcher-title {
+            font-size: 1.1rem;
+            font-weight: 400;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 50px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .launcher-title strong {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+        }
+
+        /* Grille de moteurs */
+        .engines-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        /* Carte moteur */
+        .engine-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 40px 30px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .engine-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .engine-card:hover::before {
+            opacity: 1;
+        }
+
+        .engine-card.active {
+            border-color: rgba(16, 185, 129, 0.5);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .engine-card.active:hover {
+            border-color: rgba(16, 185, 129, 0.8);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);
+        }
+
+        .engine-card.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .engine-card.disabled:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Icone du moteur */
+        .engine-icon {
+            font-size: 3.5rem;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        /* Nom du moteur */
+        .engine-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: white;
+        }
+
+        /* Badge de statut */
+        .engine-status {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-active {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .status-coming {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Icone de verrouillage */
+        .lock-icon {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 1.2rem;
+            opacity: 0.4;
+        }
+
+        /* Message "Bientot disponible" */
+        .coming-soon-message {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 40px 50px;
+            text-align: center;
+            z-index: 100;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .coming-soon-message.show {
+            display: block;
+        }
+
+        .coming-soon-message h3 {
+            font-size: 1.5rem;
+            margin-bottom: 12px;
+            color: white;
+        }
+
+        .coming-soon-message p {
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 20px;
+        }
+
+        .coming-soon-message button {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 12px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .coming-soon-message button:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Overlay pour message */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 99;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        /* Footer discret */
+        .launcher-footer {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.3);
+            font-size: 0.85rem;
+            z-index: 10;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .launcher-title {
+                font-size: 0.95rem;
+                margin-bottom: 30px;
+            }
+
+            .engines-grid {
+                grid-template-columns: 1fr;
+                gap: 16px;
+                padding: 0 10px;
+            }
+
+            .engine-card {
+                padding: 30px 25px;
+            }
+
+            .engine-icon {
+                font-size: 2.5rem;
+            }
+
+            .engine-name {
+                font-size: 1.25rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .launcher-container {
+                padding: 15px;
+            }
+
+            .engine-card {
+                padding: 25px 20px;
+            }
+
+            .engine-icon {
+                font-size: 2rem;
+            }
+
+            .engine-name {
+                font-size: 1.1rem;
+            }
+
+            .engine-status {
+                font-size: 0.75rem;
+                padding: 5px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="launcher-container">
+        <h1 class="launcher-title"><strong>LotoIA</strong> — Selection du moteur</h1>
+
+        <div class="engines-grid">
+            <!-- Loto France - ACTIF -->
+            <a href="/loto" class="engine-card active">
+                <span class="engine-icon">🎯</span>
+                <h2 class="engine-name">Loto France</h2>
+                <span class="engine-status status-active">Actif</span>
+            </a>
+
+            <!-- EuroMillions - En construction -->
+            <div class="engine-card disabled" onclick="showComingSoon('EuroMillions')">
+                <span class="lock-icon">🔒</span>
+                <span class="engine-icon">⭐</span>
+                <h2 class="engine-name">EuroMillions</h2>
+                <span class="engine-status status-coming">En construction</span>
+            </div>
+
+            <!-- Super Loto - En construction -->
+            <div class="engine-card disabled" onclick="showComingSoon('Super Loto')">
+                <span class="lock-icon">🔒</span>
+                <span class="engine-icon">💎</span>
+                <h2 class="engine-name">Super Loto</h2>
+                <span class="engine-status status-coming">En construction</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overlay -->
+    <div id="overlay" class="overlay" onclick="hideComingSoon()"></div>
+
+    <!-- Message "Bientot disponible" -->
+    <div id="coming-soon" class="coming-soon-message">
+        <h3 id="coming-soon-title">Moteur en construction</h3>
+        <p>Ce moteur sera disponible prochainement.</p>
+        <button onclick="hideComingSoon()">Compris</button>
+    </div>
+
+    <!-- Footer -->
+    <div class="launcher-footer">
+        LotoIA.fr — Plateforme de moteurs de loterie
+    </div>
+
+    <script>
+        function showComingSoon(engineName) {
+            document.getElementById('coming-soon-title').textContent = engineName + ' — En construction';
+            document.getElementById('overlay').classList.add('show');
+            document.getElementById('coming-soon').classList.add('show');
+        }
+
+        function hideComingSoon() {
+            document.getElementById('overlay').classList.remove('show');
+            document.getElementById('coming-soon').classList.remove('show');
+        }
+
+        // Fermer avec Escape
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                hideComingSoon();
+            }
+        });
+    </script>
+</body>
+</html>
