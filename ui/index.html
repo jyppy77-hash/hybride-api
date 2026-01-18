@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LotoIA - Analyse Intelligente du Loto</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/sponsor-popup.css">
+    <!-- Theme script (en premier pour éviter le flash) -->
+    <script src="/static/theme.js"></script>
+</head>
+<body class="page-index">
+    <!-- Barre de navigation moteur -->
+    <nav class="engine-nav-index">
+        <a href="/index" class="engine-nav-btn">
+            <span class="nav-arrow">←</span>
+            <span class="nav-text">Menu des moteurs</span>
+        </a>
+        <div class="engine-nav-right">
+            <span class="engine-badge">Loto France</span>
+            <button id="theme-switch" class="theme-switch" title="Changer de thème">
+                <span class="icon-day">☀️</span>
+                <span class="icon-night">🌙</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Header Branding -->
+    <header class="page-header-index">
+        <div class="header-content">
+            <h1>🎯 LotoIA<span class="brand-suffix">.fr</span></h1>
+            <p class="subtitle">Moteur d'analyse IA - Grilles statistiquement optimisées</p>
+        </div>
+    </header>
+
+    <div class="index-container">
+        <!-- ══════════════════════════════════════════════════════════════
+             ZONE PRIMAIRE - GENERATEUR (Centre de gravite)
+             ══════════════════════════════════════════════════════════════ -->
+        <section class="generator-hero">
+            <!-- Effets visuels data/algorithme -->
+            <div class="scan-line"></div>
+            <div class="data-particles">
+                <span class="particle p1"></span>
+                <span class="particle p2"></span>
+                <span class="particle p3"></span>
+                <span class="particle p4"></span>
+                <span class="particle p5"></span>
+                <span class="particle p6"></span>
+                <span class="particle p7"></span>
+                <span class="particle p8"></span>
+            </div>
+            <div class="generator-card">
+                <!-- Header du generateur -->
+                <div class="generator-header">
+                    <div class="generator-badge">
+                        <span class="badge-icon">🧠</span>
+                        <span class="badge-text">MOTEUR HYBRIDE_OPTIMAL_V1</span>
+                    </div>
+                    <h2 class="generator-title">Générez vos grilles optimisées</h2>
+                    <p class="generator-subtitle">Analyse statistique basée sur <strong id="stat-tirages-inline">967</strong> tirages officiels FDJ <span class="data-depth">depuis 2019</span></p>
+                </div>
+
+                <!-- Formulaire -->
+                <div class="generator-form">
+                    <div class="form-group">
+                        <label for="draw-date">📅 Date du prochain tirage</label>
+                        <input type="date" id="draw-date" class="premium-input">
+                        <div id="date-error" class="date-error" style="display: none; color: #d32f2f; margin-top: 8px; font-size: 14px; font-weight: 500;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>🎲 Nombre de grilles à générer</label>
+                        <div class="grid-count-selector" id="grid-count-selector">
+                            <button class="count-btn" data-count="1">1</button>
+                            <button class="count-btn" data-count="2">2</button>
+                            <button class="count-btn active" data-count="3">3</button>
+                            <button class="count-btn" data-count="4">4</button>
+                            <button class="count-btn" data-count="5">5</button>
+                        </div>
+                        <small class="helper-text">Recommandé : 3 grilles pour maximiser vos chances</small>
+                    </div>
+
+                    <!-- CTA Principal - Amplifié -->
+                    <button id="btn-analyze" class="btn-cta-main">
+                        <span class="cta-icon">✨</span>
+                        <span class="cta-text">Générer mes grilles maintenant</span>
+                        <span class="cta-arrow">→</span>
+                        <span class="spinner" style="display: none;"></span>
+                    </button>
+
+                    <p class="cta-subtext">Analyse instantanée • Score de conformité • 100% gratuit</p>
+
+                    <!-- Tension temporelle - urgence douce -->
+                    <p class="cta-urgency" id="next-draw-urgency">
+                        <span class="urgency-icon">⏱️</span>
+                        <span class="urgency-text">Prochain tirage dans <strong id="days-until-draw">2</strong> jours — préparez vos grilles</span>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             BANDEAU DE CONFIANCE (Trust Indicators - compact)
+             ══════════════════════════════════════════════════════════════ -->
+        <section class="trust-band">
+            <div class="trust-item">
+                <span class="trust-icon">✅</span>
+                <span class="trust-label">Données FDJ certifiées</span>
+            </div>
+            <div class="trust-separator">•</div>
+            <div class="trust-item">
+                <span class="trust-icon">📊</span>
+                <span class="trust-label" id="stat-tirages">967 tirages analysés</span>
+            </div>
+            <div class="trust-separator">•</div>
+            <div class="trust-item">
+                <span class="trust-icon">🔄</span>
+                <span class="trust-label">MAJ : <span id="last-update-date">7 janvier 2026</span></span>
+            </div>
+            <div class="trust-separator hide-mobile">•</div>
+            <div class="trust-item hide-mobile">
+                <span class="trust-icon">📅</span>
+                <span class="trust-label" id="stat-period">Nov. 2019 - Jan. 2026</span>
+            </div>
+        </section>
+
+        <!-- Section stats rapides (cachee) -->
+        <button id="btn-stats" class="btn btn-tertiary" style="display: none;">
+            <span class="btn-text">📊 Voir statistiques</span>
+            <span class="spinner" style="display: none;"></span>
+        </button>
+
+        <!-- Section 3: Results -->
+        <section id="results-section" class="results-section" style="display: none;">
+            <!-- Success State -->
+            <div id="success-state" style="display: none;">
+                <div class="card result-card">
+                    <div class="card-header">
+                        <h2 id="result-title">Résultat</h2>
+                        <button id="btn-copy" class="btn-copy" title="Copier">📋</button>
+                    </div>
+
+                    <!-- Numbers Grid -->
+                    <div id="numbers-grid" class="numbers-grid"></div>
+
+                    <!-- Key Info -->
+                    <div id="key-info" class="key-info"></div>
+
+                    <!-- Section Explications -->
+                    <div id="explanations-section" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div id="error-state" class="card error-card" style="display: none;">
+                <h3>Une erreur est survenue</h3>
+                <p id="error-message"></p>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             ZONE SECONDAIRE - OUTILS COMPLEMENTAIRES
+             ══════════════════════════════════════════════════════════════ -->
+        <section class="secondary-tools">
+            <div class="secondary-header">
+                <h3>Outils complémentaires</h3>
+                <p>Explorez vos données et testez vos propres combinaisons</p>
+            </div>
+
+            <div class="tools-grid-compact">
+                <a href="/static/simulateur.html" class="tool-card-mini">
+                    <div class="tool-mini-icon">🎯</div>
+                    <div class="tool-mini-content">
+                        <h4>Simulateur de grille</h4>
+                        <p>Composez votre propre grille et obtenez une analyse instantanée avec score et suggestions</p>
+                    </div>
+                    <span class="tool-mini-arrow">→</span>
+                </a>
+
+                <a href="/static/statistiques.html" class="tool-card-mini">
+                    <div class="tool-mini-icon">📊</div>
+                    <div class="tool-mini-content">
+                        <h4>Statistiques détaillées</h4>
+                        <p>Numéros chauds, froids, fréquences, retards et historique complet des tirages</p>
+                    </div>
+                    <span class="tool-mini-arrow">→</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Section 4: Gestion des données (discrète) -->
+        <details style="margin-top: 40px;">
+            <summary style="cursor: pointer; padding: 12px; background: var(--bg-white); border-radius: 8px; font-weight: 600; color: var(--text-muted); margin-bottom: 16px;">
+                ⚙️ Gestion des données
+            </summary>
+
+            <!-- Installation Base de données -->
+            <section class="card install-section">
+                <h2>Base de données</h2>
+                <p class="system-description">
+                    Initialise la base de données si elle n'existe pas encore.
+                </p>
+
+                <!-- Statut de la base -->
+                <div id="db-status" class="db-status">
+                    <span class="status-icon">⏳</span>
+                    <div class="status-text">
+                        <div id="db-main-status">Vérification en cours...</div>
+                        <div id="db-period" style="display:none;"></div>
+                        <div id="db-algo-note" style="display:none; font-style: italic;"></div>
+                    </div>
+                </div>
+
+                <!-- Boutons d'installation -->
+                <div class="install-buttons">
+                    <button id="btn-install" class="btn btn-install">
+                        <span class="btn-text">Installer la base de données</span>
+                        <span class="spinner" style="display: none;"></span>
+                    </button>
+                    <button id="btn-reset" class="btn btn-reset" style="display: none;">
+                        <span class="btn-text">Réinitialiser la base</span>
+                        <span class="spinner" style="display: none;"></span>
+                    </button>
+                </div>
+
+                <!-- Message de statut -->
+                <div id="install-status" class="install-status" style="display: none;"></div>
+            </section>
+
+            <!-- Mise à jour -->
+            <section class="card system-section">
+                <h2>Mise à jour</h2>
+                <p class="system-description">
+                    Synchronise les données avec les tirages officiels les plus récents.
+                </p>
+                <button id="btn-update" class="btn btn-system">
+                    <span class="btn-text">Mettre à jour les données</span>
+                    <span class="spinner" style="display: none;"></span>
+                </button>
+                <!-- Message de statut de mise à jour -->
+                <div id="update-status" class="update-status" style="display: none;"></div>
+            </section>
+        </details>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             MINI-FAQ - Questions essentielles (3 max)
+             ══════════════════════════════════════════════════════════════ -->
+        <section class="mini-faq-section" id="faq">
+            <div class="mini-faq-header">
+                <h3>Questions fréquentes</h3>
+                <p>Les réponses aux questions essentielles</p>
+            </div>
+
+            <div class="mini-faq-container">
+                <!-- Question 1 -->
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Comment fonctionne le générateur ?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Notre générateur utilise le <strong>moteur HYBRIDE_OPTIMAL_V1</strong> qui analyse <span class="dynamic-tirages">967</span> tirages historiques FDJ.</p>
+                        <p>Il combine analyse long terme (60%) et tendances récentes (40%) pour générer des grilles statistiquement équilibrées avec un score sur 100.</p>
+                    </div>
+                </div>
+
+                <!-- Question 2 -->
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>Le Loto est-il prévisible ?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p><strong>NON, le Loto est un jeu de pur hasard.</strong> Aucun algorithme ne peut prédire les résultats.</p>
+                        <p>Notre outil propose des grilles <strong>statistiquement guidées</strong>, mais cela <strong>ne garantit AUCUN gain</strong>. Probabilité du jackpot : 1 sur 19 068 840.</p>
+                    </div>
+                </div>
+
+                <!-- Question 3 -->
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>L'outil est-il gratuit ?</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>Oui, LotoIA est <strong>100% gratuit</strong> et sans publicité intrusive.</p>
+                        <p>Aucune inscription ni paiement requis. Toutes les fonctionnalités sont accessibles.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lien vers FAQ complete -->
+            <div class="mini-faq-footer">
+                <a href="/static/faq.html" class="btn-see-more">
+                    <span>Voir toutes les questions</span>
+                    <span class="arrow">→</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <!-- Navigation footer -->
+            <div class="footer-nav">
+                <a href="/static/index.html" class="active">Accueil</a>
+                <span class="footer-sep">•</span>
+                <a href="/static/simulateur.html">Simulateur</a>
+                <span class="footer-sep">•</span>
+                <a href="/static/statistiques.html">Statistiques</a>
+                <span class="footer-sep">•</span>
+                <a href="/static/news.html">Actualités</a>
+                <span class="footer-sep">•</span>
+                <a href="/static/faq.html">FAQ</a>
+            </div>
+
+            <p class="footer-brand">LotoIA.fr v1.0</p>
+
+            <!-- Credits -->
+            <div class="credits">
+                <p class="dev-by">Développé par <strong>JyppY</strong></p>
+                <p class="credits-text">
+                    Ce logiciel est une œuvre originale développée par Jyppy.<br>
+                    Des outils d'assistance à la programmation basés sur l'IA ont été utilisés<br>
+                    comme aide à la rédaction et à la révision du code.<br>
+                    Tous les choix algorithmiques, l'architecture et la validation finale<br>
+                    relèvent de l'auteur.
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Bouton Scroll to Top -->
+    <button id="scroll-to-top" class="scroll-to-top" aria-label="Retour en haut">
+        ↑
+    </button>
+
+    <script src="/static/sponsor-popup.js"></script>
+    <script src="/static/app.js"></script>
+    <script src="/static/scroll.js"></script>
+    <script src="/static/faq.js"></script>
+</body>
+</html>
