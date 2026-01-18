@@ -33,7 +33,7 @@ class AskPayload(BaseModel):
 @app.get("/")
 def root():
     """
-    Redirection vers l'UI live
+    Redirection vers l'UI launcher
     """
     return RedirectResponse(url="/ui/launcher.html")
 
