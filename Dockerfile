@@ -1,18 +1,42 @@
 FROM python:3.11-slim
 
-# Cloud Run fournit le port via la variable d’environnement PORT
-ENV PORT=8080
+# Variables d'environnement
+ENV PORT=8080 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1
 
-# Dossier de travail dans le conteneur
 WORKDIR /app
 
-# Dépendances Python
+# Copie et installation des dépendances
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Code applicatif
-COPY main.py .
-COPY engine ./engine
+# Copie de tout le code
+COPY . .
 
-# Lancement FastAPI (compatible Cloud Run)
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT"]
+# Exposition du port (important pour Cloud Run)
+EXPOSE 8080
+
+# Démarrage avec uvicorn
+CMD exec uvicorn main:app --host 0.0.0.0 --port ${PORT}
+```
+
+**Changements clés :**
+- `COPY . .` au lieu de copier fichier par fichier (plus safe)
+- `exec` devant uvicorn (meilleure gestion des signaux sous Cloud Run)
+- `EXPOSE 8080` explicite
+
+**Crée un `.dockerignore` pour optimiser :**
+```
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.git
+.gitignore
+.vscode
+*.md
+tests/
