@@ -35,7 +35,7 @@ def root():
     """
     Redirection vers l'UI live
     """
-    return RedirectResponse(url="/ui/index.html")
+    return RedirectResponse(url="/ui/launcher.html")
 
 
 @app.get("/health")
