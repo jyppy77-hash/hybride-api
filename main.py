@@ -16,7 +16,10 @@ app = FastAPI(
 # Static UI
 # =========================
 
-# Sert le dossier /ui (HTML / CSS / JS)
+# Sert les fichiers CSS / JS / IMAGES
+app.mount("/ui/static", StaticFiles(directory="ui/static"), name="ui-static")
+
+# Sert les pages HTML
 app.mount("/ui", StaticFiles(directory="ui"), name="ui")
 
 # =========================
@@ -37,7 +40,6 @@ def root():
     """
     return RedirectResponse(url="/ui/launcher.html")
 
-
 @app.get("/health")
 def health():
     """
@@ -48,7 +50,6 @@ def health():
         "engine": "HYBRIDE_OPTIMAL_V1",
         "version": __version__
     }
-
 
 @app.post("/ask")
 def ask(payload: AskPayload):
