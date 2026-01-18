@@ -1,31 +1,43 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-import vertexai
-from vertexai.generative_models import GenerativeModel
+from engine.hybride import generate  # adapte si le nom de la fonction diffère
+from engine.version import __version__
 
-app = FastAPI()
+app = FastAPI(
+    title="HYBRIDE API",
+    description="Moteur HYBRIDE_OPTIMAL_V1 – API officielle",
+    version=__version__
+)
 
-vertexai.init(location="europe-west9")
 
-model = GenerativeModel("gemini-1.5-flash")
+# =========================
+# Schemas
+# =========================
 
 class AskPayload(BaseModel):
     prompt: str
 
-@app.get("/")
+
+# =========================
+# Routes
+# =========================
+
+@app.get("/health")
 def health():
-    return {"status": "ok", "service": "hybride-api"}
+    return {
+        "status": "ok",
+        "engine": "HYBRIDE_OPTIMAL_V1",
+        "version": __version__
+    }
+
 
 @app.post("/ask")
 def ask(payload: AskPayload):
-    if not payload.prompt.strip():
-        raise HTTPException(status_code=400, detail="Prompt vide")
-
-    response = model.generate_content(
-        payload.prompt,
-        generation_config={
-            "temperature": 0.3,
-            "max_output_tokens": 512,
+    try:
+        result = generate(payload.prompt)
+        return {
+            "success": True,
+            "response": result
         }
-    )
-    return {"output": response.text}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
