@@ -1,13 +1,25 @@
 """
-Connexion à la base de données MariaDB
-Utilise la configuration depuis config_db.py
+Engine Database Module
+======================
+
+Proxy vers le module central db_cloudsql.py
+Centralise toutes les connexions DB du projet.
+
+Usage dans engine/:
+    from .db import get_connection
+    conn = get_connection()
 """
 
-# Import depuis la racine du projet
 import sys
 from pathlib import Path
 
+# Ajouter le repertoire parent au path pour import
 BASE_DIR = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(BASE_DIR))
+if str(BASE_DIR) not in sys.path:
+    sys.path.insert(0, str(BASE_DIR))
 
-from config_db import get_connection
+# Import centralise depuis db_cloudsql
+from db_cloudsql import get_connection, get_environment, is_production
+
+# Re-export pour compatibilite
+__all__ = ['get_connection', 'get_environment', 'is_production']
