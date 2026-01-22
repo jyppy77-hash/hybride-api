@@ -19,6 +19,18 @@ app = FastAPI(
     version=__version__
 )
 
+import os
+
+@app.get("/debug-env")
+async def debug_env():
+    return {
+        "DB_USER": os.getenv("DB_USER"),
+        "DB_NAME": os.getenv("DB_NAME"),
+        "CLOUD_SQL_CONNECTION_NAME": os.getenv("CLOUD_SQL_CONNECTION_NAME"),
+        "DB_PASSWORD_DEFINED": os.getenv("DB_PASSWORD") is not None,
+        "K_SERVICE": os.getenv("K_SERVICE") is not None
+    }
+
 # =========================
 # Static UI
 # =========================
@@ -42,6 +54,8 @@ class AskPayload(BaseModel):
 # =========================
 # Routes
 # =========================
+
+
 
 @app.get("/")
 def root():
