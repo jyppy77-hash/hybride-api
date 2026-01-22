@@ -205,9 +205,10 @@ function trackSponsorClick(sponsorId) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                sponsor_id: sponsorId,
-                timestamp: new Date().toISOString(),
-                page: window.location.pathname
+                ad_id: sponsorId || 'unknown',
+                partner_id: sponsorId || 'unknown',
+                timestamp: Math.floor(Date.now() / 1000),
+                session_id: sessionStorage.getItem('lotoia_session') || 'anonymous'
             })
         }).catch(() => {});
     }
@@ -224,9 +225,9 @@ function trackImpression(sponsorIds) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                sponsor_ids: sponsorIds,
-                timestamp: new Date().toISOString(),
-                page: window.location.pathname
+                ad_id: Array.isArray(sponsorIds) ? sponsorIds.join(',') : 'unknown',
+                timestamp: Math.floor(Date.now() / 1000),
+                session_id: sessionStorage.getItem('lotoia_session') || 'anonymous'
             })
         }).catch(() => {});
     }
