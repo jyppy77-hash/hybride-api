@@ -1108,15 +1108,15 @@ function trackGridGeneration(grid, gridNumber, targetDate) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
             grid_id: generateUUID(),
-            grid_number: gridNumber,
+            grid_number: gridNumber || 0,
             grid_data: {
-                nums: grid.nums,
-                chance: grid.chance,
-                score: grid.score
+                nums: grid.nums || [],
+                chance: grid.chance || 0,
+                score: grid.score || 0
             },
-            target_date: targetDate,
-            timestamp: Date.now(),
-            session_id: getSessionId()
+            target_date: targetDate || 'unknown',
+            timestamp: Math.floor(Date.now() / 1000),
+            session_id: getSessionId() || 'anonymous'
         })
     }).catch(err => console.error('Tracking error:', err));
 }
@@ -1129,9 +1129,9 @@ function trackAdImpression(adId) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            ad_id: adId,
-            timestamp: Date.now(),
-            session_id: getSessionId()
+            ad_id: adId || 'unknown',
+            timestamp: Math.floor(Date.now() / 1000),
+            session_id: getSessionId() || 'anonymous'
         })
     }).catch(err => console.error('Ad tracking error:', err));
 }
@@ -1144,10 +1144,10 @@ function trackAdClick(adId, partnerId) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            ad_id: adId,
-            partner_id: partnerId,
-            timestamp: Date.now(),
-            session_id: getSessionId()
+            ad_id: adId || 'unknown',
+            partner_id: partnerId || 'unknown',
+            timestamp: Math.floor(Date.now() / 1000),
+            session_id: getSessionId() || 'anonymous'
         })
     }).then(() => {
         // Rediriger vers partenaire avec UTM
