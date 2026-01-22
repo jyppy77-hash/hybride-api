@@ -57,28 +57,28 @@ class AskPayload(BaseModel):
 # =========================
 
 class GridData(BaseModel):
-    nums: list[int]
-    chance: int
+    nums: Optional[list[int]] = []
+    chance: Optional[int] = 0
     score: Optional[int] = None
 
 class TrackGridPayload(BaseModel):
-    grid_id: str
-    grid_number: int
-    grid_data: GridData
-    target_date: str
-    timestamp: int
-    session_id: str
+    grid_id: Optional[str] = "unknown"
+    grid_number: Optional[int] = 0
+    grid_data: Optional[GridData] = None
+    target_date: Optional[str] = "unknown"
+    timestamp: Optional[int] = None
+    session_id: Optional[str] = "anonymous"
 
 class TrackAdImpressionPayload(BaseModel):
-    ad_id: str
-    timestamp: int
-    session_id: str
+    ad_id: Optional[str] = "unknown"
+    timestamp: Optional[int] = None
+    session_id: Optional[str] = "anonymous"
 
 class TrackAdClickPayload(BaseModel):
-    ad_id: str
-    partner_id: str
-    timestamp: int
-    session_id: str
+    ad_id: Optional[str] = "unknown"
+    partner_id: Optional[str] = "unknown"
+    timestamp: Optional[int] = None
+    session_id: Optional[str] = "anonymous"
 
 # =========================
 # Routes
@@ -834,19 +834,25 @@ async def api_track_grid(payload: TrackGridPayload):
         JSON {success: bool, message: str}
     """
     try:
+        grid_id = payload.grid_id or "unknown"
+        session_id = payload.session_id or "anonymous"
+        target_date = payload.target_date or "unknown"
+        nums = payload.grid_data.nums if payload.grid_data else []
+        chance = payload.grid_data.chance if payload.grid_data else 0
+
         logger.info(
             f"[TRACK] Grid generated - "
-            f"grid_id={payload.grid_id}, "
-            f"session={payload.session_id[:8]}..., "
-            f"target={payload.target_date}, "
-            f"nums={payload.grid_data.nums}, "
-            f"chance={payload.grid_data.chance}"
+            f"grid_id={grid_id}, "
+            f"session={session_id[:8]}..., "
+            f"target={target_date}, "
+            f"nums={nums}, "
+            f"chance={chance}"
         )
 
         return {
             "success": True,
             "message": "Grid tracked",
-            "grid_id": payload.grid_id
+            "grid_id": grid_id
         }
 
     except Exception as e:
@@ -869,16 +875,19 @@ async def api_track_ad_impression(payload: TrackAdImpressionPayload):
         JSON {success: bool, message: str}
     """
     try:
+        ad_id = payload.ad_id or "unknown"
+        session_id = payload.session_id or "anonymous"
+
         logger.info(
             f"[TRACK] Ad impression - "
-            f"ad_id={payload.ad_id}, "
-            f"session={payload.session_id[:8]}..."
+            f"ad_id={ad_id}, "
+            f"session={session_id[:8]}..."
         )
 
         return {
             "success": True,
             "message": "Impression tracked",
-            "ad_id": payload.ad_id
+            "ad_id": ad_id
         }
 
     except Exception as e:
@@ -901,18 +910,22 @@ async def api_track_ad_click(payload: TrackAdClickPayload):
         JSON {success: bool, message: str}
     """
     try:
+        ad_id = payload.ad_id or "unknown"
+        partner_id = payload.partner_id or "unknown"
+        session_id = payload.session_id or "anonymous"
+
         logger.info(
             f"[TRACK] Ad click - "
-            f"ad_id={payload.ad_id}, "
-            f"partner={payload.partner_id}, "
-            f"session={payload.session_id[:8]}..."
+            f"ad_id={ad_id}, "
+            f"partner={partner_id}, "
+            f"session={session_id[:8]}..."
         )
 
         return {
             "success": True,
             "message": "Click tracked",
-            "ad_id": payload.ad_id,
-            "partner_id": payload.partner_id
+            "ad_id": ad_id,
+            "partner_id": partner_id
         }
 
     except Exception as e:
