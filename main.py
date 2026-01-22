@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="HYBRIDE API",
-    description="Moteur HYBRIDE_OPTIMAL_V1 — API officielle",
+    description="Moteur HYBRIDE_OPTIMAL_V1 â€” API officielle",
     version=__version__
 )
 
@@ -38,7 +38,7 @@ async def debug_env():
 # Sert les fichiers CSS / JS / IMAGES
 app.mount("/ui/static", StaticFiles(directory="ui/static"), name="ui-static")
 
-# Compatibilité Claude / Laragon : chemins /static/...
+# CompatibilitÃ© Claude / Laragon : chemins /static/...
 app.mount("/static", StaticFiles(directory="ui/static"), name="static")
 
 # Sert les pages HTML
@@ -51,9 +51,40 @@ app.mount("/ui", StaticFiles(directory="ui"), name="ui")
 class AskPayload(BaseModel):
     prompt: str
 
+
+# =========================
+# Schemas Tracking
+# =========================
+
+class GridData(BaseModel):
+    nums: list[int]
+    chance: int
+    score: Optional[int] = None
+
+class TrackGridPayload(BaseModel):
+    grid_id: str
+    grid_number: int
+    grid_data: GridData
+    target_date: str
+    timestamp: int
+    session_id: str
+
+class TrackAdImpressionPayload(BaseModel):
+    ad_id: str
+    timestamp: int
+    session_id: str
+
+class TrackAdClickPayload(BaseModel):
+    ad_id: str
+    partner_id: str
+    timestamp: int
+    session_id: str
+
 # =========================
 # Routes
 # =========================
+
+
 
 @app.get("/")
 def root():
@@ -787,24 +818,106 @@ async def api_stats_top_flop():
 
 
 # =========================
-# API Tracking (Placeholders)
+# API Tracking (Analytics)
 # =========================
 
-@app.post("/track-ad-impression")
-async def track_ad_impression():
+@app.post("/api/track-grid")
+async def api_track_grid(payload: TrackGridPayload):
     """
-    Track ad impression (placeholder pour analytics futur).
+    Enregistre le tracking d'une grille generee.
+    Pour l'instant, log uniquement. Extensible vers Cloud SQL ou BigQuery.
+
+    Args:
+        payload: Donnees de tracking (grid_id, session_id, etc.)
+
+    Returns:
+        JSON {success: bool, message: str}
     """
-    # TODO: Implémenter tracking dans une table analytics
-    logger.info("Ad impression tracked")
-    return {"success": True, "message": "Ad impression tracked"}
+    try:
+        logger.info(
+            f"[TRACK] Grid generated - "
+            f"grid_id={payload.grid_id}, "
+            f"session={payload.session_id[:8]}..., "
+            f"target={payload.target_date}, "
+            f"nums={payload.grid_data.nums}, "
+            f"chance={payload.grid_data.chance}"
+        )
+
+        return {
+            "success": True,
+            "message": "Grid tracked",
+            "grid_id": payload.grid_id
+        }
+
+    except Exception as e:
+        logger.error(f"Erreur /api/track-grid: {e}")
+        return {
+            "success": False,
+            "message": str(e)
+        }
 
 
-@app.post("/track-grid")
-async def track_grid():
+@app.post("/api/track-ad-impression")
+async def api_track_ad_impression(payload: TrackAdImpressionPayload):
     """
-    Track grid generation (placeholder pour analytics futur).
+    Enregistre une impression publicitaire.
+
+    Args:
+        payload: Donnees d'impression (ad_id, session_id, timestamp)
+
+    Returns:
+        JSON {success: bool, message: str}
     """
-    # TODO: Implémenter tracking dans une table analytics
-    logger.info("Grid generation tracked")
-    return {"success": True, "message": "Grid generation tracked"}
+    try:
+        logger.info(
+            f"[TRACK] Ad impression - "
+            f"ad_id={payload.ad_id}, "
+            f"session={payload.session_id[:8]}..."
+        )
+
+        return {
+            "success": True,
+            "message": "Impression tracked",
+            "ad_id": payload.ad_id
+        }
+
+    except Exception as e:
+        logger.error(f"Erreur /api/track-ad-impression: {e}")
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
+
+@app.post("/api/track-ad-click")
+async def api_track_ad_click(payload: TrackAdClickPayload):
+    """
+    Enregistre un clic publicitaire (CPA tracking).
+
+    Args:
+        payload: Donnees de clic (ad_id, partner_id, session_id)
+
+    Returns:
+        JSON {success: bool, message: str}
+    """
+    try:
+        logger.info(
+            f"[TRACK] Ad click - "
+            f"ad_id={payload.ad_id}, "
+            f"partner={payload.partner_id}, "
+            f"session={payload.session_id[:8]}..."
+        )
+
+        return {
+            "success": True,
+            "message": "Click tracked",
+            "ad_id": payload.ad_id,
+            "partner_id": payload.partner_id
+        }
+
+    except Exception as e:
+        logger.error(f"Erreur /api/track-ad-click: {e}")
+        return {
+            "success": False,
+            "message": str(e)
+        }
