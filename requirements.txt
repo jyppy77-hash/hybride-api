@@ -1,4 +1,16 @@
-fastapi
-uvicorn[standard]
+# =============================================================================
+# LotoIA - Requirements
+# =============================================================================
+# FastAPI + Uvicorn (API)
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+
+# MySQL / Cloud SQL
+pymysql==1.1.1
+cryptography==43.0.3
+
+# Configuration
+python-dotenv==1.0.1
+
+# Google Cloud (conserve pour compatibilite)
 google-cloud-aiplatform
-pymysql
