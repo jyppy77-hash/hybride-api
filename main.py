@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 app = FastAPI(
     title="HYBRIDE API",
-    description="Moteur HYBRIDE_OPTIMAL_V1 â€” API officielle",
+    description="Moteur HYBRIDE_OPTIMAL_V1 — API officielle",
     version=__version__
 )
 
@@ -38,7 +38,7 @@ async def debug_env():
 # Sert les fichiers CSS / JS / IMAGES
 app.mount("/ui/static", StaticFiles(directory="ui/static"), name="ui-static")
 
-# CompatibilitÃ© Claude / Laragon : chemins /static/...
+# Compatibilité Claude / Laragon : chemins /static/...
 app.mount("/static", StaticFiles(directory="ui/static"), name="static")
 
 # Sert les pages HTML
@@ -54,8 +54,6 @@ class AskPayload(BaseModel):
 # =========================
 # Routes
 # =========================
-
-
 
 @app.get("/")
 def root():
@@ -786,3 +784,27 @@ async def api_stats_top_flop():
             "success": False,
             "message": str(e)
         }
+
+
+# =========================
+# API Tracking (Placeholders)
+# =========================
+
+@app.post("/track-ad-impression")
+async def track_ad_impression(request: Request):
+    """
+    Track ad impression (placeholder pour analytics futur).
+    """
+    # TODO: Implémenter tracking dans une table analytics
+    logger.info("Ad impression tracked")
+    return {"success": True, "message": "Ad impression tracked"}
+
+
+@app.post("/track-grid")
+async def track_grid(request: Request):
+    """
+    Track grid generation (placeholder pour analytics futur).
+    """
+    # TODO: Implémenter tracking dans une table analytics
+    logger.info("Grid generation tracked")
+    return {"success": True, "message": "Grid generation tracked"}
