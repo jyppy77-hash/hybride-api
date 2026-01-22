@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -791,7 +791,7 @@ async def api_stats_top_flop():
 # =========================
 
 @app.post("/track-ad-impression")
-async def track_ad_impression(request: Request):
+async def track_ad_impression():
     """
     Track ad impression (placeholder pour analytics futur).
     """
@@ -801,7 +801,7 @@ async def track_ad_impression(request: Request):
 
 
 @app.post("/track-grid")
-async def track_grid(request: Request):
+async def track_grid():
     """
     Track grid generation (placeholder pour analytics futur).
     """
