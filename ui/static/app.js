@@ -32,6 +32,88 @@ const btnClearLogs = document.getElementById('btn-clear-logs');
 const btnCloseLogs = document.getElementById('btn-close-logs');
 
 // ================================================================
+// API FETCH UTILITIES (Cloud SQL)
+// ================================================================
+
+/**
+ * Fonction generique pour appeler les endpoints API tirages
+ * Gestion complete des erreurs avec format JSON standardise
+ *
+ * @param {string} endpoint - URL de l'endpoint (ex: '/api/tirages/count')
+ * @returns {Promise<Object>} - Les donnees de la reponse (data)
+ * @throws {Error} - En cas d'erreur HTTP ou API
+ *
+ * @example
+ * // Obtenir le nombre de tirages
+ * const data = await fetchTirages('/api/tirages/count');
+ * console.log(data.total); // 971
+ *
+ * @example
+ * // Obtenir le dernier tirage
+ * const tirage = await fetchTirages('/api/tirages/latest');
+ * console.log(tirage.date_de_tirage); // "2025-01-20"
+ *
+ * @example
+ * // Obtenir une liste de tirages
+ * const data = await fetchTirages('/api/tirages/list?limit=5');
+ * console.log(data.items.length); // 5
+ */
+async function fetchTirages(endpoint) {
+    try {
+        const response = await fetch(endpoint);
+
+        // Erreur HTTP (404, 500, etc.)
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+
+        // Erreur API (success: false)
+        if (!data.success) {
+            throw new Error(data.error || 'Erreur API inconnue');
+        }
+
+        // Retourner uniquement les donnees utiles
+        return data.data;
+
+    } catch (error) {
+        console.error(`Erreur fetchTirages(${endpoint}):`, error.message);
+        throw error;
+    }
+}
+
+/**
+ * Affiche le nombre total de tirages dans la console
+ * Exemple d'utilisation de fetchTirages()
+ */
+async function afficherNombreTirages() {
+    try {
+        const data = await fetchTirages('/api/tirages/count');
+        console.log(`Total tirages en base: ${data.total}`);
+        return data.total;
+    } catch (error) {
+        console.error('Impossible de charger le nombre de tirages:', error.message);
+        return null;
+    }
+}
+
+/**
+ * Affiche le dernier tirage dans la console
+ * Exemple d'utilisation de fetchTirages()
+ */
+async function afficherDernierTirage() {
+    try {
+        const tirage = await fetchTirages('/api/tirages/latest');
+        console.log('Dernier tirage:', tirage);
+        return tirage;
+    } catch (error) {
+        console.error('Impossible de charger le dernier tirage:', error.message);
+        return null;
+    }
+}
+
+// ================================================================
 // INITIALIZATION
 // ================================================================
 
