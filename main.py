@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Query, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -11,7 +11,6 @@ from engine.hybride import generate, generate_grids
 from engine.stats import get_global_stats
 from engine.version import __version__
 import db_cloudsql
-import seo
 
 # Logging
 logger = logging.getLogger(__name__)
@@ -117,34 +116,35 @@ class TrackAdClickPayload(BaseModel):
 # Routes SEO
 # =========================
 
-@app.get("/sitemap.xml")
-async def sitemap():
-    """
-    Sitemap XML dynamique pour SEO.
-    Utilise la date du dernier tirage pour lastmod.
-    """
-    try:
-        latest = db_cloudsql.get_latest_tirage()
-        last_date = latest.get("date_de_tirage") if latest else None
-    except Exception:
-        last_date = None
-
-    return seo.generate_sitemap_response(last_date)
-
-
 @app.get("/robots.txt")
 async def robots():
     """
-    Robots.txt dynamique.
+    Robots.txt statique pour SEO.
+    Fichier source : ui/robots.txt
     """
-    return seo.generate_robots_response()
+    return FileResponse(
+        "ui/robots.txt",
+        media_type="text/plain",
+        headers={"Cache-Control": "public, max-age=86400"}
+    )
+
+
+@app.get("/sitemap.xml")
+async def sitemap():
+    """
+    Sitemap XML statique pour SEO.
+    Fichier source : ui/sitemap.xml
+    """
+    return FileResponse(
+        "ui/sitemap.xml",
+        media_type="application/xml",
+        headers={"Cache-Control": "public, max-age=3600"}
+    )
 
 
 # =========================
 # Routes SEO-friendly (URLs propres)
 # =========================
-
-from fastapi.responses import FileResponse
 
 @app.get("/generateur")
 async def page_generateur():
