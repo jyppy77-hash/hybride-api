@@ -1,0 +1,23 @@
+steps:
+  # Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/hybride-api', '.']
+
+  # Push image to Container Registry / Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/hybride-api']
+
+  # Deploy to Cloud Run (WEST1)
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - run
+      - deploy
+      - hybride-api-eu
+      - --image=gcr.io/$PROJECT_ID/hybride-api
+      - --region=europe-west1
+      - --platform=managed
+      - --allow-unauthenticated
+      - --port=8080
+
+images:
+  - gcr.io/$PROJECT_ID/hybride-api
