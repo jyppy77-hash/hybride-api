@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LotoIA - Statistiques</title>
     <link rel="stylesheet" href="/ui/static/style.css">
+    <link rel="stylesheet" href="/ui/static/legal.css">
     <!-- Theme script (en premier pour éviter le flash) -->
     <script src="/ui/static/theme.js"></script>
     <style>
@@ -621,9 +622,31 @@
         </div>
 
         <!-- Footer -->
-        <footer class="footer" style="text-align: center; padding: 32px 20px; color: var(--text-muted);">
-            <p>Moteur Loto France v1.0</p>
-            <p class="dev-by" style="margin-top: 8px;">Développé par <strong>JyppY</strong></p>
+        <footer class="footer">
+            <div class="footer-nav">
+                <a href="/ui/loto.html">Accueil</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/simulateur.html">Simulateur</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/statistiques.html" class="active">Statistiques</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/news.html">Actualités</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/faq.html">FAQ</a>
+            </div>
+            <div class="footer-legal">
+                <a href="/ui/mentions-legales.html">Mentions légales</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/politique-confidentialite.html">Confidentialité</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/politique-cookies.html">Cookies</a>
+            </div>
+            <p class="footer-brand">LotoIA.fr v1.0</p>
+            <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dépendance. Appelez le 09 74 75 13 13 (appel non surtaxé).</p>
+            <p class="footer-help">Interdiction de jeu aux mineurs. <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
+            <div class="credits">
+                <p class="dev-by">Développé par <strong>JyppY</strong></p>
+            </div>
         </footer>
     </div>
 
@@ -901,5 +924,6 @@
             }
         }
     </script>
+    <script src="/ui/static/cookie-consent.js"></script>
 </body>
 </html>

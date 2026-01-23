@@ -334,6 +334,7 @@
             }
         }
     </style>
+    <link rel="stylesheet" href="/ui/static/legal.css">
 </head>
 <body>
     <div class="launcher-container">
@@ -377,9 +378,17 @@
 
     <!-- Footer -->
     <div class="launcher-footer">
+        <div style="margin-bottom: 8px;">
+            <a href="/ui/mentions-legales.html" style="color: rgba(255,255,255,0.5); text-decoration: none; margin: 0 8px;">Mentions légales</a>
+            <span style="color: rgba(255,255,255,0.3);">•</span>
+            <a href="/ui/politique-confidentialite.html" style="color: rgba(255,255,255,0.5); text-decoration: none; margin: 0 8px;">Confidentialité</a>
+            <span style="color: rgba(255,255,255,0.3);">•</span>
+            <a href="/ui/politique-cookies.html" style="color: rgba(255,255,255,0.5); text-decoration: none; margin: 0 8px;">Cookies</a>
+        </div>
         LotoIA.fr — Plateforme de moteurs de loterie
     </div>
 
+    <script src="/ui/static/cookie-consent.js"></script>
     <script>
         function showComingSoon(engineName) {
             document.getElementById('coming-soon-title').textContent = engineName + ' — En construction';

@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="/ui/static/style.css">
     <link rel="stylesheet" href="/ui/static/simulateur.css">
     <link rel="stylesheet" href="/ui/static/sponsor-popup.css">
+    <link rel="stylesheet" href="/ui/static/legal.css">
     <!-- Theme script (en premier pour éviter le flash) -->
     <script src="/ui/static/theme.js"></script>
 </head>
@@ -52,6 +53,9 @@
                     <span>Froid (rare)</span>
                 </div>
             </div>
+            <p id="stats-tirages" class="stats-info" style="text-align: center; margin-top: 12px; font-size: 0.9rem; color: var(--text-muted);">
+                Chargement des statistiques...
+            </p>
         </section>
 
         <!-- Grille principale 49 numeros -->
@@ -131,9 +135,31 @@
         </div>
 
         <!-- Footer -->
-        <footer class="footer" style="text-align: center; padding: 32px 20px; color: var(--text-muted);">
-            <p>Moteur Loto France v1.0</p>
-            <p class="disclaimer" style="margin-top: 8px; font-size: 14px;">Le Loto est un jeu de pur hasard. Ces analyses sont à titre indicatif uniquement.</p>
+        <footer class="footer">
+            <div class="footer-nav">
+                <a href="/ui/loto.html">Accueil</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/simulateur.html" class="active">Simulateur</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/statistiques.html">Statistiques</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/news.html">Actualités</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/faq.html">FAQ</a>
+            </div>
+            <div class="footer-legal">
+                <a href="/ui/mentions-legales.html">Mentions légales</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/politique-confidentialite.html">Confidentialité</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/politique-cookies.html">Cookies</a>
+            </div>
+            <p class="footer-brand">LotoIA.fr v1.0</p>
+            <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dépendance. Appelez le 09 74 75 13 13 (appel non surtaxé).</p>
+            <p class="footer-help">Interdiction de jeu aux mineurs. <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
+            <div class="credits">
+                <p class="dev-by">Développé par <strong>JyppY</strong></p>
+            </div>
         </footer>
     </div>
 
@@ -145,5 +171,6 @@
     <script src="/ui/static/sponsor-popup.js"></script>
     <script src="/ui/static/simulateur.js"></script>
     <script src="/ui/static/scroll.js"></script>
+    <script src="/ui/static/cookie-consent.js"></script>
 </body>
 </html>
