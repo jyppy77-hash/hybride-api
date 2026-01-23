@@ -9,7 +9,9 @@ const state = {
     selectedChance: null,
     numbersHeat: {},
     debounceTimer: null,
-    popupShownForCurrentGrid: false  // Flag pour éviter popup multiple sur même grille
+    popupShownForCurrentGrid: false,  // Flag pour éviter popup multiple sur même grille
+    statsLoaded: false,
+    totalTirages: 0
 };
 
 // DOM Elements
@@ -33,6 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 /**
  * Load heat data for numbers (hot/cold/neutral)
+ * Connecte au Cloud SQL via /api/numbers-heat
  */
 async function loadNumbersHeat() {
     try {
@@ -41,13 +44,61 @@ async function loadNumbersHeat() {
 
         if (data.success) {
             state.numbersHeat = data.numbers;
+            state.totalTirages = data.total_tirages || 0;
+            state.statsLoaded = true;
+
+            // Mettre a jour l'affichage du nombre de tirages
+            updateTiragesDisplay();
+
+            console.log(`[Simulateur] Stats chargees: ${state.totalTirages} tirages`);
+            console.log(`[Simulateur] Seuils - Chaud: ${data.seuils?.chaud}, Froid: ${data.seuils?.froid}`);
+        } else {
+            console.warn('[Simulateur] API numbers-heat: success=false');
+            generateFallbackHeat();
         }
     } catch (error) {
-        console.error('Erreur chargement heat:', error);
+        console.error('[Simulateur] Erreur chargement heat:', error);
+        // Fallback: generer des categories neutres
+        generateFallbackHeat();
     }
 
     // Initialize grid after loading heat data
     initMainGrid();
+}
+
+/**
+ * Fallback si l'API n'est pas disponible
+ * Tous les numeros sont classes comme neutres
+ */
+function generateFallbackHeat() {
+    console.warn('[Simulateur] Mode fallback - tous numeros neutres');
+    for (let i = 1; i <= 49; i++) {
+        state.numbersHeat[i] = {
+            category: 'neutral',
+            frequency: 0,
+            last_draw: null
+        };
+    }
+    state.statsLoaded = false;
+}
+
+/**
+ * Met a jour l'affichage du nombre de tirages
+ */
+function updateTiragesDisplay() {
+    // Mettre a jour la variable globale pour le popup
+    window.TOTAL_TIRAGES = state.totalTirages;
+
+    // Chercher un element pour afficher le total
+    const tiragesElement = document.getElementById('stats-tirages');
+    if (tiragesElement) {
+        tiragesElement.textContent = `Base sur ${state.totalTirages.toLocaleString('fr-FR')} tirages officiels`;
+    }
+
+    // Mettre a jour les elements avec classe dynamic-tirages
+    document.querySelectorAll('.dynamic-tirages').forEach(el => {
+        el.textContent = state.totalTirages.toLocaleString('fr-FR');
+    });
 }
 
 /**
