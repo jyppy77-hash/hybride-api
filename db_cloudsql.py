@@ -1,13 +1,16 @@
 """
-Module de connexion Cloud SQL pour LotoIA
-========================================
+Cloud SQL Connection Module - LotoIA
+===================================
 
-Connexion centralisée vers MySQL (Google Cloud SQL)
-Supporte automatiquement :
-- LOCAL : TCP via Cloud SQL Proxy (127.0.0.1:3306)
-- PROD  : Unix socket Cloud Run (/cloudsql/...)
+Support:
+- LOCAL : TCP (Cloud SQL Proxy / MySQL local)
+- PROD  : Unix socket (Google Cloud Run + Cloud SQL)
 
-Configuration via variables d'environnement (.env ou Cloud Run)
+Env vars required (Cloud Run / .env):
+- DB_USER
+- DB_PASSWORD
+- DB_NAME
+- CLOUD_SQL_CONNECTION_NAME
 """
 
 import os
@@ -17,83 +20,92 @@ from typing import Optional
 import pymysql
 from pymysql.cursors import DictCursor
 
-# Charger .env si disponible (dev local)
+# ============================================================
+# LOAD .env (LOCAL ONLY)
+# ============================================================
+
 try:
     from dotenv import load_dotenv
     load_dotenv()
-except ImportError:
+except Exception:
     pass
 
-# ============================================================================
+# ============================================================
 # LOGGING
-# ============================================================================
+# ============================================================
 
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    format="%(asctime)s | %(levelname)s | %(message)s"
 )
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("cloudsql")
 
-# ============================================================================
-# CONFIGURATION
-# ============================================================================
+# ============================================================
+# CONFIG
+# ============================================================
 
-# Cloud SQL Connection Name (PROD)
-CLOUD_SQL_CONNECTION_NAME = os.getenv(
-    "CLOUD_SQL_CONNECTION_NAME",
-    "gen-lang-client-0680927607:europe-west9:lotostat"
-)
-
-# Credentials (Cloud Run / .env)
-DB_USER = os.getenv("DB_USER", "cloudrun")   # 🔥 default corrigé
-DB_PASSWORD = os.getenv("DB_PASSWORD", "")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_NAME = os.getenv("DB_NAME", "lotofrance")
 
-# Local config (Cloud SQL Proxy)
+CLOUD_SQL_CONNECTION_NAME = os.getenv(
+    "CLOUD_SQL_CONNECTION_NAME"
+)
+
 DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
 DB_PORT = int(os.getenv("DB_PORT", "3306"))
 
-# ============================================================================
-# DETECTION ENVIRONNEMENT
-# ============================================================================
+# ============================================================
+# ENV DETECTION
+# ============================================================
 
-def is_production() -> bool:
-    """
-    Détecte si on est en environnement Cloud Run
-    """
+def is_cloud_run() -> bool:
     return bool(os.getenv("K_SERVICE"))
 
 
-def get_environment() -> str:
-    return "PROD" if is_production() else "LOCAL"
+def get_env() -> str:
+    return "PROD" if is_cloud_run() else "LOCAL"
 
 
-# ============================================================================
-# CONNEXION PRINCIPALE
-# ============================================================================
+# ============================================================
+# VALIDATION
+# ============================================================
+
+def validate_config():
+    if not DB_USER:
+        raise RuntimeError("DB_USER manquant")
+
+    if not DB_PASSWORD:
+        raise RuntimeError("DB_PASSWORD manquant (Secret Manager)")
+
+    if not DB_NAME:
+        raise RuntimeError("DB_NAME manquant")
+
+    if is_cloud_run() and not CLOUD_SQL_CONNECTION_NAME:
+        raise RuntimeError("CLOUD_SQL_CONNECTION_NAME manquant")
+
+
+# ============================================================
+# CONNECTION
+# ============================================================
 
 def get_connection() -> pymysql.connections.Connection:
     """
-    Retourne une connexion PyMySQL vers Cloud SQL.
+    Create MySQL connection (Cloud SQL / Local)
     """
-    env = get_environment()
-
-    # Vérification password
-    if not DB_PASSWORD:
-        logger.error("DB_PASSWORD non défini")
-        raise ValueError("DB_PASSWORD requis (Secret Manager / .env)")
+    validate_config()
+    env = get_env()
 
     try:
-        if is_production():
-            # =====================
-            # MODE PROD (Cloud Run)
-            # =====================
+        if is_cloud_run():
+            # ==========================
+            # CLOUD RUN (UNIX SOCKET)
+            # ==========================
             unix_socket = f"/cloudsql/{CLOUD_SQL_CONNECTION_NAME}"
 
-            logger.info("Connexion PROD via Cloud SQL unix socket")
+            logger.info(f"[{env}] Connexion Cloud SQL via socket")
 
             conn = pymysql.connect(
-                host="localhost",  # 🔥 CRITIQUE POUR CLOUD RUN
                 unix_socket=unix_socket,
                 user=DB_USER,
                 password=DB_PASSWORD,
@@ -103,11 +115,12 @@ def get_connection() -> pymysql.connections.Connection:
                 autocommit=True,
                 connect_timeout=5
             )
+
         else:
-            # =====================
-            # MODE LOCAL (Proxy)
-            # =====================
-            logger.info(f"Connexion LOCAL via TCP {DB_HOST}:{DB_PORT}")
+            # ==========================
+            # LOCAL (TCP)
+            # ==========================
+            logger.info(f"[{env}] Connexion MySQL via TCP {DB_HOST}:{DB_PORT}")
 
             conn = pymysql.connect(
                 host=DB_HOST,
@@ -121,17 +134,17 @@ def get_connection() -> pymysql.connections.Connection:
                 connect_timeout=5
             )
 
-        logger.info(f"Connexion MySQL OK ({env})")
+        logger.info(f"[{env}] Connexion MySQL OK")
         return conn
 
-    except pymysql.Error as e:
-        logger.error(f"Echec connexion MySQL ({env}) : {e}")
+    except Exception as e:
+        logger.error(f"[{env}] Erreur connexion MySQL: {e}")
         raise
 
 
-# ============================================================================
-# FONCTIONS UTILITAIRES
-# ============================================================================
+# ============================================================
+# TEST FUNCTIONS
+# ============================================================
 
 def test_connection() -> dict:
     try:
@@ -154,8 +167,8 @@ def test_connection() -> dict:
         conn.close()
 
         return {
-            "status": "ok",
-            "environment": get_environment(),
+            "status": "success",
+            "environment": get_env(),
             "database": DB_NAME,
             "mysql_version": version,
             "total_tirages": total,
@@ -166,18 +179,21 @@ def test_connection() -> dict:
     except Exception as e:
         return {
             "status": "error",
-            "environment": get_environment(),
+            "environment": get_env(),
             "error": str(e)
         }
 
 
+# ============================================================
+# SIMPLE QUERIES
+# ============================================================
+
 def get_tirages_count() -> int:
     conn = get_connection()
     try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) as total FROM tirages")
-        result = cursor.fetchone()
-        return result["total"] if result else 0
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT COUNT(*) as total FROM tirages")
+            return cursor.fetchone()["total"]
     finally:
         conn.close()
 
@@ -185,64 +201,39 @@ def get_tirages_count() -> int:
 def get_latest_tirage() -> Optional[dict]:
     conn = get_connection()
     try:
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT *
-            FROM tirages
-            ORDER BY date_de_tirage DESC
-            LIMIT 1
-        """)
-        result = cursor.fetchone()
-        if result and result.get("date_de_tirage"):
-            result["date_de_tirage"] = str(result["date_de_tirage"])
-        return result
+        with conn.cursor() as cursor:
+            cursor.execute("""
+                SELECT *
+                FROM tirages
+                ORDER BY date_de_tirage DESC
+                LIMIT 1
+            """)
+            result = cursor.fetchone()
+            if result and result.get("date_de_tirage"):
+                result["date_de_tirage"] = str(result["date_de_tirage"])
+            return result
     finally:
         conn.close()
 
 
-def get_tirages_list(limit: int = 10, offset: int = 0) -> list:
-    limit = min(max(1, limit), 100)
-    offset = max(0, offset)
-
-    conn = get_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT *
-            FROM tirages
-            ORDER BY date_de_tirage DESC
-            LIMIT %s OFFSET %s
-        """, (limit, offset))
-
-        results = cursor.fetchall()
-
-        for row in results:
-            if row.get("date_de_tirage"):
-                row["date_de_tirage"] = str(row["date_de_tirage"])
-
-        return results
-    finally:
-        conn.close()
-
-
-# ============================================================================
+# ============================================================
 # CLI TEST
-# ============================================================================
+# ============================================================
 
 if __name__ == "__main__":
-    print("=" * 50)
-    print("TEST CONNEXION CLOUD SQL")
-    print("=" * 50)
+    print("=" * 60)
+    print("TEST CLOUD SQL - LOTOIA")
+    print("=" * 60)
 
     result = test_connection()
 
-    if result["status"] == "ok":
-        print(f"Environnement : {result['environment']}")
-        print(f"Base : {result['database']}")
+    if result["status"] == "success":
+        print("✅ Connexion OK")
+        print(f"Env : {result['environment']}")
+        print(f"DB : {result['database']}")
         print(f"MySQL : {result['mysql_version']}")
         print(f"Tirages : {result['total_tirages']}")
-        print(f"Période : {result['date_min']} -> {result['date_max']}")
-        print("✅ CONNEXION OK")
+        print(f"Période : {result['date_min']} → {result['date_max']}")
     else:
-        print(f"❌ ERREUR : {result['error']}")
+        print("❌ ERREUR :", result["error"])
         exit(1)
