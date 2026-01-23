@@ -45,8 +45,11 @@ async def add_cache_headers(request: Request, call_next):
         elif path.endswith((".png", ".jpg", ".jpeg", ".svg", ".ico", ".webp")):
             response.headers["Cache-Control"] = "public, max-age=2592000"  # 30 jours
 
-    # Cache court pour pages HTML
-    elif path.endswith(".html") or path in ["/", "/generateur", "/statistiques", "/simulateur"]:
+    # Cache court pour pages HTML (SEO routes)
+    seo_routes = ["/", "/loto", "/statistiques", "/simulateur", "/faq", "/news",
+                  "/historique", "/disclaimer", "/mentions-legales",
+                  "/politique-confidentialite", "/politique-cookies"]
+    if path.endswith(".html") or path in seo_routes:
         response.headers["Cache-Control"] = "public, max-age=3600"  # 1 heure
 
     return response
@@ -113,86 +116,109 @@ class TrackAdClickPayload(BaseModel):
     session_id: Optional[str] = "anonymous"
 
 # =========================
-# Routes SEO
+# Routes SEO - Fichiers racine
 # =========================
 
 @app.get("/robots.txt")
 async def robots():
-    """
-    Robots.txt statique pour SEO.
-    Fichier source : ui/robots.txt
-    """
-    return FileResponse(
-        "ui/robots.txt",
-        media_type="text/plain",
-        headers={"Cache-Control": "public, max-age=86400"}
-    )
+    """Robots.txt pour SEO."""
+    return FileResponse("ui/robots.txt", media_type="text/plain",
+                        headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.get("/sitemap.xml")
 async def sitemap():
-    """
-    Sitemap XML statique pour SEO.
-    Fichier source : ui/sitemap.xml
-    """
-    return FileResponse(
-        "ui/sitemap.xml",
-        media_type="application/xml",
-        headers={"Cache-Control": "public, max-age=3600"}
-    )
+    """Sitemap XML pour SEO."""
+    return FileResponse("ui/sitemap.xml", media_type="application/xml",
+                        headers={"Cache-Control": "public, max-age=3600"})
 
 
 # =========================
-# Routes SEO-friendly (URLs propres)
+# Routes SEO-friendly (Pages HTML)
 # =========================
 
-@app.get("/generateur")
-async def page_generateur():
-    """Page générateur avec URL SEO-friendly."""
-    return FileResponse("ui/loto.html", media_type="text/html")
+# Mapping URL → fichier HTML
+SEO_PAGES = {
+    "/": "index.html",
+    "/loto": "loto.html",
+    "/statistiques": "statistiques.html",
+    "/simulateur": "simulateur.html",
+    "/faq": "faq.html",
+    "/news": "news.html",
+    "/historique": "historique.html",
+    "/disclaimer": "disclaimer.html",
+    "/mentions-legales": "mentions-legales.html",
+    "/politique-confidentialite": "politique-confidentialite.html",
+    "/politique-cookies": "politique-cookies.html",
+}
+
+
+def serve_page(filename: str):
+    """Sert une page HTML depuis ui/."""
+    return FileResponse(f"ui/{filename}", media_type="text/html")
+
+
+# Page d'accueil
+@app.get("/")
+async def page_index():
+    return serve_page("index.html")
+
+
+# Pages principales
+@app.get("/loto")
+async def page_loto():
+    return serve_page("loto.html")
 
 
 @app.get("/statistiques")
 async def page_statistiques():
-    """Page statistiques avec URL SEO-friendly."""
-    return FileResponse("ui/statistiques.html", media_type="text/html")
+    return serve_page("statistiques.html")
 
 
 @app.get("/simulateur")
 async def page_simulateur():
-    """Page simulateur avec URL SEO-friendly."""
-    return FileResponse("ui/simulateur.html", media_type="text/html")
-
-
-@app.get("/historique")
-async def page_historique():
-    """Page historique avec URL SEO-friendly."""
-    return FileResponse("ui/historique.html", media_type="text/html")
+    return serve_page("simulateur.html")
 
 
 @app.get("/faq")
 async def page_faq():
-    """Page FAQ avec URL SEO-friendly."""
-    return FileResponse("ui/faq.html", media_type="text/html")
+    return serve_page("faq.html")
 
 
-@app.get("/actualites")
-async def page_actualites():
-    """Page actualités avec URL SEO-friendly."""
-    return FileResponse("ui/news.html", media_type="text/html")
+@app.get("/news")
+async def page_news():
+    return serve_page("news.html")
+
+
+@app.get("/historique")
+async def page_historique():
+    return serve_page("historique.html")
+
+
+# Pages légales
+@app.get("/disclaimer")
+async def page_disclaimer():
+    return serve_page("disclaimer.html")
+
+
+@app.get("/mentions-legales")
+async def page_mentions():
+    return serve_page("mentions-legales.html")
+
+
+@app.get("/politique-confidentialite")
+async def page_confidentialite():
+    return serve_page("politique-confidentialite.html")
+
+
+@app.get("/politique-cookies")
+async def page_cookies():
+    return serve_page("politique-cookies.html")
 
 
 # =========================
-# Routes
+# Routes API
 # =========================
-
-
-@app.get("/")
-def root():
-    """
-    Redirection vers l'UI launcher
-    """
-    return RedirectResponse(url="/ui/launcher.html")
 
 @app.get("/health")
 def health():
