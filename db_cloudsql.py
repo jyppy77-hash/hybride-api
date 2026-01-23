@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 # Cloud SQL Connection Name (PROD)
 CLOUD_SQL_CONNECTION_NAME = os.getenv(
     "CLOUD_SQL_CONNECTION_NAME",
-    "gen-lang-client-0680927607:europe-west9:lotostat"
+    "gen-lang-client-0680927607:europe-west1:lotostat-eu"
 )
 
 # Credentials (Cloud Run / .env)
