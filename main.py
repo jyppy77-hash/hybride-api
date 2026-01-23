@@ -139,7 +139,7 @@ async def sitemap():
 
 # Mapping URL → fichier HTML
 SEO_PAGES = {
-    "/": "index.html",
+    "/": "launcher.html",
     "/loto": "loto.html",
     "/statistiques": "statistiques.html",
     "/simulateur": "simulateur.html",
@@ -158,10 +158,10 @@ def serve_page(filename: str):
     return FileResponse(f"ui/{filename}", media_type="text/html")
 
 
-# Page d'accueil
+# Page d'accueil (launcher)
 @app.get("/")
-async def page_index():
-    return serve_page("index.html")
+async def page_launcher():
+    return serve_page("launcher.html")
 
 
 # Pages principales
