@@ -239,18 +239,16 @@ function trackImpression(sponsorIds) {
 // ============================================
 
 /**
- * Genere une ligne de "donnees" aleatoires style Matrix
+ * Genere une ligne de numeros Loto aleatoires (1-49)
  * @returns {string}
  */
 function generateMatrixLine() {
-    const chars = '0123456789ABCDEF';
     const segments = [];
     for (let i = 0; i < 8; i++) {
-        let segment = '';
-        for (let j = 0; j < 2; j++) {
-            segment += chars[Math.floor(Math.random() * chars.length)];
-        }
-        segments.push(segment);
+        // Numéros Loto valides : 1 à 49
+        const num = Math.floor(Math.random() * 49) + 1;
+        // Formatage sur 2 chiffres (01, 02, ... 49)
+        segments.push(String(num).padStart(2, '0'));
     }
     return segments.join(' ');
 }

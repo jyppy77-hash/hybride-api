@@ -157,17 +157,22 @@ body.theme-day .sponsor-popup-overlay {
 .data-animation {
     font-family: 'Courier New', monospace;
     font-size: 12px;
-    opacity: 0.7;
+    opacity: 0.9;
     text-align: center;
     height: 30px;
     line-height: 30px;
-    color: #10b981;
-    letter-spacing: 2px;
+    /* Texte blanc pour contraste sur dégradé */
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    font-weight: 700;
+    letter-spacing: 3px;
     overflow: hidden;
     margin-bottom: 20px;
-    background: rgba(0, 0, 0, 0.2);
+    /* Même dégradé arc-en-ciel que la barre de progression */
+    background: linear-gradient(90deg, #4285f4 0%, #34a853 40%, #fbbc05 70%, #ea4335 100%);
     border-radius: 8px;
     padding: 0 10px;
+    box-shadow: 0 0 12px rgba(66, 133, 244, 0.4);
 }
 
 /* ============================================
