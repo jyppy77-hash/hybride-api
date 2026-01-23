@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Politique des Cookies | LotoIA.fr</title>
+    <meta name="description" content="Politique de gestion des cookies et traceurs de LotoIA.fr, conforme aux recommandations de la CNIL.">
+    <meta name="robots" content="noindex, follow">
+    <link rel="stylesheet" href="/ui/static/style.css">
+    <link rel="stylesheet" href="/ui/static/legal.css">
+    <script src="/ui/static/theme.js"></script>
+</head>
+<body class="subpage legal-page">
+    <!-- Barre de navigation -->
+    <nav class="engine-nav-subpage">
+        <a href="/ui/loto.html" class="engine-nav-btn">
+            <span class="nav-arrow">←</span>
+            <span class="nav-text">Retour au moteur</span>
+        </a>
+        <div class="engine-nav-right">
+            <span class="engine-badge">Loto France</span>
+            <button id="theme-switch" class="theme-switch" title="Changer de thème">
+                <span class="icon-day">☀️</span>
+                <span class="icon-night">🌙</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="page-header">
+        <div class="header-content">
+            <h1>Politique des Cookies</h1>
+            <p class="subtitle">Gestion des cookies et traceurs conformément aux recommandations de la CNIL</p>
+        </div>
+    </header>
+
+    <div class="container subpage-container">
+        <article class="legal-content">
+
+            <!-- Date de mise à jour -->
+            <p class="legal-update">Dernière mise à jour : 23 janvier 2026</p>
+
+            <!-- ══════════════════════════════════════════════════════════════════
+                 SECTION 1 : QU'EST-CE QU'UN COOKIE ?
+                 ══════════════════════════════════════════════════════════════════ -->
+            <section class="legal-section">
+                <h2>1. Qu'est-ce qu'un cookie ?</h2>
+
+                <p>Un <strong>cookie</strong> est un petit fichier texte déposé sur votre terminal (ordinateur, smartphone, tablette) lors de la visite d'un site web. Il permet au site de mémoriser des informations relatives à votre navigation.</p>
+
+                <p>Les cookies peuvent être :</p>
+                <ul>
+                    <li><strong>Cookies de session :</strong> supprimés à la fermeture du navigateur</li>
+                    <li><strong>Cookies persistants :</strong> conservés pendant une durée définie</li>
+                    <li><strong>Cookies propriétaires (first-party) :</strong> déposés par le site visité</li>
+                    <li><strong>Cookies tiers (third-party) :</strong> déposés par des domaines externes</li>
+                </ul>
+
+                <h3>Technologies similaires</h3>
+                <p>Outre les cookies HTTP classiques, d'autres technologies permettent de stocker des informations :</p>
+                <ul>
+                    <li><strong>localStorage :</strong> Stockage persistant dans le navigateur (pas de date d'expiration)</li>
+                    <li><strong>sessionStorage :</strong> Stockage limité à la session de navigation</li>
+                    <li><strong>Fingerprinting :</strong> Identification par les caractéristiques techniques du navigateur (non utilisé par LotoIA)</li>
+                </ul>
+            </section>
+
+            <!-- ══════════════════════════════════════════════════════════════════
+                 SECTION 2 : COOKIES UTILISÉS PAR LOTOIA
+                 ══════════════════════════════════════════════════════════════════ -->
+            <section class="legal-section">
+                <h2>2. Technologies utilisées par LotoIA.fr</h2>
+
+                <div class="legal-highlight">
+                    <strong>Bonne nouvelle :</strong> LotoIA.fr n'utilise PAS de cookies HTTP traditionnels. Nous utilisons uniquement des technologies de stockage local (sessionStorage et localStorage) qui restent dans votre navigateur et ne sont pas transmises à des serveurs tiers.
+                </div>
+
+                <h3>2.1 Stockage strictement nécessaire</h3>
+                <p>Ces éléments sont indispensables au fonctionnement du site et <strong>ne requièrent pas votre consentement</strong> (exemption CNIL).</p>
+
+                <table class="cookie-table">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Type</th>
+                            <th>Finalité</th>
+                            <th>Durée</th>
+                            <th>Données</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>lotoia_session</code></td>
+                            <td>sessionStorage</td>
+                            <td>Identifiant de session anonyme pour le suivi des interactions durant la visite</td>
+                            <td>Session (supprimé à la fermeture du navigateur)</td>
+                            <td>UUID v4 aléatoire</td>
+                        </tr>
+                        <tr>
+                            <td><code>lotoia-theme</code></td>
+                            <td>localStorage</td>
+                            <td>Sauvegarde de votre préférence d'affichage (mode jour/nuit)</td>
+                            <td>Persistant (jusqu'à suppression manuelle)</td>
+                            <td>"day" ou "night"</td>
+                        </tr>
+                        <tr>
+                            <td><code>lotoia_cookie_consent</code></td>
+                            <td>localStorage</td>
+                            <td>Mémorisation de vos choix concernant les cookies</td>
+                            <td>13 mois</td>
+                            <td>Préférences de consentement</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>2.2 Cookies d'analyse et de mesure d'audience (optionnels)</h3>
+                <p>Ces traceurs sont soumis à votre <strong>consentement préalable</strong>.</p>
+
+                <table class="cookie-table">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Fournisseur</th>
+                            <th>Finalité</th>
+                            <th>Durée</th>
+                            <th>Consentement</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="5" class="cookie-none">
+                                <em>Aucun cookie d'analyse tiers n'est actuellement utilisé.</em><br>
+                                LotoIA.fr réalise des mesures d'audience via des logs serveur internes uniquement.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>2.3 Cookies publicitaires (optionnels)</h3>
+                <p>Ces traceurs sont soumis à votre <strong>consentement préalable</strong>.</p>
+
+                <table class="cookie-table">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Fournisseur</th>
+                            <th>Finalité</th>
+                            <th>Durée</th>
+                            <th>Consentement</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="5" class="cookie-none">
+                                <em>Aucun cookie publicitaire tiers n'est actuellement utilisé.</em><br>
+                                Les partenariats sont gérés via un système interne sans traceur externe.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- ══════════════════════════════════════════════════════════════════
+                 SECTION 3 : CONSENTEMENT
+                 ══════════════════════════════════════════════════════════════════ -->
+            <section class="legal-section">
+                <h2>3. Votre consentement</h2>
+
+                <h3>3.1 Principe du consentement préalable</h3>
+                <p>Conformément à l'article 82 de la loi Informatique et Libertés et aux recommandations de la CNIL (délibération n°2020-091), le dépôt de cookies non essentiels nécessite votre <strong>consentement libre, spécifique, éclairé et univoque</strong>.</p>
+
+                <h3>3.2 Cookies exemptés de consentement</h3>
+                <p>Certains cookies sont dispensés du recueil du consentement car strictement nécessaires au fonctionnement du service :</p>
+                <ul>
+                    <li>Cookies de session (authentification, panier, etc.)</li>
+                    <li>Cookies de personnalisation de l'interface (langue, thème)</li>
+                    <li>Cookies de mémorisation du consentement</li>
+                    <li>Cookies de mesure d'audience respectant les conditions de la CNIL</li>
+                </ul>
+
+                <h3>3.3 Gérer vos préférences</h3>
+                <p>Vous pouvez à tout moment modifier vos choix concernant les cookies :</p>
+
+                <div class="cookie-settings-box">
+                    <button id="open-cookie-settings" class="btn btn-primary">Gérer mes préférences cookies</button>
+                    <p class="cookie-settings-note">Ce bouton ouvre le panneau de gestion des cookies.</p>
+                </div>
+            </section>
+
+            <!-- ══════════════════════════════════════════════════════════════════
+                 SECTION 4 : GESTION VIA LE NAVIGATEUR
+                 ══════════════════════════════════════════════════════════════════ -->
+            <section class="legal-section">
+                <h2>4. Gestion des cookies via votre navigateur</h2>
+
+                <p>Vous pouvez également configurer votre navigateur pour accepter ou refuser les cookies. Voici les procédures pour les principaux navigateurs :</p>
+
+                <div class="browser-list">
+                    <div class="browser-item">
+                        <h4>Google Chrome</h4>
+                        <p>Paramètres → Confidentialité et sécurité → Cookies et autres données des sites</p>
+                        <a href="https://support.google.com/chrome/answer/95647" target="_blank" rel="noopener">Guide officiel</a>
+                    </div>
+                    <div class="browser-item">
+                        <h4>Mozilla Firefox</h4>
+                        <p>Paramètres → Vie privée et sécurité → Cookies et données de sites</p>
+                        <a href="https://support.mozilla.org/fr/kb/protection-renforcee-contre-pistage-firefox-bureau" target="_blank" rel="noopener">Guide officiel</a>
+                    </div>
+                    <div class="browser-item">
+                        <h4>Safari</h4>
+                        <p>Préférences → Confidentialité → Cookies et données de sites web</p>
+                        <a href="https://support.apple.com/fr-fr/guide/safari/sfri11471/mac" target="_blank" rel="noopener">Guide officiel</a>
+                    </div>
+                    <div class="browser-item">
+                        <h4>Microsoft Edge</h4>
+                        <p>Paramètres → Cookies et autorisations de site → Gérer et supprimer les cookies</p>
+                        <a href="https://support.microsoft.com/fr-fr/microsoft-edge/supprimer-les-cookies-dans-microsoft-edge-63947406-40ac-c3b8-57b9-2a946a29ae09" target="_blank" rel="noopener">Guide officiel</a>
+                    </div>
+                </div>
+
+                <div class="legal-alert warning">
+                    <strong>Attention :</strong> Le blocage de tous les cookies peut affecter le fonctionnement de certains sites web et empêcher l'accès à certaines fonctionnalités.
+                </div>
+            </section>
+
+            <!-- ══════════════════════════════════════════════════════════════════
+                 SECTION 5 : SUPPRESSION DES DONNÉES LOCALES
+                 ══════════════════════════════════════════════════════════════════ -->
+            <section class="legal-section">
+                <h2>5. Supprimer les données stockées par LotoIA</h2>
+
+                <p>Pour supprimer toutes les données stockées localement par LotoIA.fr :</p>
+
+                <div class="clear-data-box">
+                    <button id="clear-lotoia-data" class="btn btn-danger">Effacer toutes mes données LotoIA</button>
+                    <p>Cette action supprimera :</p>
+                    <ul>
+                        <li>Votre identifiant de session</li>
+                        <li>Vos préférences de thème</li>
+                        <li>Vos choix de consentement cookies</li>
+                    </ul>
+                </div>
+
+                <p>Vous pouvez également utiliser les outils de développement de votre navigateur (F12) pour accéder au stockage local et supprimer manuellement les entrées.</p>
+            </section>
+
+            <!-- ══════════════════════════════════════════════════════════════════
+                 SECTION 6 : DURÉE DE VALIDITÉ DU CONSENTEMENT
+                 ══════════════════════════════════════════════════════════════════ -->
+            <section class="legal-section">
+                <h2>6. Durée de validité du consentement</h2>
+
+                <p>Conformément aux recommandations de la CNIL :</p>
+                <ul>
+                    <li>Votre consentement est conservé pour une durée maximale de <strong>13 mois</strong></li>
+                    <li>Au-delà de cette période, votre consentement vous sera redemandé</li>
+                    <li>Vous pouvez modifier ou retirer votre consentement à tout moment</li>
+                </ul>
+            </section>
+
+            <!-- ══════════════════════════════════════════════════════════════════
+                 SECTION 7 : MISE À JOUR
+                 ══════════════════════════════════════════════════════════════════ -->
+            <section class="legal-section">
+                <h2>7. Mise à jour de cette politique</h2>
+
+                <p>Cette politique cookies peut être mise à jour pour refléter les évolutions de nos pratiques ou de la réglementation. La date de dernière mise à jour figure en haut de ce document.</p>
+
+                <p>En cas d'ajout de nouveaux cookies non essentiels, votre consentement vous sera redemandé.</p>
+            </section>
+
+            <!-- ══════════════════════════════════════════════════════════════════
+                 SECTION 8 : CONTACT
+                 ══════════════════════════════════════════════════════════════════ -->
+            <section class="legal-section">
+                <h2>8. Contact</h2>
+
+                <p>Pour toute question relative aux cookies :</p>
+                <ul>
+                    <li><strong>Email :</strong> rgpd@lotoia.fr</li>
+                </ul>
+
+                <p>Pour en savoir plus sur les cookies : <a href="https://www.cnil.fr/fr/cookies-et-autres-traceurs" target="_blank" rel="noopener">Site de la CNIL</a></p>
+            </section>
+
+        </article>
+
+        <!-- Navigation légale -->
+        <nav class="legal-nav">
+            <h3>Documents juridiques</h3>
+            <ul>
+                <li><a href="/ui/mentions-legales.html">Mentions légales</a></li>
+                <li><a href="/ui/politique-confidentialite.html">Politique de confidentialité</a></li>
+                <li><a href="/ui/politique-cookies.html" class="active">Politique des cookies</a></li>
+                <li><a href="/ui/disclaimer.html">Avertissements</a></li>
+            </ul>
+        </nav>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-nav">
+                <a href="/ui/loto.html">Accueil</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/simulateur.html">Simulateur</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/statistiques.html">Statistiques</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/faq.html">FAQ</a>
+            </div>
+            <div class="footer-legal">
+                <a href="/ui/mentions-legales.html">Mentions légales</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/politique-confidentialite.html">Confidentialité</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/politique-cookies.html">Cookies</a>
+            </div>
+            <p class="footer-brand">LotoIA.fr - Moteur Loto France v1.0</p>
+            <p class="footer-disclaimer">Le Loto est un jeu de hasard. Jouer comporte des risques. Interdiction de jeu aux mineurs.</p>
+            <p class="footer-help">Aide : <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a> - 09 74 75 13 13 (appel non surtaxé)</p>
+            <div class="credits">
+                <p class="dev-by">Développé par <strong>JyppY</strong></p>
+            </div>
+        </footer>
+    </div>
+
+    <script src="/ui/static/cookie-consent.js"></script>
+    <script>
+        // Bouton pour ouvrir les paramètres cookies
+        document.getElementById('open-cookie-settings')?.addEventListener('click', function() {
+            if (typeof CookieConsent !== 'undefined') {
+                CookieConsent.showSettings();
+            } else {
+                alert('Le gestionnaire de cookies n\'est pas disponible.');
+            }
+        });
+
+        // Bouton pour effacer les données LotoIA
+        document.getElementById('clear-lotoia-data')?.addEventListener('click', function() {
+            if (confirm('Voulez-vous vraiment effacer toutes vos données LotoIA ?')) {
+                localStorage.removeItem('lotoia-theme');
+                localStorage.removeItem('lotoia_cookie_consent');
+                sessionStorage.removeItem('lotoia_session');
+                alert('Toutes vos données LotoIA ont été effacées.');
+                location.reload();
+            }
+        });
+    </script>
+
+</body>
+</html>
