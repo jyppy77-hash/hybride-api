@@ -13,4 +13,5 @@ COPY . .
 
 EXPOSE 8080
 
-CMD exec uvicorn main:app --host 0.0.0.0 --port ${PORT}
+# Ajout de --proxy-headers et --forwarded-allow-ips pour supporter Cloudflare
+CMD exec uvicorn main:app --host 0.0.0.0 --port ${PORT} --proxy-headers --forwarded-allow-ips='*'
