@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from pydantic import BaseModel
 from typing import Optional
 import logging
@@ -17,6 +18,13 @@ app = FastAPI(
     title="HYBRIDE API",
     description="Moteur HYBRIDE_OPTIMAL_V1 — API officielle",
     version=__version__
+)
+
+# IMPORTANT : Accepter tous les domaines (hybride-api.lotoia.fr, lotoia.fr, etc.)
+# Nécessaire car Cloud Run west9 ne supporte pas le custom domain mapping
+app.add_middleware(
+    TrustedHostMiddleware,
+    allowed_hosts=["*"]
 )
 
 import os
