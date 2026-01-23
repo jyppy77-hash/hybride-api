@@ -45,7 +45,7 @@ CLOUD_SQL_CONNECTION_NAME = os.getenv(
 )
 
 # Credentials (Cloud Run / .env)
-DB_USER = os.getenv("DB_USER", "cloudrun")   # 🔥 default corrigé
+DB_USER = os.getenv("DB_USER", "jyppy")   # 🔥 default corrigé
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 DB_NAME = os.getenv("DB_NAME", "lotofrance")
 
