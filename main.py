@@ -1,7 +1,8 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
 from typing import Optional
 import logging
@@ -10,6 +11,7 @@ from engine.hybride import generate, generate_grids
 from engine.stats import get_global_stats
 from engine.version import __version__
 import db_cloudsql
+import seo
 
 # Logging
 logger = logging.getLogger(__name__)
@@ -26,6 +28,29 @@ app.add_middleware(
     TrustedHostMiddleware,
     allowed_hosts=["*"]
 )
+
+# Compression GZip pour performance
+app.add_middleware(GZipMiddleware, minimum_size=500)
+
+
+# Middleware cache headers SEO
+@app.middleware("http")
+async def add_cache_headers(request: Request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+
+    # Cache long pour assets statiques
+    if path.startswith("/static/") or path.startswith("/ui/static/"):
+        if path.endswith((".css", ".js")):
+            response.headers["Cache-Control"] = "public, max-age=604800"  # 7 jours
+        elif path.endswith((".png", ".jpg", ".jpeg", ".svg", ".ico", ".webp")):
+            response.headers["Cache-Control"] = "public, max-age=2592000"  # 30 jours
+
+    # Cache court pour pages HTML
+    elif path.endswith(".html") or path in ["/", "/generateur", "/statistiques", "/simulateur"]:
+        response.headers["Cache-Control"] = "public, max-age=3600"  # 1 heure
+
+    return response
 
 import os
 
@@ -89,9 +114,77 @@ class TrackAdClickPayload(BaseModel):
     session_id: Optional[str] = "anonymous"
 
 # =========================
-# Routes
+# Routes SEO
 # =========================
 
+@app.get("/sitemap.xml")
+async def sitemap():
+    """
+    Sitemap XML dynamique pour SEO.
+    Utilise la date du dernier tirage pour lastmod.
+    """
+    try:
+        latest = db_cloudsql.get_latest_tirage()
+        last_date = latest.get("date_de_tirage") if latest else None
+    except Exception:
+        last_date = None
+
+    return seo.generate_sitemap_response(last_date)
+
+
+@app.get("/robots.txt")
+async def robots():
+    """
+    Robots.txt dynamique.
+    """
+    return seo.generate_robots_response()
+
+
+# =========================
+# Routes SEO-friendly (URLs propres)
+# =========================
+
+from fastapi.responses import FileResponse
+
+@app.get("/generateur")
+async def page_generateur():
+    """Page générateur avec URL SEO-friendly."""
+    return FileResponse("ui/loto.html", media_type="text/html")
+
+
+@app.get("/statistiques")
+async def page_statistiques():
+    """Page statistiques avec URL SEO-friendly."""
+    return FileResponse("ui/statistiques.html", media_type="text/html")
+
+
+@app.get("/simulateur")
+async def page_simulateur():
+    """Page simulateur avec URL SEO-friendly."""
+    return FileResponse("ui/simulateur.html", media_type="text/html")
+
+
+@app.get("/historique")
+async def page_historique():
+    """Page historique avec URL SEO-friendly."""
+    return FileResponse("ui/historique.html", media_type="text/html")
+
+
+@app.get("/faq")
+async def page_faq():
+    """Page FAQ avec URL SEO-friendly."""
+    return FileResponse("ui/faq.html", media_type="text/html")
+
+
+@app.get("/actualites")
+async def page_actualites():
+    """Page actualités avec URL SEO-friendly."""
+    return FileResponse("ui/news.html", media_type="text/html")
+
+
+# =========================
+# Routes
+# =========================
 
 
 @app.get("/")
