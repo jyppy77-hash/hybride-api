@@ -1,31 +1,9 @@
-# ============================================================================
-# LotoIA - robots.txt
-# https://lotoia.fr/robots.txt
-# Plateforme SaaS d'analyse statistique - Cloud Native
-# ============================================================================
+# ============================================================
+# LotoIA — robots.txt
+# Plateforme SaaS d’analyse statistique IA (Cloud Run)
+# ============================================================
 
-# Moteurs de recherche principaux
-User-agent: Googlebot
-Allow: /
-Allow: /loto
-Allow: /simulateur
-Allow: /statistiques
-Allow: /methodologie
-Allow: /moteur
-Allow: /faq
-Allow: /news
-Allow: /historique
-Disallow: /api/
-Disallow: /ui/
-Disallow: /static/
-
-User-agent: Bingbot
-Allow: /
-Disallow: /api/
-Disallow: /ui/
-Disallow: /static/
-
-# Regles generales
+# === SEARCH ENGINES (SEO) ===
 User-agent: *
 Allow: /
 Allow: /loto
@@ -36,38 +14,30 @@ Allow: /moteur
 Allow: /faq
 Allow: /news
 Allow: /historique
+
+# Pages légales (indexation faible mais autorisée)
 Allow: /mentions-legales
 Allow: /politique-confidentialite
 Allow: /politique-cookies
 Allow: /disclaimer
 
-# Blocage ressources techniques
+# === BLOCK TECHNICAL PATHS ===
 Disallow: /api/
+Disallow: /engine/
 Disallow: /ui/
 Disallow: /static/
 Disallow: /health
 Disallow: /debug-env
-Disallow: /ask
 Disallow: /database-info
 Disallow: /generate
 Disallow: /stats
 Disallow: /draw/
 
-# Blocage bots de scraping
-User-agent: AhrefsBot
-Disallow: /
-
-User-agent: SemrushBot
-Disallow: /
-
-User-agent: DotBot
-Disallow: /
-
-User-agent: MJ12bot
-Disallow: /
-
-# Blocage bots IA (protection contenu)
+# === AI & SCRAPING BOTS BLOCKED ===
 User-agent: GPTBot
+Disallow: /
+
+User-agent: ClaudeBot
 Disallow: /
 
 User-agent: CCBot
@@ -76,14 +46,26 @@ Disallow: /
 User-agent: anthropic-ai
 Disallow: /
 
-User-agent: Claude-Web
-Disallow: /
-
 User-agent: Google-Extended
 Disallow: /
 
-# Sitemap
+User-agent: Applebot-Extended
+Disallow: /
+
+User-agent: meta-externalagent
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+# === CONTENT SIGNALS (EU Directive 2019/790) ===
+Content-Signal: search=yes, ai-input=no, ai-train=no
+
+# === SITEMAP ===
 Sitemap: https://lotoia.fr/sitemap.xml
 
-# Host canonique
+# === CANONICAL HOST ===
 Host: https://lotoia.fr
