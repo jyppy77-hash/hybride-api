@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Methodologie 5 ans + 2 - Analyse Statistique Loto | LotoIA</title>
+    <meta name="description" content="Decouvrez la methodologie 5 ans + 2 de LotoIA : analyse statistique sur 5 ans d'historique avec ponderation des 2 dernieres annees. Approche data-driven.">
+    <link rel="canonical" href="https://lotoia.fr/methodologie">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <!-- Open Graph -->
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="LotoIA">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:title" content="Methodologie 5 ans + 2 | LotoIA">
+    <meta property="og:description" content="Approche statistique hybride combinant analyse long terme et tendances recentes.">
+    <meta property="og:url" content="https://lotoia.fr/methodologie">
+    <meta property="og:image" content="https://lotoia.fr/static/og-image.png">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Methodologie 5 ans + 2 | LotoIA">
+    <meta name="twitter:description" content="Approche statistique hybride pour l'analyse du Loto francais.">
+    <meta name="twitter:image" content="https://lotoia.fr/static/og-image.png">
+    <!-- JSON-LD Schema.org -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "TechArticle",
+      "headline": "Methodologie 5 ans + 2 : Analyse Statistique Avancee",
+      "description": "Documentation technique de la methodologie d'analyse statistique utilisee par LotoIA",
+      "author": {
+        "@type": "Organization",
+        "name": "LotoIA",
+        "url": "https://lotoia.fr"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "LotoIA"
+      },
+      "mainEntityOfPage": "https://lotoia.fr/methodologie",
+      "about": {
+        "@type": "Thing",
+        "name": "Analyse statistique",
+        "description": "Methodes statistiques appliquees aux donnees de loterie"
+      }
+    }
+    </script>
+    <link rel="stylesheet" href="/ui/static/style.css">
+    <link rel="stylesheet" href="/ui/static/legal.css">
+    <script src="/ui/static/theme.js"></script>
+</head>
+<body class="subpage">
+    <!-- Navigation -->
+    <nav class="engine-nav-subpage">
+        <a href="/loto" class="engine-nav-btn">
+            <span class="nav-arrow">←</span>
+            <span class="nav-text">Retour au generateur</span>
+        </a>
+        <div class="engine-nav-right">
+            <span class="engine-badge">Documentation</span>
+            <button id="theme-switch" class="theme-switch" title="Changer de theme">
+                <span class="icon-day">☀️</span>
+                <span class="icon-night">🌙</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="page-header">
+        <div class="header-content">
+            <h1>Methodologie "5 ans + 2"</h1>
+            <p class="subtitle">Approche statistique hybride pour l'analyse des tirages</p>
+        </div>
+    </header>
+
+    <div class="container subpage-container">
+        <article class="legal-content">
+
+            <!-- Introduction -->
+            <section class="legal-section">
+                <h2>Principe fondamental</h2>
+                <p>La methodologie <strong>"5 ans + 2"</strong> est le coeur du moteur HYBRIDE_OPTIMAL_V1. Elle combine deux horizons temporels pour equilibrer stabilite statistique et reactivite aux tendances.</p>
+
+                <div class="info-box" style="background: var(--theme-bg-card); padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+                    <p><strong>5 ans</strong> : Analyse de frequence sur l'ensemble de l'historique disponible (2019-2026)</p>
+                    <p><strong>+ 2</strong> : Ponderation renforcee sur les 2 dernieres annees pour capter les tendances recentes</p>
+                </div>
+            </section>
+
+            <!-- Data Sources -->
+            <section class="legal-section">
+                <h2>Sources de donnees</h2>
+                <ul>
+                    <li><strong>Base de donnees</strong> : Cloud SQL (MySQL) hebergee sur Google Cloud</li>
+                    <li><strong>Historique</strong> : 967+ tirages officiels FDJ depuis novembre 2019</li>
+                    <li><strong>Mise a jour</strong> : Synchronisation apres chaque tirage officiel</li>
+                    <li><strong>Integrite</strong> : Verification systematique des donnees sources</li>
+                </ul>
+            </section>
+
+            <!-- Metrics -->
+            <section class="legal-section">
+                <h2>Metriques calculees</h2>
+
+                <h3>Frequences</h3>
+                <p>Pour chaque numero (1-49), calcul du nombre d'apparitions sur la periode analysee.</p>
+
+                <h3>Retards</h3>
+                <p>Nombre de tirages depuis la derniere apparition de chaque numero.</p>
+
+                <h3>Score de conformite</h3>
+                <p>Evaluation multicritere basee sur :</p>
+                <ul>
+                    <li>Equilibre pair/impair (ratio optimal : 2-3 pairs)</li>
+                    <li>Repartition bas/haut (numeros 1-24 vs 25-49)</li>
+                    <li>Dispersion (ecart entre min et max)</li>
+                    <li>Somme totale (plage optimale : 100-150)</li>
+                    <li>Detection de suites consecutives</li>
+                </ul>
+            </section>
+
+            <!-- Limitations -->
+            <section class="legal-section">
+                <h2>Limites scientifiques</h2>
+                <div class="info-box" style="background: #fef3c7; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+                    <p><strong>Avertissement</strong> : Le Loto est un jeu de hasard. Chaque tirage est statistiquement independant. Aucune methode ne peut predire les resultats futurs.</p>
+                    <p>La methodologie "5 ans + 2" propose des grilles <em>statistiquement guidees</em>, pas des predictions.</p>
+                    <p><strong>Probabilite de gain au rang 1 : 1 / 19 068 840</strong></p>
+                </div>
+            </section>
+
+            <!-- Technical Stack -->
+            <section class="legal-section">
+                <h2>Stack technique</h2>
+                <ul>
+                    <li><strong>Backend</strong> : FastAPI (Python)</li>
+                    <li><strong>Infrastructure</strong> : Google Cloud Run</li>
+                    <li><strong>Base de donnees</strong> : Cloud SQL (MySQL)</li>
+                    <li><strong>Moteur</strong> : HYBRIDE_OPTIMAL_V1</li>
+                </ul>
+            </section>
+
+        </article>
+
+        <!-- Navigation -->
+        <nav style="margin-top: 40px; text-align: center;">
+            <a href="/moteur" class="btn btn-secondary" style="margin: 0 10px;">Voir le moteur HYBRIDE_OPTIMAL_V1</a>
+            <a href="/loto" class="btn btn-primary" style="margin: 0 10px;">Generer des grilles</a>
+        </nav>
+    </div>
+
+    <!-- Footer legal -->
+    <footer style="margin-top: 60px; padding: 20px; text-align: center; font-size: 12px; color: var(--text-muted);">
+        <p>LotoIA.fr - Outil d'analyse statistique. Jouer comporte des risques.</p>
+    </footer>
+</body>
+</html>

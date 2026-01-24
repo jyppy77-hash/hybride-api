@@ -3,7 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LotoIA - Plateforme de Moteurs de Loterie</title>
+    <title>LotoIA - Generateur de Grilles Loto par Intelligence Artificielle</title>
+    <meta name="description" content="LotoIA analyse les tirages historiques du Loto francais avec l'IA pour generer des grilles optimisees. Statistiques, simulateur et outils gratuits.">
+    <link rel="canonical" href="https://lotoia.fr/">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LotoIA">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:title" content="LotoIA - Generateur de Grilles Loto par IA">
+    <meta property="og:description" content="Analysez les tirages historiques du Loto francais avec l'IA. Generez des grilles optimisees basees sur 967+ tirages officiels.">
+    <meta property="og:url" content="https://lotoia.fr/">
+    <meta property="og:image" content="https://lotoia.fr/static/og-image.png">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="LotoIA - Generateur de Grilles Loto par IA">
+    <meta name="twitter:description" content="Analysez les tirages historiques du Loto francais avec l'IA. Generez des grilles optimisees.">
+    <meta name="twitter:image" content="https://lotoia.fr/static/og-image.png">
+    <!-- JSON-LD Schema.org - Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "LotoIA",
+      "url": "https://lotoia.fr",
+      "logo": "https://lotoia.fr/static/favicon.svg",
+      "description": "Plateforme SaaS d'analyse statistique pour l'optimisation de grilles de loterie",
+      "foundingDate": "2024",
+      "sameAs": [],
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer support",
+        "url": "https://lotoia.fr/faq"
+      }
+    }
+    </script>
+    <!-- JSON-LD Schema.org - WebSite -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "LotoIA",
+      "url": "https://lotoia.fr",
+      "description": "Plateforme d'analyse statistique du Loto francais",
+      "publisher": {
+        "@type": "Organization",
+        "name": "LotoIA"
+      },
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://lotoia.fr/historique?date={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    <!-- JSON-LD Schema.org - SoftwareApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "LotoIA",
+      "url": "https://lotoia.fr",
+      "applicationCategory": "UtilitiesApplication",
+      "applicationSubCategory": "Statistical Analysis Tool",
+      "operatingSystem": "Web Browser",
+      "description": "Generateur de grilles Loto optimisees par analyse statistique et IA",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR",
+        "availability": "https://schema.org/InStock"
+      },
+      "featureList": [
+        "Analyse statistique sur 5 ans",
+        "Generation de grilles optimisees",
+        "Simulateur de grilles personnalisees",
+        "Statistiques en temps reel",
+        "Historique des tirages"
+      ],
+      "author": {
+        "@type": "Organization",
+        "name": "LotoIA"
+      }
+    }
+    </script>
     <style>
         /* =================================================================
            LAUNCHER - SELECTEUR DE MOTEURS
@@ -287,9 +370,19 @@
 
         /* Responsive */
         @media (max-width: 768px) {
+            body {
+                align-items: flex-start;
+                padding-top: 25px;
+                overflow-y: auto;
+            }
+
             .launcher-title {
                 font-size: 0.95rem;
                 margin-bottom: 30px;
+            }
+
+            .launcher-container {
+                padding-bottom: 130px;
             }
 
             .engines-grid {
@@ -312,8 +405,13 @@
         }
 
         @media (max-width: 480px) {
+            body {
+                padding-top: 20px;
+            }
+
             .launcher-container {
                 padding: 15px;
+                padding-bottom: 140px;
             }
 
             .engine-card {

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HYBRIDE_OPTIMAL_V1 - Moteur IA d'Analyse Statistique | LotoIA</title>
+    <meta name="description" content="HYBRIDE_OPTIMAL_V1 : moteur d'analyse statistique hybride combinant frequences, retards et heuristiques. Architecture cloud-native sur Google Cloud Run.">
+    <link rel="canonical" href="https://lotoia.fr/moteur">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LotoIA">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:title" content="Moteur HYBRIDE_OPTIMAL_V1 | LotoIA">
+    <meta property="og:description" content="Moteur d'analyse statistique hybride pour l'optimisation de grilles Loto.">
+    <meta property="og:url" content="https://lotoia.fr/moteur">
+    <meta property="og:image" content="https://lotoia.fr/static/og-image.png">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Moteur HYBRIDE_OPTIMAL_V1 | LotoIA">
+    <meta name="twitter:description" content="Architecture technique du moteur d'analyse statistique LotoIA.">
+    <meta name="twitter:image" content="https://lotoia.fr/static/og-image.png">
+    <!-- JSON-LD Schema.org - SoftwareApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "HYBRIDE_OPTIMAL_V1",
+      "applicationCategory": "UtilitiesApplication",
+      "applicationSubCategory": "Statistical Analysis",
+      "operatingSystem": "Cloud (Web)",
+      "description": "Moteur d'analyse statistique hybride pour l'optimisation de grilles de loterie base sur l'historique des tirages",
+      "url": "https://lotoia.fr/moteur",
+      "author": {
+        "@type": "Organization",
+        "name": "LotoIA",
+        "url": "https://lotoia.fr"
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR",
+        "availability": "https://schema.org/InStock"
+      },
+      "featureList": [
+        "Analyse frequentielle sur 5 ans",
+        "Ponderation tendances recentes",
+        "Score de conformite multicritere",
+        "Generation de grilles optimisees",
+        "API REST temps reel"
+      ],
+      "softwareRequirements": "Navigateur web moderne",
+      "memoryRequirements": "Aucun (cloud-based)"
+    }
+    </script>
+    <link rel="stylesheet" href="/ui/static/style.css">
+    <link rel="stylesheet" href="/ui/static/legal.css">
+    <script src="/ui/static/theme.js"></script>
+</head>
+<body class="subpage">
+    <!-- Navigation -->
+    <nav class="engine-nav-subpage">
+        <a href="/loto" class="engine-nav-btn">
+            <span class="nav-arrow">←</span>
+            <span class="nav-text">Retour au generateur</span>
+        </a>
+        <div class="engine-nav-right">
+            <span class="engine-badge">Documentation</span>
+            <button id="theme-switch" class="theme-switch" title="Changer de theme">
+                <span class="icon-day">☀️</span>
+                <span class="icon-night">🌙</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="page-header">
+        <div class="header-content">
+            <h1>HYBRIDE_OPTIMAL_V1</h1>
+            <p class="subtitle">Moteur d'analyse statistique cloud-native</p>
+        </div>
+    </header>
+
+    <div class="container subpage-container">
+        <article class="legal-content">
+
+            <!-- Overview -->
+            <section class="legal-section">
+                <h2>Vue d'ensemble</h2>
+                <p><strong>HYBRIDE_OPTIMAL_V1</strong> est le moteur de calcul au coeur de la plateforme LotoIA. Il combine plusieurs approches analytiques pour generer des grilles statistiquement optimisees.</p>
+
+                <div class="info-box" style="background: var(--theme-bg-card); padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #8b5cf6;">
+                    <p><strong>Type</strong> : Moteur hybride (statistiques + heuristiques)</p>
+                    <p><strong>Methodologie</strong> : "5 ans + 2"</p>
+                    <p><strong>Infrastructure</strong> : Google Cloud Run (serverless)</p>
+                    <p><strong>Base de donnees</strong> : Cloud SQL (MySQL)</p>
+                </div>
+            </section>
+
+            <!-- Architecture -->
+            <section class="legal-section">
+                <h2>Architecture technique</h2>
+
+                <h3>Backend API</h3>
+                <ul>
+                    <li><strong>Framework</strong> : FastAPI (Python 3.11+)</li>
+                    <li><strong>Endpoints</strong> : REST API avec documentation OpenAPI</li>
+                    <li><strong>Authentification</strong> : Endpoints publics (lecture seule)</li>
+                    <li><strong>Compression</strong> : GZip middleware pour optimisation</li>
+                </ul>
+
+                <h3>Infrastructure Cloud</h3>
+                <ul>
+                    <li><strong>Compute</strong> : Google Cloud Run (auto-scaling)</li>
+                    <li><strong>Database</strong> : Cloud SQL MySQL (haute disponibilite)</li>
+                    <li><strong>CDN</strong> : Cache headers optimises pour assets statiques</li>
+                    <li><strong>Region</strong> : europe-west9 (Paris)</li>
+                </ul>
+            </section>
+
+            <!-- Algorithms -->
+            <section class="legal-section">
+                <h2>Algorithmes</h2>
+
+                <h3>1. Analyse frequentielle</h3>
+                <p>Calcul des frequences d'apparition de chaque numero (1-49) sur l'historique complet des tirages.</p>
+
+                <h3>2. Calcul des retards</h3>
+                <p>Determination du nombre de tirages depuis la derniere apparition de chaque numero.</p>
+
+                <h3>3. Ponderation temporelle</h3>
+                <p>Application de coefficients de ponderation privilegiant les 2 dernieres annees (methodologie "5 ans + 2").</p>
+
+                <h3>4. Scoring multicritere</h3>
+                <p>Evaluation de chaque grille candidate selon :</p>
+                <ul>
+                    <li>Equilibre pair/impair</li>
+                    <li>Repartition bas/haut</li>
+                    <li>Dispersion (ecart min-max)</li>
+                    <li>Somme totale</li>
+                    <li>Detection de patterns (suites)</li>
+                </ul>
+
+                <h3>5. Selection optimale</h3>
+                <p>Filtrage et classement des grilles par score de conformite decroissant.</p>
+            </section>
+
+            <!-- API Endpoints -->
+            <section class="legal-section">
+                <h2>Endpoints API</h2>
+                <div style="background: #1e293b; color: #e2e8f0; padding: 20px; border-radius: 8px; font-family: monospace; font-size: 14px; overflow-x: auto;">
+                    <p><span style="color: #22c55e;">GET</span> /generate?n=3&mode=balanced</p>
+                    <p><span style="color: #3b82f6;">GET</span> /api/stats</p>
+                    <p><span style="color: #3b82f6;">GET</span> /api/numbers-heat</p>
+                    <p><span style="color: #3b82f6;">GET</span> /api/tirages/latest</p>
+                    <p><span style="color: #3b82f6;">GET</span> /health</p>
+                </div>
+            </section>
+
+            <!-- Modes -->
+            <section class="legal-section">
+                <h2>Modes de generation</h2>
+                <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                    <thead>
+                        <tr style="background: var(--theme-bg-card);">
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid var(--border-color);">Mode</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid var(--border-color);">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);"><code>conservative</code></td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">Privilegie les numeros frequents (chauds)</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);"><code>balanced</code></td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">Equilibre entre frequences et retards</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);"><code>recent</code></td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">Ponderation forte sur les tendances recentes</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <!-- Disclaimer -->
+            <section class="legal-section">
+                <h2>Avertissement</h2>
+                <div class="info-box" style="background: #fef3c7; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+                    <p><strong>Le moteur HYBRIDE_OPTIMAL_V1 est un outil d'analyse statistique.</strong></p>
+                    <p>Il ne predit pas les resultats futurs des tirages. Le Loto reste un jeu de hasard ou chaque tirage est independant.</p>
+                    <p>LotoIA n'est pas un operateur de jeu et ne vend aucune grille.</p>
+                </div>
+            </section>
+
+        </article>
+
+        <!-- Navigation -->
+        <nav style="margin-top: 40px; text-align: center;">
+            <a href="/methodologie" class="btn btn-secondary" style="margin: 0 10px;">Voir la methodologie</a>
+            <a href="/loto" class="btn btn-primary" style="margin: 0 10px;">Utiliser le moteur</a>
+        </nav>
+    </div>
+
+    <!-- Footer -->
+    <footer style="margin-top: 60px; padding: 20px; text-align: center; font-size: 12px; color: var(--text-muted);">
+        <p>LotoIA.fr - Plateforme d'analyse statistique cloud-native</p>
+    </footer>
+</body>
+</html>

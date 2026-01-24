@@ -1,48 +1,59 @@
 # ============================================================================
 # LotoIA - robots.txt
 # https://lotoia.fr/robots.txt
+# Plateforme SaaS d'analyse statistique - Cloud Native
 # ============================================================================
 
-# Bots légitimes - Accès complet
+# Moteurs de recherche principaux
 User-agent: Googlebot
 Allow: /
-
-User-agent: Googlebot-Image
-Allow: /
+Allow: /loto
+Allow: /simulateur
+Allow: /statistiques
+Allow: /methodologie
+Allow: /moteur
+Allow: /faq
+Allow: /news
+Allow: /historique
+Disallow: /api/
+Disallow: /ui/
+Disallow: /static/
 
 User-agent: Bingbot
 Allow: /
+Disallow: /api/
+Disallow: /ui/
+Disallow: /static/
 
-User-agent: DuckDuckBot
-Allow: /
-
-User-agent: Yandex
-Allow: /
-
-User-agent: Baiduspider
-Allow: /
-
-# Règles générales
+# Regles generales
 User-agent: *
 Allow: /
+Allow: /loto
+Allow: /simulateur
+Allow: /statistiques
+Allow: /methodologie
+Allow: /moteur
+Allow: /faq
+Allow: /news
+Allow: /historique
+Allow: /mentions-legales
+Allow: /politique-confidentialite
+Allow: /politique-cookies
+Allow: /disclaimer
 
-# Blocage des ressources non-indexables
+# Blocage ressources techniques
 Disallow: /api/
+Disallow: /ui/
+Disallow: /static/
 Disallow: /health
 Disallow: /debug-env
 Disallow: /ask
+Disallow: /database-info
+Disallow: /generate
+Disallow: /stats
+Disallow: /draw/
 
-# Blocage des pages légales (déjà noindex)
-Disallow: /mentions-legales
-Disallow: /politique-confidentialite
-Disallow: /politique-cookies
-Disallow: /disclaimer
-Disallow: /ui/mentions-legales.html
-Disallow: /ui/politique-confidentialite.html
-Disallow: /ui/politique-cookies.html
-Disallow: /ui/disclaimer.html
-
-# Blocage des scrapers connus
+# Blocage bots de scraping
 User-agent: AhrefsBot
 Disallow: /
 
@@ -55,12 +66,7 @@ Disallow: /
 User-agent: MJ12bot
 Disallow: /
 
-User-agent: BLEXBot
-Disallow: /
-
-User-agent: DataForSeoBot
-Disallow: /
-
+# Blocage bots IA (protection contenu)
 User-agent: GPTBot
 Disallow: /
 
@@ -73,9 +79,11 @@ Disallow: /
 User-agent: Claude-Web
 Disallow: /
 
+User-agent: Google-Extended
+Disallow: /
+
 # Sitemap
 Sitemap: https://lotoia.fr/sitemap.xml
 
-# Crawl-delay pour bots génériques (optionnel)
-User-agent: *
-Crawl-delay: 1
+# Host canonique
+Host: https://lotoia.fr
