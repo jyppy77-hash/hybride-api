@@ -610,6 +610,15 @@ addLog(`Envoi requête GET /generate?n=${selectedGridCount}&mode=balanced`, 'req
             // Affichage visuel des grilles avec cards partenaire
             displayGridsWithAds(data.grids, data.metadata, date);
             addLog(`${data.grids.length} grille(s) générée(s) et affichée(s)`, 'success');
+
+            // Analytics GA4 - Track generation de grilles
+            if (window.LotoIAAnalytics && window.LotoIAAnalytics.product) {
+                window.LotoIAAnalytics.product.generateGrid({
+                    count: data.grids.length,
+                    mode: data.metadata?.mode || 'balanced',
+                    targetDate: date
+                });
+            }
         } else {
             const errorMsg = data.message || 'Erreur lors de la génération des grilles.';
             addLog(`Erreur API : ${errorMsg}`, 'error');

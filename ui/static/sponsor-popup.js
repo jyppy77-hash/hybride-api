@@ -199,7 +199,16 @@ function generatePopupHTML(config) {
  * @param {string} sponsorId - ID du sponsor
  */
 function trackSponsorClick(sponsorId) {
-    // Tracking API call (si disponible)
+    // GA4 Analytics - Track sponsor click
+    if (window.LotoIAAnalytics && window.LotoIAAnalytics.business) {
+        window.LotoIAAnalytics.business.sponsorClick({
+            sponsor: sponsorId,
+            sponsorId: sponsorId,
+            placement: 'popup_console'
+        });
+    }
+
+    // Tracking API call interne (si disponible)
     if (typeof fetch !== 'undefined') {
         fetch('/api/track-ad-click', {
             method: 'POST',
@@ -220,6 +229,18 @@ function trackSponsorClick(sponsorId) {
  * @param {Array} sponsorIds - IDs des sponsors affiches
  */
 function trackImpression(sponsorIds) {
+    // GA4 Analytics - Track sponsor impressions
+    if (window.LotoIAAnalytics && window.LotoIAAnalytics.business) {
+        sponsorIds.forEach(sponsorId => {
+            window.LotoIAAnalytics.business.sponsorImpression({
+                sponsor: sponsorId,
+                sponsorId: sponsorId,
+                placement: 'popup_console'
+            });
+        });
+    }
+
+    // Tracking API call interne (si disponible)
     if (typeof fetch !== 'undefined') {
         fetch('/api/track-ad-impression', {
             method: 'POST',
