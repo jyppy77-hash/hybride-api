@@ -831,7 +831,7 @@ body.theme-day .sponsor-popup-overlay {
 
     /* Titre compact */
     .popup-title {
-        font-size: 16px !important;
+        font-size: 13px !important;
         margin-bottom: 16px !important;
         flex-shrink: 0 !important;
     }
