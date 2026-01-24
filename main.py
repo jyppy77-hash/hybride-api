@@ -47,8 +47,8 @@ async def add_cache_headers(request: Request, call_next):
 
     # Cache court pour pages HTML (SEO routes)
     seo_routes = ["/", "/loto", "/statistiques", "/simulateur", "/faq", "/news",
-                  "/historique", "/disclaimer", "/mentions-legales",
-                  "/politique-confidentialite", "/politique-cookies"]
+                  "/historique", "/methodologie", "/moteur", "/disclaimer",
+                  "/mentions-legales", "/politique-confidentialite", "/politique-cookies"]
     if path.endswith(".html") or path in seo_routes:
         response.headers["Cache-Control"] = "public, max-age=3600"  # 1 heure
 
@@ -146,6 +146,8 @@ SEO_PAGES = {
     "/faq": "faq.html",
     "/news": "news.html",
     "/historique": "historique.html",
+    "/methodologie": "methodologie.html",
+    "/moteur": "moteur.html",
     "/disclaimer": "disclaimer.html",
     "/mentions-legales": "mentions-legales.html",
     "/politique-confidentialite": "politique-confidentialite.html",
@@ -193,6 +195,17 @@ async def page_news():
 @app.get("/historique")
 async def page_historique():
     return serve_page("historique.html")
+
+
+# Pages produit/documentation
+@app.get("/methodologie")
+async def page_methodologie():
+    return serve_page("methodologie.html")
+
+
+@app.get("/moteur")
+async def page_moteur():
+    return serve_page("moteur.html")
 
 
 # Pages légales
