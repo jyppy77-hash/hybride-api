@@ -13,7 +13,7 @@
  * - Architecture scalable multi-moteurs / multi-pays
  *
  * @author LotoIA Team
- * @version 2.1.1
+ * @version 2.1.2
  * @license Proprietary
  *
  * ARCHITECTURE CONSENT MODE v2 (CNIL/RGPD):
@@ -80,9 +80,10 @@
     const state = {
         initialized: false,
         consentGiven: false,
-        baselineReady: false,        // Flag anti-double baseline init
-        isEnhanced: false,           // Flag anti-double enhanced init
-        gtagLoadFailed: false,       // Flag adblock/network error
+        baselineReady: false,         // Flag anti-double baseline init
+        isEnhanced: false,            // Flag anti-double enhanced init
+        gtagLoadFailed: false,        // Flag adblock/network error (gtag.js)
+        cookieConsentBlocked: false,  // Flag adblock/network error (cookie-consent.js)
         scrollTrackingEnabled: false, // Flag anti-double scroll listener
         sessionId: null,
         pageLoadTime: Date.now(),
@@ -834,15 +835,37 @@
     // ═══════════════════════════════════════════════════════════════════════════
 
     /**
+     * Vérifie si CookieConsent est disponible (non bloqué par adblock)
+     * @returns {boolean} true si CookieConsent est chargé et fonctionnel
+     */
+    function isCookieConsentAvailable() {
+        return typeof CookieConsent !== 'undefined' &&
+               CookieConsent !== null &&
+               typeof CookieConsent.isAccepted === 'function';
+    }
+
+    /**
      * Verifie si le consentement analytics est donne
+     * Robuste face aux adblockers qui bloquent cookie-consent.js
+     * @returns {boolean} true si consentement explicite, false sinon
      */
     function hasAnalyticsConsent() {
-        // Verifier via CookieConsent si disponible
-        if (typeof CookieConsent !== 'undefined' && CookieConsent.isAccepted) {
-            return CookieConsent.isAccepted('analytics');
+        // Si CookieConsent bloqué, TOUJOURS retourner false (baseline only)
+        if (state.cookieConsentBlocked) {
+            return false;
         }
 
-        // Fallback: verifier le localStorage
+        // Verifier via CookieConsent si disponible
+        try {
+            if (isCookieConsentAvailable()) {
+                return CookieConsent.isAccepted('analytics');
+            }
+        } catch (e) {
+            // CookieConsent existe mais erreur d'appel
+            log('CookieConsent.isAccepted() error', 'warning', e.message, 2);
+        }
+
+        // Fallback: verifier le localStorage (consentement sauvegardé)
         try {
             const stored = localStorage.getItem('lotoia_cookie_consent');
             if (stored) {
@@ -850,7 +873,7 @@
                 return data.choices && data.choices.analytics === true;
             }
         } catch (e) {
-            // Ignore
+            // Ignore localStorage errors
         }
 
         return false;
@@ -906,31 +929,59 @@
     }
 
     /**
+     * Détecte si CookieConsent est bloqué par un adblock
+     * Marque le flag state.cookieConsentBlocked si nécessaire
+     */
+    function detectCookieConsentBlocked() {
+        if (!isCookieConsentAvailable()) {
+            state.cookieConsentBlocked = true;
+            log('CookieConsent missing or blocked (adblock?) → baseline only mode', 'warning');
+            return true;
+        }
+        return false;
+    }
+
+    /**
      * Point d'entrée automatique - Architecture Consent Mode v2
      * 1. Lance le baseline immédiatement (cookieless)
-     * 2. Configure les listeners pour le consentement
-     * 3. Active enhanced si consentement déjà présent
-     * 4. Fallback: vérifie le consentement après 500ms
+     * 2. Détecte si CookieConsent est bloqué
+     * 3. Configure les listeners pour le consentement
+     * 4. Active enhanced si consentement déjà présent
+     * 5. Fallback: vérifie le consentement après 500ms
      */
     async function autoInit() {
-        // 1. Baseline immédiat pour TOUS les visiteurs
+        // 1. Baseline immédiat pour TOUS les visiteurs (TOUJOURS)
         const baselineOk = await baselineInit();
 
         if (!baselineOk) {
             // gtag bloqué (adblock) - dégradation gracieuse
             log('Running in degraded mode (no analytics)', 'warning');
+            return; // Rien à faire de plus si gtag est bloqué
         }
 
-        // 2. Configurer les listeners de consentement
+        // 2. Détecter si CookieConsent est bloqué
+        const consentBlocked = detectCookieConsentBlocked();
+
+        // 3. Configurer les listeners de consentement (même si bloqué, pour le cas où il charge tard)
         setupConsentListeners();
 
-        // 3. Vérifier si consentement déjà présent
+        // 4. Si CookieConsent bloqué → rester en baseline only (RGPD safe)
+        if (consentBlocked) {
+            log('Baseline analytics forced (no consent module)', 'info');
+            return;
+        }
+
+        // 5. Vérifier si consentement déjà présent
         if (hasAnalyticsConsent()) {
             enableEnhanced();
         } else {
-            // 4. Fallback: vérification unique après 500ms
+            // 6. Fallback: vérification unique après 500ms
             // (pour les cas où l'event consent n'est pas dispatché)
             setTimeout(() => {
+                // Re-vérifier si CookieConsent est apparu entre temps
+                if (detectCookieConsentBlocked()) {
+                    return; // Toujours bloqué
+                }
                 if (hasAnalyticsConsent() && !state.isEnhanced) {
                     log('Consent detected via fallback check', 'info');
                     enableEnhanced();
@@ -948,7 +999,7 @@
      */
     const PublicAPI = {
         // Version
-        version: '2.1.1',
+        version: '2.1.2',
 
         // Configuration (lecture seule)
         config: Object.freeze({ ...CONFIG }),
@@ -997,7 +1048,8 @@
             getSessionId: getSessionId,
             getCurrentPage: getCurrentPage,
             getPageMetadata: getPageMetadata,
-            hasConsent: hasAnalyticsConsent
+            hasConsent: hasAnalyticsConsent,
+            isCookieConsentAvailable: isCookieConsentAvailable
         },
 
         // Initialisation manuelle (si necessaire)
@@ -1029,6 +1081,11 @@
 
         isEnhanced: function() {
             return state.isEnhanced;
+        },
+
+        // État CookieConsent bloqué (adblock)
+        isCookieConsentBlocked: function() {
+            return state.cookieConsentBlocked;
         },
 
         // Forcer l'envoi d'un pageview
@@ -1066,7 +1123,7 @@
 
     // Log de chargement (silencieux par défaut, sauf debug)
     if (getDebugLevel() >= 1) {
-        console.log('[LotoIA GA4] Module v2.1.1 loaded - Consent Mode v2 baseline');
+        console.log('[LotoIA GA4] Module v2.1.2 loaded - Adblock-resilient baseline');
     }
 
 })(window, document);
