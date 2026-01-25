@@ -1206,6 +1206,74 @@
          */
         flush: function() {
             flushProductBuffer();
+        },
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // WRAPPERS LEGACY - Rétrocompatibilité avec ProductEvents
+        // ═══════════════════════════════════════════════════════════════════════
+
+        /**
+         * Wrapper legacy: generateGrid (redirige vers ProductEvents.generateGrid)
+         * @param {Object} params - Paramètres de génération
+         */
+        generateGrid: function(params = {}) {
+            ProductEvents.generateGrid(params);
+        },
+
+        /**
+         * Wrapper legacy: refreshEngine (redirige vers ProductEvents.refreshEngine)
+         * @param {Object} params - Paramètres de refresh
+         */
+        refreshEngine: function(params = {}) {
+            ProductEvents.refreshEngine(params);
+        },
+
+        /**
+         * Wrapper legacy: viewResults (redirige vers ProductEvents.viewResults)
+         * @param {Object} params - Paramètres de consultation
+         */
+        viewResults: function(params = {}) {
+            ProductEvents.viewResults(params);
+        },
+
+        /**
+         * Wrapper legacy: apiCall (redirige vers ProductEvents.apiCall)
+         * @param {Object} params - Paramètres d'appel API
+         */
+        apiCall: function(params = {}) {
+            ProductEvents.apiCall(params);
+        },
+
+        /**
+         * Wrapper legacy: simulateGrid (redirige vers ProductEvents.simulateGrid)
+         * @param {Object} params - Paramètres de simulation
+         */
+        simulateGrid: function(params = {}) {
+            ProductEvents.simulateGrid(params);
+        },
+
+        /**
+         * Wrapper legacy: viewStats (redirige vers ProductEvents.viewStats)
+         * @param {Object} params - Paramètres de consultation stats
+         */
+        viewStats: function(params = {}) {
+            ProductEvents.viewStats(params);
+        },
+
+        /**
+         * Wrapper legacy: searchHistory (redirige vers ProductEvents.searchHistory)
+         * @param {Object} params - Paramètres de recherche
+         */
+        searchHistory: function(params = {}) {
+            ProductEvents.searchHistory(params);
+        },
+
+        /**
+         * Wrapper legacy: copyGrid (redirige vers ProductEvents.copyGrid)
+         * @param {Object} params - Paramètres de copie
+         */
+        copyGrid: function(params = {}) {
+            ProductEvents.copyGrid(params);
         }
     };
 
