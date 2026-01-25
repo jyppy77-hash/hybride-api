@@ -22,8 +22,7 @@ app = FastAPI(
     redirect_slashes=False
 )
 
-# IMPORTANT : Accepter tous les domaines (hybride-api.lotoia.fr, lotoia.fr, etc.)
-# Nécessaire car Cloud Run west9 ne supporte pas le custom domain mapping
+# TrustedHostMiddleware: accepte tous les hosts (filtrage géré par enforce_canonical_host)
 app.add_middleware(
     TrustedHostMiddleware,
     allowed_hosts=["*"]
@@ -31,6 +30,25 @@ app.add_middleware(
 
 # Compression GZip pour performance
 app.add_middleware(GZipMiddleware, minimum_size=500)
+
+
+# =========================
+# Canonical Domain (SEO only: www → root)
+# =========================
+@app.middleware("http")
+async def canonical_www_redirect(request: Request, call_next):
+    """Redirige UNIQUEMENT www.lotoia.fr → lotoia.fr (SEO canonical)."""
+    host = request.headers.get("host", "").split(":")[0].lower()
+
+    # Seul www.lotoia.fr est redirigé vers lotoia.fr
+    if host == "www.lotoia.fr":
+        proto = request.headers.get("x-forwarded-proto", "https")
+        path = request.url.path
+        query = f"?{request.url.query}" if request.url.query else ""
+        return RedirectResponse(url=f"{proto}://lotoia.fr{path}{query}", status_code=301)
+
+    # Tous les autres hosts passent sans modification
+    return await call_next(request)
 
 
 # Middleware cache headers SEO
@@ -57,8 +75,11 @@ async def add_cache_headers(request: Request, call_next):
 
 import os
 
-@app.get("/debug-env")
+@app.get("/debug-env", include_in_schema=False)
 async def debug_env():
+    """Debug endpoint - disponible uniquement si ENV=dev."""
+    if os.getenv("ENV") != "dev":
+        raise HTTPException(status_code=404, detail="Not Found")
     return {
         "DB_USER": os.getenv("DB_USER"),
         "DB_NAME": os.getenv("DB_NAME"),
