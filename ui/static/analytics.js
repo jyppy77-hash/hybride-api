@@ -13,7 +13,7 @@
  * - Architecture scalable multi-moteurs / multi-pays
  *
  * @author LotoIA Team
- * @version 2.1.3
+ * @version 2.1.4
  * @license Proprietary
  *
  * ARCHITECTURE CONSENT MODE v2 (CNIL/RGPD):
@@ -373,6 +373,7 @@
             });
 
             // 3. Envoyer UN SEUL page_view baseline (anonyme, cookieless)
+            // NOTE: Envoyé même si consent=denied (Consent Mode v2 gère le cookieless)
             gtag('event', 'page_view', {
                 'page_title': document.title,
                 'page_location': window.location.href,
@@ -381,7 +382,11 @@
             });
 
             state.baselineReady = true;
-            log('Baseline initialized (cookieless)', 'success');
+
+            // Log explicite du statut consent pour diagnostic
+            const consentStatus = hasAnalyticsConsent() ? 'granted' : 'denied';
+            log(`Baseline sent (analytics_storage: ${consentStatus})`, 'success');
+
             return true;
 
         } catch (error) {
@@ -408,9 +413,9 @@
             return true;
         }
 
-        // Vérifier le consentement
+        // Vérifier le consentement (CRITIQUE: enhanced uniquement si accepté)
         if (!hasAnalyticsConsent()) {
-            log('No analytics consent for enhanced mode', 'warning');
+            log('Enhanced skipped (analytics consent: denied)', 'info');
             return false;
         }
 
@@ -952,9 +957,25 @@
 
         log('Consent changed', 'info', choices);
 
-        // Si analytics accepté et pas encore en mode enhanced
+        // Cas 1: Analytics ACCEPTÉ → activer enhanced
         if (choices.analytics === true && !state.isEnhanced) {
             enableEnhanced();
+            return;
+        }
+
+        // Cas 2: Analytics REFUSÉ → rester en baseline (log diagnostic)
+        if (choices.analytics === false) {
+            log('Analytics refused → baseline only (no cookies)', 'info');
+            // S'assurer que consent est bien denied (au cas où il était granted avant)
+            if (window.gtag && state.isEnhanced) {
+                gtag('consent', 'update', {
+                    'analytics_storage': 'denied',
+                    'ad_storage': 'denied',
+                    'ad_user_data': 'denied',
+                    'ad_personalization': 'denied'
+                });
+                log('Consent revoked → analytics_storage: denied', 'warning');
+            }
         }
     }
 
@@ -1063,7 +1084,7 @@
      */
     const PublicAPI = {
         // Version
-        version: '2.1.3',
+        version: '2.1.4',
 
         // Configuration (lecture seule)
         config: Object.freeze({ ...CONFIG }),
@@ -1195,7 +1216,7 @@
 
     // Log de chargement (silencieux par défaut, sauf debug)
     if (getDebugLevel() >= 1) {
-        console.log('[LotoIA GA4] Module v2.1.3 loaded - Consent-independent gtag boot');
+        console.log('[LotoIA GA4] Module v2.1.4 loaded - Refusal-safe baseline');
     }
 
 })(window, document);
