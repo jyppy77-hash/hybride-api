@@ -1,11 +1,13 @@
 # ============================================================
-# LotoIA — robots.txt
-# Plateforme SaaS d’analyse statistique IA (Cloud Run)
+# LotoIA — robots.txt (OPEN SaaS MODE)
 # ============================================================
 
-# === SEARCH ENGINES (SEO) ===
 User-agent: *
+
+# === FRONTEND PUBLIC (SEO OK) ===
 Allow: /
+Allow: /ui/
+Allow: /static/
 Allow: /loto
 Allow: /simulateur
 Allow: /statistiques
@@ -14,18 +16,14 @@ Allow: /moteur
 Allow: /faq
 Allow: /news
 Allow: /historique
-
-# Pages légales (indexation faible mais autorisée)
 Allow: /mentions-legales
 Allow: /politique-confidentialite
 Allow: /politique-cookies
 Allow: /disclaimer
 
-# === BLOCK TECHNICAL PATHS ===
+# === BACKEND & ENGINE (NO SEO) ===
 Disallow: /api/
 Disallow: /engine/
-Disallow: /ui/
-Disallow: /static/
 Disallow: /health
 Disallow: /debug-env
 Disallow: /database-info
@@ -61,11 +59,8 @@ Disallow: /
 User-agent: Amazonbot
 Disallow: /
 
-# === CONTENT SIGNALS (EU Directive 2019/790) ===
+# === CONTENT SIGNALS ===
 Content-Signal: search=yes, ai-input=no, ai-train=no
 
 # === SITEMAP ===
 Sitemap: https://lotoia.fr/sitemap.xml
-
-# === CANONICAL HOST ===
-Host: https://lotoia.fr
