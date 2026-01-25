@@ -1,19 +1,20 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
- * LOTOIA ANALYTICS MODULE v2.1 - SAFE BASELINE
+ * LOTOIA ANALYTICS MODULE v2.5.2 - PRODUCT ANALYTICS PREMIUM
  * ═══════════════════════════════════════════════════════════════════════════════
  *
  * Infrastructure analytics professionnelle pour SaaS LotoIA
  * - GA4 Integration avec Consent Mode v2 (RGPD/CNIL compliant)
  * - Baseline cookieless pour 100% des visiteurs
  * - Events enrichis après consentement analytics
+ * - Product Analytics Engine (v2.5+) pour tracking métier
  * - Events produit (moteur LotoIA)
  * - Events UX (parcours utilisateur)
  * - Events business (sponsors / monetisation)
  * - Architecture scalable multi-moteurs / multi-pays
  *
  * @author LotoIA Team
- * @version 2.1.4
+ * @version 2.5.2
  * @license Proprietary
  *
  * ARCHITECTURE CONSENT MODE v2 (CNIL/RGPD):
@@ -34,6 +35,21 @@
  * 2. Le baseline s'initialise automatiquement (cookieless)
  * 3. Après consentement, le mode enrichi s'active automatiquement
  * 4. Utiliser window.LotoIAAnalytics.track() pour les events custom
+ *
+ * PRODUCT ANALYTICS (v2.5+):
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │ // Définir le contexte métier (optionnel, une fois par page)               │
+ * │ LotoIAAnalytics.product.setFeature('simulateur');                          │
+ * │ LotoIAAnalytics.product.setEngine('hybride');                              │
+ * │                                                                             │
+ * │ // Tracker une action métier                                                │
+ * │ LotoIAAnalytics.product.track('lotoia_generate_grid', { count: 3 });       │
+ * │ LotoIAAnalytics.product.track('lotoia_run_engine', { mode: 'balanced' });  │
+ * │                                                                             │
+ * │ // Tracker sponsors                                                         │
+ * │ LotoIAAnalytics.product.sponsorView('sidebar_top');                        │
+ * │ LotoIAAnalytics.product.sponsorClick('sidebar_top');                       │
+ * └─────────────────────────────────────────────────────────────────────────────┘
  *
  * ═══════════════════════════════════════════════════════════════════════════════
  */
@@ -86,12 +102,22 @@
         baselineReady: false,         // Flag anti-double baseline init
         isEnhanced: false,            // Flag anti-double enhanced init
         gtagLoadFailed: false,        // Flag adblock/network error (gtag.js)
+        gtagScriptReady: false,       // Flag gtag.js script loaded and ready
         cookieConsentBlocked: false,  // Flag adblock/network error (cookie-consent.js)
         scrollTrackingEnabled: false, // Flag anti-double scroll listener
         sessionId: null,
         pageLoadTime: Date.now(),
         scrollTracked: {},
-        eventsQueue: []
+        eventsQueue: [],
+
+        // Product Analytics (v2.5+)
+        productContext: {
+            engine: 'unknown',        // hybride | random | manual | unknown
+            feature: 'unknown'        // simulateur | stats | home | faq | etc.
+        },
+        productBuffer: [],            // Buffer d'events produit
+        productBufferTimer: null,     // Timer flush buffer
+        productWarnShown: false       // Flag warning gtag bloqué (unique)
     };
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -228,12 +254,22 @@
                 'ad_personalization': 'denied'
             });
 
-            // 3. Injecter gtag.js (fire-and-forget, pas de await)
+            // 3. Injecter gtag.js avec callback ready
             const script = document.createElement('script');
             script.async = true;
             script.src = 'https://www.googletagmanager.com/gtag/js?id=' + CONFIG.GA4_ID;
+            script.onload = function() {
+                state.gtagScriptReady = true;
+                // Log uniquement si debug activé
+                try {
+                    if (parseInt(localStorage.getItem('debug_ga4') || '0', 10) >= 2) {
+                        console.log('%c[LotoIA GA4] gtag.js script loaded', 'color: #4CAF50');
+                    }
+                } catch (e) { /* ignore */ }
+            };
             script.onerror = function() {
                 state.gtagLoadFailed = true;
+                state.gtagScriptReady = true; // Marquer ready même en erreur pour débloquer
                 console.warn('[LotoIA GA4] gtag.js blocked (adblock/network)');
             };
             document.head.appendChild(script);
@@ -255,6 +291,45 @@
     // BOOT IMMÉDIAT - Exécuté maintenant, avant toute autre logique
     // ══════════════════════════════════════════════════════════════════════════
     bootGtagImmediately();
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // ATTENTE GTAG.JS READY
+    // ══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Attend que gtag.js soit chargé (max 3s, puis continue en dégradé)
+     * @returns {Promise<boolean>} true si gtag.js ready, false si timeout/erreur
+     */
+    function waitForGtagReady() {
+        return new Promise((resolve) => {
+            // Déjà prêt ?
+            if (state.gtagScriptReady) {
+                resolve(!state.gtagLoadFailed);
+                return;
+            }
+
+            // Polling avec timeout
+            const maxWait = 3000; // 3 secondes max
+            const interval = 50;  // Check toutes les 50ms
+            let elapsed = 0;
+
+            const check = setInterval(() => {
+                elapsed += interval;
+
+                if (state.gtagScriptReady) {
+                    clearInterval(check);
+                    resolve(!state.gtagLoadFailed);
+                    return;
+                }
+
+                if (elapsed >= maxWait) {
+                    clearInterval(check);
+                    log('gtag.js load timeout - continuing in degraded mode', 'warning');
+                    resolve(false);
+                }
+            }, interval);
+        });
+    }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // GA4 CORE
@@ -319,8 +394,7 @@
      * BASELINE INIT - Consent Mode v2 (CNIL/RGPD)
      * ═══════════════════════════════════════════════════════════════════════════
      * Configure GA4 et envoie 1 page_view baseline cookieless.
-     * NOTE: gtag.js est déjà chargé par bootGtagImmediately() au boot.
-     * NOTE: Consent Mode v2 default denied déjà appliqué au boot.
+     * ATTEND que gtag.js soit chargé pour garantir le traitement correct.
      *
      * @returns {Promise<boolean>} true si baseline OK, false si bloqué
      */
@@ -337,15 +411,16 @@
             return false;
         }
 
-        // Si gtag.js est bloqué par adblock, on peut quand même envoyer au dataLayer
-        // Les events seront ignorés mais pas de crash
-        if (state.gtagLoadFailed) {
-            log('gtag.js blocked - baseline in degraded mode', 'warning');
+        // ATTENDRE que gtag.js soit réellement chargé (max 3s)
+        const gtagReady = await waitForGtagReady();
+
+        if (!gtagReady) {
+            log('gtag.js not ready - baseline in degraded mode', 'warning');
             // On continue quand même pour éviter de bloquer le reste
         }
 
         try {
-            // 1. Timestamp initial (gtag.js peut encore être en chargement)
+            // 1. Timestamp initial
             gtag('js', new Date());
 
             // 2. Configuration GA4 privacy-first (SANS page_view auto)
@@ -372,25 +447,25 @@
                 }
             });
 
-            // 3. Envoyer UN SEUL page_view baseline (anonyme, cookieless)
-            // NOTE: Envoyé même si consent=denied (Consent Mode v2 gère le cookieless)
+            // 3. Marquer baseline ready AVANT d'envoyer le page_view (anti-double)
+            state.baselineReady = true;
+
+            // 4. Envoyer UN SEUL page_view baseline (cookieless, Consent Mode v2)
             gtag('event', 'page_view', {
                 'page_title': document.title,
                 'page_location': window.location.href,
                 'page_path': window.location.pathname,
-                'event_category': 'baseline'
+                'event_category': 'baseline',
+                'non_interaction': true
             });
 
-            state.baselineReady = true;
-
-            // Log explicite du statut consent pour diagnostic
+            // Log explicite du statut pour diagnostic
             const consentStatus = hasAnalyticsConsent() ? 'granted' : 'denied';
-            log(`Baseline sent (analytics_storage: ${consentStatus})`, 'success');
+            log(`Baseline page_view sent (analytics_storage: ${consentStatus}, gtag_ready: ${gtagReady})`, 'success');
 
             return true;
 
         } catch (error) {
-            // Erreur inattendue
             log('Baseline init failed: ' + error.message, 'error');
             return false;
         }
@@ -840,6 +915,321 @@
     };
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // PRODUCT ANALYTICS ENGINE (v2.5+)
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Module de tracking métier LotoIA - RGPD-safe, manuel, bufferisé
+    // Baseline (denied): events anonymes cookieless autorisés
+    // Enhanced (granted): events enrichis avec cookies GA4
+
+    /**
+     * Liste des clés PII interdites (RGPD)
+     * Ces clés seront automatiquement supprimées des payloads
+     */
+    const PII_BLACKLIST = [
+        'email', 'mail', 'e-mail',
+        'phone', 'tel', 'telephone', 'mobile',
+        'name', 'nom', 'prenom', 'firstname', 'lastname', 'fullname',
+        'address', 'adresse', 'street', 'rue', 'city', 'ville', 'zip', 'postal',
+        'ip', 'ip_address', 'ipaddress',
+        'user_agent', 'useragent', 'ua',
+        'password', 'pwd', 'pass', 'mot_de_passe',
+        'credit_card', 'card_number', 'cvv', 'expiry',
+        'ssn', 'social_security', 'national_id',
+        'birth', 'birthday', 'dob', 'date_of_birth',
+        'fingerprint', 'device_id', 'deviceid'
+    ];
+
+    /**
+     * Sanitize un objet de paramètres pour RGPD compliance
+     * - Supprime les clés PII
+     * - Tronque les strings longues (>120 chars)
+     * - Limite le nombre de clés (max 25)
+     * @param {Object} params - Paramètres bruts
+     * @returns {Object} Paramètres sanitisés
+     */
+    function sanitizeParams(params) {
+        if (!params || typeof params !== 'object') return {};
+
+        const sanitized = {};
+        const keys = Object.keys(params);
+        let keyCount = 0;
+
+        for (const key of keys) {
+            // Limite max 25 clés
+            if (keyCount >= 25) {
+                log('Params truncated (max 25 keys)', 'warning', null, 2);
+                break;
+            }
+
+            // Ignorer les clés PII
+            const keyLower = key.toLowerCase();
+            if (PII_BLACKLIST.some(pii => keyLower.includes(pii))) {
+                log(`PII key removed: ${key}`, 'warning', null, 2);
+                continue;
+            }
+
+            let value = params[key];
+
+            // Ignorer null/undefined
+            if (value === null || value === undefined) continue;
+
+            // Tronquer les strings longues
+            if (typeof value === 'string' && value.length > 120) {
+                value = value.substring(0, 117) + '...';
+            }
+
+            // Convertir les objets en string (éviter les structures complexes)
+            if (typeof value === 'object') {
+                try {
+                    value = JSON.stringify(value).substring(0, 120);
+                } catch (e) {
+                    value = '[object]';
+                }
+            }
+
+            sanitized[key] = value;
+            keyCount++;
+        }
+
+        return sanitized;
+    }
+
+    /**
+     * Construit le contexte complet pour un event produit
+     * @returns {Object} Contexte minimal RGPD-safe
+     */
+    function buildProductContext() {
+        return {
+            traffic_mode: state.isEnhanced ? 'enhanced_consent' : 'baseline_cookieless',
+            consent_analytics: state.isEnhanced,
+            engine: state.productContext.engine,
+            feature: state.productContext.feature,
+            page_path: window.location.pathname,
+            ts: Date.now()
+        };
+    }
+
+    /**
+     * Envoie un event produit à GA4
+     * @param {string} eventName - Nom de l'event (doit commencer par lotoia_)
+     * @param {Object} payload - Données de l'event
+     */
+    function sendProductEvent(eventName, payload) {
+        // Vérifier gtag disponible
+        if (typeof window.gtag !== 'function') {
+            if (!state.productWarnShown) {
+                console.warn('[LotoIA Product] gtag not available - events dropped');
+                state.productWarnShown = true;
+            }
+            return false;
+        }
+
+        // Vérifier si gtag.js est bloqué
+        if (state.gtagLoadFailed) {
+            log(`Product event dropped (gtag blocked): ${eventName}`, 'warning', null, 2);
+            return false;
+        }
+
+        // Envoyer à GA4
+        gtag('event', eventName, payload);
+        log(`Product event: ${eventName}`, 'success', payload, 2);
+        return true;
+    }
+
+    /**
+     * Flush le buffer d'events produit
+     */
+    function flushProductBuffer() {
+        if (state.productBuffer.length === 0) return;
+
+        const events = [...state.productBuffer];
+        state.productBuffer = [];
+
+        log(`Flushing ${events.length} product events`, 'info', null, 2);
+
+        events.forEach(item => {
+            sendProductEvent(item.name, item.payload);
+        });
+    }
+
+    /**
+     * Normalise un nom d'event (anti-double préfixe)
+     * - Trim + lowercase
+     * - Retire les préfixes "lotoia_" répétés
+     * - Ajoute "lotoia_" si absent
+     * @param {string} name - Nom brut
+     * @returns {string} Nom normalisé
+     */
+    function normalizeEventName(name) {
+        if (!name || typeof name !== 'string') return 'lotoia_unknown';
+
+        // Trim et lowercase
+        let normalized = name.trim().toLowerCase();
+
+        // Retirer tous les préfixes "lotoia_" répétés
+        while (normalized.startsWith('lotoia_lotoia_')) {
+            normalized = normalized.replace('lotoia_lotoia_', 'lotoia_');
+        }
+
+        // Ajouter le préfixe si absent
+        if (!normalized.startsWith('lotoia_')) {
+            normalized = 'lotoia_' + normalized;
+        }
+
+        return normalized;
+    }
+
+    /**
+     * Ajoute un event au buffer et flush si nécessaire
+     * @param {string} name - Nom de l'event
+     * @param {Object} payload - Données de l'event
+     */
+    function bufferProductEvent(name, payload) {
+        // Limite max 50 events en buffer
+        if (state.productBuffer.length >= 50) {
+            log('Product buffer full - dropping oldest event', 'warning');
+            state.productBuffer.shift();
+        }
+
+        state.productBuffer.push({ name, payload, ts: Date.now() });
+
+        // Flush si 5 events ou plus
+        if (state.productBuffer.length >= 5) {
+            flushProductBuffer();
+            return;
+        }
+
+        // Timer pour flush après 2s
+        if (!state.productBufferTimer) {
+            state.productBufferTimer = setTimeout(() => {
+                state.productBufferTimer = null;
+                flushProductBuffer();
+            }, 2000);
+        }
+    }
+
+    /**
+     * Product Analytics Engine - API interne
+     */
+    const ProductEngine = {
+        /**
+         * Définit le moteur actif
+         * @param {string} engineName - hybride | random | manual | unknown
+         */
+        setEngine: function(engineName) {
+            const valid = ['hybride', 'random', 'manual', 'unknown'];
+            state.productContext.engine = valid.includes(engineName) ? engineName : 'unknown';
+            log(`Product engine set: ${state.productContext.engine}`, 'info', null, 2);
+        },
+
+        /**
+         * Définit la feature/page active
+         * @param {string} featureName - simulateur | stats | home | faq | etc.
+         */
+        setFeature: function(featureName) {
+            state.productContext.feature = featureName || 'unknown';
+            log(`Product feature set: ${state.productContext.feature}`, 'info', null, 2);
+        },
+
+        /**
+         * Définit le contexte complet (merge)
+         * @param {Object} ctx - { engine?, feature? }
+         */
+        setContext: function(ctx) {
+            if (ctx && typeof ctx === 'object') {
+                if (ctx.engine) this.setEngine(ctx.engine);
+                if (ctx.feature) this.setFeature(ctx.feature);
+            }
+        },
+
+        /**
+         * Retourne le contexte actuel
+         * @returns {Object} Contexte produit
+         */
+        getContext: function() {
+            return { ...state.productContext };
+        },
+
+        /**
+         * Track un event produit
+         * @param {string} eventName - Nom (sera normalisé avec préfixe lotoia_)
+         * @param {Object} params - Paramètres (seront sanitisés)
+         */
+        track: function(eventName, params = {}) {
+            // Normaliser le nom (anti-double préfixe, lowercase, trim)
+            const name = normalizeEventName(eventName);
+
+            // Sanitiser les params (RGPD)
+            const sanitized = sanitizeParams(params);
+
+            // Construire le payload complet
+            // Respecter event_category si fourni dans params, sinon 'product'
+            const payload = {
+                ...buildProductContext(),
+                event_category: sanitized.event_category || 'product',
+                ...sanitized
+            };
+
+            // Mode enhanced : envoi direct
+            // Mode baseline : buffer
+            if (state.isEnhanced) {
+                sendProductEvent(name, payload);
+            } else {
+                bufferProductEvent(name, payload);
+            }
+        },
+
+        /**
+         * Track une vue sponsor
+         * @param {string} slot - Emplacement (sidebar_top, footer, etc.)
+         */
+        sponsorView: function(slot) {
+            this.track('lotoia_sponsor_view', {
+                slot: slot || 'unknown',
+                event_category: 'monetization'
+            });
+        },
+
+        /**
+         * Track un clic sponsor
+         * @param {string} slot - Emplacement
+         */
+        sponsorClick: function(slot) {
+            this.track('lotoia_sponsor_click', {
+                slot: slot || 'unknown',
+                event_category: 'monetization'
+            });
+        },
+
+        /**
+         * Flush manuel du buffer
+         */
+        flush: function() {
+            flushProductBuffer();
+        }
+    };
+
+    // Flush automatique du buffer produit à la sortie de page (v2.5.1)
+    // Évite la perte d'events en baseline si l'utilisateur quitte rapidement
+    (function setupProductBufferFlushOnExit() {
+        function safeFlush() {
+            try {
+                if (state.productBuffer && state.productBuffer.length > 0) {
+                    flushProductBuffer();
+                }
+            } catch (e) {
+                // Silencieux - pas de crash sur unload
+            }
+        }
+
+        // pagehide (mobile Safari / bfcache)
+        window.addEventListener('pagehide', safeFlush);
+
+        // beforeunload (fallback desktop)
+        window.addEventListener('beforeunload', safeFlush);
+    })();
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // TRACKING AUTOMATIQUE
     // ═══════════════════════════════════════════════════════════════════════════
 
@@ -1084,7 +1474,7 @@
      */
     const PublicAPI = {
         // Version
-        version: '2.1.4',
+        version: '2.5.2',
 
         // Configuration (lecture seule)
         config: Object.freeze({ ...CONFIG }),
@@ -1119,8 +1509,11 @@
             }
         },
 
-        // Events produit
-        product: ProductEvents,
+        // Product Analytics Engine (v2.5+) - NOUVEAU
+        product: ProductEngine,
+
+        // Events produit legacy (rétrocompatibilité)
+        productLegacy: ProductEvents,
 
         // Events UX
         ux: UXEvents,
@@ -1166,6 +1559,10 @@
 
         isGtagBlocked: function() {
             return state.gtagLoadFailed;
+        },
+
+        isGtagScriptReady: function() {
+            return state.gtagScriptReady;
         },
 
         isBaselineReady: function() {
@@ -1216,7 +1613,7 @@
 
     // Log de chargement (silencieux par défaut, sauf debug)
     if (getDebugLevel() >= 1) {
-        console.log('[LotoIA GA4] Module v2.1.4 loaded - Refusal-safe baseline');
+        console.log('[LotoIA GA4] Module v2.5.2 loaded - Baseline timing fix');
     }
 
 })(window, document);
