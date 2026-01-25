@@ -13,12 +13,14 @@
  * - Architecture scalable multi-moteurs / multi-pays
  *
  * @author LotoIA Team
- * @version 2.1.2
+ * @version 2.1.3
  * @license Proprietary
  *
  * ARCHITECTURE CONSENT MODE v2 (CNIL/RGPD):
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │ 1. baselineInit() - Charge GA4 immédiatement avec consent:denied           │
+ * │ 0. bootGtagImmediately() - Charge gtag.js AU BOOT (indépendant consent)    │
+ * │    → dataLayer + gtag() + consent:default denied + script injection        │
+ * │ 1. baselineInit() - Configure GA4 + envoie 1 page_view baseline            │
  * │    → 1 page_view anonyme pour TOUS (cookieless, IP anonymisée)             │
  * │ 2. enableEnhanced() - Après consentement analytics                         │
  * │    → consent:update granted + event consent_granted (PAS de 2e page_view)  │
@@ -80,6 +82,7 @@
     const state = {
         initialized: false,
         consentGiven: false,
+        gtagBooted: false,            // Flag gtag.js boot immédiat (étape 0)
         baselineReady: false,         // Flag anti-double baseline init
         isEnhanced: false,            // Flag anti-double enhanced init
         gtagLoadFailed: false,        // Flag adblock/network error (gtag.js)
@@ -192,12 +195,75 @@
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // BOOT GTAG IMMÉDIAT (INDÉPENDANT DU CONSENTEMENT)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Boot gtag.js IMMÉDIATEMENT au chargement du module.
+     * CRITIQUE: Cette fonction est appelée au tout début, AVANT toute logique consent.
+     * Elle garantit que gtag() est disponible même si CookieConsent est bloqué.
+     *
+     * Étapes:
+     * 1. Initialise dataLayer + window.gtag
+     * 2. Applique Consent Mode v2 par défaut (tous denied)
+     * 3. Injecte le script gtag.js (fire-and-forget)
+     */
+    function bootGtagImmediately() {
+        // Anti-double boot
+        if (state.gtagBooted) return;
+
+        try {
+            // 1. Initialiser dataLayer et gtag() SYNCHRONE
+            window.dataLayer = window.dataLayer || [];
+            window.gtag = function() {
+                dataLayer.push(arguments);
+            };
+
+            // 2. Consent Mode v2 - DEFAULT DENIED (CNIL/RGPD)
+            // CRITIQUE: Doit être appelé AVANT l'injection du script
+            gtag('consent', 'default', {
+                'ad_storage': 'denied',
+                'analytics_storage': 'denied',
+                'ad_user_data': 'denied',
+                'ad_personalization': 'denied'
+            });
+
+            // 3. Injecter gtag.js (fire-and-forget, pas de await)
+            const script = document.createElement('script');
+            script.async = true;
+            script.src = 'https://www.googletagmanager.com/gtag/js?id=' + CONFIG.GA4_ID;
+            script.onerror = function() {
+                state.gtagLoadFailed = true;
+                console.warn('[LotoIA GA4] gtag.js blocked (adblock/network)');
+            };
+            document.head.appendChild(script);
+
+            state.gtagBooted = true;
+            // Log uniquement si debug activé (getDebugLevel pas encore dispo à ce stade)
+            try {
+                if (parseInt(localStorage.getItem('debug_ga4') || '0', 10) >= 1) {
+                    console.log('%c[LotoIA GA4] gtag booted immediately (consent-independent)', 'color: #4CAF50');
+                }
+            } catch (e) { /* ignore */ }
+
+        } catch (e) {
+            console.warn('[LotoIA GA4] Boot failed:', e.message);
+        }
+    }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // BOOT IMMÉDIAT - Exécuté maintenant, avant toute autre logique
+    // ══════════════════════════════════════════════════════════════════════════
+    bootGtagImmediately();
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // GA4 CORE
     // ═══════════════════════════════════════════════════════════════════════════
 
     /**
      * Charge le script gtag.js de maniere asynchrone
      * Gère gracieusement les adblockers et erreurs réseau
+     * @deprecated Utilisé en fallback, gtag.js est déjà chargé par bootGtagImmediately()
      */
     function loadGtagScript(measurementId) {
         return new Promise((resolve, reject) => {
@@ -252,9 +318,9 @@
      * ═══════════════════════════════════════════════════════════════════════════
      * BASELINE INIT - Consent Mode v2 (CNIL/RGPD)
      * ═══════════════════════════════════════════════════════════════════════════
-     * Initialise GA4 en mode cookieless pour TOUS les visiteurs.
-     * Envoie 1 page_view anonyme (baseline) sans cookies.
-     * Respecte le Consent Mode v2 avec tous les signaux denied par défaut.
+     * Configure GA4 et envoie 1 page_view baseline cookieless.
+     * NOTE: gtag.js est déjà chargé par bootGtagImmediately() au boot.
+     * NOTE: Consent Mode v2 default denied déjà appliqué au boot.
      *
      * @returns {Promise<boolean>} true si baseline OK, false si bloqué
      */
@@ -265,26 +331,24 @@
             return true;
         }
 
+        // Vérifier que gtag a bien été booté
+        if (!window.gtag) {
+            log('gtag not available (boot failed?)', 'error');
+            return false;
+        }
+
+        // Si gtag.js est bloqué par adblock, on peut quand même envoyer au dataLayer
+        // Les events seront ignorés mais pas de crash
+        if (state.gtagLoadFailed) {
+            log('gtag.js blocked - baseline in degraded mode', 'warning');
+            // On continue quand même pour éviter de bloquer le reste
+        }
+
         try {
-            // 1. Initialiser dataLayer AVANT le chargement du script
-            initDataLayer();
-
-            // 2. Consent Mode v2 - DEFAULT DENIED (CNIL/RGPD)
-            // CRITIQUE: Doit être appelé AVANT gtag('config')
-            gtag('consent', 'default', {
-                'ad_storage': 'denied',
-                'analytics_storage': 'denied',
-                'ad_user_data': 'denied',
-                'ad_personalization': 'denied'
-            });
-
-            // 3. Charger gtag.js
-            await loadGtagScript(CONFIG.GA4_ID);
-
-            // 4. Timestamp initial
+            // 1. Timestamp initial (gtag.js peut encore être en chargement)
             gtag('js', new Date());
 
-            // 5. Configuration GA4 privacy-first (SANS page_view auto)
+            // 2. Configuration GA4 privacy-first (SANS page_view auto)
             gtag('config', CONFIG.GA4_ID, {
                 // CRITIQUE: Désactiver le page_view automatique
                 'send_page_view': false,
@@ -308,7 +372,7 @@
                 }
             });
 
-            // 6. Envoyer UN SEUL page_view baseline (anonyme, cookieless)
+            // 3. Envoyer UN SEUL page_view baseline (anonyme, cookieless)
             gtag('event', 'page_view', {
                 'page_title': document.title,
                 'page_location': window.location.href,
@@ -321,7 +385,7 @@
             return true;
 
         } catch (error) {
-            // Adblock ou erreur réseau - dégradation gracieuse
+            // Erreur inattendue
             log('Baseline init failed: ' + error.message, 'error');
             return false;
         }
@@ -999,7 +1063,7 @@
      */
     const PublicAPI = {
         // Version
-        version: '2.1.2',
+        version: '2.1.3',
 
         // Configuration (lecture seule)
         config: Object.freeze({ ...CONFIG }),
@@ -1075,6 +1139,14 @@
         },
 
         // Nouveaux états Consent Mode v2
+        isGtagBooted: function() {
+            return state.gtagBooted;
+        },
+
+        isGtagBlocked: function() {
+            return state.gtagLoadFailed;
+        },
+
         isBaselineReady: function() {
             return state.baselineReady;
         },
@@ -1123,7 +1195,7 @@
 
     // Log de chargement (silencieux par défaut, sauf debug)
     if (getDebugLevel() >= 1) {
-        console.log('[LotoIA GA4] Module v2.1.2 loaded - Adblock-resilient baseline');
+        console.log('[LotoIA GA4] Module v2.1.3 loaded - Consent-independent gtag boot');
     }
 
 })(window, document);
