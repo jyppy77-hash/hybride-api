@@ -18,7 +18,8 @@ logger = logging.getLogger(__name__)
 app = FastAPI(
     title="HYBRIDE API",
     description="Moteur HYBRIDE_OPTIMAL_V1 — API officielle",
-    version=__version__
+    version=__version__,
+    redirect_slashes=False
 )
 
 # IMPORTANT : Accepter tous les domaines (hybride-api.lotoia.fr, lotoia.fr, etc.)
