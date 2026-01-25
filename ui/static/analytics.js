@@ -1,23 +1,37 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
- * LOTOIA ANALYTICS MODULE v2.0
+ * LOTOIA ANALYTICS MODULE v2.1 - SAFE BASELINE
  * ═══════════════════════════════════════════════════════════════════════════════
  *
  * Infrastructure analytics professionnelle pour SaaS LotoIA
- * - GA4 Integration avec gestion RGPD
+ * - GA4 Integration avec Consent Mode v2 (RGPD/CNIL compliant)
+ * - Baseline cookieless pour 100% des visiteurs
+ * - Events enrichis après consentement analytics
  * - Events produit (moteur LotoIA)
  * - Events UX (parcours utilisateur)
  * - Events business (sponsors / monetisation)
  * - Architecture scalable multi-moteurs / multi-pays
  *
  * @author LotoIA Team
- * @version 2.0.0
+ * @version 2.1.1
  * @license Proprietary
  *
+ * ARCHITECTURE CONSENT MODE v2 (CNIL/RGPD):
+ * ┌─────────────────────────────────────────────────────────────────────────────┐
+ * │ 1. baselineInit() - Charge GA4 immédiatement avec consent:denied           │
+ * │    → 1 page_view anonyme pour TOUS (cookieless, IP anonymisée)             │
+ * │ 2. enableEnhanced() - Après consentement analytics                         │
+ * │    → consent:update granted + event consent_granted (PAS de 2e page_view)  │
+ * └─────────────────────────────────────────────────────────────────────────────┘
+ *
+ * DEBUG: localStorage.setItem('debug_ga4', '1') pour logs basiques
+ *        localStorage.setItem('debug_ga4', '2') pour logs détaillés
+ *
  * USAGE:
- * 1. Inclure ce script dans le <head> APRES cookie-consent.js
- * 2. Le module s'initialise automatiquement apres consentement
- * 3. Utiliser window.LotoIAAnalytics.track() pour les events custom
+ * 1. Inclure ce script dans le <head>
+ * 2. Le baseline s'initialise automatiquement (cookieless)
+ * 3. Après consentement, le mode enrichi s'active automatiquement
+ * 4. Utiliser window.LotoIAAnalytics.track() pour les events custom
  *
  * ═══════════════════════════════════════════════════════════════════════════════
  */
@@ -66,6 +80,10 @@
     const state = {
         initialized: false,
         consentGiven: false,
+        baselineReady: false,        // Flag anti-double baseline init
+        isEnhanced: false,           // Flag anti-double enhanced init
+        gtagLoadFailed: false,       // Flag adblock/network error
+        scrollTrackingEnabled: false, // Flag anti-double scroll listener
         sessionId: null,
         pageLoadTime: Date.now(),
         scrollTracked: {},
@@ -77,12 +95,30 @@
     // ═══════════════════════════════════════════════════════════════════════════
 
     /**
-     * Logger conditionnel (mode debug)
+     * Niveau de debug (0=silence, 1=basique, 2=détaillé)
+     * Configurable via: localStorage.setItem('debug_ga4', '1')
      */
-    function log(message, type = 'info', data = null) {
-        if (!CONFIG.debug) return;
+    function getDebugLevel() {
+        try {
+            const level = parseInt(localStorage.getItem('debug_ga4') || '0', 10);
+            return isNaN(level) ? 0 : Math.min(Math.max(level, 0), 2);
+        } catch (e) {
+            return 0;
+        }
+    }
 
-        const prefix = '[LotoIA Analytics]';
+    /**
+     * Logger conditionnel (mode debug via localStorage)
+     * @param {string} message - Message à logger
+     * @param {string} type - Type: info, success, warning, error
+     * @param {*} data - Données additionnelles (niveau 2 uniquement)
+     * @param {number} minLevel - Niveau minimum requis (1 ou 2)
+     */
+    function log(message, type = 'info', data = null, minLevel = 1) {
+        const debugLevel = getDebugLevel();
+        if (debugLevel < minLevel) return;
+
+        const prefix = '[LotoIA GA4]';
         const styles = {
             info: 'color: #2196F3',
             success: 'color: #4CAF50',
@@ -90,7 +126,11 @@
             error: 'color: #F44336'
         };
 
-        console.log(`%c${prefix} ${message}`, styles[type] || styles.info, data || '');
+        if (data && debugLevel >= 2) {
+            console.log(`%c${prefix} ${message}`, styles[type] || styles.info, data);
+        } else {
+            console.log(`%c${prefix} ${message}`, styles[type] || styles.info);
+        }
     }
 
     /**
@@ -156,6 +196,7 @@
 
     /**
      * Charge le script gtag.js de maniere asynchrone
+     * Gère gracieusement les adblockers et erreurs réseau
      */
     function loadGtagScript(measurementId) {
         return new Promise((resolve, reject) => {
@@ -163,6 +204,12 @@
             if (window.gtag) {
                 log('gtag already loaded', 'info');
                 resolve();
+                return;
+            }
+
+            // Si échec précédent (adblock), ne pas réessayer
+            if (state.gtagLoadFailed) {
+                reject(new Error('gtag blocked (cached)'));
                 return;
             }
 
@@ -176,7 +223,9 @@
             };
 
             script.onerror = () => {
-                log('Failed to load gtag script', 'error');
+                state.gtagLoadFailed = true;
+                // Warning unique (pas de boucle)
+                console.warn('[LotoIA GA4] gtag.js blocked (adblock/network) - analytics disabled');
                 reject(new Error('gtag load failed'));
             };
 
@@ -185,7 +234,162 @@
     }
 
     /**
-     * Initialise GA4 avec la configuration RGPD
+     * Initialise le dataLayer et la fonction gtag
+     * (séparé de la config pour Consent Mode v2)
+     */
+    function initDataLayer() {
+        if (window.gtag) return; // Déjà initialisé
+
+        window.dataLayer = window.dataLayer || [];
+        function gtag() {
+            dataLayer.push(arguments);
+        }
+        window.gtag = gtag;
+    }
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════════════
+     * BASELINE INIT - Consent Mode v2 (CNIL/RGPD)
+     * ═══════════════════════════════════════════════════════════════════════════
+     * Initialise GA4 en mode cookieless pour TOUS les visiteurs.
+     * Envoie 1 page_view anonyme (baseline) sans cookies.
+     * Respecte le Consent Mode v2 avec tous les signaux denied par défaut.
+     *
+     * @returns {Promise<boolean>} true si baseline OK, false si bloqué
+     */
+    async function baselineInit() {
+        // Anti-double init
+        if (state.baselineReady) {
+            log('Baseline already initialized', 'warning');
+            return true;
+        }
+
+        try {
+            // 1. Initialiser dataLayer AVANT le chargement du script
+            initDataLayer();
+
+            // 2. Consent Mode v2 - DEFAULT DENIED (CNIL/RGPD)
+            // CRITIQUE: Doit être appelé AVANT gtag('config')
+            gtag('consent', 'default', {
+                'ad_storage': 'denied',
+                'analytics_storage': 'denied',
+                'ad_user_data': 'denied',
+                'ad_personalization': 'denied'
+            });
+
+            // 3. Charger gtag.js
+            await loadGtagScript(CONFIG.GA4_ID);
+
+            // 4. Timestamp initial
+            gtag('js', new Date());
+
+            // 5. Configuration GA4 privacy-first (SANS page_view auto)
+            gtag('config', CONFIG.GA4_ID, {
+                // CRITIQUE: Désactiver le page_view automatique
+                'send_page_view': false,
+
+                // Anonymisation IP (requis RGPD)
+                'anonymize_ip': true,
+
+                // Désactiver tous les signaux publicitaires
+                'allow_google_signals': false,
+                'allow_ad_personalization_signals': false,
+
+                // Désactiver le suivi automatique
+                'form_submit': false,
+                'file_download': false,
+
+                // Custom dimensions
+                'custom_map': {
+                    'dimension1': 'engine',
+                    'dimension2': 'algorithm',
+                    'dimension3': 'session_id'
+                }
+            });
+
+            // 6. Envoyer UN SEUL page_view baseline (anonyme, cookieless)
+            gtag('event', 'page_view', {
+                'page_title': document.title,
+                'page_location': window.location.href,
+                'page_path': window.location.pathname,
+                'event_category': 'baseline'
+            });
+
+            state.baselineReady = true;
+            log('Baseline initialized (cookieless)', 'success');
+            return true;
+
+        } catch (error) {
+            // Adblock ou erreur réseau - dégradation gracieuse
+            log('Baseline init failed: ' + error.message, 'error');
+            return false;
+        }
+    }
+
+    /**
+     * ═══════════════════════════════════════════════════════════════════════════
+     * ENABLE ENHANCED - Après consentement analytics
+     * ═══════════════════════════════════════════════════════════════════════════
+     * Active le mode enrichi après consentement utilisateur.
+     * Met à jour le Consent Mode v2 avec analytics_storage:granted.
+     * N'ENVOIE PAS de 2e page_view (déjà envoyé en baseline).
+     *
+     * @returns {boolean} true si enhanced activé, false sinon
+     */
+    function enableEnhanced() {
+        // Anti-double init
+        if (state.isEnhanced) {
+            log('Enhanced already enabled', 'warning');
+            return true;
+        }
+
+        // Vérifier le consentement
+        if (!hasAnalyticsConsent()) {
+            log('No analytics consent for enhanced mode', 'warning');
+            return false;
+        }
+
+        // Vérifier que gtag est disponible
+        if (!window.gtag) {
+            log('gtag not available for enhanced mode', 'error');
+            return false;
+        }
+
+        // 1. Consent Mode v2 - UPDATE GRANTED (analytics only)
+        // Note: ad_storage reste denied (pas de remarketing)
+        gtag('consent', 'update', {
+            'analytics_storage': 'granted',
+            'ad_storage': 'denied',
+            'ad_user_data': 'denied',
+            'ad_personalization': 'denied'
+        });
+
+        // 2. Marquer comme enhanced
+        state.isEnhanced = true;
+        state.consentGiven = true;
+        state.initialized = true; // Compatibilité avec l'ancien état
+
+        // 3. Envoyer event consent_granted (PAS de page_view!)
+        gtag('event', 'consent_granted', {
+            'event_category': 'consent',
+            'analytics_storage': 'granted',
+            'timestamp': Date.now()
+        });
+
+        // 4. Traiter la queue d'events en attente
+        processEventsQueue();
+
+        // 5. Activer le tracking avancé
+        setupScrollTracking();
+        setupSessionTracking();
+
+        log('Enhanced mode enabled (consent granted)', 'success');
+        return true;
+    }
+
+    /**
+     * Initialise GA4 avec la configuration RGPD (legacy - appelé par enableEnhanced indirectement)
+     * @deprecated Utiliser baselineInit() + enableEnhanced()
      */
     function initGA4(measurementId) {
         // DataLayer
@@ -201,6 +405,9 @@
 
         // Configuration GA4 avec options RGPD
         gtag('config', measurementId, {
+            // CRITIQUE: Désactiver le page_view automatique (anti-double)
+            'send_page_view': false,
+
             // Anonymisation IP (requis RGPD)
             'anonymize_ip': true,
 
@@ -233,10 +440,17 @@
 
     /**
      * Envoie un event GA4
+     * Gère gracieusement l'absence de gtag (adblock)
      */
     function sendGA4Event(eventName, params = {}) {
+        // Si gtag bloqué définitivement, no-op silencieux
+        if (state.gtagLoadFailed) {
+            log(`Event dropped (gtag blocked): ${eventName}`, 'warning', params, 2);
+            return false;
+        }
+
         if (!window.gtag) {
-            log(`Event queued (gtag not ready): ${eventName}`, 'warning', params);
+            log(`Event queued (gtag not ready): ${eventName}`, 'warning', params, 2);
             state.eventsQueue.push({ eventName, params, timestamp: Date.now() });
             return false;
         }
@@ -251,7 +465,7 @@
         };
 
         gtag('event', eventName, enrichedParams);
-        log(`Event sent: ${eventName}`, 'success', enrichedParams);
+        log(`Event sent: ${eventName}`, 'success', enrichedParams, 2);
         return true;
     }
 
@@ -561,9 +775,12 @@
 
     /**
      * Configure le tracking automatique du scroll
+     * Guard anti-double listener via state.scrollTrackingEnabled
      */
     function setupScrollTracking() {
         if (!CONFIG.trackScroll) return;
+        if (state.scrollTrackingEnabled) return; // Anti-double listener
+        state.scrollTrackingEnabled = true;
 
         let ticking = false;
 
@@ -640,16 +857,32 @@
     }
 
     /**
-     * Handler pour le changement de consentement
+     * Handler pour le changement de consentement (Consent Mode v2)
+     * Appelé lors des events cookieConsentUpdated / CookieConsentUpdated
      */
     function onConsentChange(event) {
         const choices = event.detail || {};
 
         log('Consent changed', 'info', choices);
 
-        if (choices.analytics === true && !state.initialized) {
-            initialize();
+        // Si analytics accepté et pas encore en mode enhanced
+        if (choices.analytics === true && !state.isEnhanced) {
+            enableEnhanced();
         }
+    }
+
+    /**
+     * Configure les listeners de consentement
+     * Écoute les deux variantes de casse de l'event
+     */
+    function setupConsentListeners() {
+        // Event principal (minuscule)
+        document.addEventListener('cookieConsentUpdated', onConsentChange);
+
+        // Event alternatif (CamelCase) - certaines versions du module
+        document.addEventListener('CookieConsentUpdated', onConsentChange);
+
+        log('Consent listeners configured', 'info', null, 2);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -657,69 +890,52 @@
     // ═══════════════════════════════════════════════════════════════════════════
 
     /**
-     * Initialise le module analytics
+     * Initialise le module analytics (legacy - pour compatibilité API)
+     * Redirige vers enableEnhanced() si consentement présent
      */
     async function initialize() {
-        if (state.initialized) {
-            log('Already initialized', 'warning');
-            return;
+        // Si baseline pas encore prêt, l'initialiser d'abord
+        if (!state.baselineReady) {
+            await baselineInit();
         }
 
-        // Verifier le consentement
-        if (!hasAnalyticsConsent()) {
-            log('No analytics consent, waiting...', 'info');
-            return;
-        }
-
-        state.consentGiven = true;
-
-        try {
-            // Charger gtag.js
-            await loadGtagScript(CONFIG.GA4_ID);
-
-            // Initialiser GA4
-            initGA4(CONFIG.GA4_ID);
-
-            // Marquer comme initialise
-            state.initialized = true;
-
-            // Traiter la queue d'events en attente
-            processEventsQueue();
-
-            // Configurer le tracking automatique
-            setupScrollTracking();
-            setupSessionTracking();
-
-            // Envoyer le pageview initial avec delai
-            setTimeout(() => {
-                UXEvents.pageView();
-                UXEvents.sessionStart();
-            }, CONFIG.pageviewDelay);
-
-            log('Analytics fully initialized', 'success');
-
-        } catch (error) {
-            log('Initialization failed: ' + error.message, 'error');
+        // Si consentement présent, activer enhanced
+        if (hasAnalyticsConsent() && !state.isEnhanced) {
+            enableEnhanced();
         }
     }
 
     /**
-     * Point d'entree automatique
+     * Point d'entrée automatique - Architecture Consent Mode v2
+     * 1. Lance le baseline immédiatement (cookieless)
+     * 2. Configure les listeners pour le consentement
+     * 3. Active enhanced si consentement déjà présent
+     * 4. Fallback: vérifie le consentement après 500ms
      */
-    function autoInit() {
-        // Ecouter les changements de consentement
-        document.addEventListener('cookieConsentUpdated', onConsentChange);
+    async function autoInit() {
+        // 1. Baseline immédiat pour TOUS les visiteurs
+        const baselineOk = await baselineInit();
 
-        // Verifier si le consentement existe deja
+        if (!baselineOk) {
+            // gtag bloqué (adblock) - dégradation gracieuse
+            log('Running in degraded mode (no analytics)', 'warning');
+        }
+
+        // 2. Configurer les listeners de consentement
+        setupConsentListeners();
+
+        // 3. Vérifier si consentement déjà présent
         if (hasAnalyticsConsent()) {
-            // Attendre que le DOM soit pret
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initialize);
-            } else {
-                initialize();
-            }
+            enableEnhanced();
         } else {
-            log('Waiting for analytics consent...', 'info');
+            // 4. Fallback: vérification unique après 500ms
+            // (pour les cas où l'event consent n'est pas dispatché)
+            setTimeout(() => {
+                if (hasAnalyticsConsent() && !state.isEnhanced) {
+                    log('Consent detected via fallback check', 'info');
+                    enableEnhanced();
+                }
+            }, 500);
         }
     }
 
@@ -732,7 +948,7 @@
      */
     const PublicAPI = {
         // Version
-        version: '2.0.0',
+        version: '2.1.1',
 
         // Configuration (lecture seule)
         config: Object.freeze({ ...CONFIG }),
@@ -787,15 +1003,32 @@
         // Initialisation manuelle (si necessaire)
         init: initialize,
 
-        // Debug mode
-        setDebug: function(enabled) {
-            CONFIG.debug = enabled;
-            log(`Debug mode ${enabled ? 'enabled' : 'disabled'}`, 'info');
+        // Nouvelles méthodes Consent Mode v2
+        baselineInit: baselineInit,
+        enableEnhanced: enableEnhanced,
+
+        // Debug mode (via localStorage)
+        setDebug: function(level) {
+            try {
+                localStorage.setItem('debug_ga4', String(level ? (level === true ? 1 : level) : 0));
+                log(`Debug level set to ${level}`, 'info');
+            } catch (e) {
+                console.warn('[LotoIA GA4] Cannot set debug level:', e.message);
+            }
         },
 
         // Verifier l'etat
         isInitialized: function() {
             return state.initialized;
+        },
+
+        // Nouveaux états Consent Mode v2
+        isBaselineReady: function() {
+            return state.baselineReady;
+        },
+
+        isEnhanced: function() {
+            return state.isEnhanced;
         },
 
         // Forcer l'envoi d'un pageview
@@ -831,7 +1064,9 @@
     // Auto-initialisation
     autoInit();
 
-    // Log de chargement
-    console.log('[LotoIA Analytics] Module v2.0 loaded - Waiting for consent');
+    // Log de chargement (silencieux par défaut, sauf debug)
+    if (getDebugLevel() >= 1) {
+        console.log('[LotoIA GA4] Module v2.1.1 loaded - Consent Mode v2 baseline');
+    }
 
 })(window, document);
