@@ -154,6 +154,9 @@ async def sitemap():
     return FileResponse("ui/sitemap.xml", media_type="application/xml",
                         headers={"Cache-Control": "public, max-age=3600"})
 
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse("favicon.ico")
 
 # =========================
 # Routes SEO-friendly (Pages HTML)
