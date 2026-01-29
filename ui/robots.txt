@@ -1,13 +1,11 @@
 # ============================================================
-# LotoIA — robots.txt (OPEN SaaS MODE)
+# LotoIA — robots.txt (SaaS / Cloud Run / SEO Optimized)
 # ============================================================
 
 User-agent: *
 
-# === FRONTEND PUBLIC (SEO OK) ===
+# === CORE SEO (PUBLIC PAGES) ===
 Allow: /
-Allow: /ui/
-Allow: /static/
 Allow: /loto
 Allow: /simulateur
 Allow: /statistiques
@@ -16,12 +14,21 @@ Allow: /moteur
 Allow: /faq
 Allow: /news
 Allow: /historique
+
+# === LEGAL PAGES (LOW PRIORITY BUT INDEXABLE) ===
 Allow: /mentions-legales
 Allow: /politique-confidentialite
 Allow: /politique-cookies
 Allow: /disclaimer
 
-# === BACKEND & ENGINE (NO SEO) ===
+# === FRONTEND ASSETS (RENDERING REQUIRED FOR GOOGLE) ===
+Allow: /ui/
+Allow: /ui/static/
+Allow: /ui/static/*.css
+Allow: /ui/static/*.js
+Allow: /static/
+
+# === BLOCK TECHNICAL / BACKEND / API ===
 Disallow: /api/
 Disallow: /engine/
 Disallow: /health
@@ -31,7 +38,11 @@ Disallow: /generate
 Disallow: /stats
 Disallow: /draw/
 
-# === AI & SCRAPING BOTS BLOCKED ===
+# === PREVENT INDEXATION OF TECH ROUTES (BUT ALLOW CRAWLING OF ASSETS) ===
+Disallow: /ui/*.html
+Allow: /ui/static/
+
+# === AI / SCRAPING BOTS BLOCK ===
 User-agent: GPTBot
 Disallow: /
 
@@ -58,9 +69,6 @@ Disallow: /
 
 User-agent: Amazonbot
 Disallow: /
-
-# === CONTENT SIGNALS ===
-Content-Signal: search=yes, ai-input=no, ai-train=no
 
 # === SITEMAP ===
 Sitemap: https://lotoia.fr/sitemap.xml
