@@ -4273,3 +4273,22 @@ a.back-link-dark:hover {
     }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   FIX: Night-mode text contrast — WCAG AA (≥ 4.5:1)
+   Root cause: legal.css targets body.night but theme.js applies .theme-night
+   ═══════════════════════════════════════════════════════════════════════ */
+body.theme-night.legal-page {
+    --legal-text-color: #e5e7eb;
+    --legal-heading-color: #f9fafb;
+    --legal-link-color: #60a5fa;
+    --legal-border-color: #374151;
+    --legal-bg-light: #1f2937;
+    --legal-bg-highlight: #1e3a5f;
+    --legal-bg-warning: #422006;
+    --legal-bg-danger: #450a0a;
+}
+
+body.theme-night .footer-nav a {
+    color: var(--theme-text-on-dark-muted);
+}
+
