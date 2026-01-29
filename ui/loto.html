@@ -65,16 +65,52 @@
     <!-- Header Premium -->
     <header class="page-header">
         <div class="header-content">
-            <h1><span>🎯</span> Exploration (générateur de grilles)</h1>
-            <p class="subtitle">Générez des grilles pour explorer différentes combinaisons.</p>
+            <h1><span>🎯</span> Loto France</h1>
+            <p class="subtitle">Moteur d'analyse statistique — exploration, audit et statistiques</p>
         </div>
     </header>
 
     <div class="loto-container">
         <!-- ══════════════════════════════════════════════════════════════
+             HUB — CHOIX DES OUTILS
+             ══════════════════════════════════════════════════════════════ -->
+        <section class="secondary-tools" style="border-top: none; opacity: 1; margin-top: 0; padding-top: 0;">
+            <div class="secondary-header">
+                <h3>Choisissez votre outil</h3>
+                <p>Trois approches pour explorer le Loto</p>
+            </div>
+            <div class="tools-grid-compact" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+                <a href="/ui/simulateur.html" class="tool-card-mini">
+                    <div class="tool-mini-icon">🎯</div>
+                    <div class="tool-mini-content">
+                        <h4>Analyser une grille</h4>
+                        <p>Composez votre grille et obtenez un audit complet avec score</p>
+                    </div>
+                    <span class="tool-mini-arrow">→</span>
+                </a>
+                <a href="#generator" class="tool-card-mini" style="border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.06);">
+                    <div class="tool-mini-icon">🧠</div>
+                    <div class="tool-mini-content">
+                        <h4>Explorer des grilles</h4>
+                        <p>Générez des combinaisons avec le moteur IA</p>
+                    </div>
+                    <span class="tool-mini-arrow">↓</span>
+                </a>
+                <a href="/ui/statistiques.html" class="tool-card-mini">
+                    <div class="tool-mini-icon">📊</div>
+                    <div class="tool-mini-content">
+                        <h4>Voir les statistiques</h4>
+                        <p>Numéros chauds, froids et historique des tirages</p>
+                    </div>
+                    <span class="tool-mini-arrow">→</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════════
              ZONE PRIMAIRE - GENERATEUR (Centre de gravite)
              ══════════════════════════════════════════════════════════════ -->
-        <section class="generator-hero">
+        <section id="generator" class="generator-hero">
             <!-- Effets visuels data/algorithme -->
             <div class="scan-line"></div>
             <div class="data-particles">
@@ -94,7 +130,7 @@
                         <span class="badge-icon">🧠</span>
                         <span class="badge-text">MOTEUR HYBRIDE_OPTIMAL_V1</span>
                     </div>
-                    <h2 class="generator-title">Explorez des combinaisons de grilles</h2>
+                    <h2 class="generator-title">Exploration de grilles</h2>
                     <p class="generator-subtitle">Analyse statistique basée sur <strong id="stat-tirages-inline">967</strong> tirages officiels FDJ <span class="data-depth">depuis 2019</span></p>
                 </div>
 
@@ -171,35 +207,7 @@
             </div>
         </section>
 
-        <!-- ══════════════════════════════════════════════════════════════
-             ZONE SECONDAIRE - OUTILS COMPLEMENTAIRES
-             ══════════════════════════════════════════════════════════════ -->
-        <section class="secondary-tools">
-            <div class="secondary-header">
-                <h3>Outils complémentaires</h3>
-                <p>Explorez vos données et testez vos propres combinaisons</p>
-            </div>
-
-            <div class="tools-grid-compact">
-                <a href="/ui/simulateur.html" class="tool-card-mini">
-                    <div class="tool-mini-icon">🎯</div>
-                    <div class="tool-mini-content">
-                        <h4>Analyser une grille (Audit)</h4>
-                        <p>Composez votre propre grille et obtenez une analyse instantanée avec score et suggestions</p>
-                    </div>
-                    <span class="tool-mini-arrow">→</span>
-                </a>
-
-                <a href="/ui/statistiques.html" class="tool-card-mini">
-                    <div class="tool-mini-icon">📊</div>
-                    <div class="tool-mini-content">
-                        <h4>Statistiques détaillées</h4>
-                        <p>Numéros chauds, froids, fréquences, retards et historique complet des tirages</p>
-                    </div>
-                    <span class="tool-mini-arrow">→</span>
-                </a>
-            </div>
-        </section>
+        <!-- (Hub outils déplacé en haut de page) -->
 
         <!-- Section 4: Gestion des données (masquée — IDs requis par app.js) -->
         <details style="display: none;">
@@ -308,6 +316,17 @@
                     <span>Voir toutes les questions</span>
                     <span class="arrow">→</span>
                 </a>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             PLACEHOLDER — ASSISTANT IA (futur chatbot)
+             ══════════════════════════════════════════════════════════════ -->
+        <section class="secondary-tools" style="border-top: 1px dashed rgba(0,0,0,0.08); opacity: 0.55; pointer-events: none;">
+            <div style="text-align: center; padding: 28px; background: var(--theme-bg-card); border-radius: var(--radius-md); border: 2px dashed var(--border);">
+                <span style="font-size: 2rem; display: block; margin-bottom: 8px;">💬</span>
+                <p style="font-weight: 600; color: var(--text-secondary); margin: 0 0 4px 0; font-size: 0.95rem;">Assistant IA</p>
+                <p style="color: var(--text-muted); font-size: 0.8rem; margin: 0;">Bientôt disponible</p>
             </div>
         </section>
 
