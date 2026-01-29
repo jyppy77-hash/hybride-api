@@ -49,9 +49,9 @@
 <body class="loto-page">
     <!-- Barre de navigation moteur -->
     <nav class="engine-nav-subpage">
-        <a href="/ui/launcher.html" class="engine-nav-btn">
+        <a href="/" class="engine-nav-btn">
             <span class="nav-arrow">←</span>
-            <span class="nav-text">Changer de moteur</span>
+            <span class="nav-text">Accueil LotoIA</span>
         </a>
         <div class="engine-nav-right">
             <span class="engine-badge">Loto France</span>
@@ -65,8 +65,8 @@
     <!-- Header Premium -->
     <header class="page-header">
         <div class="header-content">
-            <h1><span>🎯</span> Bienvenue sur LotoIA</h1>
-            <p class="subtitle">Découvrez nos outils d'analyse statistique pour optimiser vos grilles de loterie</p>
+            <h1><span>🎯</span> Exploration (générateur de grilles)</h1>
+            <p class="subtitle">Générez des grilles pour explorer différentes combinaisons.</p>
         </div>
     </header>
 
@@ -94,7 +94,7 @@
                         <span class="badge-icon">🧠</span>
                         <span class="badge-text">MOTEUR HYBRIDE_OPTIMAL_V1</span>
                     </div>
-                    <h2 class="generator-title">Générez vos grilles optimisées</h2>
+                    <h2 class="generator-title">Explorez des combinaisons de grilles</h2>
                     <p class="generator-subtitle">Analyse statistique basée sur <strong id="stat-tirages-inline">967</strong> tirages officiels FDJ <span class="data-depth">depuis 2019</span></p>
                 </div>
 
@@ -115,23 +115,23 @@
                             <button class="count-btn" data-count="4">4</button>
                             <button class="count-btn" data-count="5">5</button>
                         </div>
-                        <small class="helper-text">Recommandé : 3 grilles pour maximiser vos chances</small>
+                        <small class="helper-text">Recommandé : 3 grilles pour comparer différentes combinaisons</small>
                     </div>
 
-                    <!-- CTA Principal - Amplifié -->
+                    <!-- CTA Principal -->
                     <button id="btn-analyze" class="btn-cta-main">
                         <span class="cta-icon">✨</span>
-                        <span class="cta-text">Générer mes grilles maintenant</span>
+                        <span class="cta-text">Générer mes grilles</span>
                         <span class="cta-arrow">→</span>
                         <span class="spinner" style="display: none;"></span>
                     </button>
 
                     <p class="cta-subtext">Analyse instantanée • Score de conformité • 100% gratuit</p>
 
-                    <!-- Tension temporelle - urgence douce -->
+                    <!-- Info prochain tirage -->
                     <p class="cta-urgency" id="next-draw-urgency">
                         <span class="urgency-icon">⏱️</span>
-                        <span class="urgency-text">Prochain tirage dans <strong id="days-until-draw">2</strong> jours — préparez vos grilles</span>
+                        <span class="urgency-text">Prochain tirage dans <strong id="days-until-draw">2</strong> jours</span>
                     </p>
                 </div>
             </div>
@@ -184,7 +184,7 @@
                 <a href="/ui/simulateur.html" class="tool-card-mini">
                     <div class="tool-mini-icon">🎯</div>
                     <div class="tool-mini-content">
-                        <h4>Simulateur de grille</h4>
+                        <h4>Analyser une grille (Audit)</h4>
                         <p>Composez votre propre grille et obtenez une analyse instantanée avec score et suggestions</p>
                     </div>
                     <span class="tool-mini-arrow">→</span>
@@ -201,8 +201,8 @@
             </div>
         </section>
 
-        <!-- Section 4: Gestion des données (discrète) -->
-        <details style="margin-top: 40px;">
+        <!-- Section 4: Gestion des données (masquée — IDs requis par app.js) -->
+        <details style="display: none;">
             <summary style="cursor: pointer; padding: 12px; background: var(--bg-white); border-radius: 8px; font-weight: 600; color: var(--text-muted); margin-bottom: 16px;">
                 ⚙️ Gestion des données
             </summary>
@@ -315,9 +315,11 @@
         <footer class="footer">
             <!-- Navigation footer -->
             <div class="footer-nav">
-                <a href="/ui/loto.html" class="active">Accueil</a>
+                <a href="/">Accueil</a>
                 <span class="footer-sep">•</span>
-                <a href="/ui/simulateur.html">Simulateur</a>
+                <a href="/ui/simulateur.html">Analyse</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/loto.html" class="active">Exploration</a>
                 <span class="footer-sep">•</span>
                 <a href="/ui/statistiques.html">Statistiques</a>
                 <span class="footer-sep">•</span>

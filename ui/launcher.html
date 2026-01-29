@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>LotoIA - Analyse et génération de grilles du Loto par IA</title>
-    <meta name="description" content="LotoIA analyse les tirages du Loto avec l’IA et propose des outils d’analyse statistique et de génération de grilles. Gratuit et pédagogique.">
+    <meta name="description" content="LotoIA analyse les tirages du Loto avec l'IA et propose des outils d'analyse statistique et de génération de grilles. Gratuit et pédagogique.">
 
     <link rel="canonical" href="https://lotoia.fr/">
 
@@ -19,7 +19,7 @@
     <meta property="og:site_name" content="LotoIA">
     <meta property="og:locale" content="fr_FR">
     <meta property="og:title" content="LotoIA - Analyse et génération de grilles du Loto par IA">
-    <meta property="og:description" content="Outil d’analyse statistique du Loto basé sur l’IA, avec génération de grilles et simulateur pédagogique.">
+    <meta property="og:description" content="Outil d'analyse statistique du Loto basé sur l'IA, avec génération de grilles et simulateur pédagogique.">
     <meta property="og:url" content="https://lotoia.fr/">
     <meta property="og:image" content="https://lotoia.fr/ui/static/og-image.png">
 
@@ -39,7 +39,7 @@
   "applicationCategory": "UtilitiesApplication",
   "operatingSystem": "Web Browser",
 
-  "description": "Outil d’analyse statistique du Loto basé sur l’IA, avec génération de grilles et simulateur pédagogique.",
+  "description": "Outil d'analyse statistique du Loto basé sur l'IA, avec génération de grilles et simulateur pédagogique.",
 
   "image": "https://lotoia.fr/ui/static/og-image.png",
 
@@ -421,7 +421,16 @@
 </head>
 <body>
     <div class="launcher-container">
-        <h1 class="launcher-title"><strong>LotoIA</strong> — Selection du moteur</h1>
+        <!-- HERO — Produit phare -->
+        <h1 style="font-size: 1.6rem; font-weight: 700; color: white; margin-bottom: 10px;">Analyse statistique du Loto</h1>
+        <p style="color: rgba(255,255,255,0.5); font-size: 0.9rem; margin-bottom: 24px;">Outil d'analyse statistique — ne prédit pas les résultats.</p>
+        <div style="margin-bottom: 36px; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+            <a href="/ui/simulateur.html" style="display: inline-block; padding: 14px 28px; background: rgba(16,185,129,0.15); border: 2px solid rgba(16,185,129,0.5); color: #10b981; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 1rem;">Analyser une grille</a>
+            <a href="/ui/loto.html" style="display: inline-block; padding: 14px 28px; background: rgba(255,255,255,0.05); border: 2px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.7); border-radius: 12px; text-decoration: none; font-weight: 500; font-size: 0.95rem;">Explorer (générateur)</a>
+        </div>
+
+        <!-- Moteurs disponibles -->
+        <p class="launcher-title" style="margin-bottom: 24px;"><strong>LotoIA</strong> — Moteurs disponibles</p>
 
         <div class="engines-grid">
             <!-- Loto France - ACTIF -->
@@ -468,7 +477,7 @@
             <span style="color: rgba(255,255,255,0.3);">•</span>
             <a href="/ui/politique-cookies.html" style="color: rgba(255,255,255,0.5); text-decoration: none; margin: 0 8px;">Cookies</a>
         </div>
-        LotoIA.fr — Plateforme de moteurs de loterie
+        LotoIA.fr — Plateforme d'analyse statistique
     </div>
 
     <script src="/ui/static/cookie-consent.js"></script>

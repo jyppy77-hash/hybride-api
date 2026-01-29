@@ -24,11 +24,11 @@
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": "LotoIA - Simulateur de Grille",
+      "@type": "SoftwareApplication",
+      "name": "LotoIA - Analyse statistique",
       "url": "https://lotoia.fr/simulateur",
-      "description": "Simulateur pour composer et analyser vos grilles Loto personnalisees",
-      "applicationCategory": "UtilitiesApplication",
+      "description": "Outil d analyse statistique descriptive pour grilles Loto",
+      "applicationCategory": "StatisticalTool",
       "operatingSystem": "Web"
     }
     </script>
@@ -44,9 +44,9 @@
 <body class="simulator-page">
     <!-- Barre de navigation moteur -->
     <nav class="engine-nav-subpage">
-        <a href="/ui/loto.html" class="engine-nav-btn">
+        <a href="/" class="engine-nav-btn">
             <span class="nav-arrow">←</span>
-            <span class="nav-text">Retour au moteur</span>
+            <span class="nav-text">Accueil LotoIA</span>
         </a>
         <div class="engine-nav-right">
             <span class="engine-badge">Loto France</span>
@@ -60,12 +60,17 @@
     <!-- Header Premium -->
     <header class="page-header">
         <div class="header-content">
-            <h1><span>🎲</span> Simulateur de Grille</h1>
-            <p class="subtitle">Composez votre grille et obtenez une analyse IA en temps réel.</p>
+            <h1><span>🎲</span> Analyse statistique (Audit de grille)</h1>
+            <p class="subtitle">Analyse descriptive basée sur des statistiques — ne prédit pas les résultats.</p>
         </div>
     </header>
 
     <div class="simulator-container">
+
+        <!-- CTA secondaire vers générateur -->
+        <div style="text-align: center; margin-bottom: 16px;">
+            <a href="/ui/loto.html" style="color: var(--primary-color, #4A90E2); text-decoration: none; font-weight: 500; font-size: 0.95rem;">Explorer (générateur) →</a>
+        </div>
 
         <!-- Legende couleurs -->
         <section class="card legend-section">
@@ -167,9 +172,11 @@
         <!-- Footer -->
         <footer class="footer">
             <div class="footer-nav">
-                <a href="/ui/loto.html">Accueil</a>
+                <a href="/">Accueil</a>
                 <span class="footer-sep">•</span>
-                <a href="/ui/simulateur.html" class="active">Simulateur</a>
+                <a href="/ui/simulateur.html" class="active">Analyse</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/loto.html">Exploration</a>
                 <span class="footer-sep">•</span>
                 <a href="/ui/statistiques.html">Statistiques</a>
                 <span class="footer-sep">•</span>
