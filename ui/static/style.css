@@ -4292,3 +4292,13 @@ body.theme-night .footer-nav a {
     color: var(--theme-text-on-dark-muted);
 }
 
+body.theme-night .credits .dev-by,
+body.theme-night .faq-page .faq-category-title {
+    color: var(--theme-text-on-dark);
+}
+
+body.theme-night .footer-disclaimer,
+body.theme-night .footer-legal a {
+    opacity: 1;
+}
+
