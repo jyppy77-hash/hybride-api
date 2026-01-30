@@ -1,34 +1,33 @@
 # ============================================================
-# LotoIA — robots.txt (SaaS / Cloud Run / SEO Optimized)
+# LotoIA — robots.txt (SaaS / Cloud Run / SEO)
 # ============================================================
 
 User-agent: *
 
-# === CORE SEO (PUBLIC PAGES) ===
+# === PAGES SEO PUBLIQUES (clean URLs) ===
 Allow: /
+Allow: /accueil
 Allow: /loto
+Allow: /loto/analyse
+Allow: /loto/exploration
+Allow: /loto/statistiques
 Allow: /simulateur
 Allow: /statistiques
-Allow: /methodologie
-Allow: /moteur
 Allow: /faq
 Allow: /news
 Allow: /historique
-
-# === LEGAL PAGES (LOW PRIORITY BUT INDEXABLE) ===
+Allow: /methodologie
+Allow: /moteur
+Allow: /disclaimer
 Allow: /mentions-legales
 Allow: /politique-confidentialite
 Allow: /politique-cookies
-Allow: /disclaimer
 
-# === FRONTEND ASSETS (RENDERING REQUIRED FOR GOOGLE) ===
-Allow: /ui/
+# === ASSETS FRONTEND (requis pour le rendu Google) ===
 Allow: /ui/static/
-Allow: /ui/static/*.css
-Allow: /ui/static/*.js
 Allow: /static/
 
-# === BLOCK TECHNICAL / BACKEND / API ===
+# === BLOCAGE TECHNIQUE / BACKEND / API ===
 Disallow: /api/
 Disallow: /engine/
 Disallow: /health
@@ -37,12 +36,11 @@ Disallow: /database-info
 Disallow: /generate
 Disallow: /stats
 Disallow: /draw/
+Disallow: /ask
+Disallow: /docs
+Disallow: /openapi.json
 
-# === PREVENT INDEXATION OF TECH ROUTES (BUT ALLOW CRAWLING OF ASSETS) ===
-Disallow: /ui/*.html
-Allow: /ui/static/
-
-# === AI / SCRAPING BOTS BLOCK ===
+# === AI / SCRAPING BOTS ===
 User-agent: GPTBot
 Disallow: /
 
