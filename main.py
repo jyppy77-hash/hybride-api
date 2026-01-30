@@ -318,7 +318,15 @@ def ask(payload: AskPayload):
             status_code=500,
             detail="Internal engine error"
         )
+# =========================
+# Bing Webmaster Tools verification
+# =========================
 
+from fastapi.responses import FileResponse
+
+@app.get("/BingSiteAuth.xml")
+def bing_auth():
+    return FileResponse("BingSiteAuth.xml")
 
 # =========================
 # API Tirages (Cloud SQL)
