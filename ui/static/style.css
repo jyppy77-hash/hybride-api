@@ -4346,3 +4346,153 @@ body.theme-night .footer-legal a {
     opacity: 1;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   FIX: Night-mode — Exploration de grilles & composants générateur
+   Correctifs pour éléments hardcodés en couleurs light-mode
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* --- Generator badge (hardcoded light blue → dark theme) --- */
+body.theme-night .generator-badge {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(99, 102, 241, 0.12) 100%);
+    border-color: rgba(59, 130, 246, 0.25);
+}
+
+body.theme-night .badge-text {
+    color: #60a5fa;
+}
+
+/* --- Generator card (standalone, hors .loto-page) --- */
+body.theme-night .generator-card {
+    background: linear-gradient(135deg, var(--theme-bg-card) 0%, var(--theme-bg-card-alt) 100%);
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.06),
+        0 0 80px rgba(59, 130, 246, 0.08),
+        0 0 120px rgba(139, 92, 246, 0.05);
+}
+
+/* --- Form labels (hardcoded #374151 → themed) --- */
+body.theme-night .generator-form .form-group label {
+    color: var(--theme-text-primary);
+}
+
+/* --- Premium input dark adaptation --- */
+body.theme-night .premium-input {
+    background: var(--theme-bg-input);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: var(--theme-text-primary);
+}
+
+body.theme-night .premium-input:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15);
+}
+
+/* --- Count buttons dark adaptation --- */
+body.theme-night .count-btn {
+    background: var(--theme-bg-input);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: var(--theme-text-secondary);
+}
+
+body.theme-night .count-btn:hover {
+    border-color: #60a5fa;
+    background: rgba(96, 165, 250, 0.08);
+}
+
+body.theme-night .count-btn.active {
+    background: linear-gradient(135deg, #3b82f6, #6366f1);
+    color: white;
+    border-color: transparent;
+}
+
+/* --- Helper text --- */
+body.theme-night .helper-text {
+    color: var(--theme-text-muted);
+}
+
+/* --- CTA urgency band (hardcoded yellow → dark amber) --- */
+body.theme-night .cta-urgency {
+    background: linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, rgba(245, 158, 11, 0.08) 100%);
+    border-color: rgba(234, 179, 8, 0.2);
+}
+
+body.theme-night .urgency-text {
+    color: #fbbf24;
+}
+
+body.theme-night .urgency-text strong {
+    color: #fcd34d;
+}
+
+/* --- Data depth badge (hardcoded light blue → dark) --- */
+body.theme-night .data-depth {
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(96, 165, 250, 0.1) 100%);
+    color: #60a5fa;
+}
+
+/* --- Mini FAQ section (hardcoded light gray → dark) --- */
+body.theme-night .mini-faq-section {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.02) 100%);
+}
+
+/* --- FAQ question buttons in dark mode --- */
+body.theme-night .mini-faq-container .faq-question {
+    color: var(--theme-text-primary);
+}
+
+body.theme-night .mini-faq-container .faq-answer p {
+    color: var(--theme-text-secondary);
+}
+
+/* --- Trust band (hardcoded light → dark) --- */
+body.theme-night .trust-band {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.theme-night .trust-label {
+    color: var(--theme-text-secondary);
+}
+
+body.theme-night .trust-separator {
+    color: rgba(255, 255, 255, 0.15);
+}
+
+/* --- Secondary tools section (hardcoded border → dark) --- */
+body.theme-night .secondary-tools {
+    border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+/* --- Btn see more (FAQ link) --- */
+body.theme-night .btn-see-more {
+    border-color: rgba(255, 255, 255, 0.12);
+    color: var(--theme-text-secondary);
+}
+
+body.theme-night .btn-see-more:hover {
+    border-color: #60a5fa;
+    color: #60a5fa;
+}
+
+/* --- Result card dark adaptation --- */
+body.theme-night .result-card {
+    background: var(--theme-bg-card);
+}
+
+/* --- Date error --- */
+body.theme-night .date-error {
+    color: #f87171 !important;
+}
+
+/* --- Info boxes in subpages (hardcoded light backgrounds) --- */
+body.theme-night .info-box,
+body.theme-night [style*="background: #fef3c7"] {
+    background: rgba(245, 158, 11, 0.1) !important;
+}
+
+/* --- Card component dark bg --- */
+body.theme-night .card {
+    background: var(--theme-bg-card);
+}
+
