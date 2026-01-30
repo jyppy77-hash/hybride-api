@@ -26,7 +26,8 @@
 
 /* Mode sombre */
 body.night .legal-page,
-body[data-theme="night"] .legal-page {
+body[data-theme="night"] .legal-page,
+body.theme-night .legal-page {
     --legal-text-color: #e5e7eb;
     --legal-heading-color: #f9fafb;
     --legal-link-color: #60a5fa;
@@ -699,7 +700,8 @@ body[data-theme="night"] .legal-page {
 }
 
 body.night .cookie-settings-panel,
-body[data-theme="night"] .cookie-settings-panel {
+body[data-theme="night"] .cookie-settings-panel,
+body.theme-night .cookie-settings-panel {
     background: #1f2937;
     color: #e5e7eb;
 }

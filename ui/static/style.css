@@ -90,27 +90,35 @@ body.theme-night {
     --theme-bg-header: linear-gradient(180deg, #0f172a 0%, #1e1b4b 100%);
     /* Générateur harmonisé (nuit: indigo foncé continu) */
     --theme-bg-generator: linear-gradient(180deg, #1e1b4b 0%, #0f172a 40%, #1e1b4b 100%);
-    --theme-bg-card: #ffffff;
-    --theme-bg-card-alt: #f8fafc;
-    --theme-bg-input: #ffffff;
+    --theme-bg-card: #1e293b;
+    --theme-bg-card-alt: #1a2332;
+    --theme-bg-input: #0f172a;
     --theme-bg-hover: rgba(255, 255, 255, 0.05);
 
-    --theme-text-primary: #1f2937;
-    --theme-text-secondary: #6b7280;
-    --theme-text-muted: #9ca3af;
+    --theme-text-primary: #e2e8f0;
+    --theme-text-secondary: #94a3b8;
+    --theme-text-muted: #64748b;
     --theme-text-on-dark: rgba(255, 255, 255, 0.95);
     --theme-text-on-dark-muted: rgba(255, 255, 255, 0.7);
 
-    --theme-border: #e5e7eb;
-    --theme-border-light: rgba(255, 255, 255, 0.1);
-    --theme-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-    --theme-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.2);
-    --theme-shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.3);
+    --theme-border: rgba(255, 255, 255, 0.1);
+    --theme-border-light: rgba(255, 255, 255, 0.06);
+    --theme-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --theme-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --theme-shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.5);
 
     /* État badge */
     --theme-badge-bg: rgba(16, 185, 129, 0.15);
     --theme-badge-border: rgba(16, 185, 129, 0.4);
     --theme-badge-text: #10b981;
+
+    /* Compatibilité anciennes variables (override :root hardcodées) */
+    --text-dark: #e2e8f0;
+    --bg-white: #1e293b;
+    --bg-light: #162032;
+    --bg-secondary: #1a2332;
+    --bg-tertiary: #162032;
+    --bg-primary: #1e293b;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -200,9 +208,9 @@ body.theme-day {
     background: var(--theme-bg-generator);
 }
 
-/* Container sans padding-top */
+/* Container avec espacement pour le hub */
 .loto-page .loto-container {
-    padding-top: 0;
+    padding-top: 24px;
 }
 
 /* Header avec padding-bottom réduit pour coller au générateur */
@@ -211,27 +219,63 @@ body.theme-day {
     margin-bottom: 0;
 }
 
-/* Générateur collé au header (0 espace) et pleine largeur visuelle */
+/* Générateur intégré comme module (plus hero pleine largeur) */
 .loto-page .generator-hero {
-    margin: 0 calc(-1 * var(--app-padding-x));
-    padding-top: 0;
-    border-radius: 0 0 32px 32px;
+    margin: 0;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+/* Masquer les effets décoratifs hero */
+.loto-page .generator-hero::before,
+.loto-page .generator-hero::after,
+.loto-page .generator-hero .scan-line,
+.loto-page .generator-hero .data-particles {
+    display: none;
+}
+
+/* Card module standard (plus carte flottante hero) */
+.loto-page .generator-card {
+    padding: 32px 28px;
+    box-shadow: var(--theme-shadow);
+    border: 1px solid var(--theme-border);
+    border-radius: var(--radius-lg);
+    background: var(--theme-bg-card);
+}
+
+/* Header discret, aligné à gauche */
+.loto-page .generator-header {
+    text-align: left;
+    margin-bottom: 24px;
+}
+
+.loto-page .generator-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0;
 }
 
 /* Responsive loto-page */
 @media (max-width: 768px) {
     .loto-page .generator-hero {
-        margin: 0 -20px;
-        padding-top: 0;
-        border-radius: 0 0 24px 24px;
+        margin: 0;
+        padding: 0;
+        border-radius: 0;
+    }
+    .loto-page .generator-card {
+        padding: 24px 20px;
     }
 }
 
 @media (max-width: 480px) {
     .loto-page .generator-hero {
-        margin: 0 -16px;
-        padding-top: 0;
-        border-radius: 0 0 20px 20px;
+        margin: 0;
+        padding: 0;
+        border-radius: 0;
+    }
+    .loto-page .generator-card {
+        padding: 20px 16px;
     }
 }
 
@@ -1552,14 +1596,14 @@ details summary:hover {
 
 /* Card de grille */
 .grid-visual-card {
-    background: white;
+    background: var(--theme-bg-card);
     border-radius: 16px;
     padding: 24px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
     animation: gridFadeInUp 0.6s ease-out;
     animation-fill-mode: both;
-    border: 1px solid rgba(0, 0, 0, 0.05);
+    border: 1px solid var(--theme-border);
 }
 
 .grid-visual-card:hover {
@@ -2691,14 +2735,14 @@ a.back-link-dark:hover {
 .stats-hero-title {
     font-size: 32px;
     font-weight: 800;
-    color: #1f2937;
+    color: var(--theme-text-primary);
     margin-bottom: 10px;
     letter-spacing: -0.5px;
 }
 
 .stats-hero-subtitle {
     font-size: 16px;
-    color: #6b7280;
+    color: var(--theme-text-secondary);
     font-weight: 500;
 }
 
@@ -2712,11 +2756,11 @@ a.back-link-dark:hover {
 
 /* Card individuelle */
 .stat-card {
-    background: white;
+    background: var(--theme-bg-card);
     border-radius: 16px;
     padding: 30px 20px;
     text-align: center;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    box-shadow: var(--theme-shadow);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
@@ -2785,7 +2829,7 @@ a.back-link-dark:hover {
 .stat-number {
     font-size: 56px;
     font-weight: 900;
-    color: #1f2937;
+    color: var(--theme-text-primary);
     margin-bottom: 8px;
     line-height: 1;
     letter-spacing: -2px;
@@ -2800,7 +2844,7 @@ a.back-link-dark:hover {
 .stat-label {
     font-size: 13px;
     font-weight: 700;
-    color: #4b5563;
+    color: var(--theme-text-secondary);
     letter-spacing: 1px;
     text-transform: uppercase;
     margin-bottom: 8px;
@@ -2809,7 +2853,7 @@ a.back-link-dark:hover {
 /* Détail */
 .stat-detail {
     font-size: 12px;
-    color: #9ca3af;
+    color: var(--theme-text-muted);
     font-weight: 500;
 }
 
@@ -2830,7 +2874,7 @@ a.back-link-dark:hover {
 
 .stats-footer-text {
     font-size: 14px;
-    color: #6b7280;
+    color: var(--theme-text-secondary);
     font-weight: 500;
 }
 
@@ -3212,14 +3256,14 @@ a.back-link-dark:hover {
 .generator-title {
     font-size: 36px;
     font-weight: 800;
-    color: #1f2937;
+    color: var(--theme-text-primary);
     margin-bottom: 12px;
     letter-spacing: -1px;
 }
 
 .generator-subtitle {
     font-size: 16px;
-    color: #6b7280;
+    color: var(--theme-text-secondary);
     margin: 0;
 }
 
@@ -3328,7 +3372,7 @@ a.back-link-dark:hover {
     text-align: center;
     margin-top: 16px;
     font-size: 13px;
-    color: #9ca3af;
+    color: var(--theme-text-muted);
     margin-bottom: 0;
 }
 
@@ -3415,9 +3459,9 @@ a.back-link-dark:hover {
     align-items: center;
     gap: 16px;
     padding: 20px 24px;
-    background: white;
+    background: var(--theme-bg-card);
     border-radius: 14px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--theme-border);
     text-decoration: none;
     transition: all 0.3s ease;
     cursor: pointer;
@@ -3667,13 +3711,13 @@ a.back-link-dark:hover {
 .secondary-header h3 {
     font-size: 18px;
     font-weight: 600;
-    color: #6b7280;
+    color: var(--theme-text-secondary);
     margin-bottom: 6px;
 }
 
 .secondary-header p {
     font-size: 13px;
-    color: #9ca3af;
+    color: var(--theme-text-muted);
 }
 
 /* Cards outils - version subordonnee */
@@ -3682,18 +3726,18 @@ a.back-link-dark:hover {
     align-items: center;
     gap: 14px;
     padding: 16px 20px;
-    background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+    background: var(--theme-bg-card-alt);
     border-radius: 12px;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--theme-border);
     text-decoration: none;
     transition: all 0.3s ease;
     cursor: pointer;
 }
 
 .tool-card-mini:hover {
-    background: white;
-    border-color: #d1d5db;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    background: var(--theme-bg-card);
+    border-color: var(--theme-border);
+    box-shadow: var(--theme-shadow);
     transform: translateX(2px);
 }
 
@@ -3711,25 +3755,25 @@ a.back-link-dark:hover {
 .tool-mini-content h4 {
     font-size: 15px;
     font-weight: 600;
-    color: #4b5563;
+    color: var(--theme-text-primary);
     margin: 0 0 4px 0;
 }
 
 .tool-mini-content p {
     font-size: 12px;
-    color: #9ca3af;
+    color: var(--theme-text-muted);
     margin: 0;
     line-height: 1.4;
 }
 
 .tool-mini-arrow {
     font-size: 16px;
-    color: #d1d5db;
+    color: var(--theme-text-muted);
     transition: all 0.3s ease;
 }
 
 .tool-card-mini:hover .tool-mini-arrow {
-    color: #9ca3af;
+    color: var(--theme-text-secondary);
     transform: translateX(2px);
 }
 
@@ -3869,13 +3913,13 @@ a.back-link-dark:hover {
 .mini-faq-header h3 {
     font-size: 22px;
     font-weight: 700;
-    color: #1f2937;
+    color: var(--theme-text-primary);
     margin-bottom: 8px;
 }
 
 .mini-faq-header p {
     font-size: 14px;
-    color: #6b7280;
+    color: var(--theme-text-secondary);
     margin: 0;
 }
 
@@ -3885,10 +3929,10 @@ a.back-link-dark:hover {
 }
 
 .mini-faq-container .faq-item {
-    background: white;
+    background: var(--theme-bg-card);
     margin-bottom: 12px;
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    box-shadow: var(--theme-shadow);
 }
 
 .mini-faq-container .faq-question {
@@ -3914,7 +3958,7 @@ a.back-link-dark:hover {
     align-items: center;
     gap: 8px;
     padding: 12px 24px;
-    background: white;
+    background: var(--theme-bg-card);
     border: 2px solid var(--border);
     border-radius: 10px;
     color: var(--text-secondary);

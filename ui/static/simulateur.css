@@ -241,6 +241,7 @@
     border: 2px solid var(--border);
     border-radius: 50%;
     background: var(--bg-white);
+    color: var(--text-dark);
     font-size: 1.1rem;
     font-weight: 600;
     cursor: pointer;
