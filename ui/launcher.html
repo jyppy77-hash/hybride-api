@@ -1,73 +1,94 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>LotoIA - Analyse et génération de grilles du Loto par IA</title>
-    <meta name="description" content="LotoIA analyse les tirages du Loto avec l'IA et propose des outils d'analyse statistique et de génération de grilles. Gratuit et pédagogique.">
+<title>LotoIA – Plateforme d’analyse statistique du Loto</title>
+<meta name="description" content="LotoIA est une plateforme d’analyse statistique du Loto. Explorez les données, analysez des grilles et comprenez les probabilités grâce à un moteur algorithmique pédagogique.">
 
-    <link rel="canonical" href="https://lotoia.fr/">
+<link rel="canonical" href="https://lotoia.fr/">
 
-    <!-- Favicon -->
-    <link rel="icon" href="/favicon.ico" type="image/x-icon">
-    <link rel="icon" href="/ui/static/favicon.svg" type="image/svg+xml">
-    <link rel="shortcut icon" href="/favicon.ico">
+<!-- Favicon -->
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<link rel="icon" href="/ui/static/favicon.svg" type="image/svg+xml">
+<link rel="shortcut icon" href="/favicon.ico">
 
-    <!-- Open Graph -->
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="LotoIA">
-    <meta property="og:locale" content="fr_FR">
-    <meta property="og:title" content="LotoIA - Analyse et génération de grilles du Loto par IA">
-    <meta property="og:description" content="Outil d'analyse statistique du Loto basé sur l'IA, avec génération de grilles et simulateur pédagogique.">
-    <meta property="og:url" content="https://lotoia.fr/">
-    <meta property="og:image" content="https://lotoia.fr/ui/static/og-image.png">
+<!-- Open Graph -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="LotoIA">
+<meta property="og:locale" content="fr_FR">
+<meta property="og:title" content="LotoIA – Plateforme d’analyse statistique du Loto">
+<meta property="og:description" content="Plateforme d’analyse statistique du Loto basée sur un moteur algorithmique, permettant l’exploration de grilles et la compréhension des probabilités.">
+<meta property="og:url" content="https://lotoia.fr/">
+<meta property="og:image" content="https://lotoia.fr/ui/static/og-image.png">
 
-    <!-- Twitter Card -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="LotoIA - Analyse et génération de grilles du Loto par IA">
-    <meta name="twitter:description" content="Analyse statistique du Loto par IA et génération de grilles. Gratuit et pédagogique.">
-    <meta name="twitter:image" content="https://lotoia.fr/ui/static/og-image.png">
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="LotoIA – Plateforme d’analyse statistique du Loto">
+<meta name="twitter:description" content="Plateforme d’analyse statistique du Loto basée sur un moteur algorithmique, permettant l’exploration de grilles et la compréhension des probabilités.">
+<meta name="twitter:image" content="https://lotoia.fr/ui/static/og-image.png">
 
-    <!-- JSON-LD Schema.org - SoftwareApplication -->
-    <script type="application/ld+json">
+<!-- JSON-LD Schema.org - SoftwareApplication -->
+<script type="application/ld+json">
 {
   "@context": "https://schema.org",
-  "@type": "SoftwareApplication",
-  "name": "LotoIA",
-  "url": "https://lotoia.fr",
-  "applicationCategory": "UtilitiesApplication",
-  "operatingSystem": "Web Browser",
-
-  "description": "Outil d'analyse statistique du Loto basé sur l'IA, avec génération de grilles et simulateur pédagogique.",
-
-  "image": "https://lotoia.fr/ui/static/og-image.png",
-
-  "license": "https://lotoia.fr/ui/mentions-legales.html",
-  "isAccessibleForFree": true,
-
-  "offers": {
-    "@type": "Offer",
-    "price": "0",
-    "priceCurrency": "EUR",
-    "availability": "https://schema.org/InStock"
-  },
-
-  "featureList": [
-    "Analyse statistique des tirages du Loto",
-    "Analyse de grilles personnalisées",
-    "Génération de grilles assistée par IA",
-    "Simulateur de probabilités",
-    "Statistiques et historique des tirages"
-  ],
-
-  "publisher": {
-    "@type": "Organization",
-    "name": "LotoIA",
-    "url": "https://lotoia.fr"
-  }
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://lotoia.fr/#website",
+      "name": "LotoIA",
+      "url": "https://lotoia.fr",
+      "inLanguage": "fr-FR",
+      "description": "Plateforme d’analyse statistique du Loto basée sur un moteur algorithmique."
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://lotoia.fr/#software",
+      "name": "LotoIA",
+      "url": "https://lotoia.fr",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Web Browser",
+      "description": "Plateforme d’analyse statistique du Loto basée sur un moteur algorithmique, permettant l’exploration de grilles et la compréhension des probabilités.",
+      "image": "https://lotoia.fr/ui/static/og-image.png",
+      "license": "https://lotoia.fr/ui/mentions-legales.html",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR",
+        "availability": "https://schema.org/InStock"
+      },
+      "featureList": [
+        "Analyse statistique des tirages du Loto",
+        "Analyse de grilles personnalisées",
+        "Exploration et analyse de combinaisons statistiques",
+        "Simulateur de probabilités",
+        "Statistiques et historique des tirages"
+      ],
+      "publisher": {
+        "@type": "Organization",
+        "@id": "https://lotoia.fr/#organization",
+        "name": "LotoIA",
+        "url": "https://lotoia.fr"
+      }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://lotoia.fr/#organization",
+      "name": "LotoIA",
+      "url": "https://lotoia.fr",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://lotoia.fr/ui/static/og-image.png"
+      }
+    }
+  ]
 }
 </script>
+
+
+
 
 
     <style>
@@ -426,7 +447,7 @@
 
         <div class="engines-grid">
             <!-- Loto France - ACTIF -->
-            <a href="/ui/loto.html" class="engine-card active">
+            <a href="/accueil" class="engine-card active">
                 <span class="engine-icon">🎯</span>
                 <h2 class="engine-name">Loto France</h2>
                 <span class="engine-status status-active">Actif</span>

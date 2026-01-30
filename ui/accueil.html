@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LotoIA - Plateforme d'analyse statistique du Loto | Moteur HYBRIDE</title>
+    <meta name="description" content="LotoIA est une plateforme d'analyse statistique du Loto. Analysez vos grilles, explorez des combinaisons et comprenez les tendances historiques avec le moteur HYBRIDE_OPTIMAL_V1.">
+    <link rel="canonical" href="https://lotoia.fr/accueil">
+
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/ui/static/favicon.svg" type="image/svg+xml">
+    <link rel="shortcut icon" href="/favicon.ico">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LotoIA">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:title" content="LotoIA - Plateforme d'analyse statistique du Loto">
+    <meta property="og:description" content="Analysez vos grilles, explorez des combinaisons et comprenez les tendances historiques du Loto avec le moteur HYBRIDE_OPTIMAL_V1.">
+    <meta property="og:url" content="https://lotoia.fr/accueil">
+    <meta property="og:image" content="https://lotoia.fr/ui/static/og-image.png">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="LotoIA - Plateforme d'analyse statistique du Loto">
+    <meta name="twitter:description" content="Analysez vos grilles, explorez des combinaisons et comprenez les tendances historiques du Loto.">
+    <meta name="twitter:image" content="https://lotoia.fr/ui/static/og-image.png">
+
+    <!-- JSON-LD Schema.org -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      "name": "LotoIA - Accueil",
+      "url": "https://lotoia.fr/accueil",
+      "description": "Plateforme d'analyse statistique du Loto basee sur le moteur HYBRIDE_OPTIMAL_V1. Analyse de grilles, exploration de combinaisons et statistiques historiques.",
+      "isPartOf": {
+        "@type": "WebSite",
+        "name": "LotoIA",
+        "url": "https://lotoia.fr"
+      },
+      "mainEntity": {
+        "@type": "SoftwareApplication",
+        "name": "LotoIA",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Web",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "EUR"
+        }
+      }
+    }
+    </script>
+
+    <link rel="stylesheet" href="/ui/static/style.css">
+    <link rel="stylesheet" href="/ui/static/legal.css">
+    <!-- Theme script (en premier pour eviter le flash) -->
+    <script src="/ui/static/theme.js"></script>
+    <!-- Analytics (charge apres consentement RGPD) -->
+    <script src="/ui/static/analytics.js" defer></script>
+
+    <style>
+        /* =================================================================
+           ACCUEIL - PAGE CONCEPTUELLE PEDAGOGIQUE
+           ================================================================= */
+
+        .accueil-page {
+            min-height: 100vh;
+        }
+
+        /* ---- HERO ---- */
+        .hero-section {
+            background: var(--theme-bg-header);
+            color: var(--theme-text-on-dark);
+            padding: 60px 20px 80px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: background 0.4s ease;
+        }
+
+        .hero-section::before {
+            content: '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            line-height: 2.2;
+            color: rgba(255, 255, 255, 0.03);
+            word-wrap: break-word;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .hero-section::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.10) 0%, transparent 35%),
+                radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.06) 0%, transparent 50%);
+            pointer-events: none;
+            animation: heroBreath 8s ease-in-out infinite;
+            z-index: 1;
+        }
+
+        @keyframes heroBreath {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 10;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .hero-title {
+            font-size: 2.4rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+        }
+
+        .hero-title span {
+            color: #10b981;
+        }
+
+        .hero-subtitle {
+            font-size: 1.15rem;
+            color: rgba(255, 255, 255, 0.75);
+            margin-bottom: 40px;
+            line-height: 1.6;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .hero-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 2px solid transparent;
+        }
+
+        .hero-btn-primary {
+            background: #10b981;
+            color: white;
+            border-color: #10b981;
+        }
+
+        .hero-btn-primary:hover {
+            background: #059669;
+            border-color: #059669;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+        }
+
+        .hero-btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .hero-btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.4);
+            transform: translateY(-3px);
+        }
+
+        .hero-btn-tertiary {
+            background: rgba(255, 255, 255, 0.06);
+            color: rgba(255, 255, 255, 0.85);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .hero-btn-tertiary:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: translateY(-3px);
+        }
+
+        /* ---- MAIN CONTENT CONTAINER ---- */
+        .accueil-container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 24px 60px;
+        }
+
+        /* ---- SECTION COMMUNE ---- */
+        .accueil-section {
+            margin-top: 48px;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .section-header h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--theme-text-on-dark);
+            margin-bottom: 8px;
+        }
+
+        .section-header p {
+            font-size: 1rem;
+            color: rgba(255, 255, 255, 0.6);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.5;
+        }
+
+        /* ---- SECTION PEDAGOGIQUE ---- */
+        .pedagogy-card {
+            background: var(--theme-bg-card);
+            border: 1px solid var(--theme-border);
+            border-radius: 16px;
+            padding: 36px 32px;
+            box-shadow: var(--theme-shadow);
+        }
+
+        .pedagogy-card h3 {
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: var(--theme-text-primary);
+            margin-bottom: 16px;
+        }
+
+        .pedagogy-card p {
+            font-size: 0.95rem;
+            color: var(--theme-text-primary);
+            line-height: 1.7;
+            margin-bottom: 12px;
+            opacity: 0.85;
+        }
+
+        .pedagogy-card p:last-child {
+            margin-bottom: 0;
+        }
+
+        .pedagogy-highlight {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.1);
+            color: #059669;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.88rem;
+        }
+
+        body.theme-night .pedagogy-highlight {
+            color: #34d399;
+        }
+
+        /* ---- OUTILS CARDS ---- */
+        .tools-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .tool-card {
+            background: var(--theme-bg-card);
+            border: 1px solid var(--theme-border);
+            border-radius: 16px;
+            padding: 28px 24px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--theme-shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+            border-color: #10b981;
+        }
+
+        .tool-card-icon {
+            font-size: 2.2rem;
+            margin-bottom: 16px;
+        }
+
+        .tool-card h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--theme-text-primary);
+            margin-bottom: 8px;
+        }
+
+        .tool-card p {
+            font-size: 0.9rem;
+            color: var(--theme-text-primary);
+            opacity: 0.7;
+            line-height: 1.5;
+            flex-grow: 1;
+        }
+
+        .tool-card-arrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 16px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #10b981;
+            transition: gap 0.3s ease;
+        }
+
+        .tool-card:hover .tool-card-arrow {
+            gap: 10px;
+        }
+
+        /* ---- SECTION HYBRIDE (moteur) ---- */
+        .hybride-section {
+            background: var(--theme-bg-card);
+            border: 1px solid var(--theme-border);
+            border-radius: 16px;
+            padding: 40px 36px;
+            box-shadow: var(--theme-shadow);
+        }
+
+        .hybride-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 40px;
+            align-items: center;
+        }
+
+        .hybride-text h3 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--theme-text-primary);
+            margin-bottom: 14px;
+        }
+
+        .hybride-text p {
+            font-size: 0.95rem;
+            color: var(--theme-text-primary);
+            opacity: 0.85;
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+
+        .hybride-features {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 20px 0;
+        }
+
+        .hybride-features li {
+            position: relative;
+            padding: 8px 0 8px 28px;
+            font-size: 0.92rem;
+            color: var(--theme-text-primary);
+            opacity: 0.85;
+            line-height: 1.5;
+        }
+
+        .hybride-features li::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 14px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+        }
+
+        .hybride-features li + li {
+            border-top: 1px solid var(--theme-border);
+        }
+
+        .hybride-note {
+            font-size: 0.85rem;
+            opacity: 0.55;
+            font-style: italic;
+            margin-bottom: 0;
+        }
+
+        .hybride-visual {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .hybride-image {
+            width: 100%;
+            height: auto;
+            max-width: 340px;
+            object-fit: contain;
+            display: block;
+            border-radius: 12px;
+            background: rgba(0, 0, 0, 0.03);
+            padding: 10px;
+            border: 1px solid var(--theme-border);
+        }
+
+        body.theme-night .hybride-image {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        /* ---- DISCLAIMER ---- */
+        .disclaimer-section {
+            margin-top: 48px;
+            text-align: center;
+            padding: 28px 24px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+        }
+
+        body.theme-day .disclaimer-section {
+            background: rgba(0, 0, 0, 0.03);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        .disclaimer-section p {
+            font-size: 0.88rem;
+            color: rgba(255, 255, 255, 0.55);
+            line-height: 1.6;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        body.theme-day .disclaimer-section p {
+            color: rgba(0, 0, 0, 0.5);
+        }
+
+        .disclaimer-section p + p {
+            margin-top: 8px;
+        }
+
+        .disclaimer-icon {
+            font-size: 1.4rem;
+            display: block;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        /* ---- DAY MODE — contraste titres sections ---- */
+        body.theme-day .section-header h2 {
+            color: #1e293b;
+        }
+
+        body.theme-day .section-header p {
+            color: #64748b;
+        }
+
+        /* ---- RESPONSIVE ---- */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 40px 16px 60px;
+            }
+
+            .hero-title {
+                font-size: 1.7rem;
+            }
+
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+
+            .hero-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .hero-btn {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+
+            .accueil-container {
+                padding: 0 16px 40px;
+            }
+
+            .section-header h2 {
+                font-size: 1.3rem;
+            }
+
+            .tools-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .pedagogy-card {
+                padding: 24px 20px;
+            }
+
+            .hybride-section {
+                padding: 28px 20px;
+            }
+
+            .hybride-grid {
+                grid-template-columns: 1fr;
+                gap: 28px;
+                text-align: center;
+            }
+
+            .hybride-visual {
+                order: -1;
+            }
+
+            .hybride-image {
+                max-width: 280px;
+                margin: 0 auto;
+            }
+
+            .hybride-features li {
+                text-align: left;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero-title {
+                font-size: 1.4rem;
+            }
+
+            .hero-btn {
+                padding: 12px 20px;
+                font-size: 0.92rem;
+            }
+        }
+    </style>
+</head>
+<body class="accueil-page">
+    <!-- Barre de navigation moteur -->
+    <nav class="engine-nav-subpage">
+        <a href="/" class="engine-nav-btn">
+            <span class="nav-arrow">←</span>
+            <span class="nav-text">Moteurs</span>
+        </a>
+        <div class="engine-nav-right">
+            <span class="engine-badge">Loto France</span>
+            <button id="theme-switch" class="theme-switch" title="Changer de theme">
+                <span class="icon-day">☀️</span>
+                <span class="icon-night">🌙</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         SECTION 1 — HERO
+         ══════════════════════════════════════════════════════════════ -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <h1 class="hero-title">LotoIA — <span>moteur d'analyse statistique</span> du Loto</h1>
+            <p class="hero-subtitle">Comprendre les tirages, explorer les grilles, analyser les probabilites.</p>
+            <div class="hero-actions">
+                <a href="/ui/simulateur.html" class="hero-btn hero-btn-primary">
+                    Analyser une grille
+                </a>
+                <a href="/ui/loto.html" class="hero-btn hero-btn-secondary">
+                    Explorer des grilles
+                </a>
+                <a href="/ui/statistiques.html" class="hero-btn hero-btn-tertiary">
+                    Voir les statistiques
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <div class="accueil-container">
+
+        <!-- ══════════════════════════════════════════════════════════════
+             SECTION 2 — EXPLICATION PEDAGOGIQUE
+             ══════════════════════════════════════════════════════════════ -->
+        <section class="accueil-section">
+            <div class="section-header">
+                <h2>Qu'est-ce que LotoIA ?</h2>
+                <p>Une plateforme d'analyse algorithmique des tirages du Loto</p>
+            </div>
+            <div class="pedagogy-card">
+                <h3>Analyse statistique, pas prediction</h3>
+                <p>
+                    LotoIA est une plateforme d'analyse statistique qui exploite les donnees historiques des tirages
+                    officiels du Loto pour fournir des outils d'exploration et de comprehension.
+                    Elle ne predit pas les resultats et ne promet aucun gain.
+                </p>
+                <p>
+                    Le moteur <span class="pedagogy-highlight">HYBRIDE_OPTIMAL_V1</span> combine une analyse
+                    long terme des frequences historiques avec les tendances recentes pour produire des indicateurs
+                    statistiques sur les numeros et les grilles.
+                </p>
+                <p>
+                    Chaque grille est evaluee selon des criteres objectifs : equilibre pair/impair, repartition
+                    des numeros chauds et froids, ecart entre les numeros, et conformite statistique globale.
+                    Ces criteres sont bases sur l'observation des tirages passes, et non sur une capacite
+                    de prediction.
+                </p>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             SECTION 3 — DIFFERENCE ENTRE LES OUTILS
+             ══════════════════════════════════════════════════════════════ -->
+        <section class="accueil-section">
+            <div class="section-header">
+                <h2>Trois outils, trois approches</h2>
+                <p>Chaque outil repond a un usage different de l'analyse statistique</p>
+            </div>
+            <div class="tools-cards">
+                <a href="/ui/simulateur.html" class="tool-card">
+                    <span class="tool-card-icon">🎯</span>
+                    <h3>Analyse</h3>
+                    <p>
+                        Composez votre propre grille et obtenez un audit statistique complet :
+                        score de conformite, equilibre, numeros chauds et froids, suggestions d'amelioration.
+                    </p>
+                    <span class="tool-card-arrow">Analyser une grille →</span>
+                </a>
+
+                <a href="/ui/loto.html" class="tool-card">
+                    <span class="tool-card-icon">🧠</span>
+                    <h3>Exploration</h3>
+                    <p>
+                        Le moteur HYBRIDE genere des combinaisons statistiquement equilibrees
+                        a partir des donnees historiques. Explorez differentes grilles et comparez leurs scores.
+                    </p>
+                    <span class="tool-card-arrow">Explorer des grilles →</span>
+                </a>
+
+                <a href="/ui/statistiques.html" class="tool-card">
+                    <span class="tool-card-icon">📊</span>
+                    <h3>Statistiques</h3>
+                    <p>
+                        Consultez les frequences de chaque numero, les tendances recentes,
+                        les numeros les plus et les moins tires, et l'historique complet des tirages.
+                    </p>
+                    <span class="tool-card-arrow">Voir les statistiques →</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             SECTION 4 — MOTEUR HYBRIDE (layout SaaS)
+             ══════════════════════════════════════════════════════════════ -->
+        <section class="accueil-section">
+            <div class="section-header">
+                <h2>Comment fonctionne le moteur ?</h2>
+                <p>Le moteur HYBRIDE_OPTIMAL_V1 en un coup d'oeil</p>
+            </div>
+            <div class="hybride-section">
+                <div class="hybride-grid">
+                    <div class="hybride-text">
+                        <h3>Moteur HYBRIDE_OPTIMAL_V1</h3>
+                        <p>
+                            HYBRIDE est un moteur d'analyse algorithmique concu pour explorer
+                            les donnees historiques des tirages officiels du Loto.
+                            Il combine une ponderation long terme (60%) et court terme (40%)
+                            pour produire des indicateurs statistiques fiables.
+                        </p>
+                        <ul class="hybride-features">
+                            <li>Analyse des frequences d'apparition de chaque numero</li>
+                            <li>Evaluation de grilles via un score de conformite sur 100</li>
+                            <li>Exploration de combinaisons selon des modeles statistiques</li>
+                            <li>Identification des numeros chauds, froids et neutres</li>
+                        </ul>
+                        <p class="hybride-note">
+                            HYBRIDE est un outil d'analyse statistique descriptive. Il ne predit pas les resultats et ne garantit aucun gain.
+                        </p>
+                    </div>
+                    <div class="hybride-visual">
+                        <img src="/ui/static/og-image.png"
+                             alt="Moteur HYBRIDE_OPTIMAL_V1 - Analyse statistique du Loto"
+                             class="hybride-image"
+                             loading="lazy"
+                             width="1536"
+                             height="1024">
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             SECTION 5 — DISCLAIMER
+             ══════════════════════════════════════════════════════════════ -->
+        <div class="disclaimer-section">
+            <span class="disclaimer-icon">⚠️</span>
+            <p>
+                <strong>LotoIA est un outil d'analyse statistique.</strong><br>
+                Il ne s'agit pas d'un site de jeu et il ne permet pas de predire les resultats.
+            </p>
+            <p>
+                Les donnees fournies sont a titre informatif et pedagogique.
+                Jouer comporte des risques : endettement, isolement, dependance.
+                Appelez le 09 74 75 13 13 (appel non surtaxe).
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-nav">
+                <a href="/">Moteurs</a>
+                <span class="footer-sep">•</span>
+                <a href="/accueil" class="active">Accueil</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/simulateur.html">Analyse</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/loto.html">Exploration</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/statistiques.html">Statistiques</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/news.html">Actualites</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/faq.html">FAQ</a>
+            </div>
+            <div class="footer-legal">
+                <a href="/ui/mentions-legales.html">Mentions legales</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/politique-confidentialite.html">Confidentialite</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/politique-cookies.html">Cookies</a>
+                <span class="footer-sep">•</span>
+                <a href="/ui/disclaimer.html">Avertissements</a>
+            </div>
+            <p class="footer-brand">LotoIA.fr v1.0</p>
+            <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dependance. Appelez le 09 74 75 13 13 (appel non surtaxe).</p>
+            <p class="footer-help">Interdiction de jeu aux mineurs. <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
+            <div class="credits">
+                <p class="dev-by">Developpe par <strong>JyppY</strong></p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Bouton Scroll to Top -->
+    <button id="scroll-to-top" class="scroll-to-top" aria-label="Retour en haut">
+        ↑
+    </button>
+
+    <script src="/ui/static/scroll.js"></script>
+    <script src="/ui/static/cookie-consent.js"></script>
+</body>
+</html>
