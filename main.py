@@ -74,6 +74,42 @@ async def add_cache_headers(request: Request, call_next):
 
     return response
 
+
+# =========================
+# SEO: 301 redirect /ui/*.html → clean URL
+# =========================
+
+_UI_HTML_TO_CLEAN_URL = {
+    "launcher.html": "/",
+    "accueil.html": "/accueil",
+    "loto.html": "/loto",
+    "simulateur.html": "/simulateur",
+    "statistiques.html": "/statistiques",
+    "faq.html": "/faq",
+    "news.html": "/news",
+    "historique.html": "/historique",
+    "methodologie.html": "/methodologie",
+    "moteur.html": "/moteur",
+    "disclaimer.html": "/disclaimer",
+    "mentions-legales.html": "/mentions-legales",
+    "politique-confidentialite.html": "/politique-confidentialite",
+    "politique-cookies.html": "/politique-cookies",
+}
+
+
+@app.middleware("http")
+async def redirect_ui_html_to_seo(request: Request, call_next):
+    """301 redirect /ui/<page>.html → clean URL (SEO dedup)."""
+    path = request.url.path
+    if path.startswith("/ui/") and path.endswith(".html"):
+        filename = path[len("/ui/"):]
+        clean_url = _UI_HTML_TO_CLEAN_URL.get(filename)
+        if clean_url:
+            query = f"?{request.url.query}" if request.url.query else ""
+            return RedirectResponse(url=f"{clean_url}{query}", status_code=301)
+    return await call_next(request)
+
+
 import os
 
 @app.get("/debug-env", include_in_schema=False)
