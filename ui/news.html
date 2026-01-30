@@ -7,7 +7,6 @@
     <meta name="description" content="Suivez les dernières actualités de LotoIA : mises à jour du moteur HYBRIDE_OPTIMAL_V1, nouvelles fonctionnalités et évolutions de la plateforme.">
     <link rel="canonical" href="https://lotoia.fr/news">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="LotoIA">
     <meta property="og:locale" content="fr_FR">
@@ -15,20 +14,17 @@
     <meta property="og:description" content="Mises à jour du moteur, nouvelles fonctionnalités et évolutions de la plateforme.">
     <meta property="og:url" content="https://lotoia.fr/news">
     <meta property="og:image" content="https://lotoia.fr/static/og-image.png">
-    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Actualités LotoIA">
     <meta name="twitter:description" content="Mises à jour et nouveautés du moteur LotoIA.">
     <meta name="twitter:image" content="https://lotoia.fr/static/og-image.png">
     <link rel="stylesheet" href="/ui/static/style.css">
     <link rel="stylesheet" href="/ui/static/legal.css">
-    <!-- Theme script (en premier pour éviter le flash) -->
+    <link rel="stylesheet" href="/ui/static/chatbot.css">
     <script src="/ui/static/theme.js"></script>
-    <!-- Analytics (charge apres consentement RGPD) -->
     <script src="/ui/static/analytics.js" defer></script>
 </head>
 <body class="subpage">
-    <!-- Barre de navigation moteur -->
     <nav class="engine-nav-subpage">
         <a href="/accueil" class="engine-nav-btn">
             <span class="nav-arrow">←</span>
@@ -43,7 +39,6 @@
         </div>
     </nav>
 
-    <!-- Header Premium -->
     <header class="page-header">
         <div class="header-content">
             <h1><span>📰</span> Actualités</h1>
@@ -53,10 +48,23 @@
 
     <div class="container subpage-container">
 
-        <!-- Section Actualites -->
         <section class="news-section">
 
-            <!-- Post 0 - Chatbot HYBRIDE -->
+            <article class="news-post featured">
+                <div class="news-meta">
+                    <span class="news-date">15 février 2026</span>
+                    <span class="news-tag news-tag-update">Mise à jour v1.1</span>
+                </div>
+                <h2 class="news-title"><span>🚀</span> Optimisation du moteur HYBRIDE_OPTIMAL_V1.1</h2>
+                <div class="news-content">
+                    <p>Déploiement de la version <strong>1.1</strong> du moteur de calcul. Cette mise à jour majeure introduit une nouvelle couche de filtrage des cycles de répétition courts et améliore la vélocité du traitement des données historiques.</p>
+                    <ul>
+                        <li><strong>Précision accrue</strong> : Ajustement des coefficients de pondération sur les tirages récents.</li>
+                        <li><strong>Performance</strong> : Optimisation des requêtes asynchrones pour une génération de grilles encore plus fluide.</li>
+                    </ul>
+                </div>
+            </article>
+
             <article class="news-post">
                 <div class="news-meta">
                     <span class="news-date">À partir du 10 février 2026</span>
@@ -76,7 +84,6 @@
                 </div>
             </article>
 
-            <!-- Post 0 - Consolidation juridique -->
             <article class="news-post">
                 <div class="news-meta">
                     <span class="news-date">30 janvier 2026</span>
@@ -98,7 +105,6 @@
                 </div>
             </article>
 
-            <!-- Post 1 - Mise en production -->
             <article class="news-post">
                 <div class="news-meta">
                     <span class="news-date">18 janvier 2026</span>
@@ -135,7 +141,6 @@
                 </div>
             </article>
 
-            <!-- Post 2 - Infrastructure & SEO -->
             <article class="news-post">
                 <div class="news-meta">
                     <span class="news-date">À partir du 22 janvier 2026</span>
@@ -156,7 +161,6 @@
                 </div>
             </article>
 
-            <!-- Post 3 - Moteur -->
             <article class="news-post">
                 <div class="news-meta">
                     <span class="news-date">10 janvier 2026</span>
@@ -173,7 +177,6 @@
                 </div>
             </article>
 
-            <!-- Post 4 - Roadmap -->
             <article class="news-post">
                 <div class="news-meta">
                     <span class="news-date">5 janvier 2026</span>
@@ -245,6 +248,28 @@
         </footer>
     </div>
 
+    <div id="chatbot-ui" class="chatbot-minimized">
+        <div id="chatbot-header" role="button" aria-expanded="false" tabindex="0">
+            <div class="chatbot-status-pulse"></div>
+            <span class="chatbot-title"><span>🤖</span> Assistant HYBRIDE</span>
+            <span id="chatbot-toggle-icon">▲</span>
+        </div>
+        <div id="chatbot-window" class="hidden">
+            <div id="chatbot-messages">
+                <div class="msg ai-msg">
+                    <span class="msg-author">HYBRIDE</span>
+                    <p>Bonjour. Je suis votre assistant pédagogique. Comment puis-je vous éclairer sur le fonctionnement de nos algorithmes ?</p>
+                </div>
+            </div>
+            <div class="chatbot-input-area">
+                <input type="text" id="chatbot-input" placeholder="Posez votre question..." aria-label="Question">
+                <button id="chatbot-send-btn">Envoyer</button>
+            </div>
+            <div class="chatbot-disclaimer">Analyse statistique • Aucune promesse de gain</div>
+        </div>
+    </div>
+
+    <script src="/ui/static/chatbot.js"></script>
     <script src="/ui/static/cookie-consent.js"></script>
 </body>
 </html>
