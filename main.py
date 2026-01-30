@@ -65,7 +65,8 @@ async def add_cache_headers(request: Request, call_next):
             response.headers["Cache-Control"] = "public, max-age=2592000"  # 30 jours
 
     # Cache court pour pages HTML (SEO routes)
-    seo_routes = ["/", "/loto", "/statistiques", "/simulateur", "/faq", "/news",
+    seo_routes = ["/", "/accueil", "/loto", "/loto/analyse", "/loto/exploration",
+                  "/loto/statistiques", "/statistiques", "/simulateur", "/faq", "/news",
                   "/historique", "/methodologie", "/moteur", "/disclaimer",
                   "/mentions-legales", "/politique-confidentialite", "/politique-cookies"]
     if path.endswith(".html") or path in seo_routes:
@@ -165,7 +166,11 @@ async def favicon():
 # Mapping URL → fichier HTML
 SEO_PAGES = {
     "/": "launcher.html",
-    "/loto": "loto.html",
+    "/accueil": "accueil.html",
+    "/loto": "accueil.html",
+    "/loto/analyse": "simulateur.html",
+    "/loto/exploration": "loto.html",
+    "/loto/statistiques": "statistiques.html",
     "/statistiques": "statistiques.html",
     "/simulateur": "simulateur.html",
     "/faq": "faq.html",
@@ -185,16 +190,44 @@ def serve_page(filename: str):
     return FileResponse(f"ui/{filename}", media_type="text/html")
 
 
-# Page d'accueil (launcher)
+# Page d'accueil (launcher / choix des moteurs)
 @app.get("/")
 async def page_launcher():
     return serve_page("launcher.html")
 
 
-# Pages principales
+# =========================
+# Routes Loto France (SaaS)
+# =========================
+
+@app.get("/accueil")
+async def page_accueil():
+    """Accueil Loto France (fallback pour liens existants)."""
+    return serve_page("accueil.html")
+
+
 @app.get("/loto")
 async def page_loto():
+    """Hub Loto France — page d'accueil du moteur."""
+    return serve_page("accueil.html")
+
+
+@app.get("/loto/analyse")
+async def page_loto_analyse():
+    """Loto France — Analyse de grille (simulateur)."""
+    return serve_page("simulateur.html")
+
+
+@app.get("/loto/exploration")
+async def page_loto_exploration():
+    """Loto France — Exploration de grilles (generateur)."""
     return serve_page("loto.html")
+
+
+@app.get("/loto/statistiques")
+async def page_loto_statistiques():
+    """Loto France — Statistiques et historique."""
+    return serve_page("statistiques.html")
 
 
 @app.get("/statistiques")
