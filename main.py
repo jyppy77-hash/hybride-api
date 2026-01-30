@@ -203,7 +203,7 @@ async def favicon():
 SEO_PAGES = {
     "/": "launcher.html",
     "/accueil": "accueil.html",
-    "/loto": "accueil.html",
+    "/loto": "loto.html",
     "/loto/analyse": "simulateur.html",
     "/loto/exploration": "loto.html",
     "/loto/statistiques": "statistiques.html",
@@ -244,8 +244,8 @@ async def page_accueil():
 
 @app.get("/loto")
 async def page_loto():
-    """Hub Loto France — page d'accueil du moteur."""
-    return serve_page("accueil.html")
+    """Loto France — Exploration de grilles (generateur)."""
+    return serve_page("loto.html")
 
 
 @app.get("/loto/analyse")
