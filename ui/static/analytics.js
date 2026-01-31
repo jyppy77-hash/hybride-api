@@ -117,7 +117,11 @@
         },
         productBuffer: [],            // Buffer d'events produit
         productBufferTimer: null,     // Timer flush buffer
-        productWarnShown: false       // Flag warning gtag bloqué (unique)
+        productWarnShown: false,      // Flag warning gtag bloqué (unique)
+
+        // Sponsor analytics v2.5.2 — Engagement state & monetisation
+        engagementState: 'idle',      // idle | exploration | analysis | decision | exit
+        lastProductActionTime: 0      // Timestamp dernière action produit (pour impression_type)
     };
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -631,6 +635,60 @@
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // ENGAGEMENT STATE & SPONSOR METRICS (v2.5.2)
+    // ═══════════════════════════════════════════════════════════════════════════
+    // État d'engagement utilisateur pour enrichissement sponsor CTR/CPC/CPM.
+    // - engagement_state : contexte intentionnel (idle→exploration→analysis→decision→exit)
+    // - click_value : CPC pondéré par intention (decision=3, analysis=2, autre=1)
+    // - impression_type : CPM actif (action produit < 10s) / passif (aucune action récente)
+
+    /**
+     * Met à jour l'état d'engagement utilisateur.
+     * Appelé automatiquement par les events produit (generate_grid, simulate_grid, etc.)
+     * @param {string} newState - idle | exploration | analysis | decision | exit
+     */
+    function updateEngagementState(newState) {
+        const valid = ['idle', 'exploration', 'analysis', 'decision', 'exit'];
+        if (valid.includes(newState)) {
+            state.engagementState = newState;
+            log('Engagement state → ' + newState, 'info', null, 2);
+        }
+    }
+
+    /**
+     * Enregistre le timestamp de la dernière action produit.
+     * Utilisé pour déterminer impression_type (active si < 10s).
+     */
+    function recordProductAction() {
+        state.lastProductActionTime = Date.now();
+    }
+
+    /**
+     * Retourne le click_value pondéré selon l'engagement_state.
+     * Permet un CPC différencié par intention utilisateur.
+     * @returns {number} 1 (exploration/autre) | 2 (analysis) | 3 (decision)
+     */
+    function getClickValue() {
+        switch (state.engagementState) {
+            case 'decision': return 3;
+            case 'analysis': return 2;
+            case 'exploration': return 1;
+            default: return 1;
+        }
+    }
+
+    /**
+     * Retourne le type d'impression (active/passive).
+     * active = une action produit a eu lieu dans les 10 dernières secondes.
+     * passive = aucune action récente → impression moins qualifiée.
+     * @returns {string} 'active' | 'passive'
+     */
+    function getImpressionType() {
+        if (state.lastProductActionTime === 0) return 'passive';
+        return (Date.now() - state.lastProductActionTime) <= 10000 ? 'active' : 'passive';
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // EVENTS PRODUIT (CORE LOTOIA)
     // ═══════════════════════════════════════════════════════════════════════════
 
@@ -645,6 +703,8 @@
          * @param {string} params.targetDate - Date cible du tirage
          */
         generateGrid: function(params = {}) {
+            updateEngagementState('exploration');
+            recordProductAction();
             sendGA4Event('generate_grid', {
                 event_category: 'engagement',
                 engine: params.engine || CONFIG.defaultEngine,
@@ -661,6 +721,7 @@
          * Track rafraichissement du moteur
          */
         refreshEngine: function(params = {}) {
+            recordProductAction();
             sendGA4Event('refresh_engine', {
                 event_category: 'engagement',
                 engine: params.engine || CONFIG.defaultEngine,
@@ -672,6 +733,8 @@
          * Track consultation des resultats
          */
         viewResults: function(params = {}) {
+            updateEngagementState('analysis');
+            recordProductAction();
             sendGA4Event('view_results', {
                 event_category: 'engagement',
                 engine: params.engine || CONFIG.defaultEngine,
@@ -697,6 +760,8 @@
          * Track simulation de grille personnalisee
          */
         simulateGrid: function(params = {}) {
+            updateEngagementState('analysis');
+            recordProductAction();
             sendGA4Event('simulate_grid', {
                 event_category: 'engagement',
                 engine: params.engine || CONFIG.defaultEngine,
@@ -709,6 +774,7 @@
          * Track consultation statistiques
          */
         viewStats: function(params = {}) {
+            recordProductAction();
             sendGA4Event('view_stats', {
                 event_category: 'content',
                 stats_section: params.section || 'general',
@@ -720,6 +786,7 @@
          * Track recherche historique
          */
         searchHistory: function(params = {}) {
+            recordProductAction();
             sendGA4Event('search_history', {
                 event_category: 'search',
                 search_date: params.date || null,
@@ -731,6 +798,8 @@
          * Track copie de grille
          */
         copyGrid: function(params = {}) {
+            updateEngagementState('decision');
+            recordProductAction();
             sendGA4Event('copy_grid', {
                 event_category: 'engagement',
                 grid_id: params.gridId || 'unknown',
@@ -791,6 +860,7 @@
          * Track fin de session (beforeunload)
          */
         sessionEnd: function() {
+            updateEngagementState('exit');
             const sessionDuration = Math.round((Date.now() - state.pageLoadTime) / 1000);
 
             // Utiliser sendBeacon pour garantir l'envoi
@@ -854,7 +924,10 @@
                 sponsor_id: params.sponsorId || 'unknown',
                 engine: params.engine || CONFIG.defaultEngine,
                 placement: params.placement || 'popup_console',
-                page: getCurrentPage()
+                page: getCurrentPage(),
+                // v2.5.2 — Engagement state + CPM actif/passif
+                engagement_state: state.engagementState,
+                impression_type: getImpressionType()
             });
         },
 
@@ -869,7 +942,10 @@
                 engine: params.engine || CONFIG.defaultEngine,
                 placement: params.placement || 'popup_console',
                 destination_url: params.url || null,
-                page: getCurrentPage()
+                page: getCurrentPage(),
+                // v2.5.2 — Engagement state + CPC pondéré
+                engagement_state: state.engagementState,
+                click_value: getClickValue()
             });
         },
 
@@ -1206,74 +1282,6 @@
          */
         flush: function() {
             flushProductBuffer();
-        },
-
-        // ═══════════════════════════════════════════════════════════════════════
-        // WRAPPERS LEGACY - Rétrocompatibilité avec ProductEvents
-        // ═══════════════════════════════════════════════════════════════════════
-
-        /**
-         * Wrapper legacy: generateGrid (redirige vers ProductEvents.generateGrid)
-         * @param {Object} params - Paramètres de génération
-         */
-        generateGrid: function(params = {}) {
-            ProductEvents.generateGrid(params);
-        },
-
-        /**
-         * Wrapper legacy: refreshEngine (redirige vers ProductEvents.refreshEngine)
-         * @param {Object} params - Paramètres de refresh
-         */
-        refreshEngine: function(params = {}) {
-            ProductEvents.refreshEngine(params);
-        },
-
-        /**
-         * Wrapper legacy: viewResults (redirige vers ProductEvents.viewResults)
-         * @param {Object} params - Paramètres de consultation
-         */
-        viewResults: function(params = {}) {
-            ProductEvents.viewResults(params);
-        },
-
-        /**
-         * Wrapper legacy: apiCall (redirige vers ProductEvents.apiCall)
-         * @param {Object} params - Paramètres d'appel API
-         */
-        apiCall: function(params = {}) {
-            ProductEvents.apiCall(params);
-        },
-
-        /**
-         * Wrapper legacy: simulateGrid (redirige vers ProductEvents.simulateGrid)
-         * @param {Object} params - Paramètres de simulation
-         */
-        simulateGrid: function(params = {}) {
-            ProductEvents.simulateGrid(params);
-        },
-
-        /**
-         * Wrapper legacy: viewStats (redirige vers ProductEvents.viewStats)
-         * @param {Object} params - Paramètres de consultation stats
-         */
-        viewStats: function(params = {}) {
-            ProductEvents.viewStats(params);
-        },
-
-        /**
-         * Wrapper legacy: searchHistory (redirige vers ProductEvents.searchHistory)
-         * @param {Object} params - Paramètres de recherche
-         */
-        searchHistory: function(params = {}) {
-            ProductEvents.searchHistory(params);
-        },
-
-        /**
-         * Wrapper legacy: copyGrid (redirige vers ProductEvents.copyGrid)
-         * @param {Object} params - Paramètres de copie
-         */
-        copyGrid: function(params = {}) {
-            ProductEvents.copyGrid(params);
         }
     };
 
@@ -1282,6 +1290,8 @@
     (function setupProductBufferFlushOnExit() {
         function safeFlush() {
             try {
+                // v2.5.2 — Marquer engagement 'exit' avant flush final
+                state.engagementState = 'exit';
                 if (state.productBuffer && state.productBuffer.length > 0) {
                     flushProductBuffer();
                 }
@@ -1577,10 +1587,13 @@
             }
         },
 
-        // Product Analytics Engine (v2.5+) - NOUVEAU
-        product: ProductEngine,
+        // Events produit legacy (rétrocompatibilité API historique)
+        product: ProductEvents,
 
-        // Events produit legacy (rétrocompatibilité)
+        // Product Analytics Engine (v2.5+) - nouveau moteur premium
+        productEngine: ProductEngine,
+
+        // Alias legacy (compatibilité, si besoin explicite)
         productLegacy: ProductEvents,
 
         // Events UX
@@ -1659,6 +1672,18 @@
     // Exposer l'API globale
     window.LotoIAAnalytics = PublicAPI;
 
+    // Alias de compatibilité (legacy → engine) : ne jamais écraser les fonctions legacy.
+    // Si, pour une raison quelconque, ProductEvents n'est pas exposé, on bridge vers ProductEngine.
+    if (window.LotoIAAnalytics &&
+        window.LotoIAAnalytics.productEngine &&
+        window.LotoIAAnalytics.product &&
+        typeof window.LotoIAAnalytics.product.generateGrid !== 'function') {
+
+        window.LotoIAAnalytics.product.generateGrid = function(params) {
+            window.LotoIAAnalytics.productEngine.track('lotoia_generate_grid', params || {});
+        };
+    }
+
     // Retrocompatibilite avec l'ancienne API
     window.LotoIA = window.LotoIA || {};
     window.LotoIA.Analytics = {
@@ -1685,3 +1710,4 @@
     }
 
 })(window, document);
+
