@@ -208,18 +208,21 @@ body.theme-day {
     background: var(--theme-bg-generator);
 }
 
-/* Container avec espacement pour le hub */
+/* Container — jointure header → carte (aligné /statistiques) */
 .loto-page .loto-container {
-    padding-top: 24px;
+    margin-top: -50px;
+    padding-top: 0;
+    position: relative;
+    z-index: 10;
 }
 
 /* =================================================================
    LOTO PAGE — Hero header (pattern aligné sur accueil)
    ================================================================= */
 
-/* Hero étendu avec boutons d'action */
+/* Hero étendu avec boutons d'action — padding-bottom élargi pour jointure */
 .loto-hero-header {
-    padding: 40px 20px 48px;
+    padding: 40px 20px 80px;
     margin-bottom: 0;
 }
 
@@ -292,12 +295,12 @@ body.theme-day {
     display: none;
 }
 
-/* Card module standard */
+/* Card module standard — ombre alignée /statistiques */
 .loto-page .generator-card {
     padding: 32px 28px;
-    box-shadow: var(--theme-shadow);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.10);
     border: 1px solid var(--theme-border);
-    border-radius: var(--radius-lg);
+    border-radius: 16px;
     background: var(--theme-bg-card);
     margin-top: 0;
 }
@@ -323,7 +326,7 @@ body.theme-day {
 /* Responsive loto-page */
 @media (max-width: 768px) {
     .loto-hero-header {
-        padding: 28px 16px 36px;
+        padding: 28px 16px 70px;
     }
 
     .loto-hero-actions {
@@ -351,7 +354,7 @@ body.theme-day {
 
 @media (max-width: 480px) {
     .loto-hero-header {
-        padding: 24px 16px 32px;
+        padding: 24px 16px 60px;
     }
 
     .loto-page .generator-hero {
