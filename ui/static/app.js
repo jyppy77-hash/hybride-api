@@ -1223,12 +1223,19 @@ function displayGridsWithAds(grids, metadata, targetDate) {
     // Grilles + pubs intercalées
     grids.forEach((grid, index) => {
         const score = grid.score || 0;
-        const stars = grid.note_etoiles || Math.min(5, Math.ceil(score / 20));
 
-        // Déterminer la couleur du score
-        let scoreClass = 'score-medium';
-        if (score >= 80) scoreClass = 'score-high';
-        else if (score < 50) scoreClass = 'score-low';
+        // Déterminer le niveau descriptif de convergence (non évaluatif)
+        let convergenceLabel, convergenceClass;
+        if (score >= 80) {
+            convergenceLabel = 'Forte convergence';
+            convergenceClass = 'convergence-elevated';
+        } else if (score >= 50) {
+            convergenceLabel = 'Convergence modérée';
+            convergenceClass = 'convergence-moderate';
+        } else {
+            convergenceLabel = 'Convergence partielle';
+            convergenceClass = 'convergence-partial';
+        }
 
         html += `
             <div class="grid-visual-card" style="animation-delay: ${index * 0.15}s">
@@ -1237,22 +1244,18 @@ function displayGridsWithAds(grids, metadata, targetDate) {
                         <span class="grid-number-label">Grille</span>
                         <span class="grid-number-value">#${index + 1}</span>
                     </div>
-                    <div class="grid-score ${scoreClass}">
-                        <span class="score-value">${score}</span>
-                        <span class="score-max">/100</span>
+                    <div class="grid-convergence-indicator ${convergenceClass}">
+                        <span class="convergence-label">Profil</span>
+                        <span class="convergence-value">${convergenceLabel}</span>
                     </div>
                 </div>
 
                 <div class="grid-visual-numbers">
-                    ${grid.nums.map(n => `
+                    ${[...grid.nums].sort((a, b) => a - b).map(n => `
                         <div class="visual-ball main">${String(n).padStart(2, '0')}</div>
                     `).join('')}
                     <div class="visual-ball separator">+</div>
                     <div class="visual-ball chance">${String(grid.chance).padStart(2, '0')}</div>
-                </div>
-
-                <div class="grid-visual-stars">
-                    ${'<span class="star filled">★</span>'.repeat(stars)}${'<span class="star empty">☆</span>'.repeat(5 - stars)}
                 </div>
 
                 <div class="grid-visual-badges">
@@ -1360,12 +1363,19 @@ function displayGridsVisual(grids, metadata, targetDate) {
     // Pour chaque grille
     grids.forEach((grid, index) => {
         const score = grid.score || 0;
-        const stars = grid.note_etoiles || Math.min(5, Math.ceil(score / 20));
 
-        // Déterminer la couleur du score
-        let scoreClass = 'score-medium';
-        if (score >= 80) scoreClass = 'score-high';
-        else if (score < 50) scoreClass = 'score-low';
+        // Déterminer le niveau descriptif de convergence (non évaluatif)
+        let convergenceLabel, convergenceClass;
+        if (score >= 80) {
+            convergenceLabel = 'Forte convergence';
+            convergenceClass = 'convergence-elevated';
+        } else if (score >= 50) {
+            convergenceLabel = 'Convergence modérée';
+            convergenceClass = 'convergence-moderate';
+        } else {
+            convergenceLabel = 'Convergence partielle';
+            convergenceClass = 'convergence-partial';
+        }
 
         html += `
             <div class="grid-visual-card" style="animation-delay: ${index * 0.15}s">
@@ -1374,22 +1384,18 @@ function displayGridsVisual(grids, metadata, targetDate) {
                         <span class="grid-number-label">Grille</span>
                         <span class="grid-number-value">#${index + 1}</span>
                     </div>
-                    <div class="grid-score ${scoreClass}">
-                        <span class="score-value">${score}</span>
-                        <span class="score-max">/100</span>
+                    <div class="grid-convergence-indicator ${convergenceClass}">
+                        <span class="convergence-label">Profil</span>
+                        <span class="convergence-value">${convergenceLabel}</span>
                     </div>
                 </div>
 
                 <div class="grid-visual-numbers">
-                    ${grid.nums.map(n => `
+                    ${[...grid.nums].sort((a, b) => a - b).map(n => `
                         <div class="visual-ball main">${String(n).padStart(2, '0')}</div>
                     `).join('')}
                     <div class="visual-ball separator">+</div>
                     <div class="visual-ball chance">${String(grid.chance).padStart(2, '0')}</div>
-                </div>
-
-                <div class="grid-visual-stars">
-                    ${'<span class="star filled">★</span>'.repeat(stars)}${'<span class="star empty">☆</span>'.repeat(5 - stars)}
                 </div>
 
                 <div class="grid-visual-badges">
@@ -1454,7 +1460,9 @@ function displayNumbers(numbers, chanceNumber = null) {
     const grid = document.getElementById('numbers-grid');
     grid.innerHTML = '';
 
-    numbers.forEach(num => {
+    // Tri croissant visuel uniquement — données brutes côté moteur/API
+    const sorted = [...numbers].sort((a, b) => a - b);
+    sorted.forEach(num => {
         const ball = document.createElement('div');
         ball.className = 'number-ball';
         ball.textContent = num;
@@ -1508,8 +1516,8 @@ function displayExplanations(grid) {
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px;">
     `;
 
-    // Explications pour chaque numéro principal
-    for (let num of grid.nums) {
+    // Explications pour chaque numéro principal (tri croissant visuel)
+    for (let num of [...grid.nums].sort((a, b) => a - b)) {
         const data = numbers[num];
         html += `
             <div style="background: white; padding: 16px; border-radius: 8px; border-left: 4px solid var(--primary);">
@@ -1630,7 +1638,7 @@ function handleCopy() {
         textToCopy = currentResult.analysis;
     } else if (currentResult.grids) {
         const firstGrid = currentResult.grids[0];
-        textToCopy = `Numéros: ${firstGrid.nums.join(' - ')} + Chance: ${firstGrid.chance}`;
+        textToCopy = `Numéros: ${[...firstGrid.nums].sort((a, b) => a - b).join(' - ')} + Chance: ${firstGrid.chance}`;
     } else if (currentResult.stats) {
         textToCopy = JSON.stringify(currentResult.stats, null, 2);
     }

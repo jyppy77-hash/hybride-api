@@ -213,11 +213,68 @@ body.theme-day {
     padding-top: 24px;
 }
 
-/* Header avec padding-bottom réduit pour coller au générateur */
-.loto-page .page-header {
-    padding-bottom: 0;
+/* =================================================================
+   LOTO PAGE — Hero header (pattern aligné sur accueil)
+   ================================================================= */
+
+/* Hero étendu avec boutons d'action */
+.loto-hero-header {
+    padding: 40px 20px 48px;
     margin-bottom: 0;
 }
+
+.loto-hero-header .header-content {
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+/* Boutons d'action hero (pattern accueil) */
+.loto-hero-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 28px;
+    flex-wrap: wrap;
+}
+
+.loto-hero-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: rgba(255, 255, 255, 0.8);
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+.loto-hero-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.loto-hero-btn-active {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.5);
+    color: #fff;
+}
+
+.loto-hero-btn-active:hover {
+    background: rgba(16, 185, 129, 0.3);
+}
+
+.loto-hero-btn-icon {
+    font-size: 1rem;
+}
+
+/* =================================================================
+   LOTO PAGE — Générateur (module secondaire, centré)
+   ================================================================= */
 
 /* Générateur intégré comme module (plus hero pleine largeur) */
 .loto-page .generator-hero {
@@ -235,19 +292,22 @@ body.theme-day {
     display: none;
 }
 
-/* Card module standard (plus carte flottante hero) */
+/* Card module standard */
 .loto-page .generator-card {
     padding: 32px 28px;
     box-shadow: var(--theme-shadow);
     border: 1px solid var(--theme-border);
     border-radius: var(--radius-lg);
     background: var(--theme-bg-card);
+    margin-top: 0;
 }
 
-/* Header discret, aligné à gauche */
+/* Header centré (aligné pattern accueil) */
 .loto-page .generator-header {
-    text-align: left;
-    margin-bottom: 24px;
+    text-align: center;
+    margin-bottom: 28px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--theme-border);
 }
 
 .loto-page .generator-title {
@@ -256,24 +316,50 @@ body.theme-day {
     letter-spacing: 0;
 }
 
+.loto-page .generator-badge {
+    justify-content: center;
+}
+
 /* Responsive loto-page */
 @media (max-width: 768px) {
+    .loto-hero-header {
+        padding: 28px 16px 36px;
+    }
+
+    .loto-hero-actions {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .loto-hero-btn {
+        width: 100%;
+        max-width: 280px;
+        justify-content: center;
+    }
+
     .loto-page .generator-hero {
         margin: 0;
         padding: 0;
         border-radius: 0;
     }
+
     .loto-page .generator-card {
         padding: 24px 20px;
     }
 }
 
 @media (max-width: 480px) {
+    .loto-hero-header {
+        padding: 24px 16px 32px;
+    }
+
     .loto-page .generator-hero {
         margin: 0;
         padding: 0;
         border-radius: 0;
     }
+
     .loto-page .generator-card {
         padding: 20px 16px;
     }
@@ -1651,33 +1737,43 @@ details summary:hover {
     color: var(--primary);
 }
 
-/* Score */
-.grid-score {
+/* Indicateur de convergence (descriptif, non évaluatif) */
+.grid-convergence-indicator {
     display: flex;
-    align-items: baseline;
+    flex-direction: column;
+    align-items: flex-end;
     gap: 2px;
 }
 
-.grid-score .score-value {
-    font-size: 2rem;
-    font-weight: 700;
-}
-
-.grid-score .score-max {
-    font-size: 1rem;
+.grid-convergence-indicator .convergence-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
     color: var(--text-muted);
 }
 
-.grid-score.score-high .score-value {
-    color: #27ae60;
+.grid-convergence-indicator .convergence-value {
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 6px;
+    line-height: 1.3;
 }
 
-.grid-score.score-medium .score-value {
-    color: #f39c12;
+.grid-convergence-indicator.convergence-elevated .convergence-value {
+    color: #3949AB;
+    background: rgba(57, 73, 171, 0.08);
 }
 
-.grid-score.score-low .score-value {
-    color: #e74c3c;
+.grid-convergence-indicator.convergence-moderate .convergence-value {
+    color: #5C6BC0;
+    background: rgba(92, 107, 192, 0.08);
+}
+
+.grid-convergence-indicator.convergence-partial .convergence-value {
+    color: #7986CB;
+    background: rgba(121, 134, 203, 0.08);
 }
 
 /* Numéros */
@@ -1725,25 +1821,7 @@ details summary:hover {
     width: 30px;
 }
 
-/* Étoiles */
-.grid-visual-stars {
-    text-align: center;
-    margin: 16px 0;
-}
-
-.grid-visual-stars .star {
-    font-size: 1.5rem;
-    margin: 0 2px;
-}
-
-.grid-visual-stars .star.filled {
-    color: #FFD700;
-    text-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
-}
-
-.grid-visual-stars .star.empty {
-    color: #ddd;
-}
+/* (Étoiles supprimées — remplacées par indicateur de convergence dans le header) */
 
 /* Badges */
 .grid-visual-badges {

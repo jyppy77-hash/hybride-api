@@ -334,14 +334,8 @@ async function analyzeGrid(withPopup = false) {
 function displayResults(data) {
     elements.resultsSection.style.display = 'block';
 
-    // Score gauge
-    updateGauge(data.score);
-
-    // Score number with CountUp animation
-    animateScore(data.score);
-
-    // Stars
-    displayStars(data.note_etoiles);
+    // Indicateur de convergence (descriptif, non évaluatif)
+    displayConvergenceLevel(data.score);
 
     // Comparaison
     document.getElementById('comparaison-text').textContent = data.comparaison;
@@ -363,72 +357,39 @@ function displayResults(data) {
 }
 
 /**
- * Update gauge fill with glow effect
+ * Affiche le niveau de convergence descriptif (non évaluatif, sans score numérique)
  */
-function updateGauge(score) {
-    const gaugeFill = document.getElementById('gauge-fill');
-    const gaugeContainer = document.querySelector('.score-gauge');
+function displayConvergenceLevel(score) {
+    const levelEl = document.getElementById('convergence-level');
+    const container = document.querySelector('.convergence-display');
 
-    // Arc length is about 110 units
-    const fillLength = (score / 100) * 110;
-    gaugeFill.style.strokeDasharray = `${fillLength} 110`;
-
-    // Color and glow class based on score
-    let color, glowClass;
+    let label, levelClass;
     if (score >= 80) {
-        color = '#27ae60';
-        glowClass = 'excellent';
+        label = 'Forte convergence';
+        levelClass = 'convergence-elevated';
     } else if (score >= 60) {
-        color = '#2ecc71';
-        glowClass = 'good';
+        label = 'Convergence modérée';
+        levelClass = 'convergence-moderate';
     } else if (score >= 40) {
-        color = '#f39c12';
-        glowClass = 'medium';
+        label = 'Convergence intermédiaire';
+        levelClass = 'convergence-intermediate';
     } else {
-        color = '#e74c3c';
-        glowClass = 'low';
+        label = 'Convergence partielle';
+        levelClass = 'convergence-partial';
     }
-    gaugeFill.style.stroke = color;
 
-    // Apply glow class
-    gaugeContainer.className = 'score-gauge ' + glowClass;
-}
+    // Appliquer la classe de niveau
+    container.className = 'convergence-display ' + levelClass;
 
-/**
- * Animate score counter (CountUp effect)
- */
-function animateScore(targetScore) {
-    const scoreEl = document.getElementById('score-number');
-    let current = 0;
-    const duration = 1500; // 1.5s
-    const steps = 60;
-    const increment = targetScore / steps;
-    const stepTime = duration / steps;
-
-    const timer = setInterval(() => {
-        current += increment;
-        if (current >= targetScore) {
-            current = targetScore;
-            clearInterval(timer);
-        }
-        scoreEl.textContent = Math.floor(current);
-    }, stepTime);
-}
-
-/**
- * Display stars rating with sparkle animation
- */
-function displayStars(rating) {
-    const container = document.getElementById('stars-display');
-    container.innerHTML = '';
-
-    for (let i = 1; i <= 5; i++) {
-        const star = document.createElement('span');
-        star.className = `star ${i <= rating ? 'filled' : 'empty'}`;
-        star.textContent = '★';
-        star.style.animationDelay = `${i * 0.1}s`;
-        container.appendChild(star);
-    }
+    // Animation de fondu pour le texte
+    levelEl.style.opacity = '0';
+    levelEl.style.transform = 'translateY(8px)';
+    setTimeout(() => {
+        levelEl.textContent = label;
+        levelEl.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        levelEl.style.opacity = '1';
+        levelEl.style.transform = 'translateY(0)';
+    }, 150);
 }
 
 /**
@@ -607,8 +568,9 @@ function displaySelectedGrid(nums, chance) {
     const container = document.getElementById('selected-numbers');
     container.innerHTML = '';
 
-    // Main numbers with staggered animation
-    nums.forEach((n, index) => {
+    // Tri croissant visuel uniquement — données brutes côté moteur/API
+    const sorted = [...nums].sort((a, b) => a - b);
+    sorted.forEach((n, index) => {
         const ball = document.createElement('div');
         ball.className = 'selected-ball main';
         ball.textContent = n;
