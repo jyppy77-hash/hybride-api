@@ -42,13 +42,18 @@
     <!-- Analytics (charge apres consentement RGPD) -->
     <script src="/ui/static/analytics.js" defer></script>
     <style>
-        /* Page premium stats - hérite du châssis unifié (style.css) */
+        /* =================================================================
+           STATISTIQUES — Styles spécifiques
+           Hérite du châssis unifié (style.css) : page-header, loto-hero-header,
+           engine-nav-subpage, loto-hero-actions, loto-hero-btn
+           ================================================================= */
+
         .stats-page {
             min-height: 100vh;
-            /* background géré par style.css (fond bleu nuit global) */
         }
 
-        .page-header {
+        /* ---- Header (complément local au pattern loto-hero-header) ---- */
+        .stats-page .page-header {
             background: var(--theme-bg-header);
             color: var(--theme-text-on-dark);
             padding: 30px 20px 80px;
@@ -58,13 +63,10 @@
             transition: background 0.4s ease;
         }
 
-        .page-header::before {
+        .stats-page .page-header::before {
             content: '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             font-family: 'Courier New', monospace;
             font-size: 12px;
             font-weight: 700;
@@ -76,25 +78,14 @@
             pointer-events: none;
         }
 
-        .page-header::after {
+        .stats-page .page-header::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background-image:
                 radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.12) 0%, transparent 40%),
                 radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.1) 0%, transparent 35%);
             pointer-events: none;
-        }
-
-        .header-nav {
-            max-width: var(--app-max-width, 1140px);
-            margin: 0 auto 24px;
-            text-align: left;
-            position: relative;
-            z-index: 2;
         }
 
         .header-content {
@@ -118,8 +109,8 @@
             color: rgba(255, 255, 255, 0.9);
         }
 
+        /* ---- Container (jointure header → carte) ---- */
         .stats-container {
-            /* Utilise le châssis unifié */
             max-width: var(--app-max-width, 1140px);
             margin: -50px auto 40px;
             padding: 0 var(--app-padding-x, 24px);
@@ -127,19 +118,21 @@
             z-index: 10;
         }
 
+        /* ---- Carte principale (onglets) ---- */
         .tabs-card {
-            background: white;
+            background: var(--theme-bg-card);
+            border: 1px solid var(--theme-border);
             border-radius: 16px;
             padding: 32px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
         }
 
-        /* Styles pour les onglets */
+        /* ---- Onglets ---- */
         .tabs {
             display: flex;
             gap: 8px;
             margin-bottom: 32px;
-            border-bottom: 2px solid var(--border);
+            border-bottom: 2px solid var(--theme-border);
             flex-wrap: wrap;
         }
 
@@ -151,7 +144,7 @@
             cursor: pointer;
             font-size: 1rem;
             font-weight: 600;
-            color: var(--text-muted);
+            color: var(--theme-text-muted);
             transition: all 0.3s ease;
             font-family: inherit;
             display: flex;
@@ -169,7 +162,6 @@
             border-bottom-color: var(--primary);
         }
 
-        /* Contenu des onglets */
         .tab-content {
             display: none;
         }
@@ -179,7 +171,7 @@
             animation: fadeIn 0.4s ease-in;
         }
 
-        /* Styles pour l'analyse par numéro */
+        /* ---- Analyse par numero ---- */
         .number-selector {
             display: flex;
             gap: 12px;
@@ -190,10 +182,12 @@
         .number-selector select {
             padding: 12px 16px;
             font-size: 1.05rem;
-            border: 2px solid var(--border);
+            border: 2px solid var(--theme-border);
             border-radius: 8px;
             font-family: inherit;
             min-width: 120px;
+            background: var(--theme-bg-input, var(--theme-bg-card));
+            color: var(--theme-text-primary);
         }
 
         .number-selector select:focus {
@@ -217,14 +211,14 @@
 
         .stat-card .stat-label {
             font-size: 0.9rem;
-            color: var(--text-muted);
+            color: var(--theme-text-muted);
             margin-bottom: 8px;
         }
 
         .stat-card .stat-value {
             font-size: 1.8rem;
             font-weight: 700;
-            color: var(--text-dark);
+            color: var(--theme-text-primary);
         }
 
         .dates-list {
@@ -238,28 +232,29 @@
         .dates-list h3 {
             font-size: 1.1rem;
             margin-bottom: 16px;
-            color: var(--text-dark);
+            color: var(--theme-text-primary);
         }
 
         .date-item {
             padding: 8px 12px;
-            background: white;
+            background: var(--theme-bg-card);
             border-radius: 4px;
             margin-bottom: 8px;
             font-size: 0.95rem;
+            color: var(--theme-text-primary);
         }
 
         .info-note {
-            background: #E3F2FD;
+            background: rgba(33, 150, 243, 0.08);
             border-left: 4px solid #2196F3;
             padding: 16px;
             border-radius: 8px;
             margin-top: 24px;
             font-size: 0.95rem;
-            color: #0D47A1;
+            color: var(--theme-text-primary);
         }
 
-        /* Historique - styles existants de historique.html */
+        /* ---- Historique ---- */
         .search-form {
             margin-bottom: 24px;
         }
@@ -268,7 +263,7 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: var(--text-dark);
+            color: var(--theme-text-primary);
         }
 
         .search-form .input-group {
@@ -280,9 +275,11 @@
         .search-form input[type="date"] {
             padding: 12px 16px;
             font-size: 1.05rem;
-            border: 2px solid var(--border);
+            border: 2px solid var(--theme-border);
             border-radius: 8px;
             font-family: inherit;
+            background: var(--theme-bg-input, var(--theme-bg-card));
+            color: var(--theme-text-primary);
         }
 
         .search-result {
@@ -290,18 +287,19 @@
             border-radius: 8px;
             padding: 24px;
             margin-top: 24px;
+            color: var(--theme-text-primary);
         }
 
         .search-result.error {
-            background: #FFEBEE;
+            background: rgba(239, 68, 68, 0.08);
             border-left: 4px solid var(--error);
-            color: #B71C1C;
+            color: var(--error);
         }
 
         .search-result.not-found {
-            background: #FFF3E0;
+            background: rgba(245, 124, 0, 0.08);
             border-left: 4px solid #F57C00;
-            color: #E65100;
+            color: #F57C00;
         }
 
         .draw-numbers {
@@ -330,7 +328,7 @@
             box-shadow: 0 4px 8px rgba(255, 215, 0, 0.4);
         }
 
-        /* Styles Top/Flop */
+        /* ---- Top / Flop ---- */
         .topflop-section {
             margin-bottom: 32px;
         }
@@ -338,7 +336,7 @@
         .topflop-section h3 {
             font-size: 1.3rem;
             margin-bottom: 16px;
-            color: var(--text-dark);
+            color: var(--theme-text-primary);
         }
 
         .topflop-section h3.top-title {
@@ -361,7 +359,7 @@
             border-radius: 8px;
             padding: 16px 12px;
             text-align: center;
-            border: 2px solid var(--border);
+            border: 2px solid var(--theme-border);
             transition: all 0.3s ease;
         }
 
@@ -372,12 +370,12 @@
 
         .number-card.top {
             border-color: var(--success);
-            background: linear-gradient(135deg, #E8F5E9 0%, #FFFFFF 100%);
+            background: rgba(16, 185, 129, 0.06);
         }
 
         .number-card.flop {
             border-color: var(--tertiary);
-            background: linear-gradient(135deg, #F5F5F5 0%, #FFFFFF 100%);
+            background: var(--bg-light);
         }
 
         .number-card .number {
@@ -397,10 +395,15 @@
 
         .number-card .count {
             font-size: 0.9rem;
-            color: var(--text-muted);
+            color: var(--theme-text-muted);
         }
 
+        /* ---- Responsive ---- */
         @media (max-width: 768px) {
+            .stats-page .page-header {
+                padding: 28px 16px 70px;
+            }
+
             .numbers-grid {
                 grid-template-columns: repeat(5, 1fr);
                 gap: 8px;
@@ -417,103 +420,25 @@
             .number-card .count {
                 font-size: 0.8rem;
             }
-        }
-        /* Barre navigation moteur */
-        .engine-nav-subpage {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 20px;
-            background: var(--theme-bg-nav);
-            position: relative;
-            z-index: 100;
-            transition: background 0.4s ease;
-        }
 
-        /* Zone droite de la nav (badge + switch) */
-        .engine-nav-subpage .engine-nav-right {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+            .tabs-card {
+                padding: 20px 16px;
+            }
 
-        .engine-nav-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 18px;
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 8px;
-            color: rgba(255, 255, 255, 0.9);
-            text-decoration: none;
-            font-size: 0.95rem;
-            font-weight: 500;
-            transition: all 0.3s ease;
-        }
-
-        .engine-nav-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-            border-color: rgba(255, 255, 255, 0.4);
-            transform: translateX(-4px);
-        }
-
-        .engine-nav-btn .nav-arrow {
-            font-size: 1.1rem;
-            transition: transform 0.3s ease;
-        }
-
-        .engine-nav-btn:hover .nav-arrow {
-            transform: translateX(-3px);
-        }
-
-        .engine-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
-            background: rgba(16, 185, 129, 0.15);
-            border: 1px solid rgba(16, 185, 129, 0.4);
-            border-radius: 20px;
-            color: #10b981;
-            font-size: 0.85rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .engine-badge::before {
-            content: '●';
-            font-size: 0.6rem;
-            animation: pulse-dot 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse-dot {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.4; }
+            .tab {
+                padding: 12px 16px;
+                font-size: 0.9rem;
+            }
         }
 
         @media (max-width: 480px) {
-            .engine-nav-subpage {
-                padding: 10px 15px;
+            .stats-page .page-header {
+                padding: 24px 16px 60px;
             }
 
-            .engine-nav-btn {
-                padding: 8px 14px;
+            .tab {
+                padding: 10px 12px;
                 font-size: 0.85rem;
-            }
-
-            .engine-nav-btn .nav-text {
-                display: none;
-            }
-
-            .engine-nav-btn .nav-arrow {
-                font-size: 1.3rem;
-            }
-
-            .engine-badge {
-                padding: 6px 12px;
-                font-size: 0.75rem;
             }
         }
     </style>
@@ -534,11 +459,25 @@
         </div>
     </nav>
 
-    <!-- Header Premium -->
-    <header class="page-header">
+    <!-- Header Premium — pattern aligné Analyse / Exploration -->
+    <header class="page-header loto-hero-header">
         <div class="header-content">
             <h1><span>📊</span> Statistiques</h1>
             <p class="subtitle">Explorez l'historique complet et analysez les données des tirages.</p>
+            <div class="loto-hero-actions">
+                <a href="/simulateur" class="loto-hero-btn">
+                    <span class="loto-hero-btn-icon">🎯</span>
+                    Analyser une grille
+                </a>
+                <a href="/loto" class="loto-hero-btn">
+                    <span class="loto-hero-btn-icon">🧠</span>
+                    Explorer des grilles
+                </a>
+                <a href="/statistiques" class="loto-hero-btn loto-hero-btn-active">
+                    <span class="loto-hero-btn-icon">📊</span>
+                    Voir les statistiques
+                </a>
+            </div>
         </div>
     </header>
 
@@ -740,16 +679,14 @@
                 .then(data => {
                     if (data.success && data.found) {
                         const draw = data.draw;
+                        // Tri croissant visuel — données brutes côté moteur/API
+                        const sorted = [draw.n1, draw.n2, draw.n3, draw.n4, draw.n5].sort((a, b) => a - b);
                         resultDiv.className = 'search-result';
                         resultDiv.innerHTML = `
                             <h2 style="margin-bottom: 16px; color: var(--primary);">Tirage du ${formatDate(draw.date)}</h2>
                             <p><strong>Numéros gagnants :</strong></p>
                             <div class="draw-numbers">
-                                <div class="draw-number">${draw.n1}</div>
-                                <div class="draw-number">${draw.n2}</div>
-                                <div class="draw-number">${draw.n3}</div>
-                                <div class="draw-number">${draw.n4}</div>
-                                <div class="draw-number">${draw.n5}</div>
+                                ${sorted.map(n => `<div class="draw-number">${n}</div>`).join('')}
                             </div>
                             <p><strong>Numéro Chance :</strong></p>
                             <div class="draw-numbers">

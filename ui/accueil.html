@@ -207,16 +207,22 @@
             transform: translateY(-3px);
         }
 
-        /* ---- MAIN CONTENT CONTAINER ---- */
+        /* ---- MAIN CONTENT CONTAINER (jointure header → carte, aligné /statistiques) ---- */
         .accueil-container {
             max-width: 960px;
-            margin: 0 auto;
+            margin: -50px auto 0;
             padding: 0 24px 60px;
+            position: relative;
+            z-index: 10;
         }
 
         /* ---- SECTION COMMUNE ---- */
         .accueil-section {
             margin-top: 48px;
+        }
+
+        .accueil-section-first {
+            margin-top: 0;
         }
 
         .section-header {
@@ -239,13 +245,31 @@
             line-height: 1.5;
         }
 
-        /* ---- SECTION PEDAGOGIQUE ---- */
+        /* ---- SECTION PEDAGOGIQUE (carte jointe au header) ---- */
         .pedagogy-card {
             background: var(--theme-bg-card);
             border: 1px solid var(--theme-border);
             border-radius: 16px;
             padding: 36px 32px;
-            box-shadow: var(--theme-shadow);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.10);
+        }
+
+        .pedagogy-card .pedagogy-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--theme-text-primary);
+            margin-bottom: 6px;
+            text-align: center;
+        }
+
+        .pedagogy-card .pedagogy-subtitle {
+            font-size: 1rem;
+            color: var(--theme-text-primary);
+            opacity: 0.6;
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 24px;
+            line-height: 1.5;
         }
 
         .pedagogy-card h3 {
@@ -508,6 +532,14 @@
             color: #64748b;
         }
 
+        body.theme-day .pedagogy-card .pedagogy-title {
+            color: #1e293b;
+        }
+
+        body.theme-day .pedagogy-card .pedagogy-subtitle {
+            color: #64748b;
+        }
+
         /* ---- RESPONSIVE ---- */
         @media (max-width: 768px) {
             .hero-section {
@@ -547,6 +579,10 @@
 
             .pedagogy-card {
                 padding: 24px 20px;
+            }
+
+            .pedagogy-card .pedagogy-title {
+                font-size: 1.3rem;
             }
 
             .hybride-section {
@@ -625,14 +661,12 @@
     <div class="accueil-container">
 
         <!-- ══════════════════════════════════════════════════════════════
-             SECTION 2 — EXPLICATION PEDAGOGIQUE
+             SECTION 2 — EXPLICATION PEDAGOGIQUE (carte jointe au header)
              ══════════════════════════════════════════════════════════════ -->
-        <section class="accueil-section">
-            <div class="section-header">
-                <h2>Qu'est-ce que LotoIA ?</h2>
-                <p>Une plateforme d'analyse algorithmique des tirages du Loto</p>
-            </div>
+        <section class="accueil-section accueil-section-first">
             <div class="pedagogy-card">
+                <h2 class="pedagogy-title">Qu'est-ce que LotoIA ?</h2>
+                <p class="pedagogy-subtitle">Une plateforme d'analyse algorithmique des tirages du Loto</p>
                 <h3>Analyse statistique, pas prédiction</h3>
                 <p>
                     LotoIA est une plateforme d'analyse statistique qui exploite les données historiques des tirages
