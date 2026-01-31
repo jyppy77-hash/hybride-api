@@ -1637,8 +1637,12 @@ function handleCopy() {
     if (currentResult.analysis) {
         textToCopy = currentResult.analysis;
     } else if (currentResult.grids) {
-        const firstGrid = currentResult.grids[0];
-        textToCopy = `Numéros: ${[...firstGrid.nums].sort((a, b) => a - b).join(' - ')} + Chance: ${firstGrid.chance}`;
+        textToCopy = currentResult.grids.map((grid, i) => {
+            const nums = [...grid.nums].sort((a, b) => a - b)
+                .map(n => String(n).padStart(2, '0')).join(' ');
+            const chance = String(grid.chance).padStart(2, '0');
+            return `Grille ${i + 1} : ${nums} + ${chance}`;
+        }).join('\n');
     } else if (currentResult.stats) {
         textToCopy = JSON.stringify(currentResult.stats, null, 2);
     }
