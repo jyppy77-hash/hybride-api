@@ -30,7 +30,7 @@
       "description": "Générateur de grilles Loto optimisées par analyse statistique et IA",
       "applicationCategory": "UtilitiesApplication",
       "operatingSystem": "Web",
-      "featureList": ["Génération de grilles", "Analyse statistique", "Numéros chauds/froids", "Score de conformité"],
+      "featureList": ["Génération de grilles", "Analyse statistique", "Numéros chauds/froids", "Indice de convergence"],
       "offers": {
         "@type": "Offer",
         "price": "0",
@@ -38,13 +38,13 @@
       }
     }
     </script>
-    <link rel="stylesheet" href="/ui/static/style.css">
-    <link rel="stylesheet" href="/ui/static/sponsor-popup.css">
-    <link rel="stylesheet" href="/ui/static/legal.css">
+    <link rel="stylesheet" href="/ui/static/style.css?v=3">
+    <link rel="stylesheet" href="/ui/static/sponsor-popup.css?v=3">
+    <link rel="stylesheet" href="/ui/static/legal.css?v=3">
     <!-- Theme script (en premier pour éviter le flash) -->
-    <script src="/ui/static/theme.js"></script>
+    <script src="/ui/static/theme.js?v=3"></script>
     <!-- Analytics (charge apres consentement RGPD) -->
-    <script src="/ui/static/analytics.js" defer></script>
+    <script src="/ui/static/analytics.js?v=3" defer></script>
 </head>
 <body class="loto-page">
     <!-- Barre de navigation moteur -->
@@ -62,53 +62,34 @@
         </div>
     </nav>
 
-    <!-- Header Premium -->
-    <header class="page-header">
+    <!-- ══════════════════════════════════════════════════════════════
+         HERO — Pattern aligné sur accueil (centré, hiérarchie claire)
+         ══════════════════════════════════════════════════════════════ -->
+    <header class="page-header loto-hero-header">
         <div class="header-content">
-            <h1><span>🎯</span> Loto France</h1>
-            <p class="subtitle">Moteur d'analyse statistique — exploration, audit et statistiques</p>
+            <h1><span>🧠</span> Exploration de grilles</h1>
+            <p class="subtitle">Analyse statistique basée sur les tirages officiels FDJ</p>
+            <div class="loto-hero-actions">
+                <a href="/simulateur" class="loto-hero-btn">
+                    <span class="loto-hero-btn-icon">🎯</span>
+                    Analyser une grille
+                </a>
+                <a href="#generator" class="loto-hero-btn loto-hero-btn-active">
+                    <span class="loto-hero-btn-icon">🧠</span>
+                    Explorer des grilles
+                </a>
+                <a href="/statistiques" class="loto-hero-btn">
+                    <span class="loto-hero-btn-icon">📊</span>
+                    Voir les statistiques
+                </a>
+            </div>
         </div>
     </header>
 
     <div class="loto-container">
-        <!-- ══════════════════════════════════════════════════════════════
-             HUB — CHOIX DES OUTILS
-             ══════════════════════════════════════════════════════════════ -->
-        <section class="secondary-tools" style="border-top: none; opacity: 1; margin-top: 0; padding-top: 0;">
-            <div class="secondary-header">
-                <h3>Choisissez votre outil</h3>
-                <p>Trois approches pour explorer le Loto</p>
-            </div>
-            <div class="tools-grid-compact" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
-                <a href="/simulateur" class="tool-card-mini">
-                    <div class="tool-mini-icon">🎯</div>
-                    <div class="tool-mini-content">
-                        <h4>Analyser une grille</h4>
-                        <p>Composez votre grille et obtenez un audit complet avec score</p>
-                    </div>
-                    <span class="tool-mini-arrow">→</span>
-                </a>
-                <a href="#generator" class="tool-card-mini" style="border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.06);">
-                    <div class="tool-mini-icon">🧠</div>
-                    <div class="tool-mini-content">
-                        <h4>Explorer des grilles</h4>
-                        <p>Générez des combinaisons avec le moteur IA</p>
-                    </div>
-                    <span class="tool-mini-arrow">↓</span>
-                </a>
-                <a href="/statistiques" class="tool-card-mini">
-                    <div class="tool-mini-icon">📊</div>
-                    <div class="tool-mini-content">
-                        <h4>Voir les statistiques</h4>
-                        <p>Numéros chauds, froids et historique des tirages</p>
-                    </div>
-                    <span class="tool-mini-arrow">→</span>
-                </a>
-            </div>
-        </section>
 
         <!-- ══════════════════════════════════════════════════════════════
-             ZONE PRIMAIRE - GENERATEUR (Centre de gravite)
+             ZONE PRIMAIRE - GENERATEUR (étape secondaire après choix hero)
              ══════════════════════════════════════════════════════════════ -->
         <section id="generator" class="generator-hero">
             <!-- Effets visuels data/algorithme -->
@@ -124,17 +105,16 @@
                 <span class="particle p8"></span>
             </div>
             <div class="generator-card">
-                <!-- Header du generateur -->
+                <!-- Header du generateur (centré, aligné pattern accueil) -->
                 <div class="generator-header">
                     <div class="generator-badge">
                         <span class="badge-icon">🧠</span>
                         <span class="badge-text">MOTEUR HYBRIDE_OPTIMAL_V1</span>
                     </div>
-                    <h2 class="generator-title">Exploration de grilles</h2>
-                    <p class="generator-subtitle">Analyse statistique basée sur <strong id="stat-tirages-inline">967</strong> tirages officiels FDJ <span class="data-depth">depuis 2019</span></p>
+                    <p class="generator-subtitle">Configurez votre exploration sur <strong id="stat-tirages-inline">967</strong> tirages officiels FDJ <span class="data-depth">depuis 2019</span></p>
                 </div>
 
-                <!-- Formulaire -->
+                <!-- Formulaire (étape secondaire) -->
                 <div class="generator-form">
                     <div class="form-group">
                         <label for="draw-date">📅 Date du prochain tirage</label>
@@ -162,7 +142,7 @@
                         <span class="spinner" style="display: none;"></span>
                     </button>
 
-                    <p class="cta-subtext">Analyse instantanée • Score de conformité • 100% gratuit</p>
+                    <p class="cta-subtext">Analyse instantanée • Indice de convergence • 100% gratuit</p>
 
                     <!-- Info prochain tirage -->
                     <p class="cta-urgency" id="next-draw-urgency">
@@ -281,7 +261,7 @@
                     </button>
                     <div class="faq-answer">
                         <p>Notre générateur utilise le <strong>moteur HYBRIDE_OPTIMAL_V1</strong> qui analyse <span class="dynamic-tirages">967</span> tirages historiques FDJ.</p>
-                        <p>Il combine analyse long terme (60%) et tendances récentes (40%) pour générer des grilles statistiquement équilibrées avec un score sur 100.</p>
+                        <p>Il combine analyse long terme (60%) et tendances récentes (40%) pour générer des grilles statistiquement équilibrées avec un indice de convergence.</p>
                     </div>
                 </div>
 
@@ -378,10 +358,10 @@
         ↑
     </button>
 
-    <script src="/ui/static/sponsor-popup.js"></script>
-    <script src="/ui/static/app.js"></script>
-    <script src="/ui/static/scroll.js"></script>
-    <script src="/ui/static/faq.js"></script>
-    <script src="/ui/static/cookie-consent.js"></script>
+    <script src="/ui/static/sponsor-popup.js?v=3"></script>
+    <script src="/ui/static/app.js?v=3"></script>
+    <script src="/ui/static/scroll.js?v=3"></script>
+    <script src="/ui/static/faq.js?v=3"></script>
+    <script src="/ui/static/cookie-consent.js?v=3"></script>
 </body>
 </html>

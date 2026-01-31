@@ -32,14 +32,14 @@
       "operatingSystem": "Web"
     }
     </script>
-    <link rel="stylesheet" href="/ui/static/style.css">
-    <link rel="stylesheet" href="/ui/static/simulateur.css">
-    <link rel="stylesheet" href="/ui/static/sponsor-popup.css">
-    <link rel="stylesheet" href="/ui/static/legal.css">
+    <link rel="stylesheet" href="/ui/static/style.css?v=4">
+    <link rel="stylesheet" href="/ui/static/simulateur.css?v=4">
+    <link rel="stylesheet" href="/ui/static/sponsor-popup.css?v=4">
+    <link rel="stylesheet" href="/ui/static/legal.css?v=4">
     <!-- Theme script (en premier pour éviter le flash) -->
-    <script src="/ui/static/theme.js"></script>
+    <script src="/ui/static/theme.js?v=4"></script>
     <!-- Analytics (charge apres consentement RGPD) -->
-    <script src="/ui/static/analytics.js" defer></script>
+    <script src="/ui/static/analytics.js?v=4" defer></script>
 </head>
 <body class="simulator-page">
     <!-- Barre de navigation moteur -->
@@ -57,23 +57,34 @@
         </div>
     </nav>
 
-    <!-- Header Premium -->
-    <header class="page-header">
+    <!-- ══════════════════════════════════════════════════════════════
+         HERO — Pattern aligné sur accueil / explorateur
+         ══════════════════════════════════════════════════════════════ -->
+    <header class="page-header loto-hero-header">
         <div class="header-content">
-            <h1><span>🎲</span> Analyse statistique (Audit de grille)</h1>
-            <p class="subtitle">Analyse descriptive basée sur des statistiques — ne prédit pas les résultats.</p>
+            <h1><span>🎯</span> Analyse de grille</h1>
+            <p class="subtitle">Composez votre grille et obtenez un audit statistique descriptif</p>
+            <div class="loto-hero-actions">
+                <a href="#grid-start" class="loto-hero-btn loto-hero-btn-active">
+                    <span class="loto-hero-btn-icon">🎯</span>
+                    Auditer une grille
+                </a>
+                <a href="/loto" class="loto-hero-btn">
+                    <span class="loto-hero-btn-icon">🧠</span>
+                    Explorer des grilles
+                </a>
+                <a href="/statistiques" class="loto-hero-btn">
+                    <span class="loto-hero-btn-icon">📊</span>
+                    Voir les statistiques
+                </a>
+            </div>
         </div>
     </header>
 
     <div class="simulator-container">
 
-        <!-- CTA secondaire vers générateur -->
-        <div style="text-align: center; margin-bottom: 16px;">
-            <a href="/loto" style="color: var(--primary-color, #4A90E2); text-decoration: none; font-weight: 500; font-size: 0.95rem;">Explorer (générateur) →</a>
-        </div>
-
         <!-- Legende couleurs -->
-        <section class="card legend-section">
+        <section id="grid-start" class="card legend-section">
             <div class="legend">
                 <div class="legend-item">
                     <span class="legend-dot hot"></span>
@@ -125,19 +136,12 @@
         <section id="results-section" class="card results-section" style="display: none;">
             <h2>Analyse de votre grille</h2>
 
-            <!-- Score principal -->
+            <!-- Indicateur de convergence (descriptif, non évaluatif) -->
             <div class="score-display">
-                <div class="score-gauge">
-                    <svg viewBox="0 0 100 50" class="gauge-svg">
-                        <path d="M 10 45 A 35 35 0 0 1 90 45" fill="none" stroke="#e0e0e0" stroke-width="8" stroke-linecap="round"/>
-                        <path id="gauge-fill" d="M 10 45 A 35 35 0 0 1 90 45" fill="none" stroke="#4A90E2" stroke-width="8" stroke-linecap="round" stroke-dasharray="0 110"/>
-                    </svg>
-                    <div class="score-value">
-                        <span id="score-number">--</span>
-                        <span class="score-label">/100</span>
-                    </div>
+                <div class="convergence-display">
+                    <span class="convergence-display-label">Indice de convergence statistique</span>
+                    <span id="convergence-level" class="convergence-display-value">--</span>
                 </div>
-                <div id="stars-display" class="stars-display"></div>
                 <p id="comparaison-text" class="comparaison-text"></p>
             </div>
 
@@ -207,9 +211,9 @@
         ↑
     </button>
 
-    <script src="/ui/static/sponsor-popup.js"></script>
-    <script src="/ui/static/simulateur.js"></script>
-    <script src="/ui/static/scroll.js"></script>
-    <script src="/ui/static/cookie-consent.js"></script>
+    <script src="/ui/static/sponsor-popup.js?v=4"></script>
+    <script src="/ui/static/simulateur.js?v=4"></script>
+    <script src="/ui/static/scroll.js?v=4"></script>
+    <script src="/ui/static/cookie-consent.js?v=4"></script>
 </body>
 </html>
