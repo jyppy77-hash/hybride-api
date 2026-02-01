@@ -1176,3 +1176,15 @@ async def api_track_ad_click(payload: TrackAdClickPayload):
             "success": False,
             "message": str(e)
         }
+
+
+# ── SEO Redirections 301 ──────────────────────────────────────────────
+
+@app.get("/analyse", include_in_schema=False)
+async def redirect_analyse():
+    return RedirectResponse(url="/simulateur", status_code=301)
+
+
+@app.get("/exploration", include_in_schema=False)
+async def redirect_exploration():
+    return RedirectResponse(url="/loto", status_code=301)
