@@ -262,6 +262,21 @@
             border-radius: 16px;
             padding: 36px 32px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.10);
+            display: flex;
+            gap: 32px;
+            align-items: flex-start;
+        }
+
+        .pedagogy-card-text {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .lotoia-hybride-inline {
+            flex-shrink: 0;
+            width: 240px;
+            height: auto;
+            align-self: center;
         }
 
         .pedagogy-card .pedagogy-title {
@@ -592,6 +607,12 @@
 
             .pedagogy-card {
                 padding: 24px 20px;
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .lotoia-hybride-inline {
+                width: 140px;
             }
 
             .pedagogy-card .pedagogy-title {
@@ -679,25 +700,33 @@
              ══════════════════════════════════════════════════════════════ -->
         <section class="accueil-section accueil-section-first">
             <div class="pedagogy-card">
-                <h2 class="pedagogy-title">Qu'est-ce que LotoIA ?</h2>
-                <p class="pedagogy-subtitle">Une plateforme d'analyse algorithmique des tirages du Loto</p>
-                <h3>Analyse statistique, pas prédiction</h3>
-                <p>
-                    LotoIA est une plateforme d'analyse statistique qui exploite les données historiques des tirages
-                    officiels du Loto pour fournir des outils d'exploration et de compréhension.
-                    Elle ne prédit pas les résultats et ne promet aucun gain.
-                </p>
-                <p>
-                    Le moteur <span class="pedagogy-highlight">HYBRIDE_OPTIMAL_V1</span> combine une analyse
-                    long terme des fréquences historiques avec les tendances récentes pour produire des indicateurs
-                    statistiques sur les numéros et les grilles.
-                </p>
-                <p>
-                    Chaque grille est évaluée selon des critères objectifs : équilibre pair/impair, répartition
-                    des numéros chauds et froids, écart entre les numéros, et conformité statistique globale.
-                    Ces critères sont basés sur l'observation des tirages passés, et non sur une capacité
-                    de prédiction.
-                </p>
+                <div class="pedagogy-card-text">
+                    <h2 class="pedagogy-title">Qu'est-ce que LotoIA ?</h2>
+                    <p class="pedagogy-subtitle">Une plateforme d'analyse algorithmique des tirages du Loto</p>
+                    <h3>Analyse statistique, pas prédiction</h3>
+                    <p>
+                        LotoIA est une plateforme d'analyse statistique qui exploite les données historiques des tirages
+                        officiels du Loto pour fournir des outils d'exploration et de compréhension.
+                        Elle ne prédit pas les résultats et ne promet aucun gain.
+                    </p>
+                    <p>
+                        Le moteur <span class="pedagogy-highlight">HYBRIDE_OPTIMAL_V1</span> combine une analyse
+                        long terme des fréquences historiques avec les tendances récentes pour produire des indicateurs
+                        statistiques sur les numéros et les grilles.
+                    </p>
+                    <p>
+                        Chaque grille est évaluée selon des critères objectifs : équilibre pair/impair, répartition
+                        des numéros chauds et froids, écart entre les numéros, et conformité statistique globale.
+                        Ces critères sont basés sur l'observation des tirages passés, et non sur une capacité
+                        de prédiction.
+                    </p>
+                </div>
+                <img src="/static/hybride-chatbot-lotoia.png"
+                     alt="Hybride – assistant pédagogique LotoIA"
+                     class="lotoia-hybride-inline"
+                     loading="lazy"
+                     width="240"
+                     height="240">
             </div>
         </section>
 
