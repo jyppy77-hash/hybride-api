@@ -1106,6 +1106,22 @@ body.theme-day .chatbot-text strong {
     }
 }
 
+/* ── Illustration HYBRIDE horizontale (colonne droite) ── */
+
+.hybride-horizontal {
+    display: flex;
+    justify-content: center;
+    margin-top: 14px;
+    opacity: 0.9;
+    pointer-events: none;
+}
+
+.hybride-horizontal img {
+    max-width: 260px;
+    height: auto;
+    user-select: none;
+}
+
 /* ── Popup assistant (theme-independent) ── */
 
 .assistant-popup {
