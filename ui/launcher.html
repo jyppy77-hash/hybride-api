@@ -174,12 +174,18 @@
             width: 100%;
         }
 
+        /* Header titre + sous-texte */
+        .launcher-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
         /* Titre discret */
         .launcher-title {
             font-size: 1.1rem;
             font-weight: 400;
             color: rgba(255, 255, 255, 0.6);
-            margin-bottom: 50px;
+            margin-bottom: 0;
             letter-spacing: 2px;
             text-transform: uppercase;
         }
@@ -187,6 +193,16 @@
         .launcher-title strong {
             color: rgba(255, 255, 255, 0.9);
             font-weight: 600;
+        }
+
+        .launcher-subtext {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            opacity: 0.75;
+            letter-spacing: 0.3px;
+            margin-top: 6px;
+            line-height: 1.2;
+            font-weight: 400;
         }
 
         /* Grille de moteurs */
@@ -384,9 +400,12 @@
                 overflow-y: auto;
             }
 
+            .launcher-header {
+                margin-bottom: 24px;
+            }
+
             .launcher-title {
                 font-size: 0.95rem;
-                margin-bottom: 30px;
             }
 
             .launcher-container {
@@ -448,7 +467,10 @@
 <body>
     <div class="launcher-container">
         <!-- Moteurs disponibles -->
-        <p class="launcher-title"><strong>LotoIA</strong> — Moteurs disponibles</p>
+        <div class="launcher-header">
+            <p class="launcher-title"><strong>LotoIA</strong> — Modules disponibles</p>
+            <p class="launcher-subtext">Base de données synchronisée après chaque tirage officiel</p>
+        </div>
 
         <div class="engines-grid">
             <!-- Loto France - ACTIF -->
