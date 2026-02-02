@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Query, Request
-from fastapi.responses import RedirectResponse, FileResponse
+from fastapi.responses import RedirectResponse, FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -278,7 +278,14 @@ async def page_simulateur():
 
 @app.get("/faq")
 async def page_faq():
-    return serve_page("faq.html")
+    try:
+        total = db_cloudsql.get_tirages_count()
+    except Exception:
+        total = 967  # fallback
+    with open("ui/faq.html", "r", encoding="utf-8") as f:
+        html = f.read()
+    html = html.replace("__DB_TOTAL__", str(total))
+    return HTMLResponse(content=html)
 
 
 @app.get("/news")
@@ -499,6 +506,42 @@ async def database_info():
             "exists": False,
             "is_ready": False,
             "error": str(e)
+        }
+
+
+# =========================
+# API Database Info (light)
+# =========================
+
+@app.get("/api/database-info")
+async def api_database_info():
+    """
+    Retourne total_draws, first_draw, last_draw.
+    Endpoint léger utilisé par la FAQ pour affichage dynamique.
+    """
+    try:
+        conn = db_cloudsql.get_connection()
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT COUNT(*) as total,
+                   MIN(date_de_tirage) as date_min,
+                   MAX(date_de_tirage) as date_max
+            FROM tirages
+        """)
+        row = cursor.fetchone()
+        conn.close()
+
+        return {
+            "total_draws": row["total"],
+            "first_draw": str(row["date_min"]) if row["date_min"] else None,
+            "last_draw": str(row["date_max"]) if row["date_max"] else None
+        }
+    except Exception as e:
+        logger.error(f"Erreur /api/database-info: {e}")
+        return {
+            "total_draws": None,
+            "first_draw": None,
+            "last_draw": None
         }
 
 
