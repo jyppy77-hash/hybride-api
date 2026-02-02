@@ -34,7 +34,7 @@ Disallow: /health
 Disallow: /debug-env
 Disallow: /database-info
 Disallow: /generate
-Disallow: /stats
+Disallow: /stats$
 Disallow: /draw/
 Disallow: /ask
 Disallow: /docs
