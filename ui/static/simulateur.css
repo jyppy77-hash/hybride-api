@@ -173,6 +173,25 @@
    ================================================================= */
 .legend-section {
     padding: 16px 24px;
+    position: relative;
+    overflow: hidden;
+}
+
+.band-hybride {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    height: 56px;
+    max-height: 60px;
+    opacity: 0.95;
+    pointer-events: none;
+}
+
+@media (max-width: 768px) {
+    .band-hybride {
+        height: 42px;
+    }
 }
 
 .legend {
@@ -209,14 +228,87 @@
 }
 
 /* =================================================================
+   SIMULATION PANEL (unified card)
+   ================================================================= */
+.simulation-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 24px;
+    max-width: 960px;
+    margin: 0 auto 24px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* =================================================================
+   WORKSPACE LAYOUT (desktop horizontal)
+   ================================================================= */
+.simulation-workspace {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 32px;
+    width: 100%;
+}
+
+.workspace-left {
+    flex: 1 1 auto;
+    max-width: 560px;
+}
+
+.grid-title,
+.grid-title-chance {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+body.theme-night .grid-title,
+body.theme-night .grid-title-chance {
+    color: #e9edf5;
+}
+
+body.theme-day .grid-title,
+body.theme-day .grid-title-chance {
+    color: #1c2230;
+}
+
+.workspace-right {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    min-width: 220px;
+    max-width: 320px;
+    flex-shrink: 0;
+}
+
+.workspace-right .chance-grid {
+    justify-content: flex-start;
+}
+
+.workspace-right .chance-actions {
+    flex-direction: column;
+    margin-top: 18px;
+}
+
+.workspace-right .chance-actions button {
+    width: 100%;
+}
+
+/* =================================================================
    MAIN GRID (49 NUMBERS)
    ================================================================= */
 .grid-section h2,
-.chance-section h2 {
+.grid-section h3,
+.chance-section h2,
+.chance-section h3 {
     display: flex;
     align-items: center;
     gap: 12px;
-    margin-bottom: 20px;
+    margin-bottom: 10px;
 }
 
 .count-badge {
@@ -235,10 +327,11 @@
 
 .main-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 8px;
+    grid-template-columns: repeat(7, 44px);
+    gap: 6px;
     max-width: 500px;
     margin: 0 auto;
+    justify-content: center;
 }
 
 .grid-number {
@@ -317,8 +410,8 @@
 }
 
 .chance-number {
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
     border: 2px solid #ffd700;
     border-radius: 50%;
     background: linear-gradient(135deg, #fffef0 0%, #fff8dc 100%);
@@ -347,6 +440,49 @@
 }
 
 /* =================================================================
+   CHANCE ROW (chance grid + actions inline)
+   ================================================================= */
+.chance-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.chance-row .chance-grid {
+    justify-content: flex-start;
+}
+
+.chance-actions {
+    display: flex;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+.chance-actions button {
+    height: 40px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.chance-actions .btn-tertiary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dark);
+    opacity: 0.9;
+}
+
+.chance-actions .btn-primary {
+    background: var(--primary);
+    border: none;
+    color: #fff;
+}
+
+/* =================================================================
    ACTIONS
    ================================================================= */
 .actions-row {
@@ -358,6 +494,37 @@
 .actions-row .btn {
     flex: 1;
     max-width: 250px;
+}
+
+/* Action bar (compact SaaS style) */
+.action-bar {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.action-bar button {
+    height: 40px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+.action-bar .btn-tertiary {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-dark);
+    opacity: 0.9;
+}
+
+.action-bar .btn-primary {
+    background: var(--primary);
+    border: none;
+    color: #fff;
 }
 
 /* =================================================================
@@ -755,6 +922,41 @@
 /* =================================================================
    RESPONSIVE
    ================================================================= */
+@media (max-width: 900px) {
+    .simulation-workspace {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 20px;
+    }
+
+    .workspace-left {
+        max-width: 100%;
+    }
+
+    .workspace-right {
+        max-width: 100%;
+        min-width: 0;
+    }
+
+    .workspace-right .chance-grid {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 768px) {
+    .simulation-panel {
+        padding: 16px;
+    }
+
+    .chance-actions {
+        flex-direction: column;
+    }
+
+    .chance-actions button {
+        width: 100%;
+    }
+}
+
 @media (max-width: 600px) {
     .main-grid {
         grid-template-columns: repeat(7, 1fr);
@@ -766,9 +968,9 @@
     }
 
     .chance-number {
-        width: 42px;
-        height: 42px;
-        font-size: 1rem;
+        width: 36px;
+        height: 36px;
+        font-size: 0.95rem;
     }
 
     .actions-row {
@@ -829,4 +1031,144 @@
         padding: 6px 12px;
         font-size: 0.75rem;
     }
+}
+
+/* ── Slot chatbot assistant ── */
+
+.chatbot-slot {
+    margin-top: 32px;
+    display: flex;
+    justify-content: center;
+}
+
+.chatbot-slot-content {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    max-width: 640px;
+    width: 100%;
+}
+
+.chatbot-emoji {
+    font-size: 26px;
+}
+
+.chatbot-text {
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.chatbot-text p {
+    margin: 4px 0 0 0;
+}
+
+body.theme-night .chatbot-text {
+    color: #d2d8e6;
+}
+
+body.theme-night .chatbot-text strong {
+    color: #ffffff;
+}
+
+body.theme-day .chatbot-text {
+    color: #2b2f39;
+}
+
+body.theme-day .chatbot-text strong {
+    color: #111827;
+}
+
+.chatbot-btn {
+    margin-left: auto;
+    background: var(--primary);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    color: #fff;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .chatbot-slot-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .chatbot-btn {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
+/* ── Popup assistant (theme-independent) ── */
+
+.assistant-popup {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999;
+}
+
+.assistant-popup.hidden {
+    display: none;
+}
+
+.assistant-popup-content {
+    background: #1e2430;
+    color: #ffffff;
+    padding: 26px;
+    border-radius: 16px;
+    text-align: center;
+    max-width: 420px;
+    width: 92%;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+}
+
+.assistant-popup-content h3 {
+    margin: 0 0 8px;
+    font-size: 1.15rem;
+    color: #ffffff;
+}
+
+.assistant-popup-content p {
+    margin: 0 0 16px;
+    opacity: 0.9;
+    color: #ffffff;
+}
+
+.assistant-popup-content .popup-link {
+    display: inline-block;
+    margin-top: 12px;
+    margin-bottom: 16px;
+    color: #4da3ff;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.assistant-popup-content .popup-link:hover {
+    text-decoration: underline;
+}
+
+#popup-close {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+    padding: 10px 16px;
+    background: #2f6df6;
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
 }
