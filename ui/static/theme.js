@@ -112,13 +112,24 @@
         initTheme();
     }
 
+    // Injection annee courante dans tous les .dynamic-year
+    function injectYear() {
+        var y = new Date().getFullYear();
+        var els = document.querySelectorAll('.dynamic-year');
+        for (var i = 0; i < els.length; i++) {
+            els[i].textContent = y;
+        }
+    }
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
             initTheme();
             bindSwitch();
+            injectYear();
         });
     } else {
         initTheme();
         bindSwitch();
+        injectYear();
     }
 })();
