@@ -1,0 +1,21 @@
+{
+  "name": "LotoIA - Générateur de Grilles Loto",
+  "short_name": "LotoIA",
+  "description": "Moteur HYBRIDE_OPTIMAL_V1 - Analyse statistique du Loto français",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#4285f4",
+  "icons": [
+    {
+      "src": "/ui/android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/ui/android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
