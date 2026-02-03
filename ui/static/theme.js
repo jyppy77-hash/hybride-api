@@ -121,15 +121,27 @@
         }
     }
 
+    // Nombre de grilles META DONNÉE (variable globale)
+    window.META_GRID_COUNT = 75;
+
+    function injectGridCount() {
+        var els = document.querySelectorAll('.meta-grid-count');
+        for (var i = 0; i < els.length; i++) {
+            els[i].textContent = window.META_GRID_COUNT;
+        }
+    }
+
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
             initTheme();
             bindSwitch();
             injectYear();
+            injectGridCount();
         });
     } else {
         initTheme();
         bindSwitch();
         injectYear();
+        injectGridCount();
     }
 })();
