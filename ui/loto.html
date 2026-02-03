@@ -147,6 +147,11 @@
                         <span class="spinner" style="display: none;"></span>
                     </button>
 
+                    <!-- CTA Secondaire — Meta Data -->
+                    <button id="btn-metadata-50" class="btn-cta-secondary">
+                        <span>Meta Data 50 Grilles</span>
+                    </button>
+
                     <p class="cta-subtext">Analyse instantanée • Indice de convergence • 100% gratuit</p>
 
                     <!-- Info prochain tirage -->
@@ -362,6 +367,27 @@
     <button id="scroll-to-top" class="scroll-to-top" aria-label="Retour en haut">
         ↑
     </button>
+
+    <!-- Popup Meta Data 50 Grilles (même mécanisme que /simulateur) -->
+    <div id="metadata-popup" class="assistant-popup hidden">
+        <div class="assistant-popup-content">
+            <h3>Meta Data 50 Grilles</h3>
+            <p>Fonctionnalité en cours de développement — ouverture prochaine.</p>
+            <button class="popup-close-btn" id="metadata-popup-close">Fermer</button>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var btn = document.getElementById('btn-metadata-50');
+        var popup = document.getElementById('metadata-popup');
+        var close = document.getElementById('metadata-popup-close');
+        if (!btn || !popup || !close) return;
+        btn.addEventListener('click', function() { popup.classList.remove('hidden'); });
+        close.addEventListener('click', function() { popup.classList.add('hidden'); });
+        popup.addEventListener('click', function(e) { if (e.target === popup) popup.classList.add('hidden'); });
+    })();
+    </script>
 
     <script src="/ui/static/sponsor-popup.js?v=4"></script>
     <script src="/ui/static/app.js?v=4"></script>
