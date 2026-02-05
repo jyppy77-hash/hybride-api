@@ -42,9 +42,12 @@ const SPONSORS_CONFIG_75 = [
  * Génère la séquence de logs pour la console
  * @param {number} gridCount - Nombre de grilles
  * @param {number} duration - Durée totale en secondes
+ * @param {Object} options - Options supplémentaires
+ * @param {number} options.rowsToAnalyze - Nombre de tirages à analyser
+ * @param {boolean} options.isGlobal - True si analyse sur base complète
  * @returns {Array} Tableau de logs avec timing
  */
-function getConsoleLogs(gridCount, duration) {
+function getConsoleLogs(gridCount, duration, options = {}) {
     // Phase 1 (connexions) : fixe ~2s, quelle que soit la durée totale
     // Phase 2 (calculs) : le reste du temps (variable selon 1→5 grilles)
     const fixedPhaseSec = 2;
@@ -64,11 +67,18 @@ function getConsoleLogs(gridCount, duration) {
         return fixedPhaseSec + (i - fixedSteps) * variableStepSec;
     };
 
+    // Texte pour le nombre de tirages analysés
+    const rowsCount = options.rowsToAnalyze || window.TOTAL_TIRAGES || 967;
+    const rowsFormatted = rowsCount.toLocaleString('fr-FR');
+    const tiragesText = options.isGlobal
+        ? `✓ ${rowsFormatted} tirages analysés (base complète)`
+        : `✓ ${rowsFormatted} tirages analysés`;
+
     return [
         { time: t(0), text: "> Initialisation HYBRIDE_OPTIMAL_V1...", type: "info" },
         { time: t(1), text: "✓ Connexion moteur OK (127ms)", type: "success" },
         { time: t(2), text: "> Chargement base de données FDJ...", type: "info" },
-        { time: t(3), text: `✓ ${(window.TOTAL_TIRAGES || 967).toLocaleString('fr-FR')} tirages chargés (342ms)`, type: "success" },
+        { time: t(3), text: tiragesText, type: "success" },
         { time: t(4), text: `> GET /api/analyze?grids=${gridCount}&mode=balanced`, type: "request" },
         { time: t(5), text: "⏳ Calcul fréquences historiques... 18%", type: "progress" },
         { time: t(6), text: "⏳ Détection patterns chauds... 34%", type: "progress" },
@@ -856,7 +866,20 @@ function openMetaResultPopupFallback() {
 function onMetaAnalyseComplete() {
     console.log('[META ANALYSE] Timer terminé - fetch données locales...');
 
-    fetch('/api/meta-analyse-local')
+    // Construire l'URL selon le mode (tirages ou années)
+    var currentMode = (typeof metaCurrentMode !== 'undefined') ? metaCurrentMode : 'tirages';
+    var apiUrl = '/api/meta-analyse-local';
+
+    if (currentMode === 'annees' && typeof metaYearsSize !== 'undefined' && metaYearsSize) {
+        apiUrl += '?years=' + encodeURIComponent(metaYearsSize);
+        console.log('[META ANALYSE] Mode années:', metaYearsSize);
+    } else {
+        var windowParam = (typeof metaWindowSize !== 'undefined' && metaWindowSize) ? metaWindowSize : 'GLOBAL';
+        apiUrl += '?window=' + encodeURIComponent(windowParam);
+        console.log('[META ANALYSE] Mode tirages:', windowParam);
+    }
+
+    fetch(apiUrl)
         .then(function(response) {
             if (!response.ok) throw new Error('HTTP ' + response.status);
             return response.json();
@@ -949,8 +972,27 @@ async function showMetaAnalysePopup() {
         window.LotoIAAnalytics.productEngine.track('meta_tunnel_start', { version: 75 });
     }
 
+    // Déterminer le nombre de tirages à analyser selon le mode sélectionné
+    const currentMode = (typeof metaCurrentMode !== 'undefined') ? metaCurrentMode : 'tirages';
+    const totalTirages = window.TOTAL_TIRAGES || 967;
+    let rowsToAnalyze = totalTirages;
+    let isGlobal = true;
+
+    if (currentMode === 'annees' && typeof metaYearsSize !== 'undefined' && metaYearsSize && metaYearsSize !== 'GLOBAL') {
+        // Mode années : estimation ~150 tirages/an
+        rowsToAnalyze = parseInt(metaYearsSize, 10) * 150;
+        isGlobal = false;
+    } else if (currentMode === 'tirages' && typeof metaWindowSize !== 'undefined' && metaWindowSize && metaWindowSize !== 'GLOBAL') {
+        // Mode tirages : valeur exacte
+        rowsToAnalyze = parseInt(metaWindowSize, 10);
+        isGlobal = false;
+    }
+
     // Logs spécifiques META ANALYSE (75 grilles)
-    const metaAnalyseLogs = getConsoleLogs(75, META_ANALYSE_TIMER_DURATION);
+    const metaAnalyseLogs = getConsoleLogs(75, META_ANALYSE_TIMER_DURATION, {
+        rowsToAnalyze: rowsToAnalyze,
+        isGlobal: isGlobal
+    });
 
     const result = await showSponsorPopup({
         duration: META_ANALYSE_TIMER_DURATION,
