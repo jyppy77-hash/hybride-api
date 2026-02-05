@@ -352,8 +352,21 @@ function displayResults(data) {
     // Selected grid display
     displaySelectedGrid(data.nums, data.chance);
 
-    // Scroll to results
-    elements.resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    // History check display (safe - only if data exists)
+    displayHistoryCheck(data.history_check);
+
+    // Scroll automatique vers la grille sélectionnée (center pour UX mobile/desktop)
+    setTimeout(() => {
+        const target = document.getElementById('selected-numbers')
+                    || document.querySelector('.selected-grid')
+                    || document.querySelector('.numbers-grid');
+        if (target) {
+            target.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
+        }
+    }, 150);
 }
 
 /**
@@ -594,6 +607,77 @@ function displaySelectedGrid(nums, chance) {
 }
 
 /**
+ * Formate une date ISO (YYYY-MM-DD) en format français lisible
+ * Ex: "2025-11-02" → "2 novembre 2025"
+ */
+function formatDateFR(isoDate) {
+    if (!isoDate) return '';
+    try {
+        const d = new Date(isoDate);
+        if (isNaN(d.getTime())) return isoDate;
+        return d.toLocaleDateString('fr-FR', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+    } catch (e) {
+        return isoDate;
+    }
+}
+
+/**
+ * Affiche la vérification historique de la combinaison
+ * SAFE: Ne s'affiche que si les données existent et sont valides
+ * Utilise l'élément HTML statique #history-check
+ */
+function displayHistoryCheck(historyCheck) {
+    const historyDiv = document.getElementById('history-check');
+
+    // Si pas d'élément ou pas de données, masquer et sortir
+    if (!historyDiv) return;
+    if (!historyCheck || typeof historyCheck !== 'object') {
+        historyDiv.style.display = 'none';
+        return;
+    }
+
+    let text = '';
+
+    // CAS 1: Combinaison exacte sortie
+    if (historyCheck.exact_match === true && Array.isArray(historyCheck.exact_dates) && historyCheck.exact_dates.length > 0) {
+        const count = historyCheck.exact_dates.length;
+        const datesFormatted = historyCheck.exact_dates.map(formatDateFR).join(', ');
+        text = `📜 Cette combinaison est déjà sortie <strong>${count} fois</strong> (${datesFormatted})`;
+    } else if (historyCheck.exact_match === false) {
+        // CAS 2: Combinaison jamais sortie
+        text = `🔎 Cette combinaison n'est jamais apparue dans l'historique.`;
+    }
+
+    // CAS 3: Meilleure correspondance
+    const matchCount = parseInt(historyCheck.best_match_count, 10);
+    if (matchCount > 0 && historyCheck.best_match_date) {
+        const chanceText = historyCheck.best_match_chance ? ' + chance' : '';
+        const dateFormatted = formatDateFR(historyCheck.best_match_date);
+        text += `<br>🧠 Meilleure correspondance : <strong>${matchCount} numéro${matchCount > 1 ? 's' : ''} identique${matchCount > 1 ? 's' : ''}${chanceText}</strong> (${dateFormatted})`;
+
+        // Affichage visuel des boules communes
+        if (Array.isArray(historyCheck.best_match_numbers) && historyCheck.best_match_numbers.length > 0) {
+            const balls = historyCheck.best_match_numbers
+                .map(n => `<span style="display:inline-flex;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#4da3ff,#2563eb);color:white;font-size:12px;font-weight:600;align-items:center;justify-content:center;margin:2px;box-shadow:0 2px 4px rgba(37,99,235,0.3);">${n}</span>`)
+                .join('');
+            text += `<div style="margin-top:8px;">${balls}</div>`;
+        }
+    }
+
+    // Afficher seulement si du contenu a été généré
+    if (text.trim()) {
+        historyDiv.innerHTML = text;
+        historyDiv.style.display = 'block';
+    } else {
+        historyDiv.style.display = 'none';
+    }
+}
+
+/**
  * Reset selection
  */
 function resetSelection() {
@@ -613,6 +697,10 @@ function resetSelection() {
 
     // Hide results
     elements.resultsSection.style.display = 'none';
+
+    // Hide history check
+    const historyDiv = document.getElementById('history-check');
+    if (historyDiv) historyDiv.style.display = 'none';
 
     // Update badges
     updateCountBadge();
