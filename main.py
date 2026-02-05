@@ -1141,41 +1141,122 @@ async def api_meta_analyse_mock():
 # =========================
 
 @app.get("/api/meta-analyse-local")
-async def api_meta_analyse_local():
+async def api_meta_analyse_local(
+    window: Optional[str] = Query(default="GLOBAL", description="Fenêtre d'analyse: 25, 50, 75, 100, 200, 500, ou GLOBAL"),
+    years: Optional[str] = Query(default=None, description="Fenêtre en années: 1, 2, 3, 4, 5, 6, ou GLOBAL")
+):
     """
     Endpoint local pour META ANALYSE 75 grilles.
     Utilise le moteur HYBRIDE interne et la BDD locale.
+    Paramètre window : nombre de tirages récents à analyser (ou GLOBAL pour tous).
+    Paramètre years : nombre d'années complètes (prioritaire sur window si fourni).
     Aucune API externe, aucune IA, aucun PDF réel.
     Temps de réponse cible : < 300ms.
     """
+    from datetime import datetime, timedelta
+
     try:
-        # Récupérer les stats top/flop depuis la BDD
         conn = db_cloudsql.get_connection()
         cursor = conn.cursor()
 
-        # Calculer les fréquences des 5 premiers numéros (top)
+        # Nombre total de tirages dans la base
+        cursor.execute("SELECT COUNT(*) as total FROM tirages")
+        total_rows = cursor.fetchone()['total']
+
+        # Déterminer le mode et la fenêtre d'analyse
+        mode_used = "tirages"
+        window_used = "GLOBAL"
+        years_used = None
+        use_date_filter = False
+        date_limit = None
+
+        # MODE ANNÉES (prioritaire si years fourni)
+        if years is not None:
+            mode_used = "annees"
+            if years.upper() == "GLOBAL":
+                window_used = "GLOBAL"
+                years_used = "GLOBAL"
+            else:
+                try:
+                    years_int = int(years)
+                    if 1 <= years_int <= 10:
+                        years_used = str(years_int)
+                        window_used = f"{years_int}A"
+                        use_date_filter = True
+                        date_limit = (datetime.now() - timedelta(days=365 * years_int)).strftime('%Y-%m-%d')
+                    else:
+                        years_used = "GLOBAL"
+                        window_used = "GLOBAL"
+                except (ValueError, TypeError):
+                    years_used = "GLOBAL"
+                    window_used = "GLOBAL"
+
+        # MODE TIRAGES (si years non fourni)
+        else:
+            mode_used = "tirages"
+            if window and window.upper() != "GLOBAL":
+                try:
+                    window_int = int(window)
+                    if window_int >= 1:
+                        window_used = str(min(window_int, total_rows))
+                except (ValueError, TypeError):
+                    window_used = "GLOBAL"
+
+        # Récupérer les IDs des tirages dans la fenêtre
+        if use_date_filter and date_limit:
+            # Mode années : filtrer par date
+            cursor.execute("""
+                SELECT id FROM tirages
+                WHERE date_de_tirage >= %s
+                ORDER BY date_de_tirage DESC
+            """, (date_limit,))
+        elif window_used != "GLOBAL":
+            # Mode tirages : LIMIT
+            cursor.execute(f"""
+                SELECT id FROM tirages
+                ORDER BY date_de_tirage DESC
+                LIMIT {int(window_used)}
+            """)
+        else:
+            # GLOBAL : tous les tirages
+            cursor.execute("""
+                SELECT id FROM tirages
+                ORDER BY date_de_tirage DESC
+            """)
+        window_ids = [row['id'] for row in cursor.fetchall()]
+
+        if not window_ids:
+            conn.close()
+            raise Exception("Aucun tirage trouvé")
+
+        # Créer la clause IN pour filtrer
+        ids_placeholder = ','.join(['%s'] * len(window_ids))
+
+        # Calculer les fréquences des numéros dans la fenêtre
         top_numbers = []
         for number in range(1, 50):
-            cursor.execute("""
+            cursor.execute(f"""
                 SELECT COUNT(*) as freq
                 FROM tirages
-                WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s
-                   OR boule_4 = %s OR boule_5 = %s
-            """, (number, number, number, number, number))
+                WHERE id IN ({ids_placeholder})
+                  AND (boule_1 = %s OR boule_2 = %s OR boule_3 = %s
+                       OR boule_4 = %s OR boule_5 = %s)
+            """, (*window_ids, number, number, number, number, number))
             freq = cursor.fetchone()['freq']
             top_numbers.append({"number": number, "count": freq})
 
         # Trier par fréquence décroissante et prendre les 5 premiers
         top_numbers = sorted(top_numbers, key=lambda x: -x['count'])[:5]
 
-        # Stats globales
-        cursor.execute("SELECT COUNT(*) as total FROM tirages")
-        total_draws = cursor.fetchone()['total']
-
-        cursor.execute("SELECT MIN(date_de_tirage) as min_date, MAX(date_de_tirage) as max_date FROM tirages")
+        # Dates min/max de la fenêtre analysée
+        cursor.execute(f"""
+            SELECT MIN(date_de_tirage) as min_date, MAX(date_de_tirage) as max_date
+            FROM tirages
+            WHERE id IN ({ids_placeholder})
+        """, window_ids)
         dates = cursor.fetchone()
-        first_date = dates['min_date']
-        last_date = dates['max_date']
+        date_min = dates['min_date']
+        date_max = dates['max_date']
 
         conn.close()
 
@@ -1197,9 +1278,17 @@ async def api_meta_analyse_local():
         else:
             dispersion_text = "dispersion marquée"
 
+        actual_count = len(window_ids)
+        if mode_used == "annees" and years_used and years_used != "GLOBAL":
+            window_label = f"{years_used} an(s) ({actual_count} tirages)"
+        elif window_used != "GLOBAL":
+            window_label = f"{actual_count} tirages"
+        else:
+            window_label = "l'intégralité de la base"
+
         analysis_text = (
-            f"Analyse locale HYBRIDE sur {total_draws} tirages "
-            f"({first_date} → {last_date}). "
+            f"Analyse locale HYBRIDE sur {window_label} "
+            f"({date_min} → {date_max}). "
             f"Top 5 numéros : {', '.join(graph_labels)} avec fréquence moyenne {avg_freq:.1f}. "
             f"Écart max-min : {spread} ({dispersion_text}). "
             f"Aucun biais algorithmique détecté."
@@ -1207,6 +1296,8 @@ async def api_meta_analyse_local():
 
         return {
             "success": True,
+            "rows_used": actual_count,
+            "is_global": window_used == "GLOBAL",
             "graph": {
                 "labels": graph_labels,
                 "values": graph_values
@@ -1214,8 +1305,14 @@ async def api_meta_analyse_local():
             "analysis": analysis_text,
             "pdf": False,
             "meta": {
-                "total_draws": total_draws,
-                "period": f"{first_date} - {last_date}",
+                "total_draws": total_rows,
+                "window_used": window_used,
+                "window_size": actual_count,
+                "mode_used": mode_used,
+                "years_used": years_used,
+                "date_min": str(date_min) if date_min else None,
+                "date_max": str(date_max) if date_max else None,
+                "period": f"{date_min} - {date_max}",
                 "source": "HYBRIDE_LOCAL"
             }
         }
