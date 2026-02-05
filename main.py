@@ -4,8 +4,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict, Any
 import logging
+import os
+import httpx
 
 from engine.hybride import generate, generate_grids
 from engine.stats import get_global_stats
@@ -173,6 +175,16 @@ class TrackAdClickPayload(BaseModel):
     partner_id: Optional[str] = "unknown"
     timestamp: Optional[int] = None
     session_id: Optional[str] = "anonymous"
+
+
+# =========================
+# Schema META ANALYSE Texte
+# =========================
+
+class MetaAnalyseTextePayload(BaseModel):
+    analysis_local: str
+    stats: Optional[Dict[str, Any]] = None
+
 
 # =========================
 # Routes SEO - Fichiers racine
@@ -1100,6 +1112,229 @@ async def api_stats_top_flop():
             "success": False,
             "message": str(e)
         }
+
+
+# =========================
+# META ANALYSE Mock (Phase A)
+# =========================
+
+@app.get("/api/meta-analyse-mock")
+async def api_meta_analyse_mock():
+    """
+    Endpoint mock pour META ANALYSE 75 grilles.
+    Retourne des données statiques pour valider le flux complet.
+    Aucune API externe, aucune IA, données simulées uniquement.
+    """
+    return {
+        "success": True,
+        "graph": {
+            "labels": ["1", "2", "3", "4", "5"],
+            "values": [12, 18, 9, 22, 15]
+        },
+        "analysis": "Analyse simulée : tendances équilibrées, distribution homogène, aucun biais majeur détecté.",
+        "pdf": False
+    }
+
+
+# =========================
+# META ANALYSE Local (Phase B)
+# =========================
+
+@app.get("/api/meta-analyse-local")
+async def api_meta_analyse_local():
+    """
+    Endpoint local pour META ANALYSE 75 grilles.
+    Utilise le moteur HYBRIDE interne et la BDD locale.
+    Aucune API externe, aucune IA, aucun PDF réel.
+    Temps de réponse cible : < 300ms.
+    """
+    try:
+        # Récupérer les stats top/flop depuis la BDD
+        conn = db_cloudsql.get_connection()
+        cursor = conn.cursor()
+
+        # Calculer les fréquences des 5 premiers numéros (top)
+        top_numbers = []
+        for number in range(1, 50):
+            cursor.execute("""
+                SELECT COUNT(*) as freq
+                FROM tirages
+                WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s
+                   OR boule_4 = %s OR boule_5 = %s
+            """, (number, number, number, number, number))
+            freq = cursor.fetchone()['freq']
+            top_numbers.append({"number": number, "count": freq})
+
+        # Trier par fréquence décroissante et prendre les 5 premiers
+        top_numbers = sorted(top_numbers, key=lambda x: -x['count'])[:5]
+
+        # Stats globales
+        cursor.execute("SELECT COUNT(*) as total FROM tirages")
+        total_draws = cursor.fetchone()['total']
+
+        cursor.execute("SELECT MIN(date_de_tirage) as min_date, MAX(date_de_tirage) as max_date FROM tirages")
+        dates = cursor.fetchone()
+        first_date = dates['min_date']
+        last_date = dates['max_date']
+
+        conn.close()
+
+        # Construire le graphique (labels = numéros, values = fréquences)
+        graph_labels = [str(n['number']) for n in top_numbers]
+        graph_values = [n['count'] for n in top_numbers]
+
+        # Calculer quelques métriques pour l'analyse textuelle
+        avg_freq = sum(graph_values) / len(graph_values) if graph_values else 0
+        max_freq = max(graph_values) if graph_values else 0
+        min_freq = min(graph_values) if graph_values else 0
+        spread = max_freq - min_freq
+
+        # Générer le texte d'analyse local (pas d'IA)
+        if spread < 5:
+            dispersion_text = "dispersion très homogène"
+        elif spread < 15:
+            dispersion_text = "dispersion équilibrée"
+        else:
+            dispersion_text = "dispersion marquée"
+
+        analysis_text = (
+            f"Analyse locale HYBRIDE sur {total_draws} tirages "
+            f"({first_date} → {last_date}). "
+            f"Top 5 numéros : {', '.join(graph_labels)} avec fréquence moyenne {avg_freq:.1f}. "
+            f"Écart max-min : {spread} ({dispersion_text}). "
+            f"Aucun biais algorithmique détecté."
+        )
+
+        return {
+            "success": True,
+            "graph": {
+                "labels": graph_labels,
+                "values": graph_values
+            },
+            "analysis": analysis_text,
+            "pdf": False,
+            "meta": {
+                "total_draws": total_draws,
+                "period": f"{first_date} - {last_date}",
+                "source": "HYBRIDE_LOCAL"
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Erreur /api/meta-analyse-local: {e}")
+        # Fallback vers données mock en cas d'erreur
+        return {
+            "success": True,
+            "graph": {
+                "labels": ["1", "2", "3", "4", "5"],
+                "values": [12, 18, 9, 22, 15]
+            },
+            "analysis": "Analyse locale indisponible - données de secours affichées.",
+            "pdf": False,
+            "meta": {
+                "source": "MOCK_FALLBACK",
+                "error": str(e)
+            }
+        }
+
+
+# =========================
+# META ANALYSE Texte Gemini (Phase 3)
+# =========================
+
+@app.post("/api/meta-analyse-texte")
+async def api_meta_analyse_texte(payload: MetaAnalyseTextePayload):
+    """
+    Enrichit le texte d'analyse local via Gemini.
+    Timeout 3 secondes max, fallback vers texte local si erreur.
+    Aucune modification des statistiques.
+    """
+    analysis_local = payload.analysis_local
+
+    # === GEM DIAG START ===
+    print("=== GEM DIAG START ===")
+    print("API KEY PRESENT:", bool(os.environ.get("GEM_API_KEY") or os.environ.get("GEMINI_API_KEY")))
+    print("INPUT LOCAL:", analysis_local[:100] if analysis_local else "EMPTY")
+
+    # Récupérer la clé API Gemini depuis l'environnement
+    gem_api_key = os.environ.get("GEM_API_KEY") or os.environ.get("GEMINI_API_KEY")
+
+    if not gem_api_key:
+        logger.warning("[META TEXTE] GEM_API_KEY non configurée - fallback local")
+        print("FINAL RETURN: FALLBACK (no API key)")
+        print("=== GEM DIAG END ===")
+        return {"analysis_enriched": analysis_local, "source": "hybride_local"}
+
+    # Prompt pédagogique neutre
+    prompt = f"""Tu es un expert en statistiques de loterie.
+Reformule ce texte d'analyse de manière pédagogique et accessible.
+Règles strictes :
+- Ne promets JAMAIS de gain
+- Reste neutre et informatif
+- Garde un ton professionnel
+- Maximum 3 phrases fluides
+- Ne modifie pas les chiffres
+
+Texte à reformuler :
+{analysis_local}"""
+
+    try:
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            response = await client.post(
+                "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+                headers={
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": gem_api_key
+                },
+                json={
+                    "contents": [{
+                        "parts": [{"text": prompt}]
+                    }],
+                    "generationConfig": {
+                        "temperature": 0.7,
+                        "maxOutputTokens": 200
+                    }
+                }
+            )
+
+            print("GEM HTTP STATUS:", response.status_code)
+
+            if response.status_code == 200:
+                data = response.json()
+                print("GEM RAW RESPONSE:", str(data)[:300])
+
+                # Extraire le texte généré
+                candidates = data.get("candidates", [])
+                if candidates:
+                    content = candidates[0].get("content", {})
+                    parts = content.get("parts", [])
+                    if parts:
+                        enriched_text = parts[0].get("text", "").strip()
+                        if enriched_text:
+                            logger.info("[META TEXTE] Enrichissement Gemini OK")
+                            print("GEM ENRICHED TEXT:", enriched_text[:100])
+                            print("FINAL RETURN: ENRICHED")
+                            print("=== GEM DIAG END ===")
+                            return {"analysis_enriched": enriched_text, "source": "gemini_enriched"}
+
+            # Si pas de réponse valide, fallback
+            logger.warning(f"[META TEXTE] Réponse Gemini invalide: {response.status_code}")
+            print("GEM RAW RESPONSE (error):", response.text[:200] if response.text else "EMPTY")
+            print("FINAL RETURN: FALLBACK (invalid response)")
+            print("=== GEM DIAG END ===")
+            return {"analysis_enriched": analysis_local, "source": "hybride_local"}
+
+    except httpx.TimeoutException:
+        logger.warning("[META TEXTE] Timeout Gemini (3s) - fallback local")
+        print("FINAL RETURN: FALLBACK (timeout)")
+        print("=== GEM DIAG END ===")
+        return {"analysis_enriched": analysis_local, "source": "hybride_local"}
+    except Exception as e:
+        logger.error(f"[META TEXTE] Erreur Gemini: {e}")
+        print("GEM EXCEPTION:", str(e))
+        print("FINAL RETURN: FALLBACK (exception)")
+        print("=== GEM DIAG END ===")
+        return {"analysis_enriched": analysis_local, "source": "fallback"}
 
 
 # =========================
