@@ -841,6 +841,54 @@ async def api_analyze_custom_grid(
             freq = cursor.fetchone()['freq']
             frequencies.append(freq)
 
+        # =====================================================
+        # VERIFICATION HISTORIQUE
+        # =====================================================
+
+        # ETAPE 1: Combinaison exacte
+        cursor.execute("""
+            SELECT date_de_tirage
+            FROM tirages
+            WHERE boule_1 = %s AND boule_2 = %s AND boule_3 = %s
+                  AND boule_4 = %s AND boule_5 = %s AND numero_chance = %s
+            ORDER BY date_de_tirage DESC
+        """, (*nums, chance))
+        exact_matches = cursor.fetchall()
+        exact_dates = [str(row['date_de_tirage']) for row in exact_matches]
+
+        # ETAPE 2: Meilleure correspondance (numéros identiques)
+        cursor.execute("""
+            SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chance,
+                (
+                    (boule_1 IN (%s, %s, %s, %s, %s)) +
+                    (boule_2 IN (%s, %s, %s, %s, %s)) +
+                    (boule_3 IN (%s, %s, %s, %s, %s)) +
+                    (boule_4 IN (%s, %s, %s, %s, %s)) +
+                    (boule_5 IN (%s, %s, %s, %s, %s))
+                ) AS match_count,
+                (numero_chance = %s) AS chance_match
+            FROM tirages
+            ORDER BY match_count DESC, chance_match DESC
+            LIMIT 1
+        """, (*nums, *nums, *nums, *nums, *nums, chance))
+        best_match = cursor.fetchone()
+
+        # Calculer les numéros communs
+        best_match_numbers = []
+        if best_match:
+            tirage_nums = [best_match['boule_1'], best_match['boule_2'], best_match['boule_3'],
+                          best_match['boule_4'], best_match['boule_5']]
+            best_match_numbers = sorted([n for n in nums if n in tirage_nums])
+
+        history_check = {
+            "exact_match": len(exact_dates) > 0,
+            "exact_dates": exact_dates,
+            "best_match_count": best_match['match_count'] if best_match else 0,
+            "best_match_chance": bool(best_match['chance_match']) if best_match else False,
+            "best_match_date": str(best_match['date_de_tirage']) if best_match else None,
+            "best_match_numbers": best_match_numbers
+        }
+
         conn.close()
 
         # Calcul des metriques
@@ -950,7 +998,8 @@ async def api_analyze_custom_grid(
                 "suites_consecutives": str(suites),
                 "score_conformite": f"{score_conformite}%"
             },
-            "suggestions": suggestions
+            "suggestions": suggestions,
+            "history_check": history_check
         }
 
     except Exception as e:
