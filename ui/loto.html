@@ -154,6 +154,52 @@
                         <span>Meta Data 75 Grilles</span>
                     </button>
 
+                    <!-- Slider Fenêtre d'Analyse META DATA -->
+                    <div class="meta-window-selector" id="meta-window-container">
+                        <label class="meta-window-label">Fenêtre d'analyse</label>
+
+                        <!-- Toggle Tirages / Années -->
+                        <div class="meta-mode-toggle" id="meta-mode-toggle">
+                            <button type="button" class="meta-mode-btn active" data-mode="tirages">Tirages</button>
+                            <button type="button" class="meta-mode-btn" data-mode="annees">Années</button>
+                        </div>
+
+                        <!-- Slider Mode Tirages -->
+                        <div class="meta-window-slider-wrapper" id="meta-slider-tirages">
+                            <input type="range" id="meta-window-slider" class="meta-window-slider"
+                                   min="0" max="6" step="1" value="6">
+                            <div class="meta-window-ticks">
+                                <span>25</span>
+                                <span>50</span>
+                                <span>75</span>
+                                <span>100</span>
+                                <span>200</span>
+                                <span>500</span>
+                                <span>GLOBAL</span>
+                            </div>
+                        </div>
+
+                        <!-- Slider Mode Années -->
+                        <div class="meta-window-slider-wrapper" id="meta-slider-annees" style="display: none;">
+                            <input type="range" id="meta-years-slider" class="meta-window-slider"
+                                   min="0" max="6" step="1" value="6">
+                            <div class="meta-window-ticks">
+                                <span>1A</span>
+                                <span>2A</span>
+                                <span>3A</span>
+                                <span>4A</span>
+                                <span>5A</span>
+                                <span>6A</span>
+                                <span>GLOBAL</span>
+                            </div>
+                        </div>
+
+                        <div class="meta-window-info" id="meta-window-info">
+                            <span class="meta-window-count">Analyse sur l'intégralité de la base</span>
+                            <span class="meta-window-dates">Nov 2019 → Aujourd'hui</span>
+                        </div>
+                    </div>
+
                     <p class="cta-subtext">Analyse instantanée • Indice de convergence • 100% gratuit</p>
 
                     <!-- Info prochain tirage -->
@@ -374,7 +420,148 @@
     <script src="/ui/static/sponsor-popup.js?v=5"></script>
     <script src="/ui/static/sponsor-popup75.js?v=5"></script>
     <script>
+    // Variables globales pour la fenêtre d'analyse META
+    var metaWindowSize = "GLOBAL";
+    var metaYearsSize = null;  // null = mode tirages, sinon valeur années
+    var metaCurrentMode = "tirages";  // "tirages" ou "annees"
+
+    // Mappings sliders discrets
+    var META_WINDOW_MAP = [25, 50, 75, 100, 200, 500, "GLOBAL"];
+    var META_YEARS_MAP = [1, 2, 3, 4, 5, 6, "GLOBAL"];
+
+    // Formatage date en français (JJ/MM/AAAA)
+    function formatDateFR(dateStr) {
+        if (!dateStr || dateStr === '---') return '---';
+        try {
+            var d = new Date(dateStr);
+            return d.toLocaleDateString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        } catch (e) {
+            return dateStr;
+        }
+    }
+
     (function() {
+        // === Éléments DOM ===
+        var toggleContainer = document.getElementById('meta-mode-toggle');
+        var sliderTirages = document.getElementById('meta-slider-tirages');
+        var sliderAnnees = document.getElementById('meta-slider-annees');
+        var windowSlider = document.getElementById('meta-window-slider');
+        var yearsSlider = document.getElementById('meta-years-slider');
+        var infoContainer = document.getElementById('meta-window-info');
+
+        if (!toggleContainer || !infoContainer) return;
+
+        var countEl = infoContainer.querySelector('.meta-window-count');
+        var datesEl = infoContainer.querySelector('.meta-window-dates');
+        var toggleBtns = toggleContainer.querySelectorAll('.meta-mode-btn');
+
+        // === Fonction de mise à jour pour le mode TIRAGES ===
+        function updateTiragesDisplay(value) {
+            var windowValue = META_WINDOW_MAP[value];
+            metaWindowSize = windowValue === "GLOBAL" ? "GLOBAL" : String(windowValue);
+            metaYearsSize = null;
+
+            if (windowValue === "GLOBAL") {
+                countEl.textContent = "Analyse sur l'intégralité de la base";
+                datesEl.textContent = "Nov 2019 → Aujourd'hui";
+            } else {
+                countEl.textContent = "Analyse sur " + windowValue + " tirages";
+                datesEl.textContent = "Chargement des dates...";
+
+                fetch('/api/meta-analyse-local?window=' + windowValue)
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.success && data.meta) {
+                            var dateMin = formatDateFR(data.meta.date_min);
+                            var dateMax = formatDateFR(data.meta.date_max);
+                            datesEl.textContent = "Du " + dateMin + " au " + dateMax;
+                        }
+                    })
+                    .catch(function() {
+                        datesEl.textContent = "Dates non disponibles";
+                    });
+            }
+        }
+
+        // === Fonction de mise à jour pour le mode ANNÉES ===
+        function updateAnneesDisplay(value) {
+            var yearsValue = META_YEARS_MAP[value];
+            metaYearsSize = yearsValue === "GLOBAL" ? "GLOBAL" : String(yearsValue);
+            metaWindowSize = "GLOBAL";  // Reset tirages
+
+            if (yearsValue === "GLOBAL") {
+                countEl.textContent = "Analyse sur l'intégralité de la base";
+                datesEl.textContent = "Nov 2019 → Aujourd'hui";
+            } else {
+                countEl.textContent = "Analyse sur " + yearsValue + " an" + (yearsValue > 1 ? "s" : "");
+                datesEl.textContent = "Chargement des dates...";
+
+                fetch('/api/meta-analyse-local?years=' + yearsValue)
+                    .then(function(r) { return r.json(); })
+                    .then(function(data) {
+                        if (data.success && data.meta) {
+                            var dateMin = formatDateFR(data.meta.date_min);
+                            var dateMax = formatDateFR(data.meta.date_max);
+                            var nbTirages = data.meta.window_size || "?";
+                            countEl.textContent = "Analyse sur " + yearsValue + " an" + (yearsValue > 1 ? "s" : "") + " (" + nbTirages + " tirages)";
+                            datesEl.textContent = "Du " + dateMin + " au " + dateMax;
+                        }
+                    })
+                    .catch(function() {
+                        datesEl.textContent = "Dates non disponibles";
+                    });
+            }
+        }
+
+        // === Gestion du toggle de mode ===
+        toggleBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var mode = this.getAttribute('data-mode');
+                if (mode === metaCurrentMode) return;
+
+                metaCurrentMode = mode;
+
+                // Mise à jour UI toggle
+                toggleBtns.forEach(function(b) { b.classList.remove('active'); });
+                this.classList.add('active');
+
+                // Afficher/masquer le bon slider
+                if (mode === "tirages") {
+                    sliderTirages.style.display = "block";
+                    sliderAnnees.style.display = "none";
+                    updateTiragesDisplay(parseInt(windowSlider.value, 10));
+                } else {
+                    sliderTirages.style.display = "none";
+                    sliderAnnees.style.display = "block";
+                    updateAnneesDisplay(parseInt(yearsSlider.value, 10));
+                }
+            });
+        });
+
+        // === Événement changement slider tirages ===
+        if (windowSlider) {
+            windowSlider.addEventListener('input', function() {
+                updateTiragesDisplay(parseInt(this.value, 10));
+            });
+            windowSlider.value = 6;
+        }
+
+        // === Événement changement slider années ===
+        if (yearsSlider) {
+            yearsSlider.addEventListener('input', function() {
+                updateAnneesDisplay(parseInt(this.value, 10));
+            });
+            yearsSlider.value = 6;
+        }
+
+        // Initialiser avec mode tirages + GLOBAL
+        updateTiragesDisplay(6);
+
+        // === Bouton META DATA ===
         var btn = document.getElementById('btn-metadata-75');
         if (!btn) return;
         btn.addEventListener('click', function(e) {
@@ -382,7 +569,13 @@
 
             // EVENT 1 - Clic bouton META
             if (window.LotoIAAnalytics?.productEngine?.track) {
-                window.LotoIAAnalytics.productEngine.track('meta_click', { version: 75, page: 'loto' });
+                window.LotoIAAnalytics.productEngine.track('meta_click', {
+                    version: 75,
+                    page: 'loto',
+                    mode: metaCurrentMode,
+                    window: metaWindowSize,
+                    years: metaYearsSize
+                });
             }
 
             // Point d'entrée unique : sponsor-popup75.js
