@@ -44,6 +44,8 @@
     </script>
     <link rel="stylesheet" href="/ui/static/style.css?v=5">
     <link rel="stylesheet" href="/ui/static/sponsor-popup.css?v=5">
+    <link rel="stylesheet" href="/ui/static/sponsor-popup75.css?v=5">
+    <link rel="stylesheet" href="/ui/static/meta-result.css?v=5">
     <link rel="stylesheet" href="/ui/static/legal.css?v=5">
     <!-- Theme script (en premier pour éviter le flash) -->
     <script src="/ui/static/theme.js?v=5"></script>
@@ -148,7 +150,7 @@
                     </button>
 
                     <!-- CTA Secondaire — Meta Data -->
-                    <button id="btn-metadata-50" class="btn-cta-secondary">
+                    <button id="btn-metadata-75" class="btn-cta-secondary">
                         <span>Meta Data 75 Grilles</span>
                     </button>
 
@@ -368,28 +370,30 @@
         ↑
     </button>
 
-    <!-- Popup Meta Data 50 Grilles (même mécanisme que /simulateur) -->
-    <div id="metadata-popup" class="assistant-popup hidden">
-        <div class="assistant-popup-content">
-            <h3>Meta Data 75 Grilles</h3>
-            <p>Fonctionnalité en cours de développement — ouverture prochaine.</p>
-            <button class="popup-close-btn" id="metadata-popup-close">Fermer</button>
-        </div>
-    </div>
-
+    <!-- META ANALYSE 75 Grilles - Géré par sponsor-popup75.js -->
+    <script src="/ui/static/sponsor-popup.js?v=5"></script>
+    <script src="/ui/static/sponsor-popup75.js?v=5"></script>
     <script>
     (function() {
-        var btn = document.getElementById('btn-metadata-50');
-        var popup = document.getElementById('metadata-popup');
-        var close = document.getElementById('metadata-popup-close');
-        if (!btn || !popup || !close) return;
-        btn.addEventListener('click', function() { popup.classList.remove('hidden'); });
-        close.addEventListener('click', function() { popup.classList.add('hidden'); });
-        popup.addEventListener('click', function(e) { if (e.target === popup) popup.classList.add('hidden'); });
+        var btn = document.getElementById('btn-metadata-75');
+        if (!btn) return;
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            // EVENT 1 - Clic bouton META
+            if (window.LotoIAAnalytics?.productEngine?.track) {
+                window.LotoIAAnalytics.productEngine.track('meta_click', { version: 75, page: 'loto' });
+            }
+
+            // Point d'entrée unique : sponsor-popup75.js
+            if (typeof showMetaAnalysePopup === 'function') {
+                showMetaAnalysePopup();
+            } else {
+                console.warn('[META ANALYSE] Module sponsor-popup75.js non chargé');
+            }
+        });
     })();
     </script>
-
-    <script src="/ui/static/sponsor-popup.js?v=5"></script>
     <script src="/ui/static/app.js?v=5"></script>
     <script src="/ui/static/scroll.js?v=5"></script>
     <script src="/ui/static/faq.js?v=5"></script>
