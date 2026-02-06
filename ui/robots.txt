@@ -34,7 +34,7 @@ Disallow: /health
 Disallow: /debug-env
 Disallow: /database-info
 Disallow: /generate
-Disallow: /stats$
+Disallow: /stats
 Disallow: /draw/
 Disallow: /ask
 Disallow: /docs
@@ -66,6 +66,19 @@ User-agent: Bytespider
 Disallow: /
 
 User-agent: Amazonbot
+Disallow: /
+
+# === SEO SCRAPERS ===
+User-agent: AhrefsBot
+Disallow: /
+
+User-agent: SemrushBot
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+User-agent: cohere-ai
 Disallow: /
 
 # === SITEMAP ===
