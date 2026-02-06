@@ -1222,19 +1222,18 @@ function displayGridsWithAds(grids, metadata, targetDate) {
 
     // Grilles + pubs intercalées
     grids.forEach((grid, index) => {
-        const score = grid.score || 0;
-
-        // Déterminer le niveau descriptif de convergence (non évaluatif)
+        // Profil descriptif basé sur les badges (indicateurs réels)
+        const badges = grid.badges || [];
         let convergenceLabel, convergenceClass;
-        if (score >= 80) {
-            convergenceLabel = 'Forte convergence';
+        if (badges.some(b => b.toLowerCase().includes('chaud'))) {
+            convergenceLabel = 'Profil chaud';
             convergenceClass = 'convergence-elevated';
-        } else if (score >= 50) {
-            convergenceLabel = 'Convergence modérée';
+        } else if (badges.some(b => b.toLowerCase().includes('retard') || b.toLowerCase().includes('cart'))) {
+            convergenceLabel = 'Profil mixte';
             convergenceClass = 'convergence-moderate';
         } else {
-            convergenceLabel = 'Convergence partielle';
-            convergenceClass = 'convergence-partial';
+            convergenceLabel = 'Profil équilibré';
+            convergenceClass = 'convergence-elevated';
         }
 
         html += `
@@ -1362,19 +1361,18 @@ function displayGridsVisual(grids, metadata, targetDate) {
 
     // Pour chaque grille
     grids.forEach((grid, index) => {
-        const score = grid.score || 0;
-
-        // Déterminer le niveau descriptif de convergence (non évaluatif)
+        // Profil descriptif basé sur les badges (indicateurs réels)
+        const badges = grid.badges || [];
         let convergenceLabel, convergenceClass;
-        if (score >= 80) {
-            convergenceLabel = 'Forte convergence';
+        if (badges.some(b => b.toLowerCase().includes('chaud'))) {
+            convergenceLabel = 'Profil chaud';
             convergenceClass = 'convergence-elevated';
-        } else if (score >= 50) {
-            convergenceLabel = 'Convergence modérée';
+        } else if (badges.some(b => b.toLowerCase().includes('retard') || b.toLowerCase().includes('cart'))) {
+            convergenceLabel = 'Profil mixte';
             convergenceClass = 'convergence-moderate';
         } else {
-            convergenceLabel = 'Convergence partielle';
-            convergenceClass = 'convergence-partial';
+            convergenceLabel = 'Profil équilibré';
+            convergenceClass = 'convergence-elevated';
         }
 
         html += `

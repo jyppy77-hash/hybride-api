@@ -265,7 +265,7 @@ function getCustomGridAnalysisLogs() {
         { time: step * 5, text: "⏳ Calcul fréquences historiques... 22%", type: "progress" },
         { time: step * 6, text: `⏳ Comparaison avec ${(window.TOTAL_TIRAGES || 967).toLocaleString('fr-FR')} tirages... 45%`, type: "progress" },
         { time: step * 7, text: "⏳ Détection patterns similaires... 63%", type: "progress" },
-        { time: step * 8, text: "⏳ Calcul score de probabilité... 81%", type: "progress" },
+        { time: step * 8, text: "⏳ Calcul profil statistique... 81%", type: "progress" },
         { time: step * 9, text: "⏳ Génération recommandations... 93%", type: "progress" },
         { time: step * 10, text: "✓ Analyse terminée avec succès", type: "success" },
         { time: step * 11, text: "> Préparation affichage résultats...", type: "info" }
