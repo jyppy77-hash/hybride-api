@@ -123,7 +123,7 @@ function calculateTimerDuration(gridCount) {
  * @param {Object} config - Configuration
  * @returns {string} HTML du popup
  */
-function generatePopupHTML(config) {
+function generatePopupHTML75(config) {
     const { title, duration, isMetaAnalyse = false } = config;
 
     // Badge META ANALYSE si activé
@@ -305,7 +305,7 @@ function generateMatrixLine() {
  * @param {Function} [config.onComplete] - Callback a la fin
  * @returns {Promise} Promise resolue quand le popup se ferme
  */
-function showSponsorPopup(config) {
+function showSponsorPopup75(config) {
     return new Promise((resolve) => {
         const {
             duration,
@@ -318,7 +318,7 @@ function showSponsorPopup(config) {
         // Creer l'overlay
         const overlay = document.createElement('div');
         overlay.className = 'sponsor-popup-overlay';
-        overlay.innerHTML = generatePopupHTML({ title, duration });
+        overlay.innerHTML = generatePopupHTML75({ title, duration });
 
         // Flag d'annulation utilisateur (si true, on ne déclenche pas onComplete)
         let isCancelled = false;
@@ -645,7 +645,7 @@ async function showPopupBeforeGeneration(gridCount, generateCallback) {
     const duration = calculateTimerDuration(gridCount);
     const plural = gridCount > 1 ? 's' : '';
 
-    const result = await showSponsorPopup({
+    const result = await showSponsorPopup75({
         duration: duration,
         gridCount: gridCount,
         title: `Génération de ${gridCount} grille${plural} optimisée${plural}`
@@ -670,7 +670,7 @@ async function showPopupBeforeGeneration(gridCount, generateCallback) {
  * @param {Function} simulateCallback - Fonction de simulation a executer apres
  */
 async function showPopupBeforeSimulation(title, simulateCallback) {
-    const result = await showSponsorPopup({
+    const result = await showSponsorPopup75({
         duration: 3, // Toujours 3 secondes pour le simulateur
         title: title || 'Analyse de votre grille en cours'
     });
@@ -994,7 +994,7 @@ async function showMetaAnalysePopup() {
         isGlobal: isGlobal
     });
 
-    const result = await showSponsorPopup({
+    const result = await showSponsorPopup75({
         duration: META_ANALYSE_TIMER_DURATION,
         gridCount: 75,
         title: 'META ANALYSE - Traitement 75 grilles',
@@ -1017,7 +1017,7 @@ async function showMetaAnalysePopup() {
 // ============================================
 
 // Les fonctions sont disponibles globalement
-window.showSponsorPopup = showSponsorPopup;
+window.showSponsorPopup75 = showSponsorPopup75;
 window.showPopupBeforeGeneration = showPopupBeforeGeneration;
 window.showPopupBeforeSimulation = showPopupBeforeSimulation;
 window.calculateTimerDuration = calculateTimerDuration;
