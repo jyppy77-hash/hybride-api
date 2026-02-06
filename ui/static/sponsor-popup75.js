@@ -731,8 +731,9 @@ function openMetaResultPopup(data) {
     }
 
     const graphBars = generateGraphBarsHTML(data.graph);
-    const analysisText = data.analysis || 'Analyse non disponible.';
-    const pdfEnabled = data.pdf === true;
+    const analysisText = finalAnalysisText;
+    console.log('[UI] analysisText source:', analysisText ? 'finalAnalysisText' : 'VIDE');
+    const pdfEnabled = true;
 
     const overlay = document.createElement('div');
     overlay.className = 'meta-result-overlay';
@@ -766,7 +767,7 @@ function openMetaResultPopup(data) {
                 </button>
                 <button class="meta-result-btn meta-result-btn-pdf" id="meta-result-pdf" ${pdfEnabled ? '' : 'disabled'}>
                     <span>📄</span>
-                    Exporter PDF
+                    ${pdfEnabled ? 'Télécharger le rapport META' : 'Exporter PDF'}
                     ${pdfEnabled ? '' : '<span class="meta-result-btn-pdf-badge">Bientôt</span>'}
                 </button>
             </div>
@@ -795,20 +796,40 @@ function openMetaResultPopup(data) {
         if (e.target === overlay) closePopup();
     });
 
-    // EVENT 4 - Export PDF (même si désactivé, track le clic)
+    // EVENT 4 - Export PDF — source unique : finalAnalysisText
     if (pdfBtn) {
         pdfBtn.addEventListener('click', () => {
-            // Track analytics
             if (window.LotoIAAnalytics?.productEngine?.track) {
                 window.LotoIAAnalytics.productEngine.track('meta_pdf_export', { version: 75 });
             }
 
-            if (pdfEnabled) {
-                console.log('[META ANALYSE] Export PDF demandé (non implémenté)');
-                alert('Export PDF : fonctionnalité à venir.');
-            } else {
-                console.log('[META ANALYSE] Export PDF cliqué (désactivé)');
+            if (!finalAnalysisText) {
+                console.warn('[PDF] finalAnalysisText est null — blocage');
+                alert('Analyse avancée encore en cours...');
+                return;
             }
+
+            console.log('[PDF] finalAnalysisText:', finalAnalysisText.substring(0, 120));
+
+            fetch('/api/meta-pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    analysis: finalAnalysisText,
+                    window: '75 tirages',
+                    engine: 'HYBRIDE_OPTIMAL_V1',
+                    graph: 'ui/static/meta_graph.png',
+                    sponsor: 'Espace disponible'
+                })
+            })
+            .then(function(res) { return res.blob(); })
+            .then(function(blob) {
+                var url = URL.createObjectURL(blob);
+                window.open(url, '_blank');
+            })
+            .catch(function(err) {
+                console.error('[PDF] Erreur generation:', err);
+            });
         });
     }
 }
@@ -857,99 +878,139 @@ function openMetaResultPopupFallback() {
     });
 }
 
-/**
- * Callback de fin du timer sponsor
- * Fetch l'API locale HYBRIDE puis enrichit via Gemini
- * Fallback automatique vers mock si erreur
- * @private
- */
-function onMetaAnalyseComplete() {
-    console.log('[META ANALYSE] Timer terminé - fetch données locales...');
+// ==============================================
+// SOURCE DE VÉRITÉ UNIQUE — Analyse Gemini
+// ==============================================
 
-    // Construire l'URL selon le mode (tirages ou années)
+var finalAnalysisText = null;
+var metaResultData = null;
+var metaAnalysisPromise = null;
+
+/**
+ * Construit l'URL de l'API locale selon le mode slider.
+ * @returns {string}
+ */
+function buildMetaLocalUrl() {
     var currentMode = (typeof metaCurrentMode !== 'undefined') ? metaCurrentMode : 'tirages';
     var apiUrl = '/api/meta-analyse-local';
 
     if (currentMode === 'annees' && typeof metaYearsSize !== 'undefined' && metaYearsSize) {
         apiUrl += '?years=' + encodeURIComponent(metaYearsSize);
-        console.log('[META ANALYSE] Mode années:', metaYearsSize);
     } else {
         var windowParam = (typeof metaWindowSize !== 'undefined' && metaWindowSize) ? metaWindowSize : 'GLOBAL';
         apiUrl += '?window=' + encodeURIComponent(windowParam);
-        console.log('[META ANALYSE] Mode tirages:', windowParam);
     }
+    return apiUrl;
+}
 
-    fetch(apiUrl)
+/**
+ * Lance fetch local + Gemini à T=0.
+ * Retourne une Promise qui se résout quand finalAnalysisText est prêt.
+ * Timeout Gemini : 25 secondes.
+ * @returns {Promise}
+ */
+function triggerGeminiEarly() {
+    console.log('[GEM] START');
+
+    finalAnalysisText = null;
+    metaResultData = null;
+
+    var apiUrl = buildMetaLocalUrl();
+
+    metaAnalysisPromise = fetch(apiUrl)
         .then(function(response) {
-            if (!response.ok) throw new Error('HTTP ' + response.status);
+            if (!response.ok) throw new Error('Local HTTP ' + response.status);
             return response.json();
         })
         .then(function(data) {
-            if (!data.success) {
-                openMetaResultPopupFallback();
-                return Promise.reject('no-popup');
-            }
+            if (!data.success) throw new Error('API local: success=false');
 
-            console.log('[META ANALYSE] Données locales reçues:', data.meta?.source || 'LOCAL');
+            var localText = data.analysis;
+            console.log('[GEM] Local OK (' + (localText ? localText.length : 0) + ' chars), appel Gemini...');
 
-            // Appel Gemini texte (enrichissement)
-            return fetch('/api/meta-analyse-texte', {
+            var geminiPromise = fetch('/api/meta-analyse-texte', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     analysis_local: data.analysis,
-                    stats: data.graph
+                    stats: data.graph,
+                    window: (data.meta && data.meta.window_used) ? data.meta.window_used : 'GLOBAL'
                 })
             })
-            .then(function(r) { return r.json(); })
-            .then(function(gem) {
-                // === DIAG FRONT ===
-                console.log('[DIAG] GEM RESPONSE FRONT:', gem);
-                console.log('[DIAG] analysis_enriched:', gem?.analysis_enriched?.substring(0, 100));
-
-                // Enrichit le texte si disponible (ne modifie JAMAIS graph)
-                if (gem && gem.analysis_enriched) {
-                    console.log('[META ANALYSE] Texte enrichi par Gemini');
-                    data.analysis = gem.analysis_enriched;
-                }
-                // Propage le source pour analytics
-                if (gem && gem.source) {
-                    data.source = gem.source;
-                } else {
-                    data.source = 'hybride_local';
-                }
-                return data;
+            .then(function(r) {
+                if (!r.ok) throw new Error('Gemini HTTP ' + r.status);
+                return r.json();
             })
-            .catch(function() {
-                // Fallback : garde le texte local
-                console.warn('[META ANALYSE] Enrichissement Gemini ignoré');
-                return data;
+            .then(function(gem) {
+                console.log('[GEM] Response keys:', gem ? Object.keys(gem).join(',') : 'NULL');
+                console.log('[GEM] source:', gem ? gem.source : 'N/A');
+                var enriched = gem && gem.analysis_enriched;
+                if (!enriched || typeof enriched !== 'string' || enriched.trim().length === 0) {
+                    throw new Error('analysis_enriched manquant — keys: ' + (gem ? Object.keys(gem).join(',') : 'NULL'));
+                }
+                if (gem.source && gem.source !== 'gemini_enriched') {
+                    console.warn('[GEM] Backend a renvoyé texte LOCAL (source=' + gem.source + ') — retry ou fallback');
+                    throw new Error('Backend fallback local — source: ' + gem.source);
+                }
+                return enriched;
             });
+
+            var timeoutPromise = new Promise(function(_, reject) {
+                setTimeout(function() { reject('GEMINI_TIMEOUT_25S'); }, 25000);
+            });
+
+            return Promise.race([geminiPromise, timeoutPromise])
+                .then(function(enrichedText) {
+                    console.log('[GEM] ENRICHED OK (' + enrichedText.length + ' chars)');
+                    finalAnalysisText = enrichedText;
+                    data.analysis = enrichedText;
+                    data.source = 'gemini_enriched';
+                    metaResultData = data;
+                })
+                .catch(function(reason) {
+                    console.warn('[GEM] FALLBACK — raison:', reason);
+                    finalAnalysisText = localText;
+                    data.analysis = localText;
+                    data.source = 'hybride_local_fallback';
+                    metaResultData = data;
+                });
         })
-        .then(function(finalData) {
-            if (finalData) {
-                openMetaResultPopup(finalData);
+        .catch(function(err) {
+            console.error('[GEM] ERREUR FATALE (fetch local):', err);
+            // finalAnalysisText reste null → fallback UI dans onMetaAnalyseComplete
+        });
+
+    return metaAnalysisPromise;
+}
+
+/**
+ * Callback de fin du timer sponsor.
+ * Attend la Promise Gemini puis ouvre le résultat.
+ * Aucun polling, aucun setInterval.
+ * @private
+ */
+function onMetaAnalyseComplete() {
+    console.log('[META ANALYSE] Timer terminé — attente Promise Gemini...');
+
+    if (!metaAnalysisPromise) {
+        console.error('[META ANALYSE] Aucune Promise — fallback UI');
+        openMetaResultPopupFallback();
+        return;
+    }
+
+    metaAnalysisPromise
+        .then(function() {
+            if (finalAnalysisText && metaResultData) {
+                console.log('[META ANALYSE] finalAnalysisText OK — ouverture résultat');
+                openMetaResultPopup(metaResultData);
+            } else {
+                console.error('[META ANALYSE] finalAnalysisText null après Promise');
+                openMetaResultPopupFallback();
             }
         })
         .catch(function(err) {
-            if (err === 'no-popup') return;
-
-            console.error('[META ANALYSE] Erreur fetch local:', err);
-            // Fallback vers mock si l'endpoint local échoue
-            console.log('[META ANALYSE] Tentative fallback mock...');
-
-            fetch('/api/meta-analyse-mock')
-                .then(function(r) { return r.json(); })
-                .then(function(mockData) {
-                    if (mockData.success) {
-                        openMetaResultPopup(mockData);
-                    } else {
-                        openMetaResultPopupFallback();
-                    }
-                })
-                .catch(function() {
-                    openMetaResultPopupFallback();
-                });
+            console.error('[META ANALYSE] Promise rejetée:', err);
+            openMetaResultPopupFallback();
         });
 }
 
@@ -987,6 +1048,9 @@ async function showMetaAnalysePopup() {
         rowsToAnalyze = parseInt(metaWindowSize, 10);
         isGlobal = false;
     }
+
+    // T=0 : déclencher Gemini immédiatement (travaille pendant le timer)
+    triggerGeminiEarly();
 
     // Logs spécifiques META ANALYSE (75 grilles)
     const metaAnalyseLogs = getConsoleLogs(75, META_ANALYSE_TIMER_DURATION, {
