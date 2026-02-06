@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Query, Request
-from fastapi.responses import RedirectResponse, FileResponse, HTMLResponse
+from fastapi.responses import RedirectResponse, FileResponse, HTMLResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -7,6 +7,7 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any
 import logging
 import os
+import io
 import httpx
 
 from engine.hybride import generate, generate_grids
@@ -184,6 +185,16 @@ class TrackAdClickPayload(BaseModel):
 class MetaAnalyseTextePayload(BaseModel):
     analysis_local: str
     stats: Optional[Dict[str, Any]] = None
+    window: Optional[str] = "GLOBAL"
+
+
+class MetaPdfPayload(BaseModel):
+    analysis: Optional[str] = ""
+    window: Optional[str] = "75 tirages"
+    engine: Optional[str] = "HYBRIDE_OPTIMAL_V1"
+    metaType: Optional[str] = "META75"
+    graph: Optional[str] = None
+    sponsor: Optional[str] = None
 
 
 # =========================
@@ -1385,6 +1396,53 @@ async def api_meta_analyse_local(
 
 
 # =========================
+# PROMPT MAP — Prompts dynamiques META ANALYSE
+# =========================
+
+PROMPT_MAP = {
+    "100": "prompts/tirages/prompt_100.txt",
+    "200": "prompts/tirages/prompt_200.txt",
+    "300": "prompts/tirages/prompt_300.txt",
+    "400": "prompts/tirages/prompt_400.txt",
+    "500": "prompts/tirages/prompt_500.txt",
+    "600": "prompts/tirages/prompt_600.txt",
+    "700": "prompts/tirages/prompt_700.txt",
+    "800": "prompts/tirages/prompt_800.txt",
+    "GLOBAL": "prompts/tirages/prompt_global.txt",
+    "1A": "prompts/annees/prompt_1a.txt",
+    "2A": "prompts/annees/prompt_2a.txt",
+    "3A": "prompts/annees/prompt_3a.txt",
+    "4A": "prompts/annees/prompt_4a.txt",
+    "5A": "prompts/annees/prompt_5a.txt",
+    "6A": "prompts/annees/prompt_6a.txt",
+}
+
+FALLBACK_PROMPT_PATH = "prompts/tirages/prompt_global.txt"
+
+
+def load_prompt(window: str) -> str:
+    """
+    Charge le prompt contextuel correspondant a la fenetre d'analyse.
+    Fallback vers prompt_global.txt si fichier absent.
+    """
+    key = (window or "GLOBAL").upper().strip()
+    path = PROMPT_MAP.get(key, FALLBACK_PROMPT_PATH)
+
+    if os.path.isfile(path):
+        with open(path, "r", encoding="utf-8") as f:
+            return f.read()
+
+    # Fallback ultime si fichier introuvable
+    if os.path.isfile(FALLBACK_PROMPT_PATH):
+        logger.warning(f"[PROMPT] Fichier {path} introuvable, fallback global")
+        with open(FALLBACK_PROMPT_PATH, "r", encoding="utf-8") as f:
+            return f.read()
+
+    logger.error("[PROMPT] Aucun fichier prompt disponible")
+    return ""
+
+
+# =========================
 # META ANALYSE Texte Gemini (Phase 3)
 # =========================
 
@@ -1392,42 +1450,52 @@ async def api_meta_analyse_local(
 async def api_meta_analyse_texte(payload: MetaAnalyseTextePayload):
     """
     Enrichit le texte d'analyse local via Gemini.
+    Utilise un prompt dynamique adapte a la fenetre d'analyse.
     Timeout 3 secondes max, fallback vers texte local si erreur.
     Aucune modification des statistiques.
     """
     analysis_local = payload.analysis_local
+    window_key = payload.window or "GLOBAL"
 
-    # === GEM DIAG START ===
-    print("=== GEM DIAG START ===")
-    print("API KEY PRESENT:", bool(os.environ.get("GEM_API_KEY") or os.environ.get("GEMINI_API_KEY")))
-    print("INPUT LOCAL:", analysis_local[:100] if analysis_local else "EMPTY")
+    logger.info(f"[META TEXTE] Fenetre={window_key}")
 
-    # Récupérer la clé API Gemini depuis l'environnement
     gem_api_key = os.environ.get("GEM_API_KEY") or os.environ.get("GEMINI_API_KEY")
 
+    print(f"[DEBUG META TEXTE] GEM_API_KEY presente: {bool(gem_api_key)}")
+    print(f"[DEBUG META TEXTE] GEM_API_KEY prefix: {gem_api_key[:8] if gem_api_key else 'NONE'}...")
+    print(f"[DEBUG META TEXTE] Vars dispo: GEM_API_KEY={bool(os.environ.get('GEM_API_KEY'))}, GEMINI_API_KEY={bool(os.environ.get('GEMINI_API_KEY'))}")
+
     if not gem_api_key:
-        logger.warning("[META TEXTE] GEM_API_KEY non configurée - fallback local")
-        print("FINAL RETURN: FALLBACK (no API key)")
-        print("=== GEM DIAG END ===")
+        print("[DEBUG META TEXTE] >>> SORTIE: pas de cle API — fallback local")
+        logger.warning("[META TEXTE] GEM_API_KEY non configuree - fallback local")
         return {"analysis_enriched": analysis_local, "source": "hybride_local"}
 
-    # Prompt pédagogique neutre
-    prompt = f"""Tu es un expert en statistiques de loterie.
-Reformule ce texte d'analyse de manière pédagogique et accessible.
-Règles strictes :
+    # Charger le prompt dynamique contextuel
+    prompt_template = load_prompt(window_key)
+
+    if prompt_template:
+        prompt = prompt_template + "\n" + analysis_local
+    else:
+        prompt = f"""Tu es un expert en statistiques de loterie.
+Reformule ce texte d'analyse de maniere pedagogique et accessible.
+Regles strictes :
 - Ne promets JAMAIS de gain
 - Reste neutre et informatif
 - Garde un ton professionnel
-- Maximum 3 phrases fluides
+- Maximum 4 phrases fluides
 - Ne modifie pas les chiffres
 
-Texte à reformuler :
+Texte a reformuler :
 {analysis_local}"""
 
+    print(f"[DEBUG META TEXTE] Prompt construit ({len(prompt)} chars), appel Gemini...")
+
     try:
-        async with httpx.AsyncClient(timeout=3.0) as client:
+        print("[DEBUG META TEXTE] >>> Ouverture httpx.AsyncClient(timeout=20.0)")
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            print("[DEBUG META TEXTE] >>> POST vers Gemini en cours...")
             response = await client.post(
-                "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
+                "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
                 headers={
                     "Content-Type": "application/json",
                     "x-goog-api-key": gem_api_key
@@ -1438,49 +1506,287 @@ Texte à reformuler :
                     }],
                     "generationConfig": {
                         "temperature": 0.7,
-                        "maxOutputTokens": 200
+                        "maxOutputTokens": 250
                     }
                 }
             )
 
-            print("GEM HTTP STATUS:", response.status_code)
+            print(f"[DEBUG META TEXTE] >>> Gemini HTTP status: {response.status_code}")
+            print(f"[DEBUG META TEXTE] >>> Gemini response headers: {dict(response.headers)}")
 
             if response.status_code == 200:
                 data = response.json()
-                print("GEM RAW RESPONSE:", str(data)[:300])
-
-                # Extraire le texte généré
+                print(f"[DEBUG META TEXTE] >>> Gemini JSON keys: {list(data.keys())}")
                 candidates = data.get("candidates", [])
+                print(f"[DEBUG META TEXTE] >>> candidates count: {len(candidates)}")
                 if candidates:
                     content = candidates[0].get("content", {})
                     parts = content.get("parts", [])
+                    print(f"[DEBUG META TEXTE] >>> parts count: {len(parts)}")
                     if parts:
                         enriched_text = parts[0].get("text", "").strip()
+                        print(f"[DEBUG META TEXTE] >>> enriched_text length: {len(enriched_text)}")
+                        print(f"[DEBUG META TEXTE] >>> enriched_text preview: {enriched_text[:120]}")
                         if enriched_text:
-                            logger.info("[META TEXTE] Enrichissement Gemini OK")
-                            print("GEM ENRICHED TEXT:", enriched_text[:100])
-                            print("FINAL RETURN: ENRICHED")
-                            print("=== GEM DIAG END ===")
+                            print("[DEBUG META TEXTE] >>> SUCCES — return gemini_enriched")
+                            logger.info(f"[META TEXTE] Gemini OK (window={window_key})")
                             return {"analysis_enriched": enriched_text, "source": "gemini_enriched"}
+                        else:
+                            print("[DEBUG META TEXTE] >>> ECHEC: enriched_text vide apres strip")
+                    else:
+                        print("[DEBUG META TEXTE] >>> ECHEC: parts vide")
+                else:
+                    print("[DEBUG META TEXTE] >>> ECHEC: candidates vide")
+            else:
+                print(f"[DEBUG META TEXTE] >>> ECHEC: HTTP {response.status_code}")
+                print(f"[DEBUG META TEXTE] >>> Body: {response.text[:500]}")
 
-            # Si pas de réponse valide, fallback
-            logger.warning(f"[META TEXTE] Réponse Gemini invalide: {response.status_code}")
-            print("GEM RAW RESPONSE (error):", response.text[:200] if response.text else "EMPTY")
-            print("FINAL RETURN: FALLBACK (invalid response)")
-            print("=== GEM DIAG END ===")
+            logger.warning(f"[META TEXTE] Reponse Gemini invalide: {response.status_code}")
             return {"analysis_enriched": analysis_local, "source": "hybride_local"}
 
-    except httpx.TimeoutException:
-        logger.warning("[META TEXTE] Timeout Gemini (3s) - fallback local")
-        print("FINAL RETURN: FALLBACK (timeout)")
-        print("=== GEM DIAG END ===")
+    except httpx.TimeoutException as te:
+        print(f"[DEBUG META TEXTE] >>> EXCEPTION TimeoutException: {te}")
+        logger.warning("[META TEXTE] Timeout Gemini (20s) - fallback local")
         return {"analysis_enriched": analysis_local, "source": "hybride_local"}
     except Exception as e:
+        print(f"[DEBUG META TEXTE] >>> EXCEPTION {type(e).__name__}: {e}")
+        import traceback
+        print(f"[DEBUG META TEXTE] >>> Traceback:\n{traceback.format_exc()}")
         logger.error(f"[META TEXTE] Erreur Gemini: {e}")
-        print("GEM EXCEPTION:", str(e))
-        print("FINAL RETURN: FALLBACK (exception)")
-        print("=== GEM DIAG END ===")
         return {"analysis_enriched": analysis_local, "source": "fallback"}
+
+
+# =========================
+# META PDF (ReportLab)
+# =========================
+
+@app.post("/api/meta-pdf")
+async def api_meta_pdf(payload: MetaPdfPayload):
+    """
+    Genere le PDF officiel META75 via ReportLab.
+    Recoit du JSON, retourne un PDF en streaming.
+    """
+    logger.info("[META-PDF] Debut generation PDF")
+
+    try:
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.units import mm
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.ttfonts import TTFont
+    except ImportError as e:
+        logger.error(f"[META-PDF] Import reportlab echoue: {e}")
+        raise HTTPException(status_code=500, detail="reportlab non installe")
+
+    # Enregistrer polices UTF-8 : DejaVuSans (Linux/Cloud Run) → Vera (fallback ReportLab)
+    import reportlab as _rl
+    _rl_fonts = os.path.join(os.path.dirname(_rl.__file__), 'fonts')
+    _font_map = {
+        'DejaVuSans': [
+            os.path.join(_rl_fonts, 'DejaVuSans.ttf'),
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+            os.path.join(_rl_fonts, 'Vera.ttf'),
+        ],
+        'DejaVuSans-Bold': [
+            os.path.join(_rl_fonts, 'DejaVuSans-Bold.ttf'),
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+            os.path.join(_rl_fonts, 'VeraBd.ttf'),
+        ],
+        'DejaVuSans-Oblique': [
+            os.path.join(_rl_fonts, 'DejaVuSans-Oblique.ttf'),
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf',
+            os.path.join(_rl_fonts, 'VeraIt.ttf'),
+        ],
+    }
+    for _name, _paths in _font_map.items():
+        for _path in _paths:
+            if os.path.isfile(_path):
+                try:
+                    pdfmetrics.registerFont(TTFont(_name, _path))
+                    logger.info(f"[META-PDF] Police {_name} → {os.path.basename(_path)}")
+                except Exception as _fe:
+                    logger.warning(f"[META-PDF] Echec {_name} avec {_path}: {_fe}")
+                    continue
+                break
+        else:
+            logger.error(f"[META-PDF] Aucune police trouvee pour {_name}")
+
+    def utf8_clean(text):
+        """Nettoie le texte en preservant tous les caracteres UTF-8."""
+        if not text:
+            return ""
+        return text.encode("utf-8").decode("utf-8")
+
+    try:
+        buf = io.BytesIO()
+        w, h = A4
+        c = canvas.Canvas(buf, pagesize=A4)
+        margin_bottom = 30 * mm
+
+        y = h - 40 * mm
+        logger.info("[META-PDF] Canvas cree OK")
+
+        # Titre
+        c.setFont("DejaVuSans-Bold", 22)
+        c.drawCentredString(w / 2, y, "Rapport META DONN\u00c9E - 75 Grilles")
+        y -= 12 * mm
+
+        # Sous-titre
+        c.setFont("DejaVuSans-Bold", 16)
+        c.drawCentredString(w / 2, y, "Analyse HYBRIDE")
+        y -= 10 * mm
+
+        # Separateur
+        c.setStrokeColorRGB(0, 0, 0)
+        c.setLineWidth(0.5)
+        c.line(15 * mm, y, w - 15 * mm, y)
+        y -= 10 * mm
+
+        # Image graphique si presente
+        graph_path = payload.graph or ""
+        if graph_path and os.path.isfile(graph_path):
+            try:
+                img_w = 160 * mm
+                img_h = 80 * mm
+                img_x = (w - img_w) / 2
+                c.drawImage(
+                    graph_path, img_x, y - img_h,
+                    width=img_w, height=img_h,
+                    preserveAspectRatio=True, mask="auto"
+                )
+                y -= (img_h + 10 * mm)
+                logger.info("[META-PDF] Image inseree OK")
+            except Exception as img_err:
+                logger.warning(f"[META-PDF] Image ignoree: {img_err}")
+
+        # Bloc analyse
+        c.setFont("DejaVuSans-Bold", 13)
+        c.drawString(15 * mm, y, "Analyse :")
+        y -= 7 * mm
+
+        analysis = utf8_clean(payload.analysis) or "Aucune analyse disponible."
+        text_obj = c.beginText(15 * mm, y)
+        text_obj.setFont("DejaVuSans", 11)
+        text_obj.setLeading(16)
+        max_chars = 90
+        for raw_line in analysis.split('\n'):
+            line = raw_line
+            while len(line) > max_chars:
+                cut = line[:max_chars].rfind(' ')
+                if cut <= 0:
+                    cut = max_chars
+                text_obj.textLine(line[:cut])
+                line = line[cut:].lstrip()
+            text_obj.textLine(line)
+        c.drawText(text_obj)
+        y = text_obj.getY() - 8 * mm
+        logger.info("[META-PDF] Bloc analyse OK")
+
+        # Saut de page si espace insuffisant
+        if y < margin_bottom:
+            c.showPage()
+            y = h - 30 * mm
+
+        # Bloc infos
+        c.setFont("DejaVuSans-Bold", 13)
+        c.drawString(15 * mm, y, "Informations :")
+        y -= 7 * mm
+
+        c.setFont("DejaVuSans", 11)
+        window_text = utf8_clean(payload.window) or "75 tirages"
+        engine_text = utf8_clean(payload.engine) or "HYBRIDE_OPTIMAL_V1"
+        c.drawString(15 * mm, y, f"Fen\u00eatre analys\u00e9e : {window_text}")
+        y -= 6 * mm
+        c.drawString(15 * mm, y, f"Moteur : {engine_text}")
+        y -= 10 * mm
+
+        # Bloc sponsor si present
+        sponsor = utf8_clean(payload.sponsor)
+        if sponsor:
+            c.setStrokeColorRGB(0.7, 0.7, 0.7)
+            c.setLineWidth(0.4)
+            c.line(15 * mm, y, w - 15 * mm, y)
+            y -= 8 * mm
+
+            # Titre partenariat
+            c.setFillColorRGB(0.1, 0.1, 0.1)
+            c.setFont("DejaVuSans", 10)
+            c.drawCentredString(w / 2, y, "Analyse offerte par un Partenaire Officiel")
+            y -= 6 * mm
+
+            # Sous-titre
+            c.setFont("DejaVuSans", 9)
+            c.drawCentredString(w / 2, y, "Partenariat & sponsoring :")
+            y -= 5 * mm
+
+            # Email cliquable
+            email_text = "contact@lotoia.fr"
+            email_width = c.stringWidth(email_text, "DejaVuSans", 9)
+            email_x1 = (w - email_width) / 2
+            email_x2 = email_x1 + email_width
+            c.drawCentredString(w / 2, y, email_text)
+            c.linkURL("mailto:contact@lotoia.fr", (email_x1, y - 2, email_x2, y + 10), relative=0)
+            y -= 10 * mm
+
+        # Saut de page si espace insuffisant
+        if y < margin_bottom:
+            c.showPage()
+            y = h - 30 * mm
+
+        # Separateur
+        c.setStrokeColorRGB(0, 0, 0)
+        c.setLineWidth(0.5)
+        c.line(15 * mm, y, w - 15 * mm, y)
+        y -= 10 * mm
+
+        # Signature HYBRIDE
+        c.setFillColorRGB(0, 0, 0)
+        c.setFont("DejaVuSans-Bold", 11)
+        c.drawCentredString(w / 2, y, "Analyse g\u00e9n\u00e9r\u00e9e par HYBRIDE_OPTIMAL_V1")
+        y -= 6 * mm
+        c.setFont("DejaVuSans", 10)
+        c.drawCentredString(w / 2, y, "Moteur statistique p\u00e9dagogique")
+        y -= 8 * mm
+
+        # Mention produit
+        c.setFont("DejaVuSans-Oblique", 10)
+        c.drawCentredString(w / 2, y, "G\u00e9n\u00e9r\u00e9 par LotoIA - Module META DONN\u00c9E")
+        y -= 10 * mm
+
+        # Disclaimer
+        c.setFont("DejaVuSans", 9)
+        c.drawCentredString(w / 2, y, "Analyse statistique p\u00e9dagogique.")
+        y -= 5 * mm
+        c.drawCentredString(w / 2, y, "Aucun r\u00e9sultat n\u2019est garanti.")
+        y -= 10 * mm
+
+        # Version + notes IA
+        c.setFillColorRGB(150 / 255, 150 / 255, 150 / 255)
+        c.setFont("DejaVuSans-Oblique", 8)
+        c.drawCentredString(w / 2, y, "LotoIA \u2014 Rapport META DONN\u00c9E v0.1")
+        y -= 4 * mm
+        c.drawCentredString(w / 2, y, "Ce rapport est enti\u00e8rement g\u00e9n\u00e9r\u00e9 par intelligence artificielle en collaboration avec le moteur HYBRIDE_OPTIMAL_V1.")
+        y -= 4 * mm
+        c.drawCentredString(w / 2, y, "Graphiques et visuels en cours de d\u00e9veloppement.")
+
+        # Footer bas de page — position dynamique, toujours y=20
+        c.setFillColorRGB(0.5, 0.5, 0.5)
+        c.setFont("DejaVuSans", 8)
+        c.drawCentredString(w / 2, 20, "* Ce rapport META DONN\u00c9E est en version 0.1 \u2013 Version graphique \u00e0 venir.")
+
+        c.save()
+        buf.seek(0)
+        logger.info("[META-PDF] PDF genere OK")
+
+        return StreamingResponse(
+            buf,
+            media_type="application/pdf",
+            headers={"Content-Disposition": "inline; filename=meta75_report.pdf"}
+        )
+
+    except Exception as e:
+        logger.error(f"[META-PDF] Erreur generation: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Erreur generation PDF: {e}")
 
 
 # =========================
