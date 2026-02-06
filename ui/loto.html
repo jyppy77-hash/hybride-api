@@ -463,6 +463,17 @@
         var datesEl = infoContainer.querySelector('.meta-window-dates');
         var toggleBtns = toggleContainer.querySelectorAll('.meta-mode-btn');
 
+        // === Données locales fenêtre d'analyse (aucun appel API) ===
+        var windowInfoTirages = {
+            25:  { draws: 25,  start: "2025-10-04", end: "2026-02-04" },
+            50:  { draws: 50,  start: "2025-06-07", end: "2026-02-04" },
+            75:  { draws: 75,  start: "2025-02-08", end: "2026-02-04" },
+            100: { draws: 100, start: "2024-10-05", end: "2026-02-04" },
+            200: { draws: 200, start: "2023-06-07", end: "2026-02-04" },
+            500: { draws: 500, start: "2021-04-10", end: "2026-02-04" },
+            GLOBAL: { draws: 979, start: "2019-11-06", end: "2026-02-04" }
+        };
+
         // === Fonction de mise à jour pour le mode TIRAGES ===
         function updateTiragesDisplay(value) {
             var windowValue = META_WINDOW_MAP[value];
@@ -474,22 +485,25 @@
                 datesEl.textContent = "Nov 2019 → Aujourd'hui";
             } else {
                 countEl.textContent = "Analyse sur " + windowValue + " tirages";
-                datesEl.textContent = "Chargement des dates...";
-
-                fetch('/api/meta-analyse-local?window=' + windowValue)
-                    .then(function(r) { return r.json(); })
-                    .then(function(data) {
-                        if (data.success && data.meta) {
-                            var dateMin = formatDateFR(data.meta.date_min);
-                            var dateMax = formatDateFR(data.meta.date_max);
-                            datesEl.textContent = "Du " + dateMin + " au " + dateMax;
-                        }
-                    })
-                    .catch(function() {
-                        datesEl.textContent = "Dates non disponibles";
-                    });
+                var info = windowInfoTirages[windowValue];
+                if (info) {
+                    datesEl.textContent = "Du " + formatDateFR(info.start) + " au " + formatDateFR(info.end);
+                } else {
+                    datesEl.textContent = "";
+                }
             }
         }
+
+        // === Données locales fenêtre d'analyse années (aucun appel API) ===
+        var windowInfoAnnees = {
+            1: { draws: 156, start: "2025-02-08", end: "2026-02-04" },
+            2: { draws: 313, start: "2024-02-07", end: "2026-02-04" },
+            3: { draws: 469, start: "2023-02-08", end: "2026-02-04" },
+            4: { draws: 625, start: "2022-02-09", end: "2026-02-04" },
+            5: { draws: 782, start: "2021-02-06", end: "2026-02-04" },
+            6: { draws: 938, start: "2020-02-08", end: "2026-02-04" },
+            GLOBAL: { draws: 979, start: "2019-11-06", end: "2026-02-04" }
+        };
 
         // === Fonction de mise à jour pour le mode ANNÉES ===
         function updateAnneesDisplay(value) {
@@ -501,23 +515,14 @@
                 countEl.textContent = "Analyse sur l'intégralité de la base";
                 datesEl.textContent = "Nov 2019 → Aujourd'hui";
             } else {
-                countEl.textContent = "Analyse sur " + yearsValue + " an" + (yearsValue > 1 ? "s" : "");
-                datesEl.textContent = "Chargement des dates...";
-
-                fetch('/api/meta-analyse-local?years=' + yearsValue)
-                    .then(function(r) { return r.json(); })
-                    .then(function(data) {
-                        if (data.success && data.meta) {
-                            var dateMin = formatDateFR(data.meta.date_min);
-                            var dateMax = formatDateFR(data.meta.date_max);
-                            var nbTirages = data.meta.window_size || "?";
-                            countEl.textContent = "Analyse sur " + yearsValue + " an" + (yearsValue > 1 ? "s" : "") + " (" + nbTirages + " tirages)";
-                            datesEl.textContent = "Du " + dateMin + " au " + dateMax;
-                        }
-                    })
-                    .catch(function() {
-                        datesEl.textContent = "Dates non disponibles";
-                    });
+                var info = windowInfoAnnees[yearsValue];
+                var nbTirages = info ? info.draws : "?";
+                countEl.textContent = "Analyse sur " + yearsValue + " an" + (yearsValue > 1 ? "s" : "") + " (" + nbTirages + " tirages)";
+                if (info) {
+                    datesEl.textContent = "Du " + formatDateFR(info.start) + " au " + formatDateFR(info.end);
+                } else {
+                    datesEl.textContent = "";
+                }
             }
         }
 
