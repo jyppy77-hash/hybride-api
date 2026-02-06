@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FAQ - Questions Fréquentes sur le Générateur Loto IA | LotoIA</title>
-    <meta name="description" content="Toutes les réponses à vos questions sur LotoIA : fonctionnement du moteur, algorithme HYBRIDE_OPTIMAL_V1, scores, badges et jeu responsable.">
+    <meta name="description" content="Toutes les réponses à vos questions sur LotoIA : fonctionnement du moteur, algorithme HYBRIDE_OPTIMAL_V1, badges et jeu responsable.">
     <link rel="canonical" href="https://lotoia.fr/faq">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <!-- Open Graph -->
@@ -35,7 +35,7 @@
           "name": "Comment fonctionne le générateur de grilles Loto ?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Notre générateur utilise le moteur HYBRIDE_OPTIMAL_V1, un algorithme avancé qui analyse __DB_TOTAL__+ tirages historiques du Loto français. Le système combine analyse long terme, tendances récentes, contraintes d'équilibre et score de conformité."
+            "text": "Notre générateur utilise le moteur HYBRIDE_OPTIMAL_V1, un algorithme avancé qui analyse __DB_TOTAL__+ tirages historiques du Loto français. Le système combine analyse long terme, tendances récentes et contraintes d'équilibre."
           }
         },
         {
@@ -105,7 +105,7 @@
             <ul>
                 <li><a href="#fonctionnement">Fonctionnement Général</a></li>
                 <li><a href="#badges">Badges et Terminologie</a></li>
-                <li><a href="#scores">Score et Évaluation</a></li>
+                <li><a href="#conformite">Conformité et Analyse</a></li>
                 <li><a href="#donnees">Données et Fiabilité</a></li>
                 <li><a href="#fenetre-donnees">Fenêtre de données</a></li>
                 <li><a href="#utilisation">Utilisation</a></li>
@@ -135,9 +135,8 @@
                                 <li><strong>Analyse long terme</strong> : Étude des fréquences sur 5 ans</li>
                                 <li><strong>Tendances récentes</strong> : Analyse des 2 dernières années</li>
                                 <li><strong>Contraintes d'équilibre</strong> : Répartition pair/impair, bas/haut, dispersion</li>
-                                <li><strong>Score de conformité</strong> : Validation selon des patterns historiques</li>
+                                <li><strong>Analyse de convergence</strong> : Validation selon des patterns historiques</li>
                             </ul>
-                            <p>Le moteur attribue un <strong>score sur 100</strong> à chaque grille générée selon ces critères statistiques.</p>
                         </div>
                     </div>
 
@@ -161,7 +160,7 @@
                         </button>
                         <div class="faq-answer">
                             <p><strong>Analyse du tirage</strong> : Génère automatiquement 3 grilles optimisées pour une date donnée selon notre algorithme.</p>
-                            <p><strong>Simulateur</strong> : Vous composez votre propre grille en cliquant sur les numéros, et l'outil analyse votre sélection en temps réel avec un score et des suggestions d'amélioration.</p>
+                            <p><strong>Simulateur</strong> : Vous composez votre propre grille en cliquant sur les numéros, et l'outil analyse votre sélection en temps réel avec des indicateurs et des suggestions d'amélioration.</p>
                         </div>
                     </div>
                 </div>
@@ -264,44 +263,10 @@
                 </div>
 
                 <!-- ═══════════════════════════════════════════════════════════
-                     Categorie : Score et Evaluation
+                     Categorie : Conformité et Analyse
                      ═══════════════════════════════════════════════════════════ -->
-                <div class="faq-category" id="scores">
-                    <h3 class="faq-category-title">Score et Évaluation</h3>
-
-                    <div class="faq-item">
-                        <button class="faq-question">
-                            <span>Comment est calculé le score sur 100 ?</span>
-                            <span class="faq-icon">+</span>
-                        </button>
-                        <div class="faq-answer">
-                            <p>Le <strong>score sur 100</strong> est calculé selon une formule complexe qui prend en compte :</p>
-                            <ol>
-                                <li><strong>Score de fréquence</strong> (60%) : Moyenne des scores individuels de chaque numéro basée sur leur fréquence d'apparition historique</li>
-                                <li><strong>Score de conformité</strong> (40%) : Respect des contraintes d'équilibre (pair/impair, bas/haut, somme, dispersion, suites)</li>
-                            </ol>
-                            <p>Formule : <code>Score Final = (Score Fréquence x Score Conformité) x 10000</code></p>
-                            <p>Plus le score est élevé, plus la grille est statistiquement "optimale" selon notre modèle.</p>
-                        </div>
-                    </div>
-
-                    <div class="faq-item">
-                        <button class="faq-question">
-                            <span>Que signifient les étoiles (1 à 5) ?</span>
-                            <span class="faq-icon">+</span>
-                        </button>
-                        <div class="faq-answer">
-                            <p>Les <strong>étoiles</strong> représentent visuellement le score sur 100 :</p>
-                            <ul>
-                                <li>1 étoile : Score 0-19 (faible)</li>
-                                <li>2 étoiles : Score 20-39 (moyen-)</li>
-                                <li>3 étoiles : Score 40-59 (moyen)</li>
-                                <li>4 étoiles : Score 60-79 (bon)</li>
-                                <li>5 étoiles : Score 80-100 (excellent)</li>
-                            </ul>
-                            <p><strong>Attention</strong> : Un score élevé n'augmente PAS vos chances réelles de gain au Loto, qui restent purement aléatoires.</p>
-                        </div>
-                    </div>
+                <div class="faq-category" id="conformite">
+                    <h3 class="faq-category-title">Conformité et Analyse</h3>
 
                     <div class="faq-item">
                         <button class="faq-question">
@@ -393,7 +358,7 @@
                                 <li>Accédez à l'onglet <strong>"Simulateur de grille"</strong></li>
                                 <li>Cliquez sur <strong>5 numéros</strong> entre 1 et 49 (code couleur : rouge = chaud, bleu = froid, blanc = neutre)</li>
                                 <li>Sélectionnez <strong>1 numéro chance</strong> entre 1 et 10</li>
-                                <li>L'analyse s'affiche <strong>automatiquement</strong> avec score, étoiles, badges et suggestions</li>
+                                <li>L'analyse s'affiche <strong>automatiquement</strong> avec badges, indicateurs et suggestions</li>
                             </ol>
                             <p>Vous pouvez aussi cliquer sur <strong>"Générer automatiquement"</strong> pour remplir la grille avec l'algorithme.</p>
                         </div>
