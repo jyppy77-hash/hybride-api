@@ -191,13 +191,13 @@ PAGE_META = {
     },
     "simulateur": {
         "title": "Simulateur de Grille Loto - Analysez votre Combinaison | LotoIA",
-        "description": "Testez votre grille Loto et obtenez un score IA. Notre simulateur analyse votre combinaison selon les statistiques historiques.",
-        "keywords": "simulateur loto, analyser grille loto, score grille, test combinaison loto",
+        "description": "Testez votre grille Loto et obtenez une analyse IA. Notre simulateur évalue votre combinaison selon les statistiques historiques.",
+        "keywords": "simulateur loto, analyser grille loto, test combinaison loto, analyse grille",
         "canonical": "/simulateur",
     },
     "faq": {
         "title": "FAQ LotoIA - Questions sur l'Algorithme et le Générateur",
-        "description": "Toutes les réponses sur LotoIA : fonctionnement du moteur HYBRIDE, interprétation des scores, badges, et jeu responsable.",
+        "description": "Toutes les réponses sur LotoIA : fonctionnement du moteur HYBRIDE, badges, analyse statistique et jeu responsable.",
         "keywords": "faq lotoia, comment fonctionne lotoia, algorithme hybride, aide loto ia",
         "canonical": "/faq",
     },
@@ -314,11 +314,6 @@ def generate_jsonld_software_application() -> str:
             "@type": "Offer",
             "price": "0",
             "priceCurrency": "EUR"
-        },
-        "aggregateRating": {
-            "@type": "AggregateRating",
-            "ratingValue": "4.5",
-            "ratingCount": "127"
         },
         "description": "Générateur de grilles Loto optimisées par algorithme IA HYBRIDE_OPTIMAL_V1"
     }
