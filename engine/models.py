@@ -10,8 +10,5 @@ class GenerateRequest(BaseModel):
 class Ticket(BaseModel):
     nums: List[int]
     chance: int
-    score: int  # Conservé pour compatibilité backend
-    note_etoiles: int  # 1-5
-    note_texte: str  # "★★★★☆"
-    note_disclaimer: str  # Explication
+    score: int  # Conservé pour compatibilité interne
     badges: List[str]

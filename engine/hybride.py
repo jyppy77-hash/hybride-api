@@ -355,44 +355,6 @@ def valider_contraintes(numeros: List[int]) -> float:
 
 
 # ============================================================================
-# CALCUL DE NOTE PAR ÉTOILES
-# ============================================================================
-
-def calculer_note_etoiles(score_moyen: float, score_conformite: float) -> tuple:
-    """
-    Convertit le score en note par étoiles (1-5)
-
-    Basé sur la combinaison du score historique et de la conformité UX.
-    Cette note reflète la "qualité esthétique" de la grille, PAS les chances de gain.
-
-    Args:
-        score_moyen: Score moyen des numéros de la grille
-        score_conformite: Score de conformité aux contraintes UX [0-1]
-
-    Returns:
-        tuple (note_etoiles, note_texte, disclaimer)
-    """
-    score_brut = score_moyen * score_conformite
-
-    # Seuils calibrés autour de 1/49 ≈ 0.0204
-    if score_brut >= 0.0210:
-        note = 5  # ★★★★★
-    elif score_brut >= 0.0205:
-        note = 4  # ★★★★☆
-    elif score_brut >= 0.0200:
-        note = 3  # ★★★☆☆
-    elif score_brut >= 0.0195:
-        note = 2  # ★★☆☆☆
-    else:
-        note = 1  # ★☆☆☆☆
-
-    note_texte = "★" * note + "☆" * (5 - note)
-    disclaimer = "Note de diversité (non liée aux chances de gain)"
-
-    return (note, note_texte, disclaimer)
-
-
-# ============================================================================
 # GÉNÉRATION DE BADGES
 # ============================================================================
 
@@ -507,12 +469,9 @@ def generer_grille(
     # Calcul du score moyen
     score_moyen = sum(scores_hybrides[n] for n in numeros) / 5
 
-    # Score final de grille [50-100] (conservé pour compatibilité)
+    # Score final de grille [50-100] (conservé pour compatibilité interne)
     score_final = int(score_moyen * score_conformite * 10000)
     score_final = min(100, max(50, score_final))
-
-    # Calcul de la note par étoiles
-    note_etoiles, note_texte, note_disclaimer = calculer_note_etoiles(score_moyen, score_conformite)
 
     # Badges explicatifs
     badges = generer_badges(numeros, scores_hybrides)
@@ -520,10 +479,7 @@ def generer_grille(
     return {
         'nums': numeros,
         'chance': chance,
-        'score': score_final,  # Conservé pour compatibilité frontend
-        'note_etoiles': note_etoiles,
-        'note_texte': note_texte,
-        'note_disclaimer': note_disclaimer,
+        'score': score_final,  # Conservé pour compatibilité interne
         'badges': badges
     }
 
