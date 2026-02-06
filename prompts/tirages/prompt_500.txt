@@ -28,3 +28,9 @@ Audience qualifiee - visibilite premium.
 Contact partenariat :
 partenariats@lotoia.fr
 ----------------------------------------------------
+
+REGLES DE REDACTION STRICTES :
+- Ne commence JAMAIS par une phrase d'introduction ou de meta-commentaire.
+- Pas de "Voici", "Voici une reformulation", "Voici l'analyse", etc.
+- Ecris DIRECTEMENT l'analyse statistique des la premiere phrase.
+- Le texte sera injecte tel quel dans un rapport PDF professionnel.
