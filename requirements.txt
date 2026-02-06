@@ -12,5 +12,8 @@ cryptography==43.0.3
 # Configuration
 python-dotenv==1.0.1
 
+# PDF generation (META75)
+reportlab==4.1.0
+
 # Google Cloud (conserve pour compatibilite)
 google-cloud-aiplatform
