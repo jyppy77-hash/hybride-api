@@ -133,10 +133,28 @@ def calculer_retards(conn, date_limite: datetime) -> Dict[int, float]:
 # SCORING HYBRIDE
 # ============================================================================
 
+def _minmax_normalize(values: Dict[int, float]) -> Dict[int, float]:
+    """
+    Normalise un dictionnaire de valeurs sur [0, 1] via min-max.
+    Si toutes les valeurs sont identiques (max == min), retourne 0.0 pour tous
+    (aucune différenciation possible sur cette métrique).
+    """
+    v_min = min(values.values())
+    v_max = max(values.values())
+    if v_max == v_min:
+        return {k: 0.0 for k in values}
+    return {k: (v - v_min) / (v_max - v_min) for k, v in values.items()}
+
+
 def calculer_scores_fenetre(conn, date_limite: datetime) -> Dict[int, float]:
     """
     Calcule le score composite pour une fenêtre temporelle
-    Score = 0.7 × fréquence + 0.3 × retard
+    Score = 0.7 × fréquence_norm + 0.3 × retard_norm
+
+    Les deux métriques sont ramenées sur [0, 1] (min-max) avant pondération.
+    Sans cette normalisation, la fréquence brute (~0.08-0.13) et le retard (0-1)
+    sont sur des échelles différentes, ce qui fait que le retard domine la variance
+    du score malgré un poids configuré inférieur (0.3 vs 0.7).
 
     Args:
         conn: Connexion MariaDB
@@ -147,6 +165,11 @@ def calculer_scores_fenetre(conn, date_limite: datetime) -> Dict[int, float]:
     """
     freq = calculer_frequences(conn, date_limite)
     retard = calculer_retards(conn, date_limite)
+
+    # Normalisation min-max [0,1] pour que les poids 0.7/0.3 reflètent
+    # réellement l'importance relative voulue (fréquence > retard)
+    freq = _minmax_normalize(freq)
+    retard = _minmax_normalize(retard)
 
     scores = {}
     for n in range(1, 50):
