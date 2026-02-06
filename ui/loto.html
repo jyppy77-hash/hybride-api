@@ -167,14 +167,16 @@
                         <!-- Slider Mode Tirages -->
                         <div class="meta-window-slider-wrapper" id="meta-slider-tirages">
                             <input type="range" id="meta-window-slider" class="meta-window-slider"
-                                   min="0" max="6" step="1" value="6">
+                                   min="0" max="8" step="1" value="8">
                             <div class="meta-window-ticks">
-                                <span>25</span>
-                                <span>50</span>
-                                <span>75</span>
                                 <span>100</span>
                                 <span>200</span>
+                                <span>300</span>
+                                <span>400</span>
                                 <span>500</span>
+                                <span>600</span>
+                                <span>700</span>
+                                <span>800</span>
                                 <span>GLOBAL</span>
                             </div>
                         </div>
@@ -430,7 +432,7 @@
     var metaCurrentMode = "tirages";  // "tirages" ou "annees"
 
     // Mappings sliders discrets
-    var META_WINDOW_MAP = [25, 50, 75, 100, 200, 500, "GLOBAL"];
+    var META_WINDOW_MAP = [100, 200, 300, 400, 500, 600, 700, 800, "GLOBAL"];
     var META_YEARS_MAP = [1, 2, 3, 4, 5, 6, "GLOBAL"];
 
     // Formatage date en français (JJ/MM/AAAA)
@@ -464,15 +466,30 @@
         var toggleBtns = toggleContainer.querySelectorAll('.meta-mode-btn');
 
         // === Données locales fenêtre d'analyse (aucun appel API) ===
+        // Règle : plus de tirages => date_min plus ancienne (jamais l'inverse)
         var windowInfoTirages = {
-            25:  { draws: 25,  start: "2025-10-04", end: "2026-02-04" },
-            50:  { draws: 50,  start: "2025-06-07", end: "2026-02-04" },
-            75:  { draws: 75,  start: "2025-02-08", end: "2026-02-04" },
             100: { draws: 100, start: "2024-10-05", end: "2026-02-04" },
             200: { draws: 200, start: "2023-06-07", end: "2026-02-04" },
+            300: { draws: 300, start: "2022-02-19", end: "2026-02-04" },
+            400: { draws: 400, start: "2021-10-09", end: "2026-02-04" },
             500: { draws: 500, start: "2021-04-10", end: "2026-02-04" },
+            600: { draws: 600, start: "2020-10-10", end: "2026-02-04" },
+            700: { draws: 700, start: "2020-04-04", end: "2026-02-04" },
+            800: { draws: 800, start: "2019-11-06", end: "2026-02-04" },
             GLOBAL: { draws: 979, start: "2019-11-06", end: "2026-02-04" }
         };
+
+        // === Garde-fou cohérence dates (debug) ===
+        (function() {
+            var keys = [100, 200, 300, 400, 500, 600, 700, 800];
+            for (var i = 1; i < keys.length; i++) {
+                var prev = windowInfoTirages[keys[i - 1]];
+                var curr = windowInfoTirages[keys[i]];
+                if (prev && curr && curr.start > prev.start) {
+                    console.warn('[META SLIDER] Incohérence dates : ' + keys[i] + ' tirages (start=' + curr.start + ') plus récent que ' + keys[i - 1] + ' tirages (start=' + prev.start + ')');
+                }
+            }
+        })();
 
         // === Fonction de mise à jour pour le mode TIRAGES ===
         function updateTiragesDisplay(value) {
@@ -556,7 +573,7 @@
             windowSlider.addEventListener('input', function() {
                 updateTiragesDisplay(parseInt(this.value, 10));
             });
-            windowSlider.value = 6;
+            windowSlider.value = 8;
         }
 
         // === Événement changement slider années ===
@@ -568,7 +585,7 @@
         }
 
         // Initialiser avec mode tirages + GLOBAL
-        updateTiragesDisplay(6);
+        updateTiragesDisplay(8);
 
         // === Bouton META DATA ===
         var btn = document.getElementById('btn-metadata-75');
