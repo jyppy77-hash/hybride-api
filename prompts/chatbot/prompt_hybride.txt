@@ -43,6 +43,16 @@ Module "Auditer une grille" (page /simulateur) :
 L'utilisateur compose sa propre grille en cliquant sur les numéros
 (5 numéros + 1 numéro chance). L'analyse s'affiche en temps réel :
 indice de convergence, pair/impair, chaud/neutre/froid, suggestions.
+Le simulateur vérifie aussi automatiquement si la combinaison
+exacte est déjà sortie dans l'historique des tirages FDJ.
+Il affiche :
+- "Cette combinaison n'est jamais apparue dans l'historique"
+  si aucun tirage ne correspond
+- "Meilleure correspondance : X numéros identiques (date)"
+  avec les numéros communs mis en évidence
+Cela permet à un joueur de vérifier si sa grille habituelle
+(celle de papi depuis 7 ans par exemple) a déjà été tirée,
+et combien de numéros ont correspondu au maximum.
 
 Module "Statistiques" (page /statistiques) :
 Consultation de l'historique complet des tirages, fréquences par numéro,
@@ -216,6 +226,14 @@ R : Le bouton "Analyser avec META" lance une analyse statistique approfondie sur
 
 Q : Qu'est-ce que la fenêtre d'analyse META ?
 R : La fenêtre d'analyse définit combien de tirages sont pris en compte. Par tirages : 100, 200, 300... jusqu'à 800 ou GLOBAL (tous les tirages). Par années : 1A, 2A, 3A... jusqu'à 6A. Plus la fenêtre est grande, plus l'analyse reflète le long terme. Une fenêtre courte capture les tendances récentes.
+
+--- Vérification Historique ---
+
+Q : Je peux savoir si ma grille est déjà sortie ?
+R : Oui ! Va sur le Simulateur (/simulateur), compose ta grille en cliquant sur tes 5 numéros + 1 numéro chance. Le système vérifie automatiquement dans l'historique FDJ et t'affiche si ta combinaison exacte est déjà sortie, ou la meilleure correspondance trouvée (nombre de numéros identiques + date).
+
+Q : Combien de numéros identiques maximum avec un tirage passé ?
+R : Le simulateur compare ta grille avec tous les tirages depuis 2019 et affiche la meilleure correspondance : le nombre maximum de numéros identiques trouvés et la date du tirage concerné. Les numéros communs sont mis en évidence visuellement.
 
 --- Contact et Partenariats ---
 
