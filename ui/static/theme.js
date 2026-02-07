@@ -71,6 +71,7 @@
         }
         applyTheme(next);
         saveTheme(next);
+        try { if (window.LotoIAAnalytics && window.LotoIAAnalytics.ux) { window.LotoIAAnalytics.ux.themeChange(next); } } catch(e) {}
         return next;
     }
 

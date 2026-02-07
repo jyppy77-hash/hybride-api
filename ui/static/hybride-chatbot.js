@@ -116,10 +116,12 @@
                 win.classList.add('visible');
                 bubble.classList.add('open');
                 input.focus();
+                trackEvent('chat_open', { page: detectPage() });
             } else {
                 win.classList.remove('visible');
                 bubble.classList.remove('open');
                 root.classList.remove('hybride-fullscreen');
+                trackEvent('chat_close', { page: detectPage() });
             }
         }
 
@@ -129,6 +131,7 @@
             win.classList.remove('visible');
             bubble.classList.remove('open');
             root.classList.remove('hybride-fullscreen');
+            trackEvent('chat_close', { page: detectPage() });
         }
 
         /* ══════════════════════════════════
@@ -145,6 +148,15 @@
 
         var chatHistory = [];
 
+        /* ── Analytics helper (safe, ne bloque jamais) ── */
+        function trackEvent(name, params) {
+            try {
+                if (window.LotoIAAnalytics && window.LotoIAAnalytics.track) {
+                    window.LotoIAAnalytics.track(name, params || {});
+                }
+            } catch (e) { /* analytics must never break chat */ }
+        }
+
         /* ══════════════════════════════════
            Envoi message (API Gemini)
            ══════════════════════════════════ */
@@ -160,6 +172,7 @@
             if (chatHistory.length > 10) chatHistory = chatHistory.slice(-10);
 
             showTyping();
+            trackEvent('chat_message_sent', { page: detectPage(), message_length: text.length });
 
             var controller = new AbortController();
             var timeoutId = setTimeout(function () { controller.abort(); }, 20000);
@@ -185,11 +198,13 @@
                 addMessage(botText, 'bot');
                 chatHistory.push({ role: 'assistant', content: botText });
                 if (chatHistory.length > 10) chatHistory = chatHistory.slice(-10);
+                trackEvent('chat_response_received', { page: detectPage(), response_length: botText.length });
             })
             .catch(function () {
                 clearTimeout(timeoutId);
                 removeTyping();
                 addMessage('\uD83E\uDD16 Connexion interrompue. R\u00e9essaie dans quelques secondes !', 'bot');
+                trackEvent('chat_error', { page: detectPage() });
             });
         }
 

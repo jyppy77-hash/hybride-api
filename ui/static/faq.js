@@ -14,6 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Toggle l'item clique
                 item.classList.toggle('active');
 
+                // Analytics GA4 — Track ouverture FAQ
+                if (item.classList.contains('active')) {
+                    try { if (window.LotoIAAnalytics && window.LotoIAAnalytics.ux) { window.LotoIAAnalytics.ux.faqOpen(question.textContent.trim()); } } catch(e) {}
+                }
+
                 // Optionnel : Fermer les autres items (accordeon exclusif)
                 // Decommenter pour activer le mode exclusif
                 /*

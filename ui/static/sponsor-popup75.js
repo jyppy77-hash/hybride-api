@@ -226,8 +226,8 @@ function trackSponsorClick(sponsorId) {
         });
     }
 
-    // Tracking API call interne (si disponible)
-    if (typeof fetch !== 'undefined') {
+    // Tracking API call interne (avec vérification consentement RGPD)
+    if (typeof fetch !== 'undefined' && window.LotoIAAnalytics?.utils?.hasConsent()) {
         fetch('/api/track-ad-click', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -258,8 +258,8 @@ function trackImpression(sponsorIds) {
         });
     }
 
-    // Tracking API call interne (si disponible)
-    if (typeof fetch !== 'undefined') {
+    // Tracking API call interne (avec vérification consentement RGPD)
+    if (typeof fetch !== 'undefined' && window.LotoIAAnalytics?.utils?.hasConsent()) {
         fetch('/api/track-ad-impression', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1058,6 +1058,7 @@ async function showMetaAnalysePopup() {
     META_ANALYSE_START_TIME = Date.now();
     if (window.LotoIAAnalytics?.productEngine?.track) {
         window.LotoIAAnalytics.productEngine.track('meta_tunnel_start', { version: 75 });
+        window.LotoIAAnalytics.productEngine.track('meta_popup_open', { version: 75 });
     }
 
     // Déterminer le nombre de tirages à analyser selon le mode sélectionné

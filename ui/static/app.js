@@ -1112,6 +1112,7 @@ function displayStatsResult(data) {
  * Tracking generation grille individuelle
  */
 function trackGridGeneration(grid, gridNumber, targetDate) {
+    if (!(window.LotoIAAnalytics && window.LotoIAAnalytics.utils && window.LotoIAAnalytics.utils.hasConsent())) return;
     fetch('/api/track-grid', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1134,6 +1135,7 @@ function trackGridGeneration(grid, gridNumber, targetDate) {
  * Tracking impression pub
  */
 function trackAdImpression(adId) {
+    if (!(window.LotoIAAnalytics && window.LotoIAAnalytics.utils && window.LotoIAAnalytics.utils.hasConsent())) return;
     fetch('/api/track-ad-impression', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1149,6 +1151,7 @@ function trackAdImpression(adId) {
  * Tracking clic pub (pour CPA)
  */
 function trackAdClick(adId, partnerId) {
+    if (!(window.LotoIAAnalytics && window.LotoIAAnalytics.utils && window.LotoIAAnalytics.utils.hasConsent())) return;
     fetch('/api/track-ad-click', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1646,6 +1649,10 @@ function handleCopy() {
     }
 
     navigator.clipboard.writeText(textToCopy).then(() => {
+        // Analytics GA4 — Track copie de grille
+        if (window.LotoIAAnalytics && window.LotoIAAnalytics.product) {
+            window.LotoIAAnalytics.product.copyGrid({});
+        }
         // Visual feedback
         const originalText = btnCopy.textContent;
         btnCopy.textContent = '✓';

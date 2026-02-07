@@ -355,6 +355,11 @@ function displayResults(data) {
     // History check display (safe - only if data exists)
     displayHistoryCheck(data.history_check);
 
+    // Analytics GA4 — Track simulation de grille
+    if (window.LotoIAAnalytics && window.LotoIAAnalytics.product) {
+        window.LotoIAAnalytics.product.simulateGrid({ score: data.score });
+    }
+
     // Scroll automatique vers la grille sélectionnée (center pour UX mobile/desktop)
     setTimeout(() => {
         const target = document.getElementById('selected-numbers')

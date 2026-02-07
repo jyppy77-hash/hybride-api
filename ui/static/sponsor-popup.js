@@ -208,8 +208,8 @@ function trackSponsorClick(sponsorId) {
         });
     }
 
-    // Tracking API call interne (si disponible)
-    if (typeof fetch !== 'undefined') {
+    // Tracking API call interne (avec vérification consentement RGPD)
+    if (typeof fetch !== 'undefined' && window.LotoIAAnalytics?.utils?.hasConsent()) {
         fetch('/api/track-ad-click', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -240,8 +240,8 @@ function trackImpression(sponsorIds) {
         });
     }
 
-    // Tracking API call interne (si disponible)
-    if (typeof fetch !== 'undefined') {
+    // Tracking API call interne (avec vérification consentement RGPD)
+    if (typeof fetch !== 'undefined' && window.LotoIAAnalytics?.utils?.hasConsent()) {
         fetch('/api/track-ad-impression', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
