@@ -57,3 +57,22 @@ class MetaPdfPayload(BaseModel):
     graph: Optional[str] = None
     graph_data: Optional[Dict[str, Any]] = None
     sponsor: Optional[str] = None
+
+
+# =========================
+# Schemas HYBRIDE Chatbot
+# =========================
+
+class ChatMessage(BaseModel):
+    role: str       # "user" ou "assistant"
+    content: str
+
+class HybrideChatRequest(BaseModel):
+    message: str
+    page: str = "accueil"    # accueil | loto | simulateur | statistiques
+    history: list[ChatMessage] = []
+
+class HybrideChatResponse(BaseModel):
+    response: str
+    source: str = "gemini"   # gemini | fallback
+    mode: str = "decouverte" # decouverte | analyse | meta

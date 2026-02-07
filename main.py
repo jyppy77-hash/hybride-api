@@ -13,6 +13,7 @@ from routes.api_analyse import router as analyse_router
 from routes.api_gemini import router as gemini_router
 from routes.api_pdf import router as pdf_router
 from routes.api_tracking import router as tracking_router
+from routes.api_chat import router as chat_router
 
 # Logging
 logger = logging.getLogger(__name__)
@@ -154,6 +155,7 @@ app.include_router(analyse_router)
 app.include_router(gemini_router)
 app.include_router(pdf_router)
 app.include_router(tracking_router)
+app.include_router(chat_router)
 
 
 # =========================
