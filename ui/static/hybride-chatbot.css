@@ -262,18 +262,21 @@
 /* ── Responsive mobile ── */
 
 @media (max-width: 480px) {
-    #hybride-chatbot-root {
+    /* Root normal : pas de fullscreen, bulle cliquable */
+
+    #hybride-chatbot-root.hybride-fullscreen {
         position: fixed;
         top: 0;
         left: 0;
         width: 100vw;
         height: var(--vvp-height, 100vh);
         z-index: 10000;
-        pointer-events: none;
+        display: flex;
+        flex-direction: column;
         transition: height 0.1s ease-out;
     }
 
-    #hybride-chatbot-root .hybride-window {
+    #hybride-chatbot-root.hybride-fullscreen .hybride-window {
         position: relative;
         top: auto;
         left: auto;
@@ -287,7 +290,6 @@
         display: flex;
         flex-direction: column;
         transform-origin: bottom center;
-        pointer-events: auto;
     }
 
     .hybride-messages {

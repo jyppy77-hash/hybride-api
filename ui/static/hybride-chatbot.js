@@ -112,12 +112,14 @@
         function toggle() {
             isOpen = !isOpen;
             if (isOpen) {
+                root.classList.add('hybride-fullscreen');
                 win.classList.add('visible');
                 bubble.classList.add('open');
                 input.focus();
             } else {
                 win.classList.remove('visible');
                 bubble.classList.remove('open');
+                root.classList.remove('hybride-fullscreen');
             }
         }
 
@@ -126,6 +128,7 @@
             isOpen = false;
             win.classList.remove('visible');
             bubble.classList.remove('open');
+            root.classList.remove('hybride-fullscreen');
         }
 
         /* ══════════════════════════════════
