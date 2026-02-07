@@ -18,11 +18,20 @@ router = APIRouter()
 async def api_meta_pdf(payload: MetaPdfPayload):
     """Genere le PDF officiel META75 via ReportLab."""
     try:
+        # --- TRACE graph_data recu ---
+        if payload.graph_data and isinstance(payload.graph_data, dict):
+            logger.info(f"[META-PDF ROUTE] graph_data recu — keys: {list(payload.graph_data.keys())}, "
+                        f"labels_len: {len(payload.graph_data.get('labels', []))}, "
+                        f"values_len: {len(payload.graph_data.get('values', []))}")
+        else:
+            logger.info(f"[META-PDF ROUTE] graph_data ABSENT ou invalide — raw: {type(payload.graph_data)}")
+
         buf = generate_meta_pdf(
             analysis=payload.analysis,
             window=payload.window,
             engine=payload.engine,
             graph=payload.graph,
+            graph_data=payload.graph_data,
             sponsor=payload.sponsor
         )
         return StreamingResponse(
