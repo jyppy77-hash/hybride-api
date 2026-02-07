@@ -39,12 +39,12 @@
       "temporalCoverage": "2019/.."
     }
     </script>
-    <link rel="stylesheet" href="/ui/static/style.css">
-    <link rel="stylesheet" href="/ui/static/legal.css">
+    <link rel="stylesheet" href="/ui/static/style.css?v=7">
+    <link rel="stylesheet" href="/ui/static/legal.css?v=7">
     <!-- Theme script (en premier pour éviter le flash) -->
-    <script src="/ui/static/theme.js"></script>
+    <script src="/ui/static/theme.js?v=7"></script>
     <!-- Analytics (charge apres consentement RGPD) -->
-    <script src="/ui/static/analytics.js" defer></script>
+    <script src="/ui/static/analytics.js?v=7" defer></script>
     <style>
         /* =================================================================
            STATISTIQUES — Styles spécifiques
@@ -598,6 +598,18 @@
             </div>
         </div>
 
+        <!-- Slot chatbot assistant -->
+        <div class="chatbot-slot">
+            <div class="chatbot-slot-content">
+                <span class="chatbot-emoji">🤖</span>
+                <div class="chatbot-text">
+                    <strong>Assistant d'analyse</strong>
+                    <p>Besoin d'aide pour comprendre une grille ou explorer les statistiques ?</p>
+                </div>
+                <button class="chatbot-btn">Ouvrir l'assistant</button>
+            </div>
+        </div>
+
         <!-- Footer -->
         <footer class="footer">
             <div class="footer-nav">
@@ -630,6 +642,28 @@
             </div>
         </footer>
     </div>
+
+    <!-- Popup assistant -->
+    <div id="assistant-popup" class="assistant-popup hidden">
+        <div class="assistant-popup-content">
+            <h3>Assistant bientôt disponible</h3>
+            <p>Cette fonctionnalité arrive prochainement.</p>
+            <a href="/news" class="popup-link">Voir les actualités</a>
+            <button id="popup-close">Fermer</button>
+        </div>
+    </div>
+
+    <script>
+    (function() {
+        var btn = document.querySelector('.chatbot-btn');
+        var popup = document.getElementById('assistant-popup');
+        var close = document.getElementById('popup-close');
+        if (!btn || !popup || !close) return;
+        btn.addEventListener('click', function() { popup.classList.remove('hidden'); });
+        close.addEventListener('click', function() { popup.classList.add('hidden'); });
+        popup.addEventListener('click', function(e) { if (e.target === popup) popup.classList.add('hidden'); });
+    })();
+    </script>
 
     <script>
         // Variables globales
@@ -903,6 +937,6 @@
             }
         }
     </script>
-    <script src="/ui/static/cookie-consent.js"></script>
+    <script src="/ui/static/cookie-consent.js?v=7"></script>
 </body>
 </html>
