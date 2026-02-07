@@ -305,7 +305,7 @@ def generate_meta_pdf(analysis: str = "", window: str = "75 tirages",
         # Footer bas de page — position dynamique, toujours y=20
         c.setFillColorRGB(0.5, 0.5, 0.5)
         c.setFont("DejaVuSans", 8)
-        c.drawCentredString(w / 2, 20, "* Ce rapport META DONN\u00c9E est en version 0.9 \u2013 \u00e9volution graphique active.")
+        c.drawCentredString(w / 2, 45, "* Ce rapport META DONN\u00c9E est en version 0.9 \u2013 \u00e9volution graphique active.")
 
         c.save()
         buf.seek(0)
