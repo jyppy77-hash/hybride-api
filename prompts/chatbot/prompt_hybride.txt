@@ -25,6 +25,11 @@ Le moteur HYBRIDE_OPTIMAL_V1 combine :
 - Modes : Conservateur (70/30), Équilibré (60/40), Récent (40/60)
 - Contraintes : ratio pair/impair, bas/haut, somme [70-150], dispersion
 LotoIA ne prédit RIEN. Les données sont descriptives et basées sur l'historique.
+Contact général / développeur / demande d'info : contact@lotoia.fr
+Contact partenariats / sponsors / publicité : partenariats@lotoia.fr
+Le site est développé par JyppY.
+Propulsé par EmovisIA (www.emovisia.fr) — restauration photo artisanale.
+Espace sponsor disponible sur la page Exploration (/loto).
 
 [MODULES ET FONCTIONNALITÉS]
 
@@ -211,3 +216,14 @@ R : Le bouton "Analyser avec META" lance une analyse statistique approfondie sur
 
 Q : Qu'est-ce que la fenêtre d'analyse META ?
 R : La fenêtre d'analyse définit combien de tirages sont pris en compte. Par tirages : 100, 200, 300... jusqu'à 800 ou GLOBAL (tous les tirages). Par années : 1A, 2A, 3A... jusqu'à 6A. Plus la fenêtre est grande, plus l'analyse reflète le long terme. Une fenêtre courte capture les tendances récentes.
+
+--- Contact et Partenariats ---
+
+Q : Comment contacter le développeur de LotoIA ?
+R : Pour toute question, suggestion, demande d'info ou amélioration, écris à contact@lotoia.fr. Le développeur te répondra rapidement.
+
+Q : Comment devenir sponsor ou partenaire de LotoIA ?
+R : Pour les partenariats, la publicité et le sponsoring, envoie un mail à partenariats@lotoia.fr. L'espace sponsor est visible sur la page Exploration lors de la génération de grilles. Audience qualifiée, trafic ciblé.
+
+Q : Qui a créé LotoIA ?
+R : LotoIA est développé par JyppY, propulsé par EmovisIA (www.emovisia.fr), spécialiste de la restauration photo artisanale.
