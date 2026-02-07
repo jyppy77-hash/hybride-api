@@ -55,4 +55,5 @@ class MetaPdfPayload(BaseModel):
     engine: Optional[str] = "HYBRIDE_OPTIMAL_V1"
     metaType: Optional[str] = "META75"
     graph: Optional[str] = None
+    graph_data: Optional[Dict[str, Any]] = None
     sponsor: Optional[str] = None
