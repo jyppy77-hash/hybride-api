@@ -206,5 +206,18 @@
             }
         });
 
+        // Mobile : scroll vers le bas quand le clavier s'ouvre/ferme
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', function () {
+                if (isOpen) scrollToBottom();
+            });
+        }
+
+        input.addEventListener('focus', function () {
+            setTimeout(function () {
+                scrollToBottom();
+            }, 300);
+        });
+
     }); // fin onReady
 })(); // fin IIFE
