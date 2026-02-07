@@ -279,9 +279,9 @@
     }
 
     .hybride-bubble {
-        top: 20px;
-        right: 16px;
-        bottom: auto;
+        bottom: 80px;
+        right: 20px;
+        top: auto;
         left: auto;
     }
 }
