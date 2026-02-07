@@ -63,8 +63,8 @@ def generate_meta_graph_image(graph_data: dict) -> str:
     if not labels or not values or len(labels) != len(values):
         raise ValueError("graph_data invalide : labels et values requis, memes longueurs")
 
-    bar_colors = ['#6C5CE7', '#5F9CFF', '#4DD0E1', '#74B9FF', '#A29BFE']
-    pie_colors = ['#1E3A8A', '#38BDF8', '#8B5CF6', '#6C5CE7', '#E5E7EB']
+    bar_colors = ['#4285F4', '#34A853', '#FBBC05', '#EA4335', '#A142F4']
+    pie_colors = ['#1A73E8', '#188038', '#F9AB00', '#D93025', '#9334E6']
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
 
@@ -296,7 +296,7 @@ def generate_meta_pdf(analysis: str = "", window: str = "75 tirages",
         # Version + notes IA
         c.setFillColorRGB(150 / 255, 150 / 255, 150 / 255)
         c.setFont("DejaVuSans-Oblique", 8)
-        c.drawCentredString(w / 2, y, "LotoIA \u2014 Rapport META DONN\u00c9E v0.1")
+        c.drawCentredString(w / 2, y, "LotoIA \u2014 Rapport META DONN\u00c9E v0.9")
         y -= 4 * mm
         c.drawCentredString(w / 2, y, "Ce rapport est enti\u00e8rement g\u00e9n\u00e9r\u00e9 par intelligence artificielle en collaboration avec le moteur HYBRIDE_OPTIMAL_V1.")
         y -= 4 * mm
@@ -305,7 +305,7 @@ def generate_meta_pdf(analysis: str = "", window: str = "75 tirages",
         # Footer bas de page — position dynamique, toujours y=20
         c.setFillColorRGB(0.5, 0.5, 0.5)
         c.setFont("DejaVuSans", 8)
-        c.drawCentredString(w / 2, 20, "* Ce rapport META DONN\u00c9E est en version 0.1 \u2013 Version graphique \u00e0 venir.")
+        c.drawCentredString(w / 2, 20, "* Ce rapport META DONN\u00c9E est en version 0.9 \u2013 \u00e9volution graphique active.")
 
         c.save()
         buf.seek(0)
