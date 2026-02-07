@@ -24,6 +24,8 @@ PROMPT_MAP = {
     "4A": "prompts/annees/prompt_4a.txt",
     "5A": "prompts/annees/prompt_5a.txt",
     "6A": "prompts/annees/prompt_6a.txt",
+    # Chatbot HYBRIDE
+    "CHATBOT": "prompts/chatbot/prompt_hybride.txt",
 }
 
 FALLBACK_PROMPT_PATH = "prompts/tirages/prompt_global.txt"
