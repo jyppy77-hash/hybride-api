@@ -598,18 +598,6 @@
             </div>
         </div>
 
-        <!-- Slot chatbot assistant -->
-        <div class="chatbot-slot">
-            <div class="chatbot-slot-content">
-                <span class="chatbot-emoji">🤖</span>
-                <div class="chatbot-text">
-                    <strong>Assistant d'analyse</strong>
-                    <p>Besoin d'aide pour comprendre une grille ou explorer les statistiques ?</p>
-                </div>
-                <button class="chatbot-btn">Ouvrir l'assistant</button>
-            </div>
-        </div>
-
         <!-- Footer -->
         <footer class="footer">
             <div class="footer-nav">
@@ -642,28 +630,6 @@
             </div>
         </footer>
     </div>
-
-    <!-- Popup assistant -->
-    <div id="assistant-popup" class="assistant-popup hidden">
-        <div class="assistant-popup-content">
-            <h3>Assistant bientôt disponible</h3>
-            <p>Cette fonctionnalité arrive prochainement.</p>
-            <a href="/news" class="popup-link">Voir les actualités</a>
-            <button id="popup-close">Fermer</button>
-        </div>
-    </div>
-
-    <script>
-    (function() {
-        var btn = document.querySelector('.chatbot-btn');
-        var popup = document.getElementById('assistant-popup');
-        var close = document.getElementById('popup-close');
-        if (!btn || !popup || !close) return;
-        btn.addEventListener('click', function() { popup.classList.remove('hidden'); });
-        close.addEventListener('click', function() { popup.classList.add('hidden'); });
-        popup.addEventListener('click', function(e) { if (e.target === popup) popup.classList.add('hidden'); });
-    })();
-    </script>
 
     <script>
         // Variables globales
@@ -938,5 +904,10 @@
         }
     </script>
     <script src="/ui/static/cookie-consent.js?v=7"></script>
+
+    <!-- HYBRIDE Chatbot Widget -->
+    <div id="hybride-chatbot-root"></div>
+    <link rel="stylesheet" href="/ui/static/hybride-chatbot.css?v=1">
+    <script src="/ui/static/hybride-chatbot.js?v=1"></script>
 </body>
 </html>
