@@ -1,5 +1,6 @@
 import os
 import io
+import tempfile
 import logging
 
 logger = logging.getLogger(__name__)
@@ -47,9 +48,59 @@ def _register_fonts(pdfmetrics, TTFont):
             logger.error(f"[META-PDF] Aucune police trouvee pour {_name}")
 
 
+def generate_meta_graph_image(graph_data: dict) -> str:
+    """
+    Genere une image PNG contenant un bar chart + pie chart cote a cote.
+    Retourne le chemin du fichier temporaire PNG.
+    """
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
+    labels = graph_data.get("labels", [])
+    values = graph_data.get("values", [])
+
+    if not labels or not values or len(labels) != len(values):
+        raise ValueError("graph_data invalide : labels et values requis, memes longueurs")
+
+    bar_colors = ['#6C5CE7', '#5F9CFF', '#4DD0E1', '#74B9FF', '#A29BFE']
+    pie_colors = ['#1E3A8A', '#38BDF8', '#8B5CF6', '#6C5CE7', '#E5E7EB']
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 4))
+
+    # Bar chart (gauche)
+    ax1.bar(labels, values, color=bar_colors[:len(labels)])
+    ax1.set_title("Top 5 Fréquences", fontsize=13, fontweight='bold')
+    ax1.set_xlabel("Numéros")
+    ax1.set_ylabel("Fréquence")
+    ax1.grid(axis='y', alpha=0.15)
+
+    # Pie chart (droite)
+    pie_labels = [f"N°{l} ({v})" for l, v in zip(labels, values)]
+    ax2.pie(
+        values, labels=pie_labels, colors=pie_colors[:len(labels)],
+        autopct='%1.0f%%', startangle=90, counterclock=False,
+        textprops={'fontsize': 9},
+        wedgeprops={'linewidth': 0.5, 'edgecolor': 'white'}
+    )
+    ax2.set_title("Répartition Top 5", fontsize=13, fontweight='bold')
+
+    plt.tight_layout()
+
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+    tmp_path = tmp.name
+    tmp.close()
+
+    fig.savefig(tmp_path, format="png", dpi=200, facecolor='white', bbox_inches='tight')
+    plt.close(fig)
+
+    logger.info(f"[META-PDF] Graph image generee : {tmp_path}")
+    return tmp_path
+
+
 def generate_meta_pdf(analysis: str = "", window: str = "75 tirages",
                       engine: str = "HYBRIDE_OPTIMAL_V1", graph: str = None,
-                      sponsor: str = None) -> io.BytesIO:
+                      graph_data: dict = None, sponsor: str = None) -> io.BytesIO:
     """
     Genere le PDF officiel META75 via ReportLab.
     Retourne un BytesIO contenant le PDF.
@@ -93,140 +144,180 @@ def generate_meta_pdf(analysis: str = "", window: str = "75 tirages",
     c.line(15 * mm, y, w - 15 * mm, y)
     y -= 10 * mm
 
-    # Image graphique si presente
-    graph_path = graph or ""
-    if graph_path and os.path.isfile(graph_path):
+    # --- Validation robuste graph_data ---
+    valid_graph = (
+        isinstance(graph_data, dict)
+        and isinstance(graph_data.get("labels"), list)
+        and isinstance(graph_data.get("values"), list)
+        and len(graph_data["labels"]) == len(graph_data["values"])
+        and len(graph_data["labels"]) > 0
+    ) if graph_data else False
+
+    logger.info(f"[META-PDF] graph_data valid: {valid_graph}, "
+                f"raw type: {type(graph_data).__name__}, "
+                f"graph file: {graph!r}")
+
+    # --- Generation image matplotlib si graph_data valide ---
+    generated_graph_path = None
+    if valid_graph:
         try:
-            img_w = 160 * mm
-            img_h = 80 * mm
-            img_x = (w - img_w) / 2
-            c.drawImage(
-                graph_path, img_x, y - img_h,
-                width=img_w, height=img_h,
-                preserveAspectRatio=True, mask="auto"
-            )
-            y -= (img_h + 10 * mm)
-            logger.info("[META-PDF] Image inseree OK")
-        except Exception as img_err:
-            logger.warning(f"[META-PDF] Image ignoree: {img_err}")
+            generated_graph_path = generate_meta_graph_image(graph_data)
+            logger.info(f"[META-PDF] PNG genere OK: {generated_graph_path}")
+        except Exception as gen_err:
+            logger.warning(f"[META-PDF] Generation graph_data echouee: {gen_err}")
 
-    # Bloc analyse
-    c.setFont("DejaVuSans-Bold", 13)
-    c.drawString(15 * mm, y, "Analyse :")
-    y -= 7 * mm
+    try:
+        # --- Insertion image (graph_data prioritaire, sinon fallback graph path) ---
+        effective_graph = generated_graph_path or (graph if graph and os.path.isfile(graph) else "")
+        if effective_graph and os.path.isfile(effective_graph):
+            try:
+                from reportlab.lib.utils import ImageReader
+                img = ImageReader(effective_graph)
 
-    analysis_text = _utf8_clean(analysis) or "Aucune analyse disponible."
-    text_obj = c.beginText(15 * mm, y)
-    text_obj.setFont("DejaVuSans", 11)
-    text_obj.setLeading(16)
-    max_chars = 90
-    for raw_line in analysis_text.split('\n'):
-        line = raw_line
-        while len(line) > max_chars:
-            cut = line[:max_chars].rfind(' ')
-            if cut <= 0:
-                cut = max_chars
-            text_obj.textLine(line[:cut])
-            line = line[cut:].lstrip()
-        text_obj.textLine(line)
-    c.drawText(text_obj)
-    y = text_obj.getY() - 8 * mm
-    logger.info("[META-PDF] Bloc analyse OK")
+                # Coordonnees A4 safe (portrait 595x842 points)
+                img_x = 60
+                img_draw_y = y - 200          # image juste sous separateur
+                img_draw_w = 480
+                img_draw_h = 190
 
-    # Saut de page si espace insuffisant
-    if y < margin_bottom:
-        c.showPage()
-        y = h - 30 * mm
+                c.drawImage(
+                    img, img_x, img_draw_y,
+                    width=img_draw_w, height=img_draw_h,
+                    preserveAspectRatio=True, mask='auto'
+                )
+                y = img_draw_y - 8 * mm       # pousser Y sous l'image
+                logger.info(f"[META-PDF] Image inseree OK a y={img_draw_y}")
+            except Exception as img_err:
+                logger.warning(f"[META-PDF] Image ignoree: {img_err}")
+        else:
+            logger.info("[META-PDF] Aucune image a inserer")
 
-    # Bloc infos
-    c.setFont("DejaVuSans-Bold", 13)
-    c.drawString(15 * mm, y, "Informations :")
-    y -= 7 * mm
+        # Bloc analyse
+        c.setFont("DejaVuSans-Bold", 13)
+        c.drawString(15 * mm, y, "Analyse :")
+        y -= 7 * mm
 
-    c.setFont("DejaVuSans", 11)
-    window_text = _utf8_clean(window) or "75 tirages"
-    engine_text = _utf8_clean(engine) or "HYBRIDE_OPTIMAL_V1"
-    c.drawString(15 * mm, y, f"Fen\u00eatre analys\u00e9e : {window_text}")
-    y -= 6 * mm
-    c.drawString(15 * mm, y, f"Moteur : {engine_text}")
-    y -= 10 * mm
+        analysis_text = _utf8_clean(analysis) or "Aucune analyse disponible."
+        text_obj = c.beginText(15 * mm, y)
+        text_obj.setFont("DejaVuSans", 11)
+        text_obj.setLeading(16)
+        max_chars = 90
+        for raw_line in analysis_text.split('\n'):
+            line = raw_line
+            while len(line) > max_chars:
+                cut = line[:max_chars].rfind(' ')
+                if cut <= 0:
+                    cut = max_chars
+                text_obj.textLine(line[:cut])
+                line = line[cut:].lstrip()
+            text_obj.textLine(line)
+        c.drawText(text_obj)
+        y = text_obj.getY() - 8 * mm
+        logger.info("[META-PDF] Bloc analyse OK")
 
-    # Bloc sponsor si present
-    sponsor_text = _utf8_clean(sponsor)
-    if sponsor_text:
-        c.setStrokeColorRGB(0.7, 0.7, 0.7)
-        c.setLineWidth(0.4)
-        c.line(15 * mm, y, w - 15 * mm, y)
-        y -= 8 * mm
+        # Saut de page si espace insuffisant
+        if y < margin_bottom:
+            c.showPage()
+            y = h - 30 * mm
 
-        # Titre partenariat
-        c.setFillColorRGB(0.1, 0.1, 0.1)
-        c.setFont("DejaVuSans", 10)
-        c.drawCentredString(w / 2, y, "Analyse offerte par un Partenaire Officiel")
+        # Bloc infos
+        c.setFont("DejaVuSans-Bold", 13)
+        c.drawString(15 * mm, y, "Informations :")
+        y -= 7 * mm
+
+        c.setFont("DejaVuSans", 11)
+        window_text = _utf8_clean(window) or "75 tirages"
+        engine_text = _utf8_clean(engine) or "HYBRIDE_OPTIMAL_V1"
+        c.drawString(15 * mm, y, f"Fen\u00eatre analys\u00e9e : {window_text}")
         y -= 6 * mm
-
-        # Sous-titre
-        c.setFont("DejaVuSans", 9)
-        c.drawCentredString(w / 2, y, "Partenariat & sponsoring :")
-        y -= 5 * mm
-
-        # Email cliquable
-        email_text = "contact@lotoia.fr"
-        email_width = c.stringWidth(email_text, "DejaVuSans", 9)
-        email_x1 = (w - email_width) / 2
-        email_x2 = email_x1 + email_width
-        c.drawCentredString(w / 2, y, email_text)
-        c.linkURL("mailto:contact@lotoia.fr", (email_x1, y - 2, email_x2, y + 10), relative=0)
+        c.drawString(15 * mm, y, f"Moteur : {engine_text}")
         y -= 10 * mm
 
-    # Saut de page si espace insuffisant
-    if y < margin_bottom:
-        c.showPage()
-        y = h - 30 * mm
+        # Bloc sponsor si present
+        sponsor_text = _utf8_clean(sponsor)
+        if sponsor_text:
+            c.setStrokeColorRGB(0.7, 0.7, 0.7)
+            c.setLineWidth(0.4)
+            c.line(15 * mm, y, w - 15 * mm, y)
+            y -= 8 * mm
 
-    # Separateur
-    c.setStrokeColorRGB(0, 0, 0)
-    c.setLineWidth(0.5)
-    c.line(15 * mm, y, w - 15 * mm, y)
-    y -= 10 * mm
+            # Titre partenariat
+            c.setFillColorRGB(0.1, 0.1, 0.1)
+            c.setFont("DejaVuSans", 10)
+            c.drawCentredString(w / 2, y, "Analyse offerte par un Partenaire Officiel")
+            y -= 6 * mm
 
-    # Signature HYBRIDE
-    c.setFillColorRGB(0, 0, 0)
-    c.setFont("DejaVuSans-Bold", 11)
-    c.drawCentredString(w / 2, y, "Analyse g\u00e9n\u00e9r\u00e9e par HYBRIDE_OPTIMAL_V1")
-    y -= 6 * mm
-    c.setFont("DejaVuSans", 10)
-    c.drawCentredString(w / 2, y, "Moteur statistique p\u00e9dagogique")
-    y -= 8 * mm
+            # Sous-titre
+            c.setFont("DejaVuSans", 9)
+            c.drawCentredString(w / 2, y, "Partenariat & sponsoring :")
+            y -= 5 * mm
 
-    # Mention produit
-    c.setFont("DejaVuSans-Oblique", 10)
-    c.drawCentredString(w / 2, y, "G\u00e9n\u00e9r\u00e9 par LotoIA - Module META DONN\u00c9E")
-    y -= 10 * mm
+            # Email cliquable
+            email_text = "contact@lotoia.fr"
+            email_width = c.stringWidth(email_text, "DejaVuSans", 9)
+            email_x1 = (w - email_width) / 2
+            email_x2 = email_x1 + email_width
+            c.drawCentredString(w / 2, y, email_text)
+            c.linkURL("mailto:contact@lotoia.fr", (email_x1, y - 2, email_x2, y + 10), relative=0)
+            y -= 10 * mm
 
-    # Disclaimer
-    c.setFont("DejaVuSans", 9)
-    c.drawCentredString(w / 2, y, "Analyse statistique p\u00e9dagogique.")
-    y -= 5 * mm
-    c.drawCentredString(w / 2, y, "Aucun r\u00e9sultat n\u2019est garanti.")
-    y -= 10 * mm
+        # Saut de page si espace insuffisant
+        if y < margin_bottom:
+            c.showPage()
+            y = h - 30 * mm
 
-    # Version + notes IA
-    c.setFillColorRGB(150 / 255, 150 / 255, 150 / 255)
-    c.setFont("DejaVuSans-Oblique", 8)
-    c.drawCentredString(w / 2, y, "LotoIA \u2014 Rapport META DONN\u00c9E v0.1")
-    y -= 4 * mm
-    c.drawCentredString(w / 2, y, "Ce rapport est enti\u00e8rement g\u00e9n\u00e9r\u00e9 par intelligence artificielle en collaboration avec le moteur HYBRIDE_OPTIMAL_V1.")
-    y -= 4 * mm
-    c.drawCentredString(w / 2, y, "Graphiques et visuels en cours de d\u00e9veloppement.")
+        # Separateur
+        c.setStrokeColorRGB(0, 0, 0)
+        c.setLineWidth(0.5)
+        c.line(15 * mm, y, w - 15 * mm, y)
+        y -= 10 * mm
 
-    # Footer bas de page — position dynamique, toujours y=20
-    c.setFillColorRGB(0.5, 0.5, 0.5)
-    c.setFont("DejaVuSans", 8)
-    c.drawCentredString(w / 2, 20, "* Ce rapport META DONN\u00c9E est en version 0.1 \u2013 Version graphique \u00e0 venir.")
+        # Signature HYBRIDE
+        c.setFillColorRGB(0, 0, 0)
+        c.setFont("DejaVuSans-Bold", 11)
+        c.drawCentredString(w / 2, y, "Analyse g\u00e9n\u00e9r\u00e9e par HYBRIDE_OPTIMAL_V1")
+        y -= 6 * mm
+        c.setFont("DejaVuSans", 10)
+        c.drawCentredString(w / 2, y, "Moteur statistique p\u00e9dagogique")
+        y -= 8 * mm
 
-    c.save()
-    buf.seek(0)
-    logger.info("[META-PDF] PDF genere OK")
+        # Mention produit
+        c.setFont("DejaVuSans-Oblique", 10)
+        c.drawCentredString(w / 2, y, "G\u00e9n\u00e9r\u00e9 par LotoIA - Module META DONN\u00c9E")
+        y -= 10 * mm
 
-    return buf
+        # Disclaimer
+        c.setFont("DejaVuSans", 9)
+        c.drawCentredString(w / 2, y, "Analyse statistique p\u00e9dagogique.")
+        y -= 5 * mm
+        c.drawCentredString(w / 2, y, "Aucun r\u00e9sultat n\u2019est garanti.")
+        y -= 10 * mm
+
+        # Version + notes IA
+        c.setFillColorRGB(150 / 255, 150 / 255, 150 / 255)
+        c.setFont("DejaVuSans-Oblique", 8)
+        c.drawCentredString(w / 2, y, "LotoIA \u2014 Rapport META DONN\u00c9E v0.1")
+        y -= 4 * mm
+        c.drawCentredString(w / 2, y, "Ce rapport est enti\u00e8rement g\u00e9n\u00e9r\u00e9 par intelligence artificielle en collaboration avec le moteur HYBRIDE_OPTIMAL_V1.")
+        y -= 4 * mm
+        c.drawCentredString(w / 2, y, "Graphiques et visuels en cours de d\u00e9veloppement.")
+
+        # Footer bas de page — position dynamique, toujours y=20
+        c.setFillColorRGB(0.5, 0.5, 0.5)
+        c.setFont("DejaVuSans", 8)
+        c.drawCentredString(w / 2, 20, "* Ce rapport META DONN\u00c9E est en version 0.1 \u2013 Version graphique \u00e0 venir.")
+
+        c.save()
+        buf.seek(0)
+        logger.info("[META-PDF] PDF genere OK")
+
+        return buf
+
+    finally:
+        # Nettoyage fichier temporaire graph_data
+        if generated_graph_path:
+            try:
+                os.unlink(generated_graph_path)
+                logger.info(f"[META-PDF] Fichier temp supprime : {generated_graph_path}")
+            except OSError:
+                pass
