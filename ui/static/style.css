@@ -3685,6 +3685,79 @@ body.theme-night .meta-window-slider::-moz-range-thumb {
     }
 }
 
+/* ── Slot chatbot assistant (shared) ── */
+
+.chatbot-slot {
+    margin-top: 32px;
+    display: flex;
+    justify-content: center;
+}
+
+.chatbot-slot-content {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 18px 22px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    max-width: 640px;
+    width: 100%;
+}
+
+.chatbot-emoji {
+    font-size: 26px;
+}
+
+.chatbot-text {
+    font-size: 14px;
+    line-height: 1.4;
+}
+
+.chatbot-text p {
+    margin: 4px 0 0 0;
+}
+
+body.theme-night .chatbot-text {
+    color: #d2d8e6;
+}
+
+body.theme-night .chatbot-text strong {
+    color: #ffffff;
+}
+
+body.theme-day .chatbot-text {
+    color: #2b2f39;
+}
+
+body.theme-day .chatbot-text strong {
+    color: #111827;
+}
+
+.chatbot-btn {
+    margin-left: auto;
+    background: var(--primary);
+    border: none;
+    border-radius: 8px;
+    padding: 10px 14px;
+    cursor: pointer;
+    color: #fff;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .chatbot-slot-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .chatbot-btn {
+        width: 100%;
+        margin-left: 0;
+    }
+}
+
 /* ── Popup assistant (shared, theme-independent) ── */
 
 .assistant-popup {
@@ -3735,6 +3808,21 @@ body.theme-night .meta-window-slider::-moz-range-thumb {
 
 .assistant-popup-content .popup-link:hover {
     text-decoration: underline;
+}
+
+#popup-close {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+    padding: 10px 16px;
+    background: #2f6df6;
+    border: none;
+    border-radius: 8px;
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
 }
 
 .popup-close-btn {
