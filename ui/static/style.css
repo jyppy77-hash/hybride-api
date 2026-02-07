@@ -3305,6 +3305,28 @@ a.back-link-dark:hover {
     50% { background-position: 100% 50%; }
 }
 
+/* Barre gradient Google — pages accueil, simulateur, statistiques */
+.pedagogy-card,
+.tabs-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.pedagogy-card::before,
+.legend-section::before,
+.tabs-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #4285F4, #34A853, #FBBC05, #EA4335, #A142F4, #4285F4);
+    background-size: 500% 100%;
+    animation: gradientShift 10s ease infinite;
+    z-index: 20;
+}
+
 /* Header du generateur */
 .generator-header {
     text-align: center;
