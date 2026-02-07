@@ -206,18 +206,37 @@
             }
         });
 
-        // Mobile : scroll vers le bas quand le clavier s'ouvre/ferme
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', function () {
-                if (isOpen) scrollToBottom();
-            });
+        // Mobile : synchro visualViewport (clavier virtuel Android)
+        var vvp = window.visualViewport;
+
+        function adjustViewport() {
+            if (!vvp || !root) return;
+            root.style.setProperty('--vvp-height', vvp.height + 'px');
+            root.style.top = vvp.offsetTop + 'px';
+            if (messagesArea) {
+                setTimeout(function () {
+                    messagesArea.scrollTop = messagesArea.scrollHeight;
+                }, 50);
+            }
+        }
+
+        if (vvp) {
+            vvp.addEventListener('resize', adjustViewport);
+            vvp.addEventListener('scroll', adjustViewport);
         }
 
         input.addEventListener('focus', function () {
-            setTimeout(function () {
-                scrollToBottom();
-            }, 300);
+            setTimeout(adjustViewport, 300);
         });
+
+        // Guard meta viewport (fallback navigateurs anciens)
+        var meta = document.querySelector('meta[name="viewport"]');
+        if (meta) {
+            var content = meta.getAttribute('content');
+            if (content.indexOf('interactive-widget') === -1) {
+                meta.setAttribute('content', content + ', interactive-widget=resizes-content');
+            }
+        }
 
     }); // fin onReady
 })(); // fin IIFE
