@@ -3294,9 +3294,9 @@ a.back-link-dark:hover {
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #3b82f6, #8b5cf6, #06b6d4, #3b82f6);
-    background-size: 300% 100%;
-    animation: gradientShift 4s ease infinite;
+    background: linear-gradient(90deg, #4285F4, #34A853, #FBBC05, #EA4335, #A142F4, #4285F4);
+    background-size: 500% 100%;
+    animation: gradientShift 10s ease infinite;
     z-index: 20;
 }
 
