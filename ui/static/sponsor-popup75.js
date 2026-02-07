@@ -732,7 +732,14 @@ function openMetaResultPopup(data) {
 
     const graphBars = generateGraphBarsHTML(data.graph);
     const analysisText = finalAnalysisText;
-    console.log('[UI] analysisText source:', analysisText ? 'finalAnalysisText' : 'VIDE');
+    const analysisSource = window._metaAnalysisSource || 'unknown';
+    console.log('[UI] analysisText source:', analysisSource, '— length:', analysisText ? analysisText.length : 0);
+
+    // Badge source visible — transparence utilisateur
+    const sourceLabel = analysisSource === 'gemini_enriched'
+        ? '<span class="meta-source-badge gemini">🧠 Analyse Gemini enrichie</span>'
+        : '<span class="meta-source-badge local">⚠️ Analyse locale (Gemini indisponible)</span>';
+
     const pdfEnabled = true;
 
     const overlay = document.createElement('div');
@@ -756,7 +763,7 @@ function openMetaResultPopup(data) {
 
             <div class="meta-result-analysis">
                 <div class="meta-result-analysis-title">
-                    <span>🧠</span> Analyse HYBRIDE
+                    ${sourceLabel}
                 </div>
                 <p class="meta-result-analysis-text">${analysisText}</p>
             </div>
@@ -810,6 +817,7 @@ function openMetaResultPopup(data) {
             }
 
             console.log('[PDF] finalAnalysisText:', finalAnalysisText.substring(0, 120));
+            console.log('[META PDF] graph_data sent:', metaResultData && metaResultData.graph ? metaResultData.graph : null);
 
             fetch('/api/meta-pdf', {
                 method: 'POST',
@@ -818,7 +826,7 @@ function openMetaResultPopup(data) {
                     analysis: finalAnalysisText,
                     window: '75 tirages',
                     engine: 'HYBRIDE_OPTIMAL_V1',
-                    graph: 'ui/static/meta_graph.png',
+                    graph_data: metaResultData && metaResultData.graph ? metaResultData.graph : null,
                     sponsor: 'Espace disponible'
                 })
             })
@@ -885,6 +893,7 @@ function openMetaResultPopupFallback() {
 var finalAnalysisText = null;
 var metaResultData = null;
 var metaAnalysisPromise = null;
+window._metaAnalysisSource = null;
 
 /**
  * Construit l'URL de l'API locale selon le mode slider.
@@ -910,14 +919,17 @@ function buildMetaLocalUrl() {
  * @returns {Promise}
  */
 function triggerGeminiEarly() {
-    console.log('[GEM] START');
+    var t0 = Date.now();
+    console.log('[GEM] START T=0');
 
     finalAnalysisText = null;
     metaResultData = null;
+    window._metaAnalysisSource = null;
 
     var apiUrl = buildMetaLocalUrl();
 
-    metaAnalysisPromise = fetch(apiUrl)
+    // Chaîne complète : local fetch → Gemini fetch
+    var chainPromise = fetch(apiUrl)
         .then(function(response) {
             if (!response.ok) throw new Error('Local HTTP ' + response.status);
             return response.json();
@@ -926,9 +938,9 @@ function triggerGeminiEarly() {
             if (!data.success) throw new Error('API local: success=false');
 
             var localText = data.analysis;
-            console.log('[GEM] Local OK (' + (localText ? localText.length : 0) + ' chars), appel Gemini...');
+            console.log('[GEM] Local OK (' + (localText ? localText.length : 0) + ' chars) T+' + (Date.now() - t0) + 'ms');
 
-            var geminiPromise = fetch('/api/meta-analyse-texte', {
+            return fetch('/api/meta-analyse-texte', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -942,42 +954,46 @@ function triggerGeminiEarly() {
                 return r.json();
             })
             .then(function(gem) {
-                console.log('[GEM] Response keys:', gem ? Object.keys(gem).join(',') : 'NULL');
-                console.log('[GEM] source:', gem ? gem.source : 'N/A');
+                console.log('[GEM] Response T+' + (Date.now() - t0) + 'ms, source:', gem ? gem.source : 'N/A');
                 var enriched = gem && gem.analysis_enriched;
                 if (!enriched || typeof enriched !== 'string' || enriched.trim().length === 0) {
                     throw new Error('analysis_enriched manquant — keys: ' + (gem ? Object.keys(gem).join(',') : 'NULL'));
                 }
                 if (gem.source && gem.source !== 'gemini_enriched') {
-                    console.warn('[GEM] Backend a renvoyé texte LOCAL (source=' + gem.source + ') — retry ou fallback');
                     throw new Error('Backend fallback local — source: ' + gem.source);
                 }
-                return enriched;
+                console.log('[GEM] ENRICHED OK (' + enriched.length + ' chars) T+' + (Date.now() - t0) + 'ms');
+                finalAnalysisText = enriched;
+                window._metaAnalysisSource = 'gemini_enriched';
+                data.analysis = enriched;
+                data.source = 'gemini_enriched';
+                metaResultData = data;
+            })
+            .catch(function(gemErr) {
+                console.warn('[GEM] Gemini échoué T+' + (Date.now() - t0) + 'ms:', gemErr);
+                // finalAnalysisText reste null — PAS de fallback silencieux
+                window._metaAnalysisSource = 'gemini_failed';
+                data._localText = localText;
+                data.source = 'gemini_failed';
+                metaResultData = data;
             });
+        });
 
-            var timeoutPromise = new Promise(function(_, reject) {
-                setTimeout(function() { reject('GEMINI_TIMEOUT_25S'); }, 25000);
-            });
+    // Timeout GLOBAL depuis T=0 — 28s (avant le timer 30s)
+    var globalTimeout = new Promise(function(_, reject) {
+        setTimeout(function() { reject('GLOBAL_TIMEOUT_28S'); }, 28000);
+    });
 
-            return Promise.race([geminiPromise, timeoutPromise])
-                .then(function(enrichedText) {
-                    console.log('[GEM] ENRICHED OK (' + enrichedText.length + ' chars)');
-                    finalAnalysisText = enrichedText;
-                    data.analysis = enrichedText;
-                    data.source = 'gemini_enriched';
-                    metaResultData = data;
-                })
-                .catch(function(reason) {
-                    console.warn('[GEM] FALLBACK — raison:', reason);
-                    finalAnalysisText = localText;
-                    data.analysis = localText;
-                    data.source = 'hybride_local_fallback';
-                    metaResultData = data;
-                });
-        })
+    metaAnalysisPromise = Promise.race([chainPromise, globalTimeout])
         .catch(function(err) {
-            console.error('[GEM] ERREUR FATALE (fetch local):', err);
-            // finalAnalysisText reste null → fallback UI dans onMetaAnalyseComplete
+            console.error('[GEM] TIMEOUT ou erreur fatale T+' + (Date.now() - t0) + 'ms:', err);
+            // Fallback local UNIQUEMENT sur timeout global explicite
+            if (err === 'GLOBAL_TIMEOUT_28S' && !finalAnalysisText && metaResultData && metaResultData._localText) {
+                console.warn('[GEM] Timeout 28s — fallback explicite vers analyse locale');
+                finalAnalysisText = metaResultData._localText;
+                window._metaAnalysisSource = 'timeout_fallback_local';
+                metaResultData.source = 'timeout_fallback_local';
+            }
         });
 
     return metaAnalysisPromise;
@@ -1000,11 +1016,22 @@ function onMetaAnalyseComplete() {
 
     metaAnalysisPromise
         .then(function() {
+            // CAS 1 — Gemini enrichi OK (ou timeout fallback déjà assigné)
             if (finalAnalysisText && metaResultData) {
-                console.log('[META ANALYSE] finalAnalysisText OK — ouverture résultat');
+                console.log('[META ANALYSE] finalAnalysisText OK — source:', window._metaAnalysisSource);
                 openMetaResultPopup(metaResultData);
-            } else {
-                console.error('[META ANALYSE] finalAnalysisText null après Promise');
+            }
+            // CAS 2 — Gemini échoué, local disponible → fallback EXPLICITE
+            else if (metaResultData && metaResultData._localText) {
+                console.warn('[META ANALYSE] Gemini indisponible — fallback explicite local');
+                finalAnalysisText = metaResultData._localText;
+                window._metaAnalysisSource = 'explicit_local_fallback';
+                metaResultData.source = 'explicit_local_fallback';
+                openMetaResultPopup(metaResultData);
+            }
+            // CAS 3 — Aucune donnée exploitable
+            else {
+                console.error('[META ANALYSE] Aucune donnée — ni Gemini ni local');
                 openMetaResultPopupFallback();
             }
         })
@@ -1089,5 +1116,30 @@ window.calculateTimerDuration = calculateTimerDuration;
 // Export META ANALYSE
 window.showMetaAnalysePopup = showMetaAnalysePopup;
 window.META_ANALYSE_TIMER_DURATION = META_ANALYSE_TIMER_DURATION;
+
+// ============================================
+// CSS BADGE SOURCE META ANALYSE (injection JS)
+// ============================================
+(function() {
+    var style = document.createElement('style');
+    style.textContent = [
+        '.meta-source-badge {',
+        '  font-size: 12px;',
+        '  padding: 4px 8px;',
+        '  border-radius: 6px;',
+        '  font-weight: 600;',
+        '  display: inline-block;',
+        '}',
+        '.meta-source-badge.gemini {',
+        '  background: #0f5132;',
+        '  color: #d1e7dd;',
+        '}',
+        '.meta-source-badge.local {',
+        '  background: #664d03;',
+        '  color: #fff3cd;',
+        '}'
+    ].join('\n');
+    document.head.appendChild(style);
+})();
 
 console.log('[Sponsor Popup 75] Module META ANALYSE loaded successfully');
