@@ -132,32 +132,21 @@
         }
 
         /* ══════════════════════════════════
-           Reponses mock
+           Detection de page + historique
            ══════════════════════════════════ */
 
-        var GREETINGS = ['bonjour', 'hello', 'salut', 'coucou', 'hey', 'bonsoir'];
-
-        var GREETING_REPLY =
-            '\uD83D\uDC4B Bonjour ! Je suis HYBRIDE, l\u2019assistant IA de LotoIA. ' +
-            'Je serai bient\u00f4t op\u00e9rationnel !';
-
-        var DEFAULT_REPLY =
-            '\uD83E\uDD16 HYBRIDE est en cours de configuration. ' +
-            'Bient\u00f4t je pourrai analyser vos grilles et r\u00e9pondre ' +
-            '\u00e0 vos questions sur le Loto !';
-
-        function getMockReply(userText) {
-            var lower = userText.toLowerCase().trim();
-            for (var i = 0; i < GREETINGS.length; i++) {
-                if (lower.indexOf(GREETINGS[i]) !== -1) {
-                    return GREETING_REPLY;
-                }
-            }
-            return DEFAULT_REPLY;
+        function detectPage() {
+            var path = window.location.pathname;
+            if (path.indexOf('/loto') !== -1) return 'loto';
+            if (path.indexOf('/simulateur') !== -1) return 'simulateur';
+            if (path.indexOf('/statistiques') !== -1) return 'statistiques';
+            return 'accueil';
         }
 
+        var chatHistory = [];
+
         /* ══════════════════════════════════
-           Envoi message
+           Envoi message (API Gemini)
            ══════════════════════════════════ */
 
         function send() {
@@ -167,14 +156,41 @@
             addMessage(text, 'user');
             input.value = '';
 
-            var reply = getMockReply(text);
+            chatHistory.push({ role: 'user', content: text });
+            if (chatHistory.length > 10) chatHistory = chatHistory.slice(-10);
 
             showTyping();
 
-            setTimeout(function () {
+            var controller = new AbortController();
+            var timeoutId = setTimeout(function () { controller.abort(); }, 20000);
+
+            fetch('/api/hybride-chat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    message: text,
+                    page: detectPage(),
+                    history: chatHistory
+                }),
+                signal: controller.signal
+            })
+            .then(function (res) {
+                clearTimeout(timeoutId);
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(function (data) {
                 removeTyping();
-                addMessage(reply, 'bot');
-            }, 800);
+                var botText = data.response || '\uD83E\uDD16 R\u00e9ponse indisponible.';
+                addMessage(botText, 'bot');
+                chatHistory.push({ role: 'assistant', content: botText });
+                if (chatHistory.length > 10) chatHistory = chatHistory.slice(-10);
+            })
+            .catch(function () {
+                clearTimeout(timeoutId);
+                removeTyping();
+                addMessage('\uD83E\uDD16 Connexion interrompue. R\u00e9essaie dans quelques secondes !', 'bot');
+            });
         }
 
         /* ══════════════════════════════════
@@ -183,7 +199,7 @@
 
         addMessage(
             'Bienvenue ! Je suis HYBRIDE, l\u2019assistant IA de LotoIA. ' +
-            'Je suis en cours de configuration \u2014 bient\u00f4t op\u00e9rationnel !',
+            'Pose-moi tes questions sur le Loto, les statistiques ou le moteur HYBRIDE \uD83D\uDE80',
             'bot'
         );
 
