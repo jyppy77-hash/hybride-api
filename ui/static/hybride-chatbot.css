@@ -1,0 +1,287 @@
+/* ══════════════════════════════════════════════════════════════
+   HYBRIDE Chatbot Widget — CSS autonome
+   Ne modifie aucun style existant.
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Bulle flottante ── */
+
+.hybride-bubble {
+    position: fixed !important;
+    bottom: 96px;
+    right: 31px;
+    left: auto;
+    top: auto;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0f172a, #1a73e8);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    cursor: pointer;
+    z-index: 9999;
+    border: none;
+    opacity: 0.9;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    animation: hybridePulse 4s ease-in-out infinite;
+    -webkit-user-select: none;
+    user-select: none;
+    line-height: 1;
+}
+
+.hybride-bubble:hover {
+    opacity: 1;
+    transform: scale(1.08);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    animation: none;
+}
+
+.hybride-bubble.open {
+    animation: none;
+    transform: rotate(0deg);
+}
+
+@keyframes hybridePulse {
+    0%, 100% { box-shadow: 0 4px 14px rgba(26, 115, 232, 0.35), 0 0 0 0 rgba(26, 115, 232, 0.3); }
+    50% { box-shadow: 0 4px 14px rgba(26, 115, 232, 0.35), 0 0 0 8px rgba(26, 115, 232, 0); }
+}
+
+/* ── Fenetre chat ── */
+
+.hybride-window {
+    position: fixed;
+    bottom: 170px;
+    right: 20px;
+    width: 360px;
+    max-height: 500px;
+    border-radius: 16px;
+    background: #0f172a;
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.08);
+    z-index: 9998;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: scale(0.85) translateY(20px);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: bottom right;
+}
+
+.hybride-window.visible {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* ── Header ── */
+
+.hybride-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: linear-gradient(135deg, #0f172a, #1e1b4b);
+    color: #fff;
+    flex-shrink: 0;
+}
+
+.hybride-header-title {
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+}
+
+.hybride-header-close {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: background 0.2s ease;
+}
+
+.hybride-header-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* ── Zone messages ── */
+
+.hybride-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 200px;
+    max-height: 340px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+}
+
+.hybride-messages::-webkit-scrollbar {
+    width: 5px;
+}
+
+.hybride-messages::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.hybride-messages::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+}
+
+/* ── Bulles messages ── */
+
+.hybride-msg {
+    max-width: 85%;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #fff;
+    word-wrap: break-word;
+}
+
+.hybride-msg-bot {
+    align-self: flex-start;
+    background: #1e293b;
+    border-bottom-left-radius: 4px;
+}
+
+.hybride-msg-user {
+    align-self: flex-end;
+    background: #1a73e8;
+    border-bottom-right-radius: 4px;
+}
+
+.hybride-msg-time {
+    display: block;
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.35);
+    margin-top: 4px;
+}
+
+/* ── Indicateur "typing" ── */
+
+.hybride-typing {
+    align-self: flex-start;
+    padding: 10px 14px;
+    background: #1e293b;
+    border-radius: 12px;
+    border-bottom-left-radius: 4px;
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.hybride-typing-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.4);
+    animation: hybrideTyping 1.2s ease-in-out infinite;
+}
+
+.hybride-typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.hybride-typing-dot:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes hybrideTyping {
+    0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+    30% { opacity: 1; transform: translateY(-4px); }
+}
+
+/* ── Zone input ── */
+
+.hybride-input-area {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+    background: #0b1120;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+}
+
+.hybride-input {
+    flex: 1;
+    background: #1e293b;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: #fff;
+    font-size: 13px;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+.hybride-input::placeholder {
+    color: rgba(255, 255, 255, 0.35);
+}
+
+.hybride-input:focus {
+    border-color: #1a73e8;
+}
+
+.hybride-send {
+    background: linear-gradient(135deg, #1a73e8, #4285f4);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-size: 16px;
+    width: 42px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s ease;
+    flex-shrink: 0;
+}
+
+.hybride-send:hover {
+    opacity: 0.85;
+}
+
+/* ── Responsive mobile ── */
+
+@media (max-width: 480px) {
+    .hybride-window {
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        max-height: 100vh;
+        border-radius: 0;
+        transform-origin: top right;
+    }
+
+    .hybride-messages {
+        max-height: none;
+        flex: 1;
+    }
+
+    .hybride-bubble {
+        top: 20px;
+        right: 16px;
+        bottom: auto;
+        left: auto;
+    }
+}
