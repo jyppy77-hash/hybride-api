@@ -297,9 +297,9 @@ def generate_meta_pdf(analysis: str = "", window: str = "75 tirages",
         c.setFillColorRGB(150 / 255, 150 / 255, 150 / 255)
         c.setFont("DejaVuSans-Oblique", 8)
         c.drawCentredString(w / 2, y, "LotoIA \u2014 Rapport META DONN\u00c9E v0.9")
-        y -= 4 * mm
+        y -= 7 * mm
         c.drawCentredString(w / 2, y, "Ce rapport est enti\u00e8rement g\u00e9n\u00e9r\u00e9 par intelligence artificielle en collaboration avec le moteur HYBRIDE_OPTIMAL_V1.")
-        y -= 4 * mm
+        y -= 7 * mm
         c.drawCentredString(w / 2, y, "Graphiques et visuels en cours de d\u00e9veloppement.")
 
         # Footer bas de page — position dynamique, toujours y=20
