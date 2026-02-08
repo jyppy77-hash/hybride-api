@@ -168,9 +168,6 @@
             addMessage(text, 'user');
             input.value = '';
 
-            chatHistory.push({ role: 'user', content: text });
-            if (chatHistory.length > 10) chatHistory = chatHistory.slice(-10);
-
             showTyping();
             trackEvent('chat_message_sent', { page: detectPage(), message_length: text.length });
 
@@ -196,8 +193,9 @@
                 removeTyping();
                 var botText = data.response || '\uD83E\uDD16 R\u00e9ponse indisponible.';
                 addMessage(botText, 'bot');
+                chatHistory.push({ role: 'user', content: text });
                 chatHistory.push({ role: 'assistant', content: botText });
-                if (chatHistory.length > 10) chatHistory = chatHistory.slice(-10);
+                if (chatHistory.length > 20) chatHistory = [chatHistory[0]].concat(chatHistory.slice(-19));
                 trackEvent('chat_response_received', { page: detectPage(), response_length: botText.length });
             })
             .catch(function () {
@@ -217,6 +215,10 @@
             'Pose-moi tes questions sur le Loto, les statistiques ou le moteur HYBRIDE \uD83D\uDE80',
             'bot'
         );
+        chatHistory.push({
+            role: 'assistant',
+            content: 'Bienvenue ! Je suis HYBRIDE, l\'assistant IA de LotoIA. Pose-moi tes questions sur le Loto, les statistiques ou le moteur HYBRIDE \uD83D\uDE80'
+        });
 
         /* ══════════════════════════════════
            Events
