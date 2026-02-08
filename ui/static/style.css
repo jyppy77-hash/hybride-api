@@ -321,16 +321,26 @@ body.theme-day {
     top: 50%;
     transform: translateY(-50%) scaleY(0.94);
     transform-origin: center;
-    height: 62px;
+    height: 85px;
     width: auto;
     opacity: 0.95;
     pointer-events: none;
 }
 
+.band-hybride-moteur-mobile {
+    display: none;
+}
+
 @media (max-width: 768px) {
     .band-hybride-moteur {
-        height: 46px;
-        transform: translateY(-50%) scaleY(0.92);
+        display: none;
+    }
+    .band-hybride-moteur-mobile {
+        display: block;
+        margin: 12px auto 0;
+        height: 50px;
+        width: auto;
+        opacity: 0.9;
     }
 }
 
