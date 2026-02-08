@@ -183,6 +183,84 @@ async def api_database_info():
         }
 
 
+# =========================
+# API META Windows Info (slider)
+# =========================
+
+@router.get("/api/meta-windows-info")
+async def api_meta_windows_info():
+    """
+    Retourne les plages de dates et le nombre de tirages
+    pour chaque fenêtre d'analyse (slider META).
+    Un seul appel, toutes les fenêtres.
+    """
+    from datetime import timedelta
+
+    try:
+        conn = db_cloudsql.get_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            SELECT date_de_tirage FROM tirages
+            ORDER BY date_de_tirage DESC
+        """)
+        all_dates = [row["date_de_tirage"] for row in cursor.fetchall()]
+        conn.close()
+
+        total = len(all_dates)
+        last_draw = all_dates[0] if all_dates else None
+        first_draw = all_dates[-1] if all_dates else None
+
+        # Fenêtres par nombre de tirages
+        tirages_windows = {}
+        for size in [100, 200, 300, 400, 500, 600, 700, 800]:
+            if size <= total:
+                tirages_windows[size] = {
+                    "draws": size,
+                    "start": str(all_dates[size - 1]),
+                    "end": str(last_draw)
+                }
+            else:
+                tirages_windows[size] = {
+                    "draws": total,
+                    "start": str(first_draw),
+                    "end": str(last_draw)
+                }
+        tirages_windows["GLOBAL"] = {
+            "draws": total,
+            "start": str(first_draw),
+            "end": str(last_draw)
+        }
+
+        # Fenêtres par années (timedelta fallback, pas de dateutil)
+        annees_windows = {}
+        for y in [1, 2, 3, 4, 5, 6]:
+            date_limit = last_draw - timedelta(days=365 * y)
+            draws_in_range = [d for d in all_dates if d >= date_limit]
+            annees_windows[y] = {
+                "draws": len(draws_in_range),
+                "start": str(draws_in_range[-1]) if draws_in_range else str(first_draw),
+                "end": str(last_draw)
+            }
+        annees_windows["GLOBAL"] = {
+            "draws": total,
+            "start": str(first_draw),
+            "end": str(last_draw)
+        }
+
+        return {
+            "tirages": tirages_windows,
+            "annees": annees_windows,
+            "total_draws": total,
+            "last_draw": str(last_draw),
+            "first_draw": str(first_draw)
+        }
+
+    except Exception as e:
+        logger.error(f"Erreur /api/meta-windows-info: {e}")
+        return {"tirages": None, "annees": None}
+
+
 @router.get("/stats")
 async def stats():
     """
