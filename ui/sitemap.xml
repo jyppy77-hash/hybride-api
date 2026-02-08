@@ -118,36 +118,4 @@
     <priority>0.5</priority>
   </url>
 
-  <!-- ================================================
-       PAGES LEGALES (priority 0.3)
-       ================================================ -->
-
-  <url>
-    <loc>https://lotoia.fr/mentions-legales</loc>
-    <lastmod>2026-02-06</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
-  <url>
-    <loc>https://lotoia.fr/politique-confidentialite</loc>
-    <lastmod>2026-02-06</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
-  <url>
-    <loc>https://lotoia.fr/politique-cookies</loc>
-    <lastmod>2026-02-06</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
-  <url>
-    <loc>https://lotoia.fr/disclaimer</loc>
-    <lastmod>2026-02-06</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
 </urlset>

@@ -41,9 +41,6 @@ Disallow: /docs
 Disallow: /openapi.json
 
 # === AI / SCRAPING BOTS ===
-User-agent: GPTBot
-Disallow: /
-
 User-agent: ClaudeBot
 Disallow: /
 
