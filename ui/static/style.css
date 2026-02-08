@@ -1961,20 +1961,20 @@ details summary:hover {
 
 .scroll-to-top {
     position: fixed;
-    bottom: 90px;
+    bottom: 80px;
     right: 20px;
-    width: 50px;
-    height: 50px;
-    background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-    color: white;
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #0f172a, #1a73e8);
+    color: #fff;
     border: none;
     border-radius: 50%;
-    font-size: 24px;
+    font-size: 20px;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
     opacity: 0;
     visibility: hidden;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.3s ease, visibility 0.3s ease;
     z-index: 1000;
     display: flex;
     align-items: center;
@@ -1982,27 +1982,27 @@ details summary:hover {
 }
 
 .scroll-to-top.visible {
-    opacity: 1;
+    opacity: 0.75;
     visibility: visible;
 }
 
 .scroll-to-top:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-    background: linear-gradient(135deg, var(--secondary) 0%, var(--primary) 100%);
+    opacity: 1;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(26, 115, 232, 0.35);
 }
 
 .scroll-to-top:active {
-    transform: translateY(-2px);
+    transform: translateY(-1px);
 }
 
 @media (max-width: 768px) {
     .scroll-to-top {
-        bottom: 80px;
+        bottom: 76px;
         right: 20px;
-        width: 45px;
-        height: 45px;
-        font-size: 20px;
+        width: 42px;
+        height: 42px;
+        font-size: 18px;
     }
 }
 
