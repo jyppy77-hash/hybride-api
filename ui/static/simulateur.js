@@ -672,9 +672,14 @@ function displayHistoryCheck(historyCheck) {
 
         // Affichage visuel des boules communes
         if (Array.isArray(historyCheck.best_match_numbers) && historyCheck.best_match_numbers.length > 0) {
-            const balls = historyCheck.best_match_numbers
+            let balls = historyCheck.best_match_numbers
                 .map(n => `<span style="display:inline-flex;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#4da3ff,#2563eb);color:white;font-size:12px;font-weight:600;align-items:center;justify-content:center;margin:2px;box-shadow:0 2px 4px rgba(37,99,235,0.3);">${n}</span>`)
                 .join('');
+            // Ajouter le numero chance si matche
+            if (historyCheck.best_match_chance && historyCheck.best_match_chance_number) {
+                balls += `<span style="display:inline-flex;align-items:center;margin:0 4px;color:var(--theme-text-muted,#888);font-weight:500;">+</span>`;
+                balls += `<span style="display:inline-flex;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;font-size:12px;font-weight:600;align-items:center;justify-content:center;margin:2px;box-shadow:0 2px 4px rgba(245,158,11,0.3);">${historyCheck.best_match_chance_number}</span>`;
+            }
             text += `<div style="margin-top:8px;">${balls}</div>`;
         }
     }
