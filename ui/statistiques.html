@@ -40,7 +40,7 @@
       "temporalCoverage": "2019/.."
     }
     </script>
-    <link rel="stylesheet" href="/ui/static/style.css?v=7">
+    <link rel="stylesheet" href="/ui/static/style.css?v=8">
     <link rel="stylesheet" href="/ui/static/legal.css?v=7">
     <!-- Theme script (en premier pour éviter le flash) -->
     <script src="/ui/static/theme.js?v=7"></script>
@@ -139,6 +139,27 @@
             margin-bottom: 32px;
             border-bottom: 2px solid var(--theme-border);
             flex-wrap: wrap;
+            position: relative;
+            overflow: visible;
+        }
+
+        .band-hybride-stat {
+            position: absolute;
+            right: 16px;
+            top: 20%;
+            transform: translateY(-50%) scaleY(0.94);
+            transform-origin: center;
+            height: 70px;
+            width: auto;
+            opacity: 0.95;
+            pointer-events: none;
+        }
+
+        @media (max-width: 768px) {
+            .band-hybride-stat {
+                height: 58px;
+                transform: translateY(-50%) scaleY(0.94);
+            }
         }
 
         .tab {
@@ -494,6 +515,7 @@
                 <button class="tab active" onclick="switchTab('historique')">📅 Historique des tirages</button>
                 <button class="tab" onclick="switchTab('analyse')">🔍 Analyse par numéro</button>
                 <button class="tab" onclick="switchTab('topflop')">📌 Top / Flop</button>
+                <img src="/static/hybride-stat.png?v=1" class="band-hybride-stat" alt="Mascotte HYBRIDE - Analyse statistique des tirages du Loto">
             </div>
 
             <!-- ONGLET 1 : Historique des tirages -->
