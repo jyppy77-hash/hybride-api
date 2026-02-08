@@ -455,8 +455,7 @@
         var datesEl = infoContainer.querySelector('.meta-window-dates');
         var toggleBtns = toggleContainer.querySelectorAll('.meta-mode-btn');
 
-        // === Données locales fenêtre d'analyse (aucun appel API) ===
-        // Règle : plus de tirages => date_min plus ancienne (jamais l'inverse)
+        // === Données locales fenêtre d'analyse (fallback, écrasées par API) ===
         var windowInfoTirages = {
             100: { draws: 100, start: "2024-10-05", end: "2026-02-04" },
             200: { draws: 200, start: "2023-06-07", end: "2026-02-04" },
@@ -469,18 +468,6 @@
             GLOBAL: { draws: 979, start: "2019-11-06", end: "2026-02-04" }
         };
 
-        // === Garde-fou cohérence dates (debug) ===
-        (function() {
-            var keys = [100, 200, 300, 400, 500, 600, 700, 800];
-            for (var i = 1; i < keys.length; i++) {
-                var prev = windowInfoTirages[keys[i - 1]];
-                var curr = windowInfoTirages[keys[i]];
-                if (prev && curr && curr.start > prev.start) {
-                    console.warn('[META SLIDER] Incohérence dates : ' + keys[i] + ' tirages (start=' + curr.start + ') plus récent que ' + keys[i - 1] + ' tirages (start=' + prev.start + ')');
-                }
-            }
-        })();
-
         // === Fonction de mise à jour pour le mode TIRAGES ===
         function updateTiragesDisplay(value) {
             var windowValue = META_WINDOW_MAP[value];
@@ -488,8 +475,9 @@
             metaYearsSize = null;
 
             if (windowValue === "GLOBAL") {
-                countEl.textContent = "Analyse sur l'intégralité de la base";
-                datesEl.textContent = "Nov 2019 → Aujourd'hui";
+                var globalInfo = windowInfoTirages["GLOBAL"];
+                countEl.textContent = "Analyse sur l'intégralité de la base (" + globalInfo.draws + " tirages)";
+                datesEl.textContent = "Du " + formatDateFR(globalInfo.start) + " au " + formatDateFR(globalInfo.end);
             } else {
                 countEl.textContent = "Analyse sur " + windowValue + " tirages";
                 var info = windowInfoTirages[windowValue];
@@ -501,7 +489,7 @@
             }
         }
 
-        // === Données locales fenêtre d'analyse années (aucun appel API) ===
+        // === Données locales fenêtre d'analyse années (fallback, écrasées par API) ===
         var windowInfoAnnees = {
             1: { draws: 156, start: "2025-02-08", end: "2026-02-04" },
             2: { draws: 313, start: "2024-02-07", end: "2026-02-04" },
@@ -512,6 +500,25 @@
             GLOBAL: { draws: 979, start: "2019-11-06", end: "2026-02-04" }
         };
 
+        // === Chargement dynamique des fenêtres depuis la BDD ===
+        fetch('/api/meta-windows-info')
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.tirages) {
+                    windowInfoTirages = data.tirages;
+                }
+                if (data.annees) {
+                    windowInfoAnnees = data.annees;
+                }
+                // Rafraîchir l'affichage du slider actif
+                if (metaCurrentMode === 'tirages' && windowSlider) {
+                    updateTiragesDisplay(windowSlider.value);
+                } else if (metaCurrentMode === 'annees' && yearsSlider) {
+                    updateAnneesDisplay(yearsSlider.value);
+                }
+            })
+            .catch(function() { /* fallback hardcodé déjà en place */ });
+
         // === Fonction de mise à jour pour le mode ANNÉES ===
         function updateAnneesDisplay(value) {
             var yearsValue = META_YEARS_MAP[value];
@@ -519,8 +526,9 @@
             metaWindowSize = "GLOBAL";  // Reset tirages
 
             if (yearsValue === "GLOBAL") {
-                countEl.textContent = "Analyse sur l'intégralité de la base";
-                datesEl.textContent = "Nov 2019 → Aujourd'hui";
+                var globalInfoA = windowInfoAnnees["GLOBAL"];
+                countEl.textContent = "Analyse sur l'intégralité de la base (" + globalInfoA.draws + " tirages)";
+                datesEl.textContent = "Du " + formatDateFR(globalInfoA.start) + " au " + formatDateFR(globalInfoA.end);
             } else {
                 var info = windowInfoAnnees[yearsValue];
                 var nbTirages = info ? info.draws : "?";
