@@ -3907,6 +3907,15 @@ body.theme-day .chatbot-text strong {
     margin-bottom: 0;
 }
 
+.cta-pdf-teaser {
+    text-align: center;
+    margin-top: 6px;
+    margin-bottom: 0;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--primary);
+}
+
 /* =================================================================
    BANDEAU DE CONFIANCE (Trust Band)
    ================================================================= */
