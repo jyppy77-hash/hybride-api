@@ -59,8 +59,8 @@ async def api_hybride_chat(payload: HybrideChatRequest):
     # Construire les contents (historique + message actuel)
     contents = []
 
-    # Historique (max 10 derniers messages) + garde anti-doublon
-    history = (payload.history or [])[-10:]
+    # Historique (max 20 derniers messages) + garde anti-doublon
+    history = (payload.history or [])[-20:]
     if history and history[-1].role == "user" and history[-1].content == payload.message:
         history = history[:-1]
 
