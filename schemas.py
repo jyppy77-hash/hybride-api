@@ -76,3 +76,15 @@ class HybrideChatResponse(BaseModel):
     response: str
     source: str = "gemini"   # gemini | fallback
     mode: str = "decouverte" # decouverte | analyse | meta
+
+
+# =========================
+# Schema Pitch Grilles
+# =========================
+
+class PitchGrilleItem(BaseModel):
+    numeros: list[int]
+    chance: Optional[int] = None
+
+class PitchGrillesRequest(BaseModel):
+    grilles: list[PitchGrilleItem]
