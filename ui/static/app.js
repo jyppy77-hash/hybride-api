@@ -611,6 +611,9 @@ addLog(`Envoi requête GET /generate?n=${selectedGridCount}&mode=balanced`, 'req
             displayGridsWithAds(data.grids, data.metadata, date);
             addLog(`${data.grids.length} grille(s) générée(s) et affichée(s)`, 'success');
 
+            // Pitch HYBRIDE async (non-blocking)
+            fetchAndDisplayPitchs(data.grids);
+
             // Analytics GA4 - Track generation de grilles
             if (window.LotoIAAnalytics && window.LotoIAAnalytics.product) {
                 window.LotoIAAnalytics.product.generateGrid({
@@ -1285,6 +1288,10 @@ function displayGridsWithAds(grids, metadata, targetDate) {
                         return `<span class="visual-badge ${badgeClass}">${icon} ${badge}</span>`;
                     }).join('')}
                 </div>
+
+                <div class="grille-pitch grille-pitch-loading" data-pitch-index="${index}">
+                    <span class="pitch-icon">\u{1F916}</span> HYBRIDE analyse ta grille\u2026
+                </div>
             </div>
         `;
 
@@ -1748,6 +1755,48 @@ function clearLogs() {
             <span class="log-message">Logs effacés.</span>
         </div>
     `;
+}
+
+// ================================================================
+// PITCH HYBRIDE — Gemini async
+// ================================================================
+
+/**
+ * Appelle /api/pitch-grilles et affiche les pitchs sous chaque grille.
+ * Non-bloquant : les grilles sont deja visibles, les pitchs arrivent apres.
+ * @param {Array} grids - Tableau des grilles generees ({nums, chance})
+ */
+async function fetchAndDisplayPitchs(grids) {
+    const payload = grids.map(g => ({
+        numeros: g.nums,
+        chance: g.chance
+    }));
+
+    try {
+        const response = await fetch('/api/pitch-grilles', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ grilles: payload })
+        });
+        const data = await response.json();
+
+        if (data.success && data.data && data.data.pitchs) {
+            data.data.pitchs.forEach((pitch, index) => {
+                const el = document.querySelector(`.grille-pitch[data-pitch-index="${index}"]`);
+                if (el && pitch) {
+                    el.innerHTML = `<span class="pitch-icon">\u{1F916}</span> ${pitch}`;
+                    el.classList.remove('grille-pitch-loading');
+                }
+            });
+            addLog(`${data.data.pitchs.length} pitch(s) HYBRIDE affiche(s)`, 'success');
+        } else {
+            // Pas de pitchs — retirer les placeholders
+            document.querySelectorAll('.grille-pitch-loading').forEach(el => el.remove());
+        }
+    } catch (e) {
+        console.warn('[PITCH] Erreur:', e);
+        document.querySelectorAll('.grille-pitch-loading').forEach(el => el.remove());
+    }
 }
 
 // ================================================================

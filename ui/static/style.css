@@ -3916,6 +3916,33 @@ body.theme-day .chatbot-text strong {
     color: var(--primary);
 }
 
+/* Pitch HYBRIDE sous chaque grille */
+.grille-pitch {
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: rgba(26, 115, 232, 0.06);
+    border-left: 3px solid var(--primary);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--theme-text-muted);
+}
+
+.grille-pitch .pitch-icon {
+    margin-right: 4px;
+}
+
+.grille-pitch-loading {
+    opacity: 0.5;
+    font-style: italic;
+    animation: pitchPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pitchPulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.25; }
+}
+
 /* =================================================================
    BANDEAU DE CONFIANCE (Trust Band)
    ================================================================= */
