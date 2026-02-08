@@ -22,6 +22,7 @@ SITE_URL = "https://lotoia.fr"
 SEO_PAGES = [
     # (path, priority, changefreq, lastmod_dynamic)
     ("/", 1.0, "daily", True),
+    ("/accueil", 0.9, "weekly", False),
     ("/generateur", 0.9, "daily", True),
     ("/statistiques", 0.9, "daily", True),
     ("/simulateur", 0.8, "weekly", False),
@@ -139,9 +140,6 @@ Disallow: /
 User-agent: SemrushBot
 Disallow: /
 
-User-agent: GPTBot
-Disallow: /
-
 Sitemap: {SITE_URL}/sitemap.xml
 """
 
@@ -167,9 +165,15 @@ def generate_robots_response() -> PlainTextResponse:
 PAGE_META = {
     "index": {
         "title": "LotoIA - Générateur de Grilles Loto par Intelligence Artificielle",
-        "description": "Générez des grilles de Loto optimisées par IA. Analyse statistique de 967+ tirages FDJ, algorithme HYBRIDE_OPTIMAL_V1. 100% gratuit.",
+        "description": "Générez des grilles de Loto optimisées par IA. Analyse statistique de 979+ tirages FDJ, algorithme HYBRIDE_OPTIMAL_V1, assistant IA conversationnel. 100% gratuit.",
         "keywords": "loto ia, générateur grille loto, prédiction loto, algorithme loto, intelligence artificielle loto, statistiques loto",
         "canonical": "/",
+    },
+    "accueil": {
+        "title": "LotoIA - Analyse Statistique du Loto par Intelligence Artificielle",
+        "description": "LotoIA analyse 979+ tirages du Loto FDJ avec l'algorithme HYBRIDE_OPTIMAL_V1. Générateur de grilles IA, simulateur, statistiques et assistant conversationnel HYBRIDE. 100% gratuit.",
+        "keywords": "lotoia, analyse loto ia, statistiques loto france, générateur grille loto, assistant ia loto",
+        "canonical": "/accueil",
     },
     "loto": {
         "title": "Générateur Loto France - Grilles IA Optimisées | LotoIA",
@@ -185,7 +189,7 @@ PAGE_META = {
     },
     "statistiques": {
         "title": "Statistiques Loto - Fréquences et Retards des Numéros | LotoIA",
-        "description": "Consultez les statistiques complètes du Loto : numéros les plus sortis, retards actuels, tendances. Données issues de 967+ tirages officiels FDJ.",
+        "description": "Consultez les statistiques complètes du Loto : numéros les plus sortis, retards actuels, tendances. Données issues de 979+ tirages officiels FDJ.",
         "keywords": "statistiques loto, fréquence numéros loto, retard loto, numéros chauds froids",
         "canonical": "/statistiques",
     },
