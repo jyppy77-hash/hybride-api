@@ -311,6 +311,27 @@ body.theme-day {
     margin-bottom: 28px;
     padding-bottom: 24px;
     border-bottom: 1px solid var(--theme-border);
+    position: relative;
+    overflow: visible;
+}
+
+.band-hybride-moteur {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%) scaleY(0.94);
+    transform-origin: center;
+    height: 62px;
+    width: auto;
+    opacity: 0.95;
+    pointer-events: none;
+}
+
+@media (max-width: 768px) {
+    .band-hybride-moteur {
+        height: 46px;
+        transform: translateY(-50%) scaleY(0.92);
+    }
 }
 
 .loto-page .generator-title {
