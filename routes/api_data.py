@@ -1231,3 +1231,114 @@ def get_numeros_par_categorie(categorie, type_num="principal"):
         logger.error(f"Erreur get_numeros_par_categorie: {e}")
         conn.close()
         return None
+
+
+# =========================
+# Pitch grilles — contexte stats pour Gemini
+# =========================
+
+def prepare_grilles_pitch_context(grilles: list) -> str:
+    """
+    Prepare le contexte stats de N grilles pour le prompt Gemini pitch.
+    Optimise : 1 seule connexion BDD, requetes UNION ALL.
+
+    Args:
+        grilles: [{"numeros": [15, 20, 25, 28, 45], "chance": 5}, ...]
+
+    Returns:
+        str: bloc de contexte formate pour Gemini
+    """
+    conn = db_cloudsql.get_connection()
+    cursor = conn.cursor()
+
+    try:
+        # Total tirages et periode
+        cursor.execute("""
+            SELECT COUNT(*) as total,
+                   MIN(date_de_tirage) as date_min,
+                   MAX(date_de_tirage) as date_max
+            FROM tirages
+        """)
+        info = cursor.fetchone()
+        total = info['total']
+        date_max = info['date_max']
+
+        # Frequences globales (1 requete UNION ALL)
+        freq_map = _get_all_frequencies(cursor, "principal")
+
+        # Ecarts (optimise)
+        ecart_map = _get_all_ecarts(cursor, "principal")
+
+        # Categories chaud/froid (sur 2 ans)
+        date_2ans = date_max - timedelta(days=730)
+        freq_2ans = _get_all_frequencies(cursor, "principal", date_from=date_2ans)
+
+        conn.close()
+
+        # Seuils
+        freq_2ans_values = sorted(freq_2ans.values(), reverse=True)
+        tiers = len(freq_2ans_values) // 3
+        seuil_chaud = freq_2ans_values[tiers] if tiers < len(freq_2ans_values) else 0
+        seuil_froid = freq_2ans_values[2 * tiers] if 2 * tiers < len(freq_2ans_values) else 0
+
+        blocks = []
+        for i, grille in enumerate(grilles, 1):
+            nums = sorted(grille["numeros"])
+            chance = grille.get("chance")
+
+            # Metriques grille
+            somme = sum(nums)
+            nb_pairs = sum(1 for n in nums if n % 2 == 0)
+            dispersion = max(nums) - min(nums)
+
+            somme_ok = "\u2713" if 100 <= somme <= 140 else "\u2717"
+            equil_ok = "\u2713" if 1 <= nb_pairs <= 4 else "\u2717"
+
+            nums_str = " ".join(str(n) for n in nums)
+            chance_str = f" + Chance {chance}" if chance else ""
+
+            lines = [f"[GRILLE {i} \u2014 Num\u00e9ros : {nums_str}{chance_str}]"]
+            lines.append(f"Somme : {somme} (id\u00e9al 100-140) {somme_ok}")
+            lines.append(f"Pairs : {nb_pairs} / Impairs : {5 - nb_pairs} {equil_ok}")
+            lines.append(f"Dispersion : {dispersion}")
+            lines.append(f"Total tirages analys\u00e9s : {total}")
+
+            # Stats par numero
+            chauds = []
+            froids = []
+            for n in nums:
+                f = freq_map.get(n, 0)
+                e = ecart_map.get(n, 0)
+                f2 = freq_2ans.get(n, 0)
+
+                if f2 >= seuil_chaud:
+                    cat = "CHAUD"
+                    chauds.append(n)
+                elif f2 <= seuil_froid:
+                    cat = "FROID"
+                    froids.append(n)
+                else:
+                    cat = "NEUTRE"
+
+                lines.append(f"Num\u00e9ro {n} : {f} sorties, \u00e9cart {e}, {cat}")
+
+            # Badges
+            badges = []
+            if len(chauds) >= 3:
+                badges.append("Num\u00e9ros chauds")
+            elif len(froids) >= 3:
+                badges.append("Mix de retards")
+            else:
+                badges.append("\u00c9quilibre")
+            if 1 <= nb_pairs <= 4:
+                badges.append("Pair/Impair OK")
+
+            lines.append(f"Badges : {', '.join(badges)}")
+            blocks.append("\n".join(lines))
+
+        return "\n\n".join(blocks)
+
+    except Exception as e:
+        logger.error(f"Erreur prepare_grilles_pitch_context: {e}")
+        conn.close()
+        return ""
