@@ -373,6 +373,7 @@ async def api_analyze_custom_grid(
             "exact_dates": exact_dates,
             "best_match_count": best_match['match_count'] if best_match else 0,
             "best_match_chance": bool(best_match['chance_match']) if best_match else False,
+            "best_match_chance_number": best_match['numero_chance'] if best_match and best_match['chance_match'] else None,
             "best_match_date": str(best_match['date_de_tirage']) if best_match else None,
             "best_match_numbers": best_match_numbers
         }
@@ -412,18 +413,6 @@ async def api_analyze_custom_grid(
         # Score final
         score = int(0.6 * score_conformite + 0.4 * score_freq)
         score = max(0, min(100, score))
-
-        # Note etoiles
-        if score >= 80:
-            note_etoiles = 5
-        elif score >= 65:
-            note_etoiles = 4
-        elif score >= 50:
-            note_etoiles = 3
-        elif score >= 35:
-            note_etoiles = 2
-        else:
-            note_etoiles = 1
 
         # Badges
         badges = []
@@ -475,7 +464,6 @@ async def api_analyze_custom_grid(
             "nums": nums,
             "chance": chance,
             "score": score,
-            "note_etoiles": note_etoiles,
             "comparaison": comparaison,
             "badges": badges,
             "details": {
