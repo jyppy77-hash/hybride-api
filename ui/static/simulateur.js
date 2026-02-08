@@ -355,6 +355,12 @@ function displayResults(data) {
     // History check display (safe - only if data exists)
     displayHistoryCheck(data.history_check);
 
+    // Pitch HYBRIDE async (non-blocking)
+    fetchAndDisplaySimulateurPitch(
+        Array.from(state.selectedNumbers),
+        state.selectedChance
+    );
+
     // Analytics GA4 — Track simulation de grille
     if (window.LotoIAAnalytics && window.LotoIAAnalytics.product) {
         window.LotoIAAnalytics.product.simulateGrid({ score: data.score });
@@ -765,6 +771,51 @@ async function autoGenerate() {
         console.error('Erreur auto-generate:', error);
     } finally {
         elements.loadingOverlay.style.display = 'none';
+    }
+}
+
+// ================================================================
+// PITCH HYBRIDE — Gemini async (simulateur)
+// ================================================================
+
+/**
+ * Appelle /api/pitch-grilles pour 1 grille et affiche le pitch
+ * apres la section history-check du simulateur.
+ * @param {Array} nums - 5 numeros selectionnes
+ * @param {number} chance - numero chance
+ */
+async function fetchAndDisplaySimulateurPitch(nums, chance) {
+    // Conteneur cible : apres history-check
+    const anchor = document.getElementById('history-check');
+    if (!anchor) return;
+
+    // Supprimer un pitch precedent
+    const existing = anchor.parentElement.querySelector('.grille-pitch');
+    if (existing) existing.remove();
+
+    // Placeholder loading
+    const pitchDiv = document.createElement('div');
+    pitchDiv.className = 'grille-pitch grille-pitch-loading';
+    pitchDiv.innerHTML = '<span class="pitch-icon">\u{1F916}</span> HYBRIDE analyse ta grille\u2026';
+    anchor.insertAdjacentElement('afterend', pitchDiv);
+
+    try {
+        const response = await fetch('/api/pitch-grilles', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ grilles: [{ numeros: nums, chance: chance }] })
+        });
+        const data = await response.json();
+
+        if (data.success && data.data && data.data.pitchs && data.data.pitchs[0]) {
+            pitchDiv.innerHTML = '<span class="pitch-icon">\u{1F916}</span> ' + data.data.pitchs[0];
+            pitchDiv.classList.remove('grille-pitch-loading');
+        } else {
+            pitchDiv.remove();
+        }
+    } catch (e) {
+        console.warn('[PITCH SIMULATEUR] Erreur:', e);
+        pitchDiv.remove();
     }
 }
 
