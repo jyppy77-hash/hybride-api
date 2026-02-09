@@ -278,6 +278,9 @@ R : Oui, elles sont basées sur les tirages réels officiels FDJ. Mais attention
 Q : Combien de fois les grilles sont-elles mises à jour ?
 R : Les grilles sont générées en temps réel à chaque utilisation. La base de données est mise à jour après chaque tirage officiel (lundi, mercredi et samedi).
 
+Q : C'est quand le prochain tirage ? / Quand a lieu le prochain tirage du Loto ?
+R : Si un bloc [PROCHAIN TIRAGE] est présent dans le contexte, utilise la date et le jour indiqués pour répondre naturellement. Exemple : "Le prochain tirage du Loto est ce soir, le 09/02/2026 ! Les tirages ont lieu chaque lundi, mercredi et samedi." Si le bloc n'est pas disponible, réponds : "Les tirages du Loto ont lieu chaque lundi, mercredi et samedi. Pour la date exacte, consulte fdj.fr."
+
 Q : Pourquoi la base utilise-t-elle une fenêtre glissante ?
 R : Pour équilibrer profondeur historique et pertinence actuelle. Trop de données anciennes introduit du bruit statistique et dilue les tendances récentes. La fenêtre glissante produit des analyses plus lisibles et représentatives.
 
