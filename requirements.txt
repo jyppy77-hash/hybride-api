@@ -9,12 +9,12 @@ uvicorn[standard]==0.32.0
 pymysql==1.1.1
 cryptography==43.0.3
 
+# HTTP client (Gemini API)
+httpx>=0.27
+
 # Configuration
 python-dotenv==1.0.1
 
 # PDF generation (META75)
 reportlab==4.1.0
 matplotlib==3.9.2
-
-# Google Cloud (conserve pour compatibilite)
-google-cloud-aiplatform

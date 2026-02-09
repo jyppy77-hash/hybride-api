@@ -11,6 +11,10 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Securite : ne pas tourner en root
+RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+USER appuser
+
 EXPOSE 8080
 
 # Ajout de --proxy-headers et --forwarded-allow-ips pour supporter Cloudflare

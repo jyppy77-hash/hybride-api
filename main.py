@@ -5,6 +5,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 import logging
 
+import db_cloudsql
 from engine.version import __version__
 from routes.pages import router as pages_router
 from routes.api_data import router as data_router
@@ -177,11 +178,23 @@ app.include_router(chat_router)
 
 @app.get("/health")
 def health():
-    """Endpoint healthcheck Cloud Run"""
+    """Endpoint healthcheck Cloud Run — verifie la connectivite BDD."""
+    db_status = "ok"
+    try:
+        conn = db_cloudsql.get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+        finally:
+            conn.close()
+    except Exception:
+        db_status = "unreachable"
+
     return {
-        "status": "ok",
+        "status": "ok" if db_status == "ok" else "degraded",
         "engine": "HYBRIDE_OPTIMAL_V1",
-        "version": __version__
+        "version": __version__,
+        "database": db_status
     }
 
 
