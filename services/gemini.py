@@ -3,6 +3,7 @@ import logging
 import httpx
 
 from services.prompt_loader import load_prompt
+from services.circuit_breaker import gemini_breaker, CircuitOpenError
 
 logger = logging.getLogger(__name__)
 
@@ -53,7 +54,8 @@ Texte a reformuler :
 
     try:
         logger.debug("[META TEXTE] POST vers Gemini en cours...")
-        response = await http_client.post(
+        response = await gemini_breaker.call(
+            http_client,
             GEMINI_MODEL_URL,
             headers={
                 "Content-Type": "application/json",
@@ -96,6 +98,9 @@ Texte a reformuler :
 
         return {"analysis_enriched": analysis_local, "source": "hybride_local"}
 
+    except CircuitOpenError:
+        logger.warning("[META TEXTE] Circuit breaker ouvert — fallback local")
+        return {"analysis_enriched": analysis_local, "source": "fallback_circuit"}
     except httpx.TimeoutException:
         logger.warning("[META TEXTE] Timeout Gemini (20s) - fallback local")
         return {"analysis_enriched": analysis_local, "source": "hybride_local"}
