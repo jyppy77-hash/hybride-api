@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 GEMINI_MODEL_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
 
-async def enrich_analysis(analysis_local: str, window: str = "GLOBAL") -> dict:
+async def enrich_analysis(analysis_local: str, window: str = "GLOBAL", *, http_client: httpx.AsyncClient) -> dict:
     """
     Enrichit le texte d'analyse local via Gemini.
     Utilise un prompt dynamique adapte a la fenetre d'analyse.
@@ -52,51 +52,49 @@ Texte a reformuler :
     logger.debug(f"[META TEXTE] Prompt construit ({len(prompt)} chars), appel Gemini...")
 
     try:
-        logger.debug("[META TEXTE] Ouverture httpx.AsyncClient(timeout=20.0)")
-        async with httpx.AsyncClient(timeout=20.0) as client:
-            logger.debug("[META TEXTE] POST vers Gemini en cours...")
-            response = await client.post(
-                GEMINI_MODEL_URL,
-                headers={
-                    "Content-Type": "application/json",
-                    "x-goog-api-key": gem_api_key
-                },
-                json={
-                    "contents": [{
-                        "parts": [{"text": prompt}]
-                    }],
-                    "generationConfig": {
-                        "temperature": 0.7,
-                        "maxOutputTokens": 250
-                    }
+        logger.debug("[META TEXTE] POST vers Gemini en cours...")
+        response = await http_client.post(
+            GEMINI_MODEL_URL,
+            headers={
+                "Content-Type": "application/json",
+                "x-goog-api-key": gem_api_key
+            },
+            json={
+                "contents": [{
+                    "parts": [{"text": prompt}]
+                }],
+                "generationConfig": {
+                    "temperature": 0.7,
+                    "maxOutputTokens": 250
                 }
-            )
+            }
+        )
 
-            logger.debug(f"[META TEXTE] Gemini HTTP status: {response.status_code}")
+        logger.debug(f"[META TEXTE] Gemini HTTP status: {response.status_code}")
 
-            if response.status_code == 200:
-                data = response.json()
-                candidates = data.get("candidates", [])
-                logger.debug(f"[META TEXTE] candidates count: {len(candidates)}")
-                if candidates:
-                    content = candidates[0].get("content", {})
-                    parts = content.get("parts", [])
-                    if parts:
-                        enriched_text = parts[0].get("text", "").strip()
-                        logger.debug(f"[META TEXTE] enriched_text length: {len(enriched_text)}")
-                        if enriched_text:
-                            logger.info(f"[META TEXTE] Gemini OK (window={window_key})")
-                            return {"analysis_enriched": enriched_text, "source": "gemini_enriched"}
-                        else:
-                            logger.warning("[META TEXTE] enriched_text vide apres strip")
+        if response.status_code == 200:
+            data = response.json()
+            candidates = data.get("candidates", [])
+            logger.debug(f"[META TEXTE] candidates count: {len(candidates)}")
+            if candidates:
+                content = candidates[0].get("content", {})
+                parts = content.get("parts", [])
+                if parts:
+                    enriched_text = parts[0].get("text", "").strip()
+                    logger.debug(f"[META TEXTE] enriched_text length: {len(enriched_text)}")
+                    if enriched_text:
+                        logger.info(f"[META TEXTE] Gemini OK (window={window_key})")
+                        return {"analysis_enriched": enriched_text, "source": "gemini_enriched"}
                     else:
-                        logger.warning("[META TEXTE] parts vide dans la reponse Gemini")
+                        logger.warning("[META TEXTE] enriched_text vide apres strip")
                 else:
-                    logger.warning("[META TEXTE] candidates vide dans la reponse Gemini")
+                    logger.warning("[META TEXTE] parts vide dans la reponse Gemini")
             else:
-                logger.warning(f"[META TEXTE] Reponse Gemini HTTP {response.status_code}: {response.text[:500]}")
+                logger.warning("[META TEXTE] candidates vide dans la reponse Gemini")
+        else:
+            logger.warning(f"[META TEXTE] Reponse Gemini HTTP {response.status_code}: {response.text[:500]}")
 
-            return {"analysis_enriched": analysis_local, "source": "hybride_local"}
+        return {"analysis_enriched": analysis_local, "source": "hybride_local"}
 
     except httpx.TimeoutException:
         logger.warning("[META TEXTE] Timeout Gemini (20s) - fallback local")
