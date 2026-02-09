@@ -115,6 +115,7 @@
                 root.classList.add('hybride-fullscreen');
                 win.classList.add('visible');
                 bubble.classList.add('open');
+                adjustViewport();
                 input.focus();
                 trackEvent('chat_open', { page: detectPage() });
             } else {
@@ -246,9 +247,14 @@
         var vvp = window.visualViewport;
 
         function adjustViewport() {
-            if (!vvp || !root) return;
-            root.style.setProperty('--vvp-height', vvp.height + 'px');
-            root.style.top = vvp.offsetTop + 'px';
+            if (!root) return;
+            if (vvp) {
+                root.style.setProperty('--vvp-height', vvp.height + 'px');
+                root.style.top = vvp.offsetTop + 'px';
+            } else {
+                root.style.setProperty('--vvp-height', window.innerHeight + 'px');
+                root.style.top = '0px';
+            }
             if (messagesArea) {
                 setTimeout(function () {
                     messagesArea.scrollTop = messagesArea.scrollHeight;

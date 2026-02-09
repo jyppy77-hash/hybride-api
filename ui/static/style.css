@@ -1998,11 +1998,11 @@ details summary:hover {
 
 @media (max-width: 768px) {
     .scroll-to-top {
-        bottom: 76px;
+        bottom: 80px;
         right: 20px;
-        width: 42px;
-        height: 42px;
-        font-size: 18px;
+        width: 48px;
+        height: 48px;
+        font-size: 20px;
     }
 }
 
