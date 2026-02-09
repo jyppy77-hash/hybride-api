@@ -357,13 +357,14 @@ body.theme-day {
 /* Responsive loto-page */
 @media (max-width: 768px) {
     .loto-hero-header {
-        padding: 28px 16px 70px;
+        padding: 28px 16px 80px;
     }
 
     .loto-hero-actions {
         flex-direction: column;
         align-items: center;
         gap: 10px;
+        margin-bottom: 8px;
     }
 
     .loto-hero-btn {
@@ -385,7 +386,7 @@ body.theme-day {
 
 @media (max-width: 480px) {
     .loto-hero-header {
-        padding: 24px 16px 60px;
+        padding: 24px 16px 72px;
     }
 
     .loto-page .generator-hero {
@@ -566,7 +567,7 @@ body > .engine-nav {
 
 @media (max-width: 480px) {
     .engine-nav-subpage {
-        padding: 10px 15px;
+        padding: env(safe-area-inset-top, 14px) 15px 10px;
     }
 
     .page-header .header-content h1 {
