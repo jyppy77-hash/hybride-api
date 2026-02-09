@@ -1,7 +1,8 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 import logging
 
 from schemas import TrackGridPayload, TrackAdImpressionPayload, TrackAdClickPayload
+from rate_limit import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +14,8 @@ router = APIRouter()
 # =========================
 
 @router.post("/api/track-grid")
-async def api_track_grid(payload: TrackGridPayload):
+@limiter.limit("60/minute")
+async def api_track_grid(request: Request, payload: TrackGridPayload):
     """
     Enregistre le tracking d'une grille generee.
     Pour l'instant, log uniquement. Extensible vers Cloud SQL ou BigQuery.
@@ -55,7 +57,8 @@ async def api_track_grid(payload: TrackGridPayload):
 
 
 @router.post("/api/track-ad-impression")
-async def api_track_ad_impression(payload: TrackAdImpressionPayload):
+@limiter.limit("60/minute")
+async def api_track_ad_impression(request: Request, payload: TrackAdImpressionPayload):
     """
     Enregistre une impression publicitaire.
 
@@ -90,7 +93,8 @@ async def api_track_ad_impression(payload: TrackAdImpressionPayload):
 
 
 @router.post("/api/track-ad-click")
-async def api_track_ad_click(payload: TrackAdClickPayload):
+@limiter.limit("60/minute")
+async def api_track_ad_click(request: Request, payload: TrackAdClickPayload):
     """
     Enregistre un clic publicitaire (CPA tracking).
 

@@ -170,18 +170,20 @@ async def api_meta_analyse_local(
         # Créer la clause IN pour filtrer
         ids_placeholder = ','.join(['%s'] * len(window_ids))
 
-        # Calculer les fréquences des numéros dans la fenêtre
-        top_numbers = []
-        for number in range(1, 50):
-            cursor.execute(f"""
-                SELECT COUNT(*) as freq
-                FROM tirages
-                WHERE id IN ({ids_placeholder})
-                  AND (boule_1 = %s OR boule_2 = %s OR boule_3 = %s
-                       OR boule_4 = %s OR boule_5 = %s)
-            """, (*window_ids, number, number, number, number, number))
-            freq = cursor.fetchone()['freq']
-            top_numbers.append({"number": number, "count": freq})
+        # Calculer les fréquences des numéros dans la fenêtre (1 requete UNION ALL)
+        cursor.execute(f"""
+            SELECT num, COUNT(*) as freq FROM (
+                SELECT boule_1 as num FROM tirages WHERE id IN ({ids_placeholder})
+                UNION ALL SELECT boule_2 FROM tirages WHERE id IN ({ids_placeholder})
+                UNION ALL SELECT boule_3 FROM tirages WHERE id IN ({ids_placeholder})
+                UNION ALL SELECT boule_4 FROM tirages WHERE id IN ({ids_placeholder})
+                UNION ALL SELECT boule_5 FROM tirages WHERE id IN ({ids_placeholder})
+            ) t
+            GROUP BY num
+            ORDER BY num
+        """, (*window_ids, *window_ids, *window_ids, *window_ids, *window_ids))
+        freq_map = {row['num']: row['freq'] for row in cursor.fetchall()}
+        top_numbers = [{"number": n, "count": freq_map.get(n, 0)} for n in range(1, 50)]
 
         # Trier par fréquence décroissante et prendre les 5 premiers
         top_numbers = sorted(top_numbers, key=lambda x: -x['count'])[:5]
@@ -302,20 +304,23 @@ async def api_analyze_custom_grid(
         conn = db_cloudsql.get_connection()
         cursor = conn.cursor()
 
-        # Recuperer les frequences (conn ferme dans finally)
+        # Recuperer les frequences (1 requete UNION ALL au lieu de 5)
         cursor.execute("SELECT COUNT(*) as total FROM tirages")
         total_tirages = cursor.fetchone()['total']
 
-        frequencies = []
-        for num in nums:
-            cursor.execute("""
-                SELECT COUNT(*) as freq
-                FROM tirages
-                WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s
-                   OR boule_4 = %s OR boule_5 = %s
-            """, (num, num, num, num, num))
-            freq = cursor.fetchone()['freq']
-            frequencies.append(freq)
+        cursor.execute("""
+            SELECT num, COUNT(*) as freq FROM (
+                SELECT boule_1 as num FROM tirages
+                UNION ALL SELECT boule_2 FROM tirages
+                UNION ALL SELECT boule_3 FROM tirages
+                UNION ALL SELECT boule_4 FROM tirages
+                UNION ALL SELECT boule_5 FROM tirages
+            ) t
+            WHERE num IN (%s, %s, %s, %s, %s)
+            GROUP BY num
+        """, tuple(nums))
+        freq_map = {row['num']: row['freq'] for row in cursor.fetchall()}
+        frequencies = [freq_map.get(num, 0) for num in nums]
 
         # =====================================================
         # VERIFICATION HISTORIQUE

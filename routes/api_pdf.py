@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 import logging
 
 from schemas import MetaPdfPayload
 from services.pdf_generator import generate_meta_pdf
+from rate_limit import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,8 @@ router = APIRouter()
 # =========================
 
 @router.post("/api/meta-pdf")
-async def api_meta_pdf(payload: MetaPdfPayload):
+@limiter.limit("10/minute")
+async def api_meta_pdf(request: Request, payload: MetaPdfPayload):
     """Genere le PDF officiel META75 via ReportLab."""
     try:
         # --- TRACE graph_data recu ---
