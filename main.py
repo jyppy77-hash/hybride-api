@@ -1,10 +1,11 @@
+import time
+import uuid
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
@@ -16,6 +17,7 @@ from pythonjsonlogger import jsonlogger
 import db_cloudsql
 from rate_limit import limiter
 from engine.version import __version__
+from services.circuit_breaker import gemini_breaker
 from routes.pages import router as pages_router
 from routes.api_data import router as data_router
 from routes.api_analyse import router as analyse_router
@@ -28,7 +30,7 @@ from routes.api_chat import router as chat_router
 _log_handler = logging.StreamHandler(sys.stdout)
 _log_handler.setFormatter(
     jsonlogger.JsonFormatter(
-        fmt="%(asctime)s %(levelname)s %(name)s %(message)s",
+        fmt="%(asctime)s %(levelname)s %(name)s %(message)s %(request_id)s",
         rename_fields={"asctime": "timestamp", "levelname": "severity"},
     )
 )
@@ -36,6 +38,24 @@ logging.root.handlers = [_log_handler]
 logging.root.setLevel(logging.INFO)
 
 logger = logging.getLogger(__name__)
+
+# ── Uptime tracking ──
+_STARTED_AT = time.monotonic()
+
+
+# ── Correlation ID logging filter ──
+
+class RequestIdFilter(logging.Filter):
+    """Injecte request_id dans chaque LogRecord (defaut vide)."""
+
+    def filter(self, record):
+        if not hasattr(record, "request_id"):
+            record.request_id = ""
+        return True
+
+
+logging.root.addFilter(RequestIdFilter())
+
 
 @asynccontextmanager
 async def lifespan(app):
@@ -66,12 +86,6 @@ def _rate_limit_handler(request: Request, exc: RateLimitExceeded):
 
 app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)
 
-# TrustedHostMiddleware: accepte tous les hosts (filtrage géré par enforce_canonical_host)
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=["*"]
-)
-
 # Compression GZip pour performance
 app.add_middleware(GZipMiddleware, minimum_size=500)
 
@@ -89,6 +103,34 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
 )
+
+
+# =========================
+# Correlation ID middleware
+# =========================
+
+@app.middleware("http")
+async def correlation_id_middleware(request: Request, call_next):
+    """Genere un UUID par requete, l'injecte dans les logs et le header de reponse."""
+    request_id = request.headers.get("x-request-id") or uuid.uuid4().hex[:16]
+    request.state.request_id = request_id
+
+    # Injecter dans le contexte logging pour cette requete
+    old_factory = logging.getLogRecordFactory()
+
+    def _factory(*args, **kwargs):
+        record = old_factory(*args, **kwargs)
+        record.request_id = request_id
+        return record
+
+    logging.setLogRecordFactory(_factory)
+    try:
+        response = await call_next(request)
+    finally:
+        logging.setLogRecordFactory(old_factory)
+
+    response.headers["X-Request-ID"] = request_id
+    return response
 
 
 # =========================
@@ -229,12 +271,12 @@ app.include_router(chat_router)
 
 
 # =========================
-# Health
+# Health (ameliore R-28)
 # =========================
 
 @app.get("/health")
 def health():
-    """Endpoint healthcheck Cloud Run — verifie la connectivite BDD."""
+    """Endpoint healthcheck Cloud Run — BDD + Gemini + uptime."""
     db_status = "ok"
     try:
         conn = db_cloudsql.get_connection()
@@ -246,11 +288,20 @@ def health():
     except Exception:
         db_status = "unreachable"
 
+    gemini_state = gemini_breaker.state
+    gemini_status = "ok" if gemini_state == "closed" else "circuit_open"
+
+    overall = "ok"
+    if db_status != "ok":
+        overall = "degraded"
+
     return {
-        "status": "ok" if db_status == "ok" else "degraded",
+        "status": overall,
         "engine": "HYBRIDE_OPTIMAL_V1",
         "version": __version__,
-        "database": db_status
+        "database": db_status,
+        "gemini": gemini_status,
+        "uptime_seconds": round(time.monotonic() - _STARTED_AT),
     }
 
 
