@@ -16,12 +16,12 @@ router = APIRouter()
 
 @router.post("/ask")
 @limiter.limit("60/minute")
-def ask(request: Request, payload: AskPayload):
+async def ask(request: Request, payload: AskPayload):
     """
     Endpoint principal du moteur HYBRIDE
     """
     try:
-        result = generate(payload.prompt)
+        result = await asyncio.to_thread(generate, payload.prompt)
         return {
             "success": True,
             "response": result
