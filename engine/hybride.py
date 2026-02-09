@@ -3,12 +3,15 @@ Engine d'analyse Loto - Version HYBRIDE_OPTIMAL V1
 Modèle hybride pondéré basé sur l'analyse statistique réelle
 """
 
+import logging
 import random
 from datetime import datetime, timedelta
 from typing import List, Dict, Any
 
 # Import pour les explications
 from .db import get_connection
+
+logger = logging.getLogger(__name__)
 
 
 # ============================================================================
@@ -630,7 +633,7 @@ def build_explanation(nums: List[int], chance_num: int) -> Dict[str, Any]:
     except Exception as e:
         # Graceful degradation : si erreur, on retourne une structure minimale
         # L'UI gérera l'absence d'explications détaillées
-        pass
+        logger.warning(f"[HYBRIDE] Erreur generation explications grille: {e}")
 
     return explain
 

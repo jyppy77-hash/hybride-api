@@ -3,8 +3,11 @@ Module d'analyse statistique descriptive pour le Loto
 Analyse UNIQUEMENT l'historique réel - Aucune prédiction
 """
 
+import logging
 from typing import Dict, List, Optional
 from .db import get_connection
+
+logger = logging.getLogger(__name__)
 
 
 def analyze_number(number: int) -> Dict:
@@ -90,17 +93,17 @@ def get_global_stats() -> Dict:
     conn = get_connection()
     cursor = conn.cursor()
 
-    print("[DEBUG] get_global_stats - Début")
+    logger.debug("[STATS] get_global_stats - Debut")
 
     # Stats globales
     cursor.execute("SELECT COUNT(*) as count FROM tirages")
     result = cursor.fetchone()
-    print(f"[DEBUG] COUNT result: {result}, type: {type(result)}")
+    logger.debug(f"[STATS] COUNT result: {result}")
     total_draws = result['count'] if result else 0
 
     cursor.execute("SELECT MIN(date_de_tirage) as min_date, MAX(date_de_tirage) as max_date FROM tirages")
     result = cursor.fetchone()
-    print(f"[DEBUG] MIN/MAX result: {result}, type: {type(result)}")
+    logger.debug(f"[STATS] MIN/MAX result: {result}")
     first_draw_date = result['min_date'] if result else None
     last_draw_date = result['max_date'] if result else None
 
@@ -109,7 +112,7 @@ def get_global_stats() -> Dict:
     # Formater la période
     period_covered = f"{first_draw_date} à {last_draw_date}" if first_draw_date and last_draw_date else "N/A"
 
-    print(f"[DEBUG] get_global_stats - Fin: total_draws={total_draws}, period={period_covered}")
+    logger.debug(f"[STATS] get_global_stats - Fin: total_draws={total_draws}, period={period_covered}")
 
     return {
         "total_draws": total_draws,
