@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 from fastapi.responses import FileResponse, HTMLResponse
+import asyncio
 import db_cloudsql
 
 router = APIRouter()
@@ -120,7 +121,7 @@ async def page_simulateur():
 @router.get("/faq")
 async def page_faq():
     try:
-        total = db_cloudsql.get_tirages_count()
+        total = await asyncio.to_thread(db_cloudsql.get_tirages_count)
     except Exception:
         total = 967  # fallback
     with open("ui/faq.html", "r", encoding="utf-8") as f:
