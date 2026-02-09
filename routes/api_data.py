@@ -371,8 +371,15 @@ async def api_stats(request: Request):
                 "error": None
             }
 
-        return await asyncio.to_thread(_fetch)
+        return await asyncio.wait_for(asyncio.to_thread(_fetch), timeout=30.0)
 
+    except asyncio.TimeoutError:
+        logger.error("Timeout 30s /api/stats")
+        return JSONResponse(status_code=503, content={
+            "success": False,
+            "data": None,
+            "error": "Service temporairement indisponible"
+        })
     except Exception as e:
         logger.error(f"Erreur /api/stats: {e}")
         return JSONResponse(status_code=500, content={
@@ -448,8 +455,15 @@ async def api_numbers_heat(request: Request):
                 }
             }
 
-        return await asyncio.to_thread(_fetch)
+        return await asyncio.wait_for(asyncio.to_thread(_fetch), timeout=30.0)
 
+    except asyncio.TimeoutError:
+        logger.error("Timeout 30s /api/numbers-heat")
+        return JSONResponse(status_code=503, content={
+            "success": False,
+            "numbers": {},
+            "error": "Service temporairement indisponible"
+        })
     except Exception as e:
         logger.error(f"Erreur /api/numbers-heat: {e}")
         return JSONResponse(status_code=500, content={

@@ -452,7 +452,7 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
     # Phase 0 : prochain tirage
     if _detect_prochain_tirage(payload.message):
         try:
-            tirage_ctx = await asyncio.to_thread(_get_prochain_tirage)
+            tirage_ctx = await asyncio.wait_for(asyncio.to_thread(_get_prochain_tirage), timeout=30.0)
             if tirage_ctx:
                 enrichment_context = tirage_ctx
                 logger.info("[HYBRIDE CHAT] Prochain tirage injecte")
@@ -463,7 +463,7 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
     grille_nums, grille_chance = _detect_grille(payload.message)
     if grille_nums is not None:
         try:
-            grille_result = await asyncio.to_thread(analyze_grille_for_chat, grille_nums, grille_chance)
+            grille_result = await asyncio.wait_for(asyncio.to_thread(analyze_grille_for_chat, grille_nums, grille_chance), timeout=30.0)
             if grille_result:
                 enrichment_context = _format_grille_context(grille_result)
                 logger.info(f"[HYBRIDE CHAT] Grille analysee: {grille_nums} chance={grille_chance}")
@@ -476,11 +476,11 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
         if intent:
             try:
                 if intent["type"] == "classement":
-                    data = await asyncio.to_thread(get_classement_numeros, intent["num_type"], intent["tri"], intent["limit"])
+                    data = await asyncio.wait_for(asyncio.to_thread(get_classement_numeros, intent["num_type"], intent["tri"], intent["limit"]), timeout=30.0)
                 elif intent["type"] == "comparaison":
-                    data = await asyncio.to_thread(get_comparaison_numeros, intent["num1"], intent["num2"], intent["num_type"])
+                    data = await asyncio.wait_for(asyncio.to_thread(get_comparaison_numeros, intent["num1"], intent["num2"], intent["num_type"]), timeout=30.0)
                 elif intent["type"] == "categorie":
-                    data = await asyncio.to_thread(get_numeros_par_categorie, intent["categorie"], intent["num_type"])
+                    data = await asyncio.wait_for(asyncio.to_thread(get_numeros_par_categorie, intent["categorie"], intent["num_type"]), timeout=30.0)
                 else:
                     data = None
 
@@ -495,7 +495,7 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
         numero, type_num = _detect_numero(payload.message)
         if numero is not None:
             try:
-                stats = await asyncio.to_thread(get_numero_stats, numero, type_num)
+                stats = await asyncio.wait_for(asyncio.to_thread(get_numero_stats, numero, type_num), timeout=30.0)
                 if stats:
                     enrichment_context = _format_stats_context(stats)
                     logger.info(f"[HYBRIDE CHAT] Stats BDD injectees: numero={numero}, type={type_num}")
@@ -607,7 +607,12 @@ async def api_pitch_grilles(request: Request, payload: PitchGrillesRequest):
     grilles_data = [{"numeros": g.numeros, "chance": g.chance} for g in payload.grilles]
 
     try:
-        context = await asyncio.to_thread(prepare_grilles_pitch_context, grilles_data)
+        context = await asyncio.wait_for(asyncio.to_thread(prepare_grilles_pitch_context, grilles_data), timeout=30.0)
+    except asyncio.TimeoutError:
+        logger.error("[PITCH] Timeout 30s contexte stats")
+        return JSONResponse(status_code=503, content={
+            "success": False, "data": None, "error": "Service temporairement indisponible"
+        })
     except Exception as e:
         logger.warning(f"[PITCH] Erreur contexte stats: {e}")
         return JSONResponse(status_code=500, content={
