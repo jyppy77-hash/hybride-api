@@ -4,7 +4,7 @@ import logging
 import httpx
 from datetime import date, timedelta
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 import json as json_mod
@@ -12,6 +12,7 @@ import json as json_mod
 from schemas import HybrideChatRequest, HybrideChatResponse, PitchGrillesRequest
 from services.prompt_loader import load_prompt
 from services.gemini import GEMINI_MODEL_URL
+from rate_limit import limiter
 from routes.api_data import (
     get_numero_stats, analyze_grille_for_chat,
     get_classement_numeros, get_comparaison_numeros, get_numeros_par_categorie,
@@ -409,7 +410,8 @@ def _format_complex_context(intent: dict, data) -> str:
 # =========================
 
 @router.post("/api/hybride-chat")
-async def api_hybride_chat(payload: HybrideChatRequest):
+@limiter.limit("10/minute")
+async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
     """Endpoint chatbot HYBRIDE — conversation via Gemini 2.0 Flash."""
 
     mode = _detect_mode(payload.message, payload.page)
@@ -506,46 +508,47 @@ async def api_hybride_chat(payload: HybrideChatRequest):
     contents.append({"role": "user", "parts": [{"text": user_text}]})
 
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.post(
-                GEMINI_MODEL_URL,
-                headers={
-                    "Content-Type": "application/json",
-                    "x-goog-api-key": gem_api_key,
+        client = request.app.state.httpx_client
+        response = await client.post(
+            GEMINI_MODEL_URL,
+            headers={
+                "Content-Type": "application/json",
+                "x-goog-api-key": gem_api_key,
+            },
+            json={
+                "system_instruction": {
+                    "parts": [{"text": system_prompt}]
                 },
-                json={
-                    "system_instruction": {
-                        "parts": [{"text": system_prompt}]
-                    },
-                    "contents": contents,
-                    "generationConfig": {
-                        "temperature": 0.8,
-                        "maxOutputTokens": 300,
-                    },
+                "contents": contents,
+                "generationConfig": {
+                    "temperature": 0.8,
+                    "maxOutputTokens": 300,
                 },
-            )
+            },
+            timeout=15.0,
+        )
 
-            if response.status_code == 200:
-                data = response.json()
-                candidates = data.get("candidates", [])
-                if candidates:
-                    parts = candidates[0].get("content", {}).get("parts", [])
-                    if parts:
-                        text = parts[0].get("text", "").strip()
-                        if text:
-                            logger.info(
-                                f"[HYBRIDE CHAT] OK (page={payload.page}, mode={mode})"
-                            )
-                            return HybrideChatResponse(
-                                response=text, source="gemini", mode=mode
-                            )
+        if response.status_code == 200:
+            data = response.json()
+            candidates = data.get("candidates", [])
+            if candidates:
+                parts = candidates[0].get("content", {}).get("parts", [])
+                if parts:
+                    text = parts[0].get("text", "").strip()
+                    if text:
+                        logger.info(
+                            f"[HYBRIDE CHAT] OK (page={payload.page}, mode={mode})"
+                        )
+                        return HybrideChatResponse(
+                            response=text, source="gemini", mode=mode
+                        )
 
-            logger.warning(
-                f"[HYBRIDE CHAT] Reponse Gemini invalide: {response.status_code}"
-            )
-            return HybrideChatResponse(
-                response=FALLBACK_RESPONSE, source="fallback", mode=mode
-            )
+        logger.warning(
+            f"[HYBRIDE CHAT] Reponse Gemini invalide: {response.status_code}"
+        )
+        return HybrideChatResponse(
+            response=FALLBACK_RESPONSE, source="fallback", mode=mode
+        )
 
     except httpx.TimeoutException:
         logger.warning("[HYBRIDE CHAT] Timeout Gemini (15s) — fallback")
@@ -564,7 +567,8 @@ async def api_hybride_chat(payload: HybrideChatRequest):
 # =========================
 
 @router.post("/api/pitch-grilles")
-async def api_pitch_grilles(payload: PitchGrillesRequest):
+@limiter.limit("10/minute")
+async def api_pitch_grilles(request: Request, payload: PitchGrillesRequest):
     """Genere des pitchs HYBRIDE personnalises pour chaque grille via Gemini."""
 
     # Validation
@@ -624,66 +628,67 @@ async def api_pitch_grilles(payload: PitchGrillesRequest):
 
     # Appel Gemini (1 seul appel pour toutes les grilles)
     try:
-        async with httpx.AsyncClient(timeout=15.0) as client:
-            response = await client.post(
-                GEMINI_MODEL_URL,
-                headers={
-                    "Content-Type": "application/json",
-                    "x-goog-api-key": gem_api_key,
+        client = request.app.state.httpx_client
+        response = await client.post(
+            GEMINI_MODEL_URL,
+            headers={
+                "Content-Type": "application/json",
+                "x-goog-api-key": gem_api_key,
+            },
+            json={
+                "system_instruction": {
+                    "parts": [{"text": system_prompt}]
                 },
-                json={
-                    "system_instruction": {
-                        "parts": [{"text": system_prompt}]
-                    },
-                    "contents": [{
-                        "role": "user",
-                        "parts": [{"text": context}]
-                    }],
-                    "generationConfig": {
-                        "temperature": 0.9,
-                        "maxOutputTokens": 600,
-                    },
+                "contents": [{
+                    "role": "user",
+                    "parts": [{"text": context}]
+                }],
+                "generationConfig": {
+                    "temperature": 0.9,
+                    "maxOutputTokens": 600,
                 },
-            )
+            },
+            timeout=15.0,
+        )
 
-            if response.status_code != 200:
-                logger.warning(f"[PITCH] Gemini HTTP {response.status_code}")
-                return JSONResponse(status_code=502, content={
-                    "success": False, "data": None, "error": f"Gemini erreur HTTP {response.status_code}"
-                })
+        if response.status_code != 200:
+            logger.warning(f"[PITCH] Gemini HTTP {response.status_code}")
+            return JSONResponse(status_code=502, content={
+                "success": False, "data": None, "error": f"Gemini erreur HTTP {response.status_code}"
+            })
 
-            data = response.json()
-            candidates = data.get("candidates", [])
-            if not candidates:
-                return JSONResponse(status_code=502, content={
-                    "success": False, "data": None, "error": "Gemini: aucune r\u00e9ponse"
-                })
+        data = response.json()
+        candidates = data.get("candidates", [])
+        if not candidates:
+            return JSONResponse(status_code=502, content={
+                "success": False, "data": None, "error": "Gemini: aucune r\u00e9ponse"
+            })
 
-            text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
-            if not text:
-                return JSONResponse(status_code=502, content={
-                    "success": False, "data": None, "error": "Gemini: r\u00e9ponse vide"
-                })
+        text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
+        if not text:
+            return JSONResponse(status_code=502, content={
+                "success": False, "data": None, "error": "Gemini: r\u00e9ponse vide"
+            })
 
-            # Parser le JSON (nettoyer si Gemini ajoute des backticks)
-            clean = text.strip()
-            if clean.startswith("```"):
-                clean = clean.split("\n", 1)[1] if "\n" in clean else clean[3:]
-                if clean.endswith("```"):
-                    clean = clean[:-3]
-                clean = clean.strip()
+        # Parser le JSON (nettoyer si Gemini ajoute des backticks)
+        clean = text.strip()
+        if clean.startswith("```"):
+            clean = clean.split("\n", 1)[1] if "\n" in clean else clean[3:]
+            if clean.endswith("```"):
+                clean = clean[:-3]
+            clean = clean.strip()
 
-            try:
-                result = json_mod.loads(clean)
-                pitchs = result.get("pitchs", [])
-            except (json_mod.JSONDecodeError, AttributeError):
-                logger.warning(f"[PITCH] JSON invalide: {text[:200]}")
-                return JSONResponse(status_code=502, content={
-                    "success": False, "data": None, "error": "Gemini: JSON mal form\u00e9"
-                })
+        try:
+            result = json_mod.loads(clean)
+            pitchs = result.get("pitchs", [])
+        except (json_mod.JSONDecodeError, AttributeError):
+            logger.warning(f"[PITCH] JSON invalide: {text[:200]}")
+            return JSONResponse(status_code=502, content={
+                "success": False, "data": None, "error": "Gemini: JSON mal form\u00e9"
+            })
 
-            logger.info(f"[PITCH] OK \u2014 {len(pitchs)} pitchs g\u00e9n\u00e9r\u00e9s")
-            return {"success": True, "data": {"pitchs": pitchs}, "error": None}
+        logger.info(f"[PITCH] OK \u2014 {len(pitchs)} pitchs g\u00e9n\u00e9r\u00e9s")
+        return {"success": True, "data": {"pitchs": pitchs}, "error": None}
 
     except httpx.TimeoutException:
         logger.warning("[PITCH] Timeout Gemini (15s)")

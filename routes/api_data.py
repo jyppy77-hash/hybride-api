@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 from fastapi.responses import JSONResponse
 from datetime import timedelta
 import logging
 
 import db_cloudsql
 from engine.stats import get_global_stats
+from rate_limit import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,8 @@ router = APIRouter()
 # =========================
 
 @router.get("/api/tirages/count")
-async def api_tirages_count():
+@limiter.limit("60/minute")
+async def api_tirages_count(request: Request):
     """
     Retourne le nombre total de tirages en base.
 
@@ -40,7 +42,8 @@ async def api_tirages_count():
 
 
 @router.get("/api/tirages/latest")
-async def api_tirages_latest():
+@limiter.limit("60/minute")
+async def api_tirages_latest(request: Request):
     """
     Retourne le tirage le plus recent.
 
@@ -71,7 +74,9 @@ async def api_tirages_latest():
 
 
 @router.get("/api/tirages/list")
+@limiter.limit("60/minute")
 async def api_tirages_list(
+    request: Request,
     limit: int = Query(default=10, ge=1, le=100, description="Nombre de tirages"),
     offset: int = Query(default=0, ge=0, description="Offset pour pagination")
 ):
@@ -111,7 +116,8 @@ async def api_tirages_list(
 # =========================
 
 @router.get("/database-info")
-async def database_info():
+@limiter.limit("60/minute")
+async def database_info(request: Request):
     """
     Retourne les informations sur la base de donnees.
     Utilise par le frontend pour afficher le statut.
@@ -154,7 +160,8 @@ async def database_info():
 # =========================
 
 @router.get("/api/database-info")
-async def api_database_info():
+@limiter.limit("60/minute")
+async def api_database_info(request: Request):
     """
     Retourne total_draws, first_draw, last_draw.
     Endpoint léger utilisé par la FAQ pour affichage dynamique.
@@ -192,7 +199,8 @@ async def api_database_info():
 # =========================
 
 @router.get("/api/meta-windows-info")
-async def api_meta_windows_info():
+@limiter.limit("60/minute")
+async def api_meta_windows_info(request: Request):
     """
     Retourne les plages de dates et le nombre de tirages
     pour chaque fenêtre d'analyse (slider META).
@@ -268,7 +276,8 @@ async def api_meta_windows_info():
 
 
 @router.get("/stats")
-async def stats():
+@limiter.limit("60/minute")
+async def stats(request: Request):
     """
     Retourne les statistiques globales.
     """
@@ -291,7 +300,8 @@ async def stats():
 # =========================
 
 @router.get("/api/stats")
-async def api_stats():
+@limiter.limit("60/minute")
+async def api_stats(request: Request):
     """
     Retourne les statistiques completes pour le simulateur et la page stats.
     Base sur les tirages reels de Cloud SQL.
@@ -395,7 +405,8 @@ async def api_stats():
 
 
 @router.get("/api/numbers-heat")
-async def api_numbers_heat():
+@limiter.limit("60/minute")
+async def api_numbers_heat(request: Request):
     """
     Retourne la classification chaud/neutre/froid pour chaque numero (1-49).
     Utilise par le simulateur pour colorer les boutons.
@@ -475,7 +486,8 @@ async def api_numbers_heat():
 
 
 @router.get("/draw/{date}")
-async def get_draw_by_date(date: str):
+@limiter.limit("60/minute")
+async def get_draw_by_date(request: Request, date: str):
     """
     Recherche un tirage par date (format YYYY-MM-DD).
     """
@@ -525,7 +537,8 @@ async def get_draw_by_date(date: str):
 
 
 @router.get("/api/stats/number/{number}")
-async def api_stats_number(number: int):
+@limiter.limit("60/minute")
+async def api_stats_number(request: Request, number: int):
     """
     Analyse complete d'un numero specifique (1-49).
     """
@@ -587,7 +600,8 @@ async def api_stats_number(number: int):
 
 
 @router.get("/api/stats/top-flop")
-async def api_stats_top_flop():
+@limiter.limit("60/minute")
+async def api_stats_top_flop(request: Request):
     """
     Retourne le classement des numeros par frequence (Top et Flop).
     """
@@ -813,7 +827,9 @@ def get_numero_stats(numero: int, type_num: str = "principal") -> dict:
 
 
 @router.get("/api/hybride-stats")
+@limiter.limit("60/minute")
 async def api_hybride_stats(
+    request: Request,
     numero: int = Query(..., description="Numero a analyser"),
     type: str = Query(default="principal", description="principal ou chance")
 ):

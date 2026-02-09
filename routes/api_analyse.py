@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Request
 from fastapi.responses import JSONResponse
 from typing import Optional
 import logging
@@ -6,6 +6,7 @@ import logging
 from engine.hybride import generate, generate_grids
 import db_cloudsql
 from schemas import AskPayload
+from rate_limit import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +14,8 @@ router = APIRouter()
 
 
 @router.post("/ask")
-def ask(payload: AskPayload):
+@limiter.limit("60/minute")
+def ask(request: Request, payload: AskPayload):
     """
     Endpoint principal du moteur HYBRIDE
     """
@@ -31,7 +33,9 @@ def ask(payload: AskPayload):
 
 
 @router.get("/generate")
+@limiter.limit("60/minute")
 async def generate_endpoint(
+    request: Request,
     n: int = Query(default=3, ge=1, le=10, description="Nombre de grilles"),
     mode: str = Query(default="balanced", description="Mode: conservative, balanced, recent")
 ):
@@ -73,7 +77,9 @@ async def generate_endpoint(
 # =========================
 
 @router.get("/api/meta-analyse-local")
+@limiter.limit("60/minute")
 async def api_meta_analyse_local(
+    request: Request,
     window: Optional[str] = Query(default="GLOBAL", description="Fenêtre d'analyse: 25, 50, 75, 100, 200, 500, ou GLOBAL"),
     years: Optional[str] = Query(default=None, description="Fenêtre en années: 1, 2, 3, 4, 5, 6, ou GLOBAL")
 ):
@@ -268,7 +274,9 @@ async def api_meta_analyse_local(
 
 
 @router.post("/api/analyze-custom-grid")
+@limiter.limit("60/minute")
 async def api_analyze_custom_grid(
+    request: Request,
     nums: list = Query(..., description="5 numeros principaux"),
     chance: int = Query(..., ge=1, le=10, description="Numero chance")
 ):
