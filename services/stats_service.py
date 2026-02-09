@@ -74,7 +74,7 @@ def _get_all_frequencies(cursor, type_num="principal", date_from=None):
 
 def _get_all_ecarts(cursor, type_num="principal"):
     """
-    Calcule l'ecart actuel de TOUS les numeros en requetes optimisees.
+    Calcule l'ecart actuel de TOUS les numeros via SQL COUNT.
     Retourne un dict {numero: ecart_actuel}.
     Resultat mis en cache 1 h.
     """
@@ -83,41 +83,44 @@ def _get_all_ecarts(cursor, type_num="principal"):
     if cached is not None:
         return cached
 
-    # Date du dernier tirage
-    cursor.execute("SELECT MAX(date_de_tirage) as last FROM tirages")
-    last_draw = cursor.fetchone()['last']
+    # Total tirages (pour les numeros jamais apparus)
+    cursor.execute("SELECT COUNT(*) as total FROM tirages")
+    total = cursor.fetchone()['total']
 
-    # Derniere apparition de chaque numero
+    # Ecart = nombre de tirages apres la derniere apparition de chaque numero
+    # Calcule entierement en SQL via COUNT + sous-requete
     if type_num == "principal":
         cursor.execute("""
-            SELECT num, MAX(date_de_tirage) as last_date FROM (
-                SELECT boule_1 as num, date_de_tirage FROM tirages
-                UNION ALL SELECT boule_2, date_de_tirage FROM tirages
-                UNION ALL SELECT boule_3, date_de_tirage FROM tirages
-                UNION ALL SELECT boule_4, date_de_tirage FROM tirages
-                UNION ALL SELECT boule_5, date_de_tirage FROM tirages
-            ) t
-            GROUP BY num
+            SELECT sub.num,
+                   (SELECT COUNT(*) FROM tirages WHERE date_de_tirage > sub.last_date) AS ecart
+            FROM (
+                SELECT num, MAX(date_de_tirage) as last_date FROM (
+                    SELECT boule_1 as num, date_de_tirage FROM tirages
+                    UNION ALL SELECT boule_2, date_de_tirage FROM tirages
+                    UNION ALL SELECT boule_3, date_de_tirage FROM tirages
+                    UNION ALL SELECT boule_4, date_de_tirage FROM tirages
+                    UNION ALL SELECT boule_5, date_de_tirage FROM tirages
+                ) t
+                GROUP BY num
+            ) sub
         """)
     else:
         cursor.execute("""
-            SELECT numero_chance as num, MAX(date_de_tirage) as last_date
-            FROM tirages
-            GROUP BY numero_chance
+            SELECT sub.num,
+                   (SELECT COUNT(*) FROM tirages WHERE date_de_tirage > sub.last_date) AS ecart
+            FROM (
+                SELECT numero_chance as num, MAX(date_de_tirage) as last_date
+                FROM tirages
+                GROUP BY numero_chance
+            ) sub
         """)
-    last_dates = {row['num']: row['last_date'] for row in cursor.fetchall()}
+    ecarts = {row['num']: row['ecart'] for row in cursor.fetchall()}
 
-    # Toutes les dates de tirages pour compter les ecarts
-    cursor.execute("SELECT date_de_tirage FROM tirages ORDER BY date_de_tirage DESC")
-    all_dates = [row['date_de_tirage'] for row in cursor.fetchall()]
-
-    ecarts = {}
+    # Numeros jamais apparus → ecart = total tirages
     num_range = range(1, 50) if type_num == "principal" else range(1, 11)
     for num in num_range:
-        if num in last_dates and last_dates[num]:
-            ecarts[num] = sum(1 for d in all_dates if d > last_dates[num])
-        else:
-            ecarts[num] = len(all_dates)
+        if num not in ecarts:
+            ecarts[num] = total
 
     cache_set(cache_key, ecarts)
     return ecarts
