@@ -1,10 +1,9 @@
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 import logging
-import os
 
 from engine.version import __version__
 from routes.pages import router as pages_router
@@ -33,6 +32,37 @@ app.add_middleware(
 
 # Compression GZip pour performance
 app.add_middleware(GZipMiddleware, minimum_size=500)
+
+
+# =========================
+# Security Headers
+# =========================
+
+_CSP = (
+    "default-src 'self'; "
+    "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cloud.umami.is; "
+    "style-src 'self' 'unsafe-inline'; "
+    "img-src 'self' data: https://*.google-analytics.com; "
+    "font-src 'self'; "
+    "connect-src 'self' https://www.googletagmanager.com https://*.google-analytics.com https://analytics.google.com https://cloud.umami.is https://api-gateway.umami.dev; "
+    "frame-ancestors 'none'; "
+    "object-src 'none'; "
+    "base-uri 'self'; "
+    "form-action 'self'"
+)
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    """Injecte les headers de securite sur toutes les reponses."""
+    response = await call_next(request)
+    response.headers["Content-Security-Policy"] = _CSP
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    return response
 
 
 # =========================
@@ -112,23 +142,6 @@ async def redirect_ui_html_to_seo(request: Request, call_next):
             return RedirectResponse(url=f"{clean_url}{query}", status_code=301)
     return await call_next(request)
 
-
-# =========================
-# Debug (dev only)
-# =========================
-
-@app.get("/debug-env", include_in_schema=False)
-async def debug_env():
-    """Debug endpoint - disponible uniquement si ENV=dev."""
-    if os.getenv("ENV") != "dev":
-        raise HTTPException(status_code=404, detail="Not Found")
-    return {
-        "DB_USER": os.getenv("DB_USER"),
-        "DB_NAME": os.getenv("DB_NAME"),
-        "CLOUD_SQL_CONNECTION_NAME": os.getenv("CLOUD_SQL_CONNECTION_NAME"),
-        "DB_PASSWORD_DEFINED": os.getenv("DB_PASSWORD") is not None,
-        "K_SERVICE": os.getenv("K_SERVICE") is not None
-    }
 
 
 # =========================

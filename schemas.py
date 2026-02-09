@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from pydantic import BaseModel, Field
+from typing import Optional, Dict, Any, Literal
 
 
 # =========================
@@ -7,7 +7,7 @@ from typing import Optional, Dict, Any
 # =========================
 
 class AskPayload(BaseModel):
-    prompt: str
+    prompt: str = Field(..., max_length=2000)
 
 
 # =========================
@@ -44,13 +44,13 @@ class TrackAdClickPayload(BaseModel):
 # =========================
 
 class MetaAnalyseTextePayload(BaseModel):
-    analysis_local: str
+    analysis_local: str = Field(..., max_length=5000)
     stats: Optional[Dict[str, Any]] = None
     window: Optional[str] = "GLOBAL"
 
 
 class MetaPdfPayload(BaseModel):
-    analysis: Optional[str] = ""
+    analysis: Optional[str] = Field(default="", max_length=5000)
     window: Optional[str] = "75 tirages"
     engine: Optional[str] = "HYBRIDE_OPTIMAL_V1"
     metaType: Optional[str] = "META75"
@@ -64,13 +64,13 @@ class MetaPdfPayload(BaseModel):
 # =========================
 
 class ChatMessage(BaseModel):
-    role: str       # "user" ou "assistant"
-    content: str
+    role: Literal["user", "assistant"]
+    content: str = Field(..., max_length=2000)
 
 class HybrideChatRequest(BaseModel):
-    message: str
-    page: str = "accueil"    # accueil | loto | simulateur | statistiques
-    history: list[ChatMessage] = []
+    message: str = Field(..., max_length=2000)
+    page: Literal["accueil", "loto", "simulateur", "statistiques"] = "accueil"
+    history: list[ChatMessage] = Field(default=[], max_length=20)
 
 class HybrideChatResponse(BaseModel):
     response: str
@@ -83,8 +83,8 @@ class HybrideChatResponse(BaseModel):
 # =========================
 
 class PitchGrilleItem(BaseModel):
-    numeros: list[int]
+    numeros: list[int] = Field(..., max_length=5)
     chance: Optional[int] = None
 
 class PitchGrillesRequest(BaseModel):
-    grilles: list[PitchGrilleItem]
+    grilles: list[PitchGrilleItem] = Field(..., max_length=10)
