@@ -275,31 +275,16 @@ def analyze_grille_for_chat(nums: list, chance: int = None) -> dict:
         cursor.execute("SELECT COUNT(*) as total FROM tirages")
         total_tirages = cursor.fetchone()['total']
 
-        # Frequences de chaque numero de la grille
-        frequencies = []
-        for num in nums:
-            cursor.execute("""
-                SELECT COUNT(*) as freq FROM tirages
-                WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s
-                   OR boule_4 = %s OR boule_5 = %s
-            """, (num, num, num, num, num))
-            frequencies.append(cursor.fetchone()['freq'])
+        # Frequences de chaque numero (1 requete UNION ALL au lieu de 49+5)
+        freq_map = _get_all_frequencies(cursor, "principal")
+        frequencies = [freq_map.get(num, 0) for num in nums]
 
         # Classification chaud/neutre/froid (seuils globaux)
-        all_freq = []
-        for n in range(1, 50):
-            cursor.execute("""
-                SELECT COUNT(*) as freq FROM tirages
-                WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s
-                   OR boule_4 = %s OR boule_5 = %s
-            """, (n, n, n, n, n))
-            all_freq.append((n, cursor.fetchone()['freq']))
-
-        all_freq_sorted = sorted([f for _, f in all_freq], reverse=True)
+        all_freq_sorted = sorted(freq_map.values(), reverse=True)
         seuil_chaud = all_freq_sorted[len(all_freq_sorted) // 3]
         seuil_froid = all_freq_sorted[2 * len(all_freq_sorted) // 3]
 
-        num_freq_map = {n: f for n, f in all_freq}
+        num_freq_map = freq_map
         numeros_chauds = [n for n in nums if num_freq_map[n] >= seuil_chaud]
         numeros_froids = [n for n in nums if num_freq_map[n] <= seuil_froid]
         numeros_neutres = [n for n in nums if n not in numeros_chauds and n not in numeros_froids]
