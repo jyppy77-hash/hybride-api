@@ -4,7 +4,7 @@ Module de connexion Cloud SQL pour LotoIA
 
 Connexion centralisée vers MySQL (Google Cloud SQL)
 Supporte automatiquement :
-- LOCAL : TCP via Cloud SQL Proxy (127.0.0.1:3306)
+- LOCAL : TCP via Cloud SQL Proxy (127.0.0.1:DB_PORT)
 - PROD  : Unix socket Cloud Run (/cloudsql/...)
 
 Configuration via variables d'environnement (.env ou Cloud Run)
@@ -12,15 +12,20 @@ Configuration via variables d'environnement (.env ou Cloud Run)
 
 import os
 import logging
+from pathlib import Path
 from typing import Optional
+import asyncio
 
 import pymysql
 from pymysql.cursors import DictCursor
 
 # Charger .env si disponible (dev local)
+# Utilise un chemin absolu basé sur l'emplacement de CE fichier
+# pour éviter les problèmes de working directory
 try:
     from dotenv import load_dotenv
-    load_dotenv()
+    _env_path = Path(__file__).resolve().parent / ".env"
+    load_dotenv(dotenv_path=_env_path)
 except ImportError:
     pass
 
@@ -60,12 +65,22 @@ DB_PORT = int(os.getenv("DB_PORT", "3306"))
 def is_production() -> bool:
     """
     Détecte si on est en environnement Cloud Run
+    via la variable K_SERVICE (injectée automatiquement par Cloud Run).
     """
     return bool(os.getenv("K_SERVICE"))
 
 
 def get_environment() -> str:
     return "PROD" if is_production() else "LOCAL"
+
+
+# Log de démarrage (une seule fois à l'import du module)
+logger.info(
+    f"db_cloudsql chargé | ENV={get_environment()} | "
+    f"DB_HOST={DB_HOST} | DB_PORT={DB_PORT} | DB_NAME={DB_NAME} | "
+    f"DB_USER={DB_USER} | "
+    f"CLOUD_SQL={CLOUD_SQL_CONNECTION_NAME if is_production() else 'N/A (local)'}"
+)
 
 
 # ============================================================================
@@ -90,7 +105,7 @@ def get_connection() -> pymysql.connections.Connection:
             # =====================
             unix_socket = f"/cloudsql/{CLOUD_SQL_CONNECTION_NAME}"
 
-            logger.info("Connexion PROD via Cloud SQL unix socket")
+            logger.debug("Connexion PROD via Cloud SQL unix socket")
 
             conn = pymysql.connect(
                 host="localhost",  # 🔥 CRITIQUE POUR CLOUD RUN
@@ -107,7 +122,7 @@ def get_connection() -> pymysql.connections.Connection:
             # =====================
             # MODE LOCAL (Proxy)
             # =====================
-            logger.info(f"Connexion LOCAL via TCP {DB_HOST}:{DB_PORT}")
+            logger.debug(f"Connexion LOCAL via TCP {DB_HOST}:{DB_PORT}")
 
             conn = pymysql.connect(
                 host=DB_HOST,
@@ -121,7 +136,7 @@ def get_connection() -> pymysql.connections.Connection:
                 connect_timeout=5
             )
 
-        logger.info(f"Connexion MySQL OK ({env})")
+        logger.debug(f"Connexion MySQL OK ({env})")
         return conn
 
     except pymysql.Error as e:
@@ -136,22 +151,23 @@ def get_connection() -> pymysql.connections.Connection:
 def test_connection() -> dict:
     try:
         conn = get_connection()
-        cursor = conn.cursor()
+        try:
+            cursor = conn.cursor()
 
-        cursor.execute("SELECT VERSION() as version")
-        version = cursor.fetchone()["version"]
+            cursor.execute("SELECT VERSION() as version")
+            version = cursor.fetchone()["version"]
 
-        cursor.execute("SELECT COUNT(*) as total FROM tirages")
-        total = cursor.fetchone()["total"]
+            cursor.execute("SELECT COUNT(*) as total FROM tirages")
+            total = cursor.fetchone()["total"]
 
-        cursor.execute("""
-            SELECT MIN(date_de_tirage) as date_min,
-                   MAX(date_de_tirage) as date_max
-            FROM tirages
-        """)
-        dates = cursor.fetchone()
-
-        conn.close()
+            cursor.execute("""
+                SELECT MIN(date_de_tirage) as date_min,
+                       MAX(date_de_tirage) as date_max
+                FROM tirages
+            """)
+            dates = cursor.fetchone()
+        finally:
+            conn.close()
 
         return {
             "status": "ok",
@@ -223,6 +239,41 @@ def get_tirages_list(limit: int = 10, offset: int = 0) -> list:
         return results
     finally:
         conn.close()
+
+
+# ============================================================================
+# ASYNC HELPERS (asyncio.to_thread)
+# ============================================================================
+
+async def async_query(sql, params=None):
+    """Execute SQL and return fetchall() via asyncio.to_thread()."""
+    def _run():
+        conn = get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(sql, params)
+            return cursor.fetchall()
+        finally:
+            conn.close()
+    return await asyncio.to_thread(_run)
+
+
+async def async_fetchone(sql, params=None):
+    """Execute SQL and return fetchone() via asyncio.to_thread()."""
+    def _run():
+        conn = get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(sql, params)
+            return cursor.fetchone()
+        finally:
+            conn.close()
+    return await asyncio.to_thread(_run)
+
+
+async def async_call(func, *args, **kwargs):
+    """Run any sync function via asyncio.to_thread()."""
+    return await asyncio.to_thread(func, *args, **kwargs)
 
 
 # ============================================================================

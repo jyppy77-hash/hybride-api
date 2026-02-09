@@ -1,5 +1,6 @@
 import time
 import uuid
+import asyncio
 import contextvars
 from contextlib import asynccontextmanager
 
@@ -271,17 +272,20 @@ app.include_router(chat_router)
 # =========================
 
 @app.get("/health")
-def health():
+async def health():
     """Endpoint healthcheck Cloud Run — BDD + Gemini + uptime."""
     db_status = "ok"
     try:
-        conn = db_cloudsql.get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute("SELECT 1")
-        finally:
-            conn.close()
-    except Exception:
+        def _check_db():
+            conn = db_cloudsql.get_connection()
+            try:
+                cursor = conn.cursor()
+                cursor.execute("SELECT 1")
+            finally:
+                conn.close()
+
+        await asyncio.wait_for(asyncio.to_thread(_check_db), timeout=5.0)
+    except (asyncio.TimeoutError, Exception):
         db_status = "unreachable"
 
     gemini_state = gemini_breaker.state
