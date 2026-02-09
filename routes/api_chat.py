@@ -2,6 +2,7 @@ import os
 import re
 import logging
 import httpx
+from datetime import date, timedelta
 
 from fastapi import APIRouter
 
@@ -15,6 +16,7 @@ from routes.api_data import (
     get_classement_numeros, get_comparaison_numeros, get_numeros_par_categorie,
     prepare_grilles_pitch_context,
 )
+import db_cloudsql
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +38,78 @@ def _detect_mode(message: str, page: str) -> str:
     if page in ("simulateur", "loto", "statistiques"):
         return "analyse"
     return "decouverte"
+
+
+def _detect_prochain_tirage(message: str) -> bool:
+    """Detecte si l'utilisateur demande la date du prochain tirage."""
+    lower = message.lower()
+    return bool(re.search(
+        r'(?:prochain|prochaine|quand|date)\s+.*(?:tirage|loto|draw)'
+        r'|(?:tirage|loto)\s+.*(?:prochain|prochaine|quand|date)'
+        r'|c.est\s+quand\s+(?:le\s+)?(?:prochain\s+)?(?:tirage|loto)'
+        r'|(?:il\s+(?:y\s+a|est)\s+(?:un\s+)?tirage\s+quand)'
+        r'|(?:quand\s+(?:est|a)\s+lieu)'
+        r'|(?:prochain\s+(?:tirage|loto))',
+        lower
+    ))
+
+
+# Jours de tirage FDJ : lundi (0), mercredi (2), samedi (5)
+_JOURS_TIRAGE = [0, 2, 5]
+
+_JOURS_FR = {
+    0: "lundi", 1: "mardi", 2: "mercredi", 3: "jeudi",
+    4: "vendredi", 5: "samedi", 6: "dimanche",
+}
+
+
+def _get_prochain_tirage() -> str | None:
+    """
+    Calcule la date du prochain tirage a partir de la date du jour
+    et des jours de tirage FDJ (lundi, mercredi, samedi).
+    Returns: contexte formate ou None si erreur.
+    """
+    try:
+        today = date.today()
+
+        # Chercher le prochain jour de tirage (y compris aujourd'hui)
+        for delta in range(7):
+            candidate = today + timedelta(days=delta)
+            if candidate.weekday() in _JOURS_TIRAGE:
+                next_draw = candidate
+                break
+
+        jour_fr = _JOURS_FR[next_draw.weekday()]
+        date_str = next_draw.strftime("%d/%m/%Y")
+
+        if next_draw == today:
+            quand = "ce soir"
+        elif next_draw == today + timedelta(days=1):
+            quand = "demain soir"
+        else:
+            quand = f"{jour_fr} prochain"
+
+        # Dernier tirage en BDD
+        try:
+            conn = db_cloudsql.get_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT MAX(date_de_tirage) as last FROM tirages")
+            row = cursor.fetchone()
+            conn.close()
+            last_draw = str(row['last']) if row and row['last'] else None
+        except Exception:
+            last_draw = None
+
+        lines = [f"[PROCHAIN TIRAGE]"]
+        lines.append(f"Date du prochain tirage : {jour_fr} {date_str} ({quand})")
+        lines.append(f"Jours de tirage FDJ : lundi, mercredi et samedi")
+        if last_draw:
+            lines.append(f"Dernier tirage en base : {last_draw}")
+
+        return "\n".join(lines)
+    except Exception as e:
+        logger.warning(f"[HYBRIDE CHAT] Erreur calcul prochain tirage: {e}")
+        return None
 
 
 def _detect_numero(message: str):
@@ -365,8 +439,18 @@ async def api_hybride_chat(payload: HybrideChatRequest):
         role = "user" if msg.role == "user" else "model"
         contents.append({"role": role, "parts": [{"text": msg.content}]})
 
-    # Detection : Grille (Phase 2) → Complexe (Phase 3) → Numero (Phase 1)
+    # Detection : Prochain tirage → Grille (Phase 2) → Complexe (Phase 3) → Numero (Phase 1)
     enrichment_context = ""
+
+    # Phase 0 : prochain tirage
+    if _detect_prochain_tirage(payload.message):
+        try:
+            tirage_ctx = _get_prochain_tirage()
+            if tirage_ctx:
+                enrichment_context = tirage_ctx
+                logger.info("[HYBRIDE CHAT] Prochain tirage injecte")
+        except Exception as e:
+            logger.warning(f"[HYBRIDE CHAT] Erreur prochain tirage: {e}")
 
     # Phase 2 : detection de grille (5 numeros)
     grille_nums, grille_chance = _detect_grille(payload.message)
