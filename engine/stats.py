@@ -6,6 +6,7 @@ Analyse UNIQUEMENT l'historique réel - Aucune prédiction
 import logging
 from typing import Dict, List, Optional
 from .db import get_connection
+from services.cache import cache_get, cache_set
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +84,7 @@ def analyze_number(number: int) -> Dict:
 def get_global_stats() -> Dict:
     """
     Récupère les statistiques globales de la base de données
+    Résultat mis en cache 1 h.
 
     Returns:
         Dictionnaire contenant :
@@ -91,6 +93,10 @@ def get_global_stats() -> Dict:
         - last_draw_date: date du dernier tirage
         - period_covered: période couverte (texte)
     """
+    cached = cache_get("global_stats")
+    if cached is not None:
+        return cached
+
     conn = get_connection()
     try:
         cursor = conn.cursor()
@@ -116,12 +122,14 @@ def get_global_stats() -> Dict:
 
     logger.debug(f"[STATS] get_global_stats - Fin: total_draws={total_draws}, period={period_covered}")
 
-    return {
+    data = {
         "total_draws": total_draws,
         "first_draw_date": first_draw_date,
         "last_draw_date": last_draw_date,
         "period_covered": period_covered
     }
+    cache_set("global_stats", data)
+    return data
 
 
 def get_top_flop_numbers() -> Dict:
@@ -146,24 +154,20 @@ def get_top_flop_numbers() -> Dict:
         result = cursor.fetchone()
         total_draws = result['count'] if result else 0
 
-        # Calculer la fréquence de chaque numéro (1-49)
-        number_counts = []
-
-        for number in range(1, 50):  # 1 à 49 inclus
-            # Compter les apparitions dans boule_1 à boule_5
-            query = """
-                SELECT COUNT(*) as count
-                FROM tirages
-                WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s OR boule_4 = %s OR boule_5 = %s
-            """
-            cursor.execute(query, (number, number, number, number, number))
-            result = cursor.fetchone()
-            count = result['count'] if result else 0
-
-            number_counts.append({
-                "number": number,
-                "count": count
-            })
+        # Frequences (1 requete UNION ALL au lieu de 49)
+        cursor.execute("""
+            SELECT num, COUNT(*) as freq FROM (
+                SELECT boule_1 as num FROM tirages
+                UNION ALL SELECT boule_2 FROM tirages
+                UNION ALL SELECT boule_3 FROM tirages
+                UNION ALL SELECT boule_4 FROM tirages
+                UNION ALL SELECT boule_5 FROM tirages
+            ) t
+            GROUP BY num
+            ORDER BY num
+        """)
+        freq_map = {row['num']: row['freq'] for row in cursor.fetchall()}
+        number_counts = [{"number": num, "count": freq_map.get(num, 0)} for num in range(1, 50)]
     finally:
         conn.close()
 
