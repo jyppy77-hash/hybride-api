@@ -12,6 +12,7 @@ import json as json_mod
 from schemas import HybrideChatRequest, HybrideChatResponse, PitchGrillesRequest
 from services.prompt_loader import load_prompt
 from services.gemini import GEMINI_MODEL_URL
+from services.circuit_breaker import gemini_breaker, CircuitOpenError
 from rate_limit import limiter
 from services.stats_service import (
     get_numero_stats, analyze_grille_for_chat,
@@ -509,7 +510,8 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
 
     try:
         client = request.app.state.httpx_client
-        response = await client.post(
+        response = await gemini_breaker.call(
+            client,
             GEMINI_MODEL_URL,
             headers={
                 "Content-Type": "application/json",
@@ -550,6 +552,11 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
             response=FALLBACK_RESPONSE, source="fallback", mode=mode
         )
 
+    except CircuitOpenError:
+        logger.warning("[HYBRIDE CHAT] Circuit breaker ouvert — fallback")
+        return HybrideChatResponse(
+            response=FALLBACK_RESPONSE, source="fallback_circuit", mode=mode
+        )
     except httpx.TimeoutException:
         logger.warning("[HYBRIDE CHAT] Timeout Gemini (15s) — fallback")
         return HybrideChatResponse(
@@ -629,7 +636,8 @@ async def api_pitch_grilles(request: Request, payload: PitchGrillesRequest):
     # Appel Gemini (1 seul appel pour toutes les grilles)
     try:
         client = request.app.state.httpx_client
-        response = await client.post(
+        response = await gemini_breaker.call(
+            client,
             GEMINI_MODEL_URL,
             headers={
                 "Content-Type": "application/json",
@@ -690,6 +698,11 @@ async def api_pitch_grilles(request: Request, payload: PitchGrillesRequest):
         logger.info(f"[PITCH] OK \u2014 {len(pitchs)} pitchs g\u00e9n\u00e9r\u00e9s")
         return {"success": True, "data": {"pitchs": pitchs}, "error": None}
 
+    except CircuitOpenError:
+        logger.warning("[PITCH] Circuit breaker ouvert — fallback")
+        return JSONResponse(status_code=503, content={
+            "success": False, "data": None, "error": "Service Gemini temporairement indisponible"
+        })
     except httpx.TimeoutException:
         logger.warning("[PITCH] Timeout Gemini (15s)")
         return JSONResponse(status_code=503, content={
