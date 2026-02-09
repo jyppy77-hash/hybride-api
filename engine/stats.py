@@ -31,42 +31,43 @@ def analyze_number(number: int) -> Dict:
         raise ValueError("Le numéro doit être entre 1 et 49")
 
     conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    # Récupérer tous les tirages où le numéro apparaît (dans boule_1 à boule_5)
-    query = """
-        SELECT date_de_tirage
-        FROM tirages
-        WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s OR boule_4 = %s OR boule_5 = %s
-        ORDER BY date_de_tirage ASC
-    """
-    cursor.execute(query, (number, number, number, number, number))
-    appearance_dates = [row['date_de_tirage'] for row in cursor.fetchall()]
+        # Récupérer tous les tirages où le numéro apparaît (dans boule_1 à boule_5)
+        query = """
+            SELECT date_de_tirage
+            FROM tirages
+            WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s OR boule_4 = %s OR boule_5 = %s
+            ORDER BY date_de_tirage ASC
+        """
+        cursor.execute(query, (number, number, number, number, number))
+        appearance_dates = [row['date_de_tirage'] for row in cursor.fetchall()]
 
-    # Nombre total d'apparitions
-    total_appearances = len(appearance_dates)
+        # Nombre total d'apparitions
+        total_appearances = len(appearance_dates)
 
-    # Première et dernière apparition
-    first_appearance = appearance_dates[0] if appearance_dates else None
-    last_appearance = appearance_dates[-1] if appearance_dates else None
+        # Première et dernière apparition
+        first_appearance = appearance_dates[0] if appearance_dates else None
+        last_appearance = appearance_dates[-1] if appearance_dates else None
 
-    # Calculer l'écart actuel (nombre de tirages depuis la dernière sortie)
-    current_gap = 0
-    if last_appearance:
-        # Compter les tirages depuis la dernière apparition du numéro
-        cursor.execute(
-            "SELECT COUNT(*) as count FROM tirages WHERE date_de_tirage > %s",
-            (last_appearance,)
-        )
+        # Calculer l'écart actuel (nombre de tirages depuis la dernière sortie)
+        current_gap = 0
+        if last_appearance:
+            # Compter les tirages depuis la dernière apparition du numéro
+            cursor.execute(
+                "SELECT COUNT(*) as count FROM tirages WHERE date_de_tirage > %s",
+                (last_appearance,)
+            )
+            result = cursor.fetchone()
+            current_gap = result['count'] if result else 0
+
+        # Nombre total de tirages dans la base
+        cursor.execute("SELECT COUNT(*) as count FROM tirages")
         result = cursor.fetchone()
-        current_gap = result['count'] if result else 0
-
-    # Nombre total de tirages dans la base
-    cursor.execute("SELECT COUNT(*) as count FROM tirages")
-    result = cursor.fetchone()
-    total_draws = result['count'] if result else 0
-
-    conn.close()
+        total_draws = result['count'] if result else 0
+    finally:
+        conn.close()
 
     return {
         "number": number,
@@ -91,23 +92,24 @@ def get_global_stats() -> Dict:
         - period_covered: période couverte (texte)
     """
     conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    logger.debug("[STATS] get_global_stats - Debut")
+        logger.debug("[STATS] get_global_stats - Debut")
 
-    # Stats globales
-    cursor.execute("SELECT COUNT(*) as count FROM tirages")
-    result = cursor.fetchone()
-    logger.debug(f"[STATS] COUNT result: {result}")
-    total_draws = result['count'] if result else 0
+        # Stats globales
+        cursor.execute("SELECT COUNT(*) as count FROM tirages")
+        result = cursor.fetchone()
+        logger.debug(f"[STATS] COUNT result: {result}")
+        total_draws = result['count'] if result else 0
 
-    cursor.execute("SELECT MIN(date_de_tirage) as min_date, MAX(date_de_tirage) as max_date FROM tirages")
-    result = cursor.fetchone()
-    logger.debug(f"[STATS] MIN/MAX result: {result}")
-    first_draw_date = result['min_date'] if result else None
-    last_draw_date = result['max_date'] if result else None
-
-    conn.close()
+        cursor.execute("SELECT MIN(date_de_tirage) as min_date, MAX(date_de_tirage) as max_date FROM tirages")
+        result = cursor.fetchone()
+        logger.debug(f"[STATS] MIN/MAX result: {result}")
+        first_draw_date = result['min_date'] if result else None
+        last_draw_date = result['max_date'] if result else None
+    finally:
+        conn.close()
 
     # Formater la période
     period_covered = f"{first_draw_date} à {last_draw_date}" if first_draw_date and last_draw_date else "N/A"
@@ -136,33 +138,34 @@ def get_top_flop_numbers() -> Dict:
         Chaque élément contient : {"number": int, "count": int}
     """
     conn = get_connection()
-    cursor = conn.cursor()
+    try:
+        cursor = conn.cursor()
 
-    # Nombre total de tirages
-    cursor.execute("SELECT COUNT(*) as count FROM tirages")
-    result = cursor.fetchone()
-    total_draws = result['count'] if result else 0
-
-    # Calculer la fréquence de chaque numéro (1-49)
-    number_counts = []
-
-    for number in range(1, 50):  # 1 à 49 inclus
-        # Compter les apparitions dans boule_1 à boule_5
-        query = """
-            SELECT COUNT(*) as count
-            FROM tirages
-            WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s OR boule_4 = %s OR boule_5 = %s
-        """
-        cursor.execute(query, (number, number, number, number, number))
+        # Nombre total de tirages
+        cursor.execute("SELECT COUNT(*) as count FROM tirages")
         result = cursor.fetchone()
-        count = result['count'] if result else 0
+        total_draws = result['count'] if result else 0
 
-        number_counts.append({
-            "number": number,
-            "count": count
-        })
+        # Calculer la fréquence de chaque numéro (1-49)
+        number_counts = []
 
-    conn.close()
+        for number in range(1, 50):  # 1 à 49 inclus
+            # Compter les apparitions dans boule_1 à boule_5
+            query = """
+                SELECT COUNT(*) as count
+                FROM tirages
+                WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s OR boule_4 = %s OR boule_5 = %s
+            """
+            cursor.execute(query, (number, number, number, number, number))
+            result = cursor.fetchone()
+            count = result['count'] if result else 0
+
+            number_counts.append({
+                "number": number,
+                "count": count
+            })
+    finally:
+        conn.close()
 
     # Trier pour TOP : count DESC, puis number ASC
     top_sorted = sorted(number_counts, key=lambda x: (-x["count"], x["number"]))

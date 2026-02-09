@@ -580,34 +580,35 @@ def build_explanation(nums: List[int], chance_num: int) -> Dict[str, Any]:
 
         # Analyser le numéro chance (1-10, logique spécifique)
         conn = get_connection()
-        cursor = conn.cursor()
+        try:
+            cursor = conn.cursor()
 
-        cursor.execute(
-            "SELECT COUNT(*) as count FROM tirages WHERE numero_chance = %s",
-            (chance_num,)
-        )
-        result = cursor.fetchone()
-        chance_count = result['count'] if result else 0
-
-        cursor.execute(
-            "SELECT date_de_tirage FROM tirages WHERE numero_chance = %s ORDER BY date_de_tirage DESC LIMIT 1",
-            (chance_num,)
-        )
-        chance_last = cursor.fetchone()
-        chance_last_date = chance_last['date_de_tirage'] if chance_last else None
-
-        # Calculer gap pour chance
-        if chance_last_date:
             cursor.execute(
-                "SELECT COUNT(*) as count FROM tirages WHERE date_de_tirage > %s",
-                (chance_last_date,)
+                "SELECT COUNT(*) as count FROM tirages WHERE numero_chance = %s",
+                (chance_num,)
             )
             result = cursor.fetchone()
-            chance_gap = result['count'] if result else 0
-        else:
-            chance_gap = 0
+            chance_count = result['count'] if result else 0
 
-        conn.close()
+            cursor.execute(
+                "SELECT date_de_tirage FROM tirages WHERE numero_chance = %s ORDER BY date_de_tirage DESC LIMIT 1",
+                (chance_num,)
+            )
+            chance_last = cursor.fetchone()
+            chance_last_date = chance_last['date_de_tirage'] if chance_last else None
+
+            # Calculer gap pour chance
+            if chance_last_date:
+                cursor.execute(
+                    "SELECT COUNT(*) as count FROM tirages WHERE date_de_tirage > %s",
+                    (chance_last_date,)
+                )
+                result = cursor.fetchone()
+                chance_gap = result['count'] if result else 0
+            else:
+                chance_gap = 0
+        finally:
+            conn.close()
 
         # Tags pour chance
         chance_tags = []
