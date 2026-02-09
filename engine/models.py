@@ -4,7 +4,7 @@ from typing import List
 
 class GenerateRequest(BaseModel):
     n: int = 5
-    mode: str = "safe"
+    mode: str = "balanced"
 
 
 class Ticket(BaseModel):
