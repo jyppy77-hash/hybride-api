@@ -284,16 +284,9 @@ def test_analyze_grille_for_chat(mock_db):
     conn.cursor.return_value = cursor
     mock_db.get_connection.return_value = conn
 
-    # total tirages
+    # Nouveau flow : fetchone pour total + best_match, fetchall pour freq UNION ALL + exact matches
     cursor.fetchone.side_effect = [
         {"total": 967},
-    ] + [
-        # 5 freq pour chaque num de la grille
-        {"freq": 80}, {"freq": 75}, {"freq": 90}, {"freq": 60}, {"freq": 85},
-    ] + [
-        # 49 freq pour classification globale
-        {"freq": 100 - n} for n in range(1, 50)
-    ] + [
         # best match
         {
             "date_de_tirage": date(2024, 1, 15),
@@ -303,6 +296,8 @@ def test_analyze_grille_for_chat(mock_db):
         },
     ]
     cursor.fetchall.side_effect = [
+        # _get_all_frequencies UNION ALL (49 numeros)
+        [{"num": n, "freq": 100 - n} for n in range(1, 50)],
         # exact matches
         [],
     ]
