@@ -18,6 +18,9 @@ slowapi>=0.1.9
 # Configuration
 python-dotenv==1.0.1
 
+# JSON structured logging
+python-json-logger>=2.0.7
+
 # PDF generation (META75)
 reportlab==4.1.0
 matplotlib==3.9.2

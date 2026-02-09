@@ -10,6 +10,8 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.middleware import SlowAPIMiddleware
 import httpx
 import logging
+import sys
+from pythonjsonlogger import jsonlogger
 
 import db_cloudsql
 from rate_limit import limiter
@@ -22,7 +24,17 @@ from routes.api_pdf import router as pdf_router
 from routes.api_tracking import router as tracking_router
 from routes.api_chat import router as chat_router
 
-# Logging
+# ── JSON structured logging ──
+_log_handler = logging.StreamHandler(sys.stdout)
+_log_handler.setFormatter(
+    jsonlogger.JsonFormatter(
+        fmt="%(asctime)s %(levelname)s %(name)s %(message)s",
+        rename_fields={"asctime": "timestamp", "levelname": "severity"},
+    )
+)
+logging.root.handlers = [_log_handler]
+logging.root.setLevel(logging.INFO)
+
 logger = logging.getLogger(__name__)
 
 @asynccontextmanager
