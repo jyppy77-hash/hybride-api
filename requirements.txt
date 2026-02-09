@@ -22,11 +22,6 @@ python-dotenv==1.0.1
 # JSON structured logging
 python-json-logger>=2.0.7
 
-# Testing
-pytest>=8.0
-pytest-asyncio>=0.23
-pytest-cov>=6.0
-
 # PDF generation (META75)
 reportlab==4.1.0
 matplotlib==3.9.2

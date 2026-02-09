@@ -1,0 +1,12 @@
+# =============================================================================
+# LotoIA - Dev/Test Dependencies
+# =============================================================================
+# Install: pip install -r requirements-dev.txt
+# These are NOT included in the production Docker image.
+
+-r requirements.txt
+
+# Testing
+pytest>=8.0
+pytest-asyncio>=0.23
+pytest-cov>=6.0

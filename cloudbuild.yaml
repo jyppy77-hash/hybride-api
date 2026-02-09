@@ -3,10 +3,12 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/hybride-api', '.']
 
-  # Run tests inside the built image (blocks deploy on failure)
+  # Run tests: install dev deps then pytest (blocks deploy on failure)
   - name: 'gcr.io/$PROJECT_ID/hybride-api'
-    entrypoint: 'python'
-    args: ['-m', 'pytest', '-v', '--tb=short']
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - 'pip install --no-cache-dir pytest pytest-asyncio pytest-cov && python -m pytest -v --tb=short'
     env:
       - 'DB_PASSWORD=fake'
       - 'DB_USER=test'

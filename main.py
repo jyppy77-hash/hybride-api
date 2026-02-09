@@ -1,3 +1,4 @@
+import re
 import time
 import uuid
 import asyncio
@@ -113,10 +114,14 @@ app.add_middleware(
 # Correlation ID middleware
 # =========================
 
+_VALID_REQUEST_ID = re.compile(r'^[a-zA-Z0-9\-_]{1,64}$')
+
+
 @app.middleware("http")
 async def correlation_id_middleware(request: Request, call_next):
     """Genere un UUID par requete, l'injecte dans les logs et le header de reponse."""
-    request_id = request.headers.get("x-request-id") or uuid.uuid4().hex[:16]
+    raw_id = request.headers.get("x-request-id", "")
+    request_id = raw_id if _VALID_REQUEST_ID.match(raw_id) else uuid.uuid4().hex[:16]
     request.state.request_id = request_id
 
     # Injecter via contextvars (async-safe, pas de race condition)
