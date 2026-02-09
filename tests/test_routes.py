@@ -1,0 +1,321 @@
+"""
+Tests unitaires pour les routes FastAPI.
+Utilise TestClient + mocks complets (BDD, Gemini, fichiers).
+Aucune connexion MySQL ni API Gemini requise.
+"""
+
+import os
+from unittest.mock import patch, MagicMock
+from datetime import date
+
+import pytest
+from fastapi.testclient import TestClient
+
+
+# ── Patches appliques AVANT l'import de main.py ───────────────────────
+
+# Empecher le mount StaticFiles de planter (dossier ui/ absent en CI)
+_static_patch = patch("fastapi.staticfiles.StaticFiles.__init__", return_value=None)
+_static_call = patch("fastapi.staticfiles.StaticFiles.__call__", return_value=None)
+
+# Empecher db_cloudsql de lire .env / tenter une connexion a l'import
+_db_module_patch = patch.dict(os.environ, {
+    "DB_PASSWORD": "fake",
+    "DB_USER": "test",
+    "DB_NAME": "testdb",
+})
+
+
+def _get_client():
+    """Cree un TestClient frais avec tous les patches actifs."""
+    with _db_module_patch, _static_patch, _static_call:
+        # Re-import pour appliquer les patches
+        import importlib
+        import main as main_mod
+        importlib.reload(main_mod)
+        return TestClient(main_mod.app, raise_server_exceptions=False)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Health
+# ═══════════════════════════════════════════════════════════════════════
+
+@patch("main.db_cloudsql")
+def test_health_db_ok(mock_db):
+    """GET /health retourne status ok + tous les champs ameliores."""
+    conn = MagicMock()
+    cursor = MagicMock()
+    conn.cursor.return_value = cursor
+    mock_db.get_connection.return_value = conn
+
+    with _db_module_patch, _static_patch, _static_call:
+        import importlib, main as main_mod
+        importlib.reload(main_mod)
+        main_mod.db_cloudsql = mock_db
+        client = TestClient(main_mod.app, raise_server_exceptions=False)
+        resp = client.get("/health")
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "ok"
+    assert data["database"] == "ok"
+    assert data["gemini"] in ("ok", "circuit_open")
+    assert "uptime_seconds" in data
+    assert isinstance(data["uptime_seconds"], int)
+    assert "version" in data
+    assert "engine" in data
+
+
+@patch("main.db_cloudsql")
+def test_health_db_down(mock_db):
+    """GET /health retourne status degraded quand BDD inaccessible."""
+    mock_db.get_connection.side_effect = Exception("Connection refused")
+
+    with _db_module_patch, _static_patch, _static_call:
+        import importlib, main as main_mod
+        importlib.reload(main_mod)
+        main_mod.db_cloudsql = mock_db
+        client = TestClient(main_mod.app, raise_server_exceptions=False)
+        resp = client.get("/health")
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "degraded"
+    assert data["database"] == "unreachable"
+    assert "gemini" in data
+    assert "uptime_seconds" in data
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Tirages
+# ═══════════════════════════════════════════════════════════════════════
+
+@patch("routes.api_data.db_cloudsql")
+def test_tirages_count(mock_db):
+    """GET /api/tirages/count retourne un nombre."""
+    mock_db.get_tirages_count.return_value = 967
+
+    with _db_module_patch, _static_patch, _static_call:
+        import importlib, main as main_mod
+        importlib.reload(main_mod)
+        # Patch au niveau du module route
+        import routes.api_data as api_data_mod
+        api_data_mod.db_cloudsql = mock_db
+        client = TestClient(main_mod.app, raise_server_exceptions=False)
+        resp = client.get("/api/tirages/count")
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["success"] is True
+    assert data["data"]["total"] == 967
+
+
+@patch("routes.api_data.db_cloudsql")
+def test_tirages_latest(mock_db):
+    """GET /api/tirages/latest retourne un tirage."""
+    mock_db.get_latest_tirage.return_value = {
+        "date_de_tirage": "2026-02-03",
+        "boule_1": 5, "boule_2": 12, "boule_3": 23,
+        "boule_4": 34, "boule_5": 45, "numero_chance": 7,
+    }
+
+    with _db_module_patch, _static_patch, _static_call:
+        import importlib, main as main_mod
+        importlib.reload(main_mod)
+        import routes.api_data as api_data_mod
+        api_data_mod.db_cloudsql = mock_db
+        client = TestClient(main_mod.app, raise_server_exceptions=False)
+        resp = client.get("/api/tirages/latest")
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["success"] is True
+    assert "boule_1" in data["data"]
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Stats number
+# ═══════════════════════════════════════════════════════════════════════
+
+@patch("routes.api_data.db_cloudsql")
+def test_stats_number_valid(mock_db):
+    """GET /api/stats/number/7 retourne des stats."""
+    cursor = MagicMock()
+    conn = MagicMock()
+    conn.cursor.return_value = cursor
+    mock_db.get_connection.return_value = conn
+
+    cursor.fetchall.side_effect = [
+        # appearances du numero 7
+        [
+            {"date_de_tirage": date(2020, 3, 14)},
+            {"date_de_tirage": date(2024, 11, 2)},
+        ],
+    ]
+    cursor.fetchone.side_effect = [
+        {"gap": 5},   # ecart
+    ]
+
+    with _db_module_patch, _static_patch, _static_call:
+        import importlib, main as main_mod
+        importlib.reload(main_mod)
+        import routes.api_data as api_data_mod
+        api_data_mod.db_cloudsql = mock_db
+        client = TestClient(main_mod.app, raise_server_exceptions=False)
+        resp = client.get("/api/stats/number/7")
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["success"] is True
+    assert data["number"] == 7
+    assert "total_appearances" in data
+
+
+@patch("routes.api_data.db_cloudsql")
+def test_stats_number_invalid(mock_db):
+    """GET /api/stats/number/99 retourne 400."""
+    with _db_module_patch, _static_patch, _static_call:
+        import importlib, main as main_mod
+        importlib.reload(main_mod)
+        client = TestClient(main_mod.app, raise_server_exceptions=False)
+        resp = client.get("/api/stats/number/99")
+
+    assert resp.status_code == 400
+    data = resp.json()
+    assert data["success"] is False
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Hybride Chat (mock Gemini)
+# ═══════════════════════════════════════════════════════════════════════
+
+@patch("routes.api_chat.load_prompt", return_value="Tu es un assistant.")
+@patch.dict(os.environ, {"GEM_API_KEY": "fake-key"})
+def test_hybride_chat(mock_prompt):
+    """POST /api/hybride-chat retourne une reponse (mock Gemini)."""
+    mock_httpx_response = MagicMock()
+    mock_httpx_response.status_code = 200
+    mock_httpx_response.json.return_value = {
+        "candidates": [{
+            "content": {
+                "parts": [{"text": "Voici ma reponse test."}]
+            }
+        }]
+    }
+
+    with _db_module_patch, _static_patch, _static_call:
+        import importlib, main as main_mod
+        importlib.reload(main_mod)
+        client = TestClient(main_mod.app, raise_server_exceptions=False)
+
+        # Mock le httpx_client sur app.state
+        import httpx
+        mock_client = MagicMock(spec=httpx.AsyncClient)
+
+        async def mock_post(*args, **kwargs):
+            return mock_httpx_response
+        mock_client.post = mock_post
+
+        main_mod.app.state.httpx_client = mock_client
+
+        resp = client.post("/api/hybride-chat", json={
+            "message": "Bonjour, quels numeros jouer ?",
+            "page": "accueil",
+        })
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "response" in data
+    assert data["source"] == "gemini"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Rate Limiting
+# ═══════════════════════════════════════════════════════════════════════
+
+@patch("routes.api_chat.load_prompt", return_value="Tu es un assistant.")
+@patch.dict(os.environ, {"GEM_API_KEY": "fake-key"})
+def test_rate_limit_429(mock_prompt):
+    """Envoyer 15 requetes rapides sur /api/hybride-chat → 429."""
+    mock_httpx_response = MagicMock()
+    mock_httpx_response.status_code = 200
+    mock_httpx_response.json.return_value = {
+        "candidates": [{
+            "content": {"parts": [{"text": "Reponse."}]}
+        }]
+    }
+
+    with _db_module_patch, _static_patch, _static_call:
+        import importlib, main as main_mod
+        importlib.reload(main_mod)
+        client = TestClient(main_mod.app, raise_server_exceptions=False)
+
+        import httpx
+        mock_client = MagicMock(spec=httpx.AsyncClient)
+
+        async def mock_post(*args, **kwargs):
+            return mock_httpx_response
+        mock_client.post = mock_post
+
+        main_mod.app.state.httpx_client = mock_client
+
+        got_429 = False
+        for i in range(15):
+            resp = client.post("/api/hybride-chat", json={
+                "message": f"Test {i}",
+                "page": "accueil",
+            })
+            if resp.status_code == 429:
+                got_429 = True
+                break
+
+    assert got_429, "Attendu un 429 apres 10+ requetes rapides (limite 10/min)"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Correlation ID
+# ═══════════════════════════════════════════════════════════════════════
+
+@patch("main.db_cloudsql")
+def test_correlation_id_generated(mock_db):
+    """Chaque reponse contient un header X-Request-ID unique."""
+    conn = MagicMock()
+    cursor = MagicMock()
+    conn.cursor.return_value = cursor
+    mock_db.get_connection.return_value = conn
+
+    with _db_module_patch, _static_patch, _static_call:
+        import importlib, main as main_mod
+        importlib.reload(main_mod)
+        main_mod.db_cloudsql = mock_db
+        client = TestClient(main_mod.app, raise_server_exceptions=False)
+
+        resp1 = client.get("/health")
+        resp2 = client.get("/health")
+
+    rid1 = resp1.headers.get("x-request-id")
+    rid2 = resp2.headers.get("x-request-id")
+
+    assert rid1 is not None
+    assert rid2 is not None
+    assert len(rid1) == 16
+    assert rid1 != rid2
+
+
+@patch("main.db_cloudsql")
+def test_correlation_id_forwarded(mock_db):
+    """Si le client envoie X-Request-ID, il est reutilise."""
+    conn = MagicMock()
+    cursor = MagicMock()
+    conn.cursor.return_value = cursor
+    mock_db.get_connection.return_value = conn
+
+    with _db_module_patch, _static_patch, _static_call:
+        import importlib, main as main_mod
+        importlib.reload(main_mod)
+        main_mod.db_cloudsql = mock_db
+        client = TestClient(main_mod.app, raise_server_exceptions=False)
+
+        resp = client.get("/health", headers={"x-request-id": "my-custom-id-123"})
+
+    assert resp.headers.get("x-request-id") == "my-custom-id-123"

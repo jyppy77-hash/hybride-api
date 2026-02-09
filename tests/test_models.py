@@ -17,10 +17,10 @@ from engine.hybride import CONFIG
 class TestGenerateRequest:
 
     def test_defaults(self):
-        """Valeurs par defaut : n=5, mode='safe'."""
+        """Valeurs par defaut : n=5, mode='balanced'."""
         req = GenerateRequest()
         assert req.n == 5
-        assert req.mode == "safe"
+        assert req.mode == "balanced"
 
     def test_custom_values(self):
         """Valeurs personnalisees acceptees."""

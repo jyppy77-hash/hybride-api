@@ -35,8 +35,8 @@ class TestValiderContraintes:
         nums = [2, 4, 6, 8, 10]
         score = valider_contraintes(nums)
         assert score < 1.0
-        # 5 pairs: *0.8, somme=30 <70: *0.7, disp=8 <15: *0.6, suites=4 >2: *0.75
-        assert score == pytest.approx(0.8 * 0.7 * 0.6 * 0.75, rel=1e-6)
+        # 5 pairs: *0.8, 5 bas: *0.85, somme=30 <70: *0.7, disp=8 <15: *0.6, suites=0
+        assert score == pytest.approx(0.8 * 0.85 * 0.7 * 0.6, rel=1e-6)
 
     def test_penalite_somme(self):
         """Somme hors [70, 150] → penalite."""
