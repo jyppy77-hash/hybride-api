@@ -85,12 +85,11 @@ def test_get_all_ecarts_cached(mock_db):
     conn.cursor.return_value = cursor
     mock_db.get_connection.return_value = conn
 
-    # fetchone pour MAX(date)
-    cursor.fetchone.return_value = {"last": date(2026, 1, 1)}
-    # fetchall : 1) last_dates UNION ALL, 2) all dates
+    # fetchone pour COUNT(*) total
+    cursor.fetchone.return_value = {"total": 967}
+    # fetchall : ecarts via SQL correlated subquery
     cursor.fetchall.side_effect = [
-        [{"num": n, "last_date": date(2025, 12, 1)} for n in range(1, 50)],
-        [{"date_de_tirage": date(2025, 12, 1 + i % 28)} for i in range(10)],
+        [{"num": n, "ecart": n % 10} for n in range(1, 50)],
     ]
 
     from services.stats_service import _get_all_ecarts
@@ -100,8 +99,9 @@ def test_get_all_ecarts_cached(mock_db):
 
     assert result1 == result2
     assert isinstance(result1, dict)
-    # execute appele 3 fois au 1er appel (MAX, UNION ALL, dates), 0 au 2eme
-    assert cursor.execute.call_count == 3
+    assert len(result1) == 49
+    # execute appele 2 fois au 1er appel (COUNT + UNION ALL ecart), 0 au 2eme
+    assert cursor.execute.call_count == 2
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -185,17 +185,17 @@ def test_get_classement_numeros(mock_db):
     d_max = date(2026, 2, 3)
 
     cursor.fetchone.side_effect = [
+        # get_classement: COUNT + MIN + MAX
         {"total": 967, "date_min": d_min, "date_max": d_max},
-        {"last": d_max},  # pour _get_all_ecarts MAX(date)
+        # _get_all_ecarts: COUNT total
+        {"total": 967},
     ]
     cursor.fetchall.side_effect = [
-        # frequencies
+        # _get_all_frequencies (principal)
         [{"num": n, "freq": 100 + n} for n in range(1, 50)],
-        # ecarts — last_dates
-        [{"num": n, "last_date": d_max - timedelta(days=n)} for n in range(1, 50)],
-        # ecarts — all dates
-        [{"date_de_tirage": d_max - timedelta(days=i)} for i in range(967)],
-        # freq 2 ans
+        # _get_all_ecarts (SQL correlated subquery — {num, ecart})
+        [{"num": n, "ecart": n % 10} for n in range(1, 50)],
+        # _get_all_frequencies 2 ans (categorie)
         [{"num": n, "freq": 50 + n} for n in range(1, 50)],
     ]
 

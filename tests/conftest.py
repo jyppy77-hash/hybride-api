@@ -138,6 +138,35 @@ class SmartMockCursor:
                 freq[c] = freq.get(c, 0) + 1
             return [{"numero_chance": k, "freq": v} for k, v in sorted(freq.items())]
 
+        # UNION ALL + ecart SQL (correlated subquery — _get_all_ecarts v2)
+        if "union all" in q and "as ecart" in q:
+            last = {}
+            for t in self._tirages:
+                for col in ("boule_1", "boule_2", "boule_3", "boule_4", "boule_5"):
+                    n = t[col]
+                    d = t["date_de_tirage"]
+                    if n not in last or d > last[n]:
+                        last[n] = d
+            result = []
+            for num, last_date in sorted(last.items()):
+                ecart = sum(1 for t in self._tirages if t["date_de_tirage"] > last_date)
+                result.append({"num": num, "ecart": ecart})
+            return result
+
+        # Ecart SQL for chance (correlated subquery)
+        if "numero_chance" in q and "as ecart" in q:
+            last = {}
+            for t in self._tirages:
+                c = t["numero_chance"]
+                d = t["date_de_tirage"]
+                if c not in last or d > last[c]:
+                    last[c] = d
+            result = []
+            for num, last_date in sorted(last.items()):
+                ecart = sum(1 for t in self._tirages if t["date_de_tirage"] > last_date)
+                result.append({"num": num, "ecart": ecart})
+            return result
+
         # UNION ALL + COUNT (frequences)
         if "union all" in q and "count(*)" in q:
             filtered = self._filter_gte()
@@ -148,7 +177,7 @@ class SmartMockCursor:
                     freq[n] = freq.get(n, 0) + 1
             return [{"num": k, "freq": v} for k, v in sorted(freq.items())]
 
-        # UNION ALL + MAX(date) (dernieres apparitions — ecarts)
+        # UNION ALL + MAX(date) (dernieres apparitions — legacy compat)
         if "union all" in q and "max(date_de_tirage)" in q:
             last = {}
             for t in self._tirages:
