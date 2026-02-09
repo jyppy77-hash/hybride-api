@@ -1,11 +1,18 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+import httpx
 import logging
 
 import db_cloudsql
+from rate_limit import limiter
 from engine.version import __version__
 from routes.pages import router as pages_router
 from routes.api_data import router as data_router
@@ -18,12 +25,34 @@ from routes.api_chat import router as chat_router
 # Logging
 logger = logging.getLogger(__name__)
 
+@asynccontextmanager
+async def lifespan(app):
+    """Startup/shutdown : client HTTP partage."""
+    app.state.httpx_client = httpx.AsyncClient(timeout=20.0)
+    yield
+    await app.state.httpx_client.aclose()
+
+
 app = FastAPI(
     title="HYBRIDE API",
     description="Moteur HYBRIDE_OPTIMAL_V1 — API officielle",
     version=__version__,
-    redirect_slashes=False
+    redirect_slashes=False,
+    lifespan=lifespan
 )
+
+# Rate limiter (slowapi)
+app.state.limiter = limiter
+
+
+def _rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    return JSONResponse(
+        status_code=429,
+        content={"error": "Trop de requetes. Reessayez dans quelques instants."}
+    )
+
+
+app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)
 
 # TrustedHostMiddleware: accepte tous les hosts (filtrage géré par enforce_canonical_host)
 app.add_middleware(
@@ -33,6 +62,21 @@ app.add_middleware(
 
 # Compression GZip pour performance
 app.add_middleware(GZipMiddleware, minimum_size=500)
+
+# Rate limiting middleware
+app.add_middleware(SlowAPIMiddleware)
+
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://lotoia.fr",
+        "https://www.lotoia.fr",
+        "http://localhost:8080",
+    ],
+    allow_methods=["GET", "POST"],
+    allow_headers=["Content-Type"],
+)
 
 
 # =========================
