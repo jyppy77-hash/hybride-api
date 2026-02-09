@@ -93,11 +93,13 @@ def _get_prochain_tirage() -> str | None:
         # Dernier tirage en BDD
         try:
             conn = db_cloudsql.get_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT MAX(date_de_tirage) as last FROM tirages")
-            row = cursor.fetchone()
-            conn.close()
-            last_draw = str(row['last']) if row and row['last'] else None
+            try:
+                cursor = conn.cursor()
+                cursor.execute("SELECT MAX(date_de_tirage) as last FROM tirages")
+                row = cursor.fetchone()
+                last_draw = str(row['last']) if row and row['last'] else None
+            finally:
+                conn.close()
         except Exception:
             last_draw = None
 
@@ -691,5 +693,5 @@ async def api_pitch_grilles(payload: PitchGrillesRequest):
     except Exception as e:
         logger.error(f"[PITCH] Erreur: {e}")
         return JSONResponse(status_code=500, content={
-            "success": False, "data": None, "error": str(e)
+            "success": False, "data": None, "error": "Erreur interne du serveur"
         })

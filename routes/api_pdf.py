@@ -43,4 +43,4 @@ async def api_meta_pdf(payload: MetaPdfPayload):
         raise HTTPException(status_code=500, detail="reportlab non installe")
     except Exception as e:
         logger.error(f"[META-PDF] Erreur generation: {e}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Erreur generation PDF: {e}")
+        raise HTTPException(status_code=500, detail="Erreur generation PDF")

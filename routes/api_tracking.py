@@ -50,7 +50,7 @@ async def api_track_grid(payload: TrackGridPayload):
         logger.error(f"Erreur /api/track-grid: {e}")
         return {
             "success": False,
-            "message": str(e)
+            "message": "Erreur interne du serveur"
         }
 
 
@@ -85,7 +85,7 @@ async def api_track_ad_impression(payload: TrackAdImpressionPayload):
         logger.error(f"Erreur /api/track-ad-impression: {e}")
         return {
             "success": False,
-            "message": str(e)
+            "message": "Erreur interne du serveur"
         }
 
 
@@ -123,5 +123,5 @@ async def api_track_ad_click(payload: TrackAdClickPayload):
         logger.error(f"Erreur /api/track-ad-click: {e}")
         return {
             "success": False,
-            "message": str(e)
+            "message": "Erreur interne du serveur"
         }

@@ -35,7 +35,7 @@ async def api_tirages_count():
         return JSONResponse(status_code=500, content={
             "success": False,
             "data": None,
-            "error": str(e)
+            "error": "Erreur interne du serveur"
         })
 
 
@@ -66,7 +66,7 @@ async def api_tirages_latest():
         return JSONResponse(status_code=500, content={
             "success": False,
             "data": None,
-            "error": str(e)
+            "error": "Erreur interne du serveur"
         })
 
 
@@ -102,7 +102,7 @@ async def api_tirages_list(
         return JSONResponse(status_code=500, content={
             "success": False,
             "data": None,
-            "error": str(e)
+            "error": "Erreur interne du serveur"
         })
 
 
@@ -145,7 +145,7 @@ async def database_info():
             "status": "error",
             "exists": False,
             "is_ready": False,
-            "error": str(e)
+            "error": "Erreur interne du serveur"
         })
 
 
@@ -282,7 +282,7 @@ async def stats():
         logger.error(f"Erreur /stats: {e}")
         return JSONResponse(status_code=500, content={
             "success": False,
-            "message": str(e)
+            "message": "Erreur interne du serveur"
         })
 
 
@@ -390,7 +390,7 @@ async def api_stats():
         return JSONResponse(status_code=500, content={
             "success": False,
             "data": None,
-            "error": str(e)
+            "error": "Erreur interne du serveur"
         })
 
 
@@ -470,7 +470,7 @@ async def api_numbers_heat():
         return JSONResponse(status_code=500, content={
             "success": False,
             "numbers": {},
-            "error": str(e)
+            "error": "Erreur interne du serveur"
         })
 
 
@@ -520,7 +520,7 @@ async def get_draw_by_date(date: str):
         return JSONResponse(status_code=500, content={
             "success": False,
             "found": False,
-            "message": str(e)
+            "message": "Erreur interne du serveur"
         })
 
 
@@ -582,7 +582,7 @@ async def api_stats_number(number: int):
         logger.error(f"Erreur /api/stats/number/{number}: {e}")
         return JSONResponse(status_code=500, content={
             "success": False,
-            "message": str(e)
+            "message": "Erreur interne du serveur"
         })
 
 
@@ -625,7 +625,7 @@ async def api_stats_top_flop():
         logger.error(f"Erreur /api/stats/top-flop: {e}")
         return JSONResponse(status_code=500, content={
             "success": False,
-            "message": str(e)
+            "message": "Erreur interne du serveur"
         })
 
 

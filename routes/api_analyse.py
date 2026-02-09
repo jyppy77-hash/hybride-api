@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Query, HTTPException
+from fastapi.responses import JSONResponse
 from typing import Optional
 import logging
 
@@ -59,38 +60,16 @@ async def generate_endpoint(
         }
     except Exception as e:
         logger.error(f"Erreur /generate: {e}")
-        return {
+        return JSONResponse(status_code=500, content={
             "success": False,
-            "message": str(e),
+            "message": "Erreur interne lors de la generation",
             "grids": [],
             "metadata": {}
-        }
+        })
 
 
 # =========================
-# META ANALYSE Mock (Phase A)
-# =========================
-
-@router.get("/api/meta-analyse-mock")
-async def api_meta_analyse_mock():
-    """
-    Endpoint mock pour META ANALYSE 75 grilles.
-    Retourne des données statiques pour valider le flux complet.
-    Aucune API externe, aucune IA, données simulées uniquement.
-    """
-    return {
-        "success": True,
-        "graph": {
-            "labels": ["1", "2", "3", "4", "5"],
-            "values": [12, 18, 9, 22, 15]
-        },
-        "analysis": "Analyse simulée : tendances équilibrées, distribution homogène, aucun biais majeur détecté.",
-        "pdf": False
-    }
-
-
-# =========================
-# META ANALYSE Local (Phase B)
+# META ANALYSE Local
 # =========================
 
 @router.get("/api/meta-analyse-local")
@@ -108,6 +87,7 @@ async def api_meta_analyse_local(
     """
     from datetime import datetime, timedelta
 
+    conn = None
     try:
         conn = db_cloudsql.get_connection()
         cursor = conn.cursor()
@@ -179,7 +159,6 @@ async def api_meta_analyse_local(
         window_ids = [row['id'] for row in cursor.fetchall()]
 
         if not window_ids:
-            conn.close()
             raise Exception("Aucun tirage trouvé")
 
         # Créer la clause IN pour filtrer
@@ -210,8 +189,6 @@ async def api_meta_analyse_local(
         dates = cursor.fetchone()
         date_min = dates['min_date']
         date_max = dates['max_date']
-
-        conn.close()
 
         # Construire le graphique (labels = numéros, values = fréquences)
         graph_labels = [str(n['number']) for n in top_numbers]
@@ -272,20 +249,22 @@ async def api_meta_analyse_local(
 
     except Exception as e:
         logger.error(f"Erreur /api/meta-analyse-local: {e}")
-        # Fallback vers données mock en cas d'erreur
-        return {
-            "success": True,
-            "graph": {
-                "labels": ["1", "2", "3", "4", "5"],
-                "values": [12, 18, 9, 22, 15]
-            },
-            "analysis": "Analyse locale indisponible - données de secours affichées.",
+        return JSONResponse(status_code=500, content={
+            "success": False,
+            "graph": None,
+            "analysis": None,
             "pdf": False,
             "meta": {
-                "source": "MOCK_FALLBACK",
-                "error": str(e)
+                "source": "ERROR",
+                "error": "Erreur interne lors de l'analyse"
             }
-        }
+        })
+    finally:
+        if conn:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
 
 @router.post("/api/analyze-custom-grid")
@@ -297,6 +276,7 @@ async def api_analyze_custom_grid(
     Analyse une grille personnalisee composee par l'utilisateur.
     Retourne un score, des badges et des suggestions.
     """
+    conn = None
     try:
         # Validation
         if len(nums) != 5:
@@ -314,7 +294,7 @@ async def api_analyze_custom_grid(
         conn = db_cloudsql.get_connection()
         cursor = conn.cursor()
 
-        # Recuperer les frequences
+        # Recuperer les frequences (conn ferme dans finally)
         cursor.execute("SELECT COUNT(*) as total FROM tirages")
         total_tirages = cursor.fetchone()['total']
 
@@ -377,8 +357,6 @@ async def api_analyze_custom_grid(
             "best_match_date": str(best_match['date_de_tirage']) if best_match else None,
             "best_match_numbers": best_match_numbers
         }
-
-        conn.close()
 
         # Calcul des metriques
         nb_pairs = sum(1 for n in nums if n % 2 == 0)
@@ -480,7 +458,13 @@ async def api_analyze_custom_grid(
 
     except Exception as e:
         logger.error(f"Erreur /api/analyze-custom-grid: {e}")
-        return {
+        return JSONResponse(status_code=500, content={
             "success": False,
-            "error": str(e)
-        }
+            "error": "Erreur interne lors de l'analyse"
+        })
+    finally:
+        if conn:
+            try:
+                conn.close()
+            except Exception:
+                pass
