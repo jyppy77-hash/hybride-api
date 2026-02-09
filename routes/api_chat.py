@@ -5,6 +5,7 @@ import httpx
 from datetime import date, timedelta
 
 from fastapi import APIRouter
+from fastapi.responses import JSONResponse
 
 import json as json_mod
 
@@ -566,17 +567,27 @@ async def api_pitch_grilles(payload: PitchGrillesRequest):
 
     # Validation
     if not payload.grilles or len(payload.grilles) > 5:
-        return {"success": False, "data": None, "error": "Entre 1 et 5 grilles requises"}
+        return JSONResponse(status_code=400, content={
+            "success": False, "data": None, "error": "Entre 1 et 5 grilles requises"
+        })
 
     for i, g in enumerate(payload.grilles):
         if len(g.numeros) != 5:
-            return {"success": False, "data": None, "error": f"Grille {i+1}: 5 num\u00e9ros requis"}
+            return JSONResponse(status_code=400, content={
+                "success": False, "data": None, "error": f"Grille {i+1}: 5 num\u00e9ros requis"
+            })
         if len(set(g.numeros)) != 5:
-            return {"success": False, "data": None, "error": f"Grille {i+1}: num\u00e9ros doivent \u00eatre uniques"}
+            return JSONResponse(status_code=400, content={
+                "success": False, "data": None, "error": f"Grille {i+1}: num\u00e9ros doivent \u00eatre uniques"
+            })
         if not all(1 <= n <= 49 for n in g.numeros):
-            return {"success": False, "data": None, "error": f"Grille {i+1}: num\u00e9ros entre 1 et 49"}
+            return JSONResponse(status_code=400, content={
+                "success": False, "data": None, "error": f"Grille {i+1}: num\u00e9ros entre 1 et 49"
+            })
         if g.chance is not None and not 1 <= g.chance <= 10:
-            return {"success": False, "data": None, "error": f"Grille {i+1}: chance entre 1 et 10"}
+            return JSONResponse(status_code=400, content={
+                "success": False, "data": None, "error": f"Grille {i+1}: chance entre 1 et 10"
+            })
 
     # Preparer le contexte stats
     grilles_data = [{"numeros": g.numeros, "chance": g.chance} for g in payload.grilles]
@@ -585,21 +596,29 @@ async def api_pitch_grilles(payload: PitchGrillesRequest):
         context = prepare_grilles_pitch_context(grilles_data)
     except Exception as e:
         logger.warning(f"[PITCH] Erreur contexte stats: {e}")
-        return {"success": False, "data": None, "error": "Erreur donn\u00e9es statistiques"}
+        return JSONResponse(status_code=500, content={
+            "success": False, "data": None, "error": "Erreur donn\u00e9es statistiques"
+        })
 
     if not context:
-        return {"success": False, "data": None, "error": "Impossible de pr\u00e9parer le contexte"}
+        return JSONResponse(status_code=500, content={
+            "success": False, "data": None, "error": "Impossible de pr\u00e9parer le contexte"
+        })
 
     # Charger le prompt
     system_prompt = load_prompt("PITCH_GRILLE")
     if not system_prompt:
         logger.error("[PITCH] Prompt pitch introuvable")
-        return {"success": False, "data": None, "error": "Prompt pitch introuvable"}
+        return JSONResponse(status_code=500, content={
+            "success": False, "data": None, "error": "Prompt pitch introuvable"
+        })
 
     # Cle API
     gem_api_key = os.environ.get("GEM_API_KEY") or os.environ.get("GEMINI_API_KEY")
     if not gem_api_key:
-        return {"success": False, "data": None, "error": "API Gemini non configur\u00e9e"}
+        return JSONResponse(status_code=500, content={
+            "success": False, "data": None, "error": "API Gemini non configur\u00e9e"
+        })
 
     # Appel Gemini (1 seul appel pour toutes les grilles)
     try:
@@ -627,16 +646,22 @@ async def api_pitch_grilles(payload: PitchGrillesRequest):
 
             if response.status_code != 200:
                 logger.warning(f"[PITCH] Gemini HTTP {response.status_code}")
-                return {"success": False, "data": None, "error": f"Gemini erreur HTTP {response.status_code}"}
+                return JSONResponse(status_code=502, content={
+                    "success": False, "data": None, "error": f"Gemini erreur HTTP {response.status_code}"
+                })
 
             data = response.json()
             candidates = data.get("candidates", [])
             if not candidates:
-                return {"success": False, "data": None, "error": "Gemini: aucune r\u00e9ponse"}
+                return JSONResponse(status_code=502, content={
+                    "success": False, "data": None, "error": "Gemini: aucune r\u00e9ponse"
+                })
 
             text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
             if not text:
-                return {"success": False, "data": None, "error": "Gemini: r\u00e9ponse vide"}
+                return JSONResponse(status_code=502, content={
+                    "success": False, "data": None, "error": "Gemini: r\u00e9ponse vide"
+                })
 
             # Parser le JSON (nettoyer si Gemini ajoute des backticks)
             clean = text.strip()
@@ -651,14 +676,20 @@ async def api_pitch_grilles(payload: PitchGrillesRequest):
                 pitchs = result.get("pitchs", [])
             except (json_mod.JSONDecodeError, AttributeError):
                 logger.warning(f"[PITCH] JSON invalide: {text[:200]}")
-                return {"success": False, "data": None, "error": "Gemini: JSON mal form\u00e9"}
+                return JSONResponse(status_code=502, content={
+                    "success": False, "data": None, "error": "Gemini: JSON mal form\u00e9"
+                })
 
             logger.info(f"[PITCH] OK \u2014 {len(pitchs)} pitchs g\u00e9n\u00e9r\u00e9s")
             return {"success": True, "data": {"pitchs": pitchs}, "error": None}
 
     except httpx.TimeoutException:
         logger.warning("[PITCH] Timeout Gemini (15s)")
-        return {"success": False, "data": None, "error": "Timeout Gemini"}
+        return JSONResponse(status_code=503, content={
+            "success": False, "data": None, "error": "Timeout Gemini"
+        })
     except Exception as e:
         logger.error(f"[PITCH] Erreur: {e}")
-        return {"success": False, "data": None, "error": str(e)}
+        return JSONResponse(status_code=500, content={
+            "success": False, "data": None, "error": str(e)
+        })

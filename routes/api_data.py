@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Query
+from fastapi.responses import JSONResponse
 from datetime import timedelta
 import logging
 
@@ -31,11 +32,11 @@ async def api_tirages_count():
         }
     except Exception as e:
         logger.error(f"Erreur /api/tirages/count: {e}")
-        return {
+        return JSONResponse(status_code=500, content={
             "success": False,
             "data": None,
             "error": str(e)
-        }
+        })
 
 
 @router.get("/api/tirages/latest")
@@ -55,18 +56,18 @@ async def api_tirages_latest():
                 "error": None
             }
         else:
-            return {
+            return JSONResponse(status_code=404, content={
                 "success": False,
                 "data": None,
                 "error": "Aucun tirage trouve"
-            }
+            })
     except Exception as e:
         logger.error(f"Erreur /api/tirages/latest: {e}")
-        return {
+        return JSONResponse(status_code=500, content={
             "success": False,
             "data": None,
             "error": str(e)
-        }
+        })
 
 
 @router.get("/api/tirages/list")
@@ -98,11 +99,11 @@ async def api_tirages_list(
         }
     except Exception as e:
         logger.error(f"Erreur /api/tirages/list: {e}")
-        return {
+        return JSONResponse(status_code=500, content={
             "success": False,
             "data": None,
             "error": str(e)
-        }
+        })
 
 
 # =========================
@@ -132,20 +133,20 @@ async def database_info():
                 "file_size_mb": 0  # N/A pour Cloud SQL
             }
         else:
-            return {
+            return JSONResponse(status_code=503, content={
                 "status": "error",
                 "exists": False,
                 "is_ready": False,
                 "error": result.get('error', 'Connexion echouee')
-            }
+            })
     except Exception as e:
         logger.error(f"Erreur /database-info: {e}")
-        return {
+        return JSONResponse(status_code=500, content={
             "status": "error",
             "exists": False,
             "is_ready": False,
             "error": str(e)
-        }
+        })
 
 
 # =========================
@@ -160,15 +161,17 @@ async def api_database_info():
     """
     try:
         conn = db_cloudsql.get_connection()
-        cursor = conn.cursor()
-        cursor.execute("""
-            SELECT COUNT(*) as total,
-                   MIN(date_de_tirage) as date_min,
-                   MAX(date_de_tirage) as date_max
-            FROM tirages
-        """)
-        row = cursor.fetchone()
-        conn.close()
+        try:
+            cursor = conn.cursor()
+            cursor.execute("""
+                SELECT COUNT(*) as total,
+                       MIN(date_de_tirage) as date_min,
+                       MAX(date_de_tirage) as date_max
+                FROM tirages
+            """)
+            row = cursor.fetchone()
+        finally:
+            conn.close()
 
         return {
             "total_draws": row["total"],
@@ -177,11 +180,11 @@ async def api_database_info():
         }
     except Exception as e:
         logger.error(f"Erreur /api/database-info: {e}")
-        return {
+        return JSONResponse(status_code=500, content={
             "total_draws": None,
             "first_draw": None,
             "last_draw": None
-        }
+        })
 
 
 # =========================
@@ -199,14 +202,16 @@ async def api_meta_windows_info():
 
     try:
         conn = db_cloudsql.get_connection()
-        cursor = conn.cursor()
+        try:
+            cursor = conn.cursor()
 
-        cursor.execute("""
-            SELECT date_de_tirage FROM tirages
-            ORDER BY date_de_tirage DESC
-        """)
-        all_dates = [row["date_de_tirage"] for row in cursor.fetchall()]
-        conn.close()
+            cursor.execute("""
+                SELECT date_de_tirage FROM tirages
+                ORDER BY date_de_tirage DESC
+            """)
+            all_dates = [row["date_de_tirage"] for row in cursor.fetchall()]
+        finally:
+            conn.close()
 
         total = len(all_dates)
         last_draw = all_dates[0] if all_dates else None
@@ -259,7 +264,7 @@ async def api_meta_windows_info():
 
     except Exception as e:
         logger.error(f"Erreur /api/meta-windows-info: {e}")
-        return {"tirages": None, "annees": None}
+        return JSONResponse(status_code=500, content={"tirages": None, "annees": None})
 
 
 @router.get("/stats")
@@ -275,10 +280,10 @@ async def stats():
         }
     except Exception as e:
         logger.error(f"Erreur /stats: {e}")
-        return {
+        return JSONResponse(status_code=500, content={
             "success": False,
             "message": str(e)
-        }
+        })
 
 
 # =========================
@@ -301,57 +306,58 @@ async def api_stats():
     """
     try:
         conn = db_cloudsql.get_connection()
-        cursor = conn.cursor()
+        try:
+            cursor = conn.cursor()
 
-        # Total tirages et periode
-        cursor.execute("""
-            SELECT
-                COUNT(*) as total,
-                MIN(date_de_tirage) as date_min,
-                MAX(date_de_tirage) as date_max
-            FROM tirages
-        """)
-        info = cursor.fetchone()
-        total_tirages = info['total']
-        date_min = str(info['date_min']) if info['date_min'] else None
-        date_max = str(info['date_max']) if info['date_max'] else None
-
-        # Calculer frequences et retards pour chaque numero (1-49)
-        frequences = {}
-        retards = {}
-
-        for num in range(1, 50):
-            # Frequence
+            # Total tirages et periode
             cursor.execute("""
-                SELECT COUNT(*) as freq
+                SELECT
+                    COUNT(*) as total,
+                    MIN(date_de_tirage) as date_min,
+                    MAX(date_de_tirage) as date_max
                 FROM tirages
-                WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s
-                   OR boule_4 = %s OR boule_5 = %s
-            """, (num, num, num, num, num))
-            freq_result = cursor.fetchone()
-            frequences[str(num)] = freq_result['freq'] if freq_result else 0
+            """)
+            info = cursor.fetchone()
+            total_tirages = info['total']
+            date_min = str(info['date_min']) if info['date_min'] else None
+            date_max = str(info['date_max']) if info['date_max'] else None
 
-            # Retard (nombre de tirages depuis derniere apparition)
-            cursor.execute("""
-                SELECT MAX(date_de_tirage) as last_date
-                FROM tirages
-                WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s
-                   OR boule_4 = %s OR boule_5 = %s
-            """, (num, num, num, num, num))
-            last_result = cursor.fetchone()
+            # Calculer frequences et retards pour chaque numero (1-49)
+            frequences = {}
+            retards = {}
 
-            if last_result and last_result['last_date']:
+            for num in range(1, 50):
+                # Frequence
                 cursor.execute("""
-                    SELECT COUNT(*) as gap
+                    SELECT COUNT(*) as freq
                     FROM tirages
-                    WHERE date_de_tirage > %s
-                """, (last_result['last_date'],))
-                gap_result = cursor.fetchone()
-                retards[str(num)] = gap_result['gap'] if gap_result else 0
-            else:
-                retards[str(num)] = total_tirages
+                    WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s
+                       OR boule_4 = %s OR boule_5 = %s
+                """, (num, num, num, num, num))
+                freq_result = cursor.fetchone()
+                frequences[str(num)] = freq_result['freq'] if freq_result else 0
 
-        conn.close()
+                # Retard (nombre de tirages depuis derniere apparition)
+                cursor.execute("""
+                    SELECT MAX(date_de_tirage) as last_date
+                    FROM tirages
+                    WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s
+                       OR boule_4 = %s OR boule_5 = %s
+                """, (num, num, num, num, num))
+                last_result = cursor.fetchone()
+
+                if last_result and last_result['last_date']:
+                    cursor.execute("""
+                        SELECT COUNT(*) as gap
+                        FROM tirages
+                        WHERE date_de_tirage > %s
+                    """, (last_result['last_date'],))
+                    gap_result = cursor.fetchone()
+                    retards[str(num)] = gap_result['gap'] if gap_result else 0
+                else:
+                    retards[str(num)] = total_tirages
+        finally:
+            conn.close()
 
         # Trier pour top chauds et froids
         sorted_by_freq = sorted(
@@ -381,11 +387,11 @@ async def api_stats():
 
     except Exception as e:
         logger.error(f"Erreur /api/stats: {e}")
-        return {
+        return JSONResponse(status_code=500, content={
             "success": False,
             "data": None,
             "error": str(e)
-        }
+        })
 
 
 @router.get("/api/numbers-heat")
@@ -396,42 +402,43 @@ async def api_numbers_heat():
     """
     try:
         conn = db_cloudsql.get_connection()
-        cursor = conn.cursor()
+        try:
+            cursor = conn.cursor()
 
-        # Total tirages
-        cursor.execute("SELECT COUNT(*) as total FROM tirages")
-        total = cursor.fetchone()['total']
+            # Total tirages
+            cursor.execute("SELECT COUNT(*) as total FROM tirages")
+            total = cursor.fetchone()['total']
 
-        # Calculer frequences
-        numbers_data = {}
-        frequencies = []
+            # Calculer frequences
+            numbers_data = {}
+            frequencies = []
 
-        for num in range(1, 50):
-            cursor.execute("""
-                SELECT COUNT(*) as freq
-                FROM tirages
-                WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s
-                   OR boule_4 = %s OR boule_5 = %s
-            """, (num, num, num, num, num))
-            freq = cursor.fetchone()['freq']
+            for num in range(1, 50):
+                cursor.execute("""
+                    SELECT COUNT(*) as freq
+                    FROM tirages
+                    WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s
+                       OR boule_4 = %s OR boule_5 = %s
+                """, (num, num, num, num, num))
+                freq = cursor.fetchone()['freq']
 
-            # Derniere apparition
-            cursor.execute("""
-                SELECT MAX(date_de_tirage) as last_date
-                FROM tirages
-                WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s
-                   OR boule_4 = %s OR boule_5 = %s
-            """, (num, num, num, num, num))
-            last = cursor.fetchone()
-            last_date = str(last['last_date']) if last and last['last_date'] else None
+                # Derniere apparition
+                cursor.execute("""
+                    SELECT MAX(date_de_tirage) as last_date
+                    FROM tirages
+                    WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s
+                       OR boule_4 = %s OR boule_5 = %s
+                """, (num, num, num, num, num))
+                last = cursor.fetchone()
+                last_date = str(last['last_date']) if last and last['last_date'] else None
 
-            numbers_data[num] = {
-                "frequency": freq,
-                "last_draw": last_date
-            }
-            frequencies.append(freq)
-
-        conn.close()
+                numbers_data[num] = {
+                    "frequency": freq,
+                    "last_draw": last_date
+                }
+                frequencies.append(freq)
+        finally:
+            conn.close()
 
         # Calculer seuils (top 33% = chaud, bottom 33% = froid)
         frequencies.sort(reverse=True)
@@ -460,11 +467,11 @@ async def api_numbers_heat():
 
     except Exception as e:
         logger.error(f"Erreur /api/numbers-heat: {e}")
-        return {
+        return JSONResponse(status_code=500, content={
             "success": False,
             "numbers": {},
             "error": str(e)
-        }
+        })
 
 
 @router.get("/draw/{date}")
@@ -474,16 +481,18 @@ async def get_draw_by_date(date: str):
     """
     try:
         conn = db_cloudsql.get_connection()
-        cursor = conn.cursor()
+        try:
+            cursor = conn.cursor()
 
-        cursor.execute("""
-            SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chance
-            FROM tirages
-            WHERE date_de_tirage = %s
-        """, (date,))
+            cursor.execute("""
+                SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chance
+                FROM tirages
+                WHERE date_de_tirage = %s
+            """, (date,))
 
-        result = cursor.fetchone()
-        conn.close()
+            result = cursor.fetchone()
+        finally:
+            conn.close()
 
         if result:
             return {
@@ -500,19 +509,19 @@ async def get_draw_by_date(date: str):
                 }
             }
         else:
-            return {
+            return JSONResponse(status_code=404, content={
                 "success": True,
                 "found": False,
                 "message": f"Aucun tirage pour la date {date}"
-            }
+            })
 
     except Exception as e:
         logger.error(f"Erreur /draw/{date}: {e}")
-        return {
+        return JSONResponse(status_code=500, content={
             "success": False,
             "found": False,
             "message": str(e)
-        }
+        })
 
 
 @router.get("/api/stats/number/{number}")
@@ -522,39 +531,42 @@ async def api_stats_number(number: int):
     """
     try:
         if not 1 <= number <= 49:
-            return {"success": False, "message": "Numero doit etre entre 1 et 49"}
+            return JSONResponse(status_code=400, content={
+                "success": False, "message": "Numero doit etre entre 1 et 49"
+            })
 
         conn = db_cloudsql.get_connection()
-        cursor = conn.cursor()
+        try:
+            cursor = conn.cursor()
 
-        # Toutes les apparitions
-        cursor.execute("""
-            SELECT date_de_tirage
-            FROM tirages
-            WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s
-               OR boule_4 = %s OR boule_5 = %s
-            ORDER BY date_de_tirage ASC
-        """, (number, number, number, number, number))
-
-        results = cursor.fetchall()
-        appearance_dates = [str(r['date_de_tirage']) for r in results]
-
-        total_appearances = len(appearance_dates)
-        first_appearance = appearance_dates[0] if appearance_dates else None
-        last_appearance = appearance_dates[-1] if appearance_dates else None
-
-        # Ecart actuel
-        current_gap = 0
-        if last_appearance:
+            # Toutes les apparitions
             cursor.execute("""
-                SELECT COUNT(*) as gap
+                SELECT date_de_tirage
                 FROM tirages
-                WHERE date_de_tirage > %s
-            """, (last_appearance,))
-            gap_result = cursor.fetchone()
-            current_gap = gap_result['gap'] if gap_result else 0
+                WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s
+                   OR boule_4 = %s OR boule_5 = %s
+                ORDER BY date_de_tirage ASC
+            """, (number, number, number, number, number))
 
-        conn.close()
+            results = cursor.fetchall()
+            appearance_dates = [str(r['date_de_tirage']) for r in results]
+
+            total_appearances = len(appearance_dates)
+            first_appearance = appearance_dates[0] if appearance_dates else None
+            last_appearance = appearance_dates[-1] if appearance_dates else None
+
+            # Ecart actuel
+            current_gap = 0
+            if last_appearance:
+                cursor.execute("""
+                    SELECT COUNT(*) as gap
+                    FROM tirages
+                    WHERE date_de_tirage > %s
+                """, (last_appearance,))
+                gap_result = cursor.fetchone()
+                current_gap = gap_result['gap'] if gap_result else 0
+        finally:
+            conn.close()
 
         return {
             "success": True,
@@ -568,10 +580,10 @@ async def api_stats_number(number: int):
 
     except Exception as e:
         logger.error(f"Erreur /api/stats/number/{number}: {e}")
-        return {
+        return JSONResponse(status_code=500, content={
             "success": False,
             "message": str(e)
-        }
+        })
 
 
 @router.get("/api/stats/top-flop")
@@ -581,22 +593,23 @@ async def api_stats_top_flop():
     """
     try:
         conn = db_cloudsql.get_connection()
-        cursor = conn.cursor()
+        try:
+            cursor = conn.cursor()
 
-        # Calculer frequences
-        numbers_freq = []
+            # Calculer frequences
+            numbers_freq = []
 
-        for num in range(1, 50):
-            cursor.execute("""
-                SELECT COUNT(*) as freq
-                FROM tirages
-                WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s
-                   OR boule_4 = %s OR boule_5 = %s
-            """, (num, num, num, num, num))
-            freq = cursor.fetchone()['freq']
-            numbers_freq.append({"number": num, "count": freq})
-
-        conn.close()
+            for num in range(1, 50):
+                cursor.execute("""
+                    SELECT COUNT(*) as freq
+                    FROM tirages
+                    WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s
+                       OR boule_4 = %s OR boule_5 = %s
+                """, (num, num, num, num, num))
+                freq = cursor.fetchone()['freq']
+                numbers_freq.append({"number": num, "count": freq})
+        finally:
+            conn.close()
 
         # Trier
         top = sorted(numbers_freq, key=lambda x: (-x['count'], x['number']))
@@ -610,10 +623,10 @@ async def api_stats_top_flop():
 
     except Exception as e:
         logger.error(f"Erreur /api/stats/top-flop: {e}")
-        return {
+        return JSONResponse(status_code=500, content={
             "success": False,
             "message": str(e)
-        }
+        })
 
 
 # =========================
@@ -638,9 +651,9 @@ def get_numero_stats(numero: int, type_num: str = "principal") -> dict:
         return None
 
     conn = db_cloudsql.get_connection()
-    cursor = conn.cursor()
-
     try:
+        cursor = conn.cursor()
+
         # Total tirages et periode
         cursor.execute("""
             SELECT COUNT(*) as total,
@@ -775,29 +788,28 @@ def get_numero_stats(numero: int, type_num: str = "principal") -> dict:
         else:
             categorie = "neutre"
 
-        conn.close()
-
-        pourcentage = round(frequence_totale / total_tirages * 100, 2) if total_tirages else 0
-
-        return {
-            "numero": numero,
-            "type": type_num,
-            "frequence_totale": frequence_totale,
-            "pourcentage_apparition": f"{pourcentage}%",
-            "derniere_sortie": str(derniere_sortie) if derniere_sortie else None,
-            "ecart_actuel": ecart_actuel,
-            "ecart_moyen": ecart_moyen,
-            "classement": classement,
-            "classement_sur": classement_sur,
-            "categorie": categorie,
-            "total_tirages": total_tirages,
-            "periode": f"{date_min} au {date_max}" if date_min and date_max else "N/A"
-        }
-
     except Exception as e:
         logger.error(f"Erreur get_numero_stats({numero}, {type_num}): {e}")
-        conn.close()
         return None
+    finally:
+        conn.close()
+
+    pourcentage = round(frequence_totale / total_tirages * 100, 2) if total_tirages else 0
+
+    return {
+        "numero": numero,
+        "type": type_num,
+        "frequence_totale": frequence_totale,
+        "pourcentage_apparition": f"{pourcentage}%",
+        "derniere_sortie": str(derniere_sortie) if derniere_sortie else None,
+        "ecart_actuel": ecart_actuel,
+        "ecart_moyen": ecart_moyen,
+        "classement": classement,
+        "classement_sur": classement_sur,
+        "categorie": categorie,
+        "total_tirages": total_tirages,
+        "periode": f"{date_min} au {date_max}" if date_min and date_max else "N/A"
+    }
 
 
 @router.get("/api/hybride-stats")
@@ -809,11 +821,15 @@ async def api_hybride_stats(
     Retourne les statistiques completes d'un numero pour le chatbot HYBRIDE.
     """
     if type not in ("principal", "chance"):
-        return {"success": False, "data": None, "error": "type doit etre 'principal' ou 'chance'"}
+        return JSONResponse(status_code=400, content={
+            "success": False, "data": None, "error": "type doit etre 'principal' ou 'chance'"
+        })
 
     stats = get_numero_stats(numero, type)
     if stats is None:
-        return {"success": False, "data": None, "error": f"Numero {numero} invalide pour type {type}"}
+        return JSONResponse(status_code=404, content={
+            "success": False, "data": None, "error": f"Numero {numero} invalide pour type {type}"
+        })
 
     return {"success": True, "data": stats, "error": None}
 
@@ -837,9 +853,9 @@ def analyze_grille_for_chat(nums: list, chance: int = None) -> dict:
     nums = sorted(nums)
 
     conn = db_cloudsql.get_connection()
-    cursor = conn.cursor()
-
     try:
+        cursor = conn.cursor()
+
         # Total tirages
         cursor.execute("SELECT COUNT(*) as total FROM tirages")
         total_tirages = cursor.fetchone()['total']
@@ -918,101 +934,110 @@ def analyze_grille_for_chat(nums: list, chance: int = None) -> dict:
             best_match_count = best_match['match_count']
             best_match_date = str(best_match['date_de_tirage'])
 
-        conn.close()
-
-        # Metriques de la grille
-        nb_pairs = sum(1 for n in nums if n % 2 == 0)
-        nb_impairs = 5 - nb_pairs
-        nb_bas = sum(1 for n in nums if n <= 24)
-        nb_hauts = 5 - nb_bas
-        somme = sum(nums)
-        dispersion = max(nums) - min(nums)
-        consecutifs = sum(1 for i in range(4) if nums[i+1] - nums[i] == 1)
-
-        # Score de conformite
-        score_conformite = 100
-        if nb_pairs < 1 or nb_pairs > 4:
-            score_conformite -= 15
-        if nb_bas < 1 or nb_bas > 4:
-            score_conformite -= 10
-        if somme < 70 or somme > 150:
-            score_conformite -= 20
-        if dispersion < 15:
-            score_conformite -= 25
-        if consecutifs > 2:
-            score_conformite -= 15
-
-        # Score frequence
-        freq_moyenne = sum(frequencies) / 5
-        freq_attendue = total_tirages * 5 / 49
-        score_freq = min(100, (freq_moyenne / freq_attendue) * 100)
-
-        # Score final
-        conformite_pct = int(0.6 * score_conformite + 0.4 * score_freq)
-        conformite_pct = max(0, min(100, conformite_pct))
-
-        # Badges
-        badges = []
-        if freq_moyenne > freq_attendue * 1.1:
-            badges.append("Num\u00e9ros chauds")
-        elif freq_moyenne < freq_attendue * 0.9:
-            badges.append("Mix de retards")
-        else:
-            badges.append("\u00c9quilibre")
-        if dispersion > 35:
-            badges.append("Large spectre")
-        if nb_pairs == 2 or nb_pairs == 3:
-            badges.append("Pair/Impair OK")
-
-        return {
-            "numeros": nums,
-            "chance": chance,
-            "analyse": {
-                "somme": somme,
-                "somme_ok": 70 <= somme <= 150,
-                "pairs": nb_pairs,
-                "impairs": nb_impairs,
-                "equilibre_pair_impair": 1 <= nb_pairs <= 4,
-                "bas": nb_bas,
-                "hauts": nb_hauts,
-                "equilibre_bas_haut": 1 <= nb_bas <= 4,
-                "dispersion": dispersion,
-                "dispersion_ok": dispersion >= 15,
-                "consecutifs": consecutifs,
-                "numeros_chauds": numeros_chauds,
-                "numeros_froids": numeros_froids,
-                "numeros_neutres": numeros_neutres,
-                "conformite_pct": conformite_pct,
-                "badges": badges,
-            },
-            "historique": {
-                "deja_sortie": len(exact_dates) > 0,
-                "exact_dates": exact_dates,
-                "meilleure_correspondance": {
-                    "nb_numeros_communs": best_match_count,
-                    "date": best_match_date,
-                    "numeros_communs": best_match_numbers,
-                }
-            }
-        }
-
     except Exception as e:
         logger.error(f"Erreur analyze_grille_for_chat({nums}): {e}")
-        conn.close()
         return None
+    finally:
+        conn.close()
+
+    # Metriques de la grille
+    nb_pairs = sum(1 for n in nums if n % 2 == 0)
+    nb_impairs = 5 - nb_pairs
+    nb_bas = sum(1 for n in nums if n <= 24)
+    nb_hauts = 5 - nb_bas
+    somme = sum(nums)
+    dispersion = max(nums) - min(nums)
+    consecutifs = sum(1 for i in range(4) if nums[i+1] - nums[i] == 1)
+
+    # Score de conformite
+    score_conformite = 100
+    if nb_pairs < 1 or nb_pairs > 4:
+        score_conformite -= 15
+    if nb_bas < 1 or nb_bas > 4:
+        score_conformite -= 10
+    if somme < 70 or somme > 150:
+        score_conformite -= 20
+    if dispersion < 15:
+        score_conformite -= 25
+    if consecutifs > 2:
+        score_conformite -= 15
+
+    # Score frequence
+    freq_moyenne = sum(frequencies) / 5
+    freq_attendue = total_tirages * 5 / 49
+    score_freq = min(100, (freq_moyenne / freq_attendue) * 100)
+
+    # Score final
+    conformite_pct = int(0.6 * score_conformite + 0.4 * score_freq)
+    conformite_pct = max(0, min(100, conformite_pct))
+
+    # Badges
+    badges = []
+    if freq_moyenne > freq_attendue * 1.1:
+        badges.append("Num\u00e9ros chauds")
+    elif freq_moyenne < freq_attendue * 0.9:
+        badges.append("Mix de retards")
+    else:
+        badges.append("\u00c9quilibre")
+    if dispersion > 35:
+        badges.append("Large spectre")
+    if nb_pairs == 2 or nb_pairs == 3:
+        badges.append("Pair/Impair OK")
+
+    return {
+        "numeros": nums,
+        "chance": chance,
+        "analyse": {
+            "somme": somme,
+            "somme_ok": 70 <= somme <= 150,
+            "pairs": nb_pairs,
+            "impairs": nb_impairs,
+            "equilibre_pair_impair": 1 <= nb_pairs <= 4,
+            "bas": nb_bas,
+            "hauts": nb_hauts,
+            "equilibre_bas_haut": 1 <= nb_bas <= 4,
+            "dispersion": dispersion,
+            "dispersion_ok": dispersion >= 15,
+            "consecutifs": consecutifs,
+            "numeros_chauds": numeros_chauds,
+            "numeros_froids": numeros_froids,
+            "numeros_neutres": numeros_neutres,
+            "conformite_pct": conformite_pct,
+            "badges": badges,
+        },
+        "historique": {
+            "deja_sortie": len(exact_dates) > 0,
+            "exact_dates": exact_dates,
+            "meilleure_correspondance": {
+                "nb_numeros_communs": best_match_count,
+                "date": best_match_date,
+                "numeros_communs": best_match_numbers,
+            }
+        }
+    }
 
 
 # =========================
 # Phase 3 — Classements, comparaisons, categories
 # =========================
 
+_ALLOWED_TYPE_NUM = {"principal", "chance"}
+
 def _get_all_frequencies(cursor, type_num="principal", date_from=None):
     """
     Calcule la frequence de TOUS les numeros en UNE seule requete SQL.
     Retourne un dict {numero: frequence}.
     """
+    if type_num not in _ALLOWED_TYPE_NUM:
+        raise ValueError(f"type_num invalide: {type_num}")
+
     if type_num == "principal":
-        date_filter = f"WHERE date_de_tirage >= '{date_from}'" if date_from else ""
+        if date_from:
+            date_filter = "WHERE date_de_tirage >= %s"
+            params = [date_from] * 5
+        else:
+            date_filter = ""
+            params = []
         cursor.execute(f"""
             SELECT num, COUNT(*) as freq FROM (
                 SELECT boule_1 as num FROM tirages {date_filter}
@@ -1023,15 +1048,20 @@ def _get_all_frequencies(cursor, type_num="principal", date_from=None):
             ) t
             GROUP BY num
             ORDER BY num
-        """)
+        """, params)
     else:
-        date_filter = f"WHERE date_de_tirage >= '{date_from}'" if date_from else ""
+        if date_from:
+            date_filter = "WHERE date_de_tirage >= %s"
+            params = [date_from]
+        else:
+            date_filter = ""
+            params = []
         cursor.execute(f"""
             SELECT numero_chance as num, COUNT(*) as freq
             FROM tirages {date_filter}
             GROUP BY numero_chance
             ORDER BY numero_chance
-        """)
+        """, params)
     return {row['num']: row['freq'] for row in cursor.fetchall()}
 
 
@@ -1089,9 +1119,9 @@ def get_classement_numeros(type_num="principal", tri="frequence_desc", limit=5):
         limit: nombre de resultats (defaut 5)
     """
     conn = db_cloudsql.get_connection()
-    cursor = conn.cursor()
-
     try:
+        cursor = conn.cursor()
+
         # Total tirages et periode
         cursor.execute("""
             SELECT COUNT(*) as total,
@@ -1113,56 +1143,54 @@ def get_classement_numeros(type_num="principal", tri="frequence_desc", limit=5):
         # Categories chaud/froid (sur 2 ans)
         date_2ans = date_max - timedelta(days=730)
         freq_2ans = _get_all_frequencies(cursor, type_num, date_from=date_2ans)
-
-        conn.close()
-
-        freq_2ans_values = sorted(freq_2ans.values(), reverse=True)
-        tiers = len(freq_2ans_values) // 3
-        seuil_chaud = freq_2ans_values[tiers] if tiers < len(freq_2ans_values) else 0
-        seuil_froid = freq_2ans_values[2 * tiers] if 2 * tiers < len(freq_2ans_values) else 0
-
-        # Construire la liste
-        num_range = range(1, 50) if type_num == "principal" else range(1, 11)
-        items = []
-        for num in num_range:
-            f = freq_map.get(num, 0)
-            e = ecart_map.get(num, 0)
-            f2 = freq_2ans.get(num, 0)
-
-            if f2 >= seuil_chaud:
-                cat = "chaud"
-            elif f2 <= seuil_froid:
-                cat = "froid"
-            else:
-                cat = "neutre"
-
-            items.append({
-                "numero": num,
-                "frequence": f,
-                "ecart_actuel": e,
-                "categorie": cat,
-            })
-
-        # Trier selon le critere
-        if tri == "frequence_desc":
-            items.sort(key=lambda x: (-x["frequence"], x["numero"]))
-        elif tri == "frequence_asc":
-            items.sort(key=lambda x: (x["frequence"], x["numero"]))
-        elif tri == "ecart_desc":
-            items.sort(key=lambda x: (-x["ecart_actuel"], x["numero"]))
-        elif tri == "ecart_asc":
-            items.sort(key=lambda x: (x["ecart_actuel"], x["numero"]))
-
-        return {
-            "items": items[:limit],
-            "total_tirages": total,
-            "periode": f"{date_min} au {date_max}" if date_min and date_max else "N/A",
-        }
-
     except Exception as e:
         logger.error(f"Erreur get_classement_numeros: {e}")
-        conn.close()
         return None
+    finally:
+        conn.close()
+
+    freq_2ans_values = sorted(freq_2ans.values(), reverse=True)
+    tiers = len(freq_2ans_values) // 3
+    seuil_chaud = freq_2ans_values[tiers] if tiers < len(freq_2ans_values) else 0
+    seuil_froid = freq_2ans_values[2 * tiers] if 2 * tiers < len(freq_2ans_values) else 0
+
+    # Construire la liste
+    num_range = range(1, 50) if type_num == "principal" else range(1, 11)
+    items = []
+    for num in num_range:
+        f = freq_map.get(num, 0)
+        e = ecart_map.get(num, 0)
+        f2 = freq_2ans.get(num, 0)
+
+        if f2 >= seuil_chaud:
+            cat = "chaud"
+        elif f2 <= seuil_froid:
+            cat = "froid"
+        else:
+            cat = "neutre"
+
+        items.append({
+            "numero": num,
+            "frequence": f,
+            "ecart_actuel": e,
+            "categorie": cat,
+        })
+
+    # Trier selon le critere
+    if tri == "frequence_desc":
+        items.sort(key=lambda x: (-x["frequence"], x["numero"]))
+    elif tri == "frequence_asc":
+        items.sort(key=lambda x: (x["frequence"], x["numero"]))
+    elif tri == "ecart_desc":
+        items.sort(key=lambda x: (-x["ecart_actuel"], x["numero"]))
+    elif tri == "ecart_asc":
+        items.sort(key=lambda x: (x["ecart_actuel"], x["numero"]))
+
+    return {
+        "items": items[:limit],
+        "total_tirages": total,
+        "periode": f"{date_min} au {date_max}" if date_min and date_max else "N/A",
+    }
 
 
 def get_comparaison_numeros(num1, num2, type_num="principal"):
@@ -1190,47 +1218,46 @@ def get_numeros_par_categorie(categorie, type_num="principal"):
     Retourne la liste des numeros d'une categorie (chaud/froid/neutre).
     """
     conn = db_cloudsql.get_connection()
-    cursor = conn.cursor()
-
     try:
+        cursor = conn.cursor()
+
         cursor.execute("SELECT MAX(date_de_tirage) as d FROM tirages")
         date_max = cursor.fetchone()['d']
         date_2ans = date_max - timedelta(days=730)
 
         freq_2ans = _get_all_frequencies(cursor, type_num, date_from=date_2ans)
-        conn.close()
-
-        freq_values = sorted(freq_2ans.values(), reverse=True)
-        tiers = len(freq_values) // 3
-        seuil_chaud = freq_values[tiers] if tiers < len(freq_values) else 0
-        seuil_froid = freq_values[2 * tiers] if 2 * tiers < len(freq_values) else 0
-
-        result = []
-        for num, f in sorted(freq_2ans.items()):
-            if categorie == "chaud" and f >= seuil_chaud:
-                result.append({"numero": num, "frequence_2ans": f})
-            elif categorie == "froid" and f <= seuil_froid:
-                result.append({"numero": num, "frequence_2ans": f})
-            elif categorie == "neutre" and seuil_froid < f < seuil_chaud:
-                result.append({"numero": num, "frequence_2ans": f})
-
-        # Trier par frequence desc pour chaud, asc pour froid
-        if categorie == "froid":
-            result.sort(key=lambda x: x["frequence_2ans"])
-        else:
-            result.sort(key=lambda x: -x["frequence_2ans"])
-
-        return {
-            "categorie": categorie,
-            "numeros": result,
-            "count": len(result),
-            "periode_analyse": "2 derni\u00e8res ann\u00e9es",
-        }
-
     except Exception as e:
         logger.error(f"Erreur get_numeros_par_categorie: {e}")
-        conn.close()
         return None
+    finally:
+        conn.close()
+
+    freq_values = sorted(freq_2ans.values(), reverse=True)
+    tiers = len(freq_values) // 3
+    seuil_chaud = freq_values[tiers] if tiers < len(freq_values) else 0
+    seuil_froid = freq_values[2 * tiers] if 2 * tiers < len(freq_values) else 0
+
+    result = []
+    for num, f in sorted(freq_2ans.items()):
+        if categorie == "chaud" and f >= seuil_chaud:
+            result.append({"numero": num, "frequence_2ans": f})
+        elif categorie == "froid" and f <= seuil_froid:
+            result.append({"numero": num, "frequence_2ans": f})
+        elif categorie == "neutre" and seuil_froid < f < seuil_chaud:
+            result.append({"numero": num, "frequence_2ans": f})
+
+    # Trier par frequence desc pour chaud, asc pour froid
+    if categorie == "froid":
+        result.sort(key=lambda x: x["frequence_2ans"])
+    else:
+        result.sort(key=lambda x: -x["frequence_2ans"])
+
+    return {
+        "categorie": categorie,
+        "numeros": result,
+        "count": len(result),
+        "periode_analyse": "2 derni\u00e8res ann\u00e9es",
+    }
 
 
 # =========================
@@ -1249,9 +1276,9 @@ def prepare_grilles_pitch_context(grilles: list) -> str:
         str: bloc de contexte formate pour Gemini
     """
     conn = db_cloudsql.get_connection()
-    cursor = conn.cursor()
-
     try:
+        cursor = conn.cursor()
+
         # Total tirages et periode
         cursor.execute("""
             SELECT COUNT(*) as total,
@@ -1273,72 +1300,71 @@ def prepare_grilles_pitch_context(grilles: list) -> str:
         date_2ans = date_max - timedelta(days=730)
         freq_2ans = _get_all_frequencies(cursor, "principal", date_from=date_2ans)
 
-        conn.close()
-
-        # Seuils
-        freq_2ans_values = sorted(freq_2ans.values(), reverse=True)
-        tiers = len(freq_2ans_values) // 3
-        seuil_chaud = freq_2ans_values[tiers] if tiers < len(freq_2ans_values) else 0
-        seuil_froid = freq_2ans_values[2 * tiers] if 2 * tiers < len(freq_2ans_values) else 0
-
-        blocks = []
-        for i, grille in enumerate(grilles, 1):
-            nums = sorted(grille["numeros"])
-            chance = grille.get("chance")
-
-            # Metriques grille
-            somme = sum(nums)
-            nb_pairs = sum(1 for n in nums if n % 2 == 0)
-            dispersion = max(nums) - min(nums)
-
-            somme_ok = "\u2713" if 100 <= somme <= 140 else "\u2717"
-            equil_ok = "\u2713" if 1 <= nb_pairs <= 4 else "\u2717"
-
-            nums_str = " ".join(str(n) for n in nums)
-            chance_str = f" + Chance {chance}" if chance else ""
-
-            lines = [f"[GRILLE {i} \u2014 Num\u00e9ros : {nums_str}{chance_str}]"]
-            lines.append(f"Somme : {somme} (id\u00e9al 100-140) {somme_ok}")
-            lines.append(f"Pairs : {nb_pairs} / Impairs : {5 - nb_pairs} {equil_ok}")
-            lines.append(f"Dispersion : {dispersion}")
-            lines.append(f"Total tirages analys\u00e9s : {total}")
-
-            # Stats par numero
-            chauds = []
-            froids = []
-            for n in nums:
-                f = freq_map.get(n, 0)
-                e = ecart_map.get(n, 0)
-                f2 = freq_2ans.get(n, 0)
-
-                if f2 >= seuil_chaud:
-                    cat = "CHAUD"
-                    chauds.append(n)
-                elif f2 <= seuil_froid:
-                    cat = "FROID"
-                    froids.append(n)
-                else:
-                    cat = "NEUTRE"
-
-                lines.append(f"Num\u00e9ro {n} : {f} sorties, \u00e9cart {e}, {cat}")
-
-            # Badges
-            badges = []
-            if len(chauds) >= 3:
-                badges.append("Num\u00e9ros chauds")
-            elif len(froids) >= 3:
-                badges.append("Mix de retards")
-            else:
-                badges.append("\u00c9quilibre")
-            if 1 <= nb_pairs <= 4:
-                badges.append("Pair/Impair OK")
-
-            lines.append(f"Badges : {', '.join(badges)}")
-            blocks.append("\n".join(lines))
-
-        return "\n\n".join(blocks)
-
     except Exception as e:
         logger.error(f"Erreur prepare_grilles_pitch_context: {e}")
-        conn.close()
         return ""
+    finally:
+        conn.close()
+
+    # Seuils
+    freq_2ans_values = sorted(freq_2ans.values(), reverse=True)
+    tiers = len(freq_2ans_values) // 3
+    seuil_chaud = freq_2ans_values[tiers] if tiers < len(freq_2ans_values) else 0
+    seuil_froid = freq_2ans_values[2 * tiers] if 2 * tiers < len(freq_2ans_values) else 0
+
+    blocks = []
+    for i, grille in enumerate(grilles, 1):
+        nums = sorted(grille["numeros"])
+        chance = grille.get("chance")
+
+        # Metriques grille
+        somme = sum(nums)
+        nb_pairs = sum(1 for n in nums if n % 2 == 0)
+        dispersion = max(nums) - min(nums)
+
+        somme_ok = "\u2713" if 100 <= somme <= 140 else "\u2717"
+        equil_ok = "\u2713" if 1 <= nb_pairs <= 4 else "\u2717"
+
+        nums_str = " ".join(str(n) for n in nums)
+        chance_str = f" + Chance {chance}" if chance else ""
+
+        lines = [f"[GRILLE {i} \u2014 Num\u00e9ros : {nums_str}{chance_str}]"]
+        lines.append(f"Somme : {somme} (id\u00e9al 100-140) {somme_ok}")
+        lines.append(f"Pairs : {nb_pairs} / Impairs : {5 - nb_pairs} {equil_ok}")
+        lines.append(f"Dispersion : {dispersion}")
+        lines.append(f"Total tirages analys\u00e9s : {total}")
+
+        # Stats par numero
+        chauds = []
+        froids = []
+        for n in nums:
+            f = freq_map.get(n, 0)
+            e = ecart_map.get(n, 0)
+            f2 = freq_2ans.get(n, 0)
+
+            if f2 >= seuil_chaud:
+                cat = "CHAUD"
+                chauds.append(n)
+            elif f2 <= seuil_froid:
+                cat = "FROID"
+                froids.append(n)
+            else:
+                cat = "NEUTRE"
+
+            lines.append(f"Num\u00e9ro {n} : {f} sorties, \u00e9cart {e}, {cat}")
+
+        # Badges
+        badges = []
+        if len(chauds) >= 3:
+            badges.append("Num\u00e9ros chauds")
+        elif len(froids) >= 3:
+            badges.append("Mix de retards")
+        else:
+            badges.append("\u00c9quilibre")
+        if 1 <= nb_pairs <= 4:
+            badges.append("Pair/Impair OK")
+
+        lines.append(f"Badges : {', '.join(badges)}")
+        blocks.append("\n".join(lines))
+
+    return "\n\n".join(blocks)
