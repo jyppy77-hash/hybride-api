@@ -25,7 +25,6 @@ async def enrich_analysis(analysis_local: str, window: str = "GLOBAL") -> dict:
     gem_api_key = os.environ.get("GEM_API_KEY") or os.environ.get("GEMINI_API_KEY")
 
     logger.debug(f"[META TEXTE] GEM_API_KEY presente: {bool(gem_api_key)}")
-    logger.debug(f"[META TEXTE] GEM_API_KEY prefix: {gem_api_key[:8] if gem_api_key else 'NONE'}...")
     logger.debug(f"[META TEXTE] Vars dispo: GEM_API_KEY={bool(os.environ.get('GEM_API_KEY'))}, GEMINI_API_KEY={bool(os.environ.get('GEMINI_API_KEY'))}")
 
     if not gem_api_key:
