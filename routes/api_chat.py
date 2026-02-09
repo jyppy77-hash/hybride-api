@@ -13,7 +13,7 @@ from schemas import HybrideChatRequest, HybrideChatResponse, PitchGrillesRequest
 from services.prompt_loader import load_prompt
 from services.gemini import GEMINI_MODEL_URL
 from rate_limit import limiter
-from routes.api_data import (
+from services.stats_service import (
     get_numero_stats, analyze_grille_for_chat,
     get_classement_numeros, get_comparaison_numeros, get_numeros_par_categorie,
     prepare_grilles_pitch_context,
