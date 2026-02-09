@@ -1,5 +1,6 @@
 import time
 import uuid
+import contextvars
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -43,14 +44,16 @@ logger = logging.getLogger(__name__)
 _STARTED_AT = time.monotonic()
 
 
-# ── Correlation ID logging filter ──
+# ── Correlation ID via contextvars (thread-safe / async-safe) ──
+
+_request_id_ctx: contextvars.ContextVar[str] = contextvars.ContextVar("request_id", default="")
+
 
 class RequestIdFilter(logging.Filter):
-    """Injecte request_id dans chaque LogRecord (defaut vide)."""
+    """Injecte request_id depuis le ContextVar dans chaque LogRecord."""
 
     def filter(self, record):
-        if not hasattr(record, "request_id"):
-            record.request_id = ""
+        record.request_id = _request_id_ctx.get("")
         return True
 
 
@@ -115,19 +118,12 @@ async def correlation_id_middleware(request: Request, call_next):
     request_id = request.headers.get("x-request-id") or uuid.uuid4().hex[:16]
     request.state.request_id = request_id
 
-    # Injecter dans le contexte logging pour cette requete
-    old_factory = logging.getLogRecordFactory()
-
-    def _factory(*args, **kwargs):
-        record = old_factory(*args, **kwargs)
-        record.request_id = request_id
-        return record
-
-    logging.setLogRecordFactory(_factory)
+    # Injecter via contextvars (async-safe, pas de race condition)
+    token = _request_id_ctx.set(request_id)
     try:
         response = await call_next(request)
     finally:
-        logging.setLogRecordFactory(old_factory)
+        _request_id_ctx.reset(token)
 
     response.headers["X-Request-ID"] = request_id
     return response
