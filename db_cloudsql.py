@@ -18,6 +18,7 @@ import asyncio
 
 import pymysql
 from pymysql.cursors import DictCursor
+from dbutils.pooled_db import PooledDB
 
 # Charger .env si disponible (dev local)
 # Utilise un chemin absolu basé sur l'emplacement de CE fichier
@@ -84,63 +85,63 @@ logger.info(
 
 
 # ============================================================================
-# CONNEXION PRINCIPALE
+# CONNECTION POOL (DBUtils.PooledDB)
 # ============================================================================
 
-def get_connection() -> pymysql.connections.Connection:
+_pool = None
+
+
+def _init_pool():
+    """Initialise le pool de connexions (lazy, premier appel)."""
+    global _pool
+    if _pool is not None:
+        return _pool
+
+    common_kwargs = dict(
+        creator=pymysql,
+        mincached=5,
+        maxconnections=10,
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database=DB_NAME,
+        charset="utf8mb4",
+        cursorclass=DictCursor,
+        autocommit=True,
+        connect_timeout=5,
+        read_timeout=30,
+        write_timeout=30,
+    )
+
+    if is_production():
+        unix_socket = f"/cloudsql/{CLOUD_SQL_CONNECTION_NAME}"
+        common_kwargs.update(host="localhost", unix_socket=unix_socket)
+    else:
+        common_kwargs.update(host=DB_HOST, port=DB_PORT)
+
+    _pool = PooledDB(**common_kwargs)
+    logger.info(f"Pool MySQL initialisé ({get_environment()}) — min=5, max=10")
+    return _pool
+
+
+def get_connection():
     """
-    Retourne une connexion PyMySQL vers Cloud SQL.
+    Retourne une connexion depuis le pool DBUtils.
+    conn.close() restitue la connexion au pool (pas de fermeture réelle).
     """
     env = get_environment()
 
-    # Vérification password
     if not DB_PASSWORD:
         logger.error("DB_PASSWORD non défini")
         raise ValueError("DB_PASSWORD requis (Secret Manager / .env)")
 
     try:
-        if is_production():
-            # =====================
-            # MODE PROD (Cloud Run)
-            # =====================
-            unix_socket = f"/cloudsql/{CLOUD_SQL_CONNECTION_NAME}"
-
-            logger.debug("Connexion PROD via Cloud SQL unix socket")
-
-            conn = pymysql.connect(
-                host="localhost",  # 🔥 CRITIQUE POUR CLOUD RUN
-                unix_socket=unix_socket,
-                user=DB_USER,
-                password=DB_PASSWORD,
-                database=DB_NAME,
-                charset="utf8mb4",
-                cursorclass=DictCursor,
-                autocommit=True,
-                connect_timeout=5
-            )
-        else:
-            # =====================
-            # MODE LOCAL (Proxy)
-            # =====================
-            logger.debug(f"Connexion LOCAL via TCP {DB_HOST}:{DB_PORT}")
-
-            conn = pymysql.connect(
-                host=DB_HOST,
-                port=DB_PORT,
-                user=DB_USER,
-                password=DB_PASSWORD,
-                database=DB_NAME,
-                charset="utf8mb4",
-                cursorclass=DictCursor,
-                autocommit=True,
-                connect_timeout=5
-            )
-
-        logger.debug(f"Connexion MySQL OK ({env})")
+        pool = _init_pool()
+        conn = pool.connection()
+        logger.debug(f"Connexion pool MySQL OK ({env})")
         return conn
 
     except pymysql.Error as e:
-        logger.error(f"Echec connexion MySQL ({env}) : {e}")
+        logger.error(f"Echec connexion pool MySQL ({env}) : {e}")
         raise
 
 

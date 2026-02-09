@@ -8,6 +8,7 @@ uvicorn[standard]==0.32.0
 # MySQL / Cloud SQL
 pymysql==1.1.1
 cryptography==43.0.3
+DBUtils>=3.1
 
 # HTTP client (Gemini API)
 httpx>=0.27
