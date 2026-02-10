@@ -122,6 +122,14 @@ Règles :
 - "comparer avec un autre" sans préciser lequel = retourne NO_SQL
 - Si la proposition du model ne correspond à aucune requête SQL = retourne NO_SQL
 
+SUJETS NON-SQL (retourne toujours NO_SQL) :
+Si la conversation porte sur un de ces sujets, retourne NO_SQL même si l'utilisateur dit "oui" :
+- Le moteur HYBRIDE_OPTIMAL_V1 (formule, pondérations, score, algorithme, fonctionnement)
+- L'explication du site LotoIA (présentation, sections, pages)
+- Le jeu responsable, les probabilités théoriques, les conseils
+- Toute question qui ne nécessite PAS de données de la table tirages
+Ces sujets sont de la connaissance générale du chatbot, pas des requêtes base de données.
+
 Exemples de résolution :
 
 Historique: user="le 8 est sorti combien de fois en 2023 ?" / model="15 fois. Tu veux voir son historique complet ?"
