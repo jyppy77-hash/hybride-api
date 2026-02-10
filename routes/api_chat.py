@@ -292,7 +292,11 @@ async def _generate_sql(question: str, client, api_key: str, history: list = Non
     if history:
         for msg in history[-6:]:
             role = "user" if msg.role == "user" else "model"
-            sql_contents.append({"role": role, "parts": [{"text": msg.content}]})
+            # Fusionner les messages consecutifs de meme role (requis par Gemini)
+            if sql_contents and sql_contents[-1]["role"] == role:
+                sql_contents[-1]["parts"][0]["text"] += "\n" + msg.content
+            else:
+                sql_contents.append({"role": role, "parts": [{"text": msg.content}]})
     sql_contents.append({"role": "user", "parts": [{"text": question}]})
 
     try:
