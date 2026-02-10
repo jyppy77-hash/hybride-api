@@ -27,6 +27,7 @@ PROMPT_MAP = {
     # Chatbot HYBRIDE
     "CHATBOT": "prompts/chatbot/prompt_hybride.txt",
     "PITCH_GRILLE": "prompts/chatbot/prompt_pitch_grille.txt",
+    "SQL_GENERATOR": "prompts/chatbot/prompt_sql_generator.txt",
 }
 
 FALLBACK_PROMPT_PATH = "prompts/tirages/prompt_global.txt"
