@@ -2,6 +2,7 @@ import os
 import re
 import asyncio
 import logging
+import time
 import httpx
 from datetime import date, datetime, timedelta
 
@@ -184,6 +185,36 @@ def _detect_tirage(message: str):
     return None
 
 
+# ────────────────────────────────────────────
+# Detection filtre temporel → court-circuite les phases regex
+# ────────────────────────────────────────────
+
+_MOIS_RE = r'(?:janvier|f[eé]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[eé]cembre)'
+
+_TEMPORAL_PATTERNS = [
+    r'\ben\s+20\d{2}\b',                          # en 2025
+    r'\bdepuis\s+20\d{2}\b',                       # depuis 2023
+    r'\bavant\s+20\d{2}\b',                        # avant 2025
+    r'\bapr[eè]s\s+20\d{2}\b',                    # après 2024
+    r'\bentre\s+20\d{2}\s+et\s+20\d{2}',          # entre 2024 et 2025
+    r'\bcette\s+ann[ée]e\b',                       # cette année
+    r'\bl.ann[ée]e\s+derni[eè]re\b',              # l'année dernière
+    r'\bl.an\s+dernier\b',                         # l'an dernier
+    r'\bce\s+mois\b',                              # ce mois
+    r'\ble\s+mois\s+dernier\b',                    # le mois dernier
+    r'\ben\s+' + _MOIS_RE,                         # en janvier, en février...
+    r'\bces\s+\d+\s+derniers?\s+mois\b',           # ces 6 derniers mois
+    r'\bdepuis\s+le\s+d[eé]but\b',                # depuis le début
+    r'\bdepuis\s+\d+\s+(?:mois|ans?|semaines?)\b', # depuis 3 mois
+]
+
+
+def _has_temporal_filter(message: str) -> bool:
+    """Detecte si le message contient un filtre temporel (annee, mois, periode)."""
+    lower = message.lower()
+    return any(re.search(pat, lower) for pat in _TEMPORAL_PATTERNS)
+
+
 def _get_tirage_data(target) -> dict | None:
     """
     Recupere un tirage depuis la DB.
@@ -231,6 +262,143 @@ def _format_tirage_context(tirage: dict) -> str:
         f"Num\u00e9ros principaux : {boules}\n"
         f"Num\u00e9ro Chance : {tirage['chance']}"
     )
+
+
+# ────────────────────────────────────────────
+# Text-to-SQL : Gemini genere le SQL, Python l'execute
+# ────────────────────────────────────────────
+
+_MAX_SQL_PER_SESSION = 10
+
+_SQL_FORBIDDEN = [
+    "INSERT", "UPDATE", "DELETE", "DROP", "ALTER", "CREATE", "TRUNCATE",
+    "REPLACE INTO", "GRANT", "REVOKE", "EXEC ", "EXECUTE", "CALL ",
+    "SLEEP", "BENCHMARK", "LOAD_FILE", "INTO OUTFILE", "INTO DUMPFILE",
+    "INFORMATION_SCHEMA", "MYSQL.", "PERFORMANCE_SCHEMA", "SYS.",
+]
+
+
+async def _generate_sql(question: str, client, api_key: str, history: list = None) -> str | None:
+    """Appelle Gemini pour convertir une question en SQL (avec contexte conversationnel)."""
+    sql_prompt = load_prompt("SQL_GENERATOR")
+    if not sql_prompt:
+        return None
+
+    today_str = date.today().strftime("%Y-%m-%d")
+    sql_prompt = sql_prompt.replace("{TODAY}", today_str)
+
+    # Construire les contents avec historique pour resolution de contexte
+    sql_contents = []
+    if history:
+        for msg in history[-6:]:
+            role = "user" if msg.role == "user" else "model"
+            sql_contents.append({"role": role, "parts": [{"text": msg.content}]})
+    sql_contents.append({"role": "user", "parts": [{"text": question}]})
+
+    try:
+        response = await gemini_breaker.call(
+            client,
+            GEMINI_MODEL_URL,
+            headers={
+                "Content-Type": "application/json",
+                "x-goog-api-key": api_key,
+            },
+            json={
+                "system_instruction": {"parts": [{"text": sql_prompt}]},
+                "contents": sql_contents,
+                "generationConfig": {
+                    "temperature": 0.0,
+                    "maxOutputTokens": 300,
+                },
+            },
+            timeout=8.0,
+        )
+
+        if response.status_code == 200:
+            data = response.json()
+            candidates = data.get("candidates", [])
+            if candidates:
+                text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
+                # Nettoyer les backticks eventuels
+                if text.startswith("```"):
+                    text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+                    if text.endswith("```"):
+                        text = text[:-3]
+                    text = text.strip()
+                if text.upper().startswith("SQL"):
+                    text = text[3:].strip()
+                    if text.startswith("\n"):
+                        text = text[1:]
+                return text.strip()
+        return None
+    except Exception as e:
+        logger.warning(f"[TEXT-TO-SQL] Erreur generation SQL: {e}")
+        return None
+
+
+def _validate_sql(sql: str) -> bool:
+    """Valide la securite du SQL genere (SELECT only, pas de mots interdits)."""
+    if not sql:
+        return False
+    if len(sql) > 1000:
+        return False
+    upper = sql.strip().upper()
+    if not upper.startswith("SELECT"):
+        return False
+    if ";" in sql:
+        return False
+    if "--" in sql or "/*" in sql:
+        return False
+    for kw in _SQL_FORBIDDEN:
+        if kw in upper:
+            return False
+    return True
+
+
+def _ensure_limit(sql: str, max_limit: int = 50) -> str:
+    """Ajoute LIMIT si absent, plafonne a max_limit si present."""
+    upper = sql.strip().upper()
+    if "LIMIT" not in upper:
+        return sql.rstrip() + f" LIMIT {max_limit}"
+    return sql
+
+
+def _execute_safe_sql(sql: str) -> list | None:
+    """Execute le SQL valide avec connexion DB."""
+    conn = db_cloudsql.get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+        return rows
+    except Exception as e:
+        logger.warning(f"[TEXT-TO-SQL] Erreur execution SQL: {e}")
+        return None
+    finally:
+        conn.close()
+
+
+def _format_sql_result(rows: list) -> str:
+    """Formate les resultats SQL en bloc de contexte pour Gemini."""
+    if not rows:
+        return "[R\u00c9SULTAT SQL]\nAucun r\u00e9sultat trouv\u00e9 pour cette requ\u00eate."
+
+    lines = ["[R\u00c9SULTAT SQL]"]
+
+    for row in rows[:20]:
+        parts = []
+        for key, val in row.items():
+            if hasattr(val, 'strftime'):
+                val = _format_date_fr(str(val))
+            elif isinstance(val, str) and re.match(r'^\d{4}-\d{2}-\d{2}$', val):
+                val = _format_date_fr(val)
+            parts.append(f"{key}: {val}")
+        lines.append(" | ".join(parts))
+
+    if len(rows) > 20:
+        lines.append(f"... ({len(rows)} r\u00e9sultats au total, 20 premiers affich\u00e9s)")
+
+    return "\n".join(lines)
 
 
 def _detect_numero(message: str):
@@ -591,7 +759,7 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
         role = "user" if msg.role == "user" else "model"
         contents.append({"role": role, "parts": [{"text": msg.content}]})
 
-    # Detection : Prochain tirage → Tirage (Phase T) → Grille (Phase 2) → Complexe (Phase 3) → Numero (Phase 1)
+    # Detection : Prochain tirage → Tirage (T) → Grille (2) → Complexe (3) → Numero (1) → Text-to-SQL (fallback)
     enrichment_context = ""
 
     # Phase 0 : prochain tirage
@@ -618,9 +786,14 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
             except Exception as e:
                 logger.warning(f"[HYBRIDE CHAT] Erreur tirage: {e}")
 
+    # Filtre temporel detecte → skip phases regex, Phase SQL gere
+    force_sql = not enrichment_context and _has_temporal_filter(payload.message)
+    if force_sql:
+        logger.info("[HYBRIDE CHAT] Filtre temporel detecte, force Phase SQL")
+
     # Phase 2 : detection de grille (5 numeros)
     grille_nums, grille_chance = _detect_grille(payload.message)
-    if grille_nums is not None:
+    if not force_sql and grille_nums is not None:
         try:
             grille_result = await asyncio.wait_for(asyncio.to_thread(analyze_grille_for_chat, grille_nums, grille_chance), timeout=30.0)
             if grille_result:
@@ -630,7 +803,7 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
             logger.warning(f"[HYBRIDE CHAT] Erreur analyse grille: {e}")
 
     # Phase 3 : requete complexe (classement, comparaison, categorie)
-    if not enrichment_context:
+    if not force_sql and not enrichment_context:
         intent = _detect_requete_complexe(payload.message)
         if intent:
             try:
@@ -650,7 +823,7 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
                 logger.warning(f"[HYBRIDE CHAT] Erreur requete complexe: {e}")
 
     # Phase 1 : detection de numero simple
-    if not enrichment_context:
+    if not force_sql and not enrichment_context:
         numero, type_num = _detect_numero(payload.message)
         if numero is not None:
             try:
@@ -660,6 +833,77 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
                     logger.info(f"[HYBRIDE CHAT] Stats BDD injectees: numero={numero}, type={type_num}")
             except Exception as e:
                 logger.warning(f"[HYBRIDE CHAT] Erreur stats BDD (numero={numero}): {e}")
+
+    # Phase SQL : Text-to-SQL fallback (Gemini genere le SQL quand aucune phase ne matche)
+    if not enrichment_context:
+        _sql_count = sum(1 for m in (payload.history or []) if m.role == "user")
+        if _sql_count >= _MAX_SQL_PER_SESSION:
+            logger.info(f"[TEXT2SQL] Rate-limit session ({_sql_count} echanges)")
+        else:
+            t0 = time.monotonic()
+            try:
+                sql_client = request.app.state.httpx_client
+                sql = await asyncio.wait_for(
+                    _generate_sql(payload.message, sql_client, gem_api_key, history=payload.history),
+                    timeout=10.0,
+                )
+                if sql and sql.strip().upper() != "NO_SQL" and _validate_sql(sql):
+                    sql = _ensure_limit(sql)
+                    rows = await asyncio.wait_for(
+                        asyncio.to_thread(_execute_safe_sql, sql), timeout=5.0
+                    )
+                    t_total = int((time.monotonic() - t0) * 1000)
+                    if rows is not None and len(rows) > 0:
+                        enrichment_context = _format_sql_result(rows)
+                        logger.info(
+                            f'[TEXT2SQL] question="{payload.message[:80]}" | '
+                            f'sql="{sql[:120]}" | status=OK | '
+                            f'rows={len(rows)} | time={t_total}ms'
+                        )
+                    elif rows is not None:
+                        enrichment_context = "[R\u00c9SULTAT SQL]\nAucun r\u00e9sultat trouv\u00e9 pour cette requ\u00eate."
+                        logger.info(
+                            f'[TEXT2SQL] question="{payload.message[:80]}" | '
+                            f'sql="{sql[:120]}" | status=EMPTY | '
+                            f'rows=0 | time={t_total}ms'
+                        )
+                    else:
+                        enrichment_context = "[R\u00c9SULTAT SQL]\nAucun r\u00e9sultat trouv\u00e9 pour cette requ\u00eate."
+                        logger.warning(
+                            f'[TEXT2SQL] question="{payload.message[:80]}" | '
+                            f'sql="{sql[:120]}" | status=EXEC_ERROR | '
+                            f'time={t_total}ms'
+                        )
+                elif sql and sql.strip().upper() == "NO_SQL":
+                    logger.info(
+                        f'[TEXT2SQL] question="{payload.message[:80]}" | '
+                        f'sql=NO_SQL | status=NO_SQL | '
+                        f'time={int((time.monotonic() - t0) * 1000)}ms'
+                    )
+                elif sql:
+                    logger.warning(
+                        f'[TEXT2SQL] question="{payload.message[:80]}" | '
+                        f'sql="{sql[:120]}" | status=REJECTED | '
+                        f'time={int((time.monotonic() - t0) * 1000)}ms'
+                    )
+                else:
+                    logger.warning(
+                        f'[TEXT2SQL] question="{payload.message[:80]}" | '
+                        f'status=GEN_ERROR | '
+                        f'time={int((time.monotonic() - t0) * 1000)}ms'
+                    )
+            except asyncio.TimeoutError:
+                logger.warning(
+                    f'[TEXT2SQL] question="{payload.message[:80]}" | '
+                    f'status=TIMEOUT | '
+                    f'time={int((time.monotonic() - t0) * 1000)}ms'
+                )
+            except Exception as e:
+                logger.warning(
+                    f'[TEXT2SQL] question="{payload.message[:80]}" | '
+                    f'status=ERROR | error="{e}" | '
+                    f'time={int((time.monotonic() - t0) * 1000)}ms'
+                )
 
     # Message utilisateur avec contexte de page + donnees BDD
     if enrichment_context:
