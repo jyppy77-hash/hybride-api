@@ -40,6 +40,12 @@ RÈGLES SQL STRICTES :
 - Syntaxe MySQL 8.0
 - Pas de point-virgule à la fin
 
+RÈGLE MULTI-NUMÉROS :
+Quand l'utilisateur demande si plusieurs numéros sont sortis "ensemble", "en même temps", "dans le même tirage" :
+- Chaque numéro doit avoir son propre bloc (boule_1 = N OR boule_2 = N OR ... OR boule_5 = N)
+- Les blocs sont reliés par AND (pas OR)
+- Cela s'applique pour 2, 3, 4 ou 5 numéros
+
 RÉSOLUTION TEMPORELLE (CRITIQUE) :
 Quand une question mentionne un mois SANS année, ajoute TOUJOURS
 le filtre année en cours. La date du jour ({TODAY}) te donne l'année.
@@ -86,6 +92,9 @@ SELECT COUNT(*) as jackpots FROM tirages WHERE nombre_de_gagnant_au_rang1 > 0 AN
 
 Q: le 9 et le 22 sont sortis ensemble combien de fois ?
 SELECT COUNT(*) as ensemble FROM tirages WHERE (boule_1 = 9 OR boule_2 = 9 OR boule_3 = 9 OR boule_4 = 9 OR boule_5 = 9) AND (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22)
+
+Q: quand le 16 22 et 41 sont tombés en même temps ?
+SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chance FROM tirages WHERE (boule_1 = 16 OR boule_2 = 16 OR boule_3 = 16 OR boule_4 = 16 OR boule_5 = 16) AND (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) AND (boule_1 = 41 OR boule_2 = 41 OR boule_3 = 41 OR boule_4 = 41 OR boule_5 = 41) ORDER BY date_de_tirage DESC LIMIT 50
 
 Q: combien de fois le 7 est sorti en janvier ?
 SELECT COUNT(*) as total_sorties FROM tirages WHERE (boule_1 = 7 OR boule_2 = 7 OR boule_3 = 7 OR boule_4 = 7 OR boule_5 = 7) AND MONTH(date_de_tirage) = 1 AND YEAR(date_de_tirage) = YEAR(CURDATE()) LIMIT 1
