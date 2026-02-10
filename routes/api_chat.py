@@ -118,6 +118,121 @@ def _get_prochain_tirage() -> str | None:
         return None
 
 
+_JOURS_SEMAINE = {
+    "lundi": 0, "mardi": 1, "mercredi": 2, "jeudi": 3,
+    "vendredi": 4, "samedi": 5, "dimanche": 6,
+}
+
+_TIRAGE_KW = r'(?:tirage|r[ée]sultat|num[eé]ro|nuro|boule|sorti|tomb[eé]|tir[eé])'
+
+
+def _detect_tirage(message: str):
+    """
+    Detecte si l'utilisateur demande les resultats d'un tirage.
+    Returns: "latest", un objet date, ou None.
+    """
+    lower = message.lower()
+
+    # Exclure "prochain tirage" (gere par Phase 0)
+    if re.search(r'prochain', lower):
+        return None
+
+    # Date explicite DD/MM/YYYY ou DD/MM ou DD-MM-YYYY
+    m = re.search(r'(\d{1,2})[/\-](\d{1,2})(?:[/\-](\d{4}))?', lower)
+    if m and re.search(_TIRAGE_KW, lower):
+        day, month = int(m.group(1)), int(m.group(2))
+        year = int(m.group(3)) if m.group(3) else date.today().year
+        try:
+            return date(year, month, day)
+        except ValueError:
+            pass
+
+    # "dernier tirage", "derniers numeros", "derniere sortie"
+    if re.search(r'(?:dernier|derni[eè]re)s?\s+' + _TIRAGE_KW, lower):
+        return "latest"
+
+    # "quels numeros sont sortis", "qu'est-ce qui est sorti"
+    if re.search(r'(?:quels?|quel)\s+(?:num[eé]ro|nuro|boule).*sorti', lower):
+        return "latest"
+    if re.search(r'qu.est.ce\s+qu.*sorti', lower):
+        return "latest"
+
+    # "avant-hier" (tester AVANT "hier")
+    if ('avant-hier' in lower or 'avant hier' in lower) and re.search(_TIRAGE_KW, lower):
+        return date.today() - timedelta(days=2)
+
+    # "hier"
+    if 'hier' in lower and re.search(_TIRAGE_KW, lower):
+        return date.today() - timedelta(days=1)
+    # "les numeros d'hier" (sans mot-cle tirage explicite)
+    if re.search(r"(?:num[eé]ro|nuro)s?\s+d.?hier", lower):
+        return date.today() - timedelta(days=1)
+
+    # Jour de la semaine : "tirage de samedi", "numeros de lundi"
+    for jour, wd in _JOURS_SEMAINE.items():
+        if jour in lower and re.search(_TIRAGE_KW, lower):
+            today = date.today()
+            delta = (today.weekday() - wd) % 7
+            if delta == 0:
+                delta = 7
+            return today - timedelta(days=delta)
+
+    # "resultats" seul (indicateur fort)
+    if re.search(r'\br[ée]sultats?\b', lower):
+        return "latest"
+
+    return None
+
+
+def _get_tirage_data(target) -> dict | None:
+    """
+    Recupere un tirage depuis la DB.
+    target: "latest" ou un objet date.
+    Retourne dict {date, boules, chance} ou None.
+    """
+    conn = db_cloudsql.get_connection()
+    try:
+        cursor = conn.cursor()
+        if target == "latest":
+            cursor.execute("""
+                SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chance
+                FROM tirages ORDER BY date_de_tirage DESC LIMIT 1
+            """)
+        else:
+            cursor.execute("""
+                SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chance
+                FROM tirages WHERE date_de_tirage <= %s
+                ORDER BY date_de_tirage DESC LIMIT 1
+            """, (target,))
+
+        row = cursor.fetchone()
+        if row:
+            return {
+                "date": row["date_de_tirage"],
+                "boules": [row["boule_1"], row["boule_2"], row["boule_3"],
+                           row["boule_4"], row["boule_5"]],
+                "chance": row["numero_chance"],
+            }
+        return None
+    except Exception as e:
+        logger.error(f"[HYBRIDE CHAT] Erreur _get_tirage_data: {e}")
+        return None
+    finally:
+        conn.close()
+
+
+def _format_tirage_context(tirage: dict) -> str:
+    """Formate les resultats d'un tirage en bloc de contexte pour Gemini."""
+    date_fr = _format_date_fr(str(tirage["date"]))
+    boules = " - ".join(str(b) for b in tirage["boules"])
+    return (
+        f"[R\u00c9SULTAT TIRAGE - {date_fr}]\n"
+        f"Date du tirage : {date_fr}\n"
+        f"Num\u00e9ros principaux : {boules}\n"
+        f"Num\u00e9ro Chance : {tirage['chance']}"
+    )
+
+
 def _detect_numero(message: str):
     """
     Detecte si l'utilisateur pose une question sur un numero specifique.
@@ -476,7 +591,7 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
         role = "user" if msg.role == "user" else "model"
         contents.append({"role": role, "parts": [{"text": msg.content}]})
 
-    # Detection : Prochain tirage → Grille (Phase 2) → Complexe (Phase 3) → Numero (Phase 1)
+    # Detection : Prochain tirage → Tirage (Phase T) → Grille (Phase 2) → Complexe (Phase 3) → Numero (Phase 1)
     enrichment_context = ""
 
     # Phase 0 : prochain tirage
@@ -488,6 +603,20 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
                 logger.info("[HYBRIDE CHAT] Prochain tirage injecte")
         except Exception as e:
             logger.warning(f"[HYBRIDE CHAT] Erreur prochain tirage: {e}")
+
+    # Phase T : resultats d'un tirage (dernier tirage, tirage d'hier, etc.)
+    if not enrichment_context:
+        tirage_target = _detect_tirage(payload.message)
+        if tirage_target is not None:
+            try:
+                tirage_data = await asyncio.wait_for(
+                    asyncio.to_thread(_get_tirage_data, tirage_target), timeout=30.0
+                )
+                if tirage_data:
+                    enrichment_context = _format_tirage_context(tirage_data)
+                    logger.info(f"[HYBRIDE CHAT] Tirage injecte: {tirage_data['date']}")
+            except Exception as e:
+                logger.warning(f"[HYBRIDE CHAT] Erreur tirage: {e}")
 
     # Phase 2 : detection de grille (5 numeros)
     grille_nums, grille_chance = _detect_grille(payload.message)
