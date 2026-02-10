@@ -40,6 +40,18 @@ RÈGLES SQL STRICTES :
 - Syntaxe MySQL 8.0
 - Pas de point-virgule à la fin
 
+RÉSOLUTION TEMPORELLE (CRITIQUE) :
+Quand une question mentionne un mois SANS année, ajoute TOUJOURS
+le filtre année en cours. La date du jour ({TODAY}) te donne l'année.
+- "en janvier", "en mars" (sans année) → MONTH(...) = X AND YEAR(...) = YEAR(CURDATE())
+  JAMAIS de MONTH() seul sans YEAR(). "en janvier" = janvier de cette année.
+- "cette année" → YEAR(date_de_tirage) = YEAR(CURDATE())
+- "l'année dernière" → YEAR(date_de_tirage) = YEAR(CURDATE()) - 1
+- "ce mois" / "ce mois-ci" → YEAR(...) = YEAR(CURDATE()) AND MONTH(...) = MONTH(CURDATE())
+- "le mois dernier" → MONTH(...) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+  AND YEAR(...) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH))
+- "la semaine dernière" → date_de_tirage >= DATE_SUB(CURDATE(), INTERVAL 1 WEEK)
+
 EXEMPLES :
 
 Q: combien de fois le 22 est sorti ?
@@ -74,6 +86,15 @@ SELECT COUNT(*) as jackpots FROM tirages WHERE nombre_de_gagnant_au_rang1 > 0 AN
 
 Q: le 9 et le 22 sont sortis ensemble combien de fois ?
 SELECT COUNT(*) as ensemble FROM tirages WHERE (boule_1 = 9 OR boule_2 = 9 OR boule_3 = 9 OR boule_4 = 9 OR boule_5 = 9) AND (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22)
+
+Q: combien de fois le 7 est sorti en janvier ?
+SELECT COUNT(*) as total_sorties FROM tirages WHERE (boule_1 = 7 OR boule_2 = 7 OR boule_3 = 7 OR boule_4 = 7 OR boule_5 = 7) AND MONTH(date_de_tirage) = 1 AND YEAR(date_de_tirage) = YEAR(CURDATE()) LIMIT 1
+
+Q: combien de tirages ce mois-ci ?
+SELECT COUNT(*) as nb_tirages FROM tirages WHERE YEAR(date_de_tirage) = YEAR(CURDATE()) AND MONTH(date_de_tirage) = MONTH(CURDATE()) LIMIT 1
+
+Q: combien de tirages le mois dernier ?
+SELECT COUNT(*) as nb_tirages FROM tirages WHERE MONTH(date_de_tirage) = MONTH(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) AND YEAR(date_de_tirage) = YEAR(DATE_SUB(CURDATE(), INTERVAL 1 MONTH)) LIMIT 1
 
 CONTEXTE CONVERSATIONNEL :
 Tu peux recevoir un historique de conversation (messages précédents).
