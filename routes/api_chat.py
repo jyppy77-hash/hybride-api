@@ -35,6 +35,32 @@ FALLBACK_RESPONSE = (
 META_KEYWORDS = ["meta", "algorithme", "moteur", "pond\u00e9ration", "ponderation"]
 
 
+def _clean_response(text: str) -> str:
+    """Supprime les tags internes qui ne doivent pas \u00eatre vus par l'utilisateur."""
+    internal_tags = [
+        r'\[R\u00c9SULTAT SQL\]',
+        r'\[RESULTAT SQL\]',
+        r'\[R\u00c9SULTAT TIRAGE[^\]]*\]',
+        r'\[RESULTAT TIRAGE[^\]]*\]',
+        r'\[ANALYSE DE GRILLE[^\]]*\]',
+        r'\[CLASSEMENT[^\]]*\]',
+        r'\[COMPARAISON[^\]]*\]',
+        r'\[NUM\u00c9ROS? (?:CHAUDS?|FROIDS?)[^\]]*\]',
+        r'\[NUMEROS? (?:CHAUDS?|FROIDS?)[^\]]*\]',
+        r'\[DONN\u00c9ES TEMPS R\u00c9EL[^\]]*\]',
+        r'\[DONNEES TEMPS REEL[^\]]*\]',
+        r'\[PROCHAIN TIRAGE[^\]]*\]',
+        r'\[Page:\s*[^\]]*\]',
+        r'\[Question utilisateur[^\]]*\]',
+    ]
+    for tag in internal_tags:
+        text = re.sub(tag, '', text)
+    # Nettoyer les espaces multiples et lignes vides r\u00e9sultants
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    text = re.sub(r'  +', ' ', text)
+    return text.strip()
+
+
 def _detect_mode(message: str, page: str) -> str:
     lower = message.lower()
     for kw in META_KEYWORDS:
@@ -950,6 +976,7 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
                 if parts:
                     text = parts[0].get("text", "").strip()
                     if text:
+                        text = _clean_response(text)
                         logger.info(
                             f"[HYBRIDE CHAT] OK (page={payload.page}, mode={mode})"
                         )
