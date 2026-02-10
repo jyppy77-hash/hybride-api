@@ -135,12 +135,15 @@ def _detect_numero(message: str):
     # Patterns principal :
     patterns = [
         r'(?:le\s+)?num[eé]ro\s+(\d{1,2})(?:\s|$|[?.!,])',
-        r'(?:fr[eé]quence|[eé]cart|retard|sortie?|chaud|froid)\s+(?:du\s+)?(\d{1,2})(?:\s|$|[?.!,])',
+        r'(?:fr[eé]quence|[eé]cart|retard|sortie?|chaud|froid|stat)\s+(?:du\s+)?(\d{1,2})(?:\s|$|[?.!,])',
         r'\ble\s+(\d{1,2})\s+(?:est|il|a\s|sort|[eé]tai)',
         r'\ble\s+(\d{1,2})\s*[?.!]',
-        r'(?:combien|quand|sorti).*\ble\s+(\d{1,2})(?:\s|$|[?.!,])',
+        r'(?:combien|quand|sorti|derni[eè]re).*\ble\s+(\d{1,2})(?:\s|$|[?.!,])',
         r'\bdu\s+(\d{1,2})\s*[?.!]',
         r'\bboule\s+(\d{1,2})(?:\s|$|[?.!,])',
+        # Catch-all : "le 22" ou "du 22" dans n'importe quel contexte
+        r'\ble\s+(\d{1,2})\b',
+        r'\bdu\s+(\d{1,2})\b',
     ]
 
     for pattern in patterns:
