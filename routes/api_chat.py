@@ -3,7 +3,7 @@ import re
 import asyncio
 import logging
 import httpx
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
@@ -156,6 +156,21 @@ def _detect_numero(message: str):
     return None, None
 
 
+_MOIS_FR = [
+    "", "janvier", "f\u00e9vrier", "mars", "avril", "mai", "juin",
+    "juillet", "ao\u00fbt", "septembre", "octobre", "novembre", "d\u00e9cembre",
+]
+
+
+def _format_date_fr(date_str: str) -> str:
+    """Convertit une date ISO (2026-02-09) en format francais (9 f\u00e9vrier 2026)."""
+    try:
+        d = datetime.strptime(str(date_str), "%Y-%m-%d")
+        return f"{d.day} {_MOIS_FR[d.month]} {d.year}"
+    except (ValueError, TypeError):
+        return str(date_str) if date_str else "inconnue"
+
+
 def _format_stats_context(stats: dict) -> str:
     """
     Formate les stats d'un numero en bloc de contexte pour Gemini.
@@ -163,18 +178,30 @@ def _format_stats_context(stats: dict) -> str:
     type_label = "principal" if stats["type"] == "principal" else "chance"
     cat = stats["categorie"].upper()
     classement_sur = stats.get("classement_sur", 49)
+    derniere_sortie_fr = _format_date_fr(stats['derniere_sortie'])
 
     return (
         f"[DONN\u00c9ES TEMPS R\u00c9EL - Num\u00e9ro {type_label} {stats['numero']}]\n"
         f"Fr\u00e9quence totale : {stats['frequence_totale']} apparitions "
         f"sur {stats['total_tirages']} tirages ({stats['pourcentage_apparition']})\n"
-        f"Derni\u00e8re sortie : {stats['derniere_sortie']}\n"
+        f"Derni\u00e8re sortie : {derniere_sortie_fr}\n"
         f"\u00c9cart actuel : {stats['ecart_actuel']} tirages\n"
         f"\u00c9cart moyen : {stats['ecart_moyen']} tirages\n"
         f"Classement fr\u00e9quence : {stats['classement']}e sur {classement_sur}\n"
         f"Cat\u00e9gorie : {cat}\n"
-        f"P\u00e9riode analys\u00e9e : {stats['periode']}"
+        f"P\u00e9riode analys\u00e9e : {_format_periode_fr(stats['periode'])}"
     )
+
+
+def _format_periode_fr(periode: str) -> str:
+    """Convertit '2019-11-04 au 2026-02-07' en '4 novembre 2019 au 7 f\u00e9vrier 2026'."""
+    try:
+        parts = periode.split(" au ")
+        if len(parts) == 2:
+            return f"{_format_date_fr(parts[0])} au {_format_date_fr(parts[1])}"
+    except Exception:
+        pass
+    return periode
 
 
 def _detect_grille(message: str):
