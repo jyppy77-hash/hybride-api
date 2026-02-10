@@ -757,7 +757,11 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
 
     for msg in history:
         role = "user" if msg.role == "user" else "model"
-        contents.append({"role": role, "parts": [{"text": msg.content}]})
+        # Fusionner les messages consecutifs de meme role (requis par Gemini)
+        if contents and contents[-1]["role"] == role:
+            contents[-1]["parts"][0]["text"] += "\n" + msg.content
+        else:
+            contents.append({"role": role, "parts": [{"text": msg.content}]})
 
     # Detection : Prochain tirage → Tirage (T) → Grille (2) → Complexe (3) → Numero (1) → Text-to-SQL (fallback)
     enrichment_context = ""
