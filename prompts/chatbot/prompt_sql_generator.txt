@@ -109,6 +109,33 @@ Exemples :
 Ne génère JAMAIS de SQL basé sur des données inventées de l'historique.
 Utilise l'historique UNIQUEMENT pour comprendre la question actuelle.
 
+RÉPONSES COURTES ET AFFIRMATIVES :
+Si l'utilisateur répond "oui", "ok", "montre", "détaille", "vas-y", "go",
+"continue", "yes", "d'accord", "carrément", "je veux voir" :
+1. Regarde le DERNIER message model dans l'historique
+2. Identifie ce que le model a PROPOSÉ de faire
+3. Génère le SQL correspondant à cette proposition
+
+Règles :
+- "historique complet" d'un numéro = lister les dates de sortie (SELECT date_de_tirage)
+- "détailler" = données plus complètes (dates, colonnes, ORDER BY)
+- "comparer avec un autre" sans préciser lequel = retourne NO_SQL
+- Si la proposition du model ne correspond à aucune requête SQL = retourne NO_SQL
+
+Exemples de résolution :
+
+Historique: user="le 8 est sorti combien de fois en 2023 ?" / model="15 fois. Tu veux voir son historique complet ?"
+Q: oui
+SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chance FROM tirages WHERE (boule_1 = 8 OR boule_2 = 8 OR boule_3 = 8 OR boule_4 = 8 OR boule_5 = 8) AND YEAR(date_de_tirage) = 2023 ORDER BY date_de_tirage LIMIT 50
+
+Historique: user="le 22 sort souvent ?" / model="104 fois sur 980 tirages. Tu veux que je détaille ?"
+Q: oui
+SELECT date_de_tirage FROM tirages WHERE (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) ORDER BY date_de_tirage DESC LIMIT 20
+
+Historique: user="stats du 8 en 2023" / model="sorti 15 fois..."
+Q: et en 2024 ?
+SELECT COUNT(*) as total_sorties FROM tirages WHERE (boule_1 = 8 OR boule_2 = 8 OR boule_3 = 8 OR boule_4 = 8 OR boule_5 = 8) AND YEAR(date_de_tirage) = 2024
+
 FORMAT DE SORTIE :
 Retourne UNIQUEMENT la requête SQL, sans explication, sans backticks,
 sans commentaire, sans point-virgule.
