@@ -4,6 +4,7 @@ import asyncio
 import logging
 import time
 import httpx
+from pathlib import Path
 from datetime import date, datetime, timedelta
 
 from fastapi import APIRouter, Request
@@ -33,6 +34,57 @@ FALLBACK_RESPONSE = (
 )
 
 META_KEYWORDS = ["meta", "algorithme", "moteur", "pond\u00e9ration", "ponderation"]
+
+# ────────────────────────────────────────────
+# Systeme sponsor — insertion post-Gemini
+# ────────────────────────────────────────────
+
+_SPONSORS_PATH = Path(__file__).resolve().parent.parent / "config" / "sponsors.json"
+_sponsors_config: dict | None = None
+
+
+def _load_sponsors_config() -> dict:
+    """Charge la config sponsors depuis config/sponsors.json (cache en memoire)."""
+    global _sponsors_config
+    if _sponsors_config is not None:
+        return _sponsors_config
+    try:
+        with open(_SPONSORS_PATH, encoding="utf-8") as f:
+            _sponsors_config = json_mod.load(f)
+    except (FileNotFoundError, json_mod.JSONDecodeError) as e:
+        logger.warning(f"[SPONSOR] Config introuvable ou invalide: {e}")
+        _sponsors_config = {"enabled": False, "frequency": 3, "sponsors": []}
+    return _sponsors_config
+
+
+def _get_sponsor_if_due(history: list) -> str | None:
+    """Retourne le texte sponsor si c'est le moment, None sinon."""
+    config = _load_sponsors_config()
+    if not config.get("enabled"):
+        return None
+
+    frequency = config.get("frequency", 3)
+    active = [s for s in config.get("sponsors", []) if s.get("active")]
+    if not active:
+        return None
+
+    # Compter les reponses assistant dans l'historique
+    bot_count = sum(1 for msg in history if msg.role == "assistant")
+    # +1 car la reponse actuelle sera la suivante
+    bot_count += 1
+
+    if bot_count % frequency != 0:
+        return None
+
+    # Rotation parmi les sponsors actifs
+    cycle = bot_count // frequency
+    sponsor = active[(cycle - 1) % len(active)]
+
+    # Alterner style A (naturel) / style B (encart)
+    if cycle % 2 == 1:
+        return "\U0001f4e2 Cet espace est r\u00e9serv\u00e9 \u00e0 nos partenaires \u2014 Pour en savoir plus : partenariats@lotoia.fr"
+    else:
+        return "\u2014 Espace partenaire disponible | partenariats@lotoia.fr"
 
 
 def _clean_response(text: str) -> str:
@@ -1031,6 +1083,10 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
                     text = parts[0].get("text", "").strip()
                     if text:
                         text = _clean_response(text)
+                        # Injection sponsor post-Gemini (n'affecte pas l'historique)
+                        sponsor_line = _get_sponsor_if_due(history)
+                        if sponsor_line:
+                            text += "\n\n" + sponsor_line
                         logger.info(
                             f"[HYBRIDE CHAT] OK (page={payload.page}, mode={mode})"
                         )
