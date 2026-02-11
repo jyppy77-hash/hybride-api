@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Actualités LotoIA - Mises à jour du Moteur d'Exploration Statistique</title>
-    <meta name="description" content="Suivez les dernières actualités de LotoIA : évolutions du moteur HYBRIDE V1.1, mécanismes de randomisation contrôlée et analyses probabilistes.">
+    <meta name="description" content="Suivez les actualités de LotoIA v1.001 : plateforme d'analyse statistique Loto France propulsée par le moteur HYBRIDE, Gemini AI et une architecture Cloud Run de production.">
     <link rel="canonical" href="https://lotoia.fr/news">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="LotoIA">
     <meta property="og:locale" content="fr_FR">
     <meta property="og:title" content="Actualités LotoIA">
-    <meta property="og:description" content="Mises à jour du moteur algorithmique et évolutions de la plateforme d'analyse.">
+    <meta property="og:description" content="LotoIA v1.001 — Plateforme d'exploration statistique Loto France. Moteur HYBRIDE, chatbot IA Gemini, 981 tirages historiques. 100% gratuit, sans inscription.">
     <meta property="og:url" content="https://lotoia.fr/news">
     <meta property="og:image" content="https://lotoia.fr/static/og-image.jpg">
     <meta property="og:image:secure_url" content="https://lotoia.fr/static/og-image.jpg">
@@ -20,7 +20,7 @@
     <meta property="og:image:height" content="630">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Actualités LotoIA">
-    <meta name="twitter:description" content="Mises à jour et évolutions du moteur algorithmique LotoIA.">
+    <meta name="twitter:description" content="LotoIA v1.001 — Moteur HYBRIDE, chatbot Gemini, 981 tirages. Plateforme d'analyse statistique gratuite et transparente.">
     <meta name="twitter:image" content="https://lotoia.fr/static/og-image.jpg">
     <link rel="stylesheet" href="/ui/static/style.css">
     <link rel="stylesheet" href="/ui/static/legal.css">
@@ -57,36 +57,50 @@
 
             <article class="news-post featured">
                 <div class="news-meta">
-                    <span class="news-date">15 février 2026</span>
-                    <span class="news-tag news-tag-update">Mise à jour v1.1</span>
+                    <span class="news-date">11 février 2026</span>
+                    <span class="news-tag news-tag-update">Version officielle v1.001</span>
                 </div>
-                <h2 class="news-title"><span>🚀</span> Évolutions du moteur HYBRIDE V1.1</h2>
+                <h2 class="news-title"><span>🎯</span> LotoIA v1.001 — Le moteur est officiellement en production</h2>
                 <div class="news-content">
-                    <p>Déploiement de la version <strong>1.1</strong> du moteur algorithmique. Cette mise à jour introduit des mécanismes avancés d'augmentation de l'entropie et affine l'exploration de l'espace combinatoire.</p>
+                    <p>C'est fait. <strong>LotoIA passe en version 1.001</strong> — la première release officielle d'une plateforme d'exploration statistique pensée, construite et déployée pour durer. Pas un prototype. Pas un MVP. Un produit complet, en production, 100% gratuit et sans inscription.</p>
+
+                    <p>Ce qui a changé en quelques semaines donne le vertige :</p>
+
                     <ul>
-                        <li><strong>Analyse probabiliste</strong> : Intégration d'un mélange random uniforme / pondéré pour une distribution plus équilibrée.</li>
-                        <li><strong>Randomisation contrôlée</strong> : Nouveau protocole anti-fingerprint sur les cycles de répétition courts.</li>
-                        <li><strong>Ingénierie de données</strong> : Amélioration de la vélocité du pipeline de traitement des données historiques.</li>
+                        <li><strong>Architecture 100% refactorée</strong> : le fichier main.py est passé de 1920 à 184 lignes. L'ensemble du code est désormais modulaire, structuré en routers indépendants, avec un score d'audit qui a bondi de 4.9 à 7.2/10.</li>
+                        <li><strong>Versioning centralisé</strong> : un seul fichier source (<code>config/version.py</code>) pilote la version dans tout le projet — backend Python, endpoint <code>/api/version</code>, footer de chaque page HTML. Plus aucune version hardcodée.</li>
+                        <li><strong>981 tirages historiques</strong> en base Cloud SQL, alimentant l'ensemble des analyses du moteur HYBRIDE.</li>
+                        <li><strong>Chatbot HYBRIDE v4.3</strong> déployé en production : Text-to-SQL sur les données réelles, mémoire conversationnelle sessionStorage, personnalité calibrée, système sponsors intégré, 5 events GA4 natifs et anti-hallucination systématique.</li>
+                        <li><strong>IA Gemini en production</strong> : intégration de <code>gemini-2.0-flash</code> via l'API Google, avec circuit breaker et fallback automatique.</li>
+                        <li><strong>Google for Startups</strong> : programme validé, crédits cloud actifs.</li>
                     </ul>
+
+                    <p>LotoIA est une plateforme <strong>transparente</strong> — le code source, la méthodologie et les données sont documentés. Aucun gain n'est promis, aucune prédiction n'est formulée. C'est un outil d'exploration statistique, construit avec rigueur, et accessible à tous.</p>
+
+                    <p><em>v1.001 n'est pas une fin. C'est la ligne de départ officielle.</em></p>
                 </div>
             </article>
 
             <article class="news-post">
                 <div class="news-meta">
-                    <span class="news-date">À partir du 10 février 2026</span>
+                    <span class="news-date">10 février 2026</span>
                     <span class="news-tag news-tag-roadmap">Nouveauté</span>
                 </div>
-                <h2 class="news-title">Déploiement du chatbot HYBRIDE : assistant pédagogique</h2>
+                <h2 class="news-title">Chatbot HYBRIDE v4.3 — L'assistant IA est en production</h2>
                 <div class="news-content">
-                    <p>À partir du <strong>10 février 2026</strong>, LotoIA initie le déploiement progressif du <strong>chatbot HYBRIDE</strong>, un module conversationnel conçu pour rendre l’analyse statistique plus accessible et pédagogique.</p>
+                    <p>Le <strong>chatbot HYBRIDE v4.3</strong> est déployé et opérationnel sur l'ensemble des pages principales de LotoIA. Ce n'est pas un gadget conversationnel — c'est un véritable assistant d'analyse propulsé par <strong>Gemini 2.0 Flash</strong>.</p>
 
                     <ul>
-                        <li><strong>Comprendre l'algorithme</strong> : explication des principes d'exploration et des limites mathématiques.</li>
-                        <li><strong>Interpréter les données</strong> : aide à la lecture des indicateurs de distribution et des tendances.</li>
-                        <li><strong>Clarifier les probabilités</strong> : pédagogie sur l'indépendance des tirages et les biais cognitifs.</li>
+                        <li><strong>6 phases de construction</strong> : du prompt engineering initial au système anti-hallucination déployé en production.</li>
+                        <li><strong>Text-to-SQL natif</strong> : le chatbot interroge directement la base Cloud SQL (981 tirages) pour fournir des réponses factuelles.</li>
+                        <li><strong>22 patterns temporels</strong> reconnus : le moteur détecte automatiquement les requêtes de type « derniers tirages », « cette semaine », « depuis janvier », etc.</li>
+                        <li><strong>Mémoire conversationnelle</strong> : historique de session via sessionStorage, avec bouton de réinitialisation.</li>
+                        <li><strong>Système sponsors intégré</strong> : messages partenaires contextuels, non intrusifs, avec tracking GA4 dédié.</li>
+                        <li><strong>5 events GA4 natifs</strong> : chat_open, chat_message, chat_error, sponsor_impression, sponsor_click.</li>
+                        <li><strong>Anti-hallucination</strong> : chaque réponse est cadrée par un system prompt strict, interdisant toute prédiction ou conseil de jeu.</li>
                     </ul>
 
-                    <p><em>Le chatbot HYBRIDE est un outil d'accompagnement à l'analyse : il ne fournit aucune prédiction et ne constitue pas une aide à la décision de jeu.</em></p>
+                    <p><em>Le chatbot HYBRIDE est un outil pédagogique : il explique, contextualise et interroge les données. Il ne prédit rien et ne constitue pas une aide à la décision de jeu.</em></p>
                 </div>
             </article>
 
@@ -116,7 +130,7 @@
                 </div>
                 <h2 class="news-title">Compliance : Cadrage réglementaire et transparence produit</h2>
                 <div class="news-content">
-                    <p>Depuis le <strong>30 janvier 2026</strong>, LotoIA renforce sa structure dédiée à la <strong>conformité juridique</strong>, afin de garantir une distinction stricte entre un <strong>outil d’analyse probabiliste</strong> et toute activité d'incitation au jeu.</p>
+                    <p>Depuis le <strong>30 janvier 2026</strong>, LotoIA renforce sa structure dédiée à la <strong>conformité juridique</strong>, afin de garantir une distinction stricte entre un <strong>outil d'analyse probabiliste</strong> et toute activité d'incitation au jeu.</p>
 
                     <p>Travaux de mise en conformité :</p>
                     <ul>
@@ -135,16 +149,18 @@
                     <span class="news-date">18 janvier 2026</span>
                     <span class="news-tag news-tag-tech">Technique</span>
                 </div>
-                <h2 class="news-title">Infrastructure Cloud & API du moteur HYBRIDE</h2>
+                <h2 class="news-title">Infrastructure Cloud — Google Cloud Run, SQL & Gemini API</h2>
                 <div class="news-content">
-                    <p>Le <strong>18 janvier 2026</strong>, LotoIA a finalisé la migration de son moteur sur une <strong>infrastructure cloud haute performance</strong>, assurant la stabilité des calculs probabilistes complexes.</p>
+                    <p>Le <strong>18 janvier 2026</strong>, LotoIA a finalisé la migration de son moteur sur une <strong>infrastructure Google Cloud de production</strong>, conçue pour la fiabilité et la performance.</p>
 
-                    <p>L'architecture repose sur une <strong>API dédiée au moteur HYBRIDE</strong>, permettant une isolation totale entre la couche de présentation et la logique de calcul combinatoire.</p>
+                    <p>L'architecture déployée repose sur des composants éprouvés :</p>
 
                     <ul>
-                        <li><strong>Calculs distribués</strong> : Cohérence des distributions statistiques et protection de la logique métier.</li>
-                        <li><strong>Orchestration dynamique</strong> : Adaptation de la puissance de calcul selon les flux d'analyses simultanées.</li>
-                        <li><strong>Évolutivité native</strong> : Architecture prête pour l'intégration de nouveaux modèles d'analyse.</li>
+                        <li><strong>Google Cloud Run</strong> : conteneur Docker avec auto-scaling, 2 workers Uvicorn, compression GZip et headers de sécurité (CSP, HSTS, X-Frame-Options).</li>
+                        <li><strong>Cloud SQL (MySQL 8.0)</strong> : 981 tirages historiques, accès via PyMySQL avec connection pooling et requêtes paramétrées.</li>
+                        <li><strong>Gemini API (gemini-2.0-flash)</strong> : intégration IA pour le chatbot et les analyses META DONNÉE, avec circuit breaker (3 failures → open) et fallback automatique.</li>
+                        <li><strong>Rate limiting</strong> : slowapi avec limite IP (10 req/min sur le chat) pour protéger l'infrastructure sans pénaliser l'usage normal.</li>
+                        <li><strong>Observabilité</strong> : JSON structured logging, correlation ID par requête (X-Request-ID), health check avec diagnostic BDD + Gemini.</li>
                     </ul>
                 </div>
             </article>
@@ -154,15 +170,15 @@
                     <span class="news-date">10 janvier 2026</span>
                     <span class="news-tag news-tag-tech">Technique</span>
                 </div>
-                <h2 class="news-title">Moteur HYBRIDE V1.1 : Architecture & Principes</h2>
+                <h2 class="news-title">Moteur HYBRIDE — Architecture & Principes d'exploration</h2>
                 <div class="news-content">
-                    <p>Le moteur opère une <strong>exploration statistique</strong> basée sur une double pondération dynamique :</p>
+                    <p>Le moteur HYBRIDE est le coeur algorithmique de LotoIA. Il opère une <strong>exploration statistique</strong> basée sur une double pondération dynamique :</p>
                     <ul>
                         <li><strong>Composante Historique (60%)</strong> : Analyse de la distribution sur l'ensemble du dataset (fréquences globales).</li>
                         <li><strong>Composante Tendancielle (40%)</strong> : Pondération adaptative sur les cycles de 24 mois.</li>
                         <li><strong>Contraintes Variables</strong> : Application de filtres de dispersion et d'équilibre pour une exploration exhaustive.</li>
                     </ul>
-                    <p><em>Note technique : LotoIA est un outil d’analyse et d'exploration, pas de prédiction. La distribution des résultats reste soumise aux lois du hasard pur.</em></p>
+                    <p><em>Note technique : LotoIA est un outil d'analyse et d'exploration, pas de prédiction. La distribution des résultats reste soumise aux lois du hasard pur.</em></p>
                 </div>
             </article>
 
@@ -173,11 +189,12 @@
                 </div>
                 <h2 class="news-title">Feuille de route technique</h2>
                 <div class="news-content">
-                    <p>Prochaines étapes du développement de l'outil :</p>
+                    <p>État d'avancement et prochaines étapes :</p>
                     <ul>
-                        <li><strong>Multi-Lotteries</strong> : Extension du moteur aux tirages européens (EuroMillions).</li>
-                        <li><strong>Dashboard d'analyse</strong> : Visualisation graphique des écarts et des fréquences.</li>
-                        <li><strong>API Publique</strong> : Accès programmatique aux données statistiques brutes.</li>
+                        <li><strong>✅ Chatbot HYBRIDE</strong> : Déployé en v4.3 — assistant IA conversationnel avec Text-to-SQL et mémoire de session.</li>
+                        <li><strong>✅ Dashboard META DONNÉE</strong> : Module d'analyse experte avec graphiques, analyse textuelle et export PDF.</li>
+                        <li><strong>Multi-Lotteries</strong> : Extension du moteur aux tirages européens (EuroMillions) — à venir.</li>
+                        <li><strong>API Publique</strong> : Accès programmatique aux données statistiques brutes — à venir.</li>
                     </ul>
                     <p>LotoIA évolue pour devenir la référence en analyse probabiliste open-access.</p>
                 </div>
@@ -195,7 +212,7 @@
                 <div class="action-card-icon">✨</div>
                 <div class="action-card-text">
                     <h3>Lancer l'exploration statistique</h3>
-                    <p>Analysez l'espace combinatoire via le moteur algorithmique HYBRIDE V1.1.</p>
+                    <p>Explorez l'espace combinatoire avec le moteur HYBRIDE — LotoIA v1.001.</p>
                 </div>
                 <a href="/loto" class="btn btn-primary">
                     Accéder au moteur
