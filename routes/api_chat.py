@@ -978,6 +978,12 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
                 except Exception as e:
                     logger.warning(f"[HYBRIDE CHAT] Fallback Phase 1 erreur: {e}")
 
+    # DEBUG — tracer l'etat avant appel Gemini final (a retirer apres validation prod)
+    logger.info(
+        f"[DEBUG] force_sql={force_sql} | enrichment={bool(enrichment_context)} | "
+        f"question=\"{payload.message[:60]}\" | history_len={len(payload.history or [])}"
+    )
+
     # Message utilisateur avec contexte de page + donnees BDD
     if enrichment_context:
         user_text = f"[Page: {payload.page}]\n\n{enrichment_context}\n\n[Question utilisateur] {payload.message}"
