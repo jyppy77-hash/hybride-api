@@ -19,7 +19,7 @@ from pythonjsonlogger import jsonlogger
 
 import db_cloudsql
 from rate_limit import limiter
-from engine.version import __version__
+from config.version import __version__, APP_VERSION, APP_NAME, VERSION_DATE
 from services.circuit_breaker import gemini_breaker
 from routes.pages import router as pages_router
 from routes.api_data import router as data_router
@@ -270,6 +270,20 @@ app.include_router(gemini_router)
 app.include_router(pdf_router)
 app.include_router(tracking_router)
 app.include_router(chat_router)
+
+
+# =========================
+# Version API (centralisation frontend)
+# =========================
+
+@app.get("/api/version")
+async def api_version():
+    """Retourne la version centralisee pour injection frontend."""
+    return {
+        "version": APP_VERSION,
+        "name": APP_NAME,
+        "date": VERSION_DATE,
+    }
 
 
 # =========================
