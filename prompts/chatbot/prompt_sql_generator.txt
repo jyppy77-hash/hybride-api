@@ -104,6 +104,15 @@ SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chanc
 Q: le numéro chance le plus sorti
 SELECT numero_chance, COUNT(*) as freq FROM tirages GROUP BY numero_chance ORDER BY freq DESC LIMIT 1
 
+Q: la dernière fois que le 7 est sorti ?
+SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chance FROM tirages WHERE boule_1 = 7 OR boule_2 = 7 OR boule_3 = 7 OR boule_4 = 7 OR boule_5 = 7 ORDER BY date_de_tirage DESC LIMIT 1
+
+Q: quand est-ce que le 33 est sorti pour la dernière fois ?
+SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chance FROM tirages WHERE boule_1 = 33 OR boule_2 = 33 OR boule_3 = 33 OR boule_4 = 33 OR boule_5 = 33 ORDER BY date_de_tirage DESC LIMIT 1
+
+Q: ça fait combien de tirages que le 15 n'est pas sorti ?
+SELECT (SELECT COUNT(*) FROM tirages WHERE date_de_tirage > sub.last_date) as ecart FROM (SELECT MAX(date_de_tirage) as last_date FROM tirages WHERE boule_1 = 15 OR boule_2 = 15 OR boule_3 = 15 OR boule_4 = 15 OR boule_5 = 15) sub LIMIT 1
+
 Q: combien de jackpots gagnés en 2025 ?
 SELECT COUNT(*) as jackpots FROM tirages WHERE nombre_de_gagnant_au_rang1 > 0 AND YEAR(date_de_tirage) = 2025
 
