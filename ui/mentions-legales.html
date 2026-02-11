@@ -43,7 +43,7 @@
         <article class="legal-content">
 
             <!-- Date de mise à jour -->
-            <p class="legal-update">Dernière mise à jour : 23 janvier 2026</p>
+            <p class="legal-update">Dernière mise à jour : 8 février 2026</p>
 
             <!-- ══════════════════════════════════════════════════════════════════
                  SECTION 1 : ÉDITEUR DU SITE
@@ -138,6 +138,14 @@
                 <p>Le Site utilise des algorithmes de traitement statistique, désignés sous l'appellation « HYBRIDE_OPTIMAL_V1 », aux fins d'analyser des données historiques publiques relatives aux tirages passés du Loto.</p>
 
                 <p>Ces algorithmes procèdent exclusivement à des <strong>analyses statistiques rétrospectives et descriptives</strong> portant sur des événements passés. Ils n'intègrent aucune composante prédictive, aucun modèle d'apprentissage supervisé à visée pronostique, et aucune fonctionnalité de recommandation personnalisée.</p>
+
+                <p>Le Site intègre par ailleurs l'<strong>API Google Gemini</strong> (modèle Gemini 2.0 Flash), utilisée à deux fins exclusivement pédagogiques et informatives :</p>
+                <ul>
+                    <li><strong>Chatbot HYBRIDE :</strong> assistant conversationnel pédagogique qui utilise Gemini comme moteur de langage pour répondre aux questions des utilisateurs relatives au Loto, aux statistiques et au fonctionnement du moteur HYBRIDE_OPTIMAL_V1. Le chatbot ne formule aucune prédiction et ne fournit en aucun cas des numéros ou des recommandations de jeu ;</li>
+                    <li><strong>Génération des rapports PDF META :</strong> Gemini enrichit les analyses statistiques produites par le moteur HYBRIDE_OPTIMAL_V1 avec un texte pédagogique et contextualisé, intégré aux rapports PDF téléchargeables par l'utilisateur.</li>
+                </ul>
+
+                <p>Dans ces deux usages, l'API Google Gemini intervient exclusivement en qualité d'<strong>interface d'interprétation</strong> entre l'algorithme HYBRIDE_OPTIMAL_V1 et l'utilisateur, aux fins de rendre les données statistiques accessibles et compréhensibles. L'intelligence artificielle <strong>ne dispose d'aucune capacité prédictive ni pronostique</strong> : elle se limite à reformuler et vulgariser des analyses statistiques descriptives portant sur des événements passés.</p>
 
                 <h3>4.2 Absence de valeur prédictive</h3>
                 <div class="legal-disclaimer-box critical">
@@ -300,11 +308,13 @@
                 <p><strong>Conception et développement :</strong> JyppY / EmovisIA</p>
                 <p><strong>Moteur d'analyse statistique :</strong> HYBRIDE_OPTIMAL_V1</p>
                 <p><strong>Source des données statistiques :</strong> Données publiques issues des tirages officiels du Loto (Française des Jeux)</p>
-                <p><strong>Technologies :</strong> Python, FastAPI, Google Cloud Platform</p>
+                <p><strong>Technologies :</strong> Python, FastAPI, Google Cloud Platform (Cloud Run), Google Gemini API (modèle 2.0 Flash), ReportLab (génération PDF native Python)</p>
+
+                <p>Les rapports PDF téléchargeables sont générés intégralement en Python via la bibliothèque open source ReportLab, sans recours à un service ou plugin externe de création PDF. Le chatbot HYBRIDE utilise l'API Google Gemini comme moteur conversationnel.</p>
 
                 <p>Des outils d'assistance à la programmation intégrant des technologies d'intelligence artificielle ont été utilisés comme aide à la rédaction et à la révision du code source.</p>
 
-                <p style="margin-top: 2rem;"><strong>© <span class="dynamic-year">2025</span> EmovisIA — Tous droits réservés.</strong></p>
+                <p style="margin-top: 2rem;"><strong>© <span class="dynamic-year">2025-2026</span> EmovisIA — Tous droits réservés.</strong></p>
             </section>
 
             <!-- ══════════════════════════════════════════════════════════════════
@@ -356,14 +366,15 @@
                 <span class="footer-sep">•</span>
                 <a href="/politique-cookies">Cookies</a>
             </div>
-            <p class="footer-brand">LotoIA.fr - Outil d'analyse statistique v1.0</p>
+            <p class="footer-brand">LotoIA.fr - Outil d'analyse statistique <span class="app-version">v1.001</span></p>
             <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dépendance. Appel non surtaxé.</p>
             <p class="footer-help"><a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a> — 09 74 75 13 13</p>
             <div class="credits">
-                <p class="dev-by">© <span class="dynamic-year">2025</span> EmovisIA</p>
+                <p class="dev-by">© <span class="dynamic-year">2025-2026</span> EmovisIA</p>
             </div>
         </footer>
     </div>
 
+    <script src="/ui/static/version-inject.js"></script>
 </body>
 </html>
