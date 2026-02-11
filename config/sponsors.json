@@ -1,0 +1,12 @@
+{
+  "enabled": true,
+  "frequency": 3,
+  "sponsors": [
+    {
+      "name": "Votre marque ici",
+      "tagline": "Votre message personnalisé",
+      "url": "mailto:partenariats@lotoia.fr",
+      "active": true
+    }
+  ]
+}
