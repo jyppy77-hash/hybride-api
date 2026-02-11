@@ -145,6 +145,18 @@ def _get_sponsor_if_due(history: list) -> str | None:
         return "\u2014 Espace partenaire disponible | partenariats@lotoia.fr"
 
 
+def _strip_sponsor_from_text(text: str) -> str:
+    """Supprime les lignes sponsor d'un message (pour nettoyer l'historique avant Gemini)."""
+    lines = text.split('\n')
+    cleaned = [
+        line for line in lines
+        if 'partenaires' not in line
+        and 'Espace partenaire' not in line
+        and 'partenariats@lotoia.fr' not in line
+    ]
+    return '\n'.join(cleaned).strip()
+
+
 def _clean_response(text: str) -> str:
     """Supprime les tags internes qui ne doivent pas \u00eatre vus par l'utilisateur."""
     internal_tags = [
@@ -911,11 +923,13 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
 
     for msg in history:
         role = "user" if msg.role == "user" else "model"
+        # Nettoyer les sponsors des reponses assistant (evite que Gemini les repete)
+        content = _strip_sponsor_from_text(msg.content) if role == "model" else msg.content
         # Fusionner les messages consecutifs de meme role (requis par Gemini)
         if contents and contents[-1]["role"] == role:
-            contents[-1]["parts"][0]["text"] += "\n" + msg.content
+            contents[-1]["parts"][0]["text"] += "\n" + content
         else:
-            contents.append({"role": role, "parts": [{"text": msg.content}]})
+            contents.append({"role": role, "parts": [{"text": content}]})
 
     # Gemini exige que contents commence par "user"
     while contents and contents[0]["role"] == "model":
