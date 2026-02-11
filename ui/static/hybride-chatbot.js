@@ -37,7 +37,10 @@
         win.innerHTML =
             '<div class="hybride-header">' +
                 '<span class="hybride-header-title">\uD83E\uDD16 HYBRIDE — Assistant IA</span>' +
-                '<button class="hybride-header-close" aria-label="Fermer">\u2715</button>' +
+                '<div class="hybride-header-actions">' +
+                    '<button class="hybride-header-clear" aria-label="Nouvelle conversation" title="Nouvelle conversation">\uD83D\uDDD1\uFE0F</button>' +
+                    '<button class="hybride-header-close" aria-label="Fermer">\u2715</button>' +
+                '</div>' +
             '</div>' +
             '<div class="hybride-messages"></div>' +
             '<div class="hybride-input-area">' +
@@ -51,6 +54,7 @@
 
         /* ── Références DOM internes ── */
         var closeBtn = win.querySelector('.hybride-header-close');
+        var clearBtn = win.querySelector('.hybride-header-clear');
         var messagesArea = win.querySelector('.hybride-messages');
         var input = win.querySelector('.hybride-input');
         var sendBtn = win.querySelector('.hybride-send');
@@ -148,6 +152,15 @@
         }
 
         var chatHistory = [];
+        var WELCOME_TEXT = 'Bienvenue ! Je suis HYBRIDE, l\u2019assistant IA de LotoIA. Pose-moi tes questions sur le Loto, les statistiques ou le moteur HYBRIDE \uD83D\uDE80';
+        var STORAGE_KEY = 'hybride-history';
+
+        function saveHistory() {
+            try {
+                var toSave = chatHistory.length > 50 ? chatHistory.slice(-50) : chatHistory;
+                sessionStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+            } catch (e) { /* quota exceeded — silent */ }
+        }
 
         /* ── Analytics helper (safe, ne bloque jamais) ── */
         function trackEvent(name, params) {
@@ -197,6 +210,7 @@
                 chatHistory.push({ role: 'user', content: text });
                 chatHistory.push({ role: 'assistant', content: botText });
                 if (chatHistory.length > 20) chatHistory = [chatHistory[0]].concat(chatHistory.slice(-19));
+                saveHistory();
                 trackEvent('chat_response_received', { page: detectPage(), response_length: botText.length });
             })
             .catch(function () {
@@ -208,25 +222,48 @@
         }
 
         /* ══════════════════════════════════
-           Message d'accueil
+           Restauration historique / accueil
            ══════════════════════════════════ */
 
-        addMessage(
-            'Bienvenue ! Je suis HYBRIDE, l\u2019assistant IA de LotoIA. ' +
-            'Pose-moi tes questions sur le Loto, les statistiques ou le moteur HYBRIDE \uD83D\uDE80',
-            'bot'
-        );
-        chatHistory.push({
-            role: 'assistant',
-            content: 'Bienvenue ! Je suis HYBRIDE, l\'assistant IA de LotoIA. Pose-moi tes questions sur le Loto, les statistiques ou le moteur HYBRIDE \uD83D\uDE80'
-        });
+        var savedHistory = sessionStorage.getItem(STORAGE_KEY);
+        if (savedHistory) {
+            try {
+                chatHistory = JSON.parse(savedHistory);
+                // Re-afficher toutes les bulles
+                for (var i = 0; i < chatHistory.length; i++) {
+                    var sender = chatHistory[i].role === 'user' ? 'user' : 'bot';
+                    addMessage(chatHistory[i].content, sender);
+                }
+            } catch (e) {
+                chatHistory = [];
+                sessionStorage.removeItem(STORAGE_KEY);
+            }
+        }
+
+        // Message de bienvenue uniquement si aucun historique
+        if (chatHistory.length === 0) {
+            addMessage(WELCOME_TEXT, 'bot');
+            chatHistory.push({ role: 'assistant', content: WELCOME_TEXT });
+            saveHistory();
+        }
 
         /* ══════════════════════════════════
            Events
            ══════════════════════════════════ */
 
+        function clearConversation() {
+            chatHistory = [];
+            sessionStorage.removeItem(STORAGE_KEY);
+            messagesArea.innerHTML = '';
+            addMessage(WELCOME_TEXT, 'bot');
+            chatHistory.push({ role: 'assistant', content: WELCOME_TEXT });
+            saveHistory();
+            trackEvent('chat_clear', { page: detectPage() });
+        }
+
         bubble.addEventListener('click', toggle);
         closeBtn.addEventListener('click', close);
+        clearBtn.addEventListener('click', clearConversation);
         sendBtn.addEventListener('click', send);
 
         input.addEventListener('keydown', function (e) {

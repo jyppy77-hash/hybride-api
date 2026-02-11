@@ -98,7 +98,14 @@
     letter-spacing: 0.3px;
 }
 
-.hybride-header-close {
+.hybride-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.hybride-header-close,
+.hybride-header-clear {
     background: none;
     border: none;
     color: rgba(255, 255, 255, 0.85);
@@ -115,8 +122,19 @@
     transition: background 0.2s ease;
 }
 
-.hybride-header-close:hover {
+.hybride-header-clear {
+    font-size: 16px;
+    opacity: 0.7;
+    transition: background 0.2s ease, opacity 0.2s ease;
+}
+
+.hybride-header-close:hover,
+.hybride-header-clear:hover {
     background: rgba(255, 255, 255, 0.2);
+}
+
+.hybride-header-clear:hover {
+    opacity: 1;
 }
 
 /* ── Zone messages ── */
