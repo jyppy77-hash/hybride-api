@@ -323,6 +323,10 @@ async def _generate_sql(question: str, client, api_key: str, history: list = Non
                 sql_contents[-1]["parts"][0]["text"] += "\n" + msg.content
             else:
                 sql_contents.append({"role": role, "parts": [{"text": msg.content}]})
+    # Gemini exige que contents commence par "user"
+    while sql_contents and sql_contents[0]["role"] == "model":
+        sql_contents.pop(0)
+
     sql_contents.append({"role": "user", "parts": [{"text": question}]})
 
     try:
@@ -793,6 +797,10 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
         else:
             contents.append({"role": role, "parts": [{"text": msg.content}]})
 
+    # Gemini exige que contents commence par "user"
+    while contents and contents[0]["role"] == "model":
+        contents.pop(0)
+
     # Detection : Prochain tirage → Tirage (T) → Grille (2) → Complexe (3) → Numero (1) → Text-to-SQL (fallback)
     enrichment_context = ""
 
@@ -938,6 +946,37 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
                     f'status=ERROR | error="{e}" | '
                     f'time={int((time.monotonic() - t0) * 1000)}ms'
                 )
+
+    # Fallback regex quand Phase SQL echoue avec filtre temporel
+    # (donnees globales, mieux que la reponse generique)
+    if force_sql and not enrichment_context:
+        logger.info("[HYBRIDE CHAT] Phase SQL echouee, fallback phases regex (donnees globales)")
+        intent = _detect_requete_complexe(payload.message)
+        if intent:
+            try:
+                if intent["type"] == "classement":
+                    data = await asyncio.wait_for(asyncio.to_thread(get_classement_numeros, intent["num_type"], intent["tri"], intent["limit"]), timeout=30.0)
+                elif intent["type"] == "comparaison":
+                    data = await asyncio.wait_for(asyncio.to_thread(get_comparaison_numeros, intent["num1"], intent["num2"], intent["num_type"]), timeout=30.0)
+                elif intent["type"] == "categorie":
+                    data = await asyncio.wait_for(asyncio.to_thread(get_numeros_par_categorie, intent["categorie"], intent["num_type"]), timeout=30.0)
+                else:
+                    data = None
+                if data:
+                    enrichment_context = _format_complex_context(intent, data)
+                    logger.info(f"[HYBRIDE CHAT] Fallback Phase 3: {intent['type']}")
+            except Exception as e:
+                logger.warning(f"[HYBRIDE CHAT] Fallback Phase 3 erreur: {e}")
+        if not enrichment_context:
+            numero, type_num = _detect_numero(payload.message)
+            if numero is not None:
+                try:
+                    stats = await asyncio.wait_for(asyncio.to_thread(get_numero_stats, numero, type_num), timeout=30.0)
+                    if stats:
+                        enrichment_context = _format_stats_context(stats)
+                        logger.info(f"[HYBRIDE CHAT] Fallback Phase 1: numero={numero}")
+                except Exception as e:
+                    logger.warning(f"[HYBRIDE CHAT] Fallback Phase 1 erreur: {e}")
 
     # Message utilisateur avec contexte de page + donnees BDD
     if enrichment_context:
