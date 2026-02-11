@@ -121,12 +121,22 @@
                 bubble.classList.add('open');
                 adjustViewport();
                 input.focus();
-                trackEvent('chat_open', { page: detectPage() });
+                chatOpenTime = Date.now();
+                sponsorViews = 0;
+                trackEvent('hybride_chat_open', {
+                    page: detectPage(),
+                    has_history: chatHistory.length > 1
+                });
             } else {
                 win.classList.remove('visible');
                 bubble.classList.remove('open');
                 root.classList.remove('hybride-fullscreen');
-                trackEvent('chat_close', { page: detectPage() });
+                trackEvent('hybride_chat_session', {
+                    page: detectPage(),
+                    message_count: messageCount,
+                    session_duration_seconds: chatOpenTime ? Math.round((Date.now() - chatOpenTime) / 1000) : 0,
+                    sponsor_views: sponsorViews
+                });
             }
         }
 
@@ -136,7 +146,12 @@
             win.classList.remove('visible');
             bubble.classList.remove('open');
             root.classList.remove('hybride-fullscreen');
-            trackEvent('chat_close', { page: detectPage() });
+            trackEvent('hybride_chat_session', {
+                page: detectPage(),
+                message_count: messageCount,
+                session_duration_seconds: chatOpenTime ? Math.round((Date.now() - chatOpenTime) / 1000) : 0,
+                sponsor_views: sponsorViews
+            });
         }
 
         /* ══════════════════════════════════
@@ -154,6 +169,11 @@
         var chatHistory = [];
         var WELCOME_TEXT = 'Bienvenue ! Je suis HYBRIDE, l\u2019assistant IA de LotoIA. Pose-moi tes questions sur le Loto, les statistiques ou le moteur HYBRIDE \uD83D\uDE80';
         var STORAGE_KEY = 'hybride-history';
+
+        /* ── GA4 session tracking state ── */
+        var chatOpenTime = 0;
+        var sponsorViews = 0;
+        var messageCount = 0;
 
         function saveHistory() {
             try {
@@ -175,15 +195,24 @@
            Envoi message (API Gemini)
            ══════════════════════════════════ */
 
+        function hasSponsor(text) {
+            return text.indexOf('partenaires') !== -1 || text.indexOf('Espace partenaire') !== -1;
+        }
+
         function send() {
             var text = input.value.trim();
             if (!text) return;
 
             addMessage(text, 'user');
             input.value = '';
+            messageCount++;
 
             showTyping();
-            trackEvent('chat_message_sent', { page: detectPage(), message_length: text.length });
+            trackEvent('hybride_chat_message', {
+                page: detectPage(),
+                message_length: text.length,
+                message_count: messageCount
+            });
 
             var controller = new AbortController();
             var timeoutId = setTimeout(function () { controller.abort(); }, 20000);
@@ -211,7 +240,16 @@
                 chatHistory.push({ role: 'assistant', content: botText });
                 if (chatHistory.length > 20) chatHistory = [chatHistory[0]].concat(chatHistory.slice(-19));
                 saveHistory();
-                trackEvent('chat_response_received', { page: detectPage(), response_length: botText.length });
+
+                // Sponsor detection
+                if (hasSponsor(botText)) {
+                    sponsorViews++;
+                    trackEvent('hybride_chat_sponsor_view', {
+                        page: detectPage(),
+                        sponsor_style: botText.indexOf('partenaires') !== -1 ? 'A' : 'B',
+                        message_position: messageCount
+                    });
+                }
             })
             .catch(function () {
                 clearTimeout(timeoutId);
@@ -252,13 +290,17 @@
            ══════════════════════════════════ */
 
         function clearConversation() {
+            trackEvent('hybride_chat_clear', {
+                page: detectPage(),
+                message_count: messageCount
+            });
             chatHistory = [];
+            messageCount = 0;
             sessionStorage.removeItem(STORAGE_KEY);
             messagesArea.innerHTML = '';
             addMessage(WELCOME_TEXT, 'bot');
             chatHistory.push({ role: 'assistant', content: WELCOME_TEXT });
             saveHistory();
-            trackEvent('chat_clear', { page: detectPage() });
         }
 
         bubble.addEventListener('click', toggle);
