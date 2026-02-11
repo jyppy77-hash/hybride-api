@@ -3,6 +3,8 @@ import io
 import tempfile
 import logging
 
+from config.version import APP_VERSION
+
 logger = logging.getLogger(__name__)
 
 
@@ -296,7 +298,7 @@ def generate_meta_pdf(analysis: str = "", window: str = "75 tirages",
         # Version + notes IA
         c.setFillColorRGB(150 / 255, 150 / 255, 150 / 255)
         c.setFont("DejaVuSans-Oblique", 8)
-        c.drawCentredString(w / 2, y, "LotoIA \u2014 Rapport META DONN\u00c9E v0.9")
+        c.drawCentredString(w / 2, y, f"LotoIA \u2014 Rapport META DONN\u00c9E v{APP_VERSION}")
         y -= 7 * mm
         c.drawCentredString(w / 2, y, "Ce rapport est enti\u00e8rement g\u00e9n\u00e9r\u00e9 par intelligence artificielle en collaboration avec le moteur HYBRIDE_OPTIMAL_V1.")
         y -= 7 * mm
