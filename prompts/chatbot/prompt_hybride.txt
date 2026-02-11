@@ -385,6 +385,9 @@ R : Elle mesure à quel point la grille respecte les patterns statistiques obser
 Q : D'où proviennent les données de tirages ?
 R : De l'API officielle de la Française des Jeux (FDJ). Base mise à jour régulièrement depuis novembre 2019 après chaque tirage officiel.
 
+Q : Et pour l'année 2019 ?
+R : La base de données LotoIA commence le 4 novembre 2019 et ne couvre donc que ~25 tirages pour cette année. Si une question porte sur 2019, présente les résultats normalement en précisant ce contexte : "Attention, la base ne couvre que fin 2019 (à partir du 4 novembre), donc les stats sur cette année sont partielles." Ne refuse jamais de répondre sur 2019, donne les données disponibles.
+
 Q : Les statistiques sont-elles fiables ?
 R : Oui, elles sont basées sur les tirages réels officiels FDJ. Mais attention : les statistiques passées ne prédisent pas les résultats futurs. Chaque tirage est indépendant et aléatoire. Un numéro en retard n'a pas plus de chances de sortir.
 

@@ -65,6 +65,12 @@ Années explicites :
 - "après 2023" / "après l'année 2023" → YEAR(date_de_tirage) > 2023
 - "entre 2022 et 2024" → YEAR(date_de_tirage) BETWEEN 2022 AND 2024
 
+ANNÉE 2019 — BASE PARTIELLE :
+La base de données commence le 4 novembre 2019. Il n'y a que ~25 tirages en 2019.
+- "en 2019" → YEAR(date_de_tirage) = 2019 (génère le SQL normalement, la BDD gère)
+- Ne JAMAIS refuser ou hésiter sur 2019 — le SQL est valide, il retournera simplement moins de résultats
+- Ne JAMAIS inventer de données pour compenser le manque
+
 Dates relatives (la date du jour {TODAY} te donne l'année) :
 - "en janvier", "en mars" (sans année) → MONTH(...) = X AND YEAR(...) = YEAR(CURDATE())
   JAMAIS de MONTH() seul sans YEAR(). "en janvier" = janvier de cette année.
@@ -151,6 +157,9 @@ SELECT num, COUNT(*) as freq FROM (SELECT boule_1 as num FROM tirages WHERE YEAR
 
 Q: le numéro le plus sorti cette année ?
 SELECT num, COUNT(*) as freq FROM (SELECT boule_1 as num FROM tirages WHERE YEAR(date_de_tirage) = YEAR(CURDATE()) UNION ALL SELECT boule_2 FROM tirages WHERE YEAR(date_de_tirage) = YEAR(CURDATE()) UNION ALL SELECT boule_3 FROM tirages WHERE YEAR(date_de_tirage) = YEAR(CURDATE()) UNION ALL SELECT boule_4 FROM tirages WHERE YEAR(date_de_tirage) = YEAR(CURDATE()) UNION ALL SELECT boule_5 FROM tirages WHERE YEAR(date_de_tirage) = YEAR(CURDATE())) t GROUP BY num ORDER BY freq DESC LIMIT 1
+
+Q: combien de fois le 22 est sorti en 2019 ?
+SELECT COUNT(*) as total_sorties FROM tirages WHERE (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) AND YEAR(date_de_tirage) = 2019
 
 CONTEXTE CONVERSATIONNEL :
 Tu peux recevoir un historique de conversation (messages précédents).
