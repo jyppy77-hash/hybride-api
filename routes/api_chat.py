@@ -232,6 +232,15 @@ _TEMPORAL_PATTERNS = [
     r'\bces\s+\d+\s+derniers?\s+mois\b',           # ces 6 derniers mois
     r'\bdepuis\s+le\s+d[eé]but\b',                # depuis le début
     r'\bdepuis\s+\d+\s+(?:mois|ans?|semaines?)\b', # depuis 3 mois
+    # "l'année 2024" avec prépositions variées
+    r'(?:dans|pour|sur|pendant)\s+l[\'\u2019]?ann[ée]e\s+20\d{2}',  # dans/pour/sur/pendant l'année 2024
+    r'\bau\s+cours\s+de\s+l[\'\u2019]?ann[ée]e\s+20\d{2}',          # au cours de l'année 2024
+    r'\bl[\'\u2019]?ann[ée]e\s+20\d{2}\b',                           # l'année 2024 (seul)
+    r'\bdepuis\s+l[\'\u2019]?ann[ée]e\s+20\d{2}\b',                  # depuis l'année 2023
+    r'\bavant\s+l[\'\u2019]?ann[ée]e\s+20\d{2}\b',                   # avant l'année 2024
+    r'\bapr[eè]s\s+l[\'\u2019]?ann[ée]e\s+20\d{2}\b',               # après l'année 2023
+    r'\bentre\s+l[\'\u2019]?ann[ée]e\s+20\d{2}\s+et',                # entre l'année 2022 et ...
+    r'\bde\s+l[\'\u2019]?ann[ée]e\s+20\d{2}\b',                      # de l'année 2024
 ]
 
 
