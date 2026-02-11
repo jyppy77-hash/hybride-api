@@ -36,6 +36,64 @@ FALLBACK_RESPONSE = (
 META_KEYWORDS = ["meta", "algorithme", "moteur", "pond\u00e9ration", "ponderation"]
 
 # ────────────────────────────────────────────
+# Phase 0 : Continuation contextuelle
+# Intercepte les r\u00e9ponses courtes (oui/non/ok...) et les enrichit
+# avec le contexte conversationnel pour \u00e9viter les d\u00e9rives Gemini.
+# ────────────────────────────────────────────
+
+CONTINUATION_PATTERNS = re.compile(
+    r'^(oui|ouais|yes|yeah|yep|ok|d\'accord|vas-y|go|montre|'
+    r'montre-moi|carr\u00e9ment|bien s\u00fbr|absolument|pourquoi pas|'
+    r'je veux bien|volontiers|allez|non|nan|nope|pas vraiment|'
+    r'bof|si|stp|please|d\u00e9taille|d\u00e9tailles|detail|continue|'
+    r'envoie|balance|dis-moi|affirmatif|n\u00e9gatif|'
+    r'je veux savoir|je veux voir|on y va)[\s!.?]*$',
+    re.IGNORECASE
+)
+
+
+def _is_short_continuation(message: str) -> bool:
+    """Detecte si le message est une reponse courte de continuation."""
+    stripped = message.strip()
+    if len(stripped) > 80:
+        return False
+    return bool(CONTINUATION_PATTERNS.match(stripped))
+
+
+def _enrich_with_context(message: str, history: list) -> str:
+    """Enrichit une reponse courte avec le contexte de la derniere interaction.
+
+    Parcourt l'historique a l'envers pour trouver le dernier echange
+    (derniere question user + derniere reponse assistant) et construit
+    un message enrichi pour Gemini.
+    """
+    if not history or len(history) < 2:
+        return message
+
+    last_assistant = None
+    last_user_question = None
+
+    for msg in reversed(history):
+        if msg.role == "assistant" and not last_assistant:
+            last_assistant = msg.content
+        elif msg.role == "user" and not last_user_question:
+            last_user_question = msg.content
+        if last_assistant and last_user_question:
+            break
+
+    if not last_assistant or not last_user_question:
+        return message
+
+    enriched = (
+        f"[CONTEXTE CONTINUATION] L'utilisateur avait demand\u00e9 : \"{last_user_question}\". "
+        f"Tu avais r\u00e9pondu : \"{last_assistant[:300]}\". "
+        f"L'utilisateur r\u00e9pond maintenant : \"{message}\". "
+        f"Continue sur le m\u00eame sujet en r\u00e9pondant \u00e0 ta propre proposition."
+    )
+    return enriched
+
+
+# ────────────────────────────────────────────
 # Systeme sponsor — insertion post-Gemini
 # ────────────────────────────────────────────
 
@@ -104,6 +162,7 @@ def _clean_response(text: str) -> str:
         r'\[PROCHAIN TIRAGE[^\]]*\]',
         r'\[Page:\s*[^\]]*\]',
         r'\[Question utilisateur[^\]]*\]',
+        r'\[CONTEXTE CONTINUATION[^\]]*\]',
     ]
     for tag in internal_tags:
         text = re.sub(tag, '', text)
@@ -862,11 +921,25 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
     while contents and contents[0]["role"] == "model":
         contents.pop(0)
 
+    # ── Phase 0 : Continuation contextuelle ──
+    # Reponses courtes (oui/non/ok...) → bypass regex, enrichir pour Gemini
+    _continuation_mode = False
+    _enriched_message = None
+
+    if _is_short_continuation(payload.message) and history:
+        _enriched_message = _enrich_with_context(payload.message, history)
+        if _enriched_message != payload.message:
+            _continuation_mode = True
+            logger.info(
+                f"[CONTINUATION] Reponse courte detectee: \"{payload.message}\" "
+                f"→ enrichissement contextuel"
+            )
+
     # Detection : Prochain tirage → Tirage (T) → Grille (2) → Complexe (3) → Numero (1) → Text-to-SQL (fallback)
     enrichment_context = ""
 
-    # Phase 0 : prochain tirage
-    if _detect_prochain_tirage(payload.message):
+    # Phase 0-bis : prochain tirage (skip si continuation)
+    if not _continuation_mode and _detect_prochain_tirage(payload.message):
         try:
             tirage_ctx = await asyncio.wait_for(asyncio.to_thread(_get_prochain_tirage), timeout=30.0)
             if tirage_ctx:
@@ -876,7 +949,7 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
             logger.warning(f"[HYBRIDE CHAT] Erreur prochain tirage: {e}")
 
     # Phase T : resultats d'un tirage (dernier tirage, tirage d'hier, etc.)
-    if not enrichment_context:
+    if not _continuation_mode and not enrichment_context:
         tirage_target = _detect_tirage(payload.message)
         if tirage_target is not None:
             try:
@@ -890,12 +963,12 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
                 logger.warning(f"[HYBRIDE CHAT] Erreur tirage: {e}")
 
     # Filtre temporel detecte → skip phases regex, Phase SQL gere
-    force_sql = not enrichment_context and _has_temporal_filter(payload.message)
+    force_sql = not _continuation_mode and not enrichment_context and _has_temporal_filter(payload.message)
     if force_sql:
         logger.info("[HYBRIDE CHAT] Filtre temporel detecte, force Phase SQL")
 
     # Phase 2 : detection de grille (5 numeros)
-    grille_nums, grille_chance = _detect_grille(payload.message)
+    grille_nums, grille_chance = (None, None) if _continuation_mode else _detect_grille(payload.message)
     if not force_sql and grille_nums is not None:
         try:
             grille_result = await asyncio.wait_for(asyncio.to_thread(analyze_grille_for_chat, grille_nums, grille_chance), timeout=30.0)
@@ -906,7 +979,7 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
             logger.warning(f"[HYBRIDE CHAT] Erreur analyse grille: {e}")
 
     # Phase 3 : requete complexe (classement, comparaison, categorie)
-    if not force_sql and not enrichment_context:
+    if not _continuation_mode and not force_sql and not enrichment_context:
         intent = _detect_requete_complexe(payload.message)
         if intent:
             try:
@@ -926,7 +999,7 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
                 logger.warning(f"[HYBRIDE CHAT] Erreur requete complexe: {e}")
 
     # Phase 1 : detection de numero simple
-    if not force_sql and not enrichment_context:
+    if not _continuation_mode and not force_sql and not enrichment_context:
         numero, type_num = _detect_numero(payload.message)
         if numero is not None:
             try:
@@ -938,7 +1011,7 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
                 logger.warning(f"[HYBRIDE CHAT] Erreur stats BDD (numero={numero}): {e}")
 
     # Phase SQL : Text-to-SQL fallback (Gemini genere le SQL quand aucune phase ne matche)
-    if not enrichment_context:
+    if not _continuation_mode and not enrichment_context:
         _sql_count = sum(1 for m in (payload.history or []) if m.role == "user")
         if _sql_count >= _MAX_SQL_PER_SESSION:
             logger.info(f"[TEXT2SQL] Rate-limit session ({_sql_count} echanges)")
@@ -1041,12 +1114,16 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
 
     # DEBUG — tracer l'etat avant appel Gemini final (a retirer apres validation prod)
     logger.info(
-        f"[DEBUG] force_sql={force_sql} | enrichment={bool(enrichment_context)} | "
+        f"[DEBUG] force_sql={force_sql} | continuation={_continuation_mode} | "
+        f"enrichment={bool(enrichment_context)} | "
         f"question=\"{payload.message[:60]}\" | history_len={len(payload.history or [])}"
     )
 
     # Message utilisateur avec contexte de page + donnees BDD
-    if enrichment_context:
+    if _continuation_mode and _enriched_message:
+        # Phase 0 : envoyer le message enrichi a Gemini (bypass regex)
+        user_text = f"[Page: {payload.page}]\n\n{_enriched_message}"
+    elif enrichment_context:
         user_text = f"[Page: {payload.page}]\n\n{enrichment_context}\n\n[Question utilisateur] {payload.message}"
     else:
         user_text = f"[Page: {payload.page}] {payload.message}"
