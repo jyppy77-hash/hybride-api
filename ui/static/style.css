@@ -275,6 +275,26 @@ body.theme-day {
     font-size: 1rem;
 }
 
+/* Bouton Actualités mobile-only (masqué par défaut en desktop) */
+.loto-hero-btn-news {
+    display: none;
+}
+
+.loto-hero-scroll-hint {
+    display: none;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.45);
+    margin-top: 8px;
+    text-align: center;
+    letter-spacing: 1px;
+    animation: lotoHintFade 3s ease-in-out infinite;
+}
+
+@keyframes lotoHintFade {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 1; }
+}
+
 /* =================================================================
    LOTO PAGE — Générateur (module secondaire, centré)
    ================================================================= */
@@ -381,6 +401,49 @@ body.theme-day {
 
     .loto-page .generator-card {
         padding: 24px 20px;
+    }
+}
+
+/* Mobile < 599px : scroll horizontal + bouton Actualités visible */
+@media (max-width: 599px) {
+    .loto-hero-actions {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        justify-content: flex-start;
+        padding: 0 16px;
+        align-items: stretch;
+    }
+
+    .loto-hero-actions::-webkit-scrollbar {
+        display: none;
+    }
+
+    .loto-hero-btn {
+        flex-shrink: 0;
+        white-space: nowrap;
+        width: auto;
+        max-width: none;
+    }
+
+    .loto-hero-btn-news {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+        border-color: #10b981;
+    }
+
+    .loto-hero-btn-news:hover {
+        background: #10b981;
+        color: white;
+    }
+
+    .loto-hero-scroll-hint {
+        display: block;
     }
 }
 
