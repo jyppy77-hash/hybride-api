@@ -333,7 +333,7 @@ async def api_analyze_custom_grid(
                         ) AS match_count,
                         (numero_chance = %s) AS chance_match
                     FROM tirages
-                    ORDER BY match_count DESC, chance_match DESC
+                    ORDER BY match_count DESC, chance_match DESC, date_de_tirage DESC
                     LIMIT 1
                 """, (*nums, *nums, *nums, *nums, *nums, chance))
                 best_match = cursor.fetchone()
