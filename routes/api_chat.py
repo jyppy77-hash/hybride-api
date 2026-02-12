@@ -1243,7 +1243,7 @@ async def api_pitch_grilles(request: Request, payload: PitchGrillesRequest):
             })
 
     # Preparer le contexte stats
-    grilles_data = [{"numeros": g.numeros, "chance": g.chance} for g in payload.grilles]
+    grilles_data = [{"numeros": g.numeros, "chance": g.chance, "score_conformite": g.score_conformite, "severity": g.severity} for g in payload.grilles]
 
     try:
         context = await asyncio.wait_for(asyncio.to_thread(prepare_grilles_pitch_context, grilles_data), timeout=30.0)
