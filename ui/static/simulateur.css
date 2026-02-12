@@ -818,6 +818,52 @@ body.theme-day .grid-title-chance {
     background: rgba(33, 150, 243, 0.1);
 }
 
+/* Palier 3 — Suggestions critiques (rouge) */
+.suggestions-list li.critical {
+    border-left: 3px solid #dc2626;
+    background: rgba(220, 38, 38, 0.12);
+}
+
+body.theme-night .suggestions-list li.critical {
+    color: #fca5a5;
+}
+
+body.theme-day .suggestions-list li.critical {
+    color: #991b1b;
+}
+
+/* Alerte globale severite */
+.severity-alert {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 20px;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 12px;
+    animation: slideInLeft 0.5s ease-out;
+    animation-fill-mode: both;
+}
+
+.severity-alert-icon {
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.severity-alert-critical {
+    background: rgba(220, 38, 38, 0.15);
+    border: 2px solid rgba(220, 38, 38, 0.6);
+}
+
+body.theme-night .severity-alert-critical {
+    color: #fca5a5;
+}
+
+body.theme-day .severity-alert-critical {
+    color: #991b1b;
+}
+
 /* Selected Grid Display */
 .selected-grid-display {
     text-align: center;

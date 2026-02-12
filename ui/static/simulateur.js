@@ -346,8 +346,8 @@ function displayResults(data) {
     // Details
     displayDetails(data.details);
 
-    // Suggestions
-    displaySuggestions(data.suggestions);
+    // Suggestions (avec systeme de severite a 3 paliers)
+    displaySuggestions(data.suggestions, data.severity, data.alert_message);
 
     // Selected grid display
     displaySelectedGrid(data.nums, data.chance);
@@ -560,25 +560,49 @@ function displayDetails(details) {
 /**
  * Display suggestions with icons
  */
-function displaySuggestions(suggestions) {
+/**
+ * Display suggestions with severity system (3 tiers)
+ * @param {Array} suggestions - List of suggestion strings
+ * @param {number} severity - Severity level (1=light, 2=moderate, 3=critical)
+ * @param {string|null} alertMessage - Global alert message for tier 3
+ */
+function displaySuggestions(suggestions, severity, alertMessage) {
     const list = document.getElementById('suggestions-list');
     list.innerHTML = '';
+
+    // Nettoyer une alerte precedente
+    const oldAlert = list.parentElement.querySelector('.severity-alert');
+    if (oldAlert) oldAlert.remove();
+
+    // Alerte globale pour palier 3 (critique)
+    if (severity === 3 && alertMessage) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = 'severity-alert severity-alert-critical';
+        alertDiv.innerHTML = '<span class="severity-alert-icon">\u{1F6A8}</span> <strong>' + alertMessage + '</strong>';
+        list.parentElement.insertBefore(alertDiv, list);
+    }
 
     suggestions.forEach((suggestion, index) => {
         const li = document.createElement('li');
         li.textContent = suggestion;
         li.style.animationDelay = `${index * 0.1}s`;
 
-        // Determine type and icon
-        if (suggestion.includes('Excellent') || suggestion.includes('bien')) {
-            li.classList.add('positive');
-            li.setAttribute('data-icon', '✅');
-        } else if (suggestion.includes('Ajouter') || suggestion.includes('Equilibrer') || suggestion.includes('trop') || suggestion.includes('Mieux')) {
+        // Icone et classe selon le palier de severite
+        if (severity === 3) {
+            li.classList.add('critical');
+            li.setAttribute('data-icon', '\u{1F534}');
+        } else if (severity === 2) {
             li.classList.add('negative');
-            li.setAttribute('data-icon', '⚠️');
-        } else {
+            li.setAttribute('data-icon', '\u26A0\uFE0F');
+        } else if (suggestion.includes('Excellent') || suggestion.includes('bien')) {
+            li.classList.add('positive');
+            li.setAttribute('data-icon', '\u2705');
+        } else if (suggestion.includes('Attention') || suggestion.includes('Elargir') || suggestion.includes('Mixer') || suggestion.includes('Pensez') || suggestion.includes('Somme')) {
             li.classList.add('neutral');
-            li.setAttribute('data-icon', '💡');
+            li.setAttribute('data-icon', '\u{1F4A1}');
+        } else {
+            li.classList.add('positive');
+            li.setAttribute('data-icon', '\u2705');
         }
 
         list.appendChild(li);
