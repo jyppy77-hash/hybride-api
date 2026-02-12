@@ -3407,14 +3407,16 @@ a.back-link-dark:hover {
 
 /* Barre gradient Google — pages accueil, simulateur, statistiques */
 .pedagogy-card,
-.tabs-card {
+.tabs-card,
+.news-section {
     position: relative;
     overflow: hidden;
 }
 
 .pedagogy-card::before,
 .legend-section::before,
-.tabs-card::before {
+.tabs-card::before,
+.news-section::before {
     content: '';
     position: absolute;
     top: 0;
@@ -4463,6 +4465,11 @@ body.theme-day .chatbot-text strong {
     margin-top: -30px;
     position: relative;
     z-index: 10;
+}
+
+/* Jointure profonde quand le header a les boutons hero */
+.loto-hero-header + .subpage-container {
+    margin-top: -50px;
 }
 
 /* =================================================================
