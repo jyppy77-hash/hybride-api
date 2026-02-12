@@ -310,25 +310,42 @@ def analyze_grille_for_chat(nums: list, chance: int = None) -> dict:
         exact_matches = cursor.fetchall()
         exact_dates = [str(row['date_de_tirage']) for row in exact_matches]
 
-        # Meilleure correspondance
-        cursor.execute("""
-            SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5,
-                (
-                    (boule_1 IN (%s, %s, %s, %s, %s)) +
-                    (boule_2 IN (%s, %s, %s, %s, %s)) +
-                    (boule_3 IN (%s, %s, %s, %s, %s)) +
-                    (boule_4 IN (%s, %s, %s, %s, %s)) +
-                    (boule_5 IN (%s, %s, %s, %s, %s))
-                ) AS match_count
-            FROM tirages
-            ORDER BY match_count DESC
-            LIMIT 1
-        """, (*nums, *nums, *nums, *nums, *nums))
+        # Meilleure correspondance (alignee avec le simulateur)
+        if chance is not None:
+            cursor.execute("""
+                SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chance,
+                    (
+                        (boule_1 IN (%s, %s, %s, %s, %s)) +
+                        (boule_2 IN (%s, %s, %s, %s, %s)) +
+                        (boule_3 IN (%s, %s, %s, %s, %s)) +
+                        (boule_4 IN (%s, %s, %s, %s, %s)) +
+                        (boule_5 IN (%s, %s, %s, %s, %s))
+                    ) AS match_count,
+                    (numero_chance = %s) AS chance_match
+                FROM tirages
+                ORDER BY match_count DESC, chance_match DESC, date_de_tirage DESC
+                LIMIT 1
+            """, (*nums, *nums, *nums, *nums, *nums, chance))
+        else:
+            cursor.execute("""
+                SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5,
+                    (
+                        (boule_1 IN (%s, %s, %s, %s, %s)) +
+                        (boule_2 IN (%s, %s, %s, %s, %s)) +
+                        (boule_3 IN (%s, %s, %s, %s, %s)) +
+                        (boule_4 IN (%s, %s, %s, %s, %s)) +
+                        (boule_5 IN (%s, %s, %s, %s, %s))
+                    ) AS match_count
+                FROM tirages
+                ORDER BY match_count DESC, date_de_tirage DESC
+                LIMIT 1
+            """, (*nums, *nums, *nums, *nums, *nums))
         best_match = cursor.fetchone()
 
         best_match_numbers = []
         best_match_count = 0
         best_match_date = None
+        best_match_chance = False
         if best_match:
             tirage_nums = [best_match['boule_1'], best_match['boule_2'],
                            best_match['boule_3'], best_match['boule_4'],
@@ -336,6 +353,7 @@ def analyze_grille_for_chat(nums: list, chance: int = None) -> dict:
             best_match_numbers = sorted([n for n in nums if n in tirage_nums])
             best_match_count = best_match['match_count']
             best_match_date = str(best_match['date_de_tirage'])
+            best_match_chance = bool(best_match.get('chance_match', 0))
 
     except Exception as e:
         logger.error(f"Erreur analyze_grille_for_chat({nums}): {e}")
@@ -415,6 +433,7 @@ def analyze_grille_for_chat(nums: list, chance: int = None) -> dict:
                 "nb_numeros_communs": best_match_count,
                 "date": best_match_date,
                 "numeros_communs": best_match_numbers,
+                "chance_match": best_match_chance,
             }
         }
     }
