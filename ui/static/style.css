@@ -2007,6 +2007,11 @@ details summary:hover {
     }
 }
 
+/* Pages légales sans chatbot : scroll-to-top en position basse */
+.legal-page .scroll-to-top {
+    bottom: 20px;
+}
+
 /* =================================================================
    SECTION FAQ
    ================================================================= */
