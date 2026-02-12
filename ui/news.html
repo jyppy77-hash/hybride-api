@@ -24,7 +24,6 @@
     <meta name="twitter:image" content="https://lotoia.fr/static/og-image.jpg">
     <link rel="stylesheet" href="/ui/static/style.css">
     <link rel="stylesheet" href="/ui/static/legal.css">
-    <link rel="stylesheet" href="/ui/static/chatbot.css">
     <script src="/ui/static/theme.js"></script>
     <script src="/ui/static/analytics.js" defer></script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc"></script>
@@ -253,14 +252,18 @@
         </footer>
     </div>
 
-    <div id="chatbot-ui" class="chatbot-disabled">
-        <div id="chatbot-header-placeholder">
-            <div class="chatbot-status-offline"></div>
-            <span class="chatbot-title"><span>🤖</span> Assistant HYBRIDE (Bientôt disponible)</span>
-        </div>
-    </div>
+    <!-- Bouton Scroll to Top -->
+    <button id="scroll-to-top" class="scroll-to-top" aria-label="Retour en haut">
+        ↑
+    </button>
 
-    <script src="/ui/static/cookie-consent.js"></script>
+    <script src="/ui/static/scroll.js?v=7"></script>
+    <script src="/ui/static/cookie-consent.js?v=7"></script>
+
+    <!-- HYBRIDE Chatbot Widget -->
+    <div id="hybride-chatbot-root"></div>
+    <link rel="stylesheet" href="/ui/static/hybride-chatbot.css?v=4.3">
+    <script src="/ui/static/hybride-chatbot.js?v=4.3"></script>
     <script src="/ui/static/version-inject.js"></script>
 </body>
 </html>
