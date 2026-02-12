@@ -4457,9 +4457,10 @@ body.theme-day .chatbot-text strong {
     z-index: 10;
 }
 
-/* Jointure profonde quand le header a les boutons hero */
+/* Jointure profonde quand le header a les boutons hero (aligné /loto) */
 .loto-hero-header + .subpage-container {
     margin-top: -50px;
+    padding-top: 0;
 }
 
 /* =================================================================
