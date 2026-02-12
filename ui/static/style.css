@@ -227,7 +227,7 @@ body.theme-day {
 }
 
 .loto-hero-header .header-content {
-    max-width: 700px;
+    max-width: 860px;
     margin: 0 auto;
 }
 
@@ -235,18 +235,18 @@ body.theme-day {
 .loto-hero-actions {
     display: flex;
     justify-content: center;
-    gap: 12px;
+    gap: 10px;
     margin-top: 28px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
 }
 
 .loto-hero-btn {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 22px;
+    padding: 10px 16px;
     border-radius: 10px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 600;
     text-decoration: none;
     color: rgba(255, 255, 255, 0.8);
@@ -275,9 +275,16 @@ body.theme-day {
     font-size: 1rem;
 }
 
-/* Bouton Actualités mobile-only (masqué par défaut en desktop) */
+/* Bouton Actualités — style accent vert */
 .loto-hero-btn-news {
-    display: none;
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border-color: #10b981;
+}
+
+.loto-hero-btn-news:hover {
+    background: #10b981;
+    color: white;
 }
 
 .loto-hero-scroll-hint {
@@ -381,16 +388,13 @@ body.theme-day {
     }
 
     .loto-hero-actions {
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
+        gap: 8px;
         margin-bottom: 8px;
     }
 
     .loto-hero-btn {
-        width: 100%;
-        max-width: 280px;
-        justify-content: center;
+        padding: 8px 12px;
+        font-size: 0.8rem;
     }
 
     .loto-page .generator-hero {
@@ -426,20 +430,6 @@ body.theme-day {
         white-space: nowrap;
         width: auto;
         max-width: none;
-    }
-
-    .loto-hero-btn-news {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: rgba(16, 185, 129, 0.15);
-        color: #10b981;
-        border-color: #10b981;
-    }
-
-    .loto-hero-btn-news:hover {
-        background: #10b981;
-        color: white;
     }
 
     .loto-hero-scroll-hint {
@@ -3408,7 +3398,7 @@ a.back-link-dark:hover {
 /* Barre gradient Google — pages accueil, simulateur, statistiques */
 .pedagogy-card,
 .tabs-card,
-.news-section {
+.news-section > .news-post:first-child {
     position: relative;
     overflow: hidden;
 }
@@ -3416,7 +3406,7 @@ a.back-link-dark:hover {
 .pedagogy-card::before,
 .legend-section::before,
 .tabs-card::before,
-.news-section::before {
+.news-section > .news-post:first-child::before {
     content: '';
     position: absolute;
     top: 0;
