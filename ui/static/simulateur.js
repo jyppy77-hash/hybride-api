@@ -355,10 +355,12 @@ function displayResults(data) {
     // History check display (safe - only if data exists)
     displayHistoryCheck(data.history_check);
 
-    // Pitch HYBRIDE async (non-blocking)
+    // Pitch HYBRIDE async (non-blocking) — transmet score conformite + severite
     fetchAndDisplaySimulateurPitch(
         Array.from(state.selectedNumbers),
-        state.selectedChance
+        state.selectedChance,
+        data.details?.score_conformite,
+        data.severity
     );
 
     // Analytics GA4 — Track simulation de grille
@@ -812,8 +814,10 @@ async function autoGenerate() {
  * apres la section history-check du simulateur.
  * @param {Array} nums - 5 numeros selectionnes
  * @param {number} chance - numero chance
+ * @param {string|undefined} scoreConformite - score conformite (ex: "52%")
+ * @param {number|undefined} severity - palier de severite (1, 2 ou 3)
  */
-async function fetchAndDisplaySimulateurPitch(nums, chance) {
+async function fetchAndDisplaySimulateurPitch(nums, chance, scoreConformite, severity) {
     // Conteneur cible : apres history-check
     const anchor = document.getElementById('history-check');
     if (!anchor) return;
@@ -832,7 +836,7 @@ async function fetchAndDisplaySimulateurPitch(nums, chance) {
         const response = await fetch('/api/pitch-grilles', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ grilles: [{ numeros: nums, chance: chance }] })
+            body: JSON.stringify({ grilles: [{ numeros: nums, chance: chance, score_conformite: scoreConformite ? parseInt(scoreConformite) : null, severity: severity || null }] })
         });
         const data = await response.json();
 
