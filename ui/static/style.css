@@ -220,9 +220,9 @@ body.theme-day {
    LOTO PAGE — Hero header (pattern aligné sur accueil)
    ================================================================= */
 
-/* Hero étendu avec boutons d'action — padding-bottom élargi pour jointure */
-.loto-hero-header {
-    padding: 40px 20px 80px;
+/* Hero étendu avec boutons d'action — padding harmonisé (spécificité > .page-header) */
+.page-header.loto-hero-header {
+    padding: 40px 20px 60px;
     margin-bottom: 0;
 }
 
@@ -383,8 +383,8 @@ body.theme-day {
 
 /* Responsive loto-page */
 @media (max-width: 768px) {
-    .loto-hero-header {
-        padding: 28px 16px 80px;
+    .page-header.loto-hero-header {
+        padding: 30px 16px 50px;
     }
 
     .loto-hero-actions {
@@ -438,10 +438,6 @@ body.theme-day {
 }
 
 @media (max-width: 480px) {
-    .loto-hero-header {
-        padding: 24px 16px 72px;
-    }
-
     .loto-page .generator-hero {
         margin: 0;
         padding: 0;
