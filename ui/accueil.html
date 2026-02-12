@@ -218,6 +218,35 @@
             transform: translateY(-3px);
         }
 
+        .hero-btn-news {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border-color: #10b981;
+        }
+
+        .hero-btn-news:hover {
+            background: #10b981;
+            color: white;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(16, 185, 129, 0.3);
+        }
+
+        .hero-scroll-hint {
+            display: none;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.45);
+            margin-top: 8px;
+            margin-bottom: 32px;
+            text-align: center;
+            letter-spacing: 1px;
+            animation: hintFade 3s ease-in-out infinite;
+        }
+
+        @keyframes hintFade {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
         /* ---- MAIN CONTENT CONTAINER (jointure header → carte, aligné /statistiques) ---- */
         .accueil-container {
             max-width: 960px;
@@ -580,15 +609,11 @@
             }
 
             .hero-actions {
-                flex-direction: column;
-                align-items: center;
+                gap: 10px;
                 margin-bottom: 30px;
             }
 
             .hero-btn {
-                width: 100%;
-                max-width: 300px;
-                justify-content: center;
                 height: 40px;
                 font-size: 14px;
             }
@@ -645,6 +670,30 @@
             }
         }
 
+        @media (max-width: 599px) {
+            .hero-actions {
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                justify-content: flex-start;
+                padding: 0 16px;
+            }
+
+            .hero-actions::-webkit-scrollbar {
+                display: none;
+            }
+
+            .hero-btn {
+                flex-shrink: 0;
+                white-space: nowrap;
+            }
+
+            .hero-scroll-hint {
+                display: block;
+            }
+        }
+
         @media (max-width: 480px) {
             .hero-title {
                 font-size: 1.4rem;
@@ -691,7 +740,11 @@
                 <a href="/statistiques" class="hero-btn hero-btn-tertiary">
                     Voir les statistiques
                 </a>
+                <a href="/news" class="hero-btn hero-btn-news">
+                    📰 Actualités
+                </a>
             </div>
+            <p class="hero-scroll-hint">← glisser pour voir plus →</p>
         </div>
     </section>
 
