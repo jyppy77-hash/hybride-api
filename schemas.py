@@ -85,6 +85,8 @@ class HybrideChatResponse(BaseModel):
 class PitchGrilleItem(BaseModel):
     numeros: list[int] = Field(..., max_length=5)
     chance: Optional[int] = None
+    score_conformite: Optional[int] = None
+    severity: Optional[int] = None
 
 class PitchGrillesRequest(BaseModel):
     grilles: list[PitchGrilleItem] = Field(..., max_length=10)
