@@ -672,6 +672,29 @@ def prepare_grilles_pitch_context(grilles: list) -> str:
             badges.append("Pair/Impair OK")
 
         lines.append(f"Badges : {', '.join(badges)}")
+
+        # Injecter score de conformite et severite en tete du bloc
+        sc = grille.get("score_conformite")
+        sev = grille.get("severity")
+        if sc is not None or sev is not None:
+            severity_lines = []
+            if sc is not None:
+                if sc < 20:
+                    sc_label = "CRITIQUE"
+                elif sc < 40:
+                    sc_label = "FAIBLE"
+                elif sc < 70:
+                    sc_label = "MODERE"
+                else:
+                    sc_label = "BON"
+                severity_lines.append(f"Score conformite : {sc}% ({sc_label})")
+            if sev is not None:
+                sev_labels = {1: "Bon", 2: "Modere", 3: "Alerte maximale"}
+                severity_lines.append(f"Palier de severite : {sev}/3 - {sev_labels.get(sev, 'Inconnu')}")
+            # Inserer en position 1 (apres le titre de la grille)
+            for j, sl in enumerate(severity_lines):
+                lines.insert(1 + j, sl)
+
         blocks.append("\n".join(lines))
 
     return "\n\n".join(blocks)
