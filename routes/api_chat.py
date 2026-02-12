@@ -737,9 +737,10 @@ def _format_grille_context(result: dict) -> str:
         mc = h['meilleure_correspondance']
         if mc['nb_numeros_communs'] > 0:
             communs = ', '.join(str(n) for n in mc['numeros_communs'])
+            chance_txt = " + chance" if mc.get('chance_match') else ""
             lines.append(
                 f"Historique : jamais sortie. Meilleure correspondance : "
-                f"{mc['nb_numeros_communs']} num\u00e9ros communs le {mc['date']} ({communs})"
+                f"{mc['nb_numeros_communs']} num\u00e9ros communs{chance_txt} le {mc['date']} ({communs})"
             )
         else:
             lines.append("Historique : combinaison jamais sortie")
