@@ -364,17 +364,57 @@ async def api_analyze_custom_grid(
                 nums_sorted = sorted(nums)
                 suites = sum(1 for i in range(4) if nums_sorted[i+1] - nums_sorted[i] == 1)
 
+                # Calcul du plus long run consecutif
+                max_run = 1
+                current_run = 1
+                for i in range(4):
+                    if nums_sorted[i+1] - nums_sorted[i] == 1:
+                        current_run += 1
+                        if current_run > max_run:
+                            max_run = current_run
+                    else:
+                        current_run = 1
+
+                # Score de conformite avec penalites graduelles
                 score_conformite = 100
-                if nb_pairs < 1 or nb_pairs > 4:
-                    score_conformite -= 15
-                if nb_bas < 1 or nb_bas > 4:
-                    score_conformite -= 10
-                if somme < 70 or somme > 150:
-                    score_conformite -= 20
-                if dispersion < 15:
+
+                # Pair/Impair : penalite graduelle
+                if nb_pairs == 0 or nb_pairs == 5:
                     score_conformite -= 25
-                if suites > 2:
-                    score_conformite -= 15
+                elif nb_pairs == 1 or nb_pairs == 4:
+                    score_conformite -= 10
+
+                # Bas/Haut : penalite graduelle
+                if nb_bas == 0 or nb_bas == 5:
+                    score_conformite -= 25
+                elif nb_bas == 1 or nb_bas == 4:
+                    score_conformite -= 8
+
+                # Somme : penalite proportionnelle a la distance
+                if somme < 50:
+                    score_conformite -= 35
+                elif somme < 70:
+                    score_conformite -= 20
+                elif somme > 200:
+                    score_conformite -= 35
+                elif somme > 150:
+                    score_conformite -= 20
+
+                # Dispersion
+                if dispersion < 10:
+                    score_conformite -= 35
+                elif dispersion < 15:
+                    score_conformite -= 20
+
+                # Suites consecutives (selon longueur du run)
+                if max_run >= 5:
+                    score_conformite -= 30
+                elif max_run >= 4:
+                    score_conformite -= 20
+                elif max_run >= 3:
+                    score_conformite -= 10
+
+                score_conformite = max(0, score_conformite)
 
                 freq_moyenne = sum(frequencies) / 5
                 freq_max_theorique = total_tirages * 5 / 49
@@ -398,21 +438,102 @@ async def api_analyze_custom_grid(
 
                 badges.append("Analyse personnalisee")
 
-                suggestions = []
-                if score >= 70:
-                    suggestions.append("Excellent equilibre dans votre selection")
-                if nb_pairs == 0 or nb_pairs == 5:
-                    suggestions.append("Equilibrer le ratio pair/impair (2-3 pairs ideal)")
+                # ── Detection des conditions critiques ──
+                critical_count = 0
+                critical_flags = {}
+
+                if max_run >= 4:
+                    critical_count += 1
+                    critical_flags['suite'] = max_run
+                if somme < 50 or somme > 200:
+                    critical_count += 1
+                    critical_flags['somme'] = somme
+                if dispersion < 10:
+                    critical_count += 1
+                    critical_flags['dispersion'] = dispersion
                 if nb_bas == 0 or nb_bas == 5:
-                    suggestions.append("Mixer numeros bas (1-24) et hauts (25-49)")
-                if somme < 70:
-                    suggestions.append("Somme trop basse, ajouter des numeros plus eleves")
-                elif somme > 150:
-                    suggestions.append("Somme trop elevee, ajouter des numeros plus bas")
-                if dispersion < 15:
-                    suggestions.append("Numeros trop groupes, elargir la dispersion")
-                if suites > 2:
-                    suggestions.append("Trop de numeros consecutifs")
+                    critical_count += 1
+                    critical_flags['bas_haut'] = f"{nb_bas}/{nb_hauts}"
+                if nb_pairs == 0 or nb_pairs == 5:
+                    critical_count += 1
+                    critical_flags['pairs'] = f"{nb_pairs}/{nb_impairs}"
+                if score_conformite < 20:
+                    critical_count += 1
+                    critical_flags['conformite'] = score_conformite
+
+                # Determination du palier de severite
+                if critical_count >= 3:
+                    severity = 3
+                elif critical_count >= 2 or (critical_count == 1 and max_run >= 4):
+                    severity = 2
+                else:
+                    severity = 1
+
+                # ── Generation des suggestions selon le palier ──
+                suggestions = []
+                alert_message = None
+
+                if severity == 3:
+                    # PALIER 3 — Critique : messages cinglants
+                    alert_message = "Alerte maximale : cette grille cumule TOUS les defauts statistiques !"
+
+                    if 'suite' in critical_flags:
+                        suggestions.append(f"Suite parfaite detectee ! En {total_tirages} tirages, AUCUNE suite de {max_run} consecutifs n'est jamais sortie")
+                    if 'somme' in critical_flags:
+                        suggestions.append(f"Somme catastrophique ({somme}) — les tirages reels oscillent entre 80 et 170")
+                    if 'bas_haut' in critical_flags:
+                        if nb_bas == 5:
+                            suggestions.append("ZERO numero au-dessus de 24 — statistiquement aberrant")
+                        else:
+                            suggestions.append("ZERO numero en dessous de 25 — statistiquement aberrant")
+                    if 'dispersion' in critical_flags:
+                        suggestions.append(f"Dispersion quasi nulle ({dispersion}) — la moyenne historique est autour de 30+")
+                    if 'pairs' in critical_flags:
+                        if nb_pairs == 5:
+                            suggestions.append("100% de numeros pairs — aucun tirage historique n'a cette configuration")
+                        else:
+                            suggestions.append("100% de numeros impairs — aucun tirage historique n'a cette configuration")
+                    if 'conformite' in critical_flags:
+                        suggestions.append(f"Score de conformite effondre ({score_conformite}%) — cette grille defie toutes les statistiques")
+
+                elif severity == 2:
+                    # PALIER 2 — Modere : avertissements directs
+                    if 'suite' in critical_flags:
+                        suggestions.append(f"Suite de {max_run} numeros consecutifs detectee — tres rare dans les tirages reels")
+                    if nb_pairs == 0 or nb_pairs == 5:
+                        suggestions.append(f"Desequilibre pair/impair ({nb_pairs}/{nb_impairs}) — viser 2-3 pairs pour coller aux statistiques")
+                    if nb_bas == 0 or nb_bas == 5:
+                        suggestions.append(f"Desequilibre bas/haut ({nb_bas}/{nb_hauts}) — mixer numeros bas (1-24) et hauts (25-49)")
+                    if somme < 50 or somme > 200:
+                        suggestions.append(f"Somme trop {'basse' if somme < 50 else 'elevee'} ({somme}) — la moyenne historique est autour de 125")
+                    elif somme < 70 or somme > 150:
+                        suggestions.append(f"Somme {'basse' if somme < 70 else 'elevee'} ({somme}) — viser la fourchette 80-170")
+                    if dispersion < 10:
+                        suggestions.append(f"Dispersion insuffisante ({dispersion}) — vos numeros couvrent seulement {dispersion} unites sur 48 possibles")
+                    elif dispersion < 15:
+                        suggestions.append(f"Dispersion faible ({dispersion}) — elargir l'ecart entre vos numeros")
+                    if max_run >= 3 and 'suite' not in critical_flags:
+                        suggestions.append(f"Suite de {max_run} consecutifs — reduire les numeros qui se suivent")
+
+                else:
+                    # PALIER 1 — Leger : suggestions douces
+                    if score >= 70:
+                        suggestions.append("Excellent equilibre dans votre selection")
+                    if nb_pairs == 1 or nb_pairs == 4:
+                        suggestions.append("Pensez a varier pairs et impairs (2-3 pairs ideal)")
+                    if nb_bas == 1 or nb_bas == 4:
+                        suggestions.append("Mixer numeros bas (1-24) et hauts (25-49)")
+                    if 70 <= somme < 80:
+                        suggestions.append("Somme un peu basse, ajouter un numero plus eleve")
+                    elif 150 < somme <= 170:
+                        suggestions.append("Somme un peu elevee, ajouter un numero plus bas")
+                    if 15 <= dispersion < 20:
+                        suggestions.append("Elargir legerement la dispersion de vos numeros")
+                    if max_run == 3:
+                        suggestions.append("Attention a la suite de 3 consecutifs")
+                    elif suites >= 2 and max_run < 3:
+                        suggestions.append("Quelques numeros consecutifs — pensez a les espacer")
+
                 if not suggestions:
                     suggestions.append("Grille bien equilibree")
 
@@ -440,6 +561,8 @@ async def api_analyze_custom_grid(
                         "suites_consecutives": str(suites),
                         "score_conformite": f"{score_conformite}%"
                     },
+                    "severity": severity,
+                    "alert_message": alert_message,
                     "suggestions": suggestions,
                     "history_check": history_check
                 }
