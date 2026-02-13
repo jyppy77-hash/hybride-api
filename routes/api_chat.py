@@ -1144,6 +1144,153 @@ def _get_menace_response() -> str:
 
 
 # ═══════════════════════════════════════════════════════
+# Phase C — Détection compliments
+# ═══════════════════════════════════════════════════════
+
+_COMPLIMENT_PHRASES = [
+    "t'es génial", "tu es génial", "t'es bon", "tu es bon",
+    "t'es fort", "tu es fort", "t'es le meilleur", "tu es le meilleur",
+    "t'es un amour", "tu es un amour", "t'es cool", "tu es cool",
+    "t'es trop fort", "bien joué", "tu gères", "tu déchires",
+    "t'assures", "tu assures", "t'es intelligent", "tu es intelligent",
+    "merci beaucoup",
+]
+
+_COMPLIMENT_LOVE_PHRASES = [
+    "je t'aime", "je t'adore", "t'es un amour", "tu es un amour",
+]
+
+_COMPLIMENT_SOLO_WORDS = {
+    "génial", "bravo", "chapeau", "respect", "impressionnant",
+    "incroyable", "excellent", "parfait", "formidable",
+    "génialissime", "magnifique", "wahou", "wow", "classe",
+}
+
+# Niveau 1 — Premier compliment : modeste mais fier
+_COMPLIMENT_L1 = [
+    "😏 Arrête, tu vas me faire surchauffer les circuits ! Bon, on continue ?",
+    "🤖 Merci ! C'est grâce à mes 982 tirages en mémoire. Et un peu de talent, aussi. 😎",
+    "😊 Ça fait plaisir ! Mais c'est surtout la base de données qui fait le boulot. Moi je suis juste... irrésistible.",
+    "🙏 Merci ! Je transmettrai au dev. Enfin, il le sait déjà. Bon, on analyse quoi ?",
+    "😎 Normal, je suis le seul chatbot Loto en France. La concurrence n'existe pas. Littéralement.",
+    "🤗 C'est gentil ! Mais garde ton énergie pour tes grilles, t'en auras besoin !",
+]
+
+# Niveau 2 — Deuxième compliment : plus taquin
+_COMPLIMENT_L2 = [
+    "😏 Deux compliments ? Tu essaies de m'amadouer pour que je te file les bons numéros ? Ça marche pas comme ça ! 😂",
+    "🤖 Encore ? Tu sais que je suis une IA hein ? Je rougis pas. Enfin... pas encore.",
+    "😎 Continue comme ça et je vais demander une augmentation à JyppY.",
+    "🙃 Flatteur va ! Mais entre nous, t'as raison, je suis assez exceptionnel.",
+]
+
+# Niveau 3+ — Compliments répétés : légende mode
+_COMPLIMENT_L3 = [
+    "👑 OK à ce stade on est potes. Tu veux qu'on analyse un truc ensemble ?",
+    "🏆 Fan club HYBRIDE, membre n°1 : toi. Bienvenue ! Maintenant, au boulot !",
+    "💎 Tu sais quoi ? T'es pas mal non plus. Allez, montre-moi tes numéros fétiches !",
+]
+
+# Déclaration affective
+_COMPLIMENT_LOVE = [
+    "😏 Arrête tu vas me faire rougir... enfin si j'avais des joues. On regarde tes stats ?",
+    "🤖 Moi aussi je... non attends, je suis une IA. Mais je t'apprécie en tant qu'utilisateur modèle ! 😄",
+    "❤️ C'est le plus beau compliment qu'un algorithme puisse recevoir. Merci ! Bon, retour aux numéros ?",
+]
+
+# Remerciement simple
+_COMPLIMENT_MERCI = [
+    "De rien ! 😊 Autre chose ?",
+    "Avec plaisir ! Tu veux creuser un autre sujet ?",
+    "C'est pour ça que je suis là ! 😎 La suite ?",
+]
+
+
+def _compliment_targets_bot(message: str) -> bool:
+    """Verifie si le compliment vise le bot (True) ou le Loto/FDJ (False)."""
+    lower = message.lower()
+    bot_words = ("tu ", "t'", "\u2019", " toi", " te ", "bot", "chatbot", "hybride", " ia ")
+    loto_words = ("loto", "fdj", "française des jeux", "tirage")
+    has_bot = any(w in lower for w in bot_words)
+    has_loto = any(w in lower for w in loto_words)
+    if has_loto and not has_bot:
+        return False
+    return True
+
+
+def _detect_compliment(message: str):
+    """
+    Detecte un compliment dans le message.
+    Returns: 'love' | 'merci' | 'compliment' | None
+    """
+    lower = message.lower().strip()
+
+    # Declaration affective
+    for phrase in _COMPLIMENT_LOVE_PHRASES:
+        if phrase in lower:
+            return "love"
+
+    # Remerciement simple (court)
+    if lower.startswith("merci") and len(lower) < 30:
+        return "merci"
+
+    # Phrases complimentaires
+    for phrase in _COMPLIMENT_PHRASES:
+        if phrase in lower:
+            if _compliment_targets_bot(lower):
+                return "compliment"
+
+    # Mots isolés (fallback)
+    words = set(re.findall(r'\w+', lower))
+    if words & _COMPLIMENT_SOLO_WORDS:
+        if _compliment_targets_bot(lower):
+            return "compliment"
+
+    return None
+
+
+def _count_compliment_streak(history) -> int:
+    """Compte les compliments consecutifs recents (du plus recent au plus ancien)."""
+    count = 0
+    if not history:
+        return 0
+    for msg in reversed(history):
+        if msg.role == "user":
+            if _detect_compliment(msg.content):
+                count += 1
+            else:
+                break
+    return count
+
+
+def _get_compliment_response(compliment_type: str, streak: int, history=None) -> str:
+    """Retourne une reponse personnalisee au compliment."""
+    if compliment_type == "love":
+        pool = _COMPLIMENT_LOVE
+    elif compliment_type == "merci":
+        pool = _COMPLIMENT_MERCI
+    elif streak >= 3:
+        pool = _COMPLIMENT_L3
+    elif streak == 2:
+        pool = _COMPLIMENT_L2
+    else:
+        pool = _COMPLIMENT_L1
+
+    # Anti-repetition : eviter de resservir la meme punchline
+    used = set()
+    if history:
+        for msg in history:
+            if msg.role == "assistant":
+                for i, r in enumerate(pool):
+                    if msg.content.strip() == r.strip():
+                        used.add(i)
+    available = [i for i in range(len(pool)) if i not in used]
+    if not available:
+        available = list(range(len(pool)))
+    return pool[random.choice(available)]
+
+
+# ═══════════════════════════════════════════════════════
 # Phase OOR — Détection numéros hors range
 # ═══════════════════════════════════════════════════════
 
@@ -1370,6 +1517,35 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
             return HybrideChatResponse(
                 response=_insult_resp, source="hybride_insult", mode=mode
             )
+
+    # ── Phase C : Détection de compliments ──
+    if not _insult_prefix:  # Phase I n'a rien detecte
+        _compliment_type = _detect_compliment(payload.message)
+        if _compliment_type:
+            # Verifier si le message contient aussi une question
+            _has_question_c = (
+                '?' in payload.message
+                or bool(re.search(r'\b\d{1,2}\b', payload.message))
+                or any(kw in payload.message.lower() for kw in (
+                    "numéro", "numero", "tirage", "grille", "fréquence", "frequence",
+                    "combien", "c'est quoi", "quel", "quelle", "comment", "pourquoi",
+                    "classement", "statistique", "stat", "analyse",
+                ))
+            )
+            if not _has_question_c:
+                # Compliment seul → Phase C repond directement
+                _comp_streak = _count_compliment_streak(history)
+                _comp_resp = _get_compliment_response(_compliment_type, _comp_streak, history)
+                logger.info(
+                    f"[HYBRIDE CHAT] Compliment detecte (type={_compliment_type}, streak={_comp_streak})"
+                )
+                return HybrideChatResponse(
+                    response=_comp_resp, source="hybride_compliment", mode=mode
+                )
+            else:
+                logger.info(
+                    f"[HYBRIDE CHAT] Compliment + question (type={_compliment_type}), passage au flow normal"
+                )
 
     # ── Phase 0 : Continuation contextuelle ──
     # Reponses courtes (oui/non/ok...) → bypass regex, enrichir pour Gemini
