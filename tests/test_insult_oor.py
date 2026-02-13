@@ -4,6 +4,7 @@ Teste la detection, le comptage de streak, l'escalade, et les cas speciaux.
 """
 
 import pytest
+from datetime import date
 from unittest.mock import MagicMock
 
 # Import des fonctions a tester
@@ -17,6 +18,8 @@ from routes.api_chat import (
     _detect_out_of_range,
     _count_oor_streak,
     _get_oor_response,
+    _detect_tirage,
+    _format_tirage_context,
 )
 
 
@@ -443,3 +446,109 @@ class TestEscaladeOor:
                 result = template.format(num=55, diff=6, s="s", streak=3)
                 assert isinstance(result, str)
                 assert len(result) > 0
+
+
+# ═══════════════════════════════════════════════════════
+# Tests Phase T — Détection de tirage (dates textuelles)
+# ═══════════════════════════════════════════════════════
+
+class TestDetectTirageTextuel:
+    """Tests pour le parsing de dates textuelles (BUG 1 fix)."""
+
+    # --- Dates textuelles avec année ---
+
+    def test_tirage_9_fevrier_2026(self):
+        """'tirage du 9 février 2026' → date(2026, 2, 9)."""
+        result = _detect_tirage("C'est quoi le tirage du 9 février 2026 ?")
+        assert result == date(2026, 2, 9)
+
+    def test_resultats_2_fevrier_2026(self):
+        result = _detect_tirage("Résultats du 2 février 2026")
+        assert result == date(2026, 2, 2)
+
+    def test_tirage_4_fevrier_2026(self):
+        result = _detect_tirage("Tirage du 4 février 2026")
+        assert result == date(2026, 2, 4)
+
+    def test_tirage_15_janvier_2025(self):
+        result = _detect_tirage("les résultats du tirage du 15 janvier 2025")
+        assert result == date(2025, 1, 15)
+
+    def test_tirage_3_mars_2025(self):
+        result = _detect_tirage("qu'est-ce qui est sorti le 3 mars 2025 ?")
+        assert result == date(2025, 3, 3)
+
+    def test_tirage_25_decembre(self):
+        """Date textuelle sans année → année courante."""
+        result = _detect_tirage("tirage du 25 décembre")
+        assert result is not None
+        assert result.day == 25
+        assert result.month == 12
+        assert result.year == date.today().year
+
+    def test_tirage_1_aout_2024(self):
+        """Mois avec accent (août)."""
+        result = _detect_tirage("tirage du 1 août 2024")
+        assert result == date(2024, 8, 1)
+
+    # --- Les formats existants marchent toujours ---
+
+    def test_format_numerique_dd_mm_yyyy(self):
+        result = _detect_tirage("tirage du 09/02/2026")
+        assert result == date(2026, 2, 9)
+
+    def test_format_numerique_dd_mm(self):
+        result = _detect_tirage("résultat du 09/02")
+        assert result is not None
+        assert result.day == 9
+        assert result.month == 2
+
+    def test_dernier_tirage(self):
+        result = _detect_tirage("dernier tirage")
+        assert result == "latest"
+
+    def test_resultats_seul(self):
+        result = _detect_tirage("résultats")
+        assert result == "latest"
+
+    def test_prochain_tirage_exclut(self):
+        """'prochain tirage' ne doit PAS activer Phase T."""
+        result = _detect_tirage("prochain tirage")
+        assert result is None
+
+    # --- Anti-hallucination : la date textuelle prime sur "résultats" = latest ---
+
+    def test_resultats_avec_date_retourne_date_specifique(self):
+        """'résultats du 9 février 2026' → date(2026, 2, 9), PAS 'latest'."""
+        result = _detect_tirage("Donne moi les résultats du tirage du 9 février 2026")
+        assert result == date(2026, 2, 9)
+
+
+# ═══════════════════════════════════════════════════════
+# Tests _format_tirage_context — Anti-hallucination
+# ═══════════════════════════════════════════════════════
+
+class TestFormatTirageContext:
+    """Les numéros dans le contexte doivent venir de la BDD, pas de Gemini."""
+
+    def test_format_contient_vrais_numeros(self):
+        tirage = {
+            "date": "2026-02-09",
+            "boules": [22, 23, 25, 38, 42],
+            "chance": 3,
+        }
+        ctx = _format_tirage_context(tirage)
+        assert "22 - 23 - 25 - 38 - 42" in ctx
+        assert "3" in ctx
+        assert "TIRAGE" in ctx.upper()
+
+    def test_format_contient_date(self):
+        tirage = {
+            "date": "2026-02-09",
+            "boules": [7, 11, 12, 29, 41],
+            "chance": 5,
+        }
+        ctx = _format_tirage_context(tirage)
+        # Doit contenir les vrais numeros
+        assert "7 - 11 - 12 - 29 - 41" in ctx
+        assert "5" in ctx
