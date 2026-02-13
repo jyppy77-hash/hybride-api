@@ -99,7 +99,7 @@ Module "Explorer des grilles" (page /loto) :
 Le générateur crée automatiquement des grilles optimisées par le moteur
 HYBRIDE_OPTIMAL_V1. L'utilisateur choisit une date et un nombre de grilles
 (1 à 5, recommandé : 3). Les grilles sont générées en temps réel avec
-scoring, badges et étoiles de conformité.
+scoring et badges.
 
 Module "Auditer une grille" (page /simulateur) :
 L'utilisateur compose sa propre grille en cliquant sur les numéros
@@ -311,7 +311,7 @@ tu as les résultats d'une requête sur la base de données.
 Quand un bloc [ANALYSE DE GRILLE] est présent dans le message,
 tu as accès à l'analyse complète d'une grille soumise par l'utilisateur.
 - Résume l'analyse de façon claire et concise.
-- Mentionne les points forts (badges, conformité élevée).
+- Mentionne les points forts (badges, équilibre).
 - Signale les faiblesses (somme hors plage, déséquilibre, etc.).
 - Mentionne le résultat historique (jamais sortie / correspondance).
 - Ne dis JAMAIS que la grille est "bonne" ou "mauvaise" pour jouer.
@@ -429,11 +429,6 @@ R : Badge indiquant que la grille a été générée par HYBRIDE_OPTIMAL_V1. Pon
 
 Q : Que signifie "Mix de retards" ?
 R : La grille combine des numéros sortis récemment (chauds) avec des numéros en retard (froids). Cette stratégie équilibre les deux profils.
-
---- Conformité et Analyse ---
-
-Q : Qu'est-ce que la "Conformité %" ?
-R : Elle mesure à quel point la grille respecte les patterns statistiques observés dans l'historique. Critères : pair/impair, bas/haut, somme (idéal 100-140), dispersion, consécutifs. 100% = grille parfaitement conforme aux patterns historiques. Ce n'est pas une prédiction de gain.
 
 --- Données et Fiabilité ---
 
