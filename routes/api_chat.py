@@ -627,6 +627,47 @@ def _detect_numero(message: str):
     return None, None
 
 
+def _build_session_context(history, current_message: str) -> str:
+    """
+    Scanne l'historique + message courant pour extraire les numeros
+    et tirages consultes. Retourne un bloc [SESSION] ou chaine vide.
+    """
+    numeros_vus = set()
+    tirages_vus = set()
+
+    messages_user = [msg.content for msg in (history or []) if msg.role == "user"]
+    messages_user.append(current_message)
+
+    for msg in messages_user:
+        num, num_type = _detect_numero(msg)
+        if num is not None:
+            numeros_vus.add((num, num_type))
+
+        tirage = _detect_tirage(msg)
+        if tirage is not None:
+            if tirage == "latest":
+                tirages_vus.add("dernier")
+            elif isinstance(tirage, date):
+                tirages_vus.add(_format_date_fr(str(tirage)))
+
+    # Ne pas injecter si la session est trop courte (< 2 sujets)
+    if len(numeros_vus) + len(tirages_vus) < 2:
+        return ""
+
+    parts = []
+    if numeros_vus:
+        nums_str = ", ".join(
+            f"{n} ({'chance' if t == 'chance' else 'principal'})"
+            for n, t in sorted(numeros_vus)
+        )
+        parts.append(f"Numéros consultés : {nums_str}")
+    if tirages_vus:
+        tir_str = ", ".join(sorted(tirages_vus))
+        parts.append(f"Tirages consultés : {tir_str}")
+
+    return "[SESSION]\n" + "\n".join(parts)
+
+
 _MOIS_FR = [
     "", "janvier", "f\u00e9vrier", "mars", "avril", "mai", "juin",
     "juillet", "ao\u00fbt", "septembre", "octobre", "novembre", "d\u00e9cembre",
@@ -1555,6 +1596,9 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
         f"question=\"{payload.message[:60]}\" | history_len={len(payload.history or [])}"
     )
 
+    # Session context — resume des numeros/tirages consultes
+    _session_ctx = _build_session_context(history, payload.message)
+
     # Message utilisateur avec contexte de page + donnees BDD
     if _continuation_mode and _enriched_message:
         # Phase 0 : envoyer le message enrichi a Gemini (bypass regex)
@@ -1563,6 +1607,10 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
         user_text = f"[Page: {payload.page}]\n\n{enrichment_context}\n\n[Question utilisateur] {payload.message}"
     else:
         user_text = f"[Page: {payload.page}] {payload.message}"
+
+    if _session_ctx:
+        user_text = f"{_session_ctx}\n\n{user_text}"
+
     contents.append({"role": "user", "parts": [{"text": user_text}]})
 
     try:
