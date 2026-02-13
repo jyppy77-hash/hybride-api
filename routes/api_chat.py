@@ -276,6 +276,14 @@ _JOURS_SEMAINE = {
 
 _TIRAGE_KW = r'(?:tirage|r[ée]sultat|num[eé]ro|nuro|boule|sorti|tomb[eé]|tir[eé])'
 
+_MOIS_TO_NUM = {
+    "janvier": 1, "fevrier": 2, "mars": 3, "avril": 4,
+    "mai": 5, "juin": 6, "juillet": 7, "aout": 8,
+    "septembre": 9, "octobre": 10, "novembre": 11, "decembre": 12,
+}
+
+_MOIS_NOM_RE = r'(janvier|f[eé]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[eé]cembre)'
+
 
 def _detect_tirage(message: str):
     """
@@ -297,6 +305,19 @@ def _detect_tirage(message: str):
             return date(year, month, day)
         except ValueError:
             pass
+
+    # Date textuelle : "9 février 2026", "15 janvier", "3 mars 2025"
+    m = re.search(r'(\d{1,2})\s+' + _MOIS_NOM_RE + r'(?:\s+(\d{4}))?', lower)
+    if m and re.search(_TIRAGE_KW, lower):
+        day = int(m.group(1))
+        month_str = m.group(2).replace('\xe9', 'e').replace('\xfb', 'u').replace('\xe8', 'e')
+        month = _MOIS_TO_NUM.get(month_str)
+        year = int(m.group(3)) if m.group(3) else date.today().year
+        if month:
+            try:
+                return date(year, month, day)
+            except ValueError:
+                pass
 
     # "dernier tirage", "derniers numeros", "derniere sortie"
     if re.search(r'(?:dernier|derni[eè]re)s?\s+' + _TIRAGE_KW, lower):
@@ -391,8 +412,8 @@ def _get_tirage_data(target) -> dict | None:
         else:
             cursor.execute("""
                 SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chance
-                FROM tirages WHERE date_de_tirage <= %s
-                ORDER BY date_de_tirage DESC LIMIT 1
+                FROM tirages WHERE date_de_tirage = %s
+                LIMIT 1
             """, (target,))
 
         row = cursor.fetchone()
@@ -1251,7 +1272,18 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
     if history and history[-1].role == "user" and history[-1].content == payload.message:
         history = history[:-1]
 
+    _skip_insult_response = False
     for msg in history:
+        # Filtrer les echanges d'insultes (Phase I) du contexte Gemini
+        # pour eviter que les punchlines polluent l'interpretation
+        if msg.role == "user" and _detect_insulte(msg.content):
+            _skip_insult_response = True
+            continue
+        if msg.role == "assistant" and _skip_insult_response:
+            _skip_insult_response = False
+            continue
+        _skip_insult_response = False
+
         role = "user" if msg.role == "user" else "model"
         # Nettoyer les sponsors des reponses assistant (evite que Gemini les repete)
         content = _strip_sponsor_from_text(msg.content) if role == "model" else msg.content
@@ -1336,6 +1368,17 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
                 if tirage_data:
                     enrichment_context = _format_tirage_context(tirage_data)
                     logger.info(f"[HYBRIDE CHAT] Tirage injecte: {tirage_data['date']}")
+                elif tirage_target != "latest":
+                    # Date demandee pas en base → message explicite anti-hallucination
+                    date_fr = _format_date_fr(str(tirage_target))
+                    enrichment_context = (
+                        f"[R\u00c9SULTAT TIRAGE \u2014 INTROUVABLE]\n"
+                        f"Aucun tirage trouv\u00e9 en base de donn\u00e9es pour la date du {date_fr}.\n"
+                        f"IMPORTANT : Ne PAS inventer de num\u00e9ros. Indique simplement que "
+                        f"ce tirage n'est pas disponible dans la base.\n"
+                        f"Les tirages du Loto ont lieu les lundi, mercredi et samedi."
+                    )
+                    logger.info(f"[HYBRIDE CHAT] Tirage introuvable pour: {tirage_target}")
             except Exception as e:
                 logger.warning(f"[HYBRIDE CHAT] Erreur tirage: {e}")
 
