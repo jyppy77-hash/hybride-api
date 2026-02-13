@@ -1076,6 +1076,8 @@ def _detect_insulte(message: str):
     # Normalisation basique leet speak
     normalized = lower.replace('0', 'o').replace('1', 'i').replace('3', 'e').replace('@', 'a')
     normalized = re.sub(r'(?<=\w)\.(?=\w)', '', normalized)
+    # Normalisation apostrophe manquante : "tes nul" → "t'es nul"
+    normalized = re.sub(r'\btes\b', "t'es", normalized)
 
     # Menaces en priorite
     for pattern in _MENACE_PATTERNS:
@@ -1151,7 +1153,8 @@ _COMPLIMENT_PHRASES = [
     "t'es génial", "tu es génial", "t'es bon", "tu es bon",
     "t'es fort", "tu es fort", "t'es le meilleur", "tu es le meilleur",
     "t'es un amour", "tu es un amour", "t'es cool", "tu es cool",
-    "t'es trop fort", "bien joué", "tu gères", "tu déchires",
+    "t'es trop fort", "t'es super", "tu es super", "bien joué",
+    "tu gères", "tu déchires",
     "t'assures", "tu assures", "t'es intelligent", "tu es intelligent",
     "merci beaucoup",
 ]
@@ -1224,6 +1227,8 @@ def _detect_compliment(message: str):
     Returns: 'love' | 'merci' | 'compliment' | None
     """
     lower = message.lower().strip()
+    # Normalisation apostrophe manquante : "tes génial" → "t'es génial"
+    lower = re.sub(r'\btes\b', "t'es", lower)
 
     # Declaration affective
     for phrase in _COMPLIMENT_LOVE_PHRASES:
