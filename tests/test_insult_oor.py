@@ -104,6 +104,16 @@ class TestDetectInsulte:
         """Detection avec points inseres (c.o.n → con)."""
         assert _detect_insulte("t'es c.o.n") == "directe"
 
+    # --- Sans apostrophe ---
+
+    def test_insulte_tes_nul(self):
+        """Detection sans apostrophe : tes nul → t'es nul."""
+        assert _detect_insulte("tes nul") == "directe"
+
+    def test_insulte_tes_con(self):
+        """Detection sans apostrophe : tes con → t'es con."""
+        assert _detect_insulte("tes con") == "directe"
+
     # --- Menaces ---
 
     def test_menace_hacker(self):
@@ -732,6 +742,21 @@ class TestDetectCompliment:
 
     def test_classe(self):
         assert _detect_compliment("classe !") == "compliment"
+
+    # --- Sans apostrophe ---
+
+    def test_tes_super_fort(self):
+        """Detection sans apostrophe : tes super fort."""
+        assert _detect_compliment("tes super fort") == "compliment"
+
+    def test_tes_genial(self):
+        assert _detect_compliment("tes génial") == "compliment"
+
+    def test_tes_bon(self):
+        assert _detect_compliment("tes bon") == "compliment"
+
+    def test_tes_un_amour(self):
+        assert _detect_compliment("tes un amour") == "love"
 
 
 # ═══════════════════════════════════════════════════════
