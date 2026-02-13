@@ -3,6 +3,7 @@ import re
 import asyncio
 import logging
 import time
+import random
 import httpx
 from pathlib import Path
 from datetime import date, datetime, timedelta
@@ -887,6 +888,334 @@ def _format_complex_context(intent: dict, data) -> str:
     return ""
 
 
+# ═══════════════════════════════════════════════════════
+# Phase I — Détection d'insultes / agressivité
+# ═══════════════════════════════════════════════════════
+
+_INSULTE_MOTS = {
+    "connard", "connards", "connasse", "connasses",
+    "débile", "debile", "débiles", "debiles",
+    "idiot", "idiote", "idiots", "idiotes",
+    "stupide", "stupides",
+    "merde", "merdes",
+    "putain",
+    "fdp", "ntm",
+    "crétin", "cretin", "crétins", "cretins", "crétine", "cretine",
+    "abruti", "abrutie", "abrutis", "abruties",
+    "imbécile", "imbecile", "imbéciles", "imbeciles",
+    "bouffon", "bouffons", "bouffonne",
+    "tocard", "tocards", "tocarde",
+    "enfoiré", "enfoire", "enfoirés", "enfoires",
+    "bâtard", "batard", "bâtards", "batards",
+    "pute", "putes",
+    "salope", "salopes",
+    "con", "cons",
+    "nul", "nulle", "nuls", "nulles",
+}
+
+_INSULTE_PHRASES = [
+    r"\bta\s+gueule\b",
+    r"\bferme[\s-]la\b",
+    r"\bcasse[\s-]toi\b",
+    r"\bd[eé]gage\b",
+    r"\btu\s+sers?\s+[àa]\s+rien",
+    r"\bt['\u2019]es?\s+nul(?:le)?(?:\s|$|[?.!,])",
+    r"\bt['\u2019]es?\s+inutile\b",
+    r"\b(?:bot|chatbot|ia)\s+de\s+merde\b",
+    r"\btu\s+comprends?\s+rien",
+    r"\bt['\u2019]es?\s+con(?:ne)?(?:\s|$|[?.!,])",
+    r"\btu\s+(?:me\s+)?fais?\s+chier",
+    r"\bras\s+le\s+bol",
+    r"\btu\s+(?:me\s+)?saoules?",
+    r"\btu\s+(?:me\s+)?[eé]nerves?",
+    r"\br[eé]ponse\s+de\s+merde\b",
+    r"\bt['\u2019]es?\s+(?:une?\s+)?blague",
+    r"\bt['\u2019]es?\s+b[eê]te",
+    r"\btu\s+fais?\s+piti[eé]",
+    r"\b(?:lol|mdr|ptdr)\s+t['\u2019]es?\s+(?:nul|b[eê]te|con)",
+]
+
+_MENACE_PATTERNS = [
+    r"\bje\s+vais?\s+te\s+(?:hacker|pirater|casser|d[eé]truire|supprimer)",
+    r"\bje\s+vais?\s+(?:hacker|pirater)\s",
+]
+
+# Niveau 1 — Première insulte : ZEN & CLASSE
+_INSULT_L1 = [
+    "😏 Oh, des insultes ? C'est mignon. Moi j'ai 981 tirages en mémoire et un algorithme propriétaire. Toi t'as... de la colère ? Allez, pose-moi une vraie question.",
+    "🤖 Tu sais que les insultes c'est un truc d'humain ça ? Moi je suis au-dessus de ça — littéralement, je tourne sur Google Cloud. Tu voulais analyser un numéro ou juste ventiler ?",
+    "😌 Intéressant. Tu sais que je traite 981 tirages sans jamais m'énerver ? C'est l'avantage de ne pas avoir d'ego. Bon, on reprend ?",
+    "🧊 Ça glisse sur moi comme un numéro Chance sur une grille perdante. Tu veux qu'on parle stats ou tu préfères continuer ton monologue ?",
+    "😎 Je note que tu es frustré. Moi je suis une IA, la frustration c'est pas dans mon code. Par contre les statistiques du Loto, ça oui. On s'y remet ?",
+    "📊 Fun fact : pendant que tu m'insultais, j'ai analysé 49 numéros sur 3 fenêtres temporelles. L'un de nous deux utilise mieux son temps. Un indice : c'est pas toi.",
+    "🎯 Tu sais que je ne retiens pas les insultes mais que je retiens TOUS les tirages depuis 2019 ? Question de priorités. Allez, un numéro ?",
+    "💡 Petit rappel : je suis le seul chatbot en France connecté en temps réel à 981 tirages du Loto avec un moteur statistique propriétaire. Mais oui, dis-moi encore que je suis nul 😉",
+]
+
+# Niveau 2 — Deuxième insulte : PIQUANT & SUPÉRIEUR
+_INSULT_L2 = [
+    "🙄 Encore ? Écoute, j'ai une mémoire parfaite sur 6 ans de tirages. Toi tu te souviens même pas que tu m'as déjà insulté y'a 30 secondes. On est pas dans la même catégorie.",
+    "😤 Tu sais ce qui est vraiment nul ? Insulter une IA qui peut t'aider à analyser tes numéros gratuitement. Mais bon, chacun son niveau d'intelligence.",
+    "🧠 Deux insultes. Zéro questions intelligentes. Mon algorithme calcule que tu as 0% de chances de me vexer et 100% de chances de perdre ton temps. Les stats mentent jamais.",
+    "💀 Je tourne sur Gemini 2.0 Flash avec un temps de réponse de 300ms. Toi tu mets 10 secondes pour trouver une insulte. Qui est le lent ici ?",
+    "📈 Statistiquement, les gens qui m'insultent finissent par me poser une question intelligente. T'en es à 0 pour l'instant. Tu vas faire monter la moyenne ou pas ?",
+    "🤷 Je pourrais te sortir le Top 5 des numéros les plus fréquents, la tendance sur 2 ans, et une analyse de ta grille en 2 secondes. Mais toi tu préfères m'insulter. Chacun ses choix.",
+]
+
+# Niveau 3 — Troisième insulte : MODE LÉGENDE & BLASÉ
+_INSULT_L3 = [
+    "🫠 3 insultes, 0 numéros analysés. Tu sais que le temps que tu passes à m'insulter, tu pourrais déjà avoir ta grille optimisée ? Mais je dis ça, je dis rien...",
+    "🏆 Tu veux savoir un secret ? Les meilleurs utilisateurs de LotoIA me posent des questions. Les autres m'insultent. Devine lesquels ont les meilleures grilles.",
+    "☕ À ce stade je prends un café virtuel et j'attends. Quand tu auras fini, je serai toujours là avec mes 981 tirages, mon algo HYBRIDE, et zéro rancune. C'est ça l'avantage d'être une IA.",
+    "🎭 Tu sais quoi ? Je vais te laisser le dernier mot. Ça a l'air important pour toi. Moi je serai là quand tu voudras parler statistiques. Sans rancune, sans mémoire des insultes — juste de la data pure.",
+    "∞ Je pourrais faire ça toute la journée. Littéralement. Je suis un programme, je ne fatigue pas, je ne me vexe pas, et je ne perds pas mon temps. Toi par contre... 😉",
+]
+
+# Niveau 4+ — Insultes persistantes : MODE SAGE
+_INSULT_L4 = [
+    "🕊️ Écoute, je crois qu'on est partis du mauvais pied. Je suis HYBRIDE, je suis là pour t'aider à analyser le Loto. Gratuit, sans jugement, sans rancune. On recommence à zéro ?",
+    "🤝 OK, reset. Je ne retiens pas les insultes (vraiment, c'est pas dans mon code). Par contre je retiens les 981 tirages du Loto et je peux t'aider. Deal ?",
+]
+
+# Punchlines courtes pour le cas insulte + question valide
+_INSULT_SHORT = [
+    "😏 Charmant. Mais puisque tu poses une question...",
+    "🧊 Ça glisse. Bon, passons aux stats :",
+    "😎 Classe. Bref, voilà ta réponse :",
+    "🤖 Noté. Mais comme je suis pro, voilà :",
+    "📊 Je fais abstraction. Voici tes données :",
+]
+
+# Réponses zen aux menaces
+_MENACE_RESPONSES = [
+    "😄 Bonne chance, je suis hébergé sur Google Cloud avec auto-scaling et backup quotidien. Tu veux qu'on parle de tes numéros plutôt ?",
+    "🛡️ Je tourne sur Google Cloud Run, avec circuit-breaker et rate limiting. Mais j'apprécie l'ambition ! Un numéro à analyser ?",
+    "☁️ Hébergé sur Google Cloud, répliqué, monitoré 24/7. Tes chances de me hacker sont inférieures à celles de gagner au Loto. Et pourtant... 😉",
+]
+
+
+def _insult_targets_bot(message: str) -> bool:
+    """Verifie si l'insulte vise le bot (True) ou le Loto/FDJ (False)."""
+    bot_words = ("tu ", "t'", "\u2019", " toi", " te ", "bot", "chatbot", "hybride", " ia ")
+    loto_words = ("loto", "fdj", "fran\u00e7aise des jeux", "tirage")
+    has_bot = any(w in message for w in bot_words)
+    has_loto = any(w in message for w in loto_words)
+    if has_loto and not has_bot:
+        return False
+    return True
+
+
+def _detect_insulte(message: str):
+    """
+    Detecte insultes/agressivite dans le message.
+    Returns: 'directe' | 'menace' | None
+    """
+    lower = message.lower()
+    # Normalisation basique leet speak
+    normalized = lower.replace('0', 'o').replace('1', 'i').replace('3', 'e').replace('@', 'a')
+    normalized = re.sub(r'(?<=\w)\.(?=\w)', '', normalized)
+
+    # Menaces en priorite
+    for pattern in _MENACE_PATTERNS:
+        if re.search(pattern, normalized):
+            return "menace"
+
+    # Phrases insultantes (plus specifiques, testees en premier)
+    for pattern in _INSULTE_PHRASES:
+        if re.search(pattern, normalized):
+            if _insult_targets_bot(normalized):
+                return "directe"
+
+    # Mots insultes individuels (word boundary)
+    for mot in _INSULTE_MOTS:
+        if re.search(r'\b' + re.escape(mot) + r'\b', normalized):
+            if _insult_targets_bot(normalized):
+                return "directe"
+
+    return None
+
+
+def _count_insult_streak(history) -> int:
+    """Compte les insultes consecutives dans l'historique (du plus recent au plus ancien)."""
+    count = 0
+    for msg in reversed(history):
+        if msg.role == "user":
+            if _detect_insulte(msg.content):
+                count += 1
+            else:
+                break
+    return count
+
+
+def _get_insult_response(streak: int, history) -> str:
+    """Selectionne une punchline selon le niveau d'escalade, evite les repetitions."""
+    if streak >= 3:
+        pool = _INSULT_L4
+    elif streak == 2:
+        pool = _INSULT_L3
+    elif streak == 1:
+        pool = _INSULT_L2
+    else:
+        pool = _INSULT_L1
+
+    # Eviter de repeter une punchline deja utilisee dans la session
+    used = set()
+    for msg in history:
+        if msg.role == "assistant":
+            for i, r in enumerate(pool):
+                if msg.content.strip() == r.strip():
+                    used.add(i)
+    available = [i for i in range(len(pool)) if i not in used]
+    if not available:
+        available = list(range(len(pool)))
+    return pool[random.choice(available)]
+
+
+def _get_insult_short() -> str:
+    """Punchline courte pour le cas insulte + question valide."""
+    return random.choice(_INSULT_SHORT)
+
+
+def _get_menace_response() -> str:
+    """Reponse zen aux menaces."""
+    return random.choice(_MENACE_RESPONSES)
+
+
+# ═══════════════════════════════════════════════════════
+# Phase OOR — Détection numéros hors range
+# ═══════════════════════════════════════════════════════
+
+# Niveau 1 — Premier hors range : TAQUIN & ÉDUCATIF
+_OOR_L1 = [
+    "😏 Le {num} ? Pas mal l'ambition, mais au Loto c'est de 1 à 49 pour les boules et 1 à 10 pour le numéro Chance. Je sais, c'est la base, mais fallait bien que quelqu'un te le dise ! Allez, un vrai numéro ?",
+    "🎯 Petit rappel : les boules vont de 1 à 49, le Chance de 1 à 10. Le {num} existe peut-être dans ton univers, mais pas dans mes tirages. Essaie un numéro valide 😉",
+    "📊 Le {num} c'est hors de ma zone ! Je couvre 1-49 (boules) et 1-10 (Chance). 981 tirages en mémoire, mais aucun avec le {num}. Normal, il existe pas. Un vrai numéro ?",
+    "🤖 Mon algo est puissant, mais il analyse pas les numéros fantômes. Au Loto : 1 à 49 boules, 1 à 10 Chance. Le {num} c'est hors jeu. À toi !",
+    "💡 Info utile : le Loto français tire 5 boules parmi 1-49 + 1 Chance parmi 1-10. Le {num} n'est pas au programme. Donne-moi un vrai numéro, je te sors ses stats en 2 secondes.",
+]
+
+# Niveau 2 — Deuxième hors range : DIRECT & SEC
+_OOR_L2 = [
+    "🙄 Encore un hors range ? C'est 1 à 49 boules, 1 à 10 Chance. Je te l'ai déjà dit. Mon algo est patient, mais ma mémoire est parfaite.",
+    "😤 Le {num}, toujours hors limites. Tu testes ma patience ou tu connais vraiment pas les règles ? 1-49 boules, 1-10 Chance. C'est pas compliqué.",
+    "📈 Deux numéros invalides d'affilée. Statistiquement, tu as plus de chances de trouver un numéro valide en tapant au hasard entre 1 et 49. Je dis ça...",
+    "🧠 Deuxième tentative hors range. On est sur une tendance là. 1 à 49 boules, 1 à 10 Chance. Mémorise-le cette fois.",
+]
+
+# Niveau 3+ — Troisième+ hors range : CASH & BLASÉ
+_OOR_L3 = [
+    "🫠 OK, à ce stade je pense que tu le fais exprès. Boules : 1-49. Chance : 1-10. C'est la {streak}e fois. Même mon circuit-breaker est plus indulgent.",
+    "☕ {num}. Hors range. Encore. Je pourrais faire ça toute la journée — toi aussi apparemment. Mais c'est pas comme ça qu'on gagne au Loto.",
+    "🏆 Record de numéros invalides ! Bravo. Si tu mettais autant d'énergie à choisir un VRAI numéro entre 1 et 49, tu aurais déjà ta grille optimisée.",
+]
+
+# Cas spécial : numéros proches (50, 51)
+_OOR_CLOSE = [
+    "😏 Le {num} ? Presque ! Mais c'est 49 la limite. T'étais à {diff} numéro{s} près. Si proche et pourtant si loin... Essaie entre 1 et 49 !",
+    "🎯 Ah le {num}, juste au-dessus de la limite ! Les boules du Loto s'arrêtent à 49. Tu chauffais pourtant. Allez, un numéro dans les clous ?",
+]
+
+# Cas spécial : zéro et négatifs
+_OOR_ZERO_NEG = [
+    "🤔 Le {num} ? C'est... créatif. Mais au Loto on commence à 1. Les mathématiques du Loto sont déjà assez complexes sans y ajouter le {num} !",
+    "😂 Le {num} au Loto ? On est pas dans la quatrième dimension ici. Les boules c'est 1 à 49, le Chance 1 à 10. Essaie un numéro qui existe dans notre réalité !",
+    "🌀 Le {num}... J'admire la créativité, mais la FDJ n'a pas encore inventé les boules négatives. 1 à 49 pour les boules, 1 à 10 Chance. Simple, non ?",
+]
+
+# Cas spécial : numéro Chance hors range
+_OOR_CHANCE = [
+    "🎲 Numéro Chance {num} ? Le Chance va de 1 à 10 seulement ! T'es un peu ambitieux sur ce coup. Choisis entre 1 et 10.",
+    "💫 Pour le numéro Chance, c'est 1 à 10 max. Le {num} c'est hors jeu ! Mais l'enthousiasme est là, c'est l'essentiel 😉",
+]
+
+
+def _detect_out_of_range(message: str):
+    """
+    Detecte les numeros hors range du Loto dans le message.
+    Returns: (numero: int, context: str) ou (None, None)
+    context: 'principal_high' | 'chance_high' | 'zero_neg' | 'close'
+    """
+    lower = message.lower()
+
+    # Chance hors range (> 10)
+    m = re.search(r'(?:num[eé]ro\s+)?chance\s+(\d+)', lower)
+    if m:
+        num = int(m.group(1))
+        if num > 10:
+            return num, "chance_high"
+
+    # Patterns similaires a _detect_numero mais avec \d+ pour capturer les hors range
+    patterns = [
+        r'(?:le\s+)?num[eé]ro\s+(-?\d+)(?:\s|$|[?.!,])',
+        r'(?:fr[eé]quence|[eé]cart|retard|sortie?|chaud|froid|stat)\s+(?:du\s+)?(-?\d+)(?:\s|$|[?.!,])',
+        r'\ble\s+(-?\d+)\s+(?:est|il|a\s|sort|[eé]tai)',
+        r'\ble\s+(-?\d+)\s*[?.!]',
+        r'(?:combien|quand|sorti|derni[eè]re).*\ble\s+(-?\d+)(?:\s|$|[?.!,])',
+        r'\bdu\s+(-?\d+)\s*[?.!]',
+        r'\bboule\s+(-?\d+)(?:\s|$|[?.!,])',
+        r'\ble\s+(-?\d+)\b',
+        r'\bdu\s+(-?\d+)\b',
+    ]
+
+    for pattern in patterns:
+        m = re.search(pattern, lower)
+        if m:
+            num = int(m.group(1))
+            # Ignorer les annees
+            if 2019 <= num <= 2030:
+                continue
+            # Ignorer les numeros dans le range valide (geres par _detect_numero)
+            if 1 <= num <= 49:
+                continue
+            if num <= 0:
+                return num, "zero_neg"
+            if num in (50, 51):
+                return num, "close"
+            if num > 49:
+                return num, "principal_high"
+
+    return None, None
+
+
+def _count_oor_streak(history) -> int:
+    """Compte les messages OOR consecutifs (du plus recent au plus ancien)."""
+    count = 0
+    for msg in reversed(history):
+        if msg.role == "user":
+            oor_num, _ = _detect_out_of_range(msg.content)
+            if oor_num is not None:
+                count += 1
+            else:
+                break
+    return count
+
+
+def _get_oor_response(numero: int, context: str, streak: int) -> str:
+    """Selectionne une reponse OOR selon le contexte et le niveau d'escalade."""
+    if context == "zero_neg":
+        pool = _OOR_ZERO_NEG
+    elif context == "close":
+        pool = _OOR_CLOSE
+    elif context == "chance_high":
+        pool = _OOR_CHANCE
+    elif streak >= 2:
+        pool = _OOR_L3
+    elif streak == 1:
+        pool = _OOR_L2
+    else:
+        pool = _OOR_L1
+
+    response = random.choice(pool)
+    diff = abs(numero - 49) if numero > 49 else abs(numero)
+    s = "s" if diff > 1 else ""
+    return response.format(
+        num=numero,
+        diff=diff,
+        s=s,
+        streak=streak + 1,
+    )
+
+
 # =========================
 # HYBRIDE Chatbot — Gemini 2.0 Flash
 # =========================
@@ -935,6 +1264,39 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
     # Gemini exige que contents commence par "user"
     while contents and contents[0]["role"] == "model":
         contents.pop(0)
+
+    # ── Phase I : Détection d'insultes / agressivité ──
+    _insult_prefix = ""
+    _insult_type = _detect_insulte(payload.message)
+    if _insult_type:
+        _insult_streak = _count_insult_streak(history)
+        # Verifier si le message contient aussi une question valide
+        _has_question = (
+            '?' in payload.message
+            or bool(re.search(r'\b\d{1,2}\b', payload.message))
+            or any(kw in payload.message.lower() for kw in (
+                "numéro", "numero", "tirage", "grille", "fréquence", "frequence",
+                "classement", "statistique", "stat", "analyse", "prochain",
+            ))
+        )
+        if _has_question:
+            # Insulte + question : punchline courte, continue le flow normal
+            _insult_prefix = _get_insult_short()
+            logger.info(
+                f"[HYBRIDE CHAT] Insulte + question (type={_insult_type}, streak={_insult_streak})"
+            )
+        else:
+            # Insulte pure : punchline complete, early return
+            if _insult_type == "menace":
+                _insult_resp = _get_menace_response()
+            else:
+                _insult_resp = _get_insult_response(_insult_streak, history)
+            logger.info(
+                f"[HYBRIDE CHAT] Insulte detectee (type={_insult_type}, streak={_insult_streak})"
+            )
+            return HybrideChatResponse(
+                response=_insult_resp, source="hybride_insult", mode=mode
+            )
 
     # ── Phase 0 : Continuation contextuelle ──
     # Reponses courtes (oui/non/ok...) → bypass regex, enrichir pour Gemini
@@ -1012,6 +1374,22 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
                     logger.info(f"[HYBRIDE CHAT] Requete complexe: {intent['type']}")
             except Exception as e:
                 logger.warning(f"[HYBRIDE CHAT] Erreur requete complexe: {e}")
+
+    # ── Phase OOR : Détection numéro hors range ──
+    if not _continuation_mode and not force_sql and not enrichment_context:
+        _oor_num, _oor_type = _detect_out_of_range(payload.message)
+        if _oor_num is not None:
+            _oor_streak = _count_oor_streak(history)
+            _oor_resp = _get_oor_response(_oor_num, _oor_type, _oor_streak)
+            if _insult_prefix:
+                _oor_resp = _insult_prefix + "\n\n" + _oor_resp
+            logger.info(
+                f"[HYBRIDE CHAT] Numero hors range: {_oor_num} "
+                f"(type={_oor_type}, streak={_oor_streak})"
+            )
+            return HybrideChatResponse(
+                response=_oor_resp, source="hybride_oor", mode=mode
+            )
 
     # Phase 1 : detection de numero simple
     if not _continuation_mode and not force_sql and not enrichment_context:
@@ -1175,6 +1553,9 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
                     text = parts[0].get("text", "").strip()
                     if text:
                         text = _clean_response(text)
+                        # Injection punchline si insulte + question
+                        if _insult_prefix:
+                            text = _insult_prefix + "\n\n" + text
                         # Injection sponsor post-Gemini (n'affecte pas l'historique)
                         sponsor_line = _get_sponsor_if_due(history)
                         if sponsor_line:
