@@ -20,6 +20,11 @@ from routes.api_chat import (
     _get_oor_response,
     _detect_tirage,
     _format_tirage_context,
+    _build_session_context,
+    _detect_compliment,
+    _compliment_targets_bot,
+    _count_compliment_streak,
+    _get_compliment_response,
 )
 
 
@@ -552,3 +557,273 @@ class TestFormatTirageContext:
         # Doit contenir les vrais numeros
         assert "7 - 11 - 12 - 29 - 41" in ctx
         assert "5" in ctx
+
+
+# ═══════════════════════════════════════════════════════
+# Tests _build_session_context
+# ═══════════════════════════════════════════════════════
+
+class TestBuildSessionContext:
+    """Verifie le tracking de session (numeros et tirages consultes)."""
+
+    def test_session_vide_retourne_vide(self):
+        """Pas d'historique + message neutre → pas de bloc."""
+        result = _build_session_context([], "salut")
+        assert result == ""
+
+    def test_session_un_seul_numero_retourne_vide(self):
+        """Un seul sujet consulte → pas encore assez pour le bloc."""
+        result = _build_session_context([], "parle-moi du 7")
+        assert result == ""
+
+    def test_session_deux_numeros(self):
+        """Deux numeros differents → bloc SESSION avec les deux."""
+        history = _make_history([
+            ("user", "parle-moi du 7"),
+            ("assistant", "Le 7 est sorti 112 fois."),
+        ])
+        result = _build_session_context(history, "et le 22 ?")
+        assert "[SESSION]" in result
+        assert "7 (principal)" in result
+        assert "22 (principal)" in result
+
+    def test_session_numero_et_tirage(self):
+        """Un numero + un tirage → bloc SESSION."""
+        history = _make_history([
+            ("user", "c'est quoi le tirage du 09/02/2026 ?"),
+            ("assistant", "Le tirage du 9 fevrier 2026 : 3-17-22-38-45"),
+        ])
+        result = _build_session_context(history, "et le numero 7 ?")
+        assert "[SESSION]" in result
+        assert "7 (principal)" in result
+        assert "Tirages" in result
+
+    def test_session_deduplique_numeros(self):
+        """Le meme numero cite 2 fois ne doit apparaitre qu'une fois."""
+        history = _make_history([
+            ("user", "parle-moi du 7"),
+            ("assistant", "Le 7 est chaud !"),
+            ("user", "et l'ecart du 7 ?"),
+            ("assistant", "Ecart de 3 tirages."),
+        ])
+        # _detect_numero ne retourne que le premier match → 7
+        # Il y a aussi le tirage implicite ? Non. Seulement 7 → 1 sujet → vide
+        # On ajoute un deuxieme numero dans l'historique pour activer le bloc
+        history.extend(_make_history([
+            ("user", "et le 22 ?"),
+            ("assistant", "Le 22 est sorti 98 fois."),
+        ]))
+        result = _build_session_context(history, "reparle-moi du 7")
+        assert "[SESSION]" in result
+        assert result.count("7 (principal)") == 1
+
+    def test_session_chance_et_principal(self):
+        """Numero chance et principal sont differencies."""
+        history = _make_history([
+            ("user", "chance 5"),
+            ("assistant", "Le chance 5 est sorti 98 fois."),
+        ])
+        result = _build_session_context(history, "et le 22 ?")
+        assert "5 (chance)" in result
+        assert "22 (principal)" in result
+
+    def test_session_ignore_assistant_messages(self):
+        """Seuls les messages user sont scannes."""
+        history = _make_history([
+            ("user", "salut"),
+            ("assistant", "Le 7 est un classique ! Et le 22 aussi."),
+        ])
+        # Le message courant ne mentionne qu'un numero
+        result = _build_session_context(history, "parle-moi du 44")
+        # L'assistant a mentionne 7 et 22, mais seul le user mentionne 44
+        assert result == ""  # un seul sujet user
+
+    def test_session_tirage_latest(self):
+        """Demande du dernier tirage est tracke."""
+        history = _make_history([
+            ("user", "c'est quoi le dernier tirage ?"),
+            ("assistant", "Le dernier tirage : 3-17-22-38-45"),
+        ])
+        result = _build_session_context(history, "et le numero 7 ?")
+        assert "[SESSION]" in result
+        assert "dernier" in result
+
+    def test_session_format_no_brackets_leak(self):
+        """Le bloc SESSION ne doit pas contenir de crochets imbriques."""
+        history = _make_history([
+            ("user", "parle-moi du 7"),
+            ("assistant", "Le 7 est chaud !"),
+        ])
+        result = _build_session_context(history, "et le tirage du 09/02/2026 ?")
+        # Verifie qu'il n'y a qu'un seul bloc [SESSION]
+        assert result.count("[") == 1
+        assert result.count("]") == 1
+
+
+# ═══════════════════════════════════════════════════════
+# Tests _detect_compliment
+# ═══════════════════════════════════════════════════════
+
+class TestDetectCompliment:
+    """Detection des compliments avec types (love, merci, compliment)."""
+
+    def test_genial(self):
+        assert _detect_compliment("t'es génial") == "compliment"
+
+    def test_tu_es_bon(self):
+        assert _detect_compliment("tu es bon toi") == "compliment"
+
+    def test_bravo(self):
+        assert _detect_compliment("bravo !") == "compliment"
+
+    def test_chapeau(self):
+        assert _detect_compliment("chapeau") == "compliment"
+
+    def test_impressionnant(self):
+        assert _detect_compliment("impressionnant") == "compliment"
+
+    def test_tu_geres(self):
+        assert _detect_compliment("tu gères vraiment") == "compliment"
+
+    def test_tu_dechires(self):
+        assert _detect_compliment("tu déchires !") == "compliment"
+
+    def test_love_je_taime(self):
+        assert _detect_compliment("je t'aime") == "love"
+
+    def test_love_je_tadore(self):
+        assert _detect_compliment("je t'adore") == "love"
+
+    def test_love_amour(self):
+        assert _detect_compliment("t'es un amour") == "love"
+
+    def test_merci_simple(self):
+        assert _detect_compliment("merci beaucoup") == "merci"
+
+    def test_merci_court(self):
+        assert _detect_compliment("merci") == "merci"
+
+    def test_pas_compliment_neutre(self):
+        assert _detect_compliment("salut") is None
+
+    def test_pas_compliment_numero(self):
+        assert _detect_compliment("c'est quoi le 19 ?") is None
+
+    def test_pas_compliment_loto_genial(self):
+        """Le loto c'est genial ne vise pas le bot."""
+        assert _detect_compliment("le loto c'est génial") is None
+
+    def test_pas_compliment_fdj_top(self):
+        """La fdj c'est top ne vise pas le bot."""
+        assert _detect_compliment("la fdj c'est top") is None
+
+    def test_compliment_avec_question(self):
+        """Detection meme avec question (le handler gere le routing)."""
+        assert _detect_compliment("t'es bon mais c'est quoi le 7 ?") == "compliment"
+
+    def test_wow(self):
+        assert _detect_compliment("wow") == "compliment"
+
+    def test_genialissime(self):
+        assert _detect_compliment("génialissime !") == "compliment"
+
+    def test_magnifique(self):
+        assert _detect_compliment("magnifique") == "compliment"
+
+    def test_classe(self):
+        assert _detect_compliment("classe !") == "compliment"
+
+
+# ═══════════════════════════════════════════════════════
+# Tests _compliment_targets_bot
+# ═══════════════════════════════════════════════════════
+
+class TestComplimentTargetsBot:
+    """Verifie la distinction bot vs Loto/FDJ."""
+
+    def test_targets_bot_tu(self):
+        assert _compliment_targets_bot("tu es génial") is True
+
+    def test_targets_bot_standalone(self):
+        assert _compliment_targets_bot("bravo") is True
+
+    def test_targets_loto(self):
+        assert _compliment_targets_bot("le loto c'est génial") is False
+
+    def test_targets_fdj(self):
+        assert _compliment_targets_bot("la fdj c'est top") is False
+
+    def test_targets_bot_with_loto(self):
+        """Bot explicitement mentionne meme avec loto → True."""
+        assert _compliment_targets_bot("tu es plus fort que le loto") is True
+
+
+# ═══════════════════════════════════════════════════════
+# Tests _count_compliment_streak
+# ═══════════════════════════════════════════════════════
+
+class TestCountComplimentStreak:
+    """Compteur de compliments consecutifs."""
+
+    def test_streak_zero(self):
+        assert _count_compliment_streak([]) == 0
+
+    def test_streak_un(self):
+        history = _make_history([("user", "t'es génial"), ("assistant", "Merci !")])
+        assert _count_compliment_streak(history) == 1
+
+    def test_streak_deux(self):
+        history = _make_history([
+            ("user", "t'es génial"), ("assistant", "Merci !"),
+            ("user", "bravo"), ("assistant", "..."),
+        ])
+        assert _count_compliment_streak(history) == 2
+
+    def test_streak_reset_par_question(self):
+        history = _make_history([
+            ("user", "t'es génial"), ("assistant", "Merci !"),
+            ("user", "c'est quoi le 7 ?"), ("assistant", "Le 7..."),
+            ("user", "bravo"), ("assistant", "..."),
+        ])
+        assert _count_compliment_streak(history) == 1
+
+
+# ═══════════════════════════════════════════════════════
+# Tests _get_compliment_response
+# ═══════════════════════════════════════════════════════
+
+class TestComplimentResponse:
+    """Reponses aux compliments avec escalade et cas speciaux."""
+
+    def test_l1_premier_compliment(self):
+        resp = _get_compliment_response("compliment", 1)
+        assert len(resp) > 0
+
+    def test_l2_deuxieme_compliment(self):
+        resp = _get_compliment_response("compliment", 2)
+        assert len(resp) > 0
+
+    def test_l3_troisieme_compliment(self):
+        resp = _get_compliment_response("compliment", 3)
+        assert len(resp) > 0
+
+    def test_love_response(self):
+        resp = _get_compliment_response("love", 1)
+        assert len(resp) > 0
+
+    def test_merci_response_court(self):
+        resp = _get_compliment_response("merci", 1)
+        assert len(resp) < 80  # reponse courte
+
+    def test_anti_repetition(self):
+        """Ne doit pas repeter la meme punchline si elle est dans l'historique."""
+        history = _make_history([
+            ("user", "t'es génial"),
+            ("assistant", "😏 Arrête, tu vas me faire surchauffer les circuits ! Bon, on continue ?"),
+        ])
+        responses = set()
+        for _ in range(20):
+            r = _get_compliment_response("compliment", 0, history)
+            responses.add(r)
+        # La reponse deja utilisee ne doit pas etre la seule
+        assert len(responses) > 1
