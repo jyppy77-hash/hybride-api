@@ -30,6 +30,7 @@ from routes.api_tracking import router as tracking_router
 from routes.api_chat import router as chat_router
 from routes.em_data import router as em_data_router
 from routes.em_analyse import router as em_analyse_router
+from routes.em_pages import router as em_pages_router
 
 # ── JSON structured logging ──
 _log_handler = logging.StreamHandler(sys.stdout)
@@ -204,7 +205,10 @@ async def add_cache_headers(request: Request, call_next):
     seo_routes = ["/", "/accueil", "/loto", "/loto/analyse", "/loto/exploration",
                   "/loto/statistiques", "/statistiques", "/simulateur", "/faq", "/news",
                   "/historique", "/methodologie", "/moteur", "/disclaimer",
-                  "/mentions-legales", "/politique-confidentialite", "/politique-cookies"]
+                  "/mentions-legales", "/politique-confidentialite", "/politique-cookies",
+                  "/euromillions", "/euromillions/generateur", "/euromillions/simulateur",
+                  "/euromillions/statistiques", "/euromillions/historique",
+                  "/euromillions/faq", "/euromillions/news"]
     if path.endswith(".html") or path in seo_routes:
         response.headers["Cache-Control"] = "public, max-age=3600"  # 1 heure
 
@@ -232,14 +236,27 @@ _UI_HTML_TO_CLEAN_URL = {
     "politique-cookies.html": "/politique-cookies",
 }
 
+_UI_EM_HTML_TO_CLEAN_URL = {
+    "accueil-em.html": "/euromillions",
+    "euromillions.html": "/euromillions/generateur",
+    "simulateur-em.html": "/euromillions/simulateur",
+    "statistiques-em.html": "/euromillions/statistiques",
+    "historique-em.html": "/euromillions/historique",
+    "faq-em.html": "/euromillions/faq",
+    "news-em.html": "/euromillions/news",
+}
+
 
 @app.middleware("http")
 async def redirect_ui_html_to_seo(request: Request, call_next):
-    """301 redirect /ui/<page>.html → clean URL (SEO dedup)."""
+    """301 redirect /ui/<page>.html and /ui/em/<page>.html → clean URL (SEO dedup)."""
     path = request.url.path
     if path.startswith("/ui/") and path.endswith(".html"):
         filename = path[len("/ui/"):]
         clean_url = _UI_HTML_TO_CLEAN_URL.get(filename)
+        if not clean_url and filename.startswith("em/"):
+            em_filename = filename[len("em/"):]
+            clean_url = _UI_EM_HTML_TO_CLEAN_URL.get(em_filename)
         if clean_url:
             query = f"?{request.url.query}" if request.url.query else ""
             return RedirectResponse(url=f"{clean_url}{query}", status_code=301)
@@ -274,6 +291,7 @@ app.include_router(tracking_router)
 app.include_router(chat_router)
 app.include_router(em_data_router)
 app.include_router(em_analyse_router)
+app.include_router(em_pages_router)
 
 
 # =========================

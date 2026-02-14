@@ -199,6 +199,17 @@ def get_tirages_count() -> int:
         conn.close()
 
 
+def get_em_tirages_count() -> int:
+    conn = get_connection()
+    try:
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) as total FROM tirages_euromillions")
+        result = cursor.fetchone()
+        return result["total"] if result else 0
+    finally:
+        conn.close()
+
+
 def get_latest_tirage() -> Optional[dict]:
     conn = get_connection()
     try:
