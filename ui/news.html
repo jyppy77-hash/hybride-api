@@ -83,10 +83,10 @@
                     <p><strong>LotoIA s'agrandit !</strong> Le module EuroMillions débarque le <strong>15 mars à 15h00</strong>. Une nouvelle dimension d'analyse statistique, construite avec la même rigueur que le module Loto France.</p>
 
                     <ul>
-                        <li><strong>729 tirages officiels analysés</strong> (2019-2026) — importés depuis les données FDJ et intégrés en base Cloud SQL.</li>
-                        <li><strong>Moteur HYBRIDE adapté</strong> : 5 boules (1-50) + 2 étoiles (1-12), double pondération historique/tendancielle, contraintes de dispersion et d'équilibre.</li>
-                        <li><strong>Chatbot IA dédié</strong> : un assistant HYBRIDE spécifique EuroMillions, avec Text-to-SQL sur la table <code>tirages_euromillions</code>, analyse de grilles et mémoire conversationnelle.</li>
-                        <li><strong>Statistiques complètes</strong> : fréquences, écarts, classements, heatmap — boules et étoiles séparées.</li>
+                        <li><strong>729 tirages officiels analysés</strong> (2019-2026) — importés depuis les données officielles FDJ.</li>
+                        <li><strong>Moteur HYBRIDE adapté</strong> : 5 boules (1-50) + 2 étoiles (1-12), double pondération historique et tendancielle, contraintes d'équilibre et de dispersion.</li>
+                        <li><strong>Chatbot IA dédié</strong> : un assistant HYBRIDE spécifique EuroMillions qui interroge directement la base de données, analyse vos grilles et conserve le fil de la conversation.</li>
+                        <li><strong>Statistiques complètes</strong> : fréquences, écarts, classements, carte de chaleur — boules et étoiles séparées.</li>
                         <li><strong>Simulateur de grilles</strong> : audit interactif de vos combinaisons EuroMillions avec score de conformité et badges.</li>
                     </ul>
 
@@ -103,20 +103,20 @@
                 </div>
                 <h2 class="news-title"><span>🎯</span> LotoIA v1.001 — Le moteur est officiellement en production</h2>
                 <div class="news-content">
-                    <p>C'est fait. <strong>LotoIA passe en version 1.001</strong> — la première release officielle d'une plateforme d'exploration statistique pensée, construite et déployée pour durer. Pas un prototype. Pas un MVP. Un produit complet, en production, 100% gratuit et sans inscription.</p>
+                    <p>C'est fait. <strong>LotoIA passe en version 1.001</strong> — la première version officielle d'une plateforme d'exploration statistique pensée, construite et déployée pour durer. Pas un prototype. Un produit complet, en production, 100% gratuit et sans inscription.</p>
 
                     <p>Ce qui a changé en quelques semaines donne le vertige :</p>
 
                     <ul>
-                        <li><strong>Architecture 100% refactorée</strong> : le fichier main.py est passé de 1920 à 184 lignes. L'ensemble du code est désormais modulaire, structuré en routers indépendants, avec un score d'audit qui a bondi de 4.9 à 7.2/10.</li>
-                        <li><strong>Versioning centralisé</strong> : un seul fichier source (<code>config/version.py</code>) pilote la version dans tout le projet — backend Python, endpoint <code>/api/version</code>, footer de chaque page HTML. Plus aucune version hardcodée.</li>
-                        <li><strong>981 tirages historiques</strong> en base Cloud SQL, alimentant l'ensemble des analyses du moteur HYBRIDE.</li>
-                        <li><strong>Chatbot HYBRIDE v4.3</strong> déployé en production : Text-to-SQL sur les données réelles, mémoire conversationnelle sessionStorage, personnalité calibrée, système sponsors intégré, 5 events GA4 natifs et anti-hallucination systématique.</li>
-                        <li><strong>IA Gemini en production</strong> : intégration de <code>gemini-2.0-flash</code> via l'API Google, avec circuit breaker et fallback automatique.</li>
+                        <li><strong>Code entièrement restructuré</strong> : architecture modulaire et optimisée, avec un score d'audit qui a bondi de 4.9 à 7.2/10.</li>
+                        <li><strong>Version unifiée</strong> : un seul point de référence pilote le numéro de version dans tout le projet — moteur, API et interface. Plus aucune incohérence possible.</li>
+                        <li><strong>981 tirages historiques</strong> en base de données sécurisée, alimentant l'ensemble des analyses du moteur HYBRIDE.</li>
+                        <li><strong>Chatbot HYBRIDE v4.3</strong> déployé en production : il interroge directement la base de données, conserve le fil de la conversation, intègre un système de partenaires et empêche toute prédiction ou hallucination.</li>
+                        <li><strong>Intelligence artificielle Google</strong> intégrée au chatbot et aux analyses, avec système de protection automatique et basculement en cas d'indisponibilité.</li>
                         <li><strong>Google for Startups</strong> : programme validé, crédits cloud actifs.</li>
                     </ul>
 
-                    <p>LotoIA est une plateforme <strong>transparente</strong> — le code source, la méthodologie et les données sont documentés. Aucun gain n'est promis, aucune prédiction n'est formulée. C'est un outil d'exploration statistique, construit avec rigueur, et accessible à tous.</p>
+                    <p>LotoIA est une plateforme <strong>transparente</strong> — la méthodologie et les données sont documentées. Aucun gain n'est promis, aucune prédiction n'est formulée. C'est un outil d'exploration statistique, construit avec rigueur, et accessible à tous.</p>
 
                     <p><em>v1.001 n'est pas une fin. C'est la ligne de départ officielle.</em></p>
                 </div>
@@ -129,16 +129,16 @@
                 </div>
                 <h2 class="news-title">Chatbot HYBRIDE v4.3 — L'assistant IA est en production</h2>
                 <div class="news-content">
-                    <p>Le <strong>chatbot HYBRIDE v4.3</strong> est déployé et opérationnel sur l'ensemble des pages principales de LotoIA. Ce n'est pas un gadget conversationnel — c'est un véritable assistant d'analyse propulsé par <strong>Gemini 2.0 Flash</strong>.</p>
+                    <p>Le <strong>chatbot HYBRIDE v4.3</strong> est déployé et opérationnel sur l'ensemble des pages principales de LotoIA. Ce n'est pas un gadget conversationnel — c'est un véritable assistant d'analyse propulsé par l'<strong>intelligence artificielle Google</strong>.</p>
 
                     <ul>
-                        <li><strong>6 phases de construction</strong> : du prompt engineering initial au système anti-hallucination déployé en production.</li>
-                        <li><strong>Text-to-SQL natif</strong> : le chatbot interroge directement la base Cloud SQL (981 tirages) pour fournir des réponses factuelles.</li>
-                        <li><strong>22 patterns temporels</strong> reconnus : le moteur détecte automatiquement les requêtes de type « derniers tirages », « cette semaine », « depuis janvier », etc.</li>
-                        <li><strong>Mémoire conversationnelle</strong> : historique de session via sessionStorage, avec bouton de réinitialisation.</li>
-                        <li><strong>Système sponsors intégré</strong> : messages partenaires contextuels, non intrusifs, avec tracking GA4 dédié.</li>
-                        <li><strong>5 events GA4 natifs</strong> : chat_open, chat_message, chat_error, sponsor_impression, sponsor_click.</li>
-                        <li><strong>Anti-hallucination</strong> : chaque réponse est cadrée par un system prompt strict, interdisant toute prédiction ou conseil de jeu.</li>
+                        <li><strong>6 phases de construction</strong> : de la conception initiale au système anti-hallucination déployé en production.</li>
+                        <li><strong>Accès direct aux données</strong> : le chatbot interroge directement notre base de 981 tirages officiels pour vous donner des réponses précises et vérifiables.</li>
+                        <li><strong>22 formulations temporelles</strong> reconnues : le moteur comprend automatiquement « derniers tirages », « cette semaine », « depuis janvier », etc.</li>
+                        <li><strong>Mémoire de conversation</strong> : le chatbot retient vos échanges d'une page à l'autre, avec bouton de réinitialisation.</li>
+                        <li><strong>Système partenaires intégré</strong> : messages sponsors contextuels et non intrusifs, avec suivi d'audience dédié.</li>
+                        <li><strong>Suivi d'audience intégré</strong> pour mesurer l'engagement des visiteurs et optimiser l'expérience.</li>
+                        <li><strong>Anti-hallucination</strong> : chaque réponse est encadrée par un cadrage strict de l'IA, interdisant toute prédiction ou conseil de jeu.</li>
                     </ul>
 
                     <p><em>Le chatbot HYBRIDE est un outil pédagogique : il explique, contextualise et interroge les données. Il ne prédit rien et ne constitue pas une aide à la décision de jeu.</em></p>
@@ -156,11 +156,11 @@
 
                     <p>Ce module permet d'obtenir :</p>
                     <ul>
-                        <li><strong>Graphique d'analyse complet</strong> : Basé sur <span class="meta-grid-count"></span> grilles générées par le moteur HYBRIDE, mettant en évidence fréquences, cycles et zones de chaleur.</li>
-                        <li><strong>Analyse textuelle experte</strong> : Signée HYBRIDE, portant sur ces <span class="meta-grid-count"></span> grilles, incluant les numéros les plus ressortis, tendances statistiques et interprétation pédagogique, avec export PDF automatisé.</li>
+                        <li><strong>Graphique d'analyse complet</strong> : basé sur <span class="meta-grid-count"></span> grilles générées par le moteur HYBRIDE, mettant en évidence fréquences, cycles et zones de chaleur.</li>
+                        <li><strong>Analyse textuelle experte</strong> : rédigée par l'IA HYBRIDE à partir de ces <span class="meta-grid-count"></span> grilles — numéros les plus fréquents, tendances statistiques et interprétation pédagogique, avec export PDF en un clic.</li>
                     </ul>
 
-                    <p><em>Le module META DONNÉE vise à proposer une synthèse visuelle et explicative au-delà des statistiques classiques, tout en maintenant une transparence totale sur la méthodologie d'analyse.</em></p>
+                    <p><em>Le module META DONNÉE propose une synthèse visuelle et explicative qui va au-delà des statistiques classiques, en toute transparence sur la méthodologie.</em></p>
                 </div>
             </article>
 
@@ -190,18 +190,18 @@
                     <span class="news-date">18 janvier 2026</span>
                     <span class="news-tag news-tag-tech">Technique</span>
                 </div>
-                <h2 class="news-title">Infrastructure Cloud — Google Cloud Run, SQL & Gemini API</h2>
+                <h2 class="news-title">Infrastructure Cloud — Hébergement Google, base de données & IA</h2>
                 <div class="news-content">
                     <p>Le <strong>18 janvier 2026</strong>, LotoIA a finalisé la migration de son moteur sur une <strong>infrastructure Google Cloud de production</strong>, conçue pour la fiabilité et la performance.</p>
 
                     <p>L'architecture déployée repose sur des composants éprouvés :</p>
 
                     <ul>
-                        <li><strong>Google Cloud Run</strong> : conteneur Docker avec auto-scaling, 2 workers Uvicorn, compression GZip et headers de sécurité (CSP, HSTS, X-Frame-Options).</li>
-                        <li><strong>Cloud SQL (MySQL 8.0)</strong> : 981 tirages historiques, accès via PyMySQL avec connection pooling et requêtes paramétrées.</li>
-                        <li><strong>Gemini API (gemini-2.0-flash)</strong> : intégration IA pour le chatbot et les analyses META DONNÉE, avec circuit breaker (3 failures → open) et fallback automatique.</li>
-                        <li><strong>Rate limiting</strong> : slowapi avec limite IP (10 req/min sur le chat) pour protéger l'infrastructure sans pénaliser l'usage normal.</li>
-                        <li><strong>Observabilité</strong> : JSON structured logging, correlation ID par requête (X-Request-ID), health check avec diagnostic BDD + Gemini.</li>
+                        <li><strong>Hébergement Google Cloud</strong> : mise à l'échelle automatique selon l'affluence et protections de sécurité avancées.</li>
+                        <li><strong>Base de données sécurisée</strong> : 981 tirages historiques, avec protection contre les injections et gestion optimisée des connexions.</li>
+                        <li><strong>Intelligence artificielle Google</strong> : intégrée au chatbot et aux analyses META DONNÉE, avec système de protection automatique et basculement en cas d'indisponibilité.</li>
+                        <li><strong>Protection contre les abus</strong> : limitation automatique pour garantir la stabilité du service sans pénaliser l'usage normal.</li>
+                        <li><strong>Surveillance</strong> : traçabilité complète de chaque requête, diagnostic en temps réel de la base de données et de l'IA.</li>
                     </ul>
                 </div>
             </article>
@@ -213,13 +213,13 @@
                 </div>
                 <h2 class="news-title">Moteur HYBRIDE — Architecture & Principes d'exploration</h2>
                 <div class="news-content">
-                    <p>Le moteur HYBRIDE est le coeur algorithmique de LotoIA. Il opère une <strong>exploration statistique</strong> basée sur une double pondération dynamique :</p>
+                    <p>Le moteur HYBRIDE est le cœur algorithmique de LotoIA. Il explore les statistiques des tirages en combinant deux approches complémentaires :</p>
                     <ul>
-                        <li><strong>Composante Historique (60%)</strong> : Analyse de la distribution sur l'ensemble du dataset (fréquences globales).</li>
-                        <li><strong>Composante Tendancielle (40%)</strong> : Pondération adaptative sur les cycles de 24 mois.</li>
-                        <li><strong>Contraintes Variables</strong> : Application de filtres de dispersion et d'équilibre pour une exploration exhaustive.</li>
+                        <li><strong>Analyse historique (60%)</strong> : étude de la répartition des numéros sur l'ensemble des tirages passés.</li>
+                        <li><strong>Analyse des tendances récentes (40%)</strong> : focus sur les 24 derniers mois pour capter les dynamiques en cours.</li>
+                        <li><strong>Filtres d'équilibre</strong> : vérification de la dispersion, de la parité et de la répartition des numéros dans chaque grille.</li>
                     </ul>
-                    <p><em>Note technique : LotoIA est un outil d'analyse et d'exploration, pas de prédiction. La distribution des résultats reste soumise aux lois du hasard pur.</em></p>
+                    <p><em>LotoIA est un outil d'analyse et d'exploration, pas de prédiction. La distribution des résultats reste soumise aux lois du hasard pur.</em></p>
                 </div>
             </article>
 
@@ -232,12 +232,12 @@
                 <div class="news-content">
                     <p>État d'avancement et prochaines étapes :</p>
                     <ul>
-                        <li><strong>✅ Chatbot HYBRIDE</strong> : Déployé en v4.3 — assistant IA conversationnel avec Text-to-SQL et mémoire de session.</li>
-                        <li><strong>✅ Dashboard META DONNÉE</strong> : Module d'analyse experte avec graphiques, analyse textuelle et export PDF.</li>
-                        <li><strong>Multi-Lotteries</strong> : Extension du moteur aux tirages européens (EuroMillions) — à venir.</li>
-                        <li><strong>API Publique</strong> : Accès programmatique aux données statistiques brutes — à venir.</li>
+                        <li><strong>✅ Chatbot HYBRIDE</strong> : déployé en v4.3 — assistant IA conversationnel qui interroge directement la base de données et conserve le fil de la conversation.</li>
+                        <li><strong>✅ Dashboard META DONNÉE</strong> : module d'analyse experte avec graphiques, analyse textuelle et export PDF.</li>
+                        <li><strong>Multi-Lotteries</strong> : extension du moteur aux tirages européens (EuroMillions) — à venir.</li>
+                        <li><strong>API Publique</strong> : accès aux données statistiques brutes pour les développeurs — à venir.</li>
                     </ul>
-                    <p>LotoIA évolue pour devenir la référence en analyse probabiliste open-access.</p>
+                    <p>LotoIA évolue pour devenir la référence en analyse statistique gratuite et accessible à tous.</p>
                 </div>
             </article>
 
