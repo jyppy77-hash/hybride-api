@@ -323,7 +323,7 @@ function displayGridsEM(grids, metadata, targetDate) {
 
         html += '<div class="visual-ball separator">+</div>';
 
-        [grid.etoile1, grid.etoile2].sort(function(a, b) { return a - b; }).forEach(function(s) {
+        (grid.etoiles || []).slice().sort(function(a, b) { return a - b; }).forEach(function(s) {
             html += '<div class="visual-ball chance">' + String(s).padStart(2, '0') + '</div>';
         });
 

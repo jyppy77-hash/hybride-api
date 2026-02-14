@@ -1,0 +1,25 @@
+# Tests & dev
+tests/
+.pytest_cache/
+.coverage
+pytest.ini
+requirements-dev.txt
+
+# Environment & secrets
+.env
+
+# Cache & bytecode
+__pycache__/
+*.pyc
+
+# Documentation
+*.md
+
+# VCS & IDE
+.git/
+.gitignore
+.claude/
+
+# Build artifacts
+.dockerignore
+cloudbuild.yaml

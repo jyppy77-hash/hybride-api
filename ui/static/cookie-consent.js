@@ -134,7 +134,7 @@ const CookieConsent = (function() {
                     <p id="cookie-banner-desc">
                         LotoIA.fr utilise des technologies de stockage local pour améliorer votre expérience.
                         Ces données restent sur votre appareil et ne sont pas partagées avec des tiers.
-                        <a href="/ui/politique-cookies.html">En savoir plus</a>
+                        <a href="/politique-cookies">En savoir plus</a>
                     </p>
                 </div>
                 <div class="cookie-banner-actions">

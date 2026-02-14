@@ -280,7 +280,8 @@ function displayResults(data) {
     displayBadges(data.badges || []);
     displayDetails(data.details || {});
     displaySuggestions(data.suggestions || [], data.severity, data.alert_message);
-    displaySelectedGrid(data.nums || Array.from(state.selectedNumbers), data.etoile1, data.etoile2);
+    var etoiles = data.etoiles || Array.from(state.selectedStars).sort(function(a, b) { return a - b; });
+    displaySelectedGrid(data.nums || Array.from(state.selectedNumbers), etoiles[0], etoiles[1]);
     displayHistoryCheck(data.history_check);
 
     setTimeout(function() {
@@ -555,7 +556,7 @@ async function autoGenerate() {
                 if (btn) btn.classList.add('selected');
             });
 
-            [grid.etoile1, grid.etoile2].forEach(function(s) {
+            (grid.etoiles || []).forEach(function(s) {
                 state.selectedStars.add(s);
                 var btn = elements.starGrid.querySelector('[data-star="' + s + '"]');
                 if (btn) btn.classList.add('selected');

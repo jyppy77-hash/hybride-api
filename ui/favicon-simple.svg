@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4285f4"/>
+      <stop offset="40%" stop-color="#34a853"/>
+      <stop offset="70%" stop-color="#fbbc05"/>
+      <stop offset="100%" stop-color="#ea4335"/>
+    </linearGradient>
+  </defs>
+  <!-- Antenne -->
+  <circle cx="16" cy="3" r="2" fill="url(#g)"/>
+  <rect x="15" y="3" width="2" height="4" fill="url(#g)"/>
+  <!-- Tête -->
+  <rect x="4" y="7" width="24" height="21" rx="5" fill="url(#g)"/>
+  <!-- Visière -->
+  <rect x="6" y="11" width="20" height="9" rx="3" fill="#1a1a2e"/>
+  <!-- Yeux -->
+  <circle cx="11" cy="15.5" r="3" fill="#00f5ff"/>
+  <circle cx="21" cy="15.5" r="3" fill="#00f5ff"/>
+  <!-- Bouche -->
+  <rect x="10" y="22" width="12" height="4" rx="1" fill="#1a1a2e"/>
+  <rect x="11" y="23" width="2" height="2" fill="#34a853"/>
+  <rect x="15" y="23" width="2" height="2" fill="#fbbc05"/>
+  <rect x="19" y="23" width="2" height="2" fill="#ea4335"/>
+</svg>

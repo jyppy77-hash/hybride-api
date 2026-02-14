@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- Dégradé arc-en-ciel (cohérent avec le site) -->
+    <linearGradient id="rainbow" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4285f4"/>
+      <stop offset="40%" stop-color="#34a853"/>
+      <stop offset="70%" stop-color="#fbbc05"/>
+      <stop offset="100%" stop-color="#ea4335"/>
+    </linearGradient>
+    <!-- Lueur des yeux -->
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Antenne -->
+  <circle cx="256" cy="52" r="24" fill="url(#rainbow)"/>
+  <rect x="244" y="52" width="24" height="60" rx="12" fill="url(#rainbow)"/>
+
+  <!-- Tête du robot (carré arrondi) -->
+  <rect x="56" y="112" width="400" height="344" rx="64" fill="url(#rainbow)"/>
+
+  <!-- Visière / Zone des yeux (fond sombre) -->
+  <rect x="96" y="180" width="320" height="140" rx="32" fill="#1a1a2e"/>
+
+  <!-- Œil gauche -->
+  <circle cx="180" cy="250" r="40" fill="#00f5ff" filter="url(#glow)"/>
+  <circle cx="180" cy="250" r="20" fill="#ffffff"/>
+
+  <!-- Œil droit -->
+  <circle cx="332" cy="250" r="40" fill="#00f5ff" filter="url(#glow)"/>
+  <circle cx="332" cy="250" r="20" fill="#ffffff"/>
+
+  <!-- Bouche (grille style robot) -->
+  <rect x="156" y="360" width="200" height="56" rx="12" fill="#1a1a2e"/>
+  <rect x="176" y="372" width="24" height="32" rx="4" fill="#34a853"/>
+  <rect x="212" y="372" width="24" height="32" rx="4" fill="#34a853"/>
+  <rect x="248" y="372" width="24" height="32" rx="4" fill="#fbbc05"/>
+  <rect x="284" y="372" width="24" height="32" rx="4" fill="#fbbc05"/>
+  <rect x="320" y="372" width="24" height="32" rx="4" fill="#ea4335"/>
+</svg>

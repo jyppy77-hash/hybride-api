@@ -29,7 +29,31 @@ Thumbs.db
 # Logs
 *.log
 
+# Testing
+.coverage
+.pytest_cache/
+
 # Build
 dist/
 build/
 *.egg-info/
+
+# Phase 3 EM — pas encore public
+ui/launcher.html
+ui/robots.txt
+ui/sitemap.xml
+
+# Documentation interne
+docs/
+
+# Binaires / outils locaux
+cloud-sql-proxy.exe
+
+# Claude Code config locale
+.claude/
+
+# Data dumps
+data/
+
+# Windows reserved
+nul
