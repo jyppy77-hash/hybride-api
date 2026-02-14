@@ -507,13 +507,13 @@
                 <span class="engine-status status-active">Actif</span>
             </a>
 
-            <!-- EuroMillions - EN CONSTRUCTION (lancement 15 mars 2026) -->
-            <div class="engine-card disabled" onclick="showComingSoon('EuroMillions')">
+            <!-- EuroMillions - EN CONSTRUCTION en prod / ACTIF en local -->
+            <div id="em-card" class="engine-card disabled" onclick="showComingSoon('EuroMillions')">
                 <span class="lock-icon">🔒</span>
                 <span class="engine-icon">⭐</span>
                 <h2 class="engine-name">EuroMillions</h2>
-                <span class="engine-status status-coming">En construction</span>
-                <p style="margin-top: 12px; font-size: 0.8rem; color: #FFD700; font-weight: 600; letter-spacing: 0.3px;">Lancement le 15 mars 2026 à 15h00</p>
+                <span id="em-status" class="engine-status status-coming">En construction</span>
+                <p id="em-teaser" style="margin-top: 12px; font-size: 0.8rem; color: #FFD700; font-weight: 600; letter-spacing: 0.3px;">Lancement le 15 mars 2026 à 15h00</p>
             </div>
 
             <!-- Super Loto - En construction -->
@@ -569,6 +569,28 @@
             document.getElementById('overlay').classList.remove('show');
             document.getElementById('coming-soon').classList.remove('show');
         }
+
+        // LOCAL ONLY : activer EuroMillions sur localhost
+        (function () {
+            var h = window.location.hostname;
+            if (h === 'localhost' || h === '127.0.0.1') {
+                var card = document.getElementById('em-card');
+                var lock = card.querySelector('.lock-icon');
+                var status = document.getElementById('em-status');
+                var teaser = document.getElementById('em-teaser');
+                // Transformer en lien actif
+                var link = document.createElement('a');
+                link.href = '/euromillions';
+                link.className = 'engine-card active';
+                link.style.borderColor = 'rgba(59, 130, 246, 0.5)';
+                link.style.background = 'rgba(59, 130, 246, 0.1)';
+                link.innerHTML =
+                    '<span class="engine-icon">\u2B50</span>' +
+                    '<h2 class="engine-name">EuroMillions</h2>' +
+                    '<span class="engine-status status-active" style="background:rgba(59,130,246,0.2);color:#3b82f6;border-color:rgba(59,130,246,0.4);">Actif (local)</span>';
+                card.parentNode.replaceChild(link, card);
+            }
+        })();
 
         // Fermer avec Escape
         document.addEventListener('keydown', function(e) {
