@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+    <title>Simulateur de Grille EuroMillions - Analysez Votre Selection | LotoIA</title>
+    <meta name="description" content="Composez votre grille EuroMillions (5 numeros + 2 etoiles) et obtenez une analyse statistique. Equilibre, numeros chauds et froids, indice de convergence.">
+    <meta name="keywords" content="simulateur euromillions, analyser grille euromillions, moteur HYBRIDE, analyse statistique, numeros chauds froids, HYBRIDE_OPTIMAL_V1_EM, etoiles euromillions">
+    <link rel="canonical" href="https://lotoia.fr/euromillions/simulateur">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LotoIA">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:title" content="Simulateur de Grille EuroMillions | LotoIA">
+    <meta property="og:description" content="Composez votre grille EuroMillions et obtenez une analyse statistique. Score et equilibre.">
+    <meta property="og:url" content="https://lotoia.fr/euromillions/simulateur">
+    <meta property="og:image" content="https://lotoia.fr/static/og-image.jpg">
+    <meta property="og:image:secure_url" content="https://lotoia.fr/static/og-image.jpg">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Simulateur de Grille EuroMillions | LotoIA">
+    <meta name="twitter:description" content="Composez votre grille EuroMillions et obtenez une analyse statistique.">
+    <meta name="twitter:image" content="https://lotoia.fr/static/og-image.jpg">
+    <!-- JSON-LD Schema.org -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "LotoIA - Analyse statistique EuroMillions",
+      "url": "https://lotoia.fr/euromillions/simulateur",
+      "description": "Outil d analyse statistique descriptive pour grilles EuroMillions",
+      "applicationCategory": "StatisticalTool",
+      "operatingSystem": "Web"
+    }
+    </script>
+    <link rel="stylesheet" href="/ui/static/style.css?v=1">
+    <link rel="stylesheet" href="/ui/static/simulateur.css?v=1">
+    <link rel="stylesheet" href="/ui/static/style-em.css?v=1">
+    <link rel="stylesheet" href="/ui/static/legal.css?v=1">
+    <!-- Theme script (en premier pour eviter le flash) -->
+    <script src="/ui/static/theme.js?v=1"></script>
+    <!-- Analytics (charge apres consentement RGPD) -->
+    <script src="/ui/static/analytics.js?v=1" defer></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc"></script>
+</head>
+<body class="simulator-page em-page">
+    <!-- Barre de navigation moteur -->
+    <nav class="engine-nav-subpage">
+        <a href="/euromillions" class="engine-nav-btn">
+            <span class="nav-arrow">←</span>
+            <span class="nav-text">Accueil EuroMillions</span>
+        </a>
+        <div class="engine-nav-right">
+            <span class="engine-badge">EuroMillions</span>
+            <button id="theme-switch" class="theme-switch" title="Changer de theme">
+                <span class="icon-day">☀️</span>
+                <span class="icon-night">🌙</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- ══════════════════════════════════════════════════════════════
+         HERO — Pattern aligne sur accueil / explorateur
+         ══════════════════════════════════════════════════════════════ -->
+    <header class="page-header loto-hero-header">
+        <div class="header-content">
+            <h1><span>⭐</span> Analyse de grille EuroMillions</h1>
+            <p class="subtitle">Composez votre grille et obtenez un audit statistique descriptif</p>
+            <div class="loto-hero-actions">
+                <a href="#grid-start" class="loto-hero-btn loto-hero-btn-active">
+                    <span class="loto-hero-btn-icon">🎯</span>
+                    Auditer une grille
+                </a>
+                <a href="/euromillions/generateur" class="loto-hero-btn">
+                    <span class="loto-hero-btn-icon">🧠</span>
+                    Explorer des grilles
+                </a>
+                <a href="/euromillions/statistiques" class="loto-hero-btn">
+                    <span class="loto-hero-btn-icon">📊</span>
+                    Voir les statistiques
+                </a>
+                <a href="/euromillions/news" class="loto-hero-btn loto-hero-btn-news">
+                    <span class="loto-hero-btn-icon">📰</span>
+                    Actualites
+                </a>
+            </div>
+            <p class="loto-hero-scroll-hint">← glisser pour voir plus →</p>
+        </div>
+    </header>
+
+    <div class="simulator-container">
+
+        <!-- Legende couleurs -->
+        <section id="grid-start" class="card legend-section">
+            <div class="legend">
+                <div class="legend-item">
+                    <span class="legend-dot hot"></span>
+                    <span>Chaud (frequent)</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot neutral"></span>
+                    <span>Neutre</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-dot cold"></span>
+                    <span>Froid (rare)</span>
+                </div>
+            </div>
+            <img src="/static/Hybride-audit.png" class="band-hybride" alt="Bandeau moteur HYBRIDE_OPTIMAL_V1_EM">
+            <p id="stats-tirages" class="stats-info" style="text-align: center; margin-top: 12px; font-size: 0.9rem; color: var(--text-muted);">
+                Chargement des statistiques...
+            </p>
+        </section>
+
+        <!-- Panel simulation unifie -->
+        <div class="simulation-panel">
+            <div class="simulation-workspace">
+                <div class="workspace-left grid-section">
+                    <h3 class="grid-title">Numeros <span id="count-main" class="count-badge">0/5</span></h3>
+                    <div id="main-grid" class="main-grid">
+                        <!-- Genere par JS (1-50) -->
+                    </div>
+                </div>
+
+                <div class="workspace-right chance-section">
+                    <div class="workspace-right-block">
+                        <h3 class="grid-title-chance">Etoiles <span id="count-star" class="count-badge">0/2</span></h3>
+                        <div id="star-grid" class="chance-grid">
+                            <!-- Genere par JS (1-12) -->
+                        </div>
+                    </div>
+                    <div class="workspace-right-block">
+                        <div class="chance-actions">
+                            <button id="btn-reset" class="btn btn-tertiary">
+                                Reinitialiser
+                            </button>
+                            <button id="btn-auto" class="btn btn-primary">
+                                Remplir aleatoirement
+                            </button>
+                        </div>
+                    </div>
+                    <div class="hybride-horizontal">
+                        <img src="/static/Hybride-audit-horizontal.png" alt="Assistant Hybride analyse de grille">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Resultats -->
+        <section id="results-section" class="card results-section" style="display: none;">
+            <h2>Analyse de votre grille</h2>
+
+            <!-- Indicateur de convergence (descriptif, non evaluatif) -->
+            <div class="score-display">
+                <div class="convergence-display">
+                    <span class="convergence-display-label">Indice de convergence statistique</span>
+                    <span id="convergence-level" class="convergence-display-value">--</span>
+                </div>
+                <p id="comparaison-text" class="comparaison-text"></p>
+            </div>
+
+            <!-- Badges -->
+            <div id="badges-container" class="badges-container"></div>
+
+            <!-- Details -->
+            <div class="details-section">
+                <h3>Details</h3>
+                <div id="details-grid" class="details-grid"></div>
+            </div>
+
+            <!-- Suggestions -->
+            <div class="suggestions-section">
+                <h3>Suggestions</h3>
+                <ul id="suggestions-list" class="suggestions-list"></ul>
+            </div>
+
+            <!-- Grille selectionnee -->
+            <div class="selected-grid-display">
+                <h3>Votre grille</h3>
+                <div id="selected-numbers" class="selected-numbers"></div>
+                <!-- Historique combinaison -->
+                <div id="history-check" class="history-line" style="display:none; margin-top:12px; font-size:14px; color:#9ca3af; text-align:center; line-height:1.6;"></div>
+            </div>
+        </section>
+
+        <!-- Loading -->
+        <div id="loading-overlay" class="loading-overlay" style="display: none;">
+            <div class="loading-spinner"></div>
+            <p>Analyse en cours...</p>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-nav">
+                <a href="/">Moteurs</a>
+                <span class="footer-sep">•</span>
+                <a href="/euromillions">Accueil</a>
+                <span class="footer-sep">•</span>
+                <a href="/euromillions/simulateur" class="active">Analyse</a>
+                <span class="footer-sep">•</span>
+                <a href="/euromillions/generateur">Exploration</a>
+                <span class="footer-sep">•</span>
+                <a href="/euromillions/statistiques">Statistiques</a>
+                <span class="footer-sep">•</span>
+                <a href="/euromillions/news">Actualites</a>
+                <span class="footer-sep">•</span>
+                <a href="/faq">FAQ</a>
+            </div>
+            <div class="footer-legal">
+                <a href="/mentions-legales">Mentions legales</a>
+                <span class="footer-sep">•</span>
+                <a href="/politique-confidentialite">Confidentialite</a>
+                <span class="footer-sep">•</span>
+                <a href="/politique-cookies">Cookies</a>
+            </div>
+            <p class="footer-brand">LotoIA.fr <span class="app-version">v1.001</span></p>
+            <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dependance. Appelez le 09 74 75 13 13 (appel non surtaxe).</p>
+            <p class="footer-help">Interdiction de jeu aux mineurs. <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
+            <div class="credits">
+                <p class="dev-by">Developpe par <strong>JyppY</strong></p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Bouton Scroll to Top -->
+    <button id="scroll-to-top" class="scroll-to-top" aria-label="Retour en haut">
+        ↑
+    </button>
+
+    <script src="/ui/static/simulateur-em.js?v=1"></script>
+    <script src="/ui/static/scroll.js?v=1"></script>
+    <script src="/ui/static/cookie-consent.js?v=1"></script>
+
+    <!-- HYBRIDE Chatbot Widget -->
+    <div id="hybride-chatbot-root"></div>
+    <script src="/ui/static/version-inject.js"></script>
+</body>
+</html>

@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Actualites EuroMillions | LotoIA</title>
+    <meta name="description" content="Suivez les actualites du module EuroMillions de LotoIA : moteur HYBRIDE_OPTIMAL_V1_EM, analyse statistique des tirages europeens, infrastructure et donnees.">
+    <link rel="canonical" href="https://lotoia.fr/euromillions/news">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LotoIA">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:title" content="Actualites EuroMillions | LotoIA">
+    <meta property="og:description" content="Actualites du module EuroMillions de LotoIA. Moteur HYBRIDE_OPTIMAL_V1_EM, analyse statistique et infrastructure Cloud Run.">
+    <meta property="og:url" content="https://lotoia.fr/euromillions/news">
+    <meta property="og:image" content="https://lotoia.fr/static/og-image.jpg">
+    <meta property="og:image:secure_url" content="https://lotoia.fr/static/og-image.jpg">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Actualites EuroMillions | LotoIA">
+    <meta name="twitter:description" content="Actualites du module EuroMillions de LotoIA. Moteur HYBRIDE, analyse statistique des tirages europeens.">
+    <meta name="twitter:image" content="https://lotoia.fr/static/og-image.jpg">
+    <link rel="stylesheet" href="/ui/static/style.css?v=1">
+    <link rel="stylesheet" href="/ui/static/style-em.css?v=1">
+    <link rel="stylesheet" href="/ui/static/legal.css?v=1">
+    <!-- Theme script (en premier pour eviter le flash) -->
+    <script src="/ui/static/theme.js?v=1"></script>
+    <!-- Analytics (charge apres consentement RGPD) -->
+    <script src="/ui/static/analytics.js?v=1" defer></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc"></script>
+
+    <style>
+        /* News article cards */
+        .news-section { max-width: 800px; margin: 0 auto; }
+
+        .news-post {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            padding: 28px 32px;
+            margin-bottom: 24px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .news-post:hover {
+            border-color: var(--accent, #6366f1);
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.08);
+        }
+        .news-post.featured {
+            border-left: 4px solid var(--accent, #6366f1);
+        }
+
+        .news-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+        .news-date {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        .news-tag {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .news-tag-launch {
+            background: rgba(16, 185, 129, 0.12);
+            color: #10b981;
+        }
+        .news-tag-tech {
+            background: rgba(99, 102, 241, 0.12);
+            color: #6366f1;
+        }
+        .news-tag-update {
+            background: rgba(245, 158, 11, 0.12);
+            color: #f59e0b;
+        }
+        .news-tag-roadmap {
+            background: rgba(139, 92, 246, 0.12);
+            color: #8b5cf6;
+        }
+
+        .news-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            line-height: 1.4;
+        }
+        .news-title span {
+            margin-right: 6px;
+        }
+
+        .news-content p {
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+        .news-content ul {
+            padding-left: 20px;
+            margin-bottom: 16px;
+        }
+        .news-content li {
+            line-height: 1.7;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .news-end {
+            text-align: center;
+            padding: 32px 20px;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+        .news-end p { margin-bottom: 6px; }
+
+        /* Action card */
+        .action-card {
+            margin-top: 40px;
+            margin-bottom: 32px;
+        }
+        .action-card-content {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .action-card-icon { font-size: 2rem; }
+        .action-card-text { flex: 1; min-width: 200px; }
+        .action-card-text h3 { margin-bottom: 4px; }
+        .action-card-text p { color: var(--text-muted); font-size: 0.95rem; }
+
+        @media (max-width: 600px) {
+            .news-post { padding: 20px 18px; }
+            .action-card-content { flex-direction: column; text-align: center; }
+        }
+    </style>
+</head>
+<body class="subpage em-page">
+    <!-- Barre de navigation moteur -->
+    <nav class="engine-nav-subpage">
+        <a href="/euromillions" class="engine-nav-btn">
+            <span class="nav-arrow">&larr;</span>
+            <span class="nav-text">Accueil EuroMillions</span>
+        </a>
+        <div class="engine-nav-right">
+            <span class="engine-badge">EuroMillions</span>
+            <button id="theme-switch" class="theme-switch" title="Changer de theme">
+                <span class="icon-day">&#9728;&#65039;</span>
+                <span class="icon-night">&#127769;</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Header -->
+    <header class="page-header loto-hero-header">
+        <div class="header-content">
+            <h1><span>&#128240;</span> Actualites EuroMillions</h1>
+            <p class="subtitle">Evolutions et mises a jour du moteur EuroMillions</p>
+            <div class="loto-hero-actions">
+                <a href="/euromillions/simulateur" class="loto-hero-btn">
+                    <span class="loto-hero-btn-icon">&#127919;</span>
+                    Auditer une grille
+                </a>
+                <a href="/euromillions/generateur" class="loto-hero-btn">
+                    <span class="loto-hero-btn-icon">&#129504;</span>
+                    Explorer des grilles
+                </a>
+                <a href="/euromillions/statistiques" class="loto-hero-btn">
+                    <span class="loto-hero-btn-icon">&#128202;</span>
+                    Voir les statistiques
+                </a>
+                <a href="/euromillions/news" class="loto-hero-btn loto-hero-btn-active loto-hero-btn-news">
+                    <span class="loto-hero-btn-icon">&#128240;</span>
+                    Actualites
+                </a>
+            </div>
+            <p class="loto-hero-scroll-hint">&larr; glisser pour voir plus &rarr;</p>
+        </div>
+    </header>
+
+    <div class="container subpage-container">
+
+        <section class="news-section">
+
+            <article class="news-post featured">
+                <div class="news-meta">
+                    <span class="news-date">Fevrier 2026</span>
+                    <span class="news-tag news-tag-launch">Lancement</span>
+                </div>
+                <h2 class="news-title"><span>&#127775;</span> Lancement du module EuroMillions</h2>
+                <div class="news-content">
+                    <p><strong>LotoIA lance son module EuroMillions</strong> avec le moteur <strong>HYBRIDE_OPTIMAL_V1_EM</strong>, une adaptation specifique de l'algorithme HYBRIDE pour les tirages europeens.</p>
+
+                    <p>Le module EuroMillions propose une analyse statistique complete :</p>
+                    <ul>
+                        <li><strong>5 numeros (1-50) + 2 etoiles (1-12)</strong> : prise en charge native du format EuroMillions</li>
+                        <li><strong>Generateur de grilles</strong> : generation automatique de grilles optimisees via le moteur HYBRIDE_OPTIMAL_V1_EM</li>
+                        <li><strong>Simulateur d'analyse</strong> : composez votre grille et obtenez un audit statistique descriptif en temps reel</li>
+                        <li><strong>Statistiques detaillees</strong> : frequences, ecarts, numeros chauds et froids pour les numeros ET les etoiles</li>
+                    </ul>
+
+                    <p><em>Le module EuroMillions est un outil d'exploration statistique. Il ne predit rien et ne garantit aucun gain.</em></p>
+                </div>
+            </article>
+
+            <article class="news-post">
+                <div class="news-meta">
+                    <span class="news-date">Fevrier 2026</span>
+                    <span class="news-tag news-tag-tech">Technique</span>
+                </div>
+                <h2 class="news-title">Moteur HYBRIDE_OPTIMAL_V1_EM</h2>
+                <div class="news-content">
+                    <p>Le moteur <strong>HYBRIDE_OPTIMAL_V1_EM</strong> est une adaptation du moteur HYBRIDE pour les specificites de l'EuroMillions. Il repose sur une double ponderation dynamique :</p>
+
+                    <ul>
+                        <li><strong>Ponderation long terme (60%)</strong> : analyse de la distribution sur l'ensemble du dataset historique des tirages EuroMillions</li>
+                        <li><strong>Ponderation court terme (40%)</strong> : ponderation adaptative sur les cycles recents de 24 mois</li>
+                        <li><strong>Analyse separee</strong> : les numeros principaux (1-50) et les etoiles (1-12) sont traites comme deux espaces combinatoires distincts</li>
+                    </ul>
+
+                    <p><em>Note technique : le moteur est un outil d'analyse descriptive. La distribution des resultats reste soumise aux lois du hasard pur.</em></p>
+                </div>
+            </article>
+
+            <article class="news-post">
+                <div class="news-meta">
+                    <span class="news-date">Fevrier 2026</span>
+                    <span class="news-tag news-tag-tech">Technique</span>
+                </div>
+                <h2 class="news-title">Infrastructure et donnees</h2>
+                <div class="news-content">
+                    <p>Le module EuroMillions s'appuie sur une <strong>infrastructure dediee</strong>, alignee sur l'architecture de production du module Loto :</p>
+
+                    <ul>
+                        <li><strong>Base de donnees dediee</strong> : table <code>tirages_euromillions</code> en Cloud SQL, independante de la base Loto</li>
+                        <li><strong>API complete</strong> : ensemble d'endpoints sous <code>/api/euromillions/*</code> pour les statistiques, la generation et l'analyse</li>
+                        <li><strong>Architecture Cloud Run</strong> : conteneur Docker identique au module Loto, avec auto-scaling, compression GZip et headers de securite</li>
+                    </ul>
+
+                    <p>L'ensemble des donnees provient des tirages officiels de l'EuroMillions, mis a jour regulierement apres chaque tirage (mardi et vendredi).</p>
+                </div>
+            </article>
+
+            <div class="news-end">
+                <p>Vous avez consulte l'historique complet des mises a jour EuroMillions.</p>
+                <p>Revenez regulierement pour suivre les evolutions du module.</p>
+            </div>
+
+        </section>
+
+        <!-- Action card -->
+        <section class="card action-card">
+            <div class="action-card-content">
+                <div class="action-card-icon">&#10024;</div>
+                <div class="action-card-text">
+                    <h3>Lancer l'exploration statistique EuroMillions</h3>
+                    <p>Explorez l'espace combinatoire avec le moteur HYBRIDE_OPTIMAL_V1_EM.</p>
+                </div>
+                <a href="/euromillions/generateur" class="btn btn-primary">
+                    Acceder au moteur
+                    <span class="btn-arrow">&rarr;</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-nav">
+                <a href="/">Moteurs</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/euromillions">Accueil</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/euromillions/simulateur">Analyse</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/euromillions/generateur">Exploration</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/euromillions/statistiques">Statistiques</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/euromillions/news" class="active">Actualites</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/euromillions/faq">FAQ</a>
+            </div>
+            <div class="footer-legal">
+                <a href="/mentions-legales">Mentions legales</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/politique-confidentialite">Confidentialite</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/politique-cookies">Cookies</a>
+            </div>
+            <p class="footer-brand">LotoIA.fr <span class="app-version">v1.001</span></p>
+            <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dependance. Appelez le 09 74 75 13 13 (appel non surtaxe).</p>
+            <p class="footer-help">Interdiction de jeu aux mineurs. <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
+            <div class="credits">
+                <p class="dev-by">Developpe par <strong>JyppY</strong></p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Bouton Scroll to Top -->
+    <button id="scroll-to-top" class="scroll-to-top" aria-label="Retour en haut">
+        &uarr;
+    </button>
+
+    <script src="/ui/static/scroll.js?v=1"></script>
+    <script src="/ui/static/cookie-consent.js?v=1"></script>
+
+    <!-- HYBRIDE Chatbot Widget -->
+    <div id="hybride-chatbot-root"></div>
+    <script src="/ui/static/version-inject.js"></script>
+</body>
+</html>

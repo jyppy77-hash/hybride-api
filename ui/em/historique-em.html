@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historique des Tirages EuroMillions | LotoIA</title>
+    <meta name="description" content="Recherchez un tirage EuroMillions par date. Consultez les numeros et etoiles de chaque tirage historique.">
+    <link rel="canonical" href="https://lotoia.fr/euromillions/historique">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LotoIA">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:title" content="Historique EuroMillions | LotoIA">
+    <meta property="og:description" content="Recherchez un tirage EuroMillions par date.">
+    <meta property="og:url" content="https://lotoia.fr/euromillions/historique">
+    <meta property="og:image" content="https://lotoia.fr/static/og-image.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Historique EuroMillions | LotoIA">
+    <meta name="twitter:description" content="Recherchez un tirage EuroMillions par date.">
+    <meta name="twitter:image" content="https://lotoia.fr/static/og-image.jpg">
+    <link rel="stylesheet" href="/ui/static/style.css?v=1">
+    <link rel="stylesheet" href="/ui/static/style-em.css?v=1">
+    <link rel="stylesheet" href="/ui/static/legal.css?v=1">
+    <script src="/ui/static/theme.js?v=1"></script>
+    <script src="/ui/static/analytics.js?v=1" defer></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc"></script>
+    <style>
+        .historique-container {
+            max-width: 700px;
+            margin: -50px auto 40px;
+            padding: 0 24px 40px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .search-card {
+            background: var(--theme-bg-card);
+            border: 1px solid var(--theme-border);
+            border-radius: 16px;
+            padding: 32px 28px;
+            box-shadow: var(--theme-shadow);
+        }
+
+        .search-card h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--theme-text-primary);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-form input[type="date"] {
+            padding: 10px 16px;
+            border: 1px solid var(--theme-border);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: var(--theme-bg-input);
+            color: var(--theme-text-primary);
+            font-family: inherit;
+        }
+
+        .search-form button {
+            padding: 10px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: opacity 0.2s;
+        }
+
+        .search-form button:hover {
+            opacity: 0.85;
+        }
+
+        #draw-result {
+            margin-top: 24px;
+        }
+
+        .draw-card {
+            text-align: center;
+            padding: 24px;
+            background: var(--theme-bg-card-alt, #f8fafc);
+            border-radius: 12px;
+            border: 1px solid var(--theme-border);
+        }
+
+        .draw-card h3 {
+            font-size: 1.1rem;
+            color: var(--theme-text-primary);
+            margin-bottom: 16px;
+        }
+
+        .draw-numbers {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .number-ball {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+        }
+
+        .number-ball.main {
+            background: radial-gradient(circle at 30% 30%, #4d88ff, #003399);
+        }
+
+        .number-ball.star {
+            background: radial-gradient(circle at 30% 30%, #FFD54F, #F57C00);
+        }
+
+        .separator {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--theme-text-muted);
+            margin: 0 4px;
+        }
+
+        .error {
+            color: var(--error);
+            text-align: center;
+            font-weight: 500;
+        }
+
+        @media (max-width: 480px) {
+            .historique-container {
+                padding: 0 16px 30px;
+            }
+
+            .search-card {
+                padding: 24px 16px;
+            }
+
+            .number-ball {
+                width: 40px;
+                height: 40px;
+                font-size: 15px;
+            }
+        }
+    </style>
+</head>
+<body class="subpage em-page">
+    <nav class="engine-nav-subpage">
+        <a href="/euromillions" class="engine-nav-btn">
+            <span class="nav-arrow">←</span>
+            <span class="nav-text">Accueil EuroMillions</span>
+        </a>
+        <div class="engine-nav-right">
+            <span class="engine-badge">EuroMillions</span>
+            <button id="theme-switch" class="theme-switch" title="Changer de theme">
+                <span class="icon-day">☀️</span>
+                <span class="icon-night">🌙</span>
+            </button>
+        </div>
+    </nav>
+
+    <header class="page-header loto-hero-header">
+        <div class="header-content">
+            <h1><span>📅</span> Historique des tirages</h1>
+            <p class="subtitle">Recherchez un tirage EuroMillions par date</p>
+            <div class="loto-hero-actions">
+                <a href="/euromillions/simulateur" class="loto-hero-btn">
+                    <span class="loto-hero-btn-icon">⭐</span>
+                    Auditer une grille
+                </a>
+                <a href="/euromillions/generateur" class="loto-hero-btn">
+                    <span class="loto-hero-btn-icon">🧠</span>
+                    Explorer des grilles
+                </a>
+                <a href="/euromillions/statistiques" class="loto-hero-btn">
+                    <span class="loto-hero-btn-icon">📊</span>
+                    Voir les statistiques
+                </a>
+                <a href="/euromillions/news" class="loto-hero-btn loto-hero-btn-news">
+                    <span class="loto-hero-btn-icon">📰</span>
+                    Actualites
+                </a>
+            </div>
+            <p class="loto-hero-scroll-hint">← glisser pour voir plus →</p>
+        </div>
+    </header>
+
+    <div class="historique-container">
+        <div class="search-card">
+            <h2>Rechercher un tirage</h2>
+            <div class="search-form">
+                <input type="date" id="search-date" value="">
+                <button onclick="searchDraw()">Rechercher</button>
+            </div>
+            <div id="draw-result"></div>
+        </div>
+
+        <footer class="footer" style="margin-top: 48px;">
+            <div class="footer-nav">
+                <a href="/">Moteurs</a>
+                <span class="footer-sep">•</span>
+                <a href="/euromillions">Accueil</a>
+                <span class="footer-sep">•</span>
+                <a href="/euromillions/simulateur">Analyse</a>
+                <span class="footer-sep">•</span>
+                <a href="/euromillions/generateur">Exploration</a>
+                <span class="footer-sep">•</span>
+                <a href="/euromillions/statistiques">Statistiques</a>
+                <span class="footer-sep">•</span>
+                <a href="/euromillions/news">Actualites</a>
+                <span class="footer-sep">•</span>
+                <a href="/euromillions/faq">FAQ</a>
+            </div>
+            <div class="footer-legal">
+                <a href="/mentions-legales">Mentions legales</a>
+                <span class="footer-sep">•</span>
+                <a href="/politique-confidentialite">Confidentialite</a>
+                <span class="footer-sep">•</span>
+                <a href="/politique-cookies">Cookies</a>
+            </div>
+            <p class="footer-brand">LotoIA.fr <span class="app-version">v1.001</span></p>
+            <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dependance. Appelez le 09 74 75 13 13 (appel non surtaxe).</p>
+            <p class="footer-help">Interdiction de jeu aux mineurs. <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
+            <div class="credits">
+                <p class="dev-by">Developpe par <strong>JyppY</strong></p>
+            </div>
+        </footer>
+    </div>
+
+    <button id="scroll-to-top" class="scroll-to-top" aria-label="Retour en haut">↑</button>
+
+    <script src="/ui/static/scroll.js?v=1"></script>
+    <script src="/ui/static/cookie-consent.js?v=1"></script>
+    <div id="hybride-chatbot-root"></div>
+    <script src="/ui/static/version-inject.js"></script>
+
+    <script>
+    async function searchDraw() {
+        const date = document.getElementById('search-date').value;
+        if (!date) return;
+        const resultDiv = document.getElementById('draw-result');
+        resultDiv.innerHTML = '<p style="text-align:center; color:var(--theme-text-muted);">Recherche en cours...</p>';
+        try {
+            const response = await fetch('/api/euromillions/draw/' + date);
+            const data = await response.json();
+            if (data.success) {
+                const d = data.data;
+                let html = '<div class="draw-card">';
+                html += '<h3>Tirage du ' + d.date_de_tirage + '</h3>';
+                html += '<div class="draw-numbers">';
+                [d.boule_1, d.boule_2, d.boule_3, d.boule_4, d.boule_5].sort((a,b)=>a-b).forEach(function(n) {
+                    html += '<span class="number-ball main">' + String(n).padStart(2,'0') + '</span>';
+                });
+                html += '<span class="separator">+</span>';
+                [d.etoile_1, d.etoile_2].sort((a,b)=>a-b).forEach(function(n) {
+                    html += '<span class="number-ball star">' + String(n).padStart(2,'0') + '</span>';
+                });
+                html += '</div></div>';
+                resultDiv.innerHTML = html;
+            } else {
+                resultDiv.innerHTML = '<p class="error">Aucun tirage trouve pour cette date.</p>';
+            }
+        } catch(e) {
+            resultDiv.innerHTML = '<p class="error">Erreur de connexion au serveur.</p>';
+        }
+    }
+
+    document.getElementById('search-date').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') searchDraw();
+    });
+    </script>
+</body>
+</html>

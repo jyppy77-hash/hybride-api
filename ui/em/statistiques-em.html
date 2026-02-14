@@ -1,0 +1,984 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+    <title>Statistiques EuroMillions - Frequences et Tendances | LotoIA</title>
+    <meta name="description" content="Statistiques completes de l'EuroMillions : frequences des numeros et etoiles, tendances, numeros chauds et froids, historique des tirages.">
+    <meta name="keywords" content="statistiques euromillions, frequences numeros euromillions, etoiles euromillions, moteur HYBRIDE, numeros chauds froids, HYBRIDE_OPTIMAL_V1_EM, tendances euromillions">
+    <link rel="canonical" href="https://lotoia.fr/euromillions/statistiques">
+
+    <!-- Favicon -->
+    <link rel="icon" href="/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="/ui/static/favicon.svg" type="image/svg+xml">
+    <link rel="shortcut icon" href="/favicon.ico">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LotoIA">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:title" content="Statistiques EuroMillions | LotoIA">
+    <meta property="og:description" content="Frequences, tendances et numeros chauds/froids de l'EuroMillions.">
+    <meta property="og:url" content="https://lotoia.fr/euromillions/statistiques">
+    <meta property="og:image" content="https://lotoia.fr/static/og-image.jpg">
+    <meta property="og:image:secure_url" content="https://lotoia.fr/static/og-image.jpg">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Statistiques EuroMillions | LotoIA">
+    <meta name="twitter:description" content="Frequences, tendances et numeros chauds/froids de l'EuroMillions.">
+    <meta name="twitter:image" content="https://lotoia.fr/static/og-image.jpg">
+
+    <!-- JSON-LD Schema.org -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Dataset",
+      "name": "Statistiques EuroMillions",
+      "description": "Statistiques des tirages de l'EuroMillions : frequences des numeros et etoiles, tendances, historique",
+      "url": "https://lotoia.fr/euromillions/statistiques",
+      "creator": {
+        "@type": "Organization",
+        "name": "LotoIA"
+      },
+      "temporalCoverage": "2004/.."
+    }
+    </script>
+
+    <link rel="stylesheet" href="/ui/static/style.css?v=1">
+    <link rel="stylesheet" href="/ui/static/style-em.css?v=1">
+    <link rel="stylesheet" href="/ui/static/legal.css?v=1">
+    <!-- Theme script (en premier pour eviter le flash) -->
+    <script src="/ui/static/theme.js?v=1"></script>
+    <!-- Analytics (charge apres consentement RGPD) -->
+    <script src="/ui/static/analytics.js?v=1" defer></script>
+
+    <style>
+        /* =================================================================
+           STATISTIQUES EUROMILLIONS — Styles specifiques
+           Herite du chassis unifie (style.css + style-em.css) :
+           page-header, loto-hero-header, engine-nav-subpage,
+           loto-hero-actions, loto-hero-btn
+           ================================================================= */
+
+        .stats-page {
+            min-height: 100vh;
+        }
+
+        /* ---- Header (complement local au pattern loto-hero-header) ---- */
+        .stats-page .page-header {
+            background: var(--theme-bg-header);
+            color: var(--theme-text-on-dark);
+            padding: 30px 20px 60px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            transition: background 0.4s ease;
+        }
+
+        .stats-page .page-header::before {
+            content: '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            line-height: 2.2;
+            color: rgba(255, 255, 255, 0.03);
+            word-wrap: break-word;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .stats-page .page-header::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image:
+                radial-gradient(circle at 15% 50%, rgba(0, 51, 153, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 85% 30%, rgba(255, 215, 0, 0.10) 0%, transparent 35%);
+            pointer-events: none;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .header-content h1 {
+            font-size: 42px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+        }
+
+        .header-content .subtitle {
+            font-size: 18px;
+            opacity: 0.9;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        /* ---- Container (jointure header -> carte) ---- */
+        .stats-container {
+            max-width: var(--app-max-width, 1140px);
+            margin: -50px auto 40px;
+            padding: 0 var(--app-padding-x, 24px);
+            position: relative;
+            z-index: 10;
+        }
+
+        /* ---- Carte principale (onglets) ---- */
+        .tabs-card {
+            background: var(--theme-bg-card);
+            border: 1px solid var(--theme-border);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ---- Onglets ---- */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 32px;
+            border-bottom: 2px solid var(--theme-border);
+            flex-wrap: wrap;
+            position: relative;
+            overflow: visible;
+        }
+
+        .tab {
+            padding: 16px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--theme-text-muted);
+            transition: all 0.3s ease;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab:hover {
+            color: var(--primary);
+            background: rgba(0, 51, 153, 0.05);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* ---- Analyse par numero ---- */
+        .number-selector {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .number-selector select {
+            padding: 12px 16px;
+            font-size: 1.05rem;
+            border: 2px solid var(--theme-border);
+            border-radius: 8px;
+            font-family: inherit;
+            min-width: 120px;
+            background: var(--theme-bg-input, var(--theme-bg-card));
+            color: var(--theme-text-primary);
+        }
+
+        .number-selector select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .number-selector label {
+            font-weight: 600;
+            color: var(--theme-text-primary);
+        }
+
+        .analysis-section {
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--theme-border);
+        }
+
+        .analysis-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .analysis-section h3 {
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            color: var(--theme-text-primary);
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-light);
+            border-left: 4px solid var(--primary);
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .stat-card.star-accent {
+            border-left-color: #FFD700;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.9rem;
+            color: var(--theme-text-muted);
+            margin-bottom: 8px;
+        }
+
+        .stat-card .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--theme-text-primary);
+        }
+
+        .info-note {
+            background: rgba(0, 51, 153, 0.08);
+            border-left: 4px solid #003399;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 24px;
+            font-size: 0.95rem;
+            color: var(--theme-text-primary);
+        }
+
+        /* ---- Historique ---- */
+        .search-form {
+            margin-bottom: 24px;
+        }
+
+        .search-form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--theme-text-primary);
+        }
+
+        .search-form .input-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .search-form input[type="date"] {
+            padding: 12px 16px;
+            font-size: 1.05rem;
+            border: 2px solid var(--theme-border);
+            border-radius: 8px;
+            font-family: inherit;
+            background: var(--theme-bg-input, var(--theme-bg-card));
+            color: var(--theme-text-primary);
+        }
+
+        .search-result {
+            background: var(--bg-light);
+            border-radius: 8px;
+            padding: 24px;
+            margin-top: 24px;
+            color: var(--theme-text-primary);
+        }
+
+        .search-result.error {
+            background: rgba(239, 68, 68, 0.08);
+            border-left: 4px solid var(--error);
+            color: var(--error);
+        }
+
+        .search-result.not-found {
+            background: rgba(245, 124, 0, 0.08);
+            border-left: 4px solid #F57C00;
+            color: #F57C00;
+        }
+
+        /* ---- Boules de tirage ---- */
+        .draw-numbers {
+            display: flex;
+            gap: 12px;
+            margin: 16px 0;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .number-ball {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .number-ball.main {
+            background: linear-gradient(135deg, #4d88ff, #003399);
+            box-shadow: 0 4px 8px rgba(0, 51, 153, 0.4);
+        }
+
+        .number-ball.star {
+            background: linear-gradient(135deg, #FFD700, #F57C00);
+            box-shadow: 0 4px 8px rgba(255, 215, 0, 0.4);
+        }
+
+        .separator {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--theme-text-muted);
+            padding: 0 4px;
+        }
+
+        /* ---- Top / Flop ---- */
+        .topflop-category {
+            margin-bottom: 40px;
+        }
+
+        .topflop-category > h3 {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            color: var(--theme-text-primary);
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--theme-border);
+        }
+
+        .topflop-section {
+            margin-bottom: 32px;
+        }
+
+        .topflop-section h4 {
+            font-size: 1.15rem;
+            margin-bottom: 16px;
+            color: var(--theme-text-primary);
+        }
+
+        .topflop-section h4.top-title {
+            color: var(--success);
+        }
+
+        .topflop-section h4.flop-title {
+            color: var(--tertiary);
+        }
+
+        .numbers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .number-card {
+            background: var(--bg-light);
+            border-radius: 8px;
+            padding: 16px 12px;
+            text-align: center;
+            border: 2px solid var(--theme-border);
+            transition: all 0.3s ease;
+        }
+
+        .number-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .number-card.top {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.06);
+        }
+
+        .number-card.flop {
+            border-color: var(--tertiary);
+            background: var(--bg-light);
+        }
+
+        .number-card .number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .number-card.top .number {
+            color: var(--success);
+        }
+
+        .number-card.flop .number {
+            color: var(--tertiary);
+        }
+
+        .number-card.star-card .number {
+            color: #F57C00;
+        }
+
+        .number-card.star-card.top .number {
+            color: var(--success);
+        }
+
+        .number-card.star-card.flop .number {
+            color: var(--tertiary);
+        }
+
+        .number-card .count {
+            font-size: 0.9rem;
+            color: var(--theme-text-muted);
+        }
+
+        /* ---- Responsive ---- */
+        @media (max-width: 768px) {
+            .stats-page .page-header {
+                padding: 24px 16px 50px;
+            }
+
+            .numbers-grid {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 8px;
+            }
+
+            .number-card {
+                padding: 12px 8px;
+            }
+
+            .number-card .number {
+                font-size: 1.5rem;
+            }
+
+            .number-card .count {
+                font-size: 0.8rem;
+            }
+
+            .tabs-card {
+                padding: 20px 16px;
+            }
+
+            .tab {
+                padding: 12px 16px;
+                font-size: 0.9rem;
+            }
+
+            .number-ball {
+                width: 50px;
+                height: 50px;
+                font-size: 1.25rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stats-page .page-header {
+                padding: 24px 16px 60px;
+            }
+
+            .tab {
+                padding: 10px 12px;
+                font-size: 0.85rem;
+            }
+
+            .number-selector {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .number-selector select,
+            .number-selector button {
+                width: 100%;
+            }
+
+            .number-ball {
+                width: 44px;
+                height: 44px;
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc"></script>
+</head>
+<body class="stats-page em-page">
+    <!-- Barre de navigation moteur -->
+    <nav class="engine-nav-subpage">
+        <a href="/euromillions" class="engine-nav-btn">
+            <span class="nav-arrow">&larr;</span>
+            <span class="nav-text">Accueil EuroMillions</span>
+        </a>
+        <div class="engine-nav-right">
+            <span class="engine-badge">EuroMillions</span>
+            <button id="theme-switch" class="theme-switch" title="Changer de theme">
+                <span class="icon-day">&#9728;&#65039;</span>
+                <span class="icon-night">&#127769;</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Header Premium — pattern aligne Analyse / Exploration -->
+    <header class="page-header loto-hero-header">
+        <div class="header-content">
+            <h1><span>&#128202;</span> Statistiques EuroMillions</h1>
+            <p class="subtitle">Frequences, tendances et analyse des numeros et etoiles</p>
+            <div class="loto-hero-actions">
+                <a href="/euromillions/simulateur" class="loto-hero-btn">
+                    <span class="loto-hero-btn-icon">&#127919;</span>
+                    Auditer une grille
+                </a>
+                <a href="/euromillions/generateur" class="loto-hero-btn">
+                    <span class="loto-hero-btn-icon">&#129504;</span>
+                    Explorer des grilles
+                </a>
+                <a href="/euromillions/statistiques" class="loto-hero-btn loto-hero-btn-active">
+                    <span class="loto-hero-btn-icon">&#128202;</span>
+                    Statistiques
+                </a>
+                <a href="/euromillions/news" class="loto-hero-btn loto-hero-btn-news">
+                    <span class="loto-hero-btn-icon">&#128240;</span>
+                    Actualites
+                </a>
+            </div>
+            <p class="loto-hero-scroll-hint">&larr; glisser pour voir plus &rarr;</p>
+        </div>
+    </header>
+
+    <!-- Contenu principal -->
+    <div class="stats-container">
+        <div class="tabs-card">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('historique')">&#128197; Historique des tirages</button>
+                <button class="tab" onclick="switchTab('analyse')">&#128269; Analyse par numero</button>
+                <button class="tab" onclick="switchTab('topflop')">&#128204; Top / Flop</button>
+            </div>
+
+            <!-- ONGLET 1 : Historique des tirages -->
+            <div id="tab-historique" class="tab-content active">
+                <div class="search-form">
+                    <label for="search-date">Rechercher un tirage par date</label>
+                    <div class="input-group">
+                        <input type="date" id="search-date" name="search-date">
+                        <button onclick="searchDraw()" class="btn-primary">Rechercher</button>
+                    </div>
+                </div>
+
+                <div id="draw-result"></div>
+
+                <div class="info-note">
+                    <strong>A propos de l'historique :</strong><br>
+                    Cette base contient les tirages officiels de l'EuroMillions. Utilisez le selecteur de date pour consulter un tirage specifique.
+                    Les numeros vont de 1 a 50, les etoiles de 1 a 12.
+                </div>
+            </div>
+
+            <!-- ONGLET 2 : Analyse par numero -->
+            <div id="tab-analyse" class="tab-content">
+                <!-- Section Numeros -->
+                <div class="analysis-section">
+                    <h3>Analyse d'un numero (1-50)</h3>
+                    <div class="number-selector">
+                        <label for="number-select"><strong>Numero :</strong></label>
+                        <select id="number-select">
+                            <option value="">-- Choisir --</option>
+                        </select>
+                        <button onclick="searchNumber()" class="btn-primary">Analyser</button>
+                    </div>
+                    <div id="number-result"></div>
+                </div>
+
+                <!-- Section Etoiles -->
+                <div class="analysis-section">
+                    <h3>Analyse d'une etoile (1-12)</h3>
+                    <div class="number-selector">
+                        <label for="star-select"><strong>Etoile :</strong></label>
+                        <select id="star-select">
+                            <option value="">-- Choisir --</option>
+                        </select>
+                        <button onclick="searchStar()" class="btn-primary">Analyser</button>
+                    </div>
+                    <div id="star-result"></div>
+                </div>
+
+                <div class="info-note">
+                    <strong>Vocabulaire :</strong><br>
+                    &bull; <strong>Frequence</strong> : nombre de fois ou le numero/etoile est apparu dans l'historique.<br>
+                    &bull; <strong>Ecart actuel</strong> : nombre de tirages depuis la derniere apparition.<br>
+                    &bull; <strong>Ecart moyen</strong> : intervalle moyen entre deux apparitions.<br>
+                    &bull; <strong>Categorie</strong> : classification du numero (chaud, tiede, froid).<br>
+                    Ces donnees sont purement descriptives et n'impliquent aucune prediction.
+                </div>
+            </div>
+
+            <!-- ONGLET 3 : Top / Flop -->
+            <div id="tab-topflop" class="tab-content">
+                <p style="margin-bottom: 24px; color: var(--text-muted);">
+                    Frequence d'apparition de chaque numero et etoile sur l'ensemble de l'historique.
+                </p>
+
+                <!-- Numeros -->
+                <div class="topflop-category">
+                    <h3>&#127920; Numeros (1-50)</h3>
+
+                    <div class="topflop-section">
+                        <h4 class="top-title">&#127942; Numeros les plus sortis</h4>
+                        <div id="top-numbers-grid" class="numbers-grid"></div>
+                    </div>
+
+                    <div class="topflop-section">
+                        <h4 class="flop-title">&#128201; Numeros les moins sortis</h4>
+                        <div id="flop-numbers-grid" class="numbers-grid"></div>
+                    </div>
+                </div>
+
+                <!-- Etoiles -->
+                <div class="topflop-category">
+                    <h3>&#11088; Etoiles (1-12)</h3>
+
+                    <div class="topflop-section">
+                        <h4 class="top-title">&#127942; Etoiles les plus sorties</h4>
+                        <div id="top-stars-grid" class="numbers-grid"></div>
+                    </div>
+
+                    <div class="topflop-section">
+                        <h4 class="flop-title">&#128201; Etoiles les moins sorties</h4>
+                        <div id="flop-stars-grid" class="numbers-grid"></div>
+                    </div>
+                </div>
+
+                <div class="info-note">
+                    <strong>A propos de ces donnees :</strong><br>
+                    Ces frequences representent le nombre de sorties de chaque numero et etoile sur l'ensemble de l'historique.
+                    Elles sont purement descriptives et n'impliquent aucune prediction sur les tirages futurs.
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-nav">
+                <a href="/">Moteurs</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/euromillions">Accueil</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/euromillions/simulateur">Analyse</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/euromillions/generateur">Exploration</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/euromillions/statistiques" class="active">Statistiques</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/euromillions/news">Actualites</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/euromillions/faq">FAQ</a>
+            </div>
+            <div class="footer-legal">
+                <a href="/mentions-legales">Mentions legales</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/politique-confidentialite">Confidentialite</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/politique-cookies">Cookies</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/disclaimer">Avertissements</a>
+            </div>
+            <p class="footer-brand">LotoIA.fr <span class="app-version">v1.001</span></p>
+            <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dependance. Appelez le 09 74 75 13 13 (appel non surtaxe).</p>
+            <p class="footer-help">Interdiction de jeu aux mineurs. <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
+            <div class="credits">
+                <p class="dev-by">Developpe par <strong>JyppY</strong></p>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        // =====================================================================
+        //  INITIALISATION
+        // =====================================================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Remplir le selecteur de numeros (1-50)
+            var numberSelect = document.getElementById('number-select');
+            for (var i = 1; i <= 50; i++) {
+                var option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                numberSelect.appendChild(option);
+            }
+
+            // Remplir le selecteur d'etoiles (1-12)
+            var starSelect = document.getElementById('star-select');
+            for (var j = 1; j <= 12; j++) {
+                var opt = document.createElement('option');
+                opt.value = j;
+                opt.textContent = j;
+                starSelect.appendChild(opt);
+            }
+
+            // Permettre la recherche avec Entree sur l'historique
+            document.getElementById('search-date').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchDraw();
+                }
+            });
+        });
+
+        // =====================================================================
+        //  GESTION DES ONGLETS
+        // =====================================================================
+
+        var topFlopLoaded = false;
+
+        function switchTab(tabName) {
+            // Desactiver tous les onglets
+            document.querySelectorAll('.tab').forEach(function(tab) { tab.classList.remove('active'); });
+            document.querySelectorAll('.tab-content').forEach(function(content) { content.classList.remove('active'); });
+
+            // Activer l'onglet selectionne
+            event.target.closest('.tab').classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+
+            // Charger les donnees Top/Flop si premier acces
+            if (tabName === 'topflop' && !topFlopLoaded) {
+                loadTopFlop();
+            }
+        }
+
+        // =====================================================================
+        //  ONGLET 1 : HISTORIQUE — Recherche d'un tirage par date
+        // =====================================================================
+
+        async function searchDraw() {
+            var date = document.getElementById('search-date').value;
+            if (!date) return;
+            var resultDiv = document.getElementById('draw-result');
+            resultDiv.innerHTML = '<p>Recherche en cours...</p>';
+            try {
+                var response = await fetch('/api/euromillions/draw/' + date);
+                var data = await response.json();
+                if (data.success) {
+                    var d = data.data;
+                    var html = '<div class="search-result">';
+                    html += '<h3 style="margin-bottom: 16px; color: var(--primary);">Tirage du ' + d.date_de_tirage + '</h3>';
+                    html += '<p><strong>Numeros gagnants :</strong></p>';
+                    html += '<div class="draw-numbers">';
+                    [d.boule_1, d.boule_2, d.boule_3, d.boule_4, d.boule_5].sort(function(a,b){return a-b;}).forEach(function(n) {
+                        html += '<span class="number-ball main">' + String(n).padStart(2,'0') + '</span>';
+                    });
+                    html += '<span class="separator">+</span>';
+                    [d.etoile_1, d.etoile_2].sort(function(a,b){return a-b;}).forEach(function(n) {
+                        html += '<span class="number-ball star">' + String(n).padStart(2,'0') + '</span>';
+                    });
+                    html += '</div>';
+                    // Afficher les informations supplementaires si disponibles
+                    if (d.jour_de_tirage) {
+                        html += '<p><strong>Jour :</strong> ' + d.jour_de_tirage + '</p>';
+                    }
+                    if (d.numero_de_tirage) {
+                        html += '<p><strong>Tirage n&deg; :</strong> ' + d.numero_de_tirage + '</p>';
+                    }
+                    html += '</div>';
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = '<div class="search-result not-found"><strong>Aucun tirage trouve pour cette date.</strong></div>';
+                }
+            } catch(e) {
+                resultDiv.innerHTML = '<div class="search-result error"><strong>Erreur de connexion.</strong></div>';
+            }
+        }
+
+        // =====================================================================
+        //  ONGLET 2 : ANALYSE PAR NUMERO / ETOILE
+        // =====================================================================
+
+        async function searchNumber() {
+            var select = document.getElementById('number-select');
+            var number = select.value;
+            var resultDiv = document.getElementById('number-result');
+
+            if (!number) {
+                alert('Veuillez selectionner un numero.');
+                return;
+            }
+
+            resultDiv.innerHTML = '<p>Analyse en cours...</p>';
+
+            try {
+                var response = await fetch('/api/euromillions/stats/number/' + number);
+                var data = await response.json();
+
+                if (data.success) {
+                    var s = data.data || data;
+                    var html = '<h4 style="margin: 16px 0; color: var(--primary);">Numero ' + String(number).padStart(2,'0') + '</h4>';
+                    html += '<div class="stats-cards">';
+                    html += buildStatCard('Frequence', s.frequence || s.total_appearances || '-', '');
+                    html += buildStatCard('Pourcentage', s.pourcentage !== undefined ? s.pourcentage + '%' : '-', '');
+                    html += buildStatCard('Derniere sortie', s.derniere_sortie || s.last_appearance || '-', 'small');
+                    html += buildStatCard('Ecart actuel', s.ecart_actuel !== undefined ? s.ecart_actuel + ' tirages' : (s.current_gap !== undefined ? s.current_gap + ' tirages' : '-'), '');
+                    html += buildStatCard('Ecart moyen', s.ecart_moyen !== undefined ? s.ecart_moyen : '-', '');
+                    html += buildStatCard('Classement', s.classement || '-', '');
+                    html += '</div>';
+                    if (s.categorie) {
+                        html += '<p style="margin-top: 8px;"><strong>Categorie :</strong> ' + s.categorie + '</p>';
+                    }
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = '<div class="search-result error"><strong>Erreur :</strong> ' + (data.message || 'Impossible d\'analyser le numero') + '</div>';
+                }
+            } catch(e) {
+                resultDiv.innerHTML = '<div class="search-result error"><strong>Erreur reseau :</strong> ' + e.message + '</div>';
+            }
+        }
+
+        async function searchStar() {
+            var select = document.getElementById('star-select');
+            var star = select.value;
+            var resultDiv = document.getElementById('star-result');
+
+            if (!star) {
+                alert('Veuillez selectionner une etoile.');
+                return;
+            }
+
+            resultDiv.innerHTML = '<p>Analyse en cours...</p>';
+
+            try {
+                var response = await fetch('/api/euromillions/stats/etoile/' + star);
+                var data = await response.json();
+
+                if (data.success) {
+                    var s = data.data || data;
+                    var html = '<h4 style="margin: 16px 0; color: #F57C00;">Etoile ' + String(star).padStart(2,'0') + '</h4>';
+                    html += '<div class="stats-cards">';
+                    html += buildStatCard('Frequence', s.frequence || s.total_appearances || '-', 'star-accent');
+                    html += buildStatCard('Pourcentage', s.pourcentage !== undefined ? s.pourcentage + '%' : '-', 'star-accent');
+                    html += buildStatCard('Derniere sortie', s.derniere_sortie || s.last_appearance || '-', 'star-accent small');
+                    html += buildStatCard('Ecart actuel', s.ecart_actuel !== undefined ? s.ecart_actuel + ' tirages' : (s.current_gap !== undefined ? s.current_gap + ' tirages' : '-'), 'star-accent');
+                    html += buildStatCard('Ecart moyen', s.ecart_moyen !== undefined ? s.ecart_moyen : '-', 'star-accent');
+                    html += buildStatCard('Classement', s.classement || '-', 'star-accent');
+                    html += '</div>';
+                    if (s.categorie) {
+                        html += '<p style="margin-top: 8px;"><strong>Categorie :</strong> ' + s.categorie + '</p>';
+                    }
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = '<div class="search-result error"><strong>Erreur :</strong> ' + (data.message || 'Impossible d\'analyser l\'etoile') + '</div>';
+                }
+            } catch(e) {
+                resultDiv.innerHTML = '<div class="search-result error"><strong>Erreur reseau :</strong> ' + e.message + '</div>';
+            }
+        }
+
+        function buildStatCard(label, value, extraClass) {
+            var sizeStyle = '';
+            if (extraClass && extraClass.indexOf('small') !== -1) {
+                sizeStyle = ' style="font-size: 1.3rem;"';
+            }
+            var cls = 'stat-card';
+            if (extraClass) {
+                cls += ' ' + extraClass.replace('small', '').trim();
+            }
+            return '<div class="' + cls + '">' +
+                '<div class="stat-label">' + label + '</div>' +
+                '<div class="stat-value"' + sizeStyle + '>' + value + '</div>' +
+                '</div>';
+        }
+
+        // =====================================================================
+        //  ONGLET 3 : TOP / FLOP
+        // =====================================================================
+
+        async function loadTopFlop() {
+            try {
+                var response = await fetch('/api/euromillions/stats/top-flop');
+                var data = await response.json();
+
+                if (data.success) {
+                    var d = data.data || data;
+
+                    // Numeros — Top 5
+                    var topNumbers = d.top_numbers || d.top || [];
+                    var flopNumbers = d.flop_numbers || d.flop || [];
+                    var topStars = d.top_stars || d.top_etoiles || [];
+                    var flopStars = d.flop_stars || d.flop_etoiles || [];
+
+                    displayRanking('top-numbers-grid', topNumbers.slice(0, 5), 'top', false);
+                    displayRanking('flop-numbers-grid', flopNumbers.slice(0, 5), 'flop', false);
+                    displayRanking('top-stars-grid', topStars.slice(0, 5), 'top', true);
+                    displayRanking('flop-stars-grid', flopStars.slice(0, 5), 'flop', true);
+
+                    topFlopLoaded = true;
+                } else {
+                    alert('Erreur : ' + (data.message || 'Impossible de charger les donnees'));
+                }
+            } catch(e) {
+                alert('Erreur reseau : ' + e.message);
+            }
+        }
+
+        function displayRanking(gridId, items, type, isStar) {
+            var grid = document.getElementById(gridId);
+            grid.innerHTML = '';
+
+            if (!items || items.length === 0) {
+                grid.innerHTML = '<p style="color: var(--theme-text-muted);">Aucune donnee disponible.</p>';
+                return;
+            }
+
+            items.forEach(function(item) {
+                var card = document.createElement('div');
+                var cardClass = 'number-card ' + type;
+                if (isStar) cardClass += ' star-card';
+                card.className = cardClass;
+
+                var num = item.number || item.numero || item.etoile || '-';
+                var count = item.count || item.frequence || 0;
+
+                card.innerHTML =
+                    '<div class="number">' + String(num).padStart(2, '0') + '</div>' +
+                    '<div class="count">' + count + ' sorties</div>';
+                grid.appendChild(card);
+            });
+        }
+    </script>
+
+    <!-- Bouton Scroll to Top -->
+    <button id="scroll-to-top" class="scroll-to-top" aria-label="Retour en haut">
+        &uarr;
+    </button>
+
+    <script src="/ui/static/scroll.js?v=1"></script>
+    <script src="/ui/static/cookie-consent.js?v=1"></script>
+
+    <!-- HYBRIDE Chatbot Widget -->
+    <div id="hybride-chatbot-root"></div>
+    <script src="/ui/static/version-inject.js"></script>
+</body>
+</html>
