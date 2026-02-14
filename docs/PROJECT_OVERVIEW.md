@@ -1,6 +1,6 @@
 # LotoIA - Technical Overview
 
-> Statistical analysis platform for the French Loto and EuroMillions, powered by the HYBRIDE_OPTIMAL_V1 engine.
+> Statistical analysis platform for the French Loto and EuroMillions, powered by the HYBRIDE engine.
 
 ---
 
@@ -54,8 +54,8 @@ hybride-api/
 │
 ├── engine/                              # Core analysis engine
 │   ├── __init__.py                      # Package init
-│   ├── hybride.py                       # HYBRIDE_OPTIMAL_V1 algorithm (Loto)
-│   ├── hybride_em.py                    # HYBRIDE_OPTIMAL_V1_EM algorithm (EuroMillions)
+│   ├── hybride.py                       # HYBRIDE algorithm (Loto)
+│   ├── hybride_em.py                    # HYBRIDE algorithm (EuroMillions)
 │   ├── stats.py                         # Statistical analysis module
 │   ├── models.py                        # Pydantic data models
 │   ├── db.py                            # Database connection proxy
@@ -193,7 +193,7 @@ This approach trades developer convenience (no hot-reload, no component model) f
 
 ## 3. Key Features
 
-### HYBRIDE_OPTIMAL_V1 Engine
+### HYBRIDE Engine (Loto)
 
 | Feature | Detail |
 |---------|--------|
@@ -204,7 +204,7 @@ This approach trades developer convenience (no hot-reload, no component model) f
 | **Star Rating** | 1-5 stars based on conformity score |
 | **Badges** | Auto-generated labels (Equilibre, Chaud, Froid, etc.) |
 
-### HYBRIDE_OPTIMAL_V1_EM Engine (EuroMillions)
+### HYBRIDE Engine (EuroMillions)
 
 | Feature | Detail |
 |---------|--------|
@@ -406,8 +406,8 @@ USER BROWSER (HTML/CSS/Vanilla JS)
 +--------------------------------------------------+
 |              ENGINE LAYER                         |
 |                                                   |
-|  engine/hybride.py      HYBRIDE_OPTIMAL_V1 (Loto) |
-|  engine/hybride_em.py   HYBRIDE_OPTIMAL_V1_EM (EM)|
+|  engine/hybride.py      HYBRIDE (Loto)             |
+|  engine/hybride_em.py   HYBRIDE (EuroMillions)     |
 |  engine/stats.py        Descriptive statistics     |
 |  engine/models.py       Pydantic validation        |
 +--------------------------------------------------+
@@ -895,6 +895,7 @@ T=0  showMetaAnalysePopup()
 | **EuroMillions Phase 2** | 2026-02-14 | Full EM API layer: `em_schemas.py` (47 lines), `engine/hybride_em.py` (440 lines), `services/em_stats_service.py` (390 lines), `routes/em_data.py` (716 lines, 12 endpoints), `routes/em_analyse.py` (583 lines, 3 endpoints). Zero modification to existing Loto files (except main.py +2 router mounts). | 15 EM endpoints operational, 31/31 local tests passed |
 | **EuroMillions Phase 3** | 2026-02-14 | Full EM frontend: 7 HTML pages (accueil-em, euromillions, simulateur-em, statistiques-em, historique-em, faq-em, news-em), `routes/em_pages.py`, SEO (clean URLs, sitemap, JSON-LD, OG tags), launcher activation | 7 EM pages + 7 SEO routes operational |
 | **EuroMillions Phase 4** | 2026-02-14 | Chatbot HYBRIDE EM: `routes/api_chat_em.py` (1668 lines, 12-phase detection + Text-to-SQL on tirages_euromillions), `hybride-chatbot-em.js` (277 lines, isolated storage `hybride-history-em`), 3 EM prompts (hybride, sql_generator, pitch_grille), `em_stats_service.py` +2 functions (analyze_grille_for_chat, prepare_grilles_pitch_context), `em_schemas.py` +3 schemas (EMChatMessage/Request/Response), widget integrated on 7 EM pages, main.py wired. Generic utilities imported from api_chat.py. | 2 EM chat endpoints operational, 8/8 tests passed (pitch requires MySQL) |
+| **Rename HYBRIDE** | 2026-02-14 | Global rename: `HYBRIDE_OPTIMAL_V1` / `HYBRIDE_OPTIMAL_V1_EM` → `HYBRIDE` across all user-facing files (62 files: HTML, JS, prompts, PDF generator). Backend engine code unchanged. Line endings normalized (LF). | Zero `HYBRIDE_OPTIMAL_V1` in frontend/prompts/PDF scope |
 
 ---
 
@@ -903,8 +904,8 @@ T=0  showMetaAnalysePopup()
 | Area | Status | Notes |
 |------|--------|-------|
 | Backend (FastAPI + Cloud SQL) | Stable | All endpoints operational (Loto + EuroMillions), audit refactoring complete (12 phases) |
-| HYBRIDE_OPTIMAL_V1 Engine (Loto) | Stable | Scoring, constraints, badges functional |
-| HYBRIDE_OPTIMAL_V1_EM Engine (EuroMillions) | Stable | 5 boules [1-50] + 2 etoiles [1-12], 15 endpoints, 31/31 tests passed. No Loto regression. |
+| HYBRIDE Engine (Loto) | Stable | Scoring, constraints, badges functional |
+| HYBRIDE Engine (EuroMillions) | Stable | 5 boules [1-50] + 2 etoiles [1-12], 15 endpoints, 31/31 tests passed. No Loto regression. |
 | HYBRIDE Chatbot (Loto) | Stable | 12-phase detection (Phase 0 contextual continuation + regex + Text-to-SQL), 22 temporal patterns, session persistence (sessionStorage), sponsor system, GA4 tracking (5 events), multi-numéros SQL, simulator redirect fallback. Deployed on 6 Loto pages (accueil, loto, simulateur, statistiques, news, faq) |
 | HYBRIDE Chatbot (EuroMillions) | Stable | Full EM adaptation of Loto chatbot: 12-phase detection, Text-to-SQL on tirages_euromillions, grille analysis (5 boules 1-50 + 2 étoiles 1-12), pitch grilles, isolated sessionStorage (`hybride-history-em`), GA4 `hybride_em_chat_*` events. Deployed on 7 EM pages. 3 dedicated EM prompts. Generic utilities shared from api_chat.py. |
 | META ANALYSE 75 | Stable | Async Gemini enrichment + PDF export, circuit breaker fallback |
@@ -980,4 +981,4 @@ Observable characteristics based on development usage:
 
 ---
 
-*Updated by JyppY & Claude Opus 4.6 — 14/02/2026 (v6.0: Phase 4 — Chatbot HYBRIDE EuroMillions. api_chat_em.py 1668 lines, hybride-chatbot-em.js 277 lines, 3 EM prompts, em_schemas +3 chat schemas, em_stats_service +2 functions, widget on 7 EM pages, 17 EM endpoints total, 10 routers)*
+*Updated by JyppY & Claude Opus 4.6 — 14/02/2026 (v6.1: Rename HYBRIDE_OPTIMAL_V1 → HYBRIDE across 62 user-facing files. Overview aligned.)*
