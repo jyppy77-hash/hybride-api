@@ -28,6 +28,8 @@ from routes.api_gemini import router as gemini_router
 from routes.api_pdf import router as pdf_router
 from routes.api_tracking import router as tracking_router
 from routes.api_chat import router as chat_router
+from routes.em_data import router as em_data_router
+from routes.em_analyse import router as em_analyse_router
 
 # ── JSON structured logging ──
 _log_handler = logging.StreamHandler(sys.stdout)
@@ -270,6 +272,8 @@ app.include_router(gemini_router)
 app.include_router(pdf_router)
 app.include_router(tracking_router)
 app.include_router(chat_router)
+app.include_router(em_data_router)
+app.include_router(em_analyse_router)
 
 
 # =========================
