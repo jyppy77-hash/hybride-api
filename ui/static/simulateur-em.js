@@ -43,7 +43,7 @@ async function loadNumbersHeat() {
         const data = await response.json();
 
         if (data.success) {
-            state.numbersHeat = data.numbers;
+            state.numbersHeat = data.boules || {};
             state.totalTirages = data.total_tirages || 0;
             state.statsLoaded = true;
             updateTiragesDisplay();
@@ -100,7 +100,7 @@ function initMainGrid() {
         btn.textContent = i;
         btn.dataset.number = i;
 
-        const heat = state.numbersHeat[i];
+        const heat = state.numbersHeat[i] || state.numbersHeat[String(i)];
         if (heat) {
             btn.classList.add(heat.category);
             btn.title = 'Frequence: ' + heat.frequency + ' | Dernier: ' + (heat.last_draw || 'N/A');
