@@ -9,10 +9,30 @@ logger = logging.getLogger(__name__)
 
 
 def _utf8_clean(text):
-    """Nettoie le texte en preservant tous les caracteres UTF-8."""
+    """Nettoie le texte : remplace les caracteres Unicode problematiques par des equivalents ASCII safe pour ReportLab/Vera."""
     if not text:
         return ""
-    return text.encode("utf-8").decode("utf-8")
+    replacements = {
+        "\u2192": "->",   # → RIGHTWARDS ARROW
+        "\u2190": "<-",   # ← LEFTWARDS ARROW
+        "\u2194": "<->",  # ↔ LEFT RIGHT ARROW
+        "\u2013": "-",    # – EN DASH
+        "\u2014": "-",    # — EM DASH
+        "\u2018": "'",    # ' LEFT SINGLE QUOTATION MARK
+        "\u2019": "'",    # ' RIGHT SINGLE QUOTATION MARK
+        "\u201C": '"',    # " LEFT DOUBLE QUOTATION MARK
+        "\u201D": '"',    # " RIGHT DOUBLE QUOTATION MARK
+        "\u2026": "...",  # … HORIZONTAL ELLIPSIS
+        "\u00A0": " ",    # NO-BREAK SPACE
+        "\u2022": "-",    # • BULLET
+        "\u25A0": "-",    # ■ BLACK SQUARE
+        "\u25A1": "-",    # □ WHITE SQUARE
+        "\u2023": "-",    # ‣ TRIANGULAR BULLET
+        "\u00B7": ".",    # · MIDDLE DOT
+    }
+    for char, replacement in replacements.items():
+        text = text.replace(char, replacement)
+    return text
 
 
 def _register_fonts(pdfmetrics, TTFont):
