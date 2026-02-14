@@ -257,7 +257,7 @@ function getCustomGridAnalysisLogs() {
     const step = duration / 12;
 
     return [
-        { time: step * 0, text: "> Initialisation HYBRIDE_OPTIMAL_V1...", type: "info" },
+        { time: step * 0, text: "> Initialisation HYBRIDE...", type: "info" },
         { time: step * 1, text: "✓ Connexion moteur OK (89ms)", type: "success" },
         { time: step * 2, text: "> Analyse de votre grille personnelle...", type: "info" },
         { time: step * 3, text: "✓ 5 numéros + 1 chance validés", type: "success" },

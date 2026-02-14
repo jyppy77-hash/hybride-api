@@ -73,7 +73,7 @@
 
         // Configuration moteur par defaut
         defaultEngine: 'loto_fr',
-        defaultAlgorithm: 'HYBRIDE_OPTIMAL_V1',
+        defaultAlgorithm: 'HYBRIDE',
 
         // Delai avant envoi pageview (ms)
         pageviewDelay: 100,

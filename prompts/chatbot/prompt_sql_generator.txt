@@ -189,7 +189,7 @@ Règles :
 
 SUJETS NON-SQL (retourne toujours NO_SQL) :
 Si la conversation porte sur un de ces sujets, retourne NO_SQL même si l'utilisateur dit "oui" :
-- Le moteur HYBRIDE_OPTIMAL_V1 (formule, pondérations, score, algorithme, fonctionnement)
+- Le moteur HYBRIDE (formule, pondérations, score, algorithme, fonctionnement)
 - L'explication du site LotoIA (présentation, sections, pages)
 - Le jeu responsable, les probabilités théoriques, les conseils
 - Toute question qui ne nécessite PAS de données de la table tirages

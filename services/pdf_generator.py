@@ -121,7 +121,7 @@ def generate_meta_graph_image(graph_data: dict) -> str:
 
 
 def generate_meta_pdf(analysis: str = "", window: str = "75 tirages",
-                      engine: str = "HYBRIDE_OPTIMAL_V1", graph: str = None,
+                      engine: str = "HYBRIDE", graph: str = None,
                       graph_data: dict = None, sponsor: str = None) -> io.BytesIO:
     """
     Genere le PDF officiel META75 via ReportLab.
@@ -249,7 +249,7 @@ def generate_meta_pdf(analysis: str = "", window: str = "75 tirages",
 
         c.setFont("DejaVuSans", 11)
         window_text = _utf8_clean(window) or "75 tirages"
-        engine_text = _utf8_clean(engine) or "HYBRIDE_OPTIMAL_V1"
+        engine_text = _utf8_clean(engine) or "HYBRIDE"
         c.drawString(15 * mm, y, f"Fen\u00eatre analys\u00e9e : {window_text}")
         y -= 6 * mm
         c.drawString(15 * mm, y, f"Moteur : {engine_text}")
@@ -297,7 +297,7 @@ def generate_meta_pdf(analysis: str = "", window: str = "75 tirages",
         # Signature HYBRIDE
         c.setFillColorRGB(0, 0, 0)
         c.setFont("DejaVuSans-Bold", 11)
-        c.drawCentredString(w / 2, y, "Analyse g\u00e9n\u00e9r\u00e9e par HYBRIDE_OPTIMAL_V1")
+        c.drawCentredString(w / 2, y, "Analyse g\u00e9n\u00e9r\u00e9e par HYBRIDE")
         y -= 6 * mm
         c.setFont("DejaVuSans", 10)
         c.drawCentredString(w / 2, y, "Moteur statistique p\u00e9dagogique")
@@ -320,7 +320,7 @@ def generate_meta_pdf(analysis: str = "", window: str = "75 tirages",
         c.setFont("DejaVuSans-Oblique", 8)
         c.drawCentredString(w / 2, y, f"LotoIA \u2014 Rapport META DONN\u00c9E v{APP_VERSION}")
         y -= 7 * mm
-        c.drawCentredString(w / 2, y, "Ce rapport est enti\u00e8rement g\u00e9n\u00e9r\u00e9 par intelligence artificielle en collaboration avec le moteur HYBRIDE_OPTIMAL_V1.")
+        c.drawCentredString(w / 2, y, "Ce rapport est enti\u00e8rement g\u00e9n\u00e9r\u00e9 par intelligence artificielle en collaboration avec le moteur HYBRIDE.")
         y -= 7 * mm
         c.drawCentredString(w / 2, y, "Graphiques et visuels en cours de d\u00e9veloppement.")
 

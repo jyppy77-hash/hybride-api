@@ -75,7 +75,7 @@ function getConsoleLogs(gridCount, duration, options = {}) {
         : `✓ ${rowsFormatted} tirages analysés`;
 
     return [
-        { time: t(0), text: "> Initialisation HYBRIDE_OPTIMAL_V1...", type: "info" },
+        { time: t(0), text: "> Initialisation HYBRIDE...", type: "info" },
         { time: t(1), text: "✓ Connexion moteur OK (127ms)", type: "success" },
         { time: t(2), text: "> Chargement base de données FDJ...", type: "info" },
         { time: t(3), text: tiragesText, type: "success" },
@@ -166,7 +166,7 @@ function generatePopupHTML75(config) {
 
             <div class="console-container">
                 <div class="console-header">
-                    <span class="console-title">🖥️ MOTEUR HYBRIDE_OPTIMAL_V1</span>
+                    <span class="console-title">🖥️ MOTEUR HYBRIDE</span>
                     <span class="console-status" id="console-status">
                         <span class="status-dot"></span>PROCESSING
                     </span>
@@ -309,7 +309,7 @@ function showSponsorPopup75(config) {
     return new Promise((resolve) => {
         const {
             duration,
-            title = 'HYBRIDE_OPTIMAL_V1 - Calcul en cours...',
+            title = 'HYBRIDE - Calcul en cours...',
             gridCount = 5,
             onComplete,
             isMetaAnalyse = false
@@ -825,7 +825,7 @@ function openMetaResultPopup(data) {
                 body: JSON.stringify({
                     analysis: finalAnalysisText,
                     window: '75 tirages',
-                    engine: 'HYBRIDE_OPTIMAL_V1',
+                    engine: 'HYBRIDE',
                     graph_data: metaResultData && metaResultData.graph ? metaResultData.graph : null,
                     sponsor: 'Espace disponible'
                 })

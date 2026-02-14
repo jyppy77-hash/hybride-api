@@ -1,7 +1,7 @@
 {
   "name": "LotoIA - Générateur de Grilles Loto",
   "short_name": "LotoIA",
-  "description": "Moteur HYBRIDE_OPTIMAL_V1 - Analyse statistique du Loto français",
+  "description": "Moteur HYBRIDE - Analyse statistique du Loto français",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",
