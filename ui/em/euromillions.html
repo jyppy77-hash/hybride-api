@@ -45,6 +45,8 @@
     </script>
     <link rel="stylesheet" href="/ui/static/style.css?v=1">
     <link rel="stylesheet" href="/ui/static/style-em.css?v=1">
+    <link rel="stylesheet" href="/ui/static/sponsor-popup.css?v=1">
+    <link rel="stylesheet" href="/ui/static/sponsor-popup75.css?v=1">
     <link rel="stylesheet" href="/ui/static/meta-result.css?v=1">
     <link rel="stylesheet" href="/ui/static/legal.css?v=1">
     <!-- Theme script (en premier pour eviter le flash) -->
@@ -154,6 +156,63 @@
                         <span class="cta-arrow">&rarr;</span>
                         <span class="spinner" style="display: none;"></span>
                     </button>
+
+                    <!-- Slider Fenetre d'Analyse META DATA EM -->
+                    <div class="meta-window-selector" id="meta-window-container-em">
+                        <label class="meta-window-label">Fenetre d'analyse</label>
+
+                        <!-- Toggle Tirages / Annees -->
+                        <div class="meta-mode-toggle" id="meta-mode-toggle-em">
+                            <button type="button" class="meta-mode-btn active" data-mode="tirages">Tirages</button>
+                            <button type="button" class="meta-mode-btn" data-mode="annees">Annees</button>
+                        </div>
+
+                        <!-- Slider Mode Tirages (100-700 + GLOBAL, pas de 800 pour EM) -->
+                        <div class="meta-window-slider-wrapper" id="meta-slider-tirages-em">
+                            <input type="range" id="meta-window-slider-em" class="meta-window-slider"
+                                   min="0" max="7" step="1" value="7">
+                            <div class="meta-window-ticks">
+                                <span>100</span>
+                                <span>200</span>
+                                <span>300</span>
+                                <span>400</span>
+                                <span>500</span>
+                                <span>600</span>
+                                <span>700</span>
+                                <span>GLOBAL</span>
+                            </div>
+                        </div>
+
+                        <!-- Slider Mode Annees -->
+                        <div class="meta-window-slider-wrapper" id="meta-slider-annees-em" style="display: none;">
+                            <input type="range" id="meta-years-slider-em" class="meta-window-slider"
+                                   min="0" max="6" step="1" value="6">
+                            <div class="meta-window-ticks">
+                                <span>1A</span>
+                                <span>2A</span>
+                                <span>3A</span>
+                                <span>4A</span>
+                                <span>5A</span>
+                                <span>6A</span>
+                                <span>GLOBAL</span>
+                            </div>
+                        </div>
+
+                        <div class="meta-window-info" id="meta-window-info-em">
+                            <span class="meta-window-count">Analyse sur l'integralite de la base</span>
+                            <span class="meta-window-dates">Fev 2004 &#8594; Aujourd'hui</span>
+                        </div>
+
+                        <p class="meta-slider-info" style="font-size:0.85rem; color:#6b7280; text-align:center; margin-top:8px; opacity:0.9;">
+                            &#128269; Ce reglage s'applique uniquement a l'analyse META DONNEE.
+                        </p>
+
+                        <!-- CTA Meta Data EM -->
+                        <button id="btn-metadata-75-em" class="btn-cta-secondary" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; border: none; padding: 18px 28px; font-size: 17px; font-weight: 700; border-radius: 14px; box-shadow: 0 6px 20px rgba(245,158,11,0.35); letter-spacing: 0.3px;">
+                            <span>&#128202;</span>
+                            <span>Analyser avec META (75 grilles)</span>
+                        </button>
+                    </div>
 
                     <p class="cta-subtext">Analyse instantanee &bull; Indice de convergence &bull; 100% gratuit</p>
                     <p class="cta-pdf-teaser">&#128196; Rapport PDF detaille genere par intelligence artificielle</p>
@@ -359,6 +418,186 @@
     <button id="scroll-to-top" class="scroll-to-top" aria-label="Retour en haut">
         &uarr;
     </button>
+
+    <!-- META ANALYSE 75 Grilles EM (sponsor-popup.js grilles = sprint suivant) -->
+    <script src="/ui/static/sponsor-popup75-em.js?v=1"></script>
+    <script>
+    // Variables globales pour la fenetre d'analyse META EM
+    var metaWindowSizeEM = "GLOBAL";
+    var metaYearsSizeEM = null;
+    var metaCurrentModeEM = "tirages";
+
+    // Mappings sliders discrets EM (pas de 800 — seulement 729 tirages)
+    var META_WINDOW_MAP_EM = [100, 200, 300, 400, 500, 600, 700, "GLOBAL"];
+    var META_YEARS_MAP_EM = [1, 2, 3, 4, 5, 6, "GLOBAL"];
+
+    function formatDateFREM(dateStr) {
+        if (!dateStr || dateStr === '---') return '---';
+        try {
+            var d = new Date(dateStr);
+            return d.toLocaleDateString('fr-FR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        } catch (e) {
+            return dateStr;
+        }
+    }
+
+    (function() {
+        var toggleContainer = document.getElementById('meta-mode-toggle-em');
+        var sliderTirages = document.getElementById('meta-slider-tirages-em');
+        var sliderAnnees = document.getElementById('meta-slider-annees-em');
+        var windowSlider = document.getElementById('meta-window-slider-em');
+        var yearsSlider = document.getElementById('meta-years-slider-em');
+        var infoContainer = document.getElementById('meta-window-info-em');
+
+        if (!toggleContainer || !infoContainer) return;
+
+        var countEl = infoContainer.querySelector('.meta-window-count');
+        var datesEl = infoContainer.querySelector('.meta-window-dates');
+        var toggleBtns = toggleContainer.querySelectorAll('.meta-mode-btn');
+
+        // Donnees locales fenetre d'analyse EM (fallback)
+        var windowInfoTiragesEM = {
+            100: { draws: 100, start: "2025-05-16", end: "2026-02-11" },
+            200: { draws: 200, start: "2024-10-18", end: "2026-02-11" },
+            300: { draws: 300, start: "2024-04-02", end: "2026-02-11" },
+            400: { draws: 400, start: "2023-09-08", end: "2026-02-11" },
+            500: { draws: 500, start: "2023-02-17", end: "2026-02-11" },
+            600: { draws: 600, start: "2022-07-29", end: "2026-02-11" },
+            700: { draws: 700, start: "2021-12-31", end: "2026-02-11" },
+            GLOBAL: { draws: 729, start: "2004-02-13", end: "2026-02-11" }
+        };
+
+        function updateTiragesDisplayEM(value) {
+            var windowValue = META_WINDOW_MAP_EM[value];
+            metaWindowSizeEM = windowValue === "GLOBAL" ? "GLOBAL" : String(windowValue);
+            metaYearsSizeEM = null;
+
+            if (windowValue === "GLOBAL") {
+                var globalInfo = windowInfoTiragesEM["GLOBAL"];
+                countEl.textContent = "Analyse sur l'integralite de la base (" + globalInfo.draws + " tirages)";
+                datesEl.textContent = "Du " + formatDateFREM(globalInfo.start) + " au " + formatDateFREM(globalInfo.end);
+            } else {
+                countEl.textContent = "Analyse sur " + windowValue + " tirages";
+                var info = windowInfoTiragesEM[windowValue];
+                if (info) {
+                    datesEl.textContent = "Du " + formatDateFREM(info.start) + " au " + formatDateFREM(info.end);
+                } else {
+                    datesEl.textContent = "";
+                }
+            }
+        }
+
+        var windowInfoAnneesEM = {
+            1: { draws: 104, start: "2025-02-14", end: "2026-02-11" },
+            2: { draws: 208, start: "2024-02-13", end: "2026-02-11" },
+            3: { draws: 312, start: "2023-02-14", end: "2026-02-11" },
+            4: { draws: 416, start: "2022-02-15", end: "2026-02-11" },
+            5: { draws: 520, start: "2021-02-12", end: "2026-02-11" },
+            6: { draws: 624, start: "2020-02-14", end: "2026-02-11" },
+            GLOBAL: { draws: 729, start: "2004-02-13", end: "2026-02-11" }
+        };
+
+        // Chargement dynamique des fenetres depuis la BDD
+        fetch('/api/euromillions/meta-windows-info')
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.tirages) windowInfoTiragesEM = data.tirages;
+                if (data.annees) windowInfoAnneesEM = data.annees;
+                if (data.tirages && data.tirages.GLOBAL) {
+                    window.TOTAL_TIRAGES_EM = data.tirages.GLOBAL.draws;
+                }
+                if (metaCurrentModeEM === 'tirages' && windowSlider) {
+                    updateTiragesDisplayEM(windowSlider.value);
+                } else if (metaCurrentModeEM === 'annees' && yearsSlider) {
+                    updateAnneesDisplayEM(yearsSlider.value);
+                }
+            })
+            .catch(function() { /* fallback hardcode en place */ });
+
+        function updateAnneesDisplayEM(value) {
+            var yearsValue = META_YEARS_MAP_EM[value];
+            metaYearsSizeEM = yearsValue === "GLOBAL" ? "GLOBAL" : String(yearsValue);
+            metaWindowSizeEM = "GLOBAL";
+
+            if (yearsValue === "GLOBAL") {
+                var globalInfoA = windowInfoAnneesEM["GLOBAL"];
+                countEl.textContent = "Analyse sur l'integralite de la base (" + globalInfoA.draws + " tirages)";
+                datesEl.textContent = "Du " + formatDateFREM(globalInfoA.start) + " au " + formatDateFREM(globalInfoA.end);
+            } else {
+                var info = windowInfoAnneesEM[yearsValue];
+                var nbTirages = info ? info.draws : "?";
+                countEl.textContent = "Analyse sur " + yearsValue + " an" + (yearsValue > 1 ? "s" : "") + " (" + nbTirages + " tirages)";
+                if (info) {
+                    datesEl.textContent = "Du " + formatDateFREM(info.start) + " au " + formatDateFREM(info.end);
+                } else {
+                    datesEl.textContent = "";
+                }
+            }
+        }
+
+        toggleBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var mode = this.getAttribute('data-mode');
+                if (mode === metaCurrentModeEM) return;
+                metaCurrentModeEM = mode;
+                toggleBtns.forEach(function(b) { b.classList.remove('active'); });
+                this.classList.add('active');
+                if (mode === "tirages") {
+                    sliderTirages.style.display = "block";
+                    sliderAnnees.style.display = "none";
+                    updateTiragesDisplayEM(parseInt(windowSlider.value, 10));
+                } else {
+                    sliderTirages.style.display = "none";
+                    sliderAnnees.style.display = "block";
+                    updateAnneesDisplayEM(parseInt(yearsSlider.value, 10));
+                }
+            });
+        });
+
+        if (windowSlider) {
+            windowSlider.addEventListener('input', function() {
+                updateTiragesDisplayEM(parseInt(this.value, 10));
+            });
+            windowSlider.value = 7;
+        }
+
+        if (yearsSlider) {
+            yearsSlider.addEventListener('input', function() {
+                updateAnneesDisplayEM(parseInt(this.value, 10));
+            });
+            yearsSlider.value = 6;
+        }
+
+        updateTiragesDisplayEM(7);
+
+        // Bouton META DATA EM
+        var btn = document.getElementById('btn-metadata-75-em');
+        if (!btn) return;
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            if (window.LotoIAAnalytics?.productEngine?.track) {
+                window.LotoIAAnalytics.productEngine.track('meta_click_em', {
+                    version: 75,
+                    page: 'euromillions',
+                    mode: metaCurrentModeEM,
+                    window: metaWindowSizeEM,
+                    years: metaYearsSizeEM
+                });
+            }
+
+            if (typeof showMetaAnalysePopupEM === 'function') {
+                showMetaAnalysePopupEM();
+            } else {
+                console.warn('[META ANALYSE EM] Module sponsor-popup75-em.js non charge');
+            }
+        });
+    })();
+    </script>
 
     <!-- Scripts applicatifs -->
     <script src="/ui/static/app-em.js?v=1"></script>

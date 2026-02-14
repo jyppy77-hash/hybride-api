@@ -1,0 +1,364 @@
+"""
+PDF Generator — EuroMillions META ANALYSE
+Genere un rapport PDF A4 avec DEUX graphiques (boules + etoiles).
+Equivalent EM de services/pdf_generator.py (ZERO modification au fichier Loto).
+"""
+
+import os
+import io
+import tempfile
+import logging
+
+from config.version import APP_VERSION
+
+logger = logging.getLogger(__name__)
+
+
+def _utf8_clean(text):
+    """Nettoie le texte : remplace les caracteres Unicode problematiques par des equivalents ASCII safe pour ReportLab/Vera."""
+    if not text:
+        return ""
+    replacements = {
+        "\u2192": "->",   # → RIGHTWARDS ARROW
+        "\u2190": "<-",   # ← LEFTWARDS ARROW
+        "\u2194": "<->",  # ↔ LEFT RIGHT ARROW
+        "\u2013": "-",    # – EN DASH
+        "\u2014": "-",    # — EM DASH
+        "\u2018": "'",    # ' LEFT SINGLE QUOTATION MARK
+        "\u2019": "'",    # ' RIGHT SINGLE QUOTATION MARK
+        "\u201C": '"',    # " LEFT DOUBLE QUOTATION MARK
+        "\u201D": '"',    # " RIGHT DOUBLE QUOTATION MARK
+        "\u2026": "...",  # … HORIZONTAL ELLIPSIS
+        "\u00A0": " ",    # NO-BREAK SPACE
+        "\u2022": "-",    # • BULLET
+        "\u25A0": "-",    # ■ BLACK SQUARE
+        "\u25A1": "-",    # □ WHITE SQUARE
+        "\u2023": "-",    # ‣ TRIANGULAR BULLET
+        "\u00B7": ".",    # · MIDDLE DOT
+    }
+    for char, replacement in replacements.items():
+        text = text.replace(char, replacement)
+    return text
+
+
+def _register_fonts(pdfmetrics, TTFont):
+    """Enregistre polices UTF-8 : DejaVuSans (Linux/Cloud Run) -> Vera (fallback ReportLab)."""
+    import reportlab as _rl
+    _rl_fonts = os.path.join(os.path.dirname(_rl.__file__), 'fonts')
+    _font_map = {
+        'DejaVuSans': [
+            os.path.join(_rl_fonts, 'DejaVuSans.ttf'),
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+            os.path.join(_rl_fonts, 'Vera.ttf'),
+        ],
+        'DejaVuSans-Bold': [
+            os.path.join(_rl_fonts, 'DejaVuSans-Bold.ttf'),
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+            os.path.join(_rl_fonts, 'VeraBd.ttf'),
+        ],
+        'DejaVuSans-Oblique': [
+            os.path.join(_rl_fonts, 'DejaVuSans-Oblique.ttf'),
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf',
+            os.path.join(_rl_fonts, 'VeraIt.ttf'),
+        ],
+    }
+    for _name, _paths in _font_map.items():
+        for _path in _paths:
+            if os.path.isfile(_path):
+                try:
+                    pdfmetrics.registerFont(TTFont(_name, _path))
+                except Exception:
+                    continue
+                break
+
+
+def _validate_graph_data(graph_data):
+    """Valide un dict graph_data {labels, values}."""
+    return (
+        isinstance(graph_data, dict)
+        and isinstance(graph_data.get("labels"), list)
+        and isinstance(graph_data.get("values"), list)
+        and len(graph_data["labels"]) == len(graph_data["values"])
+        and len(graph_data["labels"]) > 0
+    ) if graph_data else False
+
+
+def generate_em_graph_image(graph_data_boules: dict, graph_data_etoiles: dict) -> str:
+    """
+    Genere une image PNG contenant 4 charts :
+    - Ligne 1 : Top 5 boules (bar + pie)
+    - Ligne 2 : Top 3 etoiles (bar + pie)
+    Retourne le chemin du fichier temporaire PNG.
+    """
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
+    labels_b = graph_data_boules.get("labels", [])
+    values_b = graph_data_boules.get("values", [])
+    labels_e = graph_data_etoiles.get("labels", [])
+    values_e = graph_data_etoiles.get("values", [])
+
+    bar_colors_b = ['#1A73E8', '#188038', '#F9AB00', '#D93025', '#9334E6']
+    pie_colors_b = ['#4285F4', '#34A853', '#FBBC05', '#EA4335', '#A142F4']
+    bar_colors_e = ['#FF6D01', '#46BDC6', '#7BAAF7']
+    pie_colors_e = ['#E37400', '#009688', '#5C6BC0']
+
+    fig, axes = plt.subplots(2, 2, figsize=(10, 7))
+
+    # --- Ligne 1 : Boules ---
+    ax1, ax2 = axes[0]
+    ax1.bar(labels_b, values_b, color=bar_colors_b[:len(labels_b)])
+    ax1.set_title("Top 5 Boules - Fr\u00e9quences", fontsize=11, fontweight='bold')
+    ax1.set_xlabel("Boules")
+    ax1.set_ylabel("Fr\u00e9quence")
+    ax1.grid(axis='y', alpha=0.15)
+
+    pie_labels_b = [f"N\u00b0{l} ({v})" for l, v in zip(labels_b, values_b)]
+    ax2.pie(
+        values_b, labels=pie_labels_b, colors=pie_colors_b[:len(labels_b)],
+        autopct='%1.0f%%', startangle=90, counterclock=False,
+        textprops={'fontsize': 8},
+        wedgeprops={'linewidth': 0.5, 'edgecolor': 'white'}
+    )
+    ax2.set_title("R\u00e9partition Top 5 Boules", fontsize=11, fontweight='bold')
+
+    # --- Ligne 2 : Etoiles ---
+    ax3, ax4 = axes[1]
+    ax3.bar(labels_e, values_e, color=bar_colors_e[:len(labels_e)])
+    ax3.set_title("Top 3 \u00c9toiles - Fr\u00e9quences", fontsize=11, fontweight='bold')
+    ax3.set_xlabel("\u00c9toiles")
+    ax3.set_ylabel("Fr\u00e9quence")
+    ax3.grid(axis='y', alpha=0.15)
+
+    pie_labels_e = [f"\u2605{l} ({v})" for l, v in zip(labels_e, values_e)]
+    ax4.pie(
+        values_e, labels=pie_labels_e, colors=pie_colors_e[:len(labels_e)],
+        autopct='%1.0f%%', startangle=90, counterclock=False,
+        textprops={'fontsize': 8},
+        wedgeprops={'linewidth': 0.5, 'edgecolor': 'white'}
+    )
+    ax4.set_title("R\u00e9partition Top 3 \u00c9toiles", fontsize=11, fontweight='bold')
+
+    plt.tight_layout()
+
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
+    tmp_path = tmp.name
+    tmp.close()
+
+    fig.savefig(tmp_path, format="png", dpi=200, facecolor='white', bbox_inches='tight')
+    plt.close(fig)
+
+    logger.info(f"[META-PDF-EM] Graph image generee : {tmp_path}")
+    return tmp_path
+
+
+def generate_em_meta_pdf(analysis: str = "", window: str = "75 tirages",
+                         engine: str = "HYBRIDE", graph: str = None,
+                         graph_data_boules: dict = None,
+                         graph_data_etoiles: dict = None,
+                         sponsor: str = None) -> io.BytesIO:
+    """
+    Genere le PDF officiel META75 EuroMillions via ReportLab.
+    Affiche DEUX graphiques : boules et etoiles.
+    Retourne un BytesIO contenant le PDF.
+    """
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.units import mm
+    from reportlab.pdfbase import pdfmetrics
+    from reportlab.pdfbase.ttfonts import TTFont
+
+    logger.info("[META-PDF-EM] Debut generation PDF EuroMillions")
+
+    _register_fonts(pdfmetrics, TTFont)
+
+    buf = io.BytesIO()
+    w, h = A4
+    c = canvas.Canvas(buf, pagesize=A4)
+    margin_bottom = 30 * mm
+
+    y = h - 40 * mm
+
+    # Titre
+    c.setFont("DejaVuSans-Bold", 22)
+    c.drawCentredString(w / 2, y, "Rapport META DONN\u00c9E EM - 75 Grilles")
+    y -= 12 * mm
+
+    # Sous-titre
+    c.setFont("DejaVuSans-Bold", 16)
+    c.drawCentredString(w / 2, y, "Analyse HYBRIDE EuroMillions")
+    y -= 10 * mm
+
+    # Separateur
+    c.setStrokeColorRGB(0, 0, 0)
+    c.setLineWidth(0.5)
+    c.line(15 * mm, y, w - 15 * mm, y)
+    y -= 10 * mm
+
+    # --- Validation graph_data ---
+    valid_boules = _validate_graph_data(graph_data_boules)
+    valid_etoiles = _validate_graph_data(graph_data_etoiles)
+
+    logger.info(f"[META-PDF-EM] graph_data_boules valid: {valid_boules}, "
+                f"graph_data_etoiles valid: {valid_etoiles}")
+
+    # --- Generation image matplotlib si graph_data valides ---
+    generated_graph_path = None
+    if valid_boules and valid_etoiles:
+        try:
+            generated_graph_path = generate_em_graph_image(graph_data_boules, graph_data_etoiles)
+            logger.info(f"[META-PDF-EM] PNG genere OK: {generated_graph_path}")
+        except Exception as gen_err:
+            logger.warning(f"[META-PDF-EM] Generation graph echouee: {gen_err}")
+
+    try:
+        # --- Insertion image ---
+        effective_graph = generated_graph_path or (graph if graph and os.path.isfile(graph) else "")
+        if effective_graph and os.path.isfile(effective_graph):
+            try:
+                from reportlab.lib.utils import ImageReader
+                img = ImageReader(effective_graph)
+
+                img_x = 40
+                img_draw_y = y - 260
+                img_draw_w = 510
+                img_draw_h = 250
+
+                c.drawImage(
+                    img, img_x, img_draw_y,
+                    width=img_draw_w, height=img_draw_h,
+                    preserveAspectRatio=True, mask='auto'
+                )
+                y = img_draw_y - 8 * mm
+                logger.info(f"[META-PDF-EM] Image inseree OK a y={img_draw_y}")
+            except Exception as img_err:
+                logger.warning(f"[META-PDF-EM] Image ignoree: {img_err}")
+        else:
+            logger.info("[META-PDF-EM] Aucune image a inserer")
+
+        # Saut de page si espace insuffisant
+        if y < margin_bottom:
+            c.showPage()
+            y = h - 30 * mm
+
+        # Bloc analyse
+        c.setFont("DejaVuSans-Bold", 13)
+        c.drawString(15 * mm, y, "Analyse :")
+        y -= 7 * mm
+
+        analysis_text = _utf8_clean(analysis) or "Aucune analyse disponible."
+        text_obj = c.beginText(15 * mm, y)
+        text_obj.setFont("DejaVuSans", 11)
+        text_obj.setLeading(16)
+        max_chars = 90
+        for raw_line in analysis_text.split('\n'):
+            line = raw_line
+            while len(line) > max_chars:
+                cut = line[:max_chars].rfind(' ')
+                if cut <= 0:
+                    cut = max_chars
+                text_obj.textLine(line[:cut])
+                line = line[cut:].lstrip()
+            text_obj.textLine(line)
+        c.drawText(text_obj)
+        y = text_obj.getY() - 8 * mm
+
+        # Saut de page si espace insuffisant
+        if y < margin_bottom:
+            c.showPage()
+            y = h - 30 * mm
+
+        # Bloc infos
+        c.setFont("DejaVuSans-Bold", 13)
+        c.drawString(15 * mm, y, "Informations :")
+        y -= 7 * mm
+
+        c.setFont("DejaVuSans", 11)
+        window_text = _utf8_clean(window) or "75 tirages"
+        engine_text = _utf8_clean(engine) or "HYBRIDE"
+        c.drawString(15 * mm, y, f"Fen\u00eatre analys\u00e9e : {window_text}")
+        y -= 6 * mm
+        c.drawString(15 * mm, y, f"Moteur : {engine_text}")
+        y -= 6 * mm
+        c.drawString(15 * mm, y, "Jeu : EuroMillions (5 boules + 2 \u00e9toiles)")
+        y -= 10 * mm
+
+        # Bloc sponsor si present
+        sponsor_text = _utf8_clean(sponsor)
+        if sponsor_text:
+            c.setStrokeColorRGB(0.7, 0.7, 0.7)
+            c.setLineWidth(0.4)
+            c.line(15 * mm, y, w - 15 * mm, y)
+            y -= 8 * mm
+
+            c.setFillColorRGB(0.1, 0.1, 0.1)
+            c.setFont("DejaVuSans", 10)
+            c.drawCentredString(w / 2, y, "Analyse offerte par un Partenaire Officiel")
+            y -= 6 * mm
+
+            c.setFont("DejaVuSans", 9)
+            c.drawCentredString(w / 2, y, "Partenariat & sponsoring :")
+            y -= 5 * mm
+
+            email_text = "contact@lotoia.fr"
+            email_width = c.stringWidth(email_text, "DejaVuSans", 9)
+            email_x1 = (w - email_width) / 2
+            email_x2 = email_x1 + email_width
+            c.drawCentredString(w / 2, y, email_text)
+            c.linkURL("mailto:contact@lotoia.fr", (email_x1, y - 2, email_x2, y + 10), relative=0)
+            y -= 10 * mm
+
+        # Saut de page si espace insuffisant
+        if y < margin_bottom:
+            c.showPage()
+            y = h - 30 * mm
+
+        # Separateur
+        c.setStrokeColorRGB(0, 0, 0)
+        c.setLineWidth(0.5)
+        c.line(15 * mm, y, w - 15 * mm, y)
+        y -= 10 * mm
+
+        # Signature HYBRIDE EM
+        c.setFillColorRGB(0, 0, 0)
+        c.setFont("DejaVuSans-Bold", 11)
+        c.drawCentredString(w / 2, y, "Analyse g\u00e9n\u00e9r\u00e9e par HYBRIDE")
+        y -= 6 * mm
+        c.setFont("DejaVuSans", 10)
+        c.drawCentredString(w / 2, y, "Moteur statistique p\u00e9dagogique - Module EuroMillions")
+        y -= 8 * mm
+
+        # Mention produit
+        c.setFont("DejaVuSans-Oblique", 10)
+        c.drawCentredString(w / 2, y, "G\u00e9n\u00e9r\u00e9 par LotoIA - Module META DONN\u00c9E EM")
+        y -= 10 * mm
+
+        # Disclaimer
+        c.setFont("DejaVuSans", 9)
+        c.drawCentredString(w / 2, y, "Analyse statistique p\u00e9dagogique.")
+        y -= 5 * mm
+        c.drawCentredString(w / 2, y, "Aucun r\u00e9sultat n\u2019est garanti.")
+        y -= 10 * mm
+
+        # Version + notes IA
+        c.setFillColorRGB(150 / 255, 150 / 255, 150 / 255)
+        c.setFont("DejaVuSans-Oblique", 8)
+        c.drawCentredString(w / 2, y, f"LotoIA \u2014 Rapport META DONN\u00c9E EM v{APP_VERSION}")
+        y -= 7 * mm
+        c.drawCentredString(w / 2, y, "Ce rapport est enti\u00e8rement g\u00e9n\u00e9r\u00e9 par intelligence artificielle en collaboration avec le moteur HYBRIDE.")
+        y -= 7 * mm
+        c.drawCentredString(w / 2, y, "Graphiques et visuels en cours de d\u00e9veloppement.")
+
+        c.save()
+        buf.seek(0)
+        logger.info("[META-PDF-EM] PDF genere OK")
+
+        return buf
+
+    finally:
+        if generated_graph_path:
+            try:
+                os.unlink(generated_graph_path)
+            except OSError:
+                pass

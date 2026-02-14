@@ -66,3 +66,18 @@ class EMChatResponse(BaseModel):
     response: str
     source: str = "gemini"
     mode: str = "decouverte"
+
+
+# =========================
+# Schema META PDF EM
+# =========================
+
+class EMMetaPdfPayload(BaseModel):
+    analysis: Optional[str] = Field(default="", max_length=5000)
+    window: Optional[str] = "75 tirages"
+    engine: Optional[str] = "HYBRIDE"
+    metaType: Optional[str] = "META75_EM"
+    graph: Optional[str] = None
+    graph_data_boules: Optional[Dict[str, Any]] = None
+    graph_data_etoiles: Optional[Dict[str, Any]] = None
+    sponsor: Optional[str] = None

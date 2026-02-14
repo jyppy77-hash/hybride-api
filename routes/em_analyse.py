@@ -3,13 +3,14 @@ Routes API EuroMillions — Analyse (generateur, META, grilles custom)
 Equivalent EM de routes/api_analyse.py
 """
 
-from fastapi import APIRouter, Query, Request
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.responses import JSONResponse, StreamingResponse
 from typing import Optional
 import asyncio
 import logging
 
 from engine.hybride_em import generate_grids
+from em_schemas import EMMetaAnalyseTextePayload, EMMetaPdfPayload
 import db_cloudsql
 from rate_limit import limiter
 
@@ -254,6 +255,57 @@ async def em_meta_analyse_local(
             "pdf": False,
             "meta": {"source": "ERROR", "error": "Erreur interne lors de l'analyse"}
         })
+
+
+# =========================
+# META ANALYSE Texte Gemini EM
+# =========================
+
+@router.post("/meta-analyse-texte")
+@limiter.limit("10/minute")
+async def em_meta_analyse_texte(request: Request, payload: EMMetaAnalyseTextePayload):
+    """Enrichit le texte d'analyse local EuroMillions via Gemini."""
+    from services.em_gemini import enrich_analysis_em
+    return await enrich_analysis_em(
+        analysis_local=payload.analysis_local,
+        window=payload.window or "GLOBAL",
+        http_client=request.app.state.httpx_client
+    )
+
+
+# =========================
+# META PDF EM
+# =========================
+
+@router.post("/meta-pdf")
+@limiter.limit("10/minute")
+async def em_meta_pdf(request: Request, payload: EMMetaPdfPayload):
+    """Genere le PDF officiel META75 EuroMillions via ReportLab."""
+    from services.em_pdf_generator import generate_em_meta_pdf
+
+    try:
+        logger.info(f"[META-PDF-EM ROUTE] graph_data_boules: {type(payload.graph_data_boules).__name__}, "
+                     f"graph_data_etoiles: {type(payload.graph_data_etoiles).__name__}")
+
+        buf = generate_em_meta_pdf(
+            analysis=payload.analysis,
+            window=payload.window,
+            engine=payload.engine,
+            graph=payload.graph,
+            graph_data_boules=payload.graph_data_boules,
+            graph_data_etoiles=payload.graph_data_etoiles,
+            sponsor=payload.sponsor
+        )
+        return StreamingResponse(
+            buf,
+            media_type="application/pdf",
+            headers={"Content-Disposition": "inline; filename=meta75_em_report.pdf"}
+        )
+    except ImportError:
+        raise HTTPException(status_code=500, detail="reportlab non installe")
+    except Exception as e:
+        logger.error(f"[META-PDF-EM] Erreur generation: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Erreur generation PDF EM")
 
 
 # =========================
