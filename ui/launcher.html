@@ -507,12 +507,13 @@
                 <span class="engine-status status-active">Actif</span>
             </a>
 
-            <!-- EuroMillions - En construction -->
+            <!-- EuroMillions - EN CONSTRUCTION (lancement 15 mars 2026) -->
             <div class="engine-card disabled" onclick="showComingSoon('EuroMillions')">
                 <span class="lock-icon">🔒</span>
                 <span class="engine-icon">⭐</span>
                 <h2 class="engine-name">EuroMillions</h2>
                 <span class="engine-status status-coming">En construction</span>
+                <p style="margin-top: 12px; font-size: 0.8rem; color: #FFD700; font-weight: 600; letter-spacing: 0.3px;">Lancement le 15 mars 2026 a 15h00</p>
             </div>
 
             <!-- Super Loto - En construction -->
@@ -531,7 +532,7 @@
     <!-- Message "Bientot disponible" -->
     <div id="coming-soon" class="coming-soon-message">
         <h3 id="coming-soon-title">Moteur en construction</h3>
-        <p>Ce moteur sera disponible prochainement.</p>
+        <p id="coming-soon-text">Ce moteur sera disponible prochainement.</p>
         <button onclick="hideComingSoon()">Compris</button>
     </div>
 
@@ -550,7 +551,16 @@
     <script src="/ui/static/cookie-consent.js"></script>
     <script>
         function showComingSoon(engineName) {
-            document.getElementById('coming-soon-title').textContent = engineName + ' — En construction';
+            document.getElementById('coming-soon-title').textContent = engineName + ' \u2014 En construction';
+            var textEl = document.getElementById('coming-soon-text');
+            if (engineName === 'EuroMillions') {
+                textEl.innerHTML =
+                    '<strong style="color: #FFD700;">Le module EuroMillions arrive le 15 mars 2026 a 15h00 !</strong><br><br>' +
+                    '729 tirages analyses \u2022 Chatbot IA \u2022 Statistiques completes<br><br>' +
+                    '<span style="font-size: 0.85rem; color: rgba(255,255,255,0.6);">Sponsors pionniers : <a href="mailto:partenariats@lotoia.fr" style="color: #FFD700; text-decoration: none;">partenariats@lotoia.fr</a></span>';
+            } else {
+                textEl.textContent = 'Ce moteur sera disponible prochainement.';
+            }
             document.getElementById('overlay').classList.add('show');
             document.getElementById('coming-soon').classList.add('show');
         }
