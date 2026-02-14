@@ -45,3 +45,24 @@ class EMPitchGrilleItem(BaseModel):
 
 class EMPitchGrillesRequest(BaseModel):
     grilles: List[EMPitchGrilleItem] = Field(..., max_length=10)
+
+
+# =========================
+# Schema Chat EM
+# =========================
+
+class EMChatMessage(BaseModel):
+    role: str = Field(..., pattern=r"^(user|assistant)$")
+    content: str = Field(..., max_length=2000)
+
+
+class EMChatRequest(BaseModel):
+    message: str = Field(..., max_length=2000)
+    page: str = Field(default="accueil-em")
+    history: Optional[List[EMChatMessage]] = None
+
+
+class EMChatResponse(BaseModel):
+    response: str
+    source: str = "gemini"
+    mode: str = "decouverte"

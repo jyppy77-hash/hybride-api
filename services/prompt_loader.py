@@ -28,6 +28,10 @@ PROMPT_MAP = {
     "CHATBOT": "prompts/chatbot/prompt_hybride.txt",
     "PITCH_GRILLE": "prompts/chatbot/prompt_pitch_grille.txt",
     "SQL_GENERATOR": "prompts/chatbot/prompt_sql_generator.txt",
+    # Chatbot HYBRIDE — EuroMillions
+    "CHATBOT_EM": "prompts/chatbot/prompt_hybride_em.txt",
+    "PITCH_GRILLE_EM": "prompts/chatbot/prompt_pitch_grille_em.txt",
+    "SQL_GENERATOR_EM": "prompts/chatbot/prompt_sql_generator_em.txt",
 }
 
 FALLBACK_PROMPT_PATH = "prompts/tirages/prompt_global.txt"
