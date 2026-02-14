@@ -1,0 +1,286 @@
+/* =================================================================
+   EUROMILLIONS — CSS THEME OVERRIDE
+   Surcharge les variables CSS de style.css pour l'identite EuroMillions.
+   NE DUPLIQUE PAS le layout — herite de style.css + simulateur.css.
+   ================================================================= */
+
+/* ═══════════════════════════════════════════════════════════════
+   COULEURS EUROMILLIONS (sur body.em-page)
+   Bleu EuroMillions #003399, Or #FFD700
+   ═══════════════════════════════════════════════════════════════ */
+
+body.em-page {
+    --primary: #003399;
+    --primary-dark: #002266;
+    --secondary: #FFD700;
+    --em-gold: #FFD700;
+    --em-gold-dark: #C5A200;
+    --em-blue: #003399;
+    --em-blue-light: #1a4dbf;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   THEME NUIT — EuroMillions
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page.theme-night {
+    --theme-bg-main: linear-gradient(180deg, #000d1a 0%, #001133 50%, #001a4d 100%);
+    --theme-bg-nav: linear-gradient(180deg, #000d1a 0%, #001a4d 100%);
+    --theme-bg-header: linear-gradient(180deg, #000d1a 0%, #001a4d 100%);
+    --theme-bg-generator: linear-gradient(180deg, #001a4d 0%, #000d1a 40%, #001a4d 100%);
+
+    --theme-badge-bg: rgba(255, 215, 0, 0.12);
+    --theme-badge-border: rgba(255, 215, 0, 0.4);
+    --theme-badge-text: #FFD700;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   THEME JOUR — EuroMillions
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page.theme-day {
+    --theme-bg-main: linear-gradient(180deg, #e8eef6 0%, #d0ddef 50%, #b8c9e0 100%);
+    --theme-bg-nav: linear-gradient(180deg, #001a4d 0%, #003080 100%);
+    --theme-bg-header: linear-gradient(180deg, #001a4d 0%, #003080 100%);
+    --theme-bg-generator: linear-gradient(180deg, #003080 0%, #001a4d 40%, #003080 100%);
+
+    --theme-badge-bg: rgba(255, 215, 0, 0.15);
+    --theme-badge-border: rgba(255, 215, 0, 0.5);
+    --theme-badge-text: #b8860b;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HEADER DECORATIF — Numeros 1-50 en fond
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page .page-header::before,
+body.em-page .hero-section::before {
+    content: '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50';
+}
+
+/* Gradient decoratif bleu/or */
+body.em-page .page-header::after,
+body.em-page .hero-section::after {
+    background-image:
+        radial-gradient(circle at 15% 50%, rgba(0, 51, 153, 0.15) 0%, transparent 40%),
+        radial-gradient(circle at 85% 30%, rgba(255, 215, 0, 0.10) 0%, transparent 35%);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ENGINE BADGE — Or au lieu du vert
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page .engine-badge {
+    background: var(--theme-badge-bg);
+    border-color: var(--theme-badge-border);
+    color: var(--theme-badge-text);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HERO BUTTONS — Accent or au lieu du vert
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page .loto-hero-btn-active,
+body.em-page .hero-btn-primary {
+    background: rgba(255, 215, 0, 0.2);
+    border-color: rgba(255, 215, 0, 0.5);
+    color: #fff;
+}
+
+body.em-page .loto-hero-btn-active:hover,
+body.em-page .hero-btn-primary:hover {
+    background: rgba(255, 215, 0, 0.35);
+}
+
+body.em-page .loto-hero-btn-news,
+body.em-page .hero-btn-news {
+    background: rgba(255, 215, 0, 0.15);
+    color: #FFD700;
+    border-color: #FFD700;
+}
+
+body.em-page .loto-hero-btn-news:hover,
+body.em-page .hero-btn-news:hover {
+    background: #FFD700;
+    color: #001a4d;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PEDAGOGY HIGHLIGHT — Or
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page .pedagogy-highlight {
+    background: rgba(255, 215, 0, 0.12);
+    color: #b8860b;
+}
+
+body.em-page.theme-night .pedagogy-highlight {
+    color: #FFD700;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TOOL CARDS — Hover or
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page .tool-card:hover {
+    border-color: #FFD700;
+}
+
+body.em-page .tool-card-arrow {
+    color: #FFD700;
+}
+
+body.em-page.theme-day .tool-card-arrow {
+    color: #b8860b;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   METHODOLOGIE BUTTON — Bleu EM
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page .btn-methodologie {
+    background: linear-gradient(135deg, #003399, #1a5cbf);
+}
+
+body.em-page.theme-night .btn-methodologie {
+    background: linear-gradient(135deg, #4d88ff, #FFD700);
+    color: #001a33;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SELECTED NUMBER BALL — Bleu EM
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page .grid-number.selected {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark)) !important;
+    border-color: var(--primary-dark) !important;
+    box-shadow: 0 4px 12px rgba(0, 51, 153, 0.4);
+}
+
+body.em-page .selected-ball.main {
+    background: radial-gradient(circle at 30% 30%, #4d88ff, #003399);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ETOILE (remplace chance) — Or EuroMillions
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page .star-number,
+body.em-page .chance-number {
+    border-color: #FFD700;
+    background: linear-gradient(135deg, #fffef0 0%, #fff8dc 100%);
+    color: #b8860b;
+}
+
+body.em-page .star-number:hover,
+body.em-page .chance-number:hover {
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+body.em-page .star-number.selected,
+body.em-page .chance-number.selected {
+    background: linear-gradient(135deg, #FFD700, #ffa500);
+    border-color: #ff8c00;
+    color: white;
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.5);
+}
+
+body.em-page .selected-ball.star,
+body.em-page .selected-ball.chance {
+    background: radial-gradient(circle at 30% 30%, #FFD54F, #F57C00);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   GRID LAYOUT — 10 colonnes pour 1-50
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page .main-grid {
+    grid-template-columns: repeat(10, 40px);
+}
+
+@media (max-width: 600px) {
+    body.em-page .main-grid {
+        grid-template-columns: repeat(10, 1fr);
+        gap: 4px;
+    }
+}
+
+@media (max-width: 400px) {
+    body.em-page .main-grid {
+        grid-template-columns: repeat(10, 1fr);
+        gap: 3px;
+    }
+
+    body.em-page .grid-number {
+        font-size: 0.7rem;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CTA BUTTON — Or au lieu de vert
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page .btn-cta-main {
+    color: #FFD700 !important;
+    border-color: #FFD700 !important;
+}
+
+body.em-page .btn-cta-main:hover {
+    background: rgba(255, 215, 0, 0.1) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ACTION BUTTONS — Bleu EM
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page .btn-primary,
+body.em-page .action-bar .btn-primary,
+body.em-page .chance-actions .btn-primary {
+    background: var(--primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SCROLL-TO-TOP
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page .scroll-to-top {
+    background: var(--primary);
+}
+
+body.em-page .scroll-to-top:hover {
+    background: var(--primary-dark);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   STATS TABS — Accent or
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page .tab-btn.active {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LOADING SPINNER — Bleu EM
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page .loading-spinner {
+    border-top-color: var(--primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   CONVERGENCE — Bleu EM au lieu de indigo
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page .convergence-display-value {
+    color: #003399;
+}
+
+body.em-page .convergence-display.convergence-moderate .convergence-display-value {
+    color: #1a5cbf;
+}
+
+body.em-page .convergence-display.convergence-intermediate .convergence-display-value {
+    color: #4d88ff;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   SUGGESTIONS — Bleu EM
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page .suggestions-list li {
+    border-left-color: var(--primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DISCLAIMER SECTION — Day mode EM
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page.theme-day .section-header h2 {
+    color: #001a4d;
+}
+
+body.em-page.theme-day .section-header p {
+    color: #4a6fa5;
+}
