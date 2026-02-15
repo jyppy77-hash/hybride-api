@@ -284,3 +284,17 @@ body.em-page.theme-day .section-header h2 {
 body.em-page.theme-day .section-header p {
     color: #4a6fa5;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   BOUTON RETOUR — Compact sur les sous-pages EM
+   Harmonisé avec le bouton "← Moteurs" de /euromillions
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page:not(.accueil-page) .engine-nav-btn {
+    font-size: 0.82rem;
+    padding: 8px 14px;
+    gap: 6px;
+}
+
+body.em-page:not(.accueil-page) .engine-nav-btn .nav-arrow {
+    font-size: 1rem;
+}
