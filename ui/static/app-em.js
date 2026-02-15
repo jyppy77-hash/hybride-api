@@ -260,6 +260,31 @@ async function handleAnalyze() {
     setLoading(btnAnalyze, true);
     hideResults();
 
+    // Calculer la duree du popup selon le nombre de grilles (proportionnel)
+    var popupDuration = typeof calculateTimerDurationSimulateurEM === 'function'
+        ? calculateTimerDurationSimulateurEM(selectedGridCount)
+        : 3;
+    var plural = selectedGridCount > 1 ? 's' : '';
+
+    // Afficher le popup sponsor AVANT l'appel API
+    if (typeof showSponsorPopupSimulateurEM === 'function') {
+        var popupResult = await showSponsorPopupSimulateurEM({
+            duration: popupDuration,
+            gridCount: selectedGridCount,
+            title: 'G\u00e9n\u00e9ration de ' + selectedGridCount + ' grille' + plural + ' optimis\u00e9e' + plural + ' EM',
+            onComplete: function() {
+                console.log('[App EM] Popup sponsor termin\u00e9, lancement de la g\u00e9n\u00e9ration');
+            }
+        });
+
+        // Verifier si l'utilisateur a annule
+        if (popupResult && popupResult.cancelled === true) {
+            console.log('[App EM] G\u00e9n\u00e9ration annul\u00e9e par l\'utilisateur');
+            setLoading(btnAnalyze, false);
+            return;
+        }
+    }
+
     try {
         var response = await fetch('/api/euromillions/generate?n=' + selectedGridCount);
         if (!response.ok) throw new Error('Erreur HTTP ' + response.status);

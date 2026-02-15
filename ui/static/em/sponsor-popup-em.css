@@ -1,0 +1,1082 @@
+/**
+ * SPONSOR POPUP EM - Styles Premium EuroMillions
+ * Phase de calcul sponsorisee avec animations
+ * Supporte les themes Jour/Nuit
+ *
+ * Copie adaptee de sponsor-popup.css (Loto FR)
+ * Couleurs : bleu EM #003399 / or #FFD700
+ */
+
+/* ============================================
+   OVERLAY & MODAL
+   ============================================ */
+
+.sponsor-popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--popup-overlay-bg, rgba(0, 13, 38, 0.88));
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: sponsorFadeIn 0.3s ease;
+    padding: 20px;
+    box-sizing: border-box;
+    transition: background 0.3s ease;
+}
+
+/* Theme Nuit - overlay plus sombre */
+body.theme-night .sponsor-popup-overlay {
+    --popup-overlay-bg: rgba(0, 8, 26, 0.92);
+}
+
+/* Theme Jour - overlay plus clair */
+body.theme-day .sponsor-popup-overlay {
+    --popup-overlay-bg: rgba(0, 26, 77, 0.78);
+}
+
+.sponsor-popup-modal {
+    background:
+        radial-gradient(circle at 20% 20%, rgba(0,51,153,0.30), transparent 40%),
+        radial-gradient(circle at 80% 20%, rgba(255,215,0,0.20), transparent 40%),
+        radial-gradient(circle at 80% 80%, rgba(0,51,153,0.20), transparent 40%),
+        radial-gradient(circle at 20% 80%, rgba(255,215,0,0.15), transparent 40%),
+        linear-gradient(180deg, #ffffff 0%, #f0f4fa 100%);
+    border-radius: 24px;
+    padding: 40px;
+    max-width: 600px;
+    width: 100%;
+    box-shadow:
+        0 25px 80px rgba(0, 20, 60, 0.30),
+        0 0 0 1px rgba(0, 51, 153, 0.08) inset;
+    position: relative;
+    color: #1f2937;
+    overflow: hidden;
+}
+
+.sponsor-popup-modal::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(
+        ellipse at center,
+        rgba(255, 255, 255, 0.25) 0%,
+        transparent 60%
+    );
+    pointer-events: none;
+}
+
+/* ============================================
+   TITRE
+   ============================================ */
+
+.popup-title {
+    font-size: 22px;
+    font-weight: 700;
+    margin: 0 0 28px 0;
+    text-align: center;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    position: relative;
+    letter-spacing: 0.5px;
+    color: #1f2937;
+}
+
+.popup-title .title-icon {
+    display: inline-block;
+    margin-right: 8px;
+    animation: spinGear 3s linear infinite;
+}
+
+@keyframes spinGear {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================
+   BARRE DE PROGRESSION
+   ============================================ */
+
+.progress-bar-container {
+    width: 100%;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) inset;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #003399 0%, #1a4dbf 35%, #FFD700 70%, #C5A200 100%);
+    border-radius: 10px;
+    width: 0%;
+    transition: width 0.1s linear;
+    box-shadow: 0 0 18px rgba(0, 51, 153, 0.5);
+    position: relative;
+}
+
+.progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.3) 50%,
+        transparent 100%
+    );
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(100%); }
+}
+
+.progress-percentage {
+    text-align: center;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 18px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   ANIMATION DONNEES (MATRIX)
+   ============================================ */
+
+.data-animation {
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    opacity: 0.9;
+    text-align: center;
+    height: 30px;
+    line-height: 30px;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    font-weight: 700;
+    letter-spacing: 3px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    background: linear-gradient(90deg, #003399 0%, #1a4dbf 40%, #FFD700 75%, #C5A200 100%);
+    border-radius: 8px;
+    padding: 0 10px;
+    box-shadow: 0 0 12px rgba(0, 51, 153, 0.4);
+}
+
+/* ============================================
+   CONSOLE
+   ============================================ */
+
+.console-container {
+    background: linear-gradient(180deg, #000d1a 0%, #001133 100%);
+    border-radius: 16px;
+    overflow: hidden;
+    margin: 18px 0 22px 0;
+    border: 1px solid rgba(0, 51, 153, 0.45);
+    box-shadow:
+        0 0 0 1px rgba(0, 51, 153, 0.20) inset,
+        0 20px 50px rgba(0, 0, 0, 0.6);
+}
+
+.console-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: linear-gradient(90deg, #000816 0%, #001028 100%);
+    border-bottom: 1px solid rgba(0, 51, 153, 0.35);
+}
+
+.console-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    opacity: 0.9;
+}
+
+.console-status {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    color: #FFD700;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #FFD700;
+    box-shadow: 0 0 0 3px rgba(255, 215, 0, 0.2);
+    animation: statusPulse 1s infinite;
+}
+
+@keyframes statusPulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.6; }
+}
+
+.console-status.complete {
+    color: #10b981;
+}
+
+.status-dot.status-complete {
+    background: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+    animation: none;
+}
+
+.console-body {
+    height: 200px;
+    overflow-y: auto;
+    padding: 14px 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    color: #e5e7eb;
+    text-shadow: 0 0 4px rgba(0, 51, 153, 0.30);
+    line-height: 1.6;
+}
+
+.console-line {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 6px;
+    opacity: 0;
+    animation: consoleLineIn 0.25s ease forwards;
+}
+
+@keyframes consoleLineIn {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.console-prompt {
+    color: #10b981;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.console-text {
+    flex: 1;
+    word-break: break-word;
+}
+
+/* Types de logs */
+.console-line.console-info .console-prompt {
+    color: #60a5fa;
+}
+
+.console-line.console-info .console-text {
+    color: #93c5fd;
+}
+
+.console-line.console-success .console-prompt {
+    color: #10b981;
+}
+
+.console-line.console-success .console-text {
+    color: #6ee7b7;
+}
+
+.console-line.console-progress .console-prompt {
+    color: #FFD700;
+}
+
+.console-line.console-progress .console-text {
+    color: #ffe066;
+}
+
+/* Colonne % a droite */
+.console-line.console-progress {
+    position: relative;
+    padding-right: 64px;
+}
+
+.console-line.console-progress::after {
+    content: attr(data-pct);
+    position: absolute;
+    top: 0;
+    right: 0;
+    min-width: 56px;
+    text-align: right;
+    font-weight: 700;
+    opacity: 0.95;
+    color: #ffe066;
+}
+
+.console-line.console-progress:not([data-pct])::after,
+.console-line.console-progress[data-pct=""]::after {
+    content: '';
+}
+
+.console-line.console-request .console-prompt {
+    color: #a78bfa;
+}
+
+.console-line.console-request .console-text {
+    color: #c4b5fd;
+    font-style: italic;
+}
+
+.console-line.console-ready .console-text {
+    color: #6b7280;
+    font-style: italic;
+}
+
+/* Curseur clignotant (derniere ligne) */
+.console-line:last-child .console-text::after {
+    content: '\25CA';
+    animation: blink-cursor 1s step-end infinite;
+    margin-left: 2px;
+    color: #FFD700;
+}
+
+@keyframes blink-cursor {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+}
+
+/* ============================================
+   SEPARATEUR
+   ============================================ */
+
+.popup-separator {
+    text-align: center;
+    margin: 24px 0;
+    font-size: 14px;
+    opacity: 0.5;
+    letter-spacing: 2px;
+}
+
+/* ============================================
+   SPONSORS
+   ============================================ */
+
+.sponsors-header {
+    text-align: center;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    opacity: 0.8;
+    margin-bottom: 16px;
+    font-weight: 600;
+}
+
+.sponsors-container {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.sponsor-card {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.95);
+    color: #1f2937;
+    border-radius: 16px;
+    padding: 20px 16px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-decoration: none;
+    display: block;
+    box-shadow: 0 4px 15px rgba(0, 20, 60, 0.12);
+    position: relative;
+    overflow: hidden;
+}
+
+.sponsor-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #003399, #FFD700);
+}
+
+.sponsor-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 15px 40px rgba(0, 20, 60, 0.25);
+}
+
+.sponsor-card:active {
+    transform: translateY(-2px) scale(1.01);
+}
+
+.sponsor-badge {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    z-index: 2;
+}
+
+.sponsor-badge.primary {
+    background: rgba(0, 51, 153, 0.12);
+    color: #003399;
+}
+
+.sponsor-badge.partner {
+    background: rgba(16, 185, 129, 0.15);
+    color: #059669;
+}
+
+.sponsor-logo {
+    font-size: 20px;
+    font-weight: 800;
+    margin: 8px 0 10px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+.sponsor-logo-icon {
+    font-size: 22px;
+}
+
+.sponsor-description {
+    font-size: 13px;
+    margin-bottom: 12px;
+    opacity: 0.85;
+    line-height: 1.3;
+}
+
+.sponsor-url {
+    font-size: 12px;
+    color: #003399;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* ============================================
+   TIMER CERCLE
+   ============================================ */
+
+.timer-circle-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.timer-circle {
+    width: 78px;
+    height: 78px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.timer-circle-bg {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.25);
+}
+
+.timer-circle-progress {
+    position: absolute;
+    inset: 0;
+}
+
+.timer-circle-progress svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.timer-circle-progress circle {
+    fill: none;
+    stroke-width: 8;
+    cx: 50;
+    cy: 50;
+    r: 40;
+}
+
+.timer-circle-progress circle.track {
+    stroke: rgba(255, 255, 255, 0.2);
+}
+
+.timer-circle-progress circle.fill {
+    stroke: url(#timerGradientEM);
+    stroke-linecap: round;
+    stroke-dasharray: 251.2;
+    stroke-dashoffset: 251.2;
+    transition: stroke-dashoffset 0.1s linear;
+    filter: drop-shadow(0 0 10px rgba(0, 51, 153, 0.4));
+}
+
+.timer-value {
+    font-size: 32px;
+    font-weight: 800;
+    text-shadow: 0 3px 15px rgba(0, 0, 0, 0.4);
+    z-index: 2;
+}
+
+.timer-label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    opacity: 0.75;
+    letter-spacing: 1px;
+}
+
+/* ============================================
+   ACTIONS (BOUTON ANNULER)
+   ============================================ */
+
+.sponsor-popup-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 18px;
+}
+
+.sponsor-cancel-btn {
+    appearance: none;
+    border: 1px solid rgba(0, 51, 153, 0.45);
+    background: linear-gradient(180deg, #ffffff 0%, #f1f5f9 100%);
+    color: #1e293b;
+    border-radius: 999px;
+    padding: 10px 18px;
+    font-size: 13px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow:
+        0 4px 14px rgba(0, 51, 153, 0.20),
+        0 0 0 1px rgba(0, 51, 153, 0.12) inset;
+    transition:
+        transform 0.15s ease,
+        box-shadow 0.15s ease,
+        background 0.15s ease;
+}
+
+.sponsor-cancel-btn:hover {
+    background: linear-gradient(180deg, #ffffff 0%, #dce6f7 100%);
+    transform: translateY(-1px);
+    box-shadow:
+        0 6px 18px rgba(0, 51, 153, 0.30),
+        0 0 0 1px rgba(0, 51, 153, 0.20) inset;
+}
+
+.sponsor-cancel-btn:active {
+    transform: translateY(0);
+    background: linear-gradient(180deg, #e0eaff 0%, #ccd9f0 100%);
+    box-shadow:
+        0 2px 8px rgba(0, 51, 153, 0.20),
+        0 0 0 1px rgba(0, 51, 153, 0.30) inset;
+}
+
+.sponsor-cancel-btn:focus-visible {
+    outline: 2px solid rgba(0, 51, 153, 0.75);
+    outline-offset: 3px;
+}
+
+@media (max-width: 480px) {
+    .sponsor-popup-actions {
+        margin-top: 14px;
+    }
+    .sponsor-cancel-btn {
+        padding: 9px 12px;
+        font-size: 12px;
+    }
+}
+
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes sponsorFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes sponsorFadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+.sponsor-popup-overlay.closing {
+    animation: sponsorFadeOut 0.3s ease forwards;
+}
+
+.sponsor-popup-modal.entering {
+    animation: modalEnter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalEnter {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .sponsor-popup-modal {
+        padding: 28px 20px;
+        border-radius: 20px;
+        margin: 10px;
+    }
+
+    .popup-title {
+        font-size: 18px;
+        margin-bottom: 20px;
+    }
+
+    .sponsors-container {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .sponsor-card {
+        padding: 16px 14px;
+    }
+
+    .timer-circle {
+        width: 70px;
+        height: 70px;
+    }
+
+    .timer-value {
+        font-size: 28px;
+    }
+
+    .data-animation {
+        font-size: 10px;
+        height: 25px;
+        line-height: 25px;
+    }
+
+    /* Console responsive */
+    .console-container {
+        margin: 15px 0;
+    }
+
+    .console-header {
+        padding: 10px 15px;
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+    }
+
+    .console-title {
+        font-size: 11px;
+    }
+
+    .console-status {
+        font-size: 10px;
+    }
+
+    .console-body {
+        height: 180px;
+        padding: 12px 15px;
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 400px) {
+    .sponsor-popup-modal {
+        padding: 24px 16px;
+    }
+
+    .popup-title {
+        font-size: 16px;
+    }
+
+    .sponsor-logo {
+        font-size: 18px;
+    }
+
+    .sponsor-description {
+        font-size: 12px;
+    }
+}
+
+/* ============================================
+   MOBILE FULLSCREEN MODE - UNIFIED FINAL FIX
+   Vue native plein ecran pour mobile
+   TOUTES les phases (ouverture + PROCESSING)
+   doivent etre en fullscreen permanent
+   ============================================ */
+
+@media (max-width: 480px) {
+    /* ROOT RESET - Force le body a fullscreen UNIQUEMENT quand popup active */
+    body.sponsor-popup-active {
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        overflow: hidden !important;
+    }
+
+    /* Overlay = vrai plein ecran FORCE */
+    .sponsor-popup-overlay {
+        position: fixed !important;
+        inset: 0 !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        width: 100dvw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-width: none !important;
+        max-height: none !important;
+        min-height: 100vh !important;
+        min-height: 100dvh !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        display: flex !important;
+        align-items: stretch !important;
+        justify-content: stretch !important;
+        overflow: hidden !important;
+        z-index: 999999 !important;
+    }
+
+    /* Modal = plein ecran FORCE pendant TOUTE la duree */
+    .sponsor-popup-modal,
+    .sponsor-popup-modal.entering,
+    .sponsor-popup-modal.processing,
+    .sponsor-popup-modal[class*="entering"],
+    .sponsor-popup-modal[class*="processing"] {
+        position: fixed !important;
+        inset: 0 !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        width: 100dvw !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        max-width: 100vw !important;
+        max-height: none !important;
+        min-height: 100vh !important;
+        min-height: 100dvh !important;
+        margin: 0 !important;
+        padding: 20px 16px !important;
+        padding-bottom: env(safe-area-inset-bottom, 80px) !important;
+        border-radius: 0 !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        -webkit-overflow-scrolling: touch !important;
+        display: flex !important;
+        flex-direction: column !important;
+        box-sizing: border-box !important;
+        transform: none !important;
+    }
+
+    /* Desactiver l'animation de scale sur mobile */
+    .sponsor-popup-modal.entering,
+    .sponsor-popup-modal[class*="entering"] {
+        animation: none !important;
+    }
+
+    /* Titre compact */
+    .popup-title {
+        font-size: 13px !important;
+        margin-bottom: 16px !important;
+        flex-shrink: 0 !important;
+    }
+
+    .popup-title .title-icon {
+        font-size: 0.9em;
+    }
+
+    /* Barre de progression */
+    .progress-bar-container {
+        height: 8px !important;
+        flex-shrink: 0 !important;
+    }
+
+    .progress-percentage {
+        font-size: 14px !important;
+        margin-bottom: 12px !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Data animation compacte */
+    .data-animation {
+        height: 24px !important;
+        line-height: 24px !important;
+        font-size: 9px !important;
+        margin-bottom: 12px !important;
+        letter-spacing: 1px;
+        flex-shrink: 0 !important;
+    }
+
+    /* Console adaptee */
+    .console-container {
+        flex-shrink: 0 !important;
+        margin: 12px 0 !important;
+    }
+
+    .console-header {
+        padding: 8px 12px !important;
+    }
+
+    .console-title {
+        font-size: 10px !important;
+    }
+
+    .console-status {
+        font-size: 9px !important;
+    }
+
+    .console-body {
+        height: 120px !important;
+        min-height: 100px !important;
+        max-height: 140px !important;
+        font-size: 10px !important;
+        padding: 10px 12px !important;
+    }
+
+    .console-line {
+        margin-bottom: 4px !important;
+        gap: 6px !important;
+    }
+
+    .console-line.console-progress {
+        padding-right: 50px !important;
+    }
+
+    .console-line.console-progress::after {
+        min-width: 45px !important;
+        font-size: 10px !important;
+    }
+
+    /* Sponsors header */
+    .sponsors-header {
+        font-size: 11px !important;
+        margin-bottom: 10px !important;
+        flex-shrink: 0 !important;
+    }
+
+    /* Sponsors en colonne */
+    .sponsors-container {
+        flex-direction: column !important;
+        gap: 10px !important;
+        margin-bottom: 15px !important;
+        flex-shrink: 0 !important;
+    }
+
+    .sponsor-card {
+        padding: 14px 12px !important;
+        border-radius: 12px !important;
+    }
+
+    .sponsor-badge {
+        font-size: 8px !important;
+        padding: 3px 8px !important;
+        top: 8px !important;
+        left: 8px !important;
+    }
+
+    .sponsor-logo {
+        font-size: 16px !important;
+        margin: 6px 0 8px 0 !important;
+    }
+
+    .sponsor-logo-icon {
+        font-size: 18px !important;
+    }
+
+    .sponsor-description {
+        font-size: 11px !important;
+        margin-bottom: 8px !important;
+    }
+
+    .sponsor-url {
+        font-size: 10px !important;
+    }
+
+    /* Timer compact mobile */
+    .timer-circle-container {
+        margin-top: 12px !important;
+        flex-shrink: 0 !important;
+    }
+
+    .timer-circle {
+        width: 56px !important;
+        height: 56px !important;
+    }
+
+    .timer-value {
+        font-size: 22px !important;
+    }
+
+    .timer-label {
+        font-size: 9px !important;
+    }
+
+    /* ============================================
+       BOUTON ANNULER - TOUJOURS VISIBLE EN MOBILE
+       Position fixed en bas de l'ecran
+       ============================================ */
+    .sponsor-popup-actions {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        margin: 0 !important;
+        padding: 12px 16px !important;
+        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+        background: linear-gradient(to top,
+            #ffffff 0%,
+            #ffffff 60%,
+            rgba(255, 255, 255, 0.95) 80%,
+            rgba(255, 255, 255, 0) 100%
+        ) !important;
+        z-index: 100 !important;
+        flex-shrink: 0 !important;
+    }
+
+    .sponsor-cancel-btn {
+        width: 100% !important;
+        padding: 14px 20px !important;
+        font-size: 14px !important;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1) !important;
+    }
+
+    /* Espace en bas de la modale pour ne pas cacher le contenu sous le bouton */
+    .sponsor-popup-modal {
+        padding-bottom: 80px !important;
+    }
+
+    /* Console plus compacte pour gagner de l'espace */
+    .console-body {
+        height: 100px !important;
+        min-height: 80px !important;
+        max-height: 120px !important;
+    }
+
+    /* Sponsors cards plus compactes */
+    .sponsor-card {
+        padding: 12px 10px !important;
+    }
+
+    .sponsor-description {
+        font-size: 10px !important;
+        margin-bottom: 6px !important;
+        line-height: 1.2 !important;
+    }
+
+    /* Timer plus compact */
+    .timer-circle {
+        width: 50px !important;
+        height: 50px !important;
+    }
+
+    .timer-value {
+        font-size: 18px !important;
+    }
+
+    .timer-circle-container {
+        margin-top: 8px !important;
+    }
+}
+
+/* Bloquer le scroll du body quand popup active */
+body.sponsor-popup-active {
+    overflow: hidden !important;
+    position: fixed !important;
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    top: 0 !important;
+    left: 0 !important;
+}
+
+/* ============================================
+   TABLET FULLSCREEN MODE (481px - 768px)
+   Vue fullscreen pour tablettes en mode portrait
+   ============================================ */
+
+@media (min-width: 481px) and (max-width: 768px) {
+    /* Reset body */
+    body.sponsor-popup-active {
+        height: 100vh !important;
+        overflow: hidden !important;
+    }
+
+    /* L'overlay DOIT couvrir tout l'ecran */
+    .sponsor-popup-overlay {
+        position: fixed !important;
+        inset: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: none !important;
+        max-height: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        z-index: 999999 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    /* Le modal sur tablette = centre avec max-width */
+    .sponsor-popup-modal,
+    .sponsor-popup-modal.entering {
+        position: relative !important;
+        width: 90vw !important;
+        max-width: 600px !important;
+        max-height: 90vh !important;
+        margin: auto !important;
+        padding: 24px !important;
+        border-radius: 16px !important;
+        overflow-y: auto !important;
+        box-sizing: border-box !important;
+    }
+}

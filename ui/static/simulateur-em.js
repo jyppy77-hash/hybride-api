@@ -10,6 +10,7 @@ const state = {
     selectedStars: new Set(),
     numbersHeat: {},
     debounceTimer: null,
+    popupShownForCurrentGrid: false,
     statsLoaded: false,
     totalTirages: 0
 };
@@ -225,20 +226,50 @@ function triggerAnalysis() {
     // Check if grid is complete: 5 numbers + 2 stars
     if (state.selectedNumbers.size !== 5 || state.selectedStars.size !== 2) {
         elements.resultsSection.style.display = 'none';
+        // Reset popup flag si grille incomplete (user modifie sa selection)
+        state.popupShownForCurrentGrid = false;
         return;
     }
 
+    // Debounce 300ms
     state.debounceTimer = setTimeout(function() {
-        analyzeGrid();
+        // Afficher le popup sponsor seulement la 1ere fois que cette grille est completee
+        var showPopup = !state.popupShownForCurrentGrid;
+        if (showPopup) {
+            state.popupShownForCurrentGrid = true;
+        }
+        analyzeGrid(showPopup);
     }, 300);
 }
 
 /**
  * Analyze the current grid via EM API
+ * @param {boolean} withPopup - Afficher le pop-up sponsor (true pour premiere analyse)
  */
-async function analyzeGrid() {
+async function analyzeGrid(withPopup) {
+    if (withPopup === undefined) withPopup = false;
+
     const nums = Array.from(state.selectedNumbers);
     const stars = Array.from(state.selectedStars).sort(function(a, b) { return a - b; });
+
+    // Afficher le pop-up sponsor si demande (premiere completion de grille)
+    if (withPopup && typeof showSponsorPopupSimulateurEM === 'function') {
+        var popupResult = await showSponsorPopupSimulateurEM({
+            duration: 3,
+            gridCount: 1,
+            title: 'Analyse de votre grille EuroMillions en cours',
+            onComplete: function() {
+                console.log('[Simulateur EM] Popup sponsor termin\u00e9, lancement analyse');
+            }
+        });
+
+        // Verifier si l'utilisateur a annule
+        if (popupResult && popupResult.cancelled === true) {
+            console.log('[Simulateur EM] Analyse annul\u00e9e par l\'utilisateur');
+            state.popupShownForCurrentGrid = false;
+            return;
+        }
+    }
 
     elements.loadingOverlay.style.display = 'flex';
 
@@ -518,6 +549,7 @@ function displayHistoryCheck(historyCheck) {
 function resetSelection() {
     state.selectedNumbers.clear();
     state.selectedStars.clear();
+    state.popupShownForCurrentGrid = false;
 
     elements.mainGrid.querySelectorAll('.grid-number').forEach(function(btn) {
         btn.classList.remove('selected', 'disabled');
@@ -540,6 +572,22 @@ function resetSelection() {
  */
 async function autoGenerate() {
     try {
+        // Afficher le popup sponsor AVANT la generation (3 secondes fixe)
+        if (typeof showSponsorPopupSimulateurEM === 'function') {
+            var popupResult = await showSponsorPopupSimulateurEM({
+                duration: 3,
+                title: 'G\u00e9n\u00e9ration d\'une grille optimis\u00e9e EM...',
+                onComplete: function() {
+                    console.log('[Simulateur EM] Popup sponsor termin\u00e9');
+                }
+            });
+
+            if (popupResult && popupResult.cancelled === true) {
+                console.log('[Simulateur EM] G\u00e9n\u00e9ration annul\u00e9e par l\'utilisateur');
+                return;
+            }
+        }
+
         elements.loadingOverlay.style.display = 'flex';
 
         var response = await fetch('/api/euromillions/generate?n=1');
@@ -566,7 +614,9 @@ async function autoGenerate() {
             updateStarGridState();
             updateCountBadge();
 
-            await analyzeGrid();
+            // Popup deja affiche — lancer l'analyse directement (sans re-popup)
+            state.popupShownForCurrentGrid = true;
+            await analyzeGrid(false);
         }
     } catch (error) {
         console.error('Erreur auto-generate EM:', error);
