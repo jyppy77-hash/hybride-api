@@ -53,67 +53,6 @@
            engine-nav-subpage, loto-hero-actions, loto-hero-btn
            ================================================================= */
 
-        .stats-page {
-            min-height: 100vh;
-        }
-
-        /* ---- Header (complément local au pattern loto-hero-header) ---- */
-        .stats-page .page-header {
-            background: var(--theme-bg-header);
-            color: var(--theme-text-on-dark);
-            padding: 30px 20px 60px;
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-            transition: background 0.4s ease;
-        }
-
-        .stats-page .page-header::before {
-            content: '1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            font-weight: 700;
-            letter-spacing: 6px;
-            line-height: 2.2;
-            color: rgba(255, 255, 255, 0.03);
-            word-wrap: break-word;
-            overflow: hidden;
-            pointer-events: none;
-        }
-
-        .stats-page .page-header::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-image:
-                radial-gradient(circle at 15% 50%, rgba(59, 130, 246, 0.12) 0%, transparent 40%),
-                radial-gradient(circle at 85% 30%, rgba(139, 92, 246, 0.1) 0%, transparent 35%);
-            pointer-events: none;
-        }
-
-        .header-content {
-            position: relative;
-            z-index: 2;
-        }
-
-        .header-content h1 {
-            font-size: 42px;
-            font-weight: 800;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 16px;
-        }
-
-        .header-content .subtitle {
-            font-size: 18px;
-            opacity: 0.9;
-            color: rgba(255, 255, 255, 0.9);
-        }
-
         /* ---- Container (jointure header → carte) ---- */
         .stats-container {
             max-width: var(--app-max-width, 1140px);
@@ -156,10 +95,6 @@
         }
 
         @media (max-width: 768px) {
-            .stats-page .page-header {
-                padding: 24px 16px 50px;
-            }
-
             .band-hybride-stat {
                 height: 58px;
                 transform: translateY(-50%) scaleY(0.94);
@@ -430,10 +365,6 @@
 
         /* ---- Responsive ---- */
         @media (max-width: 768px) {
-            .stats-page .page-header {
-                padding: 28px 16px 70px;
-            }
-
             .numbers-grid {
                 grid-template-columns: repeat(5, 1fr);
                 gap: 8px;
@@ -462,10 +393,6 @@
         }
 
         @media (max-width: 480px) {
-            .stats-page .page-header {
-                padding: 24px 16px 60px;
-            }
-
             .tab {
                 padding: 10px 12px;
                 font-size: 0.85rem;
