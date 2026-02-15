@@ -3,191 +3,77 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Actualites EuroMillions | LotoIA</title>
-    <meta name="description" content="Suivez les actualites du module EuroMillions de LotoIA : moteur HYBRIDE, analyse statistique des tirages europeens, infrastructure et donnees.">
+    <title>Actualités EuroMillions | LotoIA</title>
+    <meta name="description" content="Suivez les actualités du module EuroMillions de LotoIA : moteur HYBRIDE adapté 5+2, analyse statistique des tirages européens, chatbot IA dédié et infrastructure Cloud Run de production.">
     <link rel="canonical" href="https://lotoia.fr/euromillions/news">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
-    <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="LotoIA">
     <meta property="og:locale" content="fr_FR">
-    <meta property="og:title" content="Actualites EuroMillions | LotoIA">
-    <meta property="og:description" content="Actualites du module EuroMillions de LotoIA. Moteur HYBRIDE, analyse statistique et infrastructure Cloud Run.">
+    <meta property="og:title" content="Actualités EuroMillions | LotoIA">
+    <meta property="og:description" content="Actualités du module EuroMillions de LotoIA. Moteur HYBRIDE adapté 5+2, chatbot IA Gemini, 729 tirages historiques. 100% gratuit, sans inscription.">
     <meta property="og:url" content="https://lotoia.fr/euromillions/news">
     <meta property="og:image" content="https://lotoia.fr/static/og-image.jpg">
     <meta property="og:image:secure_url" content="https://lotoia.fr/static/og-image.jpg">
     <meta property="og:image:type" content="image/jpeg">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Actualites EuroMillions | LotoIA">
-    <meta name="twitter:description" content="Actualites du module EuroMillions de LotoIA. Moteur HYBRIDE, analyse statistique des tirages europeens.">
+    <meta name="twitter:title" content="Actualités EuroMillions | LotoIA">
+    <meta name="twitter:description" content="Actualités du module EuroMillions de LotoIA. Moteur HYBRIDE adapté 5+2, chatbot IA Gemini, 729 tirages européens.">
     <meta name="twitter:image" content="https://lotoia.fr/static/og-image.jpg">
-    <link rel="stylesheet" href="/ui/static/style.css?v=1">
-    <link rel="stylesheet" href="/ui/static/style-em.css?v=1">
-    <link rel="stylesheet" href="/ui/static/legal.css?v=1">
-    <!-- Theme script (en premier pour eviter le flash) -->
-    <script src="/ui/static/theme.js?v=1"></script>
-    <!-- Analytics (charge apres consentement RGPD) -->
-    <script src="/ui/static/analytics.js?v=1" defer></script>
+    <link rel="stylesheet" href="/ui/static/style.css">
+    <link rel="stylesheet" href="/ui/static/style-em.css">
+    <link rel="stylesheet" href="/ui/static/legal.css">
+    <script src="/ui/static/theme.js"></script>
+    <script src="/ui/static/analytics.js" defer></script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc"></script>
 
     <style>
-        /* News article cards */
-        .news-section { max-width: 800px; margin: 0 auto; }
-
-        .news-post {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            padding: 28px 32px;
-            margin-bottom: 24px;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .news-post:hover {
-            border-color: var(--accent, #6366f1);
-            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.08);
-        }
-        .news-post.featured {
-            border-left: 4px solid var(--accent, #6366f1);
-            border-radius: 2px 14px 14px 2px;
-        }
-
-        .news-meta {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-        }
-        .news-date {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            font-weight: 500;
-        }
-        .news-tag {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .news-tag-launch {
-            background: rgba(16, 185, 129, 0.12);
-            color: #10b981;
-        }
-        .news-tag-tech {
-            background: rgba(99, 102, 241, 0.12);
-            color: #6366f1;
-        }
-        .news-tag-update {
-            background: rgba(245, 158, 11, 0.12);
-            color: #f59e0b;
-        }
-        .news-tag-roadmap {
-            background: rgba(139, 92, 246, 0.12);
-            color: #8b5cf6;
-        }
-
-        .news-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 16px;
-            color: var(--text-primary);
-            line-height: 1.4;
-        }
-        .news-title span {
-            margin-right: 6px;
-        }
-
-        .news-content p {
-            line-height: 1.7;
-            color: var(--text-secondary);
-            margin-bottom: 12px;
-        }
-        .news-content ul {
-            padding-left: 20px;
-            margin-bottom: 16px;
-        }
-        .news-content li {
-            line-height: 1.7;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-        }
-
-        .news-end {
-            text-align: center;
-            padding: 32px 20px;
-            color: var(--text-muted);
-            font-size: 0.95rem;
-        }
-        .news-end p { margin-bottom: 6px; }
-
-        /* Action card */
-        .action-card {
-            margin-top: 40px;
-            margin-bottom: 32px;
-        }
-        .action-card-content {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-        .action-card-icon { font-size: 2rem; }
-        .action-card-text { flex: 1; min-width: 200px; }
-        .action-card-text h3 { margin-bottom: 4px; }
-        .action-card-text p { color: var(--text-muted); font-size: 0.95rem; }
-
-        @media (max-width: 600px) {
-            .news-post { padding: 20px 18px; }
-            .action-card-content { flex-direction: column; text-align: center; }
+        /* Supprimer la bande de numéros décoratifs 1-50 sur la page Actualités */
+        body.em-page .page-header::before {
+            content: '';
         }
     </style>
 </head>
 <body class="subpage em-page">
-    <!-- Barre de navigation moteur -->
     <nav class="engine-nav-subpage">
         <a href="/euromillions" class="engine-nav-btn">
-            <span class="nav-arrow">&larr;</span>
+            <span class="nav-arrow">←</span>
             <span class="nav-text">Accueil EuroMillions</span>
         </a>
         <div class="engine-nav-right">
             <span class="engine-badge">EuroMillions</span>
-            <button id="theme-switch" class="theme-switch" title="Changer de theme">
-                <span class="icon-day">&#9728;&#65039;</span>
-                <span class="icon-night">&#127769;</span>
+            <button id="theme-switch" class="theme-switch" title="Changer de thème">
+                <span class="icon-day">☀️</span>
+                <span class="icon-night">🌙</span>
             </button>
         </div>
     </nav>
 
-    <!-- Hero Header -->
     <header class="page-header loto-hero-header">
         <div class="header-content">
-            <h1><span>&#128240;</span> Actualites EuroMillions</h1>
-            <p class="subtitle">Evolutions et mises a jour du moteur EuroMillions</p>
+            <h1><span>📰</span> Actualités EuroMillions</h1>
+            <p class="subtitle">Évolutions, méthodologies et mises à jour du moteur EuroMillions</p>
             <div class="loto-hero-actions">
                 <a href="/euromillions/simulateur" class="loto-hero-btn">
-                    <span class="loto-hero-btn-icon">&#127919;</span>
+                    <span class="loto-hero-btn-icon">🎯</span>
                     Auditer une grille
                 </a>
                 <a href="/euromillions/generateur" class="loto-hero-btn">
-                    <span class="loto-hero-btn-icon">&#129504;</span>
+                    <span class="loto-hero-btn-icon">🧠</span>
                     Explorer des grilles
                 </a>
                 <a href="/euromillions/statistiques" class="loto-hero-btn">
-                    <span class="loto-hero-btn-icon">&#128202;</span>
+                    <span class="loto-hero-btn-icon">📊</span>
                     Voir les statistiques
                 </a>
                 <a href="/euromillions/news" class="loto-hero-btn loto-hero-btn-active loto-hero-btn-news">
-                    <span class="loto-hero-btn-icon">&#128240;</span>
-                    Actualites
+                    <span class="loto-hero-btn-icon">📰</span>
+                    Actualités
                 </a>
             </div>
-            <p class="loto-hero-scroll-hint">&larr; glisser pour voir plus &rarr;</p>
+            <p class="loto-hero-scroll-hint">← glisser pour voir plus →</p>
         </div>
     </header>
 
@@ -197,129 +83,237 @@
 
             <article class="news-post featured">
                 <div class="news-meta">
-                    <span class="news-date">Fevrier 2026</span>
-                    <span class="news-tag news-tag-launch">Lancement</span>
+                    <span class="news-date">14 février 2026</span>
+                    <span class="news-tag news-tag-launch">NOUVEAU</span>
                 </div>
-                <h2 class="news-title"><span>&#127775;</span> Lancement du module EuroMillions</h2>
+                <h2 class="news-title"><span>🌟</span> EuroMillions arrive sur LotoIA — 15 mars 2026</h2>
                 <div class="news-content">
-                    <p><strong>LotoIA lance son module EuroMillions</strong> avec le moteur <strong>HYBRIDE</strong>, une adaptation specifique de l'algorithme HYBRIDE pour les tirages europeens.</p>
+                    <p><strong>LotoIA s'agrandit !</strong> Le module EuroMillions débarque le <strong>15 mars à 15h00</strong>. Une nouvelle dimension d'analyse statistique, construite avec la même rigueur que le module Loto France.</p>
 
-                    <p>Le module EuroMillions propose une analyse statistique complete :</p>
                     <ul>
-                        <li><strong>5 numeros (1-50) + 2 etoiles (1-12)</strong> : prise en charge native du format EuroMillions</li>
-                        <li><strong>Generateur de grilles</strong> : generation automatique de grilles optimisees via le moteur HYBRIDE</li>
-                        <li><strong>Simulateur d'analyse</strong> : composez votre grille et obtenez un audit statistique descriptif en temps reel</li>
-                        <li><strong>Statistiques detaillees</strong> : frequences, ecarts, numeros chauds et froids pour les numeros ET les etoiles</li>
+                        <li><strong>729 tirages officiels analysés</strong> (2019-2026) — importés depuis les données officielles FDJ.</li>
+                        <li><strong>Moteur HYBRIDE adapté</strong> : 5 boules (1-50) + 2 étoiles (1-12), double pondération historique et tendancielle, contraintes d'équilibre et de dispersion.</li>
+                        <li><strong>Chatbot IA dédié</strong> : un assistant HYBRIDE spécifique EuroMillions qui interroge directement la base de données, analyse vos grilles et conserve le fil de la conversation.</li>
+                        <li><strong>Statistiques complètes</strong> : fréquences, écarts, classements, carte de chaleur — boules et étoiles séparées.</li>
+                        <li><strong>Simulateur de grilles</strong> : audit interactif de vos combinaisons EuroMillions avec score de conformité et badges.</li>
                     </ul>
 
-                    <p><em>Le module EuroMillions est un outil d'exploration statistique. Il ne predit rien et ne garantit aucun gain.</em></p>
+                    <p>Les <strong>sponsors pionniers du Loto</strong> auront un <strong>accès prioritaire</strong> au module EuroMillions. Intéressé ? Contactez-nous : <a href="mailto:partenariats@lotoia.fr"><strong>partenariats@lotoia.fr</strong></a></p>
+
+                    <p><em>L'EuroMillions est un jeu de hasard. LotoIA est un outil d'exploration statistique — aucune prédiction, aucune promesse de gain.</em></p>
                 </div>
             </article>
 
             <article class="news-post">
                 <div class="news-meta">
-                    <span class="news-date">Fevrier 2026</span>
-                    <span class="news-tag news-tag-tech">Technique</span>
+                    <span class="news-date">11 février 2026</span>
+                    <span class="news-tag news-tag-update">Version officielle v1.001</span>
                 </div>
-                <h2 class="news-title">Moteur HYBRIDE</h2>
+                <h2 class="news-title"><span>🎯</span> Module EuroMillions v1.001 — Le moteur est officiellement en production</h2>
                 <div class="news-content">
-                    <p>Le moteur <strong>HYBRIDE</strong> est une adaptation du moteur HYBRIDE pour les specificites de l'EuroMillions. Il repose sur une double ponderation dynamique :</p>
+                    <p>C'est fait. <strong>Le module EuroMillions passe en version 1.001</strong> — la première version officielle d'un moteur d'exploration statistique dédié aux tirages européens. Pas un prototype. Un produit complet, en production, 100% gratuit et sans inscription.</p>
+
+                    <p>Ce qui a été construit pour cette version :</p>
 
                     <ul>
-                        <li><strong>Ponderation long terme (60%)</strong> : analyse de la distribution sur l'ensemble du dataset historique des tirages EuroMillions</li>
-                        <li><strong>Ponderation court terme (40%)</strong> : ponderation adaptative sur les cycles recents de 24 mois</li>
-                        <li><strong>Analyse separee</strong> : les numeros principaux (1-50) et les etoiles (1-12) sont traites comme deux espaces combinatoires distincts</li>
+                        <li><strong>Moteur HYBRIDE adapté 5+2</strong> : architecture spécifique pour 5 boules (1-50) et 2 étoiles (1-12), avec double pondération historique et tendancielle.</li>
+                        <li><strong>729 tirages historiques</strong> en base de données sécurisée, alimentant l'ensemble des analyses du moteur EuroMillions.</li>
+                        <li><strong>Chatbot HYBRIDE dédié</strong> déployé en production : il interroge directement la base de données EuroMillions, conserve le fil de la conversation et empêche toute prédiction ou hallucination.</li>
+                        <li><strong>Intelligence artificielle Google</strong> intégrée au chatbot et aux analyses, avec système de protection automatique et basculement en cas d'indisponibilité.</li>
+                        <li><strong>Simulateur EuroMillions</strong> : audit interactif de vos grilles 5+2 avec score de conformité, badges et suggestions.</li>
+                        <li><strong>Google for Startups</strong> : programme validé, crédits cloud actifs.</li>
                     </ul>
 
-                    <p><em>Note technique : le moteur est un outil d'analyse descriptive. La distribution des resultats reste soumise aux lois du hasard pur.</em></p>
+                    <p>LotoIA EuroMillions est une plateforme <strong>transparente</strong> — la méthodologie et les données sont documentées. Aucun gain n'est promis, aucune prédiction n'est formulée. C'est un outil d'exploration statistique, construit avec rigueur, et accessible à tous.</p>
+
+                    <p><em>v1.001 n'est pas une fin. C'est la ligne de départ officielle du module EuroMillions.</em></p>
                 </div>
             </article>
 
             <article class="news-post">
                 <div class="news-meta">
-                    <span class="news-date">Fevrier 2026</span>
-                    <span class="news-tag news-tag-tech">Technique</span>
+                    <span class="news-date">10 février 2026</span>
+                    <span class="news-tag news-tag-roadmap">Nouveauté</span>
                 </div>
-                <h2 class="news-title">Infrastructure et donnees</h2>
+                <h2 class="news-title">Chatbot HYBRIDE EuroMillions — L'assistant IA est en production</h2>
                 <div class="news-content">
-                    <p>Le module EuroMillions s'appuie sur une <strong>infrastructure dediee</strong>, alignee sur l'architecture de production du module Loto :</p>
+                    <p>Le <strong>chatbot HYBRIDE EuroMillions</strong> est déployé et opérationnel sur l'ensemble des pages du module. Ce n'est pas un gadget conversationnel — c'est un véritable assistant d'analyse propulsé par l'<strong>intelligence artificielle Google</strong>, dédié aux tirages européens.</p>
 
                     <ul>
-                        <li><strong>Base de donnees dediee</strong> : table <code>tirages_euromillions</code> en Cloud SQL, independante de la base Loto</li>
-                        <li><strong>API complete</strong> : ensemble d'endpoints sous <code>/api/euromillions/*</code> pour les statistiques, la generation et l'analyse</li>
-                        <li><strong>Architecture Cloud Run</strong> : conteneur Docker identique au module Loto, avec auto-scaling, compression GZip et headers de securite</li>
+                        <li><strong>Accès direct aux données EuroMillions</strong> : le chatbot interroge directement notre base de 729 tirages officiels pour vous donner des réponses précises et vérifiables.</li>
+                        <li><strong>Analyse boules + étoiles</strong> : le chatbot distingue les 5 boules (1-50) et les 2 étoiles (1-12) dans toutes ses analyses.</li>
+                        <li><strong>22 formulations temporelles</strong> reconnues : le moteur comprend automatiquement « derniers tirages », « cette semaine », « depuis janvier », etc.</li>
+                        <li><strong>Mémoire de conversation</strong> : le chatbot retient vos échanges d'une page à l'autre, avec bouton de réinitialisation.</li>
+                        <li><strong>Système partenaires intégré</strong> : messages sponsors contextuels et non intrusifs, avec suivi d'audience dédié.</li>
+                        <li><strong>Anti-hallucination</strong> : chaque réponse est encadrée par un cadrage strict de l'IA, interdisant toute prédiction ou conseil de jeu.</li>
                     </ul>
 
-                    <p>L'ensemble des donnees provient des tirages officiels de l'EuroMillions, mis a jour regulierement apres chaque tirage (mardi et vendredi).</p>
+                    <p><em>Le chatbot HYBRIDE EuroMillions est un outil pédagogique : il explique, contextualise et interroge les données. Il ne prédit rien et ne constitue pas une aide à la décision de jeu.</em></p>
+                </div>
+            </article>
+
+            <article class="news-post">
+                <div class="news-meta">
+                    <span class="news-date">6 février 2026</span>
+                    <span class="news-tag news-tag-roadmap">Nouveauté</span>
+                </div>
+                <h2 class="news-title">Module META DONNÉE EuroMillions — Analyse experte HYBRIDE</h2>
+                <div class="news-content">
+                    <p>À partir du <strong>6 février 2026</strong>, le module EuroMillions introduit une analyse avancée nommée <strong>« META DONNÉE »</strong>, conçue pour fournir une lecture approfondie des données générées par HYBRIDE, notre moteur d'analyse assisté par IA.</p>
+
+                    <p>Ce module permet d'obtenir :</p>
+                    <ul>
+                        <li><strong>Graphique d'analyse complet</strong> : basé sur les grilles générées par le moteur HYBRIDE EuroMillions, mettant en évidence fréquences, cycles et zones de chaleur — boules et étoiles séparées.</li>
+                        <li><strong>Analyse textuelle experte</strong> : rédigée par l'IA HYBRIDE — numéros et étoiles les plus fréquents, tendances statistiques et interprétation pédagogique, avec export PDF en un clic.</li>
+                    </ul>
+
+                    <p><em>Le module META DONNÉE propose une synthèse visuelle et explicative qui va au-delà des statistiques classiques, en toute transparence sur la méthodologie.</em></p>
+                </div>
+            </article>
+
+            <article class="news-post">
+                <div class="news-meta">
+                    <span class="news-date">30 janvier 2026</span>
+                    <span class="news-tag news-tag-tech">Juridique</span>
+                </div>
+                <h2 class="news-title">Compliance : Cadrage réglementaire et transparence produit</h2>
+                <div class="news-content">
+                    <p>Depuis le <strong>30 janvier 2026</strong>, LotoIA renforce sa structure dédiée à la <strong>conformité juridique</strong>, afin de garantir une distinction stricte entre un <strong>outil d'analyse probabiliste</strong> et toute activité d'incitation au jeu.</p>
+
+                    <p>Travaux de mise en conformité :</p>
+                    <ul>
+                        <li><strong>Positionnement SaaS</strong> : Outil d'exploration statistique pur, sans promesse de gain.</li>
+                        <li><strong>Refonte des disclaimers</strong> : Clarification des risques liés aux jeux de hasard.</li>
+                        <li><strong>Périmètre fonctionnel</strong> : Suppression de tout wording ambigu lié à la performance ou à la prédiction.</li>
+                        <li><strong>Transparence algorithmique</strong> : Documentation claire sur l'usage de la randomisation contrôlée.</li>
+                    </ul>
+
+                    <p>Objectif : Garantir un service <strong>transparent</strong> et <strong>pérenne</strong>, en tant que média algorithmique indépendant, 100% gratuit et sans inscription.</p>
+                </div>
+            </article>
+
+            <article class="news-post">
+                <div class="news-meta">
+                    <span class="news-date">18 janvier 2026</span>
+                    <span class="news-tag news-tag-tech">Technique</span>
+                </div>
+                <h2 class="news-title">Infrastructure Cloud — Hébergement Google, base de données & IA</h2>
+                <div class="news-content">
+                    <p>Le <strong>18 janvier 2026</strong>, le module EuroMillions a finalisé le déploiement de son infrastructure sur <strong>Google Cloud</strong>, conçue pour la fiabilité et la performance.</p>
+
+                    <p>L'architecture déployée repose sur des composants éprouvés :</p>
+
+                    <ul>
+                        <li><strong>Hébergement Google Cloud</strong> : mise à l'échelle automatique selon l'affluence et protections de sécurité avancées.</li>
+                        <li><strong>Base de données dédiée</strong> : table <code>tirages_euromillions</code> en Cloud SQL, indépendante de la base Loto, avec 729 tirages historiques.</li>
+                        <li><strong>Intelligence artificielle Google</strong> : intégrée au chatbot et aux analyses META DONNÉE, avec système de protection automatique et basculement en cas d'indisponibilité.</li>
+                        <li><strong>API complète</strong> : ensemble d'endpoints sous <code>/api/euromillions/*</code> pour les statistiques, la génération et l'analyse.</li>
+                        <li><strong>Protection contre les abus</strong> : limitation automatique pour garantir la stabilité du service sans pénaliser l'usage normal.</li>
+                    </ul>
+                </div>
+            </article>
+
+            <article class="news-post">
+                <div class="news-meta">
+                    <span class="news-date">10 janvier 2026</span>
+                    <span class="news-tag news-tag-tech">Technique</span>
+                </div>
+                <h2 class="news-title">Moteur HYBRIDE EuroMillions — Architecture & Principes d'exploration</h2>
+                <div class="news-content">
+                    <p>Le moteur HYBRIDE EuroMillions est le cœur algorithmique du module européen. Il explore les statistiques des tirages en combinant deux approches complémentaires, adaptées au format 5+2 :</p>
+                    <ul>
+                        <li><strong>Analyse historique (60%)</strong> : étude de la répartition des numéros et étoiles sur l'ensemble des tirages passés.</li>
+                        <li><strong>Analyse des tendances récentes (40%)</strong> : focus sur les 24 derniers mois pour capter les dynamiques en cours.</li>
+                        <li><strong>Analyse séparée</strong> : les 5 boules (1-50) et les 2 étoiles (1-12) sont traités comme deux espaces combinatoires distincts.</li>
+                        <li><strong>Filtres d'équilibre</strong> : vérification de la dispersion, de la parité et de la répartition des numéros dans chaque grille.</li>
+                    </ul>
+                    <p><em>LotoIA EuroMillions est un outil d'analyse et d'exploration, pas de prédiction. La distribution des résultats reste soumise aux lois du hasard pur.</em></p>
+                </div>
+            </article>
+
+            <article class="news-post">
+                <div class="news-meta">
+                    <span class="news-date">5 janvier 2026</span>
+                    <span class="news-tag news-tag-roadmap">Roadmap</span>
+                </div>
+                <h2 class="news-title">Feuille de route technique — Module EuroMillions</h2>
+                <div class="news-content">
+                    <p>État d'avancement et prochaines étapes du module EuroMillions :</p>
+                    <ul>
+                        <li><strong>✅ Moteur HYBRIDE 5+2</strong> : déployé — exploration statistique adaptée au format EuroMillions (5 boules + 2 étoiles).</li>
+                        <li><strong>✅ Chatbot HYBRIDE EuroMillions</strong> : assistant IA conversationnel dédié, interrogation directe de la base de données européenne.</li>
+                        <li><strong>✅ Simulateur EuroMillions</strong> : audit interactif des grilles 5+2 avec score de conformité et badges.</li>
+                        <li><strong>✅ Dashboard META DONNÉE</strong> : module d'analyse experte avec graphiques, analyse textuelle et export PDF.</li>
+                        <li><strong>API Publique</strong> : accès aux données statistiques brutes EuroMillions pour les développeurs — à venir.</li>
+                    </ul>
+                    <p>Le module EuroMillions évolue pour devenir la référence en analyse statistique gratuite des tirages européens.</p>
                 </div>
             </article>
 
             <div class="news-end">
-                <p>Vous avez consulte l'historique complet des mises a jour EuroMillions.</p>
-                <p>Revenez regulierement pour suivre les evolutions du module.</p>
+                <p>Vous avez consulté l'historique complet des mises à jour EuroMillions.</p>
+                <p>Revenez régulièrement pour suivre les évolutions du module.</p>
             </div>
 
         </section>
 
-        <!-- Action card -->
         <section class="card action-card">
             <div class="action-card-content">
-                <div class="action-card-icon">&#10024;</div>
+                <div class="action-card-icon">✨</div>
                 <div class="action-card-text">
                     <h3>Lancer l'exploration statistique EuroMillions</h3>
-                    <p>Explorez l'espace combinatoire avec le moteur HYBRIDE.</p>
+                    <p>Explorez l'espace combinatoire avec le moteur HYBRIDE — LotoIA v1.001.</p>
                 </div>
                 <a href="/euromillions/generateur" class="btn btn-primary">
-                    Acceder au moteur
-                    <span class="btn-arrow">&rarr;</span>
+                    Accéder au moteur
+                    <span class="btn-arrow">→</span>
                 </a>
             </div>
         </section>
 
-        <!-- Footer -->
         <footer class="footer">
             <div class="footer-nav">
                 <a href="/">Moteurs</a>
-                <span class="footer-sep">&bull;</span>
+                <span class="footer-sep">•</span>
                 <a href="/euromillions">Accueil</a>
-                <span class="footer-sep">&bull;</span>
+                <span class="footer-sep">•</span>
                 <a href="/euromillions/simulateur">Analyse</a>
-                <span class="footer-sep">&bull;</span>
+                <span class="footer-sep">•</span>
                 <a href="/euromillions/generateur">Exploration</a>
-                <span class="footer-sep">&bull;</span>
+                <span class="footer-sep">•</span>
                 <a href="/euromillions/statistiques">Statistiques</a>
-                <span class="footer-sep">&bull;</span>
-                <a href="/euromillions/news" class="active">Actualites</a>
-                <span class="footer-sep">&bull;</span>
+                <span class="footer-sep">•</span>
+                <a href="/euromillions/news" class="active">Actualités</a>
+                <span class="footer-sep">•</span>
                 <a href="/euromillions/faq">FAQ</a>
             </div>
             <div class="footer-legal">
-                <a href="/mentions-legales">Mentions legales</a>
-                <span class="footer-sep">&bull;</span>
-                <a href="/politique-confidentialite">Confidentialite</a>
-                <span class="footer-sep">&bull;</span>
+                <a href="/mentions-legales">Mentions légales</a>
+                <span class="footer-sep">•</span>
+                <a href="/politique-confidentialite">Confidentialité</a>
+                <span class="footer-sep">•</span>
                 <a href="/politique-cookies">Cookies</a>
             </div>
             <p class="footer-brand">LotoIA.fr <span class="app-version">v1.001</span></p>
-            <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dependance. Appelez le 09 74 75 13 13 (appel non surtaxe).</p>
-            <p class="footer-help">Interdiction de jeu aux mineurs. <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
+            <p class="footer-disclaimer">Le hasard ne se prédit pas. Jouer comporte des risques : endettement, isolement, dépendance. Appelez le 09 74 75 13 13.</p>
+            <p class="footer-help">Interdiction aux mineurs. <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
             <div class="credits">
-                <p class="dev-by">Developpe par <strong>JyppY</strong></p>
+                <p class="dev-by">Développé par <strong>JyppY</strong></p>
             </div>
         </footer>
     </div>
 
     <!-- Bouton Scroll to Top -->
     <button id="scroll-to-top" class="scroll-to-top" aria-label="Retour en haut">
-        &uarr;
+        ↑
     </button>
 
-    <script src="/ui/static/scroll.js?v=1"></script>
-    <script src="/ui/static/cookie-consent.js?v=1"></script>
+    <script src="/ui/static/scroll.js?v=7"></script>
+    <script src="/ui/static/cookie-consent.js?v=7"></script>
 
     <!-- HYBRIDE Chatbot Widget EuroMillions -->
-    <link rel="stylesheet" href="/ui/static/hybride-chatbot.css?v=4.3">
     <div id="hybride-chatbot-root"></div>
+    <link rel="stylesheet" href="/ui/static/hybride-chatbot.css?v=4.3">
     <script src="/ui/static/hybride-chatbot-em.js?v=1.0"></script>
     <script src="/ui/static/version-inject.js"></script>
 </body>
