@@ -315,6 +315,14 @@ function displayResults(data) {
     displaySelectedGrid(data.nums || Array.from(state.selectedNumbers), etoiles[0], etoiles[1]);
     displayHistoryCheck(data.history_check);
 
+    // Pitch HYBRIDE async (non-blocking) — transmet score conformite + severite
+    fetchAndDisplaySimulateurPitchEM(
+        Array.from(state.selectedNumbers),
+        Array.from(state.selectedStars).sort(function(a, b) { return a - b; }),
+        data.details ? data.details.score_conformite : undefined,
+        data.severity
+    );
+
     setTimeout(function() {
         var target = document.getElementById('selected-numbers') || document.querySelector('.selected-grid');
         if (target) {
@@ -540,6 +548,59 @@ function displayHistoryCheck(historyCheck) {
         historyDiv.style.display = 'block';
     } else {
         historyDiv.style.display = 'none';
+    }
+}
+
+// ================================================================
+// PITCH HYBRIDE EM — Gemini async (simulateur)
+// ================================================================
+
+/**
+ * Appelle /api/euromillions/pitch-grilles pour 1 grille et affiche le pitch
+ * apres la section history-check du simulateur EM.
+ * @param {Array} nums - 5 numeros selectionnes
+ * @param {Array} etoiles - 2 etoiles selectionnees
+ * @param {string|undefined} scoreConformite - score conformite (ex: "52%")
+ * @param {number|undefined} severity - palier de severite (1, 2 ou 3)
+ */
+async function fetchAndDisplaySimulateurPitchEM(nums, etoiles, scoreConformite, severity) {
+    var anchor = document.getElementById('history-check');
+    if (!anchor) return;
+
+    // Supprimer un pitch precedent
+    var existing = anchor.parentElement.querySelector('.grille-pitch');
+    if (existing) existing.remove();
+
+    // Placeholder loading
+    var pitchDiv = document.createElement('div');
+    pitchDiv.className = 'grille-pitch grille-pitch-loading';
+    pitchDiv.innerHTML = '<span class="pitch-icon">\u{1F916}</span> HYBRIDE EM analyse ta grille\u2026';
+    anchor.insertAdjacentElement('afterend', pitchDiv);
+
+    try {
+        var response = await fetch('/api/euromillions/pitch-grilles', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                grilles: [{
+                    numeros: nums,
+                    etoiles: etoiles,
+                    score_conformite: scoreConformite ? parseInt(scoreConformite) : null,
+                    severity: severity || null
+                }]
+            })
+        });
+        var data = await response.json();
+
+        if (data.success && data.data && data.data.pitchs && data.data.pitchs[0]) {
+            pitchDiv.innerHTML = '<span class="pitch-icon">\u{1F916}</span> ' + data.data.pitchs[0];
+            pitchDiv.classList.remove('grille-pitch-loading');
+        } else {
+            pitchDiv.remove();
+        }
+    } catch (e) {
+        console.warn('[PITCH SIMULATEUR EM] Erreur:', e);
+        pitchDiv.remove();
     }
 }
 

@@ -294,6 +294,9 @@ async function handleAnalyze() {
         if (data.success && data.grids) {
             currentResult = data;
             displayGridsEM(data.grids, data.metadata, date);
+
+            // Pitch HYBRIDE async (non-blocking)
+            fetchAndDisplayPitchsEM(data.grids);
         } else {
             showError(data.message || 'Erreur lors de la generation des grilles.');
         }
@@ -367,7 +370,11 @@ function displayGridsEM(grids, metadata, targetDate) {
             html += '<span class="visual-badge ' + badgeClass + '">' + icon + ' ' + badge + '</span>';
         });
 
-        html += '</div></div>';
+        html += '</div>' +
+            '<div class="grille-pitch grille-pitch-loading" data-pitch-index="' + index + '">' +
+                '<span class="pitch-icon">\u{1F916}</span> HYBRIDE EM analyse ta grille\u2026' +
+            '</div>' +
+        '</div>';
     });
 
     html += '<div class="results-footer">' +
@@ -442,6 +449,49 @@ function setLoading(button, isLoading) {
         if (ctaIcon) ctaIcon.style.display = 'inline';
         if (ctaArrow) ctaArrow.style.display = 'inline';
         if (spinner) spinner.style.display = 'none';
+    }
+}
+
+// ================================================================
+// PITCH HYBRIDE EM — Gemini async
+// ================================================================
+
+/**
+ * Appelle /api/euromillions/pitch-grilles et affiche les pitchs sous chaque grille EM.
+ * Non-bloquant : les grilles sont deja visibles, les pitchs arrivent apres.
+ * @param {Array} grids - Tableau des grilles generees ({nums, etoiles})
+ */
+async function fetchAndDisplayPitchsEM(grids) {
+    var payload = grids.map(function(g) {
+        return {
+            numeros: g.nums,
+            etoiles: g.etoiles || []
+        };
+    });
+
+    try {
+        var response = await fetch('/api/euromillions/pitch-grilles', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ grilles: payload })
+        });
+        var data = await response.json();
+
+        if (data.success && data.data && data.data.pitchs) {
+            data.data.pitchs.forEach(function(pitch, index) {
+                var el = document.querySelector('.grille-pitch[data-pitch-index="' + index + '"]');
+                if (el && pitch) {
+                    el.innerHTML = '<span class="pitch-icon">\u{1F916}</span> ' + pitch;
+                    el.classList.remove('grille-pitch-loading');
+                }
+            });
+        } else {
+            // Pas de pitchs — retirer les placeholders
+            document.querySelectorAll('.grille-pitch-loading').forEach(function(el) { el.remove(); });
+        }
+    } catch (e) {
+        console.warn('[PITCH EM] Erreur:', e);
+        document.querySelectorAll('.grille-pitch-loading').forEach(function(el) { el.remove(); });
     }
 }
 
