@@ -266,7 +266,7 @@
             if (data.success && data.found) {
                 const d = data.draw;
                 let html = '<div class="draw-card">';
-                html += '<h3>Tirage du ' + d.date + '</h3>';
+                html += '<h3>Tirage du ' + d.date.split('-').reverse().join('/') + '</h3>';
                 html += '<div class="draw-numbers">';
                 [d.n1, d.n2, d.n3, d.n4, d.n5].sort((a,b)=>a-b).forEach(function(n) {
                     html += '<span class="number-ball main">' + String(n).padStart(2,'0') + '</span>';

@@ -717,7 +717,7 @@
                 if (data.success && data.found) {
                     var d = data.draw;
                     var html = '<div class="search-result">';
-                    html += '<h3 style="margin-bottom: 16px; color: var(--primary);">Tirage du ' + d.date + '</h3>';
+                    html += '<h3 style="margin-bottom: 16px; color: var(--primary);">Tirage du ' + d.date.split('-').reverse().join('/') + '</h3>';
                     html += '<p><strong>Numeros gagnants :</strong></p>';
                     html += '<div class="draw-numbers">';
                     [d.n1, d.n2, d.n3, d.n4, d.n5].sort(function(a,b){return a-b;}).forEach(function(n) {
