@@ -714,13 +714,13 @@
             try {
                 var response = await fetch('/api/euromillions/draw/' + date);
                 var data = await response.json();
-                if (data.success) {
-                    var d = data.data;
+                if (data.success && data.found) {
+                    var d = data.draw;
                     var html = '<div class="search-result">';
-                    html += '<h3 style="margin-bottom: 16px; color: var(--primary);">Tirage du ' + d.date_de_tirage + '</h3>';
+                    html += '<h3 style="margin-bottom: 16px; color: var(--primary);">Tirage du ' + d.date + '</h3>';
                     html += '<p><strong>Numeros gagnants :</strong></p>';
                     html += '<div class="draw-numbers">';
-                    [d.boule_1, d.boule_2, d.boule_3, d.boule_4, d.boule_5].sort(function(a,b){return a-b;}).forEach(function(n) {
+                    [d.n1, d.n2, d.n3, d.n4, d.n5].sort(function(a,b){return a-b;}).forEach(function(n) {
                         html += '<span class="number-ball main">' + String(n).padStart(2,'0') + '</span>';
                     });
                     html += '<span class="separator">+</span>';
@@ -728,17 +728,12 @@
                         html += '<span class="number-ball star">' + String(n).padStart(2,'0') + '</span>';
                     });
                     html += '</div>';
-                    // Afficher les informations supplementaires si disponibles
-                    if (d.jour_de_tirage) {
-                        html += '<p><strong>Jour :</strong> ' + d.jour_de_tirage + '</p>';
-                    }
-                    if (d.numero_de_tirage) {
-                        html += '<p><strong>Tirage n&deg; :</strong> ' + d.numero_de_tirage + '</p>';
-                    }
                     html += '</div>';
                     resultDiv.innerHTML = html;
-                } else {
+                } else if (data.success && !data.found) {
                     resultDiv.innerHTML = '<div class="search-result not-found"><strong>Aucun tirage trouve pour cette date.</strong></div>';
+                } else {
+                    resultDiv.innerHTML = '<div class="search-result error"><strong>' + (data.message || 'Erreur interne du serveur') + '</strong></div>';
                 }
             } catch(e) {
                 resultDiv.innerHTML = '<div class="search-result error"><strong>Erreur de connexion.</strong></div>';
