@@ -221,6 +221,7 @@ async def add_cache_headers(request: Request, call_next):
 # =========================
 
 _UI_HTML_TO_CLEAN_URL = {
+    "index.html": "/accueil",
     "launcher.html": "/",
     "accueil.html": "/accueil",
     "loto.html": "/loto",
@@ -263,6 +264,49 @@ async def redirect_ui_html_to_seo(request: Request, call_next):
             return RedirectResponse(url=f"{clean_url}{query}", status_code=301)
     return await call_next(request)
 
+
+# =========================
+# HEAD method support — Pure ASGI middleware (SEO crawlers / monitoring)
+# BaseHTTPMiddleware has known issues with FileResponse; raw ASGI is reliable.
+# =========================
+
+class HeadMethodMiddleware:
+    """Convert HEAD → GET at the ASGI level, then strip the response body."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or scope.get("method") != "HEAD":
+            await self.app(scope, receive, send)
+            return
+
+        # Switch method so downstream routes match GET handlers
+        scope["method"] = "GET"
+        body_sent = False
+
+        async def send_wrapper(message):
+            nonlocal body_sent
+            if message["type"] == "http.response.start":
+                # Strip Content-Length (body will be empty)
+                headers = [
+                    (k, v)
+                    for k, v in message.get("headers", [])
+                    if k.lower() != b"content-length"
+                ]
+                await send({**message, "headers": headers})
+            elif message["type"] == "http.response.body":
+                if not body_sent:
+                    body_sent = True
+                    await send({"type": "http.response.body", "body": b"", "more_body": False})
+                # Ignore subsequent body chunks (streaming responses)
+            else:
+                await send(message)
+
+        await self.app(scope, receive, send_wrapper)
+
+
+app.add_middleware(HeadMethodMiddleware)
 
 
 # =========================

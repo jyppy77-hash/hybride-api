@@ -1,3 +1,5 @@
+import re
+
 from fastapi import APIRouter
 from fastapi.responses import FileResponse, HTMLResponse
 import asyncio
@@ -34,6 +36,19 @@ SEO_PAGES = {
 def serve_page(filename: str):
     """Sert une page HTML depuis ui/."""
     return FileResponse(f"ui/{filename}", media_type="text/html")
+
+
+def serve_page_with_canonical(filename: str, canonical_url: str):
+    """Sert une page HTML en remplaçant la balise canonical (SEO dedup)."""
+    with open(f"ui/{filename}", "r", encoding="utf-8") as f:
+        html = f.read()
+    html = re.sub(
+        r'<link\s+rel="canonical"\s+href="[^"]*"',
+        f'<link rel="canonical" href="{canonical_url}"',
+        html,
+        count=1,
+    )
+    return HTMLResponse(content=html)
 
 
 # =========================
@@ -93,19 +108,19 @@ async def page_loto():
 @router.get("/loto/analyse")
 async def page_loto_analyse():
     """Loto France — Analyse de grille (simulateur)."""
-    return serve_page("simulateur.html")
+    return serve_page_with_canonical("simulateur.html", "https://lotoia.fr/loto/analyse")
 
 
 @router.get("/loto/exploration")
 async def page_loto_exploration():
     """Loto France — Exploration de grilles (generateur)."""
-    return serve_page("loto.html")
+    return serve_page_with_canonical("loto.html", "https://lotoia.fr/loto/exploration")
 
 
 @router.get("/loto/statistiques")
 async def page_loto_statistiques():
     """Loto France — Statistiques et historique."""
-    return serve_page("statistiques.html")
+    return serve_page_with_canonical("statistiques.html", "https://lotoia.fr/loto/statistiques")
 
 
 @router.get("/statistiques")
