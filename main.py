@@ -404,3 +404,24 @@ async def redirect_analyse():
 @app.get("/exploration", include_in_schema=False)
 async def redirect_exploration():
     return RedirectResponse(url="/loto", status_code=301)
+
+
+# Anciennes URLs /ui/*.html → routes propres
+@app.get("/ui/launcher.html", include_in_schema=False)
+async def redirect_ui_launcher():
+    return RedirectResponse(url="/accueil", status_code=301)
+
+
+@app.get("/ui/loto.html", include_in_schema=False)
+async def redirect_ui_loto():
+    return RedirectResponse(url="/loto", status_code=301)
+
+
+@app.get("/ui/simulateur.html", include_in_schema=False)
+async def redirect_ui_simulateur():
+    return RedirectResponse(url="/simulateur", status_code=301)
+
+
+@app.get("/ui/statistiques.html", include_in_schema=False)
+async def redirect_ui_statistiques():
+    return RedirectResponse(url="/statistiques", status_code=301)
