@@ -78,9 +78,9 @@ lotoia.fr/
 
 ### Actuel (problématique)
 ```
-/ui/loto.html
-/ui/statistiques.html
-/ui/simulateur.html
+/loto
+/statistiques
+/simulateur
 ```
 
 ### Recommandé (SEO-friendly)
@@ -110,7 +110,7 @@ async def page_simulateur():
 # Redirections 301 des anciennes URLs
 @app.get("/ui/loto.html")
 async def redirect_loto():
-    return RedirectResponse(url="/generateur", status_code=301)
+    return RedirectResponse(url="/loto", status_code=301)
 ```
 
 ---

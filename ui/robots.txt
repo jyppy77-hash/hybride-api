@@ -27,6 +27,9 @@ Allow: /politique-cookies
 Allow: /ui/static/
 Allow: /static/
 
+# === BLOCAGE FICHIERS HTML INTERNES ===
+Disallow: /ui/
+
 # === BLOCAGE TECHNIQUE / BACKEND / API ===
 Disallow: /api/
 Disallow: /engine/

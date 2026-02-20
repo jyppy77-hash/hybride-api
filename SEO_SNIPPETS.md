@@ -115,11 +115,11 @@ Snippets HTML prêts à copier-coller dans le `<head>` de chaque page.
     <meta name="description" content="Créez vos grilles Loto France avec notre moteur IA. Analyse des numéros chauds/froids, scores de conformité statistique. Gratuit et sans inscription.">
     <meta name="keywords" content="générateur loto france, grille loto gratuit, numéros loto, analyse loto fdj, tirage loto">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://lotoia.fr/ui/loto.html">
+    <link rel="canonical" href="https://lotoia.fr/loto">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://lotoia.fr/ui/loto.html">
+    <meta property="og:url" content="https://lotoia.fr/loto">
     <meta property="og:title" content="Générateur Loto France - Grilles IA Optimisées">
     <meta property="og:description" content="Créez vos grilles Loto France avec notre moteur IA HYBRIDE_OPTIMAL_V1.">
     <meta property="og:image" content="https://lotoia.fr/ui/static/og-lotoia.png">
@@ -150,11 +150,11 @@ Snippets HTML prêts à copier-coller dans le `<head>` de chaque page.
     <meta name="description" content="Consultez les statistiques complètes du Loto : numéros les plus sortis, retards actuels, tendances. Données issues de 967+ tirages officiels FDJ.">
     <meta name="keywords" content="statistiques loto, fréquence numéros loto, retard loto, numéros chauds froids, analyse tirages">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://lotoia.fr/ui/statistiques.html">
+    <link rel="canonical" href="https://lotoia.fr/statistiques">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://lotoia.fr/ui/statistiques.html">
+    <meta property="og:url" content="https://lotoia.fr/statistiques">
     <meta property="og:title" content="Statistiques Loto - Fréquences et Retards">
     <meta property="og:description" content="Statistiques complètes du Loto : numéros chauds, froids, retards. 967+ tirages analysés.">
     <meta property="og:image" content="https://lotoia.fr/ui/static/og-stats.png">
@@ -184,11 +184,11 @@ Snippets HTML prêts à copier-coller dans le `<head>` de chaque page.
     <meta name="description" content="Testez votre grille Loto et obtenez un score IA. Notre simulateur analyse votre combinaison selon les statistiques historiques de 967+ tirages.">
     <meta name="keywords" content="simulateur loto, analyser grille loto, score grille, test combinaison loto, vérifier numéros">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://lotoia.fr/ui/simulateur.html">
+    <link rel="canonical" href="https://lotoia.fr/simulateur">
 
     <!-- Open Graph -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://lotoia.fr/ui/simulateur.html">
+    <meta property="og:url" content="https://lotoia.fr/simulateur">
     <meta property="og:title" content="Simulateur de Grille Loto">
     <meta property="og:description" content="Testez votre grille Loto et obtenez un score d'analyse IA.">
     <meta property="og:image" content="https://lotoia.fr/ui/static/og-simulateur.png">
@@ -303,8 +303,8 @@ Snippets HTML prêts à copier-coller dans le `<head>` de chaque page.
 <link rel="preload" href="/static/app.js" as="script">
 
 <!-- Prefetch pages secondaires (navigation anticipée) -->
-<link rel="prefetch" href="/ui/statistiques.html">
-<link rel="prefetch" href="/ui/simulateur.html">
+<link rel="prefetch" href="/statistiques">
+<link rel="prefetch" href="/simulateur">
 
 <!-- DNS Prefetch (si APIs externes) -->
 <link rel="dns-prefetch" href="//fonts.googleapis.com">
