@@ -425,12 +425,16 @@ def analyze_grille_for_chat(nums: list, etoiles: list = None) -> dict:
         numeros_neutres = [n for n in nums if n not in numeros_chauds and n not in numeros_froids]
 
         # Verification historique — combinaison exacte (boules uniquement)
+        # Utilise IN pour etre independant de l'ordre de stockage en BDD
         cursor.execute(f"""
             SELECT date_de_tirage FROM {TABLE}
-            WHERE boule_1 = %s AND boule_2 = %s AND boule_3 = %s
-                  AND boule_4 = %s AND boule_5 = %s
+            WHERE boule_1 IN (%s, %s, %s, %s, %s)
+              AND boule_2 IN (%s, %s, %s, %s, %s)
+              AND boule_3 IN (%s, %s, %s, %s, %s)
+              AND boule_4 IN (%s, %s, %s, %s, %s)
+              AND boule_5 IN (%s, %s, %s, %s, %s)
             ORDER BY date_de_tirage DESC
-        """, tuple(nums))
+        """, (*nums, *nums, *nums, *nums, *nums))
         exact_matches = cursor.fetchall()
         exact_dates = [str(row['date_de_tirage']) for row in exact_matches]
 
@@ -456,14 +460,15 @@ def analyze_grille_for_chat(nums: list, etoiles: list = None) -> dict:
         best_match_date = None
         best_match_etoiles = False
         if best_match:
-            tirage_nums = [best_match['boule_1'], best_match['boule_2'],
-                           best_match['boule_3'], best_match['boule_4'],
-                           best_match['boule_5']]
+            # Cast int() pour garantir la coherence de type (BDD peut renvoyer str/Decimal)
+            tirage_nums = [int(best_match['boule_1']), int(best_match['boule_2']),
+                           int(best_match['boule_3']), int(best_match['boule_4']),
+                           int(best_match['boule_5'])]
             best_match_numbers = sorted([n for n in nums if n in tirage_nums])
-            best_match_count = best_match['match_count']
+            best_match_count = len(best_match_numbers)
             best_match_date = str(best_match['date_de_tirage'])
             if etoiles:
-                tirage_etoiles = {best_match['etoile_1'], best_match['etoile_2']}
+                tirage_etoiles = {int(best_match['etoile_1']), int(best_match['etoile_2'])}
                 best_match_etoiles = bool(set(etoiles) & tirage_etoiles)
 
     except Exception as e:

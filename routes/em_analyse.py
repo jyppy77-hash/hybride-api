@@ -366,14 +366,19 @@ async def em_analyze_custom_grid(
                 frequencies = [freq_map.get(num, 0) for num in nums]
 
                 # Correspondance exacte (5 boules + 2 etoiles)
+                # Utilise IN pour etre independant de l'ordre de stockage en BDD
                 cursor.execute(f"""
                     SELECT date_de_tirage
                     FROM {TABLE}
-                    WHERE boule_1 = %s AND boule_2 = %s AND boule_3 = %s
-                          AND boule_4 = %s AND boule_5 = %s
-                          AND etoile_1 = %s AND etoile_2 = %s
+                    WHERE boule_1 IN (%s, %s, %s, %s, %s)
+                      AND boule_2 IN (%s, %s, %s, %s, %s)
+                      AND boule_3 IN (%s, %s, %s, %s, %s)
+                      AND boule_4 IN (%s, %s, %s, %s, %s)
+                      AND boule_5 IN (%s, %s, %s, %s, %s)
+                      AND etoile_1 IN (%s, %s)
+                      AND etoile_2 IN (%s, %s)
                     ORDER BY date_de_tirage DESC
-                """, (*nums, *etoiles))
+                """, (*nums, *nums, *nums, *nums, *nums, *etoiles, *etoiles))
                 exact_matches = cursor.fetchall()
                 exact_dates = [str(row['date_de_tirage']) for row in exact_matches]
 
@@ -401,17 +406,20 @@ async def em_analyze_custom_grid(
                 best_match_numbers = []
                 best_match_etoiles = []
                 if best_match:
-                    tirage_nums = [best_match['boule_1'], best_match['boule_2'], best_match['boule_3'],
-                                   best_match['boule_4'], best_match['boule_5']]
+                    # Cast int() pour garantir la coherence de type (BDD peut renvoyer str/Decimal)
+                    tirage_nums = [int(best_match['boule_1']), int(best_match['boule_2']),
+                                   int(best_match['boule_3']), int(best_match['boule_4']),
+                                   int(best_match['boule_5'])]
                     best_match_numbers = sorted([n for n in nums if n in tirage_nums])
-                    tirage_etoiles = [best_match['etoile_1'], best_match['etoile_2']]
+                    tirage_etoiles = [int(best_match['etoile_1']), int(best_match['etoile_2'])]
                     best_match_etoiles = sorted([e for e in etoiles if e in tirage_etoiles])
 
+                # Source unique de verite : intersection Python (pas le match_count SQL)
                 history_check = {
                     "exact_match": len(exact_dates) > 0,
                     "exact_dates": exact_dates,
-                    "best_match_count": best_match['match_count'] if best_match else 0,
-                    "best_match_etoiles": best_match['etoile_match'] if best_match else 0,
+                    "best_match_count": len(best_match_numbers),
+                    "best_match_etoiles": len(best_match_etoiles),
                     "best_match_date": str(best_match['date_de_tirage']) if best_match else None,
                     "best_match_numbers": best_match_numbers,
                     "best_match_etoiles_list": best_match_etoiles
