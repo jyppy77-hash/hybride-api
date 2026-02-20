@@ -236,6 +236,8 @@ _UI_HTML_TO_CLEAN_URL = {
     "mentions-legales.html": "/mentions-legales",
     "politique-confidentialite.html": "/politique-confidentialite",
     "politique-cookies.html": "/politique-cookies",
+    "pronostics.html": "/loto",
+    "chatbot.html": "/loto",
 }
 
 _UI_EM_HTML_TO_CLEAN_URL = {
@@ -425,3 +427,34 @@ async def redirect_ui_simulateur():
 @app.get("/ui/statistiques.html", include_in_schema=False)
 async def redirect_ui_statistiques():
     return RedirectResponse(url="/statistiques", status_code=301)
+
+
+# Anciennes URLs internes → redirections 301 (SEO: éviter les 404)
+@app.get("/loto/accueil", include_in_schema=False)
+async def redirect_loto_accueil():
+    return RedirectResponse(url="/accueil", status_code=301)
+
+
+@app.get("/loto/historique", include_in_schema=False)
+async def redirect_loto_historique():
+    return RedirectResponse(url="/historique", status_code=301)
+
+
+@app.get("/loto/chatbot", include_in_schema=False)
+async def redirect_loto_chatbot():
+    return RedirectResponse(url="/loto", status_code=301)
+
+
+@app.get("/loto/pronostics", include_in_schema=False)
+async def redirect_loto_pronostics():
+    return RedirectResponse(url="/loto", status_code=301)
+
+
+@app.get("/euromillions/accueil", include_in_schema=False)
+async def redirect_em_accueil():
+    return RedirectResponse(url="/euromillions", status_code=301)
+
+
+@app.get("/euromillions/chatbot", include_in_schema=False)
+async def redirect_em_chatbot():
+    return RedirectResponse(url="/euromillions", status_code=301)
