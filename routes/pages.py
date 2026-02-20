@@ -19,8 +19,6 @@ SEO_PAGES = {
     "/loto/analyse": "simulateur.html",
     "/loto/exploration": "loto.html",
     "/loto/statistiques": "statistiques.html",
-    "/statistiques": "statistiques.html",
-    "/simulateur": "simulateur.html",
     "/faq": "faq.html",
     "/news": "news.html",
     "/historique": "historique.html",
@@ -123,14 +121,7 @@ async def page_loto_statistiques():
     return serve_page_with_canonical("statistiques.html", "https://lotoia.fr/loto/statistiques")
 
 
-@router.get("/statistiques")
-async def page_statistiques():
-    return serve_page("statistiques.html")
-
-
-@router.get("/simulateur")
-async def page_simulateur():
-    return serve_page("simulateur.html")
+## /statistiques et /simulateur supprimés — 301 vers /loto/statistiques et /loto/analyse (main.py)
 
 
 @router.get("/faq")

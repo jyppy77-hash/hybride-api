@@ -6,7 +6,8 @@ import contextvars
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -94,6 +95,16 @@ def _rate_limit_handler(request: Request, exc: RateLimitExceeded):
 
 
 app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)
+
+
+# Page 404 HTML personnalisée (SEO + UX)
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 404:
+        with open("ui/404.html", "r", encoding="utf-8") as f:
+            html_404 = f.read()
+        return HTMLResponse(content=html_404, status_code=404)
+    return JSONResponse(content={"detail": exc.detail}, status_code=exc.status_code)
 
 # Compression GZip pour performance
 app.add_middleware(GZipMiddleware, minimum_size=500)
@@ -204,7 +215,7 @@ async def add_cache_headers(request: Request, call_next):
 
     # Cache court pour pages HTML (SEO routes)
     seo_routes = ["/", "/accueil", "/loto", "/loto/analyse", "/loto/exploration",
-                  "/loto/statistiques", "/statistiques", "/simulateur", "/faq", "/news",
+                  "/loto/statistiques", "/faq", "/news",
                   "/historique", "/methodologie", "/moteur", "/disclaimer",
                   "/mentions-legales", "/politique-confidentialite", "/politique-cookies",
                   "/euromillions", "/euromillions/generateur", "/euromillions/simulateur",
@@ -225,8 +236,8 @@ _UI_HTML_TO_CLEAN_URL = {
     "launcher.html": "/",
     "accueil.html": "/accueil",
     "loto.html": "/loto",
-    "simulateur.html": "/simulateur",
-    "statistiques.html": "/statistiques",
+    "simulateur.html": "/loto/analyse",
+    "statistiques.html": "/loto/statistiques",
     "faq.html": "/faq",
     "news.html": "/news",
     "historique.html": "/historique",
@@ -400,7 +411,18 @@ async def health():
 
 @app.get("/analyse", include_in_schema=False)
 async def redirect_analyse():
-    return RedirectResponse(url="/simulateur", status_code=301)
+    return RedirectResponse(url="/loto/analyse", status_code=301)
+
+
+# Doublons de contenu → 301 vers la version canonique /loto/*
+@app.get("/statistiques", include_in_schema=False)
+async def redirect_statistiques():
+    return RedirectResponse(url="/loto/statistiques", status_code=301)
+
+
+@app.get("/simulateur", include_in_schema=False)
+async def redirect_simulateur():
+    return RedirectResponse(url="/loto/analyse", status_code=301)
 
 
 @app.get("/exploration", include_in_schema=False)
@@ -421,12 +443,12 @@ async def redirect_ui_loto():
 
 @app.get("/ui/simulateur.html", include_in_schema=False)
 async def redirect_ui_simulateur():
-    return RedirectResponse(url="/simulateur", status_code=301)
+    return RedirectResponse(url="/loto/analyse", status_code=301)
 
 
 @app.get("/ui/statistiques.html", include_in_schema=False)
 async def redirect_ui_statistiques():
-    return RedirectResponse(url="/statistiques", status_code=301)
+    return RedirectResponse(url="/loto/statistiques", status_code=301)
 
 
 # Anciennes URLs internes → redirections 301 (SEO: éviter les 404)

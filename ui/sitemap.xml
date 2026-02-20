@@ -54,22 +54,6 @@
     <priority>0.85</priority>
   </url>
 
-  <!-- Simulateur -->
-  <url>
-    <loc>https://lotoia.fr/simulateur</loc>
-    <lastmod>2026-02-06</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.85</priority>
-  </url>
-
-  <!-- Statistiques -->
-  <url>
-    <loc>https://lotoia.fr/statistiques</loc>
-    <lastmod>2026-02-06</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.85</priority>
-  </url>
-
   <!-- ================================================
        PAGES PRODUIT / DOCUMENTATION (priority 0.7-0.8)
        ================================================ -->
