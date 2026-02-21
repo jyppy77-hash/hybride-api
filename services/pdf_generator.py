@@ -122,7 +122,8 @@ def generate_meta_graph_image(graph_data: dict) -> str:
 
 def generate_meta_pdf(analysis: str = "", window: str = "75 tirages",
                       engine: str = "HYBRIDE", graph: str = None,
-                      graph_data: dict = None, sponsor: str = None) -> io.BytesIO:
+                      graph_data: dict = None, chance_data: dict = None,
+                      sponsor: str = None) -> io.BytesIO:
     """
     Genere le PDF officiel META75 via ReportLab.
     Retourne un BytesIO contenant le PDF.
@@ -213,6 +214,26 @@ def generate_meta_pdf(analysis: str = "", window: str = "75 tirages",
                 logger.warning(f"[META-PDF] Image ignoree: {img_err}")
         else:
             logger.info("[META-PDF] Aucune image a inserer")
+
+        # ── Section Numéro Chance (1-10) ──
+        if chance_data and isinstance(chance_data, dict):
+            chance_labels = chance_data.get("labels", [])
+            chance_values = chance_data.get("values", [])
+            if chance_labels and chance_values:
+                # Garde-fou saut de page
+                if y < 40 * mm:
+                    c.showPage()
+                    y = h - 30 * mm
+
+                c.setFont("DejaVuSans-Bold", 13)
+                c.drawString(15 * mm, y, "Projection Num\u00e9ro Chance (1-10) :")
+                y -= 7 * mm
+                c.setFont("DejaVuSans", 11)
+                for lbl, val in zip(chance_labels, chance_values):
+                    c.drawString(20 * mm, y, f"N\u00b0{lbl}  \u2014  {val} apparitions")
+                    y -= 5.5 * mm
+                y -= 4 * mm
+                logger.info(f"[META-PDF] Section Num\u00e9ro Chance OK ({len(chance_labels)} entr\u00e9es)")
 
         # Bloc analyse
         c.setFont("DejaVuSans-Bold", 13)

@@ -191,6 +191,22 @@ async def api_meta_analyse_local(
                 graph_labels = [str(n['number']) for n in top_numbers]
                 graph_values = [n['count'] for n in top_numbers]
 
+                # ── Fréquences numéro chance (1-10) ──
+                cursor.execute(f"""
+                    SELECT numero_chance AS num, COUNT(*) AS freq
+                    FROM tirages
+                    WHERE id IN ({ids_placeholder})
+                    GROUP BY numero_chance
+                    ORDER BY freq DESC
+                """, window_ids)
+                chance_freq = {row['num']: row['freq'] for row in cursor.fetchall()}
+                chance_top = sorted(
+                    [{"number": n, "count": chance_freq.get(n, 0)} for n in range(1, 11)],
+                    key=lambda x: -x['count']
+                )[:3]
+                chance_labels = [str(c['number']) for c in chance_top]
+                chance_values = [c['count'] for c in chance_top]
+
                 avg_freq = sum(graph_values) / len(graph_values) if graph_values else 0
                 max_freq = max(graph_values) if graph_values else 0
                 min_freq = min(graph_values) if graph_values else 0
@@ -226,6 +242,10 @@ async def api_meta_analyse_local(
                     "graph": {
                         "labels": graph_labels,
                         "values": graph_values
+                    },
+                    "chance": {
+                        "labels": chance_labels,
+                        "values": chance_values
                     },
                     "analysis": analysis_text,
                     "pdf": False,

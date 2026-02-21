@@ -56,6 +56,7 @@ class MetaPdfPayload(BaseModel):
     metaType: Optional[str] = "META75"
     graph: Optional[str] = None
     graph_data: Optional[Dict[str, Any]] = None
+    chance_data: Optional[Dict[str, Any]] = None
     sponsor: Optional[str] = None
 
 

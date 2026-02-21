@@ -827,6 +827,7 @@ function openMetaResultPopup(data) {
                     window: '75 tirages',
                     engine: 'HYBRIDE',
                     graph_data: metaResultData && metaResultData.graph ? metaResultData.graph : null,
+                    chance_data: metaResultData && metaResultData.chance ? metaResultData.chance : null,
                     sponsor: 'Espace disponible'
                 })
             })
