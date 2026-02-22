@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HYBRIDE — Chatbot IA Grounded pour le Loto | LotoIA</title>
+    <meta name="description" content="HYBRIDE est l'assistant IA de LotoIA, connecté en temps réel aux 986+ tirages officiels FDJ. Posez vos questions sur les numéros, les tirages et les statistiques du Loto.">
+    <meta name="keywords" content="chatbot loto, assistant ia loto, ia grounded loto, hybride lotoia, chatbot statistiques loto">
+    <link rel="canonical" href="https://lotoia.fr/hybride">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <!-- Open Graph -->
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="LotoIA">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:title" content="HYBRIDE — Chatbot IA Grounded pour le Loto | LotoIA">
+    <meta property="og:description" content="Assistant IA connecté en temps réel aux 986+ tirages officiels FDJ. Posez vos questions sur les numéros et statistiques du Loto.">
+    <meta property="og:url" content="https://lotoia.fr/hybride">
+    <meta property="og:image" content="https://lotoia.fr/static/og-image.jpg">
+    <meta property="og:image:secure_url" content="https://lotoia.fr/static/og-image.jpg">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="HYBRIDE — Chatbot IA Grounded pour le Loto | LotoIA">
+    <meta name="twitter:description" content="Assistant IA connecté aux tirages officiels FDJ. Zéro hallucination, uniquement des analyses factuelles.">
+    <meta name="twitter:image" content="https://lotoia.fr/static/og-image.jpg">
+    <!-- JSON-LD SoftwareApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "HYBRIDE - Chatbot IA Loto",
+      "applicationCategory": "ChatbotApplication",
+      "operatingSystem": "Web Browser",
+      "url": "https://lotoia.fr/hybride",
+      "description": "Assistant IA conversationnel connecté en temps réel aux tirages officiels du Loto FDJ. Analyse factuelle, zéro hallucination.",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      },
+      "featureList": [
+        "Connexion temps réel aux 986+ tirages officiels FDJ",
+        "Analyse de fréquences par numéro",
+        "Recherche de tirages par date",
+        "Statistiques numéros chauds et froids",
+        "Anti-hallucination par vérification systématique"
+      ],
+      "publisher": {
+        "@type": "Organization",
+        "name": "LotoIA",
+        "url": "https://lotoia.fr"
+      }
+    }
+    </script>
+    <!-- JSON-LD BreadcrumbList -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://lotoia.fr/accueil"},
+        {"@type": "ListItem", "position": 2, "name": "HYBRIDE — Chatbot IA", "item": "https://lotoia.fr/hybride"}
+      ]
+    }
+    </script>
+    <!-- JSON-LD FAQPage -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "HYBRIDE peut-il me donner les numéros gagnants du prochain tirage ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Non. Le Loto est un jeu de hasard pur et personne — aucune IA, aucun algorithme — ne peut prédire les résultats. HYBRIDE analyse les données passées, il ne prédit pas l'avenir."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Les réponses de HYBRIDE sont-elles fiables ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Oui. Chaque réponse est calculée à partir des 986+ tirages officiels de la Française des Jeux stockés dans notre base Cloud SQL. L'architecture Grounded vérifie systématiquement les données avant de formuler une réponse."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "HYBRIDE fonctionne-t-il pour l'EuroMillions ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Bientôt ! Le module EuroMillions arrive le 15 mars 2026. HYBRIDE sera alors connecté aux deux bases de données (Loto et EuroMillions) pour répondre à vos questions sur les deux jeux."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Mes conversations avec HYBRIDE sont-elles enregistrées ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Non. Aucune donnée personnelle n'est stockée. Les conversations ne sont ni enregistrées ni transmises à des tiers. Consultez notre politique de confidentialité pour plus de détails."
+          }
+        }
+      ]
+    }
+    </script>
+    <link rel="stylesheet" href="/ui/static/style.css">
+    <link rel="stylesheet" href="/ui/static/legal.css">
+    <script src="/ui/static/theme.js"></script>
+    <!-- Preconnect tiers -->
+    <link rel="preconnect" href="https://cloud.umami.is" crossorigin>
+    <link rel="dns-prefetch" href="https://cloud.umami.is">
+    <!-- Analytics -->
+    <script src="/ui/static/analytics.js" defer></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc" data-do-not-track="true"></script>
+    <style>
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95rem;
+        }
+        .compare-table thead th {
+            background: var(--theme-bg-header, #0f172a);
+            color: #fff;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .compare-table tbody td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--theme-border, #e2e8f0);
+            color: var(--theme-text-primary, #1e293b);
+        }
+        .compare-table tbody tr:nth-child(even) {
+            background: rgba(0,0,0,0.02);
+        }
+        body.theme-night .compare-table tbody tr:nth-child(even) {
+            background: rgba(255,255,255,0.03);
+        }
+        .compare-table .criteria {
+            font-weight: 600;
+        }
+        .example-box {
+            background: var(--theme-bg-card, #f8fafc);
+            border: 1px solid var(--theme-border, #e2e8f0);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin: 12px 0;
+        }
+        body.theme-night .example-box {
+            background: rgba(255,255,255,0.04);
+        }
+        .example-box code {
+            display: block;
+            padding: 6px 0;
+            font-size: 0.92rem;
+            color: var(--primary, #667eea);
+            font-family: inherit;
+            font-style: italic;
+        }
+        .cta-try {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            border-radius: 14px;
+            padding: 32px;
+            text-align: center;
+            margin: 32px 0;
+        }
+        .cta-try h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        .cta-try p {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 20px;
+        }
+        .cta-try-links {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .cta-try-links a {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .cta-try-links a.btn-white {
+            background: #fff;
+            color: #059669;
+        }
+        .cta-try-links a.btn-white:hover {
+            background: #f0fdf4;
+            transform: translateY(-2px);
+        }
+        .cta-try-links a.btn-outline {
+            background: transparent;
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+        .cta-try-links a.btn-outline:hover {
+            border-color: #fff;
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+        @media (max-width: 600px) {
+            .compare-table {
+                font-size: 0.82rem;
+            }
+            .compare-table thead th,
+            .compare-table tbody td {
+                padding: 8px 10px;
+            }
+            .cta-try {
+                padding: 24px 16px;
+            }
+        }
+    </style>
+</head>
+<body class="subpage">
+    <!-- Navigation -->
+    <nav class="engine-nav-subpage">
+        <a href="/accueil" class="engine-nav-btn">
+            <span class="nav-arrow">←</span>
+            <span class="nav-text">Accueil LotoIA</span>
+        </a>
+        <div class="engine-nav-right">
+            <span class="engine-badge">Loto France</span>
+            <button id="theme-switch" class="theme-switch" title="Changer de thème">
+                <span class="icon-day">☀️</span>
+                <span class="icon-night">🌙</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="page-header">
+        <div class="header-content">
+            <h1>HYBRIDE — L'Assistant IA Grounded de LotoIA</h1>
+            <p class="subtitle">Un chatbot connecté aux données réelles, pas à l'imagination</p>
+        </div>
+    </header>
+
+    <div class="container subpage-container">
+        <article class="legal-content">
+
+            <!-- Introduction -->
+            <section class="legal-section">
+                <p><strong>HYBRIDE</strong> est le chatbot IA intégré à LotoIA. Il est connecté en temps réel aux <strong>986+ tirages officiels</strong> du Loto FDJ depuis 2019. Contrairement à ChatGPT ou d'autres IA génératives, HYBRIDE ne devine pas : il interroge les données réelles et vous répond avec des <strong>faits vérifiables</strong>.</p>
+                <p>Vous pouvez lui poser des questions sur les numéros, les tirages, les fréquences ou le fonctionnement du moteur. Il est disponible gratuitement sur toutes les pages de LotoIA — cliquez sur l'icône en bas à droite pour essayer.</p>
+            </section>
+
+            <!-- Qu'est-ce qu'une IA Grounded ? -->
+            <section class="legal-section">
+                <h2>Qu'est-ce qu'une IA "Grounded" ?</h2>
+
+                <p>Le terme <strong>"Grounded"</strong> (ancré) désigne une IA dont les réponses sont fondées sur des données vérifiées, et non sur l'imagination ou des probabilités linguistiques.</p>
+
+                <p>La différence fondamentale avec les modèles de langage classiques (ChatGPT, Gemini en mode libre, Claude) est cruciale :</p>
+                <ul>
+                    <li>Un <strong>LLM classique</strong> génère une réponse qui "semble correcte" à partir de ses connaissances d'entraînement. Il peut inventer des faits, confondre des données ou produire des réponses plausibles mais fausses — c'est ce qu'on appelle l'<strong>hallucination</strong>.</li>
+                    <li>Une <strong>IA Grounded</strong> comme HYBRIDE interroge d'abord sa base de données, récupère les faits pertinents, puis formule sa réponse à partir de ces données vérifiées. Pas de place pour l'invention.</li>
+                </ul>
+
+                <div class="info-box" style="background: #f0fdf4; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #10b981;">
+                    <p><strong>L'analogie simple</strong></p>
+                    <p><strong>ChatGPT</strong> = un ami qui répond de mémoire. Souvent pertinent, parfois complètement faux, et vous ne pouvez pas vérifier.</p>
+                    <p><strong>HYBRIDE</strong> = un bibliothécaire qui va chercher dans les archives avant de répondre. Plus lent d'une seconde, mais toujours factuel.</p>
+                </div>
+
+                <p>En termes techniques, HYBRIDE utilise une architecture appelée <strong>RAG</strong> (Retrieval-Augmented Generation) : le modèle "récupère" d'abord les données pertinentes dans la base, puis "augmente" sa réponse avec ces données vérifiées. Le résultat : <strong>zéro hallucination</strong> sur les questions Loto.</p>
+            </section>
+
+            <!-- Comment HYBRIDE accède aux données -->
+            <section class="legal-section">
+                <h2>Comment HYBRIDE accède aux données en temps réel</h2>
+
+                <p>HYBRIDE n'est pas un chatbot décoratif. Il est connecté à la même base de données que le <a href="/moteur">moteur d'exploration</a> et les <a href="/loto/statistiques">statistiques</a> de LotoIA :</p>
+
+                <ul>
+                    <li><strong>986+ tirages officiels FDJ</strong> depuis novembre 2019 (plus de 7 ans d'historique)</li>
+                    <li><strong>Synchronisation automatique</strong> après chaque tirage officiel (lundi, mercredi, samedi)</li>
+                    <li>Base hébergée sur <strong>Google Cloud SQL</strong> pour la fiabilité et la rapidité</li>
+                </ul>
+
+                <h3>Le parcours d'une question</h3>
+                <ol>
+                    <li><strong>Vous posez votre question</strong> dans le chatbot (texte libre, en français)</li>
+                    <li><strong>HYBRIDE analyse votre intention</strong> et identifie les données nécessaires</li>
+                    <li><strong>Il interroge la base de données</strong> Cloud SQL en temps réel</li>
+                    <li><strong>Gemini (Google DeepMind)</strong> formule une réponse claire à partir des données récupérées</li>
+                    <li><strong>Vérification anti-hallucination</strong> : la réponse est ancrée exclusivement sur les données FDJ</li>
+                    <li><strong>Vous recevez une réponse factuelle</strong>, généralement en moins de 3 secondes</li>
+                </ol>
+
+                <p>Les données utilisées par HYBRIDE sont <strong>exactement les mêmes</strong> que celles affichées dans les pages <a href="/loto/statistiques">Statistiques</a> et <a href="/loto/numeros-les-plus-sortis">Numéros les plus sortis</a>. Pas de base alternative, pas de données approximatives.</p>
+            </section>
+
+            <!-- Ce que vous pouvez demander -->
+            <section class="legal-section">
+                <h2>Ce que vous pouvez demander à HYBRIDE</h2>
+
+                <h3>Questions sur les numéros</h3>
+                <p>HYBRIDE connaît l'historique complet de chaque numéro (1 à 49) et chaque numéro Chance (1 à 10).</p>
+                <div class="example-box">
+                    <code>"Combien de fois le 22 est sorti en 2024 ?"</code>
+                    <code>"Quel est le numéro le plus sorti depuis 2019 ?"</code>
+                    <code>"Le 7 et le 14 sont-ils déjà sortis ensemble ?"</code>
+                    <code>"Quels numéros ne sont pas sortis depuis plus de 20 tirages ?"</code>
+                </div>
+
+                <h3>Questions sur les tirages</h3>
+                <p>Retrouvez n'importe quel tirage par date ou explorez l'historique complet.</p>
+                <div class="example-box">
+                    <code>"Quel était le résultat du tirage du 15 janvier 2025 ?"</code>
+                    <code>"Combien de tirages ont eu lieu en 2024 ?"</code>
+                    <code>"Quel tirage a eu la somme la plus élevée ?"</code>
+                    <code>"Montre-moi les 5 derniers tirages."</code>
+                </div>
+
+                <h3>Questions sur les statistiques</h3>
+                <p>HYBRIDE calcule les statistiques à la volée à partir de la base complète.</p>
+                <div class="example-box">
+                    <code>"Quels sont les 5 numéros les plus chauds en ce moment ?"</code>
+                    <code>"Quelle est la fréquence moyenne de sortie du numéro 42 ?"</code>
+                    <code>"Y a-t-il des paires de numéros qui sortent souvent ensemble ?"</code>
+                    <code>"Quel numéro Chance sort le plus souvent ?"</code>
+                </div>
+
+                <h3>Questions pédagogiques</h3>
+                <p>HYBRIDE explique aussi le fonctionnement de la plateforme et les concepts statistiques.</p>
+                <div class="example-box">
+                    <code>"Comment fonctionne le moteur HYBRIDE ?"</code>
+                    <code>"C'est quoi un numéro chaud ?"</code>
+                    <code>"Le Loto est-il vraiment aléatoire ?"</code>
+                    <code>"Qu'est-ce que l'indice de convergence ?"</code>
+                </div>
+            </section>
+
+            <!-- Ce que HYBRIDE ne fait PAS -->
+            <section class="legal-section">
+                <h2>Ce que HYBRIDE ne fait PAS</h2>
+
+                <p>HYBRIDE est un assistant d'<strong>analyse</strong>, pas un oracle. Voici ce qu'il refuse de faire :</p>
+
+                <ul>
+                    <li>Il <strong>ne prédit PAS</strong> les résultats futurs — le Loto est un jeu de hasard pur</li>
+                    <li>Il <strong>ne promet PAS</strong> de gains — aucune méthode ne peut garantir un gain au Loto</li>
+                    <li>Il <strong>ne donne PAS</strong> de "numéros magiques" ou de "combinaisons gagnantes"</li>
+                    <li>Il <strong>refuse les questions hors-sujet</strong> (politique, médecine, cuisine…)</li>
+                    <li>Il <strong>rappelle systématiquement</strong> que le Loto est un jeu de hasard et que jouer comporte des risques</li>
+                </ul>
+
+                <p>Cette honnêteté n'est pas une limitation — c'est une <strong>force</strong>. Dans un univers où les sites de "prédictions" pullulent, HYBRIDE choisit la transparence et l'intégrité. Pour en savoir plus sur les limites de l'IA dans le Loto, consultez notre article <a href="/loto/intelligence-artificielle">Loto et Intelligence Artificielle</a>.</p>
+            </section>
+
+            <!-- Comparatif -->
+            <section class="legal-section">
+                <h2>HYBRIDE vs ChatGPT — Le comparatif</h2>
+
+                <p>Pourquoi ne pas simplement utiliser ChatGPT pour analyser le Loto ? Voici la différence concrète :</p>
+
+                <table class="compare-table">
+                    <thead>
+                        <tr>
+                            <th>Critère</th>
+                            <th>HYBRIDE (LotoIA)</th>
+                            <th>ChatGPT / GPTs Loto</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="criteria">Données FDJ réelles</td>
+                            <td>986+ tirages officiels</td>
+                            <td>Aucune base de données</td>
+                        </tr>
+                        <tr>
+                            <td class="criteria">Mise à jour</td>
+                            <td>Après chaque tirage</td>
+                            <td>Knowledge cutoff figé</td>
+                        </tr>
+                        <tr>
+                            <td class="criteria">Anti-hallucination</td>
+                            <td>Vérification systématique</td>
+                            <td>Peut inventer des données</td>
+                        </tr>
+                        <tr>
+                            <td class="criteria">Spécialisé Loto</td>
+                            <td>100% dédié</td>
+                            <td>Généraliste</td>
+                        </tr>
+                        <tr>
+                            <td class="criteria">Gratuit</td>
+                            <td>Sans inscription</td>
+                            <td>Limité sans abonnement</td>
+                        </tr>
+                        <tr>
+                            <td class="criteria">Personnalité</td>
+                            <td>Mascotte ludique et pédagogique</td>
+                            <td>Générique</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p>Quand vous demandez à ChatGPT <em>"Quel numéro sort le plus au Loto ?"</em>, il génère une réponse plausible basée sur des connaissances générales — souvent inexacte ou datée. Quand vous posez la même question à HYBRIDE, il interroge la base de données FDJ en temps réel et vous donne la <strong>vraie réponse</strong>, à jour du dernier tirage.</p>
+            </section>
+
+            <!-- Personnalité -->
+            <section class="legal-section">
+                <h2>La personnalité HYBRIDE</h2>
+
+                <p>HYBRIDE n'est pas un chatbot froid et technique. Il a été conçu pour être <strong>accessible, pédagogique et sympathique</strong> :</p>
+
+                <ul>
+                    <li><strong>Ton conversationnel</strong> — Il s'adresse à vous comme un assistant bienveillant, pas comme un rapport statistique</li>
+                    <li><strong>Emojis et mise en forme</strong> — Il utilise des emojis et des listes pour rendre les données lisibles et agréables</li>
+                    <li><strong>Jeu responsable</strong> — Il rappelle régulièrement que le Loto est un jeu de hasard et oriente vers Joueurs Info Service si nécessaire</li>
+                    <li><strong>Pédagogie</strong> — Il explique les concepts (numéros chauds, convergence, écart-type) dans un langage accessible</li>
+                </ul>
+
+                <p>Vous avez peut-être déjà croisé sa mascotte — le petit robot présent sur les pages du site. C'est lui, HYBRIDE. Sa philosophie : <strong>rendre les statistiques compréhensibles pour tous</strong>, du joueur occasionnel au passionné de data.</p>
+            </section>
+
+            <!-- CTA Essayer -->
+            <section class="legal-section">
+                <div class="cta-try">
+                    <h3>Essayez HYBRIDE maintenant</h3>
+                    <p>Le chatbot est disponible sur toutes les pages de LotoIA. Cliquez sur l'icône en bas à droite pour commencer une conversation.</p>
+                    <div class="cta-try-links">
+                        <a href="/loto" class="btn-white">Explorer des grilles</a>
+                        <a href="/loto/analyse" class="btn-outline">Auditer ma grille</a>
+                        <a href="/loto/statistiques" class="btn-outline">Statistiques</a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FAQ inline -->
+            <section class="legal-section">
+                <h2>Questions fréquentes sur HYBRIDE</h2>
+
+                <h3>HYBRIDE peut-il me donner les numéros gagnants du prochain tirage ?</h3>
+                <p><strong>Non.</strong> Le Loto est un jeu de hasard pur et <strong>personne</strong> — aucune IA, aucun algorithme, aucun "système" — ne peut prédire les résultats. HYBRIDE analyse les données passées pour vous donner des statistiques factuelles. Il ne prédit pas l'avenir, et il le dit clairement.</p>
+
+                <h3>Les réponses de HYBRIDE sont-elles fiables ?</h3>
+                <p><strong>Oui.</strong> Chaque réponse est calculée à partir des 986+ tirages officiels de la Française des Jeux stockés dans notre base Cloud SQL. L'architecture Grounded vérifie systématiquement les données avant de formuler une réponse. Si HYBRIDE ne trouve pas l'information dans la base, il le dit — plutôt que d'inventer.</p>
+
+                <h3>HYBRIDE fonctionne-t-il pour l'EuroMillions ?</h3>
+                <p><strong>Bientôt !</strong> Le module EuroMillions arrive le 15 mars 2026. HYBRIDE sera alors connecté aux deux bases de données (Loto et EuroMillions) pour répondre à vos questions sur les deux jeux.</p>
+
+                <h3>Mes conversations sont-elles enregistrées ?</h3>
+                <p><strong>Non.</strong> Aucune donnée personnelle n'est stockée. Les conversations ne sont ni enregistrées, ni transmises à des tiers. LotoIA respecte le RGPD. Consultez notre <a href="/politique-confidentialite">politique de confidentialité</a> pour plus de détails.</p>
+            </section>
+
+            <!-- Avertissement -->
+            <section class="legal-section">
+                <div class="info-box" style="background: #fef3c7; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+                    <p><strong>Jeu responsable</strong></p>
+                    <p>Le Loto est un jeu de hasard. Jouer comporte des risques : endettement, isolement, dépendance. Ne jouez jamais plus que ce que vous pouvez vous permettre de perdre.</p>
+                    <p>Appelez le <strong>09 74 75 13 13</strong> (appel non surtaxé) — <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
+                    <p>Interdiction de jeu aux mineurs.</p>
+                </div>
+            </section>
+
+        </article>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-nav">
+                <a href="/">Moteurs</a>
+                <span class="footer-sep">•</span>
+                <a href="/accueil">Accueil</a>
+                <span class="footer-sep">•</span>
+                <a href="/loto/analyse">Analyse</a>
+                <span class="footer-sep">•</span>
+                <a href="/loto">Exploration</a>
+                <span class="footer-sep">•</span>
+                <a href="/loto/statistiques">Statistiques</a>
+                <span class="footer-sep">•</span>
+                <a href="/hybride" class="active">HYBRIDE</a>
+                <span class="footer-sep">•</span>
+                <a href="/news">Actualités</a>
+                <span class="footer-sep">•</span>
+                <a href="/faq">FAQ</a>
+            </div>
+            <div class="footer-legal">
+                <a href="/mentions-legales">Mentions légales</a>
+                <span class="footer-sep">•</span>
+                <a href="/politique-confidentialite">Confidentialité</a>
+                <span class="footer-sep">•</span>
+                <a href="/politique-cookies">Cookies</a>
+            </div>
+            <p class="footer-brand">LotoIA.fr <span class="app-version">v1.001</span></p>
+            <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dépendance. Appelez le 09 74 75 13 13 (appel non surtaxé).</p>
+            <p class="footer-help">Interdiction de jeu aux mineurs. <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
+            <div class="credits">
+                <p class="dev-by">Développé par <strong>JyppY</strong></p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Bouton Scroll to Top -->
+    <button id="scroll-to-top" class="scroll-to-top" aria-label="Retour en haut">
+        ↑
+    </button>
+
+    <script src="/ui/static/scroll.js?v=7" defer></script>
+    <script src="/ui/static/cookie-consent.js?v=7" defer></script>
+
+    <!-- HYBRIDE Chatbot Widget -->
+    <div id="hybride-chatbot-root"></div>
+    <link rel="stylesheet" href="/ui/static/hybride-chatbot.css?v=4.3">
+    <script src="/ui/static/hybride-chatbot.js?v=4.3" defer></script>
+    <script src="/ui/static/version-inject.js" defer></script>
+</body>
+</html>

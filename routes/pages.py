@@ -26,6 +26,7 @@ SEO_PAGES = {
     "/historique": "historique.html",
     "/methodologie": "methodologie.html",
     "/moteur": "moteur.html",
+    "/hybride": "hybride.html",
     "/a-propos": "a-propos.html",
     "/disclaimer": "disclaimer.html",
     "/mentions-legales": "mentions-legales.html",
@@ -170,6 +171,12 @@ async def page_methodologie():
 @router.get("/moteur")
 async def page_moteur():
     return serve_page("moteur.html")
+
+
+@router.get("/hybride")
+async def page_hybride():
+    """HYBRIDE — Chatbot IA Grounded de LotoIA."""
+    return serve_page("hybride.html")
 
 
 @router.get("/a-propos")

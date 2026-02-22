@@ -90,6 +90,14 @@
     <priority>0.85</priority>
   </url>
 
+  <!-- Chatbot HYBRIDE -->
+  <url>
+    <loc>https://lotoia.fr/hybride</loc>
+    <lastmod>2026-02-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
   <!-- Page à propos (E-E-A-T) -->
   <url>
     <loc>https://lotoia.fr/a-propos</loc>
