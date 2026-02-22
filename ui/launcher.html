@@ -431,7 +431,19 @@
             }
 
             .launcher-container {
-                padding-bottom: 130px;
+                padding-bottom: 80px;
+            }
+
+            /* Nav SEO : masquée visuellement sur mobile, reste dans le DOM pour Googlebot */
+            nav[aria-label="Plan du site"] {
+                display: none !important;
+            }
+
+            /* Footer : fixé en bas, compact, ne chevauche plus les cartes */
+            .launcher-footer {
+                bottom: 0;
+                padding: 12px 10px;
+                background: linear-gradient(transparent, rgba(15, 23, 42, 0.95) 30%);
             }
 
             .engines-grid {
@@ -460,7 +472,7 @@
 
             .launcher-container {
                 padding: 15px;
-                padding-bottom: 140px;
+                padding-bottom: 80px;
             }
 
             .engine-card {
