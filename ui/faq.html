@@ -69,6 +69,70 @@
             "@type": "Answer",
             "text": "Les numéros froids sont les 15 numéros les moins fréquemment sortis lors des 2 dernières années. Ces numéros ont un retard important."
           }
+        },
+        {
+          "@type": "Question",
+          "name": "L'intelligence artificielle peut-elle prédire le Loto ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Non. Le Loto est un jeu de hasard pur où chaque tirage est indépendant. Aucune IA ne peut prédire les résultats. L'IA peut en revanche analyser les fréquences historiques et détecter les biais cognitifs des joueurs."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Quelle est la probabilité de gagner au Loto ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "La probabilité de trouver les 5 bons numéros parmi 49 et le bon numéro Chance parmi 10 est de 1 sur 19 068 840. Cette probabilité est identique pour toutes les combinaisons, à chaque tirage."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Qu'est-ce que le moteur HYBRIDE ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Le moteur HYBRIDE est l'algorithme d'analyse de LotoIA. Il combine 5 composantes : analyse fréquentielle, calcul des retards, pondération temporelle (méthodologie 5 ans + 2), scoring multicritère et sélection optimale."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Les numéros en retard ont-ils plus de chances de sortir ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Non. C'est le sophisme du joueur (gambler's fallacy). Chaque tirage est indépendant : les boules n'ont pas de mémoire. Un numéro en retard n'a pas plus de chances de sortir qu'un autre."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Quelle est la différence entre LotoIA et ChatGPT pour le Loto ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "ChatGPT est un modèle de langage qui invente des numéros sans accès aux données réelles. LotoIA utilise une IA Grounded connectée aux 986+ tirages officiels FDJ. Chaque analyse est calculée à partir de données vérifiées."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "LotoIA est-il gratuit ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Oui, LotoIA est 100% gratuit, sans inscription ni paiement. Toutes les fonctionnalités sont accessibles : exploration de grilles, analyse, statistiques et chatbot IA."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Comment sont calculés les numéros chauds et froids ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Les numéros chauds sont les 15 numéros les plus fréquemment sortis sur les 2 dernières années. Les numéros froids sont les 15 moins fréquents. Ce calcul est mis à jour après chaque tirage officiel FDJ."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Comment composer une grille équilibrée ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Une grille équilibrée respecte plusieurs critères : 2-3 numéros pairs et 2-3 impairs, 2-3 numéros bas (1-24) et 2-3 hauts (25-49), une somme entre 100 et 140, et peu de numéros consécutifs. Le simulateur LotoIA évalue automatiquement ces critères."
+          }
         }
       ]
     }
@@ -128,6 +192,7 @@
                 <li><a href="#badges">Badges et Terminologie</a></li>
                 <li><a href="#donnees">Données et Fiabilité</a></li>
                 <li><a href="#fenetre-donnees">Fenêtre de données</a></li>
+                <li><a href="#ia-probabilites">IA et Probabilités</a></li>
                 <li><a href="#utilisation">Utilisation</a></li>
                 <li><a href="#jeu-responsable">Jeu Responsable</a></li>
             </ul>
@@ -362,6 +427,124 @@
                 </div>
 
                 <!-- ═══════════════════════════════════════════════════════════
+                     Categorie : IA et Probabilités
+                     ═══════════════════════════════════════════════════════════ -->
+                <div class="faq-category" id="ia-probabilites">
+                    <h3 class="faq-category-title">IA et Probabilités</h3>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>L'intelligence artificielle peut-elle prédire le Loto ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p><strong>Non.</strong> Le Loto est un jeu de hasard pur où chaque tirage est statistiquement indépendant. Aucune IA, aucun algorithme ne peut prédire les résultats.</p>
+                            <p>L'IA peut en revanche <strong>analyser les fréquences historiques</strong> et détecter les biais cognitifs des joueurs. C'est exactement ce que fait LotoIA.</p>
+                            <p>Pour approfondir ce sujet, consultez notre article complet : <a href="/loto/intelligence-artificielle">Loto et Intelligence Artificielle</a>.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Quelle est la probabilité de gagner au Loto ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>La probabilité de trouver les 5 bons numéros parmi 49 et le bon numéro Chance parmi 10 est de <strong>1 sur 19 068 840</strong>.</p>
+                            <p>Cette probabilité est <strong>identique pour toutes les combinaisons</strong>, à chaque tirage. La combinaison 1-2-3-4-5 a exactement autant de chances de sortir que 7-14-23-38-47.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Qu'est-ce que le moteur HYBRIDE ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Le <strong>moteur HYBRIDE</strong> est l'algorithme d'analyse au cœur de LotoIA. Il combine 5 composantes :</p>
+                            <ol>
+                                <li><strong>Analyse fréquentielle</strong> — Fréquences d'apparition de chaque numéro</li>
+                                <li><strong>Calcul des retards</strong> — Nombre de tirages depuis la dernière apparition</li>
+                                <li><strong>Pondération temporelle</strong> — Méthodologie "5 ans + 2"</li>
+                                <li><strong>Scoring multicritère</strong> — Équilibre pair/impair, dispersion, somme</li>
+                                <li><strong>Sélection optimale</strong> — Classement par convergence statistique</li>
+                            </ol>
+                            <p>Découvrez les détails sur la page <a href="/moteur">Moteur HYBRIDE</a> et la <a href="/methodologie">Méthodologie</a>.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Les numéros en retard ont-ils plus de chances de sortir ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p><strong>Non.</strong> C'est le <em>sophisme du joueur</em> (gambler's fallacy), un biais cognitif classique.</p>
+                            <p>Chaque tirage est un événement <strong>indépendant</strong> : les boules n'ont pas de mémoire. Le fait qu'un numéro soit en retard ne modifie en rien sa probabilité de sortir au prochain tirage.</p>
+                            <p>Consultez le <a href="/loto/numeros-les-plus-sortis">classement des numéros les plus sortis</a> pour des données factuelles.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Quelle est la différence entre LotoIA et ChatGPT pour le Loto ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p><strong>ChatGPT</strong> est un modèle de langage génératif. Quand vous lui demandez des numéros de Loto, il <strong>invente</strong> — il n'a pas accès aux données réelles des tirages FDJ.</p>
+                            <p><strong>LotoIA</strong> utilise une IA <strong>"Grounded"</strong> (ancrée) : chaque analyse est calculée à partir des <strong>986+ tirages officiels</strong> stockés dans notre base de données. Zéro hallucination, uniquement des analyses factuelles.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Comment sont calculés les numéros chauds et froids ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Les <strong>numéros chauds</strong> sont les 15 numéros les plus fréquemment sortis sur les <strong>2 dernières années</strong> de tirages.</p>
+                            <p>Les <strong>numéros froids</strong> sont les 15 numéros les moins fréquemment sortis sur la même période.</p>
+                            <p>Ce calcul est mis à jour automatiquement après chaque tirage officiel FDJ. Retrouvez le classement complet sur la page <a href="/loto/numeros-les-plus-sortis">Numéros les plus sortis</a>.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Comment composer une grille équilibrée ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Une grille statistiquement équilibrée respecte plusieurs critères :</p>
+                            <ul>
+                                <li><strong>Pair/Impair</strong> : 2 ou 3 de chaque</li>
+                                <li><strong>Bas/Haut</strong> : 2-3 numéros bas (1-24) et 2-3 hauts (25-49)</li>
+                                <li><strong>Somme</strong> : entre 100 et 140</li>
+                                <li><strong>Dispersion</strong> : écart de 20 à 45 entre le plus petit et le plus grand</li>
+                                <li><strong>Suites</strong> : peu ou pas de numéros consécutifs</li>
+                            </ul>
+                            <p>Notre <a href="/loto/analyse">simulateur d'analyse</a> évalue automatiquement ces critères en temps réel.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>LotoIA est-il gratuit ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p><strong>Oui, 100% gratuit</strong>, sans inscription ni paiement.</p>
+                            <p>Toutes les fonctionnalités sont accessibles librement :</p>
+                            <ul>
+                                <li><a href="/loto">Exploration de grilles</a></li>
+                                <li><a href="/loto/analyse">Analyse de grille</a></li>
+                                <li><a href="/loto/statistiques">Statistiques complètes</a></li>
+                                <li>Chatbot IA Grounded</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══════════════════════════════════════════════════════════
                      Categorie : Utilisation
                      ═══════════════════════════════════════════════════════════ -->
                 <div class="faq-category" id="utilisation">
@@ -511,6 +694,10 @@
                 <a href="/news">Actualités</a>
                 <span class="footer-sep">•</span>
                 <a href="/faq" class="active">FAQ</a>
+                <span class="footer-sep">•</span>
+                <a href="/loto/intelligence-artificielle">Loto et IA</a>
+                <span class="footer-sep">•</span>
+                <a href="/a-propos">À propos</a>
             </div>
             <div class="footer-legal">
                 <a href="/mentions-legales">Mentions légales</a>

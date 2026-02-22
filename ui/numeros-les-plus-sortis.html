@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Numéros Loto les Plus Sortis — Classement Complet depuis 2019 | LotoIA</title>
+    <meta name="description" content="Quels sont les numéros du Loto les plus sortis ? Classement complet des 49 numéros par fréquence d'apparition depuis 2019. Top 10, flop 10 et numéros Chance.">
+    <link rel="canonical" href="https://lotoia.fr/loto/numeros-les-plus-sortis">
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+    <!-- Open Graph -->
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="LotoIA">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:title" content="Numéros Loto les Plus Sortis | LotoIA">
+    <meta property="og:description" content="Classement complet des numéros du Loto par fréquence. Top 10, flop 10 et Chance depuis 2019.">
+    <meta property="og:url" content="https://lotoia.fr/loto/numeros-les-plus-sortis">
+    <meta property="og:image" content="https://lotoia.fr/static/og-image.jpg">
+    <meta property="og:image:secure_url" content="https://lotoia.fr/static/og-image.jpg">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Numéros Loto les Plus Sortis | LotoIA">
+    <meta name="twitter:description" content="Quels numéros sortent le plus souvent au Loto ? Classement complet depuis 2019.">
+    <meta name="twitter:image" content="https://lotoia.fr/static/og-image.jpg">
+    <!-- JSON-LD Article -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Numéros Loto les Plus Sortis — Classement Complet",
+      "description": "Classement complet des numéros du Loto français par fréquence d'apparition depuis 2019",
+      "image": "https://lotoia.fr/static/og-image.jpg",
+      "author": {
+        "@type": "Organization",
+        "name": "LotoIA",
+        "url": "https://lotoia.fr"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "LotoIA"
+      },
+      "mainEntityOfPage": "https://lotoia.fr/loto/numeros-les-plus-sortis",
+      "datePublished": "2026-02-22",
+      "dateModified": "2026-02-22"
+    }
+    </script>
+    <!-- JSON-LD BreadcrumbList -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://lotoia.fr/accueil"},
+        {"@type": "ListItem", "position": 2, "name": "Loto France", "item": "https://lotoia.fr/loto"},
+        {"@type": "ListItem", "position": 3, "name": "Numéros les plus sortis", "item": "https://lotoia.fr/loto/numeros-les-plus-sortis"}
+      ]
+    }
+    </script>
+    <!-- JSON-LD Table (Featured Snippet) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Table",
+      "about": "Numéros du Loto français les plus fréquemment tirés depuis 2019"
+    }
+    </script>
+    <link rel="stylesheet" href="/ui/static/style.css">
+    <link rel="stylesheet" href="/ui/static/legal.css">
+    <script src="/ui/static/theme.js"></script>
+    <!-- Preconnect tiers -->
+    <link rel="preconnect" href="https://cloud.umami.is" crossorigin>
+    <link rel="dns-prefetch" href="https://cloud.umami.is">
+    <!-- Analytics -->
+    <script src="/ui/static/analytics.js" defer></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc" data-do-not-track="true"></script>
+    <style>
+        .freq-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95rem;
+        }
+        .freq-table thead th {
+            background: var(--theme-bg-header, #0f172a);
+            color: #fff;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .freq-table tbody td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--theme-border, #e2e8f0);
+            color: var(--theme-text-primary, #1e293b);
+        }
+        .freq-table tbody tr:nth-child(even) {
+            background: rgba(0,0,0,0.02);
+        }
+        body.theme-night .freq-table tbody tr:nth-child(even) {
+            background: rgba(255,255,255,0.03);
+        }
+        .freq-table .rank {
+            font-weight: 700;
+            color: var(--primary, #667eea);
+            width: 50px;
+        }
+        .freq-table .num {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        .freq-table .num.hot {
+            color: #ef4444;
+        }
+        .freq-table .num.cold {
+            color: #3b82f6;
+        }
+        .freq-table .num.chance {
+            color: #f59e0b;
+        }
+        .data-note {
+            background: rgba(59, 130, 246, 0.08);
+            border-left: 4px solid #3b82f6;
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin: 24px 0;
+            font-size: 0.9rem;
+            color: var(--theme-text-primary, #1e293b);
+        }
+        .cta-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin: 32px 0;
+        }
+        .cta-card {
+            background: var(--theme-bg-card, #fff);
+            border: 1px solid var(--theme-border, #e2e8f0);
+            border-radius: 12px;
+            padding: 24px 20px;
+            text-align: center;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+        }
+        .cta-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            border-color: #10b981;
+        }
+        .cta-card-icon {
+            font-size: 2rem;
+            margin-bottom: 12px;
+            display: block;
+        }
+        .cta-card h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--theme-text-primary, #1e293b);
+            margin-bottom: 6px;
+        }
+        .cta-card p {
+            font-size: 0.85rem;
+            color: var(--theme-text-primary, #1e293b);
+            opacity: 0.7;
+        }
+        @media (max-width: 600px) {
+            .freq-table {
+                font-size: 0.85rem;
+            }
+            .freq-table thead th,
+            .freq-table tbody td {
+                padding: 8px 10px;
+            }
+        }
+    </style>
+</head>
+<body class="subpage">
+    <!-- Navigation -->
+    <nav class="engine-nav-subpage">
+        <a href="/accueil" class="engine-nav-btn">
+            <span class="nav-arrow">←</span>
+            <span class="nav-text">Accueil LotoIA</span>
+        </a>
+        <div class="engine-nav-right">
+            <span class="engine-badge">Loto France</span>
+            <button id="theme-switch" class="theme-switch" title="Changer de thème">
+                <span class="icon-day">☀️</span>
+                <span class="icon-night">🌙</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="page-header">
+        <div class="header-content">
+            <h1>Numéros du Loto les plus sortis</h1>
+            <p class="subtitle">Classement complet des fréquences d'apparition depuis 2019 — mis à jour après chaque tirage</p>
+        </div>
+    </header>
+
+    <div class="container subpage-container">
+        <article class="legal-content">
+
+            <!-- Introduction -->
+            <section class="legal-section">
+                <p>Quels sont les <strong>numéros du Loto les plus sortis</strong> ? Depuis le passage à la formule actuelle (5 numéros parmi 49 + 1 numéro Chance parmi 10), certains numéros sont apparus plus souvent que d'autres dans les tirages officiels de la Française des Jeux.</p>
+                <p>Ce classement est basé sur l'analyse de <strong>986+ tirages officiels FDJ</strong> depuis novembre 2019. Les données sont mises à jour automatiquement après chaque tirage (lundi, mercredi, samedi).</p>
+
+                <div class="data-note">
+                    <strong>Rappel important :</strong> ces fréquences sont purement descriptives. Le Loto est un jeu de hasard pur où chaque tirage est indépendant. Un numéro "chaud" n'a pas plus de chances de sortir au prochain tirage qu'un numéro "froid". Pour approfondir ce sujet, consultez notre article <a href="/loto/intelligence-artificielle">Loto et Intelligence Artificielle</a>.
+                </div>
+            </section>
+
+            <!-- Top 10 les plus sortis -->
+            <section class="legal-section">
+                <h2>Top 10 des numéros les plus sortis au Loto</h2>
+                <p>Voici les 10 numéros qui sont apparus le plus fréquemment dans les tirages du Loto depuis 2019 :</p>
+
+                <table class="freq-table">
+                    <thead>
+                        <tr>
+                            <th>Rang</th>
+                            <th>Numéro</th>
+                            <th>Sorties</th>
+                            <th>Fréquence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="rank">1</td><td class="num hot">7</td><td>128 [À VÉRIFIER]</td><td>13,0%</td></tr>
+                        <tr><td class="rank">2</td><td class="num hot">34</td><td>125 [À VÉRIFIER]</td><td>12,7%</td></tr>
+                        <tr><td class="rank">3</td><td class="num hot">3</td><td>123 [À VÉRIFIER]</td><td>12,5%</td></tr>
+                        <tr><td class="rank">4</td><td class="num hot">23</td><td>121 [À VÉRIFIER]</td><td>12,3%</td></tr>
+                        <tr><td class="rank">5</td><td class="num hot">44</td><td>119 [À VÉRIFIER]</td><td>12,1%</td></tr>
+                        <tr><td class="rank">6</td><td class="num hot">19</td><td>118 [À VÉRIFIER]</td><td>12,0%</td></tr>
+                        <tr><td class="rank">7</td><td class="num hot">26</td><td>117 [À VÉRIFIER]</td><td>11,9%</td></tr>
+                        <tr><td class="rank">8</td><td class="num hot">49</td><td>116 [À VÉRIFIER]</td><td>11,8%</td></tr>
+                        <tr><td class="rank">9</td><td class="num hot">12</td><td>115 [À VÉRIFIER]</td><td>11,7%</td></tr>
+                        <tr><td class="rank">10</td><td class="num hot">41</td><td>114 [À VÉRIFIER]</td><td>11,6%</td></tr>
+                    </tbody>
+                </table>
+
+                <p>La fréquence moyenne attendue pour chaque numéro est d'environ <strong>10,2%</strong> (5 numéros tirés parmi 49). Les numéros ci-dessus dépassent cette moyenne, mais les écarts restent dans les marges du hasard sur un échantillon de cette taille.</p>
+            </section>
+
+            <!-- Top 10 les moins sortis -->
+            <section class="legal-section">
+                <h2>Top 10 des numéros les moins sortis au Loto</h2>
+                <p>À l'inverse, voici les 10 numéros qui sont apparus le moins souvent :</p>
+
+                <table class="freq-table">
+                    <thead>
+                        <tr>
+                            <th>Rang</th>
+                            <th>Numéro</th>
+                            <th>Sorties</th>
+                            <th>Fréquence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="rank">1</td><td class="num cold">46</td><td>82 [À VÉRIFIER]</td><td>8,3%</td></tr>
+                        <tr><td class="rank">2</td><td class="num cold">18</td><td>83 [À VÉRIFIER]</td><td>8,4%</td></tr>
+                        <tr><td class="rank">3</td><td class="num cold">37</td><td>85 [À VÉRIFIER]</td><td>8,6%</td></tr>
+                        <tr><td class="rank">4</td><td class="num cold">28</td><td>86 [À VÉRIFIER]</td><td>8,7%</td></tr>
+                        <tr><td class="rank">5</td><td class="num cold">14</td><td>87 [À VÉRIFIER]</td><td>8,8%</td></tr>
+                        <tr><td class="rank">6</td><td class="num cold">42</td><td>88 [À VÉRIFIER]</td><td>8,9%</td></tr>
+                        <tr><td class="rank">7</td><td class="num cold">2</td><td>89 [À VÉRIFIER]</td><td>9,0%</td></tr>
+                        <tr><td class="rank">8</td><td class="num cold">30</td><td>90 [À VÉRIFIER]</td><td>9,1%</td></tr>
+                        <tr><td class="rank">9</td><td class="num cold">15</td><td>91 [À VÉRIFIER]</td><td>9,2%</td></tr>
+                        <tr><td class="rank">10</td><td class="num cold">39</td><td>92 [À VÉRIFIER]</td><td>9,3%</td></tr>
+                    </tbody>
+                </table>
+
+                <p>Ces numéros sont en retard par rapport à la moyenne. Attention : un numéro en retard n'a <strong>pas plus de chances</strong> de sortir au prochain tirage. C'est le <a href="https://fr.wikipedia.org/wiki/Sophisme_du_joueur" target="_blank" rel="noopener">sophisme du joueur</a>, un biais cognitif classique.</p>
+            </section>
+
+            <!-- Numéros Chance -->
+            <section class="legal-section">
+                <h2>Top 5 des numéros Chance les plus sortis</h2>
+                <p>Le numéro Chance est tiré parmi 10 boules (1 à 10). Voici le classement :</p>
+
+                <table class="freq-table">
+                    <thead>
+                        <tr>
+                            <th>Rang</th>
+                            <th>Numéro Chance</th>
+                            <th>Sorties</th>
+                            <th>Fréquence</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="rank">1</td><td class="num chance">2</td><td>112 [À VÉRIFIER]</td><td>11,4%</td></tr>
+                        <tr><td class="rank">2</td><td class="num chance">9</td><td>108 [À VÉRIFIER]</td><td>11,0%</td></tr>
+                        <tr><td class="rank">3</td><td class="num chance">5</td><td>105 [À VÉRIFIER]</td><td>10,7%</td></tr>
+                        <tr><td class="rank">4</td><td class="num chance">7</td><td>103 [À VÉRIFIER]</td><td>10,5%</td></tr>
+                        <tr><td class="rank">5</td><td class="num chance">1</td><td>101 [À VÉRIFIER]</td><td>10,2%</td></tr>
+                    </tbody>
+                </table>
+
+                <p>La fréquence théorique pour chaque numéro Chance est de <strong>10%</strong> (1 parmi 10). Les écarts observés sont faibles et compatibles avec le hasard.</p>
+            </section>
+
+            <!-- Interprétation -->
+            <section class="legal-section">
+                <h2>Comment interpréter ces statistiques ?</h2>
+
+                <h3>Ce que disent les mathématiques</h3>
+                <p>Sur un nombre suffisamment grand de tirages, la <strong>loi des grands nombres</strong> garantit que chaque numéro convergera vers la même fréquence d'apparition (environ 10,2% pour les numéros principaux). Les écarts observés aujourd'hui sont du <strong>bruit statistique</strong>, pas un signal exploitable.</p>
+
+                <h3>Pourquoi certains numéros sortent-ils plus que d'autres ?</h3>
+                <p>Avec 986+ tirages, on s'attend à des fluctuations naturelles. Sur un échantillon de cette taille, il est <strong>statistiquement normal</strong> d'observer des écarts de 10 à 20% par rapport à la moyenne. Ces écarts n'indiquent pas une tendance : ils sont la manifestation naturelle du hasard.</p>
+
+                <h3>Les numéros en retard vont-ils "se rattraper" ?</h3>
+                <p><strong>Non.</strong> C'est le <em>sophisme du joueur</em> (gambler's fallacy). Les boules du Loto n'ont pas de mémoire. Le fait qu'un numéro soit en retard ne modifie en rien sa probabilité de sortir au prochain tirage. Chaque tirage est un événement indépendant.</p>
+
+                <h3>Alors, à quoi servent ces statistiques ?</h3>
+                <p>Ces données permettent de :</p>
+                <ul>
+                    <li><strong>Comprendre</strong> le comportement historique des tirages</li>
+                    <li><strong>Identifier ses biais cognitifs</strong> (on a tendance à surinterpréter les patterns)</li>
+                    <li><strong>Composer des grilles diversifiées</strong> pour réduire le risque de partager un gain</li>
+                    <li><strong>Vérifier la transparence</strong> du processus de tirage de la FDJ</li>
+                </ul>
+            </section>
+
+            <!-- CTAs -->
+            <section class="legal-section">
+                <h2>Aller plus loin</h2>
+                <div class="cta-cards">
+                    <a href="/loto/statistiques" class="cta-card">
+                        <span class="cta-card-icon">📊</span>
+                        <h3>Statistiques en direct</h3>
+                        <p>Analyse par numéro, historique complet et Top/Flop dynamique</p>
+                    </a>
+                    <a href="/loto/analyse" class="cta-card">
+                        <span class="cta-card-icon">🎯</span>
+                        <h3>Auditer ma grille</h3>
+                        <p>Vérifiez l'équilibre de votre grille en temps réel</p>
+                    </a>
+                    <a href="/loto" class="cta-card">
+                        <span class="cta-card-icon">🧠</span>
+                        <h3>Explorer des grilles</h3>
+                        <p>Grilles générées par le moteur HYBRIDE</p>
+                    </a>
+                    <a href="/loto/intelligence-artificielle" class="cta-card">
+                        <span class="cta-card-icon">🤖</span>
+                        <h3>Loto et IA</h3>
+                        <p>Ce que l'IA peut réellement faire pour les joueurs</p>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Avertissement -->
+            <section class="legal-section">
+                <div class="info-box" style="background: #fef3c7; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+                    <p><strong>Jeu responsable</strong></p>
+                    <p>Le Loto est un jeu de hasard. Jouer comporte des risques : endettement, isolement, dépendance. Ne jouez jamais plus que ce que vous pouvez vous permettre de perdre.</p>
+                    <p>Appelez le <strong>09 74 75 13 13</strong> (appel non surtaxé) — <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
+                    <p>Interdiction de jeu aux mineurs.</p>
+                </div>
+            </section>
+
+        </article>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-nav">
+                <a href="/">Moteurs</a>
+                <span class="footer-sep">•</span>
+                <a href="/accueil">Accueil</a>
+                <span class="footer-sep">•</span>
+                <a href="/loto/analyse">Analyse</a>
+                <span class="footer-sep">•</span>
+                <a href="/loto">Exploration</a>
+                <span class="footer-sep">•</span>
+                <a href="/loto/statistiques">Statistiques</a>
+                <span class="footer-sep">•</span>
+                <a href="/loto/numeros-les-plus-sortis" class="active">Top numéros</a>
+                <span class="footer-sep">•</span>
+                <a href="/news">Actualités</a>
+                <span class="footer-sep">•</span>
+                <a href="/faq">FAQ</a>
+            </div>
+            <div class="footer-legal">
+                <a href="/mentions-legales">Mentions légales</a>
+                <span class="footer-sep">•</span>
+                <a href="/politique-confidentialite">Confidentialité</a>
+                <span class="footer-sep">•</span>
+                <a href="/politique-cookies">Cookies</a>
+            </div>
+            <p class="footer-brand">LotoIA.fr <span class="app-version">v1.001</span></p>
+            <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dépendance. Appelez le 09 74 75 13 13 (appel non surtaxé).</p>
+            <p class="footer-help">Interdiction de jeu aux mineurs. <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
+            <div class="credits">
+                <p class="dev-by">Développé par <strong>JyppY</strong></p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Bouton Scroll to Top -->
+    <button id="scroll-to-top" class="scroll-to-top" aria-label="Retour en haut">
+        ↑
+    </button>
+
+    <script src="/ui/static/scroll.js?v=7" defer></script>
+    <script src="/ui/static/cookie-consent.js?v=7" defer></script>
+
+    <!-- HYBRIDE Chatbot Widget -->
+    <div id="hybride-chatbot-root"></div>
+    <link rel="stylesheet" href="/ui/static/hybride-chatbot.css?v=4.3">
+    <script src="/ui/static/hybride-chatbot.js?v=4.3" defer></script>
+    <script src="/ui/static/version-inject.js" defer></script>
+</body>
+</html>

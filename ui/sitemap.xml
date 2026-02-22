@@ -75,6 +75,29 @@
     <priority>0.7</priority>
   </url>
 
+  <!-- Pages contenu SEO -->
+  <url>
+    <loc>https://lotoia.fr/loto/intelligence-artificielle</loc>
+    <lastmod>2026-02-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <url>
+    <loc>https://lotoia.fr/loto/numeros-les-plus-sortis</loc>
+    <lastmod>2026-02-22</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- Page à propos (E-E-A-T) -->
+  <url>
+    <loc>https://lotoia.fr/a-propos</loc>
+    <lastmod>2026-02-22</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
   <!-- ================================================
        PAGES SUPPORT (priority 0.5-0.6)
        ================================================ -->

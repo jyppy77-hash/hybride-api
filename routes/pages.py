@@ -19,11 +19,14 @@ SEO_PAGES = {
     "/loto/analyse": "simulateur.html",
     "/loto/exploration": "loto.html",
     "/loto/statistiques": "statistiques.html",
+    "/loto/intelligence-artificielle": "loto-ia.html",
+    "/loto/numeros-les-plus-sortis": "numeros-les-plus-sortis.html",
     "/faq": "faq.html",
     "/news": "news.html",
     "/historique": "historique.html",
     "/methodologie": "methodologie.html",
     "/moteur": "moteur.html",
+    "/a-propos": "a-propos.html",
     "/disclaimer": "disclaimer.html",
     "/mentions-legales": "mentions-legales.html",
     "/politique-confidentialite": "politique-confidentialite.html",
@@ -121,6 +124,18 @@ async def page_loto_statistiques():
     return serve_page_with_canonical("statistiques.html", "https://lotoia.fr/loto/statistiques")
 
 
+@router.get("/loto/intelligence-artificielle")
+async def page_loto_ia():
+    """Loto France — Page pilier IA et analyse statistique."""
+    return serve_page("loto-ia.html")
+
+
+@router.get("/loto/numeros-les-plus-sortis")
+async def page_loto_numeros():
+    """Loto France — Numéros les plus sortis (classement fréquences)."""
+    return serve_page("numeros-les-plus-sortis.html")
+
+
 ## /statistiques et /simulateur supprimés — 301 vers /loto/statistiques et /loto/analyse (main.py)
 
 
@@ -155,6 +170,12 @@ async def page_methodologie():
 @router.get("/moteur")
 async def page_moteur():
     return serve_page("moteur.html")
+
+
+@router.get("/a-propos")
+async def page_a_propos():
+    """À propos de LotoIA (E-E-A-T)."""
+    return serve_page("a-propos.html")
 
 
 # Pages legales
