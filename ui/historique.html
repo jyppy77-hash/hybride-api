@@ -24,6 +24,16 @@
     <meta name="twitter:title" content="Historique des Tirages Loto | LotoIA">
     <meta name="twitter:description" content="Consultez l'historique des tirages du Loto français depuis 2019.">
     <meta name="twitter:image" content="https://lotoia.fr/static/og-image.jpg">
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://lotoia.fr/accueil"},
+        {"@type": "ListItem", "position": 2, "name": "Historique des tirages", "item": "https://lotoia.fr/historique"}
+      ]
+    }
+    </script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -110,6 +120,9 @@
             text-decoration: underline;
         }
     </style>
+    <!-- Preconnect tiers -->
+    <link rel="preconnect" href="https://cloud.umami.is" crossorigin>
+    <link rel="dns-prefetch" href="https://cloud.umami.is">
     <!-- Analytics (charge apres consentement RGPD) -->
     <script src="/ui/static/analytics.js" defer></script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc" data-do-not-track="true"></script>
@@ -125,21 +138,45 @@
 
     <div id="result"></div>
 
-    <a href="/" class="back-link">← Retour à l'accueil</a>
+    <a href="/accueil" class="back-link">← Retour à l'accueil</a>
 
-    <footer style="margin-top: 40px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666;">
+    <nav style="margin-top: 30px; padding: 20px; background: #f0f4ff; border-radius: 10px; text-align: center; line-height: 2.2;">
+        <p style="font-weight: 600; color: #333; margin-bottom: 8px; font-size: 14px;">Explorer LotoIA</p>
+        <a href="/accueil" style="color: #007bff; text-decoration: none; margin: 0 8px; font-size: 13px;">Accueil</a>
+        <span style="color: #ccc;">•</span>
+        <a href="/loto" style="color: #007bff; text-decoration: none; margin: 0 8px; font-size: 13px;">Exploration de grilles</a>
+        <span style="color: #ccc;">•</span>
+        <a href="/loto/analyse" style="color: #007bff; text-decoration: none; margin: 0 8px; font-size: 13px;">Analyse de grille</a>
+        <span style="color: #ccc;">•</span>
+        <a href="/loto/statistiques" style="color: #007bff; text-decoration: none; margin: 0 8px; font-size: 13px;">Statistiques</a>
+        <span style="color: #ccc;">•</span>
+        <a href="/news" style="color: #007bff; text-decoration: none; margin: 0 8px; font-size: 13px;">Actualités</a>
+        <span style="color: #ccc;">•</span>
+        <a href="/faq" style="color: #007bff; text-decoration: none; margin: 0 8px; font-size: 13px;">FAQ</a>
+        <span style="color: #ccc;">•</span>
+        <a href="/moteur" style="color: #007bff; text-decoration: none; margin: 0 8px; font-size: 13px;">Moteur HYBRIDE</a>
+        <span style="color: #ccc;">•</span>
+        <a href="/methodologie" style="color: #007bff; text-decoration: none; margin: 0 8px; font-size: 13px;">Méthodologie</a>
+    </nav>
+
+    <footer style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; font-size: 12px; color: #666;">
         <div style="margin-bottom: 10px;">
+            <a href="/" style="color: #007bff; text-decoration: none; margin: 0 8px;">Moteurs</a>
+            <span>•</span>
             <a href="/mentions-legales" style="color: #007bff; text-decoration: none; margin: 0 8px;">Mentions légales</a>
             <span>•</span>
             <a href="/politique-confidentialite" style="color: #007bff; text-decoration: none; margin: 0 8px;">Confidentialité</a>
             <span>•</span>
             <a href="/politique-cookies" style="color: #007bff; text-decoration: none; margin: 0 8px;">Cookies</a>
+            <span>•</span>
+            <a href="/disclaimer" style="color: #007bff; text-decoration: none; margin: 0 8px;">Disclaimer</a>
         </div>
-        <p>LotoIA.fr - Jouer comporte des risques. Interdit aux mineurs.</p>
+        <p>LotoIA.fr — Jouer comporte des risques : endettement, isolement, dépendance. Appelez le 09 74 75 13 13.</p>
+        <p style="margin-top: 4px;">Interdiction de jeu aux mineurs. <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener" style="color: #007bff;">Joueurs Info Service</a></p>
     </footer>
 
     <link rel="stylesheet" href="/ui/static/legal.css">
-    <script src="/ui/static/cookie-consent.js"></script>
+    <script src="/ui/static/cookie-consent.js" defer></script>
     <script>
         function searchDraw() {
             const dateInput = document.getElementById('draw_date');

@@ -6,7 +6,7 @@
     <title>Statistiques Loto France - Fréquences et Tendances | LotoIA</title>
     <meta name="description" content="Statistiques complètes du Loto français : fréquences des numéros, tendances, numéros chauds et froids, historique des tirages depuis 2019.">
     <meta name="keywords" content="statistiques loto, fréquences numéros loto, moteur HYBRIDE, numéros chauds froids, retard loto, HYBRIDE, tendances loto">
-    <link rel="canonical" href="https://lotoia.fr/statistiques">
+    <link rel="canonical" href="https://lotoia.fr/loto/statistiques">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <!-- Open Graph -->
     <meta property="og:type" content="website">
@@ -14,7 +14,7 @@
     <meta property="og:locale" content="fr_FR">
     <meta property="og:title" content="Statistiques Loto France | LotoIA">
     <meta property="og:description" content="Fréquences, tendances et numéros chauds/froids du Loto français depuis 2019.">
-    <meta property="og:url" content="https://lotoia.fr/statistiques">
+    <meta property="og:url" content="https://lotoia.fr/loto/statistiques">
     <meta property="og:image" content="https://lotoia.fr/static/og-image.jpg">
     <meta property="og:image:secure_url" content="https://lotoia.fr/static/og-image.jpg">
     <meta property="og:image:type" content="image/jpeg">
@@ -32,7 +32,7 @@
       "@type": "Dataset",
       "name": "Statistiques Loto France",
       "description": "Statistiques des tirages du Loto français depuis 2019",
-      "url": "https://lotoia.fr/statistiques",
+      "url": "https://lotoia.fr/loto/statistiques",
       "creator": {
         "@type": "Organization",
         "name": "LotoIA"
@@ -40,10 +40,24 @@
       "temporalCoverage": "2019/.."
     }
     </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://lotoia.fr/accueil"},
+        {"@type": "ListItem", "position": 2, "name": "Loto France", "item": "https://lotoia.fr/loto"},
+        {"@type": "ListItem", "position": 3, "name": "Statistiques", "item": "https://lotoia.fr/loto/statistiques"}
+      ]
+    }
+    </script>
     <link rel="stylesheet" href="/ui/static/style.css?v=8">
     <link rel="stylesheet" href="/ui/static/legal.css?v=7">
     <!-- Theme script (en premier pour éviter le flash) -->
     <script src="/ui/static/theme.js?v=7"></script>
+    <!-- Preconnect tiers -->
+    <link rel="preconnect" href="https://cloud.umami.is" crossorigin>
+    <link rel="dns-prefetch" href="https://cloud.umami.is">
     <!-- Analytics (charge apres consentement RGPD) -->
     <script src="/ui/static/analytics.js?v=7" defer></script>
     <style>
@@ -461,7 +475,7 @@
                 <button class="tab active" onclick="switchTab('historique')">📅 Historique des tirages</button>
                 <button class="tab" onclick="switchTab('analyse')">🔍 Analyse par numéro</button>
                 <button class="tab" onclick="switchTab('topflop')">📌 Top / Flop</button>
-                <img src="/static/Hybride-audit.png?v=1" class="band-hybride-stat" alt="Mascotte HYBRIDE - Analyse statistique des tirages du Loto">
+                <img src="/static/Hybride-audit.png?v=1" class="band-hybride-stat" alt="Mascotte HYBRIDE - Analyse statistique des tirages du Loto" width="163" height="173">
             </div>
 
             <!-- ONGLET 1 : Historique des tirages -->
@@ -872,13 +886,13 @@
             }
         }
     </script>
-    <script src="/ui/static/nav-scroll.js?v=1"></script>
-    <script src="/ui/static/cookie-consent.js?v=7"></script>
+    <script src="/ui/static/nav-scroll.js?v=1" defer></script>
+    <script src="/ui/static/cookie-consent.js?v=7" defer></script>
 
     <!-- HYBRIDE Chatbot Widget -->
     <div id="hybride-chatbot-root"></div>
     <link rel="stylesheet" href="/ui/static/hybride-chatbot.css?v=4.3">
-    <script src="/ui/static/hybride-chatbot.js?v=4.3"></script>
-    <script src="/ui/static/version-inject.js"></script>
+    <script src="/ui/static/hybride-chatbot.js?v=4.3" defer></script>
+    <script src="/ui/static/version-inject.js" defer></script>
 </body>
 </html>

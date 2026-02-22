@@ -6,7 +6,7 @@
     <title>Simulateur de Grille Loto - Analysez Votre Sélection | LotoIA</title>
     <meta name="description" content="Composez votre propre grille Loto et obtenez une analyse IA en temps réel. Équilibre pair/impair, numéros chauds et froids, indice de convergence.">
     <meta name="keywords" content="simulateur loto, analyser grille loto, moteur HYBRIDE, analyse statistique, numéros chauds froids, HYBRIDE">
-    <link rel="canonical" href="https://lotoia.fr/simulateur">
+    <link rel="canonical" href="https://lotoia.fr/loto/analyse">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <!-- Open Graph -->
     <meta property="og:type" content="website">
@@ -14,7 +14,7 @@
     <meta property="og:locale" content="fr_FR">
     <meta property="og:title" content="Simulateur de Grille Loto | LotoIA">
     <meta property="og:description" content="Composez votre grille Loto et obtenez une analyse IA en temps reel. Score et equilibre.">
-    <meta property="og:url" content="https://lotoia.fr/simulateur">
+    <meta property="og:url" content="https://lotoia.fr/loto/analyse">
     <meta property="og:image" content="https://lotoia.fr/static/og-image.jpg">
     <meta property="og:image:secure_url" content="https://lotoia.fr/static/og-image.jpg">
     <meta property="og:image:type" content="image/jpeg">
@@ -31,10 +31,21 @@
       "@context": "https://schema.org",
       "@type": "SoftwareApplication",
       "name": "LotoIA - Analyse statistique",
-      "url": "https://lotoia.fr/simulateur",
-      "description": "Outil d analyse statistique descriptive pour grilles Loto",
+      "url": "https://lotoia.fr/loto/analyse",
+      "description": "Outil d'analyse statistique descriptive pour grilles Loto",
       "applicationCategory": "StatisticalTool",
       "operatingSystem": "Web"
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://lotoia.fr/accueil"},
+        {"@type": "ListItem", "position": 2, "name": "Loto France", "item": "https://lotoia.fr/loto"},
+        {"@type": "ListItem", "position": 3, "name": "Analyse de grille", "item": "https://lotoia.fr/loto/analyse"}
+      ]
     }
     </script>
     <link rel="stylesheet" href="/ui/static/style.css?v=5">
@@ -43,6 +54,9 @@
     <link rel="stylesheet" href="/ui/static/legal.css?v=4">
     <!-- Theme script (en premier pour éviter le flash) -->
     <script src="/ui/static/theme.js?v=4"></script>
+    <!-- Preconnect tiers -->
+    <link rel="preconnect" href="https://cloud.umami.is" crossorigin>
+    <link rel="dns-prefetch" href="https://cloud.umami.is">
     <!-- Analytics (charge apres consentement RGPD) -->
     <script src="/ui/static/analytics.js?v=4" defer></script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc" data-do-not-track="true"></script>
@@ -110,7 +124,7 @@
                     <span>Froid (rare)</span>
                 </div>
             </div>
-            <img src="/static/Hybride-audit.png" class="band-hybride" alt="Bandeau moteur HYBRIDE - Audit statistique des grilles Loto">
+            <img src="/static/Hybride-audit.png" class="band-hybride" alt="Bandeau moteur HYBRIDE - Audit statistique des grilles Loto" width="163" height="173" style="width: auto; height: auto; max-height: 80px; object-fit: contain;">
             <p id="stats-tirages" class="stats-info" style="text-align: center; margin-top: 12px; font-size: 0.9rem; color: var(--text-muted);">
                 Chargement des statistiques...
             </p>
@@ -144,7 +158,7 @@
                         </div>
                     </div>
                     <div class="hybride-horizontal">
-                        <img src="/static/Hybride-audit-horizontal.png" alt="Assistant Hybride analyse de grille">
+                        <img src="/static/Hybride-audit-horizontal.png" alt="Assistant Hybride analyse de grille" width="1536" height="526" style="width:100%; height:auto; max-width:100%;">
                     </div>
                 </div>
             </div>
@@ -231,16 +245,16 @@
         ↑
     </button>
 
-    <script src="/ui/static/sponsor-popup.js?v=4"></script>
-    <script src="/ui/static/simulateur.js?v=5"></script>
-    <script src="/ui/static/scroll.js?v=4"></script>
-    <script src="/ui/static/nav-scroll.js?v=1"></script>
-    <script src="/ui/static/cookie-consent.js?v=4"></script>
+    <script src="/ui/static/sponsor-popup.js?v=4" defer></script>
+    <script src="/ui/static/simulateur.js?v=5" defer></script>
+    <script src="/ui/static/scroll.js?v=4" defer></script>
+    <script src="/ui/static/nav-scroll.js?v=1" defer></script>
+    <script src="/ui/static/cookie-consent.js?v=4" defer></script>
 
     <!-- HYBRIDE Chatbot Widget -->
     <div id="hybride-chatbot-root"></div>
     <link rel="stylesheet" href="/ui/static/hybride-chatbot.css?v=4.3">
-    <script src="/ui/static/hybride-chatbot.js?v=4.3"></script>
-    <script src="/ui/static/version-inject.js"></script>
+    <script src="/ui/static/hybride-chatbot.js?v=4.3" defer></script>
+    <script src="/ui/static/version-inject.js" defer></script>
 </body>
 </html>

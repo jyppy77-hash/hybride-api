@@ -1,6 +1,6 @@
 # LotoIA - Technical Overview
 
-> Statistical analysis platform for the French Loto and EuroMillions, powered by the HYBRIDE_OPTIMAL_V1 engine.
+> Statistical analysis platform for the French Loto and EuroMillions, powered by the HYBRIDE engine.
 
 ---
 
@@ -40,28 +40,31 @@ hybride-api/
 │   ├── api_chat.py                      # HYBRIDE chatbot endpoint — Loto (12-phase detection + Text-to-SQL)
 │   ├── api_chat_em.py                   # HYBRIDE chatbot endpoint — EuroMillions (12-phase detection + Text-to-SQL)
 │   ├── em_data.py                       # EuroMillions data endpoints (tirages, stats, heat)
-│   └── em_analyse.py                    # EuroMillions analysis endpoints (generate, meta-analyse, custom grid)
+│   ├── em_analyse.py                    # EuroMillions analysis endpoints (generate, meta-analyse, texte, pdf, custom grid)
+│   └── em_pages.py                      # EuroMillions HTML page routes (7 SEO clean URLs)
 │
 ├── services/                            # Business logic layer
 │   ├── __init__.py                      # Package init
 │   ├── cache.py                         # In-memory TTL cache (1h, thread-safe)
 │   ├── circuit_breaker.py               # Gemini circuit breaker (3 fails → 60s open)
-│   ├── gemini.py                        # Gemini 2.0 Flash API client (httpx async)
+│   ├── gemini.py                        # Gemini 2.0 Flash API client — Loto (httpx async)
+│   ├── em_gemini.py                     # Gemini 2.0 Flash API client — EuroMillions (load_prompt_em)
 │   ├── stats_service.py                 # Stats business logic — Loto (extracted from routes)
 │   ├── em_stats_service.py              # Stats business logic — EuroMillions (em: cache prefix + chatbot grille/pitch)
-│   ├── pdf_generator.py                 # ReportLab PDF generation (META75 report)
-│   └── prompt_loader.py                 # Dynamic prompt loader (22 keys, 23 prompt files)
+│   ├── pdf_generator.py                 # ReportLab PDF generation — Loto (META75 report, single graph)
+│   ├── em_pdf_generator.py              # ReportLab PDF generation — EuroMillions (META75 EM, dual graphs boules+etoiles)
+│   └── prompt_loader.py                 # Dynamic prompt loader (36 keys: 22 Loto + 14 EM, load_prompt + load_prompt_em)
 │
 ├── engine/                              # Core analysis engine
 │   ├── __init__.py                      # Package init
-│   ├── hybride.py                       # HYBRIDE_OPTIMAL_V1 algorithm (Loto)
-│   ├── hybride_em.py                    # HYBRIDE_OPTIMAL_V1_EM algorithm (EuroMillions)
+│   ├── hybride.py                       # HYBRIDE algorithm (Loto)
+│   ├── hybride_em.py                    # HYBRIDE algorithm (EuroMillions)
 │   ├── stats.py                         # Statistical analysis module
 │   ├── models.py                        # Pydantic data models
 │   ├── db.py                            # Database connection proxy
 │   └── version.py                       # Version constant (1.0.0)
 │
-├── prompts/                             # Gemini contextual prompts (20 files)
+├── prompts/                             # Gemini contextual prompts (37 files)
 │   ├── chatbot/                         # HYBRIDE chatbot prompts
 │   │   ├── prompt_hybride.txt           # Multi-section prompt — Loto (identity, FAQ, rules, BDD)
 │   │   ├── prompt_pitch_grille.txt      # Pitch prompt — Loto (personalized grid commentary)
@@ -69,7 +72,7 @@ hybride-api/
 │   │   ├── prompt_hybride_em.txt        # Multi-section prompt — EuroMillions (identity, FAQ, rules, BDD)
 │   │   ├── prompt_pitch_grille_em.txt   # Pitch prompt — EuroMillions (5 nums + 2 étoiles commentary)
 │   │   └── prompt_sql_generator_em.txt  # SQL Generator prompt — EuroMillions (tirages_euromillions schema)
-│   ├── tirages/                         # Window-based prompts (by draw count)
+│   ├── tirages/                         # Window-based prompts — Loto (by draw count)
 │   │   ├── prompt_100.txt               # Prompt for 100-draw window
 │   │   ├── prompt_200.txt               # Prompt for 200-draw window
 │   │   ├── prompt_300.txt               # Prompt for 300-draw window
@@ -79,14 +82,32 @@ hybride-api/
 │   │   ├── prompt_700.txt               # Prompt for 700-draw window
 │   │   ├── prompt_800.txt               # Prompt for 800-draw window
 │   │   └── prompt_global.txt            # Prompt for GLOBAL window (fallback)
-│   └── annees/                          # Year-based prompts
-│       ├── prompt_1a.txt                # Prompt for 1-year window
-│       ├── prompt_2a.txt                # Prompt for 2-year window
-│       ├── prompt_3a.txt                # Prompt for 3-year window
-│       ├── prompt_4a.txt                # Prompt for 4-year window
-│       ├── prompt_5a.txt                # Prompt for 5-year window
-│       ├── prompt_6a.txt                # Prompt for 6-year window
-│       └── prompt_global.txt            # Prompt for GLOBAL window (annees fallback)
+│   ├── annees/                          # Year-based prompts — Loto
+│   │   ├── prompt_1a.txt                # Prompt for 1-year window
+│   │   ├── prompt_2a.txt                # Prompt for 2-year window
+│   │   ├── prompt_3a.txt                # Prompt for 3-year window
+│   │   ├── prompt_4a.txt                # Prompt for 4-year window
+│   │   ├── prompt_5a.txt                # Prompt for 5-year window
+│   │   ├── prompt_6a.txt                # Prompt for 6-year window
+│   │   └── prompt_global.txt            # Prompt for GLOBAL window (annees fallback)
+│   └── euromillions/                    # EuroMillions META ANALYSE prompts (15 files)
+│       ├── tirages/                     # Window-based prompts — EM (100-700 + GLOBAL, no 800)
+│       │   ├── prompt_100.txt           # EM 100-draw window (court terme)
+│       │   ├── prompt_200.txt           # EM 200-draw window (court-moyen terme)
+│       │   ├── prompt_300.txt           # EM 300-draw window (moyen terme)
+│       │   ├── prompt_400.txt           # EM 400-draw window (moyen-long terme)
+│       │   ├── prompt_500.txt           # EM 500-draw window (long terme)
+│       │   ├── prompt_600.txt           # EM 600-draw window (long terme etendu)
+│       │   ├── prompt_700.txt           # EM 700-draw window (quasi-integralite)
+│       │   └── prompt_global.txt        # EM GLOBAL window (fallback EM)
+│       └── annees/                      # Year-based prompts — EM
+│           ├── prompt_1a.txt            # EM 1-year window
+│           ├── prompt_2a.txt            # EM 2-year window
+│           ├── prompt_3a.txt            # EM 3-year window
+│           ├── prompt_4a.txt            # EM 4-year window
+│           ├── prompt_5a.txt            # EM 5-year window
+│           ├── prompt_6a.txt            # EM 6-year window
+│           └── prompt_global.txt        # EM GLOBAL window (annees fallback EM)
 │
 ├── ui/                                  # Frontend layer
 │   ├── launcher.html                    # Entry page (route: /)
@@ -109,6 +130,15 @@ hybride-api/
 │   ├── favicon.svg                      # SVG favicon
 │   ├── favicon-simple.svg               # Simplified SVG favicon
 │   │
+│   ├── em/                              # EuroMillions HTML pages
+│   │   ├── accueil-em.html              # EM welcome page (/euromillions/accueil)
+│   │   ├── euromillions.html            # EM grid generator (/euromillions)
+│   │   ├── simulateur-em.html           # EM grid simulator (/euromillions/simulateur)
+│   │   ├── statistiques-em.html         # EM statistics dashboard (/euromillions/statistiques)
+│   │   ├── historique-em.html           # EM draw history (/euromillions/historique)
+│   │   ├── faq-em.html                  # EM FAQ (/euromillions/faq)
+│   │   └── news-em.html                # EM news (/euromillions/news)
+│   │
 │   └── static/                          # Static assets
 │       ├── style.css                    # Main stylesheet
 │       ├── simulateur.css               # Simulator-specific styles
@@ -119,7 +149,8 @@ hybride-api/
 │       ├── hybride-chatbot.css          # HYBRIDE Chatbot widget styles
 │       ├── app.js                       # Main application logic
 │       ├── simulateur.js                # Simulator UI logic
-│       ├── sponsor-popup75.js           # META ANALYSE 75 popup (Gemini + PDF flow)
+│       ├── sponsor-popup75.js           # META ANALYSE 75 popup — Loto (Gemini + PDF flow)
+│       ├── sponsor-popup75-em.js        # META ANALYSE 75 popup — EuroMillions (dual graphs boules+etoiles, PDF flow)
 │       ├── hybride-chatbot.js           # HYBRIDE Chatbot widget — Loto (IIFE, vanilla JS, sessionStorage, GA4 tracking)
 │       ├── hybride-chatbot-em.js       # HYBRIDE Chatbot widget — EuroMillions (IIFE, /api/euromillions/hybride-chat, hybride-history-em)
 │       ├── theme.js                     # Dark/light mode toggle
@@ -193,7 +224,7 @@ This approach trades developer convenience (no hot-reload, no component model) f
 
 ## 3. Key Features
 
-### HYBRIDE_OPTIMAL_V1 Engine
+### HYBRIDE Engine (Loto)
 
 | Feature | Detail |
 |---------|--------|
@@ -204,7 +235,7 @@ This approach trades developer convenience (no hot-reload, no component model) f
 | **Star Rating** | 1-5 stars based on conformity score |
 | **Badges** | Auto-generated labels (Equilibre, Chaud, Froid, etc.) |
 
-### HYBRIDE_OPTIMAL_V1_EM Engine (EuroMillions)
+### HYBRIDE Engine (EuroMillions)
 
 | Feature | Detail |
 |---------|--------|
@@ -218,19 +249,33 @@ This approach trades developer convenience (no hot-reload, no component model) f
 | **Badges** | Auto-generated labels (Equilibre, Chaud, Froid, etc.) |
 | **Table** | `tirages_euromillions` (same DB `lotofrance`) |
 | **Cache** | All keys prefixed `em:` to avoid collision with Loto |
-| **Router** | `/api/euromillions` prefix, 15 endpoints (12 data + 3 analysis) |
+| **Router** | `/api/euromillions` prefix, 17 endpoints (12 data + 5 analysis) |
 
-### META ANALYSE 75 Module
+### META ANALYSE 75 Module (Loto)
 
 | Feature | Detail |
 |---------|--------|
 | **Local Analysis** | Real-time stats computed on Cloud SQL (< 300ms) |
 | **Window Modes** | By draw count (100-800, GLOBAL) or by years (1A-6A, GLOBAL) |
-| **Gemini AI Enrichment** | Text reformulation via Gemini 2.0 Flash API |
-| **Dynamic Prompts** | 20 contextual prompt files (9 tirages + 8 annees + 3 chatbot incl. SQL Generator) |
-| **PDF Export** | Professional META75 report via ReportLab (A4, DejaVuSans fonts) |
-| **Sponsor Popup** | 30-second branded timer with animated console |
+| **Gemini AI Enrichment** | Text reformulation via Gemini 2.0 Flash API (`enrich_analysis`) |
+| **Dynamic Prompts** | 22 Loto keys in PROMPT_MAP (9 tirages + 7 annees + 3 chatbot + SQL_GENERATOR + PITCH_GRILLE + GLOBAL_A) |
+| **PDF Export** | Professional META75 report via ReportLab (A4, single graph) |
+| **Sponsor Popup** | 30-second branded timer with animated console (`sponsor-popup75.js`) |
 | **Race Condition Handling** | Promise.race with 28s global timeout from T=0 |
+
+### META ANALYSE 75 Module (EuroMillions)
+
+| Feature | Detail |
+|---------|--------|
+| **Local Analysis** | Real-time EM stats computed on Cloud SQL (boules 1-50 + etoiles 1-12) |
+| **Window Modes** | By draw count (100-700, GLOBAL — no 800, only 729 draws) or by years (1A-6A, GLOBAL) |
+| **Gemini AI Enrichment** | Text reformulation via Gemini 2.0 Flash API (`enrich_analysis_em`) |
+| **Dynamic Prompts** | 14 EM keys in PROMPT_MAP (8 tirages + 7 annees, all prefixed `EM_`) |
+| **PDF Export** | Professional META75 EM report via ReportLab (A4, dual graphs: boules bar+pie + etoiles bar+pie) |
+| **Dual Graph Architecture** | `graph_data_boules` + `graph_data_etoiles` flow from local stats → frontend → PDF |
+| **Sponsor Popup** | 30-second branded timer with animated console (`sponsor-popup75-em.js`) |
+| **Race Condition Handling** | Promise.race with 28s global timeout from T=0 |
+| **Frontend** | `sponsor-popup75-em.js` (~620 lines): `triggerGeminiEarlyEM()`, `showSponsorPopup75EM()`, `openMetaResultPopupEM()` |
 
 ### Statistics System
 
@@ -385,7 +430,8 @@ USER BROWSER (HTML/CSS/Vanilla JS)
 |  routes/api_chat.py      HYBRIDE chatbot Loto      |
 |  routes/api_chat_em.py   HYBRIDE chatbot EM        |
 |  routes/em_data.py       EM data & stats endpoints |
-|  routes/em_analyse.py    EM engine & analysis      |
+|  routes/em_analyse.py    EM engine & META analysis |
+|  routes/em_pages.py      EM HTML page routes       |
 |  main.py                 health, SEO 301           |
 +--------------------------------------------------+
          |
@@ -393,21 +439,23 @@ USER BROWSER (HTML/CSS/Vanilla JS)
 +--------------------------------------------------+
 |              SERVICES LAYER                       |
 |                                                   |
-|  services/gemini.py          Gemini 2.0 Flash API |
+|  services/gemini.py          Gemini 2.0 Flash — Loto|
+|  services/em_gemini.py       Gemini 2.0 Flash — EM |
 |  services/cache.py           In-memory TTL cache  |
 |  services/circuit_breaker.py Gemini circuit breaker|
 |  services/stats_service.py   Stats business logic  |
 |  services/em_stats_service.py EM stats (em: cache) |
-|  services/pdf_generator.py   ReportLab PDF engine  |
-|  services/prompt_loader.py   Dynamic prompt loader|
+|  services/pdf_generator.py   ReportLab PDF — Loto  |
+|  services/em_pdf_generator.py ReportLab PDF — EM   |
+|  services/prompt_loader.py   Dynamic prompt loader |
 +--------------------------------------------------+
          |
          v
 +--------------------------------------------------+
 |              ENGINE LAYER                         |
 |                                                   |
-|  engine/hybride.py      HYBRIDE_OPTIMAL_V1 (Loto) |
-|  engine/hybride_em.py   HYBRIDE_OPTIMAL_V1_EM (EM)|
+|  engine/hybride.py      HYBRIDE (Loto)             |
+|  engine/hybride_em.py   HYBRIDE (EuroMillions)     |
 |  engine/stats.py        Descriptive statistics     |
 |  engine/models.py       Pydantic validation        |
 +--------------------------------------------------+
@@ -453,7 +501,7 @@ main.py (~340 lines) — Orchestrator
     ├── Middlewares (CORS, correlation ID, security headers, canonical, cache, SEO)
     ├── Rate limiting (slowapi, 10/min on chat endpoints)
     ├── Static mounts (/ui, /static)
-    ├── app.include_router() x10 (7 Loto + 3 EuroMillions)
+    ├── app.include_router() x11 (7 Loto + 4 EuroMillions)
     ├── /health (async + asyncio.wait_for 5s timeout + to_thread)
     └── SEO 301 redirects
 
@@ -471,6 +519,7 @@ schemas.py — Pydantic Models (Loto)
 em_schemas.py — Pydantic Models (EuroMillions)
     ├── EMGridData (nums + etoiles + score)
     ├── EMMetaAnalyseTextePayload
+    ├── EMMetaPdfPayload (graph_data_boules + graph_data_etoiles)
     ├── EMPitchGrilleItem
     ├── EMPitchGrillesRequest
     ├── EMChatMessage (role + content)
@@ -479,7 +528,7 @@ em_schemas.py — Pydantic Models (EuroMillions)
 
 rate_limit.py — Shared slowapi limiter instance
 
-routes/ — 10 routers (7 Loto + 3 EuroMillions)
+routes/ — 11 routers (7 Loto + 4 EuroMillions)
     ├── pages.py          (171 lines)  21 HTML page routes
     ├── api_data.py      (~1340 lines)  tirages, stats, heat, draw, hybride-stats, pitch context
     ├── api_analyse.py    (498 lines)  generate, ask, meta-analyse-local
@@ -488,17 +537,20 @@ routes/ — 10 routers (7 Loto + 3 EuroMillions)
     ├── api_tracking.py   (127 lines)  track-grid, track-ad-*
     ├── api_chat.py     (~1340 lines)  hybride-chat (7-phase detection + contextual continuation + Text-to-SQL + sponsor system), pitch-grilles
     ├── em_data.py        (716 lines)  EuroMillions data endpoints (12 endpoints, prefix /api/euromillions)
-    ├── em_analyse.py     (583 lines)  EuroMillions analysis endpoints (3 endpoints, prefix /api/euromillions)
-    └── api_chat_em.py  (1668 lines)  EM chatbot (12-phase detection + Text-to-SQL + pitch), prefix /api/euromillions
+    ├── em_analyse.py     (640 lines)  EuroMillions analysis endpoints (5 endpoints: generate, meta-analyse-local, meta-analyse-texte, meta-pdf, analyze-custom-grid)
+    ├── api_chat_em.py  (1668 lines)  EM chatbot (12-phase detection + Text-to-SQL + pitch), prefix /api/euromillions
+    └── em_pages.py      (~80 lines)  EuroMillions HTML page routes (7 SEO clean URLs, prefix /euromillions)
 
-services/ — 7 services
+services/ — 9 services
     ├── cache.py           (~40 lines)  In-memory TTL cache (1h, thread-safe)
     ├── circuit_breaker.py (~80 lines)  Gemini circuit breaker (CLOSED/OPEN/HALF_OPEN)
-    ├── gemini.py         (119 lines)  Gemini API client (via circuit breaker)
+    ├── gemini.py         (119 lines)  Gemini API client — Loto (via circuit breaker)
+    ├── em_gemini.py      (~100 lines)  Gemini API client — EuroMillions (load_prompt_em, circuit breaker)
     ├── stats_service.py  (~200 lines)  Stats business logic — Loto (extracted from routes)
     ├── em_stats_service.py(590 lines)  Stats business logic — EuroMillions (em: cache + chatbot grille/pitch)
-    ├── pdf_generator.py  (232 lines)  ReportLab PDF engine
-    └── prompt_loader.py   (60 lines)  Prompt file loader (22 keys incl. SQL_GENERATOR + 3 EM chatbot keys)
+    ├── pdf_generator.py  (232 lines)  ReportLab PDF engine — Loto (single graph)
+    ├── em_pdf_generator.py(270 lines)  ReportLab PDF engine — EuroMillions (dual graphs boules+etoiles, 2x2 matplotlib)
+    └── prompt_loader.py  (102 lines)  Prompt file loader (36 keys: 22 Loto + 14 EM, load_prompt + load_prompt_em)
 
 tests/ — 70 tests (pytest + pytest-cov)
     ├── conftest.py                    Fixtures (SmartMockCursor, cache clear)
@@ -530,7 +582,8 @@ Static HTML pages served by FastAPI. No templating engine. JavaScript modules ha
 |--------|---------|
 | `app.js` | Grid generation, DB status, result rendering, engine controls |
 | `simulateur.js` | Interactive 49-number grid, real-time API scoring |
-| `sponsor-popup75.js` | META ANALYSE 75: Gemini chain, PDF export, sponsor timer |
+| `sponsor-popup75.js` | META ANALYSE 75 Loto: Gemini chain, PDF export, sponsor timer |
+| `sponsor-popup75-em.js` | META ANALYSE 75 EM: dual graphs (boules+etoiles), Gemini chain, PDF export, sponsor timer |
 | `theme.js` | Dark/light mode toggle with `localStorage` persistence |
 | `analytics.js` | GDPR-compliant analytics (GA4 Consent Mode v2, `LotoIAAnalytics.track()` API) |
 | `cookie-consent.js` | Cookie consent banner and preference management |
@@ -547,7 +600,7 @@ Static HTML pages served by FastAPI. No templating engine. JavaScript modules ha
 - Persisted in `localStorage`
 - All pages include `theme.js` as first script (prevents flash)
 
-### META ANALYSE 75 - Client Flow (sponsor-popup75.js)
+### META ANALYSE 75 - Client Flow — Loto (sponsor-popup75.js)
 
 ```
 T=0  showMetaAnalysePopup()
@@ -570,6 +623,37 @@ T=0  showMetaAnalysePopup()
 - `finalAnalysisText` — Single source of truth for analysis text (Gemini or local)
 - `metaResultData` — Full API response data for the result popup
 - `metaAnalysisPromise` — Promise resolved when text is ready
+
+### META ANALYSE 75 - Client Flow — EuroMillions (sponsor-popup75-em.js)
+
+```
+T=0  showMetaAnalysePopupEM()
+ ├── triggerGeminiEarlyEM()                          # Fires immediately
+ │     ├── fetch /api/euromillions/meta-analyse-local # Local analysis (graph_boules + graph_etoiles)
+ │     └── fetch /api/euromillions/meta-analyse-texte # Gemini enrichment (load_prompt_em)
+ │           ├── SUCCESS → finalAnalysisTextEM = enriched
+ │           └── FAIL    → finalAnalysisTextEM = localText (fallback)
+ │
+ ├── Promise.race([chainPromise, 28s timeout])
+ │
+ └── showSponsorPopup75EM(30s timer)                 # Sponsor popup with EM console
+       └── onComplete → onMetaAnalyseCompleteEM()
+             ├── await metaAnalysisPromiseEM
+             ├── openMetaResultPopupEM()              # TWO graph sections + analysis text
+             └── PDF button → fetch /api/euromillions/meta-pdf (graph_data_boules + graph_data_etoiles)
+```
+
+**Key variables (all EM-suffixed, no collision with Loto):**
+- `finalAnalysisTextEM` — Single source of truth for EM analysis text
+- `metaResultDataEM` — Full API response data (includes `graph_boules` + `graph_etoiles`)
+- `metaAnalysisPromiseEM` — Promise resolved when EM text is ready
+
+**EM-specific differences vs Loto:**
+- Dual graphs: `graph_boules` (Top 5, colors blue/green) + `graph_etoiles` (Top 3, colors orange/teal)
+- No 800-draw window (EM has only 729 tirages), slider max = 700
+- ~104 tirages/year estimation (2 draws/week: mardi + vendredi)
+- Console logs mention "HYBRIDE EM", "base EuroMillions", "fréquences boules (1-50)", "fréquences étoiles (1-12)"
+- Matrix line format: "01 12 34 45 50 | ★03 ★11"
 
 ---
 
@@ -725,12 +809,14 @@ T=0  showMetaAnalysePopup()
 | `/api/euromillions/stats/top-flop` | GET | Top/bottom frequency rankings (boules + etoiles) |
 | `/api/euromillions/hybride-stats` | GET | Single number/etoile stats (numero, type) |
 
-### EuroMillions Analysis Endpoints (3) — routes/em_analyse.py
+### EuroMillions Analysis Endpoints (5) — routes/em_analyse.py
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/api/euromillions/generate` | GET | Generate N optimized EM grids (5 boules + 2 etoiles) |
-| `/api/euromillions/meta-analyse-local` | GET | META ANALYSE local for EM (real Cloud SQL stats) |
+| `/api/euromillions/meta-analyse-local` | GET | META ANALYSE local for EM (real Cloud SQL stats, dual graphs) |
+| `/api/euromillions/meta-analyse-texte` | POST | AI text enrichment via Gemini 2.0 Flash (EM prompts, `enrich_analysis_em`) |
+| `/api/euromillions/meta-pdf` | POST | Generate META75 EM PDF report (ReportLab, dual graphs boules+etoiles) |
 | `/api/euromillions/analyze-custom-grid` | POST | Analyze user-composed EM grid (nums + etoile1 + etoile2) |
 
 ### EuroMillions Chat Endpoints (2) — routes/api_chat_em.py
@@ -786,31 +872,53 @@ T=0  showMetaAnalysePopup()
 - **Chatbot**: `analyze_grille_for_chat(nums, etoiles)` — full grille analysis (somme ideal 75-175, bas=1-25, dispersion, conformité, badges). `prepare_grilles_pitch_context(grilles)` — multi-grille stats for Gemini pitch.
 - **Table**: `tirages_euromillions` (same DB `lotofrance`)
 
-### services/gemini.py — Gemini AI Client
+### services/gemini.py — Gemini AI Client (Loto)
 
 - **API**: Google Gemini 2.0 Flash (`generativelanguage.googleapis.com/v1beta`)
 - **Transport**: httpx.AsyncClient (shared via app lifespan, circuit breaker wrapped)
 - **Auth**: API key via `GEM_API_KEY` or `GEMINI_API_KEY` env var
-- **Prompt**: Loaded dynamically from `prompts/` via prompt_loader
+- **Prompt**: Loaded dynamically from `prompts/tirages/` or `prompts/annees/` via `load_prompt()`
 - **Fallback chain**: Gemini enriched → Local text (if API fails/timeout) → Circuit open fallback
 - **Output**: `{"analysis_enriched": "...", "source": "gemini_enriched"|"hybride_local"|"fallback"|"fallback_circuit"}`
 - **Shared by**: META ANALYSE (api_gemini.py) + HYBRIDE chatbot (api_chat.py) via `GEMINI_MODEL_URL`
 
-### services/pdf_generator.py — ReportLab PDF Engine
+### services/em_gemini.py — Gemini AI Client (EuroMillions)
+
+- **API**: Same Gemini 2.0 Flash endpoint
+- **Prompt**: Loaded dynamically from `prompts/euromillions/` via `load_prompt_em()` (auto `EM_` prefix)
+- **Function**: `enrich_analysis_em(analysis_local, window, *, http_client)` — mirrors `enrich_analysis()` for EM
+- **Fallback chain**: Same as Loto (Gemini enriched → Local text → Circuit open fallback)
+- **Logging**: `[META TEXTE EM]` prefix for all log entries
+- **Zero coupling**: Does not import from `gemini.py` (independent module)
+
+### services/pdf_generator.py — ReportLab PDF Engine (Loto)
 
 - **Format**: A4 portrait, professional layout
 - **Font system**: DejaVuSans (Linux/Cloud Run) -> Vera (ReportLab fallback)
   - 3 variants: Regular, Bold, Oblique
   - Multi-path resolution: reportlab/fonts/ -> /usr/share/fonts/ -> Vera fallback
-- **Content**: Title, analysis block, graph image, info block, sponsor with mailto link, signature, disclaimer, footer
+- **Content**: Title, analysis block, single graph image, info block, sponsor with mailto link, signature, disclaimer, footer
 - **Text**: Full UTF-8 support (French accents via `_utf8_clean()`)
+- **Output**: `io.BytesIO` containing the PDF
+
+### services/em_pdf_generator.py — ReportLab PDF Engine (EuroMillions)
+
+- **Format**: A4 portrait, same professional layout as Loto
+- **Dual graphs**: `generate_em_graph_image()` produces a 2x2 matplotlib figure:
+  - Row 1: Top 5 Boules (bar chart + pie chart, blue/green palette)
+  - Row 2: Top 3 Etoiles (bar chart + pie chart, orange/teal palette)
+- **Function**: `generate_em_meta_pdf(analysis, window, engine, graph, graph_data_boules, graph_data_etoiles, sponsor)`
+- **Title**: "Rapport META DONNEE EM - 75 Grilles" / "Analyse HYBRIDE EuroMillions"
+- **Text**: Full UTF-8 support (`_utf8_clean()` duplicated, not imported — zero coupling with Loto)
 - **Output**: `io.BytesIO` containing the PDF
 
 ### services/prompt_loader.py — Dynamic Prompt System
 
-- **23 prompt files** mapped via `PROMPT_MAP` dict (22 keys + 1 annees fallback)
-- **Keys**: 100, 200, 300, 400, 500, 600, 700, 800, GLOBAL, 1A, 2A, 3A, 4A, 5A, 6A, CHATBOT, PITCH_GRILLE, SQL_GENERATOR, CHATBOT_EM, PITCH_GRILLE_EM, SQL_GENERATOR_EM
-- **Fallback**: `prompt_global.txt` if specific file missing
+- **36 keys** mapped via `PROMPT_MAP` dict (22 Loto + 14 EM)
+- **Loto keys**: 100, 200, 300, 400, 500, 600, 700, 800, GLOBAL, 1A-6A, GLOBAL_A, CHATBOT, PITCH_GRILLE, SQL_GENERATOR, CHATBOT_EM, PITCH_GRILLE_EM, SQL_GENERATOR_EM
+- **EM keys**: EM_100, EM_200, EM_300, EM_400, EM_500, EM_600, EM_700, EM_GLOBAL, EM_1A-EM_6A, EM_GLOBAL_A
+- **Functions**: `load_prompt(window)` (Loto) + `load_prompt_em(window)` (EM, auto `EM_` prefix)
+- **Fallback**: `prompt_global.txt` for Loto, `prompts/euromillions/tirages/prompt_global.txt` for EM
 - **Anti-meta block**: Each prompt contains rules preventing Gemini from starting with meta-commentary ("Voici une reformulation...")
 
 ---
@@ -895,6 +1003,8 @@ T=0  showMetaAnalysePopup()
 | **EuroMillions Phase 2** | 2026-02-14 | Full EM API layer: `em_schemas.py` (47 lines), `engine/hybride_em.py` (440 lines), `services/em_stats_service.py` (390 lines), `routes/em_data.py` (716 lines, 12 endpoints), `routes/em_analyse.py` (583 lines, 3 endpoints). Zero modification to existing Loto files (except main.py +2 router mounts). | 15 EM endpoints operational, 31/31 local tests passed |
 | **EuroMillions Phase 3** | 2026-02-14 | Full EM frontend: 7 HTML pages (accueil-em, euromillions, simulateur-em, statistiques-em, historique-em, faq-em, news-em), `routes/em_pages.py`, SEO (clean URLs, sitemap, JSON-LD, OG tags), launcher activation | 7 EM pages + 7 SEO routes operational |
 | **EuroMillions Phase 4** | 2026-02-14 | Chatbot HYBRIDE EM: `routes/api_chat_em.py` (1668 lines, 12-phase detection + Text-to-SQL on tirages_euromillions), `hybride-chatbot-em.js` (277 lines, isolated storage `hybride-history-em`), 3 EM prompts (hybride, sql_generator, pitch_grille), `em_stats_service.py` +2 functions (analyze_grille_for_chat, prepare_grilles_pitch_context), `em_schemas.py` +3 schemas (EMChatMessage/Request/Response), widget integrated on 7 EM pages, main.py wired. Generic utilities imported from api_chat.py. | 2 EM chat endpoints operational, 8/8 tests passed (pitch requires MySQL) |
+| **Rename HYBRIDE** | 2026-02-14 | Global rename: `HYBRIDE_OPTIMAL_V1` / `HYBRIDE_OPTIMAL_V1_EM` → `HYBRIDE` across all user-facing files (62 files: HTML, JS, prompts, PDF generator). Backend engine code unchanged. Line endings normalized (LF). | Zero `HYBRIDE_OPTIMAL_V1` in frontend/prompts/PDF scope |
+| **Phase 5 — META ANALYSE EM** | 2026-02-14 | Full META ANALYSE 75 system for EuroMillions: `em_gemini.py` (Gemini enrichment EM), `em_pdf_generator.py` (dual graphs boules+etoiles, 2x2 matplotlib), 15 EM prompts (8 tirages + 7 annees), `sponsor-popup75-em.js` (~620 lines), `load_prompt_em()` in prompt_loader (14 EM keys), `EMMetaPdfPayload` schema, 2 new endpoints (meta-analyse-texte + meta-pdf), euromillions.html META slider integration. Zero modification to existing Loto files. | 22 files changed, 2299 lines added. EM META endpoints: 5 total. 82 routes total. |
 
 ---
 
@@ -903,11 +1013,12 @@ T=0  showMetaAnalysePopup()
 | Area | Status | Notes |
 |------|--------|-------|
 | Backend (FastAPI + Cloud SQL) | Stable | All endpoints operational (Loto + EuroMillions), audit refactoring complete (12 phases) |
-| HYBRIDE_OPTIMAL_V1 Engine (Loto) | Stable | Scoring, constraints, badges functional |
-| HYBRIDE_OPTIMAL_V1_EM Engine (EuroMillions) | Stable | 5 boules [1-50] + 2 etoiles [1-12], 15 endpoints, 31/31 tests passed. No Loto regression. |
+| HYBRIDE Engine (Loto) | Stable | Scoring, constraints, badges functional |
+| HYBRIDE Engine (EuroMillions) | Stable | 5 boules [1-50] + 2 etoiles [1-12], 15 endpoints, 31/31 tests passed. No Loto regression. |
 | HYBRIDE Chatbot (Loto) | Stable | 12-phase detection (Phase 0 contextual continuation + regex + Text-to-SQL), 22 temporal patterns, session persistence (sessionStorage), sponsor system, GA4 tracking (5 events), multi-numéros SQL, simulator redirect fallback. Deployed on 6 Loto pages (accueil, loto, simulateur, statistiques, news, faq) |
 | HYBRIDE Chatbot (EuroMillions) | Stable | Full EM adaptation of Loto chatbot: 12-phase detection, Text-to-SQL on tirages_euromillions, grille analysis (5 boules 1-50 + 2 étoiles 1-12), pitch grilles, isolated sessionStorage (`hybride-history-em`), GA4 `hybride_em_chat_*` events. Deployed on 7 EM pages. 3 dedicated EM prompts. Generic utilities shared from api_chat.py. |
-| META ANALYSE 75 | Stable | Async Gemini enrichment + PDF export, circuit breaker fallback |
+| META ANALYSE 75 (Loto) | Stable | Async Gemini enrichment + PDF export, circuit breaker fallback. 22 Loto prompt keys. |
+| META ANALYSE 75 (EM) | Stable | Dual graphs (boules+etoiles), EM Gemini enrichment (`enrich_analysis_em`), EM PDF export (2x2 matplotlib), 14 EM prompt keys, `sponsor-popup75-em.js`. No 800-draw window (729 draws max). |
 | Testing | Active | 70 unit tests (pytest), 43% coverage, CI integration |
 | Security | Hardened | CORS, CSP (GA4/GTM whitelisted), rate limiting, sanitized correlation IDs, security headers, prod/dev deps split. Credential audit V6: .env never in git, excluded from Docker, injected by Cloud Run in prod (risk: LOW) |
 | SEO | Ongoing | Structured data, sitemap, canonical redirects in place |
@@ -980,4 +1091,4 @@ Observable characteristics based on development usage:
 
 ---
 
-*Updated by JyppY & Claude Opus 4.6 — 14/02/2026 (v6.0: Phase 4 — Chatbot HYBRIDE EuroMillions. api_chat_em.py 1668 lines, hybride-chatbot-em.js 277 lines, 3 EM prompts, em_schemas +3 chat schemas, em_stats_service +2 functions, widget on 7 EM pages, 17 EM endpoints total, 10 routers)*
+*Updated by JyppY & Claude Opus 4.6 — 14/02/2026 (v6.2: Phase 5 — META ANALYSE EuroMillions: em_gemini, em_pdf_generator, 15 EM prompts, sponsor-popup75-em.js, prompt_loader 36 keys, 2 new EM endpoints, euromillions.html META slider. Overview aligned.)*

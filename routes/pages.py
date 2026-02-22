@@ -112,7 +112,7 @@ async def page_loto_analyse():
 @router.get("/loto/exploration")
 async def page_loto_exploration():
     """Loto France — Exploration de grilles (generateur)."""
-    return serve_page_with_canonical("loto.html", "https://lotoia.fr/loto/exploration")
+    return serve_page_with_canonical("loto.html", "https://lotoia.fr/loto")
 
 
 @router.get("/loto/statistiques")

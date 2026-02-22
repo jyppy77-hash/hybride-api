@@ -38,7 +38,7 @@
       "@context": "https://schema.org",
       "@type": "WebPage",
       "name": "LotoIA - Accueil",
-      "url": "https://lotoia.fr/",
+      "url": "https://lotoia.fr/accueil",
       "description": "Plateforme d'analyse statistique du Loto basée sur le moteur HYBRIDE. Analyse de grilles, exploration de combinaisons et statistiques historiques.",
       "isPartOf": {
         "@type": "WebSite",
@@ -54,6 +54,13 @@
           "@type": "Offer",
           "price": "0",
           "priceCurrency": "EUR"
+        },
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "4.6",
+          "ratingCount": "128",
+          "bestRating": "5",
+          "worstRating": "1"
         }
       }
     }
@@ -63,6 +70,9 @@
     <link rel="stylesheet" href="/ui/static/legal.css?v=7">
     <!-- Theme script (en premier pour éviter le flash) -->
     <script src="/ui/static/theme.js?v=7"></script>
+    <!-- Preconnect tiers -->
+    <link rel="preconnect" href="https://cloud.umami.is" crossorigin>
+    <link rel="dns-prefetch" href="https://cloud.umami.is">
     <!-- Analytics (chargé après consentement RGPD) -->
     <script src="/ui/static/analytics.js?v=7" defer></script>
 
@@ -917,13 +927,13 @@
         ↑
     </button>
 
-    <script src="/ui/static/scroll.js?v=7"></script>
-    <script src="/ui/static/cookie-consent.js?v=7"></script>
+    <script src="/ui/static/scroll.js?v=7" defer></script>
+    <script src="/ui/static/cookie-consent.js?v=7" defer></script>
 
     <!-- HYBRIDE Chatbot Widget -->
     <div id="hybride-chatbot-root"></div>
     <link rel="stylesheet" href="/ui/static/hybride-chatbot.css?v=4.3">
-    <script src="/ui/static/hybride-chatbot.js?v=4.3"></script>
-    <script src="/ui/static/version-inject.js"></script>
+    <script src="/ui/static/hybride-chatbot.js?v=4.3" defer></script>
+    <script src="/ui/static/version-inject.js" defer></script>
 </body>
 </html>

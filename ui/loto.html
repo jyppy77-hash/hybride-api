@@ -43,6 +43,16 @@
       }
     }
     </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://lotoia.fr/accueil"},
+        {"@type": "ListItem", "position": 2, "name": "Loto France", "item": "https://lotoia.fr/loto"}
+      ]
+    }
+    </script>
     <link rel="stylesheet" href="/ui/static/style.css?v=8">
     <link rel="stylesheet" href="/ui/static/sponsor-popup.css?v=7">
     <link rel="stylesheet" href="/ui/static/sponsor-popup75.css?v=7">
@@ -50,6 +60,9 @@
     <link rel="stylesheet" href="/ui/static/legal.css?v=7">
     <!-- Theme script (en premier pour éviter le flash) -->
     <script src="/ui/static/theme.js?v=7"></script>
+    <!-- Preconnect tiers -->
+    <link rel="preconnect" href="https://cloud.umami.is" crossorigin>
+    <link rel="dns-prefetch" href="https://cloud.umami.is">
     <!-- Analytics (charge apres consentement RGPD) -->
     <script src="/ui/static/analytics.js?v=7" defer></script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc" data-do-not-track="true"></script>
@@ -125,7 +138,7 @@
                         <span class="badge-text">MOTEUR HYBRIDE</span>
                     </div>
                     <p class="generator-subtitle">Configurez votre exploration sur <strong id="stat-tirages-inline">967</strong> tirages officiels FDJ <span class="data-depth">depuis 2019</span></p>
-                    <img src="/static/hybride-moteur.png" class="band-hybride-moteur" alt="Mascotte HYBRIDE - Moteur d'analyse statistique du Loto">
+                    <img src="/static/hybride-moteur.png" class="band-hybride-moteur" alt="Mascotte HYBRIDE - Moteur d'analyse statistique du Loto" width="170" height="141">
                 </div>
 
                 <!-- Formulaire (étape secondaire) -->
@@ -222,7 +235,7 @@
                         <span class="urgency-icon">⏱️</span>
                         <span class="urgency-text">Prochain tirage dans <strong id="days-until-draw">2</strong> jours</span>
                     </p>
-                    <img src="/static/hybride-moteur.png" class="band-hybride-moteur-mobile" alt="Mascotte HYBRIDE">
+                    <img src="/static/hybride-moteur.png" class="band-hybride-moteur-mobile" alt="Mascotte HYBRIDE" width="170" height="141">
                 </div>
             </div>
         </section>
@@ -628,16 +641,16 @@
         });
     })();
     </script>
-    <script src="/ui/static/app.js?v=8"></script>
-    <script src="/ui/static/scroll.js?v=7"></script>
-    <script src="/ui/static/nav-scroll.js?v=1"></script>
-    <script src="/ui/static/faq.js?v=7"></script>
-    <script src="/ui/static/cookie-consent.js?v=7"></script>
+    <script src="/ui/static/app.js?v=8" defer></script>
+    <script src="/ui/static/scroll.js?v=7" defer></script>
+    <script src="/ui/static/nav-scroll.js?v=1" defer></script>
+    <script src="/ui/static/faq.js?v=7" defer></script>
+    <script src="/ui/static/cookie-consent.js?v=7" defer></script>
 
     <!-- HYBRIDE Chatbot Widget -->
     <div id="hybride-chatbot-root"></div>
     <link rel="stylesheet" href="/ui/static/hybride-chatbot.css?v=4.3">
-    <script src="/ui/static/hybride-chatbot.js?v=4.3"></script>
-    <script src="/ui/static/version-inject.js"></script>
+    <script src="/ui/static/hybride-chatbot.js?v=4.3" defer></script>
+    <script src="/ui/static/version-inject.js" defer></script>
 </body>
 </html>

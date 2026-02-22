@@ -182,9 +182,9 @@
 
         /* Titre discret */
         .launcher-title {
-            font-size: 1.1rem;
-            font-weight: 400;
-            color: rgba(255, 255, 255, 0.6);
+            font-size: 1.3rem;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.85);
             margin-bottom: 0;
             letter-spacing: 2px;
             text-transform: uppercase;
@@ -431,12 +431,31 @@
             }
 
             .launcher-container {
-                padding-bottom: 80px;
+                padding-bottom: 120px;
             }
 
-            /* Nav SEO : masquée visuellement sur mobile, reste dans le DOM pour Googlebot */
+            /* Nav SEO : reveal au scroll sur mobile */
             nav[aria-label="Plan du site"] {
-                display: none !important;
+                position: static;
+                margin-top: 40px;
+                padding: 16px 10px 8px;
+                line-height: 2.2;
+                background: rgba(15, 23, 42, 0.95);
+                border-top: 1px solid rgba(255,255,255,0.1);
+                opacity: 0;
+                max-height: 0;
+                overflow: hidden;
+                transition: opacity 0.4s, max-height 0.4s;
+            }
+            nav[aria-label="Plan du site"].visible {
+                opacity: 1;
+                max-height: 300px;
+            }
+            nav[aria-label="Plan du site"] p {
+                font-size: 11px !important;
+            }
+            nav[aria-label="Plan du site"] a {
+                font-size: 12px !important;
             }
 
             /* Footer : fixé en bas, compact, ne chevauche plus les cartes */
@@ -494,6 +513,9 @@
         }
     </style>
     <link rel="stylesheet" href="/ui/static/legal.css">
+    <!-- Preconnect tiers -->
+    <link rel="preconnect" href="https://cloud.umami.is" crossorigin>
+    <link rel="dns-prefetch" href="https://cloud.umami.is">
     <!-- Analytics (charge apres consentement RGPD) -->
     <script src="/ui/static/analytics.js" defer></script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc" data-do-not-track="true"></script>
@@ -575,7 +597,7 @@
         LotoIA.fr — Plateforme d'analyse statistique
     </div>
 
-    <script src="/ui/static/cookie-consent.js"></script>
+    <script src="/ui/static/cookie-consent.js" defer></script>
     <script>
         function showComingSoon(engineName) {
             document.getElementById('coming-soon-title').textContent = engineName + ' \u2014 En construction';
@@ -625,6 +647,21 @@
                 hideComingSoon();
             }
         });
+
+        // Nav SEO : reveal au scroll (mobile uniquement)
+        (function () {
+            var nav = document.querySelector('nav[aria-label="Plan du site"]');
+            if (!nav) return;
+            window.addEventListener('scroll', function () {
+                var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                if (docHeight > 0 && scrollTop / docHeight >= 0.9) {
+                    nav.classList.add('visible');
+                } else {
+                    nav.classList.remove('visible');
+                }
+            });
+        })();
     </script>
 </body>
 </html>

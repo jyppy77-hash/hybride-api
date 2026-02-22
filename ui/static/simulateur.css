@@ -186,6 +186,7 @@
 @media (max-width: 768px) {
     .band-hybride {
         height: 42px;
+        margin-top: 15px;
     }
 }
 
