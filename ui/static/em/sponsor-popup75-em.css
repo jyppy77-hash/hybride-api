@@ -1,0 +1,127 @@
+/**
+ * SPONSOR POPUP 75 EM - Styles META ANALYSE EuroMillions
+ * Complement de sponsor-popup-em.css pour le mode 75%
+ * Badge meta-analyse + sponsor unique centre en ratio 16:9
+ * Theme cosmic/spatial EuroMillions
+ */
+
+/* ============================================
+   BADGE META ANALYSE
+   ============================================ */
+
+.meta-analyse-badge {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #003399 0%, #FFD700 100%);
+    color: #ffffff;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    box-shadow: 0 4px 15px rgba(0, 51, 153, 0.4);
+    z-index: 10;
+    white-space: nowrap;
+}
+
+.meta-analyse-modal .popup-title {
+    margin-top: 32px;
+}
+
+/* ============================================
+   SPONSOR UNIQUE CENTRE - RATIO 16:9
+   ============================================ */
+
+.sponsors-container-single {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.sponsor-card-single {
+    flex: none;
+    width: 100%;
+    max-width: 400px;
+}
+
+/* Conteneur ratio 16:9 pour future video */
+.sponsor-card-16x9 {
+    aspect-ratio: 16 / 9;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 180px;
+    position: relative;
+}
+
+.sponsor-card-16x9 .sponsor-logo {
+    font-size: 24px;
+    margin: 12px 0;
+}
+
+.sponsor-card-16x9 .sponsor-logo-icon {
+    font-size: 28px;
+}
+
+.sponsor-card-16x9 .sponsor-description {
+    font-size: 14px;
+    margin-bottom: 16px;
+}
+
+.sponsor-card-16x9 .sponsor-url {
+    font-size: 13px;
+}
+
+.sponsor-card-16x9 .sponsor-badge {
+    top: 16px;
+    left: 16px;
+    font-size: 11px;
+    padding: 5px 12px;
+}
+
+/* ============================================
+   RESPONSIVE META ANALYSE
+   ============================================ */
+
+@media (max-width: 480px) {
+    .meta-analyse-badge {
+        font-size: 9px;
+        padding: 5px 12px;
+        top: 8px;
+    }
+
+    .meta-analyse-modal .popup-title {
+        margin-top: 28px;
+    }
+
+    .sponsor-card-16x9 {
+        min-height: 140px;
+        aspect-ratio: 16 / 9;
+    }
+
+    .sponsor-card-16x9 .sponsor-logo {
+        font-size: 18px;
+    }
+
+    .sponsor-card-16x9 .sponsor-logo-icon {
+        font-size: 22px;
+    }
+
+    .sponsor-card-16x9 .sponsor-description {
+        font-size: 12px;
+    }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+    .sponsor-card-single {
+        max-width: 360px;
+    }
+
+    .sponsor-card-16x9 {
+        min-height: 160px;
+    }
+}
