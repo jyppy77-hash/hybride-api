@@ -59,7 +59,17 @@ body.theme-day .sponsor-popup-overlay {
     box-shadow:
         0 25px 80px rgba(0, 0, 0, 0.5),
         0 0 40px rgba(0, 51, 153, 0.15),
-        0 0 0 1px rgba(255, 215, 0, 0.1) inset;
+        0 0 0 1px rgba(255, 215, 0, 0.1) inset,
+        55px 72px 2px 0 rgba(255,215,0,0.4),
+        195px 145px 2px 0 rgba(255,215,0,0.3),
+        340px 88px 2px 0 rgba(255,215,0,0.4),
+        485px 132px 2px 0 rgba(255,215,0,0.3),
+        260px 42px 2px 0 rgba(255,215,0,0.4),
+        120px 258px 2px 0 rgba(255,215,0,0.3),
+        415px 195px 2px 0 rgba(255,215,0,0.4),
+        540px 282px 2px 0 rgba(255,215,0,0.3),
+        65px 155px 2px 0 rgba(255,215,0,0.4),
+        330px 305px 2px 0 rgba(255,215,0,0.3);
     position: relative;
     color: #ffffff;
     overflow: hidden;
@@ -103,18 +113,8 @@ body.theme-day .sponsor-popup-overlay {
         15px 280px 0 0 rgba(255,255,255,0.8),
         60px 310px 0 0 rgba(255,255,255,0.6),
         108px 295px 0 0 rgba(255,255,255,0.7),
-        155px 330px 0 0 rgba(255,255,255,0.5),
-        55px 72px 1px 0 rgba(255,215,0,0.5),
-        195px 145px 1px 0 rgba(255,215,0,0.4),
-        340px 88px 1px 0 rgba(255,215,0,0.5),
-        485px 132px 1px 0 rgba(255,215,0,0.4),
-        260px 42px 1px 0 rgba(255,215,0,0.5),
-        120px 258px 1px 0 rgba(255,215,0,0.4),
-        415px 195px 1px 0 rgba(255,215,0,0.5),
-        540px 282px 1px 0 rgba(255,215,0,0.4),
-        65px 155px 1px 0 rgba(255,215,0,0.5),
-        330px 305px 1px 0 rgba(255,215,0,0.4);
-    animation: twinkle 3s ease-in-out infinite alternate;
+        155px 330px 0 0 rgba(255,255,255,0.5);
+    animation: twinkle 4s ease-in-out infinite alternate;
     pointer-events: none;
     z-index: 1;
 }
@@ -122,15 +122,16 @@ body.theme-day .sponsor-popup-overlay {
 .sponsor-popup-modal::after {
     content: '';
     position: absolute;
-    top: 30%;
-    left: -15%;
-    width: 80px;
-    height: 2px;
-    background: linear-gradient(90deg, transparent, rgba(255,215,0,0.8), #ffffff);
-    border-radius: 2px;
-    filter: blur(0.5px);
+    top: 20%;
+    left: -10%;
+    width: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,215,0,0.3) 30%, rgba(255,255,255,0.8) 80%, transparent 100%);
+    border-radius: 1px;
+    filter: blur(0.3px);
     opacity: 0;
-    animation: shootingStar 2s linear 8s infinite;
+    animation: shootingStar 3s ease-out 10s 1;
+    animation-iteration-count: 1;
     pointer-events: none;
     z-index: 1;
 }
@@ -713,22 +714,35 @@ body.theme-day .sponsor-popup-overlay {
 }
 
 @keyframes cosmicNebula {
-    0%   { background-position: 0% 50%; }
+    0%   { background-position: 0% 0%; }
+    25%  { background-position: 50% 100%; }
     50%  { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
+    75%  { background-position: 50% 0%; }
+    100% { background-position: 0% 0%; }
 }
 
 @keyframes twinkle {
-    0%   { opacity: 0.5; }
-    50%  { opacity: 1; }
+    0%   { opacity: 0.4; }
+    30%  { opacity: 0.9; }
+    60%  { opacity: 0.5; }
+    80%  { opacity: 1; }
+    100% { opacity: 0.4; }
+}
+
+@keyframes twinkle2 {
+    0%   { opacity: 0.6; }
+    20%  { opacity: 0.3; }
+    50%  { opacity: 0.8; }
+    70%  { opacity: 0.5; }
     100% { opacity: 0.6; }
 }
 
 @keyframes shootingStar {
-    0%   { transform: translateX(0) translateY(0); opacity: 0; }
-    5%   { opacity: 1; }
-    70%  { opacity: 1; }
-    100% { transform: translateX(500px) translateY(200px); opacity: 0; }
+    0%   { transform: translateX(-100px) translateY(0) rotate(-35deg); opacity: 0; width: 0; }
+    3%   { opacity: 0.9; width: 80px; }
+    15%  { opacity: 0.7; }
+    30%  { opacity: 0; width: 40px; }
+    100% { transform: translateX(700px) translateY(250px) rotate(-35deg); opacity: 0; width: 0; }
 }
 
 @keyframes modalEnter {
