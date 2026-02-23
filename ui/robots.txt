@@ -11,17 +11,15 @@ Allow: /loto
 Allow: /loto/analyse
 Allow: /loto/exploration
 Allow: /loto/statistiques
-Allow: /simulateur
-Allow: /statistiques
+Allow: /loto/intelligence-artificielle
+Allow: /loto/numeros-les-plus-sortis
+Allow: /hybride
+Allow: /a-propos
 Allow: /faq
 Allow: /news
 Allow: /historique
 Allow: /methodologie
 Allow: /moteur
-Allow: /disclaimer
-Allow: /mentions-legales
-Allow: /politique-confidentialite
-Allow: /politique-cookies
 
 # === ASSETS FRONTEND (requis pour le rendu Google) ===
 Allow: /ui/static/
