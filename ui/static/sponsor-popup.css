@@ -38,12 +38,16 @@ body.theme-day .sponsor-popup-overlay {
 }
 
 .sponsor-popup-modal {
-    background:
-        radial-gradient(circle at 20% 20%, rgba(66,133,244,0.35), transparent 40%),
-        radial-gradient(circle at 80% 20%, rgba(52,168,83,0.35), transparent 40%),
-        radial-gradient(circle at 80% 80%, rgba(251,188,5,0.35), transparent 40%),
-        radial-gradient(circle at 20% 80%, rgba(234,67,53,0.35), transparent 40%),
-        linear-gradient(180deg, #ffffff 0%, #f4f6f8 100%);
+    background-color: #f4f6f8;
+    background-image: linear-gradient(135deg,
+        rgba(66,133,244,0.4),
+        rgba(52,168,83,0.4),
+        rgba(251,188,5,0.4),
+        rgba(234,67,53,0.4),
+        rgba(66,133,244,0.4)
+    );
+    background-size: 400% 400%;
+    animation: googleMorph 8s ease-in-out infinite;
     border-radius: 24px;
     padding: 40px;
     max-width: 600px;
@@ -650,7 +654,15 @@ body.theme-day .sponsor-popup-overlay {
 }
 
 .sponsor-popup-modal.entering {
-    animation: modalEnter 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: modalEnter 0.4s cubic-bezier(0.4, 0, 0.2, 1), googleMorph 8s ease-in-out infinite;
+}
+
+@keyframes googleMorph {
+    0%   { background-position: 0% 50%; }
+    25%  { background-position: 100% 0%; }
+    50%  { background-position: 100% 100%; }
+    75%  { background-position: 0% 100%; }
+    100% { background-position: 0% 50%; }
 }
 
 @keyframes modalEnter {
