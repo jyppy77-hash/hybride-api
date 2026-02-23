@@ -11,6 +11,76 @@
  */
 
 // ============================================
+// ETOILES EM FLOTTANTES — Version fluide
+// ============================================
+
+var starIntervalId = null;
+var MAX_STARS = 12;
+
+function spawnFloatingStar(container) {
+    var existing = container.querySelectorAll('.floating-star');
+    if (existing.length >= MAX_STARS) return;
+
+    var star = document.createElement('span');
+    star.classList.add('floating-star');
+
+    var rand = Math.random();
+    if (rand < 0.35) {
+        star.classList.add('star-small');
+    } else if (rand < 0.75) {
+        star.classList.add('star-medium');
+    } else {
+        star.classList.add('star-large');
+    }
+
+    star.textContent = '\u2605';
+
+    var xPos = Math.random() * 80 + 10;
+    star.style.setProperty('--star-x', xPos + '%');
+    star.style.setProperty('--star-start-y', (Math.random() * 10 - 5) + '%');
+
+    var consoleEl = container.querySelector('.console-container');
+    if (consoleEl) {
+        var modalRect = container.getBoundingClientRect();
+        var consoleRect = consoleEl.getBoundingClientRect();
+        var fallDistance = consoleRect.top - modalRect.top;
+        star.style.setProperty('--star-fall-distance', fallDistance + 'px');
+    } else {
+        star.style.setProperty('--star-fall-distance', '50%');
+    }
+
+    var duration = 2.5 + Math.random() * 1.5;
+    star.style.setProperty('--star-duration', duration + 's');
+
+    container.appendChild(star);
+
+    star.addEventListener('animationend', function() {
+        if (star.parentNode) {
+            star.parentNode.removeChild(star);
+        }
+    });
+}
+
+function startFloatingStars() {
+    var modal = document.querySelector('.sponsor-popup-modal');
+    if (!modal) return;
+
+    setTimeout(function() {
+        starIntervalId = setInterval(function() {
+            spawnFloatingStar(modal);
+        }, 1200);
+    }, 2000);
+}
+
+function stopFloatingStars() {
+    if (starIntervalId) {
+        clearInterval(starIntervalId);
+        starIntervalId = null;
+    }
+    document.querySelectorAll('.floating-star').forEach(function(star) { star.remove(); });
+}
+
+// ============================================
 // CONFIGURATION DES SPONSORS
 // ============================================
 
@@ -297,6 +367,7 @@ function showSponsorPopupSimulateurEM(config) {
         document.body.appendChild(overlay);
         document.body.style.overflow = 'hidden';
         document.body.classList.add('sponsor-popup-active');
+        startFloatingStars();
 
         // Bouton Annuler
         var modal = overlay.querySelector('.sponsor-popup-modal');
@@ -534,6 +605,7 @@ function showSponsorPopupSimulateurEM(config) {
             overlay.classList.add('closing');
 
             setTimeout(function() {
+                stopFloatingStars();
                 if (overlay.parentNode) {
                     document.body.removeChild(overlay);
                 }

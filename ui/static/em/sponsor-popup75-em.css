@@ -125,3 +125,107 @@
         min-height: 160px;
     }
 }
+
+/* ============================================
+   ETOILES EM FLOTTANTES VERS LE CHRONO
+   ============================================ */
+
+.floating-star {
+    position: absolute;
+    font-size: 20px;
+    color: #FFD700;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0;
+    text-shadow: 0 0 6px rgba(255, 215, 0, 0.6), 0 0 12px rgba(255, 215, 0, 0.3);
+    animation: starFloat var(--star-duration, 3.5s) ease-in-out forwards;
+    animation-delay: var(--star-delay, 0s);
+    left: var(--star-x, 50%);
+    top: var(--star-start-y, -5%);
+}
+
+.floating-star.star-small {
+    font-size: 10px;
+    text-shadow: 0 0 4px rgba(255, 215, 0, 0.5);
+}
+
+.floating-star.star-medium {
+    font-size: 16px;
+}
+
+.floating-star.star-large {
+    font-size: 22px;
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.7), 0 0 16px rgba(255, 215, 0, 0.4);
+}
+
+/* Chute verticale fluide du haut vers la console */
+@keyframes starFloat {
+    0% {
+        opacity: 0;
+        transform: translateY(0) scale(0.3);
+    }
+    8% {
+        opacity: 0.9;
+        transform: translateY(calc(var(--star-fall-distance) * 0.05)) scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: translateY(calc(var(--star-fall-distance) * 0.5)) scale(1);
+    }
+    85% {
+        opacity: 0.6;
+        transform: translateY(calc(var(--star-fall-distance) * 0.85)) scale(0.8);
+    }
+    95% {
+        opacity: 0.2;
+        transform: translateY(calc(var(--star-fall-distance) * 0.95)) scale(0.4);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(var(--star-fall-distance)) scale(0);
+    }
+}
+
+/* Variante avec leger balancement lateral pendant la chute */
+@keyframes starFloatWave {
+    0% {
+        opacity: 0;
+        transform: translateY(0) translateX(0) scale(0.3);
+    }
+    8% {
+        opacity: 0.9;
+        transform: translateY(calc(var(--star-fall-distance) * 0.05)) translateX(6px) scale(1);
+    }
+    30% {
+        opacity: 1;
+        transform: translateY(calc(var(--star-fall-distance) * 0.3)) translateX(-5px) scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: translateY(calc(var(--star-fall-distance) * 0.5)) translateX(7px) scale(1);
+    }
+    70% {
+        opacity: 0.8;
+        transform: translateY(calc(var(--star-fall-distance) * 0.7)) translateX(-4px) scale(0.9);
+    }
+    85% {
+        opacity: 0.5;
+        transform: translateY(calc(var(--star-fall-distance) * 0.85)) translateX(3px) scale(0.7);
+    }
+    95% {
+        opacity: 0.15;
+        transform: translateY(calc(var(--star-fall-distance) * 0.95)) translateX(0) scale(0.3);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(var(--star-fall-distance)) translateX(0) scale(0);
+    }
+}
+
+.floating-star:nth-child(odd) {
+    animation-name: starFloat;
+}
+
+.floating-star:nth-child(even) {
+    animation-name: starFloatWave;
+}
