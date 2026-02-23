@@ -32,7 +32,7 @@
 }
 
 /* ============================================
-   SPONSOR UNIQUE CENTRÉ - RATIO 16:9
+   SPONSORS CONTAINER (SINGLE — vidéo)
    ============================================ */
 
 .sponsors-container-single {
@@ -41,46 +41,48 @@
     align-items: center;
 }
 
-.sponsor-card-single {
-    flex: none;
+/* ============================================
+   ENCART VIDÉO SPONSOR — Remplace "Votre marque ici"
+   ============================================ */
+
+.sponsor-video-wrapper {
     width: 100%;
     max-width: 400px;
+    margin: 0 auto;
+    text-align: center;
 }
 
-/* Conteneur ratio 16:9 pour future vidéo */
-.sponsor-card-16x9 {
+.sponsor-video-card {
+    display: block;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    text-decoration: none;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+}
+
+.sponsor-video-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+
+.sponsor-video {
+    width: 100%;
+    display: block;
+    border-radius: 16px;
     aspect-ratio: 16 / 9;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 180px;
-    position: relative;
+    object-fit: contain;
 }
 
-.sponsor-card-16x9 .sponsor-logo {
-    font-size: 24px;
-    margin: 12px 0;
-}
-
-.sponsor-card-16x9 .sponsor-logo-icon {
-    font-size: 28px;
-}
-
-.sponsor-card-16x9 .sponsor-description {
-    font-size: 14px;
-    margin-bottom: 16px;
-}
-
-.sponsor-card-16x9 .sponsor-url {
-    font-size: 13px;
-}
-
-.sponsor-card-16x9 .sponsor-badge {
-    top: 16px;
-    left: 16px;
-    font-size: 11px;
-    padding: 5px 12px;
+.sponsor-video-cta {
+    margin-top: 10px;
+    font-size: 12px;
+    color: rgba(31, 41, 55, 0.6);
+    letter-spacing: 0.5px;
+    font-style: italic;
 }
 
 /* ============================================
@@ -98,32 +100,20 @@
         margin-top: 28px;
     }
 
-    .sponsor-card-16x9 {
-        min-height: 140px;
-        aspect-ratio: 16 / 9;
+    .sponsor-video {
+        border-radius: 12px;
     }
 
-    .sponsor-card-16x9 .sponsor-logo {
-        font-size: 18px;
+    .sponsor-video-card {
+        border-radius: 12px;
     }
 
-    .sponsor-card-16x9 .sponsor-logo-icon {
-        font-size: 22px;
-    }
-
-    .sponsor-card-16x9 .sponsor-description {
-        font-size: 12px;
+    .sponsor-video-cta {
+        font-size: 11px;
     }
 }
 
 @media (min-width: 481px) and (max-width: 768px) {
-    .sponsor-card-single {
-        max-width: 360px;
-    }
-
-    .sponsor-card-16x9 {
-        min-height: 160px;
-    }
 }
 
 /* ============================================
@@ -179,7 +169,9 @@ body.theme-day .sponsor-popup-overlay {
         0 0 0 1px rgba(0, 0, 0, 0.05) inset;
     position: relative;
     color: #1f2937;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 90vh;
 }
 
 .sponsor-popup-modal::before {

@@ -18,21 +18,14 @@
 const META_ANALYSE_TIMER_DURATION = 30;
 
 // ============================================
-// CONFIGURATION DES SPONSORS (UN SEUL SPONSOR CENTRÉ)
+// CONFIGURATION DES SPONSORS (VIDÉO UNIQUEMENT)
 // ============================================
 
-const SPONSORS_CONFIG_75 = [
-    {
-        id: 'annonceur',
-        name: 'Votre marque ici',
-        url: 'mailto:partenariats@lotoia.fr',
-        icon: '📣',
-        description: 'Audience forte • trafic qualifié',
-        displayUrl: 'partenariats@lotoia.fr',
-        badge: 'Espace partenaire',
-        badgeType: 'partner'
-    }
-];
+const SPONSOR_VIDEO_75 = {
+    id: 'lotoia_video',
+    url: 'mailto:partenariats@lotoia.fr',
+    videoSrc: '/static/Sponsors_media/Sponsor75lotoia.mp4'
+};
 
 // ============================================
 // SÉQUENCE DE LOGS CONSOLE
@@ -131,23 +124,22 @@ function generatePopupHTML75(config) {
         ? `<div class="meta-analyse-badge">Fenêtre META ANALYSE</div>`
         : '';
 
-    // Sponsor unique centré avec ratio 16:9
-    const sponsorsHTML = SPONSORS_CONFIG_75.map(sponsor => `
-        <a href="${sponsor.url}" target="_blank" rel="noopener noreferrer"
-           class="sponsor-card sponsor-card-single sponsor-card-16x9" data-sponsor="${sponsor.id}"
-           onclick="trackSponsorClick('${sponsor.id}')">
-            <span class="sponsor-badge ${sponsor.badgeType}">${sponsor.badge}</span>
-            <div class="sponsor-logo">
-                <span class="sponsor-logo-icon">${sponsor.icon}</span>
-                ${sponsor.name}
-            </div>
-            <div class="sponsor-description">${sponsor.description}</div>
-            <div class="sponsor-url">
-                <span>→</span>
-                <span>${sponsor.displayUrl}</span>
-            </div>
-        </a>
-    `).join('');
+    // Encart vidéo sponsor (remplace l'ancien encart texte)
+    const sponsorVideoHTML = `
+        <div class="sponsor-video-wrapper">
+            <a href="${SPONSOR_VIDEO_75.url}" class="sponsor-video-card" onclick="trackSponsorClick('${SPONSOR_VIDEO_75.id}')">
+                <video
+                    class="sponsor-video"
+                    autoplay
+                    loop
+                    muted
+                    playsinline
+                    preload="auto"
+                    src="${SPONSOR_VIDEO_75.videoSrc}"
+                ></video>
+            </a>
+            <p class="sponsor-video-cta">\uD83D\uDCFA Cet espace vid\u00e9o est disponible pour votre marque</p>
+        </div>`;
 
     return `
         <div class="sponsor-popup-modal entering${isMetaAnalyse ? ' meta-analyse-modal' : ''}">
@@ -181,7 +173,7 @@ function generatePopupHTML75(config) {
 
             <div class="sponsors-header">Partenaire</div>
             <div class="sponsors-container sponsors-container-single">
-                ${sponsorsHTML}
+                ${sponsorVideoHTML}
             </div>
 
             <div class="timer-circle-container">
@@ -356,8 +348,8 @@ function showSponsorPopup75(config) {
             closePopup();
         });
 
-        // Track impressions
-        trackImpression(SPONSORS_CONFIG_75.map(s => s.id));
+        // Track impressions (video sponsor)
+        trackImpression([SPONSOR_VIDEO_75.id]);
 
         // Elements d'animation
         const progressBar = document.getElementById('sponsor-progress');
