@@ -200,6 +200,20 @@ async def canonical_www_redirect(request: Request, call_next):
     return await call_next(request)
 
 
+# =========================
+# SEO: force 301 HTTP → HTTPS (filet de sécurité)
+# Le 302 principal vient du GFE Cloud Run (hors contrôle applicatif).
+# Ce middleware intercepte les requêtes HTTP qui atteindraient l'app.
+# =========================
+@app.middleware("http")
+async def redirect_http_to_https(request: Request, call_next):
+    """301 redirect si x-forwarded-proto indique HTTP."""
+    if request.headers.get("x-forwarded-proto") == "http":
+        url = str(request.url).replace("http://", "https://", 1)
+        return RedirectResponse(url=url, status_code=301)
+    return await call_next(request)
+
+
 # Middleware cache headers SEO
 @app.middleware("http")
 async def add_cache_headers(request: Request, call_next):
@@ -249,6 +263,11 @@ _UI_HTML_TO_CLEAN_URL = {
     "politique-cookies.html": "/politique-cookies",
     "pronostics.html": "/loto",
     "chatbot.html": "/loto",
+    # Sprint 3-3.5 (22/02/2026)
+    "loto-ia.html": "/loto/intelligence-artificielle",
+    "a-propos.html": "/a-propos",
+    "hybride.html": "/hybride",
+    "numeros-plus-sortis.html": "/loto/numeros-les-plus-sortis",
 }
 
 _UI_EM_HTML_TO_CLEAN_URL = {

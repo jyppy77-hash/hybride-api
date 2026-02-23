@@ -126,36 +126,7 @@
     <priority>0.5</priority>
   </url>
 
-  <!-- Disclaimer -->
-  <url>
-    <loc>https://lotoia.fr/disclaimer</loc>
-    <lastmod>2026-02-22</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
-  <!-- Mentions legales -->
-  <url>
-    <loc>https://lotoia.fr/mentions-legales</loc>
-    <lastmod>2026-02-22</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
-  <!-- Politique de confidentialite -->
-  <url>
-    <loc>https://lotoia.fr/politique-confidentialite</loc>
-    <lastmod>2026-02-22</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
-
-  <!-- Politique cookies -->
-  <url>
-    <loc>https://lotoia.fr/politique-cookies</loc>
-    <lastmod>2026-02-22</lastmod>
-    <changefreq>yearly</changefreq>
-    <priority>0.3</priority>
-  </url>
+  <!-- Pages légales exclues du sitemap (noindex, follow) :
+       /disclaimer, /mentions-legales, /politique-confidentialite, /politique-cookies -->
 
 </urlset>
