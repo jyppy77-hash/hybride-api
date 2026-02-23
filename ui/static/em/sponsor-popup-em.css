@@ -901,10 +901,10 @@ body.theme-day .sponsor-popup-overlay {
         transform: none !important;
     }
 
-    /* Desactiver l'animation de scale sur mobile */
+    /* Desactiver le scale d'entree mais garder la nebuleuse cosmic */
     .sponsor-popup-modal.entering,
     .sponsor-popup-modal[class*="entering"] {
-        animation: none !important;
+        animation: cosmicNebula 15s ease-in-out infinite !important;
     }
 
     /* Titre compact */

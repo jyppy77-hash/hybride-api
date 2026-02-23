@@ -835,10 +835,10 @@ body.theme-day .sponsor-popup-overlay {
         transform: none !important;
     }
 
-    /* Désactiver l'animation de scale sur mobile */
+    /* Désactiver le scale d'entrée mais garder le morphing Google */
     .sponsor-popup-modal.entering,
     .sponsor-popup-modal[class*="entering"] {
-        animation: none !important;
+        animation: googleMorph 8s ease-in-out infinite !important;
     }
 
     /* Titre compact */
