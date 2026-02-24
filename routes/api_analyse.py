@@ -298,14 +298,14 @@ async def api_analyze_custom_grid(
     try:
         # Validation
         if len(nums) != 5:
-            return {"success": False, "error": "5 numeros requis"}
+            return {"success": False, "error": "5 numéros requis"}
 
         nums = [int(n) for n in nums]
         if not all(1 <= n <= 49 for n in nums):
-            return {"success": False, "error": "Numeros doivent etre entre 1 et 49"}
+            return {"success": False, "error": "Numéros doivent être entre 1 et 49"}
 
         if len(set(nums)) != 5:
-            return {"success": False, "error": "Numeros doivent etre uniques"}
+            return {"success": False, "error": "Numéros doivent être uniques"}
 
         nums = sorted(nums)
 
@@ -454,18 +454,18 @@ async def api_analyze_custom_grid(
 
                 badges = []
                 if freq_moyenne > freq_max_theorique * 1.1:
-                    badges.append("Numeros chauds")
+                    badges.append("Numéros chauds")
                 elif freq_moyenne < freq_max_theorique * 0.9:
                     badges.append("Mix de retards")
                 else:
-                    badges.append("Equilibre")
+                    badges.append("Équilibre")
 
                 if dispersion > 35:
                     badges.append("Large spectre")
                 if nb_pairs == 2 or nb_pairs == 3:
                     badges.append("Pair/Impair OK")
 
-                badges.append("Analyse personnalisee")
+                badges.append("Analyse personnalisée")
 
                 # ── Detection des conditions critiques ──
                 critical_count = 0
@@ -504,72 +504,72 @@ async def api_analyze_custom_grid(
 
                 if severity == 3:
                     # PALIER 3 — Critique : messages cinglants
-                    alert_message = "Alerte maximale : cette grille cumule TOUS les defauts statistiques !"
+                    alert_message = "Alerte maximale : cette grille cumule TOUS les défauts statistiques !"
 
                     if 'suite' in critical_flags:
-                        suggestions.append(f"Suite parfaite detectee ! En {total_tirages} tirages, AUCUNE suite de {max_run} consecutifs n'est jamais sortie")
+                        suggestions.append(f"Suite parfaite détectée ! En {total_tirages} tirages, AUCUNE suite de {max_run} consécutifs n'est jamais sortie")
                     if 'somme' in critical_flags:
-                        suggestions.append(f"Somme catastrophique ({somme}) — les tirages reels oscillent entre 80 et 170")
+                        suggestions.append(f"Somme catastrophique ({somme}) — les tirages réels oscillent entre 80 et 170")
                     if 'bas_haut' in critical_flags:
                         if nb_bas == 5:
-                            suggestions.append("ZERO numero au-dessus de 24 — statistiquement aberrant")
+                            suggestions.append("ZERO numéro au-dessus de 24 — statistiquement aberrant")
                         else:
-                            suggestions.append("ZERO numero en dessous de 25 — statistiquement aberrant")
+                            suggestions.append("ZERO numéro en dessous de 25 — statistiquement aberrant")
                     if 'dispersion' in critical_flags:
                         suggestions.append(f"Dispersion quasi nulle ({dispersion}) — la moyenne historique est autour de 30+")
                     if 'pairs' in critical_flags:
                         if nb_pairs == 5:
-                            suggestions.append("100% de numeros pairs — aucun tirage historique n'a cette configuration")
+                            suggestions.append("100% de numéros pairs — aucun tirage historique n'a cette configuration")
                         else:
-                            suggestions.append("100% de numeros impairs — aucun tirage historique n'a cette configuration")
+                            suggestions.append("100% de numéros impairs — aucun tirage historique n'a cette configuration")
                     if 'conformite' in critical_flags:
-                        suggestions.append(f"Score de conformite effondre ({score_conformite}%) — cette grille defie toutes les statistiques")
+                        suggestions.append(f"Score de conformité effondré ({score_conformite}%) — cette grille défie toutes les statistiques")
 
                 elif severity == 2:
                     # PALIER 2 — Modere : avertissements directs
                     if 'suite' in critical_flags:
-                        suggestions.append(f"Suite de {max_run} numeros consecutifs detectee — tres rare dans les tirages reels")
+                        suggestions.append(f"Suite de {max_run} numéros consécutifs détectée — très rare dans les tirages réels")
                     if nb_pairs == 0 or nb_pairs == 5:
-                        suggestions.append(f"Desequilibre pair/impair ({nb_pairs}/{nb_impairs}) — viser 2-3 pairs pour coller aux statistiques")
+                        suggestions.append(f"Déséquilibre pair/impair ({nb_pairs}/{nb_impairs}) — viser 2-3 pairs pour coller aux statistiques")
                     if nb_bas == 0 or nb_bas == 5:
-                        suggestions.append(f"Desequilibre bas/haut ({nb_bas}/{nb_hauts}) — mixer numeros bas (1-24) et hauts (25-49)")
+                        suggestions.append(f"Déséquilibre bas/haut ({nb_bas}/{nb_hauts}) — mixer numéros bas (1-24) et hauts (25-49)")
                     if somme < 50 or somme > 200:
-                        suggestions.append(f"Somme trop {'basse' if somme < 50 else 'elevee'} ({somme}) — la moyenne historique est autour de 125")
+                        suggestions.append(f"Somme trop {'basse' if somme < 50 else 'élevée'} ({somme}) — la moyenne historique est autour de 125")
                     elif somme < 70 or somme > 150:
-                        suggestions.append(f"Somme {'basse' if somme < 70 else 'elevee'} ({somme}) — viser la fourchette 80-170")
+                        suggestions.append(f"Somme {'basse' if somme < 70 else 'élevée'} ({somme}) — viser la fourchette 80-170")
                     if dispersion < 10:
-                        suggestions.append(f"Dispersion insuffisante ({dispersion}) — vos numeros couvrent seulement {dispersion} unites sur 48 possibles")
+                        suggestions.append(f"Dispersion insuffisante ({dispersion}) — vos numéros couvrent seulement {dispersion} unités sur 48 possibles")
                     elif dispersion < 15:
-                        suggestions.append(f"Dispersion faible ({dispersion}) — elargir l'ecart entre vos numeros")
+                        suggestions.append(f"Dispersion faible ({dispersion}) — élargir l'écart entre vos numéros")
                     if max_run >= 3 and 'suite' not in critical_flags:
-                        suggestions.append(f"Suite de {max_run} consecutifs — reduire les numeros qui se suivent")
+                        suggestions.append(f"Suite de {max_run} consécutifs — réduire les numéros qui se suivent")
 
                 else:
                     # PALIER 1 — Leger : suggestions douces
                     if score >= 70:
-                        suggestions.append("Excellent equilibre dans votre selection")
+                        suggestions.append("Excellent équilibre dans votre sélection")
                     if nb_pairs == 1 or nb_pairs == 4:
-                        suggestions.append("Pensez a varier pairs et impairs (2-3 pairs ideal)")
+                        suggestions.append("Pensez à varier pairs et impairs (2-3 pairs idéal)")
                     if nb_bas == 1 or nb_bas == 4:
-                        suggestions.append("Mixer numeros bas (1-24) et hauts (25-49)")
+                        suggestions.append("Mixer numéros bas (1-24) et hauts (25-49)")
                     if 70 <= somme < 80:
-                        suggestions.append("Somme un peu basse, ajouter un numero plus eleve")
+                        suggestions.append("Somme un peu basse, ajouter un numéro plus élevé")
                     elif 150 < somme <= 170:
-                        suggestions.append("Somme un peu elevee, ajouter un numero plus bas")
+                        suggestions.append("Somme un peu élevée, ajouter un numéro plus bas")
                     if 15 <= dispersion < 20:
-                        suggestions.append("Elargir legerement la dispersion de vos numeros")
+                        suggestions.append("Élargir légèrement la dispersion de vos numéros")
                     if max_run == 3:
-                        suggestions.append("Attention a la suite de 3 consecutifs")
+                        suggestions.append("Attention à la suite de 3 consécutifs")
                     elif suites >= 2 and max_run < 3:
-                        suggestions.append("Quelques numeros consecutifs — pensez a les espacer")
+                        suggestions.append("Quelques numéros consécutifs — pensez à les espacer")
 
                 if not suggestions:
-                    suggestions.append("Grille bien equilibree")
+                    suggestions.append("Grille bien équilibrée")
 
                 if score >= 80:
-                    comparaison = "Meilleure que 85% des grilles aleatoires"
+                    comparaison = "Meilleure que 85% des grilles aléatoires"
                 elif score >= 60:
-                    comparaison = "Meilleure que 60% des grilles aleatoires"
+                    comparaison = "Meilleure que 60% des grilles aléatoires"
                 elif score >= 40:
                     comparaison = "Dans la moyenne des grilles"
                 else:

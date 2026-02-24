@@ -1528,7 +1528,7 @@ function displayExplanations(grid) {
     for (let num of [...grid.nums].sort((a, b) => a - b)) {
         const data = numbers[num];
         html += `
-            <div style="background: white; padding: 16px; border-radius: 8px; border-left: 4px solid var(--primary);">
+            <div class="explain-card" style="background: white; padding: 16px; border-radius: 8px;">
                 <div style="font-size: 1.8rem; font-weight: 700; color: var(--primary); margin-bottom: 8px;">
                     ${num}
                 </div>

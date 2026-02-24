@@ -247,7 +247,7 @@ async function handleAnalyze() {
     if (!drawDateInput) return;
     var date = drawDateInput.value;
     if (!date) {
-        showError('Veuillez selectionner une date de tirage.');
+        showError('Veuillez sélectionner une date de tirage.');
         return;
     }
 
@@ -301,7 +301,7 @@ async function handleAnalyze() {
             showError(data.message || 'Erreur lors de la generation des grilles.');
         }
     } catch (error) {
-        showError('Impossible de generer les grilles. ' + error.message);
+        showError('Impossible de générer les grilles. ' + error.message);
     } finally {
         setLoading(btnAnalyze, false);
     }
@@ -326,7 +326,7 @@ function displayGridsEM(grids, metadata, targetDate) {
 
     grids.forEach(function(grid, index) {
         var badges = grid.badges || [];
-        var convergenceLabel = 'Profil equilibre';
+        var convergenceLabel = 'Profil équilibré';
         var convergenceClass = 'convergence-elevated';
 
         if (badges.some(function(b) { return b.toLowerCase().indexOf('chaud') !== -1; })) {
@@ -378,8 +378,8 @@ function displayGridsEM(grids, metadata, targetDate) {
     });
 
     html += '<div class="results-footer">' +
-        '<p><strong>Rappel important :</strong> Ces grilles sont generees a partir de statistiques historiques. ' +
-        'L\'EuroMillions est un jeu de hasard et aucune methode ne garantit de gains.</p>' +
+        '<p><strong>Rappel important :</strong> Ces grilles sont générées à partir de statistiques historiques. ' +
+        'L\'EuroMillions est un jeu de hasard et aucune méthode ne garantit de gains.</p>' +
         '<p>Jouez responsable : <a href="https://www.joueurs-info-service.fr" target="_blank">Joueurs Info Service</a></p></div>';
 
     var keyInfo = document.getElementById('key-info');

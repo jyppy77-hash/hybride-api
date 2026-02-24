@@ -527,7 +527,7 @@ async def em_stats_number(request: Request, number: int):
     try:
         if not 1 <= number <= 50:
             return JSONResponse(status_code=400, content={
-                "success": False, "message": "Numero doit etre entre 1 et 50"
+                "success": False, "message": "Numéro doit être entre 1 et 50"
             })
 
         def _fetch():
@@ -703,14 +703,14 @@ async def em_hybride_stats(
     """Retourne les statistiques completes d'un numero EM."""
     if type not in ("boule", "etoile"):
         return JSONResponse(status_code=400, content={
-            "success": False, "data": None, "error": "type doit etre 'boule' ou 'etoile'"
+            "success": False, "data": None, "error": "type doit être 'boule' ou 'étoile'"
         })
 
     stats = await asyncio.to_thread(get_numero_stats, numero, type)
     if stats is None:
         return JSONResponse(status_code=404, content={
             "success": False, "data": None,
-            "error": f"Numero {numero} invalide pour type {type}"
+            "error": f"Numéro {numero} invalide pour type {type}"
         })
 
     return {"success": True, "data": stats, "error": None}

@@ -41,15 +41,20 @@ async def enrich_analysis_em(analysis_local: str, window: str = "GLOBAL", *, htt
     if prompt_template:
         prompt = prompt_template + "\n" + analysis_local
     else:
-        prompt = f"""Tu es un expert en statistiques de loterie specialise dans l'EuroMillions.
-Reformule ce texte d'analyse de maniere pedagogique et accessible.
-Regles strictes :
+        prompt = f"""[LANGUE ET ORTHOGRAPHE — RÈGLE ABSOLUE]
+Tu réponds TOUJOURS en français correct avec TOUS les accents : é, è, ê, ë, à, â, ç, ù, û, ô, î, ï.
+Exemples obligatoires : "numéro" (jamais "numero"), "fréquence" (jamais "frequence"), "régularité" (jamais "regularite"), "dernière" (jamais "derniere"), "élevé" (jamais "eleve"), "intéressant" (jamais "interessant"), "présente" (jamais "presente"), "conformité" (jamais "conformite"), "éloigne" (jamais "eloigne"), "équilibre" (jamais "equilibre"), "mérite" (jamais "merite"), "peut-être" (jamais "peut-etre"), "sélection" (jamais "selection"), "mélange" (jamais "melange"), "répartition" (jamais "repartition").
+C'est une règle NON NÉGOCIABLE. Un texte sans accents est considéré comme un BUG.
+
+Tu es un expert en statistiques de loterie spécialisé dans l'EuroMillions.
+Reformule ce texte d'analyse de manière pédagogique et accessible.
+Règles strictes :
 - Ne promets JAMAIS de gain
 - Reste neutre et informatif
 - Garde un ton professionnel
 - Maximum 4 phrases fluides
 - Ne modifie pas les chiffres
-- Mets en valeur les boules et les etoiles
+- Mets en valeur les boules et les étoiles
 
 Texte a reformuler :
 {analysis_local}"""
@@ -65,6 +70,22 @@ Texte a reformuler :
                 "x-goog-api-key": gem_api_key
             },
             json={
+                "systemInstruction": {
+                    "parts": [{
+                        "text": (
+                            "OBLIGATION ABSOLUE : Tu écris TOUJOURS en français correct "
+                            "avec TOUS les accents (é, è, ê, ë, à, â, ç, ù, û, ô, î, ï). "
+                            "Exemples : \"numéro\" (jamais \"numero\"), \"fréquence\" (jamais \"frequence\"), "
+                            "\"régularité\" (jamais \"regularite\"), \"dernière\" (jamais \"derniere\"), "
+                            "\"élevé\" (jamais \"eleve\"), \"intéressant\" (jamais \"interessant\"), "
+                            "\"présente\" (jamais \"presente\"), \"conformité\" (jamais \"conformite\"), "
+                            "\"équilibre\" (jamais \"equilibre\"), \"mérite\" (jamais \"merite\"), "
+                            "\"sélection\" (jamais \"selection\"), \"mélange\" (jamais \"melange\"), "
+                            "\"répartition\" (jamais \"repartition\"). "
+                            "Un texte sans accents est considéré comme un BUG CRITIQUE."
+                        )
+                    }]
+                },
                 "contents": [{
                     "parts": [{"text": prompt}]
                 }],

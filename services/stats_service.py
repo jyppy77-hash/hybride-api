@@ -712,13 +712,13 @@ def prepare_grilles_pitch_context(grilles: list) -> str:
                 elif sc < 40:
                     sc_label = "FAIBLE"
                 elif sc < 70:
-                    sc_label = "MODERE"
+                    sc_label = "MODÉRÉ"
                 else:
                     sc_label = "BON"
-                severity_lines.append(f"Score conformite : {sc}% ({sc_label})")
+                severity_lines.append(f"Score conformité : {sc}% ({sc_label})")
             if sev is not None:
-                sev_labels = {1: "Bon", 2: "Modere", 3: "Alerte maximale"}
-                severity_lines.append(f"Palier de severite : {sev}/3 - {sev_labels.get(sev, 'Inconnu')}")
+                sev_labels = {1: "Bon", 2: "Modéré", 3: "Alerte maximale"}
+                severity_lines.append(f"Palier de sévérité : {sev}/3 - {sev_labels.get(sev, 'Inconnu')}")
             # Inserer en position 1 (apres le titre de la grille)
             for j, sl in enumerate(severity_lines):
                 lines.insert(1 + j, sl)

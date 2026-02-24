@@ -252,11 +252,11 @@ def generer_badges(numeros: List[int], scores_hybrides: Dict[int, float]) -> Lis
     score_global_moyen = sum(scores_hybrides.values()) / len(scores_hybrides)
 
     if score_moyen > score_global_moyen * 1.1:
-        badges.append("Numeros chauds")
+        badges.append("Numéros chauds")
     elif score_moyen < score_global_moyen * 0.9:
         badges.append("Mix de retards")
     else:
-        badges.append("Equilibre")
+        badges.append("Équilibre")
 
     dispersion = max(numeros) - min(numeros)
     if dispersion > 35:

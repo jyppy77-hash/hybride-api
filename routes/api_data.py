@@ -534,7 +534,7 @@ async def api_stats_number(request: Request, number: int):
     try:
         if not 1 <= number <= 49:
             return JSONResponse(status_code=400, content={
-                "success": False, "message": "Numero doit etre entre 1 et 49"
+                "success": False, "message": "Numéro doit être entre 1 et 49"
             })
 
         def _fetch():
@@ -646,7 +646,7 @@ async def api_hybride_stats(
     stats = await asyncio.to_thread(get_numero_stats, numero, type)
     if stats is None:
         return JSONResponse(status_code=404, content={
-            "success": False, "data": None, "error": f"Numero {numero} invalide pour type {type}"
+            "success": False, "data": None, "error": f"Numéro {numero} invalide pour type {type}"
         })
 
     return {"success": True, "data": stats, "error": None}

@@ -1392,10 +1392,31 @@ body.page-index {
 /* Key Info */
 .key-info {
     background: var(--bg-light);
-    border-left: 4px solid var(--primary);
+    border-left: none;
     padding: 20px;
     border-radius: 8px;
     margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.key-info::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, #4285F4, #EA4335, #FBBC05, #34A853, #4285F4);
+    background-size: 100% 300%;
+    animation: googleMorph 4s ease infinite;
+    border-radius: 4px 0 0 4px;
+}
+
+@keyframes googleMorph {
+    0% { background-position: 0% 0%; }
+    50% { background-position: 0% 100%; }
+    100% { background-position: 0% 0%; }
 }
 
 .key-info ul {
@@ -1414,6 +1435,25 @@ body.page-index {
     color: var(--success);
     font-weight: bold;
     margin-right: 8px;
+}
+
+/* Explain Card (number explanation blocks in app.js) */
+.explain-card {
+    position: relative;
+    overflow: hidden;
+}
+
+.explain-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, #4285F4, #EA4335, #FBBC05, #34A853, #4285F4);
+    background-size: 100% 300%;
+    animation: googleMorph 4s ease infinite;
+    border-radius: 4px 0 0 4px;
 }
 
 /* Accordion */
@@ -3978,11 +4018,26 @@ body.theme-day .chatbot-text strong {
     margin-top: 12px;
     padding: 10px 14px;
     background: rgba(26, 115, 232, 0.06);
-    border-left: 3px solid var(--primary);
+    border-left: none;
     border-radius: 6px;
     font-size: 0.85rem;
     line-height: 1.55;
     color: var(--theme-text-muted);
+    position: relative;
+    overflow: hidden;
+}
+
+.grille-pitch::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, #4285F4, #EA4335, #FBBC05, #34A853, #4285F4);
+    background-size: 100% 300%;
+    animation: googleMorph 4s ease infinite;
+    border-radius: 3px 0 0 3px;
 }
 
 .grille-pitch .pitch-icon {

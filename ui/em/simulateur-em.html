@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <title>Simulateur de Grille EuroMillions - Analysez Votre Selection | LotoIA</title>
-    <meta name="description" content="Composez votre grille EuroMillions (5 numeros + 2 etoiles) et obtenez une analyse statistique. Equilibre, numeros chauds et froids, indice de convergence.">
-    <meta name="keywords" content="simulateur euromillions, analyser grille euromillions, moteur HYBRIDE, analyse statistique, numeros chauds froids, HYBRIDE, etoiles euromillions">
+    <title>Simulateur de Grille EuroMillions - Analysez Votre Sélection | LotoIA</title>
+    <meta name="description" content="Composez votre grille EuroMillions (5 numéros + 2 étoiles) et obtenez une analyse statistique. Équilibre, numéros chauds et froids, indice de convergence.">
+    <meta name="keywords" content="simulateur euromillions, analyser grille euromillions, moteur HYBRIDE, analyse statistique, numéros chauds froids, HYBRIDE, étoiles euromillions">
     <link rel="canonical" href="https://lotoia.fr/euromillions/simulateur">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <!-- Open Graph -->
@@ -13,7 +13,7 @@
     <meta property="og:site_name" content="LotoIA">
     <meta property="og:locale" content="fr_FR">
     <meta property="og:title" content="Simulateur de Grille EuroMillions | LotoIA">
-    <meta property="og:description" content="Composez votre grille EuroMillions et obtenez une analyse statistique. Score et equilibre.">
+    <meta property="og:description" content="Composez votre grille EuroMillions et obtenez une analyse statistique. Score et équilibre.">
     <meta property="og:url" content="https://lotoia.fr/euromillions/simulateur">
     <meta property="og:image" content="https://lotoia.fr/static/og-image.jpg">
     <meta property="og:image:secure_url" content="https://lotoia.fr/static/og-image.jpg">
@@ -57,7 +57,7 @@
         </a>
         <div class="engine-nav-right">
             <span class="engine-badge">EuroMillions</span>
-            <button id="theme-switch" class="theme-switch" title="Changer de theme">
+            <button id="theme-switch" class="theme-switch" title="Changer de thème">
                 <span class="icon-day">☀️</span>
                 <span class="icon-night">🌙</span>
             </button>
@@ -86,7 +86,7 @@
                 </a>
                 <a href="/euromillions/news" class="loto-hero-btn loto-hero-btn-news">
                     <span class="loto-hero-btn-icon">📰</span>
-                    Actualites
+                    Actualités
                 </a>
             </div>
             <p class="loto-hero-scroll-hint">← glisser pour voir plus →</p>
@@ -100,7 +100,7 @@
             <div class="legend">
                 <div class="legend-item">
                     <span class="legend-dot hot"></span>
-                    <span>Chaud (frequent)</span>
+                    <span>Chaud (fréquent)</span>
                 </div>
                 <div class="legend-item">
                     <span class="legend-dot neutral"></span>
@@ -121,7 +121,7 @@
         <div class="simulation-panel">
             <div class="simulation-workspace">
                 <div class="workspace-left grid-section">
-                    <h3 class="grid-title">Numeros <span id="count-main" class="count-badge">0/5</span></h3>
+                    <h3 class="grid-title">Numéros <span id="count-main" class="count-badge">0/5</span></h3>
                     <div id="main-grid" class="main-grid">
                         <!-- Genere par JS (1-50) -->
                     </div>
@@ -129,7 +129,7 @@
 
                 <div class="workspace-right chance-section">
                     <div class="workspace-right-block">
-                        <h3 class="grid-title-chance">Etoiles <span id="count-star" class="count-badge">0/2</span></h3>
+                        <h3 class="grid-title-chance">Étoiles <span id="count-star" class="count-badge">0/2</span></h3>
                         <div id="star-grid" class="chance-grid">
                             <!-- Genere par JS (1-12) -->
                         </div>
@@ -137,10 +137,10 @@
                     <div class="workspace-right-block">
                         <div class="chance-actions">
                             <button id="btn-reset" class="btn btn-tertiary">
-                                Reinitialiser
+                                Réinitialiser
                             </button>
                             <button id="btn-auto" class="btn btn-primary">
-                                Remplir aleatoirement
+                                Remplir aléatoirement
                             </button>
                         </div>
                     </div>
@@ -169,7 +169,7 @@
 
             <!-- Details -->
             <div class="details-section">
-                <h3>Details</h3>
+                <h3>Détails</h3>
                 <div id="details-grid" class="details-grid"></div>
             </div>
 
@@ -179,7 +179,7 @@
                 <ul id="suggestions-list" class="suggestions-list"></ul>
             </div>
 
-            <!-- Grille selectionnee -->
+            <!-- Grille sélectionnée -->
             <div class="selected-grid-display">
                 <h3>Votre grille</h3>
                 <div id="selected-numbers" class="selected-numbers"></div>
@@ -207,22 +207,22 @@
                 <span class="footer-sep">•</span>
                 <a href="/euromillions/statistiques">Statistiques</a>
                 <span class="footer-sep">•</span>
-                <a href="/euromillions/news">Actualites</a>
+                <a href="/euromillions/news">Actualités</a>
                 <span class="footer-sep">•</span>
                 <a href="/faq">FAQ</a>
             </div>
             <div class="footer-legal">
-                <a href="/mentions-legales">Mentions legales</a>
+                <a href="/mentions-legales">Mentions légales</a>
                 <span class="footer-sep">•</span>
-                <a href="/politique-confidentialite">Confidentialite</a>
+                <a href="/politique-confidentialite">Confidentialité</a>
                 <span class="footer-sep">•</span>
                 <a href="/politique-cookies">Cookies</a>
             </div>
             <p class="footer-brand">LotoIA.fr <span class="app-version">v1.001</span></p>
-            <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dependance. Appelez le 09 74 75 13 13 (appel non surtaxe).</p>
+            <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dépendance. Appelez le 09 74 75 13 13 (appel non surtaxé).</p>
             <p class="footer-help">Interdiction de jeu aux mineurs. <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
             <div class="credits">
-                <p class="dev-by">Developpe par <strong>JyppY</strong></p>
+                <p class="dev-by">Développé par <strong>JyppY</strong></p>
             </div>
         </footer>
     </div>

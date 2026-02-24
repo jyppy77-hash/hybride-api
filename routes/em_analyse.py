@@ -66,8 +66,8 @@ async def em_generate(
 @limiter.limit("60/minute")
 async def em_meta_analyse_local(
     request: Request,
-    window: Optional[str] = Query(default="GLOBAL", description="Fenetre: 25, 50, 75, 100, 200, 500, ou GLOBAL"),
-    years: Optional[str] = Query(default=None, description="Fenetre en annees: 1, 2, 3, 4, 5, 6, ou GLOBAL")
+    window: Optional[str] = Query(default="GLOBAL", description="Fenêtre: 25, 50, 75, 100, 200, 500, ou GLOBAL"),
+    years: Optional[str] = Query(default=None, description="Fenêtre en années: 1, 2, 3, 4, 5, 6, ou GLOBAL")
 ):
     """
     META ANALYSE locale EuroMillions.
@@ -200,14 +200,14 @@ async def em_meta_analyse_local(
                 elif window_used != "GLOBAL":
                     window_label = f"{actual_count} tirages"
                 else:
-                    window_label = "l'integralite de la base"
+                    window_label = "l'intégralité de la base"
 
                 analysis_text = (
                     f"Analyse locale HYBRIDE EM sur {window_label} "
                     f"({date_min} -> {date_max}). "
                     f"Top 5 boules : {', '.join(graph_labels_b)} (freq moy {avg_freq_b:.1f}). "
                     f"Top 3 etoiles : {', '.join(graph_labels_e)} (freq moy {avg_freq_e:.1f}). "
-                    f"Aucun biais algorithmique detecte."
+                    f"Aucun biais algorithmique détecté."
                 )
 
                 return {
@@ -327,16 +327,16 @@ async def em_analyze_custom_grid(
     try:
         # Validation
         if len(nums) != 5:
-            return {"success": False, "error": "5 numeros requis"}
+            return {"success": False, "error": "5 numéros requis"}
 
         nums = [int(n) for n in nums]
         if not all(1 <= n <= 50 for n in nums):
-            return {"success": False, "error": "Numeros doivent etre entre 1 et 50"}
+            return {"success": False, "error": "Numéros doivent être entre 1 et 50"}
         if len(set(nums)) != 5:
-            return {"success": False, "error": "Numeros doivent etre uniques"}
+            return {"success": False, "error": "Numéros doivent être uniques"}
 
         if etoile1 == etoile2:
-            return {"success": False, "error": "Les 2 etoiles doivent etre differentes"}
+            return {"success": False, "error": "Les 2 étoiles doivent être différentes"}
 
         nums = sorted(nums)
         etoiles = sorted([etoile1, etoile2])
@@ -493,16 +493,16 @@ async def em_analyze_custom_grid(
                 # Badges
                 badges = []
                 if freq_moyenne > freq_max_theorique * 1.1:
-                    badges.append("Numeros chauds")
+                    badges.append("Numéros chauds")
                 elif freq_moyenne < freq_max_theorique * 0.9:
                     badges.append("Mix de retards")
                 else:
-                    badges.append("Equilibre")
+                    badges.append("Équilibre")
                 if dispersion > 35:
                     badges.append("Large spectre")
                 if nb_pairs == 2 or nb_pairs == 3:
                     badges.append("Pair/Impair OK")
-                badges.append("Analyse personnalisee EM")
+                badges.append("Analyse personnalisée EM")
 
                 # Detection conditions critiques
                 critical_count = 0
@@ -539,69 +539,69 @@ async def em_analyze_custom_grid(
                 alert_message = None
 
                 if severity == 3:
-                    alert_message = "Alerte maximale : cette grille cumule TOUS les defauts statistiques !"
+                    alert_message = "Alerte maximale : cette grille cumule TOUS les défauts statistiques !"
                     if 'suite' in critical_flags:
-                        suggestions.append(f"Suite parfaite detectee ! En {total_tirages} tirages EM, aucune suite de {max_run} consecutifs n'est jamais sortie")
+                        suggestions.append(f"Suite parfaite détectée ! En {total_tirages} tirages EM, aucune suite de {max_run} consécutifs n'est jamais sortie")
                     if 'somme' in critical_flags:
                         suggestions.append(f"Somme catastrophique ({somme}) — les tirages EM oscillent entre 80 et 175")
                     if 'bas_haut' in critical_flags:
                         if nb_bas == 5:
-                            suggestions.append("ZERO numero au-dessus de 25 — statistiquement aberrant")
+                            suggestions.append("ZERO numéro au-dessus de 25 — statistiquement aberrant")
                         else:
-                            suggestions.append("ZERO numero en dessous de 26 — statistiquement aberrant")
+                            suggestions.append("ZERO numéro en dessous de 26 — statistiquement aberrant")
                     if 'dispersion' in critical_flags:
                         suggestions.append(f"Dispersion quasi nulle ({dispersion}) — la moyenne historique est autour de 30+")
                     if 'pairs' in critical_flags:
                         if nb_pairs == 5:
-                            suggestions.append("100% de numeros pairs — aucun tirage historique n'a cette configuration")
+                            suggestions.append("100% de numéros pairs — aucun tirage historique n'a cette configuration")
                         else:
-                            suggestions.append("100% de numeros impairs — aucun tirage historique n'a cette configuration")
+                            suggestions.append("100% de numéros impairs — aucun tirage historique n'a cette configuration")
                     if 'conformite' in critical_flags:
-                        suggestions.append(f"Score de conformite effondre ({score_conformite}%) — cette grille defie toutes les statistiques")
+                        suggestions.append(f"Score de conformité effondré ({score_conformite}%) — cette grille défie toutes les statistiques")
 
                 elif severity == 2:
                     if 'suite' in critical_flags:
-                        suggestions.append(f"Suite de {max_run} numeros consecutifs detectee — tres rare dans les tirages reels")
+                        suggestions.append(f"Suite de {max_run} numéros consécutifs détectée — très rare dans les tirages réels")
                     if nb_pairs == 0 or nb_pairs == 5:
-                        suggestions.append(f"Desequilibre pair/impair ({nb_pairs}/{nb_impairs}) — viser 2-3 pairs")
+                        suggestions.append(f"Déséquilibre pair/impair ({nb_pairs}/{nb_impairs}) — viser 2-3 pairs")
                     if nb_bas == 0 or nb_bas == 5:
-                        suggestions.append(f"Desequilibre bas/haut ({nb_bas}/{nb_hauts}) — mixer numeros bas (1-25) et hauts (26-50)")
+                        suggestions.append(f"Déséquilibre bas/haut ({nb_bas}/{nb_hauts}) — mixer numéros bas (1-25) et hauts (26-50)")
                     if somme < 55 or somme > 210:
-                        suggestions.append(f"Somme trop {'basse' if somme < 55 else 'elevee'} ({somme}) — la moyenne historique est autour de 127")
+                        suggestions.append(f"Somme trop {'basse' if somme < 55 else 'élevée'} ({somme}) — la moyenne historique est autour de 127")
                     elif somme < 75 or somme > 175:
-                        suggestions.append(f"Somme {'basse' if somme < 75 else 'elevee'} ({somme}) — viser la fourchette 85-175")
+                        suggestions.append(f"Somme {'basse' if somme < 75 else 'élevée'} ({somme}) — viser la fourchette 85-175")
                     if dispersion < 10:
-                        suggestions.append(f"Dispersion insuffisante ({dispersion}) — vos numeros couvrent seulement {dispersion} unites sur 49 possibles")
+                        suggestions.append(f"Dispersion insuffisante ({dispersion}) — vos numéros couvrent seulement {dispersion} unités sur 49 possibles")
                     elif dispersion < 15:
-                        suggestions.append(f"Dispersion faible ({dispersion}) — elargir l'ecart entre vos numeros")
+                        suggestions.append(f"Dispersion faible ({dispersion}) — élargir l'écart entre vos numéros")
                     if max_run >= 3 and 'suite' not in critical_flags:
-                        suggestions.append(f"Suite de {max_run} consecutifs — reduire les numeros qui se suivent")
+                        suggestions.append(f"Suite de {max_run} consécutifs — réduire les numéros qui se suivent")
 
                 else:
                     if score >= 70:
-                        suggestions.append("Excellent equilibre dans votre selection")
+                        suggestions.append("Excellent équilibre dans votre sélection")
                     if nb_pairs == 1 or nb_pairs == 4:
-                        suggestions.append("Pensez a varier pairs et impairs (2-3 pairs ideal)")
+                        suggestions.append("Pensez à varier pairs et impairs (2-3 pairs idéal)")
                     if nb_bas == 1 or nb_bas == 4:
-                        suggestions.append("Mixer numeros bas (1-25) et hauts (26-50)")
+                        suggestions.append("Mixer numéros bas (1-25) et hauts (26-50)")
                     if 75 <= somme < 85:
-                        suggestions.append("Somme un peu basse, ajouter un numero plus eleve")
+                        suggestions.append("Somme un peu basse, ajouter un numéro plus élevé")
                     elif 165 < somme <= 175:
-                        suggestions.append("Somme un peu elevee, ajouter un numero plus bas")
+                        suggestions.append("Somme un peu élevée, ajouter un numéro plus bas")
                     if 15 <= dispersion < 20:
-                        suggestions.append("Elargir legerement la dispersion de vos numeros")
+                        suggestions.append("Élargir légèrement la dispersion de vos numéros")
                     if max_run == 3:
-                        suggestions.append("Attention a la suite de 3 consecutifs")
+                        suggestions.append("Attention à la suite de 3 consécutifs")
                     elif suites >= 2 and max_run < 3:
-                        suggestions.append("Quelques numeros consecutifs — pensez a les espacer")
+                        suggestions.append("Quelques numéros consécutifs — pensez à les espacer")
 
                 if not suggestions:
-                    suggestions.append("Grille bien equilibree")
+                    suggestions.append("Grille bien équilibrée")
 
                 if score >= 80:
-                    comparaison = "Meilleure que 85% des grilles aleatoires"
+                    comparaison = "Meilleure que 85% des grilles aléatoires"
                 elif score >= 60:
-                    comparaison = "Meilleure que 60% des grilles aleatoires"
+                    comparaison = "Meilleure que 60% des grilles aléatoires"
                 elif score >= 40:
                     comparaison = "Dans la moyenne des grilles"
                 else:

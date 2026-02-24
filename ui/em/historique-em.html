@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Historique des Tirages EuroMillions | LotoIA</title>
-    <meta name="description" content="Recherchez un tirage EuroMillions par date. Consultez les numeros et etoiles de chaque tirage historique.">
+    <meta name="description" content="Recherchez un tirage EuroMillions par date. Consultez les numéros et étoiles de chaque tirage historique.">
     <link rel="canonical" href="https://lotoia.fr/euromillions/historique">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <meta property="og:type" content="website">
@@ -169,7 +169,7 @@
         </a>
         <div class="engine-nav-right">
             <span class="engine-badge">EuroMillions</span>
-            <button id="theme-switch" class="theme-switch" title="Changer de theme">
+            <button id="theme-switch" class="theme-switch" title="Changer de thème">
                 <span class="icon-day">☀️</span>
                 <span class="icon-night">🌙</span>
             </button>
@@ -195,7 +195,7 @@
                 </a>
                 <a href="/euromillions/news" class="loto-hero-btn loto-hero-btn-news">
                     <span class="loto-hero-btn-icon">📰</span>
-                    Actualites
+                    Actualités
                 </a>
             </div>
             <p class="loto-hero-scroll-hint">← glisser pour voir plus →</p>
@@ -224,22 +224,22 @@
                 <span class="footer-sep">•</span>
                 <a href="/euromillions/statistiques">Statistiques</a>
                 <span class="footer-sep">•</span>
-                <a href="/euromillions/news">Actualites</a>
+                <a href="/euromillions/news">Actualités</a>
                 <span class="footer-sep">•</span>
                 <a href="/euromillions/faq">FAQ</a>
             </div>
             <div class="footer-legal">
-                <a href="/mentions-legales">Mentions legales</a>
+                <a href="/mentions-legales">Mentions légales</a>
                 <span class="footer-sep">•</span>
-                <a href="/politique-confidentialite">Confidentialite</a>
+                <a href="/politique-confidentialite">Confidentialité</a>
                 <span class="footer-sep">•</span>
                 <a href="/politique-cookies">Cookies</a>
             </div>
             <p class="footer-brand">LotoIA.fr <span class="app-version">v1.001</span></p>
-            <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dependance. Appelez le 09 74 75 13 13 (appel non surtaxe).</p>
+            <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dépendance. Appelez le 09 74 75 13 13 (appel non surtaxé).</p>
             <p class="footer-help">Interdiction de jeu aux mineurs. <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
             <div class="credits">
-                <p class="dev-by">Developpe par <strong>JyppY</strong></p>
+                <p class="dev-by">Développé par <strong>JyppY</strong></p>
             </div>
         </footer>
     </div>
@@ -278,7 +278,7 @@
                 html += '</div></div>';
                 resultDiv.innerHTML = html;
             } else if (data.success && !data.found) {
-                resultDiv.innerHTML = '<p class="error">Aucun tirage trouve pour cette date.</p>';
+                resultDiv.innerHTML = '<p class="error">Aucun tirage trouvé pour cette date.</p>';
             } else {
                 resultDiv.innerHTML = '<p class="error">' + (data.message || 'Erreur interne du serveur') + '</p>';
             }

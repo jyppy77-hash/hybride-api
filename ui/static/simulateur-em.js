@@ -104,7 +104,7 @@ function initMainGrid() {
         const heat = state.numbersHeat[i] || state.numbersHeat[String(i)];
         if (heat) {
             btn.classList.add(heat.category);
-            btn.title = 'Frequence: ' + heat.frequency + ' | Dernier: ' + (heat.last_draw || 'N/A');
+            btn.title = 'Fréquence: ' + heat.frequency + ' | Dernier: ' + (heat.last_draw || 'N/A');
         } else {
             btn.classList.add('neutral');
         }
@@ -425,7 +425,7 @@ function displayDetails(details) {
           evaluate: function(v) { var n = parseInt(v); return (n>=20&&n<=42)?'good':(n>=15&&n<=47)?'warning':'bad'; }},
         { key: 'suites_consecutives', label: 'Suites', icon: '\u{1F517}',
           evaluate: function(v) { var n = parseInt(v); return (n<=1)?'good':(n===2)?'warning':'bad'; }},
-        { key: 'score_conformite', label: 'Conformite', icon: '\u2713',
+        { key: 'score_conformite', label: 'Conformité', icon: '\u2713',
           evaluate: function(v) { var n = parseFloat(v); return (n>=80)?'good':(n>=50)?'warning':'bad'; }}
     ];
 
