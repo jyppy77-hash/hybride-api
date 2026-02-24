@@ -1276,9 +1276,16 @@ body.sponsor-popup-active {
     max-width: 300px !important;
 }
 
+.sponsor-popup-modal.meta-analyse-modal .sponsor-video-card {
+    aspect-ratio: 16 / 9 !important;
+    overflow: hidden !important;
+}
+
 .sponsor-popup-modal.meta-analyse-modal .sponsor-video {
-    max-height: 25vh !important;
-    width: auto !important;
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    aspect-ratio: 16 / 9 !important;
 }
 
 .sponsor-popup-modal.meta-analyse-modal .sponsor-video-cta {

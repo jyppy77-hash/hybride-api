@@ -130,6 +130,7 @@
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
     width: 100%;
+    aspect-ratio: 16 / 9;
 }
 
 .meta-popup-em .sponsor-video-card:hover {
@@ -191,7 +192,7 @@
    ============================================ */
 
 .meta-popup-em .console-body { max-height: 25vh; }
-.meta-popup-em .sponsor-video { max-height: 25vh; width: auto; }
+.meta-popup-em .sponsor-video { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 16 / 9; }
 .meta-popup-em .popup-title { font-size: 16px; margin: 4px 0; }
 .meta-popup-em .progress-bar-container { margin: 4px 0; }
 .meta-popup-em .progress-percentage { margin: 2px 0; }
