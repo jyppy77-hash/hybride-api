@@ -85,21 +85,14 @@ function stopFloatingStars() {
 const META_ANALYSE_TIMER_DURATION_EM = 30;
 
 // ============================================
-// CONFIGURATION DES SPONSORS
+// CONFIGURATION DES SPONSORS (VIDEO UNIQUEMENT)
 // ============================================
 
-const SPONSORS_CONFIG_75_EM = [
-    {
-        id: 'annonceur',
-        name: 'Votre marque ici',
-        url: 'mailto:partenariats@lotoia.fr',
-        icon: '\ud83d\udce3',
-        description: 'Audience forte \u2022 trafic qualifi\u00e9',
-        displayUrl: 'partenariats@lotoia.fr',
-        badge: 'Espace partenaire',
-        badgeType: 'partner'
-    }
-];
+const SPONSOR_VIDEO_75_EM = {
+    id: 'lotoia_video',
+    url: 'mailto:partenariats@lotoia.fr',
+    videoSrc: '/static/Sponsors_media/Sponsor75lotoia.mp4'
+};
 
 // ============================================
 // SEQUENCE DE LOGS CONSOLE EM
@@ -169,24 +162,23 @@ function generatePopupHTML75EM(config) {
         ? '<div class="meta-analyse-badge">Fen\u00eatre META ANALYSE EM</div>'
         : '';
 
-    var sponsorsHTML = SPONSORS_CONFIG_75_EM.map(function(sponsor) {
-        return '<a href="' + sponsor.url + '" target="_blank" rel="noopener noreferrer"' +
-           ' class="sponsor-card sponsor-card-single sponsor-card-16x9" data-sponsor="' + sponsor.id + '"' +
-           ' onclick="trackSponsorClickEM(\'' + sponsor.id + '\')">' +
-            '<span class="sponsor-badge ' + sponsor.badgeType + '">' + sponsor.badge + '</span>' +
-            '<div class="sponsor-logo">' +
-                '<span class="sponsor-logo-icon">' + sponsor.icon + '</span>' +
-                sponsor.name +
-            '</div>' +
-            '<div class="sponsor-description">' + sponsor.description + '</div>' +
-            '<div class="sponsor-url">' +
-                '<span>\u2192</span>' +
-                '<span>' + sponsor.displayUrl + '</span>' +
-            '</div>' +
-        '</a>';
-    }).join('');
+    var sponsorVideoHTML =
+        '<div class="sponsor-video-wrapper">' +
+            '<a href="' + SPONSOR_VIDEO_75_EM.url + '" class="sponsor-video-card" onclick="trackSponsorClickEM(\'' + SPONSOR_VIDEO_75_EM.id + '\')">' +
+                '<video' +
+                    ' class="sponsor-video"' +
+                    ' autoplay' +
+                    ' loop' +
+                    ' muted' +
+                    ' playsinline' +
+                    ' preload="auto"' +
+                    ' src="' + SPONSOR_VIDEO_75_EM.videoSrc + '"' +
+                '></video>' +
+            '</a>' +
+            '<p class="sponsor-video-cta">\ud83d\udcfa Cet espace vid\u00e9o est disponible pour votre marque</p>' +
+        '</div>';
 
-    return '<div class="sponsor-popup-modal entering' + (isMetaAnalyse ? ' meta-analyse-modal' : '') + '">' +
+    return '<div class="sponsor-popup-modal entering' + (isMetaAnalyse ? ' meta-analyse-modal meta-popup-em' : '') + '">' +
             metaAnalyseBadge +
             '<h2 class="popup-title">' +
                 '<span class="title-icon">\u2699\ufe0f</span>' +
@@ -213,7 +205,7 @@ function generatePopupHTML75EM(config) {
             '</div>' +
             '<div class="sponsors-header">Partenaire</div>' +
             '<div class="sponsors-container sponsors-container-single">' +
-                sponsorsHTML +
+                sponsorVideoHTML +
             '</div>' +
             '<div class="timer-circle-container">' +
                 '<div class="timer-circle">' +
@@ -332,18 +324,21 @@ function showSponsorPopup75EM(config) {
         document.body.classList.add('sponsor-popup-active');
         startFloatingStars();
 
-        // Bouton Annuler
+        // Bouton Annuler — injecte dans le timer-circle-container (meme ligne)
         var modal = overlay.querySelector('.sponsor-popup-modal');
         var cancelBtn = document.createElement('button');
         cancelBtn.type = 'button';
         cancelBtn.className = 'sponsor-cancel-btn';
         cancelBtn.textContent = 'Annuler';
 
-        var actions = document.createElement('div');
-        actions.className = 'sponsor-popup-actions';
-        actions.appendChild(cancelBtn);
-
-        if (modal) { modal.appendChild(actions); } else { overlay.appendChild(actions); }
+        var timerContainer = modal ? modal.querySelector('.timer-circle-container') : null;
+        if (timerContainer) {
+            timerContainer.appendChild(cancelBtn);
+        } else if (modal) {
+            modal.appendChild(cancelBtn);
+        } else {
+            overlay.appendChild(cancelBtn);
+        }
 
         cancelBtn.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -351,7 +346,7 @@ function showSponsorPopup75EM(config) {
             closePopup();
         });
 
-        trackImpressionEM(SPONSORS_CONFIG_75_EM.map(function(s) { return s.id; }));
+        trackImpressionEM([SPONSOR_VIDEO_75_EM.id]);
 
         var progressBar = document.getElementById('sponsor-progress');
         var progressText = document.getElementById('progress-text');

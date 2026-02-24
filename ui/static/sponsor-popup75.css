@@ -1213,3 +1213,152 @@ body.sponsor-popup-active {
         box-sizing: border-box !important;
     }
 }
+
+/* ============================================
+   META ANALYSE 75 — Layout compact sans scroll
+   Bouton Annuler à côté du chrono (même ligne)
+   Double-classe pour spécificité maximale
+   ============================================ */
+
+.sponsor-popup-modal.meta-analyse-modal {
+    max-height: 100vh !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+    overflow-y: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 12px 20px !important;
+    box-sizing: border-box !important;
+}
+
+.sponsor-popup-modal.meta-analyse-modal .popup-title {
+    font-size: 16px !important;
+    margin: 4px 0 !important;
+    margin-top: 32px !important;
+}
+
+.sponsor-popup-modal.meta-analyse-modal .progress-bar-container {
+    margin: 4px 0 !important;
+}
+
+.sponsor-popup-modal.meta-analyse-modal .progress-percentage {
+    margin: 2px 0 !important;
+    font-size: 14px !important;
+}
+
+.sponsor-popup-modal.meta-analyse-modal .data-animation {
+    margin: 2px 0 !important;
+}
+
+.sponsor-popup-modal.meta-analyse-modal .console-container {
+    flex: 1 !important;
+    min-height: 0 !important;
+    max-height: 30vh !important;
+    overflow-y: auto !important;
+    margin: 4px 0 !important;
+}
+
+.sponsor-popup-modal.meta-analyse-modal .console-body {
+    max-height: 25vh !important;
+    height: auto !important;
+}
+
+.sponsor-popup-modal.meta-analyse-modal .sponsors-header {
+    margin: 6px 0 4px !important;
+    font-size: 12px !important;
+}
+
+.sponsor-popup-modal.meta-analyse-modal .sponsors-container {
+    margin-bottom: 6px !important;
+}
+
+.sponsor-popup-modal.meta-analyse-modal .sponsor-video-wrapper {
+    max-width: 300px !important;
+}
+
+.sponsor-popup-modal.meta-analyse-modal .sponsor-video {
+    max-height: 25vh !important;
+    width: auto !important;
+}
+
+.sponsor-popup-modal.meta-analyse-modal .sponsor-video-cta {
+    margin: 2px 0 !important;
+    font-size: 11px !important;
+}
+
+.sponsor-popup-modal.meta-analyse-modal .timer-circle-container {
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 16px !important;
+    margin: 4px 0 !important;
+    flex-shrink: 0 !important;
+}
+
+.sponsor-popup-modal.meta-analyse-modal .timer-circle {
+    width: 60px !important;
+    height: 60px !important;
+}
+
+.sponsor-popup-modal.meta-analyse-modal .timer-value {
+    font-size: 22px !important;
+}
+
+.sponsor-popup-modal.meta-analyse-modal .timer-label {
+    font-size: 10px !important;
+}
+
+.sponsor-popup-modal.meta-analyse-modal .sponsor-cancel-btn {
+    padding: 8px 20px !important;
+    font-size: 13px !important;
+}
+
+/* META 75 responsive mobile */
+@media (max-width: 480px) {
+    .sponsor-popup-modal.meta-analyse-modal {
+        padding: 8px 12px !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+    }
+
+    .sponsor-popup-modal.meta-analyse-modal .popup-title {
+        font-size: 13px !important;
+        margin-top: 28px !important;
+    }
+
+    .sponsor-popup-modal.meta-analyse-modal .console-container {
+        max-height: 25vh !important;
+    }
+
+    .sponsor-popup-modal.meta-analyse-modal .console-body {
+        max-height: 20vh !important;
+        height: auto !important;
+        min-height: unset !important;
+    }
+
+    .sponsor-popup-modal.meta-analyse-modal .sponsor-video-wrapper {
+        max-width: 240px !important;
+    }
+
+    .sponsor-popup-modal.meta-analyse-modal .timer-circle-container {
+        flex-direction: row !important;
+        gap: 12px !important;
+        margin-top: 4px !important;
+    }
+
+    .sponsor-popup-modal.meta-analyse-modal .timer-circle {
+        width: 50px !important;
+        height: 50px !important;
+    }
+
+    .sponsor-popup-modal.meta-analyse-modal .timer-value {
+        font-size: 18px !important;
+    }
+
+    .sponsor-popup-modal.meta-analyse-modal .sponsor-cancel-btn {
+        width: auto !important;
+        padding: 8px 16px !important;
+        font-size: 12px !important;
+        position: static !important;
+    }
+}

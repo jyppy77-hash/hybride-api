@@ -1,15 +1,33 @@
 /**
  * SPONSOR POPUP 75 EM - Styles META ANALYSE EuroMillions
  * Complement de sponsor-popup-em.css pour le mode 75%
- * Badge meta-analyse + sponsor unique centre en ratio 16:9
+ * Badge meta-analyse + video sponsor + layout compact sans scroll
  * Theme cosmic/spatial EuroMillions
+ *
+ * TOUS les selecteurs sont scopes via .meta-popup-em
+ * pour ne JAMAIS impacter la popup Loto FR
  */
 
 /* ============================================
-   BADGE META ANALYSE
+   FIX POPUP META EM — Tout visible sans scroll
    ============================================ */
 
-.meta-analyse-badge {
+/* La modale prend tout l'ecran sans scroll */
+.meta-popup-em {
+    max-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 12px 20px;
+    box-sizing: border-box;
+}
+
+/* ============================================
+   BADGE META ANALYSE (scope EM)
+   ============================================ */
+
+.meta-popup-em .meta-analyse-badge {
     position: absolute;
     top: 12px;
     left: 50%;
@@ -27,102 +45,234 @@
     white-space: nowrap;
 }
 
-.meta-analyse-modal .popup-title {
+/* Titre compact */
+.meta-popup-em .popup-title {
+    font-size: 18px;
+    margin: 4px 0;
+}
+
+.meta-popup-em.meta-analyse-modal .popup-title {
     margin-top: 32px;
 }
 
 /* ============================================
-   SPONSOR UNIQUE CENTRE - RATIO 16:9
+   BARRE DE PROGRESSION COMPACTE
    ============================================ */
 
-.sponsors-container-single {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.meta-popup-em .progress-bar-container {
+    margin: 4px 0;
 }
 
-.sponsor-card-single {
-    flex: none;
-    width: 100%;
-    max-width: 400px;
-}
-
-/* Conteneur ratio 16:9 pour future video */
-.sponsor-card-16x9 {
-    aspect-ratio: 16 / 9;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 180px;
-    position: relative;
-}
-
-.sponsor-card-16x9 .sponsor-logo {
-    font-size: 24px;
-    margin: 12px 0;
-}
-
-.sponsor-card-16x9 .sponsor-logo-icon {
-    font-size: 28px;
-}
-
-.sponsor-card-16x9 .sponsor-description {
+.meta-popup-em .progress-percentage {
+    margin: 2px 0;
     font-size: 14px;
-    margin-bottom: 16px;
-}
-
-.sponsor-card-16x9 .sponsor-url {
-    font-size: 13px;
-}
-
-.sponsor-card-16x9 .sponsor-badge {
-    top: 16px;
-    left: 16px;
-    font-size: 11px;
-    padding: 5px 12px;
 }
 
 /* ============================================
-   RESPONSIVE META ANALYSE
+   ANIMATION MATRIX COMPACTE
+   ============================================ */
+
+.meta-popup-em .data-animation {
+    margin: 4px 0;
+    font-size: 11px;
+}
+
+/* ============================================
+   CONSOLE — prend l'espace restant avec limite
+   ============================================ */
+
+.meta-popup-em .console-container {
+    flex: 1;
+    min-height: 0;
+    max-height: 30vh;
+    overflow-y: auto;
+}
+
+/* ============================================
+   SECTION SPONSOR/VIDEO COMPACTE
+   ============================================ */
+
+.meta-popup-em .sponsors-header {
+    margin: 6px 0 4px;
+    font-size: 12px;
+}
+
+.meta-popup-em .sponsors-container.sponsors-container-single {
+    background: none;
+    padding: 0;
+    min-height: unset;
+    border: none;
+    box-shadow: none;
+    gap: 0;
+    margin-bottom: 6px;
+}
+
+.meta-popup-em .sponsors-container-single .sponsor-video-wrapper {
+    background: none;
+    padding: 0;
+    border: none;
+}
+
+.meta-popup-em .sponsor-video-wrapper {
+    max-width: 300px;
+    width: 100%;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.meta-popup-em .sponsor-video-card {
+    display: block;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    text-decoration: none;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    width: 100%;
+}
+
+.meta-popup-em .sponsor-video-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+}
+
+.meta-popup-em .sponsor-video {
+    width: 100%;
+    display: block;
+    border-radius: 16px;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    background: #0a1633;
+}
+
+.meta-popup-em .sponsor-video-cta {
+    margin: 4px 0;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 0.5px;
+    font-style: italic;
+}
+
+/* ============================================
+   TIMER + ANNULER — meme ligne, en bas
+   ============================================ */
+
+.meta-popup-em .timer-circle-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin: 4px 0;
+    flex-shrink: 0;
+}
+
+.meta-popup-em .timer-circle {
+    width: 60px;
+    height: 60px;
+}
+
+.meta-popup-em .timer-value {
+    font-size: 22px;
+}
+
+.meta-popup-em .timer-label {
+    font-size: 10px;
+}
+
+.meta-popup-em .sponsor-cancel-btn {
+    padding: 8px 20px;
+    font-size: 13px;
+}
+
+/* ============================================
+   COMPACT — tout visible sans scroll
+   ============================================ */
+
+.meta-popup-em .console-body { max-height: 25vh; }
+.meta-popup-em .sponsor-video { max-height: 25vh; width: auto; }
+.meta-popup-em .popup-title { font-size: 16px; margin: 4px 0; }
+.meta-popup-em .progress-bar-container { margin: 4px 0; }
+.meta-popup-em .progress-percentage { margin: 2px 0; }
+.meta-popup-em .data-animation { margin: 2px 0; }
+.meta-popup-em .sponsors-header { margin: 4px 0; }
+.meta-popup-em .sponsor-video-cta { margin: 2px 0; }
+.meta-popup-em .timer-circle { width: 50px; height: 50px; }
+
+/* ============================================
+   OVERLAY RENFORCEMENT (scope body.em-page)
+   ============================================ */
+
+body.em-page .sponsor-popup-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(0, 13, 38, 0.92) !important;
+    z-index: 9999 !important;
+}
+
+/* ============================================
+   RESPONSIVE — mobile
    ============================================ */
 
 @media (max-width: 480px) {
-    .meta-analyse-badge {
+    .meta-popup-em {
+        padding: 8px 12px;
+    }
+
+    .meta-popup-em .meta-analyse-badge {
         font-size: 9px;
         padding: 5px 12px;
         top: 8px;
     }
 
-    .meta-analyse-modal .popup-title {
+    .meta-popup-em.meta-analyse-modal .popup-title {
         margin-top: 28px;
     }
 
-    .sponsor-card-16x9 {
-        min-height: 140px;
-        aspect-ratio: 16 / 9;
+    .meta-popup-em .popup-title {
+        font-size: 13px;
     }
 
-    .sponsor-card-16x9 .sponsor-logo {
+    .meta-popup-em .console-container {
+        max-height: 25vh;
+    }
+
+    .meta-popup-em .sponsor-video-wrapper {
+        max-width: 240px;
+    }
+
+    .meta-popup-em .sponsor-video {
+        border-radius: 12px;
+    }
+
+    .meta-popup-em .sponsor-video-card {
+        border-radius: 12px;
+    }
+
+    .meta-popup-em .sponsor-video-cta {
+        font-size: 10px;
+    }
+
+    .meta-popup-em .timer-circle-container {
+        gap: 12px;
+    }
+
+    .meta-popup-em .timer-circle {
+        width: 50px;
+        height: 50px;
+    }
+
+    .meta-popup-em .timer-value {
         font-size: 18px;
     }
 
-    .sponsor-card-16x9 .sponsor-logo-icon {
-        font-size: 22px;
-    }
-
-    .sponsor-card-16x9 .sponsor-description {
+    .meta-popup-em .sponsor-cancel-btn {
+        padding: 7px 14px;
         font-size: 12px;
-    }
-}
-
-@media (min-width: 481px) and (max-width: 768px) {
-    .sponsor-card-single {
-        max-width: 360px;
-    }
-
-    .sponsor-card-16x9 {
-        min-height: 160px;
     }
 }
 
