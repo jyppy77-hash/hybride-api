@@ -13,6 +13,7 @@ from engine.hybride_em import generate_grids
 from em_schemas import EMMetaAnalyseTextePayload, EMMetaPdfPayload
 import db_cloudsql
 from rate_limit import limiter
+from services.penalization import compute_penalized_ranking
 
 logger = logging.getLogger(__name__)
 
@@ -159,8 +160,47 @@ async def em_meta_analyse_local(
                     ORDER BY num
                 """, (*window_ids, *window_ids, *window_ids, *window_ids, *window_ids))
                 freq_boules = {row['num']: row['freq'] for row in cursor.fetchall()}
-                top_boules = [{"number": n, "count": freq_boules.get(n, 0)} for n in range(1, 51)]
-                top_boules = sorted(top_boules, key=lambda x: -x['count'])[:5]
+
+                # ── 2 derniers tirages pour penalisation ──
+                cursor.execute(f"""
+                    SELECT boule_1, boule_2, boule_3, boule_4, boule_5,
+                           etoile_1, etoile_2, date_de_tirage
+                    FROM {TABLE}
+                    WHERE id IN ({ids_placeholder})
+                    ORDER BY date_de_tirage DESC
+                    LIMIT 2
+                """, window_ids)
+                recent_draws = cursor.fetchall()
+
+                if len(recent_draws) >= 2:
+                    last_draw_balls = {recent_draws[0][f'boule_{i}'] for i in range(1, 6)}
+                    second_last_balls = {recent_draws[1][f'boule_{i}'] for i in range(1, 6)}
+                    last_draw_stars = {recent_draws[0]['etoile_1'], recent_draws[0]['etoile_2']}
+                    second_last_stars = {recent_draws[1]['etoile_1'], recent_draws[1]['etoile_2']}
+                    last_draw_date = str(recent_draws[0]['date_de_tirage'])
+                    second_last_date = str(recent_draws[1]['date_de_tirage'])
+                elif len(recent_draws) == 1:
+                    last_draw_balls = {recent_draws[0][f'boule_{i}'] for i in range(1, 6)}
+                    second_last_balls = set()
+                    last_draw_stars = {recent_draws[0]['etoile_1'], recent_draws[0]['etoile_2']}
+                    second_last_stars = set()
+                    last_draw_date = str(recent_draws[0]['date_de_tirage'])
+                    second_last_date = None
+                else:
+                    last_draw_balls = set()
+                    second_last_balls = set()
+                    last_draw_stars = set()
+                    second_last_stars = set()
+                    last_draw_date = None
+                    second_last_date = None
+
+                top_boules, penal_info_boules = compute_penalized_ranking(
+                    raw_freq=freq_boules,
+                    last_draw_numbers=last_draw_balls,
+                    second_last_draw_numbers=second_last_balls,
+                    num_range=range(1, 51),
+                    top_n=5,
+                )
 
                 # Frequences etoiles sur la fenetre
                 cursor.execute(f"""
@@ -172,8 +212,13 @@ async def em_meta_analyse_local(
                     ORDER BY num
                 """, (*window_ids, *window_ids))
                 freq_etoiles = {row['num']: row['freq'] for row in cursor.fetchall()}
-                top_etoiles = [{"number": n, "count": freq_etoiles.get(n, 0)} for n in range(1, 13)]
-                top_etoiles = sorted(top_etoiles, key=lambda x: -x['count'])[:3]
+                top_etoiles, penal_info_etoiles = compute_penalized_ranking(
+                    raw_freq=freq_etoiles,
+                    last_draw_numbers=last_draw_stars,
+                    second_last_draw_numbers=second_last_stars,
+                    num_range=range(1, 13),
+                    top_n=3,
+                )
 
                 # Dates de la fenetre
                 cursor.execute(f"""
@@ -233,7 +278,13 @@ async def em_meta_analyse_local(
                         "date_min": str(date_min) if date_min else None,
                         "date_max": str(date_max) if date_max else None,
                         "period": f"{date_min} - {date_max}",
-                        "source": "HYBRIDE_LOCAL_EM"
+                        "source": "HYBRIDE_LOCAL_EM",
+                        "penalization": {
+                            "last_draw_date": last_draw_date,
+                            "second_last_draw_date": second_last_date,
+                            "boules": penal_info_boules,
+                            "etoiles": penal_info_etoiles,
+                        }
                     }
                 }
             finally:

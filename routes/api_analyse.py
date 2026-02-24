@@ -8,6 +8,7 @@ from engine.hybride import generate, generate_grids
 import db_cloudsql
 from schemas import AskPayload
 from rate_limit import limiter
+from services.penalization import compute_penalized_ranking
 
 logger = logging.getLogger(__name__)
 
@@ -175,9 +176,47 @@ async def api_meta_analyse_local(
                     ORDER BY num
                 """, (*window_ids, *window_ids, *window_ids, *window_ids, *window_ids))
                 freq_map = {row['num']: row['freq'] for row in cursor.fetchall()}
-                top_numbers = [{"number": n, "count": freq_map.get(n, 0)} for n in range(1, 50)]
 
-                top_numbers = sorted(top_numbers, key=lambda x: -x['count'])[:5]
+                # ── 2 derniers tirages pour penalisation ──
+                cursor.execute(f"""
+                    SELECT boule_1, boule_2, boule_3, boule_4, boule_5,
+                           numero_chance, date_de_tirage
+                    FROM tirages
+                    WHERE id IN ({ids_placeholder})
+                    ORDER BY date_de_tirage DESC
+                    LIMIT 2
+                """, window_ids)
+                recent_draws = cursor.fetchall()
+
+                if len(recent_draws) >= 2:
+                    last_draw_balls = {recent_draws[0][f'boule_{i}'] for i in range(1, 6)}
+                    second_last_balls = {recent_draws[1][f'boule_{i}'] for i in range(1, 6)}
+                    last_draw_chance = {recent_draws[0]['numero_chance']}
+                    second_last_chance = {recent_draws[1]['numero_chance']}
+                    last_draw_date = str(recent_draws[0]['date_de_tirage'])
+                    second_last_date = str(recent_draws[1]['date_de_tirage'])
+                elif len(recent_draws) == 1:
+                    last_draw_balls = {recent_draws[0][f'boule_{i}'] for i in range(1, 6)}
+                    second_last_balls = set()
+                    last_draw_chance = {recent_draws[0]['numero_chance']}
+                    second_last_chance = set()
+                    last_draw_date = str(recent_draws[0]['date_de_tirage'])
+                    second_last_date = None
+                else:
+                    last_draw_balls = set()
+                    second_last_balls = set()
+                    last_draw_chance = set()
+                    second_last_chance = set()
+                    last_draw_date = None
+                    second_last_date = None
+
+                top_numbers, penal_info_balls = compute_penalized_ranking(
+                    raw_freq=freq_map,
+                    last_draw_numbers=last_draw_balls,
+                    second_last_draw_numbers=second_last_balls,
+                    num_range=range(1, 50),
+                    top_n=5,
+                )
 
                 cursor.execute(f"""
                     SELECT MIN(date_de_tirage) as min_date, MAX(date_de_tirage) as max_date
@@ -200,10 +239,13 @@ async def api_meta_analyse_local(
                     ORDER BY freq DESC
                 """, window_ids)
                 chance_freq = {row['num']: row['freq'] for row in cursor.fetchall()}
-                chance_top = sorted(
-                    [{"number": n, "count": chance_freq.get(n, 0)} for n in range(1, 11)],
-                    key=lambda x: -x['count']
-                )[:3]
+                chance_top, penal_info_chance = compute_penalized_ranking(
+                    raw_freq=chance_freq,
+                    last_draw_numbers=last_draw_chance,
+                    second_last_draw_numbers=second_last_chance,
+                    num_range=range(1, 11),
+                    top_n=3,
+                )
                 chance_labels = [str(c['number']) for c in chance_top]
                 chance_values = [c['count'] for c in chance_top]
 
@@ -258,7 +300,13 @@ async def api_meta_analyse_local(
                         "date_min": str(date_min) if date_min else None,
                         "date_max": str(date_max) if date_max else None,
                         "period": f"{date_min} - {date_max}",
-                        "source": "HYBRIDE_LOCAL"
+                        "source": "HYBRIDE_LOCAL",
+                        "penalization": {
+                            "last_draw_date": last_draw_date,
+                            "second_last_draw_date": second_last_date,
+                            "balls": penal_info_balls,
+                            "chance": penal_info_chance,
+                        }
                     }
                 }
             finally:
