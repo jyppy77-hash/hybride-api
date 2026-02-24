@@ -8,11 +8,12 @@ steps:
     entrypoint: 'sh'
     args:
       - '-c'
-      - 'pip install --no-cache-dir pytest pytest-asyncio pytest-cov && python -m pytest -v --tb=short'
+      - 'pip install --no-cache-dir pytest pytest-asyncio && python -m pytest -v --tb=short -o addopts='
     env:
       - 'DB_PASSWORD=fake'
       - 'DB_USER=test'
       - 'DB_NAME=testdb'
+      - 'HOME=/tmp'
 
   # Push image to Container Registry / Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'

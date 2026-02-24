@@ -1,0 +1,63 @@
+# =============================================================================
+# LotoIA - .gcloudignore
+# Fichiers exclus de l'upload vers Cloud Build (gcloud run deploy --source)
+# NOTE : ui/launcher.html, ui/robots.txt, ui/sitemap.xml sont volontairement
+#        INCLUS ici (contrairement au .gitignore) car necessaires en production.
+# =============================================================================
+
+# Secrets / Configuration locale
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Testing
+.coverage
+.pytest_cache/
+requirements-dev.txt
+
+# Build
+dist/
+build/
+*.egg-info/
+
+# Documentation interne
+docs/
+*.md
+
+# VCS & config
+.git/
+.gitignore
+.claude/
+.dockerignore
+cloudbuild.yaml
+
+# Binaires / outils locaux
+cloud-sql-proxy.exe
+
+# Data dumps
+data/
+
+# Windows reserved
+nul

@@ -250,12 +250,151 @@
                         message_position: messageCount
                     });
                 }
+
+                // Rating widget : proposer apres 5 messages
+                if (messageCount === 5) {
+                    setTimeout(function () { showRatingWidget(); }, 1500);
+                }
             })
             .catch(function () {
                 clearTimeout(timeoutId);
                 removeTyping();
                 addMessage('\uD83E\uDD16 Connexion interrompue. R\u00e9essaie dans quelques secondes !', 'bot');
                 trackEvent('chat_error', { page: detectPage() });
+            });
+        }
+
+        /* ══════════════════════════════════
+           Systeme de notation (rating widget)
+           ══════════════════════════════════ */
+
+        var RATING_SOURCE = 'chatbot_loto';
+        var RATING_STORAGE_KEY = 'lotoia_rated_' + RATING_SOURCE;
+        var ratingShown = false;
+
+        function showRatingWidget() {
+            if (ratingShown) return;
+            if (sessionStorage.getItem(RATING_STORAGE_KEY)) return;
+            if (sessionStorage.getItem('lotoia_rated_chatbot_em')) return;
+            if (sessionStorage.getItem('lotoia_rated_popup_accueil')) return;
+            ratingShown = true;
+
+            var widget = document.createElement('div');
+            widget.className = 'hybride-msg hybride-msg-bot hybride-rating-widget';
+            widget.id = 'hybride-rating-widget';
+
+            var question = document.createElement('div');
+            question.className = 'rating-question';
+            question.textContent = 'Tu kiffes HYBRIDE ? Note ton exp\u00e9rience !';
+            widget.appendChild(question);
+
+            var starsDiv = document.createElement('div');
+            starsDiv.className = 'rating-stars';
+            starsDiv.id = 'hybride-rating-stars';
+
+            for (var i = 1; i <= 5; i++) {
+                var star = document.createElement('span');
+                star.className = 'rating-star';
+                star.setAttribute('data-value', String(i));
+                star.textContent = '\u2605';
+                (function (val) {
+                    star.addEventListener('mouseover', function () { highlightStars(val); });
+                    star.addEventListener('mouseout', function () { resetStars(); });
+                    star.addEventListener('click', function () { submitChatRating(val); });
+                })(i);
+                starsDiv.appendChild(star);
+            }
+            widget.appendChild(starsDiv);
+
+            var labels = document.createElement('div');
+            labels.className = 'rating-labels';
+            var labelBof = document.createElement('span');
+            labelBof.textContent = 'Bof';
+            var labelTop = document.createElement('span');
+            labelTop.textContent = 'Top !';
+            labels.appendChild(labelBof);
+            labels.appendChild(labelTop);
+            widget.appendChild(labels);
+
+            var feedback = document.createElement('div');
+            feedback.className = 'rating-feedback';
+            feedback.id = 'hybride-rating-feedback';
+            feedback.style.display = 'none';
+            widget.appendChild(feedback);
+
+            messagesArea.appendChild(widget);
+            scrollToBottom();
+        }
+
+        function highlightStars(n) {
+            var stars = document.querySelectorAll('#hybride-rating-stars .rating-star');
+            for (var i = 0; i < stars.length; i++) {
+                if (i < n) { stars[i].classList.add('active'); }
+                else { stars[i].classList.remove('active'); }
+            }
+        }
+
+        function resetStars() {
+            var selected = document.querySelector('#hybride-rating-stars .rating-star.selected');
+            if (selected) return;
+            var stars = document.querySelectorAll('#hybride-rating-stars .rating-star');
+            for (var i = 0; i < stars.length; i++) { stars[i].classList.remove('active'); }
+        }
+
+        function submitChatRating(rating) {
+            var stars = document.querySelectorAll('#hybride-rating-stars .rating-star');
+            for (var i = 0; i < stars.length; i++) {
+                if (i < rating) {
+                    stars[i].classList.add('selected');
+                    stars[i].classList.add('active');
+                } else {
+                    stars[i].classList.remove('selected');
+                    stars[i].classList.remove('active');
+                }
+            }
+
+            var sessionId = sessionStorage.getItem('hybride_session_id')
+                || ('sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
+            sessionStorage.setItem('hybride_session_id', sessionId);
+
+            fetch('/api/rating', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    source: RATING_SOURCE,
+                    rating: rating,
+                    session_id: sessionId,
+                    page: window.location.pathname
+                })
+            })
+            .then(function (res) { return res.json(); })
+            .then(function (data) {
+                if (data.success) {
+                    sessionStorage.setItem(RATING_STORAGE_KEY, 'true');
+                    var feedback = document.getElementById('hybride-rating-feedback');
+                    var messages = {
+                        5: 'Merci ! Tu es un vrai !',
+                        4: 'Merci ! Content que \u00e7a te plaise !',
+                        3: 'Merci ! On va s\u2019am\u00e9liorer !',
+                        2: 'Merci pour ton retour !',
+                        1: 'Merci ! Dis-nous ce qu\u2019on peut am\u00e9liorer !'
+                    };
+                    if (feedback) {
+                        feedback.textContent = messages[rating] || 'Merci !';
+                        feedback.style.display = 'block';
+                    }
+                    setTimeout(function () {
+                        var w = document.getElementById('hybride-rating-widget');
+                        if (w) w.innerHTML = '<div class="rating-thanks">Merci pour ton avis !</div>';
+                    }, 3000);
+                }
+            })
+            .catch(function (err) { /* silent — rating is non-critical */ });
+
+            trackEvent('hybride_chat_rating', {
+                page: detectPage(),
+                rating: rating,
+                message_count: messageCount
             });
         }
 

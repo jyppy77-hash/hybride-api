@@ -91,3 +91,24 @@ class PitchGrilleItem(BaseModel):
 
 class PitchGrillesRequest(BaseModel):
     grilles: list[PitchGrilleItem] = Field(..., max_length=10)
+
+
+# =========================
+# Schemas Notation (Ratings)
+# =========================
+
+class RatingSubmit(BaseModel):
+    source: str = Field(..., pattern=r"^(chatbot_loto|chatbot_em|popup_accueil)$")
+    rating: int = Field(..., ge=1, le=5)
+    comment: Optional[str] = Field(None, max_length=500)
+    session_id: str = Field(..., min_length=10, max_length=64)
+    page: Optional[str] = "/"
+
+class RatingResponse(BaseModel):
+    success: bool
+    message: str
+
+class RatingAggregate(BaseModel):
+    avg_rating: float
+    review_count: int
+    source: Optional[str] = None

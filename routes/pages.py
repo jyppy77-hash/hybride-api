@@ -97,8 +97,38 @@ async def page_launcher():
 
 @router.get("/accueil")
 async def page_accueil():
-    """Accueil Loto France (fallback pour liens existants)."""
-    return serve_page("accueil.html")
+    """Accueil Loto France — schema JSON-LD dynamique (ratings)."""
+    try:
+        result = await db_cloudsql.async_fetchone(
+            "SELECT review_count, avg_rating FROM ratings_global"
+        )
+        review_count = int(result["review_count"]) if result and result.get("review_count") else 0
+        avg_rating = float(result["avg_rating"]) if result and result.get("avg_rating") else 0
+    except Exception:
+        review_count = 0
+        avg_rating = 0
+
+    with open("ui/accueil.html", "r", encoding="utf-8") as f:
+        html = f.read()
+
+    # Injecter le schema dynamique seulement si assez de vrais avis (>= 5)
+    if review_count >= 5:
+        html = html.replace('"ratingValue": "4.6"', f'"ratingValue": "{avg_rating}"')
+        html = html.replace('"ratingCount": "128"', f'"ratingCount": "{review_count}"')
+    else:
+        # Retirer le bloc AggregateRating hardcode (eviter penalite Google)
+        html = html.replace(
+            ',\n        "aggregateRating": {\n'
+            '          "@type": "AggregateRating",\n'
+            '          "ratingValue": "4.6",\n'
+            '          "ratingCount": "128",\n'
+            '          "bestRating": "5",\n'
+            '          "worstRating": "1"\n'
+            '        }',
+            ""
+        )
+
+    return HTMLResponse(content=html)
 
 
 @router.get("/loto")

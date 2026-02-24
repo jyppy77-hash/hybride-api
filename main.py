@@ -33,6 +33,7 @@ from routes.em_data import router as em_data_router
 from routes.em_analyse import router as em_analyse_router
 from routes.em_pages import router as em_pages_router
 from routes.api_chat_em import router as em_chat_router  # Phase 4 — Chatbot EM
+from routes.api_ratings import router as ratings_router
 
 # ── JSON structured logging ──
 _log_handler = logging.StreamHandler(sys.stdout)
@@ -370,6 +371,7 @@ app.include_router(em_data_router)
 app.include_router(em_analyse_router)
 app.include_router(em_pages_router)
 app.include_router(em_chat_router)
+app.include_router(ratings_router)
 
 
 # =========================

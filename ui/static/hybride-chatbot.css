@@ -330,3 +330,56 @@
         left: auto;
     }
 }
+
+/* ── Rating widget (in-chat) ── */
+
+.hybride-rating-widget {
+    padding: 14px 16px !important;
+    text-align: center;
+    max-width: 100% !important;
+}
+
+.rating-question {
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.rating-stars {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.rating-star {
+    font-size: 2rem;
+    cursor: pointer;
+    color: #555;
+    transition: color 0.2s, transform 0.2s;
+    user-select: none;
+    line-height: 1;
+}
+
+.rating-star.active,
+.rating-star.selected {
+    color: #FFD700;
+    transform: scale(1.2);
+}
+
+.rating-labels {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+.rating-feedback,
+.rating-thanks {
+    margin-top: 8px;
+    font-size: 0.9rem;
+    color: #FFD700;
+    font-weight: 600;
+}
