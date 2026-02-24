@@ -310,7 +310,7 @@ function showSponsorPopup75(config) {
         // Creer l'overlay
         const overlay = document.createElement('div');
         overlay.className = 'sponsor-popup-overlay';
-        overlay.innerHTML = generatePopupHTML75({ title, duration });
+        overlay.innerHTML = generatePopupHTML75({ title, duration, isMetaAnalyse });
 
         // Flag d'annulation utilisateur (si true, on ne déclenche pas onComplete)
         let isCancelled = false;
