@@ -259,6 +259,8 @@ function generatePopupHTMLSimulateurEM(config) {
  * @param {string} sponsorId - ID du sponsor
  */
 function trackSponsorClickSimulateurEM(sponsorId) {
+    // Umami — sponsor click EM
+    if (typeof umami !== 'undefined') umami.track('sponsor-click', { sponsor: sponsorId, module: 'euromillions' });
     if (window.LotoIAAnalytics && window.LotoIAAnalytics.business) {
         window.LotoIAAnalytics.business.sponsorClick({
             sponsor: sponsorId,
@@ -368,6 +370,9 @@ function showSponsorPopupSimulateurEM(config) {
         document.body.style.overflow = 'hidden';
         document.body.classList.add('sponsor-popup-active');
         startFloatingStars();
+
+        // Umami — sponsor popup shown EM
+        if (typeof umami !== 'undefined') umami.track('sponsor-popup-shown', { module: 'euromillions' });
 
         // Bouton Annuler
         var modal = overlay.querySelector('.sponsor-popup-modal');

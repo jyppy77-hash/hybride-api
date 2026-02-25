@@ -199,6 +199,8 @@ function generatePopupHTML(config) {
  * @param {string} sponsorId - ID du sponsor
  */
 function trackSponsorClick(sponsorId) {
+    // Umami — sponsor click
+    if (typeof umami !== 'undefined') umami.track('sponsor-click', { sponsor: sponsorId, module: 'loto' });
     // GA4 Analytics - Track sponsor click
     if (window.LotoIAAnalytics && window.LotoIAAnalytics.business) {
         window.LotoIAAnalytics.business.sponsorClick({
@@ -312,6 +314,9 @@ function showSponsorPopup(config) {
         document.body.appendChild(overlay);
         document.body.style.overflow = 'hidden';
         document.body.classList.add('sponsor-popup-active');
+
+        // Umami — sponsor popup shown
+        if (typeof umami !== 'undefined') umami.track('sponsor-popup-shown', { module: 'loto' });
 
         // Bouton Annuler (style via CSS)
         const modal = overlay.querySelector('.sponsor-popup-modal');

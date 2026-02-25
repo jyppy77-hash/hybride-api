@@ -235,6 +235,8 @@ function generatePopupHTML75EM(config) {
 // ============================================
 
 function trackSponsorClickEM(sponsorId) {
+    // Umami — sponsor click EM
+    if (typeof umami !== 'undefined') umami.track('sponsor-click', { sponsor: sponsorId, module: 'euromillions' });
     if (window.LotoIAAnalytics && window.LotoIAAnalytics.business) {
         window.LotoIAAnalytics.business.sponsorClick({
             sponsor: sponsorId,
@@ -323,6 +325,17 @@ function showSponsorPopup75EM(config) {
         document.body.style.overflow = 'hidden';
         document.body.classList.add('sponsor-popup-active');
         startFloatingStars();
+
+        // Umami — sponsor popup shown EM
+        if (typeof umami !== 'undefined') umami.track('sponsor-popup-shown', { module: 'euromillions' });
+
+        // Umami — sponsor video played (autoplay) EM
+        var sponsorVideo = overlay.querySelector('.sponsor-video');
+        if (sponsorVideo) {
+            sponsorVideo.addEventListener('play', function() {
+                if (typeof umami !== 'undefined') umami.track('sponsor-video-played', { sponsor: SPONSOR_VIDEO_75_EM.id, module: 'euromillions' });
+            }, { once: true });
+        }
 
         // Bouton Annuler — injecte dans le timer-circle-container (meme ligne)
         var modal = overlay.querySelector('.sponsor-popup-modal');
@@ -712,6 +725,7 @@ function openMetaResultPopupEM(data) {
 
     if (pdfBtn) {
         pdfBtn.addEventListener('click', function() {
+            if (typeof umami !== 'undefined') umami.track('meta75-pdf-download', { module: 'euromillions' });
             if (window.LotoIAAnalytics?.productEngine?.track) {
                 window.LotoIAAnalytics.productEngine.track('meta_pdf_export_em', { version: 75 });
             }
@@ -922,6 +936,9 @@ var META_ANALYSE_START_TIME_EM = null;
 
 async function showMetaAnalysePopupEM() {
     console.log('[META ANALYSE EM] Ouverture fen\u00eatre META ANALYSE 75 grilles EM');
+
+    // Umami — meta75 lancee EM
+    if (typeof umami !== 'undefined') umami.track('meta75-launched', { module: 'euromillions' });
 
     META_ANALYSE_START_TIME_EM = Date.now();
     if (window.LotoIAAnalytics?.productEngine?.track) {

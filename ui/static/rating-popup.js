@@ -103,12 +103,18 @@
         closeBtn.setAttribute('aria-label', 'Fermer');
         closeBtn.textContent = '\u2715';
         closeBtn.addEventListener('click', function () {
+            var ratingModule = window.location.pathname.indexOf('/euromillions/') !== -1 ? 'euromillions' : 'loto';
+            if (typeof umami !== 'undefined') umami.track('rating-dismissed', { module: ratingModule });
             banner.classList.add('rating-banner-hide');
             setTimeout(function () { banner.remove(); }, 300);
         });
         banner.appendChild(closeBtn);
 
         document.body.appendChild(banner);
+
+        // Umami tracking
+        var ratingModule = window.location.pathname.indexOf('/euromillions/') !== -1 ? 'euromillions' : 'loto';
+        if (typeof umami !== 'undefined') umami.track('rating-popup-shown', { module: ratingModule });
     }
 
     function submitBannerRating(rating) {
@@ -127,6 +133,9 @@
         var sessionId = sessionStorage.getItem('hybride_session_id')
             || ('sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
         sessionStorage.setItem('hybride_session_id', sessionId);
+
+        var ratingModule = window.location.pathname.indexOf('/euromillions/') !== -1 ? 'euromillions' : 'loto';
+        if (typeof umami !== 'undefined') umami.track('rating-submitted', { rating: rating, module: ratingModule });
 
         fetch('/api/rating', {
             method: 'POST',

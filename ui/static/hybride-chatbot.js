@@ -127,10 +127,12 @@
                     page: detectPage(),
                     has_history: chatHistory.length > 1
                 });
+                if (typeof umami !== 'undefined') umami.track('chatbot-open', { module: 'loto' });
             } else {
                 win.classList.remove('visible');
                 bubble.classList.remove('open');
                 root.classList.remove('hybride-fullscreen');
+                if (typeof umami !== 'undefined') umami.track('chatbot-close', { module: 'loto' });
                 trackEvent('hybride_chat_session', {
                     page: detectPage(),
                     message_count: messageCount,
@@ -146,6 +148,7 @@
             win.classList.remove('visible');
             bubble.classList.remove('open');
             root.classList.remove('hybride-fullscreen');
+            if (typeof umami !== 'undefined') umami.track('chatbot-close', { module: 'loto' });
             trackEvent('hybride_chat_session', {
                 page: detectPage(),
                 message_count: messageCount,
@@ -213,6 +216,7 @@
                 message_length: text.length,
                 message_count: messageCount
             });
+            if (typeof umami !== 'undefined') umami.track('chatbot-message', { module: 'loto' });
 
             var controller = new AbortController();
             var timeoutId = setTimeout(function () { controller.abort(); }, 20000);
@@ -396,6 +400,7 @@
                 rating: rating,
                 message_count: messageCount
             });
+            if (typeof umami !== 'undefined') umami.track('rating-submitted', { rating: rating, module: 'loto' });
         }
 
         /* ══════════════════════════════════

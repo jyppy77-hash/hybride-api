@@ -209,6 +209,8 @@ function generatePopupHTML75(config) {
  * @param {string} sponsorId - ID du sponsor
  */
 function trackSponsorClick(sponsorId) {
+    // Umami — sponsor click
+    if (typeof umami !== 'undefined') umami.track('sponsor-click', { sponsor: sponsorId, module: 'loto' });
     // GA4 Analytics - Track sponsor click
     if (window.LotoIAAnalytics && window.LotoIAAnalytics.business) {
         window.LotoIAAnalytics.business.sponsorClick({
@@ -323,6 +325,17 @@ function showSponsorPopup75(config) {
         document.body.appendChild(overlay);
         document.body.style.overflow = 'hidden';
         document.body.classList.add('sponsor-popup-active');
+
+        // Umami — sponsor popup shown
+        if (typeof umami !== 'undefined') umami.track('sponsor-popup-shown', { module: 'loto' });
+
+        // Umami — sponsor video played (autoplay)
+        var sponsorVideo = overlay.querySelector('.sponsor-video');
+        if (sponsorVideo) {
+            sponsorVideo.addEventListener('play', function() {
+                if (typeof umami !== 'undefined') umami.track('sponsor-video-played', { sponsor: SPONSOR_VIDEO_75.id, module: 'loto' });
+            }, { once: true });
+        }
 
         // Bouton Annuler — injecté dans timer-circle-container (même ligne)
         const modal = overlay.querySelector('.sponsor-popup-modal');
@@ -796,6 +809,7 @@ function openMetaResultPopup(data) {
     // EVENT 4 - Export PDF — source unique : finalAnalysisText
     if (pdfBtn) {
         pdfBtn.addEventListener('click', () => {
+            if (typeof umami !== 'undefined') umami.track('meta75-pdf-download', { module: 'loto' });
             if (window.LotoIAAnalytics?.productEngine?.track) {
                 window.LotoIAAnalytics.productEngine.track('meta_pdf_export', { version: 75 });
             }
@@ -1044,6 +1058,9 @@ var META_ANALYSE_START_TIME = null;
  */
 async function showMetaAnalysePopup() {
     console.log('[META ANALYSE] Ouverture fenêtre META ANALYSE 75 grilles');
+
+    // Umami — meta75 lancee
+    if (typeof umami !== 'undefined') umami.track('meta75-launched', { module: 'loto' });
 
     // EVENT 2 - Début tunnel sponsor
     META_ANALYSE_START_TIME = Date.now();

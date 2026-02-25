@@ -315,6 +315,9 @@ function displayResults(data) {
     displaySelectedGrid(data.nums || Array.from(state.selectedNumbers), etoiles[0], etoiles[1]);
     displayHistoryCheck(data.history_check);
 
+    // Umami — audit de grille EM
+    if (typeof umami !== 'undefined') umami.track('simulateur-grille-audited', { module: 'euromillions' });
+
     // Pitch HYBRIDE async (non-blocking) — transmet score conformite + severite
     fetchAndDisplaySimulateurPitchEM(
         Array.from(state.selectedNumbers),
@@ -540,7 +543,7 @@ function displayHistoryCheck(historyCheck) {
 
     var matchCount = parseInt(historyCheck.best_match_count, 10);
     if (matchCount > 0 && historyCheck.best_match_date) {
-        text += '<br>\u{1F9E0} Meilleure correspondance : <strong>' + matchCount + ' numero' + (matchCount > 1 ? 's' : '') + ' identique' + (matchCount > 1 ? 's' : '') + '</strong> (' + historyCheck.best_match_date + ')';
+        text += '<br>\u{1F9E0} Meilleure correspondance : <strong>' + matchCount + ' numéro' + (matchCount > 1 ? 's' : '') + ' identique' + (matchCount > 1 ? 's' : '') + '</strong> (' + historyCheck.best_match_date + ')';
     }
 
     if (text.trim()) {
@@ -656,6 +659,9 @@ async function autoGenerate() {
 
         if (data.success && data.grids && data.grids.length > 0) {
             var grid = data.grids[0];
+
+            // Umami — grille generee EM
+            if (typeof umami !== 'undefined') umami.track('simulateur-grille-generated', { module: 'euromillions' });
 
             resetSelection();
 

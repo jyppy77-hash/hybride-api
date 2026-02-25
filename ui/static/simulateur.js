@@ -368,6 +368,9 @@ function displayResults(data) {
         window.LotoIAAnalytics.product.simulateGrid({ score: data.score });
     }
 
+    // Umami — audit de grille
+    if (typeof umami !== 'undefined') umami.track('simulateur-grille-audited', { module: 'loto' });
+
     // Scroll automatique vers la grille sélectionnée (center pour UX mobile/desktop)
     setTimeout(() => {
         const target = document.getElementById('selected-numbers')
@@ -775,6 +778,9 @@ async function autoGenerate() {
 
         if (data.success && data.grids && data.grids.length > 0) {
             const grid = data.grids[0];
+
+            // Umami — grille generee
+            if (typeof umami !== 'undefined') umami.track('simulateur-grille-generated', { module: 'loto' });
 
             // Reset first
             resetSelection();
