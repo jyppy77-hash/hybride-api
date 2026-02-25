@@ -30,6 +30,7 @@ steps:
       - --platform=managed
       - --allow-unauthenticated
       - --port=8080
+      - --set-env-vars=OWNER_IP=86.212.92.243
 
 images:
   - gcr.io/$PROJECT_ID/hybride-api

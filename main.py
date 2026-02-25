@@ -357,6 +357,11 @@ _UMAMI_RE = re.compile(
     rb'\s+data-website-id="[^"]+"></script>'
 )
 
+if _OWNER_IP:
+    logger.info("UmamiOwnerFilter: OWNER_IP=%s — filtrage actif", _OWNER_IP)
+else:
+    logger.warning("UmamiOwnerFilter: OWNER_IP non defini — filtrage DESACTIVE")
+
 
 class UmamiOwnerFilterMiddleware:
     """Strip Umami analytics script from HTML responses for the owner IP."""
@@ -377,17 +382,22 @@ class UmamiOwnerFilterMiddleware:
             client_addr = scope.get("client")
             client_ip = client_addr[0] if client_addr else ""
 
-        if client_ip != _OWNER_IP:
+        is_owner = client_ip == _OWNER_IP
+        path = scope.get("path", "")
+
+        if is_owner and path and not path.startswith(("/api/", "/static/", "/ui/static/")):
+            logger.info("UmamiOwnerFilter: STRIP umami | ip=%s path=%s", client_ip, path)
+
+        if not is_owner:
             await self.app(scope, receive, send)
             return
 
         # Owner IP detected — check if response is HTML, then strip Umami
         is_html = False
-        response_started = False
         body_chunks = []
 
         async def send_wrapper(message):
-            nonlocal is_html, response_started, body_chunks
+            nonlocal is_html, body_chunks
 
             if message["type"] == "http.response.start":
                 hdrs = dict(message.get("headers", []))
