@@ -59,22 +59,7 @@
     <link rel="dns-prefetch" href="https://cloud.umami.is">
     <!-- Analytics (charge apres consentement RGPD) -->
     <script src="/ui/static/analytics.js?v=4" defer></script>
-    <script>
-    (function() {
-      fetch('https://api.ipify.org?format=json')
-        .then(r => r.json())
-        .then(data => {
-          if (data.ip !== '86.212.92.243') {
-            var s = document.createElement('script');
-            s.defer = true;
-            s.src = 'https://cloud.umami.is/script.js';
-            s.dataset.websiteId = 'e6add519-5d39-42cd-b4bf-b795f4408dcc';
-            document.head.appendChild(s);
-          }
-        })
-        .catch(() => {});
-    })();
-    </script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc"></script>
 </head>
 <body class="simulator-page">
     <!-- Barre de navigation moteur -->

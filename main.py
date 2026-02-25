@@ -1,3 +1,4 @@
+import os
 import re
 import time
 import uuid
@@ -340,6 +341,102 @@ class HeadMethodMiddleware:
 
 
 app.add_middleware(HeadMethodMiddleware)
+
+
+# =========================
+# Umami owner-IP filter — Pure ASGI middleware
+# Strips the Umami <script> tag from HTML responses when the visitor
+# is the site owner (IP from env var). The owner IP never appears in HTML.
+# =========================
+
+_OWNER_IP = os.environ.get("OWNER_IP", "")
+
+# Matches the static Umami script tag (with any whitespace/indentation)
+_UMAMI_RE = re.compile(
+    rb'\s*<script\s+defer\s+src="https://cloud\.umami\.is/script\.js"'
+    rb'\s+data-website-id="[^"]+"></script>'
+)
+
+
+class UmamiOwnerFilterMiddleware:
+    """Strip Umami analytics script from HTML responses for the owner IP."""
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or not _OWNER_IP:
+            await self.app(scope, receive, send)
+            return
+
+        # Extract client IP from x-forwarded-for (Cloud Run proxy)
+        headers_raw = dict(scope.get("headers", []))
+        forwarded = headers_raw.get(b"x-forwarded-for", b"").decode()
+        client_ip = forwarded.split(",")[0].strip() if forwarded else ""
+        if not client_ip:
+            client_addr = scope.get("client")
+            client_ip = client_addr[0] if client_addr else ""
+
+        if client_ip != _OWNER_IP:
+            await self.app(scope, receive, send)
+            return
+
+        # Owner IP detected — check if response is HTML, then strip Umami
+        is_html = False
+        response_started = False
+        body_chunks = []
+
+        async def send_wrapper(message):
+            nonlocal is_html, response_started, body_chunks
+
+            if message["type"] == "http.response.start":
+                hdrs = dict(message.get("headers", []))
+                ct = hdrs.get(b"content-type", b"").decode().lower()
+                is_html = "text/html" in ct
+                if not is_html:
+                    await send(message)
+                else:
+                    # Buffer — we'll send after body modification
+                    body_chunks.append(("start", message))
+                return
+
+            if message["type"] == "http.response.body":
+                if not is_html:
+                    await send(message)
+                    return
+
+                body_chunks.append(("body", message.get("body", b"")))
+                more = message.get("more_body", False)
+                if not more:
+                    # All chunks received — assemble, strip, send
+                    full_body = b"".join(
+                        chunk for tag, chunk in body_chunks if tag == "body"
+                    )
+                    full_body = _UMAMI_RE.sub(b"", full_body)
+
+                    # Update Content-Length and send start
+                    start_msg = body_chunks[0][1]
+                    new_headers = [
+                        (k, v) for k, v in start_msg.get("headers", [])
+                        if k.lower() != b"content-length"
+                    ]
+                    new_headers.append(
+                        (b"content-length", str(len(full_body)).encode())
+                    )
+                    await send({**start_msg, "headers": new_headers})
+                    await send({
+                        "type": "http.response.body",
+                        "body": full_body,
+                        "more_body": False,
+                    })
+                return
+
+            await send(message)
+
+        await self.app(scope, receive, send_wrapper)
+
+
+app.add_middleware(UmamiOwnerFilterMiddleware)
 
 
 # =========================
