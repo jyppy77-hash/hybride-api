@@ -347,21 +347,19 @@ app.add_middleware(HeadMethodMiddleware)
 # on the Umami script tag, this silently blocks analytics for the owner.
 # =========================
 
-_OWNER_IP = os.environ.get("OWNER_IP", "")
+_OWNER_IP = os.environ.get("OWNER_IP", "").strip()
+_OWNER_IPV6 = os.environ.get("OWNER_IPV6", "").strip()
+
 _OWNER_EXACT = {"127.0.0.1", "::1"}  # localhost toujours exclu (dev)
 _OWNER_PREFIXES = []  # IPv6 prefix match (privacy extensions)
 
-# Separateur pipe "|" (evite conflit avec "," de gcloud --update-env-vars)
-for _ip in re.split(r"[|,]", _OWNER_IP):
-    _ip = _ip.strip()
-    if not _ip:
-        continue
-    if _ip.endswith(":"):
-        _OWNER_PREFIXES.append(_ip)  # e.g. "2a01:cb05:8700:5900:"
-    else:
-        _OWNER_EXACT.add(_ip)  # e.g. "86.212.92.243"
+if _OWNER_IP:
+    _OWNER_EXACT.add(_OWNER_IP)
+if _OWNER_IPV6:
+    _OWNER_PREFIXES.append(_OWNER_IPV6)
 
-logger.info("UmamiOwnerFilter: raw OWNER_IP=%r", _OWNER_IP)
+logger.info("UmamiOwnerFilter: raw OWNER_IP=%r OWNER_IPV6=%r", _OWNER_IP, _OWNER_IPV6)
+logger.info("UmamiOwnerFilter: exact=%s prefixes=%s", _OWNER_EXACT, _OWNER_PREFIXES)
 
 
 def _is_owner_ip(ip: str) -> bool:
@@ -370,11 +368,6 @@ def _is_owner_ip(ip: str) -> bool:
     return any(ip.startswith(p) for p in _OWNER_PREFIXES)
 
 _OWNER_INJECT = b'<script>window.__OWNER__=true;</script>\n</head>'
-
-if _OWNER_IP:
-    logger.info("UmamiOwnerFilter: exact=%s prefixes=%s — filtrage actif", _OWNER_EXACT, _OWNER_PREFIXES)
-else:
-    logger.warning("UmamiOwnerFilter: OWNER_IP non defini — filtrage localhost uniquement")
 
 
 class UmamiOwnerFilterMiddleware:
