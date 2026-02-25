@@ -108,9 +108,6 @@ async def custom_http_exception_handler(request: Request, exc: StarletteHTTPExce
         return HTMLResponse(content=html_404, status_code=404)
     return JSONResponse(content={"detail": exc.detail}, status_code=exc.status_code)
 
-# Compression GZip pour performance
-app.add_middleware(GZipMiddleware, minimum_size=500)
-
 # Rate limiting middleware
 app.add_middleware(SlowAPIMiddleware)
 
@@ -464,6 +461,9 @@ class UmamiOwnerFilterMiddleware:
 
 
 app.add_middleware(UmamiOwnerFilterMiddleware)
+
+# GZip APRÈS UmamiOwnerFilter — le filtre doit voir le HTML non compressé
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 
 # =========================
