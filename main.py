@@ -393,15 +393,21 @@ class UmamiOwnerFilterMiddleware:
             client_addr = scope.get("client")
             client_ip = client_addr[0] if client_addr else ""
 
+        path = scope.get("path", "")
         is_owner = _is_owner_ip(client_ip)
+
+        # === DEBUG LOGS (temporaire) ===
+        if path and not path.startswith(("/api/", "/static/", "/ui/static/")):
+            logger.info(
+                "UMAMI-DEBUG: ip=%s is_owner=%s path=%s exact=%s prefixes=%s",
+                client_ip, is_owner, path, _OWNER_EXACT, _OWNER_PREFIXES,
+            )
 
         if not is_owner:
             await self.app(scope, receive, send)
             return
 
-        path = scope.get("path", "")
-        if path and not path.startswith(("/api/", "/static/", "/ui/static/")):
-            logger.info("UmamiOwnerFilter: INJECT __OWNER__ | ip=%s path=%s", client_ip, path)
+        logger.info("UmamiOwnerFilter: INJECT __OWNER__ | ip=%s path=%s", client_ip, path)
 
         # Owner IP detected — check if response is HTML, then inject flag
         is_html = False
@@ -413,7 +419,13 @@ class UmamiOwnerFilterMiddleware:
             if message["type"] == "http.response.start":
                 hdrs = dict(message.get("headers", []))
                 ct = hdrs.get(b"content-type", b"").decode().lower()
+                ce = hdrs.get(b"content-encoding", b"").decode().lower()
                 is_html = "text/html" in ct
+                # === DEBUG LOGS (temporaire) ===
+                logger.info(
+                    "UMAMI-DEBUG-RSP: ct=%s ce=%s is_html=%s hdr_keys=%s path=%s",
+                    ct, ce, is_html, [k for k in hdrs.keys()], path,
+                )
                 if not is_html:
                     await send(message)
                 else:
@@ -430,6 +442,13 @@ class UmamiOwnerFilterMiddleware:
                 if not more:
                     full_body = b"".join(
                         chunk for tag, chunk in body_chunks if tag == "body"
+                    )
+                    has_head = b"</head>" in full_body
+                    gz = full_body[:2] == b"\x1f\x8b"
+                    # === DEBUG LOGS (temporaire) ===
+                    logger.info(
+                        "UMAMI-DEBUG-BODY: len=%d has_</head>=%s is_gzip=%s first4=%s path=%s",
+                        len(full_body), has_head, gz, full_body[:4].hex(), path,
                     )
                     full_body = full_body.replace(b"</head>", _OWNER_INJECT, 1)
 
