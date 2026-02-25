@@ -342,8 +342,9 @@ app.add_middleware(HeadMethodMiddleware)
 
 # =========================
 # Umami owner-IP filter — Pure ASGI middleware
-# Strips the Umami <script> tag from HTML responses when the visitor
-# is the site owner (IP from env var). The owner IP never appears in HTML.
+# Injects <script>window.__OWNER__=true;</script> before </head> when the
+# visitor is the site owner. Combined with data-before-send="umamiBeforeSend"
+# on the Umami script tag, this silently blocks analytics for the owner.
 # =========================
 
 _OWNER_IP = os.environ.get("OWNER_IP", "")
@@ -365,11 +366,7 @@ def _is_owner_ip(ip: str) -> bool:
         return True
     return any(ip.startswith(p) for p in _OWNER_PREFIXES)
 
-# Matches the static Umami script tag (with any whitespace/indentation)
-_UMAMI_RE = re.compile(
-    rb'\s*<script\s+defer\s+src="https://cloud\.umami\.is/script\.js"'
-    rb'\s+data-website-id="[^"]+"></script>'
-)
+_OWNER_INJECT = b'<script>window.__OWNER__=true;</script>\n</head>'
 
 if _OWNER_IP:
     logger.info("UmamiOwnerFilter: exact=%s prefixes=%s — filtrage actif", _OWNER_EXACT, _OWNER_PREFIXES)
@@ -378,7 +375,7 @@ else:
 
 
 class UmamiOwnerFilterMiddleware:
-    """Strip Umami analytics script from HTML responses for the owner IP."""
+    """Inject window.__OWNER__=true into HTML responses for the owner IP."""
 
     def __init__(self, app):
         self.app = app
@@ -397,16 +394,16 @@ class UmamiOwnerFilterMiddleware:
             client_ip = client_addr[0] if client_addr else ""
 
         is_owner = _is_owner_ip(client_ip)
-        path = scope.get("path", "")
-
-        if is_owner and path and not path.startswith(("/api/", "/static/", "/ui/static/")):
-            logger.info("UmamiOwnerFilter: STRIP umami | ip=%s path=%s", client_ip, path)
 
         if not is_owner:
             await self.app(scope, receive, send)
             return
 
-        # Owner IP detected — check if response is HTML, then strip Umami
+        path = scope.get("path", "")
+        if path and not path.startswith(("/api/", "/static/", "/ui/static/")):
+            logger.info("UmamiOwnerFilter: INJECT __OWNER__ | ip=%s path=%s", client_ip, path)
+
+        # Owner IP detected — check if response is HTML, then inject flag
         is_html = False
         body_chunks = []
 
@@ -420,7 +417,6 @@ class UmamiOwnerFilterMiddleware:
                 if not is_html:
                     await send(message)
                 else:
-                    # Buffer — we'll send after body modification
                     body_chunks.append(("start", message))
                 return
 
@@ -432,13 +428,11 @@ class UmamiOwnerFilterMiddleware:
                 body_chunks.append(("body", message.get("body", b"")))
                 more = message.get("more_body", False)
                 if not more:
-                    # All chunks received — assemble, strip, send
                     full_body = b"".join(
                         chunk for tag, chunk in body_chunks if tag == "body"
                     )
-                    full_body = _UMAMI_RE.sub(b"", full_body)
+                    full_body = full_body.replace(b"</head>", _OWNER_INJECT, 1)
 
-                    # Update Content-Length and send start
                     start_msg = body_chunks[0][1]
                     new_headers = [
                         (k, v) for k, v in start_msg.get("headers", [])
