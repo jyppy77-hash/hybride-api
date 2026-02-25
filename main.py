@@ -350,6 +350,8 @@ app.add_middleware(HeadMethodMiddleware)
 # =========================
 
 _OWNER_IP = os.environ.get("OWNER_IP", "")
+_OWNER_IPS = {ip.strip() for ip in _OWNER_IP.split(",") if ip.strip()}
+_OWNER_IPS.update({"127.0.0.1", "::1"})  # localhost toujours exclu (dev)
 
 # Matches the static Umami script tag (with any whitespace/indentation)
 _UMAMI_RE = re.compile(
@@ -358,9 +360,9 @@ _UMAMI_RE = re.compile(
 )
 
 if _OWNER_IP:
-    logger.info("UmamiOwnerFilter: OWNER_IP=%s — filtrage actif", _OWNER_IP)
+    logger.info("UmamiOwnerFilter: OWNER_IPS=%s — filtrage actif", _OWNER_IPS)
 else:
-    logger.warning("UmamiOwnerFilter: OWNER_IP non defini — filtrage DESACTIVE")
+    logger.warning("UmamiOwnerFilter: OWNER_IP non defini — filtrage localhost uniquement")
 
 
 class UmamiOwnerFilterMiddleware:
@@ -370,7 +372,7 @@ class UmamiOwnerFilterMiddleware:
         self.app = app
 
     async def __call__(self, scope, receive, send):
-        if scope["type"] != "http" or not _OWNER_IP:
+        if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
 
@@ -382,7 +384,7 @@ class UmamiOwnerFilterMiddleware:
             client_addr = scope.get("client")
             client_ip = client_addr[0] if client_addr else ""
 
-        is_owner = client_ip == _OWNER_IP
+        is_owner = client_ip in _OWNER_IPS
         path = scope.get("path", "")
 
         if is_owner and path and not path.startswith(("/api/", "/static/", "/ui/static/")):
