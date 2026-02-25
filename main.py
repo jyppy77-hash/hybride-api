@@ -351,7 +351,8 @@ _OWNER_IP = os.environ.get("OWNER_IP", "")
 _OWNER_EXACT = {"127.0.0.1", "::1"}  # localhost toujours exclu (dev)
 _OWNER_PREFIXES = []  # IPv6 prefix match (privacy extensions)
 
-for _ip in _OWNER_IP.split(","):
+# Separateur pipe "|" (evite conflit avec "," de gcloud --update-env-vars)
+for _ip in re.split(r"[|,]", _OWNER_IP):
     _ip = _ip.strip()
     if not _ip:
         continue
@@ -359,6 +360,8 @@ for _ip in _OWNER_IP.split(","):
         _OWNER_PREFIXES.append(_ip)  # e.g. "2a01:cb05:8700:5900:"
     else:
         _OWNER_EXACT.add(_ip)  # e.g. "86.212.92.243"
+
+logger.info("UmamiOwnerFilter: raw OWNER_IP=%r", _OWNER_IP)
 
 
 def _is_owner_ip(ip: str) -> bool:
