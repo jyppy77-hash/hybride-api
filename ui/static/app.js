@@ -589,10 +589,10 @@ const popupResult = await showSponsorPopup({
 });
 
 if (popupResult && popupResult.cancelled === true) {
-    addLog(‘Génération annulée par l’utilisateur’, ‘warning’);
+    addLog(`Génération annulée par l'utilisateur`, 'warning');
     setLoading(btnAnalyze, false);
-    document.body.classList.remove(‘loto-generating’);
-    addLog(‘Requête terminée’, ‘info’);
+    document.body.classList.remove('loto-generating');
+    addLog('Requête terminée', 'info');
     return;
 }
 
