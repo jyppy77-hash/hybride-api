@@ -40,7 +40,7 @@ from services.chat_sql_em import (
     _MAX_SQL_PER_SESSION,
 )
 from services.chat_utils import (
-    _enrich_with_context, _clean_response,
+    _enrich_with_context, _clean_response, _strip_non_latin,
     _get_sponsor_if_due, _strip_sponsor_from_text, _format_date_fr,
 )
 from services.chat_utils_em import (
@@ -620,6 +620,9 @@ async def handle_pitch_em(grilles: list, http_client) -> dict:
                 "error": "Gemini: JSON mal formé",
                 "status_code": 502,
             }
+
+        # Sanitize : supprimer les caractères CJK/non-latin injectés par Gemini
+        pitchs = [_strip_non_latin(p) if isinstance(p, str) else p for p in pitchs]
 
         logger.info(f"[EM PITCH] OK — {len(pitchs)} pitchs générés")
         return {

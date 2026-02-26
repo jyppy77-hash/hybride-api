@@ -14,6 +14,25 @@ FALLBACK_RESPONSE = (
     "Réessaie dans quelques secondes ou consulte la FAQ !"
 )
 
+# Regex CJK + autres blocs non-latin indésirables (chinois, japonais, coréen, arabe, etc.)
+_RE_NON_LATIN = re.compile(
+    r'[\u4e00-\u9fff'          # CJK Unified Ideographs (chinois)
+    r'\u3400-\u4dbf'           # CJK Extension A
+    r'\u3000-\u303f'           # CJK Symbols
+    r'\u3040-\u309f'           # Hiragana
+    r'\u30a0-\u30ff'           # Katakana
+    r'\uac00-\ud7af'           # Hangul (coréen)
+    r'\u0600-\u06ff'           # Arabe
+    r'\u0900-\u097f'           # Devanagari
+    r'\U00020000-\U0002a6df'   # CJK Extension B
+    r']+'
+)
+
+
+def _strip_non_latin(text: str) -> str:
+    """Supprime les caractères CJK/arabe/devanagari indésirables des réponses Gemini."""
+    return _RE_NON_LATIN.sub('', text)
+
 
 # ────────────────────────────────────────────
 # Phase 0 : Enrichissement contextuel
@@ -137,6 +156,8 @@ def _clean_response(text: str) -> str:
     ]
     for tag in internal_tags:
         text = re.sub(tag, '', text)
+    # Supprimer les caractères CJK/non-latin injectés par Gemini
+    text = _strip_non_latin(text)
     # Nettoyer les espaces multiples et lignes vides résultants
     text = re.sub(r'\n{3,}', '\n\n', text)
     text = re.sub(r'  +', ' ', text)
