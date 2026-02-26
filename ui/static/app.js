@@ -567,6 +567,9 @@ async function handleAnalyze() {
     setLoading(btnAnalyze, true);
     hideResults();
 
+    // Bloquer le scroll pendant toute la phase de génération
+    document.body.classList.add('loto-generating');
+
     addLog('Clic sur "Générer les grilles"', 'info');
     addLog(`Date sélectionnée : ${date}`, 'success');
 
@@ -586,9 +589,10 @@ const popupResult = await showSponsorPopup({
 });
 
 if (popupResult && popupResult.cancelled === true) {
-    addLog('Génération annulée par l’utilisateur', 'warning');
+    addLog(‘Génération annulée par l’utilisateur’, ‘warning’);
     setLoading(btnAnalyze, false);
-    addLog('Requête terminée', 'info');
+    document.body.classList.remove(‘loto-generating’);
+    addLog(‘Requête terminée’, ‘info’);
     return;
 }
 
@@ -634,6 +638,7 @@ addLog(`Envoi requête GET /generate?n=${selectedGridCount}&mode=balanced`, 'req
         showError(errorMsg);
     } finally {
         setLoading(btnAnalyze, false);
+        document.body.classList.remove('loto-generating');
         addLog('Requête terminée', 'info');
     }
 }

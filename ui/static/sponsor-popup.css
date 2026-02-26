@@ -823,12 +823,10 @@ body.theme-day .sponsor-popup-overlay {
         min-height: 100vh !important;
         min-height: 100dvh !important;
         margin: 0 !important;
-        padding: 20px 16px !important;
-        padding-bottom: env(safe-area-inset-bottom, 80px) !important;
+        padding: 14px 14px !important;
+        padding-bottom: env(safe-area-inset-bottom, 68px) !important;
         border-radius: 0 !important;
-        overflow-y: auto !important;
-        overflow-x: hidden !important;
-        -webkit-overflow-scrolling: touch !important;
+        overflow: hidden !important;
         display: flex !important;
         flex-direction: column !important;
         box-sizing: border-box !important;
@@ -844,7 +842,7 @@ body.theme-day .sponsor-popup-overlay {
     /* Titre compact */
     .popup-title {
         font-size: 13px !important;
-        margin-bottom: 16px !important;
+        margin-bottom: 10px !important;
         flex-shrink: 0 !important;
     }
 
@@ -859,17 +857,17 @@ body.theme-day .sponsor-popup-overlay {
     }
 
     .progress-percentage {
-        font-size: 14px !important;
-        margin-bottom: 12px !important;
+        font-size: 13px !important;
+        margin-bottom: 6px !important;
         flex-shrink: 0 !important;
     }
 
     /* Data animation compacte */
     .data-animation {
-        height: 24px !important;
-        line-height: 24px !important;
+        height: 20px !important;
+        line-height: 20px !important;
         font-size: 9px !important;
-        margin-bottom: 12px !important;
+        margin-bottom: 6px !important;
         letter-spacing: 1px;
         flex-shrink: 0 !important;
     }
@@ -877,11 +875,14 @@ body.theme-day .sponsor-popup-overlay {
     /* Console adaptée */
     .console-container {
         flex-shrink: 0 !important;
-        margin: 12px 0 !important;
+        margin: 6px 0 !important;
     }
 
     .console-header {
-        padding: 8px 12px !important;
+        padding: 6px 12px !important;
+        flex-direction: row !important;
+        gap: 4px !important;
+        align-items: center !important;
     }
 
     .console-title {
@@ -893,11 +894,11 @@ body.theme-day .sponsor-popup-overlay {
     }
 
     .console-body {
-        height: 120px !important;
-        min-height: 100px !important;
-        max-height: 140px !important;
+        height: 80px !important;
+        min-height: 60px !important;
+        max-height: 100px !important;
         font-size: 10px !important;
-        padding: 10px 12px !important;
+        padding: 8px 12px !important;
     }
 
     .console-line {
@@ -916,62 +917,62 @@ body.theme-day .sponsor-popup-overlay {
 
     /* Sponsors header */
     .sponsors-header {
-        font-size: 11px !important;
-        margin-bottom: 10px !important;
+        font-size: 10px !important;
+        margin-bottom: 6px !important;
         flex-shrink: 0 !important;
     }
 
     /* Sponsors en colonne */
     .sponsors-container {
         flex-direction: column !important;
-        gap: 10px !important;
-        margin-bottom: 15px !important;
+        gap: 6px !important;
+        margin-bottom: 8px !important;
         flex-shrink: 0 !important;
     }
 
     .sponsor-card {
-        padding: 14px 12px !important;
+        padding: 10px 10px !important;
         border-radius: 12px !important;
     }
 
     .sponsor-badge {
         font-size: 8px !important;
         padding: 3px 8px !important;
-        top: 8px !important;
+        top: 6px !important;
         left: 8px !important;
     }
 
     .sponsor-logo {
-        font-size: 16px !important;
-        margin: 6px 0 8px 0 !important;
+        font-size: 14px !important;
+        margin: 4px 0 4px 0 !important;
     }
 
     .sponsor-logo-icon {
-        font-size: 18px !important;
+        font-size: 16px !important;
     }
 
     .sponsor-description {
-        font-size: 11px !important;
-        margin-bottom: 8px !important;
+        font-size: 9px !important;
+        margin-bottom: 4px !important;
     }
 
     .sponsor-url {
-        font-size: 10px !important;
+        font-size: 9px !important;
     }
 
     /* Timer compact mobile */
     .timer-circle-container {
-        margin-top: 12px !important;
+        margin-top: 6px !important;
         flex-shrink: 0 !important;
     }
 
     .timer-circle {
-        width: 56px !important;
-        height: 56px !important;
+        width: 44px !important;
+        height: 44px !important;
     }
 
     .timer-value {
-        font-size: 22px !important;
+        font-size: 16px !important;
     }
 
     .timer-label {
@@ -988,8 +989,8 @@ body.theme-day .sponsor-popup-overlay {
         left: 0 !important;
         right: 0 !important;
         margin: 0 !important;
-        padding: 12px 16px !important;
-        padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+        padding: 10px 16px !important;
+        padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px)) !important;
         background: linear-gradient(to top,
             #ffffff 0%,
             #ffffff 60%,
@@ -1002,46 +1003,46 @@ body.theme-day .sponsor-popup-overlay {
 
     .sponsor-cancel-btn {
         width: 100% !important;
-        padding: 14px 20px !important;
-        font-size: 14px !important;
+        padding: 12px 20px !important;
+        font-size: 13px !important;
         box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1) !important;
     }
 
     /* Espace en bas de la modale pour ne pas cacher le contenu sous le bouton */
     .sponsor-popup-modal {
-        padding-bottom: 80px !important;
+        padding-bottom: 68px !important;
     }
 
     /* Console plus compacte pour gagner de l'espace */
     .console-body {
-        height: 100px !important;
-        min-height: 80px !important;
-        max-height: 120px !important;
+        height: 75px !important;
+        min-height: 60px !important;
+        max-height: 90px !important;
     }
 
     /* Sponsors cards plus compactes */
     .sponsor-card {
-        padding: 12px 10px !important;
+        padding: 8px 10px !important;
     }
 
     .sponsor-description {
-        font-size: 10px !important;
-        margin-bottom: 6px !important;
+        font-size: 9px !important;
+        margin-bottom: 4px !important;
         line-height: 1.2 !important;
     }
 
     /* Timer plus compact */
     .timer-circle {
-        width: 50px !important;
-        height: 50px !important;
+        width: 42px !important;
+        height: 42px !important;
     }
 
     .timer-value {
-        font-size: 18px !important;
+        font-size: 15px !important;
     }
 
     .timer-circle-container {
-        margin-top: 8px !important;
+        margin-top: 4px !important;
     }
 }
 
@@ -1054,6 +1055,11 @@ body.sponsor-popup-active {
     max-height: 100% !important;
     top: 0 !important;
     left: 0 !important;
+}
+
+/* Bloquer le scroll pendant toute la phase de génération (popup + API call) */
+body.loto-generating {
+    overflow: hidden !important;
 }
 
 /* ============================================
