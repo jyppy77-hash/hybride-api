@@ -31,9 +31,9 @@ steps:
       - --allow-unauthenticated
       - --port=8080
       - --memory=1Gi
-      - --cpu=2
+      - --cpu=1
       - --concurrency=40
-      - --max-instances=10
+      - --max-instances=5
       - --min-instances=0
       - --timeout=60
       - --cpu-boost
