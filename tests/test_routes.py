@@ -189,7 +189,7 @@ def test_stats_number_invalid(mock_db):
 # Hybride Chat (mock Gemini)
 # ═══════════════════════════════════════════════════════════════════════
 
-@patch("routes.api_chat.load_prompt", return_value="Tu es un assistant.")
+@patch("services.chat_pipeline.load_prompt", return_value="Tu es un assistant.")
 @patch.dict(os.environ, {"GEM_API_KEY": "fake-key"})
 def test_hybride_chat(mock_prompt):
     """POST /api/hybride-chat retourne une reponse (mock Gemini)."""
@@ -233,7 +233,7 @@ def test_hybride_chat(mock_prompt):
 # Rate Limiting
 # ═══════════════════════════════════════════════════════════════════════
 
-@patch("routes.api_chat.load_prompt", return_value="Tu es un assistant.")
+@patch("services.chat_pipeline.load_prompt", return_value="Tu es un assistant.")
 @patch.dict(os.environ, {"GEM_API_KEY": "fake-key"})
 def test_rate_limit_429(mock_prompt):
     """Envoyer 15 requetes rapides sur /api/hybride-chat → 429."""
