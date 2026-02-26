@@ -99,17 +99,18 @@ def test_health_db_down(mock_db):
 # Tirages
 # ═══════════════════════════════════════════════════════════════════════
 
-@patch("routes.api_data.db_cloudsql")
+@patch("routes.api_data_unified.db_cloudsql")
 def test_tirages_count(mock_db):
     """GET /api/tirages/count retourne un nombre."""
-    mock_db.get_tirages_count = AsyncMock(return_value=967)
+    cursor = AsyncMock()
+    mock_db.get_connection = _async_cm_conn(cursor)
+    cursor.fetchone.return_value = {"total": 967}
 
     with _db_module_patch, _static_patch, _static_call:
         import importlib, main as main_mod
         importlib.reload(main_mod)
-        # Patch au niveau du module route
-        import routes.api_data as api_data_mod
-        api_data_mod.db_cloudsql = mock_db
+        import routes.api_data_unified as unified_mod
+        unified_mod.db_cloudsql = mock_db
         client = TestClient(main_mod.app, raise_server_exceptions=False)
         resp = client.get("/api/tirages/count")
 
@@ -119,20 +120,22 @@ def test_tirages_count(mock_db):
     assert data["data"]["total"] == 967
 
 
-@patch("routes.api_data.db_cloudsql")
+@patch("routes.api_data_unified.db_cloudsql")
 def test_tirages_latest(mock_db):
     """GET /api/tirages/latest retourne un tirage."""
-    mock_db.get_latest_tirage = AsyncMock(return_value={
-        "date_de_tirage": "2026-02-03",
+    cursor = AsyncMock()
+    mock_db.get_connection = _async_cm_conn(cursor)
+    cursor.fetchone.return_value = {
+        "date_de_tirage": date(2026, 2, 3),
         "boule_1": 5, "boule_2": 12, "boule_3": 23,
         "boule_4": 34, "boule_5": 45, "numero_chance": 7,
-    })
+    }
 
     with _db_module_patch, _static_patch, _static_call:
         import importlib, main as main_mod
         importlib.reload(main_mod)
-        import routes.api_data as api_data_mod
-        api_data_mod.db_cloudsql = mock_db
+        import routes.api_data_unified as unified_mod
+        unified_mod.db_cloudsql = mock_db
         client = TestClient(main_mod.app, raise_server_exceptions=False)
         resp = client.get("/api/tirages/latest")
 
@@ -146,7 +149,7 @@ def test_tirages_latest(mock_db):
 # Stats number
 # ═══════════════════════════════════════════════════════════════════════
 
-@patch("routes.api_data.db_cloudsql")
+@patch("routes.api_data_unified.db_cloudsql")
 def test_stats_number_valid(mock_db):
     """GET /api/stats/number/7 retourne des stats."""
     cursor = AsyncMock()
@@ -166,8 +169,8 @@ def test_stats_number_valid(mock_db):
     with _db_module_patch, _static_patch, _static_call:
         import importlib, main as main_mod
         importlib.reload(main_mod)
-        import routes.api_data as api_data_mod
-        api_data_mod.db_cloudsql = mock_db
+        import routes.api_data_unified as unified_mod
+        unified_mod.db_cloudsql = mock_db
         client = TestClient(main_mod.app, raise_server_exceptions=False)
         resp = client.get("/api/stats/number/7")
 
@@ -178,8 +181,7 @@ def test_stats_number_valid(mock_db):
     assert "total_appearances" in data
 
 
-@patch("routes.api_data.db_cloudsql")
-def test_stats_number_invalid(mock_db):
+def test_stats_number_invalid():
     """GET /api/stats/number/99 retourne 400."""
     with _db_module_patch, _static_patch, _static_call:
         import importlib, main as main_mod

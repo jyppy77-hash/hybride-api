@@ -1,3 +1,8 @@
+"""
+Backward compat — routes Loto chat.
+Thin wrappers delegating to unified chat + re-exports for tests.
+"""
+
 import logging
 
 from fastapi import APIRouter, Request
@@ -8,7 +13,7 @@ from rate_limit import limiter
 from services.chat_pipeline import handle_chat, handle_pitch
 
 # Re-exports pour api_chat_em.py et les tests
-# (préserve la surface publique existante)
+# (preserve la surface publique existante)
 from services.chat_detectors import (  # noqa: F401
     CONTINUATION_PATTERNS, _is_short_continuation,
     _detect_insulte, _insult_targets_bot, _count_insult_streak,
@@ -50,10 +55,6 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-# =========================
-# HYBRIDE Chatbot — Gemini 2.0 Flash
-# =========================
-
 @router.post("/api/hybride-chat")
 @limiter.limit("10/minute")
 async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
@@ -66,10 +67,6 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
     )
     return HybrideChatResponse(**result)
 
-
-# =========================
-# PITCH GRILLES — Gemini
-# =========================
 
 @router.post("/api/pitch-grilles")
 @limiter.limit("10/minute")

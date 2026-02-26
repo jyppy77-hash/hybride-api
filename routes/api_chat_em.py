@@ -1,6 +1,6 @@
 """
-EuroMillions Chatbot — thin router.
-Delegates to services/chat_pipeline_em.py (same pattern as api_chat.py → chat_pipeline.py).
+Backward compat — routes EuroMillions chat.
+Thin wrappers + re-exports for tests.
 """
 
 import logging
@@ -46,10 +46,6 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-# =========================
-# HYBRIDE EuroMillions Chatbot — Gemini 2.0 Flash
-# =========================
-
 @router.post("/api/euromillions/hybride-chat")
 @limiter.limit("10/minute")
 async def api_hybride_chat_em(request: Request, payload: EMChatRequest):
@@ -62,10 +58,6 @@ async def api_hybride_chat_em(request: Request, payload: EMChatRequest):
     )
     return EMChatResponse(**result)
 
-
-# =========================
-# PITCH GRILLES EM — Gemini
-# =========================
 
 @router.post("/api/euromillions/pitch-grilles")
 @limiter.limit("10/minute")
