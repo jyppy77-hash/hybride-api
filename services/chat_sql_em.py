@@ -30,7 +30,7 @@ _JOURS_FR = {
 }
 
 
-def _get_prochain_tirage_em() -> str | None:
+async def _get_prochain_tirage_em() -> str | None:
     """
     Calcule la date du prochain tirage EuroMillions (mardi, vendredi).
     Returns: contexte formate ou None si erreur.
@@ -57,14 +57,11 @@ def _get_prochain_tirage_em() -> str | None:
 
         # Dernier tirage en BDD
         try:
-            conn = db_cloudsql.get_connection()
-            try:
-                cursor = conn.cursor()
-                cursor.execute("SELECT MAX(date_de_tirage) as last FROM tirages_euromillions")
-                row = cursor.fetchone()
+            async with db_cloudsql.get_connection() as conn:
+                cursor = await conn.cursor()
+                await cursor.execute("SELECT MAX(date_de_tirage) as last FROM tirages_euromillions")
+                row = await cursor.fetchone()
                 last_draw = str(row['last']) if row and row['last'] else None
-            finally:
-                conn.close()
         except Exception:
             last_draw = None
 
@@ -80,30 +77,30 @@ def _get_prochain_tirage_em() -> str | None:
         return None
 
 
-def _get_tirage_data_em(target) -> dict | None:
+async def _get_tirage_data_em(target) -> dict | None:
     """
     Recupere un tirage EuroMillions depuis la DB.
     target: "latest" ou un objet date.
     Retourne dict {date, boules, etoiles} ou None.
     """
-    conn = db_cloudsql.get_connection()
-    try:
-        cursor = conn.cursor()
+    async with db_cloudsql.get_connection() as conn:
+      try:
+        cursor = await conn.cursor()
         if target == "latest":
-            cursor.execute("""
+            await cursor.execute("""
                 SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5,
                        etoile_1, etoile_2
                 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 1
             """)
         else:
-            cursor.execute("""
+            await cursor.execute("""
                 SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5,
                        etoile_1, etoile_2
                 FROM tirages_euromillions WHERE date_de_tirage = %s
                 LIMIT 1
             """, (target,))
 
-        row = cursor.fetchone()
+        row = await cursor.fetchone()
         if row:
             return {
                 "date": row["date_de_tirage"],
@@ -112,11 +109,9 @@ def _get_tirage_data_em(target) -> dict | None:
                 "etoiles": [row["etoile_1"], row["etoile_2"]],
             }
         return None
-    except Exception as e:
+      except Exception as e:
         logger.error(f"[EM CHAT] Erreur _get_tirage_data_em: {e}")
         return None
-    finally:
-        conn.close()
 
 
 async def _generate_sql_em(question: str, client, api_key: str, history: list = None) -> str | None:

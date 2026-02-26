@@ -11,7 +11,7 @@ from services.cache import cache_get, cache_set
 logger = logging.getLogger(__name__)
 
 
-def analyze_number(number: int) -> Dict:
+async def analyze_number(number: int) -> Dict:
     """
     Analyse l'historique complet d'un numéro principal (1-49)
 
@@ -31,9 +31,8 @@ def analyze_number(number: int) -> Dict:
     if not 1 <= number <= 49:
         raise ValueError("Le numéro doit être entre 1 et 49")
 
-    conn = get_connection()
-    try:
-        cursor = conn.cursor()
+    async with get_connection() as conn:
+        cursor = await conn.cursor()
 
         # Récupérer tous les tirages où le numéro apparaît (dans boule_1 à boule_5)
         query = """
@@ -42,8 +41,8 @@ def analyze_number(number: int) -> Dict:
             WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s OR boule_4 = %s OR boule_5 = %s
             ORDER BY date_de_tirage ASC
         """
-        cursor.execute(query, (number, number, number, number, number))
-        appearance_dates = [row['date_de_tirage'] for row in cursor.fetchall()]
+        await cursor.execute(query, (number, number, number, number, number))
+        appearance_dates = [row['date_de_tirage'] for row in await cursor.fetchall()]
 
         # Nombre total d'apparitions
         total_appearances = len(appearance_dates)
@@ -56,19 +55,17 @@ def analyze_number(number: int) -> Dict:
         current_gap = 0
         if last_appearance:
             # Compter les tirages depuis la dernière apparition du numéro
-            cursor.execute(
+            await cursor.execute(
                 "SELECT COUNT(*) as count FROM tirages WHERE date_de_tirage > %s",
                 (last_appearance,)
             )
-            result = cursor.fetchone()
+            result = await cursor.fetchone()
             current_gap = result['count'] if result else 0
 
         # Nombre total de tirages dans la base
-        cursor.execute("SELECT COUNT(*) as count FROM tirages")
-        result = cursor.fetchone()
+        await cursor.execute("SELECT COUNT(*) as count FROM tirages")
+        result = await cursor.fetchone()
         total_draws = result['count'] if result else 0
-    finally:
-        conn.close()
 
     return {
         "number": number,
@@ -81,7 +78,7 @@ def analyze_number(number: int) -> Dict:
     }
 
 
-def get_global_stats() -> Dict:
+async def get_global_stats() -> Dict:
     """
     Récupère les statistiques globales de la base de données
     Résultat mis en cache 1 h.
@@ -97,25 +94,22 @@ def get_global_stats() -> Dict:
     if cached is not None:
         return cached
 
-    conn = get_connection()
-    try:
-        cursor = conn.cursor()
+    async with get_connection() as conn:
+        cursor = await conn.cursor()
 
         logger.debug("[STATS] get_global_stats - Debut")
 
         # Stats globales
-        cursor.execute("SELECT COUNT(*) as count FROM tirages")
-        result = cursor.fetchone()
+        await cursor.execute("SELECT COUNT(*) as count FROM tirages")
+        result = await cursor.fetchone()
         logger.debug(f"[STATS] COUNT result: {result}")
         total_draws = result['count'] if result else 0
 
-        cursor.execute("SELECT MIN(date_de_tirage) as min_date, MAX(date_de_tirage) as max_date FROM tirages")
-        result = cursor.fetchone()
+        await cursor.execute("SELECT MIN(date_de_tirage) as min_date, MAX(date_de_tirage) as max_date FROM tirages")
+        result = await cursor.fetchone()
         logger.debug(f"[STATS] MIN/MAX result: {result}")
         first_draw_date = result['min_date'] if result else None
         last_draw_date = result['max_date'] if result else None
-    finally:
-        conn.close()
 
     # Formater la période
     period_covered = f"{first_draw_date} à {last_draw_date}" if first_draw_date and last_draw_date else "N/A"
@@ -132,7 +126,7 @@ def get_global_stats() -> Dict:
     return data
 
 
-def get_top_flop_numbers() -> Dict:
+async def get_top_flop_numbers() -> Dict:
     """
     Calcule les fréquences de sortie pour tous les numéros (1-49)
     et retourne les tops et flops
@@ -145,17 +139,16 @@ def get_top_flop_numbers() -> Dict:
 
         Chaque élément contient : {"number": int, "count": int}
     """
-    conn = get_connection()
-    try:
-        cursor = conn.cursor()
+    async with get_connection() as conn:
+        cursor = await conn.cursor()
 
         # Nombre total de tirages
-        cursor.execute("SELECT COUNT(*) as count FROM tirages")
-        result = cursor.fetchone()
+        await cursor.execute("SELECT COUNT(*) as count FROM tirages")
+        result = await cursor.fetchone()
         total_draws = result['count'] if result else 0
 
         # Frequences (1 requete UNION ALL au lieu de 49)
-        cursor.execute("""
+        await cursor.execute("""
             SELECT num, COUNT(*) as freq FROM (
                 SELECT boule_1 as num FROM tirages
                 UNION ALL SELECT boule_2 FROM tirages
@@ -166,10 +159,8 @@ def get_top_flop_numbers() -> Dict:
             GROUP BY num
             ORDER BY num
         """)
-        freq_map = {row['num']: row['freq'] for row in cursor.fetchall()}
+        freq_map = {row['num']: row['freq'] for row in await cursor.fetchall()}
         number_counts = [{"number": num, "count": freq_map.get(num, 0)} for num in range(1, 50)]
-    finally:
-        conn.close()
 
     # Trier pour TOP : count DESC, puis number ASC
     top_sorted = sorted(number_counts, key=lambda x: (-x["count"], x["number"]))

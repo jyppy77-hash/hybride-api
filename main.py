@@ -71,9 +71,11 @@ logging.root.addFilter(RequestIdFilter())
 
 @asynccontextmanager
 async def lifespan(app):
-    """Startup/shutdown : client HTTP partage."""
+    """Startup/shutdown : client HTTP partage + pool DB."""
     app.state.httpx_client = httpx.AsyncClient(timeout=20.0)
+    await db_cloudsql.init_pool()
     yield
+    await db_cloudsql.close_pool()
     await app.state.httpx_client.aclose()
 
 
@@ -530,16 +532,10 @@ async def health():
     """Endpoint healthcheck Cloud Run — BDD + Gemini + uptime."""
     db_status = "ok"
     try:
-        def _check_db():
-            conn = db_cloudsql.get_connection()
-            try:
-                cursor = conn.cursor()
-                cursor.execute("SELECT 1")
-            finally:
-                conn.close()
-
-        await asyncio.wait_for(asyncio.to_thread(_check_db), timeout=5.0)
-    except (asyncio.TimeoutError, Exception):
+        async with db_cloudsql.get_connection() as conn:
+            cur = await conn.cursor()
+            await cur.execute("SELECT 1")
+    except Exception:
         db_status = "unreachable"
 
     gemini_state = gemini_breaker.state

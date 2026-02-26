@@ -5,11 +5,22 @@ Aucune connexion MySQL ni API Gemini requise.
 """
 
 import os
-from unittest.mock import patch, MagicMock
+from contextlib import asynccontextmanager
+from unittest.mock import patch, MagicMock, AsyncMock
 from datetime import date
 
 import pytest
 from fastapi.testclient import TestClient
+
+
+def _async_cm_conn(cursor):
+    """Retourne un callable qui produit un async context manager (simule get_connection)."""
+    @asynccontextmanager
+    async def _cm():
+        conn = AsyncMock()
+        conn.cursor = AsyncMock(return_value=cursor)
+        yield conn
+    return _cm
 
 
 # ── Patches appliques AVANT l'import de main.py ───────────────────────
@@ -43,10 +54,8 @@ def _get_client():
 @patch("main.db_cloudsql")
 def test_health_db_ok(mock_db):
     """GET /health retourne status ok + tous les champs ameliores."""
-    conn = MagicMock()
-    cursor = MagicMock()
-    conn.cursor.return_value = cursor
-    mock_db.get_connection.return_value = conn
+    cursor = AsyncMock()
+    mock_db.get_connection = _async_cm_conn(cursor)
 
     with _db_module_patch, _static_patch, _static_call:
         import importlib, main as main_mod
@@ -93,7 +102,7 @@ def test_health_db_down(mock_db):
 @patch("routes.api_data.db_cloudsql")
 def test_tirages_count(mock_db):
     """GET /api/tirages/count retourne un nombre."""
-    mock_db.get_tirages_count.return_value = 967
+    mock_db.get_tirages_count = AsyncMock(return_value=967)
 
     with _db_module_patch, _static_patch, _static_call:
         import importlib, main as main_mod
@@ -113,11 +122,11 @@ def test_tirages_count(mock_db):
 @patch("routes.api_data.db_cloudsql")
 def test_tirages_latest(mock_db):
     """GET /api/tirages/latest retourne un tirage."""
-    mock_db.get_latest_tirage.return_value = {
+    mock_db.get_latest_tirage = AsyncMock(return_value={
         "date_de_tirage": "2026-02-03",
         "boule_1": 5, "boule_2": 12, "boule_3": 23,
         "boule_4": 34, "boule_5": 45, "numero_chance": 7,
-    }
+    })
 
     with _db_module_patch, _static_patch, _static_call:
         import importlib, main as main_mod
@@ -140,10 +149,8 @@ def test_tirages_latest(mock_db):
 @patch("routes.api_data.db_cloudsql")
 def test_stats_number_valid(mock_db):
     """GET /api/stats/number/7 retourne des stats."""
-    cursor = MagicMock()
-    conn = MagicMock()
-    conn.cursor.return_value = cursor
-    mock_db.get_connection.return_value = conn
+    cursor = AsyncMock()
+    mock_db.get_connection = _async_cm_conn(cursor)
 
     cursor.fetchall.side_effect = [
         # appearances du numero 7
@@ -279,10 +286,8 @@ def test_rate_limit_429(mock_prompt):
 @patch("main.db_cloudsql")
 def test_correlation_id_generated(mock_db):
     """Chaque reponse contient un header X-Request-ID unique."""
-    conn = MagicMock()
-    cursor = MagicMock()
-    conn.cursor.return_value = cursor
-    mock_db.get_connection.return_value = conn
+    cursor = AsyncMock()
+    mock_db.get_connection = _async_cm_conn(cursor)
 
     with _db_module_patch, _static_patch, _static_call:
         import importlib, main as main_mod
@@ -305,10 +310,8 @@ def test_correlation_id_generated(mock_db):
 @patch("main.db_cloudsql")
 def test_correlation_id_forwarded(mock_db):
     """Si le client envoie X-Request-ID, il est reutilise."""
-    conn = MagicMock()
-    cursor = MagicMock()
-    conn.cursor.return_value = cursor
-    mock_db.get_connection.return_value = conn
+    cursor = AsyncMock()
+    mock_db.get_connection = _async_cm_conn(cursor)
 
     with _db_module_patch, _static_patch, _static_call:
         import importlib, main as main_mod

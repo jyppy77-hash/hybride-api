@@ -4,12 +4,20 @@ Mocker la BDD — aucune connexion MySQL requise.
 """
 
 import time
-from unittest.mock import patch, MagicMock
+from contextlib import asynccontextmanager
+from unittest.mock import patch, MagicMock, AsyncMock
 from datetime import date, timedelta
 
 import pytest
 
 from services.cache import cache_get, cache_set, cache_clear
+
+
+@asynccontextmanager
+async def _async_conn(cursor):
+    conn = AsyncMock()
+    conn.cursor = AsyncMock(return_value=cursor)
+    yield conn
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -50,85 +58,82 @@ class TestCache:
 # services/stats_service.py — helpers BDD caches
 # ═══════════════════════════════════════════════════════════════════════
 
+@pytest.mark.asyncio
 @patch("services.stats_service.db_cloudsql")
-def test_get_all_frequencies_cached(mock_db):
+async def test_get_all_frequencies_cached(mock_db):
     """Appel 2x, verifie que le 2eme ne touche pas la BDD."""
     cache_clear()
 
-    cursor = MagicMock()
-    conn = MagicMock()
-    conn.cursor.return_value = cursor
-    mock_db.get_connection.return_value = conn
+    cursor = AsyncMock()
+    mock_db.get_connection = lambda: _async_conn(cursor)
 
-    cursor.fetchall.return_value = [
+    cursor.fetchall = AsyncMock(return_value=[
         {"num": 1, "freq": 50}, {"num": 7, "freq": 30},
-    ]
+    ])
 
     from services.stats_service import _get_all_frequencies
 
-    result1 = _get_all_frequencies(cursor, "principal")
-    result2 = _get_all_frequencies(cursor, "principal")
+    result1 = await _get_all_frequencies(cursor, "principal")
+    result2 = await _get_all_frequencies(cursor, "principal")
 
     assert result1 == {1: 50, 7: 30}
     assert result1 == result2
     # cursor.execute appele 1 seule fois (cache hit au 2e)
-    assert cursor.execute.call_count == 1
+    assert cursor.execute.await_count == 1
 
 
+@pytest.mark.asyncio
 @patch("services.stats_service.db_cloudsql")
-def test_get_all_ecarts_cached(mock_db):
+async def test_get_all_ecarts_cached(mock_db):
     """Appel 2x _get_all_ecarts, verifie cache hit au 2eme appel."""
     cache_clear()
 
-    cursor = MagicMock()
-    conn = MagicMock()
-    conn.cursor.return_value = cursor
-    mock_db.get_connection.return_value = conn
+    cursor = AsyncMock()
+    mock_db.get_connection = lambda: _async_conn(cursor)
 
     # fetchone pour COUNT(*) total
-    cursor.fetchone.return_value = {"total": 967}
+    cursor.fetchone = AsyncMock(return_value={"total": 967})
     # fetchall : ecarts via SQL correlated subquery
-    cursor.fetchall.side_effect = [
+    cursor.fetchall = AsyncMock(side_effect=[
         [{"num": n, "ecart": n % 10} for n in range(1, 50)],
-    ]
+    ])
 
     from services.stats_service import _get_all_ecarts
 
-    result1 = _get_all_ecarts(cursor, "principal")
-    result2 = _get_all_ecarts(cursor, "principal")
+    result1 = await _get_all_ecarts(cursor, "principal")
+    result2 = await _get_all_ecarts(cursor, "principal")
 
     assert result1 == result2
     assert isinstance(result1, dict)
     assert len(result1) == 49
     # execute appele 2 fois au 1er appel (COUNT + UNION ALL ecart), 0 au 2eme
-    assert cursor.execute.call_count == 2
+    assert cursor.execute.await_count == 2
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # services/stats_service.py — fonctions metier
 # ═══════════════════════════════════════════════════════════════════════
 
+@pytest.mark.asyncio
 @patch("services.stats_service.db_cloudsql")
-def test_get_numero_stats_valid(mock_db):
+async def test_get_numero_stats_valid(mock_db):
     """Verifie format retour (cles, types) pour un numero valide."""
     cache_clear()
 
-    cursor = MagicMock()
-    conn = MagicMock()
-    conn.cursor.return_value = cursor
-    mock_db.get_connection.return_value = conn
+    cursor = AsyncMock()
+    mock_db.get_connection = lambda: _async_conn(cursor)
 
     d_min = date(2019, 3, 4)
     d_max = date(2026, 2, 3)
 
-    cursor.fetchone.side_effect = [
+    cursor.fetchone = AsyncMock(side_effect=[
         # COUNT + MIN + MAX
         {"total": 967, "date_min": d_min, "date_max": d_max},
         # gap
         {"gap": 5},
         # ecart moyen — pas besoin si < 2 apparitions (mais on en a 3)
-    ]
-    cursor.fetchall.side_effect = [
+    ])
+    cursor.fetchall = AsyncMock(side_effect=[
         # appearances
         [
             {"date_de_tirage": date(2020, 3, 14)},
@@ -141,11 +146,11 @@ def test_get_numero_stats_valid(mock_db):
         [{"num": n, "freq": 100 - n} for n in range(1, 50)],
         # _get_all_frequencies 2 ans (categorie)
         [{"num": n, "freq": 50 - n} for n in range(1, 50)],
-    ]
+    ])
 
     from services.stats_service import get_numero_stats
 
-    result = get_numero_stats(7, "principal")
+    result = await get_numero_stats(7, "principal")
 
     assert result is not None
     expected_keys = {
@@ -162,46 +167,46 @@ def test_get_numero_stats_valid(mock_db):
     assert result["classement_sur"] == 49
 
 
-def test_get_numero_stats_invalid_range():
+@pytest.mark.asyncio
+async def test_get_numero_stats_invalid_range():
     """Numero hors range retourne None (pas d'appel BDD)."""
     from services.stats_service import get_numero_stats
 
-    assert get_numero_stats(0, "principal") is None
-    assert get_numero_stats(50, "principal") is None
-    assert get_numero_stats(11, "chance") is None
+    assert await get_numero_stats(0, "principal") is None
+    assert await get_numero_stats(50, "principal") is None
+    assert await get_numero_stats(11, "chance") is None
 
 
+@pytest.mark.asyncio
 @patch("services.stats_service.db_cloudsql")
-def test_get_classement_numeros(mock_db):
+async def test_get_classement_numeros(mock_db):
     """Verifie le tri et le format de get_classement_numeros."""
     cache_clear()
 
-    cursor = MagicMock()
-    conn = MagicMock()
-    conn.cursor.return_value = cursor
-    mock_db.get_connection.return_value = conn
+    cursor = AsyncMock()
+    mock_db.get_connection = lambda: _async_conn(cursor)
 
     d_min = date(2019, 3, 4)
     d_max = date(2026, 2, 3)
 
-    cursor.fetchone.side_effect = [
+    cursor.fetchone = AsyncMock(side_effect=[
         # get_classement: COUNT + MIN + MAX
         {"total": 967, "date_min": d_min, "date_max": d_max},
         # _get_all_ecarts: COUNT total
         {"total": 967},
-    ]
-    cursor.fetchall.side_effect = [
+    ])
+    cursor.fetchall = AsyncMock(side_effect=[
         # _get_all_frequencies (principal)
         [{"num": n, "freq": 100 + n} for n in range(1, 50)],
         # _get_all_ecarts (SQL correlated subquery — {num, ecart})
         [{"num": n, "ecart": n % 10} for n in range(1, 50)],
         # _get_all_frequencies 2 ans (categorie)
         [{"num": n, "freq": 50 + n} for n in range(1, 50)],
-    ]
+    ])
 
     from services.stats_service import get_classement_numeros
 
-    result = get_classement_numeros("principal", "frequence_desc", 5)
+    result = await get_classement_numeros("principal", "frequence_desc", 5)
 
     assert result is not None
     assert "items" in result
@@ -218,30 +223,29 @@ def test_get_classement_numeros(mock_db):
         assert set(item.keys()) == {"numero", "frequence", "ecart_actuel", "categorie"}
 
 
+@pytest.mark.asyncio
 @patch("services.stats_service.db_cloudsql")
-def test_get_comparaison_numeros(mock_db):
+async def test_get_comparaison_numeros(mock_db):
     """Verifie la structure de comparaison entre deux numeros."""
     cache_clear()
 
-    cursor = MagicMock()
-    conn = MagicMock()
-    conn.cursor.return_value = cursor
-    mock_db.get_connection.return_value = conn
+    cursor = AsyncMock()
+    mock_db.get_connection = lambda: _async_conn(cursor)
 
     d_min = date(2019, 3, 4)
     d_max = date(2026, 2, 3)
 
     # get_numero_stats est appele 2x, chaque appel fait plusieurs queries
     # On fournit suffisamment de side_effects pour les 2 appels
-    cursor.fetchone.side_effect = [
+    cursor.fetchone = AsyncMock(side_effect=[
         # 1er appel get_numero_stats(5)
         {"total": 967, "date_min": d_min, "date_max": d_max},
         {"gap": 3},
         # 2eme appel get_numero_stats(10)
         {"total": 967, "date_min": d_min, "date_max": d_max},
         {"gap": 8},
-    ]
-    cursor.fetchall.side_effect = [
+    ])
+    cursor.fetchall = AsyncMock(side_effect=[
         # 1er: appearances
         [{"date_de_tirage": date(2020, 5, 1)}, {"date_de_tirage": date(2023, 8, 10)}],
         # 1er: all_dates ecart moyen
@@ -259,11 +263,11 @@ def test_get_comparaison_numeros(mock_db):
         [{"num": n, "freq": 100 - n} for n in range(1, 50)],
         # 2eme: freq 2 ans
         [{"num": n, "freq": 50 - n} for n in range(1, 50)],
-    ]
+    ])
 
     from services.stats_service import get_comparaison_numeros
 
-    result = get_comparaison_numeros(5, 10, "principal")
+    result = await get_comparaison_numeros(5, 10, "principal")
 
     assert result is not None
     assert "num1" in result
@@ -274,18 +278,17 @@ def test_get_comparaison_numeros(mock_db):
     assert result["num2"]["numero"] == 10
 
 
+@pytest.mark.asyncio
 @patch("services.stats_service.db_cloudsql")
-def test_analyze_grille_for_chat(mock_db):
+async def test_analyze_grille_for_chat(mock_db):
     """Verifie la structure d'analyse de grille."""
     cache_clear()
 
-    cursor = MagicMock()
-    conn = MagicMock()
-    conn.cursor.return_value = cursor
-    mock_db.get_connection.return_value = conn
+    cursor = AsyncMock()
+    mock_db.get_connection = lambda: _async_conn(cursor)
 
     # Nouveau flow : fetchone pour total + best_match, fetchall pour freq UNION ALL + exact matches
-    cursor.fetchone.side_effect = [
+    cursor.fetchone = AsyncMock(side_effect=[
         {"total": 967},
         # best match
         {
@@ -294,17 +297,17 @@ def test_analyze_grille_for_chat(mock_db):
             "boule_4": 35, "boule_5": 45,
             "match_count": 3,
         },
-    ]
-    cursor.fetchall.side_effect = [
+    ])
+    cursor.fetchall = AsyncMock(side_effect=[
         # _get_all_frequencies UNION ALL (49 numeros)
         [{"num": n, "freq": 100 - n} for n in range(1, 50)],
         # exact matches
         [],
-    ]
+    ])
 
     from services.stats_service import analyze_grille_for_chat
 
-    result = analyze_grille_for_chat([5, 15, 25, 35, 45], chance=7)
+    result = await analyze_grille_for_chat([5, 15, 25, 35, 45], chance=7)
 
     assert result is not None
     assert "numeros" in result

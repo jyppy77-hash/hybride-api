@@ -3,40 +3,47 @@ Tests unitaires pour engine/stats.py
 Mocker la BDD — aucune connexion MySQL requise.
 """
 
+from contextlib import asynccontextmanager
 from datetime import date
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, AsyncMock
 
 import pytest
 
 from engine.stats import analyze_number, get_global_stats, get_top_flop_numbers
 
 
+@asynccontextmanager
+async def _async_conn(cursor):
+    conn = AsyncMock()
+    conn.cursor = AsyncMock(return_value=cursor)
+    yield conn
+
+
 # ═══════════════════════════════════════════════════════════════════════
 # analyze_number
 # ═══════════════════════════════════════════════════════════════════════
 
+@pytest.mark.asyncio
 @patch("engine.stats.get_connection")
-def test_analyze_number_format(mock_get_conn):
+async def test_analyze_number_format(mock_get_conn):
     """Verifie le format de retour : cles presentes et types corrects."""
-    cursor = MagicMock()
-    conn = MagicMock()
-    conn.cursor.return_value = cursor
-    mock_get_conn.return_value = conn
+    cursor = AsyncMock()
+    mock_get_conn.return_value = _async_conn(cursor)
 
-    cursor.fetchall.side_effect = [
+    cursor.fetchall = AsyncMock(side_effect=[
         # Query 1 : dates d'apparition du numero
         [
             {"date_de_tirage": date(2020, 3, 14)},
             {"date_de_tirage": date(2022, 7, 20)},
             {"date_de_tirage": date(2024, 11, 2)},
         ],
-    ]
-    cursor.fetchone.side_effect = [
+    ])
+    cursor.fetchone = AsyncMock(side_effect=[
         {"count": 15},   # ecart actuel
         {"count": 800},  # total tirages
-    ]
+    ])
 
-    result = analyze_number(5)
+    result = await analyze_number(5)
 
     # Cles obligatoires
     assert set(result.keys()) == {
@@ -54,27 +61,26 @@ def test_analyze_number_format(mock_get_conn):
     assert isinstance(result["total_draws"], int)
 
 
+@pytest.mark.asyncio
 @patch("engine.stats.get_connection")
-def test_analyze_number_values(mock_get_conn):
+async def test_analyze_number_values(mock_get_conn):
     """Verifie les valeurs calculees."""
-    cursor = MagicMock()
-    conn = MagicMock()
-    conn.cursor.return_value = cursor
-    mock_get_conn.return_value = conn
+    cursor = AsyncMock()
+    mock_get_conn.return_value = _async_conn(cursor)
 
-    cursor.fetchall.side_effect = [
+    cursor.fetchall = AsyncMock(side_effect=[
         [
             {"date_de_tirage": date(2020, 3, 14)},
             {"date_de_tirage": date(2022, 7, 20)},
             {"date_de_tirage": date(2024, 11, 2)},
         ],
-    ]
-    cursor.fetchone.side_effect = [
+    ])
+    cursor.fetchone = AsyncMock(side_effect=[
         {"count": 15},
         {"count": 800},
-    ]
+    ])
 
-    result = analyze_number(5)
+    result = await analyze_number(5)
 
     assert result["number"] == 5
     assert result["total_appearances"] == 3
@@ -85,23 +91,22 @@ def test_analyze_number_values(mock_get_conn):
     assert len(result["appearance_dates"]) == 3
 
 
+@pytest.mark.asyncio
 @patch("engine.stats.get_connection")
-def test_analyze_number_no_appearances(mock_get_conn):
+async def test_analyze_number_no_appearances(mock_get_conn):
     """Numero jamais sorti : 0 apparitions, gap=0, dates None."""
-    cursor = MagicMock()
-    conn = MagicMock()
-    conn.cursor.return_value = cursor
-    mock_get_conn.return_value = conn
+    cursor = AsyncMock()
+    mock_get_conn.return_value = _async_conn(cursor)
 
-    cursor.fetchall.side_effect = [
+    cursor.fetchall = AsyncMock(side_effect=[
         [],  # aucune apparition
-    ]
-    cursor.fetchone.side_effect = [
+    ])
+    cursor.fetchone = AsyncMock(side_effect=[
         # pas de requete gap (last_appearance est None)
         {"count": 800},  # total tirages
-    ]
+    ])
 
-    result = analyze_number(42)
+    result = await analyze_number(42)
 
     assert result["number"] == 42
     assert result["total_appearances"] == 0
@@ -112,36 +117,37 @@ def test_analyze_number_no_appearances(mock_get_conn):
     assert result["appearance_dates"] == []
 
 
-def test_analyze_number_invalid_low():
+@pytest.mark.asyncio
+async def test_analyze_number_invalid_low():
     """Numero < 1 → ValueError."""
     with pytest.raises(ValueError, match="entre 1 et 49"):
-        analyze_number(0)
+        await analyze_number(0)
 
 
-def test_analyze_number_invalid_high():
+@pytest.mark.asyncio
+async def test_analyze_number_invalid_high():
     """Numero > 49 → ValueError."""
     with pytest.raises(ValueError, match="entre 1 et 49"):
-        analyze_number(50)
+        await analyze_number(50)
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # get_global_stats
 # ═══════════════════════════════════════════════════════════════════════
 
+@pytest.mark.asyncio
 @patch("engine.stats.get_connection")
-def test_get_global_stats_format(mock_get_conn):
+async def test_get_global_stats_format(mock_get_conn):
     """Verifie les cles et types de get_global_stats()."""
-    cursor = MagicMock()
-    conn = MagicMock()
-    conn.cursor.return_value = cursor
-    mock_get_conn.return_value = conn
+    cursor = AsyncMock()
+    mock_get_conn.return_value = _async_conn(cursor)
 
-    cursor.fetchone.side_effect = [
+    cursor.fetchone = AsyncMock(side_effect=[
         {"count": 967},
         {"min_date": date(2019, 3, 4), "max_date": date(2026, 2, 3)},
-    ]
+    ])
 
-    result = get_global_stats()
+    result = await get_global_stats()
 
     assert set(result.keys()) == {
         "total_draws", "first_draw_date", "last_draw_date", "period_covered",
@@ -153,21 +159,20 @@ def test_get_global_stats_format(mock_get_conn):
     assert "2026-02-03" in result["period_covered"]
 
 
+@pytest.mark.asyncio
 @patch("engine.stats.get_connection")
-def test_get_global_stats_cached(mock_get_conn):
+async def test_get_global_stats_cached(mock_get_conn):
     """Deuxieme appel ne re-interroge pas la BDD (cache TTL 1h)."""
-    cursor = MagicMock()
-    conn = MagicMock()
-    conn.cursor.return_value = cursor
-    mock_get_conn.return_value = conn
+    cursor = AsyncMock()
+    mock_get_conn.return_value = _async_conn(cursor)
 
-    cursor.fetchone.side_effect = [
+    cursor.fetchone = AsyncMock(side_effect=[
         {"count": 967},
         {"min_date": date(2019, 3, 4), "max_date": date(2026, 2, 3)},
-    ]
+    ])
 
-    result1 = get_global_stats()
-    result2 = get_global_stats()
+    result1 = await get_global_stats()
+    result2 = await get_global_stats()
 
     assert result1 == result2
     # get_connection appele une seule fois (cache hit au 2e appel)
@@ -178,25 +183,24 @@ def test_get_global_stats_cached(mock_get_conn):
 # get_top_flop_numbers
 # ═══════════════════════════════════════════════════════════════════════
 
+@pytest.mark.asyncio
 @patch("engine.stats.get_connection")
-def test_get_top_flop_numbers_format(mock_get_conn):
+async def test_get_top_flop_numbers_format(mock_get_conn):
     """Verifie structure et tri de get_top_flop_numbers()."""
-    cursor = MagicMock()
-    conn = MagicMock()
-    conn.cursor.return_value = cursor
-    mock_get_conn.return_value = conn
+    cursor = AsyncMock()
+    mock_get_conn.return_value = _async_conn(cursor)
 
     # Generer des frequences variees pour 49 numeros
     freq_data = [{"num": n, "freq": 100 - n} for n in range(1, 50)]
 
-    cursor.fetchone.side_effect = [
+    cursor.fetchone = AsyncMock(side_effect=[
         {"count": 800},  # total tirages
-    ]
-    cursor.fetchall.side_effect = [
+    ])
+    cursor.fetchall = AsyncMock(side_effect=[
         freq_data,
-    ]
+    ])
 
-    result = get_top_flop_numbers()
+    result = await get_top_flop_numbers()
 
     assert set(result.keys()) == {"total_draws", "top", "flop"}
     assert result["total_draws"] == 800
@@ -220,13 +224,12 @@ def test_get_top_flop_numbers_format(mock_get_conn):
     assert result["flop"][0]["count"] == 51  # 100 - 49
 
 
+@pytest.mark.asyncio
 @patch("engine.stats.get_connection")
-def test_get_top_flop_numbers_missing_nums(mock_get_conn):
+async def test_get_top_flop_numbers_missing_nums(mock_get_conn):
     """Numeros absents de la BDD → count=0."""
-    cursor = MagicMock()
-    conn = MagicMock()
-    conn.cursor.return_value = cursor
-    mock_get_conn.return_value = conn
+    cursor = AsyncMock()
+    mock_get_conn.return_value = _async_conn(cursor)
 
     # Seulement 3 numeros presents
     freq_data = [
@@ -235,10 +238,10 @@ def test_get_top_flop_numbers_missing_nums(mock_get_conn):
         {"num": 25, "freq": 40},
     ]
 
-    cursor.fetchone.side_effect = [{"count": 100}]
-    cursor.fetchall.side_effect = [freq_data]
+    cursor.fetchone = AsyncMock(side_effect=[{"count": 100}])
+    cursor.fetchall = AsyncMock(side_effect=[freq_data])
 
-    result = get_top_flop_numbers()
+    result = await get_top_flop_numbers()
 
     # Les 46 numeros manquants ont count=0
     zero_count = [item for item in result["top"] if item["count"] == 0]

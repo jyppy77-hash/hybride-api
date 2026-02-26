@@ -4,8 +4,9 @@ Priorite P0 : validation securite SQL (injection defense).
 """
 
 import re
+from contextlib import asynccontextmanager
 from datetime import date
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, AsyncMock
 
 import pytest
 
@@ -13,6 +14,13 @@ from services.chat_sql import (
     _validate_sql, _ensure_limit, _format_sql_result,
     _get_tirage_data, _execute_safe_sql, _SQL_FORBIDDEN,
 )
+
+
+@asynccontextmanager
+async def _async_conn(cursor):
+    conn = AsyncMock()
+    conn.cursor = AsyncMock(return_value=cursor)
+    yield conn
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -109,50 +117,47 @@ class TestFormatSqlResult:
 
 class TestGetTirageData:
 
+    @pytest.mark.asyncio
     @patch("services.chat_sql.db_cloudsql")
-    def test_latest(self, mock_db):
-        cursor = MagicMock()
-        conn = MagicMock()
-        conn.cursor.return_value = cursor
-        mock_db.get_connection.return_value = conn
+    async def test_latest(self, mock_db):
+        cursor = AsyncMock()
+        mock_db.get_connection = lambda: _async_conn(cursor)
 
-        cursor.fetchone.return_value = {
+        cursor.fetchone = AsyncMock(return_value={
             "date_de_tirage": date(2026, 2, 3),
             "boule_1": 5, "boule_2": 12, "boule_3": 23,
             "boule_4": 34, "boule_5": 45, "numero_chance": 7,
-        }
+        })
 
-        result = _get_tirage_data("latest")
+        result = await _get_tirage_data("latest")
         assert result is not None
         assert result["boules"] == [5, 12, 23, 34, 45]
         assert result["chance"] == 7
 
+    @pytest.mark.asyncio
     @patch("services.chat_sql.db_cloudsql")
-    def test_by_date(self, mock_db):
-        cursor = MagicMock()
-        conn = MagicMock()
-        conn.cursor.return_value = cursor
-        mock_db.get_connection.return_value = conn
+    async def test_by_date(self, mock_db):
+        cursor = AsyncMock()
+        mock_db.get_connection = lambda: _async_conn(cursor)
 
-        cursor.fetchone.return_value = {
+        cursor.fetchone = AsyncMock(return_value={
             "date_de_tirage": date(2024, 6, 1),
             "boule_1": 1, "boule_2": 2, "boule_3": 3,
             "boule_4": 4, "boule_5": 5, "numero_chance": 1,
-        }
+        })
 
-        result = _get_tirage_data(date(2024, 6, 1))
+        result = await _get_tirage_data(date(2024, 6, 1))
         assert result is not None
         assert result["date"] == date(2024, 6, 1)
 
+    @pytest.mark.asyncio
     @patch("services.chat_sql.db_cloudsql")
-    def test_returns_none_when_no_row(self, mock_db):
-        cursor = MagicMock()
-        conn = MagicMock()
-        conn.cursor.return_value = cursor
-        mock_db.get_connection.return_value = conn
-        cursor.fetchone.return_value = None
+    async def test_returns_none_when_no_row(self, mock_db):
+        cursor = AsyncMock()
+        mock_db.get_connection = lambda: _async_conn(cursor)
+        cursor.fetchone = AsyncMock(return_value=None)
 
-        assert _get_tirage_data(date(1999, 1, 1)) is None
+        assert await _get_tirage_data(date(1999, 1, 1)) is None
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -161,23 +166,21 @@ class TestGetTirageData:
 
 class TestExecuteSafeSql:
 
+    @pytest.mark.asyncio
     @patch("services.chat_sql.db_cloudsql")
-    def test_returns_rows(self, mock_db):
-        cursor = MagicMock()
-        conn = MagicMock()
-        conn.cursor.return_value = cursor
-        mock_db.get_connection.return_value = conn
-        cursor.fetchall.return_value = [{"num": 7, "freq": 120}]
+    async def test_returns_rows(self, mock_db):
+        cursor = AsyncMock()
+        mock_db.get_connection = lambda: _async_conn(cursor)
+        cursor.fetchall = AsyncMock(return_value=[{"num": 7, "freq": 120}])
 
-        result = _execute_safe_sql("SELECT num, freq FROM tirages")
+        result = await _execute_safe_sql("SELECT num, freq FROM tirages")
         assert result == [{"num": 7, "freq": 120}]
 
+    @pytest.mark.asyncio
     @patch("services.chat_sql.db_cloudsql")
-    def test_returns_none_on_error(self, mock_db):
-        cursor = MagicMock()
-        conn = MagicMock()
-        conn.cursor.return_value = cursor
-        mock_db.get_connection.return_value = conn
-        cursor.execute.side_effect = Exception("DB error")
+    async def test_returns_none_on_error(self, mock_db):
+        cursor = AsyncMock()
+        mock_db.get_connection = lambda: _async_conn(cursor)
+        cursor.execute = AsyncMock(side_effect=Exception("DB error"))
 
-        assert _execute_safe_sql("SELECT 1") is None
+        assert await _execute_safe_sql("SELECT 1") is None

@@ -17,6 +17,7 @@ from engine.hybride import (
     _minmax_normalize,
     CONFIG,
 )
+from tests.conftest import AsyncSmartMockCursor, make_async_conn
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -123,14 +124,15 @@ class TestGenererBadges:
 # Fonctions avec BDD (SmartMockCursor)
 # ═══════════════════════════════════════════════════════════════════════
 
+@pytest.mark.asyncio
 @patch("engine.hybride.get_connection")
-def test_generate_grids_returns_valid_structure(mock_get_conn, smart_mock_db):
+async def test_generate_grids_returns_valid_structure(mock_get_conn):
     """generate_grids retourne grids + metadata avec structure valide."""
-    conn, _ = smart_mock_db
-    mock_get_conn.return_value = conn
+    cursor = AsyncSmartMockCursor()
+    mock_get_conn.side_effect = lambda: make_async_conn(cursor)
     random.seed(42)
 
-    result = generate_grids(n=3, mode="balanced")
+    result = await generate_grids(n=3, mode="balanced")
 
     assert "grids" in result
     assert "metadata" in result
@@ -148,74 +150,80 @@ def test_generate_grids_returns_valid_structure(mock_get_conn, smart_mock_db):
         assert len(grid["badges"]) >= 1
 
 
+@pytest.mark.asyncio
 @patch("engine.hybride.get_connection")
-def test_generate_grids_count(mock_get_conn, smart_mock_db):
+async def test_generate_grids_count(mock_get_conn):
     """Le nombre de grilles retournees correspond a n."""
-    conn, _ = smart_mock_db
-    mock_get_conn.return_value = conn
+    cursor = AsyncSmartMockCursor()
+    mock_get_conn.side_effect = lambda: make_async_conn(cursor)
     random.seed(42)
 
     for n in (1, 5, 10):
-        result = generate_grids(n=n, mode="balanced")
+        result = await generate_grids(n=n, mode="balanced")
         assert len(result["grids"]) == n
 
 
+@pytest.mark.asyncio
 @patch("engine.hybride.get_connection")
-def test_generate_grids_sorted_by_score(mock_get_conn, smart_mock_db):
+async def test_generate_grids_sorted_by_score(mock_get_conn):
     """Les grilles sont triees par score decroissant."""
-    conn, _ = smart_mock_db
-    mock_get_conn.return_value = conn
+    cursor = AsyncSmartMockCursor()
+    mock_get_conn.side_effect = lambda: make_async_conn(cursor)
     random.seed(42)
 
-    result = generate_grids(n=5, mode="balanced")
+    result = await generate_grids(n=5, mode="balanced")
     scores = [g["score"] for g in result["grids"]]
     assert scores == sorted(scores, reverse=True)
 
 
+@pytest.mark.asyncio
 @patch("engine.hybride.get_connection")
-def test_generate_mode_conservative(mock_get_conn, smart_mock_db):
+async def test_generate_mode_conservative(mock_get_conn):
     """Mode conservative → metadata.ponderation = '70/30'."""
-    conn, _ = smart_mock_db
-    mock_get_conn.return_value = conn
+    cursor = AsyncSmartMockCursor()
+    mock_get_conn.side_effect = lambda: make_async_conn(cursor)
     random.seed(42)
 
-    result = generate_grids(n=1, mode="conservative")
+    result = await generate_grids(n=1, mode="conservative")
     assert result["metadata"]["mode_generation"] == "conservative"
     assert result["metadata"]["ponderation"] == "70/30"
 
 
+@pytest.mark.asyncio
 @patch("engine.hybride.get_connection")
-def test_generate_mode_balanced(mock_get_conn, smart_mock_db):
+async def test_generate_mode_balanced(mock_get_conn):
     """Mode balanced → metadata.ponderation = '60/40'."""
-    conn, _ = smart_mock_db
-    mock_get_conn.return_value = conn
+    cursor = AsyncSmartMockCursor()
+    mock_get_conn.side_effect = lambda: make_async_conn(cursor)
     random.seed(42)
 
-    result = generate_grids(n=1, mode="balanced")
+    result = await generate_grids(n=1, mode="balanced")
     assert result["metadata"]["mode_generation"] == "balanced"
     assert result["metadata"]["ponderation"] == "60/40"
 
 
+@pytest.mark.asyncio
 @patch("engine.hybride.get_connection")
-def test_generate_mode_recent(mock_get_conn, smart_mock_db):
+async def test_generate_mode_recent(mock_get_conn):
     """Mode recent → metadata.ponderation = '40/60'."""
-    conn, _ = smart_mock_db
-    mock_get_conn.return_value = conn
+    cursor = AsyncSmartMockCursor()
+    mock_get_conn.side_effect = lambda: make_async_conn(cursor)
     random.seed(42)
 
-    result = generate_grids(n=1, mode="recent")
+    result = await generate_grids(n=1, mode="recent")
     assert result["metadata"]["mode_generation"] == "recent"
     assert result["metadata"]["ponderation"] == "40/60"
 
 
+@pytest.mark.asyncio
 @patch("engine.hybride.get_connection")
-def test_generate_metadata_fields(mock_get_conn, smart_mock_db):
+async def test_generate_metadata_fields(mock_get_conn):
     """Metadata contient tous les champs attendus."""
-    conn, _ = smart_mock_db
-    mock_get_conn.return_value = conn
+    cursor = AsyncSmartMockCursor()
+    mock_get_conn.side_effect = lambda: make_async_conn(cursor)
     random.seed(42)
 
-    result = generate_grids(n=1, mode="balanced")
+    result = await generate_grids(n=1, mode="balanced")
     meta = result["metadata"]
 
     expected_keys = {
@@ -229,14 +237,15 @@ def test_generate_metadata_fields(mock_get_conn, smart_mock_db):
     assert "hasard" in meta["avertissement"].lower()
 
 
+@pytest.mark.asyncio
 @patch("engine.hybride.get_connection")
-def test_generate_wrapper(mock_get_conn, smart_mock_db):
+async def test_generate_wrapper(mock_get_conn):
     """generate(prompt) retourne la structure attendue."""
-    conn, _ = smart_mock_db
-    mock_get_conn.return_value = conn
+    cursor = AsyncSmartMockCursor()
+    mock_get_conn.side_effect = lambda: make_async_conn(cursor)
     random.seed(42)
 
-    result = generate("test prompt")
+    result = await generate("test prompt")
 
     assert "engine" in result
     assert result["engine"] == "HYBRIDE_OPTIMAL_V1"

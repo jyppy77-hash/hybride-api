@@ -43,17 +43,17 @@ class BaseStatsService:
     # Abstract: subclass MUST override
     # ──────────────────────────────────────
 
-    def _get_connection(self):
-        """Return a DB connection. Override in subclass to use module-level db_cloudsql."""
+    async def _get_connection(self):
+        """Return an async context manager for DB connection. Override in subclass."""
         raise NotImplementedError
 
     # ──────────────────────────────────────
     # Hooks: override for game-specific SQL
     # ──────────────────────────────────────
 
-    def _query_exact_matches(self, cursor, nums, secondary):
+    async def _query_exact_matches(self, cursor, nums, secondary):
         """Query exact historical matches (boules only, no secondary filter)."""
-        cursor.execute(f"""
+        await cursor.execute(f"""
             SELECT date_de_tirage FROM {self.cfg.table}
             WHERE boule_1 IN (%s, %s, %s, %s, %s)
               AND boule_2 IN (%s, %s, %s, %s, %s)
@@ -62,11 +62,11 @@ class BaseStatsService:
               AND boule_5 IN (%s, %s, %s, %s, %s)
             ORDER BY date_de_tirage DESC
         """, (*nums, *nums, *nums, *nums, *nums))
-        return cursor.fetchall()
+        return await cursor.fetchall()
 
-    def _query_best_match(self, cursor, nums, secondary):
+    async def _query_best_match(self, cursor, nums, secondary):
         """Query best historical match. Default: boules only."""
-        cursor.execute(f"""
+        await cursor.execute(f"""
             SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5,
                 (
                     (boule_1 IN (%s, %s, %s, %s, %s)) +
@@ -79,7 +79,7 @@ class BaseStatsService:
             ORDER BY match_count DESC, date_de_tirage DESC
             LIMIT 1
         """, (*nums, *nums, *nums, *nums, *nums))
-        return cursor.fetchone()
+        return await cursor.fetchone()
 
     def _extract_secondary_match(self, best_match, secondary):
         """Extract secondary number match from best_match row. Default: False."""
@@ -89,7 +89,7 @@ class BaseStatsService:
     # Helpers BDD (avec cache)
     # ──────────────────────────────────────
 
-    def _get_all_frequencies(self, cursor, type_num=None, date_from=None):
+    async def _get_all_frequencies(self, cursor, type_num=None, date_from=None):
         """
         Calcule la frequence de TOUS les numeros en UNE seule requete SQL.
         Retourne un dict {numero: frequence}.
@@ -112,7 +112,7 @@ class BaseStatsService:
             else:
                 date_filter = ""
                 params = []
-            cursor.execute(f"""
+            await cursor.execute(f"""
                 SELECT num, COUNT(*) as freq FROM (
                     SELECT boule_1 as num FROM {self.cfg.table} {date_filter}
                     UNION ALL SELECT boule_2 FROM {self.cfg.table} {date_filter}
@@ -128,13 +128,13 @@ class BaseStatsService:
             if len(cols) == 1:
                 col = cols[0]
                 if date_from:
-                    cursor.execute(f"""
+                    await cursor.execute(f"""
                         SELECT {col} as num, COUNT(*) as freq
                         FROM {self.cfg.table} WHERE date_de_tirage >= %s
                         GROUP BY {col} ORDER BY {col}
                     """, [date_from])
                 else:
-                    cursor.execute(f"""
+                    await cursor.execute(f"""
                         SELECT {col} as num, COUNT(*) as freq
                         FROM {self.cfg.table}
                         GROUP BY {col} ORDER BY {col}
@@ -150,7 +150,7 @@ class BaseStatsService:
                         params.append(date_from)
                     else:
                         unions.append(f"SELECT {col} as num FROM {self.cfg.table}")
-                cursor.execute(f"""
+                await cursor.execute(f"""
                     SELECT num, COUNT(*) as freq FROM (
                         {' UNION ALL '.join(unions)}
                     ) t
@@ -158,11 +158,11 @@ class BaseStatsService:
                     ORDER BY num
                 """, params)
 
-        result = {row['num']: row['freq'] for row in cursor.fetchall()}
+        result = {row['num']: row['freq'] for row in await cursor.fetchall()}
         cache_set(cache_key, result)
         return result
 
-    def _get_all_ecarts(self, cursor, type_num=None):
+    async def _get_all_ecarts(self, cursor, type_num=None):
         """
         Calcule l'ecart actuel de TOUS les numeros via SQL COUNT.
         Retourne un dict {numero: ecart_actuel}.
@@ -176,11 +176,11 @@ class BaseStatsService:
         if cached is not None:
             return cached
 
-        cursor.execute(f"SELECT COUNT(*) as total FROM {self.cfg.table}")
-        total = cursor.fetchone()['total']
+        await cursor.execute(f"SELECT COUNT(*) as total FROM {self.cfg.table}")
+        total = (await cursor.fetchone())['total']
 
         if type_num == self.cfg.type_principal:
-            cursor.execute(f"""
+            await cursor.execute(f"""
                 SELECT sub.num,
                        (SELECT COUNT(*) FROM {self.cfg.table}
                         WHERE date_de_tirage > sub.last_date) AS ecart
@@ -199,7 +199,7 @@ class BaseStatsService:
             cols = self.cfg.secondary_columns
             if len(cols) == 1:
                 col = cols[0]
-                cursor.execute(f"""
+                await cursor.execute(f"""
                     SELECT sub.num,
                            (SELECT COUNT(*) FROM {self.cfg.table}
                             WHERE date_de_tirage > sub.last_date) AS ecart
@@ -214,7 +214,7 @@ class BaseStatsService:
                     f"SELECT {col} as num, date_de_tirage FROM {self.cfg.table}"
                     for col in cols
                 ]
-                cursor.execute(f"""
+                await cursor.execute(f"""
                     SELECT sub.num,
                            (SELECT COUNT(*) FROM {self.cfg.table}
                             WHERE date_de_tirage > sub.last_date) AS ecart
@@ -226,7 +226,7 @@ class BaseStatsService:
                     ) sub
                 """)
 
-        ecarts = {row['num']: row['ecart'] for row in cursor.fetchall()}
+        ecarts = {row['num']: row['ecart'] for row in await cursor.fetchall()}
 
         r_min, r_max = (self.cfg.range_principal if type_num == self.cfg.type_principal
                         else self.cfg.range_secondary)
@@ -241,7 +241,7 @@ class BaseStatsService:
     # Fonctions metier
     # ──────────────────────────────────────
 
-    def get_numero_stats(self, numero: int, type_num: str = None) -> dict:
+    async def get_numero_stats(self, numero: int, type_num: str = None) -> dict:
         """
         Calcule les statistiques completes d'un numero.
 
@@ -260,23 +260,23 @@ class BaseStatsService:
         if not r_min <= numero <= r_max:
             return None
 
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
+        async with self._get_connection() as conn:
+          try:
+            cursor = await conn.cursor()
 
-            cursor.execute(f"""
+            await cursor.execute(f"""
                 SELECT COUNT(*) as total,
                        MIN(date_de_tirage) as date_min,
                        MAX(date_de_tirage) as date_max
                 FROM {self.cfg.table}
             """)
-            info = cursor.fetchone()
+            info = await cursor.fetchone()
             total_tirages = info['total']
             date_min = info['date_min']
             date_max = info['date_max']
 
             if type_num == self.cfg.type_principal:
-                cursor.execute(f"""
+                await cursor.execute(f"""
                     SELECT date_de_tirage
                     FROM {self.cfg.table}
                     WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s
@@ -286,14 +286,14 @@ class BaseStatsService:
             else:
                 conditions = [f"{col} = %s" for col in self.cfg.secondary_columns]
                 params = [numero] * len(self.cfg.secondary_columns)
-                cursor.execute(f"""
+                await cursor.execute(f"""
                     SELECT date_de_tirage
                     FROM {self.cfg.table}
                     WHERE {' OR '.join(conditions)}
                     ORDER BY date_de_tirage ASC
                 """, params)
 
-            rows = cursor.fetchall()
+            rows = await cursor.fetchall()
             appearance_dates = [row['date_de_tirage'] for row in rows]
             frequence_totale = len(appearance_dates)
 
@@ -301,18 +301,18 @@ class BaseStatsService:
 
             ecart_actuel = 0
             if derniere_sortie:
-                cursor.execute(
+                await cursor.execute(
                     f"SELECT COUNT(*) as gap FROM {self.cfg.table} WHERE date_de_tirage > %s",
                     (derniere_sortie,)
                 )
-                ecart_actuel = cursor.fetchone()['gap']
+                ecart_actuel = (await cursor.fetchone())['gap']
 
             ecart_moyen = 0.0
             if len(appearance_dates) >= 2:
-                cursor.execute(
+                await cursor.execute(
                     f"SELECT date_de_tirage FROM {self.cfg.table} ORDER BY date_de_tirage ASC"
                 )
-                all_dates = [r['date_de_tirage'] for r in cursor.fetchall()]
+                all_dates = [r['date_de_tirage'] for r in await cursor.fetchall()]
                 date_to_index = {d: i for i, d in enumerate(all_dates)}
 
                 indices = [date_to_index[d] for d in appearance_dates if d in date_to_index]
@@ -320,14 +320,14 @@ class BaseStatsService:
                     gaps = [indices[i+1] - indices[i] for i in range(len(indices) - 1)]
                     ecart_moyen = round(sum(gaps) / len(gaps), 1)
 
-            all_freq = self._get_all_frequencies(cursor, type_num)
+            all_freq = await self._get_all_frequencies(cursor, type_num)
             classement = 1 + sum(
                 1 for num, f in all_freq.items() if num != numero and f > frequence_totale
             )
             classement_sur = r_max
 
             date_2ans = date_max - timedelta(days=730)
-            freq_2ans_map = self._get_all_frequencies(cursor, type_num, date_from=date_2ans)
+            freq_2ans_map = await self._get_all_frequencies(cursor, type_num, date_from=date_2ans)
             freq_2ans = freq_2ans_map.get(numero, 0)
             all_freq_2ans = sorted(freq_2ans_map.values(), reverse=True)
             tiers = len(all_freq_2ans) // 3
@@ -341,11 +341,9 @@ class BaseStatsService:
             else:
                 categorie = "neutre"
 
-        except Exception as e:
+          except Exception as e:
             logger.error(f"Erreur get_numero_stats{self.cfg.log_label} ({numero}, {type_num}): {e}")
             return None
-        finally:
-            conn.close()
 
         pourcentage = round(frequence_totale / total_tirages * 100, 2) if total_tirages else 0
 
@@ -364,7 +362,7 @@ class BaseStatsService:
             "periode": f"{date_min} au {date_max}" if date_min and date_max else "N/A"
         }
 
-    def analyze_grille_for_chat(self, nums: list, secondary=None) -> dict:
+    async def analyze_grille_for_chat(self, nums: list, secondary=None) -> dict:
         """
         Analyse complete d'une grille pour le chatbot HYBRIDE.
 
@@ -377,14 +375,14 @@ class BaseStatsService:
         """
         nums = sorted(nums)
 
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
+        async with self._get_connection() as conn:
+          try:
+            cursor = await conn.cursor()
 
-            cursor.execute(f"SELECT COUNT(*) as total FROM {self.cfg.table}")
-            total_tirages = cursor.fetchone()['total']
+            await cursor.execute(f"SELECT COUNT(*) as total FROM {self.cfg.table}")
+            total_tirages = (await cursor.fetchone())['total']
 
-            freq_map = self._get_all_frequencies(cursor, self.cfg.type_principal)
+            freq_map = await self._get_all_frequencies(cursor, self.cfg.type_principal)
             frequencies = [freq_map.get(num, 0) for num in nums]
 
             all_freq_sorted = sorted(freq_map.values(), reverse=True)
@@ -395,10 +393,10 @@ class BaseStatsService:
             numeros_froids = [n for n in nums if freq_map.get(n, 0) <= seuil_froid]
             numeros_neutres = [n for n in nums if n not in numeros_chauds and n not in numeros_froids]
 
-            exact_matches = self._query_exact_matches(cursor, nums, secondary)
+            exact_matches = await self._query_exact_matches(cursor, nums, secondary)
             exact_dates = [str(row['date_de_tirage']) for row in exact_matches]
 
-            best_match = self._query_best_match(cursor, nums, secondary)
+            best_match = await self._query_best_match(cursor, nums, secondary)
 
             best_match_numbers = []
             best_match_count = 0
@@ -413,11 +411,9 @@ class BaseStatsService:
                 best_match_date = str(best_match['date_de_tirage'])
                 best_match_secondary = self._extract_secondary_match(best_match, secondary)
 
-        except Exception as e:
+          except Exception as e:
             logger.error(f"Erreur analyze_grille_for_chat{self.cfg.log_label} ({nums}): {e}")
             return None
-        finally:
-            conn.close()
 
         # Metriques de la grille
         nb_pairs = sum(1 for n in nums if n % 2 == 0)
@@ -498,7 +494,7 @@ class BaseStatsService:
         }
         return result
 
-    def get_classement_numeros(self, type_num=None, tri="frequence_desc", limit=5):
+    async def get_classement_numeros(self, type_num=None, tri="frequence_desc", limit=5):
         """
         Retourne un classement de numeros selon le critere demande.
 
@@ -510,31 +506,29 @@ class BaseStatsService:
         if type_num is None:
             type_num = self.cfg.type_principal
 
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
+        async with self._get_connection() as conn:
+          try:
+            cursor = await conn.cursor()
 
-            cursor.execute(f"""
+            await cursor.execute(f"""
                 SELECT COUNT(*) as total,
                        MIN(date_de_tirage) as date_min,
                        MAX(date_de_tirage) as date_max
                 FROM {self.cfg.table}
             """)
-            info = cursor.fetchone()
+            info = await cursor.fetchone()
             total = info['total']
             date_min = info['date_min']
             date_max = info['date_max']
 
-            freq_map = self._get_all_frequencies(cursor, type_num)
-            ecart_map = self._get_all_ecarts(cursor, type_num)
+            freq_map = await self._get_all_frequencies(cursor, type_num)
+            ecart_map = await self._get_all_ecarts(cursor, type_num)
 
             date_2ans = date_max - timedelta(days=730)
-            freq_2ans = self._get_all_frequencies(cursor, type_num, date_from=date_2ans)
-        except Exception as e:
+            freq_2ans = await self._get_all_frequencies(cursor, type_num, date_from=date_2ans)
+          except Exception as e:
             logger.error(f"Erreur get_classement_numeros{self.cfg.log_label}: {e}")
             return None
-        finally:
-            conn.close()
 
         freq_2ans_values = sorted(freq_2ans.values(), reverse=True)
         tiers = len(freq_2ans_values) // 3
@@ -578,13 +572,13 @@ class BaseStatsService:
             "periode": f"{date_min} au {date_max}" if date_min and date_max else "N/A",
         }
 
-    def get_comparaison_numeros(self, num1, num2, type_num=None):
+    async def get_comparaison_numeros(self, num1, num2, type_num=None):
         """Compare deux numeros cote a cote."""
         if type_num is None:
             type_num = self.cfg.type_principal
 
-        stats1 = self.get_numero_stats(num1, type_num)
-        stats2 = self.get_numero_stats(num2, type_num)
+        stats1 = await self.get_numero_stats(num1, type_num)
+        stats2 = await self.get_numero_stats(num2, type_num)
         if not stats1 or not stats2:
             return None
 
@@ -597,23 +591,21 @@ class BaseStatsService:
             "favori_frequence": num1 if diff_freq > 0 else num2 if diff_freq < 0 else None,
         }
 
-    def get_numeros_par_categorie(self, categorie, type_num=None):
+    async def get_numeros_par_categorie(self, categorie, type_num=None):
         """Retourne la liste des numeros d'une categorie (chaud/froid/neutre)."""
         if type_num is None:
             type_num = self.cfg.type_principal
 
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute(f"SELECT MAX(date_de_tirage) as d FROM {self.cfg.table}")
-            date_max = cursor.fetchone()['d']
+        async with self._get_connection() as conn:
+          try:
+            cursor = await conn.cursor()
+            await cursor.execute(f"SELECT MAX(date_de_tirage) as d FROM {self.cfg.table}")
+            date_max = (await cursor.fetchone())['d']
             date_2ans = date_max - timedelta(days=730)
-            freq_2ans = self._get_all_frequencies(cursor, type_num, date_from=date_2ans)
-        except Exception as e:
+            freq_2ans = await self._get_all_frequencies(cursor, type_num, date_from=date_2ans)
+          except Exception as e:
             logger.error(f"Erreur get_numeros_par_categorie{self.cfg.log_label}: {e}")
             return None
-        finally:
-            conn.close()
 
         freq_values = sorted(freq_2ans.values(), reverse=True)
         tiers = len(freq_values) // 3
@@ -641,7 +633,7 @@ class BaseStatsService:
             "periode_analyse": "2 derni\u00e8res ann\u00e9es",
         }
 
-    def prepare_grilles_pitch_context(self, grilles: list) -> str:
+    async def prepare_grilles_pitch_context(self, grilles: list) -> str:
         """
         Prepare le contexte stats de N grilles pour le prompt Gemini pitch.
         Optimise : 1 seule connexion BDD, requetes UNION ALL.
@@ -652,33 +644,31 @@ class BaseStatsService:
         Returns:
             str: bloc de contexte formate pour Gemini
         """
-        conn = self._get_connection()
-        try:
-            cursor = conn.cursor()
+        async with self._get_connection() as conn:
+          try:
+            cursor = await conn.cursor()
 
-            cursor.execute(f"""
+            await cursor.execute(f"""
                 SELECT COUNT(*) as total,
                        MIN(date_de_tirage) as date_min,
                        MAX(date_de_tirage) as date_max
                 FROM {self.cfg.table}
             """)
-            info = cursor.fetchone()
+            info = await cursor.fetchone()
             total = info['total']
             date_max = info['date_max']
 
-            freq_map = self._get_all_frequencies(cursor, self.cfg.type_principal)
-            ecart_map = self._get_all_ecarts(cursor, self.cfg.type_principal)
+            freq_map = await self._get_all_frequencies(cursor, self.cfg.type_principal)
+            ecart_map = await self._get_all_ecarts(cursor, self.cfg.type_principal)
 
             date_2ans = date_max - timedelta(days=730)
-            freq_2ans = self._get_all_frequencies(
+            freq_2ans = await self._get_all_frequencies(
                 cursor, self.cfg.type_principal, date_from=date_2ans
             )
 
-        except Exception as e:
+          except Exception as e:
             logger.error(f"Erreur prepare_grilles_pitch_context{self.cfg.log_label}: {e}")
             return ""
-        finally:
-            conn.close()
 
         # Seuils
         freq_2ans_values = sorted(freq_2ans.values(), reverse=True)

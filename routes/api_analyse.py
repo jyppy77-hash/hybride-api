@@ -1,7 +1,6 @@
 from fastapi import APIRouter, Query, HTTPException, Request
 from fastapi.responses import JSONResponse
 from typing import Optional
-import asyncio
 import logging
 
 from engine.hybride import generate, generate_grids
@@ -22,7 +21,7 @@ async def ask(request: Request, payload: AskPayload):
     Endpoint principal du moteur HYBRIDE
     """
     try:
-        result = await asyncio.to_thread(generate, payload.prompt)
+        result = await generate(payload.prompt)
         return {
             "success": True,
             "response": result
@@ -57,7 +56,7 @@ async def generate_endpoint(
         if mode not in valid_modes:
             mode = "balanced"
 
-        result = await asyncio.to_thread(generate_grids, n=n, mode=mode)
+        result = await generate_grids(n=n, mode=mode)
 
         return {
             "success": True,
@@ -96,14 +95,12 @@ async def api_meta_analyse_local(
     from datetime import datetime, timedelta
 
     try:
-        def _compute():
-            conn = None
-            try:
-                conn = db_cloudsql.get_connection()
-                cursor = conn.cursor()
+        async def _compute():
+            async with db_cloudsql.get_connection() as conn:
+                cursor = await conn.cursor()
 
-                cursor.execute("SELECT COUNT(*) as total FROM tirages")
-                total_rows = cursor.fetchone()['total']
+                await cursor.execute("SELECT COUNT(*) as total FROM tirages")
+                total_rows = (await cursor.fetchone())['total']
 
                 mode_used = "tirages"
                 window_used = "GLOBAL"
@@ -141,30 +138,30 @@ async def api_meta_analyse_local(
                             window_used = "GLOBAL"
 
                 if use_date_filter and date_limit:
-                    cursor.execute("""
+                    await cursor.execute("""
                         SELECT id FROM tirages
                         WHERE date_de_tirage >= %s
                         ORDER BY date_de_tirage DESC
                     """, (date_limit,))
                 elif window_used != "GLOBAL":
-                    cursor.execute("""
+                    await cursor.execute("""
                         SELECT id FROM tirages
                         ORDER BY date_de_tirage DESC
                         LIMIT %s
                     """, (int(window_used),))
                 else:
-                    cursor.execute("""
+                    await cursor.execute("""
                         SELECT id FROM tirages
                         ORDER BY date_de_tirage DESC
                     """)
-                window_ids = [row['id'] for row in cursor.fetchall()]
+                window_ids = [row['id'] for row in await cursor.fetchall()]
 
                 if not window_ids:
                     raise Exception("Aucun tirage trouvé")
 
                 ids_placeholder = ','.join(['%s'] * len(window_ids))
 
-                cursor.execute(f"""
+                await cursor.execute(f"""
                     SELECT num, COUNT(*) as freq FROM (
                         SELECT boule_1 as num FROM tirages WHERE id IN ({ids_placeholder})
                         UNION ALL SELECT boule_2 FROM tirages WHERE id IN ({ids_placeholder})
@@ -175,10 +172,10 @@ async def api_meta_analyse_local(
                     GROUP BY num
                     ORDER BY num
                 """, (*window_ids, *window_ids, *window_ids, *window_ids, *window_ids))
-                freq_map = {row['num']: row['freq'] for row in cursor.fetchall()}
+                freq_map = {row['num']: row['freq'] for row in await cursor.fetchall()}
 
                 # ── 2 derniers tirages pour penalisation ──
-                cursor.execute(f"""
+                await cursor.execute(f"""
                     SELECT boule_1, boule_2, boule_3, boule_4, boule_5,
                            numero_chance, date_de_tirage
                     FROM tirages
@@ -186,7 +183,7 @@ async def api_meta_analyse_local(
                     ORDER BY date_de_tirage DESC
                     LIMIT 2
                 """, window_ids)
-                recent_draws = cursor.fetchall()
+                recent_draws = await cursor.fetchall()
 
                 if len(recent_draws) >= 2:
                     last_draw_balls = {recent_draws[0][f'boule_{i}'] for i in range(1, 6)}
@@ -218,12 +215,12 @@ async def api_meta_analyse_local(
                     top_n=5,
                 )
 
-                cursor.execute(f"""
+                await cursor.execute(f"""
                     SELECT MIN(date_de_tirage) as min_date, MAX(date_de_tirage) as max_date
                     FROM tirages
                     WHERE id IN ({ids_placeholder})
                 """, window_ids)
-                dates = cursor.fetchone()
+                dates = await cursor.fetchone()
                 date_min = dates['min_date']
                 date_max = dates['max_date']
 
@@ -231,14 +228,14 @@ async def api_meta_analyse_local(
                 graph_values = [n['count'] for n in top_numbers]
 
                 # ── Fréquences numéro chance (1-10) ──
-                cursor.execute(f"""
+                await cursor.execute(f"""
                     SELECT numero_chance AS num, COUNT(*) AS freq
                     FROM tirages
                     WHERE id IN ({ids_placeholder})
                     GROUP BY numero_chance
                     ORDER BY freq DESC
                 """, window_ids)
-                chance_freq = {row['num']: row['freq'] for row in cursor.fetchall()}
+                chance_freq = {row['num']: row['freq'] for row in await cursor.fetchall()}
                 chance_top, penal_info_chance = compute_penalized_ranking(
                     raw_freq=chance_freq,
                     last_draw_numbers=last_draw_chance,
@@ -309,14 +306,8 @@ async def api_meta_analyse_local(
                         }
                     }
                 }
-            finally:
-                if conn:
-                    try:
-                        conn.close()
-                    except Exception:
-                        pass
 
-        return await asyncio.to_thread(_compute)
+        return await _compute()
 
     except Exception as e:
         logger.error(f"Erreur /api/meta-analyse-local: {e}")
@@ -357,16 +348,14 @@ async def api_analyze_custom_grid(
 
         nums = sorted(nums)
 
-        def _compute():
-            conn = None
-            try:
-                conn = db_cloudsql.get_connection()
-                cursor = conn.cursor()
+        async def _compute():
+            async with db_cloudsql.get_connection() as conn:
+                cursor = await conn.cursor()
 
-                cursor.execute("SELECT COUNT(*) as total FROM tirages")
-                total_tirages = cursor.fetchone()['total']
+                await cursor.execute("SELECT COUNT(*) as total FROM tirages")
+                total_tirages = (await cursor.fetchone())['total']
 
-                cursor.execute("""
+                await cursor.execute("""
                     SELECT num, COUNT(*) as freq FROM (
                         SELECT boule_1 as num FROM tirages
                         UNION ALL SELECT boule_2 FROM tirages
@@ -377,12 +366,12 @@ async def api_analyze_custom_grid(
                     WHERE num IN (%s, %s, %s, %s, %s)
                     GROUP BY num
                 """, tuple(nums))
-                freq_map = {row['num']: row['freq'] for row in cursor.fetchall()}
+                freq_map = {row['num']: row['freq'] for row in await cursor.fetchall()}
                 frequencies = [freq_map.get(num, 0) for num in nums]
 
                 # Correspondance exacte (boules + chance)
                 # Utilise IN pour les boules (independant de l'ordre de stockage)
-                cursor.execute("""
+                await cursor.execute("""
                     SELECT date_de_tirage
                     FROM tirages
                     WHERE boule_1 IN (%s, %s, %s, %s, %s)
@@ -393,10 +382,10 @@ async def api_analyze_custom_grid(
                       AND numero_chance = %s
                     ORDER BY date_de_tirage DESC
                 """, (*nums, *nums, *nums, *nums, *nums, chance))
-                exact_matches = cursor.fetchall()
+                exact_matches = await cursor.fetchall()
                 exact_dates = [str(row['date_de_tirage']) for row in exact_matches]
 
-                cursor.execute("""
+                await cursor.execute("""
                     SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chance,
                         (
                             (boule_1 IN (%s, %s, %s, %s, %s)) +
@@ -410,7 +399,7 @@ async def api_analyze_custom_grid(
                     ORDER BY match_count DESC, chance_match DESC, date_de_tirage DESC
                     LIMIT 1
                 """, (*nums, *nums, *nums, *nums, *nums, chance))
-                best_match = cursor.fetchone()
+                best_match = await cursor.fetchone()
 
                 best_match_numbers = []
                 if best_match:
@@ -643,14 +632,8 @@ async def api_analyze_custom_grid(
                     "suggestions": suggestions,
                     "history_check": history_check
                 }
-            finally:
-                if conn:
-                    try:
-                        conn.close()
-                    except Exception:
-                        pass
 
-        return await asyncio.to_thread(_compute)
+        return await _compute()
 
     except Exception as e:
         logger.error(f"Erreur /api/analyze-custom-grid: {e}")

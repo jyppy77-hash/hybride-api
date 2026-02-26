@@ -5,8 +5,9 @@ en fonction du contenu SQL, sans connexion MySQL reelle.
 """
 
 import random as _random
+from contextlib import asynccontextmanager
 from datetime import date, timedelta
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -206,15 +207,35 @@ class SmartMockCursor:
         return []
 
 
+class AsyncSmartMockCursor(SmartMockCursor):
+    """Async wrapper around SmartMockCursor for aiomysql compatibility."""
+
+    async def execute(self, query, params=None):
+        super().execute(query, params)
+
+    async def fetchone(self):
+        return super().fetchone()
+
+    async def fetchall(self):
+        return super().fetchall()
+
+
+@asynccontextmanager
+async def make_async_conn(cursor=None):
+    """Async context manager that mimics db_cloudsql.get_connection()."""
+    cur = cursor or AsyncSmartMockCursor()
+    conn = AsyncMock()
+    conn.cursor = AsyncMock(return_value=cur)
+    yield conn
+
+
 # ── Fixtures ─────────────────────────────────────────────────────────────
 
 @pytest.fixture
 def smart_mock_db():
-    """Retourne (conn, cursor) avec SmartMockCursor pre-configure."""
-    cursor = SmartMockCursor()
-    conn = MagicMock()
-    conn.cursor.return_value = cursor
-    return conn, cursor
+    """Retourne (async_conn_cm, cursor) avec AsyncSmartMockCursor."""
+    cursor = AsyncSmartMockCursor()
+    return make_async_conn(cursor), cursor
 
 
 @pytest.fixture(autouse=True)

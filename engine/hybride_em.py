@@ -38,21 +38,21 @@ NB_ETOILES = 2
 # EXTRACTION STATISTIQUES
 # ============================================================================
 
-def calculer_frequences(conn, date_limite: datetime) -> Dict[int, float]:
+async def calculer_frequences(conn, date_limite: datetime) -> Dict[int, float]:
     """
     Calcule la frequence normalisee de chaque boule depuis date_limite.
     """
-    cursor = conn.cursor()
+    cursor = await conn.cursor()
     freq = {n: 0 for n in range(BOULE_MIN, BOULE_MAX + 1)}
 
-    cursor.execute(f"""
+    await cursor.execute(f"""
         SELECT boule_1, boule_2, boule_3, boule_4, boule_5
         FROM {TABLE}
         WHERE date_de_tirage >= %s
         ORDER BY date_de_tirage
     """, (date_limite.strftime("%Y-%m-%d"),))
 
-    tirages = cursor.fetchall()
+    tirages = await cursor.fetchall()
     nb_tirages = len(tirages)
 
     if nb_tirages == 0:
@@ -69,22 +69,22 @@ def calculer_frequences(conn, date_limite: datetime) -> Dict[int, float]:
     return freq
 
 
-def calculer_retards(conn, date_limite: datetime) -> Dict[int, float]:
+async def calculer_retards(conn, date_limite: datetime) -> Dict[int, float]:
     """
     Calcule le retard normalise de chaque boule (tirages depuis derniere apparition).
     """
-    cursor = conn.cursor()
+    cursor = await conn.cursor()
     retard = {n: 0 for n in range(BOULE_MIN, BOULE_MAX + 1)}
     derniere_apparition = {n: None for n in range(BOULE_MIN, BOULE_MAX + 1)}
 
-    cursor.execute(f"""
+    await cursor.execute(f"""
         SELECT boule_1, boule_2, boule_3, boule_4, boule_5, date_de_tirage
         FROM {TABLE}
         WHERE date_de_tirage >= %s
         ORDER BY date_de_tirage DESC
     """, (date_limite.strftime("%Y-%m-%d"),))
 
-    tirages = cursor.fetchall()
+    tirages = await cursor.fetchall()
 
     if not tirages:
         return {n: 0 for n in range(BOULE_MIN, BOULE_MAX + 1)}
@@ -123,13 +123,13 @@ def _minmax_normalize(values: Dict[int, float]) -> Dict[int, float]:
     return {k: (v - v_min) / (v_max - v_min) for k, v in values.items()}
 
 
-def calculer_scores_fenetre(conn, date_limite: datetime) -> Dict[int, float]:
+async def calculer_scores_fenetre(conn, date_limite: datetime) -> Dict[int, float]:
     """
     Calcule le score composite pour une fenetre temporelle.
     Score = 0.7 x frequence_norm + 0.3 x retard_norm
     """
-    freq = calculer_frequences(conn, date_limite)
-    retard = calculer_retards(conn, date_limite)
+    freq = await calculer_frequences(conn, date_limite)
+    retard = await calculer_retards(conn, date_limite)
 
     freq = _minmax_normalize(freq)
     retard = _minmax_normalize(retard)
@@ -144,12 +144,12 @@ def calculer_scores_fenetre(conn, date_limite: datetime) -> Dict[int, float]:
     return scores
 
 
-def get_reference_date(conn) -> datetime:
+async def get_reference_date(conn) -> datetime:
     """Retourne la date du dernier tirage EM en base."""
     try:
-        cursor = conn.cursor()
-        cursor.execute(f"SELECT MAX(date_de_tirage) as max_date FROM {TABLE}")
-        row = cursor.fetchone()
+        cursor = await conn.cursor()
+        await cursor.execute(f"SELECT MAX(date_de_tirage) as max_date FROM {TABLE}")
+        row = await cursor.fetchone()
         max_date = row['max_date'] if row else None
         if not max_date:
             return datetime.now()
@@ -158,19 +158,19 @@ def get_reference_date(conn) -> datetime:
         return datetime.now()
 
 
-def calculer_scores_hybrides(conn, mode: str = "balanced") -> Dict[int, float]:
+async def calculer_scores_hybrides(conn, mode: str = "balanced") -> Dict[int, float]:
     """
     Combine les scores des 2 fenetres (5 ans + 2 ans) selon ponderation variable.
 
     Args:
         mode: "conservative" (70/30), "balanced" (60/40), "recent" (40/60)
     """
-    now = get_reference_date(conn)
+    now = await get_reference_date(conn)
     date_limite_5ans = now - timedelta(days=CONFIG['fenetre_principale_annees'] * 365.25)
     date_limite_2ans = now - timedelta(days=CONFIG['fenetre_recente_annees'] * 365.25)
 
-    scores_5ans = calculer_scores_fenetre(conn, date_limite_5ans)
-    scores_2ans = calculer_scores_fenetre(conn, date_limite_2ans)
+    scores_5ans = await calculer_scores_fenetre(conn, date_limite_5ans)
+    scores_2ans = await calculer_scores_fenetre(conn, date_limite_2ans)
 
     if mode == "conservative":
         poids_5ans, poids_2ans = 0.7, 0.3
@@ -275,7 +275,7 @@ def generer_badges(numeros: List[int], scores_hybrides: Dict[int, float]) -> Lis
 # GENERATION DES ETOILES
 # ============================================================================
 
-def generer_etoiles(conn) -> List[int]:
+async def generer_etoiles(conn) -> List[int]:
     """
     Genere 2 etoiles selon frequence historique (5 ans).
     Tirage pondere SANS remplacement parmi [1-12].
@@ -283,11 +283,11 @@ def generer_etoiles(conn) -> List[int]:
     Returns:
         Liste triee de 2 etoiles [1-12]
     """
-    cursor = conn.cursor()
-    now = get_reference_date(conn)
+    cursor = await conn.cursor()
+    now = await get_reference_date(conn)
     date_limite = now - timedelta(days=CONFIG['fenetre_principale_annees'] * 365.25)
 
-    cursor.execute(f"""
+    await cursor.execute(f"""
         SELECT num, COUNT(*) as freq FROM (
             SELECT etoile_1 as num FROM {TABLE} WHERE date_de_tirage >= %s
             UNION ALL SELECT etoile_2 FROM {TABLE} WHERE date_de_tirage >= %s
@@ -296,7 +296,7 @@ def generer_etoiles(conn) -> List[int]:
     """, (date_limite.strftime("%Y-%m-%d"), date_limite.strftime("%Y-%m-%d")))
 
     freq_etoiles = {i: 0 for i in range(ETOILE_MIN, ETOILE_MAX + 1)}
-    for row in cursor.fetchall():
+    for row in await cursor.fetchall():
         freq_etoiles[row['num']] = row['freq']
 
     total = sum(freq_etoiles.values())
@@ -322,7 +322,7 @@ def generer_etoiles(conn) -> List[int]:
 # GENERATION DE GRILLE
 # ============================================================================
 
-def generer_grille(conn, scores_hybrides: Dict[int, float]) -> Dict[str, Any]:
+async def generer_grille(conn, scores_hybrides: Dict[int, float]) -> Dict[str, Any]:
     """
     Genere une grille EM unique avec validation des contraintes.
     5 boules [1-50] + 2 etoiles [1-12].
@@ -360,7 +360,7 @@ def generer_grille(conn, scores_hybrides: Dict[int, float]) -> Dict[str, Any]:
     score_conformite = meilleur_score_conformite
 
     # 2 etoiles parmi [1-12] sans remplacement
-    etoiles = generer_etoiles(conn)
+    etoiles = await generer_etoiles(conn)
 
     # Score moyen
     score_moyen = sum(scores_hybrides[n] for n in numeros) / NB_BOULES
@@ -383,7 +383,7 @@ def generer_grille(conn, scores_hybrides: Dict[int, float]) -> Dict[str, Any]:
 # API PRINCIPALE
 # ============================================================================
 
-def generate_grids(n: int = 5, mode: str = "balanced") -> Dict[str, Any]:
+async def generate_grids(n: int = 5, mode: str = "balanced") -> Dict[str, Any]:
     """
     Point d'entree principal : genere N grilles EM optimisees.
 
@@ -391,25 +391,23 @@ def generate_grids(n: int = 5, mode: str = "balanced") -> Dict[str, Any]:
         n: Nombre de grilles (max 20)
         mode: conservative, balanced, recent
     """
-    conn = get_connection()
-
-    try:
-        scores_hybrides = calculer_scores_hybrides(conn, mode=mode)
+    async with get_connection() as conn:
+        scores_hybrides = await calculer_scores_hybrides(conn, mode=mode)
 
         grilles = []
         for i in range(n):
-            grille = generer_grille(conn, scores_hybrides)
+            grille = await generer_grille(conn, scores_hybrides)
             grilles.append(grille)
 
         grilles = sorted(grilles, key=lambda g: g['score'], reverse=True)
 
-        cursor = conn.cursor()
-        cursor.execute(f"SELECT COUNT(*) as count FROM {TABLE}")
-        result = cursor.fetchone()
+        cursor = await conn.cursor()
+        await cursor.execute(f"SELECT COUNT(*) as count FROM {TABLE}")
+        result = await cursor.fetchone()
         nb_tirages = result['count'] if result else 0
 
-        cursor.execute(f"SELECT MIN(date_de_tirage) as min_date, MAX(date_de_tirage) as max_date FROM {TABLE}")
-        result = cursor.fetchone()
+        await cursor.execute(f"SELECT MIN(date_de_tirage) as min_date, MAX(date_de_tirage) as max_date FROM {TABLE}")
+        result = await cursor.fetchone()
         date_min = result['min_date'] if result else None
         date_max = result['max_date'] if result else None
 
@@ -435,6 +433,3 @@ def generate_grids(n: int = 5, mode: str = "balanced") -> Dict[str, Any]:
             'grids': grilles,
             'metadata': metadata
         }
-
-    finally:
-        conn.close()

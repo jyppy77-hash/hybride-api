@@ -177,7 +177,7 @@ async def handle_chat_em(message: str, history: list, page: str, http_client) ->
     # Phase 0-bis : prochain tirage
     if not _continuation_mode and _detect_prochain_tirage_em(message):
         try:
-            tirage_ctx = await asyncio.wait_for(asyncio.to_thread(_get_prochain_tirage_em), timeout=30.0)
+            tirage_ctx = await asyncio.wait_for(_get_prochain_tirage_em(), timeout=30.0)
             if tirage_ctx:
                 enrichment_context = tirage_ctx
                 logger.info("[EM CHAT] Prochain tirage injecte")
@@ -190,7 +190,7 @@ async def handle_chat_em(message: str, history: list, page: str, http_client) ->
         if tirage_target is not None:
             try:
                 tirage_data = await asyncio.wait_for(
-                    asyncio.to_thread(_get_tirage_data_em, tirage_target), timeout=30.0
+                    _get_tirage_data_em(tirage_target), timeout=30.0
                 )
                 if tirage_data:
                     enrichment_context = _format_tirage_context_em(tirage_data)
@@ -217,7 +217,7 @@ async def handle_chat_em(message: str, history: list, page: str, http_client) ->
     grille_nums, grille_etoiles = (None, None) if _continuation_mode else _detect_grille_em(message)
     if not force_sql and grille_nums is not None:
         try:
-            grille_result = await asyncio.wait_for(asyncio.to_thread(analyze_grille_for_chat, grille_nums, grille_etoiles), timeout=30.0)
+            grille_result = await asyncio.wait_for(analyze_grille_for_chat(grille_nums, grille_etoiles), timeout=30.0)
             if grille_result:
                 enrichment_context = _format_grille_context_em(grille_result)
                 logger.info(f"[EM CHAT] Grille analysee: {grille_nums} etoiles={grille_etoiles}")
@@ -230,11 +230,11 @@ async def handle_chat_em(message: str, history: list, page: str, http_client) ->
         if intent:
             try:
                 if intent["type"] == "classement":
-                    data = await asyncio.wait_for(asyncio.to_thread(get_classement_numeros, intent["num_type"], intent["tri"], intent["limit"]), timeout=30.0)
+                    data = await asyncio.wait_for(get_classement_numeros(intent["num_type"], intent["tri"], intent["limit"]), timeout=30.0)
                 elif intent["type"] == "comparaison":
-                    data = await asyncio.wait_for(asyncio.to_thread(get_comparaison_numeros, intent["num1"], intent["num2"], intent["num_type"]), timeout=30.0)
+                    data = await asyncio.wait_for(get_comparaison_numeros(intent["num1"], intent["num2"], intent["num_type"]), timeout=30.0)
                 elif intent["type"] == "categorie":
-                    data = await asyncio.wait_for(asyncio.to_thread(get_numeros_par_categorie, intent["categorie"], intent["num_type"]), timeout=30.0)
+                    data = await asyncio.wait_for(get_numeros_par_categorie(intent["categorie"], intent["num_type"]), timeout=30.0)
                 else:
                     data = None
 
@@ -263,7 +263,7 @@ async def handle_chat_em(message: str, history: list, page: str, http_client) ->
         numero, type_num = _detect_numero_em(message)
         if numero is not None:
             try:
-                stats = await asyncio.wait_for(asyncio.to_thread(get_numero_stats, numero, type_num), timeout=30.0)
+                stats = await asyncio.wait_for(get_numero_stats(numero, type_num), timeout=30.0)
                 if stats:
                     enrichment_context = _format_stats_context_em(stats)
                     logger.info(f"[EM CHAT] Stats BDD injectees: numero={numero}, type={type_num}")
@@ -285,7 +285,7 @@ async def handle_chat_em(message: str, history: list, page: str, http_client) ->
                 if sql and sql.strip().upper() != "NO_SQL" and _validate_sql(sql):
                     sql = _ensure_limit(sql)
                     rows = await asyncio.wait_for(
-                        asyncio.to_thread(_execute_safe_sql, sql), timeout=5.0
+                        _execute_safe_sql(sql), timeout=5.0
                     )
                     t_total = int((time.monotonic() - t0) * 1000)
                     if rows is not None and len(rows) > 0:
@@ -347,11 +347,11 @@ async def handle_chat_em(message: str, history: list, page: str, http_client) ->
         if intent:
             try:
                 if intent["type"] == "classement":
-                    data = await asyncio.wait_for(asyncio.to_thread(get_classement_numeros, intent["num_type"], intent["tri"], intent["limit"]), timeout=30.0)
+                    data = await asyncio.wait_for(get_classement_numeros(intent["num_type"], intent["tri"], intent["limit"]), timeout=30.0)
                 elif intent["type"] == "comparaison":
-                    data = await asyncio.wait_for(asyncio.to_thread(get_comparaison_numeros, intent["num1"], intent["num2"], intent["num_type"]), timeout=30.0)
+                    data = await asyncio.wait_for(get_comparaison_numeros(intent["num1"], intent["num2"], intent["num_type"]), timeout=30.0)
                 elif intent["type"] == "categorie":
-                    data = await asyncio.wait_for(asyncio.to_thread(get_numeros_par_categorie, intent["categorie"], intent["num_type"]), timeout=30.0)
+                    data = await asyncio.wait_for(get_numeros_par_categorie(intent["categorie"], intent["num_type"]), timeout=30.0)
                 else:
                     data = None
                 if data:
@@ -363,7 +363,7 @@ async def handle_chat_em(message: str, history: list, page: str, http_client) ->
             numero, type_num = _detect_numero_em(message)
             if numero is not None:
                 try:
-                    stats = await asyncio.wait_for(asyncio.to_thread(get_numero_stats, numero, type_num), timeout=30.0)
+                    stats = await asyncio.wait_for(get_numero_stats(numero, type_num), timeout=30.0)
                     if stats:
                         enrichment_context = _format_stats_context_em(stats)
                         logger.info(f"[EM CHAT] Fallback Phase 1: numero={numero}")
@@ -510,7 +510,7 @@ async def handle_pitch_em(grilles: list, http_client) -> dict:
     grilles_data = [{"numeros": g.numeros, "etoiles": g.etoiles, "score_conformite": g.score_conformite, "severity": g.severity} for g in grilles]
 
     try:
-        context = await asyncio.wait_for(asyncio.to_thread(prepare_grilles_pitch_context, grilles_data), timeout=30.0)
+        context = await asyncio.wait_for(prepare_grilles_pitch_context(grilles_data), timeout=30.0)
     except asyncio.TimeoutError:
         logger.error("[EM PITCH] Timeout 30s contexte stats")
         return {

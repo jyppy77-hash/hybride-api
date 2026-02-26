@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 # Prochain tirage (calcul date + dernier tirage BDD)
 # ────────────────────────────────────────────
 
-def _get_prochain_tirage() -> str | None:
+async def _get_prochain_tirage() -> str | None:
     """
     Calcule la date du prochain tirage a partir de la date du jour
     et des jours de tirage FDJ (lundi, mercredi, samedi).
@@ -45,14 +45,11 @@ def _get_prochain_tirage() -> str | None:
 
         # Dernier tirage en BDD
         try:
-            conn = db_cloudsql.get_connection()
-            try:
-                cursor = conn.cursor()
-                cursor.execute("SELECT MAX(date_de_tirage) as last FROM tirages")
-                row = cursor.fetchone()
+            async with db_cloudsql.get_connection() as conn:
+                cursor = await conn.cursor()
+                await cursor.execute("SELECT MAX(date_de_tirage) as last FROM tirages")
+                row = await cursor.fetchone()
                 last_draw = str(row['last']) if row and row['last'] else None
-            finally:
-                conn.close()
         except Exception:
             last_draw = None
 
@@ -72,28 +69,28 @@ def _get_prochain_tirage() -> str | None:
 # Recuperation tirage depuis la DB
 # ────────────────────────────────────────────
 
-def _get_tirage_data(target) -> dict | None:
+async def _get_tirage_data(target) -> dict | None:
     """
     Recupere un tirage depuis la DB.
     target: "latest" ou un objet date.
     Retourne dict {date, boules, chance} ou None.
     """
-    conn = db_cloudsql.get_connection()
-    try:
-        cursor = conn.cursor()
+    async with db_cloudsql.get_connection() as conn:
+      try:
+        cursor = await conn.cursor()
         if target == "latest":
-            cursor.execute("""
+            await cursor.execute("""
                 SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chance
                 FROM tirages ORDER BY date_de_tirage DESC LIMIT 1
             """)
         else:
-            cursor.execute("""
+            await cursor.execute("""
                 SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chance
                 FROM tirages WHERE date_de_tirage = %s
                 LIMIT 1
             """, (target,))
 
-        row = cursor.fetchone()
+        row = await cursor.fetchone()
         if row:
             return {
                 "date": row["date_de_tirage"],
@@ -102,11 +99,9 @@ def _get_tirage_data(target) -> dict | None:
                 "chance": row["numero_chance"],
             }
         return None
-    except Exception as e:
+      except Exception as e:
         logger.error(f"[HYBRIDE CHAT] Erreur _get_tirage_data: {e}")
         return None
-    finally:
-        conn.close()
 
 
 # ────────────────────────────────────────────
@@ -216,19 +211,17 @@ def _ensure_limit(sql: str, max_limit: int = 50) -> str:
     return sql
 
 
-def _execute_safe_sql(sql: str) -> list | None:
+async def _execute_safe_sql(sql: str) -> list | None:
     """Execute le SQL valide avec connexion DB."""
-    conn = db_cloudsql.get_connection()
     try:
-        cursor = conn.cursor()
-        cursor.execute(sql)
-        rows = cursor.fetchall()
-        return rows
+        async with db_cloudsql.get_connection() as conn:
+            cursor = await conn.cursor()
+            await cursor.execute(sql)
+            rows = await cursor.fetchall()
+            return rows
     except Exception as e:
         logger.warning(f"[TEXT-TO-SQL] Erreur execution SQL: {e}")
         return None
-    finally:
-        conn.close()
 
 
 def _format_sql_result(rows: list) -> str:

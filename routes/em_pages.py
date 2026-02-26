@@ -1,6 +1,5 @@
 from fastapi import APIRouter
 from fastapi.responses import FileResponse, HTMLResponse
-import asyncio
 import db_cloudsql
 
 router = APIRouter()
@@ -53,7 +52,7 @@ async def em_historique():
 async def em_faq():
     """EuroMillions — FAQ avec stats BDD injectees."""
     try:
-        total = await asyncio.to_thread(db_cloudsql.get_em_tirages_count)
+        total = await db_cloudsql.get_em_tirages_count()
     except Exception:
         total = 0
     with open("ui/em/faq-em.html", "r", encoding="utf-8") as f:

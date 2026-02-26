@@ -2,7 +2,6 @@ import re
 
 from fastapi import APIRouter
 from fastapi.responses import FileResponse, HTMLResponse
-import asyncio
 import db_cloudsql
 
 router = APIRouter()
@@ -99,9 +98,10 @@ async def page_launcher():
 async def page_accueil():
     """Accueil Loto France — schema JSON-LD dynamique (ratings)."""
     try:
-        result = await db_cloudsql.async_fetchone(
-            "SELECT review_count, avg_rating FROM ratings_global"
-        )
+        async with db_cloudsql.get_connection() as conn:
+            cursor = await conn.cursor()
+            await cursor.execute("SELECT review_count, avg_rating FROM ratings_global")
+            result = await cursor.fetchone()
         review_count = int(result["review_count"]) if result and result.get("review_count") else 0
         avg_rating = float(result["avg_rating"]) if result and result.get("avg_rating") else 0
     except Exception:
@@ -173,7 +173,7 @@ async def page_loto_numeros():
 @router.get("/faq")
 async def page_faq():
     try:
-        total = await asyncio.to_thread(db_cloudsql.get_tirages_count)
+        total = await db_cloudsql.get_tirages_count()
     except Exception:
         total = 967  # fallback
     with open("ui/faq.html", "r", encoding="utf-8") as f:

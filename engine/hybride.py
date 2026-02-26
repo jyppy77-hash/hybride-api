@@ -33,7 +33,7 @@ CONFIG = {
 # EXTRACTION STATISTIQUES
 # ============================================================================
 
-def calculer_frequences(conn, date_limite: datetime) -> Dict[int, float]:
+async def calculer_frequences(conn, date_limite: datetime) -> Dict[int, float]:
     """
     Calcule la fréquence normalisée de chaque numéro depuis date_limite
 
@@ -44,20 +44,20 @@ def calculer_frequences(conn, date_limite: datetime) -> Dict[int, float]:
     Returns:
         Dict {numéro: fréquence_normalisée}
     """
-    cursor = conn.cursor()
+    cursor = await conn.cursor()
 
     # Initialiser compteurs
     freq = {n: 0 for n in range(1, 50)}
 
     # Récupérer tous les tirages depuis date_limite
-    cursor.execute("""
+    await cursor.execute("""
         SELECT boule_1, boule_2, boule_3, boule_4, boule_5
         FROM tirages
         WHERE date_de_tirage >= %s
         ORDER BY date_de_tirage
     """, (date_limite.strftime("%Y-%m-%d"),))
 
-    tirages = cursor.fetchall()
+    tirages = await cursor.fetchall()
     nb_tirages = len(tirages)
 
     if nb_tirages == 0:
@@ -77,7 +77,7 @@ def calculer_frequences(conn, date_limite: datetime) -> Dict[int, float]:
     return freq
 
 
-def calculer_retards(conn, date_limite: datetime) -> Dict[int, float]:
+async def calculer_retards(conn, date_limite: datetime) -> Dict[int, float]:
     """
     Calcule le retard normalisé de chaque numéro (tirages depuis dernière apparition)
 
@@ -88,21 +88,21 @@ def calculer_retards(conn, date_limite: datetime) -> Dict[int, float]:
     Returns:
         Dict {numéro: retard_normalisé} (0 = récent, 1 = très en retard)
     """
-    cursor = conn.cursor()
+    cursor = await conn.cursor()
 
     # Initialiser retards
     retard = {n: 0 for n in range(1, 50)}
     derniere_apparition = {n: None for n in range(1, 50)}
 
     # Récupérer tirages du plus récent au plus ancien
-    cursor.execute("""
+    await cursor.execute("""
         SELECT boule_1, boule_2, boule_3, boule_4, boule_5, date_de_tirage
         FROM tirages
         WHERE date_de_tirage >= %s
         ORDER BY date_de_tirage DESC
     """, (date_limite.strftime("%Y-%m-%d"),))
 
-    tirages = cursor.fetchall()
+    tirages = await cursor.fetchall()
 
     if not tirages:
         return {n: 0 for n in range(1, 50)}
@@ -149,7 +149,7 @@ def _minmax_normalize(values: Dict[int, float]) -> Dict[int, float]:
     return {k: (v - v_min) / (v_max - v_min) for k, v in values.items()}
 
 
-def calculer_scores_fenetre(conn, date_limite: datetime) -> Dict[int, float]:
+async def calculer_scores_fenetre(conn, date_limite: datetime) -> Dict[int, float]:
     """
     Calcule le score composite pour une fenêtre temporelle
     Score = 0.7 × fréquence_norm + 0.3 × retard_norm
@@ -166,8 +166,8 @@ def calculer_scores_fenetre(conn, date_limite: datetime) -> Dict[int, float]:
     Returns:
         Dict {numéro: score}
     """
-    freq = calculer_frequences(conn, date_limite)
-    retard = calculer_retards(conn, date_limite)
+    freq = await calculer_frequences(conn, date_limite)
+    retard = await calculer_retards(conn, date_limite)
 
     # Normalisation min-max [0,1] pour que les poids 0.7/0.3 reflètent
     # réellement l'importance relative voulue (fréquence > retard)
@@ -184,16 +184,16 @@ def calculer_scores_fenetre(conn, date_limite: datetime) -> Dict[int, float]:
     return scores
 
 
-def get_reference_date(conn) -> datetime:
+async def get_reference_date(conn) -> datetime:
     """
     Retourne la date de référence pour les calculs statistiques.
     On utilise la dernière date_de_tirage présente en base (tirage le plus récent).
     Fallback : datetime.now() si la table est vide ou en cas d'anomalie.
     """
     try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT MAX(date_de_tirage) as max_date FROM tirages")
-        row = cursor.fetchone()
+        cursor = await conn.cursor()
+        await cursor.execute("SELECT MAX(date_de_tirage) as max_date FROM tirages")
+        row = await cursor.fetchone()
         max_date = row['max_date'] if row else None
         if not max_date:
             return datetime.now()
@@ -205,7 +205,7 @@ def get_reference_date(conn) -> datetime:
         return datetime.now()
 
 
-def calculer_scores_hybrides(conn, mode: str = "balanced") -> Dict[int, float]:
+async def calculer_scores_hybrides(conn, mode: str = "balanced") -> Dict[int, float]:
     """
     Combine les scores des 2 fenêtres (5 ans + 2 ans) selon pondération variable
 
@@ -220,15 +220,15 @@ def calculer_scores_hybrides(conn, mode: str = "balanced") -> Dict[int, float]:
         Dict {numéro: score_hybride}
     """
     # Date de référence (dernier tirage connu en base)
-    now = get_reference_date(conn)
+    now = await get_reference_date(conn)
 
     # Dates limites
     date_limite_5ans = now - timedelta(days=CONFIG['fenetre_principale_annees'] * 365.25)
     date_limite_2ans = now - timedelta(days=CONFIG['fenetre_recente_annees'] * 365.25)
 
     # Scores par fenêtre
-    scores_5ans = calculer_scores_fenetre(conn, date_limite_5ans)
-    scores_2ans = calculer_scores_fenetre(conn, date_limite_2ans)
+    scores_5ans = await calculer_scores_fenetre(conn, date_limite_5ans)
+    scores_2ans = await calculer_scores_fenetre(conn, date_limite_2ans)
 
     # Adapter les poids selon le mode
     if mode == "conservative":
@@ -406,7 +406,7 @@ def generer_badges(numeros: List[int], scores_hybrides: Dict[int, float]) -> Lis
 # GÉNÉRATION DE GRILLE
 # ============================================================================
 
-def generer_grille(
+async def generer_grille(
     conn,
     scores_hybrides: Dict[int, float]
 ) -> Dict[str, Any]:
@@ -467,7 +467,7 @@ def generer_grille(
     score_conformite = meilleur_score_conformite
 
     # Numéro chance (fréquence simple)
-    chance = generer_numero_chance(conn)
+    chance = await generer_numero_chance(conn)
 
     # Calcul du score moyen
     score_moyen = sum(scores_hybrides[n] for n in numeros) / 5
@@ -487,21 +487,21 @@ def generer_grille(
     }
 
 
-def generer_numero_chance(conn) -> int:
+async def generer_numero_chance(conn) -> int:
     """
     Génère le numéro chance selon fréquence historique (5 ans)
 
     Returns:
         Numéro chance [1-10]
     """
-    cursor = conn.cursor()
+    cursor = await conn.cursor()
 
     # Date limite (5 ans) basée sur le dernier tirage connu en base
-    now = get_reference_date(conn)
+    now = await get_reference_date(conn)
     date_limite = now - timedelta(days=CONFIG['fenetre_principale_annees'] * 365.25)
 
     # Fréquence des numéros chance
-    cursor.execute("""
+    await cursor.execute("""
         SELECT numero_chance, COUNT(*) as freq
         FROM tirages
         WHERE date_de_tirage >= %s
@@ -509,7 +509,7 @@ def generer_numero_chance(conn) -> int:
     """, (date_limite.strftime("%Y-%m-%d"),))
 
     freq_chance = {i: 0 for i in range(1, 11)}
-    for row in cursor.fetchall():
+    for row in await cursor.fetchall():
         freq_chance[row['numero_chance']] = row['freq']
 
     # Normaliser en probabilités
@@ -530,7 +530,7 @@ def generer_numero_chance(conn) -> int:
 # EXPLICATIONS PÉDAGOGIQUES
 # ============================================================================
 
-def build_explanation(nums: List[int], chance_num: int) -> Dict[str, Any]:
+async def build_explanation(nums: List[int], chance_num: int) -> Dict[str, Any]:
     """
     Construit les explications pédagogiques pour une grille générée
     Réutilise l'analyse statistique existante (lecture seule BDD)
@@ -555,7 +555,7 @@ def build_explanation(nums: List[int], chance_num: int) -> Dict[str, Any]:
     try:
         # Analyser chaque numéro principal (1-49)
         for num in nums:
-            stats = analyze_number(num)
+            stats = await analyze_number(num)
 
             # Inférer des tags factuels basés sur la fréquence
             tags = []
@@ -579,36 +579,33 @@ def build_explanation(nums: List[int], chance_num: int) -> Dict[str, Any]:
             }
 
         # Analyser le numéro chance (1-10, logique spécifique)
-        conn = get_connection()
-        try:
-            cursor = conn.cursor()
+        async with get_connection() as conn:
+            cursor = await conn.cursor()
 
-            cursor.execute(
+            await cursor.execute(
                 "SELECT COUNT(*) as count FROM tirages WHERE numero_chance = %s",
                 (chance_num,)
             )
-            result = cursor.fetchone()
+            result = await cursor.fetchone()
             chance_count = result['count'] if result else 0
 
-            cursor.execute(
+            await cursor.execute(
                 "SELECT date_de_tirage FROM tirages WHERE numero_chance = %s ORDER BY date_de_tirage DESC LIMIT 1",
                 (chance_num,)
             )
-            chance_last = cursor.fetchone()
+            chance_last = await cursor.fetchone()
             chance_last_date = chance_last['date_de_tirage'] if chance_last else None
 
             # Calculer gap pour chance
             if chance_last_date:
-                cursor.execute(
+                await cursor.execute(
                     "SELECT COUNT(*) as count FROM tirages WHERE date_de_tirage > %s",
                     (chance_last_date,)
                 )
-                result = cursor.fetchone()
+                result = await cursor.fetchone()
                 chance_gap = result['count'] if result else 0
             else:
                 chance_gap = 0
-        finally:
-            conn.close()
 
         # Tags pour chance
         chance_tags = []
@@ -643,7 +640,7 @@ def build_explanation(nums: List[int], chance_num: int) -> Dict[str, Any]:
 # API PRINCIPALE
 # ============================================================================
 
-def generate_grids(n: int = 5, mode: str = "balanced") -> Dict[str, Any]:
+async def generate_grids(n: int = 5, mode: str = "balanced") -> Dict[str, Any]:
     """
     Point d'entrée principal : génère N grilles optimisées
 
@@ -660,29 +657,27 @@ def generate_grids(n: int = 5, mode: str = "balanced") -> Dict[str, Any]:
             'metadata': Dict
         }
     """
-    conn = get_connection()
-
-    try:
+    async with get_connection() as conn:
         # 1. Calcul des scores hybrides selon le mode choisi
-        scores_hybrides = calculer_scores_hybrides(conn, mode=mode)
+        scores_hybrides = await calculer_scores_hybrides(conn, mode=mode)
 
         # 2. Génération des grilles
         grilles = []
         for i in range(n):
-            grille = generer_grille(conn, scores_hybrides)
+            grille = await generer_grille(conn, scores_hybrides)
             grilles.append(grille)
 
         # 3. Tri par score décroissant
         grilles = sorted(grilles, key=lambda g: g['score'], reverse=True)
 
         # 4. Métadonnées
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) as count FROM tirages")
-        result = cursor.fetchone()
+        cursor = await conn.cursor()
+        await cursor.execute("SELECT COUNT(*) as count FROM tirages")
+        result = await cursor.fetchone()
         nb_tirages = result['count'] if result else 0
 
-        cursor.execute("SELECT MIN(date_de_tirage) as min_date, MAX(date_de_tirage) as max_date FROM tirages")
-        result = cursor.fetchone()
+        await cursor.execute("SELECT MIN(date_de_tirage) as min_date, MAX(date_de_tirage) as max_date FROM tirages")
+        result = await cursor.fetchone()
         date_min = result['min_date'] if result else None
         date_max = result['max_date'] if result else None
 
@@ -710,15 +705,12 @@ def generate_grids(n: int = 5, mode: str = "balanced") -> Dict[str, Any]:
             'metadata': metadata
         }
 
-    finally:
-        conn.close()
-
 
 # ============================================================================
 # COMPATIBILITÉ ANCIENNE API (si nécessaire)
 # ============================================================================
 
-def run_analysis(target_date: str) -> str:
+async def run_analysis(target_date: str) -> str:
     """
     Fonction de compatibilité pour l'ancienne interface CLI
     Génère 3 grilles et les formate en texte
@@ -737,7 +729,7 @@ def run_analysis(target_date: str) -> str:
         formatted_date = target_date
 
     # Génération avec nouvelle API
-    result_json = generate_grids(n=3)
+    result_json = await generate_grids(n=3)
     grids = result_json['grids']
     metadata = result_json['metadata']
 
@@ -788,15 +780,15 @@ def run_analysis(target_date: str) -> str:
 # API ENTRYPOINT (FastAPI / Cloud Run)
 # ============================================================================
 
-def generate(prompt: str) -> dict:
+async def generate(prompt: str) -> dict:
     """
     Wrapper API pour FastAPI / Cloud Run.
-    Le prompt est ignoré pour l’instant (choix volontaire).
+    Le prompt est ignoré pour l'instant (choix volontaire).
     """
 
     try:
         # Appel du moteur principal
-        result = generate_grids(n=3, mode="balanced")
+        result = await generate_grids(n=3, mode="balanced")
 
         return {
             "engine": "HYBRIDE_OPTIMAL_V1",
@@ -810,4 +802,3 @@ def generate(prompt: str) -> dict:
             "engine": "HYBRIDE_OPTIMAL_V1",
             "error": str(e)
         }
-

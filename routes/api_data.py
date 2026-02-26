@@ -30,7 +30,7 @@ async def api_tirages_count(request: Request):
         JSON {success: bool, data: {total: int}, error: str|null}
     """
     try:
-        total = await asyncio.to_thread(db_cloudsql.get_tirages_count)
+        total = await db_cloudsql.get_tirages_count()
         return {
             "success": True,
             "data": {"total": total},
@@ -55,7 +55,7 @@ async def api_tirages_latest(request: Request):
         JSON {success: bool, data: {...tirage}, error: str|null}
     """
     try:
-        tirage = await asyncio.to_thread(db_cloudsql.get_latest_tirage)
+        tirage = await db_cloudsql.get_latest_tirage()
         if tirage:
             return {
                 "success": True,
@@ -95,7 +95,7 @@ async def api_tirages_list(
         JSON {success: bool, data: {items: [...], count: int, limit: int}, error: str|null}
     """
     try:
-        tirages = await asyncio.to_thread(db_cloudsql.get_tirages_list, limit, offset)
+        tirages = await db_cloudsql.get_tirages_list(limit, offset)
         return {
             "success": True,
             "data": {
@@ -127,7 +127,7 @@ async def database_info(request: Request):
     Utilise par le frontend pour afficher le statut.
     """
     try:
-        result = await asyncio.to_thread(db_cloudsql.test_connection)
+        result = await db_cloudsql.test_connection()
 
         if result['status'] == 'ok':
             return {
@@ -171,26 +171,20 @@ async def api_database_info(request: Request):
     Endpoint léger utilisé par la FAQ pour affichage dynamique.
     """
     try:
-        def _fetch():
-            conn = db_cloudsql.get_connection()
-            try:
-                cursor = conn.cursor()
-                cursor.execute("""
-                    SELECT COUNT(*) as total,
-                           MIN(date_de_tirage) as date_min,
-                           MAX(date_de_tirage) as date_max
-                    FROM tirages
-                """)
-                row = cursor.fetchone()
-            finally:
-                conn.close()
-            return {
-                "total_draws": row["total"],
-                "first_draw": str(row["date_min"]) if row["date_min"] else None,
-                "last_draw": str(row["date_max"]) if row["date_max"] else None
-            }
-
-        return await asyncio.to_thread(_fetch)
+        async with db_cloudsql.get_connection() as conn:
+            cursor = await conn.cursor()
+            await cursor.execute("""
+                SELECT COUNT(*) as total,
+                       MIN(date_de_tirage) as date_min,
+                       MAX(date_de_tirage) as date_max
+                FROM tirages
+            """)
+            row = await cursor.fetchone()
+        return {
+            "total_draws": row["total"],
+            "first_draw": str(row["date_min"]) if row["date_min"] else None,
+            "last_draw": str(row["date_max"]) if row["date_max"] else None
+        }
     except Exception as e:
         logger.error(f"Erreur /api/database-info: {e}")
         return JSONResponse(status_code=500, content={
@@ -215,66 +209,60 @@ async def api_meta_windows_info(request: Request):
     from datetime import timedelta
 
     try:
-        def _fetch():
-            conn = db_cloudsql.get_connection()
-            try:
-                cursor = conn.cursor()
-                cursor.execute("""
-                    SELECT date_de_tirage FROM tirages
-                    ORDER BY date_de_tirage DESC
-                """)
-                all_dates = [row["date_de_tirage"] for row in cursor.fetchall()]
-            finally:
-                conn.close()
+        async with db_cloudsql.get_connection() as conn:
+            cursor = await conn.cursor()
+            await cursor.execute("""
+                SELECT date_de_tirage FROM tirages
+                ORDER BY date_de_tirage DESC
+            """)
+            all_dates = [row["date_de_tirage"] for row in await cursor.fetchall()]
 
-            total = len(all_dates)
-            last_draw = all_dates[0] if all_dates else None
-            first_draw = all_dates[-1] if all_dates else None
+        total = len(all_dates)
+        last_draw = all_dates[0] if all_dates else None
+        first_draw = all_dates[-1] if all_dates else None
 
-            tirages_windows = {}
-            for size in [100, 200, 300, 400, 500, 600, 700, 800]:
-                if size <= total:
-                    tirages_windows[size] = {
-                        "draws": size,
-                        "start": str(all_dates[size - 1]),
-                        "end": str(last_draw)
-                    }
-                else:
-                    tirages_windows[size] = {
-                        "draws": total,
-                        "start": str(first_draw),
-                        "end": str(last_draw)
-                    }
-            tirages_windows["GLOBAL"] = {
-                "draws": total,
-                "start": str(first_draw),
-                "end": str(last_draw)
-            }
-
-            annees_windows = {}
-            for y in [1, 2, 3, 4, 5, 6]:
-                date_limit = last_draw - timedelta(days=365 * y)
-                draws_in_range = [d for d in all_dates if d >= date_limit]
-                annees_windows[y] = {
-                    "draws": len(draws_in_range),
-                    "start": str(draws_in_range[-1]) if draws_in_range else str(first_draw),
+        tirages_windows = {}
+        for size in [100, 200, 300, 400, 500, 600, 700, 800]:
+            if size <= total:
+                tirages_windows[size] = {
+                    "draws": size,
+                    "start": str(all_dates[size - 1]),
                     "end": str(last_draw)
                 }
-            annees_windows["GLOBAL"] = {
-                "draws": total,
-                "start": str(first_draw),
+            else:
+                tirages_windows[size] = {
+                    "draws": total,
+                    "start": str(first_draw),
+                    "end": str(last_draw)
+                }
+        tirages_windows["GLOBAL"] = {
+            "draws": total,
+            "start": str(first_draw),
+            "end": str(last_draw)
+        }
+
+        annees_windows = {}
+        for y in [1, 2, 3, 4, 5, 6]:
+            date_limit = last_draw - timedelta(days=365 * y)
+            draws_in_range = [d for d in all_dates if d >= date_limit]
+            annees_windows[y] = {
+                "draws": len(draws_in_range),
+                "start": str(draws_in_range[-1]) if draws_in_range else str(first_draw),
                 "end": str(last_draw)
             }
+        annees_windows["GLOBAL"] = {
+            "draws": total,
+            "start": str(first_draw),
+            "end": str(last_draw)
+        }
 
-            return {
-                "tirages": tirages_windows,
-                "annees": annees_windows,
-                "total_draws": total,
-                "last_draw": str(last_draw),
-                "first_draw": str(first_draw)
-            }
-
-        return await asyncio.to_thread(_fetch)
+        return {
+            "tirages": tirages_windows,
+            "annees": annees_windows,
+            "total_draws": total,
+            "last_draw": str(last_draw),
+            "first_draw": str(first_draw)
+        }
 
     except Exception as e:
         logger.error(f"Erreur /api/meta-windows-info: {e}")
@@ -288,7 +276,7 @@ async def stats(request: Request):
     Retourne les statistiques globales.
     """
     try:
-        global_stats = await asyncio.to_thread(get_global_stats)
+        global_stats = await get_global_stats()
         return {
             "success": True,
             "stats": global_stats
@@ -321,65 +309,52 @@ async def api_stats(request: Request):
         - top_froids (5 numeros les moins frequents)
     """
     try:
-        def _fetch():
-            conn = db_cloudsql.get_connection()
-            try:
-                cursor = conn.cursor()
+        async with db_cloudsql.get_connection() as conn:
+            cursor = await conn.cursor()
 
-                cursor.execute("""
-                    SELECT
-                        COUNT(*) as total,
-                        MIN(date_de_tirage) as date_min,
-                        MAX(date_de_tirage) as date_max
-                    FROM tirages
-                """)
-                info = cursor.fetchone()
-                total_tirages = info['total']
-                date_min = str(info['date_min']) if info['date_min'] else None
-                date_max = str(info['date_max']) if info['date_max'] else None
+            await cursor.execute("""
+                SELECT
+                    COUNT(*) as total,
+                    MIN(date_de_tirage) as date_min,
+                    MAX(date_de_tirage) as date_max
+                FROM tirages
+            """)
+            info = await cursor.fetchone()
+            total_tirages = info['total']
+            date_min = str(info['date_min']) if info['date_min'] else None
+            date_max = str(info['date_max']) if info['date_max'] else None
 
-                freq_map = _get_all_frequencies(cursor, "principal")
-                frequences = {str(num): freq_map.get(num, 0) for num in range(1, 50)}
+            freq_map = await _get_all_frequencies(cursor, "principal")
+            frequences = {str(num): freq_map.get(num, 0) for num in range(1, 50)}
 
-                ecart_map = _get_all_ecarts(cursor, "principal")
-                retards = {str(num): ecart_map.get(num, total_tirages) for num in range(1, 50)}
-            finally:
-                conn.close()
+            ecart_map = await _get_all_ecarts(cursor, "principal")
+            retards = {str(num): ecart_map.get(num, total_tirages) for num in range(1, 50)}
 
-            sorted_by_freq = sorted(
-                [(int(k), v) for k, v in frequences.items()],
-                key=lambda x: x[1],
-                reverse=True
-            )
+        sorted_by_freq = sorted(
+            [(int(k), v) for k, v in frequences.items()],
+            key=lambda x: x[1],
+            reverse=True
+        )
 
-            top_chauds = [{"numero": n, "freq": f} for n, f in sorted_by_freq[:5]]
-            top_froids = [{"numero": n, "freq": f} for n, f in sorted_by_freq[-5:]]
+        top_chauds = [{"numero": n, "freq": f} for n, f in sorted_by_freq[:5]]
+        top_froids = [{"numero": n, "freq": f} for n, f in sorted_by_freq[-5:]]
 
-            return {
-                "success": True,
-                "data": {
-                    "total_tirages": total_tirages,
-                    "periode": {
-                        "debut": date_min,
-                        "fin": date_max
-                    },
-                    "frequences": frequences,
-                    "retards": retards,
-                    "top_chauds": top_chauds,
-                    "top_froids": top_froids
+        return {
+            "success": True,
+            "data": {
+                "total_tirages": total_tirages,
+                "periode": {
+                    "debut": date_min,
+                    "fin": date_max
                 },
-                "error": None
-            }
+                "frequences": frequences,
+                "retards": retards,
+                "top_chauds": top_chauds,
+                "top_froids": top_froids
+            },
+            "error": None
+        }
 
-        return await asyncio.wait_for(asyncio.to_thread(_fetch), timeout=30.0)
-
-    except asyncio.TimeoutError:
-        logger.error("Timeout 30s /api/stats")
-        return JSONResponse(status_code=503, content={
-            "success": False,
-            "data": None,
-            "error": "Service temporairement indisponible"
-        })
     except Exception as e:
         logger.error(f"Erreur /api/stats: {e}")
         return JSONResponse(status_code=500, content={
@@ -397,73 +372,60 @@ async def api_numbers_heat(request: Request):
     Utilise par le simulateur pour colorer les boutons.
     """
     try:
-        def _fetch():
-            conn = db_cloudsql.get_connection()
-            try:
-                cursor = conn.cursor()
+        async with db_cloudsql.get_connection() as conn:
+            cursor = await conn.cursor()
 
-                cursor.execute("SELECT COUNT(*) as total FROM tirages")
-                total = cursor.fetchone()['total']
+            await cursor.execute("SELECT COUNT(*) as total FROM tirages")
+            total = (await cursor.fetchone())['total']
 
-                freq_map = _get_all_frequencies(cursor, "principal")
+            freq_map = await _get_all_frequencies(cursor, "principal")
 
-                cursor.execute("""
-                    SELECT num, MAX(date_de_tirage) as last_date FROM (
-                        SELECT boule_1 as num, date_de_tirage FROM tirages
-                        UNION ALL SELECT boule_2, date_de_tirage FROM tirages
-                        UNION ALL SELECT boule_3, date_de_tirage FROM tirages
-                        UNION ALL SELECT boule_4, date_de_tirage FROM tirages
-                        UNION ALL SELECT boule_5, date_de_tirage FROM tirages
-                    ) t
-                    GROUP BY num
-                """)
-                last_dates = {row['num']: row['last_date'] for row in cursor.fetchall()}
+            await cursor.execute("""
+                SELECT num, MAX(date_de_tirage) as last_date FROM (
+                    SELECT boule_1 as num, date_de_tirage FROM tirages
+                    UNION ALL SELECT boule_2, date_de_tirage FROM tirages
+                    UNION ALL SELECT boule_3, date_de_tirage FROM tirages
+                    UNION ALL SELECT boule_4, date_de_tirage FROM tirages
+                    UNION ALL SELECT boule_5, date_de_tirage FROM tirages
+                ) t
+                GROUP BY num
+            """)
+            last_dates = {row['num']: row['last_date'] for row in await cursor.fetchall()}
 
-                numbers_data = {}
-                frequencies = []
-                for num in range(1, 50):
-                    freq = freq_map.get(num, 0)
-                    last_d = last_dates.get(num)
-                    numbers_data[num] = {
-                        "frequency": freq,
-                        "last_draw": str(last_d) if last_d else None
-                    }
-                    frequencies.append(freq)
-            finally:
-                conn.close()
-
-            frequencies.sort(reverse=True)
-            seuil_chaud = frequencies[len(frequencies) // 3]
-            seuil_froid = frequencies[2 * len(frequencies) // 3]
-
+            numbers_data = {}
+            frequencies = []
             for num in range(1, 50):
-                freq = numbers_data[num]["frequency"]
-                if freq >= seuil_chaud:
-                    numbers_data[num]["category"] = "hot"
-                elif freq <= seuil_froid:
-                    numbers_data[num]["category"] = "cold"
-                else:
-                    numbers_data[num]["category"] = "neutral"
-
-            return {
-                "success": True,
-                "numbers": numbers_data,
-                "total_tirages": total,
-                "seuils": {
-                    "chaud": seuil_chaud,
-                    "froid": seuil_froid
+                freq = freq_map.get(num, 0)
+                last_d = last_dates.get(num)
+                numbers_data[num] = {
+                    "frequency": freq,
+                    "last_draw": str(last_d) if last_d else None
                 }
+                frequencies.append(freq)
+
+        frequencies.sort(reverse=True)
+        seuil_chaud = frequencies[len(frequencies) // 3]
+        seuil_froid = frequencies[2 * len(frequencies) // 3]
+
+        for num in range(1, 50):
+            freq = numbers_data[num]["frequency"]
+            if freq >= seuil_chaud:
+                numbers_data[num]["category"] = "hot"
+            elif freq <= seuil_froid:
+                numbers_data[num]["category"] = "cold"
+            else:
+                numbers_data[num]["category"] = "neutral"
+
+        return {
+            "success": True,
+            "numbers": numbers_data,
+            "total_tirages": total,
+            "seuils": {
+                "chaud": seuil_chaud,
+                "froid": seuil_froid
             }
+        }
 
-        return await asyncio.wait_for(asyncio.to_thread(_fetch), timeout=30.0)
-
-    except asyncio.TimeoutError:
-        logger.error("Timeout 30s /api/numbers-heat")
-        return JSONResponse(status_code=503, content={
-            "success": False,
-            "numbers": {},
-            "error": "Service temporairement indisponible"
-        })
     except Exception as e:
         logger.error(f"Erreur /api/numbers-heat: {e}")
         return JSONResponse(status_code=500, content={
@@ -480,20 +442,14 @@ async def get_draw_by_date(request: Request, date: str):
     Recherche un tirage par date (format YYYY-MM-DD).
     """
     try:
-        def _fetch():
-            conn = db_cloudsql.get_connection()
-            try:
-                cursor = conn.cursor()
-                cursor.execute("""
-                    SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chance
-                    FROM tirages
-                    WHERE date_de_tirage = %s
-                """, (date,))
-                return cursor.fetchone()
-            finally:
-                conn.close()
-
-        result = await asyncio.to_thread(_fetch)
+        async with db_cloudsql.get_connection() as conn:
+            cursor = await conn.cursor()
+            await cursor.execute("""
+                SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chance
+                FROM tirages
+                WHERE date_de_tirage = %s
+            """, (date,))
+            result = await cursor.fetchone()
 
         if result:
             return {
@@ -537,49 +493,43 @@ async def api_stats_number(request: Request, number: int):
                 "success": False, "message": "Numéro doit être entre 1 et 49"
             })
 
-        def _fetch():
-            conn = db_cloudsql.get_connection()
-            try:
-                cursor = conn.cursor()
+        async with db_cloudsql.get_connection() as conn:
+            cursor = await conn.cursor()
 
-                cursor.execute("""
-                    SELECT date_de_tirage
+            await cursor.execute("""
+                SELECT date_de_tirage
+                FROM tirages
+                WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s
+                   OR boule_4 = %s OR boule_5 = %s
+                ORDER BY date_de_tirage ASC
+            """, (number, number, number, number, number))
+
+            results = await cursor.fetchall()
+            appearance_dates = [str(r['date_de_tirage']) for r in results]
+
+            total_appearances = len(appearance_dates)
+            first_appearance = appearance_dates[0] if appearance_dates else None
+            last_appearance = appearance_dates[-1] if appearance_dates else None
+
+            current_gap = 0
+            if last_appearance:
+                await cursor.execute("""
+                    SELECT COUNT(*) as gap
                     FROM tirages
-                    WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s
-                       OR boule_4 = %s OR boule_5 = %s
-                    ORDER BY date_de_tirage ASC
-                """, (number, number, number, number, number))
+                    WHERE date_de_tirage > %s
+                """, (last_appearance,))
+                gap_result = await cursor.fetchone()
+                current_gap = gap_result['gap'] if gap_result else 0
 
-                results = cursor.fetchall()
-                appearance_dates = [str(r['date_de_tirage']) for r in results]
-
-                total_appearances = len(appearance_dates)
-                first_appearance = appearance_dates[0] if appearance_dates else None
-                last_appearance = appearance_dates[-1] if appearance_dates else None
-
-                current_gap = 0
-                if last_appearance:
-                    cursor.execute("""
-                        SELECT COUNT(*) as gap
-                        FROM tirages
-                        WHERE date_de_tirage > %s
-                    """, (last_appearance,))
-                    gap_result = cursor.fetchone()
-                    current_gap = gap_result['gap'] if gap_result else 0
-            finally:
-                conn.close()
-
-            return {
-                "success": True,
-                "number": number,
-                "total_appearances": total_appearances,
-                "first_appearance": first_appearance,
-                "last_appearance": last_appearance,
-                "current_gap": current_gap,
-                "appearance_dates": appearance_dates
-            }
-
-        return await asyncio.to_thread(_fetch)
+        return {
+            "success": True,
+            "number": number,
+            "total_appearances": total_appearances,
+            "first_appearance": first_appearance,
+            "last_appearance": last_appearance,
+            "current_gap": current_gap,
+            "appearance_dates": appearance_dates
+        }
 
     except Exception as e:
         logger.error(f"Erreur /api/stats/number/{number}: {e}")
@@ -596,25 +546,19 @@ async def api_stats_top_flop(request: Request):
     Retourne le classement des numeros par frequence (Top et Flop).
     """
     try:
-        def _fetch():
-            conn = db_cloudsql.get_connection()
-            try:
-                cursor = conn.cursor()
-                freq_map = _get_all_frequencies(cursor, "principal")
-                numbers_freq = [{"number": num, "count": freq_map.get(num, 0)} for num in range(1, 50)]
-            finally:
-                conn.close()
+        async with db_cloudsql.get_connection() as conn:
+            cursor = await conn.cursor()
+            freq_map = await _get_all_frequencies(cursor, "principal")
+            numbers_freq = [{"number": num, "count": freq_map.get(num, 0)} for num in range(1, 50)]
 
-            top = sorted(numbers_freq, key=lambda x: (-x['count'], x['number']))
-            flop = sorted(numbers_freq, key=lambda x: (x['count'], x['number']))
+        top = sorted(numbers_freq, key=lambda x: (-x['count'], x['number']))
+        flop = sorted(numbers_freq, key=lambda x: (x['count'], x['number']))
 
-            return {
-                "success": True,
-                "top": top,
-                "flop": flop
-            }
-
-        return await asyncio.to_thread(_fetch)
+        return {
+            "success": True,
+            "top": top,
+            "flop": flop
+        }
 
     except Exception as e:
         logger.error(f"Erreur /api/stats/top-flop: {e}")
@@ -643,12 +587,10 @@ async def api_hybride_stats(
             "success": False, "data": None, "error": "type doit etre 'principal' ou 'chance'"
         })
 
-    stats = await asyncio.to_thread(get_numero_stats, numero, type)
+    stats = await get_numero_stats(numero, type)
     if stats is None:
         return JSONResponse(status_code=404, content={
             "success": False, "data": None, "error": f"Numéro {numero} invalide pour type {type}"
         })
 
     return {"success": True, "data": stats, "error": None}
-
-

@@ -3,6 +3,8 @@ Service metier — fonctions statistiques Loto.
 Wrapper fin autour de BaseStatsService avec config Loto + hooks SQL specifiques.
 """
 
+from contextlib import asynccontextmanager
+
 import db_cloudsql
 from services.base_stats import GameConfig, BaseStatsService
 
@@ -33,12 +35,14 @@ LOTO_CONFIG = GameConfig(
 class LotoStats(BaseStatsService):
     """Loto-specific hooks : filtrage SQL par numero_chance."""
 
-    def _get_connection(self):
-        return db_cloudsql.get_connection()
+    @asynccontextmanager
+    async def _get_connection(self):
+        async with db_cloudsql.get_connection() as conn:
+            yield conn
 
-    def _query_exact_matches(self, cursor, nums, secondary):
+    async def _query_exact_matches(self, cursor, nums, secondary):
         if secondary is not None:
-            cursor.execute("""
+            await cursor.execute("""
                 SELECT date_de_tirage FROM tirages
                 WHERE boule_1 IN (%s, %s, %s, %s, %s)
                   AND boule_2 IN (%s, %s, %s, %s, %s)
@@ -49,7 +53,7 @@ class LotoStats(BaseStatsService):
                 ORDER BY date_de_tirage DESC
             """, (*nums, *nums, *nums, *nums, *nums, secondary))
         else:
-            cursor.execute("""
+            await cursor.execute("""
                 SELECT date_de_tirage FROM tirages
                 WHERE boule_1 IN (%s, %s, %s, %s, %s)
                   AND boule_2 IN (%s, %s, %s, %s, %s)
@@ -58,11 +62,11 @@ class LotoStats(BaseStatsService):
                   AND boule_5 IN (%s, %s, %s, %s, %s)
                 ORDER BY date_de_tirage DESC
             """, (*nums, *nums, *nums, *nums, *nums))
-        return cursor.fetchall()
+        return await cursor.fetchall()
 
-    def _query_best_match(self, cursor, nums, secondary):
+    async def _query_best_match(self, cursor, nums, secondary):
         if secondary is not None:
-            cursor.execute("""
+            await cursor.execute("""
                 SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5,
                     numero_chance,
                     (
@@ -78,7 +82,7 @@ class LotoStats(BaseStatsService):
                 LIMIT 1
             """, (*nums, *nums, *nums, *nums, *nums, secondary))
         else:
-            cursor.execute("""
+            await cursor.execute("""
                 SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5,
                     (
                         (boule_1 IN (%s, %s, %s, %s, %s)) +
@@ -91,7 +95,7 @@ class LotoStats(BaseStatsService):
                 ORDER BY match_count DESC, date_de_tirage DESC
                 LIMIT 1
             """, (*nums, *nums, *nums, *nums, *nums))
-        return cursor.fetchone()
+        return await cursor.fetchone()
 
     def _extract_secondary_match(self, best_match, secondary):
         return bool(best_match.get('chance_match', 0))
@@ -112,6 +116,6 @@ get_numeros_par_categorie = _svc.get_numeros_par_categorie
 prepare_grilles_pitch_context = _svc.prepare_grilles_pitch_context
 
 
-def analyze_grille_for_chat(nums: list, chance: int = None) -> dict:
+async def analyze_grille_for_chat(nums: list, chance: int = None) -> dict:
     """Wrapper preservant la signature originale (chance: int)."""
-    return _svc.analyze_grille_for_chat(nums, chance)
+    return await _svc.analyze_grille_for_chat(nums, chance)

@@ -209,7 +209,7 @@ class TestHandlePitchEM:
 
         with patch("services.chat_pipeline_em.load_prompt", return_value="sys"), \
              patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
-             patch("services.chat_pipeline_em.prepare_grilles_pitch_context", return_value="ctx"), \
+             patch("services.chat_pipeline_em.prepare_grilles_pitch_context", new_callable=AsyncMock, return_value="ctx"), \
              patch("services.chat_pipeline_em.gemini_breaker") as mock_breaker:
             mock_breaker.call = fake_call
             result = await handle_pitch_em(
@@ -222,7 +222,7 @@ class TestHandlePitchEM:
     @pytest.mark.asyncio
     async def test_pitch_no_prompt(self):
         with patch("services.chat_pipeline_em.load_prompt", return_value=None), \
-             patch("services.chat_pipeline_em.prepare_grilles_pitch_context", return_value="ctx"):
+             patch("services.chat_pipeline_em.prepare_grilles_pitch_context", new_callable=AsyncMock, return_value="ctx"):
             result = await handle_pitch_em(
                 [_grille([5, 15, 25, 35, 45])],
                 MagicMock(),

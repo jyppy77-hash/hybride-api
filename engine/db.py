@@ -19,7 +19,7 @@ if str(BASE_DIR) not in sys.path:
     sys.path.insert(0, str(BASE_DIR))
 
 # Import centralise depuis db_cloudsql
-from db_cloudsql import get_connection, get_environment, is_production
+from db_cloudsql import get_connection, get_environment, is_production, init_pool, close_pool
 
 # Re-export pour compatibilite
-__all__ = ['get_connection', 'get_environment', 'is_production']
+__all__ = ['get_connection', 'get_environment', 'is_production', 'init_pool', 'close_pool']

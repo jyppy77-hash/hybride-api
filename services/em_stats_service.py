@@ -3,6 +3,8 @@ Service metier — fonctions statistiques EuroMillions.
 Wrapper fin autour de BaseStatsService avec config EM + hooks SQL specifiques.
 """
 
+from contextlib import asynccontextmanager
+
 import db_cloudsql
 from services.base_stats import GameConfig, BaseStatsService
 
@@ -33,13 +35,15 @@ EM_CONFIG = GameConfig(
 class EMStats(BaseStatsService):
     """EuroMillions-specific hooks : etoiles multi-colonnes, pas de filtre SQL secondaire."""
 
-    def _get_connection(self):
-        return db_cloudsql.get_connection()
+    @asynccontextmanager
+    async def _get_connection(self):
+        async with db_cloudsql.get_connection() as conn:
+            yield conn
 
     # _query_exact_matches : default base (boules only, no etoile filter) — OK
 
-    def _query_best_match(self, cursor, nums, secondary):
-        cursor.execute("""
+    async def _query_best_match(self, cursor, nums, secondary):
+        await cursor.execute("""
             SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5,
                    etoile_1, etoile_2,
                 (
@@ -53,7 +57,7 @@ class EMStats(BaseStatsService):
             ORDER BY match_count DESC, date_de_tirage DESC
             LIMIT 1
         """, (*nums, *nums, *nums, *nums, *nums))
-        return cursor.fetchone()
+        return await cursor.fetchone()
 
     def _extract_secondary_match(self, best_match, secondary):
         etoiles = secondary
@@ -78,6 +82,6 @@ get_numeros_par_categorie = _svc.get_numeros_par_categorie
 prepare_grilles_pitch_context = _svc.prepare_grilles_pitch_context
 
 
-def analyze_grille_for_chat(nums: list, etoiles: list = None) -> dict:
+async def analyze_grille_for_chat(nums: list, etoiles: list = None) -> dict:
     """Wrapper preservant la signature originale (etoiles: list)."""
-    return _svc.analyze_grille_for_chat(nums, sorted(etoiles or []))
+    return await _svc.analyze_grille_for_chat(nums, sorted(etoiles or []))

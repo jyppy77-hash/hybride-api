@@ -2,7 +2,7 @@
 Module de connexion Cloud SQL pour LotoIA
 ========================================
 
-Connexion centralisée vers MySQL (Google Cloud SQL)
+Connexion centralisée vers MySQL (Google Cloud SQL) via aiomysql async pool.
 Supporte automatiquement :
 - LOCAL : TCP via Cloud SQL Proxy (127.0.0.1:DB_PORT)
 - PROD  : Unix socket Cloud Run (/cloudsql/...)
@@ -14,15 +14,11 @@ import os
 import logging
 from pathlib import Path
 from typing import Optional
-import asyncio
+from contextlib import asynccontextmanager
 
-import pymysql
-from pymysql.cursors import DictCursor
-from dbutils.pooled_db import PooledDB
+import aiomysql
 
 # Charger .env si disponible (dev local)
-# Utilise un chemin absolu basé sur l'emplacement de CE fichier
-# pour éviter les problèmes de working directory
 try:
     from dotenv import load_dotenv
     _env_path = Path(__file__).resolve().parent / ".env"
@@ -51,7 +47,7 @@ CLOUD_SQL_CONNECTION_NAME = os.getenv(
 )
 
 # Credentials (Cloud Run / .env)
-DB_USER = os.getenv("DB_USER", "jyppy")   # 🔥 default corrigé
+DB_USER = os.getenv("DB_USER", "jyppy")
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 DB_NAME = os.getenv("DB_NAME", "lotofrance")
 
@@ -85,90 +81,81 @@ logger.info(
 
 
 # ============================================================================
-# CONNECTION POOL (DBUtils.PooledDB)
+# ASYNC CONNECTION POOL (aiomysql)
 # ============================================================================
 
-_pool = None
+_pool: aiomysql.Pool | None = None
 
 
-def _init_pool():
-    """Initialise le pool de connexions (lazy, premier appel)."""
+async def init_pool():
+    """Initialise le pool de connexions async aiomysql."""
     global _pool
     if _pool is not None:
-        return _pool
-
-    common_kwargs = dict(
-        creator=pymysql,
-        mincached=5,
-        maxconnections=10,
-        user=DB_USER,
-        password=DB_PASSWORD,
-        database=DB_NAME,
-        charset="utf8mb4",
-        cursorclass=DictCursor,
-        autocommit=True,
-        connect_timeout=5,
-        read_timeout=30,
-        write_timeout=30,
-    )
-
-    if is_production():
-        unix_socket = f"/cloudsql/{CLOUD_SQL_CONNECTION_NAME}"
-        common_kwargs.update(host="localhost", unix_socket=unix_socket)
-    else:
-        common_kwargs.update(host=DB_HOST, port=DB_PORT)
-
-    _pool = PooledDB(**common_kwargs)
-    logger.info(f"Pool MySQL initialisé ({get_environment()}) — min=5, max=10")
-    return _pool
-
-
-def get_connection():
-    """
-    Retourne une connexion depuis le pool DBUtils.
-    conn.close() restitue la connexion au pool (pas de fermeture réelle).
-    """
-    env = get_environment()
+        return
 
     if not DB_PASSWORD:
         logger.error("DB_PASSWORD non défini")
         raise ValueError("DB_PASSWORD requis (Secret Manager / .env)")
 
-    try:
-        pool = _init_pool()
-        conn = pool.connection()
-        logger.debug(f"Connexion pool MySQL OK ({env})")
-        return conn
+    kwargs = dict(
+        minsize=5, maxsize=10,
+        user=DB_USER, password=DB_PASSWORD, db=DB_NAME,
+        charset="utf8mb4", cursorclass=aiomysql.DictCursor,
+        autocommit=True, connect_timeout=5,
+        pool_recycle=3600,
+    )
 
-    except pymysql.Error as e:
-        logger.error(f"Echec connexion pool MySQL ({env}) : {e}")
-        raise
+    if is_production():
+        kwargs["unix_socket"] = f"/cloudsql/{CLOUD_SQL_CONNECTION_NAME}"
+    else:
+        kwargs.update(host=DB_HOST, port=DB_PORT)
+
+    _pool = await aiomysql.create_pool(**kwargs)
+    logger.info(f"Pool aiomysql initialisé ({get_environment()}) — min=5, max=10")
+
+
+async def close_pool():
+    """Ferme le pool de connexions async."""
+    global _pool
+    if _pool:
+        _pool.close()
+        await _pool.wait_closed()
+        _pool = None
+        logger.info("Pool aiomysql fermé")
+
+
+@asynccontextmanager
+async def get_connection():
+    """
+    Async context manager qui retourne une connexion depuis le pool.
+    Usage: async with get_connection() as conn:
+    """
+    if _pool is None:
+        raise RuntimeError("Pool not initialized — call init_pool() first")
+    async with _pool.acquire() as conn:
+        yield conn
 
 
 # ============================================================================
-# FONCTIONS UTILITAIRES
+# FONCTIONS UTILITAIRES (async)
 # ============================================================================
 
-def test_connection() -> dict:
+async def test_connection() -> dict:
     try:
-        conn = get_connection()
-        try:
-            cursor = conn.cursor()
+        async with get_connection() as conn:
+            cur = await conn.cursor()
+            await cur.execute("SELECT VERSION() as version")
+            version = (await cur.fetchone())["version"]
 
-            cursor.execute("SELECT VERSION() as version")
-            version = cursor.fetchone()["version"]
+            await cur.execute("SELECT COUNT(*) as total FROM tirages")
+            total = (await cur.fetchone())["total"]
 
-            cursor.execute("SELECT COUNT(*) as total FROM tirages")
-            total = cursor.fetchone()["total"]
-
-            cursor.execute("""
+            await cur.execute("""
                 SELECT MIN(date_de_tirage) as date_min,
                        MAX(date_de_tirage) as date_max
                 FROM tirages
             """)
-            dates = cursor.fetchone()
-        finally:
-            conn.close()
+            dates = await cur.fetchone()
 
         return {
             "status": "ok",
@@ -188,104 +175,57 @@ def test_connection() -> dict:
         }
 
 
-def get_tirages_count() -> int:
-    conn = get_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) as total FROM tirages")
-        result = cursor.fetchone()
+async def get_tirages_count() -> int:
+    async with get_connection() as conn:
+        cur = await conn.cursor()
+        await cur.execute("SELECT COUNT(*) as total FROM tirages")
+        result = await cur.fetchone()
         return result["total"] if result else 0
-    finally:
-        conn.close()
 
 
-def get_em_tirages_count() -> int:
-    conn = get_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) as total FROM tirages_euromillions")
-        result = cursor.fetchone()
+async def get_em_tirages_count() -> int:
+    async with get_connection() as conn:
+        cur = await conn.cursor()
+        await cur.execute("SELECT COUNT(*) as total FROM tirages_euromillions")
+        result = await cur.fetchone()
         return result["total"] if result else 0
-    finally:
-        conn.close()
 
 
-def get_latest_tirage() -> Optional[dict]:
-    conn = get_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("""
+async def get_latest_tirage() -> Optional[dict]:
+    async with get_connection() as conn:
+        cur = await conn.cursor()
+        await cur.execute("""
             SELECT *
             FROM tirages
             ORDER BY date_de_tirage DESC
             LIMIT 1
         """)
-        result = cursor.fetchone()
+        result = await cur.fetchone()
         if result and result.get("date_de_tirage"):
             result["date_de_tirage"] = str(result["date_de_tirage"])
         return result
-    finally:
-        conn.close()
 
 
-def get_tirages_list(limit: int = 10, offset: int = 0) -> list:
+async def get_tirages_list(limit: int = 10, offset: int = 0) -> list:
     limit = min(max(1, limit), 100)
     offset = max(0, offset)
 
-    conn = get_connection()
-    try:
-        cursor = conn.cursor()
-        cursor.execute("""
+    async with get_connection() as conn:
+        cur = await conn.cursor()
+        await cur.execute("""
             SELECT *
             FROM tirages
             ORDER BY date_de_tirage DESC
             LIMIT %s OFFSET %s
         """, (limit, offset))
 
-        results = cursor.fetchall()
+        results = await cur.fetchall()
 
         for row in results:
             if row.get("date_de_tirage"):
                 row["date_de_tirage"] = str(row["date_de_tirage"])
 
         return results
-    finally:
-        conn.close()
-
-
-# ============================================================================
-# ASYNC HELPERS (asyncio.to_thread)
-# ============================================================================
-
-async def async_query(sql, params=None):
-    """Execute SQL and return fetchall() via asyncio.to_thread()."""
-    def _run():
-        conn = get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute(sql, params)
-            return cursor.fetchall()
-        finally:
-            conn.close()
-    return await asyncio.to_thread(_run)
-
-
-async def async_fetchone(sql, params=None):
-    """Execute SQL and return fetchone() via asyncio.to_thread()."""
-    def _run():
-        conn = get_connection()
-        try:
-            cursor = conn.cursor()
-            cursor.execute(sql, params)
-            return cursor.fetchone()
-        finally:
-            conn.close()
-    return await asyncio.to_thread(_run)
-
-
-async def async_call(func, *args, **kwargs):
-    """Run any sync function via asyncio.to_thread()."""
-    return await asyncio.to_thread(func, *args, **kwargs)
 
 
 # ============================================================================
@@ -293,19 +233,27 @@ async def async_call(func, *args, **kwargs):
 # ============================================================================
 
 if __name__ == "__main__":
-    print("=" * 50)
-    print("TEST CONNEXION CLOUD SQL")
-    print("=" * 50)
+    import asyncio
 
-    result = test_connection()
+    async def _main():
+        print("=" * 50)
+        print("TEST CONNEXION CLOUD SQL (async)")
+        print("=" * 50)
 
-    if result["status"] == "ok":
-        print(f"Environnement : {result['environment']}")
-        print(f"Base : {result['database']}")
-        print(f"MySQL : {result['mysql_version']}")
-        print(f"Tirages : {result['total_tirages']}")
-        print(f"Période : {result['date_min']} -> {result['date_max']}")
-        print("✅ CONNEXION OK")
-    else:
-        print(f"❌ ERREUR : {result['error']}")
-        exit(1)
+        await init_pool()
+        result = await test_connection()
+
+        if result["status"] == "ok":
+            print(f"Environnement : {result['environment']}")
+            print(f"Base : {result['database']}")
+            print(f"MySQL : {result['mysql_version']}")
+            print(f"Tirages : {result['total_tirages']}")
+            print(f"Période : {result['date_min']} -> {result['date_max']}")
+            print("CONNEXION OK")
+        else:
+            print(f"ERREUR : {result['error']}")
+            exit(1)
+
+        await close_pool()
+
+    asyncio.run(_main())
