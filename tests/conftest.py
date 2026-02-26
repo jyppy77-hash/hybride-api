@@ -241,7 +241,7 @@ def smart_mock_db():
 @pytest.fixture(autouse=True)
 def _clear_cache():
     """Vide le cache in-memory avant et apres chaque test."""
-    from services.cache import cache_clear
-    cache_clear()
+    from services.cache import _mem_cache
+    _mem_cache.clear()
     yield
-    cache_clear()
+    _mem_cache.clear()

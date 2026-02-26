@@ -26,32 +26,36 @@ async def _async_conn(cursor):
 
 class TestCache:
 
-    def test_cache_get_set(self):
+    @pytest.mark.asyncio
+    async def test_cache_get_set(self):
         """set une valeur, get la retrouve."""
-        cache_clear()
-        cache_set("test_key", {"data": 42})
-        assert cache_get("test_key") == {"data": 42}
+        await cache_clear()
+        await cache_set("test_key", {"data": 42})
+        assert await cache_get("test_key") == {"data": 42}
 
-    def test_cache_ttl_expired(self):
+    @pytest.mark.asyncio
+    async def test_cache_ttl_expired(self):
         """set avec TTL court, verifier expiration."""
-        cache_clear()
-        cache_set("expire_key", "value", ttl=0)
+        await cache_clear()
+        await cache_set("expire_key", "value", ttl=0)
         # TTL=0 → expire immediatement (monotonic avance)
         time.sleep(0.01)
-        assert cache_get("expire_key") is None
+        assert await cache_get("expire_key") is None
 
-    def test_cache_clear(self):
+    @pytest.mark.asyncio
+    async def test_cache_clear(self):
         """clear vide tout le cache."""
-        cache_set("a", 1)
-        cache_set("b", 2)
-        cache_clear()
-        assert cache_get("a") is None
-        assert cache_get("b") is None
+        await cache_set("a", 1)
+        await cache_set("b", 2)
+        await cache_clear()
+        assert await cache_get("a") is None
+        assert await cache_get("b") is None
 
-    def test_cache_get_missing_key(self):
+    @pytest.mark.asyncio
+    async def test_cache_get_missing_key(self):
         """get sur cle inexistante retourne None."""
-        cache_clear()
-        assert cache_get("inexistant") is None
+        await cache_clear()
+        assert await cache_get("inexistant") is None
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -62,7 +66,7 @@ class TestCache:
 @patch("services.stats_service.db_cloudsql")
 async def test_get_all_frequencies_cached(mock_db):
     """Appel 2x, verifie que le 2eme ne touche pas la BDD."""
-    cache_clear()
+    await cache_clear()
 
     cursor = AsyncMock()
     mock_db.get_connection = lambda: _async_conn(cursor)
@@ -86,7 +90,7 @@ async def test_get_all_frequencies_cached(mock_db):
 @patch("services.stats_service.db_cloudsql")
 async def test_get_all_ecarts_cached(mock_db):
     """Appel 2x _get_all_ecarts, verifie cache hit au 2eme appel."""
-    cache_clear()
+    await cache_clear()
 
     cursor = AsyncMock()
     mock_db.get_connection = lambda: _async_conn(cursor)
@@ -118,7 +122,7 @@ async def test_get_all_ecarts_cached(mock_db):
 @patch("services.stats_service.db_cloudsql")
 async def test_get_numero_stats_valid(mock_db):
     """Verifie format retour (cles, types) pour un numero valide."""
-    cache_clear()
+    await cache_clear()
 
     cursor = AsyncMock()
     mock_db.get_connection = lambda: _async_conn(cursor)
@@ -181,7 +185,7 @@ async def test_get_numero_stats_invalid_range():
 @patch("services.stats_service.db_cloudsql")
 async def test_get_classement_numeros(mock_db):
     """Verifie le tri et le format de get_classement_numeros."""
-    cache_clear()
+    await cache_clear()
 
     cursor = AsyncMock()
     mock_db.get_connection = lambda: _async_conn(cursor)
@@ -227,7 +231,7 @@ async def test_get_classement_numeros(mock_db):
 @patch("services.stats_service.db_cloudsql")
 async def test_get_comparaison_numeros(mock_db):
     """Verifie la structure de comparaison entre deux numeros."""
-    cache_clear()
+    await cache_clear()
 
     cursor = AsyncMock()
     mock_db.get_connection = lambda: _async_conn(cursor)
@@ -282,7 +286,7 @@ async def test_get_comparaison_numeros(mock_db):
 @patch("services.stats_service.db_cloudsql")
 async def test_analyze_grille_for_chat(mock_db):
     """Verifie la structure d'analyse de grille."""
-    cache_clear()
+    await cache_clear()
 
     cursor = AsyncMock()
     mock_db.get_connection = lambda: _async_conn(cursor)

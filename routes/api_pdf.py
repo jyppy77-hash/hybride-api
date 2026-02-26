@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import StreamingResponse
 import logging
@@ -28,14 +30,15 @@ async def api_meta_pdf(request: Request, payload: MetaPdfPayload):
         else:
             logger.info(f"[META-PDF ROUTE] graph_data ABSENT ou invalide — raw: {type(payload.graph_data)}")
 
-        buf = generate_meta_pdf(
+        buf = await asyncio.to_thread(
+            generate_meta_pdf,
             analysis=payload.analysis,
             window=payload.window,
             engine=payload.engine,
             graph=payload.graph,
             graph_data=payload.graph_data,
             chance_data=payload.chance_data,
-            sponsor=payload.sponsor
+            sponsor=payload.sponsor,
         )
         return StreamingResponse(
             buf,

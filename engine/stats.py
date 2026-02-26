@@ -90,7 +90,7 @@ async def get_global_stats() -> Dict:
         - last_draw_date: date du dernier tirage
         - period_covered: période couverte (texte)
     """
-    cached = cache_get("global_stats")
+    cached = await cache_get("global_stats")
     if cached is not None:
         return cached
 
@@ -122,7 +122,7 @@ async def get_global_stats() -> Dict:
         "last_draw_date": last_draw_date,
         "period_covered": period_covered
     }
-    cache_set("global_stats", data)
+    await cache_set("global_stats", data)
     return data
 
 

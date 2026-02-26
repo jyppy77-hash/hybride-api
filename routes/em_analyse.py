@@ -3,6 +3,8 @@ Routes API EuroMillions — Analyse (generateur, META, grilles custom)
 Equivalent EM de routes/api_analyse.py
 """
 
+import asyncio
+
 from fastapi import APIRouter, HTTPException, Query, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 from typing import Optional
@@ -326,14 +328,15 @@ async def em_meta_pdf(request: Request, payload: EMMetaPdfPayload):
         logger.info(f"[META-PDF-EM ROUTE] graph_data_boules: {type(payload.graph_data_boules).__name__}, "
                      f"graph_data_etoiles: {type(payload.graph_data_etoiles).__name__}")
 
-        buf = generate_em_meta_pdf(
+        buf = await asyncio.to_thread(
+            generate_em_meta_pdf,
             analysis=payload.analysis,
             window=payload.window,
             engine=payload.engine,
             graph=payload.graph,
             graph_data_boules=payload.graph_data_boules,
             graph_data_etoiles=payload.graph_data_etoiles,
-            sponsor=payload.sponsor
+            sponsor=payload.sponsor,
         )
         return StreamingResponse(
             buf,

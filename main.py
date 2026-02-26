@@ -71,10 +71,13 @@ logging.root.addFilter(RequestIdFilter())
 
 @asynccontextmanager
 async def lifespan(app):
-    """Startup/shutdown : client HTTP partage + pool DB."""
+    """Startup/shutdown : client HTTP partage + pool DB + cache."""
+    from services.cache import init_cache, close_cache
     app.state.httpx_client = httpx.AsyncClient(timeout=20.0)
     await db_cloudsql.init_pool()
+    await init_cache()
     yield
+    await close_cache()
     await db_cloudsql.close_pool()
     await app.state.httpx_client.aclose()
 

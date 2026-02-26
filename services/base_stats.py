@@ -101,7 +101,7 @@ class BaseStatsService:
             raise ValueError(f"type_num invalide: {type_num}")
 
         cache_key = f"{self.cfg.cache_prefix}freq:{type_num}:{date_from}"
-        cached = cache_get(cache_key)
+        cached = await cache_get(cache_key)
         if cached is not None:
             return cached
 
@@ -159,7 +159,7 @@ class BaseStatsService:
                 """, params)
 
         result = {row['num']: row['freq'] for row in await cursor.fetchall()}
-        cache_set(cache_key, result)
+        await cache_set(cache_key, result)
         return result
 
     async def _get_all_ecarts(self, cursor, type_num=None):
@@ -172,7 +172,7 @@ class BaseStatsService:
             type_num = self.cfg.type_principal
 
         cache_key = f"{self.cfg.cache_prefix}ecarts:{type_num}"
-        cached = cache_get(cache_key)
+        cached = await cache_get(cache_key)
         if cached is not None:
             return cached
 
@@ -234,7 +234,7 @@ class BaseStatsService:
             if num not in ecarts:
                 ecarts[num] = total
 
-        cache_set(cache_key, ecarts)
+        await cache_set(cache_key, ecarts)
         return ecarts
 
     # ──────────────────────────────────────
