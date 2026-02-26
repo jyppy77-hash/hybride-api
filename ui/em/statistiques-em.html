@@ -37,14 +37,37 @@
     {
       "@context": "https://schema.org",
       "@type": "Dataset",
-      "name": "Statistiques EuroMillions",
-      "description": "Statistiques des tirages de l'EuroMillions : fréquences des numéros et étoiles, tendances, historique",
+      "name": "Historique des tirages EuroMillions",
+      "description": "Dataset complet des tirages EuroMillions : numéros gagnants (5 boules + 2 étoiles), fréquences de sortie, écarts entre apparitions, tendances statistiques. Données issues des résultats officiels FDJ, analysées par le moteur HYBRIDE.",
       "url": "https://lotoia.fr/euromillions/statistiques",
+      "identifier": "lotoia-euromillions-tirages",
+      "license": "https://www.etalab.gouv.fr/licence-ouverte-open-licence/",
+      "isAccessibleForFree": true,
       "creator": {
         "@type": "Organization",
-        "name": "LotoIA"
+        "name": "LotoIA",
+        "url": "https://lotoia.fr"
       },
-      "temporalCoverage": "2019/.."
+      "publisher": {
+        "@type": "Organization",
+        "name": "LotoIA",
+        "url": "https://lotoia.fr"
+      },
+      "temporalCoverage": "2004/2026",
+      "spatialCoverage": "Europe",
+      "variableMeasured": [
+        {"@type": "PropertyValue", "name": "Numéros gagnants", "description": "5 boules (1-50) + 2 étoiles (1-12) par tirage"},
+        {"@type": "PropertyValue", "name": "Fréquence de sortie", "description": "Nombre d'apparitions de chaque numéro et étoile sur la période"},
+        {"@type": "PropertyValue", "name": "Écart actuel", "description": "Nombre de tirages depuis la dernière apparition"},
+        {"@type": "PropertyValue", "name": "Date de tirage", "description": "Date de chaque tirage (mardi, vendredi)"}
+      ],
+      "distribution": {
+        "@type": "DataDownload",
+        "encodingFormat": "application/pdf",
+        "contentUrl": "https://lotoia.fr/api/euromillions/meta-pdf",
+        "name": "Rapport META DATA EuroMillions — PDF"
+      },
+      "keywords": ["euromillions", "tirages", "fréquences", "statistiques", "FDJ", "étoiles", "Europe"]
     }
     </script>
 

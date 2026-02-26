@@ -30,14 +30,37 @@
     {
       "@context": "https://schema.org",
       "@type": "Dataset",
-      "name": "Statistiques Loto France",
-      "description": "Statistiques des tirages du Loto français depuis 2019",
+      "name": "Historique des tirages du Loto français",
+      "description": "Dataset complet des tirages du Loto français : numéros gagnants (5 boules + numéro chance), fréquences de sortie, écarts entre apparitions, tendances statistiques. Données issues des résultats officiels FDJ, analysées par le moteur HYBRIDE.",
       "url": "https://lotoia.fr/loto/statistiques",
+      "identifier": "lotoia-loto-tirages",
+      "license": "https://www.etalab.gouv.fr/licence-ouverte-open-licence/",
+      "isAccessibleForFree": true,
       "creator": {
         "@type": "Organization",
-        "name": "LotoIA"
+        "name": "LotoIA",
+        "url": "https://lotoia.fr"
       },
-      "temporalCoverage": "2019/.."
+      "publisher": {
+        "@type": "Organization",
+        "name": "LotoIA",
+        "url": "https://lotoia.fr"
+      },
+      "temporalCoverage": "2008/2026",
+      "spatialCoverage": "France",
+      "variableMeasured": [
+        {"@type": "PropertyValue", "name": "Numéros gagnants", "description": "5 boules (1-49) + 1 numéro chance (1-10) par tirage"},
+        {"@type": "PropertyValue", "name": "Fréquence de sortie", "description": "Nombre d'apparitions de chaque numéro sur la période"},
+        {"@type": "PropertyValue", "name": "Écart actuel", "description": "Nombre de tirages depuis la dernière apparition"},
+        {"@type": "PropertyValue", "name": "Date de tirage", "description": "Date de chaque tirage (lundi, mercredi, samedi)"}
+      ],
+      "distribution": {
+        "@type": "DataDownload",
+        "encodingFormat": "application/pdf",
+        "contentUrl": "https://lotoia.fr/api/meta-pdf",
+        "name": "Rapport META DATA Loto — PDF"
+      },
+      "keywords": ["loto", "tirages", "fréquences", "statistiques", "FDJ", "numéros", "France"]
     }
     </script>
     <script type="application/ld+json">
