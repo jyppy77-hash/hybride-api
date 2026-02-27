@@ -191,7 +191,7 @@ function generatePopupHTML75EM(config) {
             '<div class="data-animation" id="data-animation"></div>' +
             '<div class="console-container">' +
                 '<div class="console-header">' +
-                    '<span class="console-title">\ud83d\udda5\ufe0f MOTEUR HYBRIDE EM</span>' +
+                    '<span class="console-title">\ud83d\udda5\ufe0f HYBRID ENGINE EM</span>' +
                     '<span class="console-status" id="console-status">' +
                         '<span class="status-dot"></span>PROCESSING' +
                     '</span>' +
@@ -743,7 +743,7 @@ function openMetaResultPopupEM(data) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     analysis: finalAnalysisTextEM,
-                    window: '75 grilles',
+                    window: '75 grids',
                     engine: 'HYBRIDE',
                     graph_data_boules: metaResultDataEM && metaResultDataEM.graph_boules ? metaResultDataEM.graph_boules : null,
                     graph_data_etoiles: metaResultDataEM && metaResultDataEM.graph_etoiles ? metaResultDataEM.graph_etoiles : null,

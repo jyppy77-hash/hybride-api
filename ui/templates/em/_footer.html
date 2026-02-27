@@ -1,0 +1,35 @@
+{# ── Standard EM footer — included by each page inside its container ── #}
+<footer class="footer"{% if footer_style %} style="{{ footer_style }}"{% endif %}>
+    <div class="footer-nav">
+        <a href="/">{{ _('Modules') }}</a>
+        <span class="footer-sep">&bull;</span>
+        <a href="{{ urls.home }}"{% if active_page == 'accueil' %} class="active"{% endif %}>{{ _('Accueil') }}</a>
+        <span class="footer-sep">&bull;</span>
+        <a href="{{ urls.simulateur }}"{% if active_page == 'simulateur' %} class="active"{% endif %}>{{ _('Analyse') }}</a>
+        <span class="footer-sep">&bull;</span>
+        <a href="{{ urls.generateur }}"{% if active_page == 'generateur' %} class="active"{% endif %}>{{ _('Exploration') }}</a>
+        <span class="footer-sep">&bull;</span>
+        <a href="{{ urls.statistiques }}"{% if active_page == 'statistiques' %} class="active"{% endif %}>{{ _('Statistiques') }}</a>
+        <span class="footer-sep">&bull;</span>
+        <a href="{{ urls.news }}"{% if active_page == 'news' %} class="active"{% endif %}>{{ _('Actualités') }}</a>
+        <span class="footer-sep">&bull;</span>
+        <a href="{{ urls.faq }}"{% if active_page == 'faq' %} class="active"{% endif %}>FAQ</a>
+    </div>
+    <div class="footer-legal">
+        <a href="/mentions-legales">{{ _('Mentions légales') }}</a>
+        <span class="footer-sep">&bull;</span>
+        <a href="/politique-confidentialite">{{ _('Confidentialité') }}</a>
+        <span class="footer-sep">&bull;</span>
+        <a href="/politique-cookies">{{ _('Cookies') }}</a>
+        {% if show_disclaimer_link|default(false) %}
+        <span class="footer-sep">&bull;</span>
+        <a href="/disclaimer">{{ _('Avertissements') }}</a>
+        {% endif %}
+    </div>
+    <p class="footer-brand">LotoIA.fr <span class="app-version">v1.001</span></p>
+    <p class="footer-disclaimer">{{ _('Jouer comporte des risques : endettement, isolement, dépendance. Appelez le 09 74 75 13 13 (appel non surtaxé).') }}</p>
+    <p class="footer-help">{{ _('Interdiction de jeu aux mineurs.') }} <a href="{{ gambling_help_url }}" target="_blank" rel="noopener">{{ gambling_help_name }}</a></p>
+    <div class="credits">
+        <p class="dev-by">{{ _('Développé par') }} <strong>JyppY</strong></p>
+    </div>
+</footer>

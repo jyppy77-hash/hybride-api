@@ -211,7 +211,7 @@ function generatePopupHTMLSimulateurEM(config) {
             '<div class="data-animation" id="data-animation"></div>' +
             '<div class="console-container">' +
                 '<div class="console-header">' +
-                    '<span class="console-title">\uD83D\uDDA5\uFE0F MOTEUR HYBRIDE EM</span>' +
+                    '<span class="console-title">\uD83D\uDDA5\uFE0F HYBRID ENGINE EM</span>' +
                     '<span class="console-status" id="console-status">' +
                         '<span class="status-dot"></span>PROCESSING' +
                     '</span>' +

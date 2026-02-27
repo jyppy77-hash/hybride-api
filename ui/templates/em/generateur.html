@@ -1,0 +1,532 @@
+{% extends "em/_base.html" %}
+
+{% block head %}
+    <title>{{ _('Simulateur de Grilles EuroMillions IA - Analyse Statistique | LotoIA') }}</title>
+    <meta name="description" content="{{ _('Générez des grilles EuroMillions optimisées grâce au moteur HYBRIDE. Analyse de tirages historiques pour des combinaisons statistiquement équilibrées.') }}">
+    <meta name="keywords" content="{{ _('simulateur euromillions, grille euromillions IA, moteur HYBRIDE, HYBRIDE, analyse statistique euromillions, numéros euromillions, étoiles euromillions') }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LotoIA">
+    <meta property="og:locale" content="{{ og_locale }}">
+    <meta property="og:title" content="{{ _('Simulateur de Grilles EuroMillions IA | LotoIA') }}">
+    <meta property="og:description" content="{{ _('Générez des grilles EuroMillions optimisées avec le moteur HYBRIDE. Analyse de tirages historiques depuis 2019.') }}">
+    <meta property="og:url" content="{{ canonical_url }}">
+    <meta property="og:image" content="{{ base_url }}/static/og-image.jpg">
+    <meta property="og:image:secure_url" content="{{ base_url }}/static/og-image.jpg">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ _('Simulateur de Grilles EuroMillions IA | LotoIA') }}">
+    <meta name="twitter:description" content="{{ _('Générez des grilles EuroMillions optimisées avec le moteur HYBRIDE. Analyse de tirages historiques depuis 2019.') }}">
+    <meta name="twitter:image" content="{{ base_url }}/static/og-image.jpg">
+    <!-- JSON-LD Schema.org -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": {{ _('LotoIA - Simulateur de Grilles EuroMillions')|tojson }},
+      "url": {{ canonical_url|tojson }},
+      "description": {{ _('Simulateur de grilles EuroMillions optimisées par analyse statistique et IA')|tojson }},
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Web",
+      "inLanguage": {{ lang|tojson }},
+      "featureList": [
+        {{ _('Simulation Monte-Carlo de grilles EuroMillions')|tojson }},
+        {{ _('Analyse statistique')|tojson }},
+        {{ _('Numéros chauds/froids')|tojson }},
+        {{ _('Indice de convergence')|tojson }},
+        {{ _('5 numéros + 2 étoiles')|tojson }}
+      ],
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      }
+    }
+    </script>
+{% endblock %}
+
+{% block extra_css %}
+    <link rel="stylesheet" href="/ui/static/em/sponsor-popup-em.css?v=6">
+    <link rel="stylesheet" href="/ui/static/em/sponsor-popup75-em.css?v=11">
+    <link rel="stylesheet" href="/ui/static/meta-result.css?v=1">
+{% endblock %}
+
+{% block body %}
+    {% include "em/_hero.html" %}
+
+    <div class="loto-container">
+
+        <!-- ══════════════════════════════════════════════════════════════
+             PRIMARY ZONE - GENERATOR (secondary step after hero choice)
+             ══════════════════════════════════════════════════════════════ -->
+        <section id="generator" class="generator-hero">
+            <!-- Visual effects data/algorithm -->
+            <div class="scan-line"></div>
+            <div class="data-particles">
+                <span class="particle p1"></span>
+                <span class="particle p2"></span>
+                <span class="particle p3"></span>
+                <span class="particle p4"></span>
+                <span class="particle p5"></span>
+                <span class="particle p6"></span>
+                <span class="particle p7"></span>
+                <span class="particle p8"></span>
+            </div>
+            <div class="generator-card">
+                <!-- Generator header (centred, aligned with home pattern) -->
+                <div class="generator-header">
+                    <div class="generator-badge">
+                        <span class="badge-icon">&#11088;</span>
+                        <span class="badge-text">{{ _('MOTEUR HYBRIDE') }}</span>
+                    </div>
+                    <p class="generator-subtitle">{{ _('Configurez votre exploration sur') }} <strong id="stat-tirages-inline">---</strong> {{ _('tirages officiels EuroMillions') }} <span class="data-depth">{{ _('depuis 2019') }}</span></p>
+                    <img src="/static/hybride-moteur.png" class="band-hybride-moteur" alt="{{ _('Mascotte HYBRIDE - Moteur d\'analyse statistique EuroMillions') }}">
+                </div>
+
+                <!-- Form (secondary step) -->
+                <div class="generator-form">
+                    <div class="form-group">
+                        <label for="draw-date">&#128197; {{ _('Date du prochain tirage') }}</label>
+                        <input type="date" id="draw-date" class="premium-input">
+                        <div id="date-error" class="date-error" style="display: none; color: #d32f2f; margin-top: 8px; font-size: 14px; font-weight: 500;"></div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>&#127922; {{ _('Nombre de grilles à générer') }}</label>
+                        <div class="grid-count-selector" id="grid-count-selector">
+                            <button class="count-btn" data-count="1">1</button>
+                            <button class="count-btn" data-count="2">2</button>
+                            <button class="count-btn active" data-count="3">3</button>
+                            <button class="count-btn" data-count="4">4</button>
+                            <button class="count-btn" data-count="5">5</button>
+                        </div>
+                        <small class="helper-text">{{ _('Recommandé : 3 grilles pour comparer différentes combinaisons') }}</small>
+                    </div>
+
+                    <!-- Secondary CTA -- Generate (outline -- handled by CSS em-page override) -->
+                    <button id="btn-analyze" class="btn-cta-main" style="background: transparent; border: 2px solid; padding: 13px 28px; font-size: 17px;">
+                        <span class="cta-icon">&#10024;</span>
+                        <span class="cta-text">{{ _('Générer mes grilles') }}</span>
+                        <span class="cta-arrow">&rarr;</span>
+                        <span class="spinner" style="display: none;"></span>
+                    </button>
+
+                    <!-- Analysis Window Slider META DATA EM -->
+                    <div class="meta-window-selector" id="meta-window-container-em">
+                        <label class="meta-window-label">{{ _('Fenêtre d\'analyse') }}</label>
+
+                        <!-- Toggle Draws / Years -->
+                        <div class="meta-mode-toggle" id="meta-mode-toggle-em">
+                            <button type="button" class="meta-mode-btn active" data-mode="tirages">{{ _('Tirages') }}</button>
+                            <button type="button" class="meta-mode-btn" data-mode="annees">{{ _('Années') }}</button>
+                        </div>
+
+                        <!-- Slider Mode Draws (100-700 + GLOBAL, no 800 for EM) -->
+                        <div class="meta-window-slider-wrapper" id="meta-slider-tirages-em">
+                            <input type="range" id="meta-window-slider-em" class="meta-window-slider"
+                                   min="0" max="7" step="1" value="7">
+                            <div class="meta-window-ticks">
+                                <span>100</span>
+                                <span>200</span>
+                                <span>300</span>
+                                <span>400</span>
+                                <span>500</span>
+                                <span>600</span>
+                                <span>700</span>
+                                <span>{{ _('GLOBAL') }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Slider Mode Years -->
+                        <div class="meta-window-slider-wrapper" id="meta-slider-annees-em" style="display: none;">
+                            <input type="range" id="meta-years-slider-em" class="meta-window-slider"
+                                   min="0" max="6" step="1" value="6">
+                            <div class="meta-window-ticks">
+                                <span>{{ _('1A') }}</span>
+                                <span>{{ _('2A') }}</span>
+                                <span>{{ _('3A') }}</span>
+                                <span>{{ _('4A') }}</span>
+                                <span>{{ _('5A') }}</span>
+                                <span>{{ _('6A') }}</span>
+                                <span>{{ _('GLOBAL') }}</span>
+                            </div>
+                        </div>
+
+                        <div class="meta-window-info" id="meta-window-info-em">
+                            <span class="meta-window-count">{{ _('Analyse sur l\'intégralité de la base') }}</span>
+                            <span class="meta-window-dates">{{ _('Fev 2019') }} &#8594; {{ _('Aujourd\'hui') }}</span>
+                        </div>
+
+                        <p class="meta-slider-info" style="font-size:0.85rem; color:#6b7280; text-align:center; margin-top:8px; opacity:0.9;">
+                            &#128269; {{ _('Ce réglage s\'applique uniquement à l\'analyse META DONNÉE.') }}
+                        </p>
+
+                        <!-- CTA Meta Data EM -->
+                        <button id="btn-metadata-75-em" class="btn-cta-secondary" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; border: none; padding: 18px 28px; font-size: 17px; font-weight: 700; border-radius: 14px; box-shadow: 0 6px 20px rgba(245,158,11,0.35); letter-spacing: 0.3px;">
+                            <span>&#128202;</span>
+                            <span>{{ _('Analyser avec META (75 grilles)') }}</span>
+                        </button>
+                    </div>
+
+                    <p class="cta-subtext">{{ _('Analyse instantanée') }} &bull; {{ _('Indice de convergence') }} &bull; {{ _('100% gratuit') }}</p>
+                    <p class="cta-pdf-teaser">&#128196; {{ _('Rapport PDF détaillé généré par intelligence artificielle') }}</p>
+
+                    <!-- Next draw info -->
+                    <p class="cta-urgency" id="next-draw-urgency">
+                        <span class="urgency-icon">&#9201;&#65039;</span>
+                        <span class="urgency-text">{{ _('Prochain tirage dans') }} <strong id="days-until-draw">--</strong> {{ _('jours') }}</span>
+                    </p>
+                    <img src="/static/hybride-moteur.png" class="band-hybride-moteur-mobile" alt="{{ _('Mascotte HYBRIDE') }}">
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick stats section (hidden) -->
+        <button id="btn-stats" class="btn btn-tertiary" style="display: none;">
+            <span class="btn-text">&#128202; {{ _('Voir statistiques') }}</span>
+            <span class="spinner" style="display: none;"></span>
+        </button>
+
+        <!-- Section: Results -->
+        <section id="results-section" class="results-section" style="display: none;">
+            <!-- Success State -->
+            <div id="success-state" style="display: none;">
+                <div class="card result-card">
+                    <div class="card-header">
+                        <h2 id="result-title">{{ _('Résultats') }}</h2>
+                        <button id="btn-copy" class="btn-copy" title="{{ _('Copier') }}">&#128203;</button>
+                    </div>
+
+                    <!-- Numbers Grid -->
+                    <div id="numbers-grid" class="numbers-grid"></div>
+
+                    <!-- Key Info -->
+                    <div id="key-info" class="key-info"></div>
+
+                    <!-- Explanations Section -->
+                    <div id="explanations-section" class="explanations-section" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div id="error-state" class="card error-card" style="display: none;">
+                <h3>{{ _('Une erreur est survenue') }}</h3>
+                <p id="error-message"></p>
+            </div>
+        </section>
+
+        <!-- Section: Data management (hidden -- IDs required by app-em.js) -->
+        <details style="display: none;">
+            <summary style="cursor: pointer; padding: 12px; background: var(--bg-white); border-radius: 8px; font-weight: 600; color: var(--text-muted); margin-bottom: 16px;">
+                &#9881;&#65039; {{ _('Gestion des données') }}
+            </summary>
+
+            <!-- Database installation -->
+            <section class="card install-section">
+                <h2>{{ _('Base de données') }}</h2>
+                <p class="system-description">
+                    {{ _('Initialise la base de données EuroMillions si elle n\'existe pas encore.') }}
+                </p>
+
+                <!-- Database status -->
+                <div id="db-status" class="db-status">
+                    <span class="status-icon">&#9203;</span>
+                    <div class="status-text">
+                        <div id="db-main-status">{{ _('Vérification en cours...') }}</div>
+                        <div id="db-period" style="display:none;"></div>
+                        <div id="db-algo-note" style="display:none; font-style: italic;"></div>
+                    </div>
+                </div>
+
+                <!-- Installation buttons -->
+                <div class="install-buttons">
+                    <button id="btn-install" class="btn btn-install">
+                        <span class="btn-text">{{ _('Installer la base de données') }}</span>
+                        <span class="spinner" style="display: none;"></span>
+                    </button>
+                    <button id="btn-reset" class="btn btn-reset" style="display: none;">
+                        <span class="btn-text">{{ _('Réinitialiser la base') }}</span>
+                        <span class="spinner" style="display: none;"></span>
+                    </button>
+                </div>
+
+                <!-- Status message -->
+                <div id="install-status" class="install-status" style="display: none;"></div>
+            </section>
+
+            <!-- Update -->
+            <section class="card system-section">
+                <h2>{{ _('Mise à jour') }}</h2>
+                <p class="system-description">
+                    {{ _('Synchronise les données avec les tirages officiels les plus récents.') }}
+                </p>
+                <button id="btn-update" class="btn btn-system">
+                    <span class="btn-text">{{ _('Mettre à jour les données') }}</span>
+                    <span class="spinner" style="display: none;"></span>
+                </button>
+                <!-- Update status message -->
+                <div id="update-status" class="update-status" style="display: none;"></div>
+            </section>
+        </details>
+
+        <!-- ══════════════════════════════════════════════════════════════
+             MINI-FAQ - Essential questions (3 max)
+             ══════════════════════════════════════════════════════════════ -->
+        <section class="mini-faq-section" id="faq">
+            <div class="mini-faq-header">
+                <h3>{{ _('Questions fréquentes') }}</h3>
+                <p>{{ _('Les réponses aux questions essentielles') }}</p>
+            </div>
+
+            <div class="mini-faq-container">
+                <!-- Question 1 -->
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>{{ _('Comment fonctionne le simulateur EuroMillions ?') }}</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>{{ _('Notre simulateur utilise le <strong>moteur HYBRIDE</strong> qui analyse les tirages historiques EuroMillions depuis 2019.')|safe }}</p>
+                        <p>{{ _('Il combine analyse long terme (60%) et tendances récentes (40%) pour générer des grilles de 5 numéros + 2 étoiles statistiquement équilibrées avec un indice de convergence.')|safe }}</p>
+                    </div>
+                </div>
+
+                <!-- Question 2 -->
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>{{ _('L\'EuroMillions est-il prévisible ?') }}</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>{{ _('<strong>NON, l\'EuroMillions est un jeu de pur hasard.</strong> Aucun algorithme ne peut prédire les résultats.')|safe }}</p>
+                        <p>{{ _('Notre outil propose des grilles <strong>statistiquement guidées</strong>, mais cela <strong>ne garantit AUCUN gain</strong>. Probabilité du jackpot : 1 sur 139 838 160.')|safe }}</p>
+                    </div>
+                </div>
+
+                <!-- Question 3 -->
+                <div class="faq-item">
+                    <button class="faq-question">
+                        <span>{{ _('L\'outil est-il gratuit ?') }}</span>
+                        <span class="faq-icon">+</span>
+                    </button>
+                    <div class="faq-answer">
+                        <p>{{ _('Oui, LotoIA est <strong>100% gratuit</strong>, sans inscription ni paiement requis.')|safe }}</p>
+                        <p>{{ _('Toutes les fonctionnalités sont accessibles librement.') }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Link to full FAQ -->
+            <div class="mini-faq-footer">
+                <a href="{{ urls.faq }}" class="btn-see-more">
+                    <span>{{ _('Voir toutes les questions') }}</span>
+                    <span class="arrow">&rarr;</span>
+                </a>
+            </div>
+        </section>
+
+        {% include "em/_footer.html" %}
+    </div>
+{% endblock %}
+
+{% block page_scripts %}
+    <!-- META ANALYSE 75 Grids EM -->
+    <script src="{{ sponsor75_js }}"></script>
+    <script>
+    // Translatable strings for the meta window slider
+    var STRINGS = {
+        analysisEntireDb: {{ _('Analyse sur l\'intégralité de la base')|tojson }},
+        draws: {{ _('tirages')|tojson }},
+        analysisOver: {{ _('Analyse sur')|tojson }},
+        from: {{ _('Du')|tojson }},
+        to: {{ _('au')|tojson }},
+        year: {{ _('an')|tojson }},
+        years: {{ _('ans')|tojson }},
+        metaNotLoaded: {{ _('Module sponsor-popup75-em.js non chargé')|tojson }}
+    };
+
+    // Global variables for META analysis window EM
+    var metaWindowSizeEM = "GLOBAL";
+    var metaYearsSizeEM = null;
+    var metaCurrentModeEM = "tirages";
+
+    // Discrete slider mappings EM (no 800 -- only 729 draws)
+    var META_WINDOW_MAP_EM = [100, 200, 300, 400, 500, 600, 700, "GLOBAL"];
+    var META_YEARS_MAP_EM = [1, 2, 3, 4, 5, 6, "GLOBAL"];
+
+    function formatDateFREM(dateStr) {
+        if (!dateStr || dateStr === '---') return '---';
+        try {
+            var d = new Date(dateStr);
+            return d.toLocaleDateString({{ date_locale|default('fr-FR')|tojson }}, {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        } catch (e) {
+            return dateStr;
+        }
+    }
+
+    (function() {
+        var toggleContainer = document.getElementById('meta-mode-toggle-em');
+        var sliderTirages = document.getElementById('meta-slider-tirages-em');
+        var sliderAnnees = document.getElementById('meta-slider-annees-em');
+        var windowSlider = document.getElementById('meta-window-slider-em');
+        var yearsSlider = document.getElementById('meta-years-slider-em');
+        var infoContainer = document.getElementById('meta-window-info-em');
+
+        if (!toggleContainer || !infoContainer) return;
+
+        var countEl = infoContainer.querySelector('.meta-window-count');
+        var datesEl = infoContainer.querySelector('.meta-window-dates');
+        var toggleBtns = toggleContainer.querySelectorAll('.meta-mode-btn');
+
+        // Local analysis window data EM (fallback)
+        var windowInfoTiragesEM = {
+            100: { draws: 100, start: "2025-05-16", end: "2026-02-11" },
+            200: { draws: 200, start: "2024-10-18", end: "2026-02-11" },
+            300: { draws: 300, start: "2024-04-02", end: "2026-02-11" },
+            400: { draws: 400, start: "2023-09-08", end: "2026-02-11" },
+            500: { draws: 500, start: "2023-02-17", end: "2026-02-11" },
+            600: { draws: 600, start: "2022-07-29", end: "2026-02-11" },
+            700: { draws: 700, start: "2021-12-31", end: "2026-02-11" },
+            GLOBAL: { draws: 729, start: "2019-02-15", end: "2026-02-11" }
+        };
+
+        function updateTiragesDisplayEM(value) {
+            var windowValue = META_WINDOW_MAP_EM[value];
+            metaWindowSizeEM = windowValue === "GLOBAL" ? "GLOBAL" : String(windowValue);
+            metaYearsSizeEM = null;
+
+            if (windowValue === "GLOBAL") {
+                var globalInfo = windowInfoTiragesEM["GLOBAL"];
+                countEl.textContent = STRINGS.analysisEntireDb + " (" + globalInfo.draws + " " + STRINGS.draws + ")";
+                datesEl.textContent = STRINGS.from + " " + formatDateFREM(globalInfo.start) + " " + STRINGS.to + " " + formatDateFREM(globalInfo.end);
+            } else {
+                countEl.textContent = STRINGS.analysisOver + " " + windowValue + " " + STRINGS.draws;
+                var info = windowInfoTiragesEM[windowValue];
+                if (info) {
+                    datesEl.textContent = STRINGS.from + " " + formatDateFREM(info.start) + " " + STRINGS.to + " " + formatDateFREM(info.end);
+                } else {
+                    datesEl.textContent = "";
+                }
+            }
+        }
+
+        var windowInfoAnneesEM = {
+            1: { draws: 104, start: "2025-02-14", end: "2026-02-11" },
+            2: { draws: 208, start: "2024-02-13", end: "2026-02-11" },
+            3: { draws: 312, start: "2023-02-14", end: "2026-02-11" },
+            4: { draws: 416, start: "2022-02-15", end: "2026-02-11" },
+            5: { draws: 520, start: "2021-02-12", end: "2026-02-11" },
+            6: { draws: 624, start: "2020-02-14", end: "2026-02-11" },
+            GLOBAL: { draws: 729, start: "2019-02-15", end: "2026-02-11" }
+        };
+
+        // Dynamic loading of windows from database
+        fetch('/api/euromillions/meta-windows-info')
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.tirages) windowInfoTiragesEM = data.tirages;
+                if (data.annees) windowInfoAnneesEM = data.annees;
+                if (data.tirages && data.tirages.GLOBAL) {
+                    window.TOTAL_TIRAGES_EM = data.tirages.GLOBAL.draws;
+                }
+                if (metaCurrentModeEM === 'tirages' && windowSlider) {
+                    updateTiragesDisplayEM(windowSlider.value);
+                } else if (metaCurrentModeEM === 'annees' && yearsSlider) {
+                    updateAnneesDisplayEM(yearsSlider.value);
+                }
+            })
+            .catch(function() { /* hardcoded fallback in place */ });
+
+        function updateAnneesDisplayEM(value) {
+            var yearsValue = META_YEARS_MAP_EM[value];
+            metaYearsSizeEM = yearsValue === "GLOBAL" ? "GLOBAL" : String(yearsValue);
+            metaWindowSizeEM = "GLOBAL";
+
+            if (yearsValue === "GLOBAL") {
+                var globalInfoA = windowInfoAnneesEM["GLOBAL"];
+                countEl.textContent = STRINGS.analysisEntireDb + " (" + globalInfoA.draws + " " + STRINGS.draws + ")";
+                datesEl.textContent = STRINGS.from + " " + formatDateFREM(globalInfoA.start) + " " + STRINGS.to + " " + formatDateFREM(globalInfoA.end);
+            } else {
+                var info = windowInfoAnneesEM[yearsValue];
+                var nbTirages = info ? info.draws : "?";
+                countEl.textContent = STRINGS.analysisOver + " " + yearsValue + " " + (yearsValue > 1 ? STRINGS.years : STRINGS.year) + " (" + nbTirages + " " + STRINGS.draws + ")";
+                if (info) {
+                    datesEl.textContent = STRINGS.from + " " + formatDateFREM(info.start) + " " + STRINGS.to + " " + formatDateFREM(info.end);
+                } else {
+                    datesEl.textContent = "";
+                }
+            }
+        }
+
+        toggleBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var mode = this.getAttribute('data-mode');
+                if (mode === metaCurrentModeEM) return;
+                metaCurrentModeEM = mode;
+                toggleBtns.forEach(function(b) { b.classList.remove('active'); });
+                this.classList.add('active');
+                if (mode === "tirages") {
+                    sliderTirages.style.display = "block";
+                    sliderAnnees.style.display = "none";
+                    updateTiragesDisplayEM(parseInt(windowSlider.value, 10));
+                } else {
+                    sliderTirages.style.display = "none";
+                    sliderAnnees.style.display = "block";
+                    updateAnneesDisplayEM(parseInt(yearsSlider.value, 10));
+                }
+            });
+        });
+
+        if (windowSlider) {
+            windowSlider.addEventListener('input', function() {
+                updateTiragesDisplayEM(parseInt(this.value, 10));
+            });
+            windowSlider.value = 7;
+        }
+
+        if (yearsSlider) {
+            yearsSlider.addEventListener('input', function() {
+                updateAnneesDisplayEM(parseInt(this.value, 10));
+            });
+            yearsSlider.value = 6;
+        }
+
+        updateTiragesDisplayEM(7);
+
+        // META DATA EM button
+        var btn = document.getElementById('btn-metadata-75-em');
+        if (!btn) return;
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+
+            if (window.LotoIAAnalytics?.productEngine?.track) {
+                window.LotoIAAnalytics.productEngine.track('meta_click_em', {
+                    version: 75,
+                    page: 'euromillions',
+                    mode: metaCurrentModeEM,
+                    window: metaWindowSizeEM,
+                    years: metaYearsSizeEM
+                });
+            }
+
+            if (typeof showMetaAnalysePopupEM === 'function') {
+                showMetaAnalysePopupEM();
+            } else {
+                console.warn('[META ANALYSE EM] ' + STRINGS.metaNotLoaded);
+            }
+        });
+    })();
+    </script>
+
+    <!-- Application scripts -->
+    <script src="{{ sponsor_js }}"></script>
+    <script src="{{ app_js }}"></script>
+{% endblock %}

@@ -1,0 +1,415 @@
+{% extends "em/_base.html" %}
+
+{% block head %}
+    <title>{{ _('FAQ EuroMillions - Questions Fréquentes | LotoIA') }}</title>
+    <meta name="description" content="{{ _('Toutes les réponses à vos questions sur l\'analyse EuroMillions : fonctionnement du moteur HYBRIDE, numéros, étoiles et jeu responsable.') }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LotoIA">
+    <meta property="og:locale" content="{{ og_locale }}">
+    <meta property="og:title" content="{{ _('FAQ EuroMillions - Questions Fréquentes | LotoIA') }}">
+    <meta property="og:description" content="{{ _('Toutes les réponses sur le fonctionnement du moteur EuroMillions, les étoiles et le jeu responsable.') }}">
+    <meta property="og:url" content="{{ canonical_url }}">
+    <meta property="og:image" content="{{ base_url }}/static/og-image.jpg">
+    <meta property="og:image:secure_url" content="{{ base_url }}/static/og-image.jpg">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ _('FAQ EuroMillions - Questions Fréquentes | LotoIA') }}">
+    <meta name="twitter:description" content="{{ _('Toutes les réponses sur le fonctionnement du moteur EuroMillions et le jeu responsable.') }}">
+    <meta name="twitter:image" content="{{ base_url }}/static/og-image.jpg">
+    <!-- JSON-LD Schema.org FAQPage -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": {{ _('Comment fonctionne le simulateur de grilles EuroMillions ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Notre simulateur utilise le moteur HYBRIDE, un algorithme qui analyse %(total)s+ tirages historiques de l\'EuroMillions. Le système combine analyse long terme et tendances récentes pour générer des grilles de 5 numéros (1-50) et 2 étoiles (1-12).')|format(total=em_db_total)|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Le EuroMillions est-il prévisible ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('NON. L\'EuroMillions est un jeu de pur hasard. Probabilité de gagner le jackpot : 1 sur 139 838 160. Notre outil est purement statistique et descriptif.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Que signifient numéros chauds et froids ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Un numéro chaud est sorti fréquemment sur les 2 dernières années. Un numéro froid est rarement sorti. L\'analyse porte sur les 50 numéros principaux ET les 12 étoiles.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Comment sont calculées les étoiles ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Les 2 étoiles (1-12) sont analysées séparément avec leur propre fréquence, écart et catégorie chaud/froid/neutre.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('D\'où viennent les données ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Les données proviennent des tirages officiels de l\'EuroMillions. La base contient plusieurs années d\'historique, mise à jour après chaque tirage officiel (mardi et vendredi).')|tojson }}
+          }
+        }
+      ]
+    }
+    </script>
+{% endblock %}
+
+{% block head_end %}
+    <style>
+        /* FAQ Categories */
+        .faq-section.faq-page { padding: 0; }
+        .faq-container { max-width: 800px; margin: 0 auto; }
+        .faq-category { margin-bottom: 40px; }
+        .faq-category-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        /* FAQ Nav */
+        .faq-nav {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px 24px;
+            margin-bottom: 32px;
+        }
+        .faq-nav h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: var(--text-muted);
+        }
+        .faq-nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .faq-nav li a {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 8px;
+            background: var(--bg-secondary, rgba(99,102,241,0.08));
+            color: var(--text-primary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: background 0.2s, color 0.2s;
+        }
+        .faq-nav li a:hover {
+            background: var(--accent, #6366f1);
+            color: #fff;
+        }
+
+        /* FAQ Item accordion */
+        .faq-item {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+            background: var(--card-bg);
+            transition: border-color 0.2s;
+        }
+        .faq-item:hover { border-color: var(--accent, #6366f1); }
+
+        .faq-question {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: left;
+            gap: 12px;
+            font-family: inherit;
+        }
+        .faq-question:hover { color: var(--accent, #6366f1); }
+
+        .faq-icon {
+            font-size: 1.4rem;
+            font-weight: 300;
+            transition: transform 0.3s;
+            flex-shrink: 0;
+            color: var(--text-muted);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.3s ease;
+            padding: 0 20px;
+        }
+        .faq-answer p,
+        .faq-answer ul,
+        .faq-answer ol {
+            margin-bottom: 12px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+        }
+        .faq-answer ul, .faq-answer ol { padding-left: 20px; }
+        .faq-answer li { margin-bottom: 6px; }
+
+        /* Active state */
+        .faq-item.active .faq-icon { transform: rotate(45deg); }
+        .faq-item.active .faq-answer {
+            max-height: 600px;
+            padding: 0 20px 20px;
+        }
+
+        /* Action card */
+        .action-card {
+            margin-top: 40px;
+            margin-bottom: 32px;
+        }
+        .action-card-content {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        .action-card-icon { font-size: 2rem; }
+        .action-card-text { flex: 1; min-width: 200px; }
+        .action-card-text h3 { margin-bottom: 4px; }
+        .action-card-text p { color: var(--text-muted); font-size: 0.95rem; }
+
+        @media (max-width: 600px) {
+            .faq-nav ul { flex-direction: column; }
+            .action-card-content { flex-direction: column; text-align: center; }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% include "em/_hero.html" %}
+
+    <div class="container subpage-container">
+
+        <!-- Sommaire rapide -->
+        <nav class="faq-nav">
+            <h3>{{ _('Accès rapide') }}</h3>
+            <ul>
+                <li><a href="#fonctionnement">{{ _('Fonctionnement') }}</a></li>
+                <li><a href="#numeros-etoiles">{{ _('Numéros et Étoiles') }}</a></li>
+                <li><a href="#donnees">{{ _('Données') }}</a></li>
+                <li><a href="#jeu-responsable">{{ _('Jeu Responsable') }}</a></li>
+            </ul>
+        </nav>
+
+        <!-- Section FAQ Complete -->
+        <section class="faq-section faq-page">
+            <div class="faq-container">
+
+                <!-- ===================================================================
+                     Catégorie : Fonctionnement
+                     =================================================================== -->
+                <div class="faq-category" id="fonctionnement">
+                    <h3 class="faq-category-title">{{ _('Fonctionnement') }}</h3>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Comment fonctionne le simulateur de grilles EuroMillions ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('Notre simulateur utilise le <strong>moteur HYBRIDE</strong>, un algorithme qui analyse <strong>%(total)s+ tirages historiques</strong> de l\'EuroMillions.')|format(total=em_db_total)|safe }}</p>
+                            <p>{{ _('Le système combine analyse long terme et tendances récentes pour générer des grilles de <strong>5 numéros (1-50)</strong> et <strong>2 étoiles (1-12)</strong>.')|safe }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Le EuroMillions est-il prévisible ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('<strong>NON.</strong> L\'EuroMillions est un jeu de pur hasard. Aucune méthode, algorithme ou statistique ne peut prédire les résultats futurs.')|safe }}</p>
+                            <p>{{ _('Notre outil est <strong>purement statistique et descriptif</strong>. Il ne garantit AUCUN gain.')|safe }}</p>
+                            <p>{{ _('<em>Probabilité de gagner le jackpot : 1 sur 139 838 160</em>')|safe }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Quelle est la différence avec le Loto ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('L\'EuroMillions utilise <strong>5 numéros de 1 à 50 + 2 étoiles de 1 à 12</strong>, contre 5 numéros de 1 à 49 + 1 chance de 1 à 10 pour le Loto.')|safe }}</p>
+                            <p>{{ _('Les tirages EuroMillions ont lieu les <strong>mardis et vendredis</strong>, tandis que le Loto se joue les lundis, mercredis et samedis.')|safe }}</p>
+                            <p>{{ _('Le moteur utilisé est <strong>HYBRIDE</strong>, une adaptation spécifique du moteur HYBRIDE pour les règles EuroMillions.')|safe }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===================================================================
+                     Catégorie : Numéros et Étoiles
+                     =================================================================== -->
+                <div class="faq-category" id="numeros-etoiles">
+                    <h3 class="faq-category-title">{{ _('Numéros et Étoiles') }}</h3>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Que signifient numéros chauds et froids ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('Un <strong>numéro chaud</strong> est sorti fréquemment sur les 2 dernières années de tirages.')|safe }}</p>
+                            <p>{{ _('Un <strong>numéro froid</strong> est rarement sorti sur cette même période. Ces numéros ont un retard important.')|safe }}</p>
+                            <p>{{ _('L\'analyse porte sur les <strong>50 numéros principaux</strong> ET les <strong>12 étoiles</strong>.')|safe }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Comment sont calculées les étoiles ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('Les <strong>2 étoiles (1-12)</strong> sont analysées séparément avec leur propre fréquence, écart et catégorie chaud/froid/neutre.')|safe }}</p>
+                            <p>{{ _('Le moteur HYBRIDE traite les étoiles comme un espace combinatoire distinct des numéros principaux.') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===================================================================
+                     Catégorie : Données
+                     =================================================================== -->
+                <div class="faq-category" id="donnees">
+                    <h3 class="faq-category-title">{{ _('Données') }}</h3>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('D\'où viennent les données ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('Les données proviennent des <strong>tirages officiels de l\'EuroMillions</strong>.')|safe }}</p>
+                            <p>{{ _('La base contient <strong>%(total)s tirages</strong> couvrant plusieurs années d\'historique.')|format(total=em_db_total)|safe }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('À quelle fréquence la base est-elle mise à jour ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('La base est mise à jour <strong>régulièrement après chaque tirage officiel</strong> (mardi et vendredi).')|safe }}</p>
+                            <p>{{ _('Les grilles sont générées en temps réel à chaque utilisation selon les dernières données disponibles.') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===================================================================
+                     Catégorie : Jeu Responsable
+                     =================================================================== -->
+                <div class="faq-category" id="jeu-responsable">
+                    <h3 class="faq-category-title">{{ _('Jeu Responsable') }}</h3>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Quels sont les risques du jeu ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('Les jeux d\'argent et de hasard, dont l\'EuroMillions, comportent des risques :') }}</p>
+                            <ul>
+                                <li>{{ _('<strong>Pertes financières</strong> : Vous pouvez perdre l\'argent misé')|safe }}</li>
+                                <li>{{ _('<strong>Addiction</strong> : Le jeu peut devenir pathologique')|safe }}</li>
+                                <li>{{ _('<strong>Impact psychologique</strong> : Stress, anxiété, frustration')|safe }}</li>
+                                <li>{{ _('<strong>Conséquences familiales</strong> : Endettement, conflits')|safe }}</li>
+                            </ul>
+                            <p>{{ _('<strong>Règles d\'or</strong> :')|safe }}</p>
+                            <ul>
+                                <li>{{ _('Ne jouez jamais plus que ce que vous pouvez vous permettre de perdre') }}</li>
+                                <li>{{ _('L\'EuroMillions doit rester un divertissement occasionnel') }}</li>
+                                <li>{{ _('N\'essayez jamais de "vous refaire" après une perte') }}</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Ou trouver de l\'aide en cas d\'addiction ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('Si vous ou un proche rencontrez des difficultés avec le jeu :') }}</p>
+                            <p><strong>{{ gambling_help_name }}</strong></p>
+                            <ul>
+                                <li>{{ _('Téléphone : <strong>09 74 75 13 13</strong> (appel non surtaxé)')|safe }}</li>
+                                <li>{{ _('Site web : <a href="%(url)s" target="_blank" rel="noopener">%(name)s</a>')|format(url=gambling_help_url, name=gambling_help_name)|safe }}</li>
+                                <li>{{ _('Chat en ligne disponible') }}</li>
+                                <li>{{ _('Service gratuit, anonyme et confidentiel') }}</li>
+                            </ul>
+                            <p>{{ _('Horaires : 7j/7 de 8h à 2h du matin') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Le jeu est-il interdit aux mineurs ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('<strong>OUI, absolument.</strong>')|safe }}</p>
+                            <p>{{ _('En France, les jeux d\'argent et de hasard sont <strong>strictement interdits aux moins de 18 ans</strong>.')|safe }}</p>
+                            <p>{{ _('Cette règle s\'applique à l\'EuroMillions, au Loto, PMU, casinos, paris sportifs, etc.') }}</p>
+                            <p>{{ _('Les parents sont responsables de l\'utilisation d\'Internet par leurs enfants.') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- Lien retour générateur -->
+        <section class="card action-card">
+            <div class="action-card-content">
+                <div class="action-card-icon">&#10024;</div>
+                <div class="action-card-text">
+                    <h3>{{ _('Prêt à générer vos grilles EuroMillions ?') }}</h3>
+                    <p>{{ _('Utilisez notre moteur HYBRIDE pour créer des grilles statistiquement optimisées.') }}</p>
+                </div>
+                <a href="{{ urls.generateur }}" class="btn btn-primary">
+                    {{ _('Générer mes grilles') }}
+                    <span class="btn-arrow">&rarr;</span>
+                </a>
+            </div>
+        </section>
+
+        {% include "em/_footer.html" %}
+    </div>
+{% endblock %}
+
+{% block page_scripts %}
+    <script src="{{ faq_js }}"></script>
+{% endblock %}

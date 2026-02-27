@@ -11,7 +11,7 @@ import logging
 import db_cloudsql
 from rate_limit import limiter
 from config.games import ValidGame, get_config, get_engine
-from config.i18n import _badges
+from config.i18n import _badges, _analysis_strings
 from services.penalization import compute_penalized_ranking
 
 logger = logging.getLogger(__name__)
@@ -613,87 +613,89 @@ async def unified_analyze_custom_grid(
         elif critical_count >= 2 or (critical_count == 1 and max_run >= 4): severity = 2
         else: severity = 1
 
-        # Suggestions
+        # Suggestions (i18n)
+        s = _analysis_strings(lang)
         suggestions = []
         alert_message = None
-        game_label = "Loto" if is_loto else "EM"
         somme_avg = 125 if is_loto else 127
         somme_range_text = "80 et 170" if is_loto else "80 et 175"
-        bas_haut_text = f"(1-{mid})" if is_loto else f"(1-{mid})"
+        bas_haut_text = f"(1-{mid})"
         hauts_text = f"({mid+1}-{cfg.num_range[1]})"
         dispersion_max = cfg.num_range[1] - 1
+        em_suffix = " EM" if not is_loto else ""
 
         if severity == 3:
-            alert_message = "Alerte maximale : cette grille cumule TOUS les défauts statistiques !"
+            alert_message = s["alert_max"]
             if 'suite' in critical_flags:
-                em_suffix = " EM" if not is_loto else ""
-                suggestions.append(f"Suite parfaite détectée ! En {total_tirages} tirages{em_suffix}, aucune suite de {max_run} consécutifs n'est jamais sortie")
+                suggestions.append(s["perfect_run"].format(total=total_tirages, suffix=em_suffix, max_run=max_run))
             if 'somme' in critical_flags:
-                suggestions.append(f"Somme catastrophique ({somme}) — les tirages{' EM' if not is_loto else ''} réels oscillent entre {somme_range_text}")
+                suggestions.append(s["sum_catastrophic"].format(sum=somme, suffix=em_suffix, range=somme_range_text))
             if 'bas_haut' in critical_flags:
                 if nb_bas == 5:
-                    suggestions.append(f"ZERO numéro au-dessus de {mid} — statistiquement aberrant")
+                    suggestions.append(s["zero_above"].format(mid=mid))
                 else:
-                    suggestions.append(f"ZERO numéro en dessous de {mid+1} — statistiquement aberrant")
+                    suggestions.append(s["zero_below"].format(mid=mid+1))
             if 'dispersion' in critical_flags:
-                suggestions.append(f"Dispersion quasi nulle ({dispersion}) — la moyenne historique est autour de 30+")
+                suggestions.append(s["dispersion_zero"].format(dispersion=dispersion))
             if 'pairs' in critical_flags:
                 if nb_pairs == 5:
-                    suggestions.append("100% de numéros pairs — aucun tirage historique n'a cette configuration")
+                    suggestions.append(s["all_even"])
                 else:
-                    suggestions.append("100% de numéros impairs — aucun tirage historique n'a cette configuration")
+                    suggestions.append(s["all_odd"])
             if 'conformite' in critical_flags:
-                suggestions.append(f"Score de conformité effondré ({score_conformite}%) — cette grille défie toutes les statistiques")
+                suggestions.append(s["conformity_collapsed"].format(score=score_conformite))
 
         elif severity == 2:
             if 'suite' in critical_flags:
-                suggestions.append(f"Suite de {max_run} numéros consécutifs détectée — très rare dans les tirages réels")
+                suggestions.append(s["run_detected"].format(max_run=max_run))
             if nb_pairs == 0 or nb_pairs == 5:
-                suggestions.append(f"Déséquilibre pair/impair ({nb_pairs}/{nb_impairs}) — viser 2-3 pairs pour coller aux statistiques")
+                suggestions.append(s["even_odd_imbalance"].format(even=nb_pairs, odd=nb_impairs))
             if nb_bas == 0 or nb_bas == 5:
-                suggestions.append(f"Déséquilibre bas/haut ({nb_bas}/{nb_hauts}) — mixer numéros bas {bas_haut_text} et hauts {hauts_text}")
+                suggestions.append(s["low_high_imbalance"].format(low=nb_bas, high=nb_hauts, low_range=bas_haut_text, high_range=hauts_text))
             somme_mod_low = 50 if is_loto else 55
             somme_mod_mid_low = 70 if is_loto else 75
             somme_mod_high = 200 if is_loto else 210
             somme_mod_mid_high = 150 if is_loto else 175
             if somme < somme_mod_low or somme > somme_mod_high:
-                suggestions.append(f"Somme trop {'basse' if somme < somme_mod_low else 'élevée'} ({somme}) — la moyenne historique est autour de {somme_avg}")
+                direction = s["dir_low"] if somme < somme_mod_low else s["dir_high"]
+                suggestions.append(s["sum_extreme"].format(direction=direction, sum=somme, avg=somme_avg))
             elif somme < somme_mod_mid_low or somme > somme_mod_mid_high:
+                direction = s["dir_low"] if somme < somme_mod_mid_low else s["dir_high"]
                 fourchette = "80-170" if is_loto else "85-175"
-                suggestions.append(f"Somme {'basse' if somme < somme_mod_mid_low else 'élevée'} ({somme}) — viser la fourchette {fourchette}")
+                suggestions.append(s["sum_moderate"].format(direction=direction, sum=somme, range=fourchette))
             if dispersion < 10:
-                suggestions.append(f"Dispersion insuffisante ({dispersion}) — vos numéros couvrent seulement {dispersion} unités sur {dispersion_max} possibles")
+                suggestions.append(s["dispersion_insufficient"].format(dispersion=dispersion, max=dispersion_max))
             elif dispersion < 15:
-                suggestions.append(f"Dispersion faible ({dispersion}) — élargir l'écart entre vos numéros")
+                suggestions.append(s["dispersion_low"].format(dispersion=dispersion))
             if max_run >= 3 and 'suite' not in critical_flags:
-                suggestions.append(f"Suite de {max_run} consécutifs — réduire les numéros qui se suivent")
+                suggestions.append(s["run_reduce"].format(max_run=max_run))
         else:
             if score >= 70:
-                suggestions.append("Excellent équilibre dans votre sélection")
+                suggestions.append(s["excellent_balance"])
             if nb_pairs == 1 or nb_pairs == 4:
-                suggestions.append("Pensez à varier pairs et impairs (2-3 pairs idéal)")
+                suggestions.append(s["vary_even_odd"])
             if nb_bas == 1 or nb_bas == 4:
-                suggestions.append(f"Mixer numéros bas {bas_haut_text} et hauts {hauts_text}")
+                suggestions.append(s["mix_low_high"].format(low_range=bas_haut_text, high_range=hauts_text))
             mild_low = 70 if is_loto else 75
             mild_high = 150 if is_loto else 165
             if mild_low <= somme < mild_low + 10:
-                suggestions.append("Somme un peu basse, ajouter un numéro plus élevé")
+                suggestions.append(s["sum_slightly_low"])
             elif mild_high < somme <= mild_high + 20:
-                suggestions.append("Somme un peu élevée, ajouter un numéro plus bas")
+                suggestions.append(s["sum_slightly_high"])
             if 15 <= dispersion < 20:
-                suggestions.append("Élargir légèrement la dispersion de vos numéros")
+                suggestions.append(s["widen_dispersion"])
             if max_run == 3:
-                suggestions.append("Attention à la suite de 3 consécutifs")
+                suggestions.append(s["watch_run_3"])
             elif suites >= 2 and max_run < 3:
-                suggestions.append("Quelques numéros consécutifs — pensez à les espacer")
+                suggestions.append(s["some_consecutive"])
 
         if not suggestions:
-            suggestions.append("Grille bien équilibrée")
+            suggestions.append(s["well_balanced"])
 
-        if score >= 80: comparaison = "Meilleure que 85% des grilles aléatoires"
-        elif score >= 60: comparaison = "Meilleure que 60% des grilles aléatoires"
-        elif score >= 40: comparaison = "Dans la moyenne des grilles"
-        else: comparaison = "En dessous de la moyenne"
+        if score >= 80: comparaison = s["better_85"]
+        elif score >= 60: comparaison = s["better_60"]
+        elif score >= 40: comparaison = s["average"]
+        else: comparaison = s["below_average"]
 
         result = {
             "success": True,

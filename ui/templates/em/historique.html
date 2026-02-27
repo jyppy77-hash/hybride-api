@@ -1,0 +1,171 @@
+{% extends "em/_base.html" %}
+
+{% block head %}
+    <title>{{ _('Historique des Tirages EuroMillions | LotoIA') }}</title>
+    <meta name="description" content="{{ _('Recherchez un tirage EuroMillions par date. Consultez les numéros et étoiles de chaque tirage historique.') }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LotoIA">
+    <meta property="og:locale" content="{{ og_locale }}">
+    <meta property="og:title" content="{{ _('Historique EuroMillions | LotoIA') }}">
+    <meta property="og:description" content="{{ _('Recherchez un tirage EuroMillions par date.') }}">
+    <meta property="og:url" content="{{ canonical_url }}">
+    <meta property="og:image" content="{{ base_url }}/static/og-image.jpg">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ _('Historique EuroMillions | LotoIA') }}">
+    <meta name="twitter:description" content="{{ _('Recherchez un tirage EuroMillions par date.') }}">
+    <meta name="twitter:image" content="{{ base_url }}/static/og-image.jpg">
+{% endblock %}
+
+{% block head_end %}
+    <style>
+        .historique-container {
+            max-width: 700px;
+            margin: -50px auto 40px;
+            padding: 0 24px 40px;
+            position: relative;
+            z-index: 10;
+        }
+        .search-card {
+            background: var(--theme-bg-card);
+            border: 1px solid var(--theme-border);
+            border-radius: 16px;
+            padding: 32px 28px;
+            box-shadow: var(--theme-shadow);
+        }
+        .search-card h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--theme-text-primary);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .search-form {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .search-form input[type="date"] {
+            padding: 10px 16px;
+            border: 1px solid var(--theme-border);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: var(--theme-bg-input);
+            color: var(--theme-text-primary);
+            font-family: inherit;
+        }
+        .search-form button {
+            padding: 10px 24px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: opacity 0.2s;
+        }
+        .search-form button:hover { opacity: 0.85; }
+        #draw-result { margin-top: 24px; }
+        .draw-card {
+            text-align: center;
+            padding: 24px;
+            background: var(--theme-bg-card-alt, #f8fafc);
+            border-radius: 12px;
+            border: 1px solid var(--theme-border);
+        }
+        .draw-card h3 {
+            font-size: 1.1rem;
+            color: var(--theme-text-primary);
+            margin-bottom: 16px;
+        }
+        .draw-numbers {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .number-ball {
+            width: 46px; height: 46px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 18px; font-weight: 700; color: white;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+        }
+        .number-ball.main { background: radial-gradient(circle at 30% 30%, #4d88ff, #003399); }
+        .number-ball.star { background: radial-gradient(circle at 30% 30%, #FFD54F, #F57C00); }
+        .separator { font-size: 1.4rem; font-weight: 600; color: var(--theme-text-muted); margin: 0 4px; }
+        .error { color: var(--error); text-align: center; font-weight: 500; }
+        @media (max-width: 480px) {
+            .historique-container { padding: 0 16px 30px; }
+            .search-card { padding: 24px 16px; }
+            .number-ball { width: 40px; height: 40px; font-size: 15px; }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% include "em/_hero.html" %}
+
+    <div class="historique-container">
+        <div class="search-card">
+            <h2>{{ _('Rechercher un tirage') }}</h2>
+            <div class="search-form">
+                <input type="date" id="search-date" value="">
+                <button onclick="searchDraw()">{{ _('Rechercher') }}</button>
+            </div>
+            <div id="draw-result"></div>
+        </div>
+
+        {% include "em/_footer.html" %}
+    </div>
+{% endblock %}
+
+{% block page_scripts %}
+    <script>
+    var STRINGS = {
+        searching: {{ _('Recherche en cours...')|tojson }},
+        drawOf: {{ _('Tirage du')|tojson }},
+        noDrawFound: {{ _('Aucun tirage trouvé pour cette date.')|tojson }},
+        serverError: {{ _('Erreur interne du serveur')|tojson }},
+        connectionError: {{ _('Erreur de connexion au serveur.')|tojson }}
+    };
+    async function searchDraw() {
+        var date = document.getElementById('search-date').value;
+        if (!date) return;
+        var resultDiv = document.getElementById('draw-result');
+        resultDiv.innerHTML = '<p style="text-align:center; color:var(--theme-text-muted);">' + STRINGS.searching + '</p>';
+        try {
+            var response = await fetch('/api/euromillions/draw/' + date);
+            var data = await response.json();
+            if (data.success && data.found) {
+                var d = data.draw;
+                var html = '<div class="draw-card">';
+                html += '<h3>' + STRINGS.drawOf + ' ' + d.date.split('-').reverse().join('/') + '</h3>';
+                html += '<div class="draw-numbers">';
+                [d.n1, d.n2, d.n3, d.n4, d.n5].sort(function(a,b){return a-b;}).forEach(function(n) {
+                    html += '<span class="number-ball main">' + String(n).padStart(2,'0') + '</span>';
+                });
+                html += '<span class="separator">+</span>';
+                [d.etoile_1, d.etoile_2].sort(function(a,b){return a-b;}).forEach(function(n) {
+                    html += '<span class="number-ball star">' + String(n).padStart(2,'0') + '</span>';
+                });
+                html += '</div></div>';
+                resultDiv.innerHTML = html;
+            } else if (data.success && !data.found) {
+                resultDiv.innerHTML = '<p class="error">' + STRINGS.noDrawFound + '</p>';
+            } else {
+                resultDiv.innerHTML = '<p class="error">' + (data.message || STRINGS.serverError) + '</p>';
+            }
+        } catch(e) {
+            resultDiv.innerHTML = '<p class="error">' + STRINGS.connectionError + '</p>';
+        }
+    }
+    document.getElementById('search-date').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') searchDraw();
+    });
+    </script>
+{% endblock %}

@@ -1,0 +1,26 @@
+{# ── Standard EM hero header — reusable across pages ── #}
+<header class="page-header loto-hero-header">
+    <div class="header-content">
+        <h1><span>{{ hero_icon }}</span> {{ hero_title }}</h1>
+        <p class="subtitle">{{ hero_subtitle }}</p>
+        <div class="loto-hero-actions">
+            <a href="{% if active_page == 'simulateur' %}#grid-start{% else %}{{ urls.simulateur }}{% endif %}" class="loto-hero-btn{% if active_page == 'simulateur' %} loto-hero-btn-active{% endif %}">
+                <span class="loto-hero-btn-icon">&#127919;</span>
+                {{ _('Auditer une grille') }}
+            </a>
+            <a href="{% if active_page == 'generateur' %}#generator{% else %}{{ urls.generateur }}{% endif %}" class="loto-hero-btn{% if active_page == 'generateur' %} loto-hero-btn-active{% endif %}">
+                <span class="loto-hero-btn-icon">&#129504;</span>
+                {{ _('Explorer des grilles') }}
+            </a>
+            <a href="{{ urls.statistiques }}" class="loto-hero-btn{% if active_page == 'statistiques' %} loto-hero-btn-active{% endif %}">
+                <span class="loto-hero-btn-icon">&#128202;</span>
+                {{ _('Statistiques') }}
+            </a>
+            <a href="{{ urls.news }}" class="loto-hero-btn loto-hero-btn-news{% if active_page == 'news' %} loto-hero-btn-active{% endif %}">
+                <span class="loto-hero-btn-icon">&#128240;</span>
+                {{ _('Actualités') }}
+            </a>
+        </div>
+        <p class="loto-hero-scroll-hint">&larr; {{ _('glisser pour voir plus') }} &rarr;</p>
+    </div>
+</header>

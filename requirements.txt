@@ -30,3 +30,6 @@ matplotlib==3.9.2
 
 # i18n (gettext + Babel)
 Babel>=2.14.0
+
+# Templates (Jinja2 i18n)
+Jinja2>=3.1.0

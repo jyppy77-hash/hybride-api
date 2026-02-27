@@ -1,0 +1,870 @@
+{% extends "em/_base.html" %}
+
+{% block head %}
+    <title>{{ _('Statistiques EuroMillions - Fréquences et Tendances | LotoIA') }}</title>
+    <meta name="description" content="{{ _('Statistiques complètes de l\'EuroMillions : fréquences des numéros et étoiles, tendances, numéros chauds et froids, historique des tirages.') }}">
+    <meta name="keywords" content="{{ _('statistiques euromillions, fréquences numéros euromillions, étoiles euromillions, moteur HYBRIDE, numéros chauds froids, HYBRIDE, tendances euromillions') }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LotoIA">
+    <meta property="og:locale" content="{{ og_locale }}">
+    <meta property="og:title" content="{{ _('Statistiques EuroMillions | LotoIA') }}">
+    <meta property="og:description" content="{{ _('Fréquences, tendances et numéros chauds/froids de l\'EuroMillions.') }}">
+    <meta property="og:url" content="{{ canonical_url }}">
+    <meta property="og:image" content="{{ base_url }}/static/og-image.jpg">
+    <meta property="og:image:secure_url" content="{{ base_url }}/static/og-image.jpg">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ _('Statistiques EuroMillions | LotoIA') }}">
+    <meta name="twitter:description" content="{{ _('Fréquences, tendances et numéros chauds/froids de l\'EuroMillions.') }}">
+    <meta name="twitter:image" content="{{ base_url }}/static/og-image.jpg">
+
+    <!-- JSON-LD Schema.org -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Dataset",
+      "name": {{ _('Historique des tirages EuroMillions')|tojson }},
+      "description": {{ _('Dataset complet des tirages EuroMillions : numéros gagnants (5 boules + 2 étoiles), fréquences de sortie, écarts entre apparitions, tendances statistiques. Données issues des résultats officiels FDJ, analysées par le moteur HYBRIDE.')|tojson }},
+      "url": "{{ canonical_url }}",
+      "identifier": "lotoia-euromillions-tirages",
+      "license": "https://www.etalab.gouv.fr/licence-ouverte-open-licence/",
+      "isAccessibleForFree": true,
+      "creator": {
+        "@type": "Organization",
+        "name": "LotoIA",
+        "url": "{{ base_url }}"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "LotoIA",
+        "url": "{{ base_url }}"
+      },
+      "temporalCoverage": "2004/2026",
+      "spatialCoverage": "Europe",
+      "variableMeasured": [
+        {"@type": "PropertyValue", "name": {{ _('Numéros gagnants')|tojson }}, "description": {{ _('5 boules (1-50) + 2 étoiles (1-12) par tirage')|tojson }}},
+        {"@type": "PropertyValue", "name": {{ _('Fréquence de sortie')|tojson }}, "description": {{ _('Nombre d\'apparitions de chaque numéro et étoile sur la période')|tojson }}},
+        {"@type": "PropertyValue", "name": {{ _('Écart actuel')|tojson }}, "description": {{ _('Nombre de tirages depuis la dernière apparition')|tojson }}},
+        {"@type": "PropertyValue", "name": {{ _('Date de tirage')|tojson }}, "description": {{ _('Date de chaque tirage (mardi, vendredi)')|tojson }}}
+      ],
+      "distribution": {
+        "@type": "DataDownload",
+        "encodingFormat": "application/pdf",
+        "contentUrl": "{{ base_url }}/api/euromillions/meta-pdf",
+        "name": {{ _('Rapport META DATA EuroMillions — PDF')|tojson }}
+      },
+      "keywords": {{ _('euromillions, tirages, fréquences, statistiques, FDJ, étoiles, Europe')|tojson }}
+    }
+    </script>
+{% endblock %}
+
+{% block head_end %}
+    <style>
+        /* =================================================================
+           STATISTIQUES EUROMILLIONS — Styles specifiques
+           Herite du chassis unifie (style.css + style-em.css) :
+           page-header, loto-hero-header, engine-nav-subpage,
+           loto-hero-actions, loto-hero-btn
+           ================================================================= */
+
+        /* ---- Container (jointure header -> carte) ---- */
+        .stats-container {
+            max-width: var(--app-max-width, 1140px);
+            margin: -50px auto 40px;
+            padding: 0 var(--app-padding-x, 24px);
+            position: relative;
+            z-index: 10;
+        }
+
+        /* ---- Carte principale (onglets) ---- */
+        .tabs-card {
+            background: var(--theme-bg-card);
+            border: 1px solid var(--theme-border);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        /* ---- Onglets ---- */
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 32px;
+            border-bottom: 2px solid var(--theme-border);
+            flex-wrap: wrap;
+            position: relative;
+            overflow: visible;
+        }
+
+        .tab {
+            padding: 16px 24px;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--theme-text-muted);
+            transition: all 0.3s ease;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tab:hover {
+            color: var(--primary);
+            background: rgba(0, 51, 153, 0.05);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.4s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* ---- Analyse par numero ---- */
+        .number-selector {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .number-selector select {
+            padding: 12px 16px;
+            font-size: 1.05rem;
+            border: 2px solid var(--theme-border);
+            border-radius: 8px;
+            font-family: inherit;
+            min-width: 120px;
+            background: var(--theme-bg-input, var(--theme-bg-card));
+            color: var(--theme-text-primary);
+        }
+
+        .number-selector select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .number-selector label {
+            font-weight: 600;
+            color: var(--theme-text-primary);
+        }
+
+        .analysis-section {
+            margin-bottom: 32px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--theme-border);
+        }
+
+        .analysis-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .analysis-section h3 {
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            color: var(--theme-text-primary);
+        }
+
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-light);
+            border-left: 4px solid var(--primary);
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .stat-card.star-accent {
+            border-left-color: #FFD700;
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.9rem;
+            color: var(--theme-text-muted);
+            margin-bottom: 8px;
+        }
+
+        .stat-card .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--theme-text-primary);
+        }
+
+        .info-note {
+            background: rgba(0, 51, 153, 0.08);
+            border-left: 4px solid #003399;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 24px;
+            font-size: 0.95rem;
+            color: var(--theme-text-primary);
+        }
+
+        /* ---- Historique ---- */
+        .search-form {
+            margin-bottom: 24px;
+        }
+
+        .search-form label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--theme-text-primary);
+        }
+
+        .search-form .input-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .search-form input[type="date"] {
+            padding: 12px 16px;
+            font-size: 1.05rem;
+            border: 2px solid var(--theme-border);
+            border-radius: 8px;
+            font-family: inherit;
+            background: var(--theme-bg-input, var(--theme-bg-card));
+            color: var(--theme-text-primary);
+        }
+
+        .search-result {
+            background: var(--bg-light);
+            border-radius: 8px;
+            padding: 24px;
+            margin-top: 24px;
+            color: var(--theme-text-primary);
+        }
+
+        .search-result.error {
+            background: rgba(239, 68, 68, 0.08);
+            border-left: 4px solid var(--error);
+            color: var(--error);
+        }
+
+        .search-result.not-found {
+            background: rgba(245, 124, 0, 0.08);
+            border-left: 4px solid #F57C00;
+            color: #F57C00;
+        }
+
+        /* ---- Boules de tirage ---- */
+        .draw-numbers {
+            display: flex;
+            gap: 12px;
+            margin: 16px 0;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .number-ball {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .number-ball.main {
+            background: linear-gradient(135deg, #4d88ff, #003399);
+            box-shadow: 0 4px 8px rgba(0, 51, 153, 0.4);
+        }
+
+        .number-ball.star {
+            background: linear-gradient(135deg, #FFD700, #F57C00);
+            box-shadow: 0 4px 8px rgba(255, 215, 0, 0.4);
+        }
+
+        .separator {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--theme-text-muted);
+            padding: 0 4px;
+        }
+
+        /* ---- Top / Flop ---- */
+        .topflop-category {
+            margin-bottom: 40px;
+        }
+
+        .topflop-category > h3 {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            color: var(--theme-text-primary);
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--theme-border);
+        }
+
+        .topflop-section {
+            margin-bottom: 32px;
+        }
+
+        .topflop-section h4 {
+            font-size: 1.15rem;
+            margin-bottom: 16px;
+            color: var(--theme-text-primary);
+        }
+
+        .topflop-section h4.top-title {
+            color: var(--success);
+        }
+
+        .topflop-section h4.flop-title {
+            color: var(--tertiary);
+        }
+
+        .numbers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .number-card {
+            background: var(--bg-light);
+            border-radius: 8px;
+            padding: 16px 12px;
+            text-align: center;
+            border: 2px solid var(--theme-border);
+            transition: all 0.3s ease;
+        }
+
+        .number-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .number-card.top {
+            border-color: var(--success);
+            background: rgba(16, 185, 129, 0.06);
+        }
+
+        .number-card.flop {
+            border-color: var(--tertiary);
+            background: var(--bg-light);
+        }
+
+        .number-card .number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+
+        .number-card.top .number {
+            color: var(--success);
+        }
+
+        .number-card.flop .number {
+            color: var(--tertiary);
+        }
+
+        .number-card.star-card .number {
+            color: #F57C00;
+        }
+
+        .number-card.star-card.top .number {
+            color: var(--success);
+        }
+
+        .number-card.star-card.flop .number {
+            color: var(--tertiary);
+        }
+
+        .number-card .count {
+            font-size: 0.9rem;
+            color: var(--theme-text-muted);
+        }
+
+        /* ---- Responsive ---- */
+        @media (max-width: 768px) {
+            .numbers-grid {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 8px;
+            }
+
+            .number-card {
+                padding: 12px 8px;
+            }
+
+            .number-card .number {
+                font-size: 1.5rem;
+            }
+
+            .number-card .count {
+                font-size: 0.8rem;
+            }
+
+            .tabs-card {
+                padding: 20px 16px;
+            }
+
+            .tab {
+                padding: 12px 16px;
+                font-size: 0.9rem;
+            }
+
+            .number-ball {
+                width: 50px;
+                height: 50px;
+                font-size: 1.25rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tab {
+                padding: 10px 12px;
+                font-size: 0.85rem;
+            }
+
+            .number-selector {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .number-selector select,
+            .number-selector button {
+                width: 100%;
+            }
+
+            .number-ball {
+                width: 44px;
+                height: 44px;
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% include "em/_hero.html" %}
+
+    <!-- Contenu principal -->
+    <div class="stats-container">
+        <div class="tabs-card">
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('historique')">&#128197; {{ _('Historique des tirages') }}</button>
+                <button class="tab" onclick="switchTab('analyse')">&#128269; {{ _('Analyse par numéro') }}</button>
+                <button class="tab" onclick="switchTab('topflop')">&#128204; {{ _('Top / Flop') }}</button>
+            </div>
+
+            <!-- ONGLET 1 : Historique des tirages -->
+            <div id="tab-historique" class="tab-content active">
+                <div class="search-form">
+                    <label for="search-date">{{ _('Rechercher un tirage par date') }}</label>
+                    <div class="input-group">
+                        <input type="date" id="search-date" name="search-date">
+                        <button onclick="searchDraw()" class="btn-primary">{{ _('Rechercher') }}</button>
+                    </div>
+                </div>
+
+                <div id="draw-result"></div>
+
+                <div class="info-note">
+                    <strong>{{ _('À propos de l\'historique :') }}</strong><br>
+                    {{ _('Cette base contient les tirages officiels de l\'EuroMillions. Utilisez le sélecteur de date pour consulter un tirage spécifique.') }}
+                    {{ _('Les numéros vont de 1 à 50, les étoiles de 1 à 12.') }}
+                </div>
+            </div>
+
+            <!-- ONGLET 2 : Analyse par numero -->
+            <div id="tab-analyse" class="tab-content">
+                <!-- Section Numeros -->
+                <div class="analysis-section">
+                    <h3>{{ _('Analyse d\'un numéro (1-50)') }}</h3>
+                    <div class="number-selector">
+                        <label for="number-select"><strong>{{ _('Numéro :') }}</strong></label>
+                        <select id="number-select">
+                            <option value="">{{ _('-- Choisir --') }}</option>
+                        </select>
+                        <button onclick="searchNumber()" class="btn-primary">{{ _('Analyser') }}</button>
+                    </div>
+                    <div id="number-result"></div>
+                </div>
+
+                <!-- Section Etoiles -->
+                <div class="analysis-section">
+                    <h3>{{ _('Analyse d\'une étoile (1-12)') }}</h3>
+                    <div class="number-selector">
+                        <label for="star-select"><strong>{{ _('Étoile :') }}</strong></label>
+                        <select id="star-select">
+                            <option value="">{{ _('-- Choisir --') }}</option>
+                        </select>
+                        <button onclick="searchStar()" class="btn-primary">{{ _('Analyser') }}</button>
+                    </div>
+                    <div id="star-result"></div>
+                </div>
+
+                <div class="info-note">
+                    <strong>{{ _('Vocabulaire :') }}</strong><br>
+                    &bull; <strong>{{ _('Fréquence') }}</strong> : {{ _('nombre de fois où le numéro/étoile est apparu dans l\'historique.') }}<br>
+                    &bull; <strong>{{ _('Écart actuel') }}</strong> : {{ _('nombre de tirages depuis la dernière apparition.') }}<br>
+                    &bull; <strong>{{ _('Écart moyen') }}</strong> : {{ _('intervalle moyen entre deux apparitions.') }}<br>
+                    &bull; <strong>{{ _('Catégorie') }}</strong> : {{ _('classification du numéro (chaud, tiède, froid).') }}<br>
+                    {{ _('Ces données sont purement descriptives et n\'impliquent aucune prédiction.') }}
+                </div>
+            </div>
+
+            <!-- ONGLET 3 : Top / Flop -->
+            <div id="tab-topflop" class="tab-content">
+                <p style="margin-bottom: 24px; color: var(--text-muted);">
+                    {{ _('Fréquence d\'apparition de chaque numéro et étoile sur l\'ensemble de l\'historique.') }}
+                </p>
+
+                <!-- Numeros -->
+                <div class="topflop-category">
+                    <h3>&#127920; {{ _('Numéros (1-50)') }}</h3>
+
+                    <div class="topflop-section">
+                        <h4 class="top-title">&#127942; {{ _('Numéros les plus sortis') }}</h4>
+                        <div id="top-numbers-grid" class="numbers-grid"></div>
+                    </div>
+
+                    <div class="topflop-section">
+                        <h4 class="flop-title">&#128201; {{ _('Numéros les moins sortis') }}</h4>
+                        <div id="flop-numbers-grid" class="numbers-grid"></div>
+                    </div>
+                </div>
+
+                <!-- Etoiles -->
+                <div class="topflop-category">
+                    <h3>&#11088; {{ _('Étoiles (1-12)') }}</h3>
+
+                    <div class="topflop-section">
+                        <h4 class="top-title">&#127942; {{ _('Étoiles les plus sorties') }}</h4>
+                        <div id="top-stars-grid" class="numbers-grid"></div>
+                    </div>
+
+                    <div class="topflop-section">
+                        <h4 class="flop-title">&#128201; {{ _('Étoiles les moins sorties') }}</h4>
+                        <div id="flop-stars-grid" class="numbers-grid"></div>
+                    </div>
+                </div>
+
+                <div class="info-note">
+                    <strong>{{ _('À propos de ces données :') }}</strong><br>
+                    {{ _('Ces fréquences représentent le nombre de sorties de chaque numéro et étoile sur l\'ensemble de l\'historique.') }}
+                    {{ _('Elles sont purement descriptives et n\'impliquent aucune prédiction sur les tirages futurs.') }}
+                </div>
+            </div>
+        </div>
+
+        {% include "em/_footer.html" %}
+    </div>
+{% endblock %}
+
+{% block page_scripts %}
+    <script>
+        // =====================================================================
+        //  TRANSLATABLE STRINGS
+        // =====================================================================
+        var STRINGS = {
+            drawOf: {{ _('Tirage du ')|tojson }},
+            winningNumbers: {{ _('Numéros gagnants :')|tojson }},
+            noDrawFound: {{ _('Aucun tirage trouvé pour cette date.')|tojson }},
+            connectionError: {{ _('Erreur de connexion.')|tojson }},
+            analyzing: {{ _('Analyse en cours...')|tojson }},
+            numberLabel: {{ _('Numéro ')|tojson }},
+            starLabel: {{ _('Étoile ')|tojson }},
+            frequency: {{ _('Fréquence')|tojson }},
+            percentage: {{ _('Pourcentage')|tojson }},
+            lastDrawn: {{ _('Dernière sortie')|tojson }},
+            currentGap: {{ _('Écart actuel')|tojson }},
+            averageGap: {{ _('Écart moyen')|tojson }},
+            ranking: {{ _('Classement')|tojson }},
+            category: {{ _('Catégorie : ')|tojson }},
+            selectNumber: {{ _('Veuillez sélectionner un numéro.')|tojson }},
+            selectStar: {{ _('Veuillez sélectionner une étoile.')|tojson }},
+            searching: {{ _('Recherche en cours...')|tojson }},
+            times: {{ _('fois')|tojson }},
+            draws: {{ _('tirages')|tojson }},
+            serverError: {{ _('Erreur interne du serveur')|tojson }},
+            errorLabel: {{ _('Erreur :')|tojson }},
+            networkError: {{ _('Erreur réseau :')|tojson }},
+            cannotAnalyzeNumber: {{ _('Impossible d\'analyser le numéro')|tojson }},
+            cannotAnalyzeStar: {{ _('Impossible d\'analyser l\'étoile')|tojson }},
+            cannotLoadData: {{ _('Impossible de charger les données')|tojson }},
+            noDataAvailable: {{ _('Aucune donnée disponible.')|tojson }},
+            appearances: {{ _('sorties')|tojson }}
+        };
+
+        // =====================================================================
+        //  INITIALISATION
+        // =====================================================================
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Remplir le selecteur de numeros (1-50)
+            var numberSelect = document.getElementById('number-select');
+            for (var i = 1; i <= 50; i++) {
+                var option = document.createElement('option');
+                option.value = i;
+                option.textContent = i;
+                numberSelect.appendChild(option);
+            }
+
+            // Remplir le selecteur d'etoiles (1-12)
+            var starSelect = document.getElementById('star-select');
+            for (var j = 1; j <= 12; j++) {
+                var opt = document.createElement('option');
+                opt.value = j;
+                opt.textContent = j;
+                starSelect.appendChild(opt);
+            }
+
+            // Permettre la recherche avec Entree sur l'historique
+            document.getElementById('search-date').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchDraw();
+                }
+            });
+        });
+
+        // =====================================================================
+        //  GESTION DES ONGLETS
+        // =====================================================================
+
+        var topFlopLoaded = false;
+
+        function switchTab(tabName) {
+            // Desactiver tous les onglets
+            document.querySelectorAll('.tab').forEach(function(tab) { tab.classList.remove('active'); });
+            document.querySelectorAll('.tab-content').forEach(function(content) { content.classList.remove('active'); });
+
+            // Activer l'onglet selectionne
+            event.target.closest('.tab').classList.add('active');
+            document.getElementById('tab-' + tabName).classList.add('active');
+
+            // Charger les donnees Top/Flop si premier acces
+            if (tabName === 'topflop' && !topFlopLoaded) {
+                loadTopFlop();
+            }
+        }
+
+        // =====================================================================
+        //  ONGLET 1 : HISTORIQUE — Recherche d'un tirage par date
+        // =====================================================================
+
+        async function searchDraw() {
+            var date = document.getElementById('search-date').value;
+            if (!date) return;
+            var resultDiv = document.getElementById('draw-result');
+            resultDiv.innerHTML = '<p>' + STRINGS.searching + '</p>';
+            try {
+                var response = await fetch('/api/euromillions/draw/' + date);
+                var data = await response.json();
+                if (data.success && data.found) {
+                    var d = data.draw;
+                    var html = '<div class="search-result">';
+                    html += '<h3 style="margin-bottom: 16px; color: var(--primary);">' + STRINGS.drawOf + d.date.split('-').reverse().join('/') + '</h3>';
+                    html += '<p><strong>' + STRINGS.winningNumbers + '</strong></p>';
+                    html += '<div class="draw-numbers">';
+                    [d.n1, d.n2, d.n3, d.n4, d.n5].sort(function(a,b){return a-b;}).forEach(function(n) {
+                        html += '<span class="number-ball main">' + String(n).padStart(2,'0') + '</span>';
+                    });
+                    html += '<span class="separator">+</span>';
+                    [d.etoile_1, d.etoile_2].sort(function(a,b){return a-b;}).forEach(function(n) {
+                        html += '<span class="number-ball star">' + String(n).padStart(2,'0') + '</span>';
+                    });
+                    html += '</div>';
+                    html += '</div>';
+                    resultDiv.innerHTML = html;
+                } else if (data.success && !data.found) {
+                    resultDiv.innerHTML = '<div class="search-result not-found"><strong>' + STRINGS.noDrawFound + '</strong></div>';
+                } else {
+                    resultDiv.innerHTML = '<div class="search-result error"><strong>' + (data.message || STRINGS.serverError) + '</strong></div>';
+                }
+            } catch(e) {
+                resultDiv.innerHTML = '<div class="search-result error"><strong>' + STRINGS.connectionError + '</strong></div>';
+            }
+        }
+
+        // =====================================================================
+        //  ONGLET 2 : ANALYSE PAR NUMERO / ETOILE
+        // =====================================================================
+
+        async function searchNumber() {
+            var select = document.getElementById('number-select');
+            var number = select.value;
+            var resultDiv = document.getElementById('number-result');
+
+            if (!number) {
+                alert(STRINGS.selectNumber);
+                return;
+            }
+
+            resultDiv.innerHTML = '<p>' + STRINGS.analyzing + '</p>';
+
+            try {
+                var response = await fetch('/api/euromillions/stats/number/' + number);
+                var data = await response.json();
+
+                if (data.success) {
+                    var s = data.data || data;
+                    var html = '<h4 style="margin: 16px 0; color: var(--primary);">' + STRINGS.numberLabel + String(number).padStart(2,'0') + '</h4>';
+                    html += '<div class="stats-cards">';
+                    html += buildStatCard(STRINGS.frequency, s.frequence || s.total_appearances || '-', '');
+                    html += buildStatCard(STRINGS.percentage, s.pourcentage !== undefined ? s.pourcentage + '%' : '-', '');
+                    html += buildStatCard(STRINGS.lastDrawn, s.derniere_sortie || s.last_appearance || '-', 'small');
+                    html += buildStatCard(STRINGS.currentGap, s.ecart_actuel !== undefined ? s.ecart_actuel + ' ' + STRINGS.draws : (s.current_gap !== undefined ? s.current_gap + ' ' + STRINGS.draws : '-'), '');
+                    html += buildStatCard(STRINGS.averageGap, s.ecart_moyen !== undefined ? s.ecart_moyen : '-', '');
+                    html += buildStatCard(STRINGS.ranking, s.classement || '-', '');
+                    html += '</div>';
+                    if (s.categorie) {
+                        html += '<p style="margin-top: 8px;"><strong>' + STRINGS.category + '</strong> ' + s.categorie + '</p>';
+                    }
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = '<div class="search-result error"><strong>' + STRINGS.errorLabel + '</strong> ' + (data.message || STRINGS.cannotAnalyzeNumber) + '</div>';
+                }
+            } catch(e) {
+                resultDiv.innerHTML = '<div class="search-result error"><strong>' + STRINGS.networkError + '</strong> ' + e.message + '</div>';
+            }
+        }
+
+        async function searchStar() {
+            var select = document.getElementById('star-select');
+            var star = select.value;
+            var resultDiv = document.getElementById('star-result');
+
+            if (!star) {
+                alert(STRINGS.selectStar);
+                return;
+            }
+
+            resultDiv.innerHTML = '<p>' + STRINGS.analyzing + '</p>';
+
+            try {
+                var response = await fetch('/api/euromillions/stats/etoile/' + star);
+                var data = await response.json();
+
+                if (data.success) {
+                    var s = data.data || data;
+                    var html = '<h4 style="margin: 16px 0; color: #F57C00;">' + STRINGS.starLabel + String(star).padStart(2,'0') + '</h4>';
+                    html += '<div class="stats-cards">';
+                    html += buildStatCard(STRINGS.frequency, s.frequence || s.total_appearances || '-', 'star-accent');
+                    html += buildStatCard(STRINGS.percentage, s.pourcentage !== undefined ? s.pourcentage + '%' : '-', 'star-accent');
+                    html += buildStatCard(STRINGS.lastDrawn, s.derniere_sortie || s.last_appearance || '-', 'star-accent small');
+                    html += buildStatCard(STRINGS.currentGap, s.ecart_actuel !== undefined ? s.ecart_actuel + ' ' + STRINGS.draws : (s.current_gap !== undefined ? s.current_gap + ' ' + STRINGS.draws : '-'), 'star-accent');
+                    html += buildStatCard(STRINGS.averageGap, s.ecart_moyen !== undefined ? s.ecart_moyen : '-', 'star-accent');
+                    html += buildStatCard(STRINGS.ranking, s.classement || '-', 'star-accent');
+                    html += '</div>';
+                    if (s.categorie) {
+                        html += '<p style="margin-top: 8px;"><strong>' + STRINGS.category + '</strong> ' + s.categorie + '</p>';
+                    }
+                    resultDiv.innerHTML = html;
+                } else {
+                    resultDiv.innerHTML = '<div class="search-result error"><strong>' + STRINGS.errorLabel + '</strong> ' + (data.message || STRINGS.cannotAnalyzeStar) + '</div>';
+                }
+            } catch(e) {
+                resultDiv.innerHTML = '<div class="search-result error"><strong>' + STRINGS.networkError + '</strong> ' + e.message + '</div>';
+            }
+        }
+
+        function buildStatCard(label, value, extraClass) {
+            var sizeStyle = '';
+            if (extraClass && extraClass.indexOf('small') !== -1) {
+                sizeStyle = ' style="font-size: 1.3rem;"';
+            }
+            var cls = 'stat-card';
+            if (extraClass) {
+                cls += ' ' + extraClass.replace('small', '').trim();
+            }
+            return '<div class="' + cls + '">' +
+                '<div class="stat-label">' + label + '</div>' +
+                '<div class="stat-value"' + sizeStyle + '>' + value + '</div>' +
+                '</div>';
+        }
+
+        // =====================================================================
+        //  ONGLET 3 : TOP / FLOP
+        // =====================================================================
+
+        async function loadTopFlop() {
+            try {
+                var response = await fetch('/api/euromillions/stats/top-flop');
+                var data = await response.json();
+
+                if (data.success) {
+                    var d = data.data || data;
+
+                    // Numeros — Top 5
+                    var topNumbers = d.top_numbers || d.top || [];
+                    var flopNumbers = d.flop_numbers || d.flop || [];
+                    var topStars = d.top_stars || d.top_etoiles || [];
+                    var flopStars = d.flop_stars || d.flop_etoiles || [];
+
+                    displayRanking('top-numbers-grid', topNumbers.slice(0, 5), 'top', false);
+                    displayRanking('flop-numbers-grid', flopNumbers.slice(0, 5), 'flop', false);
+                    displayRanking('top-stars-grid', topStars.slice(0, 5), 'top', true);
+                    displayRanking('flop-stars-grid', flopStars.slice(0, 5), 'flop', true);
+
+                    topFlopLoaded = true;
+                } else {
+                    alert(STRINGS.errorLabel + ' ' + (data.message || STRINGS.cannotLoadData));
+                }
+            } catch(e) {
+                alert(STRINGS.networkError + ' ' + e.message);
+            }
+        }
+
+        function displayRanking(gridId, items, type, isStar) {
+            var grid = document.getElementById(gridId);
+            grid.innerHTML = '';
+
+            if (!items || items.length === 0) {
+                grid.innerHTML = '<p style="color: var(--theme-text-muted);">' + STRINGS.noDataAvailable + '</p>';
+                return;
+            }
+
+            items.forEach(function(item) {
+                var card = document.createElement('div');
+                var cardClass = 'number-card ' + type;
+                if (isStar) cardClass += ' star-card';
+                card.className = cardClass;
+
+                var num = item.number || item.numero || item.etoile || '-';
+                var count = item.count || item.frequence || 0;
+
+                card.innerHTML =
+                    '<div class="number">' + String(num).padStart(2, '0') + '</div>' +
+                    '<div class="count">' + count + ' ' + STRINGS.appearances + '</div>';
+                grid.appendChild(card);
+            });
+        }
+    </script>
+{% endblock %}
