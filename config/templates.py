@@ -12,6 +12,7 @@ from starlette.requests import Request
 
 from config.i18n import ctx_lang, get_translations, SUPPORTED_LANGS, DEFAULT_LANG
 from config.js_i18n import get_js_labels
+from config import killswitch
 
 # ── Paths ────────────────────────────────────────────────────────────────
 _ROOT = os.path.dirname(os.path.dirname(__file__))
@@ -62,20 +63,62 @@ EM_URLS = {
         "news":         "/en/euromillions/news",
         "faq":          "/en/euromillions/faq",
     },
+    "pt": {
+        "home":         "/pt/euromillions",
+        "accueil":      "/pt/euromillions",
+        "simulateur":   "/pt/euromillions/simulador",
+        "generateur":   "/pt/euromillions/gerador",
+        "statistiques": "/pt/euromillions/estatisticas",
+        "historique":   "/pt/euromillions/historico",
+        "news":         "/pt/euromillions/noticias",
+        "faq":          "/pt/euromillions/faq",
+    },
+    "es": {
+        "home":         "/es/euromillions",
+        "accueil":      "/es/euromillions",
+        "simulateur":   "/es/euromillions/simulador",
+        "generateur":   "/es/euromillions/generador",
+        "statistiques": "/es/euromillions/estadisticas",
+        "historique":   "/es/euromillions/historial",
+        "news":         "/es/euromillions/noticias",
+        "faq":          "/es/euromillions/faq",
+    },
+    "de": {
+        "home":         "/de/euromillions",
+        "accueil":      "/de/euromillions",
+        "simulateur":   "/de/euromillions/simulator",
+        "generateur":   "/de/euromillions/generator",
+        "statistiques": "/de/euromillions/statistiken",
+        "historique":   "/de/euromillions/ziehungen",
+        "news":         "/de/euromillions/nachrichten",
+        "faq":          "/de/euromillions/faq",
+    },
+    "nl": {
+        "home":         "/nl/euromillions",
+        "accueil":      "/nl/euromillions",
+        "simulateur":   "/nl/euromillions/simulator",
+        "generateur":   "/nl/euromillions/generator",
+        "statistiques": "/nl/euromillions/statistieken",
+        "historique":   "/nl/euromillions/geschiedenis",
+        "news":         "/nl/euromillions/nieuws",
+        "faq":          "/nl/euromillions/faq",
+    },
 }
 
 # Reverse mapping for lang switch: page_key → other-lang URL
-_LANG_SWITCH = {
-    "fr": {k: EM_URLS["en"][k] for k in EM_URLS["en"]},
-    "en": {k: EM_URLS["fr"][k] for k in EM_URLS["fr"]},
-}
+# FR → EN toggle; all other langs → FR
+_LANG_SWITCH = {"fr": {k: EM_URLS["en"][k] for k in EM_URLS["en"]}}
+for _lc in EM_URLS:
+    if _lc != "fr":
+        _LANG_SWITCH[_lc] = {k: EM_URLS["fr"][k] for k in EM_URLS["fr"]}
 
 # ── Hreflang helpers ─────────────────────────────────────────────────────
 
 def hreflang_tags(page_key: str) -> list[dict]:
-    """Return hreflang link data [{lang, url}, ...] for a page."""
+    """Return hreflang link data [{lang, url}, ...] for a page.
+    Only includes languages present in killswitch.ENABLED_LANGS."""
     tags = []
-    for lc in ("fr", "en"):
+    for lc in killswitch.ENABLED_LANGS:
         url = EM_URLS.get(lc, {}).get(page_key)
         if url:
             tags.append({"lang": lc, "url": f"{BASE_URL}{url}"})
@@ -97,11 +140,37 @@ _GAMBLING_HELP = {
         "url":  "https://www.begambleaware.org",
         "name": "BeGambleAware",
     },
+    "pt": {
+        "url":  "https://www.jogoresponsavel.pt",
+        "name": "Jogo Responsavel",
+    },
+    "es": {
+        "url":  "https://www.jugarbien.es",
+        "name": "Jugar Bien",
+    },
+    "de": {
+        "url":  "https://www.spielen-mit-verantwortung.de",
+        "name": "Spielen mit Verantwortung",
+    },
+    "nl": {
+        "url":  "https://www.agog.nl",
+        "name": "AGOG",
+    },
 }
 
 # ── OG locale per language ───────────────────────────────────────────────
 
-_OG_LOCALE = {"fr": "fr_FR", "en": "en_GB"}
+_OG_LOCALE = {
+    "fr": "fr_FR", "en": "en_GB", "pt": "pt_PT",
+    "es": "es_ES", "de": "de_DE", "nl": "nl_NL",
+}
+
+# ── Date locale per language (JS Intl) ───────────────────────────────────
+
+_DATE_LOCALE = {
+    "fr": "fr-FR", "en": "en-GB", "pt": "pt-PT",
+    "es": "es-ES", "de": "de-DE", "nl": "nl-NL",
+}
 
 # ── render_template ──────────────────────────────────────────────────────
 
@@ -149,7 +218,7 @@ def render_template(
 
             # OG & locale
             "og_locale": _OG_LOCALE.get(lang, "fr_FR"),
-            "date_locale": "en-GB" if not is_fr else "fr-FR",
+            "date_locale": _DATE_LOCALE.get(lang, "fr-FR"),
 
             # JS paths (FR vs EN variants)
             "chatbot_js": (

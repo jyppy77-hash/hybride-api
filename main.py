@@ -39,6 +39,8 @@ from routes.api_data_unified import router as unified_data_router      # Phase 1
 from routes.api_analyse_unified import router as unified_analyse_router  # Phase 10
 from routes.api_chat_unified import router as unified_chat_router      # Phase 10
 from routes.en_em_pages import router as en_em_pages_router            # Phase 11 — EN EuroMillions
+from routes.multilang_em_pages import router as multilang_em_router    # P5/5 — PT/ES/DE/NL
+from routes.sitemap import router as sitemap_router                    # P5/5 — Dynamic sitemap
 
 # ── JSON structured logging ──
 _log_handler = logging.StreamHandler(sys.stdout)
@@ -71,6 +73,17 @@ class RequestIdFilter(logging.Filter):
 
 
 logging.root.addFilter(RequestIdFilter())
+
+# ── SEO routes set (computed once at import from EM_URLS) ──
+from config.templates import EM_URLS as _EM_URLS
+_SEO_ROUTES = {
+    "/", "/accueil", "/loto", "/loto/analyse", "/loto/exploration",
+    "/loto/statistiques", "/faq", "/news",
+    "/historique", "/methodologie", "/moteur", "/disclaimer",
+    "/mentions-legales", "/politique-confidentialite", "/politique-cookies",
+}
+for _lu in _EM_URLS.values():
+    _SEO_ROUTES.update(_lu.values())
 
 
 @asynccontextmanager
@@ -253,19 +266,7 @@ async def add_cache_headers(request: Request, call_next):
             response.headers["Cache-Control"] = "public, max-age=2592000"  # 30 jours
 
     # Cache court pour pages HTML (SEO routes)
-    seo_routes = ["/", "/accueil", "/loto", "/loto/analyse", "/loto/exploration",
-                  "/loto/statistiques", "/faq", "/news",
-                  "/historique", "/methodologie", "/moteur", "/disclaimer",
-                  "/mentions-legales", "/politique-confidentialite", "/politique-cookies",
-                  "/euromillions", "/euromillions/generateur", "/euromillions/simulateur",
-                  "/euromillions/statistiques", "/euromillions/historique",
-                  "/euromillions/faq", "/euromillions/news",
-                  # Phase 11 — EN EuroMillions
-                  "/en/euromillions", "/en/euromillions/generator",
-                  "/en/euromillions/simulator", "/en/euromillions/statistics",
-                  "/en/euromillions/history", "/en/euromillions/faq",
-                  "/en/euromillions/news"]
-    if path.endswith(".html") or path in seo_routes:
+    if path.endswith(".html") or path in _SEO_ROUTES:
         response.headers["Cache-Control"] = "public, max-age=3600"  # 1 heure
 
     return response
@@ -559,6 +560,9 @@ app.include_router(unified_analyse_router)
 app.include_router(unified_chat_router)
 # Phase 11 — English EuroMillions pages
 app.include_router(en_em_pages_router)
+# P5/5 — Multilingual EM pages (PT/ES/DE/NL) + dynamic sitemap
+app.include_router(multilang_em_router)
+app.include_router(sitemap_router)
 
 
 # =========================

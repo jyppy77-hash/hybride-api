@@ -38,6 +38,42 @@ PAGE_SLUGS = {
         "faq": "faq-em-en",
         "news": "news-em-en",
     },
+    ValidLang.pt: {
+        "home": "home-em-pt",
+        "generator": "generator-em-pt",
+        "simulator": "simulator-em-pt",
+        "statistics": "statistics-em-pt",
+        "history": "history-em-pt",
+        "faq": "faq-em-pt",
+        "news": "news-em-pt",
+    },
+    ValidLang.es: {
+        "home": "home-em-es",
+        "generator": "generator-em-es",
+        "simulator": "simulator-em-es",
+        "statistics": "statistics-em-es",
+        "history": "history-em-es",
+        "faq": "faq-em-es",
+        "news": "news-em-es",
+    },
+    ValidLang.de: {
+        "home": "home-em-de",
+        "generator": "generator-em-de",
+        "simulator": "simulator-em-de",
+        "statistics": "statistics-em-de",
+        "history": "history-em-de",
+        "faq": "faq-em-de",
+        "news": "news-em-de",
+    },
+    ValidLang.nl: {
+        "home": "home-em-nl",
+        "generator": "generator-em-nl",
+        "simulator": "simulator-em-nl",
+        "statistics": "statistics-em-nl",
+        "history": "history-em-nl",
+        "faq": "faq-em-nl",
+        "news": "news-em-nl",
+    },
 }
 
 # Prompt keys per language

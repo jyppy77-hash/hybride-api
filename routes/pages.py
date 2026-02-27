@@ -63,12 +63,6 @@ async def robots():
                         headers={"Cache-Control": "public, max-age=86400"})
 
 
-@router.get("/sitemap.xml")
-async def sitemap():
-    """Sitemap XML pour SEO."""
-    return FileResponse("ui/sitemap.xml", media_type="application/xml",
-                        headers={"Cache-Control": "public, max-age=3600"})
-
 
 @router.get("/favicon.ico", include_in_schema=False)
 async def favicon():
