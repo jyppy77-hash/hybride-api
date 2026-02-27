@@ -1,5 +1,4 @@
-// ================================================================
-// APP-EM.JS - EuroMillions Analysis UI Logic
+// APP-EM-EN.JS — EuroMillions Analysis UI Logic (English version)
 // ================================================================
 
 // State management
@@ -23,10 +22,10 @@ async function fetchTiragesEM(endpoint) {
         const response = await fetch(endpoint);
         if (!response.ok) throw new Error('HTTP ' + response.status);
         const data = await response.json();
-        if (!data.success) throw new Error(data.error || 'Erreur API');
+        if (!data.success) throw new Error(data.error || 'API Error');
         return data.data;
     } catch (error) {
-        console.error('Erreur fetchTiragesEM(' + endpoint + '):', error.message);
+        console.error('Error fetchTiragesEM(' + endpoint + '):', error.message);
         throw error;
     }
 }
@@ -51,8 +50,8 @@ function init() {
 function formatMonthYear(dateStr) {
     if (!dateStr) return '';
     var date = new Date(dateStr);
-    var months = ['jan.', 'fev.', 'mars', 'avr.', 'mai', 'juin',
-                  'juil.', 'aout', 'sept.', 'oct.', 'nov.', 'dec.'];
+    var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return months[date.getMonth()] + ' ' + date.getFullYear();
 }
 
@@ -64,30 +63,30 @@ function updateStatsDisplay() {
                 var totalDraws = data.total_draws || 0;
 
                 var tiragesEl = document.getElementById('stat-tirages');
-                if (tiragesEl) tiragesEl.textContent = totalDraws.toLocaleString('fr-FR') + ' tirages analyses';
+                if (tiragesEl) tiragesEl.textContent = totalDraws.toLocaleString('en-GB') + ' draws analysed';
 
                 var tiragesInline = document.getElementById('stat-tirages-inline');
-                if (tiragesInline) tiragesInline.textContent = totalDraws.toLocaleString('fr-FR');
+                if (tiragesInline) tiragesInline.textContent = totalDraws.toLocaleString('en-GB');
 
                 document.querySelectorAll('.dynamic-tirages').forEach(function(el) {
-                    el.textContent = totalDraws.toLocaleString('fr-FR');
+                    el.textContent = totalDraws.toLocaleString('en-GB');
                 });
 
                 window.TOTAL_TIRAGES_EM = totalDraws;
 
                 var dataDepthEl = document.querySelector('.data-depth');
                 if (dataDepthEl && data.first_draw && data.last_draw) {
-                    dataDepthEl.textContent = 'de ' + formatMonthYear(data.first_draw) + ' a ' + formatMonthYear(data.last_draw);
+                    dataDepthEl.textContent = 'from ' + formatMonthYear(data.first_draw) + ' to ' + formatMonthYear(data.last_draw);
                 }
             }
         })
         .catch(function(err) {
-            console.error('Erreur stats EM:', err);
+            console.error('Error stats EM:', err);
         });
 }
 
 // ================================================================
-// DATE PICKER — EuroMillions: Mardi (2) et Vendredi (5)
+// DATE PICKER — EuroMillions: Tuesday (2) and Friday (5)
 // ================================================================
 
 function configureDatePicker() {
@@ -107,29 +106,29 @@ function configureDatePicker() {
 }
 
 /**
- * Trouve le prochain jour de tirage EuroMillions (mardi ou vendredi)
+ * Finds the next EuroMillions draw day (Tuesday or Friday)
  */
 function getNextDrawDate() {
     var today = new Date();
-    var dayOfWeek = today.getDay(); // 0=Dim, 1=Lun, 2=Mar, 3=Mer, 4=Jeu, 5=Ven, 6=Sam
+    var dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
 
     var daysToAdd = 0;
     switch (dayOfWeek) {
-        case 0: daysToAdd = 2; break; // Dimanche -> Mardi
-        case 1: daysToAdd = 1; break; // Lundi -> Mardi
-        case 2: daysToAdd = 0; break; // Mardi -> Mardi (aujourd'hui)
-        case 3: daysToAdd = 2; break; // Mercredi -> Vendredi
-        case 4: daysToAdd = 1; break; // Jeudi -> Vendredi
-        case 5: daysToAdd = 0; break; // Vendredi -> Vendredi (aujourd'hui)
-        case 6: daysToAdd = 3; break; // Samedi -> Mardi
+        case 0: daysToAdd = 2; break; // Sunday -> Tuesday
+        case 1: daysToAdd = 1; break; // Monday -> Tuesday
+        case 2: daysToAdd = 0; break; // Tuesday -> Tuesday (today)
+        case 3: daysToAdd = 2; break; // Wednesday -> Friday
+        case 4: daysToAdd = 1; break; // Thursday -> Friday
+        case 5: daysToAdd = 0; break; // Friday -> Friday (today)
+        case 6: daysToAdd = 3; break; // Saturday -> Tuesday
     }
 
-    // Si c'est un jour de tirage mais apres 21h, passer au suivant
+    // If it is a draw day but after 9pm, move to the next one
     var now = new Date();
     if (daysToAdd === 0 && now.getHours() >= 21) {
         switch (dayOfWeek) {
-            case 2: daysToAdd = 3; break; // Mardi soir -> Vendredi
-            case 5: daysToAdd = 4; break; // Vendredi soir -> Mardi
+            case 2: daysToAdd = 3; break; // Tuesday evening -> Friday
+            case 5: daysToAdd = 4; break; // Friday evening -> Tuesday
         }
     }
 
@@ -139,7 +138,7 @@ function getNextDrawDate() {
 }
 
 /**
- * Verifie si jour de tirage EM (Mardi=2, Vendredi=5)
+ * Checks whether the date is an EM draw day (Tuesday=2, Friday=5)
  */
 function isDrawDay(date) {
     var day = date.getDay();
@@ -180,11 +179,11 @@ function validateDateInput() {
 
     if (!isDrawDay(selectedDate)) {
         var nextValidDate = findNextDrawDate(selectedDate);
-        var nextDateFormatted = new Date(nextValidDate + 'T00:00:00').toLocaleDateString('fr-FR', {
+        var nextDateFormatted = new Date(nextValidDate + 'T00:00:00').toLocaleDateString('en-GB', {
             weekday: 'long', day: 'numeric', month: 'long'
         });
 
-        showDateError('Pas de tirage EuroMillions ce jour. Prochain tirage : ' + nextDateFormatted);
+        showDateError('No EuroMillions draw on this day. Next draw: ' + nextDateFormatted);
         disableActionButtons(true);
 
         setTimeout(function() {
@@ -247,39 +246,39 @@ async function handleAnalyze() {
     if (!drawDateInput) return;
     var date = drawDateInput.value;
     if (!date) {
-        showError('Veuillez sélectionner une date de tirage.');
+        showError('Please select a draw date.');
         return;
     }
 
     var selectedDate = new Date(date + 'T00:00:00');
     if (!isDrawDay(selectedDate)) {
-        showError('L\'EuroMillions est tiré uniquement les mardis et vendredis.');
+        showError('EuroMillions draws take place on Tuesdays and Fridays only.');
         return;
     }
 
     setLoading(btnAnalyze, true);
     hideResults();
 
-    // Calculer la duree du popup selon le nombre de grilles (proportionnel)
+    // Calculate the popup duration based on grid count (proportional)
     var popupDuration = typeof calculateTimerDurationSimulateurEM === 'function'
         ? calculateTimerDurationSimulateurEM(selectedGridCount)
         : 3;
     var plural = selectedGridCount > 1 ? 's' : '';
 
-    // Afficher le popup sponsor AVANT l'appel API
+    // Show the sponsor popup BEFORE the API call
     if (typeof showSponsorPopupSimulateurEM === 'function') {
         var popupResult = await showSponsorPopupSimulateurEM({
             duration: popupDuration,
             gridCount: selectedGridCount,
-            title: 'G\u00e9n\u00e9ration de ' + selectedGridCount + ' grille' + plural + ' optimis\u00e9e' + plural + ' EM',
+            title: 'Generating ' + selectedGridCount + ' optimised EM grid' + plural,
             onComplete: function() {
-                console.log('[App EM] Popup sponsor termin\u00e9, lancement de la g\u00e9n\u00e9ration');
+                console.log('[App EM] Sponsor popup complete, starting generation');
             }
         });
 
-        // Verifier si l'utilisateur a annule
+        // Check whether the user cancelled
         if (popupResult && popupResult.cancelled === true) {
-            console.log('[App EM] G\u00e9n\u00e9ration annul\u00e9e par l\'utilisateur');
+            console.log('[App EM] Generation cancelled by user');
             setLoading(btnAnalyze, false);
             return;
         }
@@ -287,7 +286,7 @@ async function handleAnalyze() {
 
     try {
         var response = await fetch('/api/euromillions/generate?n=' + selectedGridCount);
-        if (!response.ok) throw new Error('Erreur HTTP ' + response.status);
+        if (!response.ok) throw new Error('HTTP Error' + response.status);
 
         var data = await response.json();
 
@@ -295,53 +294,53 @@ async function handleAnalyze() {
             currentResult = data;
             displayGridsEM(data.grids, data.metadata, date);
 
-            // Pitch HYBRIDE async (non-blocking)
+            // HYBRIDE pitch async (non-blocking)
             fetchAndDisplayPitchsEM(data.grids);
         } else {
-            showError(data.message || 'Erreur lors de la génération des grilles.');
+            showError(data.message || 'Error generating grids.');
         }
     } catch (error) {
-        showError('Impossible de générer les grilles. ' + error.message);
+        showError('Unable to generate grids. ' + error.message);
     } finally {
         setLoading(btnAnalyze, false);
     }
 }
 
 // ================================================================
-// DISPLAY GRIDS — EuroMillions (5 nums + 2 etoiles)
+// DISPLAY GRIDS — EuroMillions (5 nums + 2 stars)
 // ================================================================
 
 function displayGridsEM(grids, metadata, targetDate) {
     var dateObj = new Date(targetDate + 'T00:00:00');
-    var dateFormatted = dateObj.toLocaleDateString('fr-FR', {
+    var dateFormatted = dateObj.toLocaleDateString('en-GB', {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     });
 
     var html = '<div class="results-header">' +
-        '<h2>Grilles EuroMillions pour le ' + dateFormatted + '</h2>' +
+        '<h2>EuroMillions grids for ' + dateFormatted + '</h2>' +
         '<div class="results-meta">' +
-        '<span>' + grids.length + ' grille(s) générée(s)</span>' +
-        '<span>' + new Date().toLocaleTimeString('fr-FR') + '</span>' +
+        '<span>' + grids.length + ' grid(s) generated</span>' +
+        '<span>' + new Date().toLocaleTimeString('en-GB') + '</span>' +
         '</div></div>';
 
     grids.forEach(function(grid, index) {
         var badges = grid.badges || [];
-        var convergenceLabel = 'Profil équilibré';
+        var convergenceLabel = 'Balanced profile';
         var convergenceClass = 'convergence-elevated';
 
         if (badges.some(function(b) { return b.toLowerCase().indexOf('chaud') !== -1; })) {
-            convergenceLabel = 'Profil chaud';
+            convergenceLabel = 'Hot profile';
         } else if (badges.some(function(b) { return b.toLowerCase().indexOf('retard') !== -1 || b.toLowerCase().indexOf('cart') !== -1; })) {
-            convergenceLabel = 'Profil mixte';
+            convergenceLabel = 'Mixed profile';
             convergenceClass = 'convergence-moderate';
         }
 
         html += '<div class="grid-visual-card" style="animation-delay: ' + (index * 0.15) + 's">' +
             '<div class="grid-visual-header">' +
-            '<div class="grid-number"><span class="grid-number-label">Grille</span>' +
+            '<div class="grid-number"><span class="grid-number-label">Grid</span>' +
             '<span class="grid-number-value">#' + (index + 1) + '</span></div>' +
             '<div class="grid-convergence-indicator ' + convergenceClass + '">' +
-            '<span class="convergence-label">Profil</span>' +
+            '<span class="convergence-label">Profile</span>' +
             '<span class="convergence-value">' + convergenceLabel + '</span></div></div>' +
             '<div class="grid-visual-numbers">';
 
@@ -372,15 +371,15 @@ function displayGridsEM(grids, metadata, targetDate) {
 
         html += '</div>' +
             '<div class="grille-pitch grille-pitch-loading" data-pitch-index="' + index + '">' +
-                '<span class="pitch-icon">\u{1F916}</span> HYBRIDE EM analyse ta grille\u2026' +
+                '<span class="pitch-icon">\u{1F916}</span> HYBRIDE EM is analysing your grid\u2026' +
             '</div>' +
         '</div>';
     });
 
     html += '<div class="results-footer">' +
-        '<p><strong>Rappel important :</strong> Ces grilles sont générées à partir de statistiques historiques. ' +
-        'L\'EuroMillions est un jeu de hasard et aucune méthode ne garantit de gains.</p>' +
-        '<p>Jouez responsable : <a href="https://www.joueurs-info-service.fr" target="_blank">Joueurs Info Service</a></p></div>';
+        '<p><strong>Important reminder:</strong> These grids are generated from historical statistics. ' +
+        'EuroMillions is a game of chance and no method guarantees winnings.</p>' +
+        '<p>Play responsibly: <a href="https://www.begambleaware.org" target="_blank">BeGambleAware.org</a></p></div>';
 
     var keyInfo = document.getElementById('key-info');
     var numbersGrid = document.getElementById('numbers-grid');
@@ -396,7 +395,7 @@ function displayGridsEM(grids, metadata, targetDate) {
     if (explanationsSection) explanationsSection.style.display = 'none';
 
     var resultTitle = document.getElementById('result-title');
-    if (resultTitle) resultTitle.textContent = 'Analyse du tirage';
+    if (resultTitle) resultTitle.textContent = 'Draw analysis';
     showSuccess();
 }
 
@@ -453,13 +452,13 @@ function setLoading(button, isLoading) {
 }
 
 // ================================================================
-// PITCH HYBRIDE EM — Gemini async
+// HYBRIDE EM PITCH — Gemini async
 // ================================================================
 
 /**
- * Appelle /api/euromillions/pitch-grilles et affiche les pitchs sous chaque grille EM.
- * Non-bloquant : les grilles sont deja visibles, les pitchs arrivent apres.
- * @param {Array} grids - Tableau des grilles generees ({nums, etoiles})
+ * Calls /api/euromillions/pitch-grilles and displays pitches below each EM grid.
+ * Non-blocking: grids are already visible, pitches arrive afterwards.
+ * @param {Array} grids - Array of generated grids ({nums, etoiles})
  */
 async function fetchAndDisplayPitchsEM(grids) {
     var payload = grids.map(function(g) {
@@ -486,11 +485,11 @@ async function fetchAndDisplayPitchsEM(grids) {
                 }
             });
         } else {
-            // Pas de pitchs — retirer les placeholders
+            // No pitches — remove placeholders
             document.querySelectorAll('.grille-pitch-loading').forEach(function(el) { el.remove(); });
         }
     } catch (e) {
-        console.warn('[PITCH EM] Erreur:', e);
+        console.warn('[PITCH EM] Error:', e);
         document.querySelectorAll('.grille-pitch-loading').forEach(function(el) { el.remove(); });
     }
 }

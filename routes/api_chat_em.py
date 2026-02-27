@@ -55,6 +55,7 @@ async def api_hybride_chat_em(request: Request, payload: EMChatRequest):
         payload.history,
         payload.page,
         request.app.state.httpx_client,
+        lang=payload.lang,
     )
     return EMChatResponse(**result)
 

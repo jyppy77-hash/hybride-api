@@ -1,12 +1,14 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <title>Statistiques EuroMillions - Fréquences et Tendances | LotoIA</title>
-    <meta name="description" content="Statistiques complètes de l'EuroMillions : fréquences des numéros et étoiles, tendances, numéros chauds et froids, historique des tirages.">
-    <meta name="keywords" content="statistiques euromillions, fréquences numéros euromillions, étoiles euromillions, moteur HYBRIDE, numéros chauds froids, HYBRIDE, tendances euromillions">
-    <link rel="canonical" href="https://lotoia.fr/euromillions/statistiques">
+    <title>EuroMillions Statistics - Frequencies and Trends | LotoIA</title>
+    <meta name="description" content="Complete EuroMillions statistics: number and star frequencies, trends, hot and cold numbers, draw history.">
+    <meta name="keywords" content="euromillions statistics, euromillions number frequencies, euromillions stars, HYBRIDE engine, hot cold numbers, HYBRIDE, euromillions trends">
+    <link rel="canonical" href="https://lotoia.fr/en/euromillions/statistics">
+
+    <!-- hreflang -->
     <link rel="alternate" hreflang="fr" href="https://lotoia.fr/euromillions/statistiques">
     <link rel="alternate" hreflang="en" href="https://lotoia.fr/en/euromillions/statistics">
     <link rel="alternate" hreflang="x-default" href="https://lotoia.fr/euromillions/statistiques">
@@ -19,10 +21,10 @@
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="LotoIA">
-    <meta property="og:locale" content="fr_FR">
-    <meta property="og:title" content="Statistiques EuroMillions | LotoIA">
-    <meta property="og:description" content="Fréquences, tendances et numéros chauds/froids de l'EuroMillions.">
-    <meta property="og:url" content="https://lotoia.fr/euromillions/statistiques">
+    <meta property="og:locale" content="en_GB">
+    <meta property="og:title" content="EuroMillions Statistics | LotoIA">
+    <meta property="og:description" content="Frequencies, trends and hot/cold numbers for EuroMillions.">
+    <meta property="og:url" content="https://lotoia.fr/en/euromillions/statistics">
     <meta property="og:image" content="https://lotoia.fr/static/og-image.jpg">
     <meta property="og:image:secure_url" content="https://lotoia.fr/static/og-image.jpg">
     <meta property="og:image:type" content="image/jpeg">
@@ -31,8 +33,8 @@
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Statistiques EuroMillions | LotoIA">
-    <meta name="twitter:description" content="Fréquences, tendances et numéros chauds/froids de l'EuroMillions.">
+    <meta name="twitter:title" content="EuroMillions Statistics | LotoIA">
+    <meta name="twitter:description" content="Frequencies, trends and hot/cold numbers for EuroMillions.">
     <meta name="twitter:image" content="https://lotoia.fr/static/og-image.jpg">
 
     <!-- JSON-LD Schema.org -->
@@ -40,9 +42,9 @@
     {
       "@context": "https://schema.org",
       "@type": "Dataset",
-      "name": "Historique des tirages EuroMillions",
-      "description": "Dataset complet des tirages EuroMillions : numéros gagnants (5 boules + 2 étoiles), fréquences de sortie, écarts entre apparitions, tendances statistiques. Données issues des résultats officiels FDJ, analysées par le moteur HYBRIDE.",
-      "url": "https://lotoia.fr/euromillions/statistiques",
+      "name": "EuroMillions Draw History",
+      "description": "Complete EuroMillions draw dataset: winning numbers (5 balls + 2 stars), appearance frequencies, gaps between appearances, statistical trends. Data sourced from official results, analysed by the HYBRIDE engine.",
+      "url": "https://lotoia.fr/en/euromillions/statistics",
       "identifier": "lotoia-euromillions-tirages",
       "license": "https://www.etalab.gouv.fr/licence-ouverte-open-licence/",
       "isAccessibleForFree": true,
@@ -59,27 +61,27 @@
       "temporalCoverage": "2004/2026",
       "spatialCoverage": "Europe",
       "variableMeasured": [
-        {"@type": "PropertyValue", "name": "Numéros gagnants", "description": "5 boules (1-50) + 2 étoiles (1-12) par tirage"},
-        {"@type": "PropertyValue", "name": "Fréquence de sortie", "description": "Nombre d'apparitions de chaque numéro et étoile sur la période"},
-        {"@type": "PropertyValue", "name": "Écart actuel", "description": "Nombre de tirages depuis la dernière apparition"},
-        {"@type": "PropertyValue", "name": "Date de tirage", "description": "Date de chaque tirage (mardi, vendredi)"}
+        {"@type": "PropertyValue", "name": "Winning numbers", "description": "5 balls (1-50) + 2 stars (1-12) per draw"},
+        {"@type": "PropertyValue", "name": "Appearance frequency", "description": "Number of appearances of each number and star over the period"},
+        {"@type": "PropertyValue", "name": "Current gap", "description": "Number of draws since last appearance"},
+        {"@type": "PropertyValue", "name": "Draw date", "description": "Date of each draw (Tuesday, Friday)"}
       ],
       "distribution": {
         "@type": "DataDownload",
         "encodingFormat": "application/pdf",
         "contentUrl": "https://lotoia.fr/api/euromillions/meta-pdf",
-        "name": "Rapport META DATA EuroMillions — PDF"
+        "name": "EuroMillions META DATA Report — PDF"
       },
-      "keywords": ["euromillions", "tirages", "fréquences", "statistiques", "FDJ", "étoiles", "Europe"]
+      "keywords": ["euromillions", "draws", "frequencies", "statistics", "stars", "Europe"]
     }
     </script>
 
     <link rel="stylesheet" href="/ui/static/style.css?v=1">
     <link rel="stylesheet" href="/ui/static/style-em.css?v=1">
     <link rel="stylesheet" href="/ui/static/legal.css?v=1">
-    <!-- Theme script (en premier pour eviter le flash) -->
+    <!-- Theme script (first to avoid flash) -->
     <script src="/ui/static/theme.js?v=1"></script>
-    <!-- Analytics (charge apres consentement RGPD) -->
+    <!-- Analytics (loaded after GDPR consent) -->
     <script src="/ui/static/analytics.js?v=1" defer></script>
 
     <style>
@@ -489,155 +491,155 @@
     <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc" data-before-send="umamiBeforeSend"></script>
 </head>
 <body class="stats-page em-page">
-    <!-- Barre de navigation moteur -->
+    <!-- Engine navigation bar -->
     <nav class="engine-nav-subpage">
-        <a href="/euromillions" class="engine-nav-btn">
+        <a href="/en/euromillions" class="engine-nav-btn">
             <span class="nav-arrow">&larr;</span>
-            <span class="nav-text">Accueil EuroMillions</span>
+            <span class="nav-text">EuroMillions Home</span>
         </a>
         <div class="engine-nav-right">
             <span class="engine-badge">EuroMillions</span>
-            <button id="theme-switch" class="theme-switch" title="Changer de thème">
+            <a href="/euromillions/statistiques" class="lang-switch" title="Version fran&ccedil;aise">&#127467;&#127479; FR</a>
+            <button id="theme-switch" class="theme-switch" title="Switch theme">
                 <span class="icon-day">&#9728;&#65039;</span>
                 <span class="icon-night">&#127769;</span>
             </button>
-            <a href="/en/euromillions/statistics" class="lang-switch" title="English version">EN</a>
         </div>
     </nav>
 
-    <!-- Header Premium — pattern aligne Analyse / Exploration -->
+    <!-- Header Premium — pattern aligned with Audit / Explore -->
     <header class="page-header loto-hero-header">
         <div class="header-content">
-            <h1><span>&#128202;</span> Statistiques EuroMillions</h1>
-            <p class="subtitle">Fréquences, tendances et analyse des numéros et étoiles</p>
+            <h1><span>&#128202;</span> EuroMillions Statistics</h1>
+            <p class="subtitle">Frequencies, trends and analysis of numbers and stars</p>
             <div class="loto-hero-actions">
-                <a href="/euromillions/simulateur" class="loto-hero-btn">
+                <a href="/en/euromillions/simulator" class="loto-hero-btn">
                     <span class="loto-hero-btn-icon">&#127919;</span>
-                    Auditer une grille
+                    Audit a grid
                 </a>
-                <a href="/euromillions/generateur" class="loto-hero-btn">
+                <a href="/en/euromillions/generator" class="loto-hero-btn">
                     <span class="loto-hero-btn-icon">&#129504;</span>
-                    Explorer des grilles
+                    Explore grids
                 </a>
-                <a href="/euromillions/statistiques" class="loto-hero-btn loto-hero-btn-active">
+                <a href="/en/euromillions/statistics" class="loto-hero-btn loto-hero-btn-active">
                     <span class="loto-hero-btn-icon">&#128202;</span>
-                    Statistiques
+                    Statistics
                 </a>
-                <a href="/euromillions/news" class="loto-hero-btn loto-hero-btn-news">
+                <a href="/en/euromillions/news" class="loto-hero-btn loto-hero-btn-news">
                     <span class="loto-hero-btn-icon">&#128240;</span>
-                    Actualités
+                    News
                 </a>
             </div>
-            <p class="loto-hero-scroll-hint">&larr; glisser pour voir plus &rarr;</p>
+            <p class="loto-hero-scroll-hint">&larr; swipe to see more &rarr;</p>
         </div>
     </header>
 
-    <!-- Contenu principal -->
+    <!-- Main content -->
     <div class="stats-container">
         <div class="tabs-card">
             <div class="tabs">
-                <button class="tab active" onclick="switchTab('historique')">&#128197; Historique des tirages</button>
-                <button class="tab" onclick="switchTab('analyse')">&#128269; Analyse par numéro</button>
+                <button class="tab active" onclick="switchTab('historique')">&#128197; Draw history</button>
+                <button class="tab" onclick="switchTab('analyse')">&#128269; Analysis by number</button>
                 <button class="tab" onclick="switchTab('topflop')">&#128204; Top / Flop</button>
             </div>
 
-            <!-- ONGLET 1 : Historique des tirages -->
+            <!-- TAB 1 : Draw history -->
             <div id="tab-historique" class="tab-content active">
                 <div class="search-form">
-                    <label for="search-date">Rechercher un tirage par date</label>
+                    <label for="search-date">Search for a draw by date</label>
                     <div class="input-group">
                         <input type="date" id="search-date" name="search-date">
-                        <button onclick="searchDraw()" class="btn-primary">Rechercher</button>
+                        <button onclick="searchDraw()" class="btn-primary">Search</button>
                     </div>
                 </div>
 
                 <div id="draw-result"></div>
 
                 <div class="info-note">
-                    <strong>À propos de l'historique :</strong><br>
-                    Cette base contient les tirages officiels de l'EuroMillions. Utilisez le sélecteur de date pour consulter un tirage spécifique.
-                    Les numéros vont de 1 à 50, les étoiles de 1 à 12.
+                    <strong>About draw history:</strong><br>
+                    This database contains the official EuroMillions draws. Use the date picker to look up a specific draw.
+                    Numbers range from 1 to 50, stars from 1 to 12.
                 </div>
             </div>
 
-            <!-- ONGLET 2 : Analyse par numero -->
+            <!-- TAB 2 : Analysis by number -->
             <div id="tab-analyse" class="tab-content">
-                <!-- Section Numeros -->
+                <!-- Numbers section -->
                 <div class="analysis-section">
-                    <h3>Analyse d'un numéro (1-50)</h3>
+                    <h3>Number analysis (1-50)</h3>
                     <div class="number-selector">
-                        <label for="number-select"><strong>Numéro :</strong></label>
+                        <label for="number-select"><strong>Number:</strong></label>
                         <select id="number-select">
-                            <option value="">-- Choisir --</option>
+                            <option value="">-- Select --</option>
                         </select>
-                        <button onclick="searchNumber()" class="btn-primary">Analyser</button>
+                        <button onclick="searchNumber()" class="btn-primary">Analyse</button>
                     </div>
                     <div id="number-result"></div>
                 </div>
 
-                <!-- Section Étoiles -->
+                <!-- Stars section -->
                 <div class="analysis-section">
-                    <h3>Analyse d'une étoile (1-12)</h3>
+                    <h3>Star analysis (1-12)</h3>
                     <div class="number-selector">
-                        <label for="star-select"><strong>Étoile :</strong></label>
+                        <label for="star-select"><strong>Star:</strong></label>
                         <select id="star-select">
-                            <option value="">-- Choisir --</option>
+                            <option value="">-- Select --</option>
                         </select>
-                        <button onclick="searchStar()" class="btn-primary">Analyser</button>
+                        <button onclick="searchStar()" class="btn-primary">Analyse</button>
                     </div>
                     <div id="star-result"></div>
                 </div>
 
                 <div class="info-note">
-                    <strong>Vocabulaire :</strong><br>
-                    &bull; <strong>Fréquence</strong> : nombre de fois où le numéro/étoile est apparu dans l'historique.<br>
-                    &bull; <strong>Écart actuel</strong> : nombre de tirages depuis la dernière apparition.<br>
-                    &bull; <strong>Écart moyen</strong> : intervalle moyen entre deux apparitions.<br>
-                    &bull; <strong>Catégorie</strong> : classification du numéro (chaud, tiède, froid).<br>
-                    Ces données sont purement descriptives et n'impliquent aucune prédiction.
+                    <strong>Glossary:</strong><br>
+                    &bull; <strong>Frequency</strong>: number of times the number/star has appeared in the history.<br>
+                    &bull; <strong>Current gap</strong>: number of draws since its last appearance.<br>
+                    &bull; <strong>Average gap</strong>: average interval between two appearances.<br>
+                    &bull; <strong>Category</strong>: classification of the number (hot, warm, cold).<br>
+                    These data are purely descriptive and do not imply any prediction.
                 </div>
             </div>
 
-            <!-- ONGLET 3 : Top / Flop -->
+            <!-- TAB 3 : Top / Flop -->
             <div id="tab-topflop" class="tab-content">
                 <p style="margin-bottom: 24px; color: var(--text-muted);">
-                    Fréquence d'apparition de chaque numéro et étoile sur l'ensemble de l'historique.
+                    Appearance frequency of each number and star across the entire draw history.
                 </p>
 
-                <!-- Numeros -->
+                <!-- Numbers -->
                 <div class="topflop-category">
-                    <h3>&#127920; Numéros (1-50)</h3>
+                    <h3>&#127920; Numbers (1-50)</h3>
 
                     <div class="topflop-section">
-                        <h4 class="top-title">&#127942; Numéros les plus sortis</h4>
+                        <h4 class="top-title">&#127942; Most drawn numbers</h4>
                         <div id="top-numbers-grid" class="numbers-grid"></div>
                     </div>
 
                     <div class="topflop-section">
-                        <h4 class="flop-title">&#128201; Numéros les moins sortis</h4>
+                        <h4 class="flop-title">&#128201; Least drawn numbers</h4>
                         <div id="flop-numbers-grid" class="numbers-grid"></div>
                     </div>
                 </div>
 
-                <!-- Etoiles -->
+                <!-- Stars -->
                 <div class="topflop-category">
-                    <h3>&#11088; Étoiles (1-12)</h3>
+                    <h3>&#11088; Stars (1-12)</h3>
 
                     <div class="topflop-section">
-                        <h4 class="top-title">&#127942; Étoiles les plus sorties</h4>
+                        <h4 class="top-title">&#127942; Most drawn stars</h4>
                         <div id="top-stars-grid" class="numbers-grid"></div>
                     </div>
 
                     <div class="topflop-section">
-                        <h4 class="flop-title">&#128201; Étoiles les moins sorties</h4>
+                        <h4 class="flop-title">&#128201; Least drawn stars</h4>
                         <div id="flop-stars-grid" class="numbers-grid"></div>
                     </div>
                 </div>
 
                 <div class="info-note">
-                    <strong>À propos de ces données :</strong><br>
-                    Ces fréquences représentent le nombre de sorties de chaque numéro et étoile sur l'ensemble de l'historique.
-                    Elles sont purement descriptives et n'impliquent aucune prédiction sur les tirages futurs.
+                    <strong>About this data:</strong><br>
+                    These frequencies represent the number of times each number and star has been drawn across the entire history.
+                    They are purely descriptive and do not imply any prediction about future draws.
                 </div>
             </div>
         </div>
@@ -645,34 +647,34 @@
         <!-- Footer -->
         <footer class="footer">
             <div class="footer-nav">
-                <a href="/">Moteurs</a>
+                <a href="/">Engines</a>
                 <span class="footer-sep">&bull;</span>
-                <a href="/euromillions">Accueil</a>
+                <a href="/en/euromillions">Home</a>
                 <span class="footer-sep">&bull;</span>
-                <a href="/euromillions/simulateur">Analyse</a>
+                <a href="/en/euromillions/simulator">Audit</a>
                 <span class="footer-sep">&bull;</span>
-                <a href="/euromillions/generateur">Exploration</a>
+                <a href="/en/euromillions/generator">Explore</a>
                 <span class="footer-sep">&bull;</span>
-                <a href="/euromillions/statistiques" class="active">Statistiques</a>
+                <a href="/en/euromillions/statistics" class="active">Statistics</a>
                 <span class="footer-sep">&bull;</span>
-                <a href="/euromillions/news">Actualités</a>
+                <a href="/en/euromillions/news">News</a>
                 <span class="footer-sep">&bull;</span>
-                <a href="/euromillions/faq">FAQ</a>
+                <a href="/en/euromillions/faq">FAQ</a>
             </div>
             <div class="footer-legal">
-                <a href="/mentions-legales">Mentions légales</a>
+                <a href="/mentions-legales">Legal notice</a>
                 <span class="footer-sep">&bull;</span>
-                <a href="/politique-confidentialite">Confidentialité</a>
+                <a href="/politique-confidentialite">Privacy</a>
                 <span class="footer-sep">&bull;</span>
                 <a href="/politique-cookies">Cookies</a>
                 <span class="footer-sep">&bull;</span>
-                <a href="/disclaimer">Avertissements</a>
+                <a href="/disclaimer">Disclaimer</a>
             </div>
             <p class="footer-brand">LotoIA.fr <span class="app-version">v1.001</span></p>
-            <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dépendance. Appelez le 09 74 75 13 13 (appel non surtaxé).</p>
-            <p class="footer-help">Interdiction de jeu aux mineurs. <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
+            <p class="footer-disclaimer">Gambling involves risks: debt, isolation, addiction. Call the National Gambling Helpline: 0808 8020 133 (free, confidential).</p>
+            <p class="footer-help">You must be 18 or over to play. <a href="https://www.begambleaware.org" target="_blank" rel="noopener">BeGambleAware.org</a></p>
             <div class="credits">
-                <p class="dev-by">Développé par <strong>JyppY</strong></p>
+                <p class="dev-by">Developed by <strong>JyppY</strong></p>
             </div>
         </footer>
     </div>
@@ -738,15 +740,15 @@
             var date = document.getElementById('search-date').value;
             if (!date) return;
             var resultDiv = document.getElementById('draw-result');
-            resultDiv.innerHTML = '<p>Recherche en cours...</p>';
+            resultDiv.innerHTML = '<p>Searching...</p>';
             try {
                 var response = await fetch('/api/euromillions/draw/' + date);
                 var data = await response.json();
                 if (data.success && data.found) {
                     var d = data.draw;
                     var html = '<div class="search-result">';
-                    html += '<h3 style="margin-bottom: 16px; color: var(--primary);">Tirage du ' + d.date.split('-').reverse().join('/') + '</h3>';
-                    html += '<p><strong>Numéros gagnants :</strong></p>';
+                    html += '<h3 style="margin-bottom: 16px; color: var(--primary);">Draw of ' + d.date.split('-').reverse().join('/') + '</h3>';
+                    html += '<p><strong>Winning numbers:</strong></p>';
                     html += '<div class="draw-numbers">';
                     [d.n1, d.n2, d.n3, d.n4, d.n5].sort(function(a,b){return a-b;}).forEach(function(n) {
                         html += '<span class="number-ball main">' + String(n).padStart(2,'0') + '</span>';
@@ -759,12 +761,12 @@
                     html += '</div>';
                     resultDiv.innerHTML = html;
                 } else if (data.success && !data.found) {
-                    resultDiv.innerHTML = '<div class="search-result not-found"><strong>Aucun tirage trouvé pour cette date.</strong></div>';
+                    resultDiv.innerHTML = '<div class="search-result not-found"><strong>No draw found for this date.</strong></div>';
                 } else {
-                    resultDiv.innerHTML = '<div class="search-result error"><strong>' + (data.message || 'Erreur interne du serveur') + '</strong></div>';
+                    resultDiv.innerHTML = '<div class="search-result error"><strong>' + (data.message || 'Internal server error') + '</strong></div>';
                 }
             } catch(e) {
-                resultDiv.innerHTML = '<div class="search-result error"><strong>Erreur de connexion.</strong></div>';
+                resultDiv.innerHTML = '<div class="search-result error"><strong>Connection error.</strong></div>';
             }
         }
 
@@ -778,11 +780,11 @@
             var resultDiv = document.getElementById('number-result');
 
             if (!number) {
-                alert('Veuillez sélectionner un numéro.');
+                alert('Please select a number.');
                 return;
             }
 
-            resultDiv.innerHTML = '<p>Analyse en cours...</p>';
+            resultDiv.innerHTML = '<p>Analysing...</p>';
 
             try {
                 var response = await fetch('/api/euromillions/stats/number/' + number);
@@ -790,24 +792,24 @@
 
                 if (data.success) {
                     var s = data.data || data;
-                    var html = '<h4 style="margin: 16px 0; color: var(--primary);">Numéro ' + String(number).padStart(2,'0') + '</h4>';
+                    var html = '<h4 style="margin: 16px 0; color: var(--primary);">Number ' + String(number).padStart(2,'0') + '</h4>';
                     html += '<div class="stats-cards">';
-                    html += buildStatCard('Fréquence', s.frequence || s.total_appearances || '-', '');
-                    html += buildStatCard('Pourcentage', s.pourcentage !== undefined ? s.pourcentage + '%' : '-', '');
-                    html += buildStatCard('Dernière sortie', s.derniere_sortie || s.last_appearance || '-', 'small');
-                    html += buildStatCard('Écart actuel', s.ecart_actuel !== undefined ? s.ecart_actuel + ' tirages' : (s.current_gap !== undefined ? s.current_gap + ' tirages' : '-'), '');
-                    html += buildStatCard('Écart moyen', s.ecart_moyen !== undefined ? s.ecart_moyen : '-', '');
-                    html += buildStatCard('Classement', s.classement || '-', '');
+                    html += buildStatCard('Frequency', s.frequence || s.total_appearances || '-', '');
+                    html += buildStatCard('Percentage', s.pourcentage !== undefined ? s.pourcentage + '%' : '-', '');
+                    html += buildStatCard('Last drawn', s.derniere_sortie || s.last_appearance || '-', 'small');
+                    html += buildStatCard('Current gap', s.ecart_actuel !== undefined ? s.ecart_actuel + ' draws' : (s.current_gap !== undefined ? s.current_gap + ' draws' : '-'), '');
+                    html += buildStatCard('Average gap', s.ecart_moyen !== undefined ? s.ecart_moyen : '-', '');
+                    html += buildStatCard('Ranking', s.classement || '-', '');
                     html += '</div>';
                     if (s.categorie) {
-                        html += '<p style="margin-top: 8px;"><strong>Catégorie :</strong> ' + s.categorie + '</p>';
+                        html += '<p style="margin-top: 8px;"><strong>Category:</strong> ' + s.categorie + '</p>';
                     }
                     resultDiv.innerHTML = html;
                 } else {
-                    resultDiv.innerHTML = '<div class="search-result error"><strong>Erreur :</strong> ' + (data.message || 'Impossible d\'analyser le numéro') + '</div>';
+                    resultDiv.innerHTML = '<div class="search-result error"><strong>Error:</strong> ' + (data.message || 'Unable to analyse this number') + '</div>';
                 }
             } catch(e) {
-                resultDiv.innerHTML = '<div class="search-result error"><strong>Erreur réseau :</strong> ' + e.message + '</div>';
+                resultDiv.innerHTML = '<div class="search-result error"><strong>Network error:</strong> ' + e.message + '</div>';
             }
         }
 
@@ -817,11 +819,11 @@
             var resultDiv = document.getElementById('star-result');
 
             if (!star) {
-                alert('Veuillez sélectionner une étoile.');
+                alert('Please select a star.');
                 return;
             }
 
-            resultDiv.innerHTML = '<p>Analyse en cours...</p>';
+            resultDiv.innerHTML = '<p>Analysing...</p>';
 
             try {
                 var response = await fetch('/api/euromillions/stats/etoile/' + star);
@@ -829,24 +831,24 @@
 
                 if (data.success) {
                     var s = data.data || data;
-                    var html = '<h4 style="margin: 16px 0; color: #F57C00;">Étoile ' + String(star).padStart(2,'0') + '</h4>';
+                    var html = '<h4 style="margin: 16px 0; color: #F57C00;">Star ' + String(star).padStart(2,'0') + '</h4>';
                     html += '<div class="stats-cards">';
-                    html += buildStatCard('Fréquence', s.frequence || s.total_appearances || '-', 'star-accent');
-                    html += buildStatCard('Pourcentage', s.pourcentage !== undefined ? s.pourcentage + '%' : '-', 'star-accent');
-                    html += buildStatCard('Dernière sortie', s.derniere_sortie || s.last_appearance || '-', 'star-accent small');
-                    html += buildStatCard('Écart actuel', s.ecart_actuel !== undefined ? s.ecart_actuel + ' tirages' : (s.current_gap !== undefined ? s.current_gap + ' tirages' : '-'), 'star-accent');
-                    html += buildStatCard('Écart moyen', s.ecart_moyen !== undefined ? s.ecart_moyen : '-', 'star-accent');
-                    html += buildStatCard('Classement', s.classement || '-', 'star-accent');
+                    html += buildStatCard('Frequency', s.frequence || s.total_appearances || '-', 'star-accent');
+                    html += buildStatCard('Percentage', s.pourcentage !== undefined ? s.pourcentage + '%' : '-', 'star-accent');
+                    html += buildStatCard('Last drawn', s.derniere_sortie || s.last_appearance || '-', 'star-accent small');
+                    html += buildStatCard('Current gap', s.ecart_actuel !== undefined ? s.ecart_actuel + ' draws' : (s.current_gap !== undefined ? s.current_gap + ' draws' : '-'), 'star-accent');
+                    html += buildStatCard('Average gap', s.ecart_moyen !== undefined ? s.ecart_moyen : '-', 'star-accent');
+                    html += buildStatCard('Ranking', s.classement || '-', 'star-accent');
                     html += '</div>';
                     if (s.categorie) {
-                        html += '<p style="margin-top: 8px;"><strong>Catégorie :</strong> ' + s.categorie + '</p>';
+                        html += '<p style="margin-top: 8px;"><strong>Category:</strong> ' + s.categorie + '</p>';
                     }
                     resultDiv.innerHTML = html;
                 } else {
-                    resultDiv.innerHTML = '<div class="search-result error"><strong>Erreur :</strong> ' + (data.message || 'Impossible d\'analyser l\'étoile') + '</div>';
+                    resultDiv.innerHTML = '<div class="search-result error"><strong>Error:</strong> ' + (data.message || 'Unable to analyse this star') + '</div>';
                 }
             } catch(e) {
-                resultDiv.innerHTML = '<div class="search-result error"><strong>Erreur réseau :</strong> ' + e.message + '</div>';
+                resultDiv.innerHTML = '<div class="search-result error"><strong>Network error:</strong> ' + e.message + '</div>';
             }
         }
 
@@ -890,10 +892,10 @@
 
                     topFlopLoaded = true;
                 } else {
-                    alert('Erreur : ' + (data.message || 'Impossible de charger les données'));
+                    alert('Error: ' + (data.message || 'Unable to load data'));
                 }
             } catch(e) {
-                alert('Erreur réseau : ' + e.message);
+                alert('Network error: ' + e.message);
             }
         }
 
@@ -902,7 +904,7 @@
             grid.innerHTML = '';
 
             if (!items || items.length === 0) {
-                grid.innerHTML = '<p style="color: var(--theme-text-muted);">Aucune donnée disponible.</p>';
+                grid.innerHTML = '<p style="color: var(--theme-text-muted);">No data available.</p>';
                 return;
             }
 
@@ -917,14 +919,14 @@
 
                 card.innerHTML =
                     '<div class="number">' + String(num).padStart(2, '0') + '</div>' +
-                    '<div class="count">' + count + ' sorties</div>';
+                    '<div class="count">' + count + ' draws</div>';
                 grid.appendChild(card);
             });
         }
     </script>
 
-    <!-- Bouton Scroll to Top -->
-    <button id="scroll-to-top" class="scroll-to-top" aria-label="Retour en haut">
+    <!-- Scroll to Top button -->
+    <button id="scroll-to-top" class="scroll-to-top" aria-label="Back to top">
         &uarr;
     </button>
 
@@ -935,10 +937,10 @@
     <!-- HYBRIDE Chatbot Widget EuroMillions -->
     <link rel="stylesheet" href="/ui/static/hybride-chatbot.css?v=4.3">
     <div id="hybride-chatbot-root"></div>
-    <script src="/ui/static/hybride-chatbot-em.js?v=1.0"></script>
+    <script src="/ui/en/euromillions/static/hybride-chatbot-em-en.js?v=1.0"></script>
     <script src="/ui/static/version-inject.js"></script>
 
-    <!-- Bandeau Notation -->
+    <!-- Rating banner -->
     <link rel="stylesheet" href="/ui/static/rating-popup.css?v=1">
     <script src="/ui/static/rating-popup.js?v=1" defer></script>
 </body>

@@ -38,6 +38,7 @@ from routes.api_ratings import router as ratings_router
 from routes.api_data_unified import router as unified_data_router      # Phase 10
 from routes.api_analyse_unified import router as unified_analyse_router  # Phase 10
 from routes.api_chat_unified import router as unified_chat_router      # Phase 10
+from routes.en_em_pages import router as en_em_pages_router            # Phase 11 — EN EuroMillions
 
 # ── JSON structured logging ──
 _log_handler = logging.StreamHandler(sys.stdout)
@@ -224,6 +225,20 @@ async def redirect_http_to_https(request: Request, call_next):
     return await call_next(request)
 
 
+# =========================
+# SEO: strip trailing slash → 301 redirect (redirect_slashes=False)
+# =========================
+@app.middleware("http")
+async def strip_trailing_slash(request: Request, call_next):
+    """301 redirect /foo/ → /foo (sauf racine /)."""
+    path = request.url.path
+    if path != "/" and path.endswith("/"):
+        clean = path.rstrip("/")
+        query = f"?{request.url.query}" if request.url.query else ""
+        return RedirectResponse(url=f"{clean}{query}", status_code=301)
+    return await call_next(request)
+
+
 # Middleware cache headers SEO
 @app.middleware("http")
 async def add_cache_headers(request: Request, call_next):
@@ -244,7 +259,12 @@ async def add_cache_headers(request: Request, call_next):
                   "/mentions-legales", "/politique-confidentialite", "/politique-cookies",
                   "/euromillions", "/euromillions/generateur", "/euromillions/simulateur",
                   "/euromillions/statistiques", "/euromillions/historique",
-                  "/euromillions/faq", "/euromillions/news"]
+                  "/euromillions/faq", "/euromillions/news",
+                  # Phase 11 — EN EuroMillions
+                  "/en/euromillions", "/en/euromillions/generator",
+                  "/en/euromillions/simulator", "/en/euromillions/statistics",
+                  "/en/euromillions/history", "/en/euromillions/faq",
+                  "/en/euromillions/news"]
     if path.endswith(".html") or path in seo_routes:
         response.headers["Cache-Control"] = "public, max-age=3600"  # 1 heure
 
@@ -290,6 +310,16 @@ _UI_EM_HTML_TO_CLEAN_URL = {
     "news-em.html": "/euromillions/news",
 }
 
+_UI_EN_EM_HTML_TO_CLEAN_URL = {
+    "home.html": "/en/euromillions",
+    "generator.html": "/en/euromillions/generator",
+    "simulator.html": "/en/euromillions/simulator",
+    "statistics.html": "/en/euromillions/statistics",
+    "history.html": "/en/euromillions/history",
+    "faq.html": "/en/euromillions/faq",
+    "news.html": "/en/euromillions/news",
+}
+
 
 @app.middleware("http")
 async def redirect_ui_html_to_seo(request: Request, call_next):
@@ -301,6 +331,9 @@ async def redirect_ui_html_to_seo(request: Request, call_next):
         if not clean_url and filename.startswith("em/"):
             em_filename = filename[len("em/"):]
             clean_url = _UI_EM_HTML_TO_CLEAN_URL.get(em_filename)
+        if not clean_url and filename.startswith("en/euromillions/"):
+            en_filename = filename[len("en/euromillions/"):]
+            clean_url = _UI_EN_EM_HTML_TO_CLEAN_URL.get(en_filename)
         if clean_url:
             query = f"?{request.url.query}" if request.url.query else ""
             return RedirectResponse(url=f"{clean_url}{query}", status_code=301)
@@ -520,6 +553,8 @@ app.include_router(ratings_router)
 app.include_router(unified_data_router)
 app.include_router(unified_analyse_router)
 app.include_router(unified_chat_router)
+# Phase 11 — English EuroMillions pages
+app.include_router(en_em_pages_router)
 
 
 # =========================

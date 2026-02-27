@@ -114,9 +114,10 @@ async def _get_tirage_data_em(target) -> dict | None:
         return None
 
 
-async def _generate_sql_em(question: str, client, api_key: str, history: list = None) -> str | None:
+async def _generate_sql_em(question: str, client, api_key: str, history: list = None, lang: str = "fr") -> str | None:
     """Appelle Gemini pour convertir une question EM en SQL (avec contexte conversationnel)."""
-    sql_prompt = load_prompt("SQL_GENERATOR_EM")
+    sql_key = "SQL_GENERATOR_EM_EN" if lang == "en" else "SQL_GENERATOR_EM"
+    sql_prompt = load_prompt(sql_key)
     if not sql_prompt:
         return None
 

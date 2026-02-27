@@ -60,6 +60,7 @@ class EMChatRequest(BaseModel):
     message: str = Field(..., max_length=2000)
     page: str = Field(default="accueil-em")
     history: Optional[List[EMChatMessage]] = None
+    lang: str = Field(default="fr", pattern=r"^(fr|en)$")
 
 
 class EMChatResponse(BaseModel):

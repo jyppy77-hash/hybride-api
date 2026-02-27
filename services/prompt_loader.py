@@ -32,6 +32,10 @@ PROMPT_MAP = {
     "CHATBOT_EM": "prompts/chatbot/prompt_hybride_em.txt",
     "PITCH_GRILLE_EM": "prompts/chatbot/prompt_pitch_grille_em.txt",
     "SQL_GENERATOR_EM": "prompts/chatbot/prompt_sql_generator_em.txt",
+    # Chatbot HYBRIDE — EuroMillions EN (Phase 11)
+    "CHATBOT_EM_EN": "prompts/chatbot/prompt_hybride_em_en.txt",
+    "PITCH_GRILLE_EM_EN": "prompts/chatbot/prompt_pitch_grille_em_en.txt",
+    "SQL_GENERATOR_EM_EN": "prompts/chatbot/prompt_sql_generator_em_en.txt",
     # META ANALYSE — EuroMillions (tirages)
     "EM_100": "prompts/euromillions/tirages/prompt_100.txt",
     "EM_200": "prompts/euromillions/tirages/prompt_200.txt",

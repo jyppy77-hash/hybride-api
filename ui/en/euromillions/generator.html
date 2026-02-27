@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <title>Simulateur de Grilles EuroMillions IA - Analyse Statistique | LotoIA</title>
-    <meta name="description" content="Générez des grilles EuroMillions optimisées grâce au moteur HYBRIDE. Analyse de tirages historiques pour des combinaisons statistiquement équilibrées.">
-    <meta name="keywords" content="simulateur euromillions, grille euromillions IA, moteur HYBRIDE, HYBRIDE, analyse statistique euromillions, numéros euromillions, étoiles euromillions">
-    <link rel="canonical" href="https://lotoia.fr/euromillions/generateur">
+    <title>EuroMillions AI Grid Simulator - Statistical Analysis | LotoIA</title>
+    <meta name="description" content="Generate optimised EuroMillions grids using the HYBRIDE engine. Historical draw analysis for statistically balanced combinations.">
+    <meta name="keywords" content="euromillions simulator, euromillions AI grid, HYBRIDE engine, HYBRIDE, euromillions statistical analysis, euromillions numbers, euromillions stars">
+    <link rel="canonical" href="https://lotoia.fr/en/euromillions/generator">
     <link rel="alternate" hreflang="fr" href="https://lotoia.fr/euromillions/generateur">
     <link rel="alternate" hreflang="en" href="https://lotoia.fr/en/euromillions/generator">
     <link rel="alternate" hreflang="x-default" href="https://lotoia.fr/euromillions/generateur">
@@ -14,10 +14,10 @@
     <!-- Open Graph -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="LotoIA">
-    <meta property="og:locale" content="fr_FR">
-    <meta property="og:title" content="Simulateur de Grilles EuroMillions IA | LotoIA">
-    <meta property="og:description" content="Générez des grilles EuroMillions optimisées avec le moteur HYBRIDE. Analyse de tirages historiques depuis 2019.">
-    <meta property="og:url" content="https://lotoia.fr/euromillions/generateur">
+    <meta property="og:locale" content="en_GB">
+    <meta property="og:title" content="EuroMillions AI Grid Simulator | LotoIA">
+    <meta property="og:description" content="Generate optimised EuroMillions grids with the HYBRIDE engine. Historical draw analysis since 2019.">
+    <meta property="og:url" content="https://lotoia.fr/en/euromillions/generator">
     <meta property="og:image" content="https://lotoia.fr/static/og-image.jpg">
     <meta property="og:image:secure_url" content="https://lotoia.fr/static/og-image.jpg">
     <meta property="og:image:type" content="image/jpeg">
@@ -25,20 +25,21 @@
     <meta property="og:image:height" content="630">
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Simulateur de Grilles EuroMillions IA | LotoIA">
-    <meta name="twitter:description" content="Générez des grilles EuroMillions optimisées avec le moteur HYBRIDE. Analyse de tirages historiques depuis 2019.">
+    <meta name="twitter:title" content="EuroMillions AI Grid Simulator | LotoIA">
+    <meta name="twitter:description" content="Generate optimised EuroMillions grids with the HYBRIDE engine. Historical draw analysis since 2019.">
     <meta name="twitter:image" content="https://lotoia.fr/static/og-image.jpg">
     <!-- JSON-LD Schema.org -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
-      "name": "LotoIA - Simulateur de Grilles EuroMillions",
-      "url": "https://lotoia.fr/euromillions/generateur",
-      "description": "Simulateur de grilles EuroMillions optimisées par analyse statistique et IA",
+      "name": "LotoIA - EuroMillions Grid Simulator",
+      "url": "https://lotoia.fr/en/euromillions/generator",
+      "description": "EuroMillions grid simulator optimised by statistical analysis and AI",
       "applicationCategory": "UtilitiesApplication",
       "operatingSystem": "Web",
-      "featureList": ["Simulation Monte-Carlo de grilles EuroMillions", "Analyse statistique", "Numéros chauds/froids", "Indice de convergence", "5 numéros + 2 étoiles"],
+      "inLanguage": "en-GB",
+      "featureList": ["Monte Carlo simulation of EuroMillions grids", "Statistical analysis", "Hot/cold numbers", "Convergence index", "5 numbers + 2 stars"],
       "offers": {
         "@type": "Offer",
         "price": "0",
@@ -52,66 +53,66 @@
     <link rel="stylesheet" href="/ui/static/em/sponsor-popup75-em.css?v=11">
     <link rel="stylesheet" href="/ui/static/meta-result.css?v=1">
     <link rel="stylesheet" href="/ui/static/legal.css?v=1">
-    <!-- Theme script (en premier pour eviter le flash) -->
+    <!-- Theme script (first to avoid flash) -->
     <script src="/ui/static/theme.js?v=1"></script>
-    <!-- Analytics (charge apres consentement RGPD) -->
+    <!-- Analytics (loads after GDPR consent) -->
     <script src="/ui/static/analytics.js?v=1" defer></script>
     <script>function umamiBeforeSend(t,p){return window.__OWNER__?false:p;}</script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc" data-before-send="umamiBeforeSend"></script>
 </head>
 <body class="loto-page em-page">
-    <!-- Barre de navigation moteur -->
+    <!-- Engine navigation bar -->
     <nav class="engine-nav-subpage">
-        <a href="/euromillions" class="engine-nav-btn">
+        <a href="/en/euromillions" class="engine-nav-btn">
             <span class="nav-arrow">&larr;</span>
-            <span class="nav-text">Accueil EuroMillions</span>
+            <span class="nav-text">EuroMillions Home</span>
         </a>
         <div class="engine-nav-right">
+            <a href="/euromillions/generateur" class="lang-switch" title="Version fran&ccedil;aise">&#127467;&#127479; FR</a>
             <span class="engine-badge">EuroMillions</span>
-            <button id="theme-switch" class="theme-switch" title="Changer de thème">
+            <button id="theme-switch" class="theme-switch" title="Switch theme">
                 <span class="icon-day">&#9728;&#65039;</span>
                 <span class="icon-night">&#127769;</span>
             </button>
-            <a href="/en/euromillions/generator" class="lang-switch" title="English version">EN</a>
         </div>
     </nav>
 
     <!-- ══════════════════════════════════════════════════════════════
-         HERO — Pattern aligne sur accueil (centre, hierarchie claire)
+         HERO — Pattern aligned with home (centred, clear hierarchy)
          ══════════════════════════════════════════════════════════════ -->
     <header class="page-header loto-hero-header">
         <div class="header-content">
-            <h1><span>&#11088;</span> Exploration de grilles EuroMillions</h1>
-            <p class="subtitle">Analyse statistique basée sur les tirages officiels EuroMillions</p>
+            <h1><span>&#11088;</span> EuroMillions Grid Explorer</h1>
+            <p class="subtitle">Statistical analysis based on official EuroMillions draws</p>
             <div class="loto-hero-actions">
-                <a href="/euromillions/simulateur" class="loto-hero-btn">
+                <a href="/en/euromillions/simulator" class="loto-hero-btn">
                     <span class="loto-hero-btn-icon">&#127919;</span>
-                    Auditer une grille
+                    Audit a grid
                 </a>
                 <a href="#generator" class="loto-hero-btn loto-hero-btn-active">
                     <span class="loto-hero-btn-icon">&#11088;</span>
-                    Explorer des grilles
+                    Explore grids
                 </a>
-                <a href="/euromillions/statistiques" class="loto-hero-btn">
+                <a href="/en/euromillions/statistics" class="loto-hero-btn">
                     <span class="loto-hero-btn-icon">&#128202;</span>
-                    Statistiques
+                    Statistics
                 </a>
-                <a href="/euromillions/news" class="loto-hero-btn loto-hero-btn-news">
+                <a href="/en/euromillions/news" class="loto-hero-btn loto-hero-btn-news">
                     <span class="loto-hero-btn-icon">&#128240;</span>
-                    Actualités
+                    News
                 </a>
             </div>
-            <p class="loto-hero-scroll-hint">&larr; glisser pour voir plus &rarr;</p>
+            <p class="loto-hero-scroll-hint">&larr; swipe to see more &rarr;</p>
         </div>
     </header>
 
     <div class="loto-container">
 
         <!-- ══════════════════════════════════════════════════════════════
-             ZONE PRIMAIRE - GENERATEUR (etape secondaire apres choix hero)
+             PRIMARY ZONE - GENERATOR (secondary step after hero choice)
              ══════════════════════════════════════════════════════════════ -->
         <section id="generator" class="generator-hero">
-            <!-- Effets visuels data/algorithme -->
+            <!-- Visual effects data/algorithm -->
             <div class="scan-line"></div>
             <div class="data-particles">
                 <span class="particle p1"></span>
@@ -124,26 +125,26 @@
                 <span class="particle p8"></span>
             </div>
             <div class="generator-card">
-                <!-- Header du generateur (centre, aligne pattern accueil) -->
+                <!-- Generator header (centred, aligned with home pattern) -->
                 <div class="generator-header">
                     <div class="generator-badge">
                         <span class="badge-icon">&#11088;</span>
-                        <span class="badge-text">MOTEUR HYBRIDE</span>
+                        <span class="badge-text">HYBRIDE ENGINE</span>
                     </div>
-                    <p class="generator-subtitle">Configurez votre exploration sur <strong id="stat-tirages-inline">---</strong> tirages officiels EuroMillions <span class="data-depth">depuis 2019</span></p>
-                    <img src="/static/hybride-moteur.png" class="band-hybride-moteur" alt="Mascotte HYBRIDE - Moteur d'analyse statistique EuroMillions">
+                    <p class="generator-subtitle">Configure your exploration across <strong id="stat-tirages-inline">---</strong> official EuroMillions draws <span class="data-depth">since 2019</span></p>
+                    <img src="/static/hybride-moteur.png" class="band-hybride-moteur" alt="HYBRIDE Mascot - EuroMillions statistical analysis engine">
                 </div>
 
-                <!-- Formulaire (etape secondaire) -->
+                <!-- Form (secondary step) -->
                 <div class="generator-form">
                     <div class="form-group">
-                        <label for="draw-date">&#128197; Date du prochain tirage</label>
+                        <label for="draw-date">&#128197; Next draw date</label>
                         <input type="date" id="draw-date" class="premium-input">
                         <div id="date-error" class="date-error" style="display: none; color: #d32f2f; margin-top: 8px; font-size: 14px; font-weight: 500;"></div>
                     </div>
 
                     <div class="form-group">
-                        <label>&#127922; Nombre de grilles à générer</label>
+                        <label>&#127922; Number of grids to generate</label>
                         <div class="grid-count-selector" id="grid-count-selector">
                             <button class="count-btn" data-count="1">1</button>
                             <button class="count-btn" data-count="2">2</button>
@@ -151,28 +152,28 @@
                             <button class="count-btn" data-count="4">4</button>
                             <button class="count-btn" data-count="5">5</button>
                         </div>
-                        <small class="helper-text">Recommandé : 3 grilles pour comparer différentes combinaisons</small>
+                        <small class="helper-text">Recommended: 3 grids to compare different combinations</small>
                     </div>
 
-                    <!-- CTA Secondaire — Generer (outline or — gere par CSS em-page override) -->
+                    <!-- Secondary CTA — Generate (outline or — handled by CSS em-page override) -->
                     <button id="btn-analyze" class="btn-cta-main" style="background: transparent; border: 2px solid; padding: 13px 28px; font-size: 17px;">
                         <span class="cta-icon">&#10024;</span>
-                        <span class="cta-text">Générer mes grilles</span>
+                        <span class="cta-text">Generate my grids</span>
                         <span class="cta-arrow">&rarr;</span>
                         <span class="spinner" style="display: none;"></span>
                     </button>
 
-                    <!-- Slider Fenetre d'Analyse META DATA EM -->
+                    <!-- Analysis Window Slider META DATA EM -->
                     <div class="meta-window-selector" id="meta-window-container-em">
-                        <label class="meta-window-label">Fenêtre d'analyse</label>
+                        <label class="meta-window-label">Analysis window</label>
 
-                        <!-- Toggle Tirages / Annees -->
+                        <!-- Toggle Draws / Years -->
                         <div class="meta-mode-toggle" id="meta-mode-toggle-em">
-                            <button type="button" class="meta-mode-btn active" data-mode="tirages">Tirages</button>
-                            <button type="button" class="meta-mode-btn" data-mode="annees">Années</button>
+                            <button type="button" class="meta-mode-btn active" data-mode="tirages">Draws</button>
+                            <button type="button" class="meta-mode-btn" data-mode="annees">Years</button>
                         </div>
 
-                        <!-- Slider Mode Tirages (100-700 + GLOBAL, pas de 800 pour EM) -->
+                        <!-- Slider Mode Draws (100-700 + GLOBAL, no 800 for EM) -->
                         <div class="meta-window-slider-wrapper" id="meta-slider-tirages-em">
                             <input type="range" id="meta-window-slider-em" class="meta-window-slider"
                                    min="0" max="7" step="1" value="7">
@@ -184,57 +185,57 @@
                                 <span>500</span>
                                 <span>600</span>
                                 <span>700</span>
-                                <span>GLOBAL</span>
+                                <span>ALL</span>
                             </div>
                         </div>
 
-                        <!-- Slider Mode Annees -->
+                        <!-- Slider Mode Years -->
                         <div class="meta-window-slider-wrapper" id="meta-slider-annees-em" style="display: none;">
                             <input type="range" id="meta-years-slider-em" class="meta-window-slider"
                                    min="0" max="6" step="1" value="6">
                             <div class="meta-window-ticks">
-                                <span>1A</span>
-                                <span>2A</span>
-                                <span>3A</span>
-                                <span>4A</span>
-                                <span>5A</span>
-                                <span>6A</span>
-                                <span>GLOBAL</span>
+                                <span>1Y</span>
+                                <span>2Y</span>
+                                <span>3Y</span>
+                                <span>4Y</span>
+                                <span>5Y</span>
+                                <span>6Y</span>
+                                <span>ALL</span>
                             </div>
                         </div>
 
                         <div class="meta-window-info" id="meta-window-info-em">
-                            <span class="meta-window-count">Analyse sur l'intégralité de la base</span>
-                            <span class="meta-window-dates">Fev 2019 &#8594; Aujourd'hui</span>
+                            <span class="meta-window-count">Analysis across the entire database</span>
+                            <span class="meta-window-dates">Feb 2019 &#8594; Today</span>
                         </div>
 
                         <p class="meta-slider-info" style="font-size:0.85rem; color:#6b7280; text-align:center; margin-top:8px; opacity:0.9;">
-                            &#128269; Ce réglage s'applique uniquement à l'analyse META DONNÉE.
+                            &#128269; This setting applies only to the META DATA analysis.
                         </p>
 
                         <!-- CTA Meta Data EM -->
                         <button id="btn-metadata-75-em" class="btn-cta-secondary" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; border: none; padding: 18px 28px; font-size: 17px; font-weight: 700; border-radius: 14px; box-shadow: 0 6px 20px rgba(245,158,11,0.35); letter-spacing: 0.3px;">
                             <span>&#128202;</span>
-                            <span>Analyser avec META (75 grilles)</span>
+                            <span>Analyse with META (75 grids)</span>
                         </button>
                     </div>
 
-                    <p class="cta-subtext">Analyse instantanée &bull; Indice de convergence &bull; 100% gratuit</p>
-                    <p class="cta-pdf-teaser">&#128196; Rapport PDF détaillé généré par intelligence artificielle</p>
+                    <p class="cta-subtext">Instant analysis &bull; Convergence index &bull; 100% free</p>
+                    <p class="cta-pdf-teaser">&#128196; Detailed PDF report generated by artificial intelligence</p>
 
-                    <!-- Info prochain tirage -->
+                    <!-- Next draw info -->
                     <p class="cta-urgency" id="next-draw-urgency">
                         <span class="urgency-icon">&#9201;&#65039;</span>
-                        <span class="urgency-text">Prochain tirage dans <strong id="days-until-draw">--</strong> jours</span>
+                        <span class="urgency-text">Next draw in <strong id="days-until-draw">--</strong> days</span>
                     </p>
-                    <img src="/static/hybride-moteur.png" class="band-hybride-moteur-mobile" alt="Mascotte HYBRIDE">
+                    <img src="/static/hybride-moteur.png" class="band-hybride-moteur-mobile" alt="HYBRIDE Mascot">
                 </div>
             </div>
         </section>
 
-        <!-- Section stats rapides (cachee) -->
+        <!-- Quick stats section (hidden) -->
         <button id="btn-stats" class="btn btn-tertiary" style="display: none;">
-            <span class="btn-text">&#128202; Voir statistiques</span>
+            <span class="btn-text">&#128202; View statistics</span>
             <span class="spinner" style="display: none;"></span>
         </button>
 
@@ -244,8 +245,8 @@
             <div id="success-state" style="display: none;">
                 <div class="card result-card">
                     <div class="card-header">
-                        <h2 id="result-title">Résultats</h2>
-                        <button id="btn-copy" class="btn-copy" title="Copier">&#128203;</button>
+                        <h2 id="result-title">Results</h2>
+                        <button id="btn-copy" class="btn-copy" title="Copy">&#128203;</button>
                     </div>
 
                     <!-- Numbers Grid -->
@@ -254,123 +255,123 @@
                     <!-- Key Info -->
                     <div id="key-info" class="key-info"></div>
 
-                    <!-- Section Explications -->
+                    <!-- Explanations Section -->
                     <div id="explanations-section" class="explanations-section" style="display: none;"></div>
                 </div>
             </div>
 
             <!-- Error State -->
             <div id="error-state" class="card error-card" style="display: none;">
-                <h3>Une erreur est survenue</h3>
+                <h3>An error has occurred</h3>
                 <p id="error-message"></p>
             </div>
         </section>
 
-        <!-- Section: Gestion des donnees (masquee — IDs requis par app-em.js) -->
+        <!-- Section: Data management (hidden — IDs required by app-em.js) -->
         <details style="display: none;">
             <summary style="cursor: pointer; padding: 12px; background: var(--bg-white); border-radius: 8px; font-weight: 600; color: var(--text-muted); margin-bottom: 16px;">
-                &#9881;&#65039; Gestion des données
+                &#9881;&#65039; Data management
             </summary>
 
-            <!-- Installation Base de donnees -->
+            <!-- Database installation -->
             <section class="card install-section">
-                <h2>Base de données</h2>
+                <h2>Database</h2>
                 <p class="system-description">
-                    Initialise la base de données EuroMillions si elle n'existe pas encore.
+                    Initialises the EuroMillions database if it does not yet exist.
                 </p>
 
-                <!-- Statut de la base -->
+                <!-- Database status -->
                 <div id="db-status" class="db-status">
                     <span class="status-icon">&#9203;</span>
                     <div class="status-text">
-                        <div id="db-main-status">Vérification en cours...</div>
+                        <div id="db-main-status">Checking...</div>
                         <div id="db-period" style="display:none;"></div>
                         <div id="db-algo-note" style="display:none; font-style: italic;"></div>
                     </div>
                 </div>
 
-                <!-- Boutons d'installation -->
+                <!-- Installation buttons -->
                 <div class="install-buttons">
                     <button id="btn-install" class="btn btn-install">
-                        <span class="btn-text">Installer la base de données</span>
+                        <span class="btn-text">Install database</span>
                         <span class="spinner" style="display: none;"></span>
                     </button>
                     <button id="btn-reset" class="btn btn-reset" style="display: none;">
-                        <span class="btn-text">Réinitialiser la base</span>
+                        <span class="btn-text">Reset database</span>
                         <span class="spinner" style="display: none;"></span>
                     </button>
                 </div>
 
-                <!-- Message de statut -->
+                <!-- Status message -->
                 <div id="install-status" class="install-status" style="display: none;"></div>
             </section>
 
-            <!-- Mise a jour -->
+            <!-- Update -->
             <section class="card system-section">
-                <h2>Mise à jour</h2>
+                <h2>Update</h2>
                 <p class="system-description">
-                    Synchronise les données avec les tirages officiels les plus récents.
+                    Synchronises data with the most recent official draws.
                 </p>
                 <button id="btn-update" class="btn btn-system">
-                    <span class="btn-text">Mettre à jour les données</span>
+                    <span class="btn-text">Update data</span>
                     <span class="spinner" style="display: none;"></span>
                 </button>
-                <!-- Message de statut de mise a jour -->
+                <!-- Update status message -->
                 <div id="update-status" class="update-status" style="display: none;"></div>
             </section>
         </details>
 
         <!-- ══════════════════════════════════════════════════════════════
-             MINI-FAQ - Questions essentielles (3 max)
+             MINI-FAQ - Essential questions (3 max)
              ══════════════════════════════════════════════════════════════ -->
         <section class="mini-faq-section" id="faq">
             <div class="mini-faq-header">
-                <h3>Questions fréquentes</h3>
-                <p>Les réponses aux questions essentielles</p>
+                <h3>Frequently Asked Questions</h3>
+                <p>Answers to the essential questions</p>
             </div>
 
             <div class="mini-faq-container">
                 <!-- Question 1 -->
                 <div class="faq-item">
                     <button class="faq-question">
-                        <span>Comment fonctionne le simulateur EuroMillions ?</span>
+                        <span>How does the EuroMillions simulator work?</span>
                         <span class="faq-icon">+</span>
                     </button>
                     <div class="faq-answer">
-                        <p>Notre simulateur utilise le <strong>moteur HYBRIDE</strong> qui analyse les tirages historiques EuroMillions depuis 2019.</p>
-                        <p>Il combine analyse long terme (60%) et tendances récentes (40%) pour générer des grilles de 5 numéros + 2 étoiles statistiquement équilibrées avec un indice de convergence.</p>
+                        <p>Our simulator uses the <strong>HYBRIDE engine</strong> which analyses historical EuroMillions draws since 2019.</p>
+                        <p>It combines long-term analysis (60%) and recent trends (40%) to generate statistically balanced grids of 5 numbers + 2 stars with a convergence index.</p>
                     </div>
                 </div>
 
                 <!-- Question 2 -->
                 <div class="faq-item">
                     <button class="faq-question">
-                        <span>L'EuroMillions est-il prévisible ?</span>
+                        <span>Is the EuroMillions predictable?</span>
                         <span class="faq-icon">+</span>
                     </button>
                     <div class="faq-answer">
-                        <p><strong>NON, l'EuroMillions est un jeu de pur hasard.</strong> Aucun algorithme ne peut prédire les résultats.</p>
-                        <p>Notre outil propose des grilles <strong>statistiquement guidées</strong>, mais cela <strong>ne garantit AUCUN gain</strong>. Probabilité du jackpot : 1 sur 139 838 160.</p>
+                        <p><strong>NO, the EuroMillions is a game of pure chance.</strong> No algorithm can predict the results.</p>
+                        <p>Our tool offers <strong>statistically guided</strong> grids, but this <strong>does NOT guarantee ANY winnings</strong>. Jackpot probability: 1 in 139,838,160.</p>
                     </div>
                 </div>
 
                 <!-- Question 3 -->
                 <div class="faq-item">
                     <button class="faq-question">
-                        <span>L'outil est-il gratuit ?</span>
+                        <span>Is the tool free?</span>
                         <span class="faq-icon">+</span>
                     </button>
                     <div class="faq-answer">
-                        <p>Oui, LotoIA est <strong>100% gratuit</strong>, sans inscription ni paiement requis.</p>
-                        <p>Toutes les fonctionnalités sont accessibles librement.</p>
+                        <p>Yes, LotoIA is <strong>100% free</strong>, with no registration or payment required.</p>
+                        <p>All features are freely accessible.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Lien vers FAQ complete -->
+            <!-- Link to full FAQ -->
             <div class="mini-faq-footer">
-                <a href="/euromillions/faq" class="btn-see-more">
-                    <span>Voir toutes les questions</span>
+                <a href="/en/euromillions/faq" class="btn-see-more">
+                    <span>View all questions</span>
                     <span class="arrow">&rarr;</span>
                 </a>
             </div>
@@ -378,61 +379,61 @@
 
         <!-- Footer -->
         <footer class="footer">
-            <!-- Navigation footer -->
+            <!-- Footer navigation -->
             <div class="footer-nav">
-                <a href="/">Moteurs</a>
+                <a href="/">Engines</a>
                 <span class="footer-sep">&bull;</span>
-                <a href="/euromillions">Accueil</a>
+                <a href="/en/euromillions">Home</a>
                 <span class="footer-sep">&bull;</span>
-                <a href="/euromillions/simulateur">Analyse</a>
+                <a href="/en/euromillions/simulator">Analysis</a>
                 <span class="footer-sep">&bull;</span>
-                <a href="/euromillions/generateur" class="active">Exploration</a>
+                <a href="/en/euromillions/generator" class="active">Explorer</a>
                 <span class="footer-sep">&bull;</span>
-                <a href="/euromillions/statistiques">Statistiques</a>
+                <a href="/en/euromillions/statistics">Statistics</a>
                 <span class="footer-sep">&bull;</span>
-                <a href="/euromillions/news">Actualités</a>
+                <a href="/en/euromillions/news">News</a>
                 <span class="footer-sep">&bull;</span>
-                <a href="/euromillions/faq">FAQ</a>
+                <a href="/en/euromillions/faq">FAQ</a>
             </div>
 
-            <!-- Liens juridiques -->
+            <!-- Legal links -->
             <div class="footer-legal">
-                <a href="/mentions-legales">Mentions légales</a>
+                <a href="/mentions-legales">Legal notice</a>
                 <span class="footer-sep">&bull;</span>
-                <a href="/politique-confidentialite">Confidentialité</a>
+                <a href="/politique-confidentialite">Privacy</a>
                 <span class="footer-sep">&bull;</span>
                 <a href="/politique-cookies">Cookies</a>
                 <span class="footer-sep">&bull;</span>
-                <a href="/disclaimer">Avertissements</a>
+                <a href="/disclaimer">Disclaimer</a>
             </div>
 
             <p class="footer-brand">LotoIA.fr <span class="app-version">v1.001</span></p>
 
-            <!-- Avertissement jeu responsable -->
-            <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dépendance. Appelez le 09 74 75 13 13 (appel non surtaxé).</p>
-            <p class="footer-help">Interdiction de jeu aux mineurs. <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
+            <!-- Responsible gambling warning -->
+            <p class="footer-disclaimer">Gambling involves risks: debt, isolation, addiction. Call the National Gambling Helpline: 0808 8020 133 (free, confidential).</p>
+            <p class="footer-help">Gambling is not permitted for under-18s. <a href="https://www.begambleaware.org" target="_blank" rel="noopener">BeGambleAware.org</a></p>
 
             <!-- Credits -->
             <div class="credits">
-                <p class="dev-by">Développé par <strong>JyppY</strong></p>
+                <p class="dev-by">Developed by <strong>JyppY</strong></p>
             </div>
         </footer>
     </div>
 
-    <!-- Bouton Scroll to Top -->
-    <button id="scroll-to-top" class="scroll-to-top" aria-label="Retour en haut">
+    <!-- Scroll to Top button -->
+    <button id="scroll-to-top" class="scroll-to-top" aria-label="Back to top">
         &uarr;
     </button>
 
-    <!-- META ANALYSE 75 Grilles EM (sponsor-popup.js grilles = sprint suivant) -->
-    <script src="/ui/static/sponsor-popup75-em.js?v=8"></script>
+    <!-- META ANALYSE 75 Grids EM (sponsor-popup.js grids = next sprint) -->
+    <script src="/ui/en/euromillions/static/sponsor-popup75-em-en.js?v=1"></script>
     <script>
-    // Variables globales pour la fenetre d'analyse META EM
+    // Global variables for META analysis window EM
     var metaWindowSizeEM = "GLOBAL";
     var metaYearsSizeEM = null;
     var metaCurrentModeEM = "tirages";
 
-    // Mappings sliders discrets EM (pas de 800 — seulement 729 tirages)
+    // Discrete slider mappings EM (no 800 — only 729 draws)
     var META_WINDOW_MAP_EM = [100, 200, 300, 400, 500, 600, 700, "GLOBAL"];
     var META_YEARS_MAP_EM = [1, 2, 3, 4, 5, 6, "GLOBAL"];
 
@@ -464,7 +465,7 @@
         var datesEl = infoContainer.querySelector('.meta-window-dates');
         var toggleBtns = toggleContainer.querySelectorAll('.meta-mode-btn');
 
-        // Donnees locales fenetre d'analyse EM (fallback)
+        // Local analysis window data EM (fallback)
         var windowInfoTiragesEM = {
             100: { draws: 100, start: "2025-05-16", end: "2026-02-11" },
             200: { draws: 200, start: "2024-10-18", end: "2026-02-11" },
@@ -483,13 +484,13 @@
 
             if (windowValue === "GLOBAL") {
                 var globalInfo = windowInfoTiragesEM["GLOBAL"];
-                countEl.textContent = "Analyse sur l'intégralité de la base (" + globalInfo.draws + " tirages)";
-                datesEl.textContent = "Du " + formatDateFREM(globalInfo.start) + " au " + formatDateFREM(globalInfo.end);
+                countEl.textContent = "Analysis across the entire database (" + globalInfo.draws + " draws)";
+                datesEl.textContent = "From " + formatDateFREM(globalInfo.start) + " to " + formatDateFREM(globalInfo.end);
             } else {
-                countEl.textContent = "Analyse sur " + windowValue + " tirages";
+                countEl.textContent = "Analysis over " + windowValue + " draws";
                 var info = windowInfoTiragesEM[windowValue];
                 if (info) {
-                    datesEl.textContent = "Du " + formatDateFREM(info.start) + " au " + formatDateFREM(info.end);
+                    datesEl.textContent = "From " + formatDateFREM(info.start) + " to " + formatDateFREM(info.end);
                 } else {
                     datesEl.textContent = "";
                 }
@@ -506,7 +507,7 @@
             GLOBAL: { draws: 729, start: "2019-02-15", end: "2026-02-11" }
         };
 
-        // Chargement dynamique des fenetres depuis la BDD
+        // Dynamic loading of windows from database
         fetch('/api/euromillions/meta-windows-info')
             .then(function(res) { return res.json(); })
             .then(function(data) {
@@ -521,7 +522,7 @@
                     updateAnneesDisplayEM(yearsSlider.value);
                 }
             })
-            .catch(function() { /* fallback hardcode en place */ });
+            .catch(function() { /* hardcoded fallback in place */ });
 
         function updateAnneesDisplayEM(value) {
             var yearsValue = META_YEARS_MAP_EM[value];
@@ -530,14 +531,14 @@
 
             if (yearsValue === "GLOBAL") {
                 var globalInfoA = windowInfoAnneesEM["GLOBAL"];
-                countEl.textContent = "Analyse sur l'intégralité de la base (" + globalInfoA.draws + " tirages)";
-                datesEl.textContent = "Du " + formatDateFREM(globalInfoA.start) + " au " + formatDateFREM(globalInfoA.end);
+                countEl.textContent = "Analysis across the entire database (" + globalInfoA.draws + " draws)";
+                datesEl.textContent = "From " + formatDateFREM(globalInfoA.start) + " to " + formatDateFREM(globalInfoA.end);
             } else {
                 var info = windowInfoAnneesEM[yearsValue];
                 var nbTirages = info ? info.draws : "?";
-                countEl.textContent = "Analyse sur " + yearsValue + " an" + (yearsValue > 1 ? "s" : "") + " (" + nbTirages + " tirages)";
+                countEl.textContent = "Analysis over " + yearsValue + " year" + (yearsValue > 1 ? "s" : "") + " (" + nbTirages + " draws)";
                 if (info) {
-                    datesEl.textContent = "Du " + formatDateFREM(info.start) + " au " + formatDateFREM(info.end);
+                    datesEl.textContent = "From " + formatDateFREM(info.start) + " to " + formatDateFREM(info.end);
                 } else {
                     datesEl.textContent = "";
                 }
@@ -579,7 +580,7 @@
 
         updateTiragesDisplayEM(7);
 
-        // Bouton META DATA EM
+        // META DATA EM button
         var btn = document.getElementById('btn-metadata-75-em');
         if (!btn) return;
         btn.addEventListener('click', function(e) {
@@ -598,15 +599,15 @@
             if (typeof showMetaAnalysePopupEM === 'function') {
                 showMetaAnalysePopupEM();
             } else {
-                console.warn('[META ANALYSE EM] Module sponsor-popup75-em.js non charge');
+                console.warn('[META ANALYSE EM] Module sponsor-popup75-em.js not loaded');
             }
         });
     })();
     </script>
 
-    <!-- Scripts applicatifs -->
-    <script src="/ui/static/em/sponsor-popup-em.js?v=4"></script>
-    <script src="/ui/static/app-em.js?v=1"></script>
+    <!-- Application scripts -->
+    <script src="/ui/en/euromillions/static/sponsor-popup-em-en.js?v=1"></script>
+    <script src="/ui/en/euromillions/static/app-em-en.js?v=1"></script>
     <script src="/ui/static/scroll.js?v=1"></script>
     <script src="/ui/static/nav-scroll.js?v=1"></script>
     <script src="/ui/static/cookie-consent.js?v=1"></script>
@@ -614,11 +615,11 @@
     <!-- HYBRIDE Chatbot Widget EuroMillions -->
     <link rel="stylesheet" href="/ui/static/hybride-chatbot.css?v=4.3">
     <div id="hybride-chatbot-root"></div>
-    <script src="/ui/static/hybride-chatbot-em.js?v=1.0"></script>
+    <script src="/ui/en/euromillions/static/hybride-chatbot-em-en.js?v=1.0"></script>
 
     <script src="/ui/static/version-inject.js"></script>
 
-    <!-- Bandeau Notation -->
+    <!-- Rating Banner -->
     <link rel="stylesheet" href="/ui/static/rating-popup.css?v=1">
     <script src="/ui/static/rating-popup.js?v=1" defer></script>
 </body>

@@ -93,7 +93,7 @@ def _load_sponsors_config() -> dict:
     return _sponsors_config
 
 
-def _get_sponsor_if_due(history: list) -> str | None:
+def _get_sponsor_if_due(history: list, lang: str = "fr") -> str | None:
     """Retourne le texte sponsor si c'est le moment, None sinon."""
     config = _load_sponsors_config()
     if not config.get("enabled"):
@@ -117,10 +117,16 @@ def _get_sponsor_if_due(history: list) -> str | None:
     sponsor = active[(cycle - 1) % len(active)]
 
     # Alterner style A (naturel) / style B (encart)
-    if cycle % 2 == 1:
-        return "\U0001f4e2 Cet espace est réservé à nos partenaires \u2014 Pour en savoir plus : partenariats@lotoia.fr"
+    if lang == "en":
+        if cycle % 2 == 1:
+            return "\U0001f4e2 This space is reserved for our partners \u2014 Learn more: partenariats@lotoia.fr"
+        else:
+            return "\u2014 Partner space available | partenariats@lotoia.fr"
     else:
-        return "\u2014 Espace partenaire disponible | partenariats@lotoia.fr"
+        if cycle % 2 == 1:
+            return "\U0001f4e2 Cet espace est réservé à nos partenaires \u2014 Pour en savoir plus : partenariats@lotoia.fr"
+        else:
+            return "\u2014 Espace partenaire disponible | partenariats@lotoia.fr"
 
 
 def _strip_sponsor_from_text(text: str) -> str:
@@ -130,6 +136,7 @@ def _strip_sponsor_from_text(text: str) -> str:
         line for line in lines
         if 'partenaires' not in line
         and 'Espace partenaire' not in line
+        and 'Partner space' not in line
         and 'partenariats@lotoia.fr' not in line
     ]
     return '\n'.join(cleaned).strip()

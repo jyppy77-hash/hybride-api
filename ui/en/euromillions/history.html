@@ -1,25 +1,25 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Historique des Tirages EuroMillions | LotoIA</title>
-    <meta name="description" content="Recherchez un tirage EuroMillions par date. Consultez les numéros et étoiles de chaque tirage historique.">
-    <link rel="canonical" href="https://lotoia.fr/euromillions/historique">
+    <title>EuroMillions Draw History | LotoIA</title>
+    <meta name="description" content="Search for a EuroMillions draw by date. View the numbers and stars from every past draw.">
+    <link rel="canonical" href="https://lotoia.fr/en/euromillions/history">
     <link rel="alternate" hreflang="fr" href="https://lotoia.fr/euromillions/historique">
     <link rel="alternate" hreflang="en" href="https://lotoia.fr/en/euromillions/history">
     <link rel="alternate" hreflang="x-default" href="https://lotoia.fr/euromillions/historique">
     <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="LotoIA">
-    <meta property="og:locale" content="fr_FR">
-    <meta property="og:title" content="Historique EuroMillions | LotoIA">
-    <meta property="og:description" content="Recherchez un tirage EuroMillions par date.">
-    <meta property="og:url" content="https://lotoia.fr/euromillions/historique">
+    <meta property="og:locale" content="en_GB">
+    <meta property="og:title" content="EuroMillions History | LotoIA">
+    <meta property="og:description" content="Search for a EuroMillions draw by date.">
+    <meta property="og:url" content="https://lotoia.fr/en/euromillions/history">
     <meta property="og:image" content="https://lotoia.fr/static/og-image.jpg">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Historique EuroMillions | LotoIA">
-    <meta name="twitter:description" content="Recherchez un tirage EuroMillions par date.">
+    <meta name="twitter:title" content="EuroMillions History | LotoIA">
+    <meta name="twitter:description" content="Search for a EuroMillions draw by date.">
     <meta name="twitter:image" content="https://lotoia.fr/static/og-image.jpg">
     <link rel="stylesheet" href="/ui/static/style.css?v=1">
     <link rel="stylesheet" href="/ui/static/style-em.css?v=1">
@@ -167,96 +167,96 @@
 </head>
 <body class="subpage em-page">
     <nav class="engine-nav-subpage">
-        <a href="/euromillions" class="engine-nav-btn">
+        <a href="/en/euromillions" class="engine-nav-btn">
             <span class="nav-arrow">←</span>
-            <span class="nav-text">Accueil EuroMillions</span>
+            <span class="nav-text">EuroMillions Home</span>
         </a>
         <div class="engine-nav-right">
             <span class="engine-badge">EuroMillions</span>
-            <button id="theme-switch" class="theme-switch" title="Changer de thème">
+            <a href="/euromillions/historique" class="lang-switch" title="Version française">🇫🇷 FR</a>
+            <button id="theme-switch" class="theme-switch" title="Switch theme">
                 <span class="icon-day">☀️</span>
                 <span class="icon-night">🌙</span>
             </button>
-            <a href="/en/euromillions/history" class="lang-switch" title="English version">EN</a>
         </div>
     </nav>
 
     <header class="page-header loto-hero-header">
         <div class="header-content">
-            <h1><span>📅</span> Historique des tirages</h1>
-            <p class="subtitle">Recherchez un tirage EuroMillions par date</p>
+            <h1><span>📅</span> Draw History</h1>
+            <p class="subtitle">Search for a EuroMillions draw by date</p>
             <div class="loto-hero-actions">
-                <a href="/euromillions/simulateur" class="loto-hero-btn">
+                <a href="/en/euromillions/simulator" class="loto-hero-btn">
                     <span class="loto-hero-btn-icon">⭐</span>
-                    Auditer une grille
+                    Audit a grid
                 </a>
-                <a href="/euromillions/generateur" class="loto-hero-btn">
+                <a href="/en/euromillions/generator" class="loto-hero-btn">
                     <span class="loto-hero-btn-icon">🧠</span>
-                    Explorer des grilles
+                    Explore grids
                 </a>
-                <a href="/euromillions/statistiques" class="loto-hero-btn">
+                <a href="/en/euromillions/statistics" class="loto-hero-btn">
                     <span class="loto-hero-btn-icon">📊</span>
-                    Statistiques
+                    Statistics
                 </a>
-                <a href="/euromillions/news" class="loto-hero-btn loto-hero-btn-news">
+                <a href="/en/euromillions/news" class="loto-hero-btn loto-hero-btn-news">
                     <span class="loto-hero-btn-icon">📰</span>
-                    Actualités
+                    News
                 </a>
             </div>
-            <p class="loto-hero-scroll-hint">← glisser pour voir plus →</p>
+            <p class="loto-hero-scroll-hint">← swipe to see more →</p>
         </div>
     </header>
 
     <div class="historique-container">
         <div class="search-card">
-            <h2>Rechercher un tirage</h2>
+            <h2>Search for a draw</h2>
             <div class="search-form">
                 <input type="date" id="search-date" value="">
-                <button onclick="searchDraw()">Rechercher</button>
+                <button onclick="searchDraw()">Search</button>
             </div>
             <div id="draw-result"></div>
         </div>
 
         <footer class="footer" style="margin-top: 48px;">
             <div class="footer-nav">
-                <a href="/">Moteurs</a>
+                <a href="/">Engines</a>
                 <span class="footer-sep">•</span>
-                <a href="/euromillions">Accueil</a>
+                <a href="/en/euromillions">Home</a>
                 <span class="footer-sep">•</span>
-                <a href="/euromillions/simulateur">Analyse</a>
+                <a href="/en/euromillions/simulator">Analysis</a>
                 <span class="footer-sep">•</span>
-                <a href="/euromillions/generateur">Exploration</a>
+                <a href="/en/euromillions/generator">Generator</a>
                 <span class="footer-sep">•</span>
-                <a href="/euromillions/statistiques">Statistiques</a>
+                <a href="/en/euromillions/statistics">Statistics</a>
                 <span class="footer-sep">•</span>
-                <a href="/euromillions/news">Actualités</a>
+                <a href="/en/euromillions/news">News</a>
                 <span class="footer-sep">•</span>
-                <a href="/euromillions/faq">FAQ</a>
+                <a href="/en/euromillions/faq">FAQ</a>
             </div>
             <div class="footer-legal">
-                <a href="/mentions-legales">Mentions légales</a>
+                <a href="/mentions-legales">Legal Notice</a>
                 <span class="footer-sep">•</span>
-                <a href="/politique-confidentialite">Confidentialité</a>
+                <a href="/politique-confidentialite">Privacy Policy</a>
                 <span class="footer-sep">•</span>
                 <a href="/politique-cookies">Cookies</a>
             </div>
             <p class="footer-brand">LotoIA.fr <span class="app-version">v1.001</span></p>
-            <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dépendance. Appelez le 09 74 75 13 13 (appel non surtaxé).</p>
-            <p class="footer-help">Interdiction de jeu aux mineurs. <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
+            <p class="footer-disclaimer">Gambling involves risks: debt, isolation, addiction. Call 0808 8020 133 (free, confidential helpline).</p>
+            <p class="footer-help">Persons under 18 are not permitted to gamble. <a href="https://www.begambleaware.org" target="_blank" rel="noopener">BeGambleAware.org</a></p>
             <div class="credits">
-                <p class="dev-by">Développé par <strong>JyppY</strong></p>
+                <p class="dev-by">Developed by <strong>JyppY</strong></p>
             </div>
         </footer>
     </div>
 
-    <button id="scroll-to-top" class="scroll-to-top" aria-label="Retour en haut">↑</button>
+    <button id="scroll-to-top" class="scroll-to-top" aria-label="Back to top">↑</button>
 
     <script src="/ui/static/scroll.js?v=1"></script>
     <script src="/ui/static/cookie-consent.js?v=1"></script>
     <!-- HYBRIDE Chatbot Widget EuroMillions -->
     <link rel="stylesheet" href="/ui/static/hybride-chatbot.css?v=4.3">
     <div id="hybride-chatbot-root"></div>
-    <script src="/ui/static/hybride-chatbot-em.js?v=1.0"></script>
+    <script src="/ui/en/euromillions/static/hybride-chatbot-em-en.js?v=1.0"></script>
     <script src="/ui/static/version-inject.js"></script>
 
     <script>
@@ -264,14 +264,14 @@
         const date = document.getElementById('search-date').value;
         if (!date) return;
         const resultDiv = document.getElementById('draw-result');
-        resultDiv.innerHTML = '<p style="text-align:center; color:var(--theme-text-muted);">Recherche en cours...</p>';
+        resultDiv.innerHTML = '<p style="text-align:center; color:var(--theme-text-muted);">Searching...</p>';
         try {
             const response = await fetch('/api/euromillions/draw/' + date);
             const data = await response.json();
             if (data.success && data.found) {
                 const d = data.draw;
                 let html = '<div class="draw-card">';
-                html += '<h3>Tirage du ' + d.date.split('-').reverse().join('/') + '</h3>';
+                html += '<h3>Draw on ' + d.date.split('-').reverse().join('/') + '</h3>';
                 html += '<div class="draw-numbers">';
                 [d.n1, d.n2, d.n3, d.n4, d.n5].sort((a,b)=>a-b).forEach(function(n) {
                     html += '<span class="number-ball main">' + String(n).padStart(2,'0') + '</span>';
@@ -283,12 +283,12 @@
                 html += '</div></div>';
                 resultDiv.innerHTML = html;
             } else if (data.success && !data.found) {
-                resultDiv.innerHTML = '<p class="error">Aucun tirage trouvé pour cette date.</p>';
+                resultDiv.innerHTML = '<p class="error">No draw found for this date.</p>';
             } else {
-                resultDiv.innerHTML = '<p class="error">' + (data.message || 'Erreur interne du serveur') + '</p>';
+                resultDiv.innerHTML = '<p class="error">' + (data.message || 'Internal server error') + '</p>';
             }
         } catch(e) {
-            resultDiv.innerHTML = '<p class="error">Erreur de connexion au serveur.</p>';
+            resultDiv.innerHTML = '<p class="error">Connection error with the server.</p>';
         }
     }
 
@@ -297,7 +297,7 @@
     });
     </script>
 
-    <!-- Bandeau Notation -->
+    <!-- Rating Banner -->
     <link rel="stylesheet" href="/ui/static/rating-popup.css?v=1">
     <script src="/ui/static/rating-popup.js?v=1" defer></script>
 </body>

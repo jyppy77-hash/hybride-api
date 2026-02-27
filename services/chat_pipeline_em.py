@@ -34,6 +34,11 @@ from services.chat_detectors_em import (
     _get_insult_response_em, _get_insult_short_em, _get_menace_response_em,
     _get_compliment_response_em,
 )
+from services.chat_responses_em_en import (
+    _get_insult_response_em_en, _get_insult_short_em_en,
+    _get_menace_response_em_en, _get_compliment_response_em_en,
+    _get_oor_response_em_en, FALLBACK_RESPONSE_EM_EN,
+)
 from services.chat_sql_em import (
     _get_prochain_tirage_em, _get_tirage_data_em, _generate_sql_em,
     _validate_sql, _ensure_limit, _execute_safe_sql, _format_sql_result,
@@ -57,24 +62,28 @@ logger = logging.getLogger(__name__)
 # HYBRIDE EuroMillions Chatbot — Pipeline 12 phases
 # =========================
 
-async def handle_chat_em(message: str, history: list, page: str, http_client) -> dict:
+async def handle_chat_em(message: str, history: list, page: str, http_client, lang: str = "fr") -> dict:
     """
     Pipeline 12 phases du chatbot HYBRIDE EuroMillions.
     Retourne dict(response=str, source=str, mode=str).
+    lang: "fr" (default) or "en" (Phase 11).
     """
+    is_en = lang == "en"
+    _fallback = FALLBACK_RESPONSE_EM_EN if is_en else FALLBACK_RESPONSE_EM
     mode = _detect_mode_em(message, page)
 
-    # Charger le prompt systeme
-    system_prompt = load_prompt("CHATBOT_EM")
+    # Charger le prompt systeme (FR ou EN)
+    prompt_key = "CHATBOT_EM_EN" if is_en else "CHATBOT_EM"
+    system_prompt = load_prompt(prompt_key)
     if not system_prompt:
-        logger.error("[EM CHAT] Prompt systeme introuvable")
-        return {"response": FALLBACK_RESPONSE_EM, "source": "fallback", "mode": mode}
+        logger.error(f"[EM CHAT] Prompt systeme introuvable ({prompt_key})")
+        return {"response": _fallback, "source": "fallback", "mode": mode}
 
     # Cle API
     gem_api_key = os.environ.get("GEM_API_KEY") or os.environ.get("GEMINI_API_KEY")
     if not gem_api_key:
         logger.warning("[EM CHAT] GEM_API_KEY non configuree — fallback")
-        return {"response": FALLBACK_RESPONSE_EM, "source": "fallback", "mode": mode}
+        return {"response": _fallback, "source": "fallback", "mode": mode}
 
     # Construire les contents (historique + message actuel)
     contents = []
@@ -116,18 +125,21 @@ async def handle_chat_em(message: str, history: list, page: str, http_client) ->
                 "numéro", "numero", "tirage", "grille", "fréquence", "frequence",
                 "classement", "statistique", "stat", "analyse", "prochain",
                 "étoile", "etoile",
+                "number", "draw", "grid", "frequency", "ranking", "statistic",
+                "analysis", "next", "star",
             ))
         )
         if _has_question:
-            _insult_prefix = _get_insult_short_em()
+            _insult_prefix = _get_insult_short_em_en() if is_en else _get_insult_short_em()
             logger.info(
                 f"[EM CHAT] Insulte + question (type={_insult_type}, streak={_insult_streak})"
             )
         else:
             if _insult_type == "menace":
-                _insult_resp = _get_menace_response_em()
+                _insult_resp = _get_menace_response_em_en() if is_en else _get_menace_response_em()
             else:
-                _insult_resp = _get_insult_response_em(_insult_streak, history)
+                _insult_resp = (_get_insult_response_em_en(_insult_streak, history)
+                                if is_en else _get_insult_response_em(_insult_streak, history))
             logger.info(
                 f"[EM CHAT] Insulte detectee (type={_insult_type}, streak={_insult_streak})"
             )
@@ -149,7 +161,8 @@ async def handle_chat_em(message: str, history: list, page: str, http_client) ->
             )
             if not _has_question_c:
                 _comp_streak = _count_compliment_streak(history)
-                _comp_resp = _get_compliment_response_em(_compliment_type, _comp_streak, history)
+                _comp_resp = (_get_compliment_response_em_en(_compliment_type, _comp_streak, history)
+                              if is_en else _get_compliment_response_em(_compliment_type, _comp_streak, history))
                 logger.info(
                     f"[EM CHAT] Compliment detecte (type={_compliment_type}, streak={_comp_streak})"
                 )
@@ -249,7 +262,8 @@ async def handle_chat_em(message: str, history: list, page: str, http_client) ->
         _oor_num, _oor_type = _detect_out_of_range_em(message)
         if _oor_num is not None:
             _oor_streak = _count_oor_streak_em(history)
-            _oor_resp = _get_oor_response_em(_oor_num, _oor_type, _oor_streak)
+            _oor_resp = (_get_oor_response_em_en(_oor_num, _oor_type, _oor_streak)
+                         if is_en else _get_oor_response_em(_oor_num, _oor_type, _oor_streak))
             if _insult_prefix:
                 _oor_resp = _insult_prefix + "\n\n" + _oor_resp
             logger.info(
@@ -279,7 +293,7 @@ async def handle_chat_em(message: str, history: list, page: str, http_client) ->
             t0 = time.monotonic()
             try:
                 sql = await asyncio.wait_for(
-                    _generate_sql_em(message, http_client, gem_api_key, history=history),
+                    _generate_sql_em(message, http_client, gem_api_key, history=history, lang=lang),
                     timeout=10.0,
                 )
                 if sql and sql.strip().upper() != "NO_SQL" and _validate_sql(sql):
@@ -425,7 +439,7 @@ async def handle_chat_em(message: str, history: list, page: str, http_client) ->
                         text = _clean_response(text)
                         if _insult_prefix:
                             text = _insult_prefix + "\n\n" + text
-                        sponsor_line = _get_sponsor_if_due(history)
+                        sponsor_line = _get_sponsor_if_due(history, lang=lang)
                         if sponsor_line:
                             text += "\n\n" + sponsor_line
                         logger.info(
@@ -436,24 +450,24 @@ async def handle_chat_em(message: str, history: list, page: str, http_client) ->
         logger.warning(
             f"[EM CHAT] Reponse Gemini invalide: {response.status_code}"
         )
-        return {"response": FALLBACK_RESPONSE_EM, "source": "fallback", "mode": mode}
+        return {"response": _fallback, "source": "fallback", "mode": mode}
 
     except CircuitOpenError:
         logger.warning("[EM CHAT] Circuit breaker ouvert — fallback")
-        return {"response": FALLBACK_RESPONSE_EM, "source": "fallback_circuit", "mode": mode}
+        return {"response": _fallback, "source": "fallback_circuit", "mode": mode}
     except httpx.TimeoutException:
         logger.warning("[EM CHAT] Timeout Gemini (15s) — fallback")
-        return {"response": FALLBACK_RESPONSE_EM, "source": "fallback", "mode": mode}
+        return {"response": _fallback, "source": "fallback", "mode": mode}
     except Exception as e:
         logger.error(f"[EM CHAT] Erreur Gemini: {e}")
-        return {"response": FALLBACK_RESPONSE_EM, "source": "fallback", "mode": mode}
+        return {"response": _fallback, "source": "fallback", "mode": mode}
 
 
 # =========================
 # PITCH GRILLES EM — Gemini
 # =========================
 
-async def handle_pitch_em(grilles: list, http_client) -> dict:
+async def handle_pitch_em(grilles: list, http_client, lang: str = "fr") -> dict:
     """
     Genere des pitchs HYBRIDE personnalises pour chaque grille EM via Gemini.
     Retourne dict(success, data, error, status_code).
@@ -533,8 +547,9 @@ async def handle_pitch_em(grilles: list, http_client) -> dict:
             "status_code": 500,
         }
 
-    # Charger le prompt
-    system_prompt = load_prompt("PITCH_GRILLE_EM")
+    # Charger le prompt (FR ou EN)
+    pitch_key = "PITCH_GRILLE_EM_EN" if lang == "en" else "PITCH_GRILLE_EM"
+    system_prompt = load_prompt(pitch_key)
     if not system_prompt:
         logger.error("[EM PITCH] Prompt pitch introuvable")
         return {

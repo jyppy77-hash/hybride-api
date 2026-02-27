@@ -42,6 +42,7 @@ async def unified_hybride_chat(request: Request, game: ValidGame):
             payload.history,
             payload.page,
             request.app.state.httpx_client,
+            lang=payload.lang,
         )
         return EMChatResponse(**result)
 
@@ -65,6 +66,7 @@ async def unified_pitch_grilles(request: Request, game: ValidGame):
         result = await pipeline.handle_pitch_em(
             payload.grilles,
             request.app.state.httpx_client,
+            lang=payload.lang if hasattr(payload, "lang") else "fr",
         )
 
     status = result.pop("status_code", 200)
