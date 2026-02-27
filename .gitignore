@@ -55,5 +55,8 @@ cloud-sql-proxy.exe
 # Data dumps
 data/
 
+# Compiled translation files (built at Docker build time)
+*.mo
+
 # Windows reserved
 nul

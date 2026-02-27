@@ -27,3 +27,6 @@ python-json-logger>=2.0.7
 # PDF generation (META75)
 reportlab==4.1.0
 matplotlib==3.9.2
+
+# i18n (gettext + Babel)
+Babel>=2.14.0

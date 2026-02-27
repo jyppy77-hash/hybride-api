@@ -1,9 +1,9 @@
 """
-Language configuration — Phase 11 Multilingual
-===============================================
+Language configuration — Phase 11+ Multilingual
+================================================
 ValidLang enum + helpers for i18n support.
-Currently: fr (default), en (EuroMillions GB).
-Extensible for pt/es/de/nl later.
+Active: fr (default), en (EuroMillions GB).
+Registered (pages pending Phase 2+): pt, es, de, nl.
 """
 
 from enum import Enum
@@ -12,6 +12,10 @@ from enum import Enum
 class ValidLang(str, Enum):
     fr = "fr"
     en = "en"
+    pt = "pt"
+    es = "es"
+    de = "de"
+    nl = "nl"
 
 
 # Mapping lang → page slug adjustments (EN uses English slugs)

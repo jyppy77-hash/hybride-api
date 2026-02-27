@@ -14,6 +14,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+# Compile gettext .mo translation files
+RUN pybabel compile -d translations
+
 # Securite : ne pas tourner en root
 RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
 USER appuser

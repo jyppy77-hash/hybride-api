@@ -383,6 +383,10 @@ class HeadMethodMiddleware:
 
 app.add_middleware(HeadMethodMiddleware)
 
+# P1 i18n — Language detection (sets request.state.lang + ctx_lang ContextVar)
+from middleware.i18n_middleware import I18nMiddleware
+app.add_middleware(I18nMiddleware)
+
 
 # =========================
 # Umami owner-IP filter — Pure ASGI middleware

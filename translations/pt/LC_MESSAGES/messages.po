@@ -1,0 +1,138 @@
+# Portuguese translations for LotoIA.
+# Copyright (C) 2026 LotoIA
+# This file is distributed under the same license as the LotoIA project.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: LotoIA 1.0\n"
+"Report-Msgid-Bugs-To: contact@lotoia.fr\n"
+"POT-Creation-Date: 2026-02-27 00:00+0100\n"
+"PO-Revision-Date: 2026-02-27 00:00+0100\n"
+"Last-Translator: LotoIA <contact@lotoia.fr>\n"
+"Language: pt\n"
+"Language-Team: Portuguese <contact@lotoia.fr>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: Badges — Grilles
+msgid "Numéros chauds"
+msgstr ""
+
+msgid "Mix de retards"
+msgstr ""
+
+msgid "Équilibre"
+msgstr ""
+
+msgid "Large spectre"
+msgstr ""
+
+msgid "Pair/Impair OK"
+msgstr ""
+
+msgid "Analyse personnalisée EM"
+msgstr ""
+
+msgid "Analyse personnalisée"
+msgstr ""
+
+#: PDF — Titles
+msgid "Rapport META DONNÉE EM - 75 Grilles"
+msgstr ""
+
+msgid "Analyse HYBRIDE EuroMillions"
+msgstr ""
+
+#: PDF — Charts
+msgid "Top 5 Boules - Fréquences"
+msgstr ""
+
+msgid "Répartition Top 5 Boules"
+msgstr ""
+
+msgid "Top 3 Étoiles - Fréquences"
+msgstr ""
+
+msgid "Répartition Top 3 Étoiles"
+msgstr ""
+
+msgid "Fréquence"
+msgstr ""
+
+msgid "Boules"
+msgstr ""
+
+msgid "Étoiles"
+msgstr ""
+
+#: PDF — Sections
+msgid "Analyse :"
+msgstr ""
+
+msgid "Aucune analyse disponible."
+msgstr ""
+
+msgid "Informations :"
+msgstr ""
+
+msgid "Fenêtre analysée"
+msgstr ""
+
+msgid "Moteur"
+msgstr ""
+
+msgid "Jeu : EuroMillions (5 boules + 2 étoiles)"
+msgstr ""
+
+#: PDF — Sponsor
+msgid "Analyse offerte par un Partenaire Officiel"
+msgstr ""
+
+msgid "Partenariat & sponsoring :"
+msgstr ""
+
+#: PDF — Footer
+msgid "Analyse générée par HYBRIDE"
+msgstr ""
+
+msgid "Moteur statistique pédagogique - Module EuroMillions"
+msgstr ""
+
+msgid "Généré par LotoIA - Module META DONNÉE EM"
+msgstr ""
+
+msgid "Analyse statistique pédagogique."
+msgstr ""
+
+msgid "Aucun résultat n'est garanti."
+msgstr ""
+
+msgid "LotoIA — Rapport META DONNÉE EM"
+msgstr ""
+
+msgid "Ce rapport est entièrement généré par intelligence artificielle en collaboration avec le moteur HYBRIDE."
+msgstr ""
+
+msgid "Graphiques et visuels en cours de développement."
+msgstr ""
+
+#: Rating popup
+msgid "Votre avis sur LotoIA ?"
+msgstr ""
+
+msgid "Fermer"
+msgstr ""
+
+msgid "Merci !"
+msgstr ""
+
+#: Generic — plurals
+msgid "1 tirage"
+msgid_plural "{count} tirages"
+msgstr[0] ""
+msgstr[1] ""
+
+msgid "{count} tirages analysés"
+msgstr ""
