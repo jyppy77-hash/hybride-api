@@ -1,6 +1,7 @@
 // ================================================================
 // APP-EM.JS - EuroMillions Analysis UI Logic
 // ================================================================
+var LI = window.LotoIA_i18n || {};
 
 // State management
 let currentResult = null;
@@ -23,7 +24,7 @@ async function fetchTiragesEM(endpoint) {
         const response = await fetch(endpoint);
         if (!response.ok) throw new Error('HTTP ' + response.status);
         const data = await response.json();
-        if (!data.success) throw new Error(data.error || 'Erreur API');
+        if (!data.success) throw new Error(data.error || LI.api_error);
         return data.data;
     } catch (error) {
         console.error('Erreur fetchTiragesEM(' + endpoint + '):', error.message);
@@ -51,9 +52,7 @@ function init() {
 function formatMonthYear(dateStr) {
     if (!dateStr) return '';
     var date = new Date(dateStr);
-    var months = ['jan.', 'fev.', 'mars', 'avr.', 'mai', 'juin',
-                  'juil.', 'aout', 'sept.', 'oct.', 'nov.', 'dec.'];
-    return months[date.getMonth()] + ' ' + date.getFullYear();
+    return new Intl.DateTimeFormat(LI.locale, { month: 'short', year: 'numeric' }).format(date);
 }
 
 function updateStatsDisplay() {
@@ -64,20 +63,20 @@ function updateStatsDisplay() {
                 var totalDraws = data.total_draws || 0;
 
                 var tiragesEl = document.getElementById('stat-tirages');
-                if (tiragesEl) tiragesEl.textContent = totalDraws.toLocaleString('fr-FR') + ' tirages analyses';
+                if (tiragesEl) tiragesEl.textContent = totalDraws.toLocaleString(LI.locale) + LI.draws_suffix;
 
                 var tiragesInline = document.getElementById('stat-tirages-inline');
-                if (tiragesInline) tiragesInline.textContent = totalDraws.toLocaleString('fr-FR');
+                if (tiragesInline) tiragesInline.textContent = totalDraws.toLocaleString(LI.locale);
 
                 document.querySelectorAll('.dynamic-tirages').forEach(function(el) {
-                    el.textContent = totalDraws.toLocaleString('fr-FR');
+                    el.textContent = totalDraws.toLocaleString(LI.locale);
                 });
 
                 window.TOTAL_TIRAGES_EM = totalDraws;
 
                 var dataDepthEl = document.querySelector('.data-depth');
                 if (dataDepthEl && data.first_draw && data.last_draw) {
-                    dataDepthEl.textContent = 'de ' + formatMonthYear(data.first_draw) + ' a ' + formatMonthYear(data.last_draw);
+                    dataDepthEl.textContent = LI.data_depth_from + formatMonthYear(data.first_draw) + LI.data_depth_to + formatMonthYear(data.last_draw);
                 }
             }
         })
@@ -180,11 +179,11 @@ function validateDateInput() {
 
     if (!isDrawDay(selectedDate)) {
         var nextValidDate = findNextDrawDate(selectedDate);
-        var nextDateFormatted = new Date(nextValidDate + 'T00:00:00').toLocaleDateString('fr-FR', {
+        var nextDateFormatted = new Date(nextValidDate + 'T00:00:00').toLocaleDateString(LI.locale, {
             weekday: 'long', day: 'numeric', month: 'long'
         });
 
-        showDateError('Pas de tirage EuroMillions ce jour. Prochain tirage : ' + nextDateFormatted);
+        showDateError(LI.no_draw_msg + nextDateFormatted);
         disableActionButtons(true);
 
         setTimeout(function() {
@@ -247,13 +246,13 @@ async function handleAnalyze() {
     if (!drawDateInput) return;
     var date = drawDateInput.value;
     if (!date) {
-        showError('Veuillez sélectionner une date de tirage.');
+        showError(LI.select_date);
         return;
     }
 
     var selectedDate = new Date(date + 'T00:00:00');
     if (!isDrawDay(selectedDate)) {
-        showError('L\'EuroMillions est tiré uniquement les mardis et vendredis.');
+        showError(LI.draw_days_only);
         return;
     }
 
@@ -271,7 +270,7 @@ async function handleAnalyze() {
         var popupResult = await showSponsorPopupSimulateurEM({
             duration: popupDuration,
             gridCount: selectedGridCount,
-            title: 'G\u00e9n\u00e9ration de ' + selectedGridCount + ' grille' + plural + ' optimis\u00e9e' + plural + ' EM',
+            title: LI.popup_gen_title.replace('{n}', selectedGridCount).replace(/\{s\}/g, plural),
             onComplete: function() {
                 console.log('[App EM] Popup sponsor termin\u00e9, lancement de la g\u00e9n\u00e9ration');
             }
@@ -286,8 +285,8 @@ async function handleAnalyze() {
     }
 
     try {
-        var response = await fetch('/api/euromillions/generate?n=' + selectedGridCount);
-        if (!response.ok) throw new Error('Erreur HTTP ' + response.status);
+        var response = await fetch('/api/euromillions/generate?n=' + selectedGridCount + '&lang=' + window.LotoIA_lang);
+        if (!response.ok) throw new Error(LI.http_error + response.status);
 
         var data = await response.json();
 
@@ -298,10 +297,10 @@ async function handleAnalyze() {
             // Pitch HYBRIDE async (non-blocking)
             fetchAndDisplayPitchsEM(data.grids);
         } else {
-            showError(data.message || 'Erreur lors de la génération des grilles.');
+            showError(data.message || LI.error_generating);
         }
     } catch (error) {
-        showError('Impossible de générer les grilles. ' + error.message);
+        showError(LI.unable_generate + error.message);
     } finally {
         setLoading(btnAnalyze, false);
     }
@@ -313,35 +312,35 @@ async function handleAnalyze() {
 
 function displayGridsEM(grids, metadata, targetDate) {
     var dateObj = new Date(targetDate + 'T00:00:00');
-    var dateFormatted = dateObj.toLocaleDateString('fr-FR', {
+    var dateFormatted = dateObj.toLocaleDateString(LI.locale, {
         weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
     });
 
     var html = '<div class="results-header">' +
-        '<h2>Grilles EuroMillions pour le ' + dateFormatted + '</h2>' +
+        '<h2>' + LI.grids_for + dateFormatted + '</h2>' +
         '<div class="results-meta">' +
-        '<span>' + grids.length + ' grille(s) générée(s)</span>' +
-        '<span>' + new Date().toLocaleTimeString('fr-FR') + '</span>' +
+        '<span>' + grids.length + LI.grids_generated + '</span>' +
+        '<span>' + new Date().toLocaleTimeString(LI.locale) + '</span>' +
         '</div></div>';
 
     grids.forEach(function(grid, index) {
         var badges = grid.badges || [];
-        var convergenceLabel = 'Profil équilibré';
+        var convergenceLabel = LI.profile_balanced;
         var convergenceClass = 'convergence-elevated';
 
-        if (badges.some(function(b) { return b.toLowerCase().indexOf('chaud') !== -1; })) {
-            convergenceLabel = 'Profil chaud';
-        } else if (badges.some(function(b) { return b.toLowerCase().indexOf('retard') !== -1 || b.toLowerCase().indexOf('cart') !== -1; })) {
-            convergenceLabel = 'Profil mixte';
+        if (badges.some(function(b) { var bl = b.toLowerCase(); return bl.indexOf('chaud') !== -1 || bl.indexOf('hot') !== -1; })) {
+            convergenceLabel = LI.profile_hot;
+        } else if (badges.some(function(b) { var bl = b.toLowerCase(); return bl.indexOf('retard') !== -1 || bl.indexOf('cart') !== -1 || bl.indexOf('overdue') !== -1; })) {
+            convergenceLabel = LI.profile_mixed;
             convergenceClass = 'convergence-moderate';
         }
 
         html += '<div class="grid-visual-card" style="animation-delay: ' + (index * 0.15) + 's">' +
             '<div class="grid-visual-header">' +
-            '<div class="grid-number"><span class="grid-number-label">Grille</span>' +
+            '<div class="grid-number"><span class="grid-number-label">' + LI.grid_label + '</span>' +
             '<span class="grid-number-value">#' + (index + 1) + '</span></div>' +
             '<div class="grid-convergence-indicator ' + convergenceClass + '">' +
-            '<span class="convergence-label">Profil</span>' +
+            '<span class="convergence-label">' + LI.profile_label + '</span>' +
             '<span class="convergence-value">' + convergenceLabel + '</span></div></div>' +
             '<div class="grid-visual-numbers">';
 
@@ -361,26 +360,25 @@ function displayGridsEM(grids, metadata, targetDate) {
             var icon = '\u{1F3AF}';
             var badgeClass = 'badge-default';
 
-            if (badge.toLowerCase().indexOf('chaud') !== -1) { icon = '\u{1F525}'; badgeClass = 'badge-hot'; }
-            else if (badge.toLowerCase().indexOf('spectre') !== -1) { icon = '\u{1F4CF}'; badgeClass = 'badge-spectrum'; }
-            else if (badge.toLowerCase().indexOf('quilibr') !== -1) { icon = '\u2696\uFE0F'; badgeClass = 'badge-balanced'; }
+            if (badge.toLowerCase().indexOf('chaud') !== -1 || badge.toLowerCase().indexOf('hot') !== -1) { icon = '\u{1F525}'; badgeClass = 'badge-hot'; }
+            else if (badge.toLowerCase().indexOf('spectre') !== -1 || badge.toLowerCase().indexOf('spectrum') !== -1) { icon = '\u{1F4CF}'; badgeClass = 'badge-spectrum'; }
+            else if (badge.toLowerCase().indexOf('quilibr') !== -1 || badge.toLowerCase().indexOf('balanced') !== -1) { icon = '\u2696\uFE0F'; badgeClass = 'badge-balanced'; }
             else if (badge.toLowerCase().indexOf('hybride') !== -1) { icon = '\u2699\uFE0F'; badgeClass = 'badge-hybrid'; }
-            else if (badge.toLowerCase().indexOf('retard') !== -1) { icon = '\u23F0'; badgeClass = 'badge-gap'; }
+            else if (badge.toLowerCase().indexOf('retard') !== -1 || badge.toLowerCase().indexOf('overdue') !== -1) { icon = '\u23F0'; badgeClass = 'badge-gap'; }
 
             html += '<span class="visual-badge ' + badgeClass + '">' + icon + ' ' + badge + '</span>';
         });
 
         html += '</div>' +
             '<div class="grille-pitch grille-pitch-loading" data-pitch-index="' + index + '">' +
-                '<span class="pitch-icon">\u{1F916}</span> HYBRIDE EM analyse ta grille\u2026' +
+                '<span class="pitch-icon">\u{1F916}</span> ' + LI.pitch_loading +
             '</div>' +
         '</div>';
     });
 
     html += '<div class="results-footer">' +
-        '<p><strong>Rappel important :</strong> Ces grilles sont générées à partir de statistiques historiques. ' +
-        'L\'EuroMillions est un jeu de hasard et aucune méthode ne garantit de gains.</p>' +
-        '<p>Jouez responsable : <a href="https://www.joueurs-info-service.fr" target="_blank">Joueurs Info Service</a></p></div>';
+        '<p><strong>' + LI.reminder_title + '</strong> ' + LI.reminder_text + '</p>' +
+        '<p>' + LI.play_responsible + '<a href="' + LI.gambling_url + '" target="_blank">' + LI.gambling_name + '</a></p></div>';
 
     var keyInfo = document.getElementById('key-info');
     var numbersGrid = document.getElementById('numbers-grid');
@@ -396,7 +394,7 @@ function displayGridsEM(grids, metadata, targetDate) {
     if (explanationsSection) explanationsSection.style.display = 'none';
 
     var resultTitle = document.getElementById('result-title');
-    if (resultTitle) resultTitle.textContent = 'Analyse du tirage';
+    if (resultTitle) resultTitle.textContent = LI.result_title;
     showSuccess();
 }
 
@@ -473,7 +471,7 @@ async function fetchAndDisplayPitchsEM(grids) {
         var response = await fetch('/api/euromillions/pitch-grilles', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ grilles: payload })
+            body: JSON.stringify({ grilles: payload, lang: window.LotoIA_lang })
         });
         var data = await response.json();
 

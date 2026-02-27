@@ -8,6 +8,7 @@
 (function () {
     'use strict';
 
+    var LI = window.LotoIA_i18n || {};
     var SESSION_START_KEY = 'lotoia_session_start';
     var DELAY_MS = 90000; // 1m30
 
@@ -56,7 +57,7 @@
         // Texte
         var text = document.createElement('span');
         text.className = 'rating-banner-text';
-        text.textContent = 'Votre avis sur LotoIA ?';
+        text.textContent = LI.rating_prompt || 'Votre avis sur LotoIA ?';
         banner.appendChild(text);
 
         // Etoiles
@@ -100,7 +101,7 @@
         // Bouton fermer
         var closeBtn = document.createElement('button');
         closeBtn.className = 'rating-banner-close';
-        closeBtn.setAttribute('aria-label', 'Fermer');
+        closeBtn.setAttribute('aria-label', LI.rating_close || 'Fermer');
         closeBtn.textContent = '\u2715';
         closeBtn.addEventListener('click', function () {
             var ratingModule = window.location.pathname.indexOf('/euromillions/') !== -1 ? 'euromillions' : 'loto';
@@ -152,7 +153,7 @@
             if (data.success) {
                 sessionStorage.setItem('lotoia_rated_popup_accueil', 'true');
                 var feedback = document.getElementById('banner-rating-feedback');
-                if (feedback) feedback.textContent = 'Merci !';
+                if (feedback) feedback.textContent = LI.rating_thanks || 'Merci !';
                 var banner = document.getElementById('rating-banner');
                 setTimeout(function () {
                     if (banner) {

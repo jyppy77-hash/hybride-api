@@ -1,6 +1,8 @@
 /**
  * FAQ EuroMillions — Accordion + Stats BDD
  */
+var LI = window.LotoIA_i18n || {};
+
 document.addEventListener('DOMContentLoaded', function() {
     // Accordion toggle
     document.querySelectorAll('.faq-item .faq-question').forEach(function(question) {
@@ -9,9 +11,12 @@ document.addEventListener('DOMContentLoaded', function() {
             var wasActive = item.classList.contains('active');
 
             // Fermer tous les items du meme groupe
-            item.closest('.faq-category').querySelectorAll('.faq-item').forEach(function(i) {
-                i.classList.remove('active');
-            });
+            var group = item.closest('.faq-category') || item.closest('.mini-faq-container');
+            if (group) {
+                group.querySelectorAll('.faq-item').forEach(function(i) {
+                    i.classList.remove('active');
+                });
+            }
 
             // Toggle l'item clique
             if (!wasActive) {
@@ -26,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(function(data) {
             if (data.exists) {
                 document.querySelectorAll('.em-db-total').forEach(function(el) {
-                    el.textContent = (data.total_draws || 0).toLocaleString('fr-FR');
+                    el.textContent = (data.total_draws || 0).toLocaleString(LI.locale);
                 });
 
                 document.querySelectorAll('.em-db-first-date').forEach(function(el) {

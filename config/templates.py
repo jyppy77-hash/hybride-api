@@ -11,6 +11,7 @@ from fastapi.responses import HTMLResponse
 from starlette.requests import Request
 
 from config.i18n import ctx_lang, get_translations, SUPPORTED_LANGS, DEFAULT_LANG
+from config.js_i18n import get_js_labels
 
 # ── Paths ────────────────────────────────────────────────────────────────
 _ROOT = os.path.dirname(os.path.dirname(__file__))
@@ -156,11 +157,7 @@ def render_template(
                 if is_fr else
                 "/ui/en/euromillions/static/hybride-chatbot-em-en.js?v=1.0"
             ),
-            "rating_js": (
-                "/ui/static/rating-popup.js?v=1"
-                if is_fr else
-                "/ui/en/euromillions/static/rating-popup-en.js?v=1"
-            ),
+            "rating_js": "/ui/static/rating-popup.js?v=7",
 
             # Gambling help
             "gambling_help_url": help_info["url"],
@@ -168,6 +165,16 @@ def render_template(
 
             # Nav scroll (off by default, pages override)
             "include_nav_scroll": False,
+
+            # JS i18n labels (window.LotoIA_i18n)
+            "js_labels": get_js_labels(lang),
+
+            # Default JS paths (pages may override via **extra)
+            "app_js": "/ui/static/app-em.js?v=7",
+            "simulateur_js": "/ui/static/simulateur-em.js?v=7",
+            "sponsor_js": "/ui/static/em/sponsor-popup-em.js?v=7",
+            "sponsor75_js": "/ui/static/sponsor-popup75-em.js?v=7",
+            "faq_js": "/ui/static/faq-em.js?v=7",
 
             # Page overrides
             **extra,

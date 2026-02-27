@@ -36,9 +36,6 @@ async def en_em_generator(request: Request):
         hero_icon="⭐",
         hero_title="EuroMillions Grid Explorer",
         hero_subtitle="Statistical analysis based on official EuroMillions draws",
-        sponsor75_js="/ui/en/euromillions/static/sponsor-popup75-em-en.js?v=1",
-        sponsor_js="/ui/en/euromillions/static/sponsor-popup-em-en.js?v=1",
-        app_js="/ui/en/euromillions/static/app-em-en.js?v=1",
     )
 
 
@@ -52,8 +49,6 @@ async def en_em_simulator(request: Request):
         hero_icon="⭐",
         hero_title="EuroMillions Grid Analysis",
         hero_subtitle="Build your grid and get a descriptive statistical audit",
-        simulateur_js="/ui/en/euromillions/static/simulateur-em-en.js?v=1",
-        sponsor_js="/ui/en/euromillions/static/sponsor-popup-em-en.js?v=1",
     )
 
 
@@ -95,7 +90,6 @@ async def en_em_faq(request: Request):
         hero_title="EuroMillions FAQ",
         hero_subtitle="All the answers about EuroMillions analysis",
         em_db_total=total,
-        faq_js="/ui/en/euromillions/static/faq-em-en.js?v=1",
     )
 
 

@@ -4,6 +4,8 @@
  * 5 numeros (1-50) + 2 etoiles (1-12)
  */
 
+var LI = window.LotoIA_i18n || {};
+
 // State
 const state = {
     selectedNumbers: new Set(),
@@ -81,11 +83,11 @@ function updateTiragesDisplay() {
 
     const tiragesElement = document.getElementById('stats-tirages');
     if (tiragesElement) {
-        tiragesElement.textContent = 'Base sur ' + state.totalTirages.toLocaleString('fr-FR') + ' tirages officiels EuroMillions';
+        tiragesElement.textContent = LI.based_on_draws.replace('{n}', state.totalTirages.toLocaleString(LI.locale));
     }
 
     document.querySelectorAll('.dynamic-tirages').forEach(function(el) {
-        el.textContent = state.totalTirages.toLocaleString('fr-FR');
+        el.textContent = state.totalTirages.toLocaleString(LI.locale);
     });
 }
 
@@ -104,7 +106,7 @@ function initMainGrid() {
         const heat = state.numbersHeat[i] || state.numbersHeat[String(i)];
         if (heat) {
             btn.classList.add(heat.category);
-            btn.title = 'Fréquence: ' + heat.frequency + ' | Dernier: ' + (heat.last_draw || 'N/A');
+            btn.title = LI.heat_title_freq + heat.frequency + LI.heat_title_last + (heat.last_draw || 'N/A');
         } else {
             btn.classList.add('neutral');
         }
@@ -257,7 +259,7 @@ async function analyzeGrid(withPopup) {
         var popupResult = await showSponsorPopupSimulateurEM({
             duration: 3,
             gridCount: 1,
-            title: 'Analyse de votre grille EuroMillions en cours',
+            title: LI.analyzing_grid,
             onComplete: function() {
                 console.log('[Simulateur EM] Popup sponsor termin\u00e9, lancement analyse');
             }
@@ -278,6 +280,7 @@ async function analyzeGrid(withPopup) {
         nums.forEach(function(n) { params.append('nums', n); });
         params.append('etoile1', stars[0]);
         params.append('etoile2', stars[1]);
+        params.append('lang', window.LotoIA_lang);
 
         const response = await fetch('/api/euromillions/analyze-custom-grid?' + params.toString(), {
             method: 'POST'
@@ -343,16 +346,16 @@ function displayConvergenceLevel(score) {
 
     var label, levelClass;
     if (score >= 80) {
-        label = 'Forte convergence';
+        label = LI.convergence_strong;
         levelClass = 'convergence-elevated';
     } else if (score >= 60) {
-        label = 'Convergence moderee';
+        label = LI.convergence_moderate;
         levelClass = 'convergence-moderate';
     } else if (score >= 40) {
-        label = 'Convergence intermediaire';
+        label = LI.convergence_intermediate;
         levelClass = 'convergence-intermediate';
     } else {
-        label = 'Convergence partielle';
+        label = LI.convergence_partial;
         levelClass = 'convergence-partial';
     }
 
@@ -376,13 +379,13 @@ function displayBadges(badges) {
     container.innerHTML = '';
 
     var iconMap = {
-        'chaud': '\u{1F525}',
-        'spectre': '\u{1F4CF}',
-        'quilibr': '\u2696\uFE0F',
-        'Pair': '\u2705',
+        'chaud': '\u{1F525}', 'hot': '\u{1F525}',
+        'spectre': '\u{1F4CF}', 'spectrum': '\u{1F4CF}',
+        'quilibr': '\u2696\uFE0F', 'balanced': '\u2696\uFE0F',
+        'Pair': '\u2705', 'Even': '\u2705',
         'Hybride': '\u2699\uFE0F',
-        'retard': '\u23F0',
-        'froid': '\u2744\uFE0F',
+        'retard': '\u23F0', 'overdue': '\u23F0',
+        'froid': '\u2744\uFE0F', 'cold': '\u2744\uFE0F',
         'Mix': '\u{1F3B0}'
     };
 
@@ -399,9 +402,9 @@ function displayBadges(badges) {
             }
         }
 
-        if (badge.toLowerCase().indexOf('chaud') !== -1) el.classList.add('hot');
-        else if (badge.indexOf('quilibr') !== -1 || badge.indexOf('Pair') !== -1) el.classList.add('balance');
-        else if (badge.toLowerCase().indexOf('spectre') !== -1) el.classList.add('spectre');
+        if (badge.toLowerCase().indexOf('chaud') !== -1 || badge.toLowerCase().indexOf('hot') !== -1) el.classList.add('hot');
+        else if (badge.indexOf('quilibr') !== -1 || badge.indexOf('Pair') !== -1 || badge.toLowerCase().indexOf('balanced') !== -1 || badge.indexOf('Even') !== -1) el.classList.add('balance');
+        else if (badge.toLowerCase().indexOf('spectre') !== -1 || badge.toLowerCase().indexOf('spectrum') !== -1) el.classList.add('spectre');
         else if (badge.indexOf('Hybride') !== -1) el.classList.add('model');
         else if (badge.toLowerCase().indexOf('froid') !== -1) el.classList.add('cold');
 
@@ -418,17 +421,17 @@ function displayDetails(details) {
     container.innerHTML = '';
 
     var config = [
-        { key: 'pairs_impairs', label: 'Pair / Impair', icon: '\u2696\uFE0F',
+        { key: 'pairs_impairs', label: LI.detail_even_odd, icon: '\u2696\uFE0F',
           evaluate: function(v) { var p = parseInt(v.split('/')[0]); return (p>=2&&p<=3)?'good':(p>=1&&p<=4)?'warning':'bad'; }},
-        { key: 'bas_haut', label: 'Bas / Haut', icon: '\u{1F4CA}',
+        { key: 'bas_haut', label: LI.detail_low_high, icon: '\u{1F4CA}',
           evaluate: function(v) { var b = parseInt(v.split('/')[0]); return (b>=2&&b<=3)?'good':(b>=1&&b<=4)?'warning':'bad'; }},
-        { key: 'somme', label: 'Somme', icon: '\u2795',
+        { key: 'somme', label: LI.detail_sum, icon: '\u2795',
           evaluate: function(v) { var n = parseInt(v); return (n>=105&&n<=150)?'good':(n>=75&&n<=180)?'warning':'bad'; }},
-        { key: 'dispersion', label: 'Dispersion', icon: '\u2194\uFE0F',
+        { key: 'dispersion', label: LI.detail_spread, icon: '\u2194\uFE0F',
           evaluate: function(v) { var n = parseInt(v); return (n>=20&&n<=42)?'good':(n>=15&&n<=47)?'warning':'bad'; }},
-        { key: 'suites_consecutives', label: 'Suites', icon: '\u{1F517}',
+        { key: 'suites_consecutives', label: LI.detail_runs, icon: '\u{1F517}',
           evaluate: function(v) { var n = parseInt(v); return (n<=1)?'good':(n===2)?'warning':'bad'; }},
-        { key: 'score_conformite', label: 'Conformité', icon: '\u2713',
+        { key: 'score_conformite', label: LI.detail_compliance, icon: '\u2713',
           evaluate: function(v) { var n = parseFloat(v); return (n>=80)?'good':(n>=50)?'warning':'bad'; }}
     ];
 
@@ -472,10 +475,10 @@ function displaySuggestions(suggestions, severity, alertMessage) {
         } else if (severity === 2) {
             li.classList.add('negative');
             li.setAttribute('data-icon', '\u26A0\uFE0F');
-        } else if (suggestion.indexOf('Excellent') !== -1 || suggestion.indexOf('bien') !== -1) {
+        } else if (suggestion.indexOf('Excellent') !== -1 || suggestion.indexOf('bien') !== -1 || suggestion.indexOf('Good') !== -1 || suggestion.indexOf('good') !== -1) {
             li.classList.add('positive');
             li.setAttribute('data-icon', '\u2705');
-        } else if (suggestion.indexOf('Attention') !== -1 || suggestion.indexOf('Elargir') !== -1) {
+        } else if (suggestion.indexOf('Attention') !== -1 || suggestion.indexOf('Elargir') !== -1 || suggestion.indexOf('Warning') !== -1 || suggestion.indexOf('Widen') !== -1 || suggestion.indexOf('Broaden') !== -1) {
             li.classList.add('neutral');
             li.setAttribute('data-icon', '\u{1F4A1}');
         } else {
@@ -536,14 +539,14 @@ function displayHistoryCheck(historyCheck) {
 
     if (historyCheck.exact_match === true && Array.isArray(historyCheck.exact_dates) && historyCheck.exact_dates.length > 0) {
         var count = historyCheck.exact_dates.length;
-        text = '\u{1F4DC} Cette combinaison est deja sortie <strong>' + count + ' fois</strong>';
+        text = LI.history_appeared.replace('{n}', count).replace(/\{s\}/g, count > 1 ? 's' : '');
     } else if (historyCheck.exact_match === false) {
-        text = '\u{1F50E} Cette combinaison n\'est jamais apparue dans l\'historique.';
+        text = LI.history_never;
     }
 
     var matchCount = parseInt(historyCheck.best_match_count, 10);
     if (matchCount > 0 && historyCheck.best_match_date) {
-        text += '<br>\u{1F9E0} Meilleure correspondance : <strong>' + matchCount + ' numéro' + (matchCount > 1 ? 's' : '') + ' identique' + (matchCount > 1 ? 's' : '') + '</strong> (' + historyCheck.best_match_date + ')';
+        text += '<br>' + LI.history_best.replace('{n}', matchCount).replace(/\{s\}/g, matchCount > 1 ? 's' : '') + ' (' + historyCheck.best_match_date + ')';
     }
 
     if (text.trim()) {
@@ -577,7 +580,7 @@ async function fetchAndDisplaySimulateurPitchEM(nums, etoiles, scoreConformite, 
     // Placeholder loading
     var pitchDiv = document.createElement('div');
     pitchDiv.className = 'grille-pitch grille-pitch-loading';
-    pitchDiv.innerHTML = '<span class="pitch-icon">\u{1F916}</span> HYBRIDE EM analyse ta grille\u2026';
+    pitchDiv.innerHTML = '<span class="pitch-icon">\u{1F916}</span> ' + LI.pitch_loading;
     anchor.insertAdjacentElement('afterend', pitchDiv);
 
     try {
@@ -590,7 +593,8 @@ async function fetchAndDisplaySimulateurPitchEM(nums, etoiles, scoreConformite, 
                     etoiles: etoiles,
                     score_conformite: scoreConformite ? parseInt(scoreConformite) : null,
                     severity: severity || null
-                }]
+                }],
+                lang: window.LotoIA_lang
             })
         });
         var data = await response.json();
@@ -640,7 +644,7 @@ async function autoGenerate() {
         if (typeof showSponsorPopupSimulateurEM === 'function') {
             var popupResult = await showSponsorPopupSimulateurEM({
                 duration: 3,
-                title: 'G\u00e9n\u00e9ration d\'une grille optimis\u00e9e EM...',
+                title: LI.generating_one,
                 onComplete: function() {
                     console.log('[Simulateur EM] Popup sponsor termin\u00e9');
                 }
@@ -654,7 +658,7 @@ async function autoGenerate() {
 
         elements.loadingOverlay.style.display = 'flex';
 
-        var response = await fetch('/api/euromillions/generate?n=1');
+        var response = await fetch('/api/euromillions/generate?n=1&lang=' + window.LotoIA_lang);
         var data = await response.json();
 
         if (data.success && data.grids && data.grids.length > 0) {

@@ -10,6 +10,8 @@
  * @version 1.0-EM
  */
 
+var LI = window.LotoIA_i18n || {};
+
 // ============================================
 // ETOILES EM FLOTTANTES — Version fluide
 // ============================================
@@ -90,19 +92,19 @@ var SPONSORS_CONFIG_EM = [
         name: 'EmovisIA',
         url: 'https://www.emovisia.fr',
         icon: '\uD83C\uDFA8',
-        description: 'Restauration photo artisanale',
+        description: LI.sponsor1_desc,
         displayUrl: 'www.emovisia.fr',
-        badge: 'Propuls\u00e9 par',
+        badge: LI.sponsor1_badge,
         badgeType: 'primary'
     },
     {
         id: 'annonceur',
-        name: 'Votre marque ici',
+        name: LI.sponsor2_name,
         url: 'mailto:partenariats@lotoia.fr',
         icon: '\uD83D\uDCE3',
-        description: 'Audience forte \u2022 trafic qualifi\u00e9',
+        description: LI.sponsor2_desc,
         displayUrl: 'partenariats@lotoia.fr',
-        badge: 'Avec le soutien de',
+        badge: LI.sponsor2_badge,
         badgeType: 'partner'
     }
 ];
@@ -133,25 +135,25 @@ function getConsoleLogsSimulateurEM(gridCount, duration) {
     };
 
     var rowsCount = window.TOTAL_TIRAGES_EM || 729;
-    var rowsFormatted = rowsCount.toLocaleString('fr-FR');
+    var rowsFormatted = rowsCount.toLocaleString(LI.locale);
 
     return [
-        { time: t(0),  text: "> Initialisation HYBRIDE_EM_V1...", type: "info" },
-        { time: t(1),  text: "\u2713 Connexion moteur OK (142ms)", type: "success" },
-        { time: t(2),  text: "> Chargement base de donn\u00e9es EuroMillions...", type: "info" },
-        { time: t(3),  text: "\u2713 " + rowsFormatted + " tirages EuroMillions charg\u00e9s (387ms)", type: "success" },
+        { time: t(0),  text: LI.log_init, type: "info" },
+        { time: t(1),  text: LI.log_connection, type: "success" },
+        { time: t(2),  text: LI.log_loading_db, type: "info" },
+        { time: t(3),  text: "\u2713 " + rowsFormatted + LI.log_draws_loaded, type: "success" },
         { time: t(4),  text: "> GET /api/euromillions/analyze?grids=" + gridCount + "&mode=balanced", type: "request" },
-        { time: t(5),  text: "\uD83D\uDCCA Analyse fr\u00e9quences 5 num\u00e9ros + 2 \u00e9toiles... 18%", type: "progress" },
-        { time: t(6),  text: "\uD83C\uDF0D Croisement donn\u00e9es europ\u00e9ennes... 34%", type: "progress" },
-        { time: t(7),  text: "\u2B50 Optimisation \u00e9toiles... 51%", type: "progress" },
-        { time: t(8),  text: "\u2696\uFE0F \u00c9quilibrage pair/impair... 67%", type: "progress" },
-        { time: t(9),  text: "\uD83D\uDCCF Calcul dispersion multi-pays... 78%", type: "progress" },
-        { time: t(10), text: "\u23F3 Application contraintes soft... 85%", type: "progress" },
-        { time: t(11), text: "\u23F3 G\u00e9n\u00e9ration grilles optimis\u00e9es EM... 92%", type: "progress" },
-        { time: t(12), text: "\u23F3 Validation scores finaux... 0%", type: "progress", bindToGlobalProgress: true },
-        { time: t(13), text: "\u2713 " + gridCount + " grille" + (gridCount > 1 ? 's' : '') + " g\u00e9n\u00e9r\u00e9e" + (gridCount > 1 ? 's' : '') + " avec succ\u00e8s", type: "success", requires100: true },
-        { time: t(14), text: "> Pr\u00e9paration affichage r\u00e9sultats...", type: "info", requires100: true },
-        { time: t(14) + (variableStepSec * 0.5), text: "\u2713 Pr\u00eat \u00e0 afficher", type: "success", requires100: true }
+        { time: t(5),  text: LI.log_freq + "18%", type: "progress" },
+        { time: t(6),  text: LI.log_european + "34%", type: "progress" },
+        { time: t(7),  text: LI.log_star_optim + "51%", type: "progress" },
+        { time: t(8),  text: LI.log_balance + "67%", type: "progress" },
+        { time: t(9),  text: LI.log_spread_multi + "78%", type: "progress" },
+        { time: t(10), text: LI.log_constraints + "85%", type: "progress" },
+        { time: t(11), text: LI.log_gen_grids + "92%", type: "progress" },
+        { time: t(12), text: LI.log_validating + "0%", type: "progress", bindToGlobalProgress: true },
+        { time: t(13), text: LI.log_success.replace('{n}', gridCount).replace(/\{s\}/g, gridCount > 1 ? 's' : ''), type: "success", requires100: true },
+        { time: t(14), text: LI.log_preparing, type: "info", requires100: true },
+        { time: t(14) + (variableStepSec * 0.5), text: LI.log_ready, type: "success", requires100: true }
     ];
 }
 
@@ -211,7 +213,7 @@ function generatePopupHTMLSimulateurEM(config) {
             '<div class="data-animation" id="data-animation"></div>' +
             '<div class="console-container">' +
                 '<div class="console-header">' +
-                    '<span class="console-title">\uD83D\uDDA5\uFE0F MOTEUR HYBRIDE EM</span>' +
+                    '<span class="console-title">\uD83D\uDDA5\uFE0F ' + LI.console_title + '</span>' +
                     '<span class="console-status" id="console-status">' +
                         '<span class="status-dot"></span>PROCESSING' +
                     '</span>' +
@@ -219,11 +221,11 @@ function generatePopupHTMLSimulateurEM(config) {
                 '<div class="console-body" id="console-logs">' +
                     '<div class="console-line console-ready">' +
                         '<span class="console-prompt">$</span>' +
-                        '<span class="console-text">Syst\u00e8me pr\u00eat</span>' +
+                        '<span class="console-text">' + LI.system_ready + '</span>' +
                     '</div>' +
                 '</div>' +
             '</div>' +
-            '<div class="sponsors-header">Partenaires</div>' +
+            '<div class="sponsors-header">' + LI.sponsors_header + '</div>' +
             '<div class="sponsors-container">' +
                 sponsorsHTML +
             '</div>' +
@@ -245,7 +247,7 @@ function generatePopupHTMLSimulateurEM(config) {
                     '</div>' +
                     '<span class="timer-value" id="timer-display">' + duration + '</span>' +
                 '</div>' +
-                '<span class="timer-label">secondes</span>' +
+                '<span class="timer-label">' + LI.timer_label + '</span>' +
             '</div>' +
         '</div>';
 }
@@ -352,7 +354,7 @@ function generateMatrixLineSimulateurEM() {
 function showSponsorPopupSimulateurEM(config) {
     return new Promise(function(resolve) {
         var duration = config.duration;
-        var title = config.title || 'HYBRIDE EM - Analyse en cours...';
+        var title = config.title || LI.popup_default_title;
         var gridCount = config.gridCount || 5;
         var onComplete = config.onComplete;
 
@@ -379,7 +381,7 @@ function showSponsorPopupSimulateurEM(config) {
         var cancelBtn = document.createElement('button');
         cancelBtn.type = 'button';
         cancelBtn.className = 'sponsor-cancel-btn';
-        cancelBtn.textContent = 'Annuler';
+        cancelBtn.textContent = LI.cancel_btn;
 
         var actions = document.createElement('div');
         actions.className = 'sponsor-popup-actions';
@@ -576,7 +578,7 @@ function showSponsorPopupSimulateurEM(config) {
             progressText.textContent = percent + '%';
 
             if (boundProgressLine) {
-                boundProgressLine.textContent = '\u23F3 Validation scores finaux... ' + percent + '%';
+                boundProgressLine.textContent = LI.log_validating + percent + '%';
             }
 
             timerDisplay.textContent = percent >= 100 ? '0' : String(Math.ceil(remaining));
@@ -591,7 +593,7 @@ function showSponsorPopupSimulateurEM(config) {
                 progressBar.style.width = '100%';
                 progressText.textContent = '100%';
                 if (boundProgressLine) {
-                    boundProgressLine.textContent = '\u23F3 Validation scores finaux... 100%';
+                    boundProgressLine.textContent = LI.log_validating + '100%';
                 }
                 timerCircleFill.style.strokeDashoffset = 0;
                 timerDisplay.textContent = '0';
@@ -646,7 +648,7 @@ async function showPopupBeforeGenerationSimulateurEM(gridCount, generateCallback
     var result = await showSponsorPopupSimulateurEM({
         duration: duration,
         gridCount: gridCount,
-        title: 'G\u00e9n\u00e9ration de ' + gridCount + ' grille' + plural + ' optimis\u00e9e' + plural + ' EM'
+        title: LI.wrapper_gen_title.replace('{n}', gridCount).replace(/\{s\}/g, plural)
     });
 
     if (result && result.cancelled === true) return;
@@ -669,7 +671,7 @@ async function showPopupBeforeGenerationSimulateurEM(gridCount, generateCallback
 async function showPopupBeforeSimulationSimulateurEM(title, simulateCallback) {
     var result = await showSponsorPopupSimulateurEM({
         duration: 3,
-        title: title || 'Analyse de votre grille EuroMillions en cours'
+        title: title || LI.analyzing_grid
     });
 
     if (result && result.cancelled === true) return;

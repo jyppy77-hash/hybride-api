@@ -8,6 +8,8 @@
  * @version 2.0-EM
  */
 
+var LI = window.LotoIA_i18n || {};
+
 // ============================================
 // ETOILES EM FLOTTANTES — Version fluide
 // ============================================
@@ -115,28 +117,28 @@ function getConsoleLogsEM(gridCount, duration, options) {
     };
 
     var rowsCount = options.rowsToAnalyze || window.TOTAL_TIRAGES_EM || 729;
-    var rowsFormatted = rowsCount.toLocaleString('fr-FR');
+    var rowsFormatted = rowsCount.toLocaleString(LI.locale);
     var tiragesText = options.isGlobal
-        ? '\u2713 ' + rowsFormatted + ' tirages EuroMillions analys\u00e9s (base compl\u00e8te)'
-        : '\u2713 ' + rowsFormatted + ' tirages EuroMillions analys\u00e9s';
+        ? '\u2713 ' + rowsFormatted + LI.log75_draws_full
+        : '\u2713 ' + rowsFormatted + LI.log75_draws;
 
     return [
-        { time: t(0), text: "> Initialisation HYBRIDE EM...", type: "info" },
-        { time: t(1), text: "\u2713 Connexion moteur OK (142ms)", type: "success" },
-        { time: t(2), text: "> Chargement base de donn\u00e9es EuroMillions...", type: "info" },
+        { time: t(0), text: LI.log75_init, type: "info" },
+        { time: t(1), text: LI.log75_connection, type: "success" },
+        { time: t(2), text: LI.log75_loading_db, type: "info" },
         { time: t(3), text: tiragesText, type: "success" },
         { time: t(4), text: "> GET /api/euromillions/analyze?grids=" + gridCount + "&mode=balanced", type: "request" },
-        { time: t(5), text: "\u23f3 Calcul fr\u00e9quences boules (1-50)... 18%", type: "progress" },
-        { time: t(6), text: "\u23f3 Calcul fr\u00e9quences \u00e9toiles (1-12)... 34%", type: "progress" },
-        { time: t(7), text: "\u23f3 D\u00e9tection patterns chauds... 51%", type: "progress" },
-        { time: t(8), text: "\u23f3 \u00c9quilibrage pair/impair... 67%", type: "progress" },
-        { time: t(9), text: "\u23f3 Calcul dispersion g\u00e9ographique... 78%", type: "progress" },
-        { time: t(10), text: "\u23f3 Application contraintes soft... 85%", type: "progress" },
-        { time: t(11), text: "\u23f3 G\u00e9n\u00e9ration grilles optimis\u00e9es EM... 92%", type: "progress" },
-        { time: t(12), text: "\u23f3 Validation scores finaux... 0%", type: "progress", bindToGlobalProgress: true },
-        { time: t(13), text: "\u2713 " + gridCount + " grille" + (gridCount > 1 ? 's' : '') + " g\u00e9n\u00e9r\u00e9e" + (gridCount > 1 ? 's' : '') + " avec succ\u00e8s", type: "success", requires100: true },
-        { time: t(14), text: "> Pr\u00e9paration affichage r\u00e9sultats...", type: "info", requires100: true },
-        { time: t(14) + (variableStepSec * 0.5), text: "\u2713 Pr\u00eat \u00e0 afficher", type: "success", requires100: true }
+        { time: t(5), text: LI.log75_freq_balls + "18%", type: "progress" },
+        { time: t(6), text: LI.log75_freq_stars + "34%", type: "progress" },
+        { time: t(7), text: LI.log75_hot + "51%", type: "progress" },
+        { time: t(8), text: LI.log75_balance + "67%", type: "progress" },
+        { time: t(9), text: LI.log75_geo + "78%", type: "progress" },
+        { time: t(10), text: LI.log75_constraints + "85%", type: "progress" },
+        { time: t(11), text: LI.log75_gen + "92%", type: "progress" },
+        { time: t(12), text: LI.log75_validating + "0%", type: "progress", bindToGlobalProgress: true },
+        { time: t(13), text: LI.log75_success.replace('{n}', gridCount).replace(/\{s\}/g, gridCount > 1 ? 's' : ''), type: "success", requires100: true },
+        { time: t(14), text: LI.log75_preparing, type: "info", requires100: true },
+        { time: t(14) + (variableStepSec * 0.5), text: LI.log75_ready, type: "success", requires100: true }
     ];
 }
 
@@ -159,7 +161,7 @@ function generatePopupHTML75EM(config) {
     var isMetaAnalyse = config.isMetaAnalyse || false;
 
     var metaAnalyseBadge = isMetaAnalyse
-        ? '<div class="meta-analyse-badge">Fen\u00eatre META ANALYSE EM</div>'
+        ? '<div class="meta-analyse-badge">' + LI.meta_window_badge + '</div>'
         : '';
 
     var sponsorVideoHTML =
@@ -175,7 +177,7 @@ function generatePopupHTML75EM(config) {
                     ' src="' + SPONSOR_VIDEO_75_EM.videoSrc + '"' +
                 '></video>' +
             '</a>' +
-            '<p class="sponsor-video-cta">\ud83d\udcfa Cet espace vid\u00e9o est disponible pour votre marque</p>' +
+            '<p class="sponsor-video-cta">' + LI.video_cta + '</p>' +
         '</div>';
 
     return '<div class="sponsor-popup-modal entering' + (isMetaAnalyse ? ' meta-analyse-modal meta-popup-em' : '') + '">' +
@@ -191,7 +193,7 @@ function generatePopupHTML75EM(config) {
             '<div class="data-animation" id="data-animation"></div>' +
             '<div class="console-container">' +
                 '<div class="console-header">' +
-                    '<span class="console-title">\ud83d\udda5\ufe0f MOTEUR HYBRIDE EM</span>' +
+                    '<span class="console-title">\ud83d\udda5\ufe0f ' + LI.console_title + '</span>' +
                     '<span class="console-status" id="console-status">' +
                         '<span class="status-dot"></span>PROCESSING' +
                     '</span>' +
@@ -199,11 +201,11 @@ function generatePopupHTML75EM(config) {
                 '<div class="console-body" id="console-logs">' +
                     '<div class="console-line console-ready">' +
                         '<span class="console-prompt">$</span>' +
-                        '<span class="console-text">Syst\u00e8me pr\u00eat</span>' +
+                        '<span class="console-text">' + LI.system_ready + '</span>' +
                     '</div>' +
                 '</div>' +
             '</div>' +
-            '<div class="sponsors-header">Partenaire</div>' +
+            '<div class="sponsors-header">' + LI.sponsor_header_single + '</div>' +
             '<div class="sponsors-container sponsors-container-single">' +
                 sponsorVideoHTML +
             '</div>' +
@@ -225,7 +227,7 @@ function generatePopupHTML75EM(config) {
                     '</div>' +
                     '<span class="timer-value" id="timer-display">' + duration + '</span>' +
                 '</div>' +
-                '<span class="timer-label">secondes</span>' +
+                '<span class="timer-label">' + LI.timer_label + '</span>' +
             '</div>' +
         '</div>';
 }
@@ -308,7 +310,7 @@ function generateMatrixLineEM() {
 function showSponsorPopup75EM(config) {
     return new Promise(function(resolve) {
         var duration = config.duration;
-        var title = config.title || 'HYBRIDE EM - Calcul en cours...';
+        var title = config.title || LI.popup75_default;
         var gridCount = config.gridCount || 5;
         var onComplete = config.onComplete;
         var isMetaAnalyse = config.isMetaAnalyse || false;
@@ -342,7 +344,7 @@ function showSponsorPopup75EM(config) {
         var cancelBtn = document.createElement('button');
         cancelBtn.type = 'button';
         cancelBtn.className = 'sponsor-cancel-btn';
-        cancelBtn.textContent = 'Annuler';
+        cancelBtn.textContent = LI.cancel_btn;
 
         var timerContainer = modal ? modal.querySelector('.timer-circle-container') : null;
         if (timerContainer) {
@@ -381,11 +383,11 @@ function showSponsorPopup75EM(config) {
 
         var finalLogsTriggered = false;
         var finalMetaLogs = [
-            { delay: 0,    text: 'Analyse 75 grilles EM...',     type: 'info' },
-            { delay: 350,  text: 'Cr\u00e9ation graphiques...',  type: 'info' },
-            { delay: 700,  text: 'Rapport PDF EM...',            type: 'info' },
-            { delay: 1050, text: 'Validation finale...',         type: 'info' },
-            { delay: 1400, text: 'Analyse pr\u00eate.',          type: 'success' }
+            { delay: 0,    text: LI.meta_log_analysing,    type: 'info' },
+            { delay: 350,  text: LI.meta_log_charts,       type: 'info' },
+            { delay: 700,  text: LI.meta_log_pdf,          type: 'info' },
+            { delay: 1050, text: LI.meta_log_validation,   type: 'info' },
+            { delay: 1400, text: LI.meta_log_ready,        type: 'success' }
         ];
 
         function triggerFinalMetaLogs() {
@@ -535,7 +537,7 @@ function showSponsorPopup75EM(config) {
             progressText.textContent = percent + '%';
 
             if (boundProgressLine) {
-                boundProgressLine.textContent = '\u23f3 Validation scores finaux... ' + percent + '%';
+                boundProgressLine.textContent = LI.log75_validating + percent + '%';
             }
 
             timerDisplay.textContent = percent >= 100 ? '0' : String(Math.ceil(remaining));
@@ -550,7 +552,7 @@ function showSponsorPopup75EM(config) {
                 progressBar.style.width = '100%';
                 progressText.textContent = '100%';
                 if (boundProgressLine) {
-                    boundProgressLine.textContent = '\u23f3 Validation scores finaux... 100%';
+                    boundProgressLine.textContent = LI.log75_validating + '100%';
                 }
                 timerCircleFill.style.strokeDashoffset = 0;
                 timerDisplay.textContent = '0';
@@ -596,7 +598,7 @@ async function showPopupBeforeGenerationEM(gridCount, generateCallback) {
     var result = await showSponsorPopup75EM({
         duration: duration,
         gridCount: gridCount,
-        title: 'G\u00e9n\u00e9ration de ' + gridCount + ' grille' + plural + ' optimis\u00e9e' + plural + ' EM'
+        title: LI.wrapper_gen_title.replace('{n}', gridCount).replace(/\{s\}/g, plural)
     });
 
     if (result && result.cancelled === true) return;
@@ -608,7 +610,7 @@ async function showPopupBeforeGenerationEM(gridCount, generateCallback) {
 async function showPopupBeforeSimulationEM(title, simulateCallback) {
     var result = await showSponsorPopup75EM({
         duration: 3,
-        title: title || 'Analyse de votre grille EM en cours'
+        title: title || LI.wrapper_sim_title
     });
 
     if (result && result.cancelled === true) return;
@@ -623,7 +625,7 @@ async function showPopupBeforeSimulationEM(title, simulateCallback) {
 
 function generateGraphBarsHTMLEM(graph, titlePrefix) {
     if (!graph || !graph.labels || !graph.values) {
-        return '<p style="color:#6b7280;">Graphique non disponible</p>';
+        return '<p style="color:#6b7280;">' + LI.meta_chart_na + '</p>';
     }
 
     var maxValue = Math.max.apply(null, graph.values);
@@ -657,8 +659,8 @@ function openMetaResultPopupEM(data) {
     var analysisSource = window._metaAnalysisSourceEM || 'unknown';
 
     var sourceLabel = analysisSource === 'gemini_enriched'
-        ? '<span class="meta-source-badge gemini">\ud83e\udde0 Analyse Gemini enrichie</span>'
-        : '<span class="meta-source-badge local">\u26a0\ufe0f Analyse locale (Gemini indisponible)</span>';
+        ? '<span class="meta-source-badge gemini">' + LI.meta_src_gemini + '</span>'
+        : '<span class="meta-source-badge local">' + LI.meta_src_local + '</span>';
 
     var overlay = document.createElement('div');
     overlay.className = 'meta-result-overlay';
@@ -667,20 +669,20 @@ function openMetaResultPopupEM(data) {
             '<div class="meta-result-header">' +
                 '<h2 class="meta-result-title">' +
                     '<span class="meta-result-title-icon">\ud83d\udcca</span>' +
-                    'R\u00e9sultat META ANALYSE EM' +
+                    LI.meta_result_title +
                 '</h2>' +
-                '<p class="meta-result-subtitle">Analyse bas\u00e9e sur 75 grilles EuroMillions simul\u00e9es</p>' +
+                '<p class="meta-result-subtitle">' + LI.meta_result_subtitle + '</p>' +
             '</div>' +
 
             '<div class="meta-result-graph">' +
-                '<div class="meta-result-graph-title">Top 5 Boules - Convergence statistique</div>' +
+                '<div class="meta-result-graph-title">' + LI.meta_graph_balls + '</div>' +
                 '<div class="meta-result-bars">' +
                     graphBarsBoules +
                 '</div>' +
             '</div>' +
 
             '<div class="meta-result-graph" style="margin-top: 16px;">' +
-                '<div class="meta-result-graph-title">Top 3 \u00c9toiles - Convergence statistique</div>' +
+                '<div class="meta-result-graph-title">' + LI.meta_graph_stars + '</div>' +
                 '<div class="meta-result-bars">' +
                     graphBarsEtoiles +
                 '</div>' +
@@ -695,11 +697,11 @@ function openMetaResultPopupEM(data) {
 
             '<div class="meta-result-actions">' +
                 '<button class="meta-result-btn meta-result-btn-close" id="meta-result-close-em">' +
-                    'Fermer' +
+                    LI.meta_close +
                 '</button>' +
                 '<button class="meta-result-btn meta-result-btn-pdf" id="meta-result-pdf-em">' +
                     '<span>\ud83d\udcc4</span>' +
-                    'T\u00e9l\u00e9charger le rapport META EM' +
+                    LI.meta_download +
                 '</button>' +
             '</div>' +
         '</div>';
@@ -732,7 +734,7 @@ function openMetaResultPopupEM(data) {
 
             if (!finalAnalysisTextEM) {
                 console.warn('[PDF EM] finalAnalysisTextEM est null');
-                alert('Analyse avanc\u00e9e encore en cours...');
+                alert(LI.meta_pending);
                 return;
             }
 
@@ -743,11 +745,12 @@ function openMetaResultPopupEM(data) {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     analysis: finalAnalysisTextEM,
-                    window: '75 grilles',
+                    window: LI.meta_75_grids,
                     engine: 'HYBRIDE',
                     graph_data_boules: metaResultDataEM && metaResultDataEM.graph_boules ? metaResultDataEM.graph_boules : null,
                     graph_data_etoiles: metaResultDataEM && metaResultDataEM.graph_etoiles ? metaResultDataEM.graph_etoiles : null,
-                    sponsor: 'Espace disponible'
+                    sponsor: LI.meta_sponsor_space,
+                    lang: window.LotoIA_lang
                 })
             })
             .then(function(res) { return res.blob(); })
@@ -772,11 +775,11 @@ function openMetaResultPopupFallbackEM() {
             '<div class="meta-result-fallback">' +
                 '<div class="meta-result-fallback-icon">\u26a0\ufe0f</div>' +
                 '<p class="meta-result-fallback-text">' +
-                    'R\u00e9sultat temporairement indisponible.<br>' +
-                    'Veuillez r\u00e9essayer dans quelques instants.' +
+                    LI.meta_fallback_text + '<br>' +
+                    LI.meta_fallback_retry +
                 '</p>' +
                 '<button class="meta-result-btn meta-result-btn-close" id="meta-result-close-fallback-em">' +
-                    'Fermer' +
+                    LI.meta_close +
                 '</button>' +
             '</div>' +
         '</div>';
@@ -849,7 +852,8 @@ function triggerGeminiEarlyEM() {
                 body: JSON.stringify({
                     analysis_local: data.analysis,
                     stats: { boules: data.graph_boules, etoiles: data.graph_etoiles },
-                    window: (data.meta && data.meta.window_used) ? data.meta.window_used : 'GLOBAL'
+                    window: (data.meta && data.meta.window_used) ? data.meta.window_used : 'GLOBAL',
+                    lang: window.LotoIA_lang
                 })
             })
             .then(function(r) {
@@ -969,7 +973,7 @@ async function showMetaAnalysePopupEM() {
     var result = await showSponsorPopup75EM({
         duration: META_ANALYSE_TIMER_DURATION_EM,
         gridCount: 75,
-        title: 'META ANALYSE EM - Traitement 75 grilles',
+        title: LI.meta_popup_title,
         isMetaAnalyse: true,
         logs: metaAnalyseLogs,
         onComplete: onMetaAnalyseCompleteEM

@@ -52,6 +52,9 @@
     {# ── Page body (content + footer inside page container) ── #}
     {% block body %}{% endblock %}
 
+    {# ── JS i18n injection ── #}
+    <script>window.LotoIA_i18n={{ js_labels | tojson }};window.LotoIA_lang="{{ lang }}";</script>
+
     {# ── Page-specific scripts (before common) ── #}
     {% block page_scripts %}{% endblock %}
 
