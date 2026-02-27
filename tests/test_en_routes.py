@@ -333,44 +333,46 @@ def test_trailing_slash_redirects_fr():
 
 
 # ═══════════════════════════════════════════════
-# EN META prompts — load_prompt_em with EN keys
+# EN META prompts — load_prompt_em with lang="en"
 # ═══════════════════════════════════════════════
 
-_EN_TIRAGES_KEYS = [
-    "EM_100_EN", "EM_200_EN", "EM_300_EN", "EM_400_EN",
-    "EM_500_EN", "EM_600_EN", "EM_700_EN", "EM_GLOBAL_EN",
+_EN_TIRAGES_NAMES = [
+    "tirages/prompt_100", "tirages/prompt_200", "tirages/prompt_300",
+    "tirages/prompt_400", "tirages/prompt_500", "tirages/prompt_600",
+    "tirages/prompt_700", "tirages/prompt_global",
 ]
 
-_EN_ANNEES_KEYS = [
-    "EM_1A_EN", "EM_2A_EN", "EM_3A_EN", "EM_4A_EN",
-    "EM_5A_EN", "EM_6A_EN", "EM_GLOBAL_A_EN",
+_EN_ANNEES_NAMES = [
+    "annees/prompt_1a", "annees/prompt_2a", "annees/prompt_3a",
+    "annees/prompt_4a", "annees/prompt_5a", "annees/prompt_6a",
+    "annees/prompt_global",
 ]
 
 
 def test_en_meta_prompts_tirages_loadable():
     """All 8 EN tirages prompts load and contain English markers."""
     from services.prompt_loader import load_prompt_em
-    for key in _EN_TIRAGES_KEYS:
-        prompt = load_prompt_em(key)
-        assert prompt, f"Prompt {key} is empty"
-        assert "ALWAYS reply in correct, fluent English" in prompt, f"Prompt {key} missing English marker"
+    for name in _EN_TIRAGES_NAMES:
+        prompt = load_prompt_em(name, "en")
+        assert prompt, f"Prompt {name} is empty"
+        assert "ALWAYS reply in correct, fluent English" in prompt, f"Prompt {name} missing English marker"
 
 
 def test_en_meta_prompts_annees_loadable():
     """All 7 EN annees prompts load and contain English markers."""
     from services.prompt_loader import load_prompt_em
-    for key in _EN_ANNEES_KEYS:
-        prompt = load_prompt_em(key)
-        assert prompt, f"Prompt {key} is empty"
-        assert "ALWAYS reply in correct, fluent English" in prompt, f"Prompt {key} missing English marker"
+    for name in _EN_ANNEES_NAMES:
+        prompt = load_prompt_em(name, "en")
+        assert prompt, f"Prompt {name} is empty"
+        assert "ALWAYS reply in correct, fluent English" in prompt, f"Prompt {name} missing English marker"
 
 
 def test_en_meta_prompt_not_french():
     """EN prompts do not contain the FR language rule."""
     from services.prompt_loader import load_prompt_em
-    for key in _EN_TIRAGES_KEYS + _EN_ANNEES_KEYS:
-        prompt = load_prompt_em(key)
-        assert "français" not in prompt.lower(), f"Prompt {key} contains French text"
+    for name in _EN_TIRAGES_NAMES + _EN_ANNEES_NAMES:
+        prompt = load_prompt_em(name, "en")
+        assert "français" not in prompt.lower(), f"Prompt {name} contains French text"
 
 
 # ═══════════════════════════════════════════════

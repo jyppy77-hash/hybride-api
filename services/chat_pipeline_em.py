@@ -12,7 +12,7 @@ import time
 import json
 import httpx
 
-from services.prompt_loader import load_prompt
+from services.prompt_loader import load_prompt_em
 from services.gemini import GEMINI_MODEL_URL
 from services.circuit_breaker import gemini_breaker, CircuitOpenError
 from services.em_stats_service import (
@@ -72,11 +72,10 @@ async def handle_chat_em(message: str, history: list, page: str, http_client, la
     _fallback = FALLBACK_RESPONSE_EM_EN if is_en else FALLBACK_RESPONSE_EM
     mode = _detect_mode_em(message, page)
 
-    # Charger le prompt systeme (FR ou EN)
-    prompt_key = "CHATBOT_EM_EN" if is_en else "CHATBOT_EM"
-    system_prompt = load_prompt(prompt_key)
+    # Charger le prompt systeme (lang-aware)
+    system_prompt = load_prompt_em("prompt_hybride_em", lang=lang)
     if not system_prompt:
-        logger.error(f"[EM CHAT] Prompt systeme introuvable ({prompt_key})")
+        logger.error(f"[EM CHAT] Prompt systeme introuvable (prompt_hybride_em/{lang})")
         return {"response": _fallback, "source": "fallback", "mode": mode}
 
     # Cle API
@@ -547,9 +546,8 @@ async def handle_pitch_em(grilles: list, http_client, lang: str = "fr") -> dict:
             "status_code": 500,
         }
 
-    # Charger le prompt (FR ou EN)
-    pitch_key = "PITCH_GRILLE_EM_EN" if lang == "en" else "PITCH_GRILLE_EM"
-    system_prompt = load_prompt(pitch_key)
+    # Charger le prompt (lang-aware)
+    system_prompt = load_prompt_em("prompt_pitch_grille_em", lang=lang)
     if not system_prompt:
         logger.error("[EM PITCH] Prompt pitch introuvable")
         return {

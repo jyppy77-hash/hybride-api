@@ -8,7 +8,7 @@ import os
 import logging
 import httpx
 
-from services.prompt_loader import load_prompt_em
+from services.prompt_loader import load_prompt_em, em_window_to_prompt
 from services.circuit_breaker import gemini_breaker, CircuitOpenError
 
 logger = logging.getLogger(__name__)
@@ -35,12 +35,9 @@ async def enrich_analysis_em(analysis_local: str, window: str = "GLOBAL", *, htt
         logger.warning("[META TEXTE EM] GEM_API_KEY non configuree - fallback local")
         return {"analysis_enriched": analysis_local, "source": "hybride_local"}
 
-    # Charger le prompt dynamique contextuel EM (FR ou EN)
-    if lang == "en":
-        en_key = f"EM_{window_key}_EN" if not window_key.startswith("EM_") else f"{window_key}_EN"
-        prompt_template = load_prompt_em(en_key) or load_prompt_em(window_key)
-    else:
-        prompt_template = load_prompt_em(window_key)
+    # Charger le prompt dynamique contextuel EM (lang-aware fallback)
+    prompt_name = em_window_to_prompt(window_key)
+    prompt_template = load_prompt_em(prompt_name, lang=lang)
 
     if prompt_template:
         prompt = prompt_template + "\n" + analysis_local

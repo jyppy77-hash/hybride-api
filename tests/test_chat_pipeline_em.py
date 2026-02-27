@@ -37,7 +37,7 @@ class TestHandleChatEM:
     @pytest.mark.asyncio
     async def test_fallback_no_prompt(self):
         """Si prompt introuvable → fallback."""
-        with patch("services.chat_pipeline_em.load_prompt", return_value=None):
+        with patch("services.chat_pipeline_em.load_prompt_em", return_value=None):
             result = await handle_chat_em("bonjour", [], "accueil-em", MagicMock())
         assert result["source"] == "fallback"
         assert result["response"] == FALLBACK_RESPONSE_EM
@@ -45,7 +45,7 @@ class TestHandleChatEM:
     @pytest.mark.asyncio
     async def test_fallback_no_api_key(self):
         """Si cle API manquante → fallback."""
-        with patch("services.chat_pipeline_em.load_prompt", return_value="sys"), \
+        with patch("services.chat_pipeline_em.load_prompt_em", return_value="sys"), \
              patch.dict("os.environ", {}, clear=True):
             result = await handle_chat_em("bonjour", [], "accueil-em", MagicMock())
         assert result["source"] == "fallback"
@@ -53,7 +53,7 @@ class TestHandleChatEM:
     @pytest.mark.asyncio
     async def test_insult_pure_returns_insult(self):
         """Insulte pure → early return hybride_insult."""
-        with patch("services.chat_pipeline_em.load_prompt", return_value="sys"), \
+        with patch("services.chat_pipeline_em.load_prompt_em", return_value="sys"), \
              patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline_em._detect_insulte", return_value="insulte"):
             result = await handle_chat_em("t'es nul", [], "accueil-em", MagicMock())
@@ -62,7 +62,7 @@ class TestHandleChatEM:
     @pytest.mark.asyncio
     async def test_compliment_pure_returns_compliment(self):
         """Compliment sans question → early return hybride_compliment."""
-        with patch("services.chat_pipeline_em.load_prompt", return_value="sys"), \
+        with patch("services.chat_pipeline_em.load_prompt_em", return_value="sys"), \
              patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline_em._detect_insulte", return_value=None), \
              patch("services.chat_pipeline_em._detect_compliment", return_value="compliment"), \
@@ -73,7 +73,7 @@ class TestHandleChatEM:
     @pytest.mark.asyncio
     async def test_oor_returns_hybride_oor(self):
         """Numero hors range → hybride_oor."""
-        with patch("services.chat_pipeline_em.load_prompt", return_value="sys"), \
+        with patch("services.chat_pipeline_em.load_prompt_em", return_value="sys"), \
              patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline_em._detect_insulte", return_value=None), \
              patch("services.chat_pipeline_em._detect_compliment", return_value=None), \
@@ -97,7 +97,7 @@ class TestHandleChatEM:
         async def fake_call(*args, **kwargs):
             return _make_gemini_response("Voici les stats EM")
 
-        with patch("services.chat_pipeline_em.load_prompt", return_value="sys"), \
+        with patch("services.chat_pipeline_em.load_prompt_em", return_value="sys"), \
              patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline_em._detect_insulte", return_value=None), \
              patch("services.chat_pipeline_em._detect_compliment", return_value=None), \
@@ -125,7 +125,7 @@ class TestHandleChatEM:
         async def fake_call(*args, **kwargs):
             return _make_gemini_response("", status=500)
 
-        with patch("services.chat_pipeline_em.load_prompt", return_value="sys"), \
+        with patch("services.chat_pipeline_em.load_prompt_em", return_value="sys"), \
              patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline_em._detect_insulte", return_value=None), \
              patch("services.chat_pipeline_em._detect_compliment", return_value=None), \
@@ -207,7 +207,7 @@ class TestHandlePitchEM:
         async def fake_call(*args, **kwargs):
             return gemini_resp
 
-        with patch("services.chat_pipeline_em.load_prompt", return_value="sys"), \
+        with patch("services.chat_pipeline_em.load_prompt_em", return_value="sys"), \
              patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline_em.prepare_grilles_pitch_context", new_callable=AsyncMock, return_value="ctx"), \
              patch("services.chat_pipeline_em.gemini_breaker") as mock_breaker:
@@ -221,7 +221,7 @@ class TestHandlePitchEM:
 
     @pytest.mark.asyncio
     async def test_pitch_no_prompt(self):
-        with patch("services.chat_pipeline_em.load_prompt", return_value=None), \
+        with patch("services.chat_pipeline_em.load_prompt_em", return_value=None), \
              patch("services.chat_pipeline_em.prepare_grilles_pitch_context", new_callable=AsyncMock, return_value="ctx"):
             result = await handle_pitch_em(
                 [_grille([5, 15, 25, 35, 45])],

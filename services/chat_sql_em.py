@@ -8,7 +8,7 @@ import logging
 from datetime import date, timedelta
 
 import db_cloudsql
-from services.prompt_loader import load_prompt
+from services.prompt_loader import load_prompt_em
 from services.gemini import GEMINI_MODEL_URL
 from services.circuit_breaker import gemini_breaker
 from services.chat_utils import _format_date_fr
@@ -116,12 +116,10 @@ async def _get_tirage_data_em(target) -> dict | None:
 
 async def _generate_sql_em(question: str, client, api_key: str, history: list = None, lang: str = "fr") -> str | None:
     """Appelle Gemini pour convertir une question EM en SQL (avec contexte conversationnel)."""
-    sql_key = "SQL_GENERATOR_EM_EN" if lang == "en" else "SQL_GENERATOR_EM"
-    sql_prompt = load_prompt(sql_key)
+    today_str = date.today().strftime("%Y-%m-%d")
+    sql_prompt = load_prompt_em("prompt_sql_generator_em", lang=lang)
     if not sql_prompt:
         return None
-
-    today_str = date.today().strftime("%Y-%m-%d")
     sql_prompt = sql_prompt.replace("{TODAY}", today_str)
 
     sql_contents = []
