@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 
 from services.cache import cache_get, cache_set
+from config.i18n import _badges
 
 logger = logging.getLogger(__name__)
 
@@ -448,17 +449,18 @@ class BaseStatsService:
         conformite_pct = max(0, min(100, conformite_pct))
 
         # Badges
+        b = _badges("fr")
         badges = []
         if freq_moyenne > freq_attendue * 1.1:
-            badges.append("Num\u00e9ros chauds")
+            badges.append(b["hot"])
         elif freq_moyenne < freq_attendue * 0.9:
-            badges.append("Mix de retards")
+            badges.append(b["overdue"])
         else:
-            badges.append("\u00c9quilibre")
+            badges.append(b["balanced"])
         if dispersion > 35:
-            badges.append("Large spectre")
+            badges.append(b["wide_spectrum"])
         if nb_pairs == 2 or nb_pairs == 3:
-            badges.append("Pair/Impair OK")
+            badges.append(b["even_odd"])
 
         result = {
             "numeros": nums,
@@ -730,15 +732,16 @@ class BaseStatsService:
                 lines.append(f"Num\u00e9ro {n} : {f} sorties, \u00e9cart {e}, {cat}")
 
             # Badges
+            b = _badges("fr")
             badges = []
             if len(chauds) >= 3:
-                badges.append("Num\u00e9ros chauds")
+                badges.append(b["hot"])
             elif len(froids) >= 3:
-                badges.append("Mix de retards")
+                badges.append(b["overdue"])
             else:
-                badges.append("\u00c9quilibre")
+                badges.append(b["balanced"])
             if 1 <= nb_pairs <= 4:
-                badges.append("Pair/Impair OK")
+                badges.append(b["even_odd"])
 
             lines.append(f"Badges : {', '.join(badges)}")
 

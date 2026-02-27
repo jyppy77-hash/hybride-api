@@ -278,6 +278,7 @@ async function analyzeGrid(withPopup) {
         nums.forEach(function(n) { params.append('nums', n); });
         params.append('etoile1', stars[0]);
         params.append('etoile2', stars[1]);
+        params.append('lang', 'en');
 
         const response = await fetch('/api/euromillions/analyze-custom-grid?' + params.toString(), {
             method: 'POST'
@@ -376,11 +377,16 @@ function displayBadges(badges) {
     container.innerHTML = '';
 
     var iconMap = {
+        'hot': '\u{1F525}',
         'chaud': '\u{1F525}',
+        'spectrum': '\u{1F4CF}',
         'spectre': '\u{1F4CF}',
+        'balanced': '\u2696\uFE0F',
         'quilibr': '\u2696\uFE0F',
+        'even': '\u2705',
         'Pair': '\u2705',
         'Hybride': '\u2699\uFE0F',
+        'overdue': '\u23F0',
         'retard': '\u23F0',
         'froid': '\u2744\uFE0F',
         'Mix': '\u{1F3B0}'
@@ -399,9 +405,9 @@ function displayBadges(badges) {
             }
         }
 
-        if (badge.toLowerCase().indexOf('chaud') !== -1) el.classList.add('hot');
-        else if (badge.indexOf('quilibr') !== -1 || badge.indexOf('Pair') !== -1) el.classList.add('balance');
-        else if (badge.toLowerCase().indexOf('spectre') !== -1) el.classList.add('spectre');
+        if (badge.toLowerCase().indexOf('chaud') !== -1 || badge.toLowerCase().indexOf('hot') !== -1) el.classList.add('hot');
+        else if (badge.indexOf('quilibr') !== -1 || badge.indexOf('Pair') !== -1 || badge.toLowerCase().indexOf('balanced') !== -1 || badge.indexOf('Even') !== -1) el.classList.add('balance');
+        else if (badge.toLowerCase().indexOf('spectre') !== -1 || badge.toLowerCase().indexOf('spectrum') !== -1) el.classList.add('spectre');
         else if (badge.indexOf('Hybride') !== -1) el.classList.add('model');
         else if (badge.toLowerCase().indexOf('froid') !== -1) el.classList.add('cold');
 
@@ -590,7 +596,8 @@ async function fetchAndDisplaySimulateurPitchEM(nums, etoiles, scoreConformite, 
                     etoiles: etoiles,
                     score_conformite: scoreConformite ? parseInt(scoreConformite) : null,
                     severity: severity || null
-                }]
+                }],
+                lang: "en"
             })
         });
         var data = await response.json();

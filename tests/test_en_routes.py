@@ -330,3 +330,114 @@ def test_trailing_slash_redirects_fr():
         assert resp.status_code == 301, f"GET {path_slash} expected 301, got {resp.status_code}"
         location = resp.headers.get("location", "")
         assert location == expected, f"GET {path_slash} → {location}, expected {expected}"
+
+
+# ═══════════════════════════════════════════════
+# EN META prompts — load_prompt_em with EN keys
+# ═══════════════════════════════════════════════
+
+_EN_TIRAGES_KEYS = [
+    "EM_100_EN", "EM_200_EN", "EM_300_EN", "EM_400_EN",
+    "EM_500_EN", "EM_600_EN", "EM_700_EN", "EM_GLOBAL_EN",
+]
+
+_EN_ANNEES_KEYS = [
+    "EM_1A_EN", "EM_2A_EN", "EM_3A_EN", "EM_4A_EN",
+    "EM_5A_EN", "EM_6A_EN", "EM_GLOBAL_A_EN",
+]
+
+
+def test_en_meta_prompts_tirages_loadable():
+    """All 8 EN tirages prompts load and contain English markers."""
+    from services.prompt_loader import load_prompt_em
+    for key in _EN_TIRAGES_KEYS:
+        prompt = load_prompt_em(key)
+        assert prompt, f"Prompt {key} is empty"
+        assert "ALWAYS reply in correct, fluent English" in prompt, f"Prompt {key} missing English marker"
+
+
+def test_en_meta_prompts_annees_loadable():
+    """All 7 EN annees prompts load and contain English markers."""
+    from services.prompt_loader import load_prompt_em
+    for key in _EN_ANNEES_KEYS:
+        prompt = load_prompt_em(key)
+        assert prompt, f"Prompt {key} is empty"
+        assert "ALWAYS reply in correct, fluent English" in prompt, f"Prompt {key} missing English marker"
+
+
+def test_en_meta_prompt_not_french():
+    """EN prompts do not contain the FR language rule."""
+    from services.prompt_loader import load_prompt_em
+    for key in _EN_TIRAGES_KEYS + _EN_ANNEES_KEYS:
+        prompt = load_prompt_em(key)
+        assert "français" not in prompt.lower(), f"Prompt {key} contains French text"
+
+
+# ═══════════════════════════════════════════════
+# Badges i18n — _badges function
+# ═══════════════════════════════════════════════
+
+def test_badges_fr_returns_french():
+    """_badges('fr') returns French labels."""
+    from config.i18n import _badges
+    b = _badges("fr")
+    assert b["hot"] == "Numéros chauds"
+    assert b["balanced"] == "Équilibre"
+    assert b["even_odd"] == "Pair/Impair OK"
+
+
+def test_badges_en_returns_english():
+    """_badges('en') returns English labels."""
+    from config.i18n import _badges
+    b = _badges("en")
+    assert b["hot"] == "Hot Numbers"
+    assert b["balanced"] == "Balanced"
+    assert b["even_odd"] == "Even/Odd OK"
+    assert b["wide_spectrum"] == "Wide Spectrum"
+
+
+def test_badges_default_is_french():
+    """_badges() with no arg defaults to French."""
+    from config.i18n import _badges
+    b = _badges()
+    assert b["hot"] == "Numéros chauds"
+
+
+# ═══════════════════════════════════════════════
+# EN schemas — lang field on META payloads
+# ═══════════════════════════════════════════════
+
+def test_em_meta_analyse_texte_lang_default():
+    """EMMetaAnalyseTextePayload defaults lang to 'fr'."""
+    from em_schemas import EMMetaAnalyseTextePayload
+    p = EMMetaAnalyseTextePayload(analysis_local="test text")
+    assert p.lang == "fr"
+
+
+def test_em_meta_analyse_texte_lang_en():
+    """EMMetaAnalyseTextePayload accepts lang='en'."""
+    from em_schemas import EMMetaAnalyseTextePayload
+    p = EMMetaAnalyseTextePayload(analysis_local="test text", lang="en")
+    assert p.lang == "en"
+
+
+def test_em_pitch_grilles_lang_field():
+    """EMPitchGrillesRequest accepts lang='en'."""
+    from em_schemas import EMPitchGrillesRequest, EMPitchGrilleItem
+    grille = EMPitchGrilleItem(numeros=[1, 2, 3, 4, 5], etoiles=[1, 2], score_conformite=80)
+    p = EMPitchGrillesRequest(grilles=[grille], lang="en")
+    assert p.lang == "en"
+
+
+def test_em_meta_pdf_lang_field():
+    """EMMetaPdfPayload accepts lang='en'."""
+    from em_schemas import EMMetaPdfPayload
+    p = EMMetaPdfPayload(lang="en")
+    assert p.lang == "en"
+
+
+def test_em_meta_pdf_lang_default():
+    """EMMetaPdfPayload defaults lang to 'fr'."""
+    from em_schemas import EMMetaPdfPayload
+    p = EMMetaPdfPayload()
+    assert p.lang == "fr"

@@ -35,8 +35,9 @@ async def em_generate(
     request: Request,
     n: int = Query(default=3, ge=1, le=10),
     mode: str = Query(default="balanced"),
+    lang: str = Query(default="fr", pattern=r"^(fr|en)$"),
 ):
-    return await unified_generate(request=request, game=_EM, n=n, mode=mode)
+    return await unified_generate(request=request, game=_EM, n=n, mode=mode, lang=lang)
 
 
 @router.get("/meta-analyse-local")
@@ -56,9 +57,10 @@ async def em_analyze_custom_grid(
     nums: list = Query(..., description="5 numeros principaux (1-50)"),
     etoile1: int = Query(..., ge=1, le=12, description="Etoile 1"),
     etoile2: int = Query(..., ge=1, le=12, description="Etoile 2"),
+    lang: str = Query(default="fr", pattern=r"^(fr|en)$"),
 ):
     return await unified_analyze_custom_grid(
-        request=request, game=_EM, nums=nums, etoile1=etoile1, etoile2=etoile2,
+        request=request, game=_EM, nums=nums, etoile1=etoile1, etoile2=etoile2, lang=lang,
     )
 
 
@@ -73,6 +75,7 @@ async def em_meta_analyse_texte(request: Request, payload: EMMetaAnalyseTextePay
         analysis_local=payload.analysis_local,
         window=payload.window or "GLOBAL",
         http_client=request.app.state.httpx_client,
+        lang=payload.lang,
     )
 
 
@@ -94,6 +97,7 @@ async def em_meta_pdf(request: Request, payload: EMMetaPdfPayload):
             graph_data_boules=payload.graph_data_boules,
             graph_data_etoiles=payload.graph_data_etoiles,
             sponsor=payload.sponsor,
+            lang=payload.lang,
         )
         return StreamingResponse(
             buf,

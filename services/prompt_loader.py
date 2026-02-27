@@ -53,10 +53,28 @@ PROMPT_MAP = {
     "EM_5A": "prompts/euromillions/annees/prompt_5a.txt",
     "EM_6A": "prompts/euromillions/annees/prompt_6a.txt",
     "EM_GLOBAL_A": "prompts/euromillions/annees/prompt_global.txt",
+    # META ANALYSE — EuroMillions EN (tirages)
+    "EM_100_EN": "prompts/euromillions/en/tirages/prompt_100.txt",
+    "EM_200_EN": "prompts/euromillions/en/tirages/prompt_200.txt",
+    "EM_300_EN": "prompts/euromillions/en/tirages/prompt_300.txt",
+    "EM_400_EN": "prompts/euromillions/en/tirages/prompt_400.txt",
+    "EM_500_EN": "prompts/euromillions/en/tirages/prompt_500.txt",
+    "EM_600_EN": "prompts/euromillions/en/tirages/prompt_600.txt",
+    "EM_700_EN": "prompts/euromillions/en/tirages/prompt_700.txt",
+    "EM_GLOBAL_EN": "prompts/euromillions/en/tirages/prompt_global.txt",
+    # META ANALYSE — EuroMillions EN (annees)
+    "EM_1A_EN": "prompts/euromillions/en/annees/prompt_1a.txt",
+    "EM_2A_EN": "prompts/euromillions/en/annees/prompt_2a.txt",
+    "EM_3A_EN": "prompts/euromillions/en/annees/prompt_3a.txt",
+    "EM_4A_EN": "prompts/euromillions/en/annees/prompt_4a.txt",
+    "EM_5A_EN": "prompts/euromillions/en/annees/prompt_5a.txt",
+    "EM_6A_EN": "prompts/euromillions/en/annees/prompt_6a.txt",
+    "EM_GLOBAL_A_EN": "prompts/euromillions/en/annees/prompt_global.txt",
 }
 
 FALLBACK_PROMPT_PATH = "prompts/tirages/prompt_global.txt"
 EM_FALLBACK_PROMPT_PATH = "prompts/euromillions/tirages/prompt_global.txt"
+EM_FALLBACK_PROMPT_PATH_EN = "prompts/euromillions/en/tirages/prompt_global.txt"
 
 
 def load_prompt(window: str) -> str:

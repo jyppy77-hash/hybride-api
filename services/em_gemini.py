@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 GEMINI_MODEL_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
 
-async def enrich_analysis_em(analysis_local: str, window: str = "GLOBAL", *, http_client: httpx.AsyncClient) -> dict:
+async def enrich_analysis_em(analysis_local: str, window: str = "GLOBAL", *, http_client: httpx.AsyncClient, lang: str = "fr") -> dict:
     """
     Enrichit le texte d'analyse local EuroMillions via Gemini.
     Utilise un prompt dynamique EM adapte a la fenetre d'analyse.
@@ -35,11 +35,28 @@ async def enrich_analysis_em(analysis_local: str, window: str = "GLOBAL", *, htt
         logger.warning("[META TEXTE EM] GEM_API_KEY non configuree - fallback local")
         return {"analysis_enriched": analysis_local, "source": "hybride_local"}
 
-    # Charger le prompt dynamique contextuel EM
-    prompt_template = load_prompt_em(window_key)
+    # Charger le prompt dynamique contextuel EM (FR ou EN)
+    if lang == "en":
+        en_key = f"EM_{window_key}_EN" if not window_key.startswith("EM_") else f"{window_key}_EN"
+        prompt_template = load_prompt_em(en_key) or load_prompt_em(window_key)
+    else:
+        prompt_template = load_prompt_em(window_key)
 
     if prompt_template:
         prompt = prompt_template + "\n" + analysis_local
+    elif lang == "en":
+        prompt = f"""You are an expert in lottery statistics specialising in EuroMillions.
+Rephrase the analysis below in a pedagogical and accessible way.
+Strict rules:
+- NEVER promise any winnings
+- Stay neutral and informative
+- Keep a professional tone
+- Maximum 4 fluent sentences
+- Do not alter the numbers
+- Highlight balls and stars
+
+Text to rephrase:
+{analysis_local}"""
     else:
         prompt = f"""[LANGUE ET ORTHOGRAPHE — RÈGLE ABSOLUE]
 Tu réponds TOUJOURS en français correct avec TOUS les accents : é, è, ê, ë, à, â, ç, ù, û, ô, î, ï.
@@ -59,6 +76,27 @@ Règles strictes :
 Texte a reformuler :
 {analysis_local}"""
 
+    # System instruction: language-appropriate
+    if lang == "en":
+        system_instruction_text = (
+            "MANDATORY: You ALWAYS write in correct English. "
+            "Keep a professional, educational tone suitable for a PDF report. "
+            "Never promise winnings. Stay neutral and factual."
+        )
+    else:
+        system_instruction_text = (
+            "OBLIGATION ABSOLUE : Tu écris TOUJOURS en français correct "
+            "avec TOUS les accents (é, è, ê, ë, à, â, ç, ù, û, ô, î, ï). "
+            "Exemples : \"numéro\" (jamais \"numero\"), \"fréquence\" (jamais \"frequence\"), "
+            "\"régularité\" (jamais \"regularite\"), \"dernière\" (jamais \"derniere\"), "
+            "\"élevé\" (jamais \"eleve\"), \"intéressant\" (jamais \"interessant\"), "
+            "\"présente\" (jamais \"presente\"), \"conformité\" (jamais \"conformite\"), "
+            "\"équilibre\" (jamais \"equilibre\"), \"mérite\" (jamais \"merite\"), "
+            "\"sélection\" (jamais \"selection\"), \"mélange\" (jamais \"melange\"), "
+            "\"répartition\" (jamais \"repartition\"). "
+            "Un texte sans accents est considéré comme un BUG CRITIQUE."
+        )
+
     logger.debug(f"[META TEXTE EM] Prompt construit ({len(prompt)} chars), appel Gemini...")
 
     try:
@@ -72,18 +110,7 @@ Texte a reformuler :
             json={
                 "systemInstruction": {
                     "parts": [{
-                        "text": (
-                            "OBLIGATION ABSOLUE : Tu écris TOUJOURS en français correct "
-                            "avec TOUS les accents (é, è, ê, ë, à, â, ç, ù, û, ô, î, ï). "
-                            "Exemples : \"numéro\" (jamais \"numero\"), \"fréquence\" (jamais \"frequence\"), "
-                            "\"régularité\" (jamais \"regularite\"), \"dernière\" (jamais \"derniere\"), "
-                            "\"élevé\" (jamais \"eleve\"), \"intéressant\" (jamais \"interessant\"), "
-                            "\"présente\" (jamais \"presente\"), \"conformité\" (jamais \"conformite\"), "
-                            "\"équilibre\" (jamais \"equilibre\"), \"mérite\" (jamais \"merite\"), "
-                            "\"sélection\" (jamais \"selection\"), \"mélange\" (jamais \"melange\"), "
-                            "\"répartition\" (jamais \"repartition\"). "
-                            "Un texte sans accents est considéré comme un BUG CRITIQUE."
-                        )
+                        "text": system_instruction_text
                     }]
                 },
                 "contents": [{

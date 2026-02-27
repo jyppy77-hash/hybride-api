@@ -640,7 +640,7 @@ async def build_explanation(nums: List[int], chance_num: int) -> Dict[str, Any]:
 # API PRINCIPALE
 # ============================================================================
 
-async def generate_grids(n: int = 5, mode: str = "balanced") -> Dict[str, Any]:
+async def generate_grids(n: int = 5, mode: str = "balanced", lang: str = "fr") -> Dict[str, Any]:
     """
     Point d'entrée principal : génère N grilles optimisées
 

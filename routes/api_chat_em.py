@@ -67,6 +67,7 @@ async def api_pitch_grilles_em(request: Request, payload: EMPitchGrillesRequest)
     result = await handle_pitch_em(
         payload.grilles,
         request.app.state.httpx_client,
+        lang=payload.lang,
     )
     status = result.pop("status_code", 200)
     if status != 200:

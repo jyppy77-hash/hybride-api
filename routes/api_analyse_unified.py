@@ -11,6 +11,7 @@ import logging
 import db_cloudsql
 from rate_limit import limiter
 from config.games import ValidGame, get_config, get_engine
+from config.i18n import _badges
 from services.penalization import compute_penalized_ranking
 
 logger = logging.getLogger(__name__)
@@ -28,6 +29,7 @@ async def unified_generate(
     request: Request, game: ValidGame,
     n: int = Query(default=3, ge=1, le=10, description="Nombre de grilles"),
     mode: str = Query(default="balanced", description="Mode: conservative, balanced, recent"),
+    lang: str = Query(default="fr", pattern=r"^(fr|en)$"),
 ):
     cfg = get_config(game)
     try:
@@ -36,7 +38,7 @@ async def unified_generate(
             mode = "balanced"
 
         engine = get_engine(cfg)
-        result = await engine.generate_grids(n=n, mode=mode)
+        result = await engine.generate_grids(n=n, mode=mode, lang=lang)
 
         return {
             "success": True,
@@ -376,6 +378,7 @@ async def unified_analyze_custom_grid(
     chance: Optional[int] = Query(default=None, ge=1, le=10, description="Numero chance (Loto)"),
     etoile1: Optional[int] = Query(default=None, ge=1, le=12, description="Etoile 1 (EM)"),
     etoile2: Optional[int] = Query(default=None, ge=1, le=12, description="Etoile 2 (EM)"),
+    lang: str = Query(default="fr", pattern=r"^(fr|en)$"),
 ):
     cfg = get_config(game)
     is_loto = game == ValidGame.loto
@@ -574,18 +577,19 @@ async def unified_analyze_custom_grid(
         score = max(0, min(100, score))
 
         # Badges
+        b = _badges(lang)
         badges = []
         if freq_moyenne > freq_max_theorique * 1.1:
-            badges.append("Numéros chauds")
+            badges.append(b["hot"])
         elif freq_moyenne < freq_max_theorique * 0.9:
-            badges.append("Mix de retards")
+            badges.append(b["overdue"])
         else:
-            badges.append("Équilibre")
+            badges.append(b["balanced"])
         if dispersion > 35:
-            badges.append("Large spectre")
+            badges.append(b["wide_spectrum"])
         if nb_pairs == 2 or nb_pairs == 3:
-            badges.append("Pair/Impair OK")
-        badges.append("Analyse personnalisée" + (" EM" if not is_loto else ""))
+            badges.append(b["even_odd"])
+        badges.append(b["custom_em"] if not is_loto else b["custom"])
 
         # Detection conditions critiques
         critical_count = 0

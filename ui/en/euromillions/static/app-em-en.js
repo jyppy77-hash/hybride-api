@@ -285,7 +285,7 @@ async function handleAnalyze() {
     }
 
     try {
-        var response = await fetch('/api/euromillions/generate?n=' + selectedGridCount);
+        var response = await fetch('/api/euromillions/generate?n=' + selectedGridCount + '&lang=en');
         if (!response.ok) throw new Error('HTTP Error' + response.status);
 
         var data = await response.json();
@@ -328,9 +328,9 @@ function displayGridsEM(grids, metadata, targetDate) {
         var convergenceLabel = 'Balanced profile';
         var convergenceClass = 'convergence-elevated';
 
-        if (badges.some(function(b) { return b.toLowerCase().indexOf('chaud') !== -1; })) {
+        if (badges.some(function(b) { return b.toLowerCase().indexOf('chaud') !== -1 || b.toLowerCase().indexOf('hot') !== -1; })) {
             convergenceLabel = 'Hot profile';
-        } else if (badges.some(function(b) { return b.toLowerCase().indexOf('retard') !== -1 || b.toLowerCase().indexOf('cart') !== -1; })) {
+        } else if (badges.some(function(b) { return b.toLowerCase().indexOf('retard') !== -1 || b.toLowerCase().indexOf('overdue') !== -1; })) {
             convergenceLabel = 'Mixed profile';
             convergenceClass = 'convergence-moderate';
         }
@@ -360,11 +360,11 @@ function displayGridsEM(grids, metadata, targetDate) {
             var icon = '\u{1F3AF}';
             var badgeClass = 'badge-default';
 
-            if (badge.toLowerCase().indexOf('chaud') !== -1) { icon = '\u{1F525}'; badgeClass = 'badge-hot'; }
-            else if (badge.toLowerCase().indexOf('spectre') !== -1) { icon = '\u{1F4CF}'; badgeClass = 'badge-spectrum'; }
-            else if (badge.toLowerCase().indexOf('quilibr') !== -1) { icon = '\u2696\uFE0F'; badgeClass = 'badge-balanced'; }
+            if (badge.toLowerCase().indexOf('chaud') !== -1 || badge.toLowerCase().indexOf('hot') !== -1) { icon = '\u{1F525}'; badgeClass = 'badge-hot'; }
+            else if (badge.toLowerCase().indexOf('spectre') !== -1 || badge.toLowerCase().indexOf('spectrum') !== -1) { icon = '\u{1F4CF}'; badgeClass = 'badge-spectrum'; }
+            else if (badge.toLowerCase().indexOf('quilibr') !== -1 || badge.toLowerCase().indexOf('balanced') !== -1) { icon = '\u2696\uFE0F'; badgeClass = 'badge-balanced'; }
             else if (badge.toLowerCase().indexOf('hybride') !== -1) { icon = '\u2699\uFE0F'; badgeClass = 'badge-hybrid'; }
-            else if (badge.toLowerCase().indexOf('retard') !== -1) { icon = '\u23F0'; badgeClass = 'badge-gap'; }
+            else if (badge.toLowerCase().indexOf('retard') !== -1 || badge.toLowerCase().indexOf('overdue') !== -1) { icon = '\u23F0'; badgeClass = 'badge-gap'; }
 
             html += '<span class="visual-badge ' + badgeClass + '">' + icon + ' ' + badge + '</span>';
         });
@@ -472,7 +472,7 @@ async function fetchAndDisplayPitchsEM(grids) {
         var response = await fetch('/api/euromillions/pitch-grilles', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ grilles: payload })
+            body: JSON.stringify({ grilles: payload, lang: "en" })
         });
         var data = await response.json();
 

@@ -747,7 +747,8 @@ function openMetaResultPopupEM(data) {
                     engine: 'HYBRIDE',
                     graph_data_boules: metaResultDataEM && metaResultDataEM.graph_boules ? metaResultDataEM.graph_boules : null,
                     graph_data_etoiles: metaResultDataEM && metaResultDataEM.graph_etoiles ? metaResultDataEM.graph_etoiles : null,
-                    sponsor: 'Space available'
+                    sponsor: 'Space available',
+                    lang: 'en'
                 })
             })
             .then(function(res) { return res.blob(); })
@@ -849,7 +850,8 @@ function triggerGeminiEarlyEM() {
                 body: JSON.stringify({
                     analysis_local: data.analysis,
                     stats: { boules: data.graph_boules, etoiles: data.graph_etoiles },
-                    window: (data.meta && data.meta.window_used) ? data.meta.window_used : 'GLOBAL'
+                    window: (data.meta && data.meta.window_used) ? data.meta.window_used : 'GLOBAL',
+                    lang: 'en'
                 })
             })
             .then(function(r) {

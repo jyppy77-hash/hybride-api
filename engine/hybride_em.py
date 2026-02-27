@@ -10,6 +10,7 @@ from datetime import datetime, timedelta
 from typing import List, Dict, Any
 
 from .db import get_connection
+from config.i18n import _badges
 
 logger = logging.getLogger(__name__)
 
@@ -244,29 +245,30 @@ def valider_contraintes(numeros: List[int]) -> float:
 # GENERATION DE BADGES
 # ============================================================================
 
-def generer_badges(numeros: List[int], scores_hybrides: Dict[int, float]) -> List[str]:
+def generer_badges(numeros: List[int], scores_hybrides: Dict[int, float], lang: str = "fr") -> List[str]:
     """Genere des badges explicatifs pour la grille EM."""
+    b = _badges(lang)
     badges = []
 
     score_moyen = sum(scores_hybrides[n] for n in numeros) / NB_BOULES
     score_global_moyen = sum(scores_hybrides.values()) / len(scores_hybrides)
 
     if score_moyen > score_global_moyen * 1.1:
-        badges.append("Numéros chauds")
+        badges.append(b["hot"])
     elif score_moyen < score_global_moyen * 0.9:
-        badges.append("Mix de retards")
+        badges.append(b["overdue"])
     else:
-        badges.append("Équilibre")
+        badges.append(b["balanced"])
 
     dispersion = max(numeros) - min(numeros)
     if dispersion > 35:
-        badges.append("Large spectre")
+        badges.append(b["wide_spectrum"])
 
     nb_pairs = sum(1 for n in numeros if n % 2 == 0)
     if nb_pairs == 2 or nb_pairs == 3:
-        badges.append("Pair/Impair OK")
+        badges.append(b["even_odd"])
 
-    badges.append("Hybride V1 EM")
+    badges.append(b["hybride_em"])
 
     return badges
 
@@ -322,7 +324,7 @@ async def generer_etoiles(conn) -> List[int]:
 # GENERATION DE GRILLE
 # ============================================================================
 
-async def generer_grille(conn, scores_hybrides: Dict[int, float]) -> Dict[str, Any]:
+async def generer_grille(conn, scores_hybrides: Dict[int, float], lang: str = "fr") -> Dict[str, Any]:
     """
     Genere une grille EM unique avec validation des contraintes.
     5 boules [1-50] + 2 etoiles [1-12].
@@ -369,7 +371,7 @@ async def generer_grille(conn, scores_hybrides: Dict[int, float]) -> Dict[str, A
     score_final = int(score_moyen * score_conformite * 10000)
     score_final = min(100, max(50, score_final))
 
-    badges = generer_badges(numeros, scores_hybrides)
+    badges = generer_badges(numeros, scores_hybrides, lang=lang)
 
     return {
         'nums': numeros,
@@ -383,7 +385,7 @@ async def generer_grille(conn, scores_hybrides: Dict[int, float]) -> Dict[str, A
 # API PRINCIPALE
 # ============================================================================
 
-async def generate_grids(n: int = 5, mode: str = "balanced") -> Dict[str, Any]:
+async def generate_grids(n: int = 5, mode: str = "balanced", lang: str = "fr") -> Dict[str, Any]:
     """
     Point d'entree principal : genere N grilles EM optimisees.
 
@@ -396,7 +398,7 @@ async def generate_grids(n: int = 5, mode: str = "balanced") -> Dict[str, Any]:
 
         grilles = []
         for i in range(n):
-            grille = await generer_grille(conn, scores_hybrides)
+            grille = await generer_grille(conn, scores_hybrides, lang=lang)
             grilles.append(grille)
 
         grilles = sorted(grilles, key=lambda g: g['score'], reverse=True)
