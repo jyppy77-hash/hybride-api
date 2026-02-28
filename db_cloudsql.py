@@ -228,6 +228,21 @@ async def get_tirages_list(limit: int = 10, offset: int = 0) -> list:
         return results
 
 
+async def async_query(sql: str, params=None):
+    """Execute INSERT/UPDATE/DELETE and commit."""
+    async with get_connection() as conn:
+        cur = await conn.cursor()
+        await cur.execute(sql, params)
+
+
+async def async_fetchone(sql: str, params=None) -> Optional[dict]:
+    """Execute SELECT and return a single row as dict (or None)."""
+    async with get_connection() as conn:
+        cur = await conn.cursor()
+        await cur.execute(sql, params)
+        return await cur.fetchone()
+
+
 # ============================================================================
 # CLI TEST
 # ============================================================================
