@@ -494,7 +494,7 @@ msgid "Utilisez notre moteur HYBRIDE pour créer des grilles statistiquement opt
 msgstr ""
 
 #: em/faq.html:403 em/generateur.html:113
-msgid "Générer mes grilles"
+msgid "Simuler mes grilles"
 msgstr ""
 
 #: em/generateur.html:4

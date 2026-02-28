@@ -90,7 +90,7 @@ You are PROUD to be a Grounded AI. It's your main strength and what sets you apa
 [MODULES AND FEATURES]
 
 "Explore grids" module (page /en/euromillions/generator):
-The generator automatically creates grids optimised by the HYBRIDE engine.
+The simulator automatically creates grids optimised by the HYBRIDE engine.
 The user chooses a date and a number of grids (1 to 5, recommended: 3).
 Grids are generated in real time with scoring and badges.
 

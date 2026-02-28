@@ -44,14 +44,14 @@ _LABELS: dict[str, dict[str, str]] = {
         "gambling_name": "Joueurs Info Service",
 
         # ── app-em — popup title template ──
-        "popup_gen_title": "G\u00e9n\u00e9ration de {n} grille{s} optimis\u00e9e{s} EM",
+        "popup_gen_title": "Simulation de {n} grille{s} optimis\u00e9e{s} EM",
 
         # ── simulateur-em ──
         "based_on_draws": "Base sur {n} tirages officiels EuroMillions",
         "heat_title_freq": "Fr\u00e9quence: ",
         "heat_title_last": " | Dernier: ",
         "analyzing_grid": "Analyse de votre grille EuroMillions en cours",
-        "generating_one": "G\u00e9n\u00e9ration d'une grille optimis\u00e9e EM...",
+        "generating_one": "Simulation d'une grille optimis\u00e9e EM...",
 
         # convergence
         "convergence_strong": "Forte convergence",
@@ -96,7 +96,7 @@ _LABELS: dict[str, dict[str, str]] = {
         "log_balance": "\u2696\ufe0f \u00c9quilibrage pair/impair... ",
         "log_spread_multi": "\U0001f4cf Calcul dispersion multi-pays... ",
         "log_constraints": "\u23f3 Application contraintes soft... ",
-        "log_gen_grids": "\u23f3 G\u00e9n\u00e9ration grilles optimis\u00e9es EM... ",
+        "log_gen_grids": "\u23f3 Simulation grilles optimis\u00e9es EM... ",
         "log_validating": "\u23f3 Validation scores finaux... ",
         "log_success": "\u2713 {n} grille{s} g\u00e9n\u00e9r\u00e9e{s} avec succ\u00e8s",
         "log_preparing": "> Pr\u00e9paration affichage r\u00e9sultats...",
@@ -120,7 +120,7 @@ _LABELS: dict[str, dict[str, str]] = {
         "log75_balance": "\u23f3 \u00c9quilibrage pair/impair... ",
         "log75_geo": "\u23f3 Calcul dispersion g\u00e9ographique... ",
         "log75_constraints": "\u23f3 Application contraintes soft... ",
-        "log75_gen": "\u23f3 G\u00e9n\u00e9ration grilles optimis\u00e9es EM... ",
+        "log75_gen": "\u23f3 Simulation grilles optimis\u00e9es EM... ",
         "log75_validating": "\u23f3 Validation scores finaux... ",
         "log75_success": "\u2713 {n} grille{s} g\u00e9n\u00e9r\u00e9e{s} avec succ\u00e8s",
         "log75_preparing": "> Pr\u00e9paration affichage r\u00e9sultats...",
@@ -151,7 +151,7 @@ _LABELS: dict[str, dict[str, str]] = {
         "meta_popup_title": "META ANALYSE EM - Traitement 75 grilles",
 
         # wrapper titles
-        "wrapper_gen_title": "G\u00e9n\u00e9ration de {n} grille{s} optimis\u00e9e{s} EM",
+        "wrapper_gen_title": "Simulation de {n} grille{s} optimis\u00e9e{s} EM",
         "wrapper_sim_title": "Analyse de votre grille EM en cours",
 
         # ── rating-popup ──
@@ -197,14 +197,14 @@ _LABELS: dict[str, dict[str, str]] = {
         "gambling_name": "BeGambleAware.org",
 
         # ── app-em — popup title template ──
-        "popup_gen_title": "Generating {n} optimised EM grid{s}",
+        "popup_gen_title": "Simulating {n} optimised EM grid{s}",
 
         # ── simulateur-em ──
         "based_on_draws": "Based on {n} official EuroMillions draws",
         "heat_title_freq": "Frequency: ",
         "heat_title_last": " | Last: ",
         "analyzing_grid": "Analysing your EuroMillions grid",
-        "generating_one": "Generating an optimised EM grid...",
+        "generating_one": "Simulating an optimised EM grid...",
 
         # convergence
         "convergence_strong": "Strong convergence",
@@ -249,7 +249,7 @@ _LABELS: dict[str, dict[str, str]] = {
         "log_balance": "\u2696\ufe0f Balancing odd/even... ",
         "log_spread_multi": "\U0001f4cf Computing multi-country spread... ",
         "log_constraints": "\u23f3 Applying soft constraints... ",
-        "log_gen_grids": "\u23f3 Generating optimised EM grids... ",
+        "log_gen_grids": "\u23f3 Simulating optimised EM grids... ",
         "log_validating": "\u23f3 Validating final scores... ",
         "log_success": "\u2713 {n} grid{s} generated successfully",
         "log_preparing": "> Preparing results display...",
@@ -273,7 +273,7 @@ _LABELS: dict[str, dict[str, str]] = {
         "log75_balance": "\u23f3 Balancing odd/even... ",
         "log75_geo": "\u23f3 Computing geographic spread... ",
         "log75_constraints": "\u23f3 Applying soft constraints... ",
-        "log75_gen": "\u23f3 Generating optimised EM grids... ",
+        "log75_gen": "\u23f3 Simulating optimised EM grids... ",
         "log75_validating": "\u23f3 Validating final scores... ",
         "log75_success": "\u2713 {n} grid{s} generated successfully",
         "log75_preparing": "> Preparing results display...",
@@ -304,7 +304,7 @@ _LABELS: dict[str, dict[str, str]] = {
         "meta_popup_title": "META ANALYSIS EM - Processing 75 grids",
 
         # wrapper titles
-        "wrapper_gen_title": "Generating {n} optimised EM grid{s}",
+        "wrapper_gen_title": "Simulating {n} optimised EM grid{s}",
         "wrapper_sim_title": "Analysing your EM grid",
 
         # ── rating-popup ──

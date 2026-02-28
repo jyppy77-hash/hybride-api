@@ -498,8 +498,8 @@ msgid "Utilisez notre moteur HYBRIDE pour créer des grilles statistiquement opt
 msgstr "Use our HYBRIDE engine to create statistically optimised grids."
 
 #: em/faq.html:403 em/generateur.html:113
-msgid "Générer mes grilles"
-msgstr "Generate my grids"
+msgid "Simuler mes grilles"
+msgstr "Simulate my grids"
 
 #: em/generateur.html:4
 msgid "Simulateur de Grilles EuroMillions IA - Analyse Statistique | LotoIA"

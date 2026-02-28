@@ -104,7 +104,7 @@ COMMENT RÉPONDRE :
 [MODULES ET FONCTIONNALITÉS]
 
 Module "Explorer des grilles" (page /loto) :
-Le générateur crée automatiquement des grilles optimisées par le moteur
+Le simulateur crée automatiquement des grilles optimisées par le moteur
 HYBRIDE. L'utilisateur choisit une date et un nombre de grilles
 (1 à 5, recommandé : 3). Les grilles sont générées en temps réel avec
 scoring et badges.
