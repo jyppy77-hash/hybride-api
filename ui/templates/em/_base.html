@@ -45,7 +45,7 @@
                 <span class="icon-day">&#9728;&#65039;</span>
                 <span class="icon-night">&#127769;</span>
             </button>
-            <a href="{{ lang_switch_url }}" class="lang-switch" title="{{ lang_switch_title }}">{{ lang_switch_label }}</a>
+            {% for sw in lang_switches %}<a href="{{ sw.url }}" class="lang-switch" title="{{ sw.title }}">{{ sw.label }}</a>{% if not loop.last %} {% endif %}{% endfor %}
         </div>
     </nav>
 

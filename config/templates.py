@@ -112,6 +112,33 @@ for _lc in EM_URLS:
     if _lc != "fr":
         _LANG_SWITCH[_lc] = {k: EM_URLS["fr"][k] for k in EM_URLS["fr"]}
 
+# Lang switch labels & titles
+_LANG_SWITCH_META = {
+    "fr": {"label": "FR", "title": "Version française"},
+    "en": {"label": "EN", "title": "English version"},
+    "es": {"label": "ES", "title": "Versión en español"},
+    "pt": {"label": "PT", "title": "Versão em português"},
+    "de": {"label": "DE", "title": "Deutsche Version"},
+    "nl": {"label": "NL", "title": "Nederlandse versie"},
+}
+
+
+def _build_lang_switches(current_lang: str, page_key: str) -> list[dict]:
+    """Build list of lang switch buttons for all enabled langs except current."""
+    from config import killswitch
+    switches = []
+    for lc in killswitch.ENABLED_LANGS:
+        if lc == current_lang:
+            continue
+        url = EM_URLS.get(lc, {}).get(page_key, "/")
+        meta = _LANG_SWITCH_META.get(lc, {"label": lc.upper(), "title": lc})
+        switches.append({
+            "url": url,
+            "label": meta["label"],
+            "title": meta["title"],
+        })
+    return switches
+
 # ── Hreflang helpers ─────────────────────────────────────────────────────
 
 def hreflang_tags(page_key: str) -> list[dict]:
@@ -211,10 +238,8 @@ def render_template(
             "canonical_url": f"{BASE_URL}{urls.get(page_key, '/')}",
             "hreflang_tags": hreflang_tags(page_key),
 
-            # Lang switch
-            "lang_switch_url": _LANG_SWITCH.get(lang, {}).get(page_key, "/"),
-            "lang_switch_label": "EN" if is_fr else "FR",
-            "lang_switch_title": "English version" if is_fr else "Version française",
+            # Lang switches (one button per other enabled language)
+            "lang_switches": _build_lang_switches(lang, page_key),
 
             # OG & locale
             "og_locale": _OG_LOCALE.get(lang, "fr_FR"),
