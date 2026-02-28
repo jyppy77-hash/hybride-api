@@ -25,13 +25,13 @@ from config.templates import (
 # ═══════════════════════════════════════════════
 
 def test_killswitch_default():
-    """Default ENABLED_LANGS is fr + en + es + pt."""
-    assert ENABLED_LANGS == ["fr", "en", "es", "pt"]
+    """Default ENABLED_LANGS is fr + en + es + pt + de."""
+    assert ENABLED_LANGS == ["fr", "en", "es", "pt", "de"]
 
 
 def test_killswitch_excludes_new_langs():
-    """DE/NL are OFF by default."""
-    for lang in ("de", "nl"):
+    """NL is OFF by default."""
+    for lang in ("nl",):
         assert lang not in ENABLED_LANGS
 
 
@@ -101,23 +101,24 @@ def test_em_urls_no_duplicate_paths():
 # 3. hreflang_tags
 # ═══════════════════════════════════════════════
 
-def test_hreflang_default_fr_en_es_pt():
-    """Default hreflang includes fr + en + es + pt + x-default."""
+def test_hreflang_default_fr_en_es_pt_de():
+    """Default hreflang includes fr + en + es + pt + de + x-default."""
     tags = hreflang_tags("accueil")
     langs = [t["lang"] for t in tags]
     assert "fr" in langs
     assert "en" in langs
     assert "es" in langs
     assert "pt" in langs
+    assert "de" in langs
     assert "x-default" in langs
-    assert len(tags) == 5
+    assert len(tags) == 6
 
 
 def test_hreflang_excludes_disabled():
     """Disabled languages are NOT in hreflang tags."""
     tags = hreflang_tags("accueil")
     langs = [t["lang"] for t in tags]
-    for lang in ("de", "nl"):
+    for lang in ("nl",):
         assert lang not in langs
 
 
@@ -245,23 +246,22 @@ def _get_client():
 
 
 def test_disabled_lang_redirects_to_fr():
-    """DE route with DE disabled → 302 redirect to FR equivalent."""
+    """NL route with NL disabled → 302 redirect to FR equivalent."""
     client = _get_client()
-    resp = client.get("/de/euromillions/generator", follow_redirects=False)
+    resp = client.get("/nl/euromillions/generator", follow_redirects=False)
     assert resp.status_code == 302
     assert resp.headers["location"] == "/euromillions/generateur"
 
 
 def test_disabled_lang_faq_redirects_to_fr():
-    """DE FAQ route with DE disabled → 302 redirect to FR FAQ."""
+    """NL FAQ route with NL disabled → 302 redirect to FR FAQ."""
     client = _get_client()
-    resp = client.get("/de/euromillions/faq", follow_redirects=False)
+    resp = client.get("/nl/euromillions/faq", follow_redirects=False)
     assert resp.status_code == 302
     assert resp.headers["location"] == "/euromillions/faq"
 
 
 @pytest.mark.parametrize("lang,path", [
-    ("de", "/de/euromillions/generator"),
     ("nl", "/nl/euromillions/nieuws"),
 ])
 def test_all_disabled_langs_redirect(lang, path):
@@ -283,6 +283,13 @@ def test_pt_enabled_returns_200():
     """PT is enabled — pages return 200, not redirect."""
     client = _get_client()
     resp = client.get("/pt/euromillions", follow_redirects=False)
+    assert resp.status_code == 200
+
+
+def test_de_enabled_returns_200():
+    """DE is enabled — pages return 200, not redirect."""
+    client = _get_client()
+    resp = client.get("/de/euromillions", follow_redirects=False)
     assert resp.status_code == 200
 
 
@@ -338,21 +345,28 @@ def test_sitemap_includes_pt():
     assert f"{BASE_URL}/pt/euromillions" in resp.text
 
 
+def test_sitemap_includes_de():
+    """Sitemap includes DE EuroMillions pages."""
+    client = _get_client()
+    resp = client.get("/sitemap.xml")
+    assert f"{BASE_URL}/de/euromillions" in resp.text
+
+
 def test_sitemap_excludes_disabled_langs():
     """Sitemap does NOT include disabled language pages."""
     client = _get_client()
     resp = client.get("/sitemap.xml")
-    for lang in ("de", "nl"):
+    for lang in ("nl",):
         assert f"/{lang}/euromillions" not in resp.text
 
 
 def test_sitemap_includes_enabled_lang():
-    """When DE is enabled, sitemap includes DE pages."""
-    with patch("config.killswitch.ENABLED_LANGS", ["fr", "en", "es", "pt", "de"]):
+    """When NL is enabled, sitemap includes NL pages."""
+    with patch("config.killswitch.ENABLED_LANGS", ["fr", "en", "es", "pt", "de", "nl"]):
         client = _get_client()
         resp = client.get("/sitemap.xml")
-    assert f"{BASE_URL}/de/euromillions" in resp.text
-    assert f"{BASE_URL}/de/euromillions/generator" in resp.text
+    assert f"{BASE_URL}/nl/euromillions" in resp.text
+    assert f"{BASE_URL}/nl/euromillions/nieuws" in resp.text
 
 
 # ═══════════════════════════════════════════════

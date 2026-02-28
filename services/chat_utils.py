@@ -132,6 +132,11 @@ def _get_sponsor_if_due(history: list, lang: str = "fr") -> str | None:
             return "\U0001f4e2 Este espaço é reservado aos nossos parceiros \u2014 Saber mais: partenariats@lotoia.fr"
         else:
             return "\u2014 Espaço de parceiro disponível | partenariats@lotoia.fr"
+    elif lang == "de":
+        if cycle % 2 == 1:
+            return "\U0001f4e2 Dieser Platz ist unseren Partnern vorbehalten \u2014 Mehr erfahren: partenariats@lotoia.fr"
+        else:
+            return "\u2014 Partnerplatz verfügbar | partenariats@lotoia.fr"
     else:
         if cycle % 2 == 1:
             return "\U0001f4e2 Cet espace est réservé à nos partenaires \u2014 Pour en savoir plus : partenariats@lotoia.fr"
@@ -151,6 +156,8 @@ def _strip_sponsor_from_text(text: str) -> str:
         and 'Espacio de colaborador' not in line
         and 'parceiros' not in line
         and 'Espaço de parceiro' not in line
+        and 'Partnern vorbehalten' not in line
+        and 'Partnerplatz' not in line
         and 'partenariats@lotoia.fr' not in line
     ]
     return '\n'.join(cleaned).strip()

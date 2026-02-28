@@ -154,7 +154,7 @@ def test_em_chat_request_lang_invalid():
     from em_schemas import EMChatRequest
     from pydantic import ValidationError
     with pytest.raises(ValidationError):
-        EMChatRequest(message="hello", lang="de")
+        EMChatRequest(message="hello", lang="xx")
 
 
 # ═══════════════════════════════════════════════

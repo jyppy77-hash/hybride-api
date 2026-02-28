@@ -686,6 +686,176 @@ _LABELS: dict[str, dict[str, str]] = {
         "rating_close": "Fechar",
         "rating_thanks": "Obrigado!",
     },
+
+    "de": {
+        # ── Locale ──
+        "locale": "de-DE",
+
+        # ── app-em — errors / API ──
+        "api_error": "API-Fehler",
+        "http_error": "HTTP-Fehler ",
+        "error_generating": "Fehler beim Generieren der Kombinationen.",
+        "unable_generate": "Kombinationen konnten nicht generiert werden. ",
+        "select_date": "Bitte wählen Sie ein Ziehungsdatum.",
+        "draw_days_only": "EuroMillions wird nur dienstags und freitags gezogen.",
+        "no_draw_msg": "Keine EuroMillions-Ziehung an diesem Tag. Nächste Ziehung: ",
+
+        # ── app-em — display ──
+        "draws_suffix": " Ziehungen analysiert",
+        "data_depth_from": "von ",
+        "data_depth_to": " bis ",
+        "grids_for": "EuroMillions-Kombinationen für den ",
+        "grids_generated": " Kombinationen generiert",
+        "grid_generated_one": " Kombination generiert",
+        "result_title": "Ziehungsanalyse",
+
+        # ── app-em — grid cards ──
+        "profile_balanced": "Ausgewogenes Profil",
+        "profile_hot": "Heißes Profil",
+        "profile_mixed": "Gemischtes Profil",
+        "grid_label": "Kombination",
+        "profile_label": "Profil",
+        "pitch_loading": "HYBRIDE EM analysiert deine Kombination\u2026",
+
+        # ── app-em — footer ──
+        "reminder_title": "Wichtiger Hinweis:",
+        "reminder_text": "Diese Kombinationen werden aus historischen Statistiken generiert. EuroMillions ist ein Glücksspiel und keine Methode garantiert Gewinne.",
+        "play_responsible": "Spielen Sie verantwortungsvoll: ",
+        "gambling_url": "https://www.spielerschutz.de",
+        "gambling_name": "Spielerschutz",
+
+        # ── app-em — popup title template ──
+        "popup_gen_title": "Simulation von {n} optimierten EM-Kombination{s}",
+        "popup_gen_title_one": "Simulation von 1 optimierten EM-Kombination",
+
+        # ── simulateur-em ──
+        "based_on_draws": "Basierend auf {n} offiziellen EuroMillions-Ziehungen",
+        "heat_title_freq": "Häufigkeit: ",
+        "heat_title_last": " | Letzte: ",
+        "analyzing_grid": "Ihre EuroMillions-Kombination wird analysiert",
+        "generating_one": "Eine optimierte EM-Kombination wird simuliert...",
+
+        # convergence
+        "convergence_strong": "Starke Konvergenz",
+        "convergence_moderate": "Moderate Konvergenz",
+        "convergence_intermediate": "Mittlere Konvergenz",
+        "convergence_partial": "Teilweise Konvergenz",
+
+        # detail labels
+        "detail_even_odd": "Gerade / Ungerade",
+        "detail_low_high": "Niedrig / Hoch",
+        "detail_sum": "Summe",
+        "detail_spread": "Streuung",
+        "detail_runs": "Folgen",
+        "detail_compliance": "Konformität",
+
+        # history
+        "history_appeared": "\U0001f4dc Diese Kombination ist bereits <strong>{n} Mal</strong> gezogen worden",
+        "history_appeared_one": "\U0001f4dc Diese Kombination ist bereits <strong>1 Mal</strong> gezogen worden",
+        "history_never": "\U0001f50e Diese Kombination ist noch nie in der Ziehungshistorie aufgetaucht.",
+        "history_best": "\U0001f9e0 Beste Übereinstimmung: <strong>{n} identische Zahl{s}</strong>",
+
+        # ── sponsor-popup-em ──
+        "sponsor1_desc": "Handwerkliche Fotorestaurierung",
+        "sponsor1_badge": "Unterstützt von",
+        "sponsor2_name": "Ihre Marke hier",
+        "sponsor2_desc": "Große Reichweite \u2022 qualifizierter Traffic",
+        "sponsor2_badge": "Mit Unterstützung von",
+        "console_title": "HYBRIDE-ENGINE EM",
+        "system_ready": "System bereit",
+        "sponsors_header": "Partner",
+        "timer_label": "Sekunden",
+        "cancel_btn": "Abbrechen",
+        "popup_default_title": "HYBRIDE EM - Analyse läuft...",
+
+        # console logs (sponsor-popup-em)
+        "log_init": "> Initialisierung HYBRIDE_EM_V1...",
+        "log_connection": "\u2713 Verbindung zur Engine OK (142ms)",
+        "log_loading_db": "> Lade EuroMillions-Datenbank...",
+        "log_draws_loaded": " EuroMillions-Ziehungen geladen (387ms)",
+        "log_freq": "\U0001f4ca Analysiere Häufigkeiten 5 Zahlen + 2 Sterne... ",
+        "log_european": "\U0001f30d Abgleich europäischer Daten... ",
+        "log_star_optim": "\u2b50 Optimiere Sterne... ",
+        "log_balance": "\u2696\ufe0f Ausgleich gerade/ungerade... ",
+        "log_spread_multi": "\U0001f4cf Berechne Streuung länderübergreifend... ",
+        "log_constraints": "\u23f3 Wende Soft-Constraints an... ",
+        "log_gen_grids": "\u23f3 Simuliere optimierte EM-Kombinationen... ",
+        "log_validating": "\u23f3 Validiere Endergebnisse... ",
+        "log_success": "\u2713 {n} Kombination{s} erfolgreich generiert",
+        "log_preparing": "> Bereite Ergebnisanzeige vor...",
+        "log_ready": "\u2713 Bereit zur Anzeige",
+
+        # ── sponsor-popup75-em ──
+        "sponsor_header_single": "Partner",
+        "video_cta": "\U0001f4fa Dieser Videoplatz steht für Ihre Marke zur Verfügung",
+        "meta_window_badge": "META-ANALYSE EM Fenster",
+        "popup75_default": "HYBRIDE EM - Berechnung...",
+
+        # console logs 75
+        "log75_init": "> Initialisierung HYBRIDE EM...",
+        "log75_connection": "\u2713 Verbindung zur Engine OK (142ms)",
+        "log75_loading_db": "> Lade EuroMillions-Datenbank...",
+        "log75_draws": " EuroMillions-Ziehungen analysiert",
+        "log75_draws_full": " EuroMillions-Ziehungen analysiert (vollständige Datenbank)",
+        "log75_freq_balls": "\u23f3 Berechne Kugelhäufigkeiten (1-50)... ",
+        "log75_freq_stars": "\u23f3 Berechne Sternhäufigkeiten (1-12)... ",
+        "log75_hot": "\u23f3 Erkenne heiße Muster... ",
+        "log75_balance": "\u23f3 Ausgleich gerade/ungerade... ",
+        "log75_geo": "\u23f3 Berechne geografische Streuung... ",
+        "log75_constraints": "\u23f3 Wende Soft-Constraints an... ",
+        "log75_gen": "\u23f3 Simuliere optimierte EM-Kombinationen... ",
+        "log75_validating": "\u23f3 Validiere Endergebnisse... ",
+        "log75_success": "\u2713 {n} Kombination{s} erfolgreich generiert",
+        "log75_preparing": "> Bereite Ergebnisanzeige vor...",
+        "log75_ready": "\u2713 Bereit zur Anzeige",
+
+        # meta final logs
+        "meta_log_analysing": "Analysiere 75 EM-Kombinationen...",
+        "meta_log_charts": "Erstelle Diagramme...",
+        "meta_log_pdf": "PDF-Bericht EM...",
+        "meta_log_validation": "Abschlussvalidierung...",
+        "meta_log_ready": "Analyse bereit.",
+
+        # meta result popup
+        "meta_result_title": "Ergebnis META-ANALYSE EM",
+        "meta_result_subtitle": "Analyse basierend auf 75 simulierten EuroMillions-Kombinationen",
+        "meta_graph_balls": "Top 5 Kugeln - Statistische Konvergenz",
+        "meta_graph_stars": "Top 3 Sterne - Statistische Konvergenz",
+        "meta_src_gemini": "\U0001f9e0 Gemini-erweiterte Analyse",
+        "meta_src_local": "\u26a0\ufe0f Lokale Analyse (Gemini nicht verfügbar)",
+        "meta_close": "Schließen",
+        "meta_download": "META-EM-Bericht herunterladen",
+        "meta_chart_na": "Diagramm nicht verfügbar",
+        "meta_pending": "Erweiterte Analyse noch in Bearbeitung...",
+        "meta_fallback_text": "Ergebnis vorübergehend nicht verfügbar.",
+        "meta_fallback_retry": "Bitte versuchen Sie es in einigen Augenblicken erneut.",
+        "meta_75_grids": "75 Kombinationen",
+        "meta_sponsor_space": "Platz verfügbar",
+        "meta_popup_title": "META-ANALYSE EM - Verarbeitung von 75 Kombinationen",
+
+        # PDF labor illusion steps
+        "meta_anim_step1": "Analysiere Ziehungszyklen...",
+        "meta_anim_step2": "Berechne statistische Konvergenz...",
+        "meta_anim_step3": "Modelliere Wahrscheinlichkeiten...",
+        "meta_anim_step4": "Erstelle PDF-Bericht...",
+
+        # wrapper titles
+        "wrapper_gen_title": "Simulation von {n} optimierten EM-Kombination{s}",
+        "wrapper_sim_title": "Ihre EM-Kombination wird analysiert",
+
+        # ── chatbot widget ──
+        "chatbot_welcome": "Willkommen! Ich bin HYBRIDE, der KI-Assistent von LotoIA \u2014 EuroMillions-Modul. Frag mich alles über EuroMillions, Statistiken oder die HYBRIDE-Engine \uD83C\uDF1F",
+        "chatbot_placeholder": "Stelle deine EuroMillions-Frage...",
+        "chatbot_bubble_label": "HYBRIDE EuroMillions Chatbot öffnen",
+        "chatbot_clear_title": "Neues Gespräch",
+        "chatbot_close_label": "Schließen",
+        "chatbot_send_label": "Senden",
+
+        # ── rating-popup ──
+        "rating_prompt": "Deine Meinung zu LotoIA?",
+        "rating_close": "Schließen",
+        "rating_thanks": "Danke!",
+    },
 }
 
 

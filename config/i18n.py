@@ -141,6 +141,17 @@ def _badges(lang: str = "fr") -> dict:
             "custom_em": "Análise personalizada EM",
             "custom": "Análise personalizada",
         }
+    if lang == "de":
+        return {
+            "hot": "Heiße Zahlen",
+            "overdue": "Überfälligkeitsmix",
+            "balanced": "Ausgewogen",
+            "wide_spectrum": "Breites Spektrum",
+            "even_odd": "Gerade/Ungerade OK",
+            "hybride_em": "Hybride V1 EM",
+            "custom_em": "Individuelle Analyse EM",
+            "custom": "Individuelle Analyse",
+        }
     return {
         "hot": "Numéros chauds",
         "overdue": "Mix de retards",
@@ -240,6 +251,47 @@ def _analysis_strings(lang: str = "fr") -> dict:
             # --- Direction words ---
             "dir_low": "baixa",
             "dir_high": "alta",
+        }
+    if lang == "de":
+        return {
+            # --- Severity 3 (critical) ---
+            "alert_max": "Maximale Warnung: Diese Kombination vereint ALLE statistischen Mängel!",
+            "perfect_run": "Perfekte Folge erkannt! In {total} Ziehungen{suffix} ist noch nie eine Folge von {max_run} aufeinanderfolgenden Zahlen gezogen worden",
+            "sum_catastrophic": "Katastrophale Summe ({sum}) — reale Ziehungen{suffix} liegen zwischen {range}",
+            "zero_above": "NULL Zahlen über {mid} — statistisch aberrant",
+            "zero_below": "NULL Zahlen unter {mid} — statistisch aberrant",
+            "dispersion_zero": "Nahezu keine Streuung ({dispersion}) — der historische Durchschnitt liegt bei 30+",
+            "all_even": "100% gerade Zahlen — keine historische Ziehung hat diese Konfiguration",
+            "all_odd": "100% ungerade Zahlen — keine historische Ziehung hat diese Konfiguration",
+            "conformity_collapsed": "Konformitätswert eingebrochen ({score}%) — diese Kombination trotzt allen Statistiken",
+            # --- Severity 2 (warning) ---
+            "run_detected": "Folge von {max_run} aufeinanderfolgenden Zahlen erkannt — sehr selten in realen Ziehungen",
+            "even_odd_imbalance": "Ungleichgewicht gerade/ungerade ({even}/{odd}) — streben Sie 2-3 gerade Zahlen an",
+            "low_high_imbalance": "Ungleichgewicht niedrig/hoch ({low}/{high}) — mischen Sie niedrige {low_range} und hohe {high_range} Zahlen",
+            "sum_extreme": "Summe zu {direction} ({sum}) — der historische Durchschnitt liegt bei {avg}",
+            "sum_moderate": "Summe {direction} ({sum}) — streben Sie den Bereich {range} an",
+            "dispersion_insufficient": "Unzureichende Streuung ({dispersion}) — Ihre Zahlen decken nur {dispersion} von {max} möglichen Einheiten ab",
+            "dispersion_low": "Niedrige Streuung ({dispersion}) — vergrößern Sie den Abstand zwischen Ihren Zahlen",
+            "run_reduce": "Folge von {max_run} Aufeinanderfolgenden — reduzieren Sie aufeinanderfolgende Zahlen",
+            # --- Severity 0/1 (mild) ---
+            "excellent_balance": "Ausgezeichnete Balance in Ihrer Auswahl",
+            "vary_even_odd": "Variieren Sie gerade und ungerade Zahlen (2-3 gerade ist ideal)",
+            "mix_low_high": "Mischen Sie niedrige {low_range} und hohe {high_range} Zahlen",
+            "sum_slightly_low": "Summe etwas niedrig, fügen Sie eine höhere Zahl hinzu",
+            "sum_slightly_high": "Summe etwas hoch, fügen Sie eine niedrigere Zahl hinzu",
+            "widen_dispersion": "Vergrößern Sie leicht die Streuung Ihrer Zahlen",
+            "watch_run_3": "Achtung: Folge von 3 Aufeinanderfolgenden",
+            "some_consecutive": "Einige aufeinanderfolgende Zahlen — erwägen Sie, sie zu verteilen",
+            # --- Default ---
+            "well_balanced": "Gut ausgewogene Kombination",
+            # --- Comparison ---
+            "better_85": "Besser als 85% der Zufallskombinationen",
+            "better_60": "Besser als 60% der Zufallskombinationen",
+            "average": "Im Durchschnitt der Kombinationen",
+            "below_average": "Unter dem Durchschnitt",
+            # --- Direction words ---
+            "dir_low": "niedrig",
+            "dir_high": "hoch",
         }
     if lang == "en":
         return {

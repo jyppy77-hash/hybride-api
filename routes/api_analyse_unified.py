@@ -29,7 +29,7 @@ async def unified_generate(
     request: Request, game: ValidGame,
     n: int = Query(default=3, ge=1, le=10, description="Nombre de grilles"),
     mode: str = Query(default="balanced", description="Mode: conservative, balanced, recent"),
-    lang: str = Query(default="fr", pattern=r"^(fr|en|pt|es)$"),
+    lang: str = Query(default="fr", pattern=r"^(fr|en|pt|es|de)$"),
 ):
     cfg = get_config(game)
     try:
@@ -378,7 +378,7 @@ async def unified_analyze_custom_grid(
     chance: Optional[int] = Query(default=None, ge=1, le=10, description="Numero chance (Loto)"),
     etoile1: Optional[int] = Query(default=None, ge=1, le=12, description="Etoile 1 (EM)"),
     etoile2: Optional[int] = Query(default=None, ge=1, le=12, description="Etoile 2 (EM)"),
-    lang: str = Query(default="fr", pattern=r"^(fr|en|pt|es)$"),
+    lang: str = Query(default="fr", pattern=r"^(fr|en|pt|es|de)$"),
 ):
     cfg = get_config(game)
     is_loto = game == ValidGame.loto

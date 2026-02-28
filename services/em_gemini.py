@@ -93,6 +93,13 @@ Texte a reformuler :
             "Mantén un tono profesional y pedagógico adecuado para un informe PDF. "
             "Nunca prometas ganancias. Mantente neutro y factual."
         )
+    elif lang == "de":
+        system_instruction_text = (
+            "PFLICHT: Du schreibst IMMER in korrektem Deutsch "
+            "mit allen Umlauten (ä, ö, ü, ß). "
+            "Halte einen professionellen, pädagogischen Ton, der für einen PDF-Bericht geeignet ist. "
+            "Verspreche niemals Gewinne. Bleibe neutral und sachlich."
+        )
     else:
         system_instruction_text = (
             "OBLIGATION ABSOLUE : Tu écris TOUJOURS en français correct "
