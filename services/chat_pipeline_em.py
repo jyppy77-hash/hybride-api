@@ -13,7 +13,7 @@ import json
 import httpx
 
 from services.prompt_loader import load_prompt_em
-from services.gemini import GEMINI_MODEL_URL
+from services.gemini import GEMINI_MODEL_URL, stream_gemini_chat
 from services.circuit_breaker import gemini_breaker, CircuitOpenError
 from services.em_stats_service import (
     get_numero_stats, analyze_grille_for_chat,
@@ -62,32 +62,27 @@ logger = logging.getLogger(__name__)
 # HYBRIDE EuroMillions Chatbot — Pipeline 12 phases
 # =========================
 
-async def handle_chat_em(message: str, history: list, page: str, http_client, lang: str = "fr") -> dict:
+async def _prepare_chat_context_em(message: str, history: list, page: str, http_client, lang: str = "fr"):
     """
-    Pipeline 12 phases du chatbot HYBRIDE EuroMillions.
-    Retourne dict(response=str, source=str, mode=str).
-    lang: "fr" (default) or "en" (Phase 11).
+    Phases I-SQL EM : prepare le contexte pour l'appel Gemini.
+    Retourne (early_return_or_None, ctx_dict_or_None).
     """
     is_en = lang == "en"
     _fallback = FALLBACK_RESPONSE_EM_EN if is_en else FALLBACK_RESPONSE_EM
     mode = _detect_mode_em(message, page)
 
-    # Charger le prompt systeme (lang-aware)
     system_prompt = load_prompt_em("prompt_hybride_em", lang=lang)
     if not system_prompt:
         logger.error(f"[EM CHAT] Prompt systeme introuvable (prompt_hybride_em/{lang})")
-        return {"response": _fallback, "source": "fallback", "mode": mode}
+        return {"response": _fallback, "source": "fallback", "mode": mode}, None
 
-    # Cle API
     gem_api_key = os.environ.get("GEM_API_KEY") or os.environ.get("GEMINI_API_KEY")
     if not gem_api_key:
         logger.warning("[EM CHAT] GEM_API_KEY non configuree — fallback")
-        return {"response": _fallback, "source": "fallback", "mode": mode}
+        return {"response": _fallback, "source": "fallback", "mode": mode}, None
 
-    # Construire les contents (historique + message actuel)
     contents = []
 
-    # Historique (max 20 derniers messages) + garde anti-doublon
     history = (history or [])[-20:]
     if history and history[-1].role == "user" and history[-1].content == message:
         history = history[:-1]
@@ -142,7 +137,7 @@ async def handle_chat_em(message: str, history: list, page: str, http_client, la
             logger.info(
                 f"[EM CHAT] Insulte detectee (type={_insult_type}, streak={_insult_streak})"
             )
-            return {"response": _insult_resp, "source": "hybride_insult", "mode": mode}
+            return {"response": _insult_resp, "source": "hybride_insult", "mode": mode}, None
 
     # ── Phase C : Détection de compliments ──
     if not _insult_prefix:
@@ -165,7 +160,7 @@ async def handle_chat_em(message: str, history: list, page: str, http_client, la
                 logger.info(
                     f"[EM CHAT] Compliment detecte (type={_compliment_type}, streak={_comp_streak})"
                 )
-                return {"response": _comp_resp, "source": "hybride_compliment", "mode": mode}
+                return {"response": _comp_resp, "source": "hybride_compliment", "mode": mode}, None
             else:
                 logger.info(
                     f"[EM CHAT] Compliment + question (type={_compliment_type}), passage au flow normal"
@@ -220,7 +215,6 @@ async def handle_chat_em(message: str, history: list, page: str, http_client, la
             except Exception as e:
                 logger.warning(f"[EM CHAT] Erreur tirage: {e}")
 
-    # Filtre temporel → skip phases regex, Phase SQL gere
     force_sql = not _continuation_mode and not enrichment_context and _has_temporal_filter(message)
     if force_sql:
         logger.info("[EM CHAT] Filtre temporel detecte, force Phase SQL")
@@ -236,7 +230,7 @@ async def handle_chat_em(message: str, history: list, page: str, http_client, la
         except Exception as e:
             logger.warning(f"[EM CHAT] Erreur analyse grille: {e}")
 
-    # Phase 3 : requete complexe (classement, comparaison, categorie)
+    # Phase 3 : requete complexe
     if not _continuation_mode and not force_sql and not enrichment_context:
         intent = _detect_requete_complexe_em(message)
         if intent:
@@ -269,7 +263,7 @@ async def handle_chat_em(message: str, history: list, page: str, http_client, la
                 f"[EM CHAT] Numero hors range: {_oor_num} "
                 f"(type={_oor_type}, streak={_oor_streak})"
             )
-            return {"response": _oor_resp, "source": "hybride_oor", "mode": mode}
+            return {"response": _oor_resp, "source": "hybride_oor", "mode": mode}, None
 
     # Phase 1 : detection de numero simple
     if not _continuation_mode and not force_sql and not enrichment_context:
@@ -383,17 +377,14 @@ async def handle_chat_em(message: str, history: list, page: str, http_client, la
                 except Exception as e:
                     logger.warning(f"[EM CHAT] Fallback Phase 1 erreur: {e}")
 
-    # DEBUG trace
     logger.info(
         f"[EM DEBUG] force_sql={force_sql} | continuation={_continuation_mode} | "
         f"enrichment={bool(enrichment_context)} | "
         f"question=\"{message[:60]}\" | history_len={len(history or [])}"
     )
 
-    # Session context
     _session_ctx = _build_session_context_em(history, message)
 
-    # Message utilisateur avec contexte de page + donnees BDD
     if _continuation_mode and _enriched_message:
         user_text = f"[Page: {page}]\n\n{_enriched_message}"
     elif enrichment_context:
@@ -406,19 +397,43 @@ async def handle_chat_em(message: str, history: list, page: str, http_client, la
 
     contents.append({"role": "user", "parts": [{"text": user_text}]})
 
+    return None, {
+        "system_prompt": system_prompt,
+        "gem_api_key": gem_api_key,
+        "contents": contents,
+        "mode": mode,
+        "insult_prefix": _insult_prefix,
+        "history": history,
+        "lang": lang,
+        "fallback": _fallback,
+    }
+
+
+async def handle_chat_em(message: str, history: list, page: str, http_client, lang: str = "fr") -> dict:
+    """
+    Pipeline 12 phases du chatbot HYBRIDE EuroMillions.
+    Retourne dict(response=str, source=str, mode=str).
+    """
+    early, ctx = await _prepare_chat_context_em(message, history, page, http_client, lang)
+    if early:
+        return early
+
+    mode = ctx["mode"]
+    _fallback = ctx["fallback"]
+
     try:
         response = await gemini_breaker.call(
             http_client,
             GEMINI_MODEL_URL,
             headers={
                 "Content-Type": "application/json",
-                "x-goog-api-key": gem_api_key,
+                "x-goog-api-key": ctx["gem_api_key"],
             },
             json={
                 "system_instruction": {
-                    "parts": [{"text": system_prompt}]
+                    "parts": [{"text": ctx["system_prompt"]}]
                 },
-                "contents": contents,
+                "contents": ctx["contents"],
                 "generationConfig": {
                     "temperature": 0.8,
                     "maxOutputTokens": 300,
@@ -436,9 +451,9 @@ async def handle_chat_em(message: str, history: list, page: str, http_client, la
                     text = parts[0].get("text", "").strip()
                     if text:
                         text = _clean_response(text)
-                        if _insult_prefix:
-                            text = _insult_prefix + "\n\n" + text
-                        sponsor_line = _get_sponsor_if_due(history, lang=lang)
+                        if ctx["insult_prefix"]:
+                            text = ctx["insult_prefix"] + "\n\n" + text
+                        sponsor_line = _get_sponsor_if_due(ctx["history"], lang=ctx["lang"])
                         if sponsor_line:
                             text += "\n\n" + sponsor_line
                         logger.info(
@@ -460,6 +475,85 @@ async def handle_chat_em(message: str, history: list, page: str, http_client, la
     except Exception as e:
         logger.error(f"[EM CHAT] Erreur Gemini: {e}")
         return {"response": _fallback, "source": "fallback", "mode": mode}
+
+
+def _sse_event_em(data):
+    """Format dict as SSE event line."""
+    return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+async def handle_chat_stream_em(message: str, history: list, page: str, http_client, lang: str = "fr"):
+    """
+    Async generator — SSE streaming du chatbot HYBRIDE EuroMillions.
+    Yields SSE event strings: data: {...}\n\n
+    """
+    early, ctx = await _prepare_chat_context_em(message, history, page, http_client, lang)
+    if early:
+        yield _sse_event_em({
+            "chunk": early["response"],
+            "source": early["source"],
+            "mode": early["mode"],
+            "is_done": True,
+        })
+        return
+
+    mode = ctx["mode"]
+    _fallback = ctx["fallback"]
+
+    try:
+        if ctx["insult_prefix"]:
+            yield _sse_event_em({
+                "chunk": ctx["insult_prefix"] + "\n\n",
+                "source": "gemini", "mode": mode, "is_done": False,
+            })
+
+        has_chunks = False
+        async for chunk in stream_gemini_chat(
+            http_client, ctx["gem_api_key"], ctx["system_prompt"],
+            ctx["contents"], timeout=15.0,
+        ):
+            has_chunks = True
+            yield _sse_event_em({
+                "chunk": chunk, "source": "gemini", "mode": mode, "is_done": False,
+            })
+
+        if not has_chunks:
+            yield _sse_event_em({
+                "chunk": _fallback,
+                "source": "fallback", "mode": mode, "is_done": True,
+            })
+            return
+
+        sponsor_line = _get_sponsor_if_due(ctx["history"], lang=ctx["lang"])
+        if sponsor_line:
+            yield _sse_event_em({
+                "chunk": "\n\n" + sponsor_line,
+                "source": "gemini", "mode": mode, "is_done": False,
+            })
+
+        yield _sse_event_em({
+            "chunk": "", "source": "gemini", "mode": mode, "is_done": True,
+        })
+        logger.info(f"[EM CHAT] Stream OK (page={page}, mode={mode})")
+
+    except CircuitOpenError:
+        logger.warning("[EM CHAT] Circuit breaker ouvert — fallback")
+        yield _sse_event_em({
+            "chunk": _fallback,
+            "source": "fallback_circuit", "mode": mode, "is_done": True,
+        })
+    except httpx.TimeoutException:
+        logger.warning("[EM CHAT] Timeout Gemini (15s) — fallback")
+        yield _sse_event_em({
+            "chunk": _fallback,
+            "source": "fallback", "mode": mode, "is_done": True,
+        })
+    except Exception as e:
+        logger.error(f"[EM CHAT] Erreur streaming: {e}")
+        yield _sse_event_em({
+            "chunk": _fallback,
+            "source": "fallback", "mode": mode, "is_done": True,
+        })
 
 
 # =========================

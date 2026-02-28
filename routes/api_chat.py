@@ -6,11 +6,11 @@ Thin wrappers delegating to unified chat + re-exports for tests.
 import logging
 
 from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from schemas import HybrideChatRequest, HybrideChatResponse, PitchGrillesRequest
 from rate_limit import limiter
-from services.chat_pipeline import handle_chat, handle_pitch
+from services.chat_pipeline import handle_chat, handle_pitch, handle_chat_stream
 
 # Re-exports pour api_chat_em.py et les tests
 # (preserve la surface publique existante)
@@ -58,14 +58,16 @@ router = APIRouter()
 @router.post("/api/hybride-chat")
 @limiter.limit("10/minute")
 async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
-    """Endpoint chatbot HYBRIDE — conversation via Gemini 2.0 Flash."""
-    result = await handle_chat(
-        payload.message,
-        payload.history,
-        payload.page,
-        request.app.state.httpx_client,
+    """Endpoint chatbot HYBRIDE — SSE streaming via Gemini 2.0 Flash."""
+    return StreamingResponse(
+        handle_chat_stream(
+            payload.message,
+            payload.history,
+            payload.page,
+            request.app.state.httpx_client,
+        ),
+        media_type="text/event-stream",
     )
-    return HybrideChatResponse(**result)
 
 
 @router.post("/api/pitch-grilles")

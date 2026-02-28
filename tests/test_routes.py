@@ -5,6 +5,7 @@ Aucune connexion MySQL ni API Gemini requise.
 """
 
 import os
+import json
 from contextlib import asynccontextmanager
 from unittest.mock import patch, MagicMock, AsyncMock
 from datetime import date
@@ -198,33 +199,23 @@ def test_stats_number_invalid():
 # Hybride Chat (mock Gemini)
 # ═══════════════════════════════════════════════════════════════════════
 
+@patch("services.chat_pipeline.stream_gemini_chat")
 @patch("services.chat_pipeline.load_prompt", return_value="Tu es un assistant.")
 @patch.dict(os.environ, {"GEM_API_KEY": "fake-key"})
-def test_hybride_chat(mock_prompt):
-    """POST /api/hybride-chat retourne une reponse (mock Gemini)."""
-    mock_httpx_response = MagicMock()
-    mock_httpx_response.status_code = 200
-    mock_httpx_response.json.return_value = {
-        "candidates": [{
-            "content": {
-                "parts": [{"text": "Voici ma reponse test."}]
-            }
-        }]
-    }
+def test_hybride_chat(mock_prompt, mock_stream):
+    """POST /api/hybride-chat retourne des events SSE (mock Gemini stream)."""
+    async def fake_gen(*a, **kw):
+        yield "Voici ma reponse test."
+
+    mock_stream.side_effect = lambda *a, **kw: fake_gen()
 
     with _db_module_patch, _static_patch, _static_call:
         import importlib, main as main_mod
         importlib.reload(main_mod)
         client = TestClient(main_mod.app, raise_server_exceptions=False)
 
-        # Mock le httpx_client sur app.state
         import httpx
         mock_client = MagicMock(spec=httpx.AsyncClient)
-
-        async def mock_post(*args, **kwargs):
-            return mock_httpx_response
-        mock_client.post = mock_post
-
         main_mod.app.state.httpx_client = mock_client
 
         resp = client.post("/api/hybride-chat", json={
@@ -233,26 +224,33 @@ def test_hybride_chat(mock_prompt):
         })
 
     assert resp.status_code == 200
-    data = resp.json()
-    assert "response" in data
-    assert data["source"] == "gemini"
+    # Parse SSE events
+    events = []
+    for block in resp.text.strip().split("\n\n"):
+        for line in block.split("\n"):
+            line = line.strip()
+            if line.startswith("data: "):
+                events.append(json.loads(line[6:]))
+    done_events = [e for e in events if e.get("is_done")]
+    assert len(done_events) >= 1
+    chunks = [e["chunk"] for e in events if e.get("chunk")]
+    assert "Voici ma reponse test." in "".join(chunks)
+    assert done_events[-1]["source"] == "gemini"
 
 
 # ═══════════════════════════════════════════════════════════════════════
 # Rate Limiting
 # ═══════════════════════════════════════════════════════════════════════
 
+@patch("services.chat_pipeline.stream_gemini_chat")
 @patch("services.chat_pipeline.load_prompt", return_value="Tu es un assistant.")
 @patch.dict(os.environ, {"GEM_API_KEY": "fake-key"})
-def test_rate_limit_429(mock_prompt):
+def test_rate_limit_429(mock_prompt, mock_stream):
     """Envoyer 15 requetes rapides sur /api/hybride-chat → 429."""
-    mock_httpx_response = MagicMock()
-    mock_httpx_response.status_code = 200
-    mock_httpx_response.json.return_value = {
-        "candidates": [{
-            "content": {"parts": [{"text": "Reponse."}]}
-        }]
-    }
+    async def fake_gen(*a, **kw):
+        yield "Reponse."
+
+    mock_stream.side_effect = lambda *a, **kw: fake_gen()
 
     with _db_module_patch, _static_patch, _static_call:
         import importlib, main as main_mod
@@ -261,11 +259,6 @@ def test_rate_limit_429(mock_prompt):
 
         import httpx
         mock_client = MagicMock(spec=httpx.AsyncClient)
-
-        async def mock_post(*args, **kwargs):
-            return mock_httpx_response
-        mock_client.post = mock_post
-
         main_mod.app.state.httpx_client = mock_client
 
         got_429 = False

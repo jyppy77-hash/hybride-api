@@ -7,7 +7,7 @@ import json
 import httpx
 
 from services.prompt_loader import load_prompt
-from services.gemini import GEMINI_MODEL_URL
+from services.gemini import GEMINI_MODEL_URL, stream_gemini_chat
 from services.circuit_breaker import gemini_breaker, CircuitOpenError
 from services.stats_service import (
     get_numero_stats, analyze_grille_for_chat,
@@ -42,37 +42,33 @@ logger = logging.getLogger(__name__)
 # HYBRIDE Chatbot — Pipeline 12 phases
 # =========================
 
-async def handle_chat(message: str, history: list, page: str, http_client) -> dict:
+async def _prepare_chat_context(message: str, history: list, page: str, http_client):
     """
-    Pipeline 12 phases du chatbot HYBRIDE.
-    Retourne dict(response=str, source=str, mode=str).
+    Phases I-SQL : prepare le contexte pour l'appel Gemini.
+    Retourne (early_return_or_None, ctx_dict_or_None).
+    Si early_return n'est pas None, c'est une reponse complete (insult/compliment/OOR).
+    Sinon, ctx_dict contient les cles pour l'appel Gemini.
     """
     mode = _detect_mode(message, page)
 
-    # Charger le prompt systeme
     system_prompt = load_prompt("CHATBOT")
     if not system_prompt:
         logger.error("[HYBRIDE CHAT] Prompt systeme introuvable")
-        return {"response": FALLBACK_RESPONSE, "source": "fallback", "mode": mode}
+        return {"response": FALLBACK_RESPONSE, "source": "fallback", "mode": mode}, None
 
-    # Cle API
     gem_api_key = os.environ.get("GEM_API_KEY") or os.environ.get("GEMINI_API_KEY")
     if not gem_api_key:
         logger.warning("[HYBRIDE CHAT] GEM_API_KEY non configuree — fallback")
-        return {"response": FALLBACK_RESPONSE, "source": "fallback", "mode": mode}
+        return {"response": FALLBACK_RESPONSE, "source": "fallback", "mode": mode}, None
 
-    # Construire les contents (historique + message actuel)
     contents = []
 
-    # Historique (max 20 derniers messages) + garde anti-doublon
     history = (history or [])[-20:]
     if history and history[-1].role == "user" and history[-1].content == message:
         history = history[:-1]
 
     _skip_insult_response = False
     for msg in history:
-        # Filtrer les echanges d'insultes (Phase I) du contexte Gemini
-        # pour eviter que les punchlines polluent l'interpretation
         if msg.role == "user" and _detect_insulte(msg.content):
             _skip_insult_response = True
             continue
@@ -82,15 +78,12 @@ async def handle_chat(message: str, history: list, page: str, http_client) -> di
         _skip_insult_response = False
 
         role = "user" if msg.role == "user" else "model"
-        # Nettoyer les sponsors des reponses assistant (evite que Gemini les repete)
         content = _strip_sponsor_from_text(msg.content) if role == "model" else msg.content
-        # Fusionner les messages consecutifs de meme role (requis par Gemini)
         if contents and contents[-1]["role"] == role:
             contents[-1]["parts"][0]["text"] += "\n" + content
         else:
             contents.append({"role": role, "parts": [{"text": content}]})
 
-    # Gemini exige que contents commence par "user"
     while contents and contents[0]["role"] == "model":
         contents.pop(0)
 
@@ -99,7 +92,6 @@ async def handle_chat(message: str, history: list, page: str, http_client) -> di
     _insult_type = _detect_insulte(message)
     if _insult_type:
         _insult_streak = _count_insult_streak(history)
-        # Verifier si le message contient aussi une question valide
         _has_question = (
             '?' in message
             or bool(re.search(r'\b\d{1,2}\b', message))
@@ -109,13 +101,11 @@ async def handle_chat(message: str, history: list, page: str, http_client) -> di
             ))
         )
         if _has_question:
-            # Insulte + question : punchline courte, continue le flow normal
             _insult_prefix = _get_insult_short()
             logger.info(
                 f"[HYBRIDE CHAT] Insulte + question (type={_insult_type}, streak={_insult_streak})"
             )
         else:
-            # Insulte pure : punchline complete, early return
             if _insult_type == "menace":
                 _insult_resp = _get_menace_response()
             else:
@@ -123,13 +113,12 @@ async def handle_chat(message: str, history: list, page: str, http_client) -> di
             logger.info(
                 f"[HYBRIDE CHAT] Insulte detectee (type={_insult_type}, streak={_insult_streak})"
             )
-            return {"response": _insult_resp, "source": "hybride_insult", "mode": mode}
+            return {"response": _insult_resp, "source": "hybride_insult", "mode": mode}, None
 
     # ── Phase C : Détection de compliments ──
-    if not _insult_prefix:  # Phase I n'a rien detecte
+    if not _insult_prefix:
         _compliment_type = _detect_compliment(message)
         if _compliment_type:
-            # Verifier si le message contient aussi une question
             _has_question_c = (
                 '?' in message
                 or bool(re.search(r'\b\d{1,2}\b', message))
@@ -140,20 +129,18 @@ async def handle_chat(message: str, history: list, page: str, http_client) -> di
                 ))
             )
             if not _has_question_c:
-                # Compliment seul → Phase C repond directement
                 _comp_streak = _count_compliment_streak(history)
                 _comp_resp = _get_compliment_response(_compliment_type, _comp_streak, history)
                 logger.info(
                     f"[HYBRIDE CHAT] Compliment detecte (type={_compliment_type}, streak={_comp_streak})"
                 )
-                return {"response": _comp_resp, "source": "hybride_compliment", "mode": mode}
+                return {"response": _comp_resp, "source": "hybride_compliment", "mode": mode}, None
             else:
                 logger.info(
                     f"[HYBRIDE CHAT] Compliment + question (type={_compliment_type}), passage au flow normal"
                 )
 
     # ── Phase 0 : Continuation contextuelle ──
-    # Reponses courtes (oui/non/ok...) → bypass regex, enrichir pour Gemini
     _continuation_mode = False
     _enriched_message = None
 
@@ -166,10 +153,9 @@ async def handle_chat(message: str, history: list, page: str, http_client) -> di
                 f"→ enrichissement contextuel"
             )
 
-    # Detection : Prochain tirage → Tirage (T) → Grille (2) → Complexe (3) → Numero (1) → Text-to-SQL (fallback)
     enrichment_context = ""
 
-    # Phase 0-bis : prochain tirage (skip si continuation)
+    # Phase 0-bis : prochain tirage
     if not _continuation_mode and _detect_prochain_tirage(message):
         try:
             tirage_ctx = await asyncio.wait_for(_get_prochain_tirage(), timeout=30.0)
@@ -179,7 +165,7 @@ async def handle_chat(message: str, history: list, page: str, http_client) -> di
         except Exception as e:
             logger.warning(f"[HYBRIDE CHAT] Erreur prochain tirage: {e}")
 
-    # Phase T : resultats d'un tirage (dernier tirage, tirage d'hier, etc.)
+    # Phase T : resultats d'un tirage
     if not _continuation_mode and not enrichment_context:
         tirage_target = _detect_tirage(message)
         if tirage_target is not None:
@@ -191,7 +177,6 @@ async def handle_chat(message: str, history: list, page: str, http_client) -> di
                     enrichment_context = _format_tirage_context(tirage_data)
                     logger.info(f"[HYBRIDE CHAT] Tirage injecte: {tirage_data['date']}")
                 elif tirage_target != "latest":
-                    # Date demandee pas en base → message explicite anti-hallucination
                     date_fr = _format_date_fr(str(tirage_target))
                     enrichment_context = (
                         f"[RÉSULTAT TIRAGE \u2014 INTROUVABLE]\n"
@@ -204,7 +189,6 @@ async def handle_chat(message: str, history: list, page: str, http_client) -> di
             except Exception as e:
                 logger.warning(f"[HYBRIDE CHAT] Erreur tirage: {e}")
 
-    # Filtre temporel detecte → skip phases regex, Phase SQL gere
     force_sql = not _continuation_mode and not enrichment_context and _has_temporal_filter(message)
     if force_sql:
         logger.info("[HYBRIDE CHAT] Filtre temporel detecte, force Phase SQL")
@@ -220,7 +204,7 @@ async def handle_chat(message: str, history: list, page: str, http_client) -> di
         except Exception as e:
             logger.warning(f"[HYBRIDE CHAT] Erreur analyse grille: {e}")
 
-    # Phase 3 : requete complexe (classement, comparaison, categorie)
+    # Phase 3 : requete complexe
     if not _continuation_mode and not force_sql and not enrichment_context:
         intent = _detect_requete_complexe(message)
         if intent:
@@ -252,7 +236,7 @@ async def handle_chat(message: str, history: list, page: str, http_client) -> di
                 f"[HYBRIDE CHAT] Numero hors range: {_oor_num} "
                 f"(type={_oor_type}, streak={_oor_streak})"
             )
-            return {"response": _oor_resp, "source": "hybride_oor", "mode": mode}
+            return {"response": _oor_resp, "source": "hybride_oor", "mode": mode}, None
 
     # Phase 1 : detection de numero simple
     if not _continuation_mode and not force_sql and not enrichment_context:
@@ -266,7 +250,7 @@ async def handle_chat(message: str, history: list, page: str, http_client) -> di
             except Exception as e:
                 logger.warning(f"[HYBRIDE CHAT] Erreur stats BDD (numero={numero}): {e}")
 
-    # Phase SQL : Text-to-SQL fallback (Gemini genere le SQL quand aucune phase ne matche)
+    # Phase SQL : Text-to-SQL fallback
     if not _continuation_mode and not enrichment_context:
         _sql_count = sum(1 for m in (history or []) if m.role == "user")
         if _sql_count >= _MAX_SQL_PER_SESSION:
@@ -337,7 +321,6 @@ async def handle_chat(message: str, history: list, page: str, http_client) -> di
                 )
 
     # Fallback regex quand Phase SQL echoue avec filtre temporel
-    # (donnees globales, mieux que la reponse generique)
     if force_sql and not enrichment_context:
         logger.info("[HYBRIDE CHAT] Phase SQL echouee, fallback phases regex (donnees globales)")
         intent = _detect_requete_complexe(message)
@@ -367,19 +350,15 @@ async def handle_chat(message: str, history: list, page: str, http_client) -> di
                 except Exception as e:
                     logger.warning(f"[HYBRIDE CHAT] Fallback Phase 1 erreur: {e}")
 
-    # DEBUG — tracer l'etat avant appel Gemini final (a retirer apres validation prod)
     logger.info(
         f"[DEBUG] force_sql={force_sql} | continuation={_continuation_mode} | "
         f"enrichment={bool(enrichment_context)} | "
         f"question=\"{message[:60]}\" | history_len={len(history or [])}"
     )
 
-    # Session context — resume des numeros/tirages consultes
     _session_ctx = _build_session_context(history, message)
 
-    # Message utilisateur avec contexte de page + donnees BDD
     if _continuation_mode and _enriched_message:
-        # Phase 0 : envoyer le message enrichi a Gemini (bypass regex)
         user_text = f"[Page: {page}]\n\n{_enriched_message}"
     elif enrichment_context:
         user_text = f"[Page: {page}]\n\n{enrichment_context}\n\n[Question utilisateur] {message}"
@@ -391,19 +370,40 @@ async def handle_chat(message: str, history: list, page: str, http_client) -> di
 
     contents.append({"role": "user", "parts": [{"text": user_text}]})
 
+    return None, {
+        "system_prompt": system_prompt,
+        "gem_api_key": gem_api_key,
+        "contents": contents,
+        "mode": mode,
+        "insult_prefix": _insult_prefix,
+        "history": history,
+    }
+
+
+async def handle_chat(message: str, history: list, page: str, http_client) -> dict:
+    """
+    Pipeline 12 phases du chatbot HYBRIDE.
+    Retourne dict(response=str, source=str, mode=str).
+    """
+    early, ctx = await _prepare_chat_context(message, history, page, http_client)
+    if early:
+        return early
+
+    mode = ctx["mode"]
+
     try:
         response = await gemini_breaker.call(
             http_client,
             GEMINI_MODEL_URL,
             headers={
                 "Content-Type": "application/json",
-                "x-goog-api-key": gem_api_key,
+                "x-goog-api-key": ctx["gem_api_key"],
             },
             json={
                 "system_instruction": {
-                    "parts": [{"text": system_prompt}]
+                    "parts": [{"text": ctx["system_prompt"]}]
                 },
-                "contents": contents,
+                "contents": ctx["contents"],
                 "generationConfig": {
                     "temperature": 0.8,
                     "maxOutputTokens": 300,
@@ -421,11 +421,9 @@ async def handle_chat(message: str, history: list, page: str, http_client) -> di
                     text = parts[0].get("text", "").strip()
                     if text:
                         text = _clean_response(text)
-                        # Injection punchline si insulte + question
-                        if _insult_prefix:
-                            text = _insult_prefix + "\n\n" + text
-                        # Injection sponsor post-Gemini (n'affecte pas l'historique)
-                        sponsor_line = _get_sponsor_if_due(history)
+                        if ctx["insult_prefix"]:
+                            text = ctx["insult_prefix"] + "\n\n" + text
+                        sponsor_line = _get_sponsor_if_due(ctx["history"])
                         if sponsor_line:
                             text += "\n\n" + sponsor_line
                         logger.info(
@@ -447,6 +445,84 @@ async def handle_chat(message: str, history: list, page: str, http_client) -> di
     except Exception as e:
         logger.error(f"[HYBRIDE CHAT] Erreur Gemini: {e}")
         return {"response": FALLBACK_RESPONSE, "source": "fallback", "mode": mode}
+
+
+def _sse_event(data):
+    """Format dict as SSE event line."""
+    return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
+
+
+async def handle_chat_stream(message: str, history: list, page: str, http_client):
+    """
+    Async generator — SSE streaming du chatbot HYBRIDE.
+    Yields SSE event strings: data: {...}\n\n
+    """
+    early, ctx = await _prepare_chat_context(message, history, page, http_client)
+    if early:
+        yield _sse_event({
+            "chunk": early["response"],
+            "source": early["source"],
+            "mode": early["mode"],
+            "is_done": True,
+        })
+        return
+
+    mode = ctx["mode"]
+
+    try:
+        if ctx["insult_prefix"]:
+            yield _sse_event({
+                "chunk": ctx["insult_prefix"] + "\n\n",
+                "source": "gemini", "mode": mode, "is_done": False,
+            })
+
+        has_chunks = False
+        async for chunk in stream_gemini_chat(
+            http_client, ctx["gem_api_key"], ctx["system_prompt"],
+            ctx["contents"], timeout=15.0,
+        ):
+            has_chunks = True
+            yield _sse_event({
+                "chunk": chunk, "source": "gemini", "mode": mode, "is_done": False,
+            })
+
+        if not has_chunks:
+            yield _sse_event({
+                "chunk": FALLBACK_RESPONSE,
+                "source": "fallback", "mode": mode, "is_done": True,
+            })
+            return
+
+        sponsor_line = _get_sponsor_if_due(ctx["history"])
+        if sponsor_line:
+            yield _sse_event({
+                "chunk": "\n\n" + sponsor_line,
+                "source": "gemini", "mode": mode, "is_done": False,
+            })
+
+        yield _sse_event({
+            "chunk": "", "source": "gemini", "mode": mode, "is_done": True,
+        })
+        logger.info(f"[HYBRIDE CHAT] Stream OK (page={page}, mode={mode})")
+
+    except CircuitOpenError:
+        logger.warning("[HYBRIDE CHAT] Circuit breaker ouvert — fallback")
+        yield _sse_event({
+            "chunk": FALLBACK_RESPONSE,
+            "source": "fallback_circuit", "mode": mode, "is_done": True,
+        })
+    except httpx.TimeoutException:
+        logger.warning("[HYBRIDE CHAT] Timeout Gemini (15s) — fallback")
+        yield _sse_event({
+            "chunk": FALLBACK_RESPONSE,
+            "source": "fallback", "mode": mode, "is_done": True,
+        })
+    except Exception as e:
+        logger.error(f"[HYBRIDE CHAT] Erreur streaming: {e}")
+        yield _sse_event({
+            "chunk": FALLBACK_RESPONSE,
+            "source": "fallback", "mode": mode, "is_done": True,
+        })
 
 
 # =========================

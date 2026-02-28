@@ -1,4 +1,5 @@
 import os
+import json
 import logging
 import httpx
 
@@ -8,6 +9,10 @@ from services.circuit_breaker import gemini_breaker, CircuitOpenError
 logger = logging.getLogger(__name__)
 
 GEMINI_MODEL_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+GEMINI_STREAM_URL = (
+    "https://generativelanguage.googleapis.com/v1beta/models/"
+    "gemini-2.0-flash:streamGenerateContent?alt=sse"
+)
 
 
 async def enrich_analysis(analysis_local: str, window: str = "GLOBAL", *, http_client: httpx.AsyncClient) -> dict:
@@ -128,3 +133,60 @@ Texte a reformuler :
     except Exception as e:
         logger.error(f"[META TEXTE] Erreur Gemini: {e}", exc_info=True)
         return {"analysis_enriched": analysis_local, "source": "fallback"}
+
+
+async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, timeout=15.0):
+    """
+    Async generator — stream text chunks from Gemini streaming API.
+    Yields str chunks. Manages circuit breaker state manually.
+    """
+    current = gemini_breaker.state
+    if current == gemini_breaker.OPEN:
+        raise CircuitOpenError("Circuit ouvert — fallback immediat")
+
+    try:
+        async with http_client.stream(
+            "POST",
+            GEMINI_STREAM_URL,
+            headers={
+                "Content-Type": "application/json",
+                "x-goog-api-key": gem_api_key,
+            },
+            json={
+                "system_instruction": {"parts": [{"text": system_prompt}]},
+                "contents": contents,
+                "generationConfig": {
+                    "temperature": 0.8,
+                    "maxOutputTokens": 300,
+                },
+            },
+            timeout=timeout,
+        ) as response:
+            if response.status_code >= 500 or response.status_code == 429:
+                gemini_breaker._record_failure()
+                return
+
+            if response.status_code != 200:
+                logger.warning(f"[STREAM] Gemini HTTP {response.status_code}")
+                return
+
+            async for line in response.aiter_lines():
+                if not line.startswith("data: "):
+                    continue
+                try:
+                    data = json.loads(line[6:])
+                    candidates = data.get("candidates", [])
+                    if candidates:
+                        parts = candidates[0].get("content", {}).get("parts", [])
+                        if parts:
+                            text = parts[0].get("text", "")
+                            if text:
+                                yield text
+                except json.JSONDecodeError:
+                    continue
+
+            gemini_breaker._record_success()
+
+    except (httpx.TimeoutException, httpx.ConnectError, OSError):
+        gemini_breaker._record_failure()
+        raise

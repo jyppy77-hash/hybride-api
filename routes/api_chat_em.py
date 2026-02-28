@@ -6,11 +6,11 @@ Thin wrappers + re-exports for tests.
 import logging
 
 from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from em_schemas import EMChatRequest, EMChatResponse, EMPitchGrillesRequest
 from rate_limit import limiter
-from services.chat_pipeline_em import handle_chat_em, handle_pitch_em
+from services.chat_pipeline_em import handle_chat_em, handle_pitch_em, handle_chat_stream_em
 
 # Re-exports pour compatibilite (tests et imports existants)
 from services.chat_detectors_em import (  # noqa: F401
@@ -49,15 +49,17 @@ router = APIRouter()
 @router.post("/api/euromillions/hybride-chat")
 @limiter.limit("10/minute")
 async def api_hybride_chat_em(request: Request, payload: EMChatRequest):
-    """Endpoint chatbot HYBRIDE EuroMillions — conversation via Gemini 2.0 Flash."""
-    result = await handle_chat_em(
-        payload.message,
-        payload.history,
-        payload.page,
-        request.app.state.httpx_client,
-        lang=payload.lang,
+    """Endpoint chatbot HYBRIDE EuroMillions — SSE streaming via Gemini 2.0 Flash."""
+    return StreamingResponse(
+        handle_chat_stream_em(
+            payload.message,
+            payload.history,
+            payload.page,
+            request.app.state.httpx_client,
+            lang=payload.lang,
+        ),
+        media_type="text/event-stream",
     )
-    return EMChatResponse(**result)
 
 
 @router.post("/api/euromillions/pitch-grilles")

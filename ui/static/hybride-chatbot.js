@@ -86,6 +86,26 @@
             scrollToBottom();
         }
 
+        function createBotBubble() {
+            var msg = document.createElement('div');
+            msg.className = 'hybride-msg hybride-msg-bot';
+            var textSpan = document.createElement('span');
+            var timeSpan = document.createElement('span');
+            timeSpan.className = 'hybride-msg-time';
+            timeSpan.textContent = getTime();
+            msg.appendChild(textSpan);
+            msg.appendChild(timeSpan);
+            messagesArea.appendChild(msg);
+            scrollToBottom();
+            return msg;
+        }
+
+        function updateBubbleText(msgEl, text) {
+            var span = msgEl.querySelector('span:first-child');
+            span.textContent = text;
+            scrollToBottom();
+        }
+
         function escapeHtml(str) {
             var div = document.createElement('div');
             div.appendChild(document.createTextNode(str));
@@ -219,7 +239,7 @@
             if (typeof umami !== 'undefined') umami.track('chatbot-message', { module: 'loto' });
 
             var controller = new AbortController();
-            var timeoutId = setTimeout(function () { controller.abort(); }, 20000);
+            var timeoutId = setTimeout(function () { controller.abort(); }, 30000);
 
             fetch('/api/hybride-chat', {
                 method: 'POST',
@@ -234,31 +254,77 @@
             .then(function (res) {
                 clearTimeout(timeoutId);
                 if (!res.ok) throw new Error('HTTP ' + res.status);
-                return res.json();
-            })
-            .then(function (data) {
-                removeTyping();
-                var botText = data.response || '\uD83E\uDD16 R\u00e9ponse indisponible.';
-                addMessage(botText, 'bot');
-                chatHistory.push({ role: 'user', content: text });
-                chatHistory.push({ role: 'assistant', content: botText });
-                if (chatHistory.length > 20) chatHistory = [chatHistory[0]].concat(chatHistory.slice(-19));
-                saveHistory();
 
-                // Sponsor detection
-                if (hasSponsor(botText)) {
-                    sponsorViews++;
-                    trackEvent('hybride_chat_sponsor_view', {
-                        page: detectPage(),
-                        sponsor_style: botText.indexOf('partenaires') !== -1 ? 'A' : 'B',
-                        message_position: messageCount
+                var reader = res.body.getReader();
+                var decoder = new TextDecoder();
+                var botText = '';
+                var msgEl = null;
+                var buffer = '';
+
+                function processStream() {
+                    return reader.read().then(function (result) {
+                        if (result.done) {
+                            finalize();
+                            return;
+                        }
+
+                        buffer += decoder.decode(result.value, { stream: true });
+                        var parts = buffer.split('\n\n');
+                        buffer = parts.pop();
+
+                        for (var i = 0; i < parts.length; i++) {
+                            var lines = parts[i].split('\n');
+                            for (var j = 0; j < lines.length; j++) {
+                                var line = lines[j].trim();
+                                if (line.indexOf('data: ') === 0) {
+                                    try {
+                                        var evt = JSON.parse(line.substring(6));
+                                        if (evt.chunk) {
+                                            botText += evt.chunk;
+                                            if (!msgEl) {
+                                                removeTyping();
+                                                msgEl = createBotBubble();
+                                            }
+                                            updateBubbleText(msgEl, botText);
+                                        }
+                                        if (evt.is_done) {
+                                            finalize();
+                                            return;
+                                        }
+                                    } catch (e) { /* ignore parse errors */ }
+                                }
+                            }
+                        }
+                        return processStream();
                     });
                 }
 
-                // Rating widget : proposer apres 5 messages
-                if (messageCount === 5) {
-                    setTimeout(function () { showRatingWidget(); }, 1500);
+                function finalize() {
+                    if (!botText) botText = '\uD83E\uDD16 R\u00e9ponse indisponible.';
+                    if (!msgEl) {
+                        removeTyping();
+                        addMessage(botText, 'bot');
+                    }
+                    chatHistory.push({ role: 'user', content: text });
+                    chatHistory.push({ role: 'assistant', content: botText });
+                    if (chatHistory.length > 20) chatHistory = [chatHistory[0]].concat(chatHistory.slice(-19));
+                    saveHistory();
+
+                    if (hasSponsor(botText)) {
+                        sponsorViews++;
+                        trackEvent('hybride_chat_sponsor_view', {
+                            page: detectPage(),
+                            sponsor_style: botText.indexOf('partenaires') !== -1 ? 'A' : 'B',
+                            message_position: messageCount
+                        });
+                    }
+
+                    if (messageCount === 5) {
+                        setTimeout(function () { showRatingWidget(); }, 1500);
+                    }
                 }
+
+                return processStream();
             })
             .catch(function () {
                 clearTimeout(timeoutId);

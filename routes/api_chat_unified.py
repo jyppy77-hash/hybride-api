@@ -6,7 +6,7 @@ Phase 10 — remplace la duplication api_chat.py / api_chat_em.py
 import logging
 
 from fastapi import APIRouter, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from rate_limit import limiter
 from config.games import ValidGame, get_config, get_chat_pipeline
@@ -28,23 +28,27 @@ async def unified_hybride_chat(request: Request, game: ValidGame):
 
     if game == ValidGame.loto:
         payload = HybrideChatRequest(**body)
-        result = await pipeline.handle_chat(
-            payload.message,
-            payload.history,
-            payload.page,
-            request.app.state.httpx_client,
+        return StreamingResponse(
+            pipeline.handle_chat_stream(
+                payload.message,
+                payload.history,
+                payload.page,
+                request.app.state.httpx_client,
+            ),
+            media_type="text/event-stream",
         )
-        return HybrideChatResponse(**result)
     else:
         payload = EMChatRequest(**body)
-        result = await pipeline.handle_chat_em(
-            payload.message,
-            payload.history,
-            payload.page,
-            request.app.state.httpx_client,
-            lang=payload.lang,
+        return StreamingResponse(
+            pipeline.handle_chat_stream_em(
+                payload.message,
+                payload.history,
+                payload.page,
+                request.app.state.httpx_client,
+                lang=payload.lang,
+            ),
+            media_type="text/event-stream",
         )
-        return EMChatResponse(**result)
 
 
 @router.post("/pitch-grilles")
