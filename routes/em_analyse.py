@@ -35,7 +35,7 @@ async def em_generate(
     request: Request,
     n: int = Query(default=3, ge=1, le=10),
     mode: str = Query(default="balanced"),
-    lang: str = Query(default="fr", pattern=r"^(fr|en)$"),
+    lang: str = Query(default="fr", pattern=r"^(fr|en|es)$"),
 ):
     return await unified_generate(request=request, game=_EM, n=n, mode=mode, lang=lang)
 
@@ -57,7 +57,7 @@ async def em_analyze_custom_grid(
     nums: list = Query(..., description="5 numeros principaux (1-50)"),
     etoile1: int = Query(..., ge=1, le=12, description="Etoile 1"),
     etoile2: int = Query(..., ge=1, le=12, description="Etoile 2"),
-    lang: str = Query(default="fr", pattern=r"^(fr|en)$"),
+    lang: str = Query(default="fr", pattern=r"^(fr|en|es)$"),
 ):
     return await unified_analyze_custom_grid(
         request=request, game=_EM, nums=nums, etoile1=etoile1, etoile2=etoile2, lang=lang,

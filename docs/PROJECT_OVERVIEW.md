@@ -9,7 +9,7 @@
 ```
 hybride-api/
 │
-├── main.py                              # FastAPI orchestrator (~660L, 12 middlewares, 16 routers)
+├── main.py                              # FastAPI orchestrator (~688L, 12 middlewares, 18 routers)
 ├── schemas.py                           # Pydantic models — Loto API payloads
 ├── em_schemas.py                        # Pydantic models — EuroMillions API payloads
 ├── db_cloudsql.py                       # aiomysql async pool manager (259L, Phase 5)
@@ -32,7 +32,7 @@ hybride-api/
 │
 ├── routes/                              # API & page routers (APIRouter)
 │   ├── __init__.py                      # Package init
-│   ├── pages.py                         # 23 HTML page routes (SEO clean URLs)
+│   ├── pages.py                         # 22 HTML page routes (SEO clean URLs, sitemap removed P5/5)
 │   ├── api_data_unified.py              # Unified data endpoints /api/{game}/... (Phase 10, ~400L)
 │   ├── api_analyse_unified.py           # Unified analysis endpoints /api/{game}/... (Phase 10, ~720L)
 │   ├── api_chat_unified.py              # Unified chat endpoints /api/{game}/... (Phase 10, ~70L)
@@ -42,20 +42,22 @@ hybride-api/
 │   ├── api_pdf.py                       # PDF generation endpoint (ReportLab)
 │   ├── api_tracking.py                  # Analytics tracking endpoints (grid, ads)
 │   ├── api_ratings.py                   # User rating endpoints (submit, global stats)
-│   ├── api_chat.py                      # HYBRIDE chatbot Loto — thin wrapper + re-exports (Phase 10)
-│   ├── api_chat_em.py                   # HYBRIDE chatbot EM — thin wrapper + re-exports (Phase 10)
+│   ├── api_chat.py                      # HYBRIDE chatbot Loto — SSE StreamingResponse + re-exports (Phase 10, P9)
+│   ├── api_chat_em.py                   # HYBRIDE chatbot EM — SSE StreamingResponse + re-exports (Phase 10, P9)
 │   ├── em_data.py                       # EM data — thin wrapper → api_data_unified (Phase 10)
 │   ├── em_analyse.py                    # EM analysis — thin wrapper + /meta-analyse-texte, /meta-pdf (Phase 10)
 │   ├── em_pages.py                      # EuroMillions HTML page routes (7 SEO clean URLs)
-│   └── en_em_pages.py                   # EuroMillions EN page routes (7 SEO clean URLs, Phase 11)
+│   ├── en_em_pages.py                   # EuroMillions EN page routes (7 SEO clean URLs, Phase 11)
+│   ├── multilang_em_pages.py            # EuroMillions PT/ES/DE/NL page routes (28 factory routes, P5/5)
+│   └── sitemap.py                       # Dynamic XML sitemap — Loto FR + EM multilang (P5/5)
 │
 ├── services/                            # Business logic layer (21 modules, ~6200L)
 │   ├── __init__.py                      # Package init
 │   ├── base_stats.py                    # GameConfig-driven base class Loto/EM (770L, Phase 2)
 │   ├── stats_service.py                 # Loto stats thin wrapper → base_stats (121L, Phase 2)
 │   ├── em_stats_service.py              # EM stats thin wrapper → base_stats (87L, Phase 2)
-│   ├── chat_pipeline.py                 # HYBRIDE chatbot orchestration — Loto (639L, Phase 1)
-│   ├── chat_pipeline_em.py              # HYBRIDE chatbot orchestration — EM (653L, Phase 4)
+│   ├── chat_pipeline.py                 # HYBRIDE chatbot orchestration — Loto (715L, Phase 1+P9 SSE)
+│   ├── chat_pipeline_em.py              # HYBRIDE chatbot orchestration — EM (760L, Phase 4+P9 SSE)
 │   ├── chat_detectors.py                # 12-phase detection: insults, numbers, grids — Loto (850L, Phase 1)
 │   ├── chat_detectors_em.py             # 12-phase detection — EM variant (495L, Phase 4)
 │   ├── chat_sql.py                      # Text-to-SQL generator + executor — Loto (247L, Phase 1)
@@ -64,13 +66,13 @@ hybride-api/
 │   ├── chat_utils_em.py                 # Formatting, context — EM (200L, Phase 4)
 │   ├── cache.py                         # Redis async cache + in-memory fallback (116L, Phase 6)
 │   ├── circuit_breaker.py               # Gemini circuit breaker (84L, 3 fails → 60s open)
-│   ├── gemini.py                        # Gemini 2.0 Flash API client — Loto (130L)
+│   ├── gemini.py                        # Gemini 2.0 Flash API client — Loto (192L, +streaming P9)
 │   ├── em_gemini.py                     # Gemini 2.0 Flash API client — EM (122L)
 │   ├── pdf_generator.py                 # ReportLab PDF — Loto (361L, single graph)
 │   ├── em_pdf_generator.py              # ReportLab PDF — EM (364L, dual graphs boules+etoiles)
 │   ├── chat_responses_em_en.py          # English response pools for EM chatbot (Phase 11)
 │   ├── penalization.py                  # Number penalization logic (65L)
-│   └── prompt_loader.py                 # Dynamic prompt loader (101L, 36 keys: 18 Loto + 18 EM)
+│   └── prompt_loader.py                 # Dynamic prompt loader (143L, Loto PROMPT_MAP + file-based load_prompt_em with lang fallback, P4/5)
 │
 ├── engine/                              # Core analysis engine
 │   ├── __init__.py                      # Package init
@@ -81,9 +83,9 @@ hybride-api/
 │   ├── db.py                            # Database connection proxy
 │   └── version.py                       # Version constant (1.0.0)
 │
-├── prompts/                             # Gemini contextual prompts (38 files)
+├── prompts/                             # Gemini contextual prompts (146 files)
 │   ├── prompt_hybride.txt               # Legacy HYBRIDE prompt (root level)
-│   ├── chatbot/                         # HYBRIDE chatbot prompts
+│   ├── chatbot/                         # HYBRIDE chatbot prompts (Loto + legacy EM EN)
 │   │   ├── prompt_hybride.txt           # Multi-section prompt — Loto (identity, FAQ, rules, BDD)
 │   │   ├── prompt_pitch_grille.txt      # Pitch prompt — Loto (personalized grid commentary)
 │   │   ├── prompt_sql_generator.txt     # SQL Generator prompt — Loto (Text-to-SQL, schema, few-shot examples)
@@ -94,41 +96,31 @@ hybride-api/
 │   │   ├── prompt_pitch_grille_em_en.txt # Pitch prompt — EM English (Phase 11)
 │   │   └── prompt_sql_generator_em_en.txt # SQL Generator prompt — EM English (Phase 11)
 │   ├── tirages/                         # Window-based prompts — Loto (by draw count)
-│   │   ├── prompt_100.txt               # Prompt for 100-draw window
-│   │   ├── prompt_200.txt               # Prompt for 200-draw window
-│   │   ├── prompt_300.txt               # Prompt for 300-draw window
-│   │   ├── prompt_400.txt               # Prompt for 400-draw window
-│   │   ├── prompt_500.txt               # Prompt for 500-draw window
-│   │   ├── prompt_600.txt               # Prompt for 600-draw window
-│   │   ├── prompt_700.txt               # Prompt for 700-draw window
-│   │   ├── prompt_800.txt               # Prompt for 800-draw window
+│   │   ├── prompt_100.txt ... prompt_800.txt   # 100-800 draw windows
 │   │   └── prompt_global.txt            # Prompt for GLOBAL window (fallback)
 │   ├── annees/                          # Year-based prompts — Loto
-│   │   ├── prompt_1a.txt                # Prompt for 1-year window
-│   │   ├── prompt_2a.txt                # Prompt for 2-year window
-│   │   ├── prompt_3a.txt                # Prompt for 3-year window
-│   │   ├── prompt_4a.txt                # Prompt for 4-year window
-│   │   ├── prompt_5a.txt                # Prompt for 5-year window
-│   │   ├── prompt_6a.txt                # Prompt for 6-year window
+│   │   ├── prompt_1a.txt ... prompt_6a.txt     # 1-6 year windows
 │   │   └── prompt_global.txt            # Prompt for GLOBAL window (annees fallback)
-│   └── euromillions/                    # EuroMillions META ANALYSE prompts (15 files)
-│       ├── tirages/                     # Window-based prompts — EM (100-700 + GLOBAL, no 800)
-│       │   ├── prompt_100.txt           # EM 100-draw window (court terme)
-│       │   ├── prompt_200.txt           # EM 200-draw window (court-moyen terme)
-│       │   ├── prompt_300.txt           # EM 300-draw window (moyen terme)
-│       │   ├── prompt_400.txt           # EM 400-draw window (moyen-long terme)
-│       │   ├── prompt_500.txt           # EM 500-draw window (long terme)
-│       │   ├── prompt_600.txt           # EM 600-draw window (long terme etendu)
-│       │   ├── prompt_700.txt           # EM 700-draw window (quasi-integralite)
-│       │   └── prompt_global.txt        # EM GLOBAL window (fallback EM)
-│       └── annees/                      # Year-based prompts — EM
-│           ├── prompt_1a.txt            # EM 1-year window
-│           ├── prompt_2a.txt            # EM 2-year window
-│           ├── prompt_3a.txt            # EM 3-year window
-│           ├── prompt_4a.txt            # EM 4-year window
-│           ├── prompt_5a.txt            # EM 5-year window
-│           ├── prompt_6a.txt            # EM 6-year window
-│           └── prompt_global.txt        # EM GLOBAL window (annees fallback EM)
+│   ├── euromillions/                    # Legacy EM META ANALYSE prompts (FR + EN, 30 files)
+│   │   ├── tirages/                     # Window-based prompts — EM FR (100-700 + GLOBAL)
+│   │   ├── annees/                      # Year-based prompts — EM FR (1A-6A + GLOBAL)
+│   │   └── en/                          # EM EN prompts (tirages + annees, Phase 11)
+│   └── em/                              # Multilingual EM prompts (P4/5, 108 files)
+│       ├── fr/                          # FR: 3 chatbot + 8 tirages + 7 annees = 18 files
+│       ├── en/                          # EN: 3 chatbot + 8 tirages + 7 annees = 18 files
+│       ├── pt/                          # PT: same structure (18 files, P4/5)
+│       ├── es/                          # ES: same structure (18 files, fully translated, Sprint ES)
+│       ├── de/                          # DE: same structure (18 files, P4/5)
+│       └── nl/                          # NL: same structure (18 files, P4/5)
+│
+├── translations/                          # Babel/gettext i18n catalogs (P1/5)
+│   ├── messages.pot                     # Extracted message template (Babel)
+│   ├── fr/LC_MESSAGES/messages.po/.mo   # French catalog (reference)
+│   ├── en/LC_MESSAGES/messages.po/.mo   # English (GB) catalog
+│   ├── pt/LC_MESSAGES/messages.po/.mo   # Portuguese catalog (stub)
+│   ├── es/LC_MESSAGES/messages.po/.mo   # Spanish catalog (complete, 384 entries)
+│   ├── de/LC_MESSAGES/messages.po/.mo   # German catalog (stub)
+│   └── nl/LC_MESSAGES/messages.po/.mo   # Dutch catalog (stub)
 │
 ├── ui/                                  # Frontend layer
 │   ├── launcher.html                    # Entry page (route: /)
@@ -152,7 +144,7 @@ hybride-api/
 │   ├── politique-confidentialite.html   # Privacy policy
 │   ├── politique-cookies.html           # Cookie policy
 │   ├── robots.txt                       # Search engine directives
-│   ├── sitemap.xml                      # XML sitemap
+│   ├── sitemap.xml                      # Legacy static XML sitemap (replaced by dynamic routes/sitemap.py, P5/5)
 │   ├── site.webmanifest                 # PWA manifest
 │   ├── favicon.svg                      # SVG favicon
 │   ├── favicon-simple.svg               # Simplified SVG favicon
@@ -166,21 +158,22 @@ hybride-api/
 │   │   ├── faq-em.html                  # EM FAQ (/euromillions/faq)
 │   │   └── news-em.html                # EM news (/euromillions/news)
 │   │
+│   ├── templates/em/                    # Jinja2 templates — EuroMillions (P2/5, replaces static HTML serving)
+│   │   ├── _base.html                  # Base layout (head, nav, footer, hreflang, OG, chatbot, rating)
+│   │   ├── _footer.html                # Footer partial (nav links, gambling help, lang switch)
+│   │   ├── _hero.html                  # Hero partial (icon, title, subtitle, action buttons)
+│   │   ├── accueil.html                # EM home page template
+│   │   ├── generateur.html             # EM generator template (META slider, sponsor popups, app.js)
+│   │   ├── simulateur.html             # EM simulator template (grid selector, sponsor popup)
+│   │   ├── statistiques.html           # EM statistics template (frequencies, heatmap, charts)
+│   │   ├── historique.html             # EM history template (date picker, draw display)
+│   │   ├── faq.html                    # EM FAQ template (accordion, dynamic DB total)
+│   │   └── news.html                   # EM news template (timeline, releases)
+│   │
 │   ├── en/                              # English (GB) pages (Phase 11)
-│   │   └── euromillions/                # EuroMillions EN pages (7 pages)
-│   │       ├── home.html                # EM EN home (/en/euromillions)
-│   │       ├── generator.html           # EM EN generator (/en/euromillions/generator)
-│   │       ├── simulator.html           # EM EN simulator (/en/euromillions/simulator)
-│   │       ├── statistics.html          # EM EN statistics (/en/euromillions/statistics)
-│   │       ├── history.html             # EM EN history (/en/euromillions/history)
-│   │       ├── faq.html                 # EM EN FAQ (/en/euromillions/faq)
-│   │       ├── news.html                # EM EN news (/en/euromillions/news)
-│   │       └── static/                  # EN-specific JS files (6 translated modules)
-│   │           ├── app-em-en.js          # EN application logic (months, dates, labels)
-│   │           ├── simulateur-em-en.js   # EN simulator UI (convergence, details, history)
-│   │           ├── sponsor-popup-em-en.js    # EN sponsor popup (config, console, labels)
-│   │           ├── sponsor-popup75-em-en.js  # EN META ANALYSE popup (result, PDF, fallback)
-│   │           ├── faq-em-en.js          # EN FAQ accordion (en-GB locale)
+│   │   └── euromillions/                # EuroMillions EN pages (7 pages, rendered by Jinja2 P2/5)
+│   │       ├── home.html ... news.html  # 7 EN HTML pages (legacy, now served via templates)
+│   │       └── static/                  # EN-specific JS (chatbot only, other JS via P3/5 i18n)
 │   │           └── hybride-chatbot-em-en.js  # EN chatbot widget (hasSponsor EN, analytics)
 │   │
 │   └── static/                          # Static assets
@@ -201,7 +194,7 @@ hybride-api/
 │       ├── sponsor-popup75-em.js        # META ANALYSE 75 popup — EuroMillions (dual graphs boules+etoiles, PDF flow)
 │       ├── hybride-chatbot.js           # HYBRIDE Chatbot widget — Loto (IIFE, vanilla JS, sessionStorage, GA4 tracking)
 │       ├── hybride-chatbot-em.js        # HYBRIDE Chatbot widget — EuroMillions (IIFE, /api/euromillions/hybride-chat, hybride-history-em)
-│       ├── hybride-chatbot-em-en.js    # HYBRIDE Chatbot widget — EM English (Phase 11, EN sponsor detection, en-GB locale)
+│       ├── hybride-chatbot-em-en.js    # HYBRIDE Chatbot widget — EM English (Phase 11, now in ui/en/euromillions/static/)
 │       ├── theme.js                     # Dark/light mode toggle
 │       ├── analytics.js                 # GDPR-compliant analytics
 │       ├── cookie-consent.js            # Cookie consent management
@@ -231,7 +224,7 @@ hybride-api/
 │           ├── sponsor-popup-em.js      # EM sponsor popup logic
 │           └── sponsor-popup75-em.css   # EM META ANALYSE 75 popup styling
 │
-├── tests/                               # Unit tests (pytest) — 473 tests
+├── tests/                               # Unit tests (pytest) — 685 tests
 │   ├── conftest.py                      # Shared fixtures (SmartMockCursor, cache clear)
 │   ├── test_models.py                   # Pydantic models + CONFIG weights (10 tests)
 │   ├── test_hybride.py                  # HYBRIDE engine tests (21 tests)
@@ -243,12 +236,21 @@ hybride-api/
 │   ├── test_ratings.py                  # Rating system tests (27 tests)
 │   ├── test_penalization.py             # Penalization logic tests (10 tests)
 │   ├── test_unified_routes.py          # Unified /api/{game}/... route tests (17 tests, Phase 10)
-│   └── test_en_routes.py              # EN EuroMillions route tests (18 tests, Phase 11)
+│   ├── test_en_routes.py              # EN EuroMillions route tests (18 tests, Phase 11)
+│   ├── test_i18n.py                   # i18n gettext tests (30 tests, P1/5)
+│   ├── test_templates.py             # Jinja2 templates + render_template tests (37 tests, P2/5)
+│   ├── test_js_i18n.py              # JS i18n labels tests (18 tests, P3/5)
+│   ├── test_prompts.py              # Prompt system tests (59 tests, P4/5 + Sprint ES)
+│   └── test_multilang_routes.py     # Multilang routes + SEO tests (69 tests, P5/5 + Sprint ES)
 │
 ├── config/                                # Runtime configuration
 │   ├── __init__.py                      # Package init
 │   ├── games.py                         # GameConfig registry — unified game definitions (Phase 10)
-│   ├── languages.py                     # Language registry — LANG_CONFIGS, get_lang_config() (Phase 11)
+│   ├── languages.py                     # Language registry — ValidLang enum, PAGE_SLUGS (6 langs), PROMPT_KEYS (Phase 11+P5/5)
+│   ├── i18n.py                          # i18n module — gettext + Babel, 6 languages, badges + analysis strings (P1/5)
+│   ├── js_i18n.py                       # JS i18n labels — window.LotoIA_i18n, FR/EN/ES, 155 keys per lang (P3/5)
+│   ├── templates.py                     # Jinja2 template engine — EM_URLS (6 langs), hreflang (killswitch-filtered), lang switch (P2-P5/5)
+│   ├── killswitch.py                    # Multilingual kill switch — ENABLED_LANGS = ["fr", "en", "es"] (P5/5)
 │   ├── version.py                       # Centralized version constant (VERSION = "1.001")
 │   └── sponsors.json                    # Sponsor system config (enabled, frequency, sponsors[])
 │
@@ -273,7 +275,13 @@ hybride-api/
 
 ## 2. Design Philosophy
 
-The frontend is built entirely with vanilla JavaScript (ES5+), HTML5, and CSS3. There is no framework (React, Vue, Angular) and no build step (no Webpack, Vite, or Babel).
+The frontend is built with vanilla JavaScript (ES5+), HTML5, and CSS3. There is no JS framework (React, Vue, Angular) and no build step (no Webpack, Vite, or Babel).
+
+**Templating (P2/5):** EuroMillions pages use **Jinja2** server-side templates with i18n extension (`_()` / `ngettext()`). A single set of 10 templates (`ui/templates/em/`) renders all 6 languages via `render_template(lang="fr"|"en"|"pt"|...)`. Loto pages remain static HTML.
+
+**JS i18n (P3/5):** All JS-rendered strings (155 keys per language) are centralized in `config/js_i18n.py` and injected as `window.LotoIA_i18n` via Jinja2. Frontend JS reads labels at runtime — no per-language JS files needed.
+
+**Multilang routing (P5/5):** PT/ES/DE/NL routes are factory-generated (`routes/multilang_em_pages.py`) with a **kill switch** (`config/killswitch.py`). Disabled languages return 302 redirects to the FR equivalent. `hreflang_tags()` and the dynamic sitemap only include enabled languages.
 
 **Rationale:**
 
@@ -281,6 +289,7 @@ The frontend is built entirely with vanilla JavaScript (ES5+), HTML5, and CSS3. 
 - **Control** — Direct DOM manipulation without abstraction layers. Every interaction is explicit and traceable.
 - **Minimal dependencies** — The chatbot widget (`hybride-chatbot.js`) is a self-contained IIFE with zero external imports. The same applies to all other JS modules.
 - **Deployment simplicity** — Static files served directly by FastAPI. No node_modules, no build pipeline, no transpilation.
+- **i18n (P1-P5/5)** — Babel/gettext `.po` catalogs for 6 languages. Thread-safe `ContextVar` ensures async-safe translations. JS labels via `window.LotoIA_i18n` (P3/5). File-based prompts with lang fallback chain (P4/5). Kill switch + dynamic sitemap (P5/5).
 
 This approach trades developer convenience (no hot-reload, no component model) for a lighter, more predictable production artifact.
 
@@ -362,7 +371,8 @@ This approach trades developer convenience (no hot-reload, no component model) f
 | **Mobile** | Fullscreen chat via `.hybride-fullscreen` class toggle (only when open) |
 | **Android keyboard** | `visualViewport` API sync + `--vvp-height` CSS variable + `interactive-widget=resizes-content` |
 | **Typing indicator** | Animated 3-dot bounce |
-| **Responses** | Gemini 2.0 Flash via `/api/hybride-chat` (multi-turn, system_instruction, 15s timeout, fallback) |
+| **SSE Streaming (P9)** | Real-time word-by-word rendering via `fetch()` + `getReader()` + `TextDecoder`. SSE events: `data: {"chunk", "source", "mode", "is_done"}`. Anti-buffering headers: `Cache-Control: no-cache, no-transform`, `X-Accel-Buffering: no`, `Content-Encoding: identity` (bypasses GZipMiddleware). 30s timeout. |
+| **Responses** | Gemini 2.0 Flash via `/api/hybride-chat` SSE stream (multi-turn, system_instruction, circuit breaker, fallback) |
 | **Sponsor system** | Post-Gemini injection via `_get_sponsor_if_due()`. Alternates style A (natural) / style B (banner) every N responses. Config in `config/sponsors.json`. Does not pollute conversational history. |
 | **GA4 tracking** | 5 custom events via `LotoIAAnalytics.track()`: `hybride_chat_open` (page, has_history), `hybride_chat_message` (message_length, message_count), `hybride_chat_session` (duration, sponsor_views, message_count), `hybride_chat_sponsor_view` (sponsor_style A/B, message_position), `hybride_chat_clear` (message_count). Safe wrapper: analytics errors never break chat. |
 | **History** | Last 20 messages sent as context (chatHistory array, trimmed by frontend) |
@@ -378,7 +388,8 @@ This approach trades developer convenience (no hot-reload, no component model) f
 | **Auto-init** | Same `#hybride-chatbot-root` div, guard via `data-hybride-init` attribute |
 | **Pages** | Integrated on 7 EM pages: accueil-em, euromillions, simulateur-em, statistiques-em, historique-em, faq-em, news-em |
 | **CSS** | Shared `hybride-chatbot.css` (same dark-mode palette) |
-| **Endpoint** | `/api/euromillions/hybride-chat` (POST) |
+| **SSE Streaming (P9)** | Same real-time streaming as Loto widget (SSE events, `getReader()`, anti-buffering headers) |
+| **Endpoint** | `/api/euromillions/hybride-chat` (POST, SSE stream) |
 | **Storage** | `hybride-history-em` (sessionStorage, isolated from Loto's `hybride-history`) |
 | **Header** | `HYBRIDE — EuroMillions` |
 | **Welcome** | `...assistant IA de LotoIA — module EuroMillions...` |
@@ -472,7 +483,7 @@ USER BROWSER (HTML/CSS/Vanilla JS)
          v
 +--------------------------------------------------+
 |              MIDDLEWARE STACK                      |
-|  1. GZipMiddleware (>500 bytes) — outermost       |
+|  1. GZipMiddleware (>500 bytes, bypassed for SSE via Content-Encoding: identity) |
 |  2. UmamiOwnerFilterMiddleware (OWNER_IP filter)  |
 |  3. HeadMethodMiddleware (HEAD → GET adapter)     |
 |  4. trailing_slash_redirect (strip trailing /)     |
@@ -504,9 +515,11 @@ USER BROWSER (HTML/CSS/Vanilla JS)
 |  routes/api_chat_em.py   HYBRIDE chatbot EM       |
 |                                                   |
 |  ── Shared Routes ────────────────────────────   |
-|  routes/pages.py         23 HTML/SEO pages        |
+|  routes/pages.py         22 HTML/SEO pages        |
 |  routes/em_pages.py      EM HTML page routes (FR) |
 |  routes/en_em_pages.py   EM HTML page routes (EN) |
+|  routes/multilang_em_pages.py  EM PT/ES/DE/NL (28)|
+|  routes/sitemap.py       Dynamic XML sitemap      |
 |  routes/api_gemini.py    Gemini AI enrichment     |
 |  routes/api_pdf.py       PDF generation           |
 |  routes/api_tracking.py  Analytics tracking       |
@@ -541,7 +554,7 @@ USER BROWSER (HTML/CSS/Vanilla JS)
 |  pdf_generator.py       ReportLab PDF — Loto       |
 |  em_pdf_generator.py    ReportLab PDF — EM         |
 |  penalization.py        Post-draw frequency filter  |
-|  prompt_loader.py       36 keys dynamic loader     |
+|  prompt_loader.py       Loto PROMPT_MAP + EM multilang|
 +--------------------------------------------------+
          |
          v
@@ -604,12 +617,13 @@ USER BROWSER (HTML/CSS/Vanilla JS)
 ### Modular Architecture (Post-Audit Refactoring)
 
 ```
-main.py (~640 lines) — Orchestrator
+main.py (~688 lines) — Orchestrator
     ├── app = FastAPI() + lifespan (httpx.AsyncClient + aiomysql pool + Redis cache)
     ├── Middlewares (CORS, correlation ID, security headers, canonical, cache, SEO, Umami filter, HEAD, HTTPS)
     ├── Rate limiting (slowapi, 10/min on chat endpoints)
     ├── Static mounts (/ui, /static)
-    ├── app.include_router() x16 (8 legacy Loto + 4 legacy EM + 3 unified Phase 10 + 1 EN EM Phase 11)
+    ├── _SEO_ROUTES frozenset (auto-built from EM_URLS, all langs, P5/5)
+    ├── app.include_router() x18 (8 legacy Loto + 4 legacy EM + 3 unified P10 + 1 EN P11 + 1 multilang P5/5 + 1 sitemap P5/5)
     ├── /health (native async + asyncio.wait_for 5s timeout)
     └── SEO 301 redirects
 
@@ -636,7 +650,7 @@ em_schemas.py — Pydantic Models (EuroMillions)
 
 rate_limit.py — Shared slowapi limiter instance
 
-routes/ — 16 routers (3 unified + 8 legacy Loto + 4 legacy EM + 1 EN Phase 11)
+routes/ — 18 routers (3 unified + 8 legacy Loto + 4 legacy EM + 1 EN Phase 11 + 1 multilang P5/5 + 1 sitemap P5/5)
     ── Unified Routes (Phase 10) ──
     ├── api_data_unified.py    (~400L)  /api/{game}/tirages/*, stats/*, numbers-heat, draw/*, etc.
     ├── api_analyse_unified.py (~720L)  /api/{game}/generate, meta-analyse-local, analyze-custom-grid
@@ -646,12 +660,14 @@ routes/ — 16 routers (3 unified + 8 legacy Loto + 4 legacy EM + 1 EN Phase 11)
     ├── em_data.py        (~100L)  EM thin wrapper → unified (prefix /api/euromillions)
     ├── api_analyse.py     (~60L)  Loto thin wrapper → unified + /ask (Loto-only)
     ├── em_analyse.py     (~100L)  EM thin wrapper → unified + /meta-analyse-texte, /meta-pdf (EM-only)
-    ├── api_chat.py        (~85L)  Loto chatbot wrapper + re-exports (services.chat_detectors, chat_sql, chat_utils)
-    ├── api_chat_em.py     (~75L)  EM chatbot wrapper + re-exports (services.chat_detectors_em, chat_sql_em, chat_utils_em)
+    ├── api_chat.py        (~92L)  Loto chatbot SSE StreamingResponse + re-exports (P9)
+    ├── api_chat_em.py     (~85L)  EM chatbot SSE StreamingResponse + re-exports (P9)
     ── Shared Routes ──
-    ├── pages.py          (236 lines)  23 HTML page routes
+    ├── pages.py          (230 lines)  22 HTML page routes (sitemap removed P5/5)
     ├── em_pages.py       (68 lines)   EuroMillions HTML page routes (7 SEO clean URLs, FR)
     ├── en_em_pages.py    (74 lines)   EuroMillions EN page routes (7 SEO clean URLs, Phase 11)
+    ├── multilang_em_pages.py (175L)   EuroMillions PT/ES/DE/NL factory routes (28 routes, P5/5)
+    ├── sitemap.py         (86 lines)  Dynamic XML sitemap — Loto FR + EM multilang (P5/5)
     ├── api_gemini.py      (19 lines)  meta-analyse-texte
     ├── api_pdf.py         (37 lines)  meta-pdf
     ├── api_tracking.py   (127 lines)  track-grid, track-ad-*
@@ -659,8 +675,8 @@ routes/ — 16 routers (3 unified + 8 legacy Loto + 4 legacy EM + 1 EN Phase 11)
 
 services/ — 21 modules, ~6200 lines
     ── Chat Pipeline (Phase 1 Loto, Phase 4 EM) ──
-    ├── chat_pipeline.py     (639L)  12-phase orchestration — Loto
-    ├── chat_pipeline_em.py  (653L)  12-phase orchestration — EuroMillions
+    ├── chat_pipeline.py     (715L)  12-phase orchestration + SSE streaming — Loto (P9)
+    ├── chat_pipeline_em.py  (760L)  12-phase orchestration + SSE streaming — EM (P9)
     ├── chat_detectors.py    (850L)  Regex detectors, insult/OOR pools, streak — Loto
     ├── chat_detectors_em.py (495L)  EM-specific detectors + response pools
     ├── chat_sql.py          (247L)  Text-to-SQL generator + executor — Loto
@@ -675,14 +691,14 @@ services/ — 21 modules, ~6200 lines
     ── AI, Cache, PDF ──
     ├── cache.py             (116L)  Redis async + in-memory fallback (Phase 6)
     ├── circuit_breaker.py    (84L)  Gemini circuit breaker (CLOSED/OPEN/HALF_OPEN)
-    ├── gemini.py            (130L)  Gemini API client — Loto (via circuit breaker)
+    ├── gemini.py            (192L)  Gemini API client — Loto (batch + streaming, circuit breaker, P9)
     ├── em_gemini.py         (122L)  Gemini API client — EuroMillions
     ├── pdf_generator.py     (361L)  ReportLab PDF engine — Loto (single graph)
     ├── em_pdf_generator.py  (364L)  ReportLab PDF engine — EM (dual graphs, 2x2 matplotlib)
     ├── penalization.py       (65L)  Post-draw frequency penalization filter
-    └── prompt_loader.py     (101L)  Dynamic prompt loader (36 keys: 18 Loto + 18 EM)
+    └── prompt_loader.py     (143L)  Loto PROMPT_MAP (18 keys) + EM file-based multilang loader (P4/5)
 
-tests/ — 473 tests, 20 files, ~5100 lines (pytest + pytest-cov)
+tests/ — 685 tests, 23 files (pytest + pytest-cov)
     ├── conftest.py                (247L)  Fixtures (AsyncSmartMockCursor, cache clear)
     ── Foundation Tests ──
     ├── test_models.py             (92L)   Pydantic models + CONFIG weights
@@ -705,6 +721,12 @@ tests/ — 473 tests, 20 files, ~5100 lines (pytest + pytest-cov)
     ├── test_chat_detectors_em.py (319L)   EM detection pipeline
     ├── test_chat_pipeline_em.py  (231L)   EM orchestration
     ├── test_chat_utils_em.py     (232L)   EM context building
+    ── i18n / Multilang Tests (P1-P5/5) ──
+    ├── test_i18n.py             (30 tests)  gettext, Babel catalogs, plurals, badges
+    ├── test_templates.py        (37 tests)  Jinja2 env, EM_URLS, render_template FR/EN
+    ├── test_js_i18n.py          (18 tests)  JS i18n labels FR/EN, key coverage
+    ├── test_prompts.py          (58 tests)  Loto+EM prompts, lang fallback, variable substitution
+    ├── test_multilang_routes.py (67 tests)  Kill switch, hreflang, sitemap, routes, PAGE_SLUGS
     ── Stress Tests ──
     └── test_insult_oor.py        (854L)   141 tests: insult detection + out-of-range numbers
 ```
@@ -750,7 +772,7 @@ FastAPI's first-match routing ensures exact legacy paths match before the `{game
 
 ## 5. Frontend Architecture
 
-Static HTML pages served by FastAPI. No templating engine. JavaScript modules handle dynamic behavior client-side.
+Loto pages are static HTML served by FastAPI. EuroMillions pages use **Jinja2 templates** (P2/5) with i18n extension for multilingual rendering (6 languages). JS labels are centralized in `config/js_i18n.py` and injected as `window.LotoIA_i18n` (P3/5) — no per-language JS files needed.
 
 | Module | Purpose |
 |--------|---------|
@@ -852,6 +874,8 @@ T=0  showMetaAnalysePopupEM()
 | python-json-logger | ≥2.0.7 | JSON structured logging |
 | ReportLab | 4.1.0 | PDF generation (META75 reports) |
 | matplotlib | 3.9.2 | Charts for EM PDF (dual graphs boules+etoiles) |
+| Jinja2 | ≥3.1 | Server-side templates for EM pages (i18n extension, P2/5) |
+| Babel | ≥2.16 | i18n catalog extraction + compilation (.po/.mo, P1/5) |
 | python-dotenv | 1.0.1 | Environment configuration |
 | cryptography | 43.0.3 | SSL/TLS support |
 | pytest | ≥8.0 | Unit testing framework |
@@ -875,7 +899,9 @@ T=0  showMetaAnalysePopupEM()
 
 | Technology | Purpose |
 |------------|---------|
-| HTML5 | Semantic markup, no templating |
+| HTML5 | Semantic markup |
+| Jinja2 | Server-side templates for EM pages (P2/5), i18n extension, thread-safe ContextVar, JS i18n injection (P3/5) |
+| Babel / gettext | i18n catalogs for 6 languages (P1/5). JS labels via `window.LotoIA_i18n` (P3/5) |
 | CSS3 | Custom properties, Grid, Flexbox |
 | Vanilla JavaScript | No framework dependency |
 
@@ -892,7 +918,7 @@ T=0  showMetaAnalysePopupEM()
 
 ## 7. API Summary
 
-### Page Routes (23) — routes/pages.py
+### Page Routes (22) — routes/pages.py
 
 | Route | Template |
 |-------|----------|
@@ -916,23 +942,43 @@ T=0  showMetaAnalysePopupEM()
 | `GET /politique-confidentialite` | politique-confidentialite.html |
 | `GET /politique-cookies` | politique-cookies.html |
 | `GET /robots.txt` | robots.txt |
-| `GET /sitemap.xml` | sitemap.xml |
 | `GET /favicon.ico` | favicon.ico |
 | `GET /BingSiteAuth.xml` | BingSiteAuth.xml |
 
-### EN EuroMillions Page Routes (7) — routes/en_em_pages.py (Phase 11)
+### EN EuroMillions Page Routes (7) — routes/en_em_pages.py (P2/5 — Jinja2)
 
-| Route | Template |
-|-------|----------|
-| `GET /en/euromillions` | en/euromillions/home.html |
-| `GET /en/euromillions/generator` | en/euromillions/generator.html |
-| `GET /en/euromillions/simulator` | en/euromillions/simulator.html |
-| `GET /en/euromillions/statistics` | en/euromillions/statistics.html |
-| `GET /en/euromillions/history` | en/euromillions/history.html |
-| `GET /en/euromillions/faq` | en/euromillions/faq.html |
-| `GET /en/euromillions/news` | en/euromillions/news.html |
+| Route | Jinja2 Template | lang |
+|-------|-----------------|------|
+| `GET /en/euromillions` | em/accueil.html | en |
+| `GET /en/euromillions/generator` | em/generateur.html | en |
+| `GET /en/euromillions/simulator` | em/simulateur.html | en |
+| `GET /en/euromillions/statistics` | em/statistiques.html | en |
+| `GET /en/euromillions/history` | em/historique.html | en |
+| `GET /en/euromillions/faq` | em/faq.html | en |
+| `GET /en/euromillions/news` | em/news.html | en |
 
-All EN pages include `hreflang` alternate links (`fr`/`en`/`x-default`), lang-switch button (`FR/EN`), and load EN-specific JS from `/ui/en/euromillions/static/`.
+All EN pages use the **same Jinja2 templates** as FR with `lang="en"`. `render_template()` injects: EN URLs, `date_locale="en-GB"`, EN chatbot JS, EN sponsor popup JS, `hreflang` tags (`fr`/`en`/`x-default`), lang-switch button, OG locale `en_GB`, BeGambleAware help link.
+
+### Multilang EuroMillions Page Routes (28) — routes/multilang_em_pages.py (P5/5)
+
+Factory-generated routes for PT/ES/DE/NL (7 pages x 4 languages = 28 routes). All use the same Jinja2 templates as FR/EN.
+
+| Route Pattern | Pages | Notes |
+|---------------|-------|-------|
+| `GET /pt/euromillions/*` | 7 | Portuguese (gerador, simulador, estatisticas, historico, noticias, faq) |
+| `GET /es/euromillions/*` | 7 | Spanish (generador, simulador, estadisticas, historial, noticias, faq) |
+| `GET /de/euromillions/*` | 7 | German (generator, simulator, statistiken, ziehungen, nachrichten, faq) |
+| `GET /nl/euromillions/*` | 7 | Dutch (generator, simulator, statistieken, geschiedenis, nieuws, faq) |
+
+**Kill switch**: If `lang` not in `killswitch.ENABLED_LANGS` → 302 redirect to FR equivalent. Routes are always registered (SEO crawl-safe), check is at request time. ES activated 2026-02-28.
+
+### Dynamic Sitemap — routes/sitemap.py (P5/5)
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `GET /sitemap.xml` | GET | Dynamic XML sitemap — Loto FR + EM pages for all ENABLED_LANGS |
+
+Includes `<priority>`, `<lastmod>`, `<changefreq>` per URL. Only enabled languages appear in the sitemap.
 
 ### Unified Data Endpoints (Phase 10) — routes/api_data_unified.py
 
@@ -1118,15 +1164,17 @@ All endpoints below delegate to unified handlers (game=euromillions). Backward c
 - **Cache prefix**: `em:` (no collision with Loto)
 - **Used by**: `api_data_unified.py`, `chat_pipeline_em.py`
 
-### services/gemini.py — Gemini AI Client (Loto)
+### services/gemini.py — Gemini AI Client (Loto, 192L)
 
 - **API**: Google Gemini 2.0 Flash (`generativelanguage.googleapis.com/v1beta`)
 - **Transport**: httpx.AsyncClient (shared via app lifespan, circuit breaker wrapped)
 - **Auth**: API key via `GEM_API_KEY` or `GEMINI_API_KEY` env var
 - **Prompt**: Loaded dynamically from `prompts/tirages/` or `prompts/annees/` via `load_prompt()`
+- **Batch mode**: `enrich_analysis()` for META ANALYSE — single request/response via `GEMINI_MODEL_URL`
+- **Streaming mode (P9)**: `stream_gemini_chat()` async generator via `GEMINI_STREAM_URL` (`streamGenerateContent?alt=sse`). Uses `httpx.AsyncClient.stream("POST", ...)` with manual circuit breaker management (`_record_success`/`_record_failure`). Yields text chunks progressively.
 - **Fallback chain**: Gemini enriched → Local text (if API fails/timeout) → Circuit open fallback
-- **Output**: `{"analysis_enriched": "...", "source": "gemini_enriched"|"hybride_local"|"fallback"|"fallback_circuit"}`
-- **Shared by**: META ANALYSE (api_gemini.py) + HYBRIDE chatbot (chat_pipeline.py) via `GEMINI_MODEL_URL`
+- **Output**: Batch: `{"analysis_enriched": "...", "source": "..."}`. Stream: yields `str` chunks.
+- **Shared by**: META ANALYSE (api_gemini.py) via `GEMINI_MODEL_URL` + HYBRIDE chatbot (chat_pipeline.py) via `stream_gemini_chat()`
 
 ### services/em_gemini.py — Gemini AI Client (EuroMillions)
 
@@ -1141,9 +1189,11 @@ All endpoints below delegate to unified handlers (game=euromillions). Backward c
 
 Phase 1 split `api_chat.py` (2014L) into 4 service modules. Phase 4 applied the same pattern to `api_chat_em.py` (1668L).
 
-**services/chat_pipeline.py** (639L) / **chat_pipeline_em.py** (653L):
+**services/chat_pipeline.py** (715L) / **chat_pipeline_em.py** (760L):
 - **12-phase orchestration**: Continuation → Next Draw → Draw Results → Grid → Complex → Single Number → Text-to-SQL → Gemini
-- **Functions**: `handle_chat(message, history, page, httpx_client)` → `dict(response, source, mode)`
+- **Refactored (P9)**: `_prepare_chat_context()` extracts all 12 detection phases → returns `(early_return, ctx_dict)`. Shared by batch and streaming modes.
+- **Batch mode**: `handle_chat(message, history, page, httpx_client)` → `dict(response, source, mode)` (preserved for backward compat)
+- **SSE Streaming (P9)**: `handle_chat_stream()` async generator yields SSE events (`data: {"chunk", "source", "mode", "is_done"}\n\n`). Early returns (insult, compliment, OOR) yield single event. Gemini responses stream progressively. Sponsor injected as final chunk before done event. Fallback on exception.
 - **Pitch**: `handle_pitch(grilles, httpx_client)` → `dict(pitchs: list[str])`
 
 **services/chat_detectors.py** (850L) / **chat_detectors_em.py** (495L):
@@ -1188,13 +1238,13 @@ Phase 1 split `api_chat.py` (2014L) into 4 service modules. Phase 4 applied the 
 - **Purpose**: Frequency-based weight adjustment for number generation
 - **Used by**: Engine layer for grid optimization
 
-### services/prompt_loader.py — Dynamic Prompt System
+### services/prompt_loader.py — Dynamic Prompt System (P4/5 Refactored)
 
-- **36 keys** mapped via `PROMPT_MAP` dict (18 Loto + 18 EM)
-- **Loto keys** (18): 100, 200, 300, 400, 500, 600, 700, 800, GLOBAL, 1A-6A, CHATBOT, PITCH_GRILLE, SQL_GENERATOR
-- **EM keys** (18): CHATBOT_EM, PITCH_GRILLE_EM, SQL_GENERATOR_EM, EM_100-EM_700, EM_GLOBAL, EM_1A-EM_6A, EM_GLOBAL_A
-- **Functions**: `load_prompt(window)` (Loto) + `load_prompt_em(window)` (EM, auto `EM_` prefix)
-- **Fallback**: `prompt_global.txt` for Loto, `prompts/euromillions/tirages/prompt_global.txt` for EM
+- **Loto**: 18 keys via `PROMPT_MAP` dict (100-800, GLOBAL, 1A-6A, CHATBOT, PITCH_GRILLE, SQL_GENERATOR)
+- **EM**: File-based multilingual loader `load_prompt_em(name, lang)` with **fallback chain** `[lang → en → fr]`
+- **Prompt directory**: `prompts/em/{lang}/` — 108 files (18 per language x 6 languages: fr, en, pt, es, de, nl)
+- **Functions**: `load_prompt(window)` (Loto), `load_prompt_em(name, lang)` (EM, `@lru_cache`), `get_em_prompt(name, lang, **kwargs)` (safe variable substitution), `em_window_to_prompt(window)` (window key → file path)
+- **Fallback**: `prompt_global.txt` for Loto. EM: lang → en → fr chain (always finds FR as ultimate fallback)
 - **Anti-meta block**: Each prompt contains rules preventing Gemini from starting with meta-commentary ("Voici une reformulation...")
 
 ---
@@ -1234,7 +1284,7 @@ Phase 1 split `api_chat.py` (2014L) into 4 service modules. Phase 4 applied the 
 | Rate Limiting | slowapi IP-based limiter (10/min on chat, X-Forwarded-For aware) |
 | Correlation ID | X-Request-ID per request (generated or forwarded) for tracing |
 | Circuit Breaker | Gemini API protection (3 fails → 60s open → graceful fallback) |
-| Compression | GZipMiddleware (>500 bytes) |
+| Compression | GZipMiddleware (>500 bytes, bypassed for SSE via `Content-Encoding: identity`) |
 | Scraper Blocking | robots.txt (AhrefsBot, SemrushBot, GPTBot, CCBot) |
 | GDPR Compliance | Cookie consent system, no tracking without approval |
 | URL Deduplication | 301 redirect `/ui/*.html` → clean routes |
@@ -1407,10 +1457,160 @@ Other changes:
 
 **Result**: 38 files changed, +9368 lines, 455 → 473 tests, 0 failures.
 
+### Phase 11 — Post-Release Fix: FR Residuals in EN API (2026-02-27)
+
+Fixed 30 hardcoded French suggestion/comparison strings visible on `/en/euromillions/simulator` analysis results.
+
+| Change | Detail |
+|--------|--------|
+| `config/i18n.py` | Added `_analysis_strings(lang)` function — 34 FR/EN string pairs (severity 0-3, comparison, direction words) |
+| `routes/api_analyse_unified.py` | Refactored 30 f-strings → `s = _analysis_strings(lang); s[key].format(...)` |
+| `translations/en/.../messages.po` | Added 4 active entries (`Numéros chauds`, `Équilibre`, plural `tirages`, `{count} tirages analysés`) |
+
+**Result**: 473 → 540 tests (including P1-P2/5 tests added in same session), 0 failures.
+
+### P1/5 — gettext + Babel i18n Infrastructure (2026-02-27)
+
+Babel/gettext catalog system for multilingual EuroMillions pages.
+
+| Change | Detail |
+|--------|--------|
+| `config/i18n.py` (221L) | Central i18n module: `gettext_func(lang)`, `ngettext_func(lang)`, `_global()` via ContextVar, `get_translator(request)`, `_badges(lang)`, `_analysis_strings(lang)` |
+| `translations/messages.pot` | Extracted 250+ msgids from Jinja2 templates via Babel |
+| `translations/{fr,en,pt,es,de,nl}/` | 6-language `.po` catalogs with compiled `.mo` files. FR=reference, EN=complete, pt/es/de/nl=stubs |
+| `tests/test_i18n.py` (30 tests) | gettext loading, FR/EN translations, plurals, named placeholders, fallback, badge translations |
+
+**Result**: Production-ready gettext infrastructure. 6 supported languages. FR+EN complete, 4 languages ready for translation.
+
+### P2/5 — Jinja2 Templates + Sponsor Popup Fix (2026-02-27)
+
+Server-side Jinja2 templates replace static HTML serving for all EuroMillions pages (FR + EN).
+
+| Change | Detail |
+|--------|--------|
+| `config/templates.py` (180L) | Jinja2 Environment with i18n extension, `newstyle=False`, thread-safe `ctx_lang` ContextVar. `render_template()` injects full i18n context: URLs, hreflang, OG locale, date_locale, gambling help, lang switch, chatbot/rating JS paths |
+| `ui/templates/em/` (10 files) | 3 partials (`_base.html`, `_footer.html`, `_hero.html`) + 7 page templates. All `_()` translated strings, `{{ sponsor_js }}` / `{{ app_js }}` template variables |
+| `routes/em_pages.py` | FR routes → `render_template("em/*.html", lang="fr")` |
+| `routes/en_em_pages.py` | EN routes → `render_template("em/*.html", lang="en")` — same templates, different lang |
+| Sponsor popup fix | `MOTEUR HYBRIDE EM` → `HYBRID ENGINE EM` in `sponsor-popup-em-en.js` + `sponsor-popup75-em-en.js`. `75 grilles` → `75 grids`. Added `date_locale` context var (`en-GB` / `fr-FR`) |
+| `tests/test_templates.py` (37 tests) | Jinja2 env, EM_URLS, hreflang_tags, render_template FR/EN, all 7 pages x 2 langs, ContextVar isolation, gambling help, chatbot JS paths |
+
+**Key design decision**: `newstyle=False` avoids Jinja2's `_make_new_gettext` auto-formatting (`rv % variables`) which breaks any `%` character in translated strings (CSS `60%`, `100%`, `%(total)s` placeholders).
+
+**Result**: 10 Jinja2 templates serve 14 pages (7 FR + 7 EN). 37 new tests. 540 total, 0 failures.
+
+### P3/5 — JS i18n Centralisation (2026-02-27)
+
+Centralized all JS-rendered strings into a single Python dict, injected via Jinja2 as `window.LotoIA_i18n`.
+
+| Change | Detail |
+|--------|--------|
+| `config/js_i18n.py` (480L) | `_LABELS` dict: FR + EN + ES, 155 keys per lang (app-em, simulateur-em, sponsor-popup, meta75, rating) |
+| `ui/templates/em/_base.html` | Added `<script>window.LotoIA_i18n = {{ js_labels\|tojson }};</script>` |
+| `config/templates.py` | `render_template()` injects `js_labels=get_js_labels(lang)` |
+| EN static JS files | Deleted 5 of 6 EN-specific JS files (`app-em-en.js`, `simulateur-em-en.js`, `sponsor-popup-em-en.js`, `sponsor-popup75-em-en.js`, `faq-em-en.js`) — frontend now reads `window.LotoIA_i18n` |
+| FR JS files | Refactored to read `window.LotoIA_i18n` labels instead of hardcoded French strings |
+| `tests/test_js_i18n.py` (18 tests) | Label coverage, key parity FR/EN, rating keys, locale format |
+
+**Result**: 5 duplicated JS files eliminated. Single source of truth for all JS strings. 540 → 558 tests, 0 failures.
+
+### P4/5 — Prompts localisés + file-based loader (2026-02-27)
+
+Refactored EM prompt system from PROMPT_MAP dict to file-based multilingual loader with lang fallback.
+
+| Change | Detail |
+|--------|--------|
+| `services/prompt_loader.py` (143L) | New `load_prompt_em(name, lang)` with `@lru_cache`, fallback chain `[lang → en → fr]`. New `get_em_prompt(name, lang, **kwargs)` for safe variable substitution. New `em_window_to_prompt(window)` path resolver. Loto PROMPT_MAP unchanged. |
+| `prompts/em/` (108 files) | 6 language directories (fr, en, pt, es, de, nl) x 18 files each (3 chatbot + 8 tirages + 7 annees) |
+| `services/em_gemini.py` | Uses `load_prompt_em(em_window_to_prompt(window), lang)` instead of `PROMPT_MAP[f"EM_{window}"]` |
+| `services/chat_pipeline_em.py` | Uses `load_prompt_em("prompt_hybride_em", lang)` for chatbot system prompt |
+| `services/chat_sql_em.py` | Uses `load_prompt_em("prompt_sql_generator_em", lang)` for SQL generator |
+| `config/languages.py` (96L) | Extended PROMPT_KEYS for chatbot/pitch/sql per language |
+| `tests/test_prompts.py` (58 tests) | Loto PROMPT_MAP, EM load_prompt_em, lang fallback chain, variable substitution, em_window_to_prompt |
+
+**Result**: EM prompts fully multilingual with graceful fallback. 558 → 616 tests, 0 failures.
+
+### P5/5 — Routes multilingues + SEO (2026-02-27)
+
+Factory-generated routes for PT/ES/DE/NL with kill switch, dynamic sitemap, and hreflang filtering.
+
+| Change | Detail |
+|--------|--------|
+| `config/killswitch.py` (7L) | `ENABLED_LANGS = ["fr", "en", "es"]` — central toggle for multilingual routes |
+| `config/templates.py` (256L) | Extended `EM_URLS` for 6 languages with localized URL slugs. Dynamic `_LANG_SWITCH` (FR→EN, others→FR). `hreflang_tags()` reads `killswitch.ENABLED_LANGS`. Extended `_GAMBLING_HELP`, `_OG_LOCALE`, `_DATE_LOCALE` for all 6 langs. |
+| `config/languages.py` (96L) | Extended `PAGE_SLUGS` for PT/ES/DE/NL (7 page types x 4 langs) |
+| `routes/multilang_em_pages.py` (175L) | Factory routes: `_HERO_TEXTS` per lang, `_PAGE_DEFS` for 7 pages, `_make_handler()`/`_make_faq_handler()` closures. Kill switch check → 302 to FR if disabled. 28 routes = 7 pages x 4 langs |
+| `routes/sitemap.py` (86L) | Dynamic `/sitemap.xml`: `_LOTO_PAGES` (14 static) + EM pages for `killswitch.ENABLED_LANGS`. Replaces static `ui/sitemap.xml` |
+| `routes/pages.py` (230L) | Removed static sitemap route (was shadowing dynamic endpoint) |
+| `main.py` (688L) | `_SEO_ROUTES` frozenset auto-built from `EM_URLS`. New router registrations: `multilang_em_router`, `sitemap_router` |
+| `tests/test_multilang_routes.py` (67 tests) | Kill switch defaults, EM_URLS coverage (6 langs), hreflang filtering, route registration (28 routes), kill switch redirect, dynamic sitemap (structure, content, enabled/disabled langs), _LANG_SWITCH, gambling help, OG/date locale, PAGE_SLUGS |
+
+**Localized URL slugs**:
+- PT: gerador, simulador, estatisticas, historico, noticias
+- ES: generador, simulador, estadisticas, historial, noticias
+- DE: generator, simulator, statistiken, ziehungen, nachrichten
+- NL: generator, simulator, statistieken, geschiedenis, nieuws
+
+**Result**: 4 new languages route-ready with kill switch. Dynamic sitemap respects enabled langs. 616 → 683 tests, 0 failures.
+
+### Phase 9 — SSE Streaming Chatbot (2026-02-28)
+
+Real-time Server-Sent Events streaming for the HYBRIDE chatbot. Responses appear word-by-word in the browser instead of arriving as a single block.
+
+| File | Lines | Purpose |
+|------|-------|---------|
+| `services/gemini.py` | 130→192 | `stream_gemini_chat()` async generator via `streamGenerateContent?alt=sse`, manual circuit breaker |
+| `services/chat_pipeline.py` | 639→715 | Extracted `_prepare_chat_context()`, added `_sse_event()` + `handle_chat_stream()` |
+| `services/chat_pipeline_em.py` | 653→760 | Same pattern: `_prepare_chat_context_em()` + `handle_chat_stream_em()` with `lang` support |
+| `routes/api_chat.py` | 85→92 | `StreamingResponse` + `_SSE_HEADERS` (anti-buffering) |
+| `routes/api_chat_em.py` | 73→85 | Same SSE StreamingResponse pattern |
+| `routes/api_chat_unified.py` | 73→88 | Same SSE StreamingResponse for both game variants |
+| `ui/static/hybride-chatbot.js` | ~500 | `fetch()` + `getReader()` + `TextDecoder` SSE parsing, `createBotBubble()` + `updateBubbleText()` |
+| `ui/static/hybride-chatbot-em.js` | ~500 | Same streaming frontend for EuroMillions |
+| `tests/test_routes.py` | +20 | Mock `stream_gemini_chat`, parse SSE events, verify `is_done` + `source` |
+
+**Anti-buffering headers** (3 iterations to solve Cloud Run + GZipMiddleware buffering):
+1. Initial deploy: responses buffered by GZipMiddleware
+2. Added `Cache-Control: no-cache, no-transform` + `X-Accel-Buffering: no` — GZip still compresses
+3. Added `Content-Encoding: identity` — forces GZipMiddleware to skip compression. Streaming confirmed.
+
+**SSE event format**: `data: {"chunk": "text", "source": "gemini", "mode": "decouverte", "is_done": false}\n\n`
+
+**Result**: 9 files changed, 683 → 684 tests, 0 failures. Real-time streaming confirmed on Cloud Run.
+
+### Sprint ES — Complete Spanish Translation + Kill Switch Activation (2026-02-28)
+
+Full Spanish (castillan) translation of the EuroMillions module: UI, backend labels, AI prompts, and kill switch activation.
+
+**Sprint 1/2 — UI & Backend:**
+
+| Change | Detail |
+|--------|--------|
+| `translations/es/LC_MESSAGES/messages.po` | 384 `msgstr` entries translated (from empty stubs). Cultural adaptations: Jugar Bien (gambling help), 900 200 225 (phone), Spanish legal references |
+| `config/js_i18n.py` (+155 keys) | Full `"es"` section: locale `es-ES`, all 155 JS labels translated |
+| `services/em_pdf_generator.py` (+25 keys) | `PDF_LABELS["es"]` block for META ANALYSE PDF reports |
+| `em_schemas.py` (4 regex) | `^(fr\|en)$` → `^(fr\|en\|es)$` on 4 Pydantic schema `lang` fields |
+
+**Sprint 2/2 — AI Prompts (18 files):**
+
+| File | Lines | Description |
+|------|-------|-------------|
+| `prompts/em/es/prompt_hybride_em.txt` | ~453 | Main chatbot system prompt (identity, FAQ, rules, BDD) |
+| `prompts/em/es/prompt_pitch_grille_em.txt` | ~65 | Grid pitch generator (conformity tiers) |
+| `prompts/em/es/prompt_sql_generator_em.txt` | ~184 | SQL generator ({TODAY} preserved, Spanish question examples) |
+| `prompts/em/es/annees/prompt_1a..6a.txt + global` | 7 | Year-based analysis horizons (corto→largo plazo) |
+| `prompts/em/es/tirages/prompt_100..700.txt + global` | 8 | Draw-based analysis horizons (100-700 + global) |
+
+**Translation choices**: Data Science tone — "combinación" (not "boleto"), "modelado de probabilidades", "análisis estadístico". No lottery jargon ("ganar", "apostar", "suerte"). Internal tags kept in French (`[DONNÉES TEMPS RÉEL]`, `[RÉSULTAT SQL]` — code-matched). Gambling help: Jugar Bien / www.jugarbien.es / 900 200 225.
+
+**Kill switch activation**: `ENABLED_LANGS = ["fr", "en", "es"]`. Tests updated: kill switch default, hreflang (4 tags), sitemap includes ES, ES pages return 200.
+
+**Result**: 26 files changed, +1621/-1412 lines. 684 → 685 tests, 0 failures. Deployed revision `hybride-api-00018-qm9`, 7 ES pages live at `lotoia.fr/es/euromillions/*`.
+
 ### Cumulative Impact
 
-| Metric | Before P1 | After P11 |
-|--------|-----------|-----------|
+| Metric | Before P1 | After P5/5 |
+|--------|-----------|------------|
 | `api_chat.py` | 2014L monolith | 82L wrapper |
 | `api_chat_em.py` | 1668L monolith | 73L wrapper |
 | `stats_service.py` + `em_stats_service.py` | 1418L duplicated | 978L (base class + wrappers) |
@@ -1418,8 +1618,13 @@ Other changes:
 | Database driver | PyMySQL (sync + 68 to_thread) | aiomysql (native async) |
 | Cache | In-memory dict | Redis async + in-memory fallback |
 | Security headers | Basic CSP | CSP + HSTS preload + COOP + Permissions-Policy |
-| i18n | FR only | FR + EN (GB) for EuroMillions (Phase 11) |
-| Tests | 248 | **473** |
+| EM page serving | Static HTML (duplicated FR/EN) | Jinja2 templates (shared 6 langs, P2/5) |
+| JS i18n | Hardcoded FR + 6 EN-specific JS files | `window.LotoIA_i18n` centralized, FR/EN/ES (P3/5 + Sprint ES) |
+| EM prompts | PROMPT_MAP dict (FR-only) | File-based multilang (6 langs, fallback chain, P4/5). ES fully translated (Sprint ES) |
+| Multilang routes | FR + EN only | 6 langs (42 EM routes), kill switch, dynamic sitemap (P5/5). ES activated (Sprint ES) |
+| i18n | FR only | Babel/gettext 6 langs + Jinja2 + JS labels + prompts + routes (P1-P5/5). ES complete (Sprint ES) |
+| Chatbot delivery | Batch (single block response) | SSE streaming (word-by-word, P9) |
+| Tests | 248 | **685** |
 | Services modules | 10 | **21** |
 ### Earlier Development History (Condensed)
 
@@ -1432,6 +1637,13 @@ Other changes:
 | 2026-02-14 | EuroMillions (5 phases): DB import (729 draws), API layer (15 endpoints), frontend (7 pages), chatbot EM (1668L), META ANALYSE EM (dual graphs + 15 prompts + PDF) |
 | 2026-02-14 | HYBRIDE rename: `HYBRIDE_OPTIMAL_V1` → `HYBRIDE` across 62 files |
 | 2026-02-27 | Phase 11: EuroMillions English (GB) — 7 EN pages, 6 EN JS, EN chatbot, i18n infra, hreflang, 473 tests |
+| 2026-02-27 | P1/5: gettext + Babel infrastructure — 6-language .po catalogs, config/i18n.py, 30 i18n tests |
+| 2026-02-27 | P2/5: Jinja2 templates — 10 templates (shared FR/EN), render_template(), sponsor popup EN fix, 37 template tests |
+| 2026-02-27 | P3/5: JS i18n — `config/js_i18n.py` (130+ keys FR/EN), `window.LotoIA_i18n`, deleted 5 EN JS files, 18 tests |
+| 2026-02-27 | P4/5: Prompts localisés — file-based `load_prompt_em(name, lang)` with fallback chain, `prompts/em/` (108 files, 6 langs), 58 tests |
+| 2026-02-27 | P5/5: Routes multilingues + SEO — kill switch, 28 factory routes (PT/ES/DE/NL), dynamic sitemap, hreflang filtering, 67 tests. 683 tests. |
+| 2026-02-28 | P9: SSE Streaming — real-time word-by-word chatbot responses via `stream_gemini_chat()`, `handle_chat_stream()`, `getReader()` frontend. Anti-buffering headers (`Content-Encoding: identity`). 684 tests. |
+| 2026-02-28 | Sprint ES: Complete Spanish translation — 384 .po entries, 155 JS keys, 25 PDF labels, 18 AI prompts (Data Science tone), 4 schema regex. Kill switch activated: `["fr", "en", "es"]`. 7 ES pages live. **685 tests.** |
 
 ---
 
@@ -1439,20 +1651,20 @@ Other changes:
 
 | Area | Status | Notes |
 |------|--------|-------|
-| Backend (FastAPI + aiomysql) | Stable | ~660L orchestrator, 16 routers, native async DB (Phase 5), 12 middlewares |
+| Backend (FastAPI + aiomysql) | Stable | ~688L orchestrator, 18 routers, native async DB (Phase 5), 12 middlewares |
 | Unified Routes | Stable | `/api/{game}/...` with `game = loto \| euromillions` (Phase 10), backward compat preserved |
 | HYBRIDE Engine (Loto) | Stable | Scoring, constraints, badges functional |
 | HYBRIDE Engine (EuroMillions) | Stable | 5 boules [1-50] + 2 etoiles [1-12] |
-| HYBRIDE Chatbot (Loto) | Stable | Modular: 4 service modules (Phase 1). 12-phase detection, Text-to-SQL, session persistence, GA4 tracking, sponsor system. 6 pages. |
-| HYBRIDE Chatbot (EuroMillions) | Stable | Modular: 4 service modules (Phase 4). Same architecture as Loto. 7 FR + 7 EN pages (Phase 11). Isolated sessionStorage. EN response pools + EN prompts. |
-| i18n / Multilang | Partial | EuroMillions EN (GB) version live (Phase 11). 7 EN pages, 6 EN JS, EN chatbot. Loto EN not yet implemented. Remaining FR residue: badges, pitch lang chain, META prompts, PDF, rating popup. |
+| HYBRIDE Chatbot (Loto) | Stable | Modular: 4 service modules (Phase 1). 12-phase detection, Text-to-SQL, SSE streaming (P9), session persistence, GA4 tracking, sponsor system. 6 pages. |
+| HYBRIDE Chatbot (EuroMillions) | Stable | Modular: 4 service modules (Phase 4). SSE streaming (P9). Same architecture as Loto. 7 FR + 7 EN pages (Phase 11). Isolated sessionStorage. EN response pools + EN prompts. |
+| i18n / Multilang | **Complete (P1-P5/5 + Sprint ES)** | Babel/gettext (P1/5), Jinja2 templates (P2/5), JS i18n (P3/5), multilang prompts (P4/5), routes+sitemap+killswitch (P5/5). 6 languages, 42 EM routes. **ES fully translated** (Sprint ES): 384 .po, 155 JS, 25 PDF, 18 prompts, kill switch ON. Remaining: PDF (26 FR strings), rating popup (5 FR strings), .po stubs (pt/de/nl). Loto EN not yet planned. |
 | Stats Layer | Stable | Base class (Phase 2): 770L base + 2 thin wrappers, GameConfig-driven |
 | META ANALYSE 75 (Loto) | Stable | Async Gemini enrichment + PDF export, circuit breaker fallback. 18 Loto prompt keys. |
 | META ANALYSE 75 (EM) | Stable | Dual graphs, EM Gemini enrichment, EM PDF (2x2 matplotlib), 14 EM prompt keys. |
 | Cache | Stable | Redis async + in-memory fallback (Phase 6). PDF off-thread. |
-| Testing | Active | **473 tests** (pytest, 20 test files, ~5100L), CI integration |
+| Testing | Active | **685 tests** (pytest, 23 test files), CI integration |
 | Security | Hardened | CSP+HSTS preload+COOP (Phase 7), aiomysql parameterized queries, rate limiting, correlation IDs |
-| SEO | Stable | Schema.org Dataset (Phase 7), bankability T4 pivot (Phase 8), structured data, canonical redirects |
+| SEO | Stable | Schema.org Dataset (Phase 7), bankability T4 pivot (Phase 8), dynamic sitemap (P5/5), hreflang multilang (P5/5), structured data, canonical redirects |
 | Mobile responsive | Stable | Fullscreen chatbot, viewport sync, safe-area support |
 
 ---
@@ -1464,7 +1676,8 @@ Not formally benchmarked yet.
 Observable characteristics based on development usage:
 
 - `/api/meta-analyse-local` typically responds in < 300ms (Cloud SQL aggregate queries)
-- Gemini API calls (`/api/meta-analyse-texte`, `/api/hybride-chat`) are bound by external latency (5-15s typical)
+- Gemini API calls (`/api/meta-analyse-texte`) are bound by external latency (5-15s typical)
+- `/api/hybride-chat` uses SSE streaming (P9): first token appears in ~500ms, full response streams progressively over 3-8s
 - Static assets benefit from cache headers (7-30 days depending on type)
 - No client-side performance profiling has been conducted
 
@@ -1476,8 +1689,8 @@ Observable characteristics based on development usage:
 - **Redis optional** — `services/cache.py` falls back to per-process in-memory cache if `REDIS_URL` absent (not shared across 2 workers in fallback mode).
 - **Gemini dependency** — META ANALYSE and chatbot depend on an external API. Mitigated by circuit breaker + fallback messages, but degraded experience when open.
 - **Minimal monitoring** — Production observability relies on Cloud Run metrics + JSON structured logs with correlation IDs. No APM or alerting.
-- **Test coverage** — 473 tests across 20 files. Core engine, chat pipeline, stats, insult/OOR detection well covered. Some route handlers and PDF have lower coverage.
-- **i18n partial** — EuroMillions EN version live but 5 FR residue areas remain: badges (hardcoded FR in `generer_badges()`), pitch lang chain (schema missing `lang` field), META prompts (15 FR-only prompt files), PDF (26 hardcoded FR strings in `em_pdf_generator.py`), rating popup (5 FR strings in `rating-popup.js`).
+- **Test coverage** — 685 tests across 23 files. Core engine, chat pipeline, stats, insult/OOR detection, templates, i18n, JS labels, prompts, multilang routes well covered. Some route handlers and PDF have lower coverage.
+- **i18n residue** — Full i18n pipeline complete (P1-P5/5): gettext, Jinja2, JS labels, prompts, routes, sitemap, kill switch. ES fully translated (Sprint ES). 2 FR residue areas remain: PDF (26 hardcoded FR strings in `em_pdf_generator.py`), rating popup (5 FR strings in `rating-popup.js`). 3 stub languages (pt/de/nl) `.po` catalogs need human translation.
 
 ---
 
@@ -1522,4 +1735,4 @@ Observable characteristics based on development usage:
 
 ---
 
-*Updated by JyppY & Claude Opus 4.6 — 27/02/2026 (v8.0: Phase 11 — EuroMillions English (GB) multilang: 7 EN pages, 6 EN JS, EN chatbot pipeline, i18n infra, hreflang, trailing slash middleware, "Moteurs"→"Modules" rename. 473 tests, 21 services, 16 routers. Previous: Phases 1-10 — chat modularization, stats base class, aiomysql async, Redis cache, Schema.org+CSP, SEO bankability, unified routes.)*
+*Updated by JyppY & Claude Opus 4.6 — 28/02/2026 (v12.0: Sprint ES — Complete Spanish translation + kill switch activation. 384 .po entries, 155 JS keys, 25 PDF labels, 18 AI prompts (Data Science tone), 4 schema regex. ENABLED_LANGS = ["fr", "en", "es"]. 7 ES pages live at lotoia.fr/es/euromillions/*. 685 tests, 0 failures. Previous: P9 (SSE streaming), P1-P5/5 (i18n infrastructure), Phase 11 (EN multilang), Phases 1-10.)*

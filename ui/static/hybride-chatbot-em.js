@@ -252,7 +252,8 @@
                 body: JSON.stringify({
                     message: text,
                     page: detectPage(),
-                    history: chatHistory
+                    history: chatHistory,
+                    lang: document.documentElement.lang || 'fr'
                 }),
                 signal: controller.signal
             })
