@@ -223,7 +223,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
     grille_nums, grille_etoiles = (None, None) if _continuation_mode else _detect_grille_em(message)
     if not force_sql and grille_nums is not None:
         try:
-            grille_result = await asyncio.wait_for(analyze_grille_for_chat(grille_nums, grille_etoiles), timeout=30.0)
+            grille_result = await asyncio.wait_for(analyze_grille_for_chat(grille_nums, grille_etoiles, lang=lang), timeout=30.0)
             if grille_result:
                 enrichment_context = _format_grille_context_em(grille_result)
                 logger.info(f"[EM CHAT] Grille analysee: {grille_nums} etoiles={grille_etoiles}")
@@ -617,7 +617,7 @@ async def handle_pitch_em(grilles: list, http_client, lang: str = "fr") -> dict:
     grilles_data = [{"numeros": g.numeros, "etoiles": g.etoiles, "score_conformite": g.score_conformite, "severity": g.severity} for g in grilles]
 
     try:
-        context = await asyncio.wait_for(prepare_grilles_pitch_context(grilles_data), timeout=30.0)
+        context = await asyncio.wait_for(prepare_grilles_pitch_context(grilles_data, lang=lang), timeout=30.0)
     except asyncio.TimeoutError:
         logger.error("[EM PITCH] Timeout 30s contexte stats")
         return {

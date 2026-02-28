@@ -119,6 +119,17 @@ def _badges(lang: str = "fr") -> dict:
             "custom_em": "Custom Analysis EM",
             "custom": "Custom Analysis",
         }
+    if lang == "es":
+        return {
+            "hot": "Números calientes",
+            "overdue": "Mezcla de retrasos",
+            "balanced": "Equilibrio",
+            "wide_spectrum": "Amplio espectro",
+            "even_odd": "Par/Impar OK",
+            "hybride_em": "Hybride V1 EM",
+            "custom_em": "Análisis personalizado EM",
+            "custom": "Análisis personalizado",
+        }
     return {
         "hot": "Numéros chauds",
         "overdue": "Mix de retards",
@@ -137,6 +148,47 @@ def _badges(lang: str = "fr") -> dict:
 
 def _analysis_strings(lang: str = "fr") -> dict:
     """Return analysis suggestion and comparison strings for the given language."""
+    if lang == "es":
+        return {
+            # --- Severity 3 (critical) ---
+            "alert_max": "Alerta máxima: ¡esta combinación acumula TODOS los defectos estadísticos!",
+            "perfect_run": "¡Secuencia perfecta detectada! En {total} sorteos{suffix}, ninguna secuencia de {max_run} números consecutivos ha salido jamás",
+            "sum_catastrophic": "Suma catastrófica ({sum}) — los sorteos{suffix} reales oscilan entre {range}",
+            "zero_above": "CERO números por encima de {mid} — estadísticamente aberrante",
+            "zero_below": "CERO números por debajo de {mid} — estadísticamente aberrante",
+            "dispersion_zero": "Dispersión casi nula ({dispersion}) — la media histórica ronda los 30+",
+            "all_even": "100% números pares — ningún sorteo histórico tiene esta configuración",
+            "all_odd": "100% números impares — ningún sorteo histórico tiene esta configuración",
+            "conformity_collapsed": "Puntuación de conformidad desplomada ({score}%) — esta combinación desafía todas las estadísticas",
+            # --- Severity 2 (warning) ---
+            "run_detected": "Secuencia de {max_run} números consecutivos detectada — muy raro en sorteos reales",
+            "even_odd_imbalance": "Desequilibrio par/impar ({even}/{odd}) — apuntar a 2-3 pares para ajustarse a las estadísticas",
+            "low_high_imbalance": "Desequilibrio bajo/alto ({low}/{high}) — mezclar números bajos {low_range} y altos {high_range}",
+            "sum_extreme": "Suma demasiado {direction} ({sum}) — la media histórica ronda {avg}",
+            "sum_moderate": "Suma {direction} ({sum}) — apuntar al rango {range}",
+            "dispersion_insufficient": "Dispersión insuficiente ({dispersion}) — sus números cubren solo {dispersion} unidades de {max} posibles",
+            "dispersion_low": "Dispersión baja ({dispersion}) — ampliar la separación entre sus números",
+            "run_reduce": "Secuencia de {max_run} consecutivos — reducir los números consecutivos",
+            # --- Severity 0/1 (mild) ---
+            "excellent_balance": "Excelente equilibrio en su selección",
+            "vary_even_odd": "Considere variar pares e impares (2-3 pares es ideal)",
+            "mix_low_high": "Mezclar números bajos {low_range} y altos {high_range}",
+            "sum_slightly_low": "Suma ligeramente baja, añadir un número más alto",
+            "sum_slightly_high": "Suma ligeramente alta, añadir un número más bajo",
+            "widen_dispersion": "Ampliar ligeramente la dispersión de sus números",
+            "watch_run_3": "Atención a la secuencia de 3 consecutivos",
+            "some_consecutive": "Algunos números consecutivos — considere espaciarlos",
+            # --- Default ---
+            "well_balanced": "Combinación bien equilibrada",
+            # --- Comparison ---
+            "better_85": "Mejor que el 85% de las combinaciones aleatorias",
+            "better_60": "Mejor que el 60% de las combinaciones aleatorias",
+            "average": "En la media de las combinaciones",
+            "below_average": "Por debajo de la media",
+            # --- Direction words ---
+            "dir_low": "baja",
+            "dir_high": "alta",
+        }
     if lang == "en":
         return {
             # --- Severity 3 (critical) ---

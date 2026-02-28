@@ -82,6 +82,6 @@ get_numeros_par_categorie = _svc.get_numeros_par_categorie
 prepare_grilles_pitch_context = _svc.prepare_grilles_pitch_context
 
 
-async def analyze_grille_for_chat(nums: list, etoiles: list = None) -> dict:
+async def analyze_grille_for_chat(nums: list, etoiles: list = None, lang: str = "fr") -> dict:
     """Wrapper preservant la signature originale (etoiles: list)."""
-    return await _svc.analyze_grille_for_chat(nums, sorted(etoiles or []))
+    return await _svc.analyze_grille_for_chat(nums, sorted(etoiles or []), lang=lang)

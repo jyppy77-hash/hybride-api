@@ -539,7 +539,7 @@ function displayHistoryCheck(historyCheck) {
 
     if (historyCheck.exact_match === true && Array.isArray(historyCheck.exact_dates) && historyCheck.exact_dates.length > 0) {
         var count = historyCheck.exact_dates.length;
-        text = LI.history_appeared.replace('{n}', count).replace(/\{s\}/g, count > 1 ? 's' : '');
+        text = count === 1 && LI.history_appeared_one ? LI.history_appeared_one : LI.history_appeared.replace('{n}', count).replace(/\{s\}/g, count > 1 ? 's' : '');
     } else if (historyCheck.exact_match === false) {
         text = LI.history_never;
     }

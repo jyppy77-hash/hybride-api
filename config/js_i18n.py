@@ -26,6 +26,7 @@ _LABELS: dict[str, dict[str, str]] = {
         "data_depth_to": " a ",
         "grids_for": "Grilles EuroMillions pour le ",
         "grids_generated": " grille(s) g\u00e9n\u00e9r\u00e9e(s)",
+        "grid_generated_one": " grille g\u00e9n\u00e9r\u00e9e",
         "result_title": "Analyse du tirage",
 
         # ── app-em — grid cards ──
@@ -185,6 +186,7 @@ _LABELS: dict[str, dict[str, str]] = {
         "data_depth_to": " to ",
         "grids_for": "EuroMillions grids for ",
         "grids_generated": " grid(s) generated",
+        "grid_generated_one": " grid generated",
         "result_title": "Draw analysis",
 
         # ── app-em — grid cards ──
@@ -343,7 +345,8 @@ _LABELS: dict[str, dict[str, str]] = {
         "data_depth_from": "del ",
         "data_depth_to": " al ",
         "grids_for": "Combinaciones EuroMillions para el ",
-        "grids_generated": " combinación(es) generada(s)",
+        "grids_generated": " combinaciones generadas",
+        "grid_generated_one": " combinación generada",
         "result_title": "Análisis del sorteo",
 
         # ── app-em — grid cards ──
@@ -362,7 +365,8 @@ _LABELS: dict[str, dict[str, str]] = {
         "gambling_name": "Jugar Bien",
 
         # ── app-em — popup title template ──
-        "popup_gen_title": "Simulación de {n} combinación(es) optimizada{s} EM",
+        "popup_gen_title": "Simulación de {n} combinaciones optimizada{s} EM",
+        "popup_gen_title_one": "Simulación de 1 combinación optimizada EM",
 
         # ── simulateur-em ──
         "based_on_draws": "Basado en {n} sorteos oficiales de EuroMillions",
@@ -386,7 +390,8 @@ _LABELS: dict[str, dict[str, str]] = {
         "detail_compliance": "Conformidad",
 
         # history
-        "history_appeared": "\U0001f4dc Esta combinación ya ha salido <strong>{n} vez/veces</strong>",
+        "history_appeared": "\U0001f4dc Esta combinación ya ha salido <strong>{n} veces</strong>",
+        "history_appeared_one": "\U0001f4dc Esta combinación ya ha salido <strong>1 vez</strong>",
         "history_never": "\U0001f50e Esta combinación nunca ha aparecido en el historial.",
         "history_best": "\U0001f9e0 Mejor coincidencia: <strong>{n} número{s} idéntico{s}</strong>",
 
@@ -416,7 +421,7 @@ _LABELS: dict[str, dict[str, str]] = {
         "log_constraints": "\u23f3 Aplicando restricciones blandas... ",
         "log_gen_grids": "\u23f3 Simulando combinaciones optimizadas EM... ",
         "log_validating": "\u23f3 Validando puntuaciones finales... ",
-        "log_success": "\u2713 {n} combinación(es) generada{s} con éxito",
+        "log_success": "\u2713 {n} combinaciones generada{s} con éxito",
         "log_preparing": "> Preparando visualización de resultados...",
         "log_ready": "\u2713 Listo para mostrar",
 
@@ -440,7 +445,7 @@ _LABELS: dict[str, dict[str, str]] = {
         "log75_constraints": "\u23f3 Aplicando restricciones blandas... ",
         "log75_gen": "\u23f3 Simulando combinaciones optimizadas EM... ",
         "log75_validating": "\u23f3 Validando puntuaciones finales... ",
-        "log75_success": "\u2713 {n} combinación(es) generada{s} con éxito",
+        "log75_success": "\u2713 {n} combinaciones generada{s} con éxito",
         "log75_preparing": "> Preparando visualización de resultados...",
         "log75_ready": "\u2713 Listo para mostrar",
 
@@ -475,7 +480,7 @@ _LABELS: dict[str, dict[str, str]] = {
         "meta_anim_step4": "Compilando el informe PDF...",
 
         # wrapper titles
-        "wrapper_gen_title": "Simulación de {n} combinación(es) optimizada{s} EM",
+        "wrapper_gen_title": "Simulación de {n} combinaciones optimizada{s} EM",
         "wrapper_sim_title": "Analizando su combinación EM",
 
         # ── rating-popup ──

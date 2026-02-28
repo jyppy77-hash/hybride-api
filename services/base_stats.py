@@ -363,7 +363,7 @@ class BaseStatsService:
             "periode": f"{date_min} au {date_max}" if date_min and date_max else "N/A"
         }
 
-    async def analyze_grille_for_chat(self, nums: list, secondary=None) -> dict:
+    async def analyze_grille_for_chat(self, nums: list, secondary=None, lang: str = "fr") -> dict:
         """
         Analyse complete d'une grille pour le chatbot HYBRIDE.
 
@@ -449,7 +449,7 @@ class BaseStatsService:
         conformite_pct = max(0, min(100, conformite_pct))
 
         # Badges
-        b = _badges("fr")
+        b = _badges(lang)
         badges = []
         if freq_moyenne > freq_attendue * 1.1:
             badges.append(b["hot"])
@@ -635,7 +635,7 @@ class BaseStatsService:
             "periode_analyse": "2 derni\u00e8res ann\u00e9es",
         }
 
-    async def prepare_grilles_pitch_context(self, grilles: list) -> str:
+    async def prepare_grilles_pitch_context(self, grilles: list, lang: str = "fr") -> str:
         """
         Prepare le contexte stats de N grilles pour le prompt Gemini pitch.
         Optimise : 1 seule connexion BDD, requetes UNION ALL.
@@ -732,7 +732,7 @@ class BaseStatsService:
                 lines.append(f"Num\u00e9ro {n} : {f} sorties, \u00e9cart {e}, {cat}")
 
             # Badges
-            b = _badges("fr")
+            b = _badges(lang)
             badges = []
             if len(chauds) >= 3:
                 badges.append(b["hot"])

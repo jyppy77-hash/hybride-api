@@ -270,7 +270,7 @@ async function handleAnalyze() {
         var popupResult = await showSponsorPopupSimulateurEM({
             duration: popupDuration,
             gridCount: selectedGridCount,
-            title: LI.popup_gen_title.replace('{n}', selectedGridCount).replace(/\{s\}/g, plural),
+            title: (selectedGridCount === 1 && LI.popup_gen_title_one ? LI.popup_gen_title_one : LI.popup_gen_title.replace('{n}', selectedGridCount).replace(/\{s\}/g, plural)),
             onComplete: function() {
                 console.log('[App EM] Popup sponsor termin\u00e9, lancement de la g\u00e9n\u00e9ration');
             }
@@ -319,7 +319,7 @@ function displayGridsEM(grids, metadata, targetDate) {
     var html = '<div class="results-header">' +
         '<h2>' + LI.grids_for + dateFormatted + '</h2>' +
         '<div class="results-meta">' +
-        '<span>' + grids.length + LI.grids_generated + '</span>' +
+        '<span>' + grids.length + (grids.length === 1 && LI.grid_generated_one ? LI.grid_generated_one : LI.grids_generated) + '</span>' +
         '<span>' + new Date().toLocaleTimeString(LI.locale) + '</span>' +
         '</div></div>';
 
