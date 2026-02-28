@@ -80,6 +80,19 @@ Texte a reformuler :
             "Keep a professional, educational tone suitable for a PDF report. "
             "Never promise winnings. Stay neutral and factual."
         )
+    elif lang == "pt":
+        system_instruction_text = (
+            "OBRIGATÓRIO: Escreves SEMPRE em português correto de Portugal "
+            "com TODOS os acentos (á, à, â, ã, é, ê, í, ó, ô, õ, ú, ç). "
+            "Mantém um tom profissional e pedagógico adequado a um relatório PDF. "
+            "Nunca prometas ganhos. Mantém-te neutro e factual."
+        )
+    elif lang == "es":
+        system_instruction_text = (
+            "OBLIGATORIO: Escribes SIEMPRE en español correcto. "
+            "Mantén un tono profesional y pedagógico adecuado para un informe PDF. "
+            "Nunca prometas ganancias. Mantente neutro y factual."
+        )
     else:
         system_instruction_text = (
             "OBLIGATION ABSOLUE : Tu écris TOUJOURS en français correct "

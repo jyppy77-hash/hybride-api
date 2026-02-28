@@ -25,13 +25,13 @@ from config.templates import (
 # ═══════════════════════════════════════════════
 
 def test_killswitch_default():
-    """Default ENABLED_LANGS is fr + en + es."""
-    assert ENABLED_LANGS == ["fr", "en", "es"]
+    """Default ENABLED_LANGS is fr + en + es + pt."""
+    assert ENABLED_LANGS == ["fr", "en", "es", "pt"]
 
 
 def test_killswitch_excludes_new_langs():
-    """PT/DE/NL are OFF by default."""
-    for lang in ("pt", "de", "nl"):
+    """DE/NL are OFF by default."""
+    for lang in ("de", "nl"):
         assert lang not in ENABLED_LANGS
 
 
@@ -101,22 +101,23 @@ def test_em_urls_no_duplicate_paths():
 # 3. hreflang_tags
 # ═══════════════════════════════════════════════
 
-def test_hreflang_default_fr_en_es():
-    """Default hreflang includes fr + en + es + x-default."""
+def test_hreflang_default_fr_en_es_pt():
+    """Default hreflang includes fr + en + es + pt + x-default."""
     tags = hreflang_tags("accueil")
     langs = [t["lang"] for t in tags]
     assert "fr" in langs
     assert "en" in langs
     assert "es" in langs
+    assert "pt" in langs
     assert "x-default" in langs
-    assert len(tags) == 4
+    assert len(tags) == 5
 
 
 def test_hreflang_excludes_disabled():
     """Disabled languages are NOT in hreflang tags."""
     tags = hreflang_tags("accueil")
     langs = [t["lang"] for t in tags]
-    for lang in ("pt", "de", "nl"):
+    for lang in ("de", "nl"):
         assert lang not in langs
 
 
@@ -244,17 +245,17 @@ def _get_client():
 
 
 def test_disabled_lang_redirects_to_fr():
-    """PT route with PT disabled → 302 redirect to FR equivalent."""
+    """DE route with DE disabled → 302 redirect to FR equivalent."""
     client = _get_client()
-    resp = client.get("/pt/euromillions/gerador", follow_redirects=False)
+    resp = client.get("/de/euromillions/generator", follow_redirects=False)
     assert resp.status_code == 302
     assert resp.headers["location"] == "/euromillions/generateur"
 
 
 def test_disabled_lang_faq_redirects_to_fr():
-    """PT FAQ route with PT disabled → 302 redirect to FR FAQ."""
+    """DE FAQ route with DE disabled → 302 redirect to FR FAQ."""
     client = _get_client()
-    resp = client.get("/pt/euromillions/faq", follow_redirects=False)
+    resp = client.get("/de/euromillions/faq", follow_redirects=False)
     assert resp.status_code == 302
     assert resp.headers["location"] == "/euromillions/faq"
 
@@ -275,6 +276,13 @@ def test_es_enabled_returns_200():
     """ES is enabled — pages return 200, not redirect."""
     client = _get_client()
     resp = client.get("/es/euromillions", follow_redirects=False)
+    assert resp.status_code == 200
+
+
+def test_pt_enabled_returns_200():
+    """PT is enabled — pages return 200, not redirect."""
+    client = _get_client()
+    resp = client.get("/pt/euromillions", follow_redirects=False)
     assert resp.status_code == 200
 
 
@@ -323,21 +331,28 @@ def test_sitemap_includes_es():
     assert f"{BASE_URL}/es/euromillions" in resp.text
 
 
+def test_sitemap_includes_pt():
+    """Sitemap includes PT EuroMillions pages."""
+    client = _get_client()
+    resp = client.get("/sitemap.xml")
+    assert f"{BASE_URL}/pt/euromillions" in resp.text
+
+
 def test_sitemap_excludes_disabled_langs():
     """Sitemap does NOT include disabled language pages."""
     client = _get_client()
     resp = client.get("/sitemap.xml")
-    for lang in ("pt", "de", "nl"):
+    for lang in ("de", "nl"):
         assert f"/{lang}/euromillions" not in resp.text
 
 
 def test_sitemap_includes_enabled_lang():
-    """When PT is enabled, sitemap includes PT pages."""
-    with patch("config.killswitch.ENABLED_LANGS", ["fr", "en", "pt"]):
+    """When DE is enabled, sitemap includes DE pages."""
+    with patch("config.killswitch.ENABLED_LANGS", ["fr", "en", "es", "pt", "de"]):
         client = _get_client()
         resp = client.get("/sitemap.xml")
-    assert f"{BASE_URL}/pt/euromillions" in resp.text
-    assert f"{BASE_URL}/pt/euromillions/gerador" in resp.text
+    assert f"{BASE_URL}/de/euromillions" in resp.text
+    assert f"{BASE_URL}/de/euromillions/generator" in resp.text
 
 
 # ═══════════════════════════════════════════════

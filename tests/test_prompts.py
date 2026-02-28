@@ -41,12 +41,12 @@ def test_load_prompt_em_en():
 
 
 def test_load_prompt_em_fallback_to_en():
-    """Language 'pt' loads prompt from EN (placeholder copy)."""
+    """Language 'de' loads prompt from EN (placeholder copy)."""
     from services.prompt_loader import load_prompt_em
-    pt = load_prompt_em("prompt_hybride_em", "pt")
+    de = load_prompt_em("prompt_hybride_em", "de")
     en = load_prompt_em("prompt_hybride_em", "en")
-    assert pt == en
-    assert len(pt) > 100
+    assert de == en
+    assert len(de) > 100
 
 
 def test_load_prompt_em_fallback_to_fr():
@@ -254,7 +254,7 @@ def test_fallback_chain():
 # 15: Placeholder langs have content
 # ═══════════════════════════════════════════════
 
-@pytest.mark.parametrize("lang", ["pt", "de", "nl"])
+@pytest.mark.parametrize("lang", ["de", "nl"])
 def test_placeholder_langs_load(lang):
     """Placeholder languages load prompts (EN copies)."""
     from services.prompt_loader import load_prompt_em
@@ -272,3 +272,13 @@ def test_es_has_own_prompts():
     en = load_prompt_em("prompt_hybride_em", "en")
     assert es != en
     assert "REGLA OBLIGATORIA" in es or "HYBRIDE" in es
+
+
+def test_pt_has_own_prompts():
+    """PT has its own translated prompts (not EN copies)."""
+    from services.prompt_loader import load_prompt_em
+    pt = load_prompt_em("prompt_hybride_em", "pt")
+    assert len(pt) > 100
+    en = load_prompt_em("prompt_hybride_em", "en")
+    assert pt != en
+    assert "REGRA OBRIGATÓRIA" in pt or "HYBRIDE" in pt

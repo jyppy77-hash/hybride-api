@@ -46,6 +46,7 @@ _LABELS: dict[str, dict[str, str]] = {
 
         # ── app-em — popup title template ──
         "popup_gen_title": "Simulation de {n} grille{s} optimis\u00e9e{s} EM",
+        "popup_gen_title_one": "Simulation de 1 grille optimis\u00e9e EM",
 
         # ── simulateur-em ──
         "based_on_draws": "Base sur {n} tirages officiels EuroMillions",
@@ -70,6 +71,7 @@ _LABELS: dict[str, dict[str, str]] = {
 
         # history
         "history_appeared": "\U0001f4dc Cette combinaison est deja sortie <strong>{n} fois</strong>",
+        "history_appeared_one": "\U0001f4dc Cette combinaison est deja sortie <strong>1 fois</strong>",
         "history_never": "\U0001f50e Cette combinaison n'est jamais apparue dans l'historique.",
         "history_best": "\U0001f9e0 Meilleure correspondance : <strong>{n} num\u00e9ro{s} identique{s}</strong>",
 
@@ -214,6 +216,7 @@ _LABELS: dict[str, dict[str, str]] = {
 
         # ── app-em — popup title template ──
         "popup_gen_title": "Simulating {n} optimised EM grid{s}",
+        "popup_gen_title_one": "Simulating 1 optimised EM grid",
 
         # ── simulateur-em ──
         "based_on_draws": "Based on {n} official EuroMillions draws",
@@ -238,6 +241,7 @@ _LABELS: dict[str, dict[str, str]] = {
 
         # history
         "history_appeared": "\U0001f4dc This combination has appeared <strong>{n} time{s}</strong>",
+        "history_appeared_one": "\U0001f4dc This combination has appeared <strong>1 time</strong>",
         "history_never": "\U0001f50e This combination has never appeared in the draw history.",
         "history_best": "\U0001f9e0 Best match: <strong>{n} identical number{s}</strong>",
 
@@ -511,6 +515,176 @@ _LABELS: dict[str, dict[str, str]] = {
         "rating_prompt": "¿Tu opinión sobre LotoIA?",
         "rating_close": "Cerrar",
         "rating_thanks": "¡Gracias!",
+    },
+
+    "pt": {
+        # ── Locale ──
+        "locale": "pt-PT",
+
+        # ── app-em — errors / API ──
+        "api_error": "Erro de API",
+        "http_error": "Erro HTTP ",
+        "error_generating": "Erro ao gerar as combinações.",
+        "unable_generate": "Não foi possível gerar as combinações. ",
+        "select_date": "Por favor, selecione uma data de sorteio.",
+        "draw_days_only": "O EuroMillions só é sorteado às terças e sextas-feiras.",
+        "no_draw_msg": "Não há sorteio EuroMillions neste dia. Próximo sorteio: ",
+
+        # ── app-em — display ──
+        "draws_suffix": " sorteios analisados",
+        "data_depth_from": "de ",
+        "data_depth_to": " a ",
+        "grids_for": "Combinações EuroMillions para ",
+        "grids_generated": " combinações geradas",
+        "grid_generated_one": " combinação gerada",
+        "result_title": "Análise do sorteio",
+
+        # ── app-em — grid cards ──
+        "profile_balanced": "Perfil equilibrado",
+        "profile_hot": "Perfil quente",
+        "profile_mixed": "Perfil misto",
+        "grid_label": "Combinação",
+        "profile_label": "Perfil",
+        "pitch_loading": "HYBRIDE EM analisa a tua combinação\u2026",
+
+        # ── app-em — footer ──
+        "reminder_title": "Aviso importante:",
+        "reminder_text": "Estas combinações são geradas a partir de estatísticas históricas. O EuroMillions é um jogo de sorte e nenhum método garante ganhos.",
+        "play_responsible": "Joga com responsabilidade: ",
+        "gambling_url": "https://www.jogoresponsavel.pt",
+        "gambling_name": "Jogo Responsável",
+
+        # ── app-em — popup title template ──
+        "popup_gen_title": "Simulação de {n} combinações otimizada{s} EM",
+        "popup_gen_title_one": "Simulação de 1 combinação otimizada EM",
+
+        # ── simulateur-em ──
+        "based_on_draws": "Baseado em {n} sorteios oficiais EuroMillions",
+        "heat_title_freq": "Frequência: ",
+        "heat_title_last": " | Último: ",
+        "analyzing_grid": "A analisar a sua combinação EuroMillions",
+        "generating_one": "A simular uma combinação otimizada EM...",
+
+        # convergence
+        "convergence_strong": "Convergência forte",
+        "convergence_moderate": "Convergência moderada",
+        "convergence_intermediate": "Convergência intermédia",
+        "convergence_partial": "Convergência parcial",
+
+        # detail labels
+        "detail_even_odd": "Par / Ímpar",
+        "detail_low_high": "Baixo / Alto",
+        "detail_sum": "Soma",
+        "detail_spread": "Dispersão",
+        "detail_runs": "Sequências",
+        "detail_compliance": "Conformidade",
+
+        # history
+        "history_appeared": "\U0001f4dc Esta combinação já saiu <strong>{n} vezes</strong>",
+        "history_appeared_one": "\U0001f4dc Esta combinação já saiu <strong>1 vez</strong>",
+        "history_never": "\U0001f50e Esta combinação nunca apareceu no histórico.",
+        "history_best": "\U0001f9e0 Melhor correspondência: <strong>{n} número{s} idêntico{s}</strong>",
+
+        # ── sponsor-popup-em ──
+        "sponsor1_desc": "Restauro artesanal de fotografias",
+        "sponsor1_badge": "Impulsionado por",
+        "sponsor2_name": "A sua marca aqui",
+        "sponsor2_desc": "Audiência ampla \u2022 tráfego qualificado",
+        "sponsor2_badge": "Com o apoio de",
+        "console_title": "MOTOR HYBRIDE EM",
+        "system_ready": "Sistema pronto",
+        "sponsors_header": "Parceiros",
+        "timer_label": "segundos",
+        "cancel_btn": "Cancelar",
+        "popup_default_title": "HYBRIDE EM - Análise em curso...",
+
+        # console logs (sponsor-popup-em)
+        "log_init": "> A inicializar HYBRIDE_EM_V1...",
+        "log_connection": "\u2713 Ligação ao motor OK (142ms)",
+        "log_loading_db": "> A carregar base de dados EuroMillions...",
+        "log_draws_loaded": " sorteios EuroMillions carregados (387ms)",
+        "log_freq": "\U0001f4ca A analisar frequências 5 números + 2 estrelas... ",
+        "log_european": "\U0001f30d A cruzar dados europeus... ",
+        "log_star_optim": "\u2b50 A otimizar estrelas... ",
+        "log_balance": "\u2696\ufe0f A equilibrar par/ímpar... ",
+        "log_spread_multi": "\U0001f4cf A calcular dispersão multipaís... ",
+        "log_constraints": "\u23f3 A aplicar restrições suaves... ",
+        "log_gen_grids": "\u23f3 A simular combinações otimizadas EM... ",
+        "log_validating": "\u23f3 A validar pontuações finais... ",
+        "log_success": "\u2713 {n} combinações gerada{s} com sucesso",
+        "log_preparing": "> A preparar visualização dos resultados...",
+        "log_ready": "\u2713 Pronto a apresentar",
+
+        # ── sponsor-popup75-em ──
+        "sponsor_header_single": "Parceiro",
+        "video_cta": "\U0001f4fa Este espaço de vídeo está disponível para a sua marca",
+        "meta_window_badge": "Janela META ANÁLISE EM",
+        "popup75_default": "HYBRIDE EM - A calcular...",
+
+        # console logs 75
+        "log75_init": "> A inicializar HYBRIDE EM...",
+        "log75_connection": "\u2713 Ligação ao motor OK (142ms)",
+        "log75_loading_db": "> A carregar base de dados EuroMillions...",
+        "log75_draws": " sorteios EuroMillions analisados",
+        "log75_draws_full": " sorteios EuroMillions analisados (base completa)",
+        "log75_freq_balls": "\u23f3 A calcular frequências de bolas (1-50)... ",
+        "log75_freq_stars": "\u23f3 A calcular frequências de estrelas (1-12)... ",
+        "log75_hot": "\u23f3 A detetar padrões quentes... ",
+        "log75_balance": "\u23f3 A equilibrar par/ímpar... ",
+        "log75_geo": "\u23f3 A calcular dispersão geográfica... ",
+        "log75_constraints": "\u23f3 A aplicar restrições suaves... ",
+        "log75_gen": "\u23f3 A simular combinações otimizadas EM... ",
+        "log75_validating": "\u23f3 A validar pontuações finais... ",
+        "log75_success": "\u2713 {n} combinações gerada{s} com sucesso",
+        "log75_preparing": "> A preparar visualização dos resultados...",
+        "log75_ready": "\u2713 Pronto a apresentar",
+
+        # meta final logs
+        "meta_log_analysing": "A analisar 75 combinações EM...",
+        "meta_log_charts": "A criar gráficos...",
+        "meta_log_pdf": "Relatório PDF EM...",
+        "meta_log_validation": "Validação final...",
+        "meta_log_ready": "Análise pronta.",
+
+        # meta result popup
+        "meta_result_title": "Resultado META ANÁLISE EM",
+        "meta_result_subtitle": "Análise baseada em 75 combinações EuroMillions simuladas",
+        "meta_graph_balls": "Top 5 Bolas - Convergência estatística",
+        "meta_graph_stars": "Top 3 Estrelas - Convergência estatística",
+        "meta_src_gemini": "\U0001f9e0 Análise enriquecida Gemini",
+        "meta_src_local": "\u26a0\ufe0f Análise local (Gemini indisponível)",
+        "meta_close": "Fechar",
+        "meta_download": "Descarregar relatório META EM",
+        "meta_chart_na": "Gráfico não disponível",
+        "meta_pending": "Análise avançada ainda em curso...",
+        "meta_fallback_text": "Resultado temporariamente indisponível.",
+        "meta_fallback_retry": "Por favor, tente novamente dentro de instantes.",
+        "meta_75_grids": "75 combinações",
+        "meta_sponsor_space": "Espaço disponível",
+        "meta_popup_title": "META ANÁLISE EM - A processar 75 combinações",
+
+        # PDF labor illusion steps
+        "meta_anim_step1": "A analisar os ciclos de sorteio...",
+        "meta_anim_step2": "A calcular a convergência estatística...",
+        "meta_anim_step3": "A modelar as probabilidades...",
+        "meta_anim_step4": "A compilar o relatório PDF...",
+
+        # wrapper titles
+        "wrapper_gen_title": "Simulação de {n} combinações otimizada{s} EM",
+        "wrapper_sim_title": "A analisar a sua combinação EM",
+
+        # ── chatbot widget ──
+        "chatbot_welcome": "Bem-vindo! Sou o HYBRIDE, o assistente IA do LotoIA \u2014 módulo EuroMillions. Pergunta-me o que quiseres sobre o EuroMillions, estatísticas ou o motor HYBRIDE \uD83C\uDF1F",
+        "chatbot_placeholder": "Faz a tua pergunta sobre EuroMillions...",
+        "chatbot_bubble_label": "Abrir o chatbot HYBRIDE EuroMillions",
+        "chatbot_clear_title": "Nova conversa",
+        "chatbot_close_label": "Fechar",
+        "chatbot_send_label": "Enviar",
+
+        # ── rating-popup ──
+        "rating_prompt": "A tua opinião sobre o LotoIA?",
+        "rating_close": "Fechar",
+        "rating_thanks": "Obrigado!",
     },
 }
 

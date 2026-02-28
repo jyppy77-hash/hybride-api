@@ -38,28 +38,31 @@ def _make_request():
 # 1-3: Label dict structure
 # ═══════════════════════════════════════════════
 
-def test_labels_has_fr_and_en():
-    """_LABELS dict has 'fr' and 'en' keys."""
+def test_labels_has_fr_en_es_pt():
+    """_LABELS dict has 'fr', 'en', 'es' and 'pt' keys."""
     from config.js_i18n import _LABELS
     assert "fr" in _LABELS
     assert "en" in _LABELS
+    assert "es" in _LABELS
+    assert "pt" in _LABELS
 
 
 def test_labels_same_keys():
-    """FR and EN have exactly the same set of keys."""
+    """FR, EN, ES and PT have exactly the same set of keys."""
     from config.js_i18n import _LABELS
     fr_keys = set(_LABELS["fr"].keys())
-    en_keys = set(_LABELS["en"].keys())
-    missing_in_en = fr_keys - en_keys
-    missing_in_fr = en_keys - fr_keys
-    assert not missing_in_en, f"Missing in EN: {missing_in_en}"
-    assert not missing_in_fr, f"Missing in FR: {missing_in_fr}"
+    for lang in ("en", "es", "pt"):
+        lang_keys = set(_LABELS[lang].keys())
+        missing_in_lang = fr_keys - lang_keys
+        missing_in_fr = lang_keys - fr_keys
+        assert not missing_in_lang, f"Missing in {lang.upper()}: {missing_in_lang}"
+        assert not missing_in_fr, f"Missing in FR (extra in {lang.upper()}): {missing_in_fr}"
 
 
 def test_labels_all_strings():
     """All label values are non-empty strings."""
     from config.js_i18n import _LABELS
-    for lang in ("fr", "en"):
+    for lang in ("fr", "en", "es", "pt"):
         for key, val in _LABELS[lang].items():
             assert isinstance(val, str), f"{lang}.{key} is {type(val)}"
             assert len(val) > 0, f"{lang}.{key} is empty"
@@ -97,15 +100,16 @@ def test_get_js_labels_fallback():
 # ═══════════════════════════════════════════════
 
 def test_placeholder_consistency():
-    """Keys with {n} or {s} in FR also have them in EN."""
+    """Keys with {n} or {s} in FR also have them in EN, ES and PT."""
     from config.js_i18n import _LABELS
     for key in _LABELS["fr"]:
         fr_val = _LABELS["fr"][key]
-        en_val = _LABELS["en"][key]
-        if "{n}" in fr_val:
-            assert "{n}" in en_val, f"{key}: FR has {{n}} but EN does not"
-        if "{s}" in fr_val:
-            assert "{s}" in en_val, f"{key}: FR has {{s}} but EN does not"
+        for lang in ("en", "es", "pt"):
+            lang_val = _LABELS[lang][key]
+            if "{n}" in fr_val:
+                assert "{n}" in lang_val, f"{key}: FR has {{n}} but {lang.upper()} does not"
+            if "{s}" in fr_val:
+                assert "{s}" in lang_val, f"{key}: FR has {{s}} but {lang.upper()} does not"
 
 
 def test_locale_values():
@@ -113,6 +117,8 @@ def test_locale_values():
     from config.js_i18n import _LABELS
     assert _LABELS["fr"]["locale"] == "fr-FR"
     assert _LABELS["en"]["locale"] == "en-GB"
+    assert _LABELS["es"]["locale"] == "es-ES"
+    assert _LABELS["pt"]["locale"] == "pt-PT"
 
 
 # ═══════════════════════════════════════════════
@@ -120,10 +126,10 @@ def test_locale_values():
 # ═══════════════════════════════════════════════
 
 def test_minimum_key_count():
-    """At least 100 i18n keys per language (audit found ~111)."""
+    """At least 100 i18n keys per language."""
     from config.js_i18n import _LABELS
-    assert len(_LABELS["fr"]) >= 100
-    assert len(_LABELS["en"]) >= 100
+    for lang in ("fr", "en", "es", "pt"):
+        assert len(_LABELS[lang]) >= 100, f"{lang} has only {len(_LABELS[lang])} keys"
 
 
 def test_key_naming_convention():
@@ -223,23 +229,45 @@ def test_gambling_urls_match_lang():
     from config.js_i18n import get_js_labels
     fr = get_js_labels("fr")
     en = get_js_labels("en")
+    es = get_js_labels("es")
+    pt = get_js_labels("pt")
     assert "joueurs-info-service.fr" in fr["gambling_url"]
     assert "begambleaware.org" in en["gambling_url"]
+    assert "jugarbien.es" in es["gambling_url"]
+    assert "jogoresponsavel.pt" in pt["gambling_url"]
 
 
 def test_http_error_has_trailing_space():
     """http_error has trailing space for status code concatenation."""
     from config.js_i18n import get_js_labels
-    for lang in ("fr", "en"):
+    for lang in ("fr", "en", "es", "pt"):
         val = get_js_labels(lang)["http_error"]
         assert val.endswith(" "), f"{lang} http_error missing trailing space"
 
 
 def test_rating_popup_keys_exist():
-    """Rating popup keys exist in both languages."""
+    """Rating popup keys exist in all languages."""
     from config.js_i18n import get_js_labels
-    for lang in ("fr", "en"):
+    for lang in ("fr", "en", "es", "pt"):
         labels = get_js_labels(lang)
         assert "rating_prompt" in labels
         assert "rating_close" in labels
         assert "rating_thanks" in labels
+
+
+def test_get_js_labels_pt():
+    """get_js_labels('pt') returns PT labels."""
+    from config.js_i18n import get_js_labels
+    labels = get_js_labels("pt")
+    assert labels["locale"] == "pt-PT"
+    assert "Erro" in labels["api_error"]
+
+
+def test_chatbot_keys_all_langs():
+    """Chatbot widget keys exist in all languages."""
+    from config.js_i18n import get_js_labels
+    for lang in ("fr", "en", "es", "pt"):
+        labels = get_js_labels(lang)
+        assert "chatbot_welcome" in labels
+        assert "chatbot_placeholder" in labels
+        assert len(labels["chatbot_welcome"]) > 20

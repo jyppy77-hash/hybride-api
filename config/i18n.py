@@ -130,6 +130,17 @@ def _badges(lang: str = "fr") -> dict:
             "custom_em": "Análisis personalizado EM",
             "custom": "Análisis personalizado",
         }
+    if lang == "pt":
+        return {
+            "hot": "Números quentes",
+            "overdue": "Mistura de atrasos",
+            "balanced": "Equilíbrio",
+            "wide_spectrum": "Amplo espectro",
+            "even_odd": "Par/Ímpar OK",
+            "hybride_em": "Hybride V1 EM",
+            "custom_em": "Análise personalizada EM",
+            "custom": "Análise personalizada",
+        }
     return {
         "hot": "Numéros chauds",
         "overdue": "Mix de retards",
@@ -187,6 +198,47 @@ def _analysis_strings(lang: str = "fr") -> dict:
             "below_average": "Por debajo de la media",
             # --- Direction words ---
             "dir_low": "baja",
+            "dir_high": "alta",
+        }
+    if lang == "pt":
+        return {
+            # --- Severity 3 (critical) ---
+            "alert_max": "Alerta máximo: esta combinação acumula TODOS os defeitos estatísticos!",
+            "perfect_run": "Sequência perfeita detetada! Em {total} sorteios{suffix}, nenhuma sequência de {max_run} números consecutivos alguma vez saiu",
+            "sum_catastrophic": "Soma catastrófica ({sum}) — os sorteios{suffix} reais oscilam entre {range}",
+            "zero_above": "ZERO números acima de {mid} — estatisticamente aberrante",
+            "zero_below": "ZERO números abaixo de {mid} — estatisticamente aberrante",
+            "dispersion_zero": "Dispersão quase nula ({dispersion}) — a média histórica ronda os 30+",
+            "all_even": "100% números pares — nenhum sorteio histórico tem esta configuração",
+            "all_odd": "100% números ímpares — nenhum sorteio histórico tem esta configuração",
+            "conformity_collapsed": "Pontuação de conformidade desabou ({score}%) — esta combinação desafia todas as estatísticas",
+            # --- Severity 2 (warning) ---
+            "run_detected": "Sequência de {max_run} números consecutivos detetada — muito raro em sorteios reais",
+            "even_odd_imbalance": "Desequilíbrio par/ímpar ({even}/{odd}) — apontar para 2-3 pares para ajustar-se às estatísticas",
+            "low_high_imbalance": "Desequilíbrio baixo/alto ({low}/{high}) — misturar números baixos {low_range} e altos {high_range}",
+            "sum_extreme": "Soma demasiado {direction} ({sum}) — a média histórica ronda {avg}",
+            "sum_moderate": "Soma {direction} ({sum}) — apontar para o intervalo {range}",
+            "dispersion_insufficient": "Dispersão insuficiente ({dispersion}) — os seus números cobrem apenas {dispersion} unidades de {max} possíveis",
+            "dispersion_low": "Dispersão baixa ({dispersion}) — alargar a separação entre os seus números",
+            "run_reduce": "Sequência de {max_run} consecutivos — reduzir os números consecutivos",
+            # --- Severity 0/1 (mild) ---
+            "excellent_balance": "Excelente equilíbrio na sua seleção",
+            "vary_even_odd": "Considere variar pares e ímpares (2-3 pares é o ideal)",
+            "mix_low_high": "Misturar números baixos {low_range} e altos {high_range}",
+            "sum_slightly_low": "Soma ligeiramente baixa, adicionar um número mais alto",
+            "sum_slightly_high": "Soma ligeiramente alta, adicionar um número mais baixo",
+            "widen_dispersion": "Alargar ligeiramente a dispersão dos seus números",
+            "watch_run_3": "Atenção à sequência de 3 consecutivos",
+            "some_consecutive": "Alguns números consecutivos — considere espaçá-los",
+            # --- Default ---
+            "well_balanced": "Combinação bem equilibrada",
+            # --- Comparison ---
+            "better_85": "Melhor que 85% das combinações aleatórias",
+            "better_60": "Melhor que 60% das combinações aleatórias",
+            "average": "Na média das combinações",
+            "below_average": "Abaixo da média",
+            # --- Direction words ---
+            "dir_low": "baixa",
             "dir_high": "alta",
         }
     if lang == "en":
