@@ -819,7 +819,10 @@ function openMetaResultPopupEM(data) {
                     labor.finish();
                     setTimeout(function() {
                         var url = URL.createObjectURL(results[1]);
-                        window.open(url, '_blank');
+                        var a = document.createElement('a');
+                        a.href = url;
+                        a.download = 'rapport-meta-euromillions.pdf';
+                        a.click();
                         pdfBtn.disabled = false;
                     }, 700);
                 })
