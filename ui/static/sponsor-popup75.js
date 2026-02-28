@@ -716,6 +716,61 @@ function generateGraphBarsHTML(graph) {
     return bars;
 }
 
+// ============================================
+// PDF LABOR ILLUSION — micro-animation avant download
+// ============================================
+
+function showPdfLaborIllusion(modal) {
+    const LI = window.LotoIA_i18n || {};
+    const steps = [
+        { text: LI.meta_anim_step1 || 'Analyse des cycles de sortie...', at: 0 },
+        { text: LI.meta_anim_step2 || 'Calcul de convergence statistique...', at: 1500 },
+        { text: LI.meta_anim_step3 || 'Modélisation des probabilités...', at: 3000 },
+        { text: LI.meta_anim_step4 || 'Compilation du rapport PDF...', at: 5000 }
+    ];
+
+    const laborOverlay = document.createElement('div');
+    laborOverlay.className = 'meta-pdf-labor';
+    laborOverlay.innerHTML = '<div class="meta-pdf-spinner"></div><div class="meta-pdf-steps"></div>';
+
+    const container = laborOverlay.querySelector('.meta-pdf-steps');
+    steps.forEach(s => {
+        const el = document.createElement('div');
+        el.className = 'meta-pdf-step';
+        el.textContent = s.text;
+        container.appendChild(el);
+    });
+
+    modal.style.overflow = 'hidden';
+    modal.appendChild(laborOverlay);
+
+    const els = laborOverlay.querySelectorAll('.meta-pdf-step');
+    const timers = [];
+
+    steps.forEach((s, i) => {
+        timers.push(setTimeout(() => {
+            if (i > 0) { els[i-1].classList.remove('active'); els[i-1].classList.add('done'); }
+            els[i].classList.add('active');
+        }, s.at));
+    });
+
+    return {
+        promise: new Promise(resolve => setTimeout(resolve, 5200)),
+        finish: function() {
+            timers.forEach(clearTimeout);
+            els.forEach(el => { el.classList.remove('active'); el.classList.add('done'); });
+            setTimeout(() => {
+                laborOverlay.style.opacity = '0';
+                laborOverlay.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => {
+                    if (laborOverlay.parentNode) laborOverlay.parentNode.removeChild(laborOverlay);
+                    modal.style.overflow = '';
+                }, 300);
+            }, 400);
+        }
+    };
+}
+
 /**
  * Ouvre le pop-up de résultats META ANALYSE
  * @param {Object} data - Données de l'API mock
@@ -806,7 +861,7 @@ function openMetaResultPopup(data) {
         if (e.target === overlay) closePopup();
     });
 
-    // EVENT 4 - Export PDF — source unique : finalAnalysisText
+    // EVENT 4 - Export PDF — labor illusion + fetch parallèle
     if (pdfBtn) {
         pdfBtn.addEventListener('click', () => {
             if (typeof umami !== 'undefined') umami.track('meta75-pdf-download', { module: 'loto' });
@@ -820,10 +875,11 @@ function openMetaResultPopup(data) {
                 return;
             }
 
-            console.log('[PDF] finalAnalysisText:', finalAnalysisText.substring(0, 120));
-            console.log('[META PDF] graph_data sent:', metaResultData && metaResultData.graph ? metaResultData.graph : null);
+            pdfBtn.disabled = true;
+            const modal = overlay.querySelector('.meta-result-modal');
+            const labor = showPdfLaborIllusion(modal);
 
-            fetch('/api/meta-pdf', {
+            const fetchPromise = fetch('/api/meta-pdf', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -835,14 +891,22 @@ function openMetaResultPopup(data) {
                     sponsor: 'Espace disponible'
                 })
             })
-            .then(function(res) { return res.blob(); })
-            .then(function(blob) {
-                var url = URL.createObjectURL(blob);
-                window.open(url, '_blank');
-            })
-            .catch(function(err) {
-                console.error('[PDF] Erreur generation:', err);
-            });
+            .then(function(res) { return res.blob(); });
+
+            Promise.all([labor.promise, fetchPromise])
+                .then(function(results) {
+                    labor.finish();
+                    setTimeout(function() {
+                        var url = URL.createObjectURL(results[1]);
+                        window.open(url, '_blank');
+                        pdfBtn.disabled = false;
+                    }, 700);
+                })
+                .catch(function(err) {
+                    console.error('[PDF] Erreur generation:', err);
+                    labor.finish();
+                    pdfBtn.disabled = false;
+                });
         });
     }
 }

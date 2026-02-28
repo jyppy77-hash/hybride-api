@@ -150,6 +150,12 @@ _LABELS: dict[str, dict[str, str]] = {
         "meta_sponsor_space": "Espace disponible",
         "meta_popup_title": "META ANALYSE EM - Traitement 75 grilles",
 
+        # PDF labor illusion steps
+        "meta_anim_step1": "Analyse des cycles de sortie...",
+        "meta_anim_step2": "Calcul de convergence statistique...",
+        "meta_anim_step3": "Mod\u00e9lisation des probabilit\u00e9s...",
+        "meta_anim_step4": "Compilation du rapport PDF...",
+
         # wrapper titles
         "wrapper_gen_title": "Simulation de {n} grille{s} optimis\u00e9e{s} EM",
         "wrapper_sim_title": "Analyse de votre grille EM en cours",
@@ -302,6 +308,12 @@ _LABELS: dict[str, dict[str, str]] = {
         "meta_75_grids": "75 grids",
         "meta_sponsor_space": "Space available",
         "meta_popup_title": "META ANALYSIS EM - Processing 75 grids",
+
+        # PDF labor illusion steps
+        "meta_anim_step1": "Analysing draw cycles...",
+        "meta_anim_step2": "Computing statistical convergence...",
+        "meta_anim_step3": "Modelling probabilities...",
+        "meta_anim_step4": "Compiling PDF report...",
 
         # wrapper titles
         "wrapper_gen_title": "Simulating {n} optimised EM grid{s}",

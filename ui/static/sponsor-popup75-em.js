@@ -641,6 +641,63 @@ function generateGraphBarsHTMLEM(graph, titlePrefix) {
     return bars;
 }
 
+// ============================================
+// PDF LABOR ILLUSION EM — micro-animation avant download
+// ============================================
+
+function showPdfLaborIllusionEM(modal) {
+    var steps = [
+        { text: LI.meta_anim_step1, at: 0 },
+        { text: LI.meta_anim_step2, at: 1500 },
+        { text: LI.meta_anim_step3, at: 3000 },
+        { text: LI.meta_anim_step4, at: 5000 }
+    ];
+
+    var laborOverlay = document.createElement('div');
+    laborOverlay.className = 'meta-pdf-labor';
+    laborOverlay.innerHTML = '<div class="meta-pdf-spinner"></div><div class="meta-pdf-steps"></div>';
+
+    var container = laborOverlay.querySelector('.meta-pdf-steps');
+    steps.forEach(function(s) {
+        var el = document.createElement('div');
+        el.className = 'meta-pdf-step';
+        el.textContent = s.text;
+        container.appendChild(el);
+    });
+
+    modal.style.overflow = 'hidden';
+    modal.appendChild(laborOverlay);
+
+    var els = laborOverlay.querySelectorAll('.meta-pdf-step');
+    var timers = [];
+
+    steps.forEach(function(s, i) {
+        timers.push(setTimeout(function() {
+            if (i > 0) { els[i-1].classList.remove('active'); els[i-1].classList.add('done'); }
+            els[i].classList.add('active');
+        }, s.at));
+    });
+
+    return {
+        promise: new Promise(function(resolve) { setTimeout(resolve, 5200); }),
+        finish: function() {
+            timers.forEach(clearTimeout);
+            for (var j = 0; j < els.length; j++) {
+                els[j].classList.remove('active');
+                els[j].classList.add('done');
+            }
+            setTimeout(function() {
+                laborOverlay.style.opacity = '0';
+                laborOverlay.style.transition = 'opacity 0.3s ease';
+                setTimeout(function() {
+                    if (laborOverlay.parentNode) laborOverlay.parentNode.removeChild(laborOverlay);
+                    modal.style.overflow = '';
+                }, 300);
+            }, 400);
+        }
+    };
+}
+
 function openMetaResultPopupEM(data) {
     console.log('[META ANALYSE EM] Ouverture pop-up r\u00e9sultat', data);
 
@@ -738,9 +795,11 @@ function openMetaResultPopupEM(data) {
                 return;
             }
 
-            console.log('[PDF EM] finalAnalysisTextEM:', finalAnalysisTextEM.substring(0, 120));
+            pdfBtn.disabled = true;
+            var modal = overlay.querySelector('.meta-result-modal');
+            var labor = showPdfLaborIllusionEM(modal);
 
-            fetch('/api/euromillions/meta-pdf', {
+            var fetchPromise = fetch('/api/euromillions/meta-pdf', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -753,14 +812,22 @@ function openMetaResultPopupEM(data) {
                     lang: window.LotoIA_lang
                 })
             })
-            .then(function(res) { return res.blob(); })
-            .then(function(blob) {
-                var url = URL.createObjectURL(blob);
-                window.open(url, '_blank');
-            })
-            .catch(function(err) {
-                console.error('[PDF EM] Erreur generation:', err);
-            });
+            .then(function(res) { return res.blob(); });
+
+            Promise.all([labor.promise, fetchPromise])
+                .then(function(results) {
+                    labor.finish();
+                    setTimeout(function() {
+                        var url = URL.createObjectURL(results[1]);
+                        window.open(url, '_blank');
+                        pdfBtn.disabled = false;
+                    }, 700);
+                })
+                .catch(function(err) {
+                    console.error('[PDF EM] Erreur generation:', err);
+                    labor.finish();
+                    pdfBtn.disabled = false;
+                });
         });
     }
 }
