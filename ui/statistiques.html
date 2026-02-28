@@ -30,11 +30,11 @@
     {
       "@context": "https://schema.org",
       "@type": "Dataset",
-      "name": "Historique des tirages du Loto français",
-      "description": "Dataset complet des tirages du Loto français : numéros gagnants (5 boules + numéro chance), fréquences de sortie, écarts entre apparitions, tendances statistiques. Données issues des résultats officiels FDJ, analysées par le moteur HYBRIDE.",
+      "name": "Historique des tirages et statistiques du Loto français",
+      "description": "Jeu de données statistiques complet des tirages du Loto français. Numéros gagnants (5 boules + numéro chance), fréquences de sortie, écarts entre apparitions, analyse des probabilités et tendances. Données issues des résultats officiels FDJ, analysées par l'algorithme HYBRIDE.",
       "url": "https://lotoia.fr/loto/statistiques",
       "identifier": "lotoia-loto-tirages",
-      "license": "https://www.etalab.gouv.fr/licence-ouverte-open-licence/",
+      "license": "https://lotoia.fr/mentions-legales",
       "isAccessibleForFree": true,
       "creator": {
         "@type": "Organization",
@@ -46,8 +46,9 @@
         "name": "LotoIA",
         "url": "https://lotoia.fr"
       },
-      "temporalCoverage": "2008/2026",
-      "spatialCoverage": "France",
+      "temporalCoverage": "2019-11-04/..",
+      "spatialCoverage": "FR",
+      "measurementTechnique": "Algorithme statistique HYBRIDE",
       "variableMeasured": [
         {"@type": "PropertyValue", "name": "Numéros gagnants", "description": "5 boules (1-49) + 1 numéro chance (1-10) par tirage"},
         {"@type": "PropertyValue", "name": "Fréquence de sortie", "description": "Nombre d'apparitions de chaque numéro sur la période"},
@@ -60,7 +61,7 @@
         "contentUrl": "https://lotoia.fr/api/meta-pdf",
         "name": "Rapport META DATA Loto — PDF"
       },
-      "keywords": ["loto", "tirages", "fréquences", "statistiques", "FDJ", "numéros", "France"]
+      "keywords": ["statistiques loto", "data science", "analyse de probabilités", "historique des tirages", "fréquences", "FDJ", "France"]
     }
     </script>
     <script type="application/ld+json">

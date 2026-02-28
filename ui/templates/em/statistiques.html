@@ -30,11 +30,11 @@
     {
       "@context": "https://schema.org",
       "@type": "Dataset",
-      "name": {{ _('Historique des tirages EuroMillions')|tojson }},
-      "description": {{ _('Dataset complet des tirages EuroMillions : numéros gagnants (5 boules + 2 étoiles), fréquences de sortie, écarts entre apparitions, tendances statistiques. Données issues des résultats officiels FDJ, analysées par le moteur HYBRIDE.')|tojson }},
+      "name": {{ _('Historique des tirages et statistiques EuroMillions')|tojson }},
+      "description": {{ _('Jeu de données statistiques complet des tirages EuroMillions. Numéros gagnants (5 boules + 2 étoiles), fréquences de sortie, écarts entre apparitions, analyse des probabilités et tendances. Données issues des résultats officiels, analysées par l\'algorithme HYBRIDE.')|tojson }},
       "url": "{{ canonical_url }}",
       "identifier": "lotoia-euromillions-tirages",
-      "license": "https://www.etalab.gouv.fr/licence-ouverte-open-licence/",
+      "license": "https://lotoia.fr/mentions-legales",
       "isAccessibleForFree": true,
       "creator": {
         "@type": "Organization",
@@ -46,8 +46,9 @@
         "name": "LotoIA",
         "url": "{{ base_url }}"
       },
-      "temporalCoverage": "2004/2026",
-      "spatialCoverage": "Europe",
+      "temporalCoverage": "2019-01-01/..",
+      "spatialCoverage": "EU",
+      "measurementTechnique": {{ _('Algorithme statistique HYBRIDE')|tojson }},
       "variableMeasured": [
         {"@type": "PropertyValue", "name": {{ _('Numéros gagnants')|tojson }}, "description": {{ _('5 boules (1-50) + 2 étoiles (1-12) par tirage')|tojson }}},
         {"@type": "PropertyValue", "name": {{ _('Fréquence de sortie')|tojson }}, "description": {{ _('Nombre d\'apparitions de chaque numéro et étoile sur la période')|tojson }}},
@@ -60,7 +61,7 @@
         "contentUrl": "{{ base_url }}/api/euromillions/meta-pdf",
         "name": {{ _('Rapport META DATA EuroMillions — PDF')|tojson }}
       },
-      "keywords": {{ _('euromillions, tirages, fréquences, statistiques, FDJ, étoiles, Europe')|tojson }}
+      "keywords": {{ _('statistiques euromillions, data science, analyse de probabilités, historique des tirages, fréquences, étoiles, Europe')|tojson }}
     }
     </script>
 {% endblock %}
