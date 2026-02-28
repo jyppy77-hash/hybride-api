@@ -45,6 +45,12 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+_SSE_HEADERS = {
+    "Cache-Control": "no-cache, no-transform",
+    "Connection": "keep-alive",
+    "X-Accel-Buffering": "no",
+}
+
 
 @router.post("/api/euromillions/hybride-chat")
 @limiter.limit("10/minute")
@@ -59,6 +65,7 @@ async def api_hybride_chat_em(request: Request, payload: EMChatRequest):
             lang=payload.lang,
         ),
         media_type="text/event-stream",
+        headers=_SSE_HEADERS,
     )
 
 

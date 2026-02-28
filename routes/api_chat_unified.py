@@ -17,6 +17,12 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/{game}", tags=["Unified - Chat"])
 
+_SSE_HEADERS = {
+    "Cache-Control": "no-cache, no-transform",
+    "Connection": "keep-alive",
+    "X-Accel-Buffering": "no",
+}
+
 
 @router.post("/hybride-chat")
 @limiter.limit("10/minute")
@@ -36,6 +42,7 @@ async def unified_hybride_chat(request: Request, game: ValidGame):
                 request.app.state.httpx_client,
             ),
             media_type="text/event-stream",
+            headers=_SSE_HEADERS,
         )
     else:
         payload = EMChatRequest(**body)
@@ -48,6 +55,7 @@ async def unified_hybride_chat(request: Request, game: ValidGame):
                 lang=payload.lang,
             ),
             media_type="text/event-stream",
+            headers=_SSE_HEADERS,
         )
 
 
