@@ -12,6 +12,7 @@ import logging
 from fastapi import APIRouter, Request, HTTPException
 
 import db_cloudsql
+from rate_limit import limiter
 from schemas import RatingSubmit, RatingResponse, RatingAggregate
 
 logger = logging.getLogger(__name__)
@@ -19,6 +20,7 @@ router = APIRouter(prefix="/api", tags=["ratings"])
 
 
 @router.post("/rating", response_model=RatingResponse)
+@limiter.limit("10/minute")
 async def submit_rating(data: RatingSubmit, request: Request):
     """Soumet une note utilisateur (1 vote par session+source, upsert)."""
     try:
@@ -63,7 +65,8 @@ async def submit_rating(data: RatingSubmit, request: Request):
 
 
 @router.get("/ratings/aggregate", response_model=RatingAggregate)
-async def get_aggregate():
+@limiter.limit("60/minute")
+async def get_aggregate(request: Request):
     """Retourne la note moyenne globale (pour le schema JSON-LD)."""
     try:
         result = await db_cloudsql.async_fetchone(
@@ -84,7 +87,8 @@ async def get_aggregate():
 
 
 @router.get("/ratings/aggregate/{source}", response_model=RatingAggregate)
-async def get_aggregate_by_source(source: str):
+@limiter.limit("60/minute")
+async def get_aggregate_by_source(source: str, request: Request):
     """Retourne la note moyenne par source (chatbot_loto, chatbot_em, popup_accueil)."""
     try:
         result = await db_cloudsql.async_fetchone(

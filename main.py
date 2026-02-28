@@ -104,7 +104,10 @@ app = FastAPI(
     description="Moteur HYBRIDE_OPTIMAL_V1 — API officielle",
     version=__version__,
     redirect_slashes=False,
-    lifespan=lifespan
+    lifespan=lifespan,
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
 
 # Rate limiter (slowapi)
@@ -134,13 +137,16 @@ async def custom_http_exception_handler(request: Request, exc: StarletteHTTPExce
 app.add_middleware(SlowAPIMiddleware)
 
 # CORS
+_cors_origins = [
+    "https://lotoia.fr",
+    "https://www.lotoia.fr",
+]
+if not os.getenv("K_SERVICE"):  # localhost uniquement en dev local
+    _cors_origins.append("http://localhost:8080")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://lotoia.fr",
-        "https://www.lotoia.fr",
-        "http://localhost:8080",
-    ],
+    allow_origins=_cors_origins,
     allow_methods=["GET", "POST"],
     allow_headers=["Content-Type"],
 )
@@ -202,6 +208,7 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
     return response
 
 
@@ -441,13 +448,6 @@ class UmamiOwnerFilterMiddleware:
         path = scope.get("path", "")
         is_owner = _is_owner_ip(client_ip)
 
-        # === DEBUG LOGS (temporaire) ===
-        if path and not path.startswith(("/api/", "/static/", "/ui/static/")):
-            logger.info(
-                "UMAMI-DEBUG: ip=%s is_owner=%s path=%s exact=%s prefixes=%s",
-                client_ip, is_owner, path, _OWNER_EXACT, _OWNER_PREFIXES,
-            )
-
         if not is_owner:
             await self.app(scope, receive, send)
             return
@@ -466,11 +466,6 @@ class UmamiOwnerFilterMiddleware:
                 ct = hdrs.get(b"content-type", b"").decode().lower()
                 ce = hdrs.get(b"content-encoding", b"").decode().lower()
                 is_html = "text/html" in ct
-                # === DEBUG LOGS (temporaire) ===
-                logger.info(
-                    "UMAMI-DEBUG-RSP: ct=%s ce=%s is_html=%s hdr_keys=%s path=%s",
-                    ct, ce, is_html, [k for k in hdrs.keys()], path,
-                )
                 if not is_html:
                     await send(message)
                 else:
@@ -487,13 +482,6 @@ class UmamiOwnerFilterMiddleware:
                 if not more:
                     full_body = b"".join(
                         chunk for tag, chunk in body_chunks if tag == "body"
-                    )
-                    has_head = b"</head>" in full_body
-                    gz = full_body[:2] == b"\x1f\x8b"
-                    # === DEBUG LOGS (temporaire) ===
-                    logger.info(
-                        "UMAMI-DEBUG-BODY: len=%d has_</head>=%s is_gzip=%s first4=%s path=%s",
-                        len(full_body), has_head, gz, full_body[:4].hex(), path,
                     )
                     full_body = full_body.replace(b"</head>", _OWNER_INJECT, 1)
 
@@ -522,6 +510,16 @@ app.add_middleware(UmamiOwnerFilterMiddleware)
 
 # GZip APRÈS UmamiOwnerFilter — le filtre doit voir le HTML non compressé
 app.add_middleware(GZipMiddleware, minimum_size=500)
+
+
+# =========================
+# Block sensitive static paths
+# =========================
+
+@app.get("/ui/templates/{rest:path}", include_in_schema=False)
+async def block_templates_access(rest: str):
+    """Block direct access to Jinja2 template sources."""
+    return HTMLResponse(status_code=404, content="Not Found")
 
 
 # =========================
