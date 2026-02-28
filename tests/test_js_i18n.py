@@ -38,21 +38,18 @@ def _make_request():
 # 1-3: Label dict structure
 # ═══════════════════════════════════════════════
 
-def test_labels_has_fr_en_es_pt_de():
-    """_LABELS dict has 'fr', 'en', 'es', 'pt' and 'de' keys."""
+def test_labels_has_all_6_langs():
+    """_LABELS dict has all 6 language keys."""
     from config.js_i18n import _LABELS
-    assert "fr" in _LABELS
-    assert "en" in _LABELS
-    assert "es" in _LABELS
-    assert "pt" in _LABELS
-    assert "de" in _LABELS
+    for lang in ("fr", "en", "es", "pt", "de", "nl"):
+        assert lang in _LABELS, f"Missing {lang} in _LABELS"
 
 
 def test_labels_same_keys():
     """FR, EN, ES, PT and DE have exactly the same set of keys."""
     from config.js_i18n import _LABELS
     fr_keys = set(_LABELS["fr"].keys())
-    for lang in ("en", "es", "pt", "de"):
+    for lang in ("en", "es", "pt", "de", "nl"):
         lang_keys = set(_LABELS[lang].keys())
         missing_in_lang = fr_keys - lang_keys
         missing_in_fr = lang_keys - fr_keys
@@ -63,7 +60,7 @@ def test_labels_same_keys():
 def test_labels_all_strings():
     """All label values are non-empty strings."""
     from config.js_i18n import _LABELS
-    for lang in ("fr", "en", "es", "pt", "de"):
+    for lang in ("fr", "en", "es", "pt", "de", "nl"):
         for key, val in _LABELS[lang].items():
             assert isinstance(val, str), f"{lang}.{key} is {type(val)}"
             assert len(val) > 0, f"{lang}.{key} is empty"
@@ -97,10 +94,18 @@ def test_get_js_labels_de():
     assert "Fehler" in labels["api_error"]
 
 
+def test_get_js_labels_nl():
+    """get_js_labels('nl') returns NL labels."""
+    from config.js_i18n import get_js_labels
+    labels = get_js_labels("nl")
+    assert labels["locale"] == "nl-BE"
+    assert "fout" in labels["api_error"].lower()
+
+
 def test_get_js_labels_fallback():
     """Unknown lang falls back to FR."""
     from config.js_i18n import get_js_labels
-    labels = get_js_labels("nl")
+    labels = get_js_labels("xx")
     assert labels["locale"] == "fr-FR"
 
 
@@ -113,7 +118,7 @@ def test_placeholder_consistency():
     from config.js_i18n import _LABELS
     for key in _LABELS["fr"]:
         fr_val = _LABELS["fr"][key]
-        for lang in ("en", "es", "pt", "de"):
+        for lang in ("en", "es", "pt", "de", "nl"):
             lang_val = _LABELS[lang][key]
             if "{n}" in fr_val:
                 assert "{n}" in lang_val, f"{key}: FR has {{n}} but {lang.upper()} does not"
@@ -129,6 +134,7 @@ def test_locale_values():
     assert _LABELS["es"]["locale"] == "es-ES"
     assert _LABELS["pt"]["locale"] == "pt-PT"
     assert _LABELS["de"]["locale"] == "de-DE"
+    assert _LABELS["nl"]["locale"] == "nl-BE"
 
 
 # ═══════════════════════════════════════════════
@@ -138,7 +144,7 @@ def test_locale_values():
 def test_minimum_key_count():
     """At least 100 i18n keys per language."""
     from config.js_i18n import _LABELS
-    for lang in ("fr", "en", "es", "pt", "de"):
+    for lang in ("fr", "en", "es", "pt", "de", "nl"):
         assert len(_LABELS[lang]) >= 100, f"{lang} has only {len(_LABELS[lang])} keys"
 
 
@@ -247,12 +253,14 @@ def test_gambling_urls_match_lang():
     assert "jogoresponsavel.pt" in pt["gambling_url"]
     de = get_js_labels("de")
     assert "spielerschutz.de" in de["gambling_url"]
+    nl = get_js_labels("nl")
+    assert "gokkliniek.be" in nl["gambling_url"]
 
 
 def test_http_error_has_trailing_space():
     """http_error has trailing space for status code concatenation."""
     from config.js_i18n import get_js_labels
-    for lang in ("fr", "en", "es", "pt", "de"):
+    for lang in ("fr", "en", "es", "pt", "de", "nl"):
         val = get_js_labels(lang)["http_error"]
         assert val.endswith(" "), f"{lang} http_error missing trailing space"
 
@@ -260,7 +268,7 @@ def test_http_error_has_trailing_space():
 def test_rating_popup_keys_exist():
     """Rating popup keys exist in all languages."""
     from config.js_i18n import get_js_labels
-    for lang in ("fr", "en", "es", "pt", "de"):
+    for lang in ("fr", "en", "es", "pt", "de", "nl"):
         labels = get_js_labels(lang)
         assert "rating_prompt" in labels
         assert "rating_close" in labels
@@ -278,7 +286,7 @@ def test_get_js_labels_pt():
 def test_chatbot_keys_all_langs():
     """Chatbot widget keys exist in all languages."""
     from config.js_i18n import get_js_labels
-    for lang in ("fr", "en", "es", "pt", "de"):
+    for lang in ("fr", "en", "es", "pt", "de", "nl"):
         labels = get_js_labels(lang)
         assert "chatbot_welcome" in labels
         assert "chatbot_placeholder" in labels

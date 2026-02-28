@@ -152,6 +152,17 @@ def _badges(lang: str = "fr") -> dict:
             "custom_em": "Individuelle Analyse EM",
             "custom": "Individuelle Analyse",
         }
+    if lang == "nl":
+        return {
+            "hot": "Populaire nummers",
+            "overdue": "Achterstanden-mix",
+            "balanced": "Evenwichtig",
+            "wide_spectrum": "Breed spectrum",
+            "even_odd": "Even/Oneven OK",
+            "hybride_em": "Hybride V1 EM",
+            "custom_em": "Individuele analyse EM",
+            "custom": "Individuele analyse",
+        }
     return {
         "hot": "Numéros chauds",
         "overdue": "Mix de retards",
@@ -251,6 +262,47 @@ def _analysis_strings(lang: str = "fr") -> dict:
             # --- Direction words ---
             "dir_low": "baixa",
             "dir_high": "alta",
+        }
+    if lang == "nl":
+        return {
+            # --- Severity 3 (critical) ---
+            "alert_max": "Maximale waarschuwing: deze combinatie combineert ALLE statistische gebreken!",
+            "perfect_run": "Perfecte reeks gedetecteerd! In {total} trekkingen{suffix} is er nooit een reeks van {max_run} opeenvolgende nummers getrokken",
+            "sum_catastrophic": "Catastrofale som ({sum}) — echte trekkingen{suffix} liggen tussen {range}",
+            "zero_above": "NUL nummers boven {mid} — statistisch afwijkend",
+            "zero_below": "NUL nummers onder {mid} — statistisch afwijkend",
+            "dispersion_zero": "Bijna nul spreiding ({dispersion}) — het historisch gemiddelde ligt rond 30+",
+            "all_even": "100% even nummers — geen historische trekking heeft deze configuratie",
+            "all_odd": "100% oneven nummers — geen historische trekking heeft deze configuratie",
+            "conformity_collapsed": "Conformiteitsscore ingestort ({score}%) — deze combinatie tart alle statistieken",
+            # --- Severity 2 (warning) ---
+            "run_detected": "Reeks van {max_run} opeenvolgende nummers gedetecteerd — zeer zeldzaam in echte trekkingen",
+            "even_odd_imbalance": "Even/oneven onbalans ({even}/{odd}) — streef naar 2-3 even nummers",
+            "low_high_imbalance": "Laag/hoog onbalans ({low}/{high}) — mix lage {low_range} en hoge {high_range} nummers",
+            "sum_extreme": "Som te {direction} ({sum}) — het historisch gemiddelde ligt rond {avg}",
+            "sum_moderate": "Som {direction} ({sum}) — streef naar het bereik {range}",
+            "dispersion_insufficient": "Onvoldoende spreiding ({dispersion}) — uw nummers beslaan slechts {dispersion} van {max} mogelijke eenheden",
+            "dispersion_low": "Lage spreiding ({dispersion}) — vergroot de afstand tussen uw nummers",
+            "run_reduce": "Reeks van {max_run} opeenvolgend — verminder opeenvolgende nummers",
+            # --- Severity 0/1 (mild) ---
+            "excellent_balance": "Uitstekende balans in uw selectie",
+            "vary_even_odd": "Overweeg om even en oneven nummers af te wisselen (2-3 even is ideaal)",
+            "mix_low_high": "Mix lage {low_range} en hoge {high_range} nummers",
+            "sum_slightly_low": "Som iets te laag, voeg een hoger nummer toe",
+            "sum_slightly_high": "Som iets te hoog, voeg een lager nummer toe",
+            "widen_dispersion": "Vergroot licht de spreiding van uw nummers",
+            "watch_run_3": "Let op de reeks van 3 opeenvolgende nummers",
+            "some_consecutive": "Enkele opeenvolgende nummers — overweeg ze te spreiden",
+            # --- Default ---
+            "well_balanced": "Goed uitgebalanceerde combinatie",
+            # --- Comparison ---
+            "better_85": "Beter dan 85% van de willekeurige combinaties",
+            "better_60": "Beter dan 60% van de willekeurige combinaties",
+            "average": "Gemiddeld onder de combinaties",
+            "below_average": "Onder het gemiddelde",
+            # --- Direction words ---
+            "dir_low": "laag",
+            "dir_high": "hoog",
         }
     if lang == "de":
         return {

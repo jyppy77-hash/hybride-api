@@ -856,6 +856,176 @@ _LABELS: dict[str, dict[str, str]] = {
         "rating_close": "Schließen",
         "rating_thanks": "Danke!",
     },
+
+    "nl": {
+        # ── Locale ──
+        "locale": "nl-BE",
+
+        # ── app-em — errors / API ──
+        "api_error": "API-fout",
+        "http_error": "HTTP-fout ",
+        "error_generating": "Fout bij het genereren van de combinaties.",
+        "unable_generate": "Kan de combinaties niet genereren. ",
+        "select_date": "Selecteer een trekkingsdatum.",
+        "draw_days_only": "EuroMillions wordt alleen op dinsdag en vrijdag getrokken.",
+        "no_draw_msg": "Geen EuroMillions-trekking op deze dag. Volgende trekking: ",
+
+        # ── app-em — display ──
+        "draws_suffix": " trekkingen geanalyseerd",
+        "data_depth_from": "van ",
+        "data_depth_to": " tot ",
+        "grids_for": "EuroMillions-combinaties voor ",
+        "grids_generated": " combinatie(s) gegenereerd",
+        "grid_generated_one": " combinatie gegenereerd",
+        "result_title": "Analyse van de trekking",
+
+        # ── app-em — grid cards ──
+        "profile_balanced": "Evenwichtig profiel",
+        "profile_hot": "Populair profiel",
+        "profile_mixed": "Gemengd profiel",
+        "grid_label": "Combinatie",
+        "profile_label": "Profiel",
+        "pitch_loading": "HYBRIDE EM analyseert je combinatie\u2026",
+
+        # ── app-em — footer ──
+        "reminder_title": "Belangrijke herinnering:",
+        "reminder_text": "Deze combinaties zijn gegenereerd op basis van historische statistieken. EuroMillions is een kansspel en geen enkele methode garandeert winst.",
+        "play_responsible": "Speel verantwoord: ",
+        "gambling_url": "https://www.gokkliniek.be",
+        "gambling_name": "Gokkliniek",
+
+        # ── app-em — popup title template ──
+        "popup_gen_title": "Simulatie van {n} geoptimaliseerde EM-combinatie{s}",
+        "popup_gen_title_one": "Simulatie van 1 geoptimaliseerde EM-combinatie",
+
+        # ── simulateur-em ──
+        "based_on_draws": "Gebaseerd op {n} offici\u00eble EuroMillions-trekkingen",
+        "heat_title_freq": "Frequentie: ",
+        "heat_title_last": " | Laatste: ",
+        "analyzing_grid": "Analyse van uw EuroMillions-combinatie bezig",
+        "generating_one": "Simulatie van een geoptimaliseerde EM-combinatie...",
+
+        # convergence
+        "convergence_strong": "Sterke convergentie",
+        "convergence_moderate": "Matige convergentie",
+        "convergence_intermediate": "Tussenliggende convergentie",
+        "convergence_partial": "Gedeeltelijke convergentie",
+
+        # detail labels
+        "detail_even_odd": "Even / Oneven",
+        "detail_low_high": "Laag / Hoog",
+        "detail_sum": "Som",
+        "detail_spread": "Spreiding",
+        "detail_runs": "Reeksen",
+        "detail_compliance": "Conformiteit",
+
+        # history
+        "history_appeared": "\U0001f4dc Deze combinatie is al <strong>{n} keer</strong> getrokken",
+        "history_appeared_one": "\U0001f4dc Deze combinatie is al <strong>1 keer</strong> getrokken",
+        "history_never": "\U0001f50e Deze combinatie is nooit verschenen in de geschiedenis.",
+        "history_best": "\U0001f9e0 Beste overeenkomst: <strong>{n} identiek{s} nummer{s}</strong>",
+
+        # ── sponsor-popup-em ──
+        "sponsor1_desc": "Ambachtelijke fotorestauratie",
+        "sponsor1_badge": "Mogelijk gemaakt door",
+        "sponsor2_name": "Uw merk hier",
+        "sponsor2_desc": "Sterk bereik \u2022 gekwalificeerd verkeer",
+        "sponsor2_badge": "Met steun van",
+        "console_title": "HYBRIDE EM ENGINE",
+        "system_ready": "Systeem gereed",
+        "sponsors_header": "Partners",
+        "timer_label": "seconden",
+        "cancel_btn": "Annuleren",
+        "popup_default_title": "HYBRIDE EM - Analyse bezig...",
+
+        # console logs (sponsor-popup-em)
+        "log_init": "> Initialisatie HYBRIDE_EM_V1...",
+        "log_connection": "\u2713 Verbinding engine OK (142ms)",
+        "log_loading_db": "> Laden EuroMillions-database...",
+        "log_draws_loaded": " EuroMillions-trekkingen geladen (387ms)",
+        "log_freq": "\U0001f4ca Analyse frequenties 5 nummers + 2 sterren... ",
+        "log_european": "\U0001f30d Kruising Europese gegevens... ",
+        "log_star_optim": "\u2b50 Optimalisatie sterren... ",
+        "log_balance": "\u2696\ufe0f Balancering even/oneven... ",
+        "log_spread_multi": "\U0001f4cf Berekening spreiding multi-land... ",
+        "log_constraints": "\u23f3 Toepassing zachte beperkingen... ",
+        "log_gen_grids": "\u23f3 Simulatie geoptimaliseerde EM-combinaties... ",
+        "log_validating": "\u23f3 Validatie eindscores... ",
+        "log_success": "\u2713 {n} combinatie{s} succesvol gegenereerd",
+        "log_preparing": "> Voorbereiding weergave resultaten...",
+        "log_ready": "\u2713 Klaar om weer te geven",
+
+        # ── sponsor-popup75-em ──
+        "sponsor_header_single": "Partner",
+        "video_cta": "\U0001f4fa Deze videoruimte is beschikbaar voor uw merk",
+        "meta_window_badge": "Venster META ANALYSE EM",
+        "popup75_default": "HYBRIDE EM - Berekening bezig...",
+
+        # console logs 75
+        "log75_init": "> Initialisatie HYBRIDE EM...",
+        "log75_connection": "\u2713 Verbinding engine OK (142ms)",
+        "log75_loading_db": "> Laden EuroMillions-database...",
+        "log75_draws": " EuroMillions-trekkingen geanalyseerd",
+        "log75_draws_full": " EuroMillions-trekkingen geanalyseerd (volledige basis)",
+        "log75_freq_balls": "\u23f3 Berekening frequenties ballen (1-50)... ",
+        "log75_freq_stars": "\u23f3 Berekening frequenties sterren (1-12)... ",
+        "log75_hot": "\u23f3 Detectie populaire patronen... ",
+        "log75_balance": "\u23f3 Balancering even/oneven... ",
+        "log75_geo": "\u23f3 Berekening geografische spreiding... ",
+        "log75_constraints": "\u23f3 Toepassing zachte beperkingen... ",
+        "log75_gen": "\u23f3 Simulatie geoptimaliseerde EM-combinaties... ",
+        "log75_validating": "\u23f3 Validatie eindscores... ",
+        "log75_success": "\u2713 {n} combinatie{s} succesvol gegenereerd",
+        "log75_preparing": "> Voorbereiding weergave resultaten...",
+        "log75_ready": "\u2713 Klaar om weer te geven",
+
+        # meta final logs
+        "meta_log_analysing": "Analyse 75 EM-combinaties...",
+        "meta_log_charts": "Grafieken aanmaken...",
+        "meta_log_pdf": "PDF-rapport EM...",
+        "meta_log_validation": "Eindvalidatie...",
+        "meta_log_ready": "Analyse gereed.",
+
+        # meta result popup
+        "meta_result_title": "Resultaat META ANALYSE EM",
+        "meta_result_subtitle": "Analyse gebaseerd op 75 gesimuleerde EuroMillions-combinaties",
+        "meta_graph_balls": "Top 5 Ballen - Statistische convergentie",
+        "meta_graph_stars": "Top 3 Sterren - Statistische convergentie",
+        "meta_src_gemini": "\U0001f9e0 Verrijkte Gemini-analyse",
+        "meta_src_local": "\u26a0\ufe0f Lokale analyse (Gemini niet beschikbaar)",
+        "meta_close": "Sluiten",
+        "meta_download": "Download het META EM-rapport",
+        "meta_chart_na": "Grafiek niet beschikbaar",
+        "meta_pending": "Geavanceerde analyse nog bezig...",
+        "meta_fallback_text": "Resultaat tijdelijk niet beschikbaar.",
+        "meta_fallback_retry": "Probeer het over enkele ogenblikken opnieuw.",
+        "meta_75_grids": "75 combinaties",
+        "meta_sponsor_space": "Ruimte beschikbaar",
+        "meta_popup_title": "META ANALYSE EM - Verwerking 75 combinaties",
+
+        # PDF labor illusion steps
+        "meta_anim_step1": "Analyse van uitgiftecycli...",
+        "meta_anim_step2": "Berekening statistische convergentie...",
+        "meta_anim_step3": "Modellering van waarschijnlijkheden...",
+        "meta_anim_step4": "Samenstelling PDF-rapport...",
+
+        # wrapper titles
+        "wrapper_gen_title": "Simulatie van {n} geoptimaliseerde EM-combinatie{s}",
+        "wrapper_sim_title": "Uw EM-combinatie wordt geanalyseerd",
+
+        # ── chatbot widget ──
+        "chatbot_welcome": "Welkom! Ik ben HYBRIDE, de AI-assistent van LotoIA \u2014 EuroMillions-module. Stel me al je vragen over EuroMillions, statistieken of de HYBRIDE-engine \uD83C\uDF1F",
+        "chatbot_placeholder": "Stel je EuroMillions-vraag...",
+        "chatbot_bubble_label": "Open de HYBRIDE EuroMillions chatbot",
+        "chatbot_clear_title": "Nieuw gesprek",
+        "chatbot_close_label": "Sluiten",
+        "chatbot_send_label": "Verzenden",
+
+        # ── rating-popup ──
+        "rating_prompt": "Uw mening over LotoIA?",
+        "rating_close": "Sluiten",
+        "rating_thanks": "Bedankt!",
+    },
 }
 
 

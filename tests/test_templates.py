@@ -91,7 +91,7 @@ def test_hreflang_tags_structure():
     from config.templates import hreflang_tags
     tags = hreflang_tags("accueil")
     assert isinstance(tags, list)
-    assert len(tags) == 6  # fr, en, es, pt, de, x-default
+    assert len(tags) == 7  # fr, en, es, pt, de, nl, x-default
     for tag in tags:
         assert "lang" in tag
         assert "url" in tag

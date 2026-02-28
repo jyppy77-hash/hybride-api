@@ -30,7 +30,7 @@ class EMMetaAnalyseTextePayload(BaseModel):
     analysis_local: str = Field(..., max_length=5000)
     stats: Optional[Dict[str, Any]] = None
     window: Optional[str] = "GLOBAL"
-    lang: str = Field(default="fr", pattern=r"^(fr|en|pt|es|de)$")
+    lang: str = Field(default="fr", pattern=r"^(fr|en|pt|es|de|nl)$")
 
 
 # =========================
@@ -46,7 +46,7 @@ class EMPitchGrilleItem(BaseModel):
 
 class EMPitchGrillesRequest(BaseModel):
     grilles: List[EMPitchGrilleItem] = Field(..., max_length=10)
-    lang: str = Field(default="fr", pattern=r"^(fr|en|pt|es|de)$")
+    lang: str = Field(default="fr", pattern=r"^(fr|en|pt|es|de|nl)$")
 
 
 # =========================
@@ -62,7 +62,7 @@ class EMChatRequest(BaseModel):
     message: str = Field(..., max_length=2000)
     page: str = Field(default="accueil-em")
     history: Optional[List[EMChatMessage]] = None
-    lang: str = Field(default="fr", pattern=r"^(fr|en|pt|es|de)$")
+    lang: str = Field(default="fr", pattern=r"^(fr|en|pt|es|de|nl)$")
 
 
 class EMChatResponse(BaseModel):
@@ -84,4 +84,4 @@ class EMMetaPdfPayload(BaseModel):
     graph_data_boules: Optional[Dict[str, Any]] = None
     graph_data_etoiles: Optional[Dict[str, Any]] = None
     sponsor: Optional[str] = None
-    lang: str = Field(default="fr", pattern=r"^(fr|en|pt|es|de)$")
+    lang: str = Field(default="fr", pattern=r"^(fr|en|pt|es|de|nl)$")

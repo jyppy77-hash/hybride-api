@@ -100,6 +100,12 @@ Texte a reformuler :
             "Halte einen professionellen, pädagogischen Ton, der für einen PDF-Bericht geeignet ist. "
             "Verspreche niemals Gewinne. Bleibe neutral und sachlich."
         )
+    elif lang == "nl":
+        system_instruction_text = (
+            "VERPLICHT: Je schrijft ALTIJD in correct Nederlands. "
+            "Houd een professionele, educatieve toon aan die geschikt is voor een PDF-rapport. "
+            "Beloof nooit winsten. Blijf neutraal en feitelijk."
+        )
     else:
         system_instruction_text = (
             "OBLIGATION ABSOLUE : Tu écris TOUJOURS en français correct "
