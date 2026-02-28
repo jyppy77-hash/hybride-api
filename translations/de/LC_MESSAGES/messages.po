@@ -639,9 +639,9 @@ msgid "Analyse instantanée"
 msgstr "Sofortanalyse"
 
 #: em/generateur.html:175
-
+#, python-format
 msgid "100% gratuit"
-msgstr "100% kostenlos"
+msgstr "100% gratis"
 
 #: em/generateur.html:176
 msgid "Rapport PDF détaillé généré par intelligence artificielle"
@@ -748,9 +748,9 @@ msgid "L'outil est-il gratuit ?"
 msgstr "Ist das Werkzeug kostenlos?"
 
 #: em/generateur.html:317
-
+#, python-format
 msgid "Oui, LotoIA est <strong>100% gratuit</strong>, sans inscription ni paiement requis."
-msgstr "Ja, LotoIA ist <strong>100% kostenlos</strong>, ohne Registrierung oder Zahlung."
+msgstr "Ja, LotoIA ist <strong>100% gratis</strong>, ohne Registrierung oder Zahlung."
 
 #: em/generateur.html:318
 msgid "Toutes les fonctionnalités sont accessibles librement."
@@ -843,9 +843,9 @@ msgid "Suivez les actualités du module EuroMillions de LotoIA : moteur HYBRIDE 
 msgstr "Verfolgen Sie die Neuigkeiten des EuroMillions-Moduls von LotoIA: angepasste HYBRIDE-Engine 5+2, statistische Analyse europäischer Ziehungen, dedizierter KI-Chatbot und Cloud-Run-Produktionsinfrastruktur."
 
 #: em/news.html:11
-
+#, python-format
 msgid "Actualités du module EuroMillions de LotoIA. Moteur HYBRIDE adapté 5+2, chatbot IA Gemini, 729 tirages historiques. 100% gratuit, sans inscription."
-msgstr "Neuigkeiten des EuroMillions-Moduls von LotoIA. Angepasste HYBRIDE-Engine 5+2, KI-Chatbot Gemini, 729 historische Ziehungen. 100% kostenlos, ohne Registrierung."
+msgstr "Neuigkeiten des EuroMillions-Moduls von LotoIA. Angepasste HYBRIDE-Engine 5+2, KI-Chatbot Gemini, 729 historische Ziehungen. 100% gratis, ohne Registrierung."
 
 #: em/news.html:20
 msgid "Actualités du module EuroMillions de LotoIA. Moteur HYBRIDE adapté 5+2, chatbot IA Gemini, 729 tirages européens."
@@ -908,9 +908,9 @@ msgid "Module EuroMillions v1.001 — Le moteur est officiellement en production
 msgstr "EuroMillions-Modul v1.001 — Die Engine ist offiziell in Produktion"
 
 #: em/news.html:61
-
+#, python-format
 msgid "C'est fait. <strong>Le module EuroMillions passe en version 1.001</strong> — la première version officielle d'un moteur d'exploration statistique dédié aux tirages européens. Pas un prototype. Un produit complet, en production, 100% gratuit et sans inscription."
-msgstr "Es ist soweit. <strong>Das EuroMillions-Modul geht in Version 1.001</strong> — die erste offizielle Version einer statistischen Explorations-Engine für europäische Ziehungen. Kein Prototyp. Ein vollständiges Produkt, in Produktion, 100% kostenlos und ohne Registrierung."
+msgstr "Es ist soweit. <strong>Das EuroMillions-Modul geht in Version 1.001</strong> — die erste offizielle Version einer statistischen Explorations-Engine für europäische Ziehungen. Kein Prototyp. Ein vollständiges Produkt, in Produktion, 100% gratis und ohne Registrierung."
 
 #: em/news.html:63
 msgid "Ce qui a été construit pour cette version :"
@@ -1057,9 +1057,9 @@ msgid "<strong>Transparence algorithmique</strong> : Documentation claire sur l'
 msgstr "<strong>Algorithmische Transparenz</strong>: Klare Dokumentation über den Einsatz kontrollierter Randomisierung."
 
 #: em/news.html:138
-
+#, python-format
 msgid "Objectif : Garantir un service <strong>transparent</strong> et <strong>pérenne</strong>, en tant que média algorithmique indépendant, 100% gratuit et sans inscription."
-msgstr "Ziel: Einen <strong>transparenten</strong> und <strong>nachhaltigen</strong> Service zu gewährleisten, als unabhängiges algorithmisches Medium, 100% kostenlos und ohne Registrierung."
+msgstr "Ziel: Einen <strong>transparenten</strong> und <strong>nachhaltigen</strong> Service zu gewährleisten, als unabhängiges algorithmisches Medium, 100% gratis und ohne Registrierung."
 
 #: em/news.html:144
 msgid "18 janvier 2026"
