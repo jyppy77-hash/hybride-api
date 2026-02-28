@@ -161,6 +161,14 @@ _LABELS: dict[str, dict[str, str]] = {
         "wrapper_gen_title": "Simulation de {n} grille{s} optimis\u00e9e{s} EM",
         "wrapper_sim_title": "Analyse de votre grille EM en cours",
 
+        # ── chatbot widget ──
+        "chatbot_welcome": "Bienvenue ! Je suis HYBRIDE, l\u2019assistant IA de LotoIA \u2014 module EuroMillions. Pose-moi tes questions sur l\u2019EuroMillions, les statistiques ou le moteur HYBRIDE \uD83C\uDF1F",
+        "chatbot_placeholder": "Pose ta question EuroMillions...",
+        "chatbot_bubble_label": "Ouvrir le chatbot HYBRIDE EuroMillions",
+        "chatbot_clear_title": "Nouvelle conversation",
+        "chatbot_close_label": "Fermer",
+        "chatbot_send_label": "Envoyer",
+
         # ── rating-popup ──
         "rating_prompt": "Votre avis sur LotoIA ?",
         "rating_close": "Fermer",
@@ -320,6 +328,14 @@ _LABELS: dict[str, dict[str, str]] = {
         # wrapper titles
         "wrapper_gen_title": "Simulating {n} optimised EM grid{s}",
         "wrapper_sim_title": "Analysing your EM grid",
+
+        # ── chatbot widget ──
+        "chatbot_welcome": "Welcome! I\u2019m HYBRIDE, the LotoIA AI assistant \u2014 EuroMillions module. Ask me anything about EuroMillions, statistics or the HYBRIDE engine \uD83C\uDF1F",
+        "chatbot_placeholder": "Ask your EuroMillions question...",
+        "chatbot_bubble_label": "Open HYBRIDE EuroMillions chatbot",
+        "chatbot_clear_title": "New conversation",
+        "chatbot_close_label": "Close",
+        "chatbot_send_label": "Send",
 
         # ── rating-popup ──
         "rating_prompt": "Rate LotoIA?",
@@ -482,6 +498,14 @@ _LABELS: dict[str, dict[str, str]] = {
         # wrapper titles
         "wrapper_gen_title": "Simulación de {n} combinaciones optimizada{s} EM",
         "wrapper_sim_title": "Analizando su combinación EM",
+
+        # ── chatbot widget ──
+        "chatbot_welcome": "¡Bienvenido! Soy HYBRIDE, el asistente IA de LotoIA \u2014 módulo EuroMillions. Pregúntame lo que quieras sobre EuroMillions, estadísticas o el motor HYBRIDE \uD83C\uDF1F",
+        "chatbot_placeholder": "Haz tu pregunta EuroMillions...",
+        "chatbot_bubble_label": "Abrir el chatbot HYBRIDE EuroMillions",
+        "chatbot_clear_title": "Nueva conversación",
+        "chatbot_close_label": "Cerrar",
+        "chatbot_send_label": "Enviar",
 
         # ── rating-popup ──
         "rating_prompt": "¿Tu opinión sobre LotoIA?",

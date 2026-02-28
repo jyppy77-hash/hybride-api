@@ -23,6 +23,9 @@
         if (root.getAttribute('data-hybride-init') === '1') return;
         root.setAttribute('data-hybride-init', '1');
 
+        /* ── i18n labels (from window.LotoIA_i18n injected by Jinja2) ── */
+        var LI = window.LotoIA_i18n || {};
+
         /* ══════════════════════════════════
            HTML du widget
            ══════════════════════════════════ */
@@ -30,7 +33,7 @@
         // Bulle flottante
         var bubble = document.createElement('button');
         bubble.className = 'hybride-bubble';
-        bubble.setAttribute('aria-label', 'Ouvrir le chatbot HYBRIDE EuroMillions');
+        bubble.setAttribute('aria-label', LI.chatbot_bubble_label || 'Ouvrir le chatbot HYBRIDE EuroMillions');
         bubble.innerHTML = '<span>\uD83E\uDD16</span>';
 
         // Fenetre
@@ -40,14 +43,14 @@
             '<div class="hybride-header">' +
                 '<span class="hybride-header-title">\uD83E\uDD16 HYBRIDE \u2014 EuroMillions</span>' +
                 '<div class="hybride-header-actions">' +
-                    '<button class="hybride-header-clear" aria-label="Nouvelle conversation" title="Nouvelle conversation">\uD83D\uDDD1\uFE0F</button>' +
-                    '<button class="hybride-header-close" aria-label="Fermer">\u2715</button>' +
+                    '<button class="hybride-header-clear" aria-label="' + (LI.chatbot_clear_title || 'Nouvelle conversation') + '" title="' + (LI.chatbot_clear_title || 'Nouvelle conversation') + '">\uD83D\uDDD1\uFE0F</button>' +
+                    '<button class="hybride-header-close" aria-label="' + (LI.chatbot_close_label || 'Fermer') + '">\u2715</button>' +
                 '</div>' +
             '</div>' +
             '<div class="hybride-messages"></div>' +
             '<div class="hybride-input-area">' +
-                '<input class="hybride-input" type="text" placeholder="Pose ta question EuroMillions..." autocomplete="off">' +
-                '<button class="hybride-send" aria-label="Envoyer">\u27A4</button>' +
+                '<input class="hybride-input" type="text" placeholder="' + (LI.chatbot_placeholder || 'Pose ta question EuroMillions...') + '" autocomplete="off">' +
+                '<button class="hybride-send" aria-label="' + (LI.chatbot_send_label || 'Envoyer') + '">\u27A4</button>' +
             '</div>';
 
         // Injecter dans le root
@@ -195,7 +198,7 @@
         }
 
         var chatHistory = [];
-        var WELCOME_TEXT = 'Bienvenue ! Je suis HYBRIDE, l\u2019assistant IA de LotoIA \u2014 module EuroMillions. Pose-moi tes questions sur l\u2019EuroMillions, les statistiques ou le moteur HYBRIDE \uD83C\uDF1F';
+        var WELCOME_TEXT = LI.chatbot_welcome || 'Bienvenue ! Je suis HYBRIDE, l\u2019assistant IA de LotoIA \u2014 module EuroMillions. Pose-moi tes questions sur l\u2019EuroMillions, les statistiques ou le moteur HYBRIDE \uD83C\uDF1F';
         var STORAGE_KEY = 'hybride-history-em';
 
         /* ── GA4 session tracking state ── */
