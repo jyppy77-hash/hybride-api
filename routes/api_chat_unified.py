@@ -21,6 +21,7 @@ _SSE_HEADERS = {
     "Cache-Control": "no-cache, no-transform",
     "Connection": "keep-alive",
     "X-Accel-Buffering": "no",
+    "Content-Encoding": "identity",
 }
 
 
