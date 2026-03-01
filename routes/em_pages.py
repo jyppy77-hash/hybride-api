@@ -37,8 +37,8 @@ async def em_generateur(request: Request):
         hero_title="Exploration de grilles EuroMillions",
         hero_subtitle="Analyse statistique basée sur les tirages officiels EuroMillions",
         sponsor75_js="/ui/static/sponsor-popup75-em.js?v=8",
-        sponsor_js="/ui/static/sponsor-popup-em.js?v=4",
-        app_js="/ui/static/app-em.js?v=1",
+        sponsor_js="/ui/static/em/sponsor-popup-em.js?v=7",
+        app_js="/ui/static/app-em.js?v=7",
     )
 
 
