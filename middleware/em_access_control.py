@@ -35,25 +35,33 @@ _OWNER_IPV4 = os.getenv("OWNER_IP", "").strip()
 
 # ── Protected route patterns (compiled once at import) ────────────────────────
 
+_I = re.IGNORECASE
+
 _EM_PROTECTED = [
-    re.compile(r"^/euromillions(/.*)?$"),            # FR pages
-    re.compile(r"^/en/euromillions(/.*)?$"),          # EN pages
-    re.compile(r"^/es/euromillions(/.*)?$"),          # ES pages
-    re.compile(r"^/pt/euromilhoes(/.*)?$"),           # PT pages
-    re.compile(r"^/de/euromillionen(/.*)?$"),         # DE pages
-    re.compile(r"^/nl/euromillions(/.*)?$"),          # NL pages
-    re.compile(r"^/api/euromillions(/.*)?$"),         # All EM API endpoints
-    re.compile(r"^/static/pdf/em_"),                  # EM PDF assets
+    re.compile(r"^/euromillions(/.*)?$", _I),            # FR pages
+    re.compile(r"^/en/euromillions(/.*)?$", _I),          # EN pages
+    re.compile(r"^/es/euromillions(/.*)?$", _I),          # ES pages
+    re.compile(r"^/pt/euromilhoes(/.*)?$", _I),           # PT pages
+    re.compile(r"^/de/euromillionen(/.*)?$", _I),         # DE pages
+    re.compile(r"^/nl/euromillions(/.*)?$", _I),          # NL pages
+    re.compile(r"^/api/euromillions(/.*)?$", _I),         # All EM API endpoints
+    re.compile(r"^/static/pdf/em_", _I),                  # EM PDF assets
 ]
 
 
 # ── Utility functions ─────────────────────────────────────────────────────────
 
 def get_client_ip(request: Request) -> str:
-    """Extract real client IP from Cloud Run X-Forwarded-For header."""
+    """Extract real client IP from Cloud Run X-Forwarded-For header.
+
+    Takes the LAST IP in X-Forwarded-For: it is the one appended by
+    Google's trusted GFE proxy and cannot be forged by the client.
+    (ips[0] is attacker-controlled via a spoofed header.)
+    """
     forwarded = request.headers.get("x-forwarded-for", "")
     if forwarded:
-        return forwarded.split(",")[0].strip()
+        ips = [ip.strip() for ip in forwarded.split(",")]
+        return ips[-1]
     return request.client.host if request.client else "unknown"
 
 

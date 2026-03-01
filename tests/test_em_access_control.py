@@ -34,9 +34,16 @@ class TestGetClientIp:
         req = self._make_request(forwarded="203.0.113.50")
         assert get_client_ip(req) == "203.0.113.50"
 
-    def test_xff_multiple_ips_takes_first(self):
+    def test_xff_multiple_ips_takes_last(self):
+        """Last IP is the one added by Google's trusted GFE (anti-spoofing)."""
         req = self._make_request(forwarded="203.0.113.50, 10.0.0.1, 10.0.0.2")
-        assert get_client_ip(req) == "203.0.113.50"
+        assert get_client_ip(req) == "10.0.0.2"
+
+    def test_xff_spoofed_owner_ip_takes_real(self):
+        """Attacker forges owner IP in XFF; GFE appends real IP last."""
+        spoofed = f"{OWNER_IPV6}, 198.51.100.99"
+        req = self._make_request(forwarded=spoofed)
+        assert get_client_ip(req) == "198.51.100.99"
 
     def test_xff_ipv6(self):
         req = self._make_request(forwarded="2a01:cb05:8700:5900:aaaa:bbbb:cccc:dddd")
@@ -44,7 +51,7 @@ class TestGetClientIp:
 
     def test_xff_strips_whitespace(self):
         req = self._make_request(forwarded="  203.0.113.50 , 10.0.0.1")
-        assert get_client_ip(req) == "203.0.113.50"
+        assert get_client_ip(req) == "10.0.0.1"
 
     def test_fallback_to_client_host(self):
         req = self._make_request(forwarded=None, host="192.168.1.1")
@@ -131,6 +138,13 @@ class TestIsEmRoute:
         "/api/euromillions/meta-pdf",
         "/static/pdf/em_report.pdf",
         "/static/pdf/em_meta75.pdf",
+        # Case-insensitive bypass attempts
+        "/EuroMillions",
+        "/EUROMILLIONS/statistiques",
+        "/En/EuroMillions",
+        "/API/EUROMILLIONS/stats",
+        "/PT/EuroMilhoes",
+        "/Static/Pdf/EM_report.pdf",
     ])
     def test_em_routes_blocked(self, path):
         assert is_em_route(path) is True
