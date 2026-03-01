@@ -334,6 +334,7 @@ function showSponsorPopup75(config) {
         if (sponsorVideo) {
             sponsorVideo.addEventListener('play', function() {
                 if (typeof umami !== 'undefined') umami.track('sponsor-video-played', { sponsor: SPONSOR_VIDEO_75.id, module: 'loto' });
+                if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('sponsor_video_played', { event_category: 'sponsor', sponsor: SPONSOR_VIDEO_75.id, module: 'loto' });
             }, { once: true });
         }
 
@@ -1131,6 +1132,7 @@ async function showMetaAnalysePopup() {
 
     // Umami — meta75 lancee
     if (typeof umami !== 'undefined') umami.track('meta75-launched', { module: 'loto' });
+    if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('meta75_launched', { event_category: 'engagement', module: 'loto', version: 75 });
 
     // EVENT 2 - Début tunnel sponsor
     META_ANALYSE_START_TIME = Date.now();

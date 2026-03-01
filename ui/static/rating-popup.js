@@ -106,6 +106,7 @@
         closeBtn.addEventListener('click', function () {
             var ratingModule = window.location.pathname.indexOf('/euromillions/') !== -1 ? 'euromillions' : 'loto';
             if (typeof umami !== 'undefined') umami.track('rating-dismissed', { module: ratingModule });
+            if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('rating_dismissed', { event_category: 'engagement', module: ratingModule });
             banner.classList.add('rating-banner-hide');
             setTimeout(function () { banner.remove(); }, 300);
         });
@@ -116,6 +117,7 @@
         // Umami tracking
         var ratingModule = window.location.pathname.indexOf('/euromillions/') !== -1 ? 'euromillions' : 'loto';
         if (typeof umami !== 'undefined') umami.track('rating-popup-shown', { module: ratingModule });
+        if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('rating_popup_shown', { event_category: 'engagement', module: ratingModule });
     }
 
     function submitBannerRating(rating) {

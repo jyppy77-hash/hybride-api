@@ -242,6 +242,15 @@
         // Anti-double boot
         if (state.gtagBooted) return;
 
+        // Owner IP filter — same mechanism as Umami (window.__OWNER__)
+        // Injected by UmamiOwnerFilterMiddleware in main.py
+        if (window.__OWNER__) {
+            state.gtagBooted = true;
+            state.gtagLoadFailed = true;
+            state.gtagScriptReady = true;
+            return;
+        }
+
         try {
             // 1. Initialiser dataLayer et gtag() SYNCHRONE
             window.dataLayer = window.dataLayer || [];
@@ -963,31 +972,8 @@
             });
         },
 
-        /**
-         * Track impression publicitaire
-         */
-        adImpression: function(params = {}) {
-            sendGA4Event('ad_impression', {
-                event_category: 'advertising',
-                ad_id: params.adId || 'unknown',
-                ad_placement: params.placement || 'inline',
-                ad_format: params.format || 'banner',
-                page: getCurrentPage()
-            });
-        },
-
-        /**
-         * Track clic publicitaire
-         */
-        adClick: function(params = {}) {
-            sendGA4Event('ad_click', {
-                event_category: 'advertising',
-                ad_id: params.adId || 'unknown',
-                ad_placement: params.placement || 'inline',
-                partner_id: params.partnerId || 'unknown',
-                page: getCurrentPage()
-            });
-        }
+        // NOTE: adImpression / adClick removed (dead code, never called).
+        // Sponsor tracking uses sponsorImpression / sponsorClick above.
     };
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -1255,27 +1241,8 @@
             }
         },
 
-        /**
-         * Track une vue sponsor
-         * @param {string} slot - Emplacement (sidebar_top, footer, etc.)
-         */
-        sponsorView: function(slot) {
-            this.track('lotoia_sponsor_view', {
-                slot: slot || 'unknown',
-                event_category: 'monetization'
-            });
-        },
-
-        /**
-         * Track un clic sponsor
-         * @param {string} slot - Emplacement
-         */
-        sponsorClick: function(slot) {
-            this.track('lotoia_sponsor_click', {
-                slot: slot || 'unknown',
-                event_category: 'monetization'
-            });
-        },
+        // NOTE: sponsorView / sponsorClick removed (dead code, never called).
+        // Sponsor tracking uses BusinessEvents.sponsorImpression / sponsorClick.
 
         /**
          * Flush manuel du buffer

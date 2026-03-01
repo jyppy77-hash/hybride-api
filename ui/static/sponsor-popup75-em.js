@@ -336,6 +336,7 @@ function showSponsorPopup75EM(config) {
         if (sponsorVideo) {
             sponsorVideo.addEventListener('play', function() {
                 if (typeof umami !== 'undefined') umami.track('sponsor-video-played', { sponsor: SPONSOR_VIDEO_75_EM.id, module: 'euromillions' });
+                if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('sponsor_video_played', { event_category: 'sponsor', sponsor: SPONSOR_VIDEO_75_EM.id, module: 'euromillions' });
             }, { once: true });
         }
 
@@ -1015,6 +1016,7 @@ async function showMetaAnalysePopupEM() {
 
     // Umami — meta75 lancee EM
     if (typeof umami !== 'undefined') umami.track('meta75-launched', { module: 'euromillions' });
+    if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('meta75_launched', { event_category: 'engagement', module: 'euromillions', version: 75 });
 
     META_ANALYSE_START_TIME_EM = Date.now();
     if (window.LotoIAAnalytics?.productEngine?.track) {

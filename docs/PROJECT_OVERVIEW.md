@@ -68,8 +68,9 @@ hybride-api/
 │   ├── circuit_breaker.py               # Gemini circuit breaker (84L, 3 fails → 60s open)
 │   ├── gemini.py                        # Gemini 2.0 Flash API client — Loto (192L, +streaming P9)
 │   ├── em_gemini.py                     # Gemini 2.0 Flash API client — EM (122L)
-│   ├── pdf_generator.py                 # ReportLab PDF — Loto (361L, single graph)
-│   ├── em_pdf_generator.py              # ReportLab PDF — EM (364L, dual graphs boules+etoiles)
+│   ├── pdf_generator.py                 # ReportLab PDF — Loto (576L, graph + heatmap page 2, i18n 6 langs)
+│   ├── em_pdf_generator.py              # ReportLab PDF — EM (621L, dual graphs + heatmap page 2, i18n 6 langs)
+│   ├── pdf_heatmap.py                   # Shared heatmap module (134L, Google 4-color gradient grid + legend)
 │   ├── chat_responses_em_en.py          # English response pools for EM chatbot (Phase 11)
 │   ├── penalization.py                  # Number penalization logic (65L)
 │   └── prompt_loader.py                 # Dynamic prompt loader (143L, Loto PROMPT_MAP + file-based load_prompt_em with lang fallback, P4/5)
@@ -555,8 +556,9 @@ USER BROWSER (HTML/CSS/Vanilla JS)
 |  em_gemini.py           Gemini 2.0 Flash — EM      |
 |  cache.py               Redis async + fallback (P6)|
 |  circuit_breaker.py     3 fails → 60s open         |
-|  pdf_generator.py       ReportLab PDF — Loto       |
-|  em_pdf_generator.py    ReportLab PDF — EM         |
+|  pdf_generator.py       ReportLab PDF — Loto (i18n) |
+|  em_pdf_generator.py    ReportLab PDF — EM (i18n)  |
+|  pdf_heatmap.py         Shared heatmap grid+legend  |
 |  penalization.py        Post-draw frequency filter  |
 |  prompt_loader.py       Loto PROMPT_MAP + EM multilang|
 +--------------------------------------------------+
@@ -636,7 +638,7 @@ schemas.py — Pydantic Models (Loto)
     ├── GridData, TrackGridPayload
     ├── TrackAdImpressionPayload, TrackAdClickPayload
     ├── MetaAnalyseTextePayload
-    ├── MetaPdfPayload
+    ├── MetaPdfPayload (lang, all_freq_boules, all_freq_secondary)
     ├── ChatMessage, HybrideChatRequest
     ├── HybrideChatResponse
     ├── PitchGrilleItem
@@ -645,7 +647,7 @@ schemas.py — Pydantic Models (Loto)
 em_schemas.py — Pydantic Models (EuroMillions)
     ├── EMGridData (nums + etoiles + score)
     ├── EMMetaAnalyseTextePayload
-    ├── EMMetaPdfPayload (graph_data_boules + graph_data_etoiles)
+    ├── EMMetaPdfPayload (graph_data_boules + graph_data_etoiles + all_freq_boules + all_freq_secondary)
     ├── EMPitchGrilleItem
     ├── EMPitchGrillesRequest
     ├── EMChatMessage (role + content)
@@ -697,12 +699,13 @@ services/ — 21 modules, ~6200 lines
     ├── circuit_breaker.py    (84L)  Gemini circuit breaker (CLOSED/OPEN/HALF_OPEN)
     ├── gemini.py            (192L)  Gemini API client — Loto (batch + streaming, circuit breaker, P9)
     ├── em_gemini.py         (122L)  Gemini API client — EuroMillions
-    ├── pdf_generator.py     (361L)  ReportLab PDF engine — Loto (single graph)
-    ├── em_pdf_generator.py  (364L)  ReportLab PDF engine — EM (dual graphs, 2x2 matplotlib)
+    ├── pdf_generator.py     (576L)  ReportLab PDF engine — Loto (graph + heatmap page 2, PDF_LABELS 6 langs)
+    ├── em_pdf_generator.py  (621L)  ReportLab PDF engine — EM (dual graphs + heatmap page 2, PDF_LABELS 6 langs)
+    ├── pdf_heatmap.py       (134L)  Shared heatmap module (Google 4-color gradient grid + legend bar)
     ├── penalization.py       (65L)  Post-draw frequency penalization filter
     └── prompt_loader.py     (143L)  Loto PROMPT_MAP (18 keys) + EM file-based multilang loader (P4/5)
 
-tests/ — 737 tests, 23 files (pytest + pytest-cov)
+tests/ — 774 tests, 24 files (pytest + pytest-cov)
     ├── conftest.py                (247L)  Fixtures (AsyncSmartMockCursor, cache clear)
     ── Foundation Tests ──
     ├── test_models.py             (92L)   Pydantic models + CONFIG weights
@@ -731,6 +734,8 @@ tests/ — 737 tests, 23 files (pytest + pytest-cov)
     ├── test_js_i18n.py          (21 tests)  JS i18n labels FR/EN, key coverage, chatbot welcome per lang
     ├── test_prompts.py          (58 tests)  Loto+EM prompts, lang fallback, variable substitution
     ├── test_multilang_routes.py (66 tests)  Kill switch, hreflang, sitemap, routes (44), PAGE_SLUGS, legal URLs
+    ── PDF Heatmap Tests ──
+    ├── test_pdf_heatmap.py     (37 tests)  Google gradient, text color, grid rendering, legend, full PDF 2-page count, PDF_LABELS, schemas
     ── Stress Tests ──
     └── test_insult_oor.py        (854L)   141 tests: insult detection + out-of-range numbers
 ```
@@ -1222,24 +1227,35 @@ Phase 1 split `api_chat.py` (2014L) into 4 service modules. Phase 4 applied the 
 
 ### services/pdf_generator.py — ReportLab PDF Engine (Loto)
 
-- **Format**: A4 portrait, professional layout
+- **Format**: A4 portrait, 2-page layout (page 1: analysis, page 2: heatmap)
+- **i18n**: `PDF_LABELS` dict with 22 keys x 6 languages (FR/EN/ES/PT/DE/NL)
 - **Font system**: DejaVuSans (Linux/Cloud Run) -> Vera (ReportLab fallback)
   - 3 variants: Regular, Bold, Oblique
   - Multi-path resolution: reportlab/fonts/ -> /usr/share/fonts/ -> Vera fallback
-- **Content**: Title, analysis block, single graph image, info block, sponsor with mailto link, signature, disclaimer, footer
-- **Text**: Full UTF-8 support (French accents via `_utf8_clean()`)
+- **Page 1**: Title, analysis block, single graph image, chance data, info block, sponsor with mailto link
+- **Page 2**: Heatmap grid numbers 1-49 (7x7) + chance 1-10 (5x2) + Google gradient legend + footer
+- **Heatmap**: Google Material Design 4-color gradient (Blue #4285F4 -> Green #34A853 -> Yellow #FBBC05 -> Red #EA4335)
+- **Retro-compatible**: Without `all_freq_boules` data, produces 1-page PDF with footer on page 1
 - **Output**: `io.BytesIO` containing the PDF
 
 ### services/em_pdf_generator.py — ReportLab PDF Engine (EuroMillions)
 
-- **Format**: A4 portrait, same professional layout as Loto
+- **Format**: A4 portrait, 2-page layout (page 1: analysis, page 2: heatmap)
+- **i18n**: `PDF_LABELS` dict with 26 keys x 6 languages (FR/EN/ES/PT/DE/NL)
 - **Dual graphs**: `generate_em_graph_image()` produces a 2x2 matplotlib figure:
   - Row 1: Top 5 Boules (bar chart + pie chart, blue/green palette)
   - Row 2: Top 3 Etoiles (bar chart + pie chart, orange/teal palette)
-- **Function**: `generate_em_meta_pdf(analysis, window, engine, graph, graph_data_boules, graph_data_etoiles, sponsor)`
-- **Title**: "Rapport META DONNEE EM - 75 Grilles" / "Analyse HYBRIDE EuroMillions"
-- **Text**: Full UTF-8 support (`_utf8_clean()` duplicated, not imported — zero coupling with Loto)
+- **Page 2**: Heatmap grid boules 1-50 (10x5) + etoiles 1-12 (6x2) + Google gradient legend + footer
+- **Retro-compatible**: Without `all_freq_boules` data, produces 1-page PDF with footer on page 1
 - **Output**: `io.BytesIO` containing the PDF
+
+### services/pdf_heatmap.py — Shared Heatmap Module
+
+- **Gradient**: `_freq_to_color()` — Google Material 4-color gradient (Blue -> Green -> Yellow -> Red)
+- **Text contrast**: `_text_color_for_bg()` — white text on dark backgrounds (blue/green/red), black on bright (yellow)
+- **Grid**: `draw_heatmap_grid()` — draws numbered cells with frequency, color-coded by value
+- **Legend**: `draw_legend_bar()` — horizontal gradient bar with "cold/rare" and "hot/frequent" labels
+- **Used by**: Both `pdf_generator.py` (Loto) and `em_pdf_generator.py` (EM)
 
 ### services/penalization.py — Number Penalization
 
@@ -1858,4 +1874,4 @@ Observable characteristics based on development usage:
 
 ---
 
-*Updated by JyppY & Claude Opus 4.6 — 01/03/2026 (v16.0: Legal pages EM multilingues (4 pages x 6 langs = 24 URLs), mobile globe lang selector, chatbot welcome per-lang fix. 66 EM routes total (11 pages x 6 langs). 737 tests, 0 failures. Previous: i18n 6/6 COMPLETE, P9 (SSE streaming), P1-P5/5 (i18n infrastructure), Phase 11 (EN multilang), Phases 1-10.)*
+*Updated by JyppY & Claude Opus 4.6 — 01/03/2026 (v17.0: PDF heatmap page 2 with Google Material 4-color gradient (EM + Loto), full-frequency grids, PDF_LABELS i18n 6 langs for Loto, all_frequencies API pipeline, pdf_heatmap.py shared module. 774 tests, 0 failures. Previous: v16.0 legal pages, globe selector, chatbot fix. i18n 6/6 COMPLETE, P9 (SSE streaming), P1-P5/5 (i18n infrastructure), Phase 11 (EN multilang), Phases 1-10.)*
