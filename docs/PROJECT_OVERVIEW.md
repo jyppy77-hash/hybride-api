@@ -29,6 +29,7 @@ hybride-api/
 ├── SEO_CHECKLIST.md                     # SEO audit checklist
 ├── SEO_SNIPPETS.md                      # SEO code snippets reference
 ├── SEO_STRATEGY.md                      # SEO strategy document
+├── AUDIT_GA4_REPORT.md                  # GA4 analytics audit report (Phase 1+2 fixes applied)
 │
 ├── routes/                              # API & page routers (APIRouter)
 │   ├── __init__.py                      # Package init
@@ -201,15 +202,15 @@ hybride-api/
 │       ├── hybride-chatbot-em.js        # HYBRIDE Chatbot widget — EuroMillions (IIFE, /api/euromillions/hybride-chat, hybride-history-em)
 │       ├── hybride-chatbot-em-en.js    # HYBRIDE Chatbot widget — EM English (Phase 11, now in ui/en/euromillions/static/)
 │       ├── theme.js                     # Dark/light mode toggle
-│       ├── analytics.js                 # GDPR-compliant analytics
-│       ├── cookie-consent.js            # Cookie consent management
+│       ├── analytics.js                 # GA4 analytics v2.5.2 (Consent Mode v2, owner IP filter, 32+ events)
+│       ├── cookie-consent.js            # Cookie consent banner v2.0.0 (CNIL, i18n 6 langs)
 │       ├── faq.js                       # FAQ accordion logic (Loto)
 │       ├── faq-em.js                    # FAQ accordion logic (EuroMillions)
 │       ├── scroll.js                    # Scroll-to-top button (all pages)
 │       ├── nav-scroll.js                # Navigation scroll behavior
 │       ├── version-inject.js            # Dynamic version injection from /api/version
 │       ├── sponsor-popup.js             # Sponsor popup logic (grids)
-│       ├── rating-popup.js              # Rating popup UI logic
+│       ├── rating-popup.js              # Rating popup UI logic (GA4 + Umami dual tracking)
 │       ├── og-image.jpg                 # Open Graph image (1200x630)
 │       ├── og-image.webp                # Open Graph image (WebP)
 │       ├── hero-bg.jpg                  # Hero background image
@@ -229,7 +230,7 @@ hybride-api/
 │           ├── sponsor-popup-em.js      # EM sponsor popup logic
 │           └── sponsor-popup75-em.css   # EM META ANALYSE 75 popup styling
 │
-├── tests/                               # Unit tests (pytest) — 737 tests
+├── tests/                               # Unit tests (pytest) — 774 tests
 │   ├── conftest.py                      # Shared fixtures (SmartMockCursor, cache clear)
 │   ├── test_models.py                   # Pydantic models + CONFIG weights (10 tests)
 │   ├── test_hybride.py                  # HYBRIDE engine tests (21 tests)
@@ -470,13 +471,14 @@ The chatbot is connected to Cloud SQL in real-time via a multi-phase detection p
 
 ### Analytics & GDPR
 
-- Cookie consent management (consent-based activation)
+- **Dual analytics**: GA4 (`G-YYJ5LD1ZT3`) + Umami (self-hosted, cookieless)
 - GA4 Consent Mode v2: baseline cookieless → enhanced after consent
-- Grid generation tracking (session, grid_id, target_date)
-- Ad impression/click tracking (CPA)
-- Chatbot GA4 events (5 custom events: open, message, session, sponsor_view, clear)
-- No tracking without explicit user consent
-- CSP: img-src + connect-src whitelist GA4/GTM domains
+- Cookie consent banner i18n: 6 languages (FR/EN/ES/PT/DE/NL), auto-detect via `window.LotoIA_lang`
+- Owner IP filtering: `window.__OWNER__` blocks both GA4 and Umami for admin visits
+- 32+ GA4 events: UX (scroll, page_view, session), Product (generate_grid, simulate_grid), Business (sponsor_impression, sponsor_click, sponsor_video_played), Chatbot (8 events), Meta (meta75_launched, meta_pdf_export)
+- 13 Umami events: full parity with GA4 for key actions
+- CSP: img-src + connect-src whitelist GA4/GTM + Umami domains
+- Graceful adblock degradation: `gtagLoadFailed` flag, no JS errors
 
 ---
 
@@ -792,13 +794,13 @@ Loto pages are static HTML served by FastAPI. EuroMillions pages use **Jinja2 te
 | `sponsor-popup75.js` | META ANALYSE 75 Loto: Gemini chain, PDF export, sponsor timer |
 | `sponsor-popup75-em.js` | META ANALYSE 75 EM: dual graphs (boules+etoiles), Gemini chain, PDF export, sponsor timer |
 | `theme.js` | Dark/light mode toggle with `localStorage` persistence |
-| `analytics.js` | GDPR-compliant analytics (GA4 Consent Mode v2, `LotoIAAnalytics.track()` API) |
-| `cookie-consent.js` | Cookie consent banner and preference management |
+| `analytics.js` | GA4 analytics v2.5.2: Consent Mode v2, owner IP filter (`window.__OWNER__`), 32+ events (UX/Product/Business/Chatbot), ProductEngine with RGPD sanitizer + buffer, graceful adblock degradation |
+| `cookie-consent.js` | Cookie consent banner v2.0.0: CNIL-compliant, i18n 6 languages (CONSENT_LABELS dict), auto-detect lang, contextual cookie policy URL |
 | `faq.js` | FAQ accordion interactions (Loto) |
 | `faq-em.js` | FAQ accordion interactions (EuroMillions) |
 | `scroll.js` | Scroll-to-top button (shows after 300px scroll, all pages including legal) |
 | `nav-scroll.js` | Navigation scroll behavior |
-| `rating-popup.js` | Rating popup UI logic (user feedback submission) |
+| `rating-popup.js` | Rating popup UI logic: GA4 + Umami dual tracking (rating_popup_shown, rating_dismissed, rating-submitted) |
 | `version-inject.js` | Dynamic version injection from `/api/version` into `.app-version` spans |
 | `hybride-chatbot.js` | HYBRIDE chatbot widget — Loto (bubble, chat window, sessionStorage `hybride-history`, GA4 tracking, Gemini API via `/api/hybride-chat`) |
 | `hybride-chatbot-em.js` | HYBRIDE chatbot widget — EuroMillions (sessionStorage `hybride-history-em`, Gemini API via `/api/euromillions/hybride-chat`, GA4 `hybride_em_chat_*` events) |
@@ -1287,8 +1289,8 @@ Phase 1 split `api_chat.py` (2014L) into 4 service modules. Phase 4 applied the 
 | `GEMINI_API_KEY` | Optional | — | Gemini API key (fallback name) |
 | `REDIS_URL` | Optional | — | Redis connection URL for async cache (Phase 6; fallback to in-memory if absent) |
 | `K_SERVICE` | Auto | — | Set by Cloud Run (production detection) |
-| `OWNER_IP` | Optional | — | Owner IPv4 address(es) for Umami analytics filtering (pipe-separated) |
-| `OWNER_IPV6` | Optional | — | Owner IPv6 prefix for Umami analytics filtering |
+| `OWNER_IP` | Optional | — | Owner IPv4 address(es) for GA4 + Umami analytics filtering (pipe-separated) |
+| `OWNER_IPV6` | Optional | — | Owner IPv6 prefix for GA4 + Umami analytics filtering |
 
 ### Environment Detection
 
@@ -1315,7 +1317,7 @@ Phase 1 split `api_chat.py` (2014L) into 4 service modules. Phase 4 applied the 
 | Canonical URLs | 301 redirect `www` → root domain |
 | HTTPS | Enforced via Cloud Run + `og:image:secure_url` + redirect_http_to_https middleware |
 | API Key Protection | Gemini key stored in env vars, never exposed to client |
-| Owner IP Filtering | UmamiOwnerFilterMiddleware strips analytics for owner IPs (OWNER_IP + OWNER_IPV6) |
+| Owner IP Filtering | UmamiOwnerFilterMiddleware injects `window.__OWNER__=true` for owner IPs → blocks both Umami (via `umamiBeforeSend`) and GA4 (via `bootGtagImmediately` early return) |
 | HEAD Method Support | HeadMethodMiddleware converts HEAD to GET (SEO crawlers compatibility) |
 
 ---
@@ -1828,8 +1830,8 @@ Observable characteristics based on development usage:
 - **Redis optional** — `services/cache.py` falls back to per-process in-memory cache if `REDIS_URL` absent (not shared across 2 workers in fallback mode).
 - **Gemini dependency** — META ANALYSE and chatbot depend on an external API. Mitigated by circuit breaker + fallback messages, but degraded experience when open.
 - **Minimal monitoring** — Production observability relies on Cloud Run metrics + JSON structured logs with correlation IDs. No APM or alerting.
-- **Test coverage** — 737 tests across 23 files. Core engine, chat pipeline, stats, insult/OOR detection, templates, legal pages, i18n, JS labels, prompts, multilang routes well covered. Some route handlers and PDF have lower coverage.
-- **i18n residue** — Full i18n pipeline complete (P1-P5/5 + Sprints ES/PT/DE/NL): gettext, Jinja2, JS labels, prompts, routes, sitemap, kill switch. **All 6 languages fully translated and live.** 4 legal pages translated. 1 minor FR residue: rating popup (5 FR strings in `rating-popup.js`). Loto EN not yet planned.
+- **Test coverage** — 774 tests across 24 files. Core engine, chat pipeline, stats, insult/OOR detection, templates, legal pages, i18n, JS labels, prompts, multilang routes, PDF heatmap well covered. Some route handlers have lower coverage.
+- **i18n residue** — Full i18n pipeline complete (P1-P5/5 + Sprints ES/PT/DE/NL): gettext, Jinja2, JS labels, prompts, routes, sitemap, kill switch. **All 6 languages fully translated and live.** 4 legal pages translated. Cookie consent banner translated (6 langs). 1 minor FR residue: rating popup labels (5 FR strings in `rating-popup.js`). Loto EN not yet planned.
 
 ---
 
@@ -1874,4 +1876,4 @@ Observable characteristics based on development usage:
 
 ---
 
-*Updated by JyppY & Claude Opus 4.6 — 01/03/2026 (v17.0: PDF heatmap page 2 with Google Material 4-color gradient (EM + Loto), full-frequency grids, PDF_LABELS i18n 6 langs for Loto, all_frequencies API pipeline, pdf_heatmap.py shared module. 774 tests, 0 failures. Previous: v16.0 legal pages, globe selector, chatbot fix. i18n 6/6 COMPLETE, P9 (SSE streaming), P1-P5/5 (i18n infrastructure), Phase 11 (EN multilang), Phases 1-10.)*
+*Updated by JyppY & Claude Opus 4.6 — 01/03/2026 (v18.0: GA4 audit + Phase 1-2 fixes — delete obsolete root analytics.js, owner IP filter for GA4, analytics.js on all 36 pages, 4 missing GA4 events added, cookie consent i18n 6 langs, dead sponsor code removed, AUDIT_GA4_REPORT.md. 774 tests, 0 failures. Previous: v17.0 PDF heatmap, v16.0 legal pages, globe selector, chatbot fix. i18n 6/6 COMPLETE, P9 (SSE streaming), P1-P5/5 (i18n infrastructure), Phase 11 (EN multilang), Phases 1-10.)*
