@@ -109,3 +109,44 @@ async def em_news(request: Request):
         hero_title="Actualités EuroMillions",
         hero_subtitle="Évolutions, méthodologies et mises à jour du moteur EuroMillions",
     )
+
+
+# =========================
+# Pages légales EM (FR)
+# =========================
+
+@router.get("/euromillions/mentions-legales", include_in_schema=False)
+async def em_mentions(request: Request):
+    """EuroMillions — Mentions légales."""
+    return render_template(
+        "em/mentions-legales.html", request, lang="fr", page_key="mentions",
+        body_class="subpage legal-page em-page",
+    )
+
+
+@router.get("/euromillions/confidentialite", include_in_schema=False)
+async def em_confidentialite(request: Request):
+    """EuroMillions — Politique de confidentialité."""
+    return render_template(
+        "em/confidentialite.html", request, lang="fr", page_key="confidentialite",
+        body_class="subpage legal-page em-page",
+    )
+
+
+@router.get("/euromillions/cookies", include_in_schema=False)
+async def em_cookies(request: Request):
+    """EuroMillions — Politique de cookies."""
+    return render_template(
+        "em/cookies.html", request, lang="fr", page_key="cookies",
+        body_class="subpage legal-page em-page",
+    )
+
+
+@router.get("/euromillions/avertissement", include_in_schema=False)
+async def em_disclaimer(request: Request):
+    """EuroMillions — Avertissements."""
+    return render_template(
+        "em/disclaimer.html", request, lang="fr", page_key="disclaimer",
+        body_class="subpage legal-page em-page",
+        show_disclaimer_link=True,
+    )

@@ -16,14 +16,14 @@
         <a href="{{ urls.faq }}"{% if active_page == 'faq' %} class="active"{% endif %}>FAQ</a>
     </div>
     <div class="footer-legal">
-        <a href="/mentions-legales">{{ _('Mentions légales') }}</a>
+        <a href="{{ urls.mentions }}">{{ _('Mentions légales') }}</a>
         <span class="footer-sep">&bull;</span>
-        <a href="/politique-confidentialite">{{ _('Confidentialité') }}</a>
+        <a href="{{ urls.confidentialite }}">{{ _('Confidentialité') }}</a>
         <span class="footer-sep">&bull;</span>
-        <a href="/politique-cookies">{{ _('Cookies') }}</a>
+        <a href="{{ urls.cookies }}">Cookies</a>
         {% if show_disclaimer_link|default(false) %}
         <span class="footer-sep">&bull;</span>
-        <a href="/disclaimer">{{ _('Avertissements') }}</a>
+        <a href="{{ urls.disclaimer }}">{{ _('Avertissements') }}</a>
         {% endif %}
     </div>
     <p class="footer-brand">LotoIA.fr <span class="app-version">v1.001</span></p>

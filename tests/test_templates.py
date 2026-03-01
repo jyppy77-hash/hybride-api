@@ -423,3 +423,92 @@ def test_build_all_lang_switches():
     assert current[0]["label"] == "ES"
     non_current = [s for s in switches if not s["current"]]
     assert len(non_current) == 5
+
+
+# ═══════════════════════════════════════════════
+# Legal pages (mentions, confidentialite, cookies, disclaimer)
+# ═══════════════════════════════════════════════
+
+_LEGAL_PAGES = [
+    ("mentions", "em/mentions-legales.html"),
+    ("confidentialite", "em/confidentialite.html"),
+    ("cookies", "em/cookies.html"),
+    ("disclaimer", "em/disclaimer.html"),
+]
+
+_ALL_LANGS = ("fr", "en", "es", "pt", "de", "nl")
+
+
+@pytest.mark.parametrize("page_key,template", _LEGAL_PAGES)
+@pytest.mark.parametrize("lang", _ALL_LANGS)
+def test_legal_page_renders_all_langs(page_key, template, lang):
+    """Each legal page renders without error for all 6 languages."""
+    from config.templates import render_template
+    request = _make_request()
+    resp = render_template(
+        template, request, lang=lang, page_key=page_key,
+        body_class="subpage legal-page em-page",
+    )
+    assert resp.status_code == 200
+    html = resp.body.decode("utf-8")
+    assert "legal-content" in html or "legal-section" in html
+
+
+@pytest.mark.parametrize("page_key,template", _LEGAL_PAGES)
+def test_legal_page_has_noindex(page_key, template):
+    """Legal pages have noindex meta tag."""
+    from config.templates import render_template
+    request = _make_request()
+    html = render_template(
+        template, request, lang="fr", page_key=page_key,
+        body_class="subpage legal-page em-page",
+    ).body.decode("utf-8")
+    assert 'noindex' in html
+
+
+@pytest.mark.parametrize("page_key,template", _LEGAL_PAGES)
+def test_legal_page_has_canonical(page_key, template):
+    """Legal pages have canonical URL."""
+    from config.templates import render_template
+    request = _make_request()
+    html = render_template(
+        template, request, lang="fr", page_key=page_key,
+        body_class="subpage legal-page em-page",
+    ).body.decode("utf-8")
+    assert 'rel="canonical"' in html
+
+
+def test_legal_urls_in_em_urls():
+    """All 4 legal page keys exist in EM_URLS for all 6 langs."""
+    from config.templates import EM_URLS
+    for lang in _ALL_LANGS:
+        for key in ("mentions", "confidentialite", "cookies", "disclaimer"):
+            assert key in EM_URLS[lang], f"Missing EM_URLS[{lang}][{key}]"
+            assert EM_URLS[lang][key].startswith("/"), (
+                f"EM_URLS[{lang}][{key}] should start with /"
+            )
+
+
+@pytest.mark.parametrize("lang", _ALL_LANGS)
+def test_footer_legal_links_per_lang(lang):
+    """Footer renders correct legal URLs for each language."""
+    from config.templates import render_template, EM_URLS
+    request = _make_request()
+    html = render_template(
+        "em/accueil.html", request, lang=lang, page_key="accueil",
+        nav_back_url="/", body_class="accueil-page em-page",
+        show_disclaimer_link=True,
+    ).body.decode("utf-8")
+    # Footer should contain the language-specific legal URLs
+    assert EM_URLS[lang]["mentions"] in html, (
+        f"Footer should link to {EM_URLS[lang]['mentions']} for {lang}"
+    )
+    assert EM_URLS[lang]["confidentialite"] in html, (
+        f"Footer should link to {EM_URLS[lang]['confidentialite']} for {lang}"
+    )
+    assert EM_URLS[lang]["cookies"] in html, (
+        f"Footer should link to {EM_URLS[lang]['cookies']} for {lang}"
+    )
+    assert EM_URLS[lang]["disclaimer"] in html, (
+        f"Footer should link to {EM_URLS[lang]['disclaimer']} for {lang}"
+    )

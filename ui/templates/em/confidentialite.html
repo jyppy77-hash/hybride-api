@@ -1,0 +1,808 @@
+{% extends "em/_base.html" %}
+
+{% block head %}
+  <title>{% if lang == "fr" %}Politique de Confidentialit&eacute; | LotoIA EuroMillions{% elif lang == "en" %}Privacy Policy | LotoIA EuroMillions{% elif lang == "es" %}Pol&iacute;tica de Privacidad | LotoIA EuroMillions{% elif lang == "pt" %}Pol&iacute;tica de Privacidade | LotoIA EuroMillions{% elif lang == "de" %}Datenschutzerkl&auml;rung | LotoIA EuroMillions{% elif lang == "nl" %}Privacybeleid | LotoIA EuroMillions{% endif %}</title>
+  <meta name="robots" content="noindex, follow">
+  <link rel="canonical" href="{{ canonical_url }}">
+{% endblock %}
+
+{% block head_end %}<link rel="stylesheet" href="/ui/static/legal.css?v=1">{% endblock %}
+
+{% block body %}
+  <header class="page-header">
+    <div class="header-content">
+      <h1>{% if lang == "fr" %}Politique de Confidentialit&eacute;{% elif lang == "en" %}Privacy Policy{% elif lang == "es" %}Pol&iacute;tica de Privacidad{% elif lang == "pt" %}Pol&iacute;tica de Privacidade{% elif lang == "de" %}Datenschutzerkl&auml;rung{% elif lang == "nl" %}Privacybeleid{% endif %}</h1>
+      <p class="subtitle">{% if lang == "fr" %}Protection de vos donn&eacute;es personnelles{% elif lang == "en" %}Protecting your personal data{% elif lang == "es" %}Protecci&oacute;n de sus datos personales{% elif lang == "pt" %}Prote&ccedil;&atilde;o dos seus dados pessoais{% elif lang == "de" %}Schutz Ihrer personenbezogenen Daten{% elif lang == "nl" %}Bescherming van uw persoonsgegevens{% endif %}</p>
+    </div>
+  </header>
+
+  <div class="container subpage-container">
+    <article class="legal-content">
+
+      {# ── Update date ── #}
+      <div class="legal-update">
+        {% if lang == "fr" %}Derni&egrave;re mise &agrave; jour : 1 mars 2026{% elif lang == "en" %}Last updated: 1 March 2026{% elif lang == "es" %}&Uacute;ltima actualizaci&oacute;n: 1 de marzo de 2026{% elif lang == "pt" %}&Uacute;ltima atualiza&ccedil;&atilde;o: 1 de mar&ccedil;o de 2026{% elif lang == "de" %}Letzte Aktualisierung: 1. M&auml;rz 2026{% elif lang == "nl" %}Laatst bijgewerkt: 1 maart 2026{% endif %}
+      </div>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         TABLE OF CONTENTS
+         ══════════════════════════════════════════════════════════════════════ #}
+      <nav class="legal-toc">
+        <h3>{% if lang == "fr" %}Sommaire{% elif lang == "en" %}Table of Contents{% elif lang == "es" %}Sumario{% elif lang == "pt" %}Sum&aacute;rio{% elif lang == "de" %}Inhaltsverzeichnis{% elif lang == "nl" %}Inhoudsopgave{% endif %}</h3>
+        <ol>
+          {% if lang == "fr" %}
+          <li><a href="#responsable">Responsable du traitement</a></li>
+          <li><a href="#donnees-collectees">Donn&eacute;es collect&eacute;es</a></li>
+          <li><a href="#finalites">Finalit&eacute;s du traitement</a></li>
+          <li><a href="#base-legale">Base l&eacute;gale</a></li>
+          <li><a href="#conservation">Dur&eacute;es de conservation</a></li>
+          <li><a href="#destinataires">Destinataires des donn&eacute;es</a></li>
+          <li><a href="#transferts">Transferts hors UE</a></li>
+          <li><a href="#droits">Vos droits</a></li>
+          <li><a href="#cookies">Cookies</a></li>
+          <li><a href="#securite">S&eacute;curit&eacute;</a></li>
+          <li><a href="#modifications">Modifications</a></li>
+          <li><a href="#contact">Contact</a></li>
+          {% elif lang == "en" %}
+          <li><a href="#responsable">Data Controller</a></li>
+          <li><a href="#donnees-collectees">Data Collected</a></li>
+          <li><a href="#finalites">Purposes of Processing</a></li>
+          <li><a href="#base-legale">Legal Basis</a></li>
+          <li><a href="#conservation">Retention Periods</a></li>
+          <li><a href="#destinataires">Data Recipients</a></li>
+          <li><a href="#transferts">Transfers Outside the EU</a></li>
+          <li><a href="#droits">Your Rights</a></li>
+          <li><a href="#cookies">Cookies</a></li>
+          <li><a href="#securite">Security</a></li>
+          <li><a href="#modifications">Modifications</a></li>
+          <li><a href="#contact">Contact</a></li>
+          {% elif lang == "es" %}
+          <li><a href="#responsable">Responsable del tratamiento</a></li>
+          <li><a href="#donnees-collectees">Datos recopilados</a></li>
+          <li><a href="#finalites">Finalidades del tratamiento</a></li>
+          <li><a href="#base-legale">Base jur&iacute;dica</a></li>
+          <li><a href="#conservation">Plazos de conservaci&oacute;n</a></li>
+          <li><a href="#destinataires">Destinatarios de los datos</a></li>
+          <li><a href="#transferts">Transferencias fuera de la UE</a></li>
+          <li><a href="#droits">Sus derechos</a></li>
+          <li><a href="#cookies">Cookies</a></li>
+          <li><a href="#securite">Seguridad</a></li>
+          <li><a href="#modifications">Modificaciones</a></li>
+          <li><a href="#contact">Contacto</a></li>
+          {% elif lang == "pt" %}
+          <li><a href="#responsable">Respons&aacute;vel pelo tratamento</a></li>
+          <li><a href="#donnees-collectees">Dados recolhidos</a></li>
+          <li><a href="#finalites">Finalidades do tratamento</a></li>
+          <li><a href="#base-legale">Base jur&iacute;dica</a></li>
+          <li><a href="#conservation">Prazos de conserva&ccedil;&atilde;o</a></li>
+          <li><a href="#destinataires">Destinat&aacute;rios dos dados</a></li>
+          <li><a href="#transferts">Transfer&ecirc;ncias para fora da UE</a></li>
+          <li><a href="#droits">Os seus direitos</a></li>
+          <li><a href="#cookies">Cookies</a></li>
+          <li><a href="#securite">Seguran&ccedil;a</a></li>
+          <li><a href="#modifications">Modifica&ccedil;&otilde;es</a></li>
+          <li><a href="#contact">Contacto</a></li>
+          {% elif lang == "de" %}
+          <li><a href="#responsable">Verantwortlicher</a></li>
+          <li><a href="#donnees-collectees">Erhobene Daten</a></li>
+          <li><a href="#finalites">Zwecke der Verarbeitung</a></li>
+          <li><a href="#base-legale">Rechtsgrundlage</a></li>
+          <li><a href="#conservation">Speicherdauer</a></li>
+          <li><a href="#destinataires">Empf&auml;nger der Daten</a></li>
+          <li><a href="#transferts">&Uuml;bermittlungen au&szlig;erhalb der EU</a></li>
+          <li><a href="#droits">Ihre Rechte</a></li>
+          <li><a href="#cookies">Cookies</a></li>
+          <li><a href="#securite">Sicherheit</a></li>
+          <li><a href="#modifications">&Auml;nderungen</a></li>
+          <li><a href="#contact">Kontakt</a></li>
+          {% elif lang == "nl" %}
+          <li><a href="#responsable">Verwerkingsverantwoordelijke</a></li>
+          <li><a href="#donnees-collectees">Verzamelde gegevens</a></li>
+          <li><a href="#finalites">Doeleinden van de verwerking</a></li>
+          <li><a href="#base-legale">Rechtsgrondslag</a></li>
+          <li><a href="#conservation">Bewaartermijnen</a></li>
+          <li><a href="#destinataires">Ontvangers van de gegevens</a></li>
+          <li><a href="#transferts">Doorgifte buiten de EU</a></li>
+          <li><a href="#droits">Uw rechten</a></li>
+          <li><a href="#cookies">Cookies</a></li>
+          <li><a href="#securite">Beveiliging</a></li>
+          <li><a href="#modifications">Wijzigingen</a></li>
+          <li><a href="#contact">Contact</a></li>
+          {% endif %}
+        </ol>
+      </nav>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         1. DATA CONTROLLER
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="responsable">
+        <h2>{% if lang == "fr" %}1. Responsable du traitement{% elif lang == "en" %}1. Data Controller{% elif lang == "es" %}1. Responsable del tratamiento{% elif lang == "pt" %}1. Respons&aacute;vel pelo tratamento{% elif lang == "de" %}1. Verantwortlicher{% elif lang == "nl" %}1. Verwerkingsverantwoordelijke{% endif %}</h2>
+
+        {% if lang == "fr" %}
+        <p>Le responsable du traitement des donn&eacute;es personnelles collect&eacute;es sur le site LotoIA est :</p>
+        {% elif lang == "en" %}
+        <p>The data controller for personal data collected on the LotoIA website is:</p>
+        {% elif lang == "es" %}
+        <p>El responsable del tratamiento de los datos personales recopilados en el sitio LotoIA es:</p>
+        {% elif lang == "pt" %}
+        <p>O respons&aacute;vel pelo tratamento dos dados pessoais recolhidos no site LotoIA &eacute;:</p>
+        {% elif lang == "de" %}
+        <p>Verantwortlicher f&uuml;r die Verarbeitung der auf der Website LotoIA erhobenen personenbezogenen Daten ist:</p>
+        {% elif lang == "nl" %}
+        <p>De verwerkingsverantwoordelijke voor de persoonsgegevens die op de website LotoIA worden verzameld, is:</p>
+        {% endif %}
+
+        <div class="legal-info-block">
+          <p><strong>Jean-Philippe Godard</strong></p>
+          <p>EmovisIA</p>
+          <p>3 rue Alexandre Riou</p>
+          <p>44270 Machecoul-Saint-M&ecirc;me, France</p>
+          <p>{% if lang == "fr" %}E-mail{% elif lang == "en" %}Email{% elif lang == "es" %}Correo electr&oacute;nico{% elif lang == "pt" %}E-mail{% elif lang == "de" %}E-Mail{% elif lang == "nl" %}E-mail{% endif %} : <a href="mailto:rgpd@lotoia.fr">rgpd@lotoia.fr</a></p>
+          <p>{% if lang == "fr" %}T&eacute;l&eacute;phone{% elif lang == "en" %}Phone{% elif lang == "es" %}Tel&eacute;fono{% elif lang == "pt" %}Telefone{% elif lang == "de" %}Telefon{% elif lang == "nl" %}Telefoon{% endif %} : 06 99 55 22 10</p>
+        </div>
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         2. DATA COLLECTED
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="donnees-collectees">
+        <h2>{% if lang == "fr" %}2. Donn&eacute;es collect&eacute;es{% elif lang == "en" %}2. Data Collected{% elif lang == "es" %}2. Datos recopilados{% elif lang == "pt" %}2. Dados recolhidos{% elif lang == "de" %}2. Erhobene Daten{% elif lang == "nl" %}2. Verzamelde gegevens{% endif %}</h2>
+
+        <h3>{% if lang == "fr" %}Donn&eacute;es collect&eacute;es automatiquement{% elif lang == "en" %}Automatically collected data{% elif lang == "es" %}Datos recopilados autom&aacute;ticamente{% elif lang == "pt" %}Dados recolhidos automaticamente{% elif lang == "de" %}Automatisch erhobene Daten{% elif lang == "nl" %}Automatisch verzamelde gegevens{% endif %}</h3>
+
+        <table class="legal-table">
+          <thead>
+            <tr>
+              <th>{% if lang == "fr" %}Donn&eacute;e{% elif lang == "en" %}Data{% elif lang == "es" %}Dato{% elif lang == "pt" %}Dado{% elif lang == "de" %}Daten{% elif lang == "nl" %}Gegeven{% endif %}</th>
+              <th>{% if lang == "fr" %}Type{% elif lang == "en" %}Type{% elif lang == "es" %}Tipo{% elif lang == "pt" %}Tipo{% elif lang == "de" %}Typ{% elif lang == "nl" %}Type{% endif %}</th>
+              <th>{% if lang == "fr" %}Stockage{% elif lang == "en" %}Storage{% elif lang == "es" %}Almacenamiento{% elif lang == "pt" %}Armazenamento{% elif lang == "de" %}Speicherung{% elif lang == "nl" %}Opslag{% endif %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{% if lang == "fr" %}Identifiant de session{% elif lang == "en" %}Session ID{% elif lang == "es" %}Identificador de sesi&oacute;n{% elif lang == "pt" %}Identificador de sess&atilde;o{% elif lang == "de" %}Sitzungs-ID{% elif lang == "nl" %}Sessie-ID{% endif %}</td>
+              <td>UUID v4</td>
+              <td>sessionStorage</td>
+            </tr>
+            <tr>
+              <td>{% if lang == "fr" %}Pr&eacute;f&eacute;rence de th&egrave;me{% elif lang == "en" %}Theme preference{% elif lang == "es" %}Preferencia de tema{% elif lang == "pt" %}Prefer&ecirc;ncia de tema{% elif lang == "de" %}Theme-Einstellung{% elif lang == "nl" %}Themavoorkeur{% endif %}</td>
+              <td>{% if lang == "fr" %}Clair / Sombre{% elif lang == "en" %}Light / Dark{% elif lang == "es" %}Claro / Oscuro{% elif lang == "pt" %}Claro / Escuro{% elif lang == "de" %}Hell / Dunkel{% elif lang == "nl" %}Licht / Donker{% endif %}</td>
+              <td>localStorage</td>
+            </tr>
+            <tr>
+              <td>{% if lang == "fr" %}Donn&eacute;es d'utilisation{% elif lang == "en" %}Usage data{% elif lang == "es" %}Datos de uso{% elif lang == "pt" %}Dados de utiliza&ccedil;&atilde;o{% elif lang == "de" %}Nutzungsdaten{% elif lang == "nl" %}Gebruiksgegevens{% endif %}</td>
+              <td>{% if lang == "fr" %}Journaux serveur{% elif lang == "en" %}Server logs{% elif lang == "es" %}Registros del servidor{% elif lang == "pt" %}Registos do servidor{% elif lang == "de" %}Server-Protokolle{% elif lang == "nl" %}Serverlogboeken{% endif %}</td>
+              <td>{% if lang == "fr" %}30 jours{% elif lang == "en" %}30 days{% elif lang == "es" %}30 d&iacute;as{% elif lang == "pt" %}30 dias{% elif lang == "de" %}30 Tage{% elif lang == "nl" %}30 dagen{% endif %}</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>{% if lang == "fr" %}Donn&eacute;es NON collect&eacute;es{% elif lang == "en" %}Data NOT collected{% elif lang == "es" %}Datos NO recopilados{% elif lang == "pt" %}Dados N&Atilde;O recolhidos{% elif lang == "de" %}NICHT erhobene Daten{% elif lang == "nl" %}NIET verzamelde gegevens{% endif %}</h3>
+
+        <div class="legal-highlight">
+          {% if lang == "fr" %}
+          <p>LotoIA <strong>ne collecte pas</strong> les donn&eacute;es suivantes :</p>
+          {% elif lang == "en" %}
+          <p>LotoIA <strong>does not collect</strong> the following data:</p>
+          {% elif lang == "es" %}
+          <p>LotoIA <strong>no recopila</strong> los siguientes datos:</p>
+          {% elif lang == "pt" %}
+          <p>LotoIA <strong>n&atilde;o recolhe</strong> os seguintes dados:</p>
+          {% elif lang == "de" %}
+          <p>LotoIA erhebt <strong>keine</strong> der folgenden Daten:</p>
+          {% elif lang == "nl" %}
+          <p>LotoIA verzamelt <strong>niet</strong> de volgende gegevens:</p>
+          {% endif %}
+          <ul>
+            {% if lang == "fr" %}
+            <li>Nom, pr&eacute;nom, adresse postale</li>
+            <li>Adresse e-mail (sauf envoi volontaire de votre part)</li>
+            <li>Num&eacute;ro de t&eacute;l&eacute;phone</li>
+            <li>Donn&eacute;es de paiement</li>
+            <li>G&eacute;olocalisation pr&eacute;cise</li>
+            <li>Donn&eacute;es biom&eacute;triques</li>
+            <li>Donn&eacute;es de sant&eacute;</li>
+            {% elif lang == "en" %}
+            <li>Name, surname, postal address</li>
+            <li>Email address (unless voluntarily provided by you)</li>
+            <li>Phone number</li>
+            <li>Payment data</li>
+            <li>Precise geolocation</li>
+            <li>Biometric data</li>
+            <li>Health data</li>
+            {% elif lang == "es" %}
+            <li>Nombre, apellidos, direcci&oacute;n postal</li>
+            <li>Direcci&oacute;n de correo electr&oacute;nico (salvo env&iacute;o voluntario por su parte)</li>
+            <li>N&uacute;mero de tel&eacute;fono</li>
+            <li>Datos de pago</li>
+            <li>Geolocalizaci&oacute;n precisa</li>
+            <li>Datos biom&eacute;tricos</li>
+            <li>Datos de salud</li>
+            {% elif lang == "pt" %}
+            <li>Nome, apelido, morada</li>
+            <li>Endere&ccedil;o de e-mail (salvo envio volunt&aacute;rio da sua parte)</li>
+            <li>N&uacute;mero de telefone</li>
+            <li>Dados de pagamento</li>
+            <li>Geolocaliza&ccedil;&atilde;o precisa</li>
+            <li>Dados biom&eacute;tricos</li>
+            <li>Dados de sa&uacute;de</li>
+            {% elif lang == "de" %}
+            <li>Name, Vorname, Postanschrift</li>
+            <li>E-Mail-Adresse (es sei denn, Sie senden uns freiwillig eine Nachricht)</li>
+            <li>Telefonnummer</li>
+            <li>Zahlungsdaten</li>
+            <li>Pr&auml;zise Geolokalisierung</li>
+            <li>Biometrische Daten</li>
+            <li>Gesundheitsdaten</li>
+            {% elif lang == "nl" %}
+            <li>Naam, voornaam, postadres</li>
+            <li>E-mailadres (tenzij u ons vrijwillig een bericht stuurt)</li>
+            <li>Telefoonnummer</li>
+            <li>Betalingsgegevens</li>
+            <li>Nauwkeurige geolocatie</li>
+            <li>Biometrische gegevens</li>
+            <li>Gezondheidsgegevens</li>
+            {% endif %}
+          </ul>
+        </div>
+
+        <p>{% if lang == "fr" %}Aucune inscription n'est requise pour utiliser LotoIA.{% elif lang == "en" %}No registration is required to use LotoIA.{% elif lang == "es" %}No se requiere registro para utilizar LotoIA.{% elif lang == "pt" %}N&atilde;o &eacute; necess&aacute;rio qualquer registo para utilizar o LotoIA.{% elif lang == "de" %}F&uuml;r die Nutzung von LotoIA ist keine Registrierung erforderlich.{% elif lang == "nl" %}Er is geen registratie vereist om LotoIA te gebruiken.{% endif %}</p>
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         3. PURPOSES
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="finalites">
+        <h2>{% if lang == "fr" %}3. Finalit&eacute;s du traitement{% elif lang == "en" %}3. Purposes of Processing{% elif lang == "es" %}3. Finalidades del tratamiento{% elif lang == "pt" %}3. Finalidades do tratamento{% elif lang == "de" %}3. Zwecke der Verarbeitung{% elif lang == "nl" %}3. Doeleinden van de verwerking{% endif %}</h2>
+
+        {% if lang == "fr" %}
+        <p>Les donn&eacute;es sont utilis&eacute;es pour :</p>
+        {% elif lang == "en" %}
+        <p>Data is used for:</p>
+        {% elif lang == "es" %}
+        <p>Los datos se utilizan para:</p>
+        {% elif lang == "pt" %}
+        <p>Os dados s&atilde;o utilizados para:</p>
+        {% elif lang == "de" %}
+        <p>Die Daten werden f&uuml;r folgende Zwecke verwendet:</p>
+        {% elif lang == "nl" %}
+        <p>De gegevens worden gebruikt voor:</p>
+        {% endif %}
+
+        <ul>
+          {% if lang == "fr" %}
+          <li><strong>Fonctionnement du service</strong> : gestion des sessions, conservation des pr&eacute;f&eacute;rences utilisateur</li>
+          <li><strong>Personnalisation</strong> : m&eacute;morisation du th&egrave;me visuel choisi</li>
+          <li><strong>Statistiques d'utilisation</strong> : analyse agr&eacute;g&eacute;e et anonymis&eacute;e de la fr&eacute;quentation</li>
+          <li><strong>Am&eacute;lioration</strong> : optimisation des performances et de l'exp&eacute;rience utilisateur</li>
+          <li><strong>S&eacute;curit&eacute;</strong> : d&eacute;tection et pr&eacute;vention des abus</li>
+          {% elif lang == "en" %}
+          <li><strong>Service operation</strong>: session management, user preference retention</li>
+          <li><strong>Personalisation</strong>: remembering your chosen visual theme</li>
+          <li><strong>Usage statistics</strong>: aggregated and anonymised traffic analysis</li>
+          <li><strong>Improvement</strong>: performance optimisation and user experience enhancement</li>
+          <li><strong>Security</strong>: abuse detection and prevention</li>
+          {% elif lang == "es" %}
+          <li><strong>Funcionamiento del servicio</strong>: gesti&oacute;n de sesiones, conservaci&oacute;n de preferencias del usuario</li>
+          <li><strong>Personalizaci&oacute;n</strong>: memorizaci&oacute;n del tema visual elegido</li>
+          <li><strong>Estad&iacute;sticas de uso</strong>: an&aacute;lisis agregado y anonimizado del tr&aacute;fico</li>
+          <li><strong>Mejora</strong>: optimizaci&oacute;n del rendimiento y de la experiencia del usuario</li>
+          <li><strong>Seguridad</strong>: detecci&oacute;n y prevenci&oacute;n de abusos</li>
+          {% elif lang == "pt" %}
+          <li><strong>Funcionamento do servi&ccedil;o</strong>: gest&atilde;o de sess&otilde;es, conserva&ccedil;&atilde;o das prefer&ecirc;ncias do utilizador</li>
+          <li><strong>Personaliza&ccedil;&atilde;o</strong>: memoriza&ccedil;&atilde;o do tema visual escolhido</li>
+          <li><strong>Estat&iacute;sticas de utiliza&ccedil;&atilde;o</strong>: an&aacute;lise agregada e anonimizada do tr&aacute;fego</li>
+          <li><strong>Melhoria</strong>: otimiza&ccedil;&atilde;o do desempenho e da experi&ecirc;ncia do utilizador</li>
+          <li><strong>Seguran&ccedil;a</strong>: dete&ccedil;&atilde;o e preven&ccedil;&atilde;o de abusos</li>
+          {% elif lang == "de" %}
+          <li><strong>Betrieb des Dienstes</strong>: Sitzungsverwaltung, Speicherung der Benutzereinstellungen</li>
+          <li><strong>Personalisierung</strong>: Speicherung des gew&auml;hlten visuellen Themas</li>
+          <li><strong>Nutzungsstatistiken</strong>: aggregierte und anonymisierte Besucheranalyse</li>
+          <li><strong>Verbesserung</strong>: Optimierung der Leistung und des Benutzererlebnisses</li>
+          <li><strong>Sicherheit</strong>: Erkennung und Verhinderung von Missbrauch</li>
+          {% elif lang == "nl" %}
+          <li><strong>Werking van de dienst</strong>: sessiebeheer, bewaring van gebruikersvoorkeuren</li>
+          <li><strong>Personalisatie</strong>: onthouden van het gekozen visuele thema</li>
+          <li><strong>Gebruiksstatistieken</strong>: geaggregeerde en geanonimiseerde verkeersanalyse</li>
+          <li><strong>Verbetering</strong>: optimalisatie van prestaties en gebruikerservaring</li>
+          <li><strong>Beveiliging</strong>: detectie en preventie van misbruik</li>
+          {% endif %}
+        </ul>
+
+        <div class="legal-highlight">
+          {% if lang == "fr" %}
+          <p><strong>Vos donn&eacute;es ne sont jamais utilis&eacute;es pour :</strong></p>
+          <ul>
+            <li>Le profilage comportemental</li>
+            <li>La publicit&eacute; cibl&eacute;e</li>
+            <li>La revente &agrave; des tiers</li>
+            <li>Des d&eacute;cisions automatis&eacute;es vous concernant</li>
+          </ul>
+          {% elif lang == "en" %}
+          <p><strong>Your data is never used for:</strong></p>
+          <ul>
+            <li>Behavioural profiling</li>
+            <li>Targeted advertising</li>
+            <li>Resale to third parties</li>
+            <li>Automated decisions concerning you</li>
+          </ul>
+          {% elif lang == "es" %}
+          <p><strong>Sus datos nunca se utilizan para:</strong></p>
+          <ul>
+            <li>Perfilado comportamental</li>
+            <li>Publicidad dirigida</li>
+            <li>Reventa a terceros</li>
+            <li>Decisiones automatizadas sobre usted</li>
+          </ul>
+          {% elif lang == "pt" %}
+          <p><strong>Os seus dados nunca s&atilde;o utilizados para:</strong></p>
+          <ul>
+            <li>Perfis comportamentais</li>
+            <li>Publicidade direcionada</li>
+            <li>Revenda a terceiros</li>
+            <li>Decis&otilde;es automatizadas que lhe digam respeito</li>
+          </ul>
+          {% elif lang == "de" %}
+          <p><strong>Ihre Daten werden niemals verwendet f&uuml;r:</strong></p>
+          <ul>
+            <li>Verhaltensbasiertes Profiling</li>
+            <li>Gezielte Werbung</li>
+            <li>Weiterverkauf an Dritte</li>
+            <li>Automatisierte Entscheidungen, die Sie betreffen</li>
+          </ul>
+          {% elif lang == "nl" %}
+          <p><strong>Uw gegevens worden nooit gebruikt voor:</strong></p>
+          <ul>
+            <li>Gedragsprofilering</li>
+            <li>Gerichte reclame</li>
+            <li>Doorverkoop aan derden</li>
+            <li>Geautomatiseerde beslissingen die u betreffen</li>
+          </ul>
+          {% endif %}
+        </div>
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         4. LEGAL BASIS
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="base-legale">
+        <h2>{% if lang == "fr" %}4. Base l&eacute;gale{% elif lang == "en" %}4. Legal Basis{% elif lang == "es" %}4. Base jur&iacute;dica{% elif lang == "pt" %}4. Base jur&iacute;dica{% elif lang == "de" %}4. Rechtsgrundlage{% elif lang == "nl" %}4. Rechtsgrondslag{% endif %}</h2>
+
+        {% if lang == "fr" %}
+        <p>Conform&eacute;ment &agrave; l'article 6 du R&egrave;glement G&eacute;n&eacute;ral sur la Protection des Donn&eacute;es (RGPD), les traitements reposent sur :</p>
+        {% elif lang == "en" %}
+        <p>In accordance with Article 6 of the General Data Protection Regulation (GDPR), data processing is based on:</p>
+        {% elif lang == "es" %}
+        <p>De conformidad con el art&iacute;culo 6 del Reglamento General de Protecci&oacute;n de Datos (RGPD), los tratamientos se basan en:</p>
+        {% elif lang == "pt" %}
+        <p>Em conformidade com o artigo 6.&ordm; do Regulamento Geral sobre a Prote&ccedil;&atilde;o de Dados (RGPD), os tratamentos baseiam-se em:</p>
+        {% elif lang == "de" %}
+        <p>Gem&auml;&szlig; Artikel 6 der Datenschutz-Grundverordnung (DSGVO) beruht die Verarbeitung auf:</p>
+        {% elif lang == "nl" %}
+        <p>Overeenkomstig artikel 6 van de Algemene Verordening Gegevensbescherming (AVG) berust de verwerking op:</p>
+        {% endif %}
+
+        <table class="legal-table">
+          <thead>
+            <tr>
+              <th>{% if lang == "fr" %}Base l&eacute;gale{% elif lang == "en" %}Legal basis{% elif lang == "es" %}Base jur&iacute;dica{% elif lang == "pt" %}Base jur&iacute;dica{% elif lang == "de" %}Rechtsgrundlage{% elif lang == "nl" %}Rechtsgrondslag{% endif %}</th>
+              <th>{% if lang == "fr" %}Article{% elif lang == "en" %}Article{% elif lang == "es" %}Art&iacute;culo{% elif lang == "pt" %}Artigo{% elif lang == "de" %}Artikel{% elif lang == "nl" %}Artikel{% endif %}</th>
+              <th>{% if lang == "fr" %}Application{% elif lang == "en" %}Application{% elif lang == "es" %}Aplicaci&oacute;n{% elif lang == "pt" %}Aplica&ccedil;&atilde;o{% elif lang == "de" %}Anwendung{% elif lang == "nl" %}Toepassing{% endif %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{% if lang == "fr" %}Int&eacute;r&ecirc;t l&eacute;gitime{% elif lang == "en" %}Legitimate interest{% elif lang == "es" %}Inter&eacute;s leg&iacute;timo{% elif lang == "pt" %}Interesse leg&iacute;timo{% elif lang == "de" %}Berechtigtes Interesse{% elif lang == "nl" %}Gerechtvaardigd belang{% endif %}</td>
+              <td>6.1.f</td>
+              <td>{% if lang == "fr" %}Fonctionnement, statistiques, s&eacute;curit&eacute;{% elif lang == "en" %}Operation, statistics, security{% elif lang == "es" %}Funcionamiento, estad&iacute;sticas, seguridad{% elif lang == "pt" %}Funcionamento, estat&iacute;sticas, seguran&ccedil;a{% elif lang == "de" %}Betrieb, Statistiken, Sicherheit{% elif lang == "nl" %}Werking, statistieken, beveiliging{% endif %}</td>
+            </tr>
+            <tr>
+              <td>{% if lang == "fr" %}Consentement{% elif lang == "en" %}Consent{% elif lang == "es" %}Consentimiento{% elif lang == "pt" %}Consentimento{% elif lang == "de" %}Einwilligung{% elif lang == "nl" %}Toestemming{% endif %}</td>
+              <td>6.1.a</td>
+              <td>{% if lang == "fr" %}Cookies non essentiels{% elif lang == "en" %}Non-essential cookies{% elif lang == "es" %}Cookies no esenciales{% elif lang == "pt" %}Cookies n&atilde;o essenciais{% elif lang == "de" %}Nicht notwendige Cookies{% elif lang == "nl" %}Niet-essenti&euml;le cookies{% endif %}</td>
+            </tr>
+            <tr>
+              <td>{% if lang == "fr" %}Obligation l&eacute;gale{% elif lang == "en" %}Legal obligation{% elif lang == "es" %}Obligaci&oacute;n legal{% elif lang == "pt" %}Obriga&ccedil;&atilde;o legal{% elif lang == "de" %}Rechtliche Verpflichtung{% elif lang == "nl" %}Wettelijke verplichting{% endif %}</td>
+              <td>6.1.c</td>
+              <td>{% if lang == "fr" %}Conformit&eacute; r&eacute;glementaire{% elif lang == "en" %}Regulatory compliance{% elif lang == "es" %}Cumplimiento normativo{% elif lang == "pt" %}Conformidade regulamentar{% elif lang == "de" %}Regulatorische Einhaltung{% elif lang == "nl" %}Naleving van de regelgeving{% endif %}</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         5. RETENTION PERIODS
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="conservation">
+        <h2>{% if lang == "fr" %}5. Dur&eacute;es de conservation{% elif lang == "en" %}5. Retention Periods{% elif lang == "es" %}5. Plazos de conservaci&oacute;n{% elif lang == "pt" %}5. Prazos de conserva&ccedil;&atilde;o{% elif lang == "de" %}5. Speicherdauer{% elif lang == "nl" %}5. Bewaartermijnen{% endif %}</h2>
+
+        <table class="legal-table">
+          <thead>
+            <tr>
+              <th>{% if lang == "fr" %}Donn&eacute;e{% elif lang == "en" %}Data{% elif lang == "es" %}Dato{% elif lang == "pt" %}Dado{% elif lang == "de" %}Daten{% elif lang == "nl" %}Gegeven{% endif %}</th>
+              <th>{% if lang == "fr" %}Dur&eacute;e{% elif lang == "en" %}Duration{% elif lang == "es" %}Duraci&oacute;n{% elif lang == "pt" %}Dura&ccedil;&atilde;o{% elif lang == "de" %}Dauer{% elif lang == "nl" %}Duur{% endif %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>{% if lang == "fr" %}Identifiant de session{% elif lang == "en" %}Session ID{% elif lang == "es" %}Identificador de sesi&oacute;n{% elif lang == "pt" %}Identificador de sess&atilde;o{% elif lang == "de" %}Sitzungs-ID{% elif lang == "nl" %}Sessie-ID{% endif %}</td>
+              <td>{% if lang == "fr" %}Dur&eacute;e de la session navigateur{% elif lang == "en" %}Duration of the browser session{% elif lang == "es" %}Duraci&oacute;n de la sesi&oacute;n del navegador{% elif lang == "pt" %}Dura&ccedil;&atilde;o da sess&atilde;o do navegador{% elif lang == "de" %}Dauer der Browser-Sitzung{% elif lang == "nl" %}Duur van de browsersessie{% endif %}</td>
+            </tr>
+            <tr>
+              <td>{% if lang == "fr" %}Pr&eacute;f&eacute;rence de th&egrave;me{% elif lang == "en" %}Theme preference{% elif lang == "es" %}Preferencia de tema{% elif lang == "pt" %}Prefer&ecirc;ncia de tema{% elif lang == "de" %}Theme-Einstellung{% elif lang == "nl" %}Themavoorkeur{% endif %}</td>
+              <td>{% if lang == "fr" %}Jusqu'&agrave; suppression par l'utilisateur{% elif lang == "en" %}Until deleted by the user{% elif lang == "es" %}Hasta que el usuario lo elimine{% elif lang == "pt" %}At&eacute; &agrave; elimina&ccedil;&atilde;o pelo utilizador{% elif lang == "de" %}Bis zur L&ouml;schung durch den Benutzer{% elif lang == "nl" %}Tot verwijdering door de gebruiker{% endif %}</td>
+            </tr>
+            <tr>
+              <td>{% if lang == "fr" %}Journaux serveur{% elif lang == "en" %}Server logs{% elif lang == "es" %}Registros del servidor{% elif lang == "pt" %}Registos do servidor{% elif lang == "de" %}Server-Protokolle{% elif lang == "nl" %}Serverlogboeken{% endif %}</td>
+              <td>{% if lang == "fr" %}30 jours{% elif lang == "en" %}30 days{% elif lang == "es" %}30 d&iacute;as{% elif lang == "pt" %}30 dias{% elif lang == "de" %}30 Tage{% elif lang == "nl" %}30 dagen{% endif %}</td>
+            </tr>
+            <tr>
+              <td>{% if lang == "fr" %}E-mails de contact{% elif lang == "en" %}Contact emails{% elif lang == "es" %}Correos de contacto{% elif lang == "pt" %}E-mails de contacto{% elif lang == "de" %}Kontakt-E-Mails{% elif lang == "nl" %}Contacte-mails{% endif %}</td>
+              <td>{% if lang == "fr" %}3 ans{% elif lang == "en" %}3 years{% elif lang == "es" %}3 a&ntilde;os{% elif lang == "pt" %}3 anos{% elif lang == "de" %}3 Jahre{% elif lang == "nl" %}3 jaar{% endif %}</td>
+            </tr>
+            <tr>
+              <td>{% if lang == "fr" %}Cookies de consentement{% elif lang == "en" %}Consent cookies{% elif lang == "es" %}Cookies de consentimiento{% elif lang == "pt" %}Cookies de consentimento{% elif lang == "de" %}Einwilligungs-Cookies{% elif lang == "nl" %}Toestemmingscookies{% endif %}</td>
+              <td>{% if lang == "fr" %}13 mois{% elif lang == "en" %}13 months{% elif lang == "es" %}13 meses{% elif lang == "pt" %}13 meses{% elif lang == "de" %}13 Monate{% elif lang == "nl" %}13 maanden{% endif %}</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         6. DATA RECIPIENTS
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="destinataires">
+        <h2>{% if lang == "fr" %}6. Destinataires des donn&eacute;es{% elif lang == "en" %}6. Data Recipients{% elif lang == "es" %}6. Destinatarios de los datos{% elif lang == "pt" %}6. Destinat&aacute;rios dos dados{% elif lang == "de" %}6. Empf&auml;nger der Daten{% elif lang == "nl" %}6. Ontvangers van de gegevens{% endif %}</h2>
+
+        {% if lang == "fr" %}
+        <p>Les donn&eacute;es collect&eacute;es sont trait&eacute;es exclusivement en interne et par notre h&eacute;bergeur :</p>
+        {% elif lang == "en" %}
+        <p>Collected data is processed exclusively internally and by our hosting provider:</p>
+        {% elif lang == "es" %}
+        <p>Los datos recopilados son tratados exclusivamente de forma interna y por nuestro proveedor de alojamiento:</p>
+        {% elif lang == "pt" %}
+        <p>Os dados recolhidos s&atilde;o tratados exclusivamente internamente e pelo nosso fornecedor de alojamento:</p>
+        {% elif lang == "de" %}
+        <p>Die erhobenen Daten werden ausschlie&szlig;lich intern und von unserem Hosting-Anbieter verarbeitet:</p>
+        {% elif lang == "nl" %}
+        <p>De verzamelde gegevens worden uitsluitend intern en door onze hostingprovider verwerkt:</p>
+        {% endif %}
+
+        <div class="legal-info-block">
+          <p><strong>Google Cloud Platform</strong></p>
+          <p>{% if lang == "fr" %}H&eacute;bergement UE (r&eacute;gion europe-west1){% elif lang == "en" %}EU hosting (europe-west1 region){% elif lang == "es" %}Alojamiento UE (regi&oacute;n europe-west1){% elif lang == "pt" %}Alojamento UE (regi&atilde;o europe-west1){% elif lang == "de" %}EU-Hosting (Region europe-west1){% elif lang == "nl" %}EU-hosting (regio europe-west1){% endif %}</p>
+          <p>{% if lang == "fr" %}Certifications{% elif lang == "en" %}Certifications{% elif lang == "es" %}Certificaciones{% elif lang == "pt" %}Certifica&ccedil;&otilde;es{% elif lang == "de" %}Zertifizierungen{% elif lang == "nl" %}Certificeringen{% endif %} : ISO 27001, SOC 2</p>
+        </div>
+
+        <div class="legal-highlight">
+          <p><strong>{% if lang == "fr" %}Vos donn&eacute;es ne sont jamais vendues &agrave; des tiers.{% elif lang == "en" %}Your data is never sold to third parties.{% elif lang == "es" %}Sus datos nunca se venden a terceros.{% elif lang == "pt" %}Os seus dados nunca s&atilde;o vendidos a terceiros.{% elif lang == "de" %}Ihre Daten werden niemals an Dritte verkauft.{% elif lang == "nl" %}Uw gegevens worden nooit aan derden verkocht.{% endif %}</strong></p>
+        </div>
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         7. TRANSFERS OUTSIDE EU
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="transferts">
+        <h2>{% if lang == "fr" %}7. Transferts hors UE{% elif lang == "en" %}7. Transfers Outside the EU{% elif lang == "es" %}7. Transferencias fuera de la UE{% elif lang == "pt" %}7. Transfer&ecirc;ncias para fora da UE{% elif lang == "de" %}7. &Uuml;bermittlungen au&szlig;erhalb der EU{% elif lang == "nl" %}7. Doorgifte buiten de EU{% endif %}</h2>
+
+        {% if lang == "fr" %}
+        <p>Les donn&eacute;es sont h&eacute;berg&eacute;es principalement dans l'Union europ&eacute;enne. Dans le cas o&ugrave; certaines donn&eacute;es seraient transf&eacute;r&eacute;es vers les &Eacute;tats-Unis (services Google Cloud), ces transferts sont encadr&eacute;s par :</p>
+        <ul>
+          <li><strong>Clauses Contractuelles Types (CCT)</strong> approuv&eacute;es par la Commission europ&eacute;enne</li>
+          <li><strong>EU-US Data Privacy Framework</strong> (d&eacute;cision d'ad&eacute;quation du 10 juillet 2023)</li>
+        </ul>
+        {% elif lang == "en" %}
+        <p>Data is primarily hosted within the European Union. Should any data be transferred to the United States (Google Cloud services), such transfers are governed by:</p>
+        <ul>
+          <li><strong>Standard Contractual Clauses (SCCs)</strong> approved by the European Commission</li>
+          <li><strong>EU-US Data Privacy Framework</strong> (adequacy decision of 10 July 2023)</li>
+        </ul>
+        {% elif lang == "es" %}
+        <p>Los datos se alojan principalmente en la Uni&oacute;n Europea. En caso de que algunos datos se transfieran a Estados Unidos (servicios de Google Cloud), dichas transferencias est&aacute;n reguladas por:</p>
+        <ul>
+          <li><strong>Cl&aacute;usulas Contractuales Tipo (CCT)</strong> aprobadas por la Comisi&oacute;n Europea</li>
+          <li><strong>EU-US Data Privacy Framework</strong> (decisi&oacute;n de adecuaci&oacute;n del 10 de julio de 2023)</li>
+        </ul>
+        {% elif lang == "pt" %}
+        <p>Os dados s&atilde;o alojados principalmente na Uni&atilde;o Europeia. Caso alguns dados sejam transferidos para os Estados Unidos (servi&ccedil;os Google Cloud), essas transfer&ecirc;ncias s&atilde;o enquadradas por:</p>
+        <ul>
+          <li><strong>Cl&aacute;usulas Contratuais-Tipo (CCT)</strong> aprovadas pela Comiss&atilde;o Europeia</li>
+          <li><strong>EU-US Data Privacy Framework</strong> (decis&atilde;o de adequa&ccedil;&atilde;o de 10 de julho de 2023)</li>
+        </ul>
+        {% elif lang == "de" %}
+        <p>Die Daten werden haupts&auml;chlich in der Europ&auml;ischen Union gehostet. Sollten Daten in die Vereinigten Staaten &uuml;bermittelt werden (Google-Cloud-Dienste), werden diese &Uuml;bermittlungen abgesichert durch:</p>
+        <ul>
+          <li><strong>Standardvertragsklauseln (SVK)</strong>, genehmigt von der Europ&auml;ischen Kommission</li>
+          <li><strong>EU-US Data Privacy Framework</strong> (Angemessenheitsbeschluss vom 10. Juli 2023)</li>
+        </ul>
+        {% elif lang == "nl" %}
+        <p>De gegevens worden voornamelijk in de Europese Unie gehost. Indien bepaalde gegevens naar de Verenigde Staten worden doorgegeven (Google Cloud-diensten), worden deze doorgiften beschermd door:</p>
+        <ul>
+          <li><strong>Standaardcontractbepalingen (SCB's)</strong> goedgekeurd door de Europese Commissie</li>
+          <li><strong>EU-US Data Privacy Framework</strong> (adequaatheidsbesluit van 10 juli 2023)</li>
+        </ul>
+        {% endif %}
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         8. YOUR RIGHTS
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="droits">
+        <h2>{% if lang == "fr" %}8. Vos droits{% elif lang == "en" %}8. Your Rights{% elif lang == "es" %}8. Sus derechos{% elif lang == "pt" %}8. Os seus direitos{% elif lang == "de" %}8. Ihre Rechte{% elif lang == "nl" %}8. Uw rechten{% endif %}</h2>
+
+        {% if lang == "fr" %}
+        <p>Conform&eacute;ment aux articles 15 &agrave; 22 du RGPD, vous disposez des droits suivants :</p>
+        {% elif lang == "en" %}
+        <p>In accordance with Articles 15 to 22 of the GDPR, you have the following rights:</p>
+        {% elif lang == "es" %}
+        <p>De conformidad con los art&iacute;culos 15 a 22 del RGPD, usted dispone de los siguientes derechos:</p>
+        {% elif lang == "pt" %}
+        <p>Nos termos dos artigos 15.&ordm; a 22.&ordm; do RGPD, tem os seguintes direitos:</p>
+        {% elif lang == "de" %}
+        <p>Gem&auml;&szlig; den Artikeln 15 bis 22 der DSGVO stehen Ihnen folgende Rechte zu:</p>
+        {% elif lang == "nl" %}
+        <p>Overeenkomstig de artikelen 15 tot 22 van de AVG hebt u de volgende rechten:</p>
+        {% endif %}
+
+        <div class="rights-grid">
+          <div class="right-card">
+            <h4>{% if lang == "fr" %}Droit d'acc&egrave;s{% elif lang == "en" %}Right of access{% elif lang == "es" %}Derecho de acceso{% elif lang == "pt" %}Direito de acesso{% elif lang == "de" %}Auskunftsrecht{% elif lang == "nl" %}Recht van inzage{% endif %}</h4>
+            <p>{% if lang == "fr" %}Obtenir la confirmation que vos donn&eacute;es sont trait&eacute;es et en recevoir une copie.{% elif lang == "en" %}Obtain confirmation that your data is being processed and receive a copy of it.{% elif lang == "es" %}Obtener la confirmaci&oacute;n de que sus datos est&aacute;n siendo tratados y recibir una copia.{% elif lang == "pt" %}Obter a confirma&ccedil;&atilde;o de que os seus dados est&atilde;o a ser tratados e receber uma c&oacute;pia.{% elif lang == "de" %}Best&auml;tigung erhalten, dass Ihre Daten verarbeitet werden, und eine Kopie erhalten.{% elif lang == "nl" %}Bevestiging krijgen dat uw gegevens worden verwerkt en er een kopie van ontvangen.{% endif %}</p>
+          </div>
+          <div class="right-card">
+            <h4>{% if lang == "fr" %}Droit de rectification{% elif lang == "en" %}Right to rectification{% elif lang == "es" %}Derecho de rectificaci&oacute;n{% elif lang == "pt" %}Direito de retifica&ccedil;&atilde;o{% elif lang == "de" %}Recht auf Berichtigung{% elif lang == "nl" %}Recht op rectificatie{% endif %}</h4>
+            <p>{% if lang == "fr" %}Demander la correction de donn&eacute;es inexactes ou incompl&egrave;tes.{% elif lang == "en" %}Request the correction of inaccurate or incomplete data.{% elif lang == "es" %}Solicitar la correcci&oacute;n de datos inexactos o incompletos.{% elif lang == "pt" %}Solicitar a corre&ccedil;&atilde;o de dados inexatos ou incompletos.{% elif lang == "de" %}Die Berichtigung unrichtiger oder unvollst&auml;ndiger Daten verlangen.{% elif lang == "nl" %}Correctie van onjuiste of onvolledige gegevens vragen.{% endif %}</p>
+          </div>
+          <div class="right-card">
+            <h4>{% if lang == "fr" %}Droit &agrave; l'effacement{% elif lang == "en" %}Right to erasure{% elif lang == "es" %}Derecho de supresi&oacute;n{% elif lang == "pt" %}Direito ao apagamento{% elif lang == "de" %}Recht auf L&ouml;schung{% elif lang == "nl" %}Recht op wissing{% endif %}</h4>
+            <p>{% if lang == "fr" %}Demander la suppression de vos donn&eacute;es personnelles.{% elif lang == "en" %}Request the deletion of your personal data.{% elif lang == "es" %}Solicitar la eliminaci&oacute;n de sus datos personales.{% elif lang == "pt" %}Solicitar a elimina&ccedil;&atilde;o dos seus dados pessoais.{% elif lang == "de" %}Die L&ouml;schung Ihrer personenbezogenen Daten verlangen.{% elif lang == "nl" %}Verwijdering van uw persoonsgegevens vragen.{% endif %}</p>
+          </div>
+          <div class="right-card">
+            <h4>{% if lang == "fr" %}Droit &agrave; la limitation{% elif lang == "en" %}Right to restriction{% elif lang == "es" %}Derecho a la limitaci&oacute;n{% elif lang == "pt" %}Direito &agrave; limita&ccedil;&atilde;o{% elif lang == "de" %}Recht auf Einschr&auml;nkung{% elif lang == "nl" %}Recht op beperking{% endif %}</h4>
+            <p>{% if lang == "fr" %}Demander la limitation du traitement de vos donn&eacute;es.{% elif lang == "en" %}Request restriction of the processing of your data.{% elif lang == "es" %}Solicitar la limitaci&oacute;n del tratamiento de sus datos.{% elif lang == "pt" %}Solicitar a limita&ccedil;&atilde;o do tratamento dos seus dados.{% elif lang == "de" %}Die Einschr&auml;nkung der Verarbeitung Ihrer Daten verlangen.{% elif lang == "nl" %}Beperking van de verwerking van uw gegevens vragen.{% endif %}</p>
+          </div>
+          <div class="right-card">
+            <h4>{% if lang == "fr" %}Droit &agrave; la portabilit&eacute;{% elif lang == "en" %}Right to portability{% elif lang == "es" %}Derecho a la portabilidad{% elif lang == "pt" %}Direito &agrave; portabilidade{% elif lang == "de" %}Recht auf Daten&uuml;bertragbarkeit{% elif lang == "nl" %}Recht op overdraagbaarheid{% endif %}</h4>
+            <p>{% if lang == "fr" %}Recevoir vos donn&eacute;es dans un format structur&eacute; et r&eacute;utilisable.{% elif lang == "en" %}Receive your data in a structured, commonly used and machine-readable format.{% elif lang == "es" %}Recibir sus datos en un formato estructurado y reutilizable.{% elif lang == "pt" %}Receber os seus dados num formato estruturado e reutiliz&aacute;vel.{% elif lang == "de" %}Ihre Daten in einem strukturierten, g&auml;ngigen und maschinenlesbaren Format erhalten.{% elif lang == "nl" %}Uw gegevens ontvangen in een gestructureerd en herbruikbaar formaat.{% endif %}</p>
+          </div>
+          <div class="right-card">
+            <h4>{% if lang == "fr" %}Droit d'opposition{% elif lang == "en" %}Right to object{% elif lang == "es" %}Derecho de oposici&oacute;n{% elif lang == "pt" %}Direito de oposi&ccedil;&atilde;o{% elif lang == "de" %}Widerspruchsrecht{% elif lang == "nl" %}Recht van bezwaar{% endif %}</h4>
+            <p>{% if lang == "fr" %}Vous opposer au traitement de vos donn&eacute;es &agrave; tout moment.{% elif lang == "en" %}Object to the processing of your data at any time.{% elif lang == "es" %}Oponerse al tratamiento de sus datos en cualquier momento.{% elif lang == "pt" %}Opor-se ao tratamento dos seus dados a qualquer momento.{% elif lang == "de" %}Der Verarbeitung Ihrer Daten jederzeit widersprechen.{% elif lang == "nl" %}Zich op elk moment verzetten tegen de verwerking van uw gegevens.{% endif %}</p>
+          </div>
+          <div class="right-card">
+            <h4>{% if lang == "fr" %}Retrait du consentement{% elif lang == "en" %}Withdrawal of consent{% elif lang == "es" %}Retirada del consentimiento{% elif lang == "pt" %}Retirada do consentimento{% elif lang == "de" %}Widerruf der Einwilligung{% elif lang == "nl" %}Intrekking van toestemming{% endif %}</h4>
+            <p>{% if lang == "fr" %}Retirer votre consentement &agrave; tout moment, sans affecter la lic&eacute;it&eacute; du traitement ant&eacute;rieur.{% elif lang == "en" %}Withdraw your consent at any time, without affecting the lawfulness of prior processing.{% elif lang == "es" %}Retirar su consentimiento en cualquier momento, sin afectar la licitud del tratamiento anterior.{% elif lang == "pt" %}Retirar o seu consentimento a qualquer momento, sem afetar a licitude do tratamento anterior.{% elif lang == "de" %}Ihre Einwilligung jederzeit widerrufen, ohne dass die Rechtm&auml;&szlig;igkeit der bisherigen Verarbeitung ber&uuml;hrt wird.{% elif lang == "nl" %}Uw toestemming op elk moment intrekken, zonder dat dit afbreuk doet aan de rechtmatigheid van de eerdere verwerking.{% endif %}</p>
+          </div>
+          <div class="right-card">
+            <h4>{% if lang == "fr" %}Directives post-mortem{% elif lang == "en" %}Post-mortem directives{% elif lang == "es" %}Directrices post-mortem{% elif lang == "pt" %}Diretivas post-mortem{% elif lang == "de" %}Verfügungen für den Todesfall{% elif lang == "nl" %}Postmortale richtlijnen{% endif %}</h4>
+            <p>{% if lang == "fr" %}D&eacute;finir des directives relatives au sort de vos donn&eacute;es apr&egrave;s votre d&eacute;c&egrave;s.{% elif lang == "en" %}Define directives regarding the fate of your data after your death.{% elif lang == "es" %}Definir directrices relativas al destino de sus datos tras su fallecimiento.{% elif lang == "pt" %}Definir diretivas relativas ao destino dos seus dados ap&oacute;s o seu falecimento.{% elif lang == "de" %}Verf&uuml;gungen &uuml;ber das Schicksal Ihrer Daten nach Ihrem Tod festlegen.{% elif lang == "nl" %}Richtlijnen vastleggen over het lot van uw gegevens na uw overlijden.{% endif %}</p>
+          </div>
+        </div>
+
+        <div class="contact-box">
+          <h4>{% if lang == "fr" %}Exercer vos droits{% elif lang == "en" %}Exercise your rights{% elif lang == "es" %}Ejercer sus derechos{% elif lang == "pt" %}Exercer os seus direitos{% elif lang == "de" %}Ihre Rechte aus&uuml;ben{% elif lang == "nl" %}Uw rechten uitoefenen{% endif %}</h4>
+          {% if lang == "fr" %}
+          <p>Contactez-nous &agrave; l'adresse <a href="mailto:rgpd@lotoia.fr">rgpd@lotoia.fr</a>. Nous vous r&eacute;pondrons dans un d&eacute;lai d'<strong>un mois</strong>.</p>
+          {% elif lang == "en" %}
+          <p>Contact us at <a href="mailto:rgpd@lotoia.fr">rgpd@lotoia.fr</a>. We will respond within <strong>one month</strong>.</p>
+          {% elif lang == "es" %}
+          <p>Cont&aacute;ctenos en <a href="mailto:rgpd@lotoia.fr">rgpd@lotoia.fr</a>. Le responderemos en un plazo de <strong>un mes</strong>.</p>
+          {% elif lang == "pt" %}
+          <p>Contacte-nos em <a href="mailto:rgpd@lotoia.fr">rgpd@lotoia.fr</a>. Responderemos no prazo de <strong>um m&ecirc;s</strong>.</p>
+          {% elif lang == "de" %}
+          <p>Kontaktieren Sie uns unter <a href="mailto:rgpd@lotoia.fr">rgpd@lotoia.fr</a>. Wir antworten Ihnen innerhalb von <strong>einem Monat</strong>.</p>
+          {% elif lang == "nl" %}
+          <p>Neem contact met ons op via <a href="mailto:rgpd@lotoia.fr">rgpd@lotoia.fr</a>. Wij antwoorden u binnen <strong>&eacute;&eacute;n maand</strong>.</p>
+          {% endif %}
+        </div>
+
+        {% if lang == "fr" %}
+        <p>En cas de litige, vous pouvez introduire une r&eacute;clamation aupr&egrave;s de l'autorit&eacute; de contr&ocirc;le comp&eacute;tente :</p>
+        <div class="legal-info-block">
+          <p><strong>CNIL</strong> (Commission Nationale de l'Informatique et des Libert&eacute;s)</p>
+          <p>Site web : <a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a></p>
+        </div>
+        {% elif lang == "en" %}
+        <p>In case of a dispute, you may lodge a complaint with the competent supervisory authority:</p>
+        <div class="legal-info-block">
+          <p><strong>ICO</strong> (Information Commissioner's Office)</p>
+          <p>Website: <a href="https://www.ico.org.uk" target="_blank" rel="noopener">www.ico.org.uk</a></p>
+        </div>
+        {% elif lang == "es" %}
+        <p>En caso de litigio, puede presentar una reclamaci&oacute;n ante la autoridad de control competente:</p>
+        <div class="legal-info-block">
+          <p><strong>AEPD</strong> (Agencia Espa&ntilde;ola de Protecci&oacute;n de Datos)</p>
+          <p>Sitio web: <a href="https://www.aepd.es" target="_blank" rel="noopener">www.aepd.es</a></p>
+        </div>
+        {% elif lang == "pt" %}
+        <p>Em caso de lit&iacute;gio, pode apresentar uma reclama&ccedil;&atilde;o junto da autoridade de controlo competente:</p>
+        <div class="legal-info-block">
+          <p><strong>CNPD</strong> (Comiss&atilde;o Nacional de Prote&ccedil;&atilde;o de Dados)</p>
+          <p>Site web: <a href="https://www.cnpd.pt" target="_blank" rel="noopener">www.cnpd.pt</a></p>
+        </div>
+        {% elif lang == "de" %}
+        <p>Im Streitfall k&ouml;nnen Sie eine Beschwerde bei der zust&auml;ndigen Aufsichtsbeh&ouml;rde einreichen:</p>
+        <div class="legal-info-block">
+          <p><strong>BfDI</strong> (Der Bundesbeauftragte f&uuml;r den Datenschutz und die Informationsfreiheit)</p>
+          <p>Website: <a href="https://www.bfdi.bund.de" target="_blank" rel="noopener">www.bfdi.bund.de</a></p>
+        </div>
+        {% elif lang == "nl" %}
+        <p>In geval van een geschil kunt u een klacht indienen bij de bevoegde toezichthoudende autoriteit:</p>
+        <div class="legal-info-block">
+          <p><strong>AP</strong> (Autoriteit Persoonsgegevens)</p>
+          <p>Website: <a href="https://www.autoriteitpersoonsgegevens.nl" target="_blank" rel="noopener">www.autoriteitpersoonsgegevens.nl</a></p>
+        </div>
+        {% endif %}
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         9. COOKIES
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="cookies">
+        <h2>9. Cookies</h2>
+
+        {% if lang == "fr" %}
+        <p>LotoIA utilise un nombre tr&egrave;s limit&eacute; de cookies, principalement techniques. Pour une information d&eacute;taill&eacute;e sur les cookies utilis&eacute;s, leur finalit&eacute; et leur dur&eacute;e, veuillez consulter notre <a href="{{ urls.cookies }}">Politique des cookies</a>.</p>
+        {% elif lang == "en" %}
+        <p>LotoIA uses a very limited number of cookies, mainly technical. For detailed information about the cookies used, their purpose and duration, please see our <a href="{{ urls.cookies }}">Cookie Policy</a>.</p>
+        {% elif lang == "es" %}
+        <p>LotoIA utiliza un n&uacute;mero muy limitado de cookies, principalmente t&eacute;cnicas. Para informaci&oacute;n detallada sobre las cookies utilizadas, su finalidad y duraci&oacute;n, consulte nuestra <a href="{{ urls.cookies }}">Pol&iacute;tica de cookies</a>.</p>
+        {% elif lang == "pt" %}
+        <p>O LotoIA utiliza um n&uacute;mero muito limitado de cookies, principalmente t&eacute;cnicos. Para informa&ccedil;&atilde;o detalhada sobre os cookies utilizados, a sua finalidade e dura&ccedil;&atilde;o, consulte a nossa <a href="{{ urls.cookies }}">Pol&iacute;tica de cookies</a>.</p>
+        {% elif lang == "de" %}
+        <p>LotoIA verwendet eine sehr begrenzte Anzahl von Cookies, haupts&auml;chlich technischer Art. Ausf&uuml;hrliche Informationen &uuml;ber die verwendeten Cookies, ihren Zweck und ihre Dauer finden Sie in unserer <a href="{{ urls.cookies }}">Cookie-Richtlinie</a>.</p>
+        {% elif lang == "nl" %}
+        <p>LotoIA gebruikt een zeer beperkt aantal cookies, voornamelijk technische. Voor gedetailleerde informatie over de gebruikte cookies, hun doel en duur, raadpleeg ons <a href="{{ urls.cookies }}">Cookiebeleid</a>.</p>
+        {% endif %}
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         10. SECURITY
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="securite">
+        <h2>{% if lang == "fr" %}10. S&eacute;curit&eacute;{% elif lang == "en" %}10. Security{% elif lang == "es" %}10. Seguridad{% elif lang == "pt" %}10. Seguran&ccedil;a{% elif lang == "de" %}10. Sicherheit{% elif lang == "nl" %}10. Beveiliging{% endif %}</h2>
+
+        {% if lang == "fr" %}
+        <p>Nous mettons en &oelig;uvre des mesures techniques et organisationnelles appropri&eacute;es pour prot&eacute;ger vos donn&eacute;es :</p>
+        {% elif lang == "en" %}
+        <p>We implement appropriate technical and organisational measures to protect your data:</p>
+        {% elif lang == "es" %}
+        <p>Implementamos medidas t&eacute;cnicas y organizativas adecuadas para proteger sus datos:</p>
+        {% elif lang == "pt" %}
+        <p>Implementamos medidas t&eacute;cnicas e organizativas adequadas para proteger os seus dados:</p>
+        {% elif lang == "de" %}
+        <p>Wir setzen geeignete technische und organisatorische Ma&szlig;nahmen zum Schutz Ihrer Daten um:</p>
+        {% elif lang == "nl" %}
+        <p>Wij treffen passende technische en organisatorische maatregelen om uw gegevens te beschermen:</p>
+        {% endif %}
+
+        <ul>
+          {% if lang == "fr" %}
+          <li><strong>Chiffrement HTTPS/TLS</strong> pour toutes les communications</li>
+          <li><strong>Certifications Google Cloud</strong> (ISO 27001, SOC 2)</li>
+          <li><strong>Mises &agrave; jour r&eacute;guli&egrave;res</strong> des d&eacute;pendances et du syst&egrave;me</li>
+          <li><strong>Acc&egrave;s restreint</strong> aux donn&eacute;es (principe du moindre privil&egrave;ge)</li>
+          <li><strong>Minimisation des donn&eacute;es</strong> : seules les donn&eacute;es strictement n&eacute;cessaires sont collect&eacute;es</li>
+          <li><strong>Pseudonymisation</strong> : les identifiants de session sont des UUID al&eacute;atoires sans lien avec votre identit&eacute;</li>
+          {% elif lang == "en" %}
+          <li><strong>HTTPS/TLS encryption</strong> for all communications</li>
+          <li><strong>Google Cloud certifications</strong> (ISO 27001, SOC 2)</li>
+          <li><strong>Regular updates</strong> of dependencies and system</li>
+          <li><strong>Restricted access</strong> to data (principle of least privilege)</li>
+          <li><strong>Data minimisation</strong>: only strictly necessary data is collected</li>
+          <li><strong>Pseudonymisation</strong>: session identifiers are random UUIDs with no link to your identity</li>
+          {% elif lang == "es" %}
+          <li><strong>Cifrado HTTPS/TLS</strong> para todas las comunicaciones</li>
+          <li><strong>Certificaciones de Google Cloud</strong> (ISO 27001, SOC 2)</li>
+          <li><strong>Actualizaciones regulares</strong> de las dependencias y del sistema</li>
+          <li><strong>Acceso restringido</strong> a los datos (principio de m&iacute;nimo privilegio)</li>
+          <li><strong>Minimizaci&oacute;n de datos</strong>: solo se recopilan los datos estrictamente necesarios</li>
+          <li><strong>Seudonimizaci&oacute;n</strong>: los identificadores de sesi&oacute;n son UUID aleatorios sin v&iacute;nculo con su identidad</li>
+          {% elif lang == "pt" %}
+          <li><strong>Encripta&ccedil;&atilde;o HTTPS/TLS</strong> para todas as comunica&ccedil;&otilde;es</li>
+          <li><strong>Certifica&ccedil;&otilde;es Google Cloud</strong> (ISO 27001, SOC 2)</li>
+          <li><strong>Atualiza&ccedil;&otilde;es regulares</strong> das depend&ecirc;ncias e do sistema</li>
+          <li><strong>Acesso restrito</strong> aos dados (princ&iacute;pio do privil&eacute;gio m&iacute;nimo)</li>
+          <li><strong>Minimiza&ccedil;&atilde;o de dados</strong>: apenas os dados estritamente necess&aacute;rios s&atilde;o recolhidos</li>
+          <li><strong>Pseudonimiza&ccedil;&atilde;o</strong>: os identificadores de sess&atilde;o s&atilde;o UUID aleat&oacute;rios sem liga&ccedil;&atilde;o com a sua identidade</li>
+          {% elif lang == "de" %}
+          <li><strong>HTTPS/TLS-Verschl&uuml;sselung</strong> f&uuml;r die gesamte Kommunikation</li>
+          <li><strong>Google-Cloud-Zertifizierungen</strong> (ISO 27001, SOC 2)</li>
+          <li><strong>Regelm&auml;&szlig;ige Aktualisierungen</strong> der Abh&auml;ngigkeiten und des Systems</li>
+          <li><strong>Eingeschr&auml;nkter Zugang</strong> zu den Daten (Prinzip der geringsten Berechtigung)</li>
+          <li><strong>Datenminimierung</strong>: Es werden nur die unbedingt erforderlichen Daten erhoben</li>
+          <li><strong>Pseudonymisierung</strong>: Sitzungskennungen sind zuf&auml;llige UUIDs ohne Bezug zu Ihrer Identit&auml;t</li>
+          {% elif lang == "nl" %}
+          <li><strong>HTTPS/TLS-versleuteling</strong> voor alle communicatie</li>
+          <li><strong>Google Cloud-certificeringen</strong> (ISO 27001, SOC 2)</li>
+          <li><strong>Regelmatige updates</strong> van afhankelijkheden en het systeem</li>
+          <li><strong>Beperkte toegang</strong> tot gegevens (principe van minimale rechten)</li>
+          <li><strong>Gegevensminimalisatie</strong>: alleen strikt noodzakelijke gegevens worden verzameld</li>
+          <li><strong>Pseudonimisering</strong>: sessie-ID's zijn willekeurige UUID's zonder verband met uw identiteit</li>
+          {% endif %}
+        </ul>
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         11. MODIFICATIONS
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="modifications">
+        <h2>{% if lang == "fr" %}11. Modifications{% elif lang == "en" %}11. Modifications{% elif lang == "es" %}11. Modificaciones{% elif lang == "pt" %}11. Modifica&ccedil;&otilde;es{% elif lang == "de" %}11. &Auml;nderungen{% elif lang == "nl" %}11. Wijzigingen{% endif %}</h2>
+
+        {% if lang == "fr" %}
+        <p>La pr&eacute;sente politique de confidentialit&eacute; peut &ecirc;tre mise &agrave; jour afin de refl&eacute;ter les &eacute;volutions l&eacute;gales ou r&eacute;glementaires, ou les modifications apport&eacute;es au service.</p>
+        <p>En cas de modification substantielle, un avis sera publi&eacute; sur le site. La date de derni&egrave;re mise &agrave; jour figure en haut de cette page.</p>
+        {% elif lang == "en" %}
+        <p>This privacy policy may be updated to reflect legal or regulatory developments, or changes to the service.</p>
+        <p>In case of a substantial modification, a notice will be published on the site. The date of the last update is shown at the top of this page.</p>
+        {% elif lang == "es" %}
+        <p>La presente pol&iacute;tica de privacidad puede actualizarse para reflejar las evoluciones legales o reglamentarias, o las modificaciones introducidas en el servicio.</p>
+        <p>En caso de modificaci&oacute;n sustancial, se publicar&aacute; un aviso en el sitio. La fecha de la &uacute;ltima actualizaci&oacute;n figura en la parte superior de esta p&aacute;gina.</p>
+        {% elif lang == "pt" %}
+        <p>A presente pol&iacute;tica de privacidade pode ser atualizada para refletir as evolu&ccedil;&otilde;es legais ou regulamentares, ou as modifica&ccedil;&otilde;es introduzidas no servi&ccedil;o.</p>
+        <p>Em caso de modifica&ccedil;&atilde;o substancial, ser&aacute; publicado um aviso no site. A data da &uacute;ltima atualiza&ccedil;&atilde;o consta no topo desta p&aacute;gina.</p>
+        {% elif lang == "de" %}
+        <p>Diese Datenschutzerkl&auml;rung kann aktualisiert werden, um rechtlichen oder regulatorischen Entwicklungen oder &Auml;nderungen am Dienst Rechnung zu tragen.</p>
+        <p>Bei wesentlichen &Auml;nderungen wird ein Hinweis auf der Website ver&ouml;ffentlicht. Das Datum der letzten Aktualisierung steht oben auf dieser Seite.</p>
+        {% elif lang == "nl" %}
+        <p>Dit privacybeleid kan worden bijgewerkt om wettelijke of regelgevende ontwikkelingen of wijzigingen in de dienst weer te geven.</p>
+        <p>Bij een substantiële wijziging wordt een kennisgeving op de site gepubliceerd. De datum van de laatste update staat bovenaan deze pagina.</p>
+        {% endif %}
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         12. CONTACT
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="contact">
+        <h2>12. Contact</h2>
+
+        {% if lang == "fr" %}
+        <p>Pour toute question relative &agrave; la protection de vos donn&eacute;es personnelles, vous pouvez nous contacter :</p>
+        {% elif lang == "en" %}
+        <p>For any question regarding the protection of your personal data, you may contact us:</p>
+        {% elif lang == "es" %}
+        <p>Para cualquier consulta relativa a la protecci&oacute;n de sus datos personales, puede contactarnos:</p>
+        {% elif lang == "pt" %}
+        <p>Para qualquer quest&atilde;o relativa &agrave; prote&ccedil;&atilde;o dos seus dados pessoais, pode contactar-nos:</p>
+        {% elif lang == "de" %}
+        <p>F&uuml;r jegliche Fragen zum Schutz Ihrer personenbezogenen Daten k&ouml;nnen Sie uns kontaktieren:</p>
+        {% elif lang == "nl" %}
+        <p>Voor elke vraag over de bescherming van uw persoonsgegevens kunt u contact met ons opnemen:</p>
+        {% endif %}
+
+        <div class="contact-box">
+          <h4>{% if lang == "fr" %}Donn&eacute;es personnelles (DPO){% elif lang == "en" %}Personal data (DPO){% elif lang == "es" %}Datos personales (DPO){% elif lang == "pt" %}Dados pessoais (DPO){% elif lang == "de" %}Personenbezogene Daten (DSB){% elif lang == "nl" %}Persoonsgegevens (DPO){% endif %}</h4>
+          <ul>
+            <li>{% if lang == "fr" %}E-mail{% elif lang == "en" %}Email{% elif lang == "es" %}Correo electr&oacute;nico{% elif lang == "pt" %}E-mail{% elif lang == "de" %}E-Mail{% elif lang == "nl" %}E-mail{% endif %} : <a href="mailto:rgpd@lotoia.fr">rgpd@lotoia.fr</a></li>
+          </ul>
+        </div>
+
+        <div class="contact-box">
+          <h4>{% if lang == "fr" %}Contact g&eacute;n&eacute;ral{% elif lang == "en" %}General contact{% elif lang == "es" %}Contacto general{% elif lang == "pt" %}Contacto geral{% elif lang == "de" %}Allgemeiner Kontakt{% elif lang == "nl" %}Algemeen contact{% endif %}</h4>
+          <ul>
+            <li>{% if lang == "fr" %}E-mail{% elif lang == "en" %}Email{% elif lang == "es" %}Correo electr&oacute;nico{% elif lang == "pt" %}E-mail{% elif lang == "de" %}E-Mail{% elif lang == "nl" %}E-mail{% endif %} : <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a></li>
+          </ul>
+        </div>
+
+        <p>{% if lang == "fr" %}D&eacute;lai de r&eacute;ponse : <strong>1 mois maximum</strong> conform&eacute;ment au RGPD.{% elif lang == "en" %}Response time: <strong>1 month maximum</strong> in accordance with the GDPR.{% elif lang == "es" %}Plazo de respuesta: <strong>1 mes m&aacute;ximo</strong> conforme al RGPD.{% elif lang == "pt" %}Prazo de resposta: <strong>1 m&ecirc;s no m&aacute;ximo</strong> em conformidade com o RGPD.{% elif lang == "de" %}Antwortfrist: <strong>maximal 1 Monat</strong> gem&auml;&szlig; DSGVO.{% elif lang == "nl" %}Antwoordtermijn: <strong>maximaal 1 maand</strong> overeenkomstig de AVG.{% endif %}</p>
+      </section>
+
+    </article>
+
+    {# ══════════════════════════════════════════════════════════════════════
+       LEGAL NAVIGATION
+       ══════════════════════════════════════════════════════════════════════ #}
+    <nav class="legal-nav">
+      <h3>{% if lang == "fr" %}Documents juridiques{% elif lang == "en" %}Legal Documents{% elif lang == "es" %}Documentos legales{% elif lang == "pt" %}Documentos legais{% elif lang == "de" %}Rechtliche Dokumente{% elif lang == "nl" %}Juridische documenten{% endif %}</h3>
+      <ul>
+        <li><a href="{{ urls.mentions }}">{% if lang == "fr" %}Mentions l&eacute;gales{% elif lang == "en" %}Legal Notices{% elif lang == "es" %}Aviso legal{% elif lang == "pt" %}Avisos legais{% elif lang == "de" %}Impressum{% elif lang == "nl" %}Juridische kennisgeving{% endif %}</a></li>
+        <li><a href="{{ urls.confidentialite }}" class="active">{% if lang == "fr" %}Politique de confidentialit&eacute;{% elif lang == "en" %}Privacy Policy{% elif lang == "es" %}Pol&iacute;tica de privacidad{% elif lang == "pt" %}Pol&iacute;tica de privacidade{% elif lang == "de" %}Datenschutzerkl&auml;rung{% elif lang == "nl" %}Privacybeleid{% endif %}</a></li>
+        <li><a href="{{ urls.cookies }}">{% if lang == "fr" %}Politique des cookies{% elif lang == "en" %}Cookie Policy{% elif lang == "es" %}Pol&iacute;tica de cookies{% elif lang == "pt" %}Pol&iacute;tica de cookies{% elif lang == "de" %}Cookie-Richtlinie{% elif lang == "nl" %}Cookiebeleid{% endif %}</a></li>
+        <li><a href="{{ urls.disclaimer }}">{% if lang == "fr" %}Avertissements{% elif lang == "en" %}Disclaimer{% elif lang == "es" %}Aviso de responsabilidad{% elif lang == "pt" %}Aviso de responsabilidade{% elif lang == "de" %}Haftungsausschluss{% elif lang == "nl" %}Disclaimer{% endif %}</a></li>
+      </ul>
+    </nav>
+
+    {% set show_disclaimer_link = true %}
+    {% include "em/_footer.html" %}
+  </div>
+{% endblock %}

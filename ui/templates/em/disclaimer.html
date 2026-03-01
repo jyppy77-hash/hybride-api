@@ -1,0 +1,710 @@
+{% extends "em/_base.html" %}
+
+{% block head %}
+    <title>{% if lang == "fr" %}Avertissements Legaux{% elif lang == "en" %}Legal Disclaimer{% elif lang == "es" %}Aviso de Responsabilidad{% elif lang == "pt" %}Aviso de Responsabilidade{% elif lang == "de" %}Haftungsausschluss{% elif lang == "nl" %}Disclaimer{% endif %} | LotoIA EuroMillions</title>
+    <meta name="robots" content="noindex, follow">
+    <link rel="canonical" href="{{ canonical_url }}">
+{% endblock %}
+
+{% block head_end %}<link rel="stylesheet" href="/ui/static/legal.css?v=1">{% endblock %}
+
+{% block body %}
+    <header class="page-header">
+        <div class="header-content">
+            <h1>{% if lang == "fr" %}Avertissements Legaux{% elif lang == "en" %}Legal Disclaimer{% elif lang == "es" %}Aviso de Responsabilidad{% elif lang == "pt" %}Aviso de Responsabilidade{% elif lang == "de" %}Haftungsausschluss{% elif lang == "nl" %}Disclaimer{% endif %}</h1>
+            <p class="subtitle">{% if lang == "fr" %}Jeux d'argent, Intelligence Artificielle et Limites du service{% elif lang == "en" %}Gambling, Artificial Intelligence and Service Limitations{% elif lang == "es" %}Juegos de azar, Inteligencia Artificial y Limitaciones del servicio{% elif lang == "pt" %}Jogos de azar, Inteligencia Artificial e Limites do servico{% elif lang == "de" %}Glucksspiel, Kunstliche Intelligenz und Grenzen des Dienstes{% elif lang == "nl" %}Kansspelen, Kunstmatige Intelligentie en Beperkingen van de dienst{% endif %}</p>
+        </div>
+    </header>
+
+    <div class="container subpage-container">
+        <article class="legal-content">
+
+            <!-- Date -->
+            <p class="legal-update">{% if lang == "fr" %}Derniere mise a jour : 1 mars 2026{% elif lang == "en" %}Last updated: 1 March 2026{% elif lang == "es" %}Ultima actualizacion: 1 de marzo de 2026{% elif lang == "pt" %}Ultima atualizacao: 1 de marco de 2026{% elif lang == "de" %}Letzte Aktualisierung: 1. Marz 2026{% elif lang == "nl" %}Laatst bijgewerkt: 1 maart 2026{% endif %}</p>
+
+            <!-- ================================================================
+                 SECTION 1 : GAMBLING WARNING
+                 ================================================================ -->
+            <section class="legal-section disclaimer-gambling">
+                <h2>{% if lang == "fr" %}Avertissement Jeux d'Argent{% elif lang == "en" %}Gambling Warning{% elif lang == "es" %}Advertencia sobre Juegos de Azar{% elif lang == "pt" %}Aviso sobre Jogos de Azar{% elif lang == "de" %}Glucksspielwarnung{% elif lang == "nl" %}Kansspelwaarschuwing{% endif %}</h2>
+
+                <!-- Banner 18+ -->
+                <div class="disclaimer-banner critical">
+                    <div class="disclaimer-icon">18+</div>
+                    <div class="disclaimer-content">
+                        {% if lang == "fr" %}
+                        <p class="disclaimer-headline">JOUER COMPORTE DES RISQUES : ENDETTEMENT, ISOLEMENT, DEPENDANCE.</p>
+                        <p>Pour etre accompagne, appelez le <strong>09 74 75 13 13</strong> (appel non surtaxe)</p>
+                        {% elif lang == "en" %}
+                        <p class="disclaimer-headline">GAMBLING INVOLVES RISKS: DEBT, ISOLATION, ADDICTION.</p>
+                        <p>For support, contact <strong>BeGambleAware</strong> at <strong>www.begambleaware.org</strong></p>
+                        {% elif lang == "es" %}
+                        <p class="disclaimer-headline">JUGAR CONLLEVA RIESGOS: ENDEUDAMIENTO, AISLAMIENTO, ADICCION.</p>
+                        <p>Para recibir ayuda, llame al <strong>900 200 225</strong> (gratuito y anonimo)</p>
+                        {% elif lang == "pt" %}
+                        <p class="disclaimer-headline">JOGAR COMPORTA RISCOS: ENDIVIDAMENTO, ISOLAMENTO, DEPENDENCIA.</p>
+                        <p>Para obteres ajuda, liga para o <strong>808 200 204</strong> (gratuito e anonimo)</p>
+                        {% elif lang == "de" %}
+                        <p class="disclaimer-headline">GLUCKSSPIEL BIRGT RISIKEN: VERSCHULDUNG, ISOLATION, SUCHT.</p>
+                        <p>Hilfe erhalten Sie unter <strong>0800 1 372 700</strong> (BZgA, kostenfrei)</p>
+                        {% elif lang == "nl" %}
+                        <p class="disclaimer-headline">GOKKEN BRENGT RISICO'S MET ZICH MEE: SCHULDEN, ISOLEMENT, VERSLAVING.</p>
+                        <p>Voor hulp, bel <strong>078 15 13 14</strong> (Gokkliniek)</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Nature of service -->
+                <h3>{% if lang == "fr" %}Nature du service LotoIA{% elif lang == "en" %}Nature of the LotoIA Service{% elif lang == "es" %}Naturaleza del servicio LotoIA{% elif lang == "pt" %}Natureza do servico LotoIA{% elif lang == "de" %}Art des LotoIA-Dienstes{% elif lang == "nl" %}Aard van de LotoIA-dienst{% endif %}</h3>
+                <div class="legal-disclaimer-box">
+                    {% if lang == "fr" %}
+                    <p><strong>LotoIA.fr est un outil d'analyse statistique INDEPENDANT.</strong></p>
+                    <ul>
+                        <li>LotoIA.fr <strong>N'EST PAS un operateur de jeux d'argent</strong></li>
+                        <li>LotoIA.fr <strong>NE DETIENT AUCUN agrement</strong> d'aucune autorite de regulation des jeux</li>
+                        <li>LotoIA.fr <strong>N'EST PAS affilie, partenaire, ni approuve</strong> par aucun operateur de loterie</li>
+                        <li>LotoIA.fr <strong>NE PERMET AUCUNE</strong> mise d'argent, pari ou transaction financiere</li>
+                        <li>LotoIA.fr <strong>NE VEND PAS</strong> de bulletins de jeu</li>
+                    </ul>
+                    {% elif lang == "en" %}
+                    <p><strong>LotoIA.fr is an INDEPENDENT statistical analysis tool.</strong></p>
+                    <ul>
+                        <li>LotoIA.fr <strong>IS NOT a gambling operator</strong></li>
+                        <li>LotoIA.fr <strong>HOLDS NO authorisation</strong> from any gambling authority</li>
+                        <li>LotoIA.fr <strong>IS NOT affiliated with, partnered with, or endorsed by</strong> any lottery operator</li>
+                        <li>LotoIA.fr <strong>DOES NOT ALLOW</strong> any money bets, wagers, or financial transactions</li>
+                        <li>LotoIA.fr <strong>DOES NOT SELL</strong> lottery tickets</li>
+                    </ul>
+                    {% elif lang == "es" %}
+                    <p><strong>LotoIA.fr es una herramienta de analisis estadistico INDEPENDIENTE.</strong></p>
+                    <ul>
+                        <li>LotoIA.fr <strong>NO ES un operador de juegos de azar</strong></li>
+                        <li>LotoIA.fr <strong>NO POSEE NINGUNA autorizacion</strong> de ninguna autoridad reguladora del juego</li>
+                        <li>LotoIA.fr <strong>NO ESTA afiliado, asociado ni avalado</strong> por ningun operador de loteria</li>
+                        <li>LotoIA.fr <strong>NO PERMITE NINGUNA</strong> apuesta, puesta ni transaccion financiera</li>
+                        <li>LotoIA.fr <strong>NO VENDE</strong> boletos de loteria</li>
+                    </ul>
+                    {% elif lang == "pt" %}
+                    <p><strong>LotoIA.fr e uma ferramenta de analise estatistica INDEPENDENTE.</strong></p>
+                    <ul>
+                        <li>LotoIA.fr <strong>NAO E um operador de jogos de azar</strong></li>
+                        <li>LotoIA.fr <strong>NAO POSSUI QUALQUER autorizacao</strong> de nenhuma autoridade reguladora do jogo</li>
+                        <li>LotoIA.fr <strong>NAO E afiliado, parceiro nem aprovado</strong> por qualquer operador de lotaria</li>
+                        <li>LotoIA.fr <strong>NAO PERMITE QUALQUER</strong> aposta, parada ou transacao financeira</li>
+                        <li>LotoIA.fr <strong>NAO VENDE</strong> bilhetes de lotaria</li>
+                    </ul>
+                    {% elif lang == "de" %}
+                    <p><strong>LotoIA.fr ist ein UNABHANGIGES statistisches Analysetool.</strong></p>
+                    <ul>
+                        <li>LotoIA.fr <strong>IST KEIN Glucksspielanbieter</strong></li>
+                        <li>LotoIA.fr <strong>BESITZT KEINE Genehmigung</strong> einer Glucksspielaufsichtsbehorde</li>
+                        <li>LotoIA.fr <strong>IST NICHT mit einem Lotteriebetreiber verbunden, assoziiert oder von diesem genehmigt</strong></li>
+                        <li>LotoIA.fr <strong>ERMOGLICHT KEINE</strong> Geldeinsatze, Wetten oder Finanztransaktionen</li>
+                        <li>LotoIA.fr <strong>VERKAUFT KEINE</strong> Lottoscheine</li>
+                    </ul>
+                    {% elif lang == "nl" %}
+                    <p><strong>LotoIA.fr is een ONAFHANKELIJK statistisch analysetool.</strong></p>
+                    <ul>
+                        <li>LotoIA.fr <strong>IS GEEN kansspelaanbieder</strong></li>
+                        <li>LotoIA.fr <strong>BEZIT GEEN vergunning</strong> van enige kansspelautoriteit</li>
+                        <li>LotoIA.fr <strong>IS NIET gelieerd aan, partner van of goedgekeurd door</strong> enige loterij-exploitant</li>
+                        <li>LotoIA.fr <strong>STAAT GEEN</strong> geldinzetten, weddenschappen of financiele transacties toe</li>
+                        <li>LotoIA.fr <strong>VERKOOPT GEEN</strong> loterijbiljetten</li>
+                    </ul>
+                    {% endif %}
+                </div>
+
+                <!-- EuroMillions is pure chance -->
+                <h3>{% if lang == "fr" %}L'EuroMillions est un jeu de pur hasard{% elif lang == "en" %}EuroMillions is a Game of Pure Chance{% elif lang == "es" %}EuroMillions es un juego de puro azar{% elif lang == "pt" %}O EuroMillions e um jogo de puro acaso{% elif lang == "de" %}EuroMillions ist ein reines Glucksspiel{% elif lang == "nl" %}EuroMillions is een puur kansspel{% endif %}</h3>
+                {% if lang == "fr" %}
+                <p>Chaque tirage de l'EuroMillions est un evenement <strong>totalement aleatoire et independant</strong>. Les numeros sont tires au sort de maniere equiprobable, ce qui signifie que :</p>
+                <ul>
+                    <li>Chaque combinaison a <strong>exactement la meme probabilite</strong> de sortir</li>
+                    <li>Les tirages passes <strong>n'influencent pas</strong> les tirages futurs</li>
+                    <li>Un numero &laquo; en retard &raquo; n'a <strong>pas plus de chances</strong> de sortir qu'un autre</li>
+                    <li><strong>Aucune methode, aucun algorithme, aucune strategie</strong> ne peut predire les resultats</li>
+                </ul>
+                {% elif lang == "en" %}
+                <p>Each EuroMillions draw is a <strong>totally random and independent</strong> event. Numbers are drawn with equal probability, which means:</p>
+                <ul>
+                    <li>Every combination has <strong>exactly the same probability</strong> of being drawn</li>
+                    <li>Past draws <strong>do not influence</strong> future draws</li>
+                    <li>An "overdue" number is <strong>no more likely</strong> to be drawn than any other</li>
+                    <li><strong>No method, algorithm, or strategy</strong> can predict the results</li>
+                </ul>
+                {% elif lang == "es" %}
+                <p>Cada sorteo de EuroMillions es un evento <strong>totalmente aleatorio e independiente</strong>. Los numeros se extraen con igual probabilidad, lo que significa que:</p>
+                <ul>
+                    <li>Cada combinacion tiene <strong>exactamente la misma probabilidad</strong> de salir</li>
+                    <li>Los sorteos pasados <strong>no influyen</strong> en los sorteos futuros</li>
+                    <li>Un numero &laquo;retrasado&raquo; <strong>no tiene mas posibilidades</strong> de salir que otro</li>
+                    <li><strong>Ningun metodo, algoritmo ni estrategia</strong> puede predecir los resultados</li>
+                </ul>
+                {% elif lang == "pt" %}
+                <p>Cada sorteio do EuroMillions e um evento <strong>totalmente aleatorio e independente</strong>. Os numeros sao sorteados com igual probabilidade, o que significa que:</p>
+                <ul>
+                    <li>Cada combinacao tem <strong>exatamente a mesma probabilidade</strong> de sair</li>
+                    <li>Os sorteios anteriores <strong>nao influenciam</strong> os sorteios futuros</li>
+                    <li>Um numero &laquo;atrasado&raquo; <strong>nao tem mais hipoteses</strong> de sair do que outro</li>
+                    <li><strong>Nenhum metodo, algoritmo ou estrategia</strong> pode prever os resultados</li>
+                </ul>
+                {% elif lang == "de" %}
+                <p>Jede EuroMillions-Ziehung ist ein <strong>vollig zufalliges und unabhangiges</strong> Ereignis. Die Zahlen werden gleichwahrscheinlich gezogen, was bedeutet:</p>
+                <ul>
+                    <li>Jede Kombination hat <strong>genau die gleiche Wahrscheinlichkeit</strong>, gezogen zu werden</li>
+                    <li>Vergangene Ziehungen <strong>beeinflussen nicht</strong> zukunftige Ziehungen</li>
+                    <li>Eine &laquo;uberfällige&raquo; Zahl hat <strong>keine grossere Chance</strong>, gezogen zu werden als jede andere</li>
+                    <li><strong>Keine Methode, kein Algorithmus und keine Strategie</strong> kann die Ergebnisse vorhersagen</li>
+                </ul>
+                {% elif lang == "nl" %}
+                <p>Elke EuroMillions-trekking is een <strong>volledig willekeurige en onafhankelijke</strong> gebeurtenis. De nummers worden met gelijke waarschijnlijkheid getrokken, wat betekent dat:</p>
+                <ul>
+                    <li>Elke combinatie <strong>exact dezelfde kans</strong> heeft om getrokken te worden</li>
+                    <li>Eerdere trekkingen <strong>geen invloed hebben</strong> op toekomstige trekkingen</li>
+                    <li>Een &laquo;achterstallig&raquo; nummer <strong>niet meer kans</strong> heeft om getrokken te worden dan een ander</li>
+                    <li><strong>Geen enkele methode, algoritme of strategie</strong> kan de resultaten voorspellen</li>
+                </ul>
+                {% endif %}
+
+                <!-- Probability table -->
+                <div class="probability-box">
+                    <h4>{% if lang == "fr" %}Probabilites de gain a l'EuroMillions{% elif lang == "en" %}EuroMillions Winning Probabilities{% elif lang == "es" %}Probabilidades de premio en EuroMillions{% elif lang == "pt" %}Probabilidades de premio no EuroMillions{% elif lang == "de" %}Gewinnwahrscheinlichkeiten bei EuroMillions{% elif lang == "nl" %}Winstkansen bij EuroMillions{% endif %}</h4>
+                    <table class="probability-table">
+                        <thead>
+                            <tr>
+                                <th>{% if lang == "fr" %}Rang{% elif lang == "en" %}Rank{% elif lang == "es" %}Rango{% elif lang == "pt" %}Escalao{% elif lang == "de" %}Rang{% elif lang == "nl" %}Rang{% endif %}</th>
+                                <th>{% if lang == "fr" %}Combinaison{% elif lang == "en" %}Combination{% elif lang == "es" %}Combinacion{% elif lang == "pt" %}Combinacao{% elif lang == "de" %}Kombination{% elif lang == "nl" %}Combinatie{% endif %}</th>
+                                <th>{% if lang == "fr" %}Probabilite{% elif lang == "en" %}Probability{% elif lang == "es" %}Probabilidad{% elif lang == "pt" %}Probabilidade{% elif lang == "de" %}Wahrscheinlichkeit{% elif lang == "nl" %}Waarschijnlijkheid{% endif %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>1</td>
+                                <td>{% if lang == "fr" %}5 numeros + 2 etoiles{% elif lang == "en" %}5 numbers + 2 stars{% elif lang == "es" %}5 numeros + 2 estrellas{% elif lang == "pt" %}5 numeros + 2 estrelas{% elif lang == "de" %}5 Zahlen + 2 Sterne{% elif lang == "nl" %}5 nummers + 2 sterren{% endif %}</td>
+                                <td>1 / 139 838 160</td>
+                            </tr>
+                            <tr>
+                                <td>2</td>
+                                <td>{% if lang == "fr" %}5 numeros + 1 etoile{% elif lang == "en" %}5 numbers + 1 star{% elif lang == "es" %}5 numeros + 1 estrella{% elif lang == "pt" %}5 numeros + 1 estrela{% elif lang == "de" %}5 Zahlen + 1 Stern{% elif lang == "nl" %}5 nummers + 1 ster{% endif %}</td>
+                                <td>1 / 6 991 908</td>
+                            </tr>
+                            <tr>
+                                <td>3</td>
+                                <td>{% if lang == "fr" %}5 numeros{% elif lang == "en" %}5 numbers{% elif lang == "es" %}5 numeros{% elif lang == "pt" %}5 numeros{% elif lang == "de" %}5 Zahlen{% elif lang == "nl" %}5 nummers{% endif %}</td>
+                                <td>1 / 3 107 515</td>
+                            </tr>
+                            <tr>
+                                <td>4</td>
+                                <td>{% if lang == "fr" %}4 numeros + 2 etoiles{% elif lang == "en" %}4 numbers + 2 stars{% elif lang == "es" %}4 numeros + 2 estrellas{% elif lang == "pt" %}4 numeros + 2 estrelas{% elif lang == "de" %}4 Zahlen + 2 Sterne{% elif lang == "nl" %}4 nummers + 2 sterren{% endif %}</td>
+                                <td>1 / 621 503</td>
+                            </tr>
+                            <tr>
+                                <td>5</td>
+                                <td>{% if lang == "fr" %}4 numeros + 1 etoile{% elif lang == "en" %}4 numbers + 1 star{% elif lang == "es" %}4 numeros + 1 estrella{% elif lang == "pt" %}4 numeros + 1 estrela{% elif lang == "de" %}4 Zahlen + 1 Stern{% elif lang == "nl" %}4 nummers + 1 ster{% endif %}</td>
+                                <td>1 / 31 075</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p class="probability-note">{% if lang == "fr" %}Source : Reglement officiel EuroMillions{% elif lang == "en" %}Source: Official EuroMillions rules{% elif lang == "es" %}Fuente: Reglamento oficial de EuroMillions{% elif lang == "pt" %}Fonte: Regulamento oficial do EuroMillions{% elif lang == "de" %}Quelle: Offizielle EuroMillions-Regeln{% elif lang == "nl" %}Bron: Officieel EuroMillions-reglement{% endif %}</p>
+                </div>
+
+                <!-- Minors prohibition -->
+                <h3>{% if lang == "fr" %}Interdiction aux mineurs{% elif lang == "en" %}Prohibition on Minors{% elif lang == "es" %}Prohibicion a menores{% elif lang == "pt" %}Proibicao a menores{% elif lang == "de" %}Verbot fur Minderjahrige{% elif lang == "nl" %}Verbod voor minderjarigen{% endif %}</h3>
+                <div class="legal-disclaimer-box warning">
+                    {% if lang == "fr" %}
+                    <p><strong>Les jeux d'argent et de hasard sont strictement interdits aux personnes de moins de 18 ans.</strong></p>
+                    <p>Cette interdiction s'applique a l'ensemble des jeux de loterie, y compris l'EuroMillions.</p>
+                    <p>Article L320-7 du Code de la securite interieure.</p>
+                    {% elif lang == "en" %}
+                    <p><strong>Gambling is strictly prohibited for persons under 18 years of age.</strong></p>
+                    <p>This prohibition applies to all lottery games, including EuroMillions.</p>
+                    <p>Gambling Act 2005 (UK).</p>
+                    {% elif lang == "es" %}
+                    <p><strong>Los juegos de azar estan estrictamente prohibidos para los menores de 18 anos.</strong></p>
+                    <p>Esta prohibicion se aplica a todos los juegos de loteria, incluido EuroMillions.</p>
+                    <p>Ley 13/2011 de regulacion del juego.</p>
+                    {% elif lang == "pt" %}
+                    <p><strong>Os jogos de azar sao estritamente proibidos para menores de 18 anos.</strong></p>
+                    <p>Esta proibicao aplica-se a todos os jogos de lotaria, incluindo o EuroMillions.</p>
+                    <p>Decreto-Lei n.o 66/2015.</p>
+                    {% elif lang == "de" %}
+                    <p><strong>Glucksspiel ist fur Personen unter 18 Jahren streng verboten.</strong></p>
+                    <p>Dieses Verbot gilt fur alle Lotteriespiele, einschliesslich EuroMillions.</p>
+                    <p>Glucksspielstaatsvertrag (GluStV).</p>
+                    {% elif lang == "nl" %}
+                    <p><strong>Kansspelen zijn strikt verboden voor personen jonger dan 18 jaar.</strong></p>
+                    <p>Dit verbod geldt voor alle loterijen, inclusief EuroMillions.</p>
+                    <p>Wet op de kansspelen.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Responsible gaming -->
+                <h3>{% if lang == "fr" %}Jeu responsable{% elif lang == "en" %}Responsible Gambling{% elif lang == "es" %}Juego responsable{% elif lang == "pt" %}Jogo responsavel{% elif lang == "de" %}Verantwortungsvolles Spielen{% elif lang == "nl" %}Verantwoord gokken{% endif %}</h3>
+                {% if lang == "fr" %}
+                <p>Le jeu doit rester un <strong>divertissement occasionnel</strong>. Si vous ressentez des difficultes :</p>
+                <ul>
+                    <li>Ne jouez jamais plus que ce que vous pouvez vous permettre de perdre</li>
+                    <li>Fixez-vous des limites de temps et d'argent</li>
+                    <li>N'essayez jamais de &laquo; vous refaire &raquo; apres une perte</li>
+                    <li>Le jeu ne doit pas etre une source de revenus</li>
+                </ul>
+                {% elif lang == "en" %}
+                <p>Gambling should remain <strong>occasional entertainment</strong>. If you experience difficulties:</p>
+                <ul>
+                    <li>Never gamble more than you can afford to lose</li>
+                    <li>Set yourself time and money limits</li>
+                    <li>Never try to "chase your losses"</li>
+                    <li>Gambling should not be a source of income</li>
+                </ul>
+                {% elif lang == "es" %}
+                <p>El juego debe ser un <strong>entretenimiento ocasional</strong>. Si experimentas dificultades:</p>
+                <ul>
+                    <li>No juegues nunca mas de lo que puedas permitirte perder</li>
+                    <li>Fijate limites de tiempo y de dinero</li>
+                    <li>Nunca intentes &laquo;recuperar&raquo; lo perdido</li>
+                    <li>El juego no debe ser una fuente de ingresos</li>
+                </ul>
+                {% elif lang == "pt" %}
+                <p>O jogo deve continuar a ser um <strong>entretenimento ocasional</strong>. Se sentires dificuldades:</p>
+                <ul>
+                    <li>Nunca jogues mais do que aquilo que te podes permitir perder</li>
+                    <li>Define limites de tempo e de dinheiro</li>
+                    <li>Nunca tentes &laquo;recuperar&raquo; o que perdeste</li>
+                    <li>O jogo nao deve ser uma fonte de rendimento</li>
+                </ul>
+                {% elif lang == "de" %}
+                <p>Glucksspiel sollte ein <strong>gelegentliches Vergnugen</strong> bleiben. Wenn Sie Schwierigkeiten haben:</p>
+                <ul>
+                    <li>Spielen Sie nie um mehr, als Sie sich leisten konnen zu verlieren</li>
+                    <li>Setzen Sie sich Zeit- und Geldlimits</li>
+                    <li>Versuchen Sie nie, Verluste &laquo;aufzuholen&raquo;</li>
+                    <li>Glucksspiel sollte keine Einkommensquelle sein</li>
+                </ul>
+                {% elif lang == "nl" %}
+                <p>Gokken moet een <strong>occasioneel vermaak</strong> blijven. Als u moeilijkheden ondervindt:</p>
+                <ul>
+                    <li>Gok nooit meer dan u zich kunt veroorloven te verliezen</li>
+                    <li>Stel tijd- en geldlimieten voor uzelf vast</li>
+                    <li>Probeer nooit uw verlies &laquo;goed te maken&raquo;</li>
+                    <li>Gokken mag geen bron van inkomsten zijn</li>
+                </ul>
+                {% endif %}
+
+                <!-- Help box -->
+                <div class="help-box">
+                    <h4>{% if lang == "fr" %}Besoin d'aide ?{% elif lang == "en" %}Need Help?{% elif lang == "es" %}Necesitas ayuda?{% elif lang == "pt" %}Precisas de ajuda?{% elif lang == "de" %}Brauchen Sie Hilfe?{% elif lang == "nl" %}Hulp nodig?{% endif %}</h4>
+                    {% if lang == "fr" %}
+                    <p><strong>Joueurs Info Service</strong></p>
+                    <ul>
+                        <li>Telephone : <strong>09 74 75 13 13</strong> (appel non surtaxe)</li>
+                        <li>Site : <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">www.joueurs-info-service.fr</a></li>
+                        <li>Horaires : 7j/7 de 8h a 2h du matin</li>
+                        <li>Service gratuit, anonyme et confidentiel</li>
+                    </ul>
+                    {% elif lang == "en" %}
+                    <p><strong>BeGambleAware</strong></p>
+                    <ul>
+                        <li>Website: <a href="https://www.begambleaware.org" target="_blank" rel="noopener">www.begambleaware.org</a></li>
+                        <li>GamCare helpline: <strong>0808 8020 133</strong></li>
+                        <li>Free, confidential support available 24/7</li>
+                    </ul>
+                    {% elif lang == "es" %}
+                    <p><strong>Jugar Bien</strong></p>
+                    <ul>
+                        <li>Telefono: <strong>900 200 225</strong> (gratuito y anonimo)</li>
+                        <li>Sitio web: <a href="https://www.jugarbien.es" target="_blank" rel="noopener">www.jugarbien.es</a></li>
+                        <li>Servicio gratuito, anonimo y confidencial</li>
+                    </ul>
+                    {% elif lang == "pt" %}
+                    <p><strong>Jogo Responsavel</strong></p>
+                    <ul>
+                        <li>Telefone: <strong>808 200 204</strong> (gratuito e anonimo)</li>
+                        <li>Site: <a href="https://www.jogoresponsavel.pt" target="_blank" rel="noopener">www.jogoresponsavel.pt</a></li>
+                        <li>Servico gratuito, anonimo e confidencial</li>
+                    </ul>
+                    {% elif lang == "de" %}
+                    <p><strong>Spielerschutz</strong></p>
+                    <ul>
+                        <li>Website: <a href="https://www.spielerschutz.de" target="_blank" rel="noopener">www.spielerschutz.de</a></li>
+                        <li>BZgA-Beratungstelefon: <strong>0800 1 372 700</strong> (kostenfrei)</li>
+                        <li>Kostenlose, anonyme und vertrauliche Hilfe</li>
+                    </ul>
+                    {% elif lang == "nl" %}
+                    <p><strong>Gokkliniek</strong></p>
+                    <ul>
+                        <li>Telefoon: <strong>078 15 13 14</strong></li>
+                        <li>Website: <a href="https://www.gokkliniek.be" target="_blank" rel="noopener">www.gokkliniek.be</a></li>
+                        <li>AGOG: <a href="https://www.agog.nl" target="_blank" rel="noopener">www.agog.nl</a></li>
+                        <li>Gratis, anonieme en vertrouwelijke hulp</li>
+                    </ul>
+                    {% endif %}
+                </div>
+            </section>
+
+            <!-- ================================================================
+                 SECTION 2 : AI WARNING
+                 ================================================================ -->
+            <section class="legal-section disclaimer-ai">
+                <h2>{% if lang == "fr" %}Avertissement Intelligence Artificielle{% elif lang == "en" %}Artificial Intelligence Warning{% elif lang == "es" %}Advertencia sobre Inteligencia Artificial{% elif lang == "pt" %}Aviso sobre Inteligencia Artificial{% elif lang == "de" %}Hinweis zur Kunstlichen Intelligenz{% elif lang == "nl" %}Waarschuwing Kunstmatige Intelligentie{% endif %}</h2>
+
+                {% if lang == "fr" %}
+                <p>Conformement au Reglement europeen sur l'Intelligence Artificielle (AI Act - UE 2024/1689), nous vous informons des caracteristiques du systeme d'IA utilise par LotoIA.fr.</p>
+                {% elif lang == "en" %}
+                <p>In accordance with the European Regulation on Artificial Intelligence (AI Act - EU 2024/1689), we inform you of the characteristics of the AI system used by LotoIA.fr.</p>
+                {% elif lang == "es" %}
+                <p>De conformidad con el Reglamento europeo sobre Inteligencia Artificial (AI Act - UE 2024/1689), le informamos de las caracteristicas del sistema de IA utilizado por LotoIA.fr.</p>
+                {% elif lang == "pt" %}
+                <p>Em conformidade com o Regulamento europeu sobre Inteligencia Artificial (AI Act - UE 2024/1689), informamos-te das caracteristicas do sistema de IA utilizado pelo LotoIA.fr.</p>
+                {% elif lang == "de" %}
+                <p>Gemass der Europaischen Verordnung uber Kunstliche Intelligenz (AI Act - EU 2024/1689) informieren wir Sie uber die Merkmale des von LotoIA.fr verwendeten KI-Systems.</p>
+                {% elif lang == "nl" %}
+                <p>Overeenkomstig de Europese Verordening inzake Kunstmatige Intelligentie (AI Act - EU 2024/1689) informeren wij u over de kenmerken van het door LotoIA.fr gebruikte AI-systeem.</p>
+                {% endif %}
+
+                <!-- Algorithmic transparency -->
+                <h3>{% if lang == "fr" %}Transparence algorithmique{% elif lang == "en" %}Algorithmic Transparency{% elif lang == "es" %}Transparencia algoritmica{% elif lang == "pt" %}Transparencia algoritmica{% elif lang == "de" %}Algorithmische Transparenz{% elif lang == "nl" %}Algoritmische transparantie{% endif %}</h3>
+                <div class="legal-info-block">
+                    {% if lang == "fr" %}
+                    <p><strong>Nom du systeme :</strong> HYBRIDE</p>
+                    <p><strong>Type :</strong> Algorithme d'analyse statistique</p>
+                    <p><strong>Classification AI Act :</strong> Systeme a risque minimal (Article 6)</p>
+                    <p><strong>Decision automatisee :</strong> Non - Le systeme fournit des suggestions, l'utilisateur decide</p>
+                    {% elif lang == "en" %}
+                    <p><strong>System name:</strong> HYBRIDE</p>
+                    <p><strong>Type:</strong> Statistical analysis algorithm</p>
+                    <p><strong>AI Act classification:</strong> Minimal risk system (Article 6)</p>
+                    <p><strong>Automated decision:</strong> No - The system provides suggestions, the user decides</p>
+                    {% elif lang == "es" %}
+                    <p><strong>Nombre del sistema:</strong> HYBRIDE</p>
+                    <p><strong>Tipo:</strong> Algoritmo de analisis estadistico</p>
+                    <p><strong>Clasificacion AI Act:</strong> Sistema de riesgo minimo (Articulo 6)</p>
+                    <p><strong>Decision automatizada:</strong> No - El sistema proporciona sugerencias, el usuario decide</p>
+                    {% elif lang == "pt" %}
+                    <p><strong>Nome do sistema:</strong> HYBRIDE</p>
+                    <p><strong>Tipo:</strong> Algoritmo de analise estatistica</p>
+                    <p><strong>Classificacao AI Act:</strong> Sistema de risco minimo (Artigo 6)</p>
+                    <p><strong>Decisao automatizada:</strong> Nao - O sistema fornece sugestoes, o utilizador decide</p>
+                    {% elif lang == "de" %}
+                    <p><strong>Systemname:</strong> HYBRIDE</p>
+                    <p><strong>Typ:</strong> Statistischer Analysealgorithmus</p>
+                    <p><strong>AI-Act-Klassifizierung:</strong> System mit minimalem Risiko (Artikel 6)</p>
+                    <p><strong>Automatisierte Entscheidung:</strong> Nein - Das System liefert Vorschlage, der Nutzer entscheidet</p>
+                    {% elif lang == "nl" %}
+                    <p><strong>Systeemnaam:</strong> HYBRIDE</p>
+                    <p><strong>Type:</strong> Statistisch analyse-algoritme</p>
+                    <p><strong>AI Act-classificatie:</strong> Systeem met minimaal risico (Artikel 6)</p>
+                    <p><strong>Geautomatiseerde beslissing:</strong> Nee - Het systeem biedt suggesties, de gebruiker beslist</p>
+                    {% endif %}
+                </div>
+
+                <!-- Algorithm operation -->
+                <h3>{% if lang == "fr" %}Fonctionnement de l'algorithme{% elif lang == "en" %}Algorithm Operation{% elif lang == "es" %}Funcionamiento del algoritmo{% elif lang == "pt" %}Funcionamento do algoritmo{% elif lang == "de" %}Funktionsweise des Algorithmus{% elif lang == "nl" %}Werking van het algoritme{% endif %}</h3>
+                {% if lang == "fr" %}
+                <p>Le moteur HYBRIDE analyse les donnees historiques des tirages EuroMillions pour generer des grilles de numeros. Il utilise :</p>
+                <ul>
+                    <li><strong>Analyse de frequence :</strong> Calcul des occurrences de chaque numero sur l'historique</li>
+                    <li><strong>Ponderation temporelle :</strong> Equilibre entre tendances long terme (60%) et recentes (40%)</li>
+                    <li><strong>Contraintes d'equilibre :</strong> Repartition pair/impair, somme, dispersion</li>
+                    <li><strong>Specificite EuroMillions :</strong> 5 numeros parmi 50 + 2 etoiles parmi 12</li>
+                </ul>
+                {% elif lang == "en" %}
+                <p>The HYBRIDE engine analyses historical EuroMillions draw data to generate number grids. It uses:</p>
+                <ul>
+                    <li><strong>Frequency analysis:</strong> Calculation of occurrences for each number across the history</li>
+                    <li><strong>Temporal weighting:</strong> Balance between long-term trends (60%) and recent trends (40%)</li>
+                    <li><strong>Balance constraints:</strong> Even/odd distribution, sum, spread</li>
+                    <li><strong>EuroMillions specific:</strong> 5 numbers from 50 + 2 stars from 12</li>
+                </ul>
+                {% elif lang == "es" %}
+                <p>El motor HYBRIDE analiza los datos historicos de los sorteos de EuroMillions para generar combinaciones de numeros. Utiliza:</p>
+                <ul>
+                    <li><strong>Analisis de frecuencia:</strong> Calculo de las apariciones de cada numero en el historial</li>
+                    <li><strong>Ponderacion temporal:</strong> Equilibrio entre tendencias a largo plazo (60%) y recientes (40%)</li>
+                    <li><strong>Restricciones de equilibrio:</strong> Distribucion par/impar, suma, dispersion</li>
+                    <li><strong>Especificidad EuroMillions:</strong> 5 numeros de 50 + 2 estrellas de 12</li>
+                </ul>
+                {% elif lang == "pt" %}
+                <p>O motor HYBRIDE analisa os dados historicos dos sorteios do EuroMillions para gerar grelhas de numeros. Utiliza:</p>
+                <ul>
+                    <li><strong>Analise de frequencia:</strong> Calculo das ocorrencias de cada numero no historico</li>
+                    <li><strong>Ponderacao temporal:</strong> Equilibrio entre tendencias a longo prazo (60%) e recentes (40%)</li>
+                    <li><strong>Restricoes de equilibrio:</strong> Distribuicao par/impar, soma, dispersao</li>
+                    <li><strong>Especificidade EuroMillions:</strong> 5 numeros de 50 + 2 estrelas de 12</li>
+                </ul>
+                {% elif lang == "de" %}
+                <p>Der HYBRIDE-Motor analysiert historische EuroMillions-Ziehungsdaten, um Zahlenkombinationen zu generieren. Er verwendet:</p>
+                <ul>
+                    <li><strong>Haufigkeitsanalyse:</strong> Berechnung der Haufigkeit jeder Zahl im historischen Verlauf</li>
+                    <li><strong>Zeitliche Gewichtung:</strong> Gleichgewicht zwischen Langzeittrends (60%) und aktuellen Trends (40%)</li>
+                    <li><strong>Gleichgewichtsbedingungen:</strong> Gerade/Ungerade-Verteilung, Summe, Streuung</li>
+                    <li><strong>EuroMillions-Spezifikation:</strong> 5 Zahlen aus 50 + 2 Sterne aus 12</li>
+                </ul>
+                {% elif lang == "nl" %}
+                <p>De HYBRIDE-motor analyseert historische EuroMillions-trekkingsgegevens om nummercombinaties te genereren. Hij gebruikt:</p>
+                <ul>
+                    <li><strong>Frequentieanalyse:</strong> Berekening van het voorkomen van elk nummer in de geschiedenis</li>
+                    <li><strong>Temporele weging:</strong> Evenwicht tussen langetermijntrends (60%) en recente trends (40%)</li>
+                    <li><strong>Evenwichtsbeperkingen:</strong> Even/oneven-verdeling, som, spreiding</li>
+                    <li><strong>EuroMillions-specificatie:</strong> 5 nummers uit 50 + 2 sterren uit 12</li>
+                </ul>
+                {% endif %}
+
+                <!-- System limitations -->
+                <h3>{% if lang == "fr" %}Limites du systeme{% elif lang == "en" %}System Limitations{% elif lang == "es" %}Limitaciones del sistema{% elif lang == "pt" %}Limites do sistema{% elif lang == "de" %}Systembeschrankungen{% elif lang == "nl" %}Systeembeperkingen{% endif %}</h3>
+                <div class="legal-disclaimer-box warning">
+                    {% if lang == "fr" %}
+                    <p><strong>IMPORTANT : Ce systeme d'IA ne peut PAS predire les resultats des tirages.</strong></p>
+                    <ul>
+                        <li>L'algorithme n'a <strong>aucune capacite predictive</strong> sur des evenements aleatoires</li>
+                        <li>Les patterns statistiques observes <strong>n'ont pas de valeur predictive</strong></li>
+                        <li>Le systeme ne garantit <strong>aucun avantage</strong> par rapport a un choix aleatoire</li>
+                        <li>Les scores attribues mesurent la conformite a des patterns historiques, <strong>pas la probabilite de gain</strong></li>
+                    </ul>
+                    {% elif lang == "en" %}
+                    <p><strong>IMPORTANT: This AI system CANNOT predict draw results.</strong></p>
+                    <ul>
+                        <li>The algorithm has <strong>no predictive capability</strong> for random events</li>
+                        <li>Observed statistical patterns <strong>have no predictive value</strong></li>
+                        <li>The system guarantees <strong>no advantage</strong> over a random selection</li>
+                        <li>Assigned scores measure conformity to historical patterns, <strong>not the probability of winning</strong></li>
+                    </ul>
+                    {% elif lang == "es" %}
+                    <p><strong>IMPORTANTE: Este sistema de IA NO puede predecir los resultados de los sorteos.</strong></p>
+                    <ul>
+                        <li>El algoritmo <strong>no tiene capacidad predictiva</strong> para eventos aleatorios</li>
+                        <li>Los patrones estadisticos observados <strong>no tienen valor predictivo</strong></li>
+                        <li>El sistema no garantiza <strong>ninguna ventaja</strong> respecto a una seleccion aleatoria</li>
+                        <li>Las puntuaciones miden la conformidad con patrones historicos, <strong>no la probabilidad de premio</strong></li>
+                    </ul>
+                    {% elif lang == "pt" %}
+                    <p><strong>IMPORTANTE: Este sistema de IA NAO pode prever os resultados dos sorteios.</strong></p>
+                    <ul>
+                        <li>O algoritmo <strong>nao tem capacidade preditiva</strong> para eventos aleatorios</li>
+                        <li>Os padroes estatisticos observados <strong>nao tem valor preditivo</strong></li>
+                        <li>O sistema nao garante <strong>nenhuma vantagem</strong> em relacao a uma selecao aleatoria</li>
+                        <li>As pontuacoes medem a conformidade com padroes historicos, <strong>nao a probabilidade de premio</strong></li>
+                    </ul>
+                    {% elif lang == "de" %}
+                    <p><strong>WICHTIG: Dieses KI-System kann die Ziehungsergebnisse NICHT vorhersagen.</strong></p>
+                    <ul>
+                        <li>Der Algorithmus hat <strong>keine Vorhersagefahigkeit</strong> fur zufallige Ereignisse</li>
+                        <li>Die beobachteten statistischen Muster <strong>haben keinen Vorhersagewert</strong></li>
+                        <li>Das System garantiert <strong>keinen Vorteil</strong> gegenuber einer zufalligen Auswahl</li>
+                        <li>Die vergebenen Bewertungen messen die Ubereinstimmung mit historischen Mustern, <strong>nicht die Gewinnwahrscheinlichkeit</strong></li>
+                    </ul>
+                    {% elif lang == "nl" %}
+                    <p><strong>BELANGRIJK: Dit AI-systeem kan de trekkingsresultaten NIET voorspellen.</strong></p>
+                    <ul>
+                        <li>Het algoritme heeft <strong>geen voorspellend vermogen</strong> voor willekeurige gebeurtenissen</li>
+                        <li>Waargenomen statistische patronen <strong>hebben geen voorspellende waarde</strong></li>
+                        <li>Het systeem garandeert <strong>geen voordeel</strong> ten opzichte van een willekeurige selectie</li>
+                        <li>De toegekende scores meten de overeenstemming met historische patronen, <strong>niet de winstkans</strong></li>
+                    </ul>
+                    {% endif %}
+                </div>
+
+                <!-- Training data -->
+                <h3>{% if lang == "fr" %}Donnees d'entrainement{% elif lang == "en" %}Training Data{% elif lang == "es" %}Datos de entrenamiento{% elif lang == "pt" %}Dados de treino{% elif lang == "de" %}Trainingsdaten{% elif lang == "nl" %}Trainingsgegevens{% endif %}</h3>
+                {% if lang == "fr" %}
+                <p>Le systeme utilise exclusivement :</p>
+                <ul>
+                    <li>Donnees publiques des tirages officiels EuroMillions</li>
+                    <li>Environ 1800+ tirages historiques</li>
+                    <li>Aucune donnee personnelle n'est utilisee dans l'algorithme</li>
+                </ul>
+                {% elif lang == "en" %}
+                <p>The system exclusively uses:</p>
+                <ul>
+                    <li>Public data from official EuroMillions draws</li>
+                    <li>Approximately 1,800+ historical draws</li>
+                    <li>No personal data is used in the algorithm</li>
+                </ul>
+                {% elif lang == "es" %}
+                <p>El sistema utiliza exclusivamente:</p>
+                <ul>
+                    <li>Datos publicos de los sorteos oficiales de EuroMillions</li>
+                    <li>Aproximadamente 1800+ sorteos historicos</li>
+                    <li>Ningun dato personal se utiliza en el algoritmo</li>
+                </ul>
+                {% elif lang == "pt" %}
+                <p>O sistema utiliza exclusivamente:</p>
+                <ul>
+                    <li>Dados publicos dos sorteios oficiais do EuroMillions</li>
+                    <li>Aproximadamente 1800+ sorteios historicos</li>
+                    <li>Nenhum dado pessoal e utilizado no algoritmo</li>
+                </ul>
+                {% elif lang == "de" %}
+                <p>Das System verwendet ausschliesslich:</p>
+                <ul>
+                    <li>Offentliche Daten der offiziellen EuroMillions-Ziehungen</li>
+                    <li>Etwa 1.800+ historische Ziehungen</li>
+                    <li>Keine personenbezogenen Daten werden im Algorithmus verwendet</li>
+                </ul>
+                {% elif lang == "nl" %}
+                <p>Het systeem maakt uitsluitend gebruik van:</p>
+                <ul>
+                    <li>Openbare gegevens van officiele EuroMillions-trekkingen</li>
+                    <li>Ongeveer 1.800+ historische trekkingen</li>
+                    <li>Geen persoonsgegevens worden in het algoritme gebruikt</li>
+                </ul>
+                {% endif %}
+            </section>
+
+            <!-- ================================================================
+                 SECTION 3 : LIABILITY LIMITATION
+                 ================================================================ -->
+            <section class="legal-section disclaimer-general">
+                <h2>{% if lang == "fr" %}Limitation de responsabilite{% elif lang == "en" %}Limitation of Liability{% elif lang == "es" %}Limitacion de responsabilidad{% elif lang == "pt" %}Limitacao de responsabilidade{% elif lang == "de" %}Haftungsbeschrankung{% elif lang == "nl" %}Beperking van aansprakelijkheid{% endif %}</h2>
+
+                <!-- No warranty -->
+                <h3>{% if lang == "fr" %}Absence de garantie{% elif lang == "en" %}No Warranty{% elif lang == "es" %}Ausencia de garantia{% elif lang == "pt" %}Ausencia de garantia{% elif lang == "de" %}Gewahrleistungsausschluss{% elif lang == "nl" %}Geen garantie{% endif %}</h3>
+                {% if lang == "fr" %}
+                <p>LotoIA.fr est fourni &laquo; EN L'ETAT &raquo; et &laquo; TEL QUE DISPONIBLE &raquo;, sans garantie d'aucune sorte, expresse ou implicite.</p>
+                {% elif lang == "en" %}
+                <p>LotoIA.fr is provided "AS IS" and "AS AVAILABLE", without warranty of any kind, express or implied.</p>
+                {% elif lang == "es" %}
+                <p>LotoIA.fr se proporciona &laquo;TAL CUAL&raquo; y &laquo;SEGUN DISPONIBILIDAD&raquo;, sin garantia de ningun tipo, expresa o implicita.</p>
+                {% elif lang == "pt" %}
+                <p>O LotoIA.fr e fornecido &laquo;TAL COMO ESTA&raquo; e &laquo;CONFORME DISPONIVEL&raquo;, sem garantia de qualquer tipo, expressa ou implicita.</p>
+                {% elif lang == "de" %}
+                <p>LotoIA.fr wird &laquo;WIE BESEHEN&raquo; und &laquo;NACH VERFUGBARKEIT&raquo; bereitgestellt, ohne jegliche ausdruckliche oder stillschweigende Gewahrleistung.</p>
+                {% elif lang == "nl" %}
+                <p>LotoIA.fr wordt aangeboden &laquo;ZOALS HET IS&raquo; en &laquo;ZOALS BESCHIKBAAR&raquo;, zonder enige garantie, uitdrukkelijk of impliciet.</p>
+                {% endif %}
+
+                <!-- Exclusion of liability -->
+                <h3>{% if lang == "fr" %}Exclusion de responsabilite{% elif lang == "en" %}Exclusion of Liability{% elif lang == "es" %}Exclusion de responsabilidad{% elif lang == "pt" %}Exclusao de responsabilidade{% elif lang == "de" %}Haftungsausschluss{% elif lang == "nl" %}Uitsluiting van aansprakelijkheid{% endif %}</h3>
+                <div class="legal-disclaimer-box critical">
+                    {% if lang == "fr" %}
+                    <p><strong>L'editeur decline expressement toute responsabilite pour :</strong></p>
+                    <ul>
+                        <li>Les pertes financieres liees a des decisions de jeu</li>
+                        <li>Les dommages directs ou indirects resultant de l'utilisation du service</li>
+                        <li>Les consequences de l'addiction aux jeux d'argent</li>
+                        <li>L'utilisation des informations fournies par le site</li>
+                    </ul>
+                    <p><strong>L'utilisateur reconnait utiliser le service a ses propres risques et perils.</strong></p>
+                    {% elif lang == "en" %}
+                    <p><strong>The publisher expressly disclaims all liability for:</strong></p>
+                    <ul>
+                        <li>Financial losses related to gambling decisions</li>
+                        <li>Direct or indirect damages resulting from the use of the service</li>
+                        <li>Consequences of gambling addiction</li>
+                        <li>Use of information provided by the site</li>
+                    </ul>
+                    <p><strong>The user acknowledges using the service at their own risk.</strong></p>
+                    {% elif lang == "es" %}
+                    <p><strong>El editor declina expresamente toda responsabilidad por:</strong></p>
+                    <ul>
+                        <li>Las perdidas financieras relacionadas con decisiones de juego</li>
+                        <li>Los danos directos o indirectos derivados del uso del servicio</li>
+                        <li>Las consecuencias de la adiccion a los juegos de azar</li>
+                        <li>El uso de la informacion proporcionada por el sitio</li>
+                    </ul>
+                    <p><strong>El usuario reconoce que utiliza el servicio bajo su propia responsabilidad.</strong></p>
+                    {% elif lang == "pt" %}
+                    <p><strong>O editor declina expressamente toda a responsabilidade por:</strong></p>
+                    <ul>
+                        <li>As perdas financeiras relacionadas com decisoes de jogo</li>
+                        <li>Os danos diretos ou indiretos resultantes da utilizacao do servico</li>
+                        <li>As consequencias da dependencia de jogos de azar</li>
+                        <li>A utilizacao das informacoes fornecidas pelo site</li>
+                    </ul>
+                    <p><strong>O utilizador reconhece que utiliza o servico por sua conta e risco.</strong></p>
+                    {% elif lang == "de" %}
+                    <p><strong>Der Herausgeber lehnt ausdrucklich jede Haftung ab fur:</strong></p>
+                    <ul>
+                        <li>Finanzielle Verluste im Zusammenhang mit Spielentscheidungen</li>
+                        <li>Direkte oder indirekte Schaden aus der Nutzung des Dienstes</li>
+                        <li>Folgen von Glucksspielsucht</li>
+                        <li>Die Nutzung der auf der Website bereitgestellten Informationen</li>
+                    </ul>
+                    <p><strong>Der Nutzer erkennt an, dass er den Dienst auf eigenes Risiko nutzt.</strong></p>
+                    {% elif lang == "nl" %}
+                    <p><strong>De uitgever wijst uitdrukkelijk alle aansprakelijkheid af voor:</strong></p>
+                    <ul>
+                        <li>Financiele verliezen gerelateerd aan gokbeslissingen</li>
+                        <li>Directe of indirecte schade als gevolg van het gebruik van de dienst</li>
+                        <li>Gevolgen van gokverslaving</li>
+                        <li>Het gebruik van informatie die door de site wordt verstrekt</li>
+                    </ul>
+                    <p><strong>De gebruiker erkent dat hij de dienst op eigen risico gebruikt.</strong></p>
+                    {% endif %}
+                </div>
+
+                <!-- Terms acceptance -->
+                <h3>{% if lang == "fr" %}Acceptation des conditions{% elif lang == "en" %}Acceptance of Terms{% elif lang == "es" %}Aceptacion de las condiciones{% elif lang == "pt" %}Aceitacao das condicoes{% elif lang == "de" %}Annahme der Bedingungen{% elif lang == "nl" %}Aanvaarding van de voorwaarden{% endif %}</h3>
+                {% if lang == "fr" %}
+                <p>En utilisant LotoIA.fr, l'utilisateur declare :</p>
+                <ul>
+                    <li>Avoir lu et compris les presents avertissements</li>
+                    <li>Etre majeur (18 ans ou plus)</li>
+                    <li>Comprendre que l'EuroMillions est un jeu de hasard sans strategie permettant d'ameliorer ses chances</li>
+                    <li>Accepter l'entiere responsabilite de ses decisions de jeu</li>
+                    <li>Ne pas tenir LotoIA.fr responsable de ses pertes eventuelles</li>
+                </ul>
+                {% elif lang == "en" %}
+                <p>By using LotoIA.fr, the user declares that they:</p>
+                <ul>
+                    <li>Have read and understood these disclaimers</li>
+                    <li>Are of legal age (18 years or older)</li>
+                    <li>Understand that EuroMillions is a game of chance with no strategy to improve one's odds</li>
+                    <li>Accept full responsibility for their gambling decisions</li>
+                    <li>Will not hold LotoIA.fr liable for any losses incurred</li>
+                </ul>
+                {% elif lang == "es" %}
+                <p>Al utilizar LotoIA.fr, el usuario declara:</p>
+                <ul>
+                    <li>Haber leido y comprendido los presentes avisos</li>
+                    <li>Ser mayor de edad (18 anos o mas)</li>
+                    <li>Comprender que EuroMillions es un juego de azar sin estrategia que mejore las probabilidades</li>
+                    <li>Aceptar la total responsabilidad de sus decisiones de juego</li>
+                    <li>No responsabilizar a LotoIA.fr de sus posibles perdidas</li>
+                </ul>
+                {% elif lang == "pt" %}
+                <p>Ao utilizar o LotoIA.fr, o utilizador declara:</p>
+                <ul>
+                    <li>Ter lido e compreendido os presentes avisos</li>
+                    <li>Ser maior de idade (18 anos ou mais)</li>
+                    <li>Compreender que o EuroMillions e um jogo de acaso sem estrategia que melhore as probabilidades</li>
+                    <li>Aceitar a total responsabilidade pelas suas decisoes de jogo</li>
+                    <li>Nao responsabilizar o LotoIA.fr por quaisquer perdas incorridas</li>
+                </ul>
+                {% elif lang == "de" %}
+                <p>Durch die Nutzung von LotoIA.fr erklart der Nutzer:</p>
+                <ul>
+                    <li>Die vorliegenden Hinweise gelesen und verstanden zu haben</li>
+                    <li>Vollahrig zu sein (18 Jahre oder alter)</li>
+                    <li>Zu verstehen, dass EuroMillions ein Glucksspiel ist, bei dem keine Strategie die Gewinnchancen verbessern kann</li>
+                    <li>Die volle Verantwortung fur seine Spielentscheidungen zu ubernehmen</li>
+                    <li>LotoIA.fr nicht fur etwaige Verluste haftbar zu machen</li>
+                </ul>
+                {% elif lang == "nl" %}
+                <p>Door LotoIA.fr te gebruiken verklaart de gebruiker:</p>
+                <ul>
+                    <li>Deze waarschuwingen te hebben gelezen en begrepen</li>
+                    <li>Meerderjarig te zijn (18 jaar of ouder)</li>
+                    <li>Te begrijpen dat EuroMillions een kansspel is zonder strategie om de kansen te verbeteren</li>
+                    <li>De volledige verantwoordelijkheid voor zijn gokbeslissingen te aanvaarden</li>
+                    <li>LotoIA.fr niet aansprakelijk te stellen voor eventuele verliezen</li>
+                </ul>
+                {% endif %}
+            </section>
+
+        </article>
+
+        <!-- Legal navigation -->
+        <nav class="legal-nav">
+            <h3>{% if lang == "fr" %}Documents juridiques{% elif lang == "en" %}Legal Documents{% elif lang == "es" %}Documentos juridicos{% elif lang == "pt" %}Documentos juridicos{% elif lang == "de" %}Rechtliche Dokumente{% elif lang == "nl" %}Juridische documenten{% endif %}</h3>
+            <ul>
+                <li><a href="{{ urls.mentions }}">{% if lang == "fr" %}Mentions legales{% elif lang == "en" %}Legal Notices{% elif lang == "es" %}Aviso legal{% elif lang == "pt" %}Avisos legais{% elif lang == "de" %}Impressum{% elif lang == "nl" %}Juridische kennisgeving{% endif %}</a></li>
+                <li><a href="{{ urls.confidentialite }}">{% if lang == "fr" %}Politique de confidentialite{% elif lang == "en" %}Privacy Policy{% elif lang == "es" %}Politica de privacidad{% elif lang == "pt" %}Politica de privacidade{% elif lang == "de" %}Datenschutzrichtlinie{% elif lang == "nl" %}Privacybeleid{% endif %}</a></li>
+                <li><a href="{{ urls.cookies }}">{% if lang == "fr" %}Politique des cookies{% elif lang == "en" %}Cookie Policy{% elif lang == "es" %}Politica de cookies{% elif lang == "pt" %}Politica de cookies{% elif lang == "de" %}Cookie-Richtlinie{% elif lang == "nl" %}Cookiebeleid{% endif %}</a></li>
+                <li><a href="{{ urls.disclaimer }}" class="active">{% if lang == "fr" %}Avertissements{% elif lang == "en" %}Disclaimer{% elif lang == "es" %}Aviso de responsabilidad{% elif lang == "pt" %}Aviso de responsabilidade{% elif lang == "de" %}Haftungsausschluss{% elif lang == "nl" %}Disclaimer{% endif %}</a></li>
+            </ul>
+        </nav>
+
+        {% set show_disclaimer_link = true %}
+        {% include "em/_footer.html" %}
+    </div>
+{% endblock %}

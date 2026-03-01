@@ -109,6 +109,20 @@ _PAGE_DEFS = [
         "include_nav_scroll": True,
         "hero_icon": "\U0001f4f0",
     }),
+    # Legal pages
+    ("mentions", "em/mentions-legales.html", {
+        "body_class": "subpage legal-page em-page",
+    }),
+    ("confidentialite", "em/confidentialite.html", {
+        "body_class": "subpage legal-page em-page",
+    }),
+    ("cookies", "em/cookies.html", {
+        "body_class": "subpage legal-page em-page",
+    }),
+    ("disclaimer", "em/disclaimer.html", {
+        "body_class": "subpage legal-page em-page",
+        "show_disclaimer_link": True,
+    }),
 ]
 
 

@@ -52,6 +52,10 @@ EM_URLS = {
         "historique":   "/euromillions/historique",
         "news":         "/euromillions/news",
         "faq":          "/euromillions/faq",
+        "mentions":         "/euromillions/mentions-legales",
+        "confidentialite":  "/euromillions/confidentialite",
+        "cookies":          "/euromillions/cookies",
+        "disclaimer":       "/euromillions/avertissement",
     },
     "en": {
         "home":         "/en/euromillions",
@@ -62,6 +66,10 @@ EM_URLS = {
         "historique":   "/en/euromillions/history",
         "news":         "/en/euromillions/news",
         "faq":          "/en/euromillions/faq",
+        "mentions":         "/en/euromillions/legal-notices",
+        "confidentialite":  "/en/euromillions/privacy",
+        "cookies":          "/en/euromillions/cookies",
+        "disclaimer":       "/en/euromillions/disclaimer",
     },
     "pt": {
         "home":         "/pt/euromillions",
@@ -72,6 +80,10 @@ EM_URLS = {
         "historique":   "/pt/euromillions/historico",
         "news":         "/pt/euromillions/noticias",
         "faq":          "/pt/euromillions/faq",
+        "mentions":         "/pt/euromillions/avisos-legais",
+        "confidentialite":  "/pt/euromillions/privacidade",
+        "cookies":          "/pt/euromillions/cookies",
+        "disclaimer":       "/pt/euromillions/aviso",
     },
     "es": {
         "home":         "/es/euromillions",
@@ -82,6 +94,10 @@ EM_URLS = {
         "historique":   "/es/euromillions/historial",
         "news":         "/es/euromillions/noticias",
         "faq":          "/es/euromillions/faq",
+        "mentions":         "/es/euromillions/aviso-legal",
+        "confidentialite":  "/es/euromillions/privacidad",
+        "cookies":          "/es/euromillions/cookies",
+        "disclaimer":       "/es/euromillions/aviso",
     },
     "de": {
         "home":         "/de/euromillions",
@@ -92,6 +108,10 @@ EM_URLS = {
         "historique":   "/de/euromillions/ziehungen",
         "news":         "/de/euromillions/nachrichten",
         "faq":          "/de/euromillions/faq",
+        "mentions":         "/de/euromillions/impressum",
+        "confidentialite":  "/de/euromillions/datenschutz",
+        "cookies":          "/de/euromillions/cookies",
+        "disclaimer":       "/de/euromillions/haftungsausschluss",
     },
     "nl": {
         "home":         "/nl/euromillions",
@@ -102,6 +122,10 @@ EM_URLS = {
         "historique":   "/nl/euromillions/geschiedenis",
         "news":         "/nl/euromillions/nieuws",
         "faq":          "/nl/euromillions/faq",
+        "mentions":         "/nl/euromillions/juridische-kennisgeving",
+        "confidentialite":  "/nl/euromillions/privacy",
+        "cookies":          "/nl/euromillions/cookies",
+        "disclaimer":       "/nl/euromillions/disclaimer",
     },
 }
 

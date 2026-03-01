@@ -1,0 +1,752 @@
+{% extends "em/_base.html" %}
+
+{% block head %}
+  <title>{% if lang == "fr" %}Mentions L&eacute;gales{% elif lang == "en" %}Legal Notices{% elif lang == "es" %}Aviso Legal{% elif lang == "pt" %}Avisos Legais{% elif lang == "de" %}Impressum{% elif lang == "nl" %}Juridische Kennisgeving{% endif %} | LotoIA EuroMillions</title>
+  <meta name="robots" content="noindex, follow">
+  <link rel="canonical" href="{{ canonical_url }}">
+{% endblock %}
+
+{% block head_end %}
+  <link rel="stylesheet" href="/ui/static/legal.css?v=1">
+{% endblock %}
+
+{% block body %}
+  <header class="page-header">
+    <div class="header-content">
+      <h1>{% if lang == "fr" %}Mentions L&eacute;gales{% elif lang == "en" %}Legal Notices{% elif lang == "es" %}Aviso Legal{% elif lang == "pt" %}Avisos Legais{% elif lang == "de" %}Impressum{% elif lang == "nl" %}Juridische Kennisgeving{% endif %}</h1>
+      <p class="subtitle">{% if lang == "fr" %}Conform&eacute;ment aux articles 6-III et 19 de la loi n&deg;2004-575 du 21 juin 2004{% elif lang == "en" %}In accordance with the applicable legal provisions{% elif lang == "es" %}De conformidad con las disposiciones legales aplicables{% elif lang == "pt" %}Em conformidade com as disposi&ccedil;&otilde;es legais aplic&aacute;veis{% elif lang == "de" %}Gem&auml;&szlig; den geltenden gesetzlichen Bestimmungen{% elif lang == "nl" %}Conform de toepasselijke wettelijke bepalingen{% endif %}</p>
+    </div>
+  </header>
+
+  <div class="container subpage-container">
+    <article class="legal-content">
+
+      {# ── Update date ── #}
+      <div class="legal-update">
+        {% if lang == "fr" %}Derni&egrave;re mise &agrave; jour : 1 mars 2026{% elif lang == "en" %}Last updated: 1 March 2026{% elif lang == "es" %}&Uacute;ltima actualizaci&oacute;n: 1 de marzo de 2026{% elif lang == "pt" %}&Uacute;ltima atualiza&ccedil;&atilde;o: 1 de mar&ccedil;o de 2026{% elif lang == "de" %}Letzte Aktualisierung: 1. M&auml;rz 2026{% elif lang == "nl" %}Laatst bijgewerkt: 1 maart 2026{% endif %}
+      </div>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         SECTION 1 : SITE PUBLISHER / EDITEUR
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="editeur">
+        {% if lang == "fr" %}
+        <h2>1. &Eacute;diteur du site</h2>
+        <div class="legal-info-block">
+          <p><strong>Raison sociale :</strong> EmovisIA</p>
+          <p><strong>SIRET :</strong> 511 245 730 00029</p>
+          <p><strong>Si&egrave;ge social :</strong> 3 rue Alexandre Riou, 44270 Machecoul-Saint-M&ecirc;me, France</p>
+          <p><strong>Courriel :</strong> <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a></p>
+          <p><strong>Directeur de la publication :</strong> Jean-Philippe Godard</p>
+        </div>
+        {% elif lang == "en" %}
+        <h2>1. Site Publisher</h2>
+        <div class="legal-info-block">
+          <p><strong>Company name:</strong> EmovisIA</p>
+          <p><strong>SIRET (French company ID):</strong> 511 245 730 00029</p>
+          <p><strong>Registered office:</strong> 3 rue Alexandre Riou, 44270 Machecoul-Saint-M&ecirc;me, France</p>
+          <p><strong>Email:</strong> <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a></p>
+          <p><strong>Publication Director:</strong> Jean-Philippe Godard</p>
+        </div>
+        {% elif lang == "es" %}
+        <h2>1. Editor del sitio</h2>
+        <div class="legal-info-block">
+          <p><strong>Raz&oacute;n social:</strong> EmovisIA</p>
+          <p><strong>SIRET (identificador de empresa franc&eacute;s):</strong> 511 245 730 00029</p>
+          <p><strong>Domicilio social:</strong> 3 rue Alexandre Riou, 44270 Machecoul-Saint-M&ecirc;me, Francia</p>
+          <p><strong>Correo electr&oacute;nico:</strong> <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a></p>
+          <p><strong>Director de la publicaci&oacute;n:</strong> Jean-Philippe Godard</p>
+        </div>
+        {% elif lang == "pt" %}
+        <h2>1. Editor do site</h2>
+        <div class="legal-info-block">
+          <p><strong>Denomina&ccedil;&atilde;o social:</strong> EmovisIA</p>
+          <p><strong>SIRET (identificador de empresa franc&ecirc;s):</strong> 511 245 730 00029</p>
+          <p><strong>Sede social:</strong> 3 rue Alexandre Riou, 44270 Machecoul-Saint-M&ecirc;me, Fran&ccedil;a</p>
+          <p><strong>Correio eletr&oacute;nico:</strong> <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a></p>
+          <p><strong>Diretor da publica&ccedil;&atilde;o:</strong> Jean-Philippe Godard</p>
+        </div>
+        {% elif lang == "de" %}
+        <h2>1. Herausgeber der Website</h2>
+        <div class="legal-info-block">
+          <p><strong>Firma:</strong> EmovisIA</p>
+          <p><strong>SIRET (franz&ouml;sische Unternehmenskennung):</strong> 511 245 730 00029</p>
+          <p><strong>Sitz:</strong> 3 rue Alexandre Riou, 44270 Machecoul-Saint-M&ecirc;me, Frankreich</p>
+          <p><strong>E-Mail:</strong> <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a></p>
+          <p><strong>Verantwortlicher f&uuml;r die Ver&ouml;ffentlichung:</strong> Jean-Philippe Godard</p>
+        </div>
+        {% elif lang == "nl" %}
+        <h2>1. Uitgever van de website</h2>
+        <div class="legal-info-block">
+          <p><strong>Bedrijfsnaam:</strong> EmovisIA</p>
+          <p><strong>SIRET (Franse bedrijfsidentificatie):</strong> 511 245 730 00029</p>
+          <p><strong>Maatschappelijke zetel:</strong> 3 rue Alexandre Riou, 44270 Machecoul-Saint-M&ecirc;me, Frankrijk</p>
+          <p><strong>E-mail:</strong> <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a></p>
+          <p><strong>Verantwoordelijke voor publicatie:</strong> Jean-Philippe Godard</p>
+        </div>
+        {% endif %}
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         SECTION 2 : HOSTING / HEBERGEMENT
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="hebergement">
+        {% if lang == "fr" %}
+        <h2>2. H&eacute;bergement</h2>
+        <div class="legal-info-block">
+          <p><strong>H&eacute;bergeur :</strong> Google Cloud Platform (Cloud Run)</p>
+          <p><strong>Soci&eacute;t&eacute; :</strong> Google Ireland Limited</p>
+          <p><strong>Adresse :</strong> Gordon House, Barrow Street, Dublin 4, Irlande</p>
+          <p><strong>R&eacute;gion :</strong> Union europ&eacute;enne (Cloud Run EU)</p>
+        </div>
+        <p>Les donn&eacute;es sont h&eacute;berg&eacute;es au sein de l'Union europ&eacute;enne, conform&eacute;ment au R&egrave;glement G&eacute;n&eacute;ral sur la Protection des Donn&eacute;es (RGPD).</p>
+        {% elif lang == "en" %}
+        <h2>2. Hosting</h2>
+        <div class="legal-info-block">
+          <p><strong>Host:</strong> Google Cloud Platform (Cloud Run)</p>
+          <p><strong>Company:</strong> Google Ireland Limited</p>
+          <p><strong>Address:</strong> Gordon House, Barrow Street, Dublin 4, Ireland</p>
+          <p><strong>Region:</strong> European Union (Cloud Run EU)</p>
+        </div>
+        <p>Data is hosted within the European Union, in compliance with the General Data Protection Regulation (GDPR).</p>
+        {% elif lang == "es" %}
+        <h2>2. Alojamiento</h2>
+        <div class="legal-info-block">
+          <p><strong>Proveedor de alojamiento:</strong> Google Cloud Platform (Cloud Run)</p>
+          <p><strong>Sociedad:</strong> Google Ireland Limited</p>
+          <p><strong>Direcci&oacute;n:</strong> Gordon House, Barrow Street, Dubl&iacute;n 4, Irlanda</p>
+          <p><strong>Regi&oacute;n:</strong> Uni&oacute;n Europea (Cloud Run EU)</p>
+        </div>
+        <p>Los datos est&aacute;n alojados dentro de la Uni&oacute;n Europea, de conformidad con el Reglamento General de Protecci&oacute;n de Datos (RGPD).</p>
+        {% elif lang == "pt" %}
+        <h2>2. Alojamento</h2>
+        <div class="legal-info-block">
+          <p><strong>Fornecedor de alojamento:</strong> Google Cloud Platform (Cloud Run)</p>
+          <p><strong>Sociedade:</strong> Google Ireland Limited</p>
+          <p><strong>Morada:</strong> Gordon House, Barrow Street, Dublin 4, Irlanda</p>
+          <p><strong>Regi&atilde;o:</strong> Uni&atilde;o Europeia (Cloud Run EU)</p>
+        </div>
+        <p>Os dados s&atilde;o alojados na Uni&atilde;o Europeia, em conformidade com o Regulamento Geral sobre a Prote&ccedil;&atilde;o de Dados (RGPD).</p>
+        {% elif lang == "de" %}
+        <h2>2. Hosting</h2>
+        <div class="legal-info-block">
+          <p><strong>Hoster:</strong> Google Cloud Platform (Cloud Run)</p>
+          <p><strong>Unternehmen:</strong> Google Ireland Limited</p>
+          <p><strong>Adresse:</strong> Gordon House, Barrow Street, Dublin 4, Irland</p>
+          <p><strong>Region:</strong> Europ&auml;ische Union (Cloud Run EU)</p>
+        </div>
+        <p>Die Daten werden innerhalb der Europ&auml;ischen Union gehostet, in &Uuml;bereinstimmung mit der Datenschutz-Grundverordnung (DSGVO).</p>
+        {% elif lang == "nl" %}
+        <h2>2. Hosting</h2>
+        <div class="legal-info-block">
+          <p><strong>Hostingprovider:</strong> Google Cloud Platform (Cloud Run)</p>
+          <p><strong>Onderneming:</strong> Google Ireland Limited</p>
+          <p><strong>Adres:</strong> Gordon House, Barrow Street, Dublin 4, Ierland</p>
+          <p><strong>Regio:</strong> Europese Unie (Cloud Run EU)</p>
+        </div>
+        <p>De gegevens worden gehost binnen de Europese Unie, in overeenstemming met de Algemene Verordening Gegevensbescherming (AVG).</p>
+        {% endif %}
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         SECTION 3 : NATURE OF SERVICE
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="nature-service">
+        {% if lang == "fr" %}
+        <h2>3. Nature du service</h2>
+        <p>LotoIA.fr est un <strong>outil d'analyse statistique</strong> des tirages historiques de l'EuroMillions&reg;. Le service est propos&eacute; &agrave; titre <strong>informatif et p&eacute;dagogique</strong> uniquement.</p>
+        <div class="legal-disclaimer-box critical">
+          <p><strong>AVERTISSEMENT IMPORTANT :</strong></p>
+          <ul>
+            <li>LotoIA.fr <strong>N'EST PAS un op&eacute;rateur de jeux d'argent</strong></li>
+            <li>LotoIA.fr <strong>N'EST PAS affili&eacute;</strong> &agrave; un quelconque op&eacute;rateur de loterie</li>
+            <li>LotoIA.fr <strong>NE FORMULE AUCUNE PR&Eacute;DICTION</strong> sur les r&eacute;sultats futurs des tirages</li>
+            <li>L'EuroMillions&reg; est un jeu de <strong>pur hasard</strong> : 5 num&eacute;ros parmi 50 + 2 &eacute;toiles parmi 12</li>
+            <li>Probabilit&eacute; de remporter le rang 1 (5+2) : <strong>1 sur 139 838 160</strong></li>
+          </ul>
+        </div>
+        {% elif lang == "en" %}
+        <h2>3. Nature of the Service</h2>
+        <p>LotoIA.fr is a <strong>statistical analysis tool</strong> for historical EuroMillions&reg; draws. The service is provided for <strong>informational and educational purposes</strong> only.</p>
+        <div class="legal-disclaimer-box critical">
+          <p><strong>IMPORTANT DISCLAIMER:</strong></p>
+          <ul>
+            <li>LotoIA.fr <strong>IS NOT a gambling operator</strong></li>
+            <li>LotoIA.fr <strong>IS NOT affiliated</strong> with any lottery operator</li>
+            <li>LotoIA.fr <strong>DOES NOT MAKE ANY PREDICTIONS</strong> about future draw results</li>
+            <li>EuroMillions&reg; is a game of <strong>pure chance</strong>: 5 numbers from 1-50 + 2 stars from 1-12</li>
+            <li>Probability of winning rank 1 (5+2): <strong>1 in 139,838,160</strong></li>
+          </ul>
+        </div>
+        {% elif lang == "es" %}
+        <h2>3. Naturaleza del servicio</h2>
+        <p>LotoIA.fr es una <strong>herramienta de an&aacute;lisis estad&iacute;stico</strong> de los sorteos hist&oacute;ricos de EuroMillions&reg;. El servicio se ofrece con fines <strong>informativos y educativos</strong> exclusivamente.</p>
+        <div class="legal-disclaimer-box critical">
+          <p><strong>AVISO IMPORTANTE:</strong></p>
+          <ul>
+            <li>LotoIA.fr <strong>NO ES un operador de juegos de azar</strong></li>
+            <li>LotoIA.fr <strong>NO EST&Aacute; afiliado</strong> a ning&uacute;n operador de loter&iacute;a</li>
+            <li>LotoIA.fr <strong>NO FORMULA NINGUNA PREDICCI&Oacute;N</strong> sobre los resultados de futuros sorteos</li>
+            <li>EuroMillions&reg; es un juego de <strong>puro azar</strong>: 5 n&uacute;meros del 1 al 50 + 2 estrellas del 1 al 12</li>
+            <li>Probabilidad de obtener el rango 1 (5+2): <strong>1 entre 139 838 160</strong></li>
+          </ul>
+        </div>
+        {% elif lang == "pt" %}
+        <h2>3. Natureza do servi&ccedil;o</h2>
+        <p>LotoIA.fr &eacute; uma <strong>ferramenta de an&aacute;lise estat&iacute;stica</strong> dos sorteios hist&oacute;ricos do EuroMillions&reg;. O servi&ccedil;o &eacute; disponibilizado apenas para fins <strong>informativos e pedag&oacute;gicos</strong>.</p>
+        <div class="legal-disclaimer-box critical">
+          <p><strong>AVISO IMPORTANTE:</strong></p>
+          <ul>
+            <li>LotoIA.fr <strong>N&Atilde;O &Eacute; um operador de jogos de azar</strong></li>
+            <li>LotoIA.fr <strong>N&Atilde;O EST&Aacute; afiliado</strong> a qualquer operador de lotaria</li>
+            <li>LotoIA.fr <strong>N&Atilde;O FORMULA QUALQUER PREVIS&Atilde;O</strong> sobre os resultados de futuros sorteios</li>
+            <li>O EuroMillions&reg; &eacute; um jogo de <strong>puro acaso</strong>: 5 n&uacute;meros de 1 a 50 + 2 estrelas de 1 a 12</li>
+            <li>Probabilidade de obter o escalao 1 (5+2): <strong>1 em 139 838 160</strong></li>
+          </ul>
+        </div>
+        {% elif lang == "de" %}
+        <h2>3. Art des Dienstes</h2>
+        <p>LotoIA.fr ist ein <strong>statistisches Analysetool</strong> f&uuml;r historische EuroMillions&reg;-Ziehungen. Der Dienst wird ausschlie&szlig;lich zu <strong>Informations- und Bildungszwecken</strong> bereitgestellt.</p>
+        <div class="legal-disclaimer-box critical">
+          <p><strong>WICHTIGER HINWEIS:</strong></p>
+          <ul>
+            <li>LotoIA.fr <strong>IST KEIN Gl&uuml;cksspielanbieter</strong></li>
+            <li>LotoIA.fr <strong>IST NICHT</strong> mit einem Lotterieanbieter verbunden</li>
+            <li>LotoIA.fr <strong>GIBT KEINERLEI VORHERSAGEN</strong> &uuml;ber zuk&uuml;nftige Ziehungsergebnisse ab</li>
+            <li>EuroMillions&reg; ist ein reines <strong>Gl&uuml;cksspiel</strong>: 5 Zahlen aus 50 + 2 Sterne aus 12</li>
+            <li>Gewinnwahrscheinlichkeit Rang 1 (5+2): <strong>1 zu 139.838.160</strong></li>
+          </ul>
+        </div>
+        {% elif lang == "nl" %}
+        <h2>3. Aard van de dienst</h2>
+        <p>LotoIA.fr is een <strong>statistisch analysetool</strong> voor historische EuroMillions&reg;-trekkingen. De dienst wordt uitsluitend aangeboden voor <strong>informatieve en educatieve doeleinden</strong>.</p>
+        <div class="legal-disclaimer-box critical">
+          <p><strong>BELANGRIJKE WAARSCHUWING:</strong></p>
+          <ul>
+            <li>LotoIA.fr <strong>IS GEEN kansspelaanbieder</strong></li>
+            <li>LotoIA.fr <strong>IS NIET gelieerd</strong> aan enige loterij-exploitant</li>
+            <li>LotoIA.fr <strong>DOET GEEN ENKELE VOORSPELLING</strong> over toekomstige trekkingsresultaten</li>
+            <li>EuroMillions&reg; is een <strong>zuiver kansspel</strong>: 5 nummers uit 50 + 2 sterren uit 12</li>
+            <li>Kans op rang 1 (5+2): <strong>1 op 139.838.160</strong></li>
+          </ul>
+        </div>
+        {% endif %}
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         SECTION 4 : AI CLAUSE
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="intelligence-artificielle">
+        {% if lang == "fr" %}
+        <h2>4. Intelligence Artificielle</h2>
+        <h3>Algorithme HYBRIDE</h3>
+        <p>Le moteur d'analyse de LotoIA.fr repose sur l'algorithme propri&eacute;taire <strong>HYBRIDE</strong>, d&eacute;velopp&eacute; par EmovisIA. Cet algorithme combine des m&eacute;thodes statistiques classiques (fr&eacute;quences, &eacute;carts, tendances) pour produire des analyses descriptives des tirages historiques.</p>
+        <h3>API Gemini</h3>
+        <p>Le chatbot conversationnel et la g&eacute;n&eacute;ration de rapports PDF utilisent l'API <strong>Google Gemini 2.0 Flash</strong>. Les contenus g&eacute;n&eacute;r&eacute;s par IA sont &agrave; consid&eacute;rer comme des commentaires analytiques, non des conseils de jeu.</p>
+        <div class="legal-disclaimer-box warning">
+          <p><strong>R&egrave;glement europ&eacute;en sur l'IA :</strong> Conform&eacute;ment au R&egrave;glement (UE) 2024/1689 (EU AI Act), le syst&egrave;me d'IA utilis&eacute; par LotoIA.fr est class&eacute; en <strong>risque minimal</strong> (Article 6) car il ne fournit aucun service de prise de d&eacute;cision automatis&eacute;e ni de profilage affectant les droits fondamentaux.</p>
+        </div>
+        {% elif lang == "en" %}
+        <h2>4. Artificial Intelligence</h2>
+        <h3>HYBRIDE Algorithm</h3>
+        <p>The analysis engine of LotoIA.fr relies on the proprietary <strong>HYBRIDE</strong> algorithm, developed by EmovisIA. This algorithm combines classical statistical methods (frequencies, gaps, trends) to produce descriptive analyses of historical draws.</p>
+        <h3>Gemini API</h3>
+        <p>The conversational chatbot and PDF report generation use the <strong>Google Gemini 2.0 Flash</strong> API. AI-generated content should be considered as analytical commentary, not gaming advice.</p>
+        <div class="legal-disclaimer-box warning">
+          <p><strong>EU AI Regulation:</strong> In accordance with Regulation (EU) 2024/1689 (EU AI Act), the AI system used by LotoIA.fr is classified as <strong>minimal risk</strong> (Article 6) as it does not provide any automated decision-making service or profiling affecting fundamental rights.</p>
+        </div>
+        {% elif lang == "es" %}
+        <h2>4. Inteligencia Artificial</h2>
+        <h3>Algoritmo HYBRIDE</h3>
+        <p>El motor de an&aacute;lisis de LotoIA.fr se basa en el algoritmo propietario <strong>HYBRIDE</strong>, desarrollado por EmovisIA. Este algoritmo combina m&eacute;todos estad&iacute;sticos cl&aacute;sicos (frecuencias, intervalos, tendencias) para producir an&aacute;lisis descriptivos de los sorteos hist&oacute;ricos.</p>
+        <h3>API Gemini</h3>
+        <p>El chatbot conversacional y la generaci&oacute;n de informes PDF utilizan la API <strong>Google Gemini 2.0 Flash</strong>. Los contenidos generados por IA deben considerarse como comentarios anal&iacute;ticos, no como consejos de juego.</p>
+        <div class="legal-disclaimer-box warning">
+          <p><strong>Reglamento europeo de IA:</strong> De conformidad con el Reglamento (UE) 2024/1689 (EU AI Act), el sistema de IA utilizado por LotoIA.fr se clasifica como de <strong>riesgo m&iacute;nimo</strong> (Art&iacute;culo 6) ya que no proporciona ning&uacute;n servicio de toma de decisiones automatizada ni de elaboraci&oacute;n de perfiles que afecten a los derechos fundamentales.</p>
+        </div>
+        {% elif lang == "pt" %}
+        <h2>4. Intelig&ecirc;ncia Artificial</h2>
+        <h3>Algoritmo HYBRIDE</h3>
+        <p>O motor de an&aacute;lise do LotoIA.fr baseia-se no algoritmo propriet&aacute;rio <strong>HYBRIDE</strong>, desenvolvido pela EmovisIA. Este algoritmo combina m&eacute;todos estat&iacute;sticos cl&aacute;ssicos (frequ&ecirc;ncias, intervalos, tend&ecirc;ncias) para produzir an&aacute;lises descritivas dos sorteios hist&oacute;ricos.</p>
+        <h3>API Gemini</h3>
+        <p>O chatbot conversacional e a gera&ccedil;&atilde;o de relat&oacute;rios PDF utilizam a API <strong>Google Gemini 2.0 Flash</strong>. Os conte&uacute;dos gerados por IA devem ser considerados como coment&aacute;rios anal&iacute;ticos e n&atilde;o como conselhos de jogo.</p>
+        <div class="legal-disclaimer-box warning">
+          <p><strong>Regulamento europeu sobre IA:</strong> Em conformidade com o Regulamento (UE) 2024/1689 (EU AI Act), o sistema de IA utilizado pelo LotoIA.fr &eacute; classificado como de <strong>risco m&iacute;nimo</strong> (Artigo 6), uma vez que n&atilde;o fornece qualquer servi&ccedil;o de tomada de decis&atilde;o automatizada nem de defini&ccedil;&atilde;o de perfis que afete os direitos fundamentais.</p>
+        </div>
+        {% elif lang == "de" %}
+        <h2>4. K&uuml;nstliche Intelligenz</h2>
+        <h3>HYBRIDE-Algorithmus</h3>
+        <p>Die Analyse-Engine von LotoIA.fr basiert auf dem propriet&auml;ren Algorithmus <strong>HYBRIDE</strong>, der von EmovisIA entwickelt wurde. Dieser Algorithmus kombiniert klassische statistische Methoden (H&auml;ufigkeiten, Abst&auml;nde, Trends), um deskriptive Analysen historischer Ziehungen zu erstellen.</p>
+        <h3>Gemini API</h3>
+        <p>Der Konversations-Chatbot und die PDF-Berichtserstellung verwenden die <strong>Google Gemini 2.0 Flash</strong> API. KI-generierte Inhalte sind als analytische Kommentare zu betrachten, nicht als Spielempfehlungen.</p>
+        <div class="legal-disclaimer-box warning">
+          <p><strong>EU-KI-Verordnung:</strong> Gem&auml;&szlig; der Verordnung (EU) 2024/1689 (EU AI Act) wird das von LotoIA.fr verwendete KI-System als <strong>minimales Risiko</strong> eingestuft (Artikel 6), da es keinen automatisierten Entscheidungsdienst und kein Profiling bereitstellt, das Grundrechte beeintr&auml;chtigt.</p>
+        </div>
+        {% elif lang == "nl" %}
+        <h2>4. Kunstmatige Intelligentie</h2>
+        <h3>HYBRIDE-algoritme</h3>
+        <p>De analyse-engine van LotoIA.fr is gebaseerd op het eigen <strong>HYBRIDE</strong>-algoritme, ontwikkeld door EmovisIA. Dit algoritme combineert klassieke statistische methoden (frequenties, intervallen, trends) om beschrijvende analyses van historische trekkingen te produceren.</p>
+        <h3>Gemini API</h3>
+        <p>De conversationele chatbot en het genereren van PDF-rapporten maken gebruik van de <strong>Google Gemini 2.0 Flash</strong> API. Door AI gegenereerde inhoud moet worden beschouwd als analytisch commentaar, niet als speladvies.</p>
+        <div class="legal-disclaimer-box warning">
+          <p><strong>EU AI-verordening:</strong> In overeenstemming met Verordening (EU) 2024/1689 (EU AI Act) wordt het door LotoIA.fr gebruikte AI-systeem geclassificeerd als <strong>minimaal risico</strong> (Artikel 6), aangezien het geen geautomatiseerde besluitvormingsdienst of profilering biedt die de grondrechten aantast.</p>
+        </div>
+        {% endif %}
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         SECTION 5 : INTELLECTUAL PROPERTY
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="propriete-intellectuelle">
+        {% if lang == "fr" %}
+        <h2>5. Propri&eacute;t&eacute; intellectuelle</h2>
+        <p>L'ensemble du contenu du site LotoIA.fr (textes, graphismes, code source, algorithmes, logo, structure) est la propri&eacute;t&eacute; exclusive d'<strong>EmovisIA</strong>, sauf mention contraire.</p>
+        <p>La marque <strong>LotoIA</strong> et l'algorithme <strong>HYBRIDE</strong> sont des cr&eacute;ations originales d'EmovisIA, prot&eacute;g&eacute;es par le droit de la propri&eacute;t&eacute; intellectuelle.</p>
+        <p><strong>EuroMillions&reg;</strong> est une marque d&eacute;pos&eacute;e appartenant &agrave; ses propri&eacute;taires respectifs. LotoIA.fr n'est ni affili&eacute; ni approuv&eacute; par les op&eacute;rateurs de l'EuroMillions.</p>
+        {% elif lang == "en" %}
+        <h2>5. Intellectual Property</h2>
+        <p>All content on the LotoIA.fr website (text, graphics, source code, algorithms, logo, structure) is the exclusive property of <strong>EmovisIA</strong>, unless otherwise stated.</p>
+        <p>The <strong>LotoIA</strong> brand and the <strong>HYBRIDE</strong> algorithm are original creations of EmovisIA, protected by intellectual property law.</p>
+        <p><strong>EuroMillions&reg;</strong> is a registered trademark belonging to its respective owners. LotoIA.fr is neither affiliated with nor endorsed by the EuroMillions operators.</p>
+        {% elif lang == "es" %}
+        <h2>5. Propiedad intelectual</h2>
+        <p>Todo el contenido del sitio LotoIA.fr (textos, gr&aacute;ficos, c&oacute;digo fuente, algoritmos, logotipo, estructura) es propiedad exclusiva de <strong>EmovisIA</strong>, salvo indicaci&oacute;n en contrario.</p>
+        <p>La marca <strong>LotoIA</strong> y el algoritmo <strong>HYBRIDE</strong> son creaciones originales de EmovisIA, protegidas por el derecho de propiedad intelectual.</p>
+        <p><strong>EuroMillions&reg;</strong> es una marca registrada que pertenece a sus respectivos propietarios. LotoIA.fr no est&aacute; afiliado ni avalado por los operadores de EuroMillions.</p>
+        {% elif lang == "pt" %}
+        <h2>5. Propriedade intelectual</h2>
+        <p>Todo o conte&uacute;do do site LotoIA.fr (textos, gr&aacute;ficos, c&oacute;digo-fonte, algoritmos, logotipo, estrutura) &eacute; propriedade exclusiva da <strong>EmovisIA</strong>, salvo indica&ccedil;&atilde;o em contr&aacute;rio.</p>
+        <p>A marca <strong>LotoIA</strong> e o algoritmo <strong>HYBRIDE</strong> s&atilde;o cria&ccedil;&otilde;es originais da EmovisIA, protegidas pelo direito de propriedade intelectual.</p>
+        <p><strong>EuroMillions&reg;</strong> &eacute; uma marca registada pertencente aos seus respetivos propriet&aacute;rios. O LotoIA.fr n&atilde;o est&aacute; afiliado nem &eacute; aprovado pelos operadores do EuroMillions.</p>
+        {% elif lang == "de" %}
+        <h2>5. Geistiges Eigentum</h2>
+        <p>Der gesamte Inhalt der Website LotoIA.fr (Texte, Grafiken, Quellcode, Algorithmen, Logo, Struktur) ist ausschlie&szlig;liches Eigentum von <strong>EmovisIA</strong>, sofern nicht anders angegeben.</p>
+        <p>Die Marke <strong>LotoIA</strong> und der Algorithmus <strong>HYBRIDE</strong> sind Originale Sch&ouml;pfungen von EmovisIA, gesch&uuml;tzt durch das Recht des geistigen Eigentums.</p>
+        <p><strong>EuroMillions&reg;</strong> ist eine eingetragene Marke ihrer jeweiligen Eigent&uuml;mer. LotoIA.fr ist weder mit den Betreibern von EuroMillions verbunden noch von diesen genehmigt.</p>
+        {% elif lang == "nl" %}
+        <h2>5. Intellectueel eigendom</h2>
+        <p>Alle inhoud op de website LotoIA.fr (teksten, afbeeldingen, broncode, algoritmen, logo, structuur) is het exclusieve eigendom van <strong>EmovisIA</strong>, tenzij anders vermeld.</p>
+        <p>Het merk <strong>LotoIA</strong> en het algoritme <strong>HYBRIDE</strong> zijn originele creaties van EmovisIA, beschermd door het intellectueel eigendomsrecht.</p>
+        <p><strong>EuroMillions&reg;</strong> is een geregistreerd handelsmerk dat toebehoort aan de respectieve eigenaars. LotoIA.fr is niet gelieerd aan noch goedgekeurd door de exploitanten van EuroMillions.</p>
+        {% endif %}
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         SECTION 6 : PERSONAL DATA / RGPD
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="donnees-personnelles">
+        {% if lang == "fr" %}
+        <h2>6. Donn&eacute;es personnelles</h2>
+        <p>Le traitement des donn&eacute;es personnelles est r&eacute;gi par le <strong>R&egrave;glement G&eacute;n&eacute;ral sur la Protection des Donn&eacute;es (RGPD)</strong> et la loi Informatique et Libert&eacute;s.</p>
+        <p>Pour conna&icirc;tre en d&eacute;tail les donn&eacute;es collect&eacute;es, les finalit&eacute;s du traitement, vos droits et les modalit&eacute;s d'exercice, consultez notre <a href="{{ urls.confidentialite }}">Politique de confidentialit&eacute;</a>.</p>
+        <div class="legal-info-block">
+          <p><strong>Autorit&eacute; de contr&ocirc;le :</strong> Commission Nationale de l'Informatique et des Libert&eacute;s (CNIL)</p>
+          <p><strong>Site web :</strong> <a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a></p>
+        </div>
+        {% elif lang == "en" %}
+        <h2>6. Personal Data</h2>
+        <p>The processing of personal data is governed by the <strong>General Data Protection Regulation (GDPR)</strong>.</p>
+        <p>For full details on the data collected, the purposes of processing, your rights and how to exercise them, please consult our <a href="{{ urls.confidentialite }}">Privacy Policy</a>.</p>
+        <div class="legal-info-block">
+          <p><strong>Supervisory authority (France):</strong> Commission Nationale de l'Informatique et des Libert&eacute;s (CNIL)</p>
+          <p><strong>Website:</strong> <a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a></p>
+          <p>You may also contact the data protection authority in your country of residence.</p>
+        </div>
+        {% elif lang == "es" %}
+        <h2>6. Datos personales</h2>
+        <p>El tratamiento de datos personales se rige por el <strong>Reglamento General de Protecci&oacute;n de Datos (RGPD)</strong>.</p>
+        <p>Para conocer en detalle los datos recopilados, las finalidades del tratamiento, sus derechos y las modalidades de ejercicio, consulte nuestra <a href="{{ urls.confidentialite }}">Pol&iacute;tica de privacidad</a>.</p>
+        <div class="legal-info-block">
+          <p><strong>Autoridad de control (Francia):</strong> Commission Nationale de l'Informatique et des Libert&eacute;s (CNIL)</p>
+          <p><strong>Sitio web:</strong> <a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a></p>
+          <p>Tambi&eacute;n puede dirigirse a la autoridad de protecci&oacute;n de datos de su pa&iacute;s de residencia.</p>
+        </div>
+        {% elif lang == "pt" %}
+        <h2>6. Dados pessoais</h2>
+        <p>O tratamento de dados pessoais &eacute; regido pelo <strong>Regulamento Geral sobre a Prote&ccedil;&atilde;o de Dados (RGPD)</strong>.</p>
+        <p>Para conheceres em pormenor os dados recolhidos, as finalidades do tratamento, os teus direitos e as modalidades de exerc&iacute;cio, consulta a nossa <a href="{{ urls.confidentialite }}">Pol&iacute;tica de privacidade</a>.</p>
+        <div class="legal-info-block">
+          <p><strong>Autoridade de controlo (Fran&ccedil;a):</strong> Commission Nationale de l'Informatique et des Libert&eacute;s (CNIL)</p>
+          <p><strong>Site web:</strong> <a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a></p>
+          <p>Podes tamb&eacute;m contactar a autoridade de prote&ccedil;&atilde;o de dados do teu pa&iacute;s de resid&ecirc;ncia.</p>
+        </div>
+        {% elif lang == "de" %}
+        <h2>6. Personenbezogene Daten</h2>
+        <p>Die Verarbeitung personenbezogener Daten unterliegt der <strong>Datenschutz-Grundverordnung (DSGVO)</strong>.</p>
+        <p>Ausf&uuml;hrliche Informationen zu den erhobenen Daten, den Verarbeitungszwecken, Ihren Rechten und deren Aus&uuml;bung finden Sie in unserer <a href="{{ urls.confidentialite }}">Datenschutzerkl&auml;rung</a>.</p>
+        <div class="legal-info-block">
+          <p><strong>Aufsichtsbeh&ouml;rde (Frankreich):</strong> Commission Nationale de l'Informatique et des Libert&eacute;s (CNIL)</p>
+          <p><strong>Webseite:</strong> <a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a></p>
+          <p>Sie k&ouml;nnen sich auch an die Datenschutzbeh&ouml;rde Ihres Wohnsitzlandes wenden.</p>
+        </div>
+        {% elif lang == "nl" %}
+        <h2>6. Persoonsgegevens</h2>
+        <p>De verwerking van persoonsgegevens wordt beheerst door de <strong>Algemene Verordening Gegevensbescherming (AVG)</strong>.</p>
+        <p>Voor volledige details over de verzamelde gegevens, de verwerkingsdoeleinden, uw rechten en de wijze van uitoefening, raadpleeg ons <a href="{{ urls.confidentialite }}">Privacybeleid</a>.</p>
+        <div class="legal-info-block">
+          <p><strong>Toezichthoudende autoriteit (Frankrijk):</strong> Commission Nationale de l'Informatique et des Libert&eacute;s (CNIL)</p>
+          <p><strong>Website:</strong> <a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a></p>
+          <p>U kunt ook contact opnemen met de gegevensbeschermingsautoriteit van uw land van verblijf.</p>
+        </div>
+        {% endif %}
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         SECTION 7 : COOKIES
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="cookies">
+        {% if lang == "fr" %}
+        <h2>7. Cookies</h2>
+        <p>Le site LotoIA.fr utilise des cookies strictement n&eacute;cessaires au fonctionnement du service. Pour conna&icirc;tre en d&eacute;tail les cookies utilis&eacute;s, leur finalit&eacute; et la gestion de vos pr&eacute;f&eacute;rences, consultez notre <a href="{{ urls.cookies }}">Politique des cookies</a>.</p>
+        {% elif lang == "en" %}
+        <h2>7. Cookies</h2>
+        <p>The LotoIA.fr website uses cookies that are strictly necessary for the operation of the service. For full details on the cookies used, their purpose and how to manage your preferences, please consult our <a href="{{ urls.cookies }}">Cookie Policy</a>.</p>
+        {% elif lang == "es" %}
+        <h2>7. Cookies</h2>
+        <p>El sitio LotoIA.fr utiliza cookies estrictamente necesarias para el funcionamiento del servicio. Para conocer en detalle las cookies utilizadas, su finalidad y la gesti&oacute;n de sus preferencias, consulte nuestra <a href="{{ urls.cookies }}">Pol&iacute;tica de cookies</a>.</p>
+        {% elif lang == "pt" %}
+        <h2>7. Cookies</h2>
+        <p>O site LotoIA.fr utiliza cookies estritamente necess&aacute;rios para o funcionamento do servi&ccedil;o. Para conheceres em pormenor os cookies utilizados, a sua finalidade e a gest&atilde;o das tuas prefer&ecirc;ncias, consulta a nossa <a href="{{ urls.cookies }}">Pol&iacute;tica de cookies</a>.</p>
+        {% elif lang == "de" %}
+        <h2>7. Cookies</h2>
+        <p>Die Website LotoIA.fr verwendet ausschlie&szlig;lich f&uuml;r den Betrieb des Dienstes unbedingt erforderliche Cookies. Ausf&uuml;hrliche Informationen zu den verwendeten Cookies, deren Zweck und zur Verwaltung Ihrer Einstellungen finden Sie in unserer <a href="{{ urls.cookies }}">Cookie-Richtlinie</a>.</p>
+        {% elif lang == "nl" %}
+        <h2>7. Cookies</h2>
+        <p>De website LotoIA.fr maakt gebruik van cookies die strikt noodzakelijk zijn voor de werking van de dienst. Voor volledige details over de gebruikte cookies, hun doel en het beheer van uw voorkeuren, raadpleeg ons <a href="{{ urls.cookies }}">Cookiebeleid</a>.</p>
+        {% endif %}
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         SECTION 8 : LIMITATION OF LIABILITY
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="responsabilite">
+        {% if lang == "fr" %}
+        <h2>8. Limitation de responsabilit&eacute;</h2>
+        <p>EmovisIA s'efforce de fournir des informations exactes et &agrave; jour sur le site LotoIA.fr. Toutefois, EmovisIA <strong>ne peut garantir</strong> l'exactitude, l'exhaustivit&eacute; ou la pertinence des informations diffus&eacute;es.</p>
+        <div class="legal-disclaimer-box warning">
+          <p><strong>D&eacute;charge de responsabilit&eacute; :</strong></p>
+          <ul>
+            <li>Les analyses statistiques fournies sont de nature purement <strong>descriptive et r&eacute;trospective</strong></li>
+            <li>EmovisIA <strong>d&eacute;cline toute responsabilit&eacute;</strong> quant &agrave; l'utilisation des donn&eacute;es par les utilisateurs, notamment en mati&egrave;re de jeux d'argent</li>
+            <li>L'utilisateur reconna&icirc;t utiliser le service <strong>&agrave; ses propres risques</strong></li>
+            <li>EmovisIA ne saurait &ecirc;tre tenue responsable de pertes financi&egrave;res li&eacute;es &agrave; l'utilisation du service</li>
+          </ul>
+        </div>
+        {% elif lang == "en" %}
+        <h2>8. Limitation of Liability</h2>
+        <p>EmovisIA endeavours to provide accurate and up-to-date information on the LotoIA.fr website. However, EmovisIA <strong>cannot guarantee</strong> the accuracy, completeness or relevance of the information provided.</p>
+        <div class="legal-disclaimer-box warning">
+          <p><strong>Disclaimer:</strong></p>
+          <ul>
+            <li>The statistical analyses provided are purely <strong>descriptive and retrospective</strong> in nature</li>
+            <li>EmovisIA <strong>disclaims all liability</strong> for the use of data by users, particularly in relation to gambling</li>
+            <li>The user acknowledges using the service <strong>at their own risk</strong></li>
+            <li>EmovisIA shall not be held liable for any financial losses related to the use of the service</li>
+          </ul>
+        </div>
+        {% elif lang == "es" %}
+        <h2>8. Limitaci&oacute;n de responsabilidad</h2>
+        <p>EmovisIA se esfuerza por proporcionar informaci&oacute;n exacta y actualizada en el sitio LotoIA.fr. Sin embargo, EmovisIA <strong>no puede garantizar</strong> la exactitud, exhaustividad o pertinencia de la informaci&oacute;n difundida.</p>
+        <div class="legal-disclaimer-box warning">
+          <p><strong>Exenci&oacute;n de responsabilidad:</strong></p>
+          <ul>
+            <li>Los an&aacute;lisis estad&iacute;sticos proporcionados son de naturaleza puramente <strong>descriptiva y retrospectiva</strong></li>
+            <li>EmovisIA <strong>declina toda responsabilidad</strong> en cuanto al uso de los datos por parte de los usuarios, especialmente en materia de juegos de azar</li>
+            <li>El usuario reconoce utilizar el servicio <strong>bajo su propia responsabilidad</strong></li>
+            <li>EmovisIA no podr&aacute; ser considerada responsable de p&eacute;rdidas financieras relacionadas con el uso del servicio</li>
+          </ul>
+        </div>
+        {% elif lang == "pt" %}
+        <h2>8. Limita&ccedil;&atilde;o de responsabilidade</h2>
+        <p>A EmovisIA esfor&ccedil;a-se por fornecer informa&ccedil;&otilde;es exatas e atualizadas no site LotoIA.fr. Contudo, a EmovisIA <strong>n&atilde;o pode garantir</strong> a exatid&atilde;o, a exaustividade ou a pertin&ecirc;ncia das informa&ccedil;&otilde;es divulgadas.</p>
+        <div class="legal-disclaimer-box warning">
+          <p><strong>Exonera&ccedil;&atilde;o de responsabilidade:</strong></p>
+          <ul>
+            <li>As an&aacute;lises estat&iacute;sticas fornecidas s&atilde;o de natureza puramente <strong>descritiva e retrospetiva</strong></li>
+            <li>A EmovisIA <strong>declina toda a responsabilidade</strong> quanto &agrave; utiliza&ccedil;&atilde;o dos dados pelos utilizadores, nomeadamente em mat&eacute;ria de jogos de azar</li>
+            <li>O utilizador reconhece que utiliza o servi&ccedil;o <strong>por sua conta e risco</strong></li>
+            <li>A EmovisIA n&atilde;o poder&aacute; ser responsabilizada por perdas financeiras relacionadas com a utiliza&ccedil;&atilde;o do servi&ccedil;o</li>
+          </ul>
+        </div>
+        {% elif lang == "de" %}
+        <h2>8. Haftungsbeschr&auml;nkung</h2>
+        <p>EmovisIA bem&uuml;ht sich, auf der Website LotoIA.fr genaue und aktuelle Informationen bereitzustellen. EmovisIA <strong>kann jedoch nicht garantieren</strong>, dass die bereitgestellten Informationen korrekt, vollst&auml;ndig oder relevant sind.</p>
+        <div class="legal-disclaimer-box warning">
+          <p><strong>Haftungsausschluss:</strong></p>
+          <ul>
+            <li>Die bereitgestellten statistischen Analysen sind rein <strong>deskriptiver und retrospektiver</strong> Natur</li>
+            <li>EmovisIA <strong>lehnt jede Haftung</strong> f&uuml;r die Nutzung der Daten durch die Nutzer ab, insbesondere im Zusammenhang mit Gl&uuml;cksspiel</li>
+            <li>Der Nutzer erkennt an, den Dienst <strong>auf eigenes Risiko</strong> zu nutzen</li>
+            <li>EmovisIA haftet nicht f&uuml;r finanzielle Verluste im Zusammenhang mit der Nutzung des Dienstes</li>
+          </ul>
+        </div>
+        {% elif lang == "nl" %}
+        <h2>8. Beperking van aansprakelijkheid</h2>
+        <p>EmovisIA streeft ernaar om nauwkeurige en actuele informatie te verstrekken op de website LotoIA.fr. EmovisIA <strong>kan echter niet garanderen</strong> dat de verstrekte informatie juist, volledig of relevant is.</p>
+        <div class="legal-disclaimer-box warning">
+          <p><strong>Disclaimer:</strong></p>
+          <ul>
+            <li>De verstrekte statistische analyses zijn van zuiver <strong>beschrijvende en retrospectieve</strong> aard</li>
+            <li>EmovisIA <strong>wijst alle aansprakelijkheid af</strong> voor het gebruik van de gegevens door de gebruikers, met name in verband met kansspelen</li>
+            <li>De gebruiker erkent de dienst <strong>op eigen risico</strong> te gebruiken</li>
+            <li>EmovisIA kan niet aansprakelijk worden gesteld voor financi&euml;le verliezen in verband met het gebruik van de dienst</li>
+          </ul>
+        </div>
+        {% endif %}
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         SECTION 9 : RESPONSIBLE GAMING
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="jeu-responsable">
+        {% if lang == "fr" %}
+        <h2>9. Jeu responsable</h2>
+        <p>Les jeux d'argent et de hasard comportent des risques : endettement, isolement, d&eacute;pendance. <strong>L'EuroMillions est un jeu de pur hasard.</strong> Aucune m&eacute;thode ne peut garantir un gain.</p>
+        <div class="legal-disclaimer-box critical">
+          <p><strong>Interdiction de jeu aux mineurs.</strong> En France, les jeux d'argent sont strictement interdits aux moins de 18 ans.</p>
+        </div>
+        <div class="help-box">
+          <h4>Besoin d'aide ?</h4>
+          <ul>
+            <li><strong>Joueurs Info Service :</strong> <strong>09 74 75 13 13</strong> (appel non surtax&eacute;)</li>
+            <li><strong>Site web :</strong> <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">www.joueurs-info-service.fr</a></li>
+            <li>Service gratuit, anonyme et confidentiel, 7j/7 de 8h &agrave; 2h du matin</li>
+          </ul>
+        </div>
+        {% elif lang == "en" %}
+        <h2>9. Responsible Gaming</h2>
+        <p>Gambling involves risks: debt, isolation, addiction. <strong>EuroMillions is a game of pure chance.</strong> No method can guarantee a win.</p>
+        <div class="legal-disclaimer-box critical">
+          <p><strong>Gambling is prohibited for minors.</strong> In most jurisdictions, gambling is strictly prohibited for persons under 18 years of age.</p>
+        </div>
+        <div class="help-box">
+          <h4>Need help?</h4>
+          <ul>
+            <li><strong>BeGambleAware:</strong> <a href="https://www.begambleaware.org" target="_blank" rel="noopener">www.begambleaware.org</a></li>
+            <li>Free, confidential support and advice</li>
+          </ul>
+        </div>
+        {% elif lang == "es" %}
+        <h2>9. Juego responsable</h2>
+        <p>Los juegos de azar conllevan riesgos: endeudamiento, aislamiento, adicci&oacute;n. <strong>El EuroMillions es un juego de puro azar.</strong> Ning&uacute;n m&eacute;todo puede garantizar un premio.</p>
+        <div class="legal-disclaimer-box critical">
+          <p><strong>Prohibici&oacute;n de juego a menores.</strong> En Espa&ntilde;a, los juegos de azar est&aacute;n estrictamente prohibidos a los menores de 18 a&ntilde;os.</p>
+        </div>
+        <div class="help-box">
+          <h4>&iquest;Necesitas ayuda?</h4>
+          <ul>
+            <li><strong>Jugar Bien:</strong> <strong>900 200 225</strong> (gratuito y an&oacute;nimo)</li>
+            <li><strong>Sitio web:</strong> <a href="https://www.jugarbien.es" target="_blank" rel="noopener">www.jugarbien.es</a></li>
+            <li>Servicio gratuito, an&oacute;nimo y confidencial</li>
+          </ul>
+        </div>
+        {% elif lang == "pt" %}
+        <h2>9. Jogo respons&aacute;vel</h2>
+        <p>Os jogos de azar comportam riscos: endividamento, isolamento, depend&ecirc;ncia. <strong>O EuroMillions &eacute; um jogo de puro acaso.</strong> Nenhum m&eacute;todo pode garantir um pr&eacute;mio.</p>
+        <div class="legal-disclaimer-box critical">
+          <p><strong>Proibi&ccedil;&atilde;o de jogo a menores.</strong> Em Portugal, os jogos de azar s&atilde;o estritamente proibidos a menores de 18 anos.</p>
+        </div>
+        <div class="help-box">
+          <h4>Precisas de ajuda?</h4>
+          <ul>
+            <li><strong>Jogo Respons&aacute;vel:</strong> <strong>808 200 204</strong> (gratuito e an&oacute;nimo)</li>
+            <li><strong>Site web:</strong> <a href="https://www.jogoresponsavel.pt" target="_blank" rel="noopener">www.jogoresponsavel.pt</a></li>
+            <li>Servi&ccedil;o gratuito, an&oacute;nimo e confidencial</li>
+          </ul>
+        </div>
+        {% elif lang == "de" %}
+        <h2>9. Verantwortungsvolles Spielen</h2>
+        <p>Gl&uuml;cksspiel birgt Risiken: Verschuldung, Isolation, Sucht. <strong>EuroMillions ist ein reines Gl&uuml;cksspiel.</strong> Keine Methode kann einen Gewinn garantieren.</p>
+        <div class="legal-disclaimer-box critical">
+          <p><strong>Gl&uuml;cksspiel ist f&uuml;r Minderj&auml;hrige verboten.</strong> In Deutschland ist Gl&uuml;cksspiel f&uuml;r Personen unter 18 Jahren streng verboten.</p>
+        </div>
+        <div class="help-box">
+          <h4>Brauchen Sie Hilfe?</h4>
+          <ul>
+            <li><strong>Spielerschutz:</strong> <a href="https://www.spielerschutz.de" target="_blank" rel="noopener">www.spielerschutz.de</a></li>
+            <li>Kostenlose, anonyme und vertrauliche Beratung</li>
+          </ul>
+        </div>
+        {% elif lang == "nl" %}
+        <h2>9. Verantwoord spelen</h2>
+        <p>Kansspelen brengen risico's met zich mee: schulden, isolement, verslaving. <strong>EuroMillions is een zuiver kansspel.</strong> Geen enkele methode kan een prijs garanderen.</p>
+        <div class="legal-disclaimer-box critical">
+          <p><strong>Kansspelen zijn verboden voor minderjarigen.</strong> In Belgi&euml; zijn kansspelen streng verboden voor personen jonger dan 18 jaar.</p>
+        </div>
+        <div class="help-box">
+          <h4>Hulp nodig?</h4>
+          <ul>
+            <li><strong>Gokkliniek:</strong> <strong>078 15 13 14</strong></li>
+            <li><strong>Website:</strong> <a href="https://www.gokkliniek.be" target="_blank" rel="noopener">www.gokkliniek.be</a></li>
+            <li>Gratis, anonieme en vertrouwelijke hulp</li>
+          </ul>
+        </div>
+        {% endif %}
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         SECTION 10 : APPLICABLE LAW
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="droit-applicable">
+        {% if lang == "fr" %}
+        <h2>10. Droit applicable</h2>
+        <p>Les pr&eacute;sentes mentions l&eacute;gales sont r&eacute;gies par le <strong>droit fran&ccedil;ais</strong>.</p>
+        <p>Tout litige relatif &agrave; l'utilisation du site LotoIA.fr sera soumis &agrave; la comp&eacute;tence exclusive des <strong>tribunaux fran&ccedil;ais comp&eacute;tents</strong>, conform&eacute;ment &agrave; la l&eacute;gislation en vigueur.</p>
+        <p>Conform&eacute;ment &agrave; l'article L.612-1 du Code de la consommation, le consommateur peut recourir gratuitement &agrave; un m&eacute;diateur de la consommation en vue de la r&eacute;solution amiable du litige.</p>
+        {% elif lang == "en" %}
+        <h2>10. Applicable Law</h2>
+        <p>These legal notices are governed by <strong>French law</strong>.</p>
+        <p>Any dispute relating to the use of the LotoIA.fr website shall be subject to the exclusive jurisdiction of the <strong>competent French courts</strong>, in accordance with applicable legislation.</p>
+        <p>The publisher is a French company (EmovisIA, registered in France). All legal obligations are fulfilled under French law, regardless of the language in which the service is accessed.</p>
+        {% elif lang == "es" %}
+        <h2>10. Derecho aplicable</h2>
+        <p>El presente aviso legal se rige por el <strong>derecho franc&eacute;s</strong>.</p>
+        <p>Cualquier litigio relativo al uso del sitio LotoIA.fr se someter&aacute; a la jurisdicci&oacute;n exclusiva de los <strong>tribunales franceses competentes</strong>, de conformidad con la legislaci&oacute;n vigente.</p>
+        <p>El editor es una empresa francesa (EmovisIA, registrada en Francia). Todas las obligaciones legales se cumplen conforme al derecho franc&eacute;s, independientemente del idioma en el que se acceda al servicio.</p>
+        {% elif lang == "pt" %}
+        <h2>10. Direito aplic&aacute;vel</h2>
+        <p>Os presentes avisos legais s&atilde;o regidos pelo <strong>direito franc&ecirc;s</strong>.</p>
+        <p>Qualquer lit&iacute;gio relativo &agrave; utiliza&ccedil;&atilde;o do site LotoIA.fr ser&aacute; submetido &agrave; jurisdi&ccedil;&atilde;o exclusiva dos <strong>tribunais franceses competentes</strong>, em conformidade com a legisla&ccedil;&atilde;o em vigor.</p>
+        <p>O editor &eacute; uma empresa francesa (EmovisIA, registada em Fran&ccedil;a). Todas as obriga&ccedil;&otilde;es legais s&atilde;o cumpridas ao abrigo do direito franc&ecirc;s, independentemente do idioma em que o servi&ccedil;o &eacute; acedido.</p>
+        {% elif lang == "de" %}
+        <h2>10. Anwendbares Recht</h2>
+        <p>Dieses Impressum unterliegt dem <strong>franz&ouml;sischen Recht</strong>.</p>
+        <p>Jede Streitigkeit im Zusammenhang mit der Nutzung der Website LotoIA.fr unterliegt der ausschlie&szlig;lichen Zust&auml;ndigkeit der <strong>zust&auml;ndigen franz&ouml;sischen Gerichte</strong>, gem&auml;&szlig; der geltenden Gesetzgebung.</p>
+        <p>Der Herausgeber ist ein franz&ouml;sisches Unternehmen (EmovisIA, in Frankreich registriert). Alle rechtlichen Verpflichtungen werden nach franz&ouml;sischem Recht erf&uuml;llt, unabh&auml;ngig von der Sprache, in der auf den Dienst zugegriffen wird.</p>
+        {% elif lang == "nl" %}
+        <h2>10. Toepasselijk recht</h2>
+        <p>Deze juridische kennisgeving wordt beheerst door het <strong>Franse recht</strong>.</p>
+        <p>Elk geschil met betrekking tot het gebruik van de website LotoIA.fr valt onder de exclusieve bevoegdheid van de <strong>bevoegde Franse rechtbanken</strong>, in overeenstemming met de geldende wetgeving.</p>
+        <p>De uitgever is een Frans bedrijf (EmovisIA, geregistreerd in Frankrijk). Alle wettelijke verplichtingen worden vervuld onder Frans recht, ongeacht de taal waarin de dienst wordt geraadpleegd.</p>
+        {% endif %}
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         SECTION 11 : CREDITS
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="credits">
+        {% if lang == "fr" %}
+        <h2>11. Cr&eacute;dits</h2>
+        <div class="legal-info-block">
+          <p><strong>Conception et d&eacute;veloppement :</strong> JyppY / EmovisIA</p>
+          <p><strong>Algorithme :</strong> HYBRIDE (propri&eacute;taire EmovisIA)</p>
+          <p><strong>Technologies :</strong> Python, FastAPI, Google Cloud Platform (Cloud Run), Google Gemini API, ReportLab</p>
+        </div>
+        {% elif lang == "en" %}
+        <h2>11. Credits</h2>
+        <div class="legal-info-block">
+          <p><strong>Design and development:</strong> JyppY / EmovisIA</p>
+          <p><strong>Algorithm:</strong> HYBRIDE (EmovisIA proprietary)</p>
+          <p><strong>Technologies:</strong> Python, FastAPI, Google Cloud Platform (Cloud Run), Google Gemini API, ReportLab</p>
+        </div>
+        {% elif lang == "es" %}
+        <h2>11. Cr&eacute;ditos</h2>
+        <div class="legal-info-block">
+          <p><strong>Dise&ntilde;o y desarrollo:</strong> JyppY / EmovisIA</p>
+          <p><strong>Algoritmo:</strong> HYBRIDE (propiedad de EmovisIA)</p>
+          <p><strong>Tecnolog&iacute;as:</strong> Python, FastAPI, Google Cloud Platform (Cloud Run), Google Gemini API, ReportLab</p>
+        </div>
+        {% elif lang == "pt" %}
+        <h2>11. Cr&eacute;ditos</h2>
+        <div class="legal-info-block">
+          <p><strong>Conce&ccedil;&atilde;o e desenvolvimento:</strong> JyppY / EmovisIA</p>
+          <p><strong>Algoritmo:</strong> HYBRIDE (propriedade da EmovisIA)</p>
+          <p><strong>Tecnologias:</strong> Python, FastAPI, Google Cloud Platform (Cloud Run), Google Gemini API, ReportLab</p>
+        </div>
+        {% elif lang == "de" %}
+        <h2>11. Danksagungen</h2>
+        <div class="legal-info-block">
+          <p><strong>Konzeption und Entwicklung:</strong> JyppY / EmovisIA</p>
+          <p><strong>Algorithmus:</strong> HYBRIDE (Eigentum von EmovisIA)</p>
+          <p><strong>Technologien:</strong> Python, FastAPI, Google Cloud Platform (Cloud Run), Google Gemini API, ReportLab</p>
+        </div>
+        {% elif lang == "nl" %}
+        <h2>11. Credits</h2>
+        <div class="legal-info-block">
+          <p><strong>Ontwerp en ontwikkeling:</strong> JyppY / EmovisIA</p>
+          <p><strong>Algoritme:</strong> HYBRIDE (eigendom van EmovisIA)</p>
+          <p><strong>Technologie&euml;n:</strong> Python, FastAPI, Google Cloud Platform (Cloud Run), Google Gemini API, ReportLab</p>
+        </div>
+        {% endif %}
+      </section>
+
+      {# ══════════════════════════════════════════════════════════════════════
+         SECTION 12 : CONTACT
+         ══════════════════════════════════════════════════════════════════════ #}
+      <section class="legal-section" id="contact">
+        {% if lang == "fr" %}
+        <h2>12. Contact</h2>
+        <div class="contact-box">
+          <h4>Nous contacter</h4>
+          <ul>
+            <li><strong>Contact g&eacute;n&eacute;ral :</strong> <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a></li>
+            <li><strong>Partenariats :</strong> <a href="mailto:partenariats@lotoia.fr">partenariats@lotoia.fr</a></li>
+          </ul>
+        </div>
+        {% elif lang == "en" %}
+        <h2>12. Contact</h2>
+        <div class="contact-box">
+          <h4>Contact Us</h4>
+          <ul>
+            <li><strong>General enquiries:</strong> <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a></li>
+            <li><strong>Partnerships:</strong> <a href="mailto:partenariats@lotoia.fr">partenariats@lotoia.fr</a></li>
+          </ul>
+        </div>
+        {% elif lang == "es" %}
+        <h2>12. Contacto</h2>
+        <div class="contact-box">
+          <h4>Cont&aacute;ctenos</h4>
+          <ul>
+            <li><strong>Contacto general:</strong> <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a></li>
+            <li><strong>Colaboraciones:</strong> <a href="mailto:partenariats@lotoia.fr">partenariats@lotoia.fr</a></li>
+          </ul>
+        </div>
+        {% elif lang == "pt" %}
+        <h2>12. Contacto</h2>
+        <div class="contact-box">
+          <h4>Contacta-nos</h4>
+          <ul>
+            <li><strong>Contacto geral:</strong> <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a></li>
+            <li><strong>Parcerias:</strong> <a href="mailto:partenariats@lotoia.fr">partenariats@lotoia.fr</a></li>
+          </ul>
+        </div>
+        {% elif lang == "de" %}
+        <h2>12. Kontakt</h2>
+        <div class="contact-box">
+          <h4>Kontaktieren Sie uns</h4>
+          <ul>
+            <li><strong>Allgemeine Anfragen:</strong> <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a></li>
+            <li><strong>Partnerschaften:</strong> <a href="mailto:partenariats@lotoia.fr">partenariats@lotoia.fr</a></li>
+          </ul>
+        </div>
+        {% elif lang == "nl" %}
+        <h2>12. Contact</h2>
+        <div class="contact-box">
+          <h4>Neem contact met ons op</h4>
+          <ul>
+            <li><strong>Algemene vragen:</strong> <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a></li>
+            <li><strong>Samenwerkingen:</strong> <a href="mailto:partenariats@lotoia.fr">partenariats@lotoia.fr</a></li>
+          </ul>
+        </div>
+        {% endif %}
+      </section>
+
+    </article>
+
+    {# ══════════════════════════════════════════════════════════════════════
+       LEGAL NAVIGATION
+       ══════════════════════════════════════════════════════════════════════ #}
+    <nav class="legal-nav">
+      <h3>{% if lang == "fr" %}Documents juridiques{% elif lang == "en" %}Legal Documents{% elif lang == "es" %}Documentos legales{% elif lang == "pt" %}Documentos legais{% elif lang == "de" %}Rechtliche Dokumente{% elif lang == "nl" %}Juridische documenten{% endif %}</h3>
+      <ul>
+        <li><a href="{{ urls.mentions }}" class="active">{% if lang == "fr" %}Mentions l&eacute;gales{% elif lang == "en" %}Legal Notices{% elif lang == "es" %}Aviso legal{% elif lang == "pt" %}Avisos legais{% elif lang == "de" %}Impressum{% elif lang == "nl" %}Juridische kennisgeving{% endif %}</a></li>
+        <li><a href="{{ urls.confidentialite }}">{% if lang == "fr" %}Politique de confidentialit&eacute;{% elif lang == "en" %}Privacy Policy{% elif lang == "es" %}Pol&iacute;tica de privacidad{% elif lang == "pt" %}Pol&iacute;tica de privacidade{% elif lang == "de" %}Datenschutzerkl&auml;rung{% elif lang == "nl" %}Privacybeleid{% endif %}</a></li>
+        <li><a href="{{ urls.cookies }}">{% if lang == "fr" %}Politique des cookies{% elif lang == "en" %}Cookie Policy{% elif lang == "es" %}Pol&iacute;tica de cookies{% elif lang == "pt" %}Pol&iacute;tica de cookies{% elif lang == "de" %}Cookie-Richtlinie{% elif lang == "nl" %}Cookiebeleid{% endif %}</a></li>
+        <li><a href="{{ urls.disclaimer }}">{% if lang == "fr" %}Avertissements{% elif lang == "en" %}Disclaimer{% elif lang == "es" %}Aviso de responsabilidad{% elif lang == "pt" %}Aviso de responsabilidade{% elif lang == "de" %}Haftungsausschluss{% elif lang == "nl" %}Disclaimer{% endif %}</a></li>
+      </ul>
+    </nav>
+
+    {% set show_disclaimer_link = true %}
+    {% include "em/_footer.html" %}
+  </div>
+{% endblock %}
