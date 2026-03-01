@@ -5,6 +5,8 @@ Unit tests for all utility functions + integration tests for the middleware.
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock
+from datetime import datetime, timezone, timedelta
+from starlette.datastructures import URL, QueryParams
 
 from middleware.em_access_control import (
     get_client_ip,
@@ -12,7 +14,10 @@ from middleware.em_access_control import (
     is_em_route,
     get_redirect_url,
     anonymize_ip,
+    validate_press_token,
+    get_cookie_max_age,
     OWNER_IPV6,
+    _PRESS_COOKIE_NAME,
 )
 
 
@@ -247,11 +252,86 @@ class TestAnonymizeIp:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# validate_press_token
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class TestValidatePressToken:
+    def test_valid_token_before_expiry(self, monkeypatch):
+        import middleware.em_access_control as mod
+        monkeypatch.setattr(mod, "PRESS_PREVIEW_TOKEN", "SECRET123")
+        monkeypatch.setattr(mod, "PRESS_PREVIEW_EXPIRY", "2099-12-31T00:00:00Z")
+        assert validate_press_token("SECRET123") is True
+
+    def test_wrong_token(self, monkeypatch):
+        import middleware.em_access_control as mod
+        monkeypatch.setattr(mod, "PRESS_PREVIEW_TOKEN", "SECRET123")
+        monkeypatch.setattr(mod, "PRESS_PREVIEW_EXPIRY", "2099-12-31T00:00:00Z")
+        assert validate_press_token("WRONG") is False
+
+    def test_expired_token(self, monkeypatch):
+        import middleware.em_access_control as mod
+        monkeypatch.setattr(mod, "PRESS_PREVIEW_TOKEN", "SECRET123")
+        monkeypatch.setattr(mod, "PRESS_PREVIEW_EXPIRY", "2020-01-01T00:00:00Z")
+        assert validate_press_token("SECRET123") is False
+
+    def test_empty_configured_token(self, monkeypatch):
+        import middleware.em_access_control as mod
+        monkeypatch.setattr(mod, "PRESS_PREVIEW_TOKEN", "")
+        assert validate_press_token("anything") is False
+
+    def test_bad_expiry_format(self, monkeypatch):
+        import middleware.em_access_control as mod
+        monkeypatch.setattr(mod, "PRESS_PREVIEW_TOKEN", "SECRET123")
+        monkeypatch.setattr(mod, "PRESS_PREVIEW_EXPIRY", "not-a-date")
+        assert validate_press_token("SECRET123") is False
+
+    def test_case_sensitive(self, monkeypatch):
+        import middleware.em_access_control as mod
+        monkeypatch.setattr(mod, "PRESS_PREVIEW_TOKEN", "Secret123")
+        monkeypatch.setattr(mod, "PRESS_PREVIEW_EXPIRY", "2099-12-31T00:00:00Z")
+        assert validate_press_token("secret123") is False
+        assert validate_press_token("SECRET123") is False
+        assert validate_press_token("Secret123") is True
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# get_cookie_max_age
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class TestGetCookieMaxAge:
+    def test_future_expiry(self, monkeypatch):
+        import middleware.em_access_control as mod
+        future = (datetime.now(timezone.utc) + timedelta(hours=2)).isoformat()
+        monkeypatch.setattr(mod, "PRESS_PREVIEW_EXPIRY", future)
+        age = get_cookie_max_age()
+        assert 7100 <= age <= 7200  # ~2 hours in seconds
+
+    def test_past_expiry_returns_zero(self, monkeypatch):
+        import middleware.em_access_control as mod
+        monkeypatch.setattr(mod, "PRESS_PREVIEW_EXPIRY", "2020-01-01T00:00:00Z")
+        assert get_cookie_max_age() == 0
+
+    def test_bad_format_returns_zero(self, monkeypatch):
+        import middleware.em_access_control as mod
+        monkeypatch.setattr(mod, "PRESS_PREVIEW_EXPIRY", "garbage")
+        assert get_cookie_max_age() == 0
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # Full middleware integration
 # ═══════════════════════════════════════════════════════════════════════════════
 
 class TestEmAccessMiddleware:
     """Integration tests for em_access_middleware."""
+
+    VALID_TOKEN = "TEST_PRESS_TOKEN"
+
+    @pytest.fixture(autouse=True)
+    def _setup_press(self, monkeypatch):
+        """Configure press token for all middleware tests."""
+        import middleware.em_access_control as mod
+        monkeypatch.setattr(mod, "PRESS_PREVIEW_TOKEN", self.VALID_TOKEN)
+        monkeypatch.setattr(mod, "PRESS_PREVIEW_EXPIRY", "2099-12-31T00:00:00Z")
 
     @pytest.fixture
     def call_next(self):
@@ -260,16 +340,22 @@ class TestEmAccessMiddleware:
         resp.status_code = 200
         return AsyncMock(return_value=resp)
 
-    def _make_request(self, path, forwarded=None, host="203.0.113.50"):
+    def _make_request(self, path, forwarded=None, host="203.0.113.50",
+                      query_params=None, cookies=None):
         req = MagicMock()
-        req.url = MagicMock()
-        req.url.path = path
+        qs = "&".join(f"{k}={v}" for k, v in (query_params or {}).items())
+        full = f"http://testserver{path}?{qs}" if qs else f"http://testserver{path}"
+        req.url = URL(full)
         req.headers = {}
         if forwarded:
             req.headers["x-forwarded-for"] = forwarded
         req.client = MagicMock()
         req.client.host = host
+        req.query_params = QueryParams(query_params or {})
+        req.cookies = cookies or {}
         return req
+
+    # ── Basic access control (unchanged) ──
 
     @pytest.mark.asyncio
     async def test_non_em_route_passes(self, call_next):
@@ -282,10 +368,7 @@ class TestEmAccessMiddleware:
     @pytest.mark.asyncio
     async def test_owner_ipv6_passes(self, call_next):
         from middleware.em_access_control import em_access_middleware
-        req = self._make_request(
-            "/euromillions",
-            forwarded=OWNER_IPV6,
-        )
+        req = self._make_request("/euromillions", forwarded=OWNER_IPV6)
         resp = await em_access_middleware(req, call_next)
         assert resp.status_code == 200
         call_next.assert_called_once()
@@ -304,10 +387,7 @@ class TestEmAccessMiddleware:
     @pytest.mark.asyncio
     async def test_stranger_blocked_redirect_fr(self, call_next):
         from middleware.em_access_control import em_access_middleware
-        req = self._make_request(
-            "/euromillions",
-            forwarded="2001:db8::1",
-        )
+        req = self._make_request("/euromillions", forwarded="2001:db8::1")
         resp = await em_access_middleware(req, call_next)
         assert resp.status_code == 302
         assert resp.headers["location"] == "/"
@@ -316,10 +396,7 @@ class TestEmAccessMiddleware:
     @pytest.mark.asyncio
     async def test_stranger_blocked_redirect_en(self, call_next):
         from middleware.em_access_control import em_access_middleware
-        req = self._make_request(
-            "/en/euromillions",
-            forwarded="203.0.113.99",
-        )
+        req = self._make_request("/en/euromillions", forwarded="203.0.113.99")
         resp = await em_access_middleware(req, call_next)
         assert resp.status_code == 302
         assert resp.headers["location"] == "/en"
@@ -328,10 +405,7 @@ class TestEmAccessMiddleware:
     @pytest.mark.asyncio
     async def test_stranger_blocked_api(self, call_next):
         from middleware.em_access_control import em_access_middleware
-        req = self._make_request(
-            "/api/euromillions/stats",
-            forwarded="198.51.100.1",
-        )
+        req = self._make_request("/api/euromillions/stats", forwarded="198.51.100.1")
         resp = await em_access_middleware(req, call_next)
         assert resp.status_code == 302
         assert resp.headers["location"] == "/"
@@ -340,10 +414,7 @@ class TestEmAccessMiddleware:
     @pytest.mark.asyncio
     async def test_localhost_passes(self, call_next):
         from middleware.em_access_control import em_access_middleware
-        req = self._make_request(
-            "/euromillions",
-            host="127.0.0.1",
-        )
+        req = self._make_request("/euromillions", host="127.0.0.1")
         resp = await em_access_middleware(req, call_next)
         assert resp.status_code == 200
         call_next.assert_called_once()
@@ -352,10 +423,7 @@ class TestEmAccessMiddleware:
     async def test_public_access_mode(self, call_next, monkeypatch):
         import middleware.em_access_control as mod
         monkeypatch.setattr(mod, "EM_PUBLIC_ACCESS", True)
-        req = self._make_request(
-            "/euromillions",
-            forwarded="2001:db8::1",
-        )
+        req = self._make_request("/euromillions", forwarded="2001:db8::1")
         resp = await mod.em_access_middleware(req, call_next)
         assert resp.status_code == 200
         call_next.assert_called_once()
@@ -363,10 +431,7 @@ class TestEmAccessMiddleware:
     @pytest.mark.asyncio
     async def test_health_not_blocked(self, call_next):
         from middleware.em_access_control import em_access_middleware
-        req = self._make_request(
-            "/health",
-            forwarded="2001:db8::1",
-        )
+        req = self._make_request("/health", forwarded="2001:db8::1")
         resp = await em_access_middleware(req, call_next)
         assert resp.status_code == 200
         call_next.assert_called_once()
@@ -374,10 +439,106 @@ class TestEmAccessMiddleware:
     @pytest.mark.asyncio
     async def test_loto_api_not_blocked(self, call_next):
         from middleware.em_access_control import em_access_middleware
+        req = self._make_request("/api/loto/stats", forwarded="2001:db8::1")
+        resp = await em_access_middleware(req, call_next)
+        assert resp.status_code == 200
+        call_next.assert_called_once()
+
+    # ── Press token via URL ──
+
+    @pytest.mark.asyncio
+    async def test_valid_url_token_sets_cookie_and_redirects(self, call_next):
+        from middleware.em_access_control import em_access_middleware
         req = self._make_request(
-            "/api/loto/stats",
-            forwarded="2001:db8::1",
+            "/en/euromillions",
+            forwarded="198.51.100.1",
+            query_params={"press_token": self.VALID_TOKEN},
         )
+        resp = await em_access_middleware(req, call_next)
+        assert resp.status_code == 302
+        # Redirect URL should NOT contain press_token
+        location = resp.headers["location"]
+        assert "press_token" not in location
+        assert "/en/euromillions" in location
+        # Cookie must be set
+        cookie_header = resp.raw_headers
+        cookie_set = any(k == b"set-cookie" for k, _ in cookie_header)
+        assert cookie_set
+        call_next.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_valid_url_token_preserves_utm(self, call_next):
+        from middleware.em_access_control import em_access_middleware
+        req = self._make_request(
+            "/en/euromillions",
+            forwarded="198.51.100.1",
+            query_params={"press_token": self.VALID_TOKEN, "utm_source": "press"},
+        )
+        resp = await em_access_middleware(req, call_next)
+        assert resp.status_code == 302
+        location = resp.headers["location"]
+        assert "utm_source=press" in location
+        assert "press_token" not in location
+
+    @pytest.mark.asyncio
+    async def test_invalid_url_token_blocks_even_with_valid_cookie(self, call_next):
+        from middleware.em_access_control import em_access_middleware
+        req = self._make_request(
+            "/euromillions",
+            forwarded="198.51.100.1",
+            query_params={"press_token": "WRONG_TOKEN"},
+            cookies={_PRESS_COOKIE_NAME: self.VALID_TOKEN},
+        )
+        resp = await em_access_middleware(req, call_next)
+        assert resp.status_code == 302
+        assert resp.headers["location"] == "/"
+        call_next.assert_not_called()
+
+    # ── Press token via cookie ──
+
+    @pytest.mark.asyncio
+    async def test_valid_cookie_grants_access(self, call_next):
+        from middleware.em_access_control import em_access_middleware
+        req = self._make_request(
+            "/en/euromillions/statistics",
+            forwarded="198.51.100.1",
+            cookies={_PRESS_COOKIE_NAME: self.VALID_TOKEN},
+        )
+        resp = await em_access_middleware(req, call_next)
+        assert resp.status_code == 200
+        call_next.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_invalid_cookie_blocks(self, call_next):
+        from middleware.em_access_control import em_access_middleware
+        req = self._make_request(
+            "/euromillions",
+            forwarded="198.51.100.1",
+            cookies={_PRESS_COOKIE_NAME: "EXPIRED_OR_WRONG"},
+        )
+        resp = await em_access_middleware(req, call_next)
+        assert resp.status_code == 302
+        assert resp.headers["location"] == "/"
+        call_next.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_expired_token_blocks(self, call_next, monkeypatch):
+        import middleware.em_access_control as mod
+        monkeypatch.setattr(mod, "PRESS_PREVIEW_EXPIRY", "2020-01-01T00:00:00Z")
+        req = self._make_request(
+            "/euromillions",
+            forwarded="198.51.100.1",
+            cookies={_PRESS_COOKIE_NAME: self.VALID_TOKEN},
+        )
+        resp = await mod.em_access_middleware(req, call_next)
+        assert resp.status_code == 302
+        call_next.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_owner_passes_without_token(self, call_next):
+        """Owner IP bypasses token check entirely."""
+        from middleware.em_access_control import em_access_middleware
+        req = self._make_request("/euromillions", forwarded=OWNER_IPV6)
         resp = await em_access_middleware(req, call_next)
         assert resp.status_code == 200
         call_next.assert_called_once()

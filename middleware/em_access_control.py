@@ -4,6 +4,12 @@ EuroMillions access control middleware.
 Blocks all EM routes except for the site owner until public launch (15/03/2026).
 Toggle via EM_PUBLIC_ACCESS env var on Cloud Run.
 
+Access hierarchy:
+  1. EM_PUBLIC_ACCESS=True → everyone passes
+  2. Owner IP (/64 match) → direct access
+  3. Valid press token (URL param or cookie) + not expired → access
+  4. Everyone else → 302 redirect
+
 RGPD: IPs are anonymized in all log output (IPv6 /64, IPv4 /24).
 IPv6: uses /64 network match to handle privacy extensions (suffix rotation).
 """
@@ -11,6 +17,8 @@ IPv6: uses /64 network match to handle privacy extensions (suffix rotation).
 import logging
 import os
 import re
+import secrets
+from datetime import datetime, timezone
 from ipaddress import ip_address, ip_network
 
 from fastapi import Request
@@ -32,6 +40,12 @@ _OWNER_NET_V6 = ip_network(OWNER_IPV6 + "/64", strict=False)
 
 # Optional IPv4 from env (already set on Cloud Run for Umami owner filter).
 _OWNER_IPV4 = os.getenv("OWNER_IP", "").strip()
+
+# ── Press preview token ───────────────────────────────────────────────────────
+
+PRESS_PREVIEW_TOKEN = os.getenv("PRESS_PREVIEW_TOKEN", "LOTOIA_EM_PREVIEW_2026")
+PRESS_PREVIEW_EXPIRY = os.getenv("PRESS_PREVIEW_EXPIRY", "2026-03-15T00:00:00Z")
+_PRESS_COOKIE_NAME = "lotoia_em_press_preview"
 
 # ── Protected route patterns (compiled once at import) ────────────────────────
 
@@ -109,24 +123,100 @@ def anonymize_ip(ip_str: str) -> str:
         return "invalid"
 
 
+# ── Press token functions ─────────────────────────────────────────────────────
+
+def _parse_expiry() -> datetime | None:
+    """Parse PRESS_PREVIEW_EXPIRY as timezone-aware datetime, or None."""
+    try:
+        return datetime.fromisoformat(PRESS_PREVIEW_EXPIRY)
+    except (ValueError, TypeError):
+        return None
+
+
+def validate_press_token(token: str) -> bool:
+    """Validate press preview token (timing-safe) and check expiry."""
+    if not PRESS_PREVIEW_TOKEN:
+        return False
+    if not secrets.compare_digest(token, PRESS_PREVIEW_TOKEN):
+        return False
+    expiry = _parse_expiry()
+    if expiry is None:
+        return False
+    return datetime.now(timezone.utc) < expiry
+
+
+def get_cookie_max_age() -> int:
+    """Seconds remaining until PRESS_PREVIEW_EXPIRY (0 if expired/invalid)."""
+    expiry = _parse_expiry()
+    if expiry is None:
+        return 0
+    remaining = (expiry - datetime.now(timezone.utc)).total_seconds()
+    return max(0, int(remaining))
+
+
 # ── Middleware ─────────────────────────────────────────────────────────────────
 
 async def em_access_middleware(request: Request, call_next):
-    """Block EuroMillions routes for non-owner IPs (302 → homepage)."""
+    """Block EuroMillions routes for non-owner IPs (302 → homepage).
+
+    Access hierarchy: public toggle → owner IP → press token → block.
+    """
+    # a) Public access toggle
     if EM_PUBLIC_ACCESS:
         return await call_next(request)
 
     path = request.url.path
 
+    # b) Non-EM route → pass
     if not is_em_route(path):
         return await call_next(request)
 
+    # c) Owner IP → pass
     client_ip = get_client_ip(request)
-
     if is_owner_ip(client_ip):
         logger.info("EM access granted | IP: OWNER | Route: %s", path)
         return await call_next(request)
 
     anon_ip = anonymize_ip(client_ip)
+
+    # d) Extract tokens
+    token_from_url = request.query_params.get("press_token")
+    token_from_cookie = request.cookies.get(_PRESS_COOKIE_NAME)
+
+    # e) Token URL (priority) — valid → set cookie + redirect to clean URL
+    if token_from_url:
+        if validate_press_token(token_from_url):
+            clean_url = str(request.url.remove_query_params("press_token"))
+            response = RedirectResponse(url=clean_url, status_code=302)
+            response.set_cookie(
+                key=_PRESS_COOKIE_NAME,
+                value=token_from_url,
+                max_age=get_cookie_max_age(),
+                httponly=True,
+                secure=True,
+                samesite="lax",
+                path="/",
+            )
+            logger.info(
+                "EM access granted | IP: %s | Token: valid (URL) | Route: %s",
+                anon_ip, path,
+            )
+            return response
+        # Token URL invalid → block (ignore cookie)
+        logger.warning(
+            "EM access blocked | IP: %s | Token: invalid | Route: %s",
+            anon_ip, path,
+        )
+        return RedirectResponse(url=get_redirect_url(path), status_code=302)
+
+    # f) Cookie token (no URL token present)
+    if token_from_cookie and validate_press_token(token_from_cookie):
+        logger.info(
+            "EM access granted | IP: %s | Token: valid (cookie) | Route: %s",
+            anon_ip, path,
+        )
+        return await call_next(request)
+
+    # g) Block
     logger.warning("EM access blocked | IP: %s | Route: %s", anon_ip, path)
     return RedirectResponse(url=get_redirect_url(path), status_code=302)
