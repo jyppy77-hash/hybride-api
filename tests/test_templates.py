@@ -328,3 +328,98 @@ def test_chatbot_js_varies_by_lang():
                               page_key="historique").body.decode("utf-8")
     assert "hybride-chatbot-em.js" in fr_html
     assert "hybride-chatbot-em-en.js" in en_html
+
+
+# ═══════════════════════════════════════════════
+# 38-42: Mobile lang globe selector
+# ═══════════════════════════════════════════════
+
+def test_mobile_globe_present_in_html():
+    """Rendered HTML contains the mobile globe button and dropdown."""
+    from config.templates import render_template
+    request = _make_request()
+    html = render_template(
+        "em/historique.html", request, lang="fr", page_key="historique",
+    ).body.decode("utf-8")
+    assert "lang-globe-btn" in html
+    assert "lang-globe-dropdown" in html
+
+
+def test_mobile_globe_shows_current_lang():
+    """Globe button displays the current language code."""
+    from config.templates import render_template
+    request = _make_request()
+    for lang, expected_code in [("fr", "FR"), ("en", "EN"), ("es", "ES"),
+                                 ("pt", "PT"), ("de", "DE"), ("nl", "NL")]:
+        html = render_template(
+            "em/historique.html", request, lang=lang, page_key="historique",
+        ).body.decode("utf-8")
+        # The code appears inside .lang-globe-code span
+        assert f"lang-globe-code\">{expected_code}</span>" in html, (
+            f"Globe should show {expected_code} for lang={lang}"
+        )
+
+
+def test_mobile_globe_all_6_langs_in_dropdown():
+    """Dropdown contains all 6 languages regardless of current lang."""
+    from config.templates import render_template
+    request = _make_request()
+    html = render_template(
+        "em/historique.html", request, lang="es", page_key="historique",
+    ).body.decode("utf-8")
+    for code in ("FR", "EN", "ES", "PT", "DE", "NL"):
+        assert f">{code}</span>" in html, f"{code} missing from dropdown"
+
+
+def test_mobile_globe_current_lang_highlighted():
+    """Current language has the lang-globe-active class."""
+    from config.templates import render_template
+    request = _make_request()
+    for lang in ("fr", "en", "es", "pt", "de", "nl"):
+        html = render_template(
+            "em/historique.html", request, lang=lang, page_key="historique",
+        ).body.decode("utf-8")
+        # Find the active item and verify it contains the current lang code
+        idx = html.index("lang-globe-active")
+        snippet = html[idx:idx + 200]
+        assert f">{lang.upper()}</span>" in snippet, (
+            f"Active item should be {lang.upper()}"
+        )
+
+
+def test_mobile_globe_urls_match_page():
+    """Dropdown URLs point to the correct page for each language."""
+    from config.templates import render_template, EM_URLS
+    request = _make_request()
+    html = render_template(
+        "em/historique.html", request, lang="fr", page_key="historique",
+    ).body.decode("utf-8")
+    for lc in ("fr", "en", "es", "pt", "de", "nl"):
+        expected_url = EM_URLS[lc]["historique"]
+        assert f'href="{expected_url}"' in html, (
+            f"Dropdown should link to {expected_url} for {lc}"
+        )
+
+
+def test_desktop_lang_switches_still_present():
+    """Desktop inline lang-switch buttons are still rendered."""
+    from config.templates import render_template
+    request = _make_request()
+    html = render_template(
+        "em/historique.html", request, lang="fr", page_key="historique",
+    ).body.decode("utf-8")
+    assert 'class="lang-switch"' in html
+
+
+def test_build_all_lang_switches():
+    """_build_all_lang_switches returns all enabled langs with current marked."""
+    from config.templates import _build_all_lang_switches
+    switches = _build_all_lang_switches("es", "accueil")
+    labels = [s["label"] for s in switches]
+    assert "FR" in labels
+    assert "ES" in labels
+    current = [s for s in switches if s["current"]]
+    assert len(current) == 1
+    assert current[0]["label"] == "ES"
+    non_current = [s for s in switches if not s["current"]]
+    assert len(non_current) == 5

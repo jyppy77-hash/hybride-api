@@ -497,6 +497,106 @@ body > .engine-nav {
     border-color: rgba(255,255,255,0.3);
 }
 
+/* ── Mobile lang globe selector ── */
+.lang-globe-wrap {
+    display: none;
+    position: relative;
+}
+
+.lang-globe-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 6px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--theme-border-light);
+    background: var(--theme-border-light);
+    color: var(--theme-text-on-dark);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+    min-height: 36px;
+}
+
+.lang-globe-btn:hover,
+.lang-globe-btn:focus-visible {
+    background: rgba(255,255,255,0.15);
+    border-color: rgba(255,255,255,0.3);
+    outline: none;
+}
+
+.lang-globe-icon {
+    font-size: 1.1rem;
+    line-height: 1;
+}
+
+.lang-globe-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    min-width: 190px;
+    padding: 8px;
+    background: var(--theme-bg-card, #1a1f2e);
+    border: 1px solid var(--theme-border, rgba(255,255,255,0.12));
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0,0,0,0.35);
+    z-index: 200;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px);
+    transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+}
+
+.lang-globe-dropdown.lang-globe-open {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.lang-globe-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--theme-text-primary, #e2e8f0);
+    text-decoration: none;
+    transition: background 0.15s;
+    min-height: 44px;
+}
+
+.lang-globe-item:hover,
+.lang-globe-item:focus-visible {
+    background: rgba(255,255,255,0.08);
+    outline: none;
+}
+
+.lang-globe-active {
+    background: rgba(16,185,129,0.15);
+    color: #10b981;
+    border: 1px solid rgba(16,185,129,0.3);
+}
+
+.lang-globe-active:hover {
+    background: rgba(16,185,129,0.22);
+}
+
+.lang-globe-flag {
+    font-size: 1.25rem;
+    line-height: 1;
+}
+
+@media (max-width: 768px) {
+    .lang-switch { display: none !important; }
+    .lang-globe-wrap { display: block; }
+}
+
 .engine-nav-btn {
     display: flex;
     align-items: center;

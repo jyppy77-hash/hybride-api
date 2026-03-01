@@ -112,14 +112,14 @@ for _lc in EM_URLS:
     if _lc != "fr":
         _LANG_SWITCH[_lc] = {k: EM_URLS["fr"][k] for k in EM_URLS["fr"]}
 
-# Lang switch labels & titles
+# Lang switch labels, titles & flags
 _LANG_SWITCH_META = {
-    "fr": {"label": "FR", "title": "Version française"},
-    "en": {"label": "EN", "title": "English version"},
-    "es": {"label": "ES", "title": "Versión en español"},
-    "pt": {"label": "PT", "title": "Versão em português"},
-    "de": {"label": "DE", "title": "Deutsche Version"},
-    "nl": {"label": "NL", "title": "Nederlandse versie"},
+    "fr": {"label": "FR", "title": "Version française", "flag": "\U0001f1eb\U0001f1f7"},
+    "en": {"label": "EN", "title": "English version", "flag": "\U0001f1ec\U0001f1e7"},
+    "es": {"label": "ES", "title": "Versión en español", "flag": "\U0001f1ea\U0001f1f8"},
+    "pt": {"label": "PT", "title": "Versão em português", "flag": "\U0001f1f5\U0001f1f9"},
+    "de": {"label": "DE", "title": "Deutsche Version", "flag": "\U0001f1e9\U0001f1ea"},
+    "nl": {"label": "NL", "title": "Nederlandse versie", "flag": "\U0001f1f3\U0001f1f1"},
 }
 
 
@@ -136,6 +136,23 @@ def _build_lang_switches(current_lang: str, page_key: str) -> list[dict]:
             "url": url,
             "label": meta["label"],
             "title": meta["title"],
+        })
+    return switches
+
+
+def _build_all_lang_switches(current_lang: str, page_key: str) -> list[dict]:
+    """Build list of ALL enabled langs with flags, marking current."""
+    from config import killswitch
+    switches = []
+    for lc in killswitch.ENABLED_LANGS:
+        url = EM_URLS.get(lc, {}).get(page_key, "/")
+        meta = _LANG_SWITCH_META.get(lc, {"label": lc.upper(), "title": lc, "flag": ""})
+        switches.append({
+            "url": url,
+            "label": meta["label"],
+            "title": meta["title"],
+            "flag": meta.get("flag", ""),
+            "current": lc == current_lang,
         })
     return switches
 
@@ -240,6 +257,10 @@ def render_template(
 
             # Lang switches (one button per other enabled language)
             "lang_switches": _build_lang_switches(lang, page_key),
+
+            # Mobile lang selector (all langs with flags, current marked)
+            "all_lang_switches": _build_all_lang_switches(lang, page_key),
+            "lang_flag": _LANG_SWITCH_META.get(lang, {}).get("flag", ""),
 
             # OG & locale
             "og_locale": _OG_LOCALE.get(lang, "fr_FR"),

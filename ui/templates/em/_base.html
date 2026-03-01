@@ -46,6 +46,21 @@
                 <span class="icon-night">&#127769;</span>
             </button>
             {% for sw in lang_switches %}<a href="{{ sw.url }}" class="lang-switch" title="{{ sw.title }}">{{ sw.label }}</a>{% if not loop.last %} {% endif %}{% endfor %}
+            {# ── Mobile lang globe selector ── #}
+            <div class="lang-globe-wrap">
+                <button class="lang-globe-btn" aria-label="{{ _('Choisir la langue') }}" aria-expanded="false">
+                    <span class="lang-globe-icon">&#127760;</span>
+                    <span class="lang-globe-code">{{ lang|upper }}</span>
+                </button>
+                <div class="lang-globe-dropdown" role="menu">
+                    {% for item in all_lang_switches %}
+                    <a href="{{ item.url }}" class="lang-globe-item{% if item.current %} lang-globe-active{% endif %}" role="menuitem" title="{{ item.title }}">
+                        <span class="lang-globe-flag">{{ item.flag }}</span>
+                        <span>{{ item.label }}</span>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
     </nav>
 
@@ -60,6 +75,25 @@
 
     {# ── Scroll to top ── #}
     <button id="scroll-to-top" class="scroll-to-top" aria-label="{{ _('Retour en haut') }}">&uarr;</button>
+
+    {# ── Mobile lang globe toggle ── #}
+    <script>
+    (function(){
+        var btn=document.querySelector('.lang-globe-btn');
+        if(!btn)return;
+        var dd=document.querySelector('.lang-globe-dropdown');
+        btn.addEventListener('click',function(e){
+            e.stopPropagation();
+            var open=dd.classList.toggle('lang-globe-open');
+            btn.setAttribute('aria-expanded',open);
+        });
+        document.addEventListener('click',function(){
+            dd.classList.remove('lang-globe-open');
+            btn.setAttribute('aria-expanded','false');
+        });
+        dd.addEventListener('click',function(e){e.stopPropagation();});
+    })();
+    </script>
 
     {# ── Common scripts ── #}
     <script src="/ui/static/scroll.js?v=1"></script>
