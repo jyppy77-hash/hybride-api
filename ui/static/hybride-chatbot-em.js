@@ -199,7 +199,7 @@
 
         var chatHistory = [];
         var WELCOME_TEXT = LI.chatbot_welcome || 'Bienvenue ! Je suis HYBRIDE, l\u2019assistant IA de LotoIA \u2014 module EuroMillions. Pose-moi tes questions sur l\u2019EuroMillions, les statistiques ou le moteur HYBRIDE \uD83C\uDF1F';
-        var STORAGE_KEY = 'hybride-history-em';
+        var STORAGE_KEY = 'hybride-history-em' + (window.LotoIA_lang && window.LotoIA_lang !== 'fr' ? '-' + window.LotoIA_lang : '');
 
         /* ── GA4 session tracking state ── */
         var chatOpenTime = 0;

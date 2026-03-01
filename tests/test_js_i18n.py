@@ -291,3 +291,61 @@ def test_chatbot_keys_all_langs():
         assert "chatbot_welcome" in labels
         assert "chatbot_placeholder" in labels
         assert len(labels["chatbot_welcome"]) > 20
+
+
+def test_chatbot_welcome_not_french_for_other_langs():
+    """chatbot_welcome is NOT the French text for ES/PT/DE/NL."""
+    from config.js_i18n import get_js_labels
+    fr_welcome = get_js_labels("fr")["chatbot_welcome"]
+    for lang in ("es", "pt", "de", "nl"):
+        lang_welcome = get_js_labels(lang)["chatbot_welcome"]
+        assert lang_welcome != fr_welcome, (
+            f"{lang.upper()} chatbot_welcome is identical to FR"
+        )
+
+
+def test_chatbot_welcome_language_markers():
+    """Each lang welcome starts with the correct greeting word."""
+    from config.js_i18n import get_js_labels
+    expected_starts = {
+        "fr": "Bienvenue",
+        "en": "Welcome",
+        "es": "\u00a1Bienvenido",
+        "pt": "Bem-vindo",
+        "de": "Willkommen",
+        "nl": "Welkom",
+    }
+    for lang, start in expected_starts.items():
+        welcome = get_js_labels(lang)["chatbot_welcome"]
+        assert welcome.startswith(start), (
+            f"{lang.upper()} welcome should start with '{start}', got: {welcome[:30]}"
+        )
+
+
+def test_chatbot_welcome_injected_per_lang():
+    """Rendered HTML contains the correct lang-specific chatbot_welcome."""
+    import json
+    from config.templates import render_template
+    # Each lang's welcome must start with its greeting word
+    greetings = {
+        "fr": "Bienvenue",
+        "en": "Welcome",
+        "es": "Bienvenido",
+        "pt": "Bem-vindo",
+        "de": "Willkommen",
+        "nl": "Welkom",
+    }
+    request = _make_request()
+    for lang, greeting in greetings.items():
+        resp = render_template(
+            "em/historique.html", request, lang=lang, page_key="historique",
+        )
+        html = resp.body.decode("utf-8")
+        start = html.index("window.LotoIA_i18n=") + len("window.LotoIA_i18n=")
+        end = html.index(";window.LotoIA_lang")
+        labels = json.loads(html[start:end])
+        welcome = labels["chatbot_welcome"]
+        assert greeting in welcome, (
+            f"{lang.upper()} HTML welcome should contain '{greeting}', "
+            f"got: {welcome[:60]}"
+        )
