@@ -26,6 +26,7 @@ _static_patch = patch("fastapi.staticfiles.StaticFiles.__init__", return_value=N
 _static_call = patch("fastapi.staticfiles.StaticFiles.__call__", return_value=None)
 _db_module_patch = patch.dict(os.environ, {
     "DB_PASSWORD": "fake", "DB_USER": "test", "DB_NAME": "testdb",
+    "EM_PUBLIC_ACCESS": "true",
 })
 
 
@@ -33,6 +34,8 @@ def _get_patched_client_and_modules():
     """Create a TestClient with patches, return (client, main_mod)."""
     with _db_module_patch, _static_patch, _static_call:
         import importlib
+        import middleware.em_access_control as _em_ac
+        importlib.reload(_em_ac)
         import main as main_mod
         importlib.reload(main_mod)
         client = TestClient(main_mod.app, raise_server_exceptions=False)
@@ -202,6 +205,8 @@ def test_unified_em_tirages_count(mock_db):
 
     with _db_module_patch, _static_patch, _static_call:
         import importlib, main as main_mod
+        import middleware.em_access_control as _em_ac
+        importlib.reload(_em_ac)
         importlib.reload(main_mod)
         import routes.api_data_unified as mod
         mod.db_cloudsql = mock_db
@@ -226,6 +231,8 @@ def test_unified_em_stats_number(mock_db):
 
     with _db_module_patch, _static_patch, _static_call:
         import importlib, main as main_mod
+        import middleware.em_access_control as _em_ac
+        importlib.reload(_em_ac)
         importlib.reload(main_mod)
         import routes.api_data_unified as mod
         mod.db_cloudsql = mock_db
@@ -265,6 +272,8 @@ def test_stats_etoile_em_ok(mock_db):
 
     with _db_module_patch, _static_patch, _static_call:
         import importlib, main as main_mod
+        import middleware.em_access_control as _em_ac
+        importlib.reload(_em_ac)
         importlib.reload(main_mod)
         import routes.api_data_unified as mod
         mod.db_cloudsql = mock_db
@@ -281,6 +290,8 @@ def test_stats_etoile_em_invalid():
     """GET /api/euromillions/stats/etoile/99 → 400."""
     with _db_module_patch, _static_patch, _static_call:
         import importlib, main as main_mod
+        import middleware.em_access_control as _em_ac
+        importlib.reload(_em_ac)
         importlib.reload(main_mod)
         client = TestClient(main_mod.app, raise_server_exceptions=False)
         resp = client.get("/api/euromillions/stats/etoile/99")
@@ -321,6 +332,8 @@ def test_legacy_em_tirages_count(mock_db):
 
     with _db_module_patch, _static_patch, _static_call:
         import importlib, main as main_mod
+        import middleware.em_access_control as _em_ac
+        importlib.reload(_em_ac)
         importlib.reload(main_mod)
         import routes.api_data_unified as mod
         mod.db_cloudsql = mock_db

@@ -23,6 +23,7 @@ _static_patch = patch("fastapi.staticfiles.StaticFiles.__init__", return_value=N
 _static_call = patch("fastapi.staticfiles.StaticFiles.__call__", return_value=None)
 _db_module_patch = patch.dict(os.environ, {
     "DB_PASSWORD": "fake", "DB_USER": "test", "DB_NAME": "testdb",
+    "EM_PUBLIC_ACCESS": "true",
 })
 
 
@@ -38,6 +39,8 @@ def _async_cm_conn(cursor):
 def _get_client():
     with _db_module_patch, _static_patch, _static_call:
         import importlib
+        import middleware.em_access_control as _em_ac
+        importlib.reload(_em_ac)
         import main as main_mod
         importlib.reload(main_mod)
         return TestClient(main_mod.app, raise_server_exceptions=False), main_mod

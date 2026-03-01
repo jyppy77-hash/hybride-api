@@ -511,6 +511,10 @@ app.add_middleware(UmamiOwnerFilterMiddleware)
 # GZip APRÈS UmamiOwnerFilter — le filtre doit voir le HTML non compressé
 app.add_middleware(GZipMiddleware, minimum_size=500)
 
+# ── EM Access Control (owner-only until public launch 15/03/2026) ──
+from middleware.em_access_control import em_access_middleware
+app.middleware("http")(em_access_middleware)
+
 
 # =========================
 # Block sensitive static paths

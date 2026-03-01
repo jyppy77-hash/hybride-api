@@ -222,13 +222,17 @@ def test_multilang_routes_match_em_urls():
 
 def _get_client():
     """Build a TestClient with standard mocks."""
+    import importlib
     from unittest.mock import patch
     from fastapi.testclient import TestClient
 
     with patch("main.StaticFiles", return_value=MagicMock()), \
          patch.dict("os.environ", {
              "DB_HOST": "x", "DB_USER": "x", "DB_PASS": "x", "DB_NAME": "x",
+             "EM_PUBLIC_ACCESS": "true",
          }):
+        import middleware.em_access_control as _em_ac
+        importlib.reload(_em_ac)
         from main import app
         return TestClient(app, raise_server_exceptions=False)
 
