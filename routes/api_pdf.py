@@ -39,6 +39,9 @@ async def api_meta_pdf(request: Request, payload: MetaPdfPayload):
             graph_data=payload.graph_data,
             chance_data=payload.chance_data,
             sponsor=payload.sponsor,
+            lang=payload.lang,
+            all_freq_boules=payload.all_freq_boules,
+            all_freq_secondary=payload.all_freq_secondary,
         )
         return StreamingResponse(
             buf,

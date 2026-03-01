@@ -298,6 +298,10 @@ async def unified_meta_analyse_local(
                 "chance": {"labels": secondary_labels, "values": secondary_values},
                 "analysis": analysis_text,
                 "pdf": False,
+                "all_frequencies": {
+                    "boules": {str(k): v for k, v in freq_map.items()},
+                    "secondary": {str(k): v for k, v in secondary_freq.items()},
+                },
                 "meta": {
                     "total_draws": total_rows,
                     "window_used": window_used,
@@ -333,6 +337,10 @@ async def unified_meta_analyse_local(
                 "graph_etoiles": {"labels": secondary_labels, "values": secondary_values},
                 "analysis": analysis_text,
                 "pdf": False,
+                "all_frequencies": {
+                    "boules": {str(k): v for k, v in freq_map.items()},
+                    "secondary": {str(k): v for k, v in secondary_freq.items()},
+                },
                 "meta": {
                     "total_draws": total_rows,
                     "window_used": window_used,

@@ -809,7 +809,9 @@ function openMetaResultPopupEM(data) {
                     graph_data_boules: metaResultDataEM && metaResultDataEM.graph_boules ? metaResultDataEM.graph_boules : null,
                     graph_data_etoiles: metaResultDataEM && metaResultDataEM.graph_etoiles ? metaResultDataEM.graph_etoiles : null,
                     sponsor: LI.meta_sponsor_space,
-                    lang: window.LotoIA_lang
+                    lang: window.LotoIA_lang,
+                    all_freq_boules: metaResultDataEM && metaResultDataEM.all_frequencies ? metaResultDataEM.all_frequencies.boules : null,
+                    all_freq_secondary: metaResultDataEM && metaResultDataEM.all_frequencies ? metaResultDataEM.all_frequencies.secondary : null
                 })
             })
             .then(function(res) { return res.blob(); });

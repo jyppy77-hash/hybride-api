@@ -85,3 +85,5 @@ class EMMetaPdfPayload(BaseModel):
     graph_data_etoiles: Optional[Dict[str, Any]] = None
     sponsor: Optional[str] = None
     lang: str = Field(default="fr", pattern=r"^(fr|en|pt|es|de|nl)$")
+    all_freq_boules: Optional[Dict[str, int]] = None
+    all_freq_secondary: Optional[Dict[str, int]] = None

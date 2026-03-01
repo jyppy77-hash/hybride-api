@@ -888,7 +888,10 @@ function openMetaResultPopup(data) {
                     engine: 'HYBRIDE',
                     graph_data: metaResultData && metaResultData.graph ? metaResultData.graph : null,
                     chance_data: metaResultData && metaResultData.chance ? metaResultData.chance : null,
-                    sponsor: 'Espace disponible'
+                    sponsor: 'Espace disponible',
+                    lang: window.LotoIA_lang || 'fr',
+                    all_freq_boules: metaResultData && metaResultData.all_frequencies ? metaResultData.all_frequencies.boules : null,
+                    all_freq_secondary: metaResultData && metaResultData.all_frequencies ? metaResultData.all_frequencies.secondary : null
                 })
             })
             .then(function(res) { return res.blob(); });
