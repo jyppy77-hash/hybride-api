@@ -46,9 +46,9 @@ hybride-api/
 │   ├── api_chat_em.py                   # HYBRIDE chatbot EM — SSE StreamingResponse + re-exports (Phase 10, P9)
 │   ├── em_data.py                       # EM data — thin wrapper → api_data_unified (Phase 10)
 │   ├── em_analyse.py                    # EM analysis — thin wrapper + /meta-analyse-texte, /meta-pdf (Phase 10)
-│   ├── em_pages.py                      # EuroMillions HTML page routes (7 SEO clean URLs)
-│   ├── en_em_pages.py                   # EuroMillions EN page routes (7 SEO clean URLs, Phase 11)
-│   ├── multilang_em_pages.py            # EuroMillions PT/ES/DE/NL page routes (28 factory routes, P5/5)
+│   ├── em_pages.py                      # EuroMillions HTML page routes (11 SEO clean URLs: 7 pages + 4 legal)
+│   ├── en_em_pages.py                   # EuroMillions EN page routes (11 SEO clean URLs, Phase 11)
+│   ├── multilang_em_pages.py            # EuroMillions PT/ES/DE/NL page routes (44 factory routes: 11 pages x 4 langs, P5/5)
 │   └── sitemap.py                       # Dynamic XML sitemap — Loto FR + EM multilang (P5/5)
 │
 ├── services/                            # Business logic layer (21 modules, ~6200L)
@@ -108,19 +108,19 @@ hybride-api/
 │   └── em/                              # Multilingual EM prompts (P4/5, 108 files)
 │       ├── fr/                          # FR: 3 chatbot + 8 tirages + 7 annees = 18 files
 │       ├── en/                          # EN: 3 chatbot + 8 tirages + 7 annees = 18 files
-│       ├── pt/                          # PT: same structure (18 files, P4/5)
+│       ├── pt/                          # PT: same structure (18 files, fully translated, Sprint PT)
 │       ├── es/                          # ES: same structure (18 files, fully translated, Sprint ES)
-│       ├── de/                          # DE: same structure (18 files, P4/5)
-│       └── nl/                          # NL: same structure (18 files, P4/5)
+│       ├── de/                          # DE: same structure (18 files, fully translated, Sprint DE)
+│       └── nl/                          # NL: same structure (18 files, fully translated, Sprint NL)
 │
 ├── translations/                          # Babel/gettext i18n catalogs (P1/5)
 │   ├── messages.pot                     # Extracted message template (Babel)
 │   ├── fr/LC_MESSAGES/messages.po/.mo   # French catalog (reference)
 │   ├── en/LC_MESSAGES/messages.po/.mo   # English (GB) catalog
-│   ├── pt/LC_MESSAGES/messages.po/.mo   # Portuguese catalog (stub)
-│   ├── es/LC_MESSAGES/messages.po/.mo   # Spanish catalog (complete, 384 entries)
-│   ├── de/LC_MESSAGES/messages.po/.mo   # German catalog (stub)
-│   └── nl/LC_MESSAGES/messages.po/.mo   # Dutch catalog (stub)
+│   ├── pt/LC_MESSAGES/messages.po/.mo   # Portuguese catalog (complete, 384 entries, Sprint PT)
+│   ├── es/LC_MESSAGES/messages.po/.mo   # Spanish catalog (complete, 384 entries, Sprint ES)
+│   ├── de/LC_MESSAGES/messages.po/.mo   # German catalog (complete, 384 entries, Sprint DE)
+│   └── nl/LC_MESSAGES/messages.po/.mo   # Dutch catalog (complete, 384 entries, Sprint NL)
 │
 ├── ui/                                  # Frontend layer
 │   ├── launcher.html                    # Entry page (route: /)
@@ -159,8 +159,8 @@ hybride-api/
 │   │   └── news-em.html                # EM news (/euromillions/news)
 │   │
 │   ├── templates/em/                    # Jinja2 templates — EuroMillions (P2/5, replaces static HTML serving)
-│   │   ├── _base.html                  # Base layout (head, nav, footer, hreflang, OG, chatbot, rating)
-│   │   ├── _footer.html                # Footer partial (nav links, gambling help, lang switch)
+│   │   ├── _base.html                  # Base layout (head, nav, footer, hreflang, OG, chatbot, rating, mobile globe selector)
+│   │   ├── _footer.html                # Footer partial (nav links, dynamic legal URLs per lang, gambling help)
 │   │   ├── _hero.html                  # Hero partial (icon, title, subtitle, action buttons)
 │   │   ├── accueil.html                # EM home page template
 │   │   ├── generateur.html             # EM generator template (META slider, sponsor popups, app.js)
@@ -168,7 +168,11 @@ hybride-api/
 │   │   ├── statistiques.html           # EM statistics template (frequencies, heatmap, charts)
 │   │   ├── historique.html             # EM history template (date picker, draw display)
 │   │   ├── faq.html                    # EM FAQ template (accordion, dynamic DB total)
-│   │   └── news.html                   # EM news template (timeline, releases)
+│   │   ├── news.html                   # EM news template (timeline, releases)
+│   │   ├── mentions-legales.html       # EM legal notices (6 langs: publisher, hosting, IP, liability, data, cookies, links, law, contact)
+│   │   ├── confidentialite.html        # EM privacy policy (6 langs: 12 GDPR/RGPD sections, per-lang supervisory authorities)
+│   │   ├── cookies.html                # EM cookie policy (6 langs: 8 sections, JS settings buttons)
+│   │   └── disclaimer.html             # EM disclaimer (6 langs: gambling warning, AI warning, liability limitation)
 │   │
 │   ├── en/                              # English (GB) pages (Phase 11)
 │   │   └── euromillions/                # EuroMillions EN pages (7 pages, rendered by Jinja2 P2/5)
@@ -224,7 +228,7 @@ hybride-api/
 │           ├── sponsor-popup-em.js      # EM sponsor popup logic
 │           └── sponsor-popup75-em.css   # EM META ANALYSE 75 popup styling
 │
-├── tests/                               # Unit tests (pytest) — 685 tests
+├── tests/                               # Unit tests (pytest) — 737 tests
 │   ├── conftest.py                      # Shared fixtures (SmartMockCursor, cache clear)
 │   ├── test_models.py                   # Pydantic models + CONFIG weights (10 tests)
 │   ├── test_hybride.py                  # HYBRIDE engine tests (21 tests)
@@ -238,19 +242,19 @@ hybride-api/
 │   ├── test_unified_routes.py          # Unified /api/{game}/... route tests (17 tests, Phase 10)
 │   ├── test_en_routes.py              # EN EuroMillions route tests (18 tests, Phase 11)
 │   ├── test_i18n.py                   # i18n gettext tests (30 tests, P1/5)
-│   ├── test_templates.py             # Jinja2 templates + render_template tests (37 tests, P2/5)
-│   ├── test_js_i18n.py              # JS i18n labels tests (18 tests, P3/5)
+│   ├── test_templates.py             # Jinja2 templates + render_template + legal pages tests (83 tests, P2/5 + legal)
+│   ├── test_js_i18n.py              # JS i18n labels tests (21 tests, P3/5 + chatbot welcome)
 │   ├── test_prompts.py              # Prompt system tests (59 tests, P4/5 + Sprint ES)
-│   └── test_multilang_routes.py     # Multilang routes + SEO tests (69 tests, P5/5 + Sprint ES)
+│   └── test_multilang_routes.py     # Multilang routes + SEO tests (66 tests, P5/5 + legal routes)
 │
 ├── config/                                # Runtime configuration
 │   ├── __init__.py                      # Package init
 │   ├── games.py                         # GameConfig registry — unified game definitions (Phase 10)
 │   ├── languages.py                     # Language registry — ValidLang enum, PAGE_SLUGS (6 langs), PROMPT_KEYS (Phase 11+P5/5)
 │   ├── i18n.py                          # i18n module — gettext + Babel, 6 languages, badges + analysis strings (P1/5)
-│   ├── js_i18n.py                       # JS i18n labels — window.LotoIA_i18n, FR/EN/ES, 155 keys per lang (P3/5)
+│   ├── js_i18n.py                       # JS i18n labels — window.LotoIA_i18n, 6 langs (FR/EN/ES/PT/DE/NL), 160+ keys per lang (P3/5 + Sprints)
 │   ├── templates.py                     # Jinja2 template engine — EM_URLS (6 langs), hreflang (killswitch-filtered), lang switch (P2-P5/5)
-│   ├── killswitch.py                    # Multilingual kill switch — ENABLED_LANGS = ["fr", "en", "es"] (P5/5)
+│   ├── killswitch.py                    # Multilingual kill switch — ENABLED_LANGS = ["fr", "en", "es", "pt", "de", "nl"] (P5/5, all 6 ON)
 │   ├── version.py                       # Centralized version constant (VERSION = "1.001")
 │   └── sponsors.json                    # Sponsor system config (enabled, frequency, sponsors[])
 │
@@ -277,9 +281,9 @@ hybride-api/
 
 The frontend is built with vanilla JavaScript (ES5+), HTML5, and CSS3. There is no JS framework (React, Vue, Angular) and no build step (no Webpack, Vite, or Babel).
 
-**Templating (P2/5):** EuroMillions pages use **Jinja2** server-side templates with i18n extension (`_()` / `ngettext()`). A single set of 10 templates (`ui/templates/em/`) renders all 6 languages via `render_template(lang="fr"|"en"|"pt"|...)`. Loto pages remain static HTML.
+**Templating (P2/5):** EuroMillions pages use **Jinja2** server-side templates with i18n extension (`_()` / `ngettext()`). A single set of 14 templates (`ui/templates/em/`: 7 main + 4 legal + 3 partials) renders all 6 languages via `render_template(lang="fr"|"en"|"pt"|...)`. Loto pages remain static HTML.
 
-**JS i18n (P3/5):** All JS-rendered strings (155 keys per language) are centralized in `config/js_i18n.py` and injected as `window.LotoIA_i18n` via Jinja2. Frontend JS reads labels at runtime — no per-language JS files needed.
+**JS i18n (P3/5):** All JS-rendered strings (160+ keys per language, 6 languages) are centralized in `config/js_i18n.py` and injected as `window.LotoIA_i18n` via Jinja2. Frontend JS reads labels at runtime — no per-language JS files needed.
 
 **Multilang routing (P5/5):** PT/ES/DE/NL routes are factory-generated (`routes/multilang_em_pages.py`) with a **kill switch** (`config/killswitch.py`). Disabled languages return 302 redirects to the FR equivalent. `hreflang_tags()` and the dynamic sitemap only include enabled languages.
 
@@ -390,7 +394,7 @@ This approach trades developer convenience (no hot-reload, no component model) f
 | **CSS** | Shared `hybride-chatbot.css` (same dark-mode palette) |
 | **SSE Streaming (P9)** | Same real-time streaming as Loto widget (SSE events, `getReader()`, anti-buffering headers) |
 | **Endpoint** | `/api/euromillions/hybride-chat` (POST, SSE stream) |
-| **Storage** | `hybride-history-em` (sessionStorage, isolated from Loto's `hybride-history`) |
+| **Storage** | `hybride-history-em` + lang suffix (sessionStorage, per-language isolation: `hybride-history-em-es`, `-pt`, `-de`, `-nl`; FR uses base key) |
 | **Header** | `HYBRIDE — EuroMillions` |
 | **Welcome** | `...assistant IA de LotoIA — module EuroMillions...` |
 | **detectPage()** | accueil-em, euromillions, simulateur-em, statistiques-em, historique-em, faq-em, news-em |
@@ -518,7 +522,7 @@ USER BROWSER (HTML/CSS/Vanilla JS)
 |  routes/pages.py         22 HTML/SEO pages        |
 |  routes/em_pages.py      EM HTML page routes (FR) |
 |  routes/en_em_pages.py   EM HTML page routes (EN) |
-|  routes/multilang_em_pages.py  EM PT/ES/DE/NL (28)|
+|  routes/multilang_em_pages.py  EM PT/ES/DE/NL (44)|
 |  routes/sitemap.py       Dynamic XML sitemap      |
 |  routes/api_gemini.py    Gemini AI enrichment     |
 |  routes/api_pdf.py       PDF generation           |
@@ -664,9 +668,9 @@ routes/ — 18 routers (3 unified + 8 legacy Loto + 4 legacy EM + 1 EN Phase 11 
     ├── api_chat_em.py     (~85L)  EM chatbot SSE StreamingResponse + re-exports (P9)
     ── Shared Routes ──
     ├── pages.py          (230 lines)  22 HTML page routes (sitemap removed P5/5)
-    ├── em_pages.py       (68 lines)   EuroMillions HTML page routes (7 SEO clean URLs, FR)
-    ├── en_em_pages.py    (74 lines)   EuroMillions EN page routes (7 SEO clean URLs, Phase 11)
-    ├── multilang_em_pages.py (175L)   EuroMillions PT/ES/DE/NL factory routes (28 routes, P5/5)
+    ├── em_pages.py       (~150L)      EuroMillions HTML page routes (11 SEO clean URLs: 7 pages + 4 legal, FR)
+    ├── en_em_pages.py    (~150L)      EuroMillions EN page routes (11 SEO clean URLs, Phase 11)
+    ├── multilang_em_pages.py (~190L)  EuroMillions PT/ES/DE/NL factory routes (44 routes: 11 pages x 4 langs, P5/5)
     ├── sitemap.py         (86 lines)  Dynamic XML sitemap — Loto FR + EM multilang (P5/5)
     ├── api_gemini.py      (19 lines)  meta-analyse-texte
     ├── api_pdf.py         (37 lines)  meta-pdf
@@ -698,7 +702,7 @@ services/ — 21 modules, ~6200 lines
     ├── penalization.py       (65L)  Post-draw frequency penalization filter
     └── prompt_loader.py     (143L)  Loto PROMPT_MAP (18 keys) + EM file-based multilang loader (P4/5)
 
-tests/ — 685 tests, 23 files (pytest + pytest-cov)
+tests/ — 737 tests, 23 files (pytest + pytest-cov)
     ├── conftest.py                (247L)  Fixtures (AsyncSmartMockCursor, cache clear)
     ── Foundation Tests ──
     ├── test_models.py             (92L)   Pydantic models + CONFIG weights
@@ -723,10 +727,10 @@ tests/ — 685 tests, 23 files (pytest + pytest-cov)
     ├── test_chat_utils_em.py     (232L)   EM context building
     ── i18n / Multilang Tests (P1-P5/5) ──
     ├── test_i18n.py             (30 tests)  gettext, Babel catalogs, plurals, badges
-    ├── test_templates.py        (37 tests)  Jinja2 env, EM_URLS, render_template FR/EN
-    ├── test_js_i18n.py          (18 tests)  JS i18n labels FR/EN, key coverage
+    ├── test_templates.py        (83 tests)  Jinja2 env, EM_URLS, render_template FR/EN, legal pages 6 langs, footer links
+    ├── test_js_i18n.py          (21 tests)  JS i18n labels FR/EN, key coverage, chatbot welcome per lang
     ├── test_prompts.py          (58 tests)  Loto+EM prompts, lang fallback, variable substitution
-    ├── test_multilang_routes.py (67 tests)  Kill switch, hreflang, sitemap, routes, PAGE_SLUGS
+    ├── test_multilang_routes.py (66 tests)  Kill switch, hreflang, sitemap, routes (44), PAGE_SLUGS, legal URLs
     ── Stress Tests ──
     └── test_insult_oor.py        (854L)   141 tests: insult detection + out-of-range numbers
 ```
@@ -945,7 +949,7 @@ T=0  showMetaAnalysePopupEM()
 | `GET /favicon.ico` | favicon.ico |
 | `GET /BingSiteAuth.xml` | BingSiteAuth.xml |
 
-### EN EuroMillions Page Routes (7) — routes/en_em_pages.py (P2/5 — Jinja2)
+### EN EuroMillions Page Routes (11) — routes/en_em_pages.py (P2/5 — Jinja2)
 
 | Route | Jinja2 Template | lang |
 |-------|-----------------|------|
@@ -956,21 +960,25 @@ T=0  showMetaAnalysePopupEM()
 | `GET /en/euromillions/history` | em/historique.html | en |
 | `GET /en/euromillions/faq` | em/faq.html | en |
 | `GET /en/euromillions/news` | em/news.html | en |
+| `GET /en/euromillions/legal-notices` | em/mentions-legales.html | en |
+| `GET /en/euromillions/privacy` | em/confidentialite.html | en |
+| `GET /en/euromillions/cookies` | em/cookies.html | en |
+| `GET /en/euromillions/disclaimer` | em/disclaimer.html | en |
 
 All EN pages use the **same Jinja2 templates** as FR with `lang="en"`. `render_template()` injects: EN URLs, `date_locale="en-GB"`, EN chatbot JS, EN sponsor popup JS, `hreflang` tags (`fr`/`en`/`x-default`), lang-switch button, OG locale `en_GB`, BeGambleAware help link.
 
-### Multilang EuroMillions Page Routes (28) — routes/multilang_em_pages.py (P5/5)
+### Multilang EuroMillions Page Routes (44) — routes/multilang_em_pages.py (P5/5)
 
-Factory-generated routes for PT/ES/DE/NL (7 pages x 4 languages = 28 routes). All use the same Jinja2 templates as FR/EN.
+Factory-generated routes for PT/ES/DE/NL (11 pages x 4 languages = 44 routes). All use the same Jinja2 templates as FR/EN.
 
 | Route Pattern | Pages | Notes |
 |---------------|-------|-------|
-| `GET /pt/euromillions/*` | 7 | Portuguese (gerador, simulador, estatisticas, historico, noticias, faq) |
-| `GET /es/euromillions/*` | 7 | Spanish (generador, simulador, estadisticas, historial, noticias, faq) |
-| `GET /de/euromillions/*` | 7 | German (generator, simulator, statistiken, ziehungen, nachrichten, faq) |
-| `GET /nl/euromillions/*` | 7 | Dutch (generator, simulator, statistieken, geschiedenis, nieuws, faq) |
+| `GET /pt/euromillions/*` | 11 | Portuguese (gerador, simulador, estatisticas, historico, noticias, faq + avisos-legais, privacidade, cookies, aviso) |
+| `GET /es/euromillions/*` | 11 | Spanish (generador, simulador, estadisticas, historial, noticias, faq + aviso-legal, privacidad, cookies, aviso) |
+| `GET /de/euromillions/*` | 11 | German (generator, simulator, statistiken, ziehungen, nachrichten, faq + impressum, datenschutz, cookies, haftungsausschluss) |
+| `GET /nl/euromillions/*` | 11 | Dutch (generator, simulator, statistieken, geschiedenis, nieuws, faq + juridische-kennisgeving, privacy, cookies, disclaimer) |
 
-**Kill switch**: If `lang` not in `killswitch.ENABLED_LANGS` → 302 redirect to FR equivalent. Routes are always registered (SEO crawl-safe), check is at request time. ES activated 2026-02-28.
+**Kill switch**: If `lang` not in `killswitch.ENABLED_LANGS` → 302 redirect to FR equivalent. Routes are always registered (SEO crawl-safe), check is at request time. All 6 languages activated (ES/PT/DE/NL sprints 2026-02-28).
 
 ### Dynamic Sitemap — routes/sitemap.py (P5/5)
 
@@ -1477,10 +1485,10 @@ Babel/gettext catalog system for multilingual EuroMillions pages.
 |--------|--------|
 | `config/i18n.py` (221L) | Central i18n module: `gettext_func(lang)`, `ngettext_func(lang)`, `_global()` via ContextVar, `get_translator(request)`, `_badges(lang)`, `_analysis_strings(lang)` |
 | `translations/messages.pot` | Extracted 250+ msgids from Jinja2 templates via Babel |
-| `translations/{fr,en,pt,es,de,nl}/` | 6-language `.po` catalogs with compiled `.mo` files. FR=reference, EN=complete, pt/es/de/nl=stubs |
+| `translations/{fr,en,pt,es,de,nl}/` | 6-language `.po` catalogs with compiled `.mo` files. All 6 complete (384 entries each). FR=reference. |
 | `tests/test_i18n.py` (30 tests) | gettext loading, FR/EN translations, plurals, named placeholders, fallback, badge translations |
 
-**Result**: Production-ready gettext infrastructure. 6 supported languages. FR+EN complete, 4 languages ready for translation.
+**Result**: Production-ready gettext infrastructure. 6 supported languages. All 6 now complete (FR+EN initially, ES/PT/DE/NL via subsequent sprints).
 
 ### P2/5 — Jinja2 Templates + Sponsor Popup Fix (2026-02-27)
 
@@ -1497,7 +1505,7 @@ Server-side Jinja2 templates replace static HTML serving for all EuroMillions pa
 
 **Key design decision**: `newstyle=False` avoids Jinja2's `_make_new_gettext` auto-formatting (`rv % variables`) which breaks any `%` character in translated strings (CSS `60%`, `100%`, `%(total)s` placeholders).
 
-**Result**: 10 Jinja2 templates serve 14 pages (7 FR + 7 EN). 37 new tests. 540 total, 0 failures.
+**Result**: 10 Jinja2 templates serve 14 pages (7 FR + 7 EN). 37 new tests. 540 total, 0 failures. Later extended to 14 templates (+ 4 legal pages).
 
 ### P3/5 — JS i18n Centralisation (2026-02-27)
 
@@ -1505,7 +1513,7 @@ Centralized all JS-rendered strings into a single Python dict, injected via Jinj
 
 | Change | Detail |
 |--------|--------|
-| `config/js_i18n.py` (480L) | `_LABELS` dict: FR + EN + ES, 155 keys per lang (app-em, simulateur-em, sponsor-popup, meta75, rating) |
+| `config/js_i18n.py` (~1600L) | `_LABELS` dict: 6 langs (FR/EN/ES/PT/DE/NL), 160+ keys per lang (app-em, simulateur-em, sponsor-popup, meta75, rating, chatbot) |
 | `ui/templates/em/_base.html` | Added `<script>window.LotoIA_i18n = {{ js_labels\|tojson }};</script>` |
 | `config/templates.py` | `render_template()` injects `js_labels=get_js_labels(lang)` |
 | EN static JS files | Deleted 5 of 6 EN-specific JS files (`app-em-en.js`, `simulateur-em-en.js`, `sponsor-popup-em-en.js`, `sponsor-popup75-em-en.js`, `faq-em-en.js`) — frontend now reads `window.LotoIA_i18n` |
@@ -1536,7 +1544,7 @@ Factory-generated routes for PT/ES/DE/NL with kill switch, dynamic sitemap, and 
 
 | Change | Detail |
 |--------|--------|
-| `config/killswitch.py` (7L) | `ENABLED_LANGS = ["fr", "en", "es"]` — central toggle for multilingual routes |
+| `config/killswitch.py` (7L) | `ENABLED_LANGS = ["fr", "en", "es", "pt", "de", "nl"]` — all 6 languages active |
 | `config/templates.py` (256L) | Extended `EM_URLS` for 6 languages with localized URL slugs. Dynamic `_LANG_SWITCH` (FR→EN, others→FR). `hreflang_tags()` reads `killswitch.ENABLED_LANGS`. Extended `_GAMBLING_HELP`, `_OG_LOCALE`, `_DATE_LOCALE` for all 6 langs. |
 | `config/languages.py` (96L) | Extended `PAGE_SLUGS` for PT/ES/DE/NL (7 page types x 4 langs) |
 | `routes/multilang_em_pages.py` (175L) | Factory routes: `_HERO_TEXTS` per lang, `_PAGE_DEFS` for 7 pages, `_make_handler()`/`_make_faq_handler()` closures. Kill switch check → 302 to FR if disabled. 28 routes = 7 pages x 4 langs |
@@ -1603,9 +1611,116 @@ Full Spanish (castillan) translation of the EuroMillions module: UI, backend lab
 
 **Translation choices**: Data Science tone — "combinación" (not "boleto"), "modelado de probabilidades", "análisis estadístico". No lottery jargon ("ganar", "apostar", "suerte"). Internal tags kept in French (`[DONNÉES TEMPS RÉEL]`, `[RÉSULTAT SQL]` — code-matched). Gambling help: Jugar Bien / www.jugarbien.es / 900 200 225.
 
-**Kill switch activation**: `ENABLED_LANGS = ["fr", "en", "es"]`. Tests updated: kill switch default, hreflang (4 tags), sitemap includes ES, ES pages return 200.
+**Kill switch activation**: `ENABLED_LANGS` updated to include `"es"`. Tests updated: kill switch default, hreflang (4 tags), sitemap includes ES, ES pages return 200.
 
 **Result**: 26 files changed, +1621/-1412 lines. 684 → 685 tests, 0 failures. Deployed revision `hybride-api-00018-qm9`, 7 ES pages live at `lotoia.fr/es/euromillions/*`.
+
+### Sprint PT — Complete Portuguese Translation + Kill Switch Activation (2026-02-28)
+
+Full European Portuguese (PT-PT) translation of the EuroMillions module: UI, backend labels, AI prompts, and kill switch activation.
+
+| Change | Detail |
+|--------|--------|
+| `translations/pt/LC_MESSAGES/messages.po` | 384 `msgstr` entries translated. Cultural adaptations: Jogo Responsável (gambling help), 808 200 204 (phone), European Portuguese (not Brazilian) |
+| `config/js_i18n.py` (+160 keys) | Full `"pt"` section: locale `pt-PT`, all JS labels translated |
+| `services/em_pdf_generator.py` (+25 keys) | `PDF_LABELS["pt"]` block for META ANALYSE PDF reports |
+| `config/i18n.py` | `_badges("pt")` (8 keys) + `_analysis_strings("pt")` (30 keys) |
+| `em_schemas.py` (4 regex) | `^(fr|en|es)$` → `^(fr|en|pt|es)$` |
+| `prompts/em/pt/` (18 files) | All 18 prompts translated (PT-PT). Language header: `[IDIOMA — REGRA OBRIGATÓRIA]` |
+
+**Result**: 685 → 689 tests, 0 failures. 7 PT pages live at `lotoia.fr/pt/euromillions/*`.
+
+### Sprint DE — Complete German Translation + Kill Switch Activation (2026-02-28)
+
+Full German (Hochdeutsch) translation of the EuroMillions module: UI, backend labels, AI prompts, and kill switch activation.
+
+| Change | Detail |
+|--------|--------|
+| `translations/de/LC_MESSAGES/messages.po` | 384 `msgstr` entries translated. Cultural adaptations: Spielerschutz (gambling help). `100% gratis` pattern to avoid Babel `%g` format spec conflict |
+| `config/js_i18n.py` (+160 keys) | Full `"de"` section: locale `de-DE`, all JS labels translated |
+| `services/em_pdf_generator.py` (+25 keys) | `PDF_LABELS["de"]` block for META ANALYSE PDF reports |
+| `config/i18n.py` | `_badges("de")` (8 keys) + `_analysis_strings("de")` (30 keys) |
+| `em_schemas.py` (4 regex) | `^(fr|en|pt|es)$` → `^(fr|en|pt|es|de)$` |
+| `prompts/em/de/` (18 files) | All 18 prompts translated. Language header: `[SPRACHE — PFLICHT]` |
+
+**Babel `%g` bug fix**: `100% gratuit` → Babel auto-detects `%g` as Python format spec. DE `100% kostenlos` produces `%k` (mismatch → build failure). Fix: `100% gratis` keeps `%g` compatible.
+
+**Result**: 689 → 691 tests, 0 failures. 7 DE pages live at `lotoia.fr/de/euromillions/*`.
+
+### Sprint NL — Complete Dutch Translation + Kill Switch Activation (2026-02-28)
+
+Full Dutch (Belgian standard Nederlands) translation of the EuroMillions module — **final language, completing 6/6**.
+
+| Change | Detail |
+|--------|--------|
+| `translations/nl/LC_MESSAGES/messages.po` | 384 `msgstr` entries translated. Belgian cultural references: Gokkliniek (gambling help), 078 15 13 14 (phone). `100% gratis` pattern |
+| `config/js_i18n.py` (+160 keys) | Full `"nl"` section: locale `nl-BE`, all JS labels translated |
+| `services/em_pdf_generator.py` (+25 keys) | `PDF_LABELS["nl"]` block for META ANALYSE PDF reports |
+| `config/i18n.py` | `_badges("nl")` (8 keys) + `_analysis_strings("nl")` (30 keys) |
+| `services/em_gemini.py` | NL system instruction: `"VERPLICHT: Je schrijft ALTIJD in correct Nederlands."` |
+| `services/chat_utils.py` | NL sponsor messages + NL strip filter keywords |
+| `em_schemas.py` (4 regex) | `^(fr|en|pt|es|de)$` → `^(fr|en|pt|es|de|nl)$` |
+| `config/killswitch.py` | `ENABLED_LANGS = ["fr", "en", "es", "pt", "de", "nl"]` — all 6 ON |
+| `prompts/em/nl/` (18 files) | All 18 prompts translated. Language header: `[TAAL — VERPLICHTE REGEL]` |
+
+**Result**: 691 → 688 tests (NL-disabled tests removed, no more disabled languages), 0 failures. 7 NL pages live at `lotoia.fr/nl/euromillions/*`. **i18n 6/6 COMPLETE.**
+
+### Fix — Chatbot EM Welcome Message Per-Language (2026-03-01)
+
+Fixed bug where the EuroMillions chatbot welcome message always displayed in French for ES/PT/DE/NL pages.
+
+| Change | Detail |
+|--------|--------|
+| `ui/static/hybride-chatbot-em.js` | `STORAGE_KEY` made per-language: `hybride-history-em` + lang suffix (`-es`, `-pt`, `-de`, `-nl`). FR keeps base key. Prevents cross-language sessionStorage contamination |
+| `config/js_i18n.py` | Updated `chatbot_welcome` for ES/PT/DE/NL with correct translations |
+| `tests/test_js_i18n.py` (+3 tests) | `test_chatbot_welcome_not_french_for_other_langs`, `test_chatbot_welcome_language_markers`, `test_chatbot_welcome_injected_per_lang` |
+
+**Root cause**: All non-EN languages shared the same sessionStorage key `hybride-history-em`. When FR was visited first, the French welcome was cached and restored on other language pages.
+
+**Result**: 688 → 691 tests, 0 failures.
+
+### Feature — Mobile Globe Language Selector (2026-03-01)
+
+Added a globe button (🌐) on mobile (≤768px) replacing inline lang-switch buttons, with dropdown showing all 6 languages with flags.
+
+| Change | Detail |
+|--------|--------|
+| `config/templates.py` | Added `_build_all_lang_switches()` returning all enabled langs with flags + current marker. Added `all_lang_switches` and `lang_flag` to render context |
+| `ui/templates/em/_base.html` | Added `.lang-globe-wrap` with globe button + dropdown (`role="menu"`, `aria-expanded`) |
+| `ui/static/style.css` | +90 lines: `.lang-globe-*` styles. Desktop: `display: none`. Mobile `@media (max-width: 768px)`: globe visible, inline `.lang-switch` hidden |
+| `tests/test_templates.py` (+7 tests) | Globe in HTML, current lang highlighted, all 6 langs in dropdown, URLs match page, desktop switches preserved, `_build_all_lang_switches` unit test |
+
+**Design**: Desktop unchanged (inline buttons). Mobile: single globe button shows current lang code, opens dropdown with flags, active lang highlighted, click outside closes.
+
+**Result**: 691 → 698 tests, 0 failures.
+
+### Feature — Legal Pages EM Multilingues + Footer Corrigé (2026-03-01)
+
+Added 4 multilingual legal pages for EuroMillions (6 languages each) and updated the EM footer to use dynamic per-language legal URLs.
+
+| Change | Detail |
+|--------|--------|
+| `ui/templates/em/mentions-legales.html` (new, ~500L) | Legal notices: publisher, hosting (GCP), IP, liability, personal data, cookies, external links, applicable law, contact. All 6 langs |
+| `ui/templates/em/confidentialite.html` (new, ~800L) | Privacy policy: 12 GDPR/RGPD sections. Per-lang supervisory authorities (CNIL, ICO, AEPD, CNPD, BfDI, AP) |
+| `ui/templates/em/cookies.html` (new, ~1260L) | Cookie policy: 8 sections, JS cookie settings and data clearing buttons |
+| `ui/templates/em/disclaimer.html` (new, ~710L) | Disclaimer: gambling warning 18+, AI warning, liability limitation. Per-lang gambling help resources |
+| `config/templates.py` | 24 new legal URLs in `EM_URLS` (4 pages x 6 languages with localized slugs) |
+| `ui/templates/em/_footer.html` | Dynamic legal URLs: `{{ urls.mentions }}`, `{{ urls.confidentialite }}`, `{{ urls.cookies }}`, `{{ urls.disclaimer }}` (was hardcoded FR) |
+| `routes/em_pages.py` (+4 routes) | FR legal: `/euromillions/mentions-legales`, `/euromillions/confidentialite`, `/euromillions/cookies`, `/euromillions/avertissement` |
+| `routes/en_em_pages.py` (+4 routes) | EN legal: `/en/euromillions/legal-notices`, `/en/euromillions/privacy`, `/en/euromillions/cookies`, `/en/euromillions/disclaimer` |
+| `routes/multilang_em_pages.py` (+4 `_PAGE_DEFS`) | Legal pages added to factory: 16 new routes (4 pages x 4 langs) |
+| `tests/test_templates.py` (+39 tests) | Legal page rendering (4 pages x 6 langs), noindex, canonical, `EM_URLS` legal keys, footer links per lang |
+| `tests/test_multilang_routes.py` (updated) | Route count 7→11 per lang, route match includes legal keys |
+
+**Localized legal URL slugs**:
+- FR: mentions-legales, confidentialite, cookies, avertissement
+- EN: legal-notices, privacy, cookies, disclaimer
+- PT: avisos-legais, privacidade, cookies, aviso
+- ES: aviso-legal, privacidad, cookies, aviso
+- DE: impressum, datenschutz, cookies, haftungsausschluss
+- NL: juridische-kennisgeving, privacy, cookies, disclaimer
+
+**Result**: 698 → 737 tests, 0 failures. 66 EM routes total (11 pages x 6 langs). All legal pages have `noindex, follow` meta.
 
 ### Cumulative Impact
 
@@ -1618,13 +1733,15 @@ Full Spanish (castillan) translation of the EuroMillions module: UI, backend lab
 | Database driver | PyMySQL (sync + 68 to_thread) | aiomysql (native async) |
 | Cache | In-memory dict | Redis async + in-memory fallback |
 | Security headers | Basic CSP | CSP + HSTS preload + COOP + Permissions-Policy |
-| EM page serving | Static HTML (duplicated FR/EN) | Jinja2 templates (shared 6 langs, P2/5) |
-| JS i18n | Hardcoded FR + 6 EN-specific JS files | `window.LotoIA_i18n` centralized, FR/EN/ES (P3/5 + Sprint ES) |
-| EM prompts | PROMPT_MAP dict (FR-only) | File-based multilang (6 langs, fallback chain, P4/5). ES fully translated (Sprint ES) |
-| Multilang routes | FR + EN only | 6 langs (42 EM routes), kill switch, dynamic sitemap (P5/5). ES activated (Sprint ES) |
-| i18n | FR only | Babel/gettext 6 langs + Jinja2 + JS labels + prompts + routes (P1-P5/5). ES complete (Sprint ES) |
+| EM page serving | Static HTML (duplicated FR/EN) | Jinja2 templates (14 templates shared 6 langs, P2/5 + legal pages) |
+| JS i18n | Hardcoded FR + 6 EN-specific JS files | `window.LotoIA_i18n` centralized, 6 langs (P3/5 + Sprints ES/PT/DE/NL) |
+| EM prompts | PROMPT_MAP dict (FR-only) | File-based multilang (6 langs, fallback chain, P4/5). All 6 fully translated |
+| Multilang routes | FR + EN only | 6 langs (66 EM routes: 11 pages x 6 langs), kill switch, dynamic sitemap (P5/5). All 6 activated |
+| i18n | FR only | Babel/gettext 6 langs + Jinja2 + JS labels + prompts + routes (P1-P5/5). **All 6 complete** |
 | Chatbot delivery | Batch (single block response) | SSE streaming (word-by-word, P9) |
-| Tests | 248 | **685** |
+| Legal pages | None | 4 multilingual legal pages (mentions, privacy, cookies, disclaimer) x 6 langs = 24 URLs |
+| Mobile UX | Inline lang buttons (all sizes) | Globe selector on mobile (≤768px), inline buttons on desktop |
+| Tests | 248 | **737** |
 | Services modules | 10 | **21** |
 ### Earlier Development History (Condensed)
 
@@ -1643,7 +1760,13 @@ Full Spanish (castillan) translation of the EuroMillions module: UI, backend lab
 | 2026-02-27 | P4/5: Prompts localisés — file-based `load_prompt_em(name, lang)` with fallback chain, `prompts/em/` (108 files, 6 langs), 58 tests |
 | 2026-02-27 | P5/5: Routes multilingues + SEO — kill switch, 28 factory routes (PT/ES/DE/NL), dynamic sitemap, hreflang filtering, 67 tests. 683 tests. |
 | 2026-02-28 | P9: SSE Streaming — real-time word-by-word chatbot responses via `stream_gemini_chat()`, `handle_chat_stream()`, `getReader()` frontend. Anti-buffering headers (`Content-Encoding: identity`). 684 tests. |
-| 2026-02-28 | Sprint ES: Complete Spanish translation — 384 .po entries, 155 JS keys, 25 PDF labels, 18 AI prompts (Data Science tone), 4 schema regex. Kill switch activated: `["fr", "en", "es"]`. 7 ES pages live. **685 tests.** |
+| 2026-02-28 | Sprint ES: Complete Spanish translation — 384 .po entries, 155 JS keys, 25 PDF labels, 18 AI prompts (Data Science tone), 4 schema regex. Kill switch activated. 7 ES pages live. **685 tests.** |
+| 2026-02-28 | Sprint PT: Complete Portuguese (PT-PT) translation — 384 .po, 160+ JS, 25 PDF, 18 prompts, badges, analysis strings. Kill switch activated. 7 PT pages live. **689 tests.** |
+| 2026-02-28 | Sprint DE: Complete German (Hochdeutsch) translation — 384 .po, 160+ JS, 25 PDF, 18 prompts. Babel `%g` bug fix (`gratis` pattern). 7 DE pages live. **691 tests.** |
+| 2026-02-28 | Sprint NL: Complete Dutch (Belgian Nederlands) translation — FINAL language. 384 .po, 160+ JS, 25 PDF, 18 prompts. `ENABLED_LANGS` = all 6. **i18n 6/6 COMPLETE. 688 tests.** |
+| 2026-03-01 | Fix: Chatbot EM welcome per-language sessionStorage key. Per-lang `STORAGE_KEY` in `hybride-chatbot-em.js`. **691 tests.** |
+| 2026-03-01 | Feature: Mobile globe language selector (🌐). Globe button + dropdown on mobile ≤768px, desktop unchanged. **698 tests.** |
+| 2026-03-01 | Feature: Legal pages EM multilingues (4 pages x 6 langs = 24 URLs). mentions-legales, confidentialite, cookies, disclaimer. Footer dynamic URLs. 66 EM routes total. **737 tests.** |
 
 ---
 
@@ -1657,12 +1780,12 @@ Full Spanish (castillan) translation of the EuroMillions module: UI, backend lab
 | HYBRIDE Engine (EuroMillions) | Stable | 5 boules [1-50] + 2 etoiles [1-12] |
 | HYBRIDE Chatbot (Loto) | Stable | Modular: 4 service modules (Phase 1). 12-phase detection, Text-to-SQL, SSE streaming (P9), session persistence, GA4 tracking, sponsor system. 6 pages. |
 | HYBRIDE Chatbot (EuroMillions) | Stable | Modular: 4 service modules (Phase 4). SSE streaming (P9). Same architecture as Loto. 7 FR + 7 EN pages (Phase 11). Isolated sessionStorage. EN response pools + EN prompts. |
-| i18n / Multilang | **Complete (P1-P5/5 + Sprint ES)** | Babel/gettext (P1/5), Jinja2 templates (P2/5), JS i18n (P3/5), multilang prompts (P4/5), routes+sitemap+killswitch (P5/5). 6 languages, 42 EM routes. **ES fully translated** (Sprint ES): 384 .po, 155 JS, 25 PDF, 18 prompts, kill switch ON. Remaining: PDF (26 FR strings), rating popup (5 FR strings), .po stubs (pt/de/nl). Loto EN not yet planned. |
+| i18n / Multilang | **Complete (P1-P5/5 + Sprints ES/PT/DE/NL)** | Babel/gettext (P1/5), Jinja2 templates (P2/5), JS i18n (P3/5), multilang prompts (P4/5), routes+sitemap+killswitch (P5/5). **All 6 languages fully translated and live**: FR, EN, ES, PT, DE, NL. 66 EM routes (11 pages x 6 langs). 384 .po entries, 160+ JS keys, 25 PDF labels, 18 AI prompts per lang. `ENABLED_LANGS = ["fr", "en", "es", "pt", "de", "nl"]`. 4 multilingual legal pages. Mobile globe lang selector. Remaining: rating popup (5 FR strings). Loto EN not yet planned. |
 | Stats Layer | Stable | Base class (Phase 2): 770L base + 2 thin wrappers, GameConfig-driven |
 | META ANALYSE 75 (Loto) | Stable | Async Gemini enrichment + PDF export, circuit breaker fallback. 18 Loto prompt keys. |
 | META ANALYSE 75 (EM) | Stable | Dual graphs, EM Gemini enrichment, EM PDF (2x2 matplotlib), 14 EM prompt keys. |
 | Cache | Stable | Redis async + in-memory fallback (Phase 6). PDF off-thread. |
-| Testing | Active | **685 tests** (pytest, 23 test files), CI integration |
+| Testing | Active | **737 tests** (pytest, 23 test files), CI integration |
 | Security | Hardened | CSP+HSTS preload+COOP (Phase 7), aiomysql parameterized queries, rate limiting, correlation IDs |
 | SEO | Stable | Schema.org Dataset (Phase 7), bankability T4 pivot (Phase 8), dynamic sitemap (P5/5), hreflang multilang (P5/5), structured data, canonical redirects |
 | Mobile responsive | Stable | Fullscreen chatbot, viewport sync, safe-area support |
@@ -1689,8 +1812,8 @@ Observable characteristics based on development usage:
 - **Redis optional** — `services/cache.py` falls back to per-process in-memory cache if `REDIS_URL` absent (not shared across 2 workers in fallback mode).
 - **Gemini dependency** — META ANALYSE and chatbot depend on an external API. Mitigated by circuit breaker + fallback messages, but degraded experience when open.
 - **Minimal monitoring** — Production observability relies on Cloud Run metrics + JSON structured logs with correlation IDs. No APM or alerting.
-- **Test coverage** — 685 tests across 23 files. Core engine, chat pipeline, stats, insult/OOR detection, templates, i18n, JS labels, prompts, multilang routes well covered. Some route handlers and PDF have lower coverage.
-- **i18n residue** — Full i18n pipeline complete (P1-P5/5): gettext, Jinja2, JS labels, prompts, routes, sitemap, kill switch. ES fully translated (Sprint ES). 2 FR residue areas remain: PDF (26 hardcoded FR strings in `em_pdf_generator.py`), rating popup (5 FR strings in `rating-popup.js`). 3 stub languages (pt/de/nl) `.po` catalogs need human translation.
+- **Test coverage** — 737 tests across 23 files. Core engine, chat pipeline, stats, insult/OOR detection, templates, legal pages, i18n, JS labels, prompts, multilang routes well covered. Some route handlers and PDF have lower coverage.
+- **i18n residue** — Full i18n pipeline complete (P1-P5/5 + Sprints ES/PT/DE/NL): gettext, Jinja2, JS labels, prompts, routes, sitemap, kill switch. **All 6 languages fully translated and live.** 4 legal pages translated. 1 minor FR residue: rating popup (5 FR strings in `rating-popup.js`). Loto EN not yet planned.
 
 ---
 
@@ -1735,4 +1858,4 @@ Observable characteristics based on development usage:
 
 ---
 
-*Updated by JyppY & Claude Opus 4.6 — 28/02/2026 (v12.0: Sprint ES — Complete Spanish translation + kill switch activation. 384 .po entries, 155 JS keys, 25 PDF labels, 18 AI prompts (Data Science tone), 4 schema regex. ENABLED_LANGS = ["fr", "en", "es"]. 7 ES pages live at lotoia.fr/es/euromillions/*. 685 tests, 0 failures. Previous: P9 (SSE streaming), P1-P5/5 (i18n infrastructure), Phase 11 (EN multilang), Phases 1-10.)*
+*Updated by JyppY & Claude Opus 4.6 — 01/03/2026 (v16.0: Legal pages EM multilingues (4 pages x 6 langs = 24 URLs), mobile globe lang selector, chatbot welcome per-lang fix. 66 EM routes total (11 pages x 6 langs). 737 tests, 0 failures. Previous: i18n 6/6 COMPLETE, P9 (SSE streaming), P1-P5/5 (i18n infrastructure), Phase 11 (EN multilang), Phases 1-10.)*
