@@ -338,20 +338,22 @@ function showSponsorPopup75(config) {
             }, { once: true });
         }
 
-        // Bouton Annuler — injecté dans timer-circle-container (même ligne)
+        // Bouton Annuler — wrapper .sponsor-popup-actions (harmonisé avec classique)
         const modal = overlay.querySelector('.sponsor-popup-modal');
         const cancelBtn = document.createElement('button');
         cancelBtn.type = 'button';
         cancelBtn.className = 'sponsor-cancel-btn';
         cancelBtn.textContent = 'Annuler';
 
-        const timerContainer = overlay.querySelector('.timer-circle-container');
-        if (timerContainer) {
-            timerContainer.appendChild(cancelBtn);
-        } else if (modal) {
-            modal.appendChild(cancelBtn);
+        // Conteneur d'actions (positionnement bas/droite via CSS)
+        const actions = document.createElement('div');
+        actions.className = 'sponsor-popup-actions';
+        actions.appendChild(cancelBtn);
+
+        if (modal) {
+            modal.appendChild(actions);
         } else {
-            overlay.appendChild(cancelBtn);
+            overlay.appendChild(actions);
         }
 
         cancelBtn.addEventListener('click', (e) => {
