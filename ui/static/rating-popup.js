@@ -16,7 +16,8 @@
     function hasAlreadyRated() {
         return sessionStorage.getItem('lotoia_rated_popup_accueil')
             || sessionStorage.getItem('lotoia_rated_chatbot_loto')
-            || sessionStorage.getItem('lotoia_rated_chatbot_em');
+            || sessionStorage.getItem('lotoia_rated_chatbot_em')
+            || sessionStorage.getItem('lotoia_dismissed_rating');
     }
 
     if (hasAlreadyRated()) return;
@@ -107,6 +108,7 @@
             var ratingModule = window.location.pathname.indexOf('/euromillions/') !== -1 ? 'euromillions' : 'loto';
             if (typeof umami !== 'undefined') umami.track('rating-dismissed', { module: ratingModule });
             if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('rating_dismissed', { event_category: 'engagement', module: ratingModule });
+            sessionStorage.setItem('lotoia_dismissed_rating', 'true');
             banner.classList.add('rating-banner-hide');
             setTimeout(function () { banner.remove(); }, 300);
         });

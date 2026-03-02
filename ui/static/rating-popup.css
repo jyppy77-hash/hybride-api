@@ -14,7 +14,7 @@
     align-items: center;
     justify-content: center;
     gap: 14px;
-    padding: 10px 48px 10px 20px;
+    padding: 10px 90px 10px 20px;
     background: var(--theme-bg-card, #1e293b);
     border-top: 1px solid var(--theme-border-light, rgba(255, 255, 255, 0.1));
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.25);
@@ -64,7 +64,7 @@
 .rating-banner-close {
     position: absolute;
     top: 50%;
-    right: 12px;
+    right: 78px;
     transform: translateY(-50%);
     background: none;
     border: none;
@@ -112,7 +112,7 @@
 @media (max-width: 480px) {
     #rating-banner {
         gap: 8px;
-        padding: 8px 40px 8px 16px;
+        padding: 8px 84px 8px 16px;
     }
 
     .rating-banner-text {
