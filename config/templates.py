@@ -326,7 +326,7 @@ def render_template(
                 if lang == "en" else
                 "/ui/static/hybride-chatbot-em.js?v=1.1"
             ),
-            "rating_js": "/ui/static/rating-popup.js?v=7",
+            "rating_js": "/ui/static/rating-popup.js?v=8",
 
             # Gambling help
             "gambling_help_url": help_info["url"],
