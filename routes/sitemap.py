@@ -41,6 +41,11 @@ _EM_PAGE_PRIORITY = {
     "historique":   (0.7,  "daily"),
     "faq":          (0.6,  "monthly"),
     "news":         (0.5,  "weekly"),
+    "a_propos":     (0.6,  "monthly"),
+    "moteur":       (0.8,  "monthly"),
+    "methodologie": (0.8,  "monthly"),
+    "ia":           (0.8,  "monthly"),
+    "hybride_page": (0.7,  "monthly"),
 }
 
 

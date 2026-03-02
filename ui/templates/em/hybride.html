@@ -1,0 +1,459 @@
+{% extends "em/_base.html" %}
+
+{% block head %}
+    <title>{{ _('HYBRIDE — Chatbot IA Grounded pour l\'EuroMillions | LotoIA') }}</title>
+    <meta name="description" content="{{ _('HYBRIDE est l\'assistant IA de LotoIA, connecté en temps réel aux %(total)s+ tirages officiels EuroMillions. Posez vos questions sur les numéros, les étoiles, les tirages et les statistiques.')|format(total=em_db_total) }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+    <!-- Open Graph -->
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="LotoIA">
+    <meta property="og:locale" content="{{ og_locale }}">
+    <meta property="og:title" content="{{ _('HYBRIDE — Chatbot IA Grounded EuroMillions | LotoIA') }}">
+    <meta property="og:description" content="{{ _('Assistant IA connecté en temps réel aux %(total)s+ tirages officiels EuroMillions. Zéro hallucination, uniquement des analyses factuelles.')|format(total=em_db_total) }}">
+    <meta property="og:url" content="{{ canonical_url }}">
+    <meta property="og:image" content="{{ base_url }}/static/og-image.jpg">
+    <meta property="og:image:secure_url" content="{{ base_url }}/static/og-image.jpg">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ _('HYBRIDE — Chatbot IA Grounded EuroMillions | LotoIA') }}">
+    <meta name="twitter:description" content="{{ _('Assistant IA connecté aux tirages officiels EuroMillions. Zéro hallucination, uniquement des analyses factuelles.') }}">
+    <meta name="twitter:image" content="{{ base_url }}/static/og-image.jpg">
+    <!-- JSON-LD SoftwareApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "HYBRIDE - Chatbot IA EuroMillions",
+      "applicationCategory": "ChatbotApplication",
+      "operatingSystem": "Web Browser",
+      "url": {{ canonical_url|tojson }},
+      "description": {{ _('Assistant IA conversationnel connecté en temps réel aux tirages officiels EuroMillions. Analyse factuelle, zéro hallucination.')|tojson }},
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR"
+      },
+      "featureList": [
+        {{ _('Connexion temps réel aux %(total)s+ tirages officiels EuroMillions')|format(total=em_db_total)|tojson }},
+        {{ _('Analyse de fréquences par numéro (1-50) et par étoile (1-12)')|tojson }},
+        {{ _('Recherche de tirages par date')|tojson }},
+        {{ _('Statistiques numéros et étoiles chauds et froids')|tojson }},
+        {{ _('Anti-hallucination par vérification systématique')|tojson }}
+      ],
+      "publisher": {
+        "@type": "Organization",
+        "name": "LotoIA",
+        "url": {{ base_url|tojson }}
+      }
+    }
+    </script>
+    <!-- JSON-LD BreadcrumbList -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": {{ _('Accueil EuroMillions')|tojson }}, "item": "{{ base_url }}{{ urls.home }}"},
+        {"@type": "ListItem", "position": 2, "name": {{ _('HYBRIDE — Chatbot IA')|tojson }}, "item": "{{ canonical_url }}"}
+      ]
+    }
+    </script>
+    <!-- JSON-LD FAQPage -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": {{ _('Comment fonctionne le chatbot HYBRIDE pour l\'EuroMillions ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('HYBRIDE utilise une architecture Grounded (RAG) : il interroge la base de données des %(total)s+ tirages officiels EuroMillions en temps réel, puis Gemini (Google DeepMind) formule une réponse factuelle à partir des données récupérées. Zéro hallucination.')|format(total=em_db_total)|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Le chatbot peut-il prédire les résultats EuroMillions ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Non. L\'EuroMillions est un jeu de hasard pur et personne — aucune IA, aucun algorithme — ne peut prédire les résultats. HYBRIDE analyse les données passées pour fournir des statistiques factuelles, il ne prédit pas l\'avenir.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('En quoi HYBRIDE est différent de ChatGPT pour l\'EuroMillions ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('ChatGPT est un modèle de langage généraliste sans accès aux données réelles des tirages. HYBRIDE est une IA Grounded connectée aux %(total)s+ tirages officiels EuroMillions stockés dans Cloud SQL. Chaque réponse est vérifiée, pas inventée.')|format(total=em_db_total)|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Le chatbot est-il disponible dans ma langue ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('HYBRIDE est disponible en 6 langues : français, anglais, espagnol, portugais, allemand et néerlandais. L\'interface et les réponses s\'adaptent automatiquement à la langue de la page.')|tojson }}
+          }
+        }
+      ]
+    }
+    </script>
+    <!-- Page-specific styles -->
+    <style>
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-size: 0.95rem;
+        }
+        .compare-table thead th {
+            background: var(--theme-bg-header, #0f172a);
+            color: #fff;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+        }
+        .compare-table tbody td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--theme-border, #e2e8f0);
+            color: var(--theme-text-primary, #1e293b);
+        }
+        .compare-table tbody tr:nth-child(even) {
+            background: rgba(0,0,0,0.02);
+        }
+        body.theme-night .compare-table tbody td {
+            color: var(--theme-text-primary, #e2e8f0);
+        }
+        body.theme-night .compare-table tbody tr:nth-child(even) {
+            background: rgba(255,255,255,0.03);
+        }
+        .compare-table .criteria {
+            font-weight: 600;
+        }
+        .example-box {
+            background: var(--theme-bg-card, #f8fafc);
+            border: 1px solid var(--theme-border, #e2e8f0);
+            border-radius: 10px;
+            padding: 16px 20px;
+            margin: 12px 0;
+        }
+        body.theme-night .example-box {
+            background: rgba(255,255,255,0.04);
+        }
+        .example-box code {
+            display: block;
+            padding: 6px 0;
+            font-size: 0.92rem;
+            color: var(--primary, #667eea);
+            font-family: inherit;
+            font-style: italic;
+        }
+        .cta-try {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            border-radius: 14px;
+            padding: 32px;
+            text-align: center;
+            margin: 32px 0;
+        }
+        .cta-try h3 {
+            font-size: 1.3rem;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+        .cta-try p {
+            font-size: 1rem;
+            color: rgba(255,255,255,0.9);
+            margin-bottom: 20px;
+        }
+        .cta-try-links {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .cta-try-links a {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .cta-try-links a.btn-white {
+            background: #fff;
+            color: #059669;
+        }
+        .cta-try-links a.btn-white:hover {
+            background: #f0fdf4;
+            transform: translateY(-2px);
+        }
+        .cta-try-links a.btn-outline-w {
+            background: transparent;
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.5);
+        }
+        .cta-try-links a.btn-outline-w:hover {
+            border-color: #fff;
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-2px);
+        }
+        @media (max-width: 600px) {
+            .compare-table { font-size: 0.82rem; }
+            .compare-table thead th,
+            .compare-table tbody td { padding: 8px 10px; }
+            .cta-try { padding: 24px 16px; }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% include "em/_hero.html" %}
+
+    <div class="container subpage-container">
+        <article class="legal-content">
+
+            {# ── Introduction ── #}
+            <section class="legal-section">
+                <p>{{ _('<strong>HYBRIDE</strong> est le chatbot IA intégré à LotoIA. Il est connecté en temps réel aux <strong>%(total)s+ tirages officiels</strong> de l\'EuroMillions. Contrairement à ChatGPT ou d\'autres IA génératives, HYBRIDE ne devine pas : il interroge les données réelles et vous répond avec des <strong>faits vérifiables</strong>.')|format(total=em_db_total)|safe }}</p>
+                <p>{{ _('Vous pouvez lui poser des questions sur les numéros (1-50), les étoiles (1-12), les tirages, les fréquences ou le fonctionnement du moteur. Il est disponible gratuitement sur toutes les pages EuroMillions de LotoIA — cliquez sur l\'icône en bas à droite pour essayer.')|safe }}</p>
+            </section>
+
+            {# ── Qu'est-ce qu'une IA Grounded ? ── #}
+            <section class="legal-section">
+                <h2>{{ _('Qu\'est-ce qu\'une IA « Grounded » ?') }}</h2>
+
+                <p>{{ _('Le terme <strong>« Grounded »</strong> (ancré) désigne une IA dont les réponses sont fondées sur des données vérifiées, et non sur l\'imagination ou des probabilités linguistiques.')|safe }}</p>
+
+                <p>{{ _('La différence fondamentale avec les modèles de langage classiques (ChatGPT, Gemini en mode libre, Claude) est cruciale :') }}</p>
+                <ul>
+                    <li>{{ _('Un <strong>LLM classique</strong> génère une réponse qui « semble correcte » à partir de ses connaissances d\'entraînement. Il peut inventer des faits, confondre des données ou produire des réponses plausibles mais fausses — c\'est ce qu\'on appelle l\'<strong>hallucination</strong>.')|safe }}</li>
+                    <li>{{ _('Une <strong>IA Grounded</strong> comme HYBRIDE interroge d\'abord sa base de données, récupère les faits pertinents, puis formule sa réponse à partir de ces données vérifiées. Pas de place pour l\'invention.')|safe }}</li>
+                </ul>
+
+                <div class="info-box" style="background: #f0fdf4; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #10b981;">
+                    <p><strong>{{ _('L\'analogie simple') }}</strong></p>
+                    <p><strong>ChatGPT</strong> = {{ _('un ami qui répond de mémoire. Souvent pertinent, parfois complètement faux, et vous ne pouvez pas vérifier.') }}</p>
+                    <p><strong>HYBRIDE</strong> = {{ _('un bibliothécaire qui va chercher dans les archives avant de répondre. Plus lent d\'une seconde, mais toujours factuel.') }}</p>
+                </div>
+
+                <p>{{ _('En termes techniques, HYBRIDE utilise une architecture appelée <strong>RAG</strong> (Retrieval-Augmented Generation) : le modèle « récupère » d\'abord les données pertinentes dans la base, puis « augmente » sa réponse avec ces données vérifiées. Le résultat : <strong>zéro hallucination</strong> sur les questions EuroMillions.')|safe }}</p>
+            </section>
+
+            {# ── Comment HYBRIDE accède aux données ── #}
+            <section class="legal-section">
+                <h2>{{ _('Comment HYBRIDE accède aux données en temps réel') }}</h2>
+
+                <p>{{ _('HYBRIDE n\'est pas un chatbot décoratif. Il est connecté à la même base de données que le <a href="%(moteur_url)s">moteur d\'exploration</a> et les <a href="%(stats_url)s">statistiques</a> de LotoIA :')|format(moteur_url=urls.moteur, stats_url=urls.statistiques)|safe }}</p>
+
+                <ul>
+                    <li>{{ _('<strong>%(total)s+ tirages officiels EuroMillions</strong> (plusieurs années d\'historique)')|format(total=em_db_total)|safe }}</li>
+                    <li>{{ _('<strong>Synchronisation automatique</strong> après chaque tirage officiel (mardi et vendredi)')|safe }}</li>
+                    <li>{{ _('Base hébergée sur <strong>Google Cloud SQL</strong> pour la fiabilité et la rapidité')|safe }}</li>
+                </ul>
+
+                <h3>{{ _('Le parcours d\'une question') }}</h3>
+                <ol>
+                    <li>{{ _('<strong>Vous posez votre question</strong> dans le chatbot (texte libre)')|safe }}</li>
+                    <li>{{ _('<strong>HYBRIDE analyse votre intention</strong> et identifie les données nécessaires')|safe }}</li>
+                    <li>{{ _('<strong>Il interroge la base de données</strong> Cloud SQL en temps réel')|safe }}</li>
+                    <li>{{ _('<strong>Gemini (Google DeepMind)</strong> formule une réponse claire à partir des données récupérées')|safe }}</li>
+                    <li>{{ _('<strong>Vérification anti-hallucination</strong> : la réponse est ancrée exclusivement sur les données EuroMillions')|safe }}</li>
+                    <li>{{ _('<strong>Vous recevez une réponse factuelle</strong>, généralement en moins de 3 secondes')|safe }}</li>
+                </ol>
+
+                <p>{{ _('Les données utilisées par HYBRIDE sont <strong>exactement les mêmes</strong> que celles affichées dans la page <a href="%(stats_url)s">Statistiques</a>. Pas de base alternative, pas de données approximatives.')|format(stats_url=urls.statistiques)|safe }}</p>
+            </section>
+
+            {# ── Ce que vous pouvez demander ── #}
+            <section class="legal-section">
+                <h2>{{ _('Ce que vous pouvez demander à HYBRIDE') }}</h2>
+
+                <h3>{{ _('Questions sur les numéros et les étoiles') }}</h3>
+                <p>{{ _('HYBRIDE connaît l\'historique complet de chaque numéro (1 à 50) et chaque étoile (1 à 12).') }}</p>
+                <div class="example-box">
+                    <code>{{ _('"Combien de fois le 22 est sorti en 2024 ?"') }}</code>
+                    <code>{{ _('"Quel est le numéro le plus sorti depuis 2019 ?"') }}</code>
+                    <code>{{ _('"Quelle étoile sort le plus souvent ?"') }}</code>
+                    <code>{{ _('"Quels numéros ne sont pas sortis depuis plus de 20 tirages ?"') }}</code>
+                </div>
+
+                <h3>{{ _('Questions sur les tirages') }}</h3>
+                <p>{{ _('Retrouvez n\'importe quel tirage par date ou explorez l\'historique complet.') }}</p>
+                <div class="example-box">
+                    <code>{{ _('"Quel était le résultat du tirage du 14 janvier 2025 ?"') }}</code>
+                    <code>{{ _('"Combien de tirages ont eu lieu en 2024 ?"') }}</code>
+                    <code>{{ _('"Quel tirage a eu la somme la plus élevée ?"') }}</code>
+                    <code>{{ _('"Montre-moi les 5 derniers tirages."') }}</code>
+                </div>
+
+                <h3>{{ _('Questions sur les statistiques') }}</h3>
+                <p>{{ _('HYBRIDE calcule les statistiques à la volée à partir de la base complète.') }}</p>
+                <div class="example-box">
+                    <code>{{ _('"Quels sont les 5 numéros les plus chauds en ce moment ?"') }}</code>
+                    <code>{{ _('"Quelle est la fréquence moyenne de sortie du numéro 42 ?"') }}</code>
+                    <code>{{ _('"Y a-t-il des paires de numéros qui sortent souvent ensemble ?"') }}</code>
+                    <code>{{ _('"Quelle étoile est la plus en retard ?"') }}</code>
+                </div>
+
+                <h3>{{ _('Questions pédagogiques') }}</h3>
+                <p>{{ _('HYBRIDE explique aussi le fonctionnement de la plateforme et les concepts statistiques.') }}</p>
+                <div class="example-box">
+                    <code>{{ _('"Comment fonctionne le moteur HYBRIDE ?"') }}</code>
+                    <code>{{ _('"C\'est quoi un numéro chaud ?"') }}</code>
+                    <code>{{ _('"L\'EuroMillions est-il vraiment aléatoire ?"') }}</code>
+                    <code>{{ _('"Dans quels pays peut-on jouer à l\'EuroMillions ?"') }}</code>
+                </div>
+            </section>
+
+            {# ── Ce que HYBRIDE ne fait PAS ── #}
+            <section class="legal-section">
+                <h2>{{ _('Ce que HYBRIDE ne fait PAS') }}</h2>
+
+                <p>{{ _('HYBRIDE est un assistant d\'<strong>analyse</strong>, pas un oracle. Voici ce qu\'il refuse de faire :')|safe }}</p>
+
+                <ul>
+                    <li>{{ _('Il <strong>ne prédit PAS</strong> les résultats futurs — l\'EuroMillions est un jeu de hasard pur')|safe }}</li>
+                    <li>{{ _('Il <strong>ne promet PAS</strong> de gains — aucune méthode ne peut garantir un gain à l\'EuroMillions')|safe }}</li>
+                    <li>{{ _('Il <strong>ne donne PAS</strong> de « numéros magiques » ou de « combinaisons gagnantes »')|safe }}</li>
+                    <li>{{ _('Il <strong>refuse les questions hors-sujet</strong> (politique, médecine, cuisine\u2026)')|safe }}</li>
+                    <li>{{ _('Il <strong>rappelle systématiquement</strong> que l\'EuroMillions est un jeu de hasard et que jouer comporte des risques')|safe }}</li>
+                </ul>
+
+                <p>{{ _('Cette honnêteté n\'est pas une limitation — c\'est une <strong>force</strong>. Dans un univers où les sites de « prédictions » pullulent, HYBRIDE choisit la transparence et l\'intégrité. Pour en savoir plus, consultez notre article <a href="%(ia_url)s">EuroMillions et Intelligence Artificielle</a>.')|format(ia_url=urls.ia)|safe }}</p>
+            </section>
+
+            {# ── Comparatif HYBRIDE vs ChatGPT ── #}
+            <section class="legal-section">
+                <h2>{{ _('HYBRIDE vs ChatGPT — Le comparatif') }}</h2>
+
+                <p>{{ _('Pourquoi ne pas simplement utiliser ChatGPT pour analyser l\'EuroMillions ? Voici la différence concrète :') }}</p>
+
+                <table class="compare-table">
+                    <thead>
+                        <tr>
+                            <th>{{ _('Critère') }}</th>
+                            <th>HYBRIDE (LotoIA)</th>
+                            <th>ChatGPT / GPTs</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="criteria">{{ _('Données EuroMillions réelles') }}</td>
+                            <td>{{ _('%(total)s+ tirages officiels')|format(total=em_db_total) }}</td>
+                            <td>{{ _('Aucune base de données') }}</td>
+                        </tr>
+                        <tr>
+                            <td class="criteria">{{ _('Mise à jour') }}</td>
+                            <td>{{ _('Après chaque tirage') }}</td>
+                            <td>{{ _('Knowledge cutoff figé') }}</td>
+                        </tr>
+                        <tr>
+                            <td class="criteria">{{ _('Anti-hallucination') }}</td>
+                            <td>{{ _('Vérification systématique') }}</td>
+                            <td>{{ _('Peut inventer des données') }}</td>
+                        </tr>
+                        <tr>
+                            <td class="criteria">{{ _('Spécialisé EuroMillions') }}</td>
+                            <td>{{ _('100%% dédié') }}</td>
+                            <td>{{ _('Généraliste') }}</td>
+                        </tr>
+                        <tr>
+                            <td class="criteria">{{ _('Gratuit') }}</td>
+                            <td>{{ _('Sans inscription') }}</td>
+                            <td>{{ _('Limité sans abonnement') }}</td>
+                        </tr>
+                        <tr>
+                            <td class="criteria">{{ _('Personnalité') }}</td>
+                            <td>{{ _('Mascotte ludique et pédagogique') }}</td>
+                            <td>{{ _('Générique') }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p>{{ _('Quand vous demandez à ChatGPT <em>« Quel numéro sort le plus à l\'EuroMillions ? »</em>, il génère une réponse plausible basée sur des connaissances générales — souvent inexacte ou datée. Quand vous posez la même question à HYBRIDE, il interroge la base de données en temps réel et vous donne la <strong>vraie réponse</strong>, à jour du dernier tirage.')|safe }}</p>
+            </section>
+
+            {# ── La personnalité HYBRIDE ── #}
+            <section class="legal-section">
+                <h2>{{ _('La personnalité HYBRIDE') }}</h2>
+
+                <p>{{ _('HYBRIDE n\'est pas un chatbot froid et technique. Il a été conçu pour être <strong>accessible, pédagogique et sympathique</strong> :')|safe }}</p>
+
+                <ul>
+                    <li>{{ _('<strong>Ton conversationnel</strong> — Il s\'adresse à vous comme un assistant bienveillant, pas comme un rapport statistique')|safe }}</li>
+                    <li>{{ _('<strong>Mise en forme claire</strong> — Il utilise des listes et des mises en forme pour rendre les données lisibles et agréables')|safe }}</li>
+                    <li>{{ _('<strong>Jeu responsable</strong> — Il rappelle régulièrement que l\'EuroMillions est un jeu de hasard et oriente vers les organismes d\'aide si nécessaire')|safe }}</li>
+                    <li>{{ _('<strong>Pédagogie</strong> — Il explique les concepts (numéros chauds, convergence, écart-type) dans un langage accessible')|safe }}</li>
+                    <li>{{ _('<strong>Multilingue</strong> — Il répond en 6 langues et s\'adapte automatiquement à la langue de la page')|safe }}</li>
+                </ul>
+
+                <p>{{ _('Sa philosophie : <strong>rendre les statistiques EuroMillions compréhensibles pour tous</strong>, du joueur occasionnel au passionné de data.')|safe }}</p>
+            </section>
+
+            {# ── CTA Essayer ── #}
+            <section class="legal-section">
+                <div class="cta-try">
+                    <h3>{{ _('Essayez HYBRIDE maintenant') }}</h3>
+                    <p>{{ _('Le chatbot est disponible sur toutes les pages EuroMillions de LotoIA. Cliquez sur l\'icône en bas à droite pour commencer une conversation.') }}</p>
+                    <div class="cta-try-links">
+                        <a href="{{ urls.generateur }}" class="btn-white">{{ _('Explorer des grilles') }}</a>
+                        <a href="{{ urls.simulateur }}" class="btn-outline-w">{{ _('Auditer ma grille') }}</a>
+                        <a href="{{ urls.statistiques }}" class="btn-outline-w">{{ _('Statistiques') }}</a>
+                    </div>
+                </div>
+            </section>
+
+            {# ── FAQ inline ── #}
+            <section class="legal-section">
+                <h2>{{ _('Questions fréquentes sur HYBRIDE') }}</h2>
+
+                <h3>{{ _('Comment fonctionne le chatbot HYBRIDE pour l\'EuroMillions ?') }}</h3>
+                <p>{{ _('HYBRIDE utilise une architecture <strong>Grounded (RAG)</strong> : il interroge la base de données des %(total)s+ tirages officiels EuroMillions en temps réel, puis <strong>Gemini</strong> (Google DeepMind) formule une réponse factuelle à partir des données récupérées. Si HYBRIDE ne trouve pas l\'information dans la base, il le dit — plutôt que d\'inventer.')|format(total=em_db_total)|safe }}</p>
+
+                <h3>{{ _('Le chatbot peut-il prédire les résultats EuroMillions ?') }}</h3>
+                <p>{{ _('<strong>Non.</strong> L\'EuroMillions est un jeu de hasard pur et <strong>personne</strong> — aucune IA, aucun algorithme, aucun « système » — ne peut prédire les résultats. HYBRIDE analyse les données passées pour vous donner des statistiques factuelles. Il ne prédit pas l\'avenir, et il le dit clairement.')|safe }}</p>
+
+                <h3>{{ _('En quoi HYBRIDE est différent de ChatGPT pour l\'EuroMillions ?') }}</h3>
+                <p>{{ _('ChatGPT est un modèle de langage <strong>généraliste</strong> sans accès aux données réelles des tirages. HYBRIDE est une IA <strong>Grounded</strong> connectée aux %(total)s+ tirages officiels EuroMillions stockés dans Cloud SQL. Chaque réponse est vérifiée, pas inventée.')|format(total=em_db_total)|safe }}</p>
+
+                <h3>{{ _('Le chatbot est-il disponible dans ma langue ?') }}</h3>
+                <p>{{ _('HYBRIDE est disponible en <strong>6 langues</strong> : français, anglais, espagnol, portugais, allemand et néerlandais. L\'interface et les réponses s\'adaptent automatiquement à la langue de la page que vous consultez.')|safe }}</p>
+            </section>
+
+            {# ── Avertissement ── #}
+            <section class="legal-section">
+                <div class="info-box" style="background: #fef3c7; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+                    <p><strong>{{ _('Jeu responsable') }}</strong></p>
+                    <p>{{ _('L\'EuroMillions est un jeu de hasard. Jouer comporte des risques : endettement, isolement, dépendance. Ne jouez jamais plus que ce que vous pouvez vous permettre de perdre.')|safe }}</p>
+                    <p>{{ _('Si vous ou un proche avez des difficultés avec le jeu, contactez <a href="%(url)s" target="_blank" rel="noopener">%(name)s</a>.')|format(url=gambling_help_url, name=gambling_help_name)|safe }}</p>
+                    <p>{{ _('Interdiction de jeu aux mineurs.') }}</p>
+                </div>
+            </section>
+
+        </article>
+
+        {# ── CTA action card ── #}
+        <section class="card action-card">
+            <div class="action-card-content">
+                <div class="action-card-icon">&#10024;</div>
+                <div class="action-card-text">
+                    <h3>{{ _('Explorer des grilles EuroMillions') }}</h3>
+                    <p>{{ _('Utilisez le moteur HYBRIDE pour générer des grilles statistiquement optimisées.') }}</p>
+                </div>
+                <a href="{{ urls.generateur }}" class="btn btn-primary">
+                    {{ _('Lancer l\'exploration') }}
+                    <span class="btn-arrow">&rarr;</span>
+                </a>
+            </div>
+        </section>
+
+        {% include "em/_footer.html" %}
+    </div>
+{% endblock %}

@@ -1,0 +1,206 @@
+{% extends "em/_base.html" %}
+
+{% block head %}
+    <title>{{ _('Moteur HYBRIDE EuroMillions — Analyse Statistique | LotoIA') }}</title>
+    <meta name="description" content="{{ _('HYBRIDE : moteur d\'analyse statistique hybride pour l\'EuroMillions. Architecture cloud-native, 5 algorithmes combinés, API REST temps réel.') }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LotoIA">
+    <meta property="og:locale" content="{{ og_locale }}">
+    <meta property="og:title" content="{{ _('Moteur HYBRIDE EuroMillions | LotoIA') }}">
+    <meta property="og:description" content="{{ _('Architecture technique du moteur d\'analyse statistique EuroMillions.') }}">
+    <meta property="og:url" content="{{ canonical_url }}">
+    <meta property="og:image" content="{{ base_url }}/static/og-image.jpg">
+    <meta property="og:image:secure_url" content="{{ base_url }}/static/og-image.jpg">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ _('Moteur HYBRIDE EuroMillions | LotoIA') }}">
+    <meta name="twitter:description" content="{{ _('Architecture technique du moteur d\'analyse statistique EuroMillions.') }}">
+    <meta name="twitter:image" content="{{ base_url }}/static/og-image.jpg">
+    <!-- JSON-LD SoftwareApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "HYBRIDE EuroMillions",
+      "applicationCategory": "UtilitiesApplication",
+      "applicationSubCategory": "Statistical Analysis",
+      "operatingSystem": "Cloud (Web)",
+      "description": {{ _('Moteur d\'analyse statistique hybride pour l\'EuroMillions basé sur l\'historique des tirages officiels')|tojson }},
+      "url": {{ canonical_url|tojson }},
+      "author": {
+        "@type": "Organization",
+        "name": "LotoIA",
+        "url": {{ base_url|tojson }}
+      },
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "EUR",
+        "availability": "https://schema.org/InStock"
+      },
+      "featureList": [
+        {{ _('Analyse fréquentielle sur 5 ans')|tojson }},
+        {{ _('Pondération tendances récentes')|tojson }},
+        {{ _('Analyse de conformité multicritère')|tojson }},
+        {{ _('Génération de grilles optimisées (5+2)')|tojson }},
+        {{ _('API REST temps réel')|tojson }}
+      ],
+      "softwareRequirements": {{ _('Navigateur web moderne')|tojson }},
+      "memoryRequirements": {{ _('Aucun (cloud-based)')|tojson }}
+    }
+    </script>
+    <!-- JSON-LD BreadcrumbList -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": {{ _('Accueil EuroMillions')|tojson }}, "item": "{{ base_url }}{{ urls.home }}"},
+        {"@type": "ListItem", "position": 2, "name": {{ _('Moteur HYBRIDE')|tojson }}, "item": "{{ canonical_url }}"}
+      ]
+    }
+    </script>
+{% endblock %}
+
+{% block body %}
+    {% include "em/_hero.html" %}
+
+    <div class="container subpage-container">
+        <article class="legal-content">
+
+            {# ── Vue d'ensemble ── #}
+            <section class="legal-section">
+                <h2>{{ _('Vue d\'ensemble') }}</h2>
+                <p>{{ _('<strong>HYBRIDE</strong> est le moteur de calcul au cœur de la plateforme LotoIA. Il combine plusieurs approches analytiques pour générer des grilles EuroMillions statistiquement optimisées.')|safe }}</p>
+
+                <div class="info-box" style="background: var(--theme-bg-card); padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #8b5cf6;">
+                    <p><strong>{{ _('Type') }}</strong> : {{ _('Moteur hybride (statistiques + heuristiques)') }}</p>
+                    <p><strong>{{ _('Format') }}</strong> : {{ _('5 numéros (1-50) + 2 étoiles (1-12)') }}</p>
+                    <p><strong>{{ _('Méthodologie') }}</strong> : {{ _('« 5 ans + 2 »') }}</p>
+                    <p><strong>{{ _('Infrastructure') }}</strong> : Google Cloud Run (serverless)</p>
+                    <p><strong>{{ _('Base de données') }}</strong> : Cloud SQL (MySQL)</p>
+                </div>
+            </section>
+
+            {# ── Architecture technique ── #}
+            <section class="legal-section">
+                <h2>{{ _('Architecture technique') }}</h2>
+
+                <h3>{{ _('Backend API') }}</h3>
+                <ul>
+                    <li><strong>Framework</strong> : FastAPI (Python 3.13+)</li>
+                    <li><strong>Endpoints</strong> : {{ _('REST API avec documentation OpenAPI') }}</li>
+                    <li><strong>{{ _('Authentification') }}</strong> : {{ _('Endpoints publics (lecture seule)') }}</li>
+                    <li><strong>{{ _('Compression') }}</strong> : {{ _('GZip middleware pour optimisation') }}</li>
+                </ul>
+
+                <h3>{{ _('Infrastructure Cloud') }}</h3>
+                <ul>
+                    <li><strong>Compute</strong> : Google Cloud Run (auto-scaling)</li>
+                    <li><strong>Database</strong> : Cloud SQL MySQL ({{ _('haute disponibilité') }})</li>
+                    <li><strong>CDN</strong> : {{ _('Cache headers optimisés pour assets statiques') }}</li>
+                    <li><strong>{{ _('Région') }}</strong> : {{ _('Google Cloud — Union européenne') }}</li>
+                </ul>
+            </section>
+
+            {# ── Algorithmes ── #}
+            <section class="legal-section">
+                <h2>{{ _('Algorithmes') }}</h2>
+
+                <h3>{{ _('1. Analyse fréquentielle') }}</h3>
+                <p>{{ _('Calcul des fréquences d\'apparition de chaque numéro (1-50) et de chaque étoile (1-12) sur l\'historique complet des tirages EuroMillions.') }}</p>
+
+                <h3>{{ _('2. Calcul des retards') }}</h3>
+                <p>{{ _('Détermination du nombre de tirages depuis la dernière apparition de chaque numéro et de chaque étoile.') }}</p>
+
+                <h3>{{ _('3. Pondération temporelle') }}</h3>
+                <p>{{ _('Application de coefficients de pondération privilégiant les 2 dernières années (méthodologie « 5 ans + 2 »).') }}</p>
+
+                <h3>{{ _('4. Scoring multicritère') }}</h3>
+                <p>{{ _('Évaluation de chaque grille candidate selon :') }}</p>
+                <ul>
+                    <li>{{ _('Équilibre pair/impair') }}</li>
+                    <li>{{ _('Répartition bas/haut') }}</li>
+                    <li>{{ _('Dispersion (écart min-max)') }}</li>
+                    <li>{{ _('Somme totale') }}</li>
+                    <li>{{ _('Détection de patterns (suites)') }}</li>
+                    <li>{{ _('Étoiles évaluées séparément (1-12)') }}</li>
+                </ul>
+
+                <h3>{{ _('5. Sélection optimale') }}</h3>
+                <p>{{ _('Filtrage et classement des grilles par niveau de convergence décroissant.') }}</p>
+            </section>
+
+            {# ── Endpoints API ── #}
+            <section class="legal-section">
+                <h2>{{ _('Endpoints API') }}</h2>
+                <div style="background: #1e293b; color: #e2e8f0; padding: 20px; border-radius: 8px; font-family: monospace; font-size: 14px; overflow-x: auto;">
+                    <p><span style="color: #22c55e;">GET</span> /api/euromillions/generate?n=3&amp;mode=balanced</p>
+                    <p><span style="color: #3b82f6;">GET</span> /api/euromillions/stats</p>
+                    <p><span style="color: #3b82f6;">GET</span> /api/euromillions/numbers-heat</p>
+                    <p><span style="color: #3b82f6;">GET</span> /api/euromillions/tirages/latest</p>
+                    <p><span style="color: #3b82f6;">GET</span> /health</p>
+                </div>
+            </section>
+
+            {# ── Modes de génération ── #}
+            <section class="legal-section">
+                <h2>{{ _('Modes de génération') }}</h2>
+                <table style="width: 100%; border-collapse: collapse; margin: 20px 0;">
+                    <thead>
+                        <tr style="background: var(--theme-bg-card);">
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid var(--border-color);">{{ _('Mode') }}</th>
+                            <th style="padding: 12px; text-align: left; border-bottom: 2px solid var(--border-color);">{{ _('Description') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);"><code>conservative</code></td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">{{ _('Privilégie les numéros fréquents (chauds)') }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);"><code>balanced</code></td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">{{ _('Équilibre entre fréquences et retards') }}</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);"><code>recent</code></td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">{{ _('Pondération forte sur les tendances récentes') }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            {# ── Avertissement ── #}
+            <section class="legal-section">
+                <div class="info-box" style="background: #fef3c7; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+                    <p><strong>{{ _('Le moteur HYBRIDE est un outil d\'analyse statistique.') }}</strong></p>
+                    <p>{{ _('Il ne prédit pas les résultats futurs des tirages. L\'EuroMillions reste un jeu de hasard où chaque tirage est indépendant. Probabilité de gagner le jackpot : 1 sur 139 838 160.') }}</p>
+                    <p>{{ _('LotoIA n\'est pas un opérateur de jeu et ne vend aucune grille.') }}</p>
+                </div>
+            </section>
+
+        </article>
+
+        {# ── CTA action card ── #}
+        <section class="card action-card">
+            <div class="action-card-content">
+                <div class="action-card-icon">&#10024;</div>
+                <div class="action-card-text">
+                    <h3>{{ _('Explorer des grilles EuroMillions') }}</h3>
+                    <p>{{ _('Utilisez le moteur HYBRIDE pour générer des grilles statistiquement optimisées.') }}</p>
+                </div>
+                <a href="{{ urls.generateur }}" class="btn btn-primary">
+                    {{ _('Lancer l\'exploration') }}
+                    <span class="btn-arrow">&rarr;</span>
+                </a>
+            </div>
+        </section>
+
+        {% include "em/_footer.html" %}
+    </div>
+{% endblock %}

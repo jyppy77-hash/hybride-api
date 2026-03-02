@@ -1,0 +1,163 @@
+{% extends "em/_base.html" %}
+
+{% block head %}
+    <title>{{ _('À propos de LotoIA | LotoIA EuroMillions') }}</title>
+    <meta name="description" content="{{ _('Découvrez LotoIA : mission, technologie HYBRIDE, données officielles EuroMillions et Loto, jeu responsable. Plateforme gratuite d\'analyse statistique.') }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LotoIA">
+    <meta property="og:locale" content="{{ og_locale }}">
+    <meta property="og:title" content="{{ _('À propos de LotoIA | LotoIA EuroMillions') }}">
+    <meta property="og:description" content="{{ _('Qui sommes-nous, notre mission et notre engagement pour le jeu responsable.') }}">
+    <meta property="og:url" content="{{ canonical_url }}">
+    <meta property="og:image" content="{{ base_url }}/static/og-image.jpg">
+    <meta property="og:image:secure_url" content="{{ base_url }}/static/og-image.jpg">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ _('À propos de LotoIA | LotoIA EuroMillions') }}">
+    <meta name="twitter:description" content="{{ _('Mission, technologie et engagement pour le jeu responsable.') }}">
+    <meta name="twitter:image" content="{{ base_url }}/static/og-image.jpg">
+    <!-- JSON-LD Organization -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "LotoIA",
+      "url": {{ base_url|tojson }},
+      "logo": "{{ base_url }}/static/og-image.jpg",
+      "description": {{ _('Plateforme d\'analyse statistique du Loto et de l\'EuroMillions basée sur le moteur algorithmique HYBRIDE')|tojson }},
+      "foundingDate": "2025",
+      "founder": {
+        "@type": "Person",
+        "name": "JyppY"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "customer support",
+        "email": "contact@lotoia.fr"
+      }
+    }
+    </script>
+    <!-- JSON-LD BreadcrumbList -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": {{ _('Accueil EuroMillions')|tojson }}, "item": "{{ base_url }}{{ urls.home }}"},
+        {"@type": "ListItem", "position": 2, "name": {{ _('À propos')|tojson }}, "item": "{{ canonical_url }}"}
+      ]
+    }
+    </script>
+{% endblock %}
+
+{% block body %}
+    {% include "em/_hero.html" %}
+
+    <div class="container subpage-container">
+        <article class="legal-content">
+
+            {# ── Qui sommes-nous ── #}
+            <section class="legal-section">
+                <h2>{{ _('Qui sommes-nous ?') }}</h2>
+                <p>{{ _('<strong>LotoIA</strong> est une plateforme française indépendante dédiée à l\'analyse statistique des tirages du Loto et de l\'EuroMillions. Créée par <strong>JyppY</strong>, développeur passionné par la data science et les probabilités, LotoIA est née d\'une conviction simple : les joueurs méritent des outils transparents, honnêtes et gratuits.')|safe }}</p>
+                <p>{{ _('Nous ne sommes <strong>pas affiliés à la Française des Jeux</strong> ni à aucun opérateur de loterie européen. Nous ne vendons ni grilles, ni abonnements, ni « systèmes gagnants ». LotoIA est un outil d\'analyse purement informatif et pédagogique.')|safe }}</p>
+            </section>
+
+            {# ── Notre mission ── #}
+            <section class="legal-section">
+                <h2>{{ _('Notre mission') }}</h2>
+                <p>{{ _('LotoIA poursuit trois objectifs :') }}</p>
+                <ol>
+                    <li>{{ _('<strong>Rendre les statistiques accessibles</strong> — Transformer des données brutes (tirages officiels Loto et EuroMillions) en analyses visuelles et compréhensibles par tous.')|safe }}</li>
+                    <li>{{ _('<strong>Lutter contre la désinformation</strong> — Trop de sites prétendent « prédire » les résultats ou vendent des méthodes miracles. Nous rappelons systématiquement que le Loto et l\'EuroMillions sont des jeux de hasard pur et que <strong>personne ne peut prédire les résultats</strong>.')|safe }}</li>
+                    <li>{{ _('<strong>Promouvoir le jeu responsable</strong> — Chaque page de notre site rappelle les risques liés au jeu et fournit les coordonnées des organismes d\'aide.')|safe }}</li>
+                </ol>
+            </section>
+
+            {# ── Notre technologie ── #}
+            <section class="legal-section">
+                <h2>{{ _('Notre technologie') }}</h2>
+
+                <h3>{{ _('Le moteur HYBRIDE') }}</h3>
+                <p>{{ _('Au cœur de LotoIA se trouve le moteur HYBRIDE, un algorithme d\'analyse statistique qui combine 5 composantes : analyse fréquentielle, calcul des retards, pondération temporelle, scoring multicritère et sélection optimale. Sa méthodologie est entièrement documentée et transparente.')|safe }}</p>
+
+                <h3>{{ _('L\'IA Grounded') }}</h3>
+                <p>{{ _('Notre chatbot intelligent est alimenté par <strong>Gemini</strong> (Google DeepMind) en mode « Grounded » : il est connecté en temps réel à nos bases de données de tirages officiels. Résultat : <strong>zéro hallucination</strong>. Chaque réponse est ancrée sur des données réelles et vérifiables.')|safe }}</p>
+
+                <h3>{{ _('Infrastructure') }}</h3>
+                <p>{{ _('LotoIA est hébergé sur <strong>Google Cloud Run</strong> avec une base de données <strong>Cloud SQL</strong>. Cette architecture garantit la disponibilité, la sécurité et la mise à jour automatique des données après chaque tirage officiel.')|safe }}</p>
+            </section>
+
+            {# ── Nos données ── #}
+            <section class="legal-section">
+                <h2>{{ _('Nos données') }}</h2>
+
+                <h3>{{ _('EuroMillions') }}</h3>
+                <p>{{ _('Notre base couvre <strong>729+ tirages officiels EuroMillions</strong> depuis 2019. L\'EuroMillions se joue dans 9 pays européens avec 5 numéros (1-50) et 2 étoiles (1-12). Les tirages ont lieu les mardis et vendredis.')|safe }}</p>
+
+                <h3>{{ _('Loto France') }}</h3>
+                <p>{{ _('Notre base couvre <strong>986+ tirages officiels du Loto français</strong> depuis novembre 2019. Le Loto se joue avec 5 numéros (1-49) et 1 numéro Chance (1-10). Les tirages ont lieu les lundis, mercredis et samedis.')|safe }}</p>
+
+                <p>{{ _('Toutes les données proviennent des sources officielles. Elles sont mises à jour automatiquement après chaque tirage. Aucune donnée n\'est inventée ou approximée.')|safe }}</p>
+            </section>
+
+            {# ── Jeu responsable ── #}
+            <section class="legal-section">
+                <h2>{{ _('Notre engagement pour le jeu responsable') }}</h2>
+                <p>{{ _('Le jeu responsable est au cœur de notre démarche. Concrètement :') }}</p>
+                <ul>
+                    <li>{{ _('Chaque page de LotoIA affiche un <strong>avertissement sur les risques du jeu</strong>')|safe }}</li>
+                    <li>{{ _('Nous ne promettons <strong>jamais de gains</strong> et rappelons que le Loto et l\'EuroMillions sont des jeux de hasard pur')|safe }}</li>
+                    <li>{{ _('Les coordonnées des <strong>organismes d\'aide</strong> sont visibles sur chaque page')|safe }}</li>
+                    <li>{{ _('Nous rappelons l\'<strong>interdiction de jeu aux mineurs</strong>')|safe }}</li>
+                    <li>{{ _('Nous n\'incitons jamais à jouer plus ou à augmenter ses mises')|safe }}</li>
+                </ul>
+                <p>{{ _('Si vous ou un proche avez des difficultés avec le jeu, contactez <a href="%(url)s" target="_blank" rel="noopener">%(name)s</a>.')|format(url=gambling_help_url, name=gambling_help_name)|safe }}</p>
+            </section>
+
+            {# ── Ce que LotoIA n'est pas ── #}
+            <section class="legal-section">
+                <h2>{{ _('Ce que LotoIA n\'est pas') }}</h2>
+                <ul>
+                    <li>{{ _('LotoIA <strong>n\'est pas un site de jeu</strong> — nous ne vendons pas de grilles et ne permettons pas de jouer')|safe }}</li>
+                    <li>{{ _('LotoIA <strong>n\'est pas un outil de pronostic</strong> — nous analysons des données historiques, nous ne prédisons pas l\'avenir')|safe }}</li>
+                    <li>{{ _('LotoIA <strong>n\'est pas affilié à la FDJ</strong> ni à aucun opérateur — nous sommes un projet indépendant')|safe }}</li>
+                    <li>{{ _('LotoIA <strong>n\'est pas payant</strong> — toutes les fonctionnalités sont gratuites, sans inscription')|safe }}</li>
+                </ul>
+            </section>
+
+            {# ── Contact ── #}
+            <section class="legal-section">
+                <h2>{{ _('Nous contacter') }}</h2>
+                <p>{{ _('Pour toute question, suggestion ou partenariat :') }}</p>
+                <ul>
+                    <li>{{ _('Email : <strong>contact@lotoia.fr</strong>')|safe }}</li>
+                    <li>{{ _('Partenariats : <strong>partenariats@lotoia.fr</strong>')|safe }}</li>
+                </ul>
+            </section>
+
+        </article>
+
+        {# ── CTA action card ── #}
+        <section class="card action-card">
+            <div class="action-card-content">
+                <div class="action-card-icon">&#10024;</div>
+                <div class="action-card-text">
+                    <h3>{{ _('Explorer les statistiques EuroMillions') }}</h3>
+                    <p>{{ _('Découvrez les fréquences, tendances et analyses des numéros et étoiles.') }}</p>
+                </div>
+                <a href="{{ urls.statistiques }}" class="btn btn-primary">
+                    {{ _('Voir les statistiques') }}
+                    <span class="btn-arrow">&rarr;</span>
+                </a>
+            </div>
+        </section>
+
+        {% include "em/_footer.html" %}
+    </div>
+{% endblock %}

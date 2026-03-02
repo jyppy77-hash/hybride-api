@@ -109,6 +109,81 @@ async def en_em_news(request: Request):
 # Legal pages EN
 # =========================
 
+@router.get("/en/euromillions/hybride", include_in_schema=False)
+async def en_em_hybride_page(request: Request):
+    """EuroMillions EN — HYBRIDE Chatbot."""
+    try:
+        total = await db_cloudsql.get_em_tirages_count()
+    except Exception:
+        total = 0
+    return render_template(
+        "em/hybride.html", request, lang="en", page_key="hybride_page",
+        body_class="subpage em-page",
+        include_nav_scroll=True,
+        hero_icon="\U0001f916",
+        hero_title="HYBRIDE Chatbot EuroMillions",
+        hero_subtitle="Conversational AI grounded in real data",
+        em_db_total=total,
+    )
+
+
+@router.get("/en/euromillions/artificial-intelligence", include_in_schema=False)
+async def en_em_ai(request: Request):
+    """EuroMillions EN — Artificial Intelligence."""
+    try:
+        total = await db_cloudsql.get_em_tirages_count()
+    except Exception:
+        total = 0
+    return render_template(
+        "em/euromillions-ia.html", request, lang="en", page_key="ia",
+        body_class="subpage em-page",
+        include_nav_scroll=True,
+        hero_icon="\U0001f916",
+        hero_title="EuroMillions and Artificial Intelligence",
+        hero_subtitle="What AI can \u2014 and cannot \u2014 do for lotteries",
+        em_db_total=total,
+    )
+
+
+@router.get("/en/euromillions/engine", include_in_schema=False)
+async def en_em_engine(request: Request):
+    """EuroMillions EN — HYBRIDE Engine."""
+    return render_template(
+        "em/moteur.html", request, lang="en", page_key="moteur",
+        body_class="subpage em-page",
+        include_nav_scroll=True,
+        hero_icon="⚙️",
+        hero_title="HYBRIDE Engine EuroMillions",
+        hero_subtitle="Technical architecture and analysis algorithms",
+    )
+
+
+@router.get("/en/euromillions/methodology", include_in_schema=False)
+async def en_em_methodology(request: Request):
+    """EuroMillions EN — Methodology."""
+    return render_template(
+        "em/methodologie.html", request, lang="en", page_key="methodologie",
+        body_class="subpage em-page",
+        include_nav_scroll=True,
+        hero_icon="📐",
+        hero_title="EuroMillions Methodology",
+        hero_subtitle="Our scientific approach to statistical analysis",
+    )
+
+
+@router.get("/en/euromillions/about", include_in_schema=False)
+async def en_em_about(request: Request):
+    """EuroMillions EN — About."""
+    return render_template(
+        "em/a-propos.html", request, lang="en", page_key="a_propos",
+        body_class="subpage em-page",
+        include_nav_scroll=True,
+        hero_icon="ℹ️",
+        hero_title="About LotoIA",
+        hero_subtitle="Our mission: making statistics accessible and understandable",
+    )
+
+
 @router.get("/en/euromillions/legal-notices", include_in_schema=False)
 async def en_em_mentions(request: Request):
     """EuroMillions EN — Legal Notices."""

@@ -1,0 +1,183 @@
+{% extends "em/_base.html" %}
+
+{% block head %}
+    <title>{{ _('Méthodologie « 5 ans + 2 » EuroMillions — Analyse Statistique | LotoIA') }}</title>
+    <meta name="description" content="{{ _('Découvrez la méthodologie « 5 ans + 2 » appliquée à l\'EuroMillions : analyse fréquentielle sur 5 ans, pondération des 2 dernières années. Approche data-driven.') }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+    <!-- Open Graph -->
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="LotoIA">
+    <meta property="og:locale" content="{{ og_locale }}">
+    <meta property="og:title" content="{{ _('Méthodologie « 5 ans + 2 » EuroMillions | LotoIA') }}">
+    <meta property="og:description" content="{{ _('Approche statistique hybride combinant analyse long terme et tendances récentes pour l\'EuroMillions.') }}">
+    <meta property="og:url" content="{{ canonical_url }}">
+    <meta property="og:image" content="{{ base_url }}/static/og-image.jpg">
+    <meta property="og:image:secure_url" content="{{ base_url }}/static/og-image.jpg">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ _('Méthodologie « 5 ans + 2 » EuroMillions | LotoIA') }}">
+    <meta name="twitter:description" content="{{ _('Approche statistique hybride pour l\'analyse des tirages EuroMillions.') }}">
+    <meta name="twitter:image" content="{{ base_url }}/static/og-image.jpg">
+    <!-- JSON-LD TechArticle -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "TechArticle",
+      "headline": {{ _('Méthodologie « 5 ans + 2 » : Analyse Statistique Avancée EuroMillions')|tojson }},
+      "description": {{ _('Documentation technique de la méthodologie d\'analyse statistique appliquée aux tirages EuroMillions')|tojson }},
+      "image": "{{ base_url }}/static/og-image.jpg",
+      "author": {
+        "@type": "Organization",
+        "name": "LotoIA",
+        "url": {{ base_url|tojson }}
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "LotoIA"
+      },
+      "mainEntityOfPage": {{ canonical_url|tojson }},
+      "about": {
+        "@type": "Thing",
+        "name": {{ _('Analyse statistique')|tojson }},
+        "description": {{ _('Méthodes statistiques appliquées aux données de loterie EuroMillions')|tojson }}
+      }
+    }
+    </script>
+    <!-- JSON-LD BreadcrumbList -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": {{ _('Accueil EuroMillions')|tojson }}, "item": "{{ base_url }}{{ urls.home }}"},
+        {"@type": "ListItem", "position": 2, "name": {{ _('Méthodologie')|tojson }}, "item": "{{ canonical_url }}"}
+      ]
+    }
+    </script>
+{% endblock %}
+
+{% block body %}
+    {% include "em/_hero.html" %}
+
+    <div class="container subpage-container">
+        <article class="legal-content">
+
+            {# ── Principe fondamental ── #}
+            <section class="legal-section">
+                <h2>{{ _('Principe fondamental') }}</h2>
+                <p>{{ _('La méthodologie <strong>« 5 ans + 2 »</strong> est le cœur du moteur HYBRIDE appliqué à l\'EuroMillions. Elle combine deux horizons temporels pour équilibrer stabilité statistique et réactivité aux tendances.')|safe }}</p>
+
+                <div class="info-box" style="background: var(--theme-bg-card); padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+                    <p><strong>5 {{ _('ans') }}</strong> : {{ _('Analyse de fréquence sur l\'ensemble de l\'historique disponible (2019-2026)') }}</p>
+                    <p><strong>+ 2</strong> : {{ _('Pondération renforcée sur les 2 dernières années pour capter les tendances récentes') }}</p>
+                </div>
+            </section>
+
+            {# ── Sources de données ── #}
+            <section class="legal-section">
+                <h2>{{ _('Sources de données') }}</h2>
+                <ul>
+                    <li><strong>{{ _('Base de données') }}</strong> : Cloud SQL (MySQL) {{ _('hébergée sur Google Cloud') }}</li>
+                    <li><strong>{{ _('Historique') }}</strong> : {{ _('729+ tirages officiels EuroMillions depuis février 2004') }}</li>
+                    <li><strong>{{ _('Fréquence') }}</strong> : {{ _('Tirages les mardis et vendredis') }}</li>
+                    <li><strong>{{ _('Mise à jour') }}</strong> : {{ _('Synchronisation après chaque tirage officiel') }}</li>
+                    <li><strong>{{ _('Intégrité') }}</strong> : {{ _('Vérification systématique des données sources') }}</li>
+                </ul>
+            </section>
+
+            {# ── Métriques calculées ── #}
+            <section class="legal-section">
+                <h2>{{ _('Métriques calculées') }}</h2>
+
+                <h3>{{ _('Fréquences') }}</h3>
+                <p>{{ _('Pour chaque numéro (1-50) et chaque étoile (1-12), calcul du nombre d\'apparitions sur la période analysée.') }}</p>
+
+                <h3>{{ _('Retards') }}</h3>
+                <p>{{ _('Nombre de tirages depuis la dernière apparition de chaque numéro et de chaque étoile.') }}</p>
+
+                <h3>{{ _('Analyse de conformité') }}</h3>
+                <p>{{ _('Évaluation multicritère basée sur :') }}</p>
+                <ul>
+                    <li>{{ _('Équilibre pair/impair (ratio optimal : 2-3 pairs)') }}</li>
+                    <li>{{ _('Répartition bas/haut (numéros 1-25 vs 26-50)') }}</li>
+                    <li>{{ _('Dispersion (écart entre min et max)') }}</li>
+                    <li>{{ _('Somme totale (plage optimale : ~125)') }}</li>
+                    <li>{{ _('Détection de suites consécutives') }}</li>
+                    <li>{{ _('Étoiles évaluées séparément (1-12)') }}</li>
+                </ul>
+            </section>
+
+            {# ── Pondération temporelle ── #}
+            <section class="legal-section">
+                <h2>{{ _('Pondération temporelle') }}</h2>
+                <p>{{ _('Le moteur HYBRIDE applique un système de pondération en deux couches :') }}</p>
+
+                <h3>{{ _('Couche 1 — Base long terme') }}</h3>
+                <p>{{ _('L\'historique complet des tirages EuroMillions est analysé pour établir les fréquences de référence. Cette base assure la stabilité statistique et identifie les tendances profondes.') }}</p>
+
+                <h3>{{ _('Couche 2 — Boost récent') }}</h3>
+                <p>{{ _('Les tirages des 2 dernières années reçoivent un coefficient de pondération plus élevé. Cela permet de capter les éventuelles inflexions de tendance sans perdre la perspective historique.') }}</p>
+
+                <div class="info-box" style="background: var(--theme-bg-card); padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #8b5cf6;">
+                    <p>{{ _('Ce double horizon est la raison du nom <strong>« 5 ans + 2 »</strong> : 5 ans de profondeur historique, avec un poids renforcé sur les 2 dernières années.')|safe }}</p>
+                </div>
+            </section>
+
+            {# ── Processus de génération ── #}
+            <section class="legal-section">
+                <h2>{{ _('Processus de génération') }}</h2>
+                <p>{{ _('Le moteur HYBRIDE suit un pipeline en 5 étapes pour chaque grille générée :') }}</p>
+                <ol>
+                    <li><strong>{{ _('Collecte') }}</strong> : {{ _('Extraction des tirages officiels depuis la base de données') }}</li>
+                    <li><strong>{{ _('Calcul') }}</strong> : {{ _('Fréquences, retards et pondérations temporelles pour les numéros (1-50) et les étoiles (1-12)') }}</li>
+                    <li><strong>{{ _('Génération') }}</strong> : {{ _('Sélection probabiliste de combinaisons candidates (5 numéros + 2 étoiles)') }}</li>
+                    <li><strong>{{ _('Scoring') }}</strong> : {{ _('Évaluation multicritère de chaque combinaison candidate') }}</li>
+                    <li><strong>{{ _('Sélection') }}</strong> : {{ _('Classement par score de conformité et retour des meilleures grilles') }}</li>
+                </ol>
+            </section>
+
+            {# ── Limites scientifiques ── #}
+            <section class="legal-section">
+                <h2>{{ _('Limites scientifiques') }}</h2>
+                <div class="info-box" style="background: #fef3c7; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+                    <p><strong>{{ _('Avertissement') }}</strong> : {{ _('L\'EuroMillions est un jeu de hasard. Chaque tirage est statistiquement indépendant. Aucune méthode ne peut prédire les résultats futurs.') }}</p>
+                    <p>{{ _('La méthodologie « 5 ans + 2 » propose des grilles <em>statistiquement guidées</em>, pas des prédictions.')|safe }}</p>
+                    <p><strong>{{ _('Probabilité de gain au rang 1 : 1 sur 139 838 160') }}</strong></p>
+                </div>
+            </section>
+
+            {# ── Stack technique ── #}
+            <section class="legal-section">
+                <h2>{{ _('Stack technique') }}</h2>
+                <ul>
+                    <li><strong>Backend</strong> : FastAPI (Python 3.13+)</li>
+                    <li><strong>Infrastructure</strong> : Google Cloud Run (auto-scaling)</li>
+                    <li><strong>{{ _('Base de données') }}</strong> : Cloud SQL (MySQL)</li>
+                    <li><strong>{{ _('Moteur') }}</strong> : HYBRIDE</li>
+                    <li><strong>{{ _('Région') }}</strong> : {{ _('Google Cloud — Union européenne') }}</li>
+                </ul>
+            </section>
+
+        </article>
+
+        {# ── CTA action card ── #}
+        <section class="card action-card">
+            <div class="action-card-content">
+                <div class="action-card-icon">&#10024;</div>
+                <div class="action-card-text">
+                    <h3>{{ _('Explorer des grilles EuroMillions') }}</h3>
+                    <p>{{ _('Utilisez la méthodologie « 5 ans + 2 » pour générer des grilles statistiquement guidées.') }}</p>
+                </div>
+                <a href="{{ urls.generateur }}" class="btn btn-primary">
+                    {{ _('Lancer l\'exploration') }}
+                    <span class="btn-arrow">&rarr;</span>
+                </a>
+            </div>
+        </section>
+
+        {% include "em/_footer.html" %}
+    </div>
+{% endblock %}

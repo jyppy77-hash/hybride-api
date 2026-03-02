@@ -171,6 +171,11 @@ _EN_PAGES = [
     "/en/euromillions/statistics",
     "/en/euromillions/history",
     "/en/euromillions/news",
+    "/en/euromillions/about",
+    "/en/euromillions/engine",
+    "/en/euromillions/methodology",
+    "/en/euromillions/artificial-intelligence",
+    "/en/euromillions/hybride",
 ]
 
 

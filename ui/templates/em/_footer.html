@@ -15,6 +15,17 @@
         <span class="footer-sep">&bull;</span>
         <a href="{{ urls.faq }}"{% if active_page == 'faq' %} class="active"{% endif %}>FAQ</a>
     </div>
+    <div class="footer-nav">
+        <a href="{{ urls.moteur }}"{% if active_page == 'moteur' %} class="active"{% endif %}>{{ _('Moteur HYBRIDE') }}</a>
+        <span class="footer-sep">&bull;</span>
+        <a href="{{ urls.methodologie }}"{% if active_page == 'methodologie' %} class="active"{% endif %}>{{ _('Méthodologie') }}</a>
+        <span class="footer-sep">&bull;</span>
+        <a href="{{ urls.ia }}"{% if active_page == 'ia' %} class="active"{% endif %}>{{ _('IA et EuroMillions') }}</a>
+        <span class="footer-sep">&bull;</span>
+        <a href="{{ urls.hybride_page }}"{% if active_page == 'hybride_page' %} class="active"{% endif %}>{{ _('Chatbot HYBRIDE') }}</a>
+        <span class="footer-sep">&bull;</span>
+        <a href="{{ urls.a_propos }}"{% if active_page == 'a_propos' %} class="active"{% endif %}>{{ _('À propos') }}</a>
+    </div>
     <div class="footer-legal">
         <a href="{{ urls.mentions }}">{{ _('Mentions légales') }}</a>
         <span class="footer-sep">&bull;</span>

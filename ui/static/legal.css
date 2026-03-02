@@ -50,6 +50,11 @@ body.theme-night .legal-page {
     line-height: 1.7;
 }
 
+/* Content pages with hero header — compensate -50px overlap */
+.loto-hero-header + .subpage-container > .legal-content {
+    padding-top: 60px;
+}
+
 .legal-page .legal-content h1 {
     font-size: 2rem;
     color: var(--legal-heading-color);
