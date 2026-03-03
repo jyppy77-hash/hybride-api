@@ -52,15 +52,15 @@ hybride-api/
 │   ├── multilang_em_pages.py            # EuroMillions PT/ES/DE/NL page routes (44 factory routes: 11 pages x 4 langs, P5/5)
 │   └── sitemap.py                       # Dynamic XML sitemap — Loto FR + EM multilang (P5/5)
 │
-├── services/                            # Business logic layer (21 modules, ~6200L)
+├── services/                            # Business logic layer (21 modules, ~7600L)
 │   ├── __init__.py                      # Package init
 │   ├── base_stats.py                    # GameConfig-driven base class Loto/EM (770L, Phase 2)
 │   ├── stats_service.py                 # Loto stats thin wrapper → base_stats (121L, Phase 2)
 │   ├── em_stats_service.py              # EM stats thin wrapper → base_stats (87L, Phase 2)
-│   ├── chat_pipeline.py                 # HYBRIDE chatbot orchestration — Loto (715L, Phase 1+P9 SSE)
-│   ├── chat_pipeline_em.py              # HYBRIDE chatbot orchestration — EM (760L, Phase 4+P9 SSE)
-│   ├── chat_detectors.py                # 12-phase detection: insults, numbers, grids — Loto (850L, Phase 1)
-│   ├── chat_detectors_em.py             # 12-phase detection — EM variant (495L, Phase 4)
+│   ├── chat_pipeline.py                 # HYBRIDE chatbot orchestration — Loto (723L, Phase 1+P9 SSE+Phase A)
+│   ├── chat_pipeline_em.py              # HYBRIDE chatbot orchestration — EM (771L, Phase 4+P9 SSE+Phase A)
+│   ├── chat_detectors.py                # 13-phase detection: insults, argent, numbers, grids — Loto (939L, Phase 1+Phase A)
+│   ├── chat_detectors_em.py             # 13-phase detection — EM variant (784L, Phase 4+Phase A)
 │   ├── chat_sql.py                      # Text-to-SQL generator + executor — Loto (247L, Phase 1)
 │   ├── chat_sql_em.py                   # Text-to-SQL generator — EM (176L, Phase 4)
 │   ├── chat_utils.py                    # Formatting, context, sponsor — Loto (396L, Phase 1)
@@ -72,7 +72,7 @@ hybride-api/
 │   ├── pdf_generator.py                 # ReportLab PDF — Loto (576L, graph + heatmap page 2, i18n 6 langs)
 │   ├── em_pdf_generator.py              # ReportLab PDF — EM (621L, dual graphs + heatmap page 2, i18n 6 langs)
 │   ├── pdf_heatmap.py                   # Shared heatmap module (134L, Google 4-color gradient grid + legend)
-│   ├── chat_responses_em_en.py          # English response pools for EM chatbot (Phase 11)
+│   ├── chat_responses_em_en.py          # English response pools for EM chatbot (277L, Phase 11+Phase A)
 │   ├── penalization.py                  # Number penalization logic (65L)
 │   └── prompt_loader.py                 # Dynamic prompt loader (143L, Loto PROMPT_MAP + file-based load_prompt_em with lang fallback, P4/5)
 │
@@ -230,7 +230,7 @@ hybride-api/
 │           ├── sponsor-popup-em.js      # EM sponsor popup logic
 │           └── sponsor-popup75-em.css   # EM META ANALYSE 75 popup styling
 │
-├── tests/                               # Unit tests (pytest) — 774 tests
+├── tests/                               # Unit tests (pytest) — 972 tests
 │   ├── conftest.py                      # Shared fixtures (SmartMockCursor, cache clear)
 │   ├── test_models.py                   # Pydantic models + CONFIG weights (10 tests)
 │   ├── test_hybride.py                  # HYBRIDE engine tests (21 tests)
@@ -247,7 +247,8 @@ hybride-api/
 │   ├── test_templates.py             # Jinja2 templates + render_template + legal pages tests (83 tests, P2/5 + legal)
 │   ├── test_js_i18n.py              # JS i18n labels tests (21 tests, P3/5 + chatbot welcome)
 │   ├── test_prompts.py              # Prompt system tests (59 tests, P4/5 + Sprint ES)
-│   └── test_multilang_routes.py     # Multilang routes + SEO tests (66 tests, P5/5 + legal routes)
+│   ├── test_multilang_routes.py     # Multilang routes + SEO tests (66 tests, P5/5 + legal routes)
+│   └── test_argent.py               # Argent/money detection + response tests (84 tests, Phase A)
 │
 ├── config/                                # Runtime configuration
 │   ├── __init__.py                      # Package init
@@ -402,7 +403,7 @@ This approach trades developer convenience (no hot-reload, no component model) f
 | **detectPage()** | accueil-em, euromillions, simulateur-em, statistiques-em, historique-em, faq-em, news-em |
 | **Typing ID** | `hybride-typing-indicator-em` (no conflict with Loto widget) |
 | **GA4 events** | Prefixed `hybride_em_chat_*` (open, message, session, sponsor_view, clear, error) |
-| **Backend** | `api_chat_em.py` (thin wrapper) → `services/chat_pipeline_em.py`: 12-phase detection pipeline adapted for EuroMillions (boules 1-50, 2 étoiles 1-12, table tirages_euromillions, draw days mardi/vendredi) |
+| **Backend** | `api_chat_em.py` (thin wrapper) → `services/chat_pipeline_em.py`: 13-phase detection pipeline adapted for EuroMillions (boules 1-50, 2 étoiles 1-12, table tirages_euromillions, draw days mardi/vendredi) |
 | **Prompts** | 3 dedicated EM prompts: `prompt_hybride_em.txt`, `prompt_sql_generator_em.txt`, `prompt_pitch_grille_em.txt` |
 | **Pitch** | `POST /api/euromillions/pitch-grilles` (1-5 grids, JSON pitchs with étoiles support) |
 | **Imports** | Generic utilities imported from `api_chat.py` (continuation, sponsor, insult/compliment detection, SQL validation, clean_response, format_date_fr, temporal filter). EM-specific functions and response pools defined locally. |
@@ -414,6 +415,7 @@ The chatbot is connected to Cloud SQL in real-time via a multi-phase detection p
 
 | Phase | Detection | Data Source | Example Query |
 |-------|-----------|-------------|---------------|
+| **Phase A — Money/Gambling** | Regex `_detect_argent()` / `_detect_argent_em()` | Court-circuit (no Gemini) — L1/L2/L3 response pools | "combien vaut le jackpot", "I want to get rich", "quiero apostar" |
 | **Phase 0 — Continuation** | Regex `_is_short_continuation()` | `_enrich_with_context()` (history) | "oui", "non", "vas-y", "détaille", "continue" |
 | **Phase 0-bis — Next Draw** | Regex `_detect_prochain_tirage()` | `_get_prochain_tirage()` | "c'est quand le prochain tirage ?" |
 | **Phase T — Draw Results** | Regex `_detect_tirage()` | `_get_tirage_data()` | "dernier tirage", "les numéros d'hier" |
@@ -422,7 +424,7 @@ The chatbot is connected to Cloud SQL in real-time via a multi-phase detection p
 | **Phase 1 — Single Number** | Regex `_detect_numero()` | `get_numero_stats()` | "le 9 est sorti combien de fois ?" |
 | **Phase SQL — Text-to-SQL** | Gemini SQL generation | `_generate_sql()` → `_execute_safe_sql()` | "combien de fois le 22 en 2025 ?", "quel numéro a le plus grand écart ?" |
 
-**Detection priority**: Continuation → Next Draw → Draw Results → [Temporal filter check] → Grid → Complex → Single Number → Text-to-SQL
+**Detection priority**: Insult → Compliment → **Argent** → Continuation → Next Draw → Draw Results → [Temporal filter check] → Grid → Complex → Single Number → Text-to-SQL
 
 **Contextual continuation (Phase 0)**: Short replies ("oui", "non", "vas-y", "détaille", "go", etc.) are intercepted by `CONTINUATION_PATTERNS` regex before any other phase. When detected, the message is enriched with the last user question + last assistant response from history via `_enrich_with_context()`, then sent directly to Gemini (all regex/SQL phases are bypassed). This prevents short answers from being misrouted to the grid generator or Text-to-SQL. The enriched message is used only for the Gemini call — the original message is preserved in conversational history. Logged as `[CONTINUATION]`.
 
@@ -536,11 +538,11 @@ USER BROWSER (HTML/CSS/Vanilla JS)
          |
          v
 +--------------------------------------------------+
-|              SERVICES LAYER (21 modules, ~6200L)  |
+|              SERVICES LAYER (21 modules, ~7600L)  |
 |                                                   |
-|  ── Chat Pipeline (Phase 1+4) ──────────────     |
-|  chat_pipeline.py       Loto 12-phase orchestration|
-|  chat_pipeline_em.py    EM 12-phase orchestration  |
+|  ── Chat Pipeline (Phase 1+4+A) ────────────     |
+|  chat_pipeline.py       Loto 13-phase orchestration|
+|  chat_pipeline_em.py    EM 13-phase orchestration  |
 |  chat_detectors.py      Regex detection + responses|
 |  chat_detectors_em.py   EM-specific detectors      |
 |  chat_sql.py            Text-to-SQL + executor     |
@@ -681,17 +683,17 @@ routes/ — 18 routers (3 unified + 8 legacy Loto + 4 legacy EM + 1 EN Phase 11 
     ├── api_tracking.py   (127 lines)  track-grid, track-ad-*
     └── api_ratings.py    (106 lines)  user rating submission + global stats
 
-services/ — 21 modules, ~6200 lines
-    ── Chat Pipeline (Phase 1 Loto, Phase 4 EM) ──
-    ├── chat_pipeline.py     (715L)  12-phase orchestration + SSE streaming — Loto (P9)
-    ├── chat_pipeline_em.py  (760L)  12-phase orchestration + SSE streaming — EM (P9)
-    ├── chat_detectors.py    (850L)  Regex detectors, insult/OOR pools, streak — Loto
-    ├── chat_detectors_em.py (495L)  EM-specific detectors + response pools
+services/ — 21 modules, ~7600 lines
+    ── Chat Pipeline (Phase 1 Loto, Phase 4 EM, Phase A) ──
+    ├── chat_pipeline.py     (723L)  13-phase orchestration + SSE streaming — Loto (P9+Phase A)
+    ├── chat_pipeline_em.py  (771L)  13-phase orchestration + SSE streaming — EM (P9+Phase A)
+    ├── chat_detectors.py    (939L)  Regex detectors, insult/OOR/argent pools, streak — Loto
+    ├── chat_detectors_em.py (784L)  EM-specific detectors + response pools (6 langs)
     ├── chat_sql.py          (247L)  Text-to-SQL generator + executor — Loto
     ├── chat_sql_em.py       (176L)  Text-to-SQL — EuroMillions
     ├── chat_utils.py        (396L)  Context building, formatting, sponsor — Loto
     ├── chat_utils_em.py     (200L)  Context building, formatting — EuroMillions
-    ├── chat_responses_em_en.py (~250L) English response pools for EM chatbot (Phase 11)
+    ├── chat_responses_em_en.py (277L)  EN response pools for EM chatbot (Phase 11+Phase A)
     ── Stats Layer (Phase 2: base class refactoring) ──
     ├── base_stats.py        (770L)  GameConfig-driven base class (8 methods, 4 SQL hooks)
     ├── stats_service.py     (121L)  Loto thin wrapper → base_stats
@@ -707,7 +709,7 @@ services/ — 21 modules, ~6200 lines
     ├── penalization.py       (65L)  Post-draw frequency penalization filter
     └── prompt_loader.py     (143L)  Loto PROMPT_MAP (18 keys) + EM file-based multilang loader (P4/5)
 
-tests/ — 774 tests, 24 files (pytest + pytest-cov)
+tests/ — 972 tests, 25 files (pytest + pytest-cov)
     ├── conftest.py                (247L)  Fixtures (AsyncSmartMockCursor, cache clear)
     ── Foundation Tests ──
     ├── test_models.py             (92L)   Pydantic models + CONFIG weights
@@ -730,6 +732,8 @@ tests/ — 774 tests, 24 files (pytest + pytest-cov)
     ├── test_chat_detectors_em.py (319L)   EM detection pipeline
     ├── test_chat_pipeline_em.py  (231L)   EM orchestration
     ├── test_chat_utils_em.py     (232L)   EM context building
+    ── Argent/Money Detection Tests (Phase A) ──
+    ├── test_argent.py            (373L)   84 tests: FR/EN/ES/PT/DE/NL detection, L1/L2/L3 levels, response language, non-regression
     ── i18n / Multilang Tests (P1-P5/5) ──
     ├── test_i18n.py             (30 tests)  gettext, Babel catalogs, plurals, badges
     ├── test_templates.py        (83 tests)  Jinja2 env, EM_URLS, render_template FR/EN, legal pages 6 langs, footer links
@@ -1200,20 +1204,21 @@ All endpoints below delegate to unified handlers (game=euromillions). Backward c
 - **Logging**: `[META TEXTE EM]` prefix for all log entries
 - **Zero coupling**: Does not import from `gemini.py` (independent module)
 
-### Chat Pipeline — 8 Modules (Phase 1 Loto, Phase 4 EM)
+### Chat Pipeline — 8 Modules (Phase 1 Loto, Phase 4 EM, Phase A Argent)
 
-Phase 1 split `api_chat.py` (2014L) into 4 service modules. Phase 4 applied the same pattern to `api_chat_em.py` (1668L).
+Phase 1 split `api_chat.py` (2014L) into 4 service modules. Phase 4 applied the same pattern to `api_chat_em.py` (1668L). Phase A added money/gambling detection (court-circuit, no Gemini).
 
-**services/chat_pipeline.py** (715L) / **chat_pipeline_em.py** (760L):
-- **12-phase orchestration**: Continuation → Next Draw → Draw Results → Grid → Complex → Single Number → Text-to-SQL → Gemini
-- **Refactored (P9)**: `_prepare_chat_context()` extracts all 12 detection phases → returns `(early_return, ctx_dict)`. Shared by batch and streaming modes.
+**services/chat_pipeline.py** (723L) / **chat_pipeline_em.py** (771L):
+- **13-phase orchestration**: Insult → Compliment → **Argent** → Continuation → Next Draw → Draw Results → Grid → Complex → Single Number → Text-to-SQL → Gemini
+- **Refactored (P9)**: `_prepare_chat_context()` extracts all 13 detection phases → returns `(early_return, ctx_dict)`. Shared by batch and streaming modes.
 - **Batch mode**: `handle_chat(message, history, page, httpx_client)` → `dict(response, source, mode)` (preserved for backward compat)
 - **SSE Streaming (P9)**: `handle_chat_stream()` async generator yields SSE events (`data: {"chunk", "source", "mode", "is_done"}\n\n`). Early returns (insult, compliment, OOR) yield single event. Gemini responses stream progressively. Sponsor injected as final chunk before done event. Fallback on exception.
 - **Pitch**: `handle_pitch(grilles, httpx_client)` → `dict(pitchs: list[str])`
 
-**services/chat_detectors.py** (850L) / **chat_detectors_em.py** (495L):
-- **Regex patterns**: `_detect_insulte()`, `_detect_numero()`, `_detect_grille()`, `_detect_requete_complexe()`, `_detect_prochain_tirage()`, `_detect_mode()`
-- **Response pools**: Insult L1-L4, OOR L1-L3, Compliment L1-L3, Menace responses
+**services/chat_detectors.py** (939L) / **chat_detectors_em.py** (784L):
+- **Regex patterns**: `_detect_insulte()`, `_detect_argent()` / `_detect_argent_em()`, `_detect_numero()`, `_detect_grille()`, `_detect_requete_complexe()`, `_detect_prochain_tirage()`, `_detect_mode()`
+- **Response pools**: Insult L1-L4, OOR L1-L3, Compliment L1-L3, Argent L1-L3 (6 langs), Menace responses
+- **Argent detection (Phase A)**: 3-level escalation — L1 pedagogical (default), L2 firm (strong money words like "devenir riche"/"get rich"), L3 help redirection (betting/gambling words → country-specific support links). FR/EN/ES/PT/DE/NL each have dedicated response pools and word lists.
 - **Streak tracking**: `_count_oor_streak()`, `_count_insult_streak()` with escalating responses
 
 **services/chat_sql.py** (247L) / **chat_sql_em.py** (176L):
@@ -1338,7 +1343,7 @@ Split `api_chat.py` (2014L) into 4 service modules + thin router.
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `services/chat_detectors.py` | 850 | Regex detection, insult/OOR/compliment pools, streak tracking |
+| `services/chat_detectors.py` | 939 | Regex detection, insult/OOR/compliment/argent pools, streak tracking |
 | `services/chat_pipeline.py` | 639 | 12-phase orchestration + Gemini pitch |
 | `services/chat_utils.py` | 396 | Context building, formatting, sponsor injection |
 | `services/chat_sql.py` | 247 | Text-to-SQL pipeline + safe DB execution |
@@ -1379,8 +1384,8 @@ Applied Phase 1 pattern to `api_chat_em.py` (1668L) → 4 service modules + thin
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `services/chat_detectors_em.py` | 495 | EM-specific regex + response pools |
-| `services/chat_pipeline_em.py` | 653 | EM 12-phase orchestration |
+| `services/chat_detectors_em.py` | 784 | EM-specific regex + response pools (6 langs, Phase A argent) |
+| `services/chat_pipeline_em.py` | 771 | EM 13-phase orchestration (Phase A argent) |
 | `services/chat_utils_em.py` | 200 | EM context formatting |
 | `services/chat_sql_em.py` | 176 | EM Text-to-SQL (tirages_euromillions schema) |
 | `routes/api_chat_em.py` | 73 | Thin wrapper + backward compat re-exports |
@@ -1466,7 +1471,7 @@ Full English (GB) version of the EuroMillions module: 7 HTML pages, 6 translated
 |------|-------|---------|
 | `config/languages.py` | ~50 | Language registry: `LANG_CONFIGS`, `get_lang_config()` |
 | `routes/en_em_pages.py` | 74 | 7 EN page routes (`/en/euromillions/*`) |
-| `services/chat_responses_em_en.py` | ~250 | English response pools for EM chatbot |
+| `services/chat_responses_em_en.py` | 277 | English response pools for EM chatbot (+ Phase A argent EN) |
 | `ui/en/euromillions/*.html` | 7 files | Full EN HTML pages (hreflang, lang-switch, EN meta tags) |
 | `ui/en/euromillions/static/*.js` | 6 files | Translated JS: app, simulator, sponsor, meta75, faq, chatbot |
 | `ui/static/hybride-chatbot-em-en.js` | ~450 | EN chatbot widget (hasSponsor EN, en-GB locale) |
@@ -1740,6 +1745,37 @@ Added 4 multilingual legal pages for EuroMillions (6 languages each) and updated
 
 **Result**: 698 → 737 tests, 0 failures. 66 EM routes total (11 pages x 6 langs). All legal pages have `noindex, follow` meta.
 
+### Phase A — Argent / Money / Gambling Detection (2026-03-03)
+
+13th detection phase in both Loto FR and EuroMillions pipelines. Court-circuit (no Gemini call) — detects money, gambling, and addiction keywords and returns a pre-written response with escalating severity.
+
+**Pipeline position**: I (Insult) → C (Compliment) → **A (Argent)** → 0 (Continuation) → ...
+
+| Level | Trigger | Response Tone | Example |
+|-------|---------|---------------|---------|
+| **L1 — Pedagogical** | Default (jackpot, money, gains...) | Redirect to stats | "Ici, on ne parle pas d'argent — on parle de DATA !" |
+| **L2 — Firm** | Strong words (devenir riche, stratégie pour gagner...) | Warning | "⚠️ Le jeu ne doit jamais être considéré comme un revenu." |
+| **L3 — Help Redirection** | Betting/addiction words (parier, miser, gambling...) | 🛑 + help link | "🛑 Le jeu comporte des risques. Si besoin: joueurs-info-service.fr" |
+
+| File | Lines | Changes |
+|------|-------|---------|
+| `services/chat_detectors.py` | 850→939 | `_detect_argent()`, `_get_argent_response()`, FR word lists + response pools L1/L2/L3 |
+| `services/chat_detectors_em.py` | 495→784 | `_detect_argent_em(msg, lang)`, 6-lang word lists (phrases + mots + strong + betting), response pools FR/ES/PT/DE/NL, `_ARGENT_POOLS_EM` dispatch dict |
+| `services/chat_responses_em_en.py` | ~250→277 | EN pools L1/L2/L3, `_get_argent_response_em_en()`, strong/betting EN patterns |
+| `services/chat_pipeline.py` | 715→723 | Phase A block after Phase C (Loto FR) |
+| `services/chat_pipeline_em.py` | 760→771 | Phase A block after Phase C (EM, lang-aware dispatch EN vs other) |
+| `tests/test_argent.py` | 373 (new) | 84 tests: detection FR/EN/ES/PT/DE/NL, L1/L2/L3 levels, response language, L3 help links, non-regression |
+
+**L3 help links by language**:
+- FR: joueurs-info-service.fr (ANJ)
+- EN: begambleaware.org / ncpgambling.org
+- ES: jugarbien.es / 900 200 225
+- PT: jogoresponsavel.pt / 808 200 204
+- DE: bzga.de / 0800-1372700
+- NL: agog.nl / 0900-2177
+
+**Result**: 888 → 972 tests (+84), 0 failures. `source: "hybride_argent"` in analytics.
+
 ### Cumulative Impact
 
 | Metric | Before P1 | After P5/5 |
@@ -1759,7 +1795,8 @@ Added 4 multilingual legal pages for EuroMillions (6 languages each) and updated
 | Chatbot delivery | Batch (single block response) | SSE streaming (word-by-word, P9) |
 | Legal pages | None | 4 multilingual legal pages (mentions, privacy, cookies, disclaimer) x 6 langs = 24 URLs |
 | Mobile UX | Inline lang buttons (all sizes) | Globe selector on mobile (≤768px), inline buttons on desktop |
-| Tests | 248 | **737** |
+| Chatbot detection | 12 phases | **13 phases** (+ Phase A: argent/money/gambling) |
+| Tests | 248 | **972** |
 | Services modules | 10 | **21** |
 ### Earlier Development History (Condensed)
 
@@ -1785,6 +1822,7 @@ Added 4 multilingual legal pages for EuroMillions (6 languages each) and updated
 | 2026-03-01 | Fix: Chatbot EM welcome per-language sessionStorage key. Per-lang `STORAGE_KEY` in `hybride-chatbot-em.js`. **691 tests.** |
 | 2026-03-01 | Feature: Mobile globe language selector (🌐). Globe button + dropdown on mobile ≤768px, desktop unchanged. **698 tests.** |
 | 2026-03-01 | Feature: Legal pages EM multilingues (4 pages x 6 langs = 24 URLs). mentions-legales, confidentialite, cookies, disclaimer. Footer dynamic URLs. 66 EM routes total. **737 tests.** |
+| 2026-03-03 | Phase A: Argent/money/gambling detection — 13th pipeline phase. Court-circuit (no Gemini). 3-level escalation (L1 pedagogical, L2 firm, L3 help redirection). 6-lang response pools + word lists (FR/EN/ES/PT/DE/NL). Country-specific gambling support links. **972 tests.** |
 
 ---
 
@@ -1796,14 +1834,14 @@ Added 4 multilingual legal pages for EuroMillions (6 languages each) and updated
 | Unified Routes | Stable | `/api/{game}/...` with `game = loto \| euromillions` (Phase 10), backward compat preserved |
 | HYBRIDE Engine (Loto) | Stable | Scoring, constraints, badges functional |
 | HYBRIDE Engine (EuroMillions) | Stable | 5 boules [1-50] + 2 etoiles [1-12] |
-| HYBRIDE Chatbot (Loto) | Stable | Modular: 4 service modules (Phase 1). 12-phase detection, Text-to-SQL, SSE streaming (P9), session persistence, GA4 tracking, sponsor system. 6 pages. |
-| HYBRIDE Chatbot (EuroMillions) | Stable | Modular: 4 service modules (Phase 4). SSE streaming (P9). Same architecture as Loto. 7 FR + 7 EN pages (Phase 11). Isolated sessionStorage. EN response pools + EN prompts. |
+| HYBRIDE Chatbot (Loto) | Stable | Modular: 4 service modules (Phase 1). 13-phase detection (Phase A: argent), Text-to-SQL, SSE streaming (P9), session persistence, GA4 tracking, sponsor system. 6 pages. |
+| HYBRIDE Chatbot (EuroMillions) | Stable | Modular: 4 service modules (Phase 4). 13-phase detection (Phase A: argent, 6 langs). SSE streaming (P9). Same architecture as Loto. 7 FR + 7 EN pages (Phase 11). Isolated sessionStorage. EN response pools + EN prompts. |
 | i18n / Multilang | **Complete (P1-P5/5 + Sprints ES/PT/DE/NL)** | Babel/gettext (P1/5), Jinja2 templates (P2/5), JS i18n (P3/5), multilang prompts (P4/5), routes+sitemap+killswitch (P5/5). **All 6 languages fully translated and live**: FR, EN, ES, PT, DE, NL. 66 EM routes (11 pages x 6 langs). 384 .po entries, 160+ JS keys, 25 PDF labels, 18 AI prompts per lang. `ENABLED_LANGS = ["fr", "en", "es", "pt", "de", "nl"]`. 4 multilingual legal pages. Mobile globe lang selector. Remaining: rating popup (5 FR strings). Loto EN not yet planned. |
 | Stats Layer | Stable | Base class (Phase 2): 770L base + 2 thin wrappers, GameConfig-driven |
 | META ANALYSE 75 (Loto) | Stable | Async Gemini enrichment + PDF export, circuit breaker fallback. 18 Loto prompt keys. |
 | META ANALYSE 75 (EM) | Stable | Dual graphs, EM Gemini enrichment, EM PDF (2x2 matplotlib), 14 EM prompt keys. |
 | Cache | Stable | Redis async + in-memory fallback (Phase 6). PDF off-thread. |
-| Testing | Active | **737 tests** (pytest, 23 test files), CI integration |
+| Testing | Active | **972 tests** (pytest, 25 test files), CI integration |
 | Security | Hardened | CSP+HSTS preload+COOP (Phase 7), aiomysql parameterized queries, rate limiting, correlation IDs |
 | SEO | Stable | Schema.org Dataset (Phase 7), bankability T4 pivot (Phase 8), dynamic sitemap (P5/5), hreflang multilang (P5/5), structured data, canonical redirects |
 | Mobile responsive | Stable | Fullscreen chatbot, viewport sync, safe-area support |
@@ -1830,7 +1868,7 @@ Observable characteristics based on development usage:
 - **Redis optional** — `services/cache.py` falls back to per-process in-memory cache if `REDIS_URL` absent (not shared across 2 workers in fallback mode).
 - **Gemini dependency** — META ANALYSE and chatbot depend on an external API. Mitigated by circuit breaker + fallback messages, but degraded experience when open.
 - **Minimal monitoring** — Production observability relies on Cloud Run metrics + JSON structured logs with correlation IDs. No APM or alerting.
-- **Test coverage** — 774 tests across 24 files. Core engine, chat pipeline, stats, insult/OOR detection, templates, legal pages, i18n, JS labels, prompts, multilang routes, PDF heatmap well covered. Some route handlers have lower coverage.
+- **Test coverage** — 972 tests across 25 files. Core engine, chat pipeline, stats, insult/OOR/argent detection, templates, legal pages, i18n, JS labels, prompts, multilang routes, PDF heatmap well covered. Some route handlers have lower coverage.
 - **i18n residue** — Full i18n pipeline complete (P1-P5/5 + Sprints ES/PT/DE/NL): gettext, Jinja2, JS labels, prompts, routes, sitemap, kill switch. **All 6 languages fully translated and live.** 4 legal pages translated. Cookie consent banner translated (6 langs). 1 minor FR residue: rating popup labels (5 FR strings in `rating-popup.js`). Loto EN not yet planned.
 
 ---
@@ -1876,4 +1914,4 @@ Observable characteristics based on development usage:
 
 ---
 
-*Updated by JyppY & Claude Opus 4.6 — 01/03/2026 (v18.0: GA4 audit + Phase 1-2 fixes — delete obsolete root analytics.js, owner IP filter for GA4, analytics.js on all 36 pages, 4 missing GA4 events added, cookie consent i18n 6 langs, dead sponsor code removed, AUDIT_GA4_REPORT.md. 774 tests, 0 failures. Previous: v17.0 PDF heatmap, v16.0 legal pages, globe selector, chatbot fix. i18n 6/6 COMPLETE, P9 (SSE streaming), P1-P5/5 (i18n infrastructure), Phase 11 (EN multilang), Phases 1-10.)*
+*Updated by JyppY & Claude Opus 4.6 — 03/03/2026 (v19.0: Phase A — Argent/money/gambling detection. 13th pipeline phase, court-circuit, 3-level escalation L1/L2/L3, 6-lang response pools FR/EN/ES/PT/DE/NL, country-specific gambling help links. 972 tests, 0 failures. Previous: v18.0 GA4 audit, v17.0 PDF heatmap, v16.0 legal pages, globe selector, chatbot fix. i18n 6/6 COMPLETE, P9 (SSE streaming), P1-P5/5 (i18n infrastructure), Phase 11 (EN multilang), Phases 1-10.)*
