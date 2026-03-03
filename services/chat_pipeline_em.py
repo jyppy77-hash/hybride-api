@@ -33,11 +33,13 @@ from services.chat_detectors_em import (
     _count_oor_streak_em, _get_oor_response_em,
     _get_insult_response_em, _get_insult_short_em, _get_menace_response_em,
     _get_compliment_response_em,
+    _detect_argent_em, _get_argent_response_em,
 )
 from services.chat_responses_em_en import (
     _get_insult_response_em_en, _get_insult_short_em_en,
     _get_menace_response_em_en, _get_compliment_response_em_en,
     _get_oor_response_em_en, FALLBACK_RESPONSE_EM_EN,
+    _get_argent_response_em_en,
 )
 from services.chat_sql_em import (
     _get_prochain_tirage_em, _get_tirage_data_em, _generate_sql_em,
@@ -165,6 +167,15 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                 logger.info(
                     f"[EM CHAT] Compliment + question (type={_compliment_type}), passage au flow normal"
                 )
+
+    # ── Phase A : Détection argent / gains / paris ──
+    if _detect_argent_em(message, lang):
+        _argent_resp = (_get_argent_response_em_en(message)
+                        if is_en else _get_argent_response_em(message, lang))
+        if _insult_prefix:
+            _argent_resp = _insult_prefix + "\n\n" + _argent_resp
+        logger.info(f"[EM CHAT] Argent detecte — court-circuit Phase A (lang={lang})")
+        return {"response": _argent_resp, "source": "hybride_argent", "mode": mode}, None
 
     # ── Phase 0 : Continuation contextuelle ──
     _continuation_mode = False

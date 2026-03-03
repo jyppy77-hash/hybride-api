@@ -716,6 +716,95 @@ def _get_compliment_response(compliment_type: str, streak: int, history=None) ->
 
 
 # ═══════════════════════════════════════════════════════
+# Phase A — Détection argent / gains / paris
+# ═══════════════════════════════════════════════════════
+
+_ARGENT_PHRASES_FR = [
+    r'\bdevenir\s+riche',
+    r'\bgros\s+lot',
+    r'\bsuper\s+cagnotte',
+    r'\btoucher\s+le\s+gros\s+lot',
+    r'\bcombien\s+(?:on|je|tu|peut[\s-]on)\s+gagn',
+    r'\bcombien\s+[çc]a\s+rapporte',
+    r'\bstrat[eé]gie\s+pour\s+gagner',
+]
+
+_ARGENT_MOTS_FR = {
+    "argent", "euros", "eur",
+    "cagnotte", "jackpot",
+    "gains", "gagner",
+    "prix",
+    "million", "millions", "milliard", "milliards",
+    "mise", "miser",
+    "parier", "pari",
+    "lot",
+    "pognon", "fric", "thune", "thunes", "sous",
+    "riche", "fortune",
+    "profit", "bénéfice", "benefice",
+    "remporter",
+}
+
+# Mots forts → déclenche L2
+_ARGENT_STRONG_FR = [
+    r'\bdevenir\s+riche',
+    r'\bstrat[eé]gie\s+pour\s+gagner',
+    r'\btoucher\s+le\s+gros\s+lot',
+    r'\bcombien\s+(?:on|je|tu|peut[\s-]on)\s+gagn',
+    r'\bcombien\s+[çc]a\s+rapporte',
+]
+
+# Mots paris/addiction → déclenche L3
+_ARGENT_BETTING_FR = {"parier", "miser", "pari"}
+
+# Niveau 1 — Pédagogique (défaut)
+_ARGENT_L1 = [
+    "📊 Ici, on ne parle pas d'argent — on parle de DATA ! Pose-moi une question sur les fréquences, les écarts ou les tendances des tirages !",
+    "🎲 LotoIA est un outil d'analyse statistique, pas un casino ! Demande-moi plutôt quels sont les numéros les plus fréquents.",
+    "💡 L'argent, c'est pas mon rayon ! Moi je suis branché chiffres et statistiques. Qu'est-ce que tu veux savoir sur les tirages ?",
+    "🤖 Je suis HYBRIDE, ton assistant DATA — pas ton banquier ! Allez, pose-moi une vraie question statistique.",
+]
+
+# Niveau 2 — Ferme (mots forts)
+_ARGENT_L2 = [
+    "⚠️ Le jeu ne doit jamais être considéré comme une source de revenus. LotoIA analyse les données, rien de plus.",
+    "⚠️ Aucun outil, aucune IA, ne peut prédire les résultats d'un tirage. C'est mathématiquement impossible. Parlons plutôt statistiques !",
+    "⚠️ Je ne peux pas t'aider à gagner — personne ne le peut. Mais je peux t'éclairer sur les données historiques des tirages.",
+]
+
+# Niveau 3 — Redirection aide (paris/addiction)
+_ARGENT_L3 = [
+    "🛑 Le jeu comporte des risques. Si tu as besoin d'aide : joueurs-info-service.fr ou appelle le 09 74 75 13 13 (ANJ). Je suis là pour les stats, pas pour les mises.",
+]
+
+
+def _detect_argent(message: str) -> bool:
+    """Detecte si le message concerne l'argent, les gains ou les paris."""
+    lower = message.lower()
+    for pattern in _ARGENT_PHRASES_FR:
+        if re.search(pattern, lower):
+            return True
+    for mot in _ARGENT_MOTS_FR:
+        if re.search(r'\b' + re.escape(mot) + r'\b', lower):
+            return True
+    return False
+
+
+def _get_argent_response(message: str) -> str:
+    """Selectionne une reponse argent selon le niveau (L1/L2/L3)."""
+    lower = message.lower()
+    # L3 : mots paris/addiction
+    for mot in _ARGENT_BETTING_FR:
+        if re.search(r'\b' + re.escape(mot) + r'\b', lower):
+            return _ARGENT_L3[0]
+    # L2 : mots forts
+    for pattern in _ARGENT_STRONG_FR:
+        if re.search(pattern, lower):
+            return random.choice(_ARGENT_L2)
+    # L1 : defaut
+    return random.choice(_ARGENT_L1)
+
+
+# ═══════════════════════════════════════════════════════
 # Phase OOR — Détection numéros hors range
 # ═══════════════════════════════════════════════════════
 

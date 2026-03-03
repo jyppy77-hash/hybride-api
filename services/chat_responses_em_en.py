@@ -4,6 +4,7 @@ Mirrors chat_detectors_em.py response pools + chat_utils_em.py fallback.
 """
 
 import random
+import re
 
 # ═══════════════════════════════════════════════════════════
 # Response pools EN — Insults
@@ -93,6 +94,42 @@ _COMPLIMENT_MERCI_EM_EN = [
     "My pleasure! Want to dig into another topic?",
     "That's what I'm here for! 😎 What's next?",
 ]
+
+# ═══════════════════════════════════════════════════════════
+# Response pools EN — Argent / Money
+# ═══════════════════════════════════════════════════════════
+
+# Niveau 1 — Pédagogique (défaut)
+_ARGENT_L1_EM_EN = [
+    "📊 Here, we don't talk about money — we talk about DATA! Ask me about frequencies, gaps or draw trends instead!",
+    "🎲 LotoIA is a statistical analysis tool, not a casino! Try asking me about the most frequent numbers.",
+    "💡 Money isn't my thing! I'm all about numbers and statistics. What do you want to know about the draws?",
+    "🤖 I'm HYBRIDE, your DATA assistant — not your banker! Go ahead, ask me a real stats question.",
+]
+
+# Niveau 2 — Ferme (mots forts)
+_ARGENT_L2_EM_EN = [
+    "⚠️ Gambling should never be considered a source of income. LotoIA analyses data, nothing more.",
+    "⚠️ No tool, no AI, can predict lottery results. It's mathematically impossible. Let's talk statistics instead!",
+    "⚠️ I can't help you win — nobody can. But I can shed light on historical draw data.",
+]
+
+# Niveau 3 — Redirection aide (paris/addiction)
+_ARGENT_L3_EM_EN = [
+    "🛑 Gambling involves risks. If you need help: www.begambleaware.org (UK) or www.ncpgambling.org (US). I'm here for stats, not for bets.",
+]
+
+# Mots forts EN → L2
+_ARGENT_STRONG_EN = [
+    r'\bget\s+rich',
+    r'\bstrategy\s+to\s+win',
+    r'\bhow\s+much\s+can\s+(?:i|you|we)\s+win',
+    r'\bhow\s+much\s+does\s+it\s+pay',
+]
+
+# Mots paris/addiction EN → L3
+_ARGENT_BETTING_EN = {"bet", "betting", "gambling"}
+
 
 # ═══════════════════════════════════════════════════════════
 # Response pools EN — OOR (Out Of Range)
@@ -223,3 +260,18 @@ def _get_oor_response_em_en(numero: int, context: str, streak: int) -> str:
         s=s,
         streak=streak + 1,
     )
+
+
+def _get_argent_response_em_en(message: str) -> str:
+    """Selectionne une reponse argent EN selon le niveau (L1/L2/L3)."""
+    lower = message.lower()
+    # L3 : betting/addiction words
+    for mot in _ARGENT_BETTING_EN:
+        if re.search(r'\b' + re.escape(mot) + r'\b', lower):
+            return _ARGENT_L3_EM_EN[0]
+    # L2 : strong words
+    for pattern in _ARGENT_STRONG_EN:
+        if re.search(pattern, lower):
+            return random.choice(_ARGENT_L2_EM_EN)
+    # L1 : default
+    return random.choice(_ARGENT_L1_EM_EN)

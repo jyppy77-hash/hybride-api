@@ -22,7 +22,7 @@ from services.chat_detectors import (
     _count_insult_streak, _get_insult_response, _get_insult_short,
     _get_menace_response, _detect_compliment, _count_compliment_streak,
     _get_compliment_response, _detect_out_of_range, _count_oor_streak,
-    _get_oor_response,
+    _get_oor_response, _detect_argent, _get_argent_response,
 )
 from services.chat_sql import (
     _get_prochain_tirage, _get_tirage_data, _generate_sql, _validate_sql,
@@ -139,6 +139,14 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
                 logger.info(
                     f"[HYBRIDE CHAT] Compliment + question (type={_compliment_type}), passage au flow normal"
                 )
+
+    # ── Phase A : Détection argent / gains / paris ──
+    if _detect_argent(message):
+        _argent_resp = _get_argent_response(message)
+        if _insult_prefix:
+            _argent_resp = _insult_prefix + "\n\n" + _argent_resp
+        logger.info("[HYBRIDE CHAT] Argent detecte — court-circuit Phase A")
+        return {"response": _argent_resp, "source": "hybride_argent", "mode": mode}, None
 
     # ── Phase 0 : Continuation contextuelle ──
     _continuation_mode = False

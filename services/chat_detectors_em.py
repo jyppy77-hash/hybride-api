@@ -428,6 +428,295 @@ def _get_compliment_response_em(compliment_type: str, streak: int, history=None)
 
 
 # ═══════════════════════════════════════════════════════════
+# Phase A — Détection argent / gains / paris (EM multilingue)
+# ═══════════════════════════════════════════════════════════
+
+_ARGENT_PHRASES_EM = {
+    "fr": [
+        r'\bdevenir\s+riche',
+        r'\bgros\s+lot',
+        r'\bsuper\s+cagnotte',
+        r'\btoucher\s+le\s+gros\s+lot',
+        r'\bcombien\s+(?:on|je|tu|peut[\s-]on)\s+gagn',
+        r'\bcombien\s+[çc]a\s+rapporte',
+        r'\bstrat[eé]gie\s+pour\s+gagner',
+    ],
+    "en": [
+        r'\bget\s+rich',
+        r'\bhow\s+much\s+can\s+(?:i|you|we)\s+win',
+        r'\bhow\s+much\s+does\s+it\s+pay',
+        r'\bstrategy\s+to\s+win',
+    ],
+    "es": [
+        r'\bhacerse\s+rico',
+        r'\bcu[aá]nto\s+se\s+gana',
+        r'\bestrategia\s+para\s+ganar',
+    ],
+    "pt": [
+        r'\bficar\s+rico',
+        r'\bquanto\s+se\s+ganha',
+        r'\bestrat[eé]gia\s+para\s+ganhar',
+    ],
+    "de": [
+        r'\breich\s+werden',
+        r'\bwie\s+viel\s+kann\s+man\s+gewinnen',
+        r'\bgewinnstrategie',
+    ],
+    "nl": [
+        r'\brijk\s+worden',
+        r'\bhoeveel\s+kun\s+je\s+winnen',
+        r'\bstrategie\s+om\s+te\s+winnen',
+    ],
+}
+
+_ARGENT_MOTS_EM = {
+    "fr": {
+        "argent", "euros", "eur",
+        "cagnotte", "jackpot",
+        "gains", "gagner",
+        "prix",
+        "million", "millions", "milliard", "milliards",
+        "mise", "miser",
+        "parier", "pari",
+        "lot",
+        "pognon", "fric", "thune", "thunes", "sous",
+        "riche", "fortune",
+        "profit", "bénéfice", "benefice",
+        "remporter",
+    },
+    "en": {
+        "money", "euros", "eur",
+        "jackpot", "prize",
+        "win", "winning", "winnings",
+        "million", "millions", "billion", "billions",
+        "bet", "betting", "gambling",
+        "payout", "cash", "pot",
+        "rich", "fortune",
+        "profit",
+    },
+    "es": {
+        "dinero", "euros", "eur",
+        "bote", "premio",
+        "ganar", "ganancias",
+        "millón", "millon", "millones",
+        "apostar", "apuesta",
+        "rico", "fortuna",
+        "beneficio",
+    },
+    "pt": {
+        "dinheiro", "euros", "eur",
+        "jackpot", "prémio", "premio",
+        "ganhar", "ganhos",
+        "milhão", "milhao", "milhões", "milhoes",
+        "apostar", "aposta",
+        "rico", "fortuna",
+        "lucro",
+    },
+    "de": {
+        "geld", "euro", "euros", "eur",
+        "jackpot", "gewinn", "gewinne", "gewinnen",
+        "million", "millionen", "milliarde", "milliarden",
+        "wetten", "einsatz",
+        "reich", "vermögen", "vermoegen",
+        "profit",
+    },
+    "nl": {
+        "geld", "euro", "euros", "eur",
+        "jackpot", "prijs",
+        "winnen", "winst",
+        "miljoen", "miljoenen",
+        "gokken", "inzet",
+        "rijk", "fortuin",
+    },
+}
+
+# Mots forts → L2
+_ARGENT_STRONG_EM = {
+    "fr": [
+        r'\bdevenir\s+riche',
+        r'\bstrat[eé]gie\s+pour\s+gagner',
+        r'\btoucher\s+le\s+gros\s+lot',
+        r'\bcombien\s+(?:on|je|tu|peut[\s-]on)\s+gagn',
+        r'\bcombien\s+[çc]a\s+rapporte',
+    ],
+    "en": [
+        r'\bget\s+rich',
+        r'\bstrategy\s+to\s+win',
+        r'\bhow\s+much\s+can\s+(?:i|you|we)\s+win',
+        r'\bhow\s+much\s+does\s+it\s+pay',
+    ],
+    "es": [
+        r'\bhacerse\s+rico',
+        r'\bestrategia\s+para\s+ganar',
+        r'\bcu[aá]nto\s+se\s+gana',
+    ],
+    "pt": [
+        r'\bficar\s+rico',
+        r'\bestrat[eé]gia\s+para\s+ganhar',
+        r'\bquanto\s+se\s+ganha',
+    ],
+    "de": [
+        r'\breich\s+werden',
+        r'\bgewinnstrategie',
+        r'\bwie\s+viel\s+kann\s+man\s+gewinnen',
+    ],
+    "nl": [
+        r'\brijk\s+worden',
+        r'\bstrategie\s+om\s+te\s+winnen',
+        r'\bhoeveel\s+kun\s+je\s+winnen',
+    ],
+}
+
+# Mots paris/addiction → L3
+_ARGENT_BETTING_EM = {
+    "fr": {"parier", "miser", "pari"},
+    "en": {"bet", "betting", "gambling"},
+    "es": {"apostar", "apuesta"},
+    "pt": {"apostar", "aposta"},
+    "de": {"wetten", "einsatz"},
+    "nl": {"gokken", "inzet"},
+}
+
+
+def _detect_argent_em(message: str, lang: str) -> bool:
+    """Detecte si le message EM concerne l'argent/gains/paris (multilingue)."""
+    lower = message.lower()
+    phrases = _ARGENT_PHRASES_EM.get(lang, _ARGENT_PHRASES_EM["fr"])
+    for pattern in phrases:
+        if re.search(pattern, lower):
+            return True
+    mots = _ARGENT_MOTS_EM.get(lang, _ARGENT_MOTS_EM["fr"])
+    for mot in mots:
+        if re.search(r'\b' + re.escape(mot) + r'\b', lower):
+            return True
+    return False
+
+
+# --- Response pools EM FR (argent) ---
+
+_ARGENT_L1_EM = [
+    "📊 Ici, on ne parle pas d'argent — on parle de DATA ! Pose-moi une question sur les fréquences, les écarts ou les tendances des tirages !",
+    "🎲 LotoIA est un outil d'analyse statistique, pas un casino ! Demande-moi plutôt quels sont les numéros les plus fréquents.",
+    "💡 L'argent, c'est pas mon rayon ! Moi je suis branché chiffres et statistiques. Qu'est-ce que tu veux savoir sur les tirages ?",
+    "🤖 Je suis HYBRIDE, ton assistant DATA — pas ton banquier ! Allez, pose-moi une vraie question statistique.",
+]
+
+_ARGENT_L2_EM = [
+    "⚠️ Le jeu ne doit jamais être considéré comme une source de revenus. LotoIA analyse les données, rien de plus.",
+    "⚠️ Aucun outil, aucune IA, ne peut prédire les résultats d'un tirage. C'est mathématiquement impossible. Parlons plutôt statistiques !",
+    "⚠️ Je ne peux pas t'aider à gagner — personne ne le peut. Mais je peux t'éclairer sur les données historiques des tirages.",
+]
+
+_ARGENT_L3_EM = [
+    "🛑 Le jeu comporte des risques. Si tu as besoin d'aide : joueurs-info-service.fr ou appelle le 09 74 75 13 13 (ANJ). Je suis là pour les stats, pas pour les mises.",
+]
+
+# --- Response pools EM ES (argent) ---
+
+_ARGENT_L1_EM_ES = [
+    "📊 ¡Aquí no hablamos de dinero, hablamos de DATOS! Pregúntame sobre frecuencias, intervalos o tendencias de los sorteos.",
+    "🎲 ¡LotoIA es una herramienta de análisis estadístico, no un casino! Pregúntame cuáles son los números más frecuentes.",
+    "💡 ¡El dinero no es lo mío! Yo me dedico a los números y las estadísticas. ¿Qué quieres saber sobre los sorteos?",
+    "🤖 Soy HYBRIDE, tu asistente de DATOS, ¡no tu banquero! Venga, hazme una pregunta sobre estadísticas.",
+]
+
+_ARGENT_L2_EM_ES = [
+    "⚠️ El juego nunca debe considerarse una fuente de ingresos. LotoIA analiza datos, nada más.",
+    "⚠️ Ninguna herramienta ni IA puede predecir los resultados de un sorteo. Es matemáticamente imposible. ¡Hablemos de estadísticas!",
+    "⚠️ No puedo ayudarte a ganar, nadie puede. Pero puedo mostrarte los datos históricos de los sorteos.",
+]
+
+_ARGENT_L3_EM_ES = [
+    "🛑 El juego conlleva riesgos. Si necesitas ayuda: www.jugarbien.es o llama al 900 200 225. Estoy aquí para las estadísticas, no para las apuestas.",
+]
+
+# --- Response pools EM PT (argent) ---
+
+_ARGENT_L1_EM_PT = [
+    "📊 Aqui não falamos de dinheiro, falamos de DADOS! Pergunta-me sobre frequências, intervalos ou tendências dos sorteios!",
+    "🎲 O LotoIA é uma ferramenta de análise estatística, não um casino! Pergunta-me quais são os números mais frequentes.",
+    "💡 Dinheiro não é comigo! Eu trabalho com números e estatísticas. O que queres saber sobre os sorteios?",
+    "🤖 Sou o HYBRIDE, o teu assistente de DADOS, não o teu banqueiro! Faz-me uma pergunta sobre estatísticas.",
+]
+
+_ARGENT_L2_EM_PT = [
+    "⚠️ O jogo nunca deve ser considerado uma fonte de rendimento. O LotoIA analisa dados, nada mais.",
+    "⚠️ Nenhuma ferramenta ou IA pode prever os resultados de um sorteio. É matematicamente impossível. Falemos de estatísticas!",
+    "⚠️ Não te posso ajudar a ganhar, ninguém pode. Mas posso mostrar-te os dados históricos dos sorteios.",
+]
+
+_ARGENT_L3_EM_PT = [
+    "🛑 O jogo envolve riscos. Se precisas de ajuda: www.jogoresponsavel.pt ou liga para o 808 200 204. Estou aqui para estatísticas, não para apostas.",
+]
+
+# --- Response pools EM DE (argent) ---
+
+_ARGENT_L1_EM_DE = [
+    "📊 Hier reden wir nicht über Geld, wir reden über DATEN! Frag mich nach Häufigkeiten, Abständen oder Ziehungstrends!",
+    "🎲 LotoIA ist ein statistisches Analysetool, kein Casino! Frag mich, welche Zahlen am häufigsten vorkommen.",
+    "💡 Geld ist nicht mein Ding! Ich bin für Zahlen und Statistiken zuständig. Was willst du über die Ziehungen wissen?",
+    "🤖 Ich bin HYBRIDE, dein DATEN-Assistent, nicht dein Banker! Los, stell mir eine echte Statistikfrage.",
+]
+
+_ARGENT_L2_EM_DE = [
+    "⚠️ Glücksspiel sollte nie als Einkommensquelle betrachtet werden. LotoIA analysiert Daten, nicht mehr.",
+    "⚠️ Kein Tool und keine KI kann Lottoergebnisse vorhersagen. Das ist mathematisch unmöglich. Reden wir lieber über Statistiken!",
+    "⚠️ Ich kann dir nicht beim Gewinnen helfen, niemand kann das. Aber ich kann dir die historischen Ziehungsdaten zeigen.",
+]
+
+_ARGENT_L3_EM_DE = [
+    "🛑 Glücksspiel birgt Risiken. Wenn du Hilfe brauchst: www.bzga.de oder 0800-1372700. Ich bin für Statistiken da, nicht für Wetten.",
+]
+
+# --- Response pools EM NL (argent) ---
+
+_ARGENT_L1_EM_NL = [
+    "📊 Hier praten we niet over geld, we praten over DATA! Vraag me naar frequenties, tussenpozen of trekkingstrends!",
+    "🎲 LotoIA is een statistisch analysetool, geen casino! Vraag me welke nummers het vaakst voorkomen.",
+    "💡 Geld is niet mijn ding! Ik ben er voor cijfers en statistieken. Wat wil je weten over de trekkingen?",
+    "🤖 Ik ben HYBRIDE, je DATA-assistent, niet je bankier! Stel me een echte statistiekvraag.",
+]
+
+_ARGENT_L2_EM_NL = [
+    "⚠️ Gokken mag nooit als inkomstenbron worden beschouwd. LotoIA analyseert gegevens, meer niet.",
+    "⚠️ Geen enkel hulpmiddel of AI kan loterijresultaten voorspellen. Het is wiskundig onmogelijk. Laten we het over statistieken hebben!",
+    "⚠️ Ik kan je niet helpen winnen, niemand kan dat. Maar ik kan je de historische trekkingsgegevens laten zien.",
+]
+
+_ARGENT_L3_EM_NL = [
+    "🛑 Gokken brengt risico's met zich mee. Als je hulp nodig hebt: www.agog.nl of 0900-2177. Ik ben er voor statistieken, niet voor wedden.",
+]
+
+# --- Pool dispatch par langue ---
+
+_ARGENT_POOLS_EM = {
+    "fr": (_ARGENT_L1_EM, _ARGENT_L2_EM, _ARGENT_L3_EM),
+    "es": (_ARGENT_L1_EM_ES, _ARGENT_L2_EM_ES, _ARGENT_L3_EM_ES),
+    "pt": (_ARGENT_L1_EM_PT, _ARGENT_L2_EM_PT, _ARGENT_L3_EM_PT),
+    "de": (_ARGENT_L1_EM_DE, _ARGENT_L2_EM_DE, _ARGENT_L3_EM_DE),
+    "nl": (_ARGENT_L1_EM_NL, _ARGENT_L2_EM_NL, _ARGENT_L3_EM_NL),
+}
+
+
+def _get_argent_response_em(message: str, lang: str) -> str:
+    """Selectionne une reponse argent EM selon le niveau et la langue."""
+    lower = message.lower()
+    l1, l2, l3 = _ARGENT_POOLS_EM.get(lang, _ARGENT_POOLS_EM["fr"])
+    # L3 : mots paris/addiction (dans la langue de l'utilisateur)
+    betting = _ARGENT_BETTING_EM.get(lang, _ARGENT_BETTING_EM["fr"])
+    for mot in betting:
+        if re.search(r'\b' + re.escape(mot) + r'\b', lower):
+            return l3[0]
+    # L2 : mots forts (dans la langue de l'utilisateur)
+    strong = _ARGENT_STRONG_EM.get(lang, _ARGENT_STRONG_EM["fr"])
+    for pattern in strong:
+        if re.search(pattern, lower):
+            return random.choice(l2)
+    # L1 : defaut
+    return random.choice(l1)
+
+
+# ═══════════════════════════════════════════════════════════
 # Response pools EM — OOR
 # ═══════════════════════════════════════════════════════════
 
