@@ -71,7 +71,7 @@ async def en_em_history(request: Request):
     return render_template(
         "em/historique.html", request, lang="en", page_key="historique",
         hero_icon="📅",
-        hero_title="Draw History",
+        hero_title="EuroMillions Draw History",
         hero_subtitle="Search for a EuroMillions draw by date",
         footer_style="margin-top: 48px;",
     )
@@ -179,7 +179,7 @@ async def en_em_about(request: Request):
         body_class="subpage em-page",
         include_nav_scroll=True,
         hero_icon="ℹ️",
-        hero_title="About LotoIA",
+        hero_title="About LotoIA EuroMillions",
         hero_subtitle="Our mission: making statistics accessible and understandable",
     )
 

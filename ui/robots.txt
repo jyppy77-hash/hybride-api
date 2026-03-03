@@ -4,7 +4,7 @@
 
 User-agent: *
 
-# === PAGES SEO PUBLIQUES (clean URLs) ===
+# === PAGES SEO PUBLIQUES — LOTO (clean URLs) ===
 Allow: /
 Allow: /accueil
 Allow: /loto
@@ -20,6 +20,14 @@ Allow: /news
 Allow: /historique
 Allow: /methodologie
 Allow: /moteur
+
+# === PAGES SEO PUBLIQUES — EUROMILLIONS (6 langues) ===
+Allow: /euromillions
+Allow: /en/euromillions
+Allow: /es/euromillions
+Allow: /pt/euromillions
+Allow: /de/euromillions
+Allow: /nl/euromillions
 
 # === ASSETS FRONTEND (requis pour le rendu Google) ===
 Allow: /ui/static/

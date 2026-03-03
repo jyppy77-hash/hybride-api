@@ -64,6 +64,17 @@
       "keywords": {{ _('statistiques euromillions, data science, analyse de probabilités, historique des tirages, fréquences, étoiles, Europe')|tojson }}
     }
     </script>
+    <!-- JSON-LD BreadcrumbList -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": {{ _('Accueil EuroMillions')|tojson }}, "item": "{{ base_url }}{{ urls.home }}"},
+        {"@type": "ListItem", "position": 2, "name": {{ _('Statistiques')|tojson }}, "item": "{{ canonical_url }}"}
+      ]
+    }
+    </script>
 {% endblock %}
 
 {% block head_end %}

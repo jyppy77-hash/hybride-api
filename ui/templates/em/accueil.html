@@ -1,7 +1,7 @@
 {% extends "em/_base.html" %}
 
 {% block head %}
-    <title>{{ _('LotoIA EuroMillions - Plateforme d\'analyse statistique | Moteur HYBRIDE') }}</title>
+    <title>{{ _('Analyse EuroMillions IA — Moteur HYBRIDE | LotoIA') }}</title>
     <meta name="description" content="{{ _('LotoIA EuroMillions est une plateforme d\'analyse statistique de l\'EuroMillions. Analysez vos grilles, explorez des combinaisons et comprenez les tendances historiques avec le moteur HYBRIDE.') }}">
     <meta name="keywords" content="{{ _('lotoia euromillions, analyse euromillions, moteur HYBRIDE, statistiques euromillions, simulateur grille euromillions, HYBRIDE') }}">
     <link rel="canonical" href="{{ canonical_url }}">
@@ -10,7 +10,7 @@
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="LotoIA">
     <meta property="og:locale" content="{{ og_locale }}">
-    <meta property="og:title" content="{{ _('LotoIA EuroMillions - Plateforme d\'analyse statistique') }}">
+    <meta property="og:title" content="{{ _('Analyse EuroMillions IA — Moteur HYBRIDE | LotoIA') }}">
     <meta property="og:description" content="{{ _('Analysez vos grilles, explorez des combinaisons et comprenez les tendances historiques de l\'EuroMillions avec le moteur HYBRIDE.') }}">
     <meta property="og:url" content="{{ canonical_url }}">
     <meta property="og:image" content="{{ base_url }}/static/og-image.jpg">
@@ -21,7 +21,7 @@
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ _('LotoIA EuroMillions - Plateforme d\'analyse statistique') }}">
+    <meta name="twitter:title" content="{{ _('Analyse EuroMillions IA — Moteur HYBRIDE | LotoIA') }}">
     <meta name="twitter:description" content="{{ _('Analysez vos grilles, explorez des combinaisons et comprenez les tendances historiques de l\'EuroMillions avec le moteur HYBRIDE.') }}">
     <meta name="twitter:image" content="{{ base_url }}/static/og-image.jpg">
 
@@ -49,6 +49,17 @@
           "priceCurrency": "EUR"
         }
       }
+    }
+    </script>
+    <!-- JSON-LD BreadcrumbList -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "LotoIA", "item": "{{ base_url }}/"},
+        {"@type": "ListItem", "position": 2, "name": "EuroMillions", "item": "{{ canonical_url }}"}
+      ]
     }
     </script>
 {% endblock %}
