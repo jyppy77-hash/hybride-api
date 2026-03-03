@@ -440,13 +440,12 @@ def test_page_slugs_all_langs():
 # 11. Cookie consent parity (CNIL compliance)
 # ═══════════════════════════════════════════════
 
-def test_cookie_consent_on_all_analytics_pages():
-    """Every HTML page that loads analytics.js must also load cookie-consent.js.
-    Prevents CNIL non-compliance: no consent banner = no way to accept/refuse."""
+def _scan_html_for_script(pattern: str) -> set[str]:
+    """Return set of ui/ HTML files matching a regex pattern."""
     import os
     import re
     ui_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "ui")
-    missing = []
+    found = set()
     for root, _dirs, files in os.walk(ui_dir):
         for fname in files:
             if not fname.endswith(".html"):
@@ -454,9 +453,24 @@ def test_cookie_consent_on_all_analytics_pages():
             fpath = os.path.join(root, fname)
             with open(fpath, encoding="utf-8") as f:
                 content = f.read()
-            has_analytics = bool(re.search(r"analytics\.js", content))
-            has_consent = bool(re.search(r"cookie-consent\.js", content))
-            if has_analytics and not has_consent:
-                rel = os.path.relpath(fpath, ui_dir)
-                missing.append(rel)
+            if re.search(pattern, content):
+                found.add(os.path.relpath(fpath, ui_dir))
+    return found
+
+
+def test_cookie_consent_on_all_analytics_pages():
+    """Every HTML page that loads analytics.js must also load cookie-consent.js.
+    Prevents CNIL non-compliance: no consent banner = no way to accept/refuse."""
+    has_analytics = _scan_html_for_script(r"analytics\.js")
+    has_consent = _scan_html_for_script(r"cookie-consent\.js")
+    missing = sorted(has_analytics - has_consent)
     assert missing == [], f"Pages with analytics.js but missing cookie-consent.js: {missing}"
+
+
+def test_wysistat_on_all_analytics_pages():
+    """Every HTML page that loads analytics.js must also load wysistat.js.
+    Ensures Wysistat ACPM tracking covers all pages."""
+    has_analytics = _scan_html_for_script(r"analytics\.js")
+    has_wysistat = _scan_html_for_script(r"wysistat")
+    missing = sorted(has_analytics - has_wysistat)
+    assert missing == [], f"Pages with analytics.js but missing wysistat: {missing}"
