@@ -434,3 +434,29 @@ def test_page_slugs_all_langs():
     for lang in ValidLang:
         assert lang in PAGE_SLUGS, f"Missing PAGE_SLUGS for {lang}"
         assert len(PAGE_SLUGS[lang]) == 7  # 7 page types
+
+
+# ═══════════════════════════════════════════════
+# 11. Cookie consent parity (CNIL compliance)
+# ═══════════════════════════════════════════════
+
+def test_cookie_consent_on_all_analytics_pages():
+    """Every HTML page that loads analytics.js must also load cookie-consent.js.
+    Prevents CNIL non-compliance: no consent banner = no way to accept/refuse."""
+    import os
+    import re
+    ui_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "ui")
+    missing = []
+    for root, _dirs, files in os.walk(ui_dir):
+        for fname in files:
+            if not fname.endswith(".html"):
+                continue
+            fpath = os.path.join(root, fname)
+            with open(fpath, encoding="utf-8") as f:
+                content = f.read()
+            has_analytics = bool(re.search(r"analytics\.js", content))
+            has_consent = bool(re.search(r"cookie-consent\.js", content))
+            if has_analytics and not has_consent:
+                rel = os.path.relpath(fpath, ui_dir)
+                missing.append(rel)
+    assert missing == [], f"Pages with analytics.js but missing cookie-consent.js: {missing}"
