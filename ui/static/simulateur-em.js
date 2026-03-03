@@ -6,6 +6,25 @@
 
 var LI = window.LotoIA_i18n || {};
 
+/**
+ * Formate une date ISO (YYYY-MM-DD) au format lisible selon la locale active
+ * Ex: "2021-02-09" → "9 février 2021" (fr), "9 February 2021" (en)
+ */
+function formatDateLocale(isoDate) {
+    if (!isoDate) return '';
+    try {
+        var d = new Date(isoDate + 'T00:00:00');
+        if (isNaN(d.getTime())) return isoDate;
+        return d.toLocaleDateString(LI.locale || 'fr-FR', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        });
+    } catch (e) {
+        return isoDate;
+    }
+}
+
 // State
 const state = {
     selectedNumbers: new Set(),
@@ -546,7 +565,7 @@ function displayHistoryCheck(historyCheck) {
 
     var matchCount = parseInt(historyCheck.best_match_count, 10);
     if (matchCount > 0 && historyCheck.best_match_date) {
-        text += '<br>' + LI.history_best.replace('{n}', matchCount).replace(/\{s\}/g, matchCount > 1 ? 's' : '') + ' (' + historyCheck.best_match_date + ')';
+        text += '<br>' + LI.history_best.replace('{n}', matchCount).replace(/\{s\}/g, matchCount > 1 ? 's' : '') + ' (' + formatDateLocale(historyCheck.best_match_date) + ')';
     }
 
     if (text.trim()) {
