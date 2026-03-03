@@ -6,14 +6,13 @@ var LI = window.LotoIA_i18n || {};
 // State management
 let currentResult = null;
 let selectedGridCount = 3;
+var nextDrawDate = null;
 
 // DOM Elements
-const drawDateInput = document.getElementById('draw-date');
 const btnAnalyze = document.getElementById('btn-analyze');
 const resultsSection = document.getElementById('results-section');
 const successState = document.getElementById('success-state');
 const errorState = document.getElementById('error-state');
-const dateError = document.getElementById('date-error');
 
 // ================================================================
 // API FETCH UTILITIES
@@ -37,8 +36,7 @@ async function fetchTiragesEM(endpoint) {
 // ================================================================
 
 function init() {
-    configureDatePicker();
-    if (drawDateInput) drawDateInput.addEventListener('change', validateDateInput);
+    initNextDraw();
     if (btnAnalyze) btnAnalyze.addEventListener('click', handleAnalyze);
     initGridCountSelector();
     updateStatsDisplay();
@@ -86,37 +84,37 @@ function updateStatsDisplay() {
 }
 
 // ================================================================
-// DATE PICKER — EuroMillions: Mardi (2) et Vendredi (5)
+// NEXT DRAW — EuroMillions: Mardi (2) et Vendredi (5)
 // ================================================================
 
-function configureDatePicker() {
-    if (!drawDateInput) return;
+/**
+ * Calcule et affiche la date du prochain tirage EuroMillions.
+ */
+function initNextDraw() {
+    nextDrawDate = getNextDrawDate();
 
-    var nextDrawDate = getNextDrawDate();
-    drawDateInput.value = nextDrawDate;
+    // Afficher la date formatee dans le texte informatif
+    var el = document.getElementById('next-draw-date');
+    if (el) {
+        var dateObj = new Date(nextDrawDate + 'T00:00:00');
+        el.textContent = dateObj.toLocaleDateString(LI.locale, {
+            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+        });
+    }
 
-    var today = new Date();
-    drawDateInput.min = today.toISOString().split('T')[0];
-
-    var maxDate = new Date();
-    maxDate.setMonth(maxDate.getMonth() + 3);
-    drawDateInput.max = maxDate.toISOString().split('T')[0];
-
-    validateDateInput();
     updateDaysUntilDraw();
 }
 
 /**
  * Met a jour le message "Prochain tirage dans X jours"
- * Calcul precis base sur la date selectionnee
  */
 function updateDaysUntilDraw() {
-    if (!drawDateInput || !drawDateInput.value) return;
+    if (!nextDrawDate) return;
 
     var today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    var drawDate = new Date(drawDateInput.value + 'T00:00:00');
+    var drawDate = new Date(nextDrawDate + 'T00:00:00');
     drawDate.setHours(0, 0, 0, 0);
 
     var diffTime = drawDate - today;
@@ -173,90 +171,6 @@ function getNextDrawDate() {
     return nextDate.toISOString().split('T')[0];
 }
 
-/**
- * Verifie si jour de tirage EM (Mardi=2, Vendredi=5)
- */
-function isDrawDay(date) {
-    var day = date.getDay();
-    return day === 2 || day === 5;
-}
-
-function findNextDrawDate(fromDate) {
-    var date = new Date(fromDate);
-    var dayOfWeek = date.getDay();
-
-    if (dayOfWeek === 2 || dayOfWeek === 5) {
-        return date.toISOString().split('T')[0];
-    }
-
-    var daysToAdd = 0;
-    switch (dayOfWeek) {
-        case 0: daysToAdd = 2; break;
-        case 1: daysToAdd = 1; break;
-        case 3: daysToAdd = 2; break;
-        case 4: daysToAdd = 1; break;
-        case 6: daysToAdd = 3; break;
-    }
-
-    date.setDate(date.getDate() + daysToAdd);
-    return date.toISOString().split('T')[0];
-}
-
-function validateDateInput() {
-    if (!drawDateInput) return;
-    var dateValue = drawDateInput.value;
-    if (!dateValue) {
-        hideDateError();
-        disableActionButtons(false);
-        return;
-    }
-
-    var selectedDate = new Date(dateValue + 'T00:00:00');
-
-    if (!isDrawDay(selectedDate)) {
-        var nextValidDate = findNextDrawDate(selectedDate);
-        var nextDateFormatted = new Date(nextValidDate + 'T00:00:00').toLocaleDateString(LI.locale, {
-            weekday: 'long', day: 'numeric', month: 'long'
-        });
-
-        showDateError(LI.no_draw_msg + nextDateFormatted);
-        disableActionButtons(true);
-
-        setTimeout(function() {
-            if (drawDateInput.value === dateValue) {
-                drawDateInput.value = nextValidDate;
-                hideDateError();
-                disableActionButtons(false);
-                updateDaysUntilDraw();
-            }
-        }, 1500);
-    } else {
-        hideDateError();
-        disableActionButtons(false);
-        updateDaysUntilDraw();
-    }
-}
-
-function showDateError(message) {
-    if (!dateError) return;
-    dateError.textContent = message;
-    dateError.style.display = 'block';
-    drawDateInput.style.borderColor = '#d32f2f';
-}
-
-function hideDateError() {
-    if (!dateError) return;
-    dateError.style.display = 'none';
-    drawDateInput.style.borderColor = '';
-}
-
-function disableActionButtons(disable) {
-    if (!btnAnalyze) return;
-    btnAnalyze.disabled = disable;
-    btnAnalyze.style.opacity = disable ? '0.5' : '1';
-    btnAnalyze.style.cursor = disable ? 'not-allowed' : 'pointer';
-}
-
 // ================================================================
 // GRID COUNT SELECTOR
 // ================================================================
@@ -281,18 +195,7 @@ function initGridCountSelector() {
 // ================================================================
 
 async function handleAnalyze() {
-    if (!drawDateInput) return;
-    var date = drawDateInput.value;
-    if (!date) {
-        showError(LI.select_date);
-        return;
-    }
-
-    var selectedDate = new Date(date + 'T00:00:00');
-    if (!isDrawDay(selectedDate)) {
-        showError(LI.draw_days_only);
-        return;
-    }
+    var date = nextDrawDate;
 
     setLoading(btnAnalyze, true);
     hideResults();

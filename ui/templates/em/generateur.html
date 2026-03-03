@@ -89,11 +89,9 @@
 
                 <!-- Form (secondary step) -->
                 <div class="generator-form">
-                    <div class="form-group">
-                        <label for="draw-date">&#128197; {{ _('Date du prochain tirage') }}</label>
-                        <input type="date" id="draw-date" class="premium-input">
-                        <div id="date-error" class="date-error" style="display: none; color: #d32f2f; margin-top: 8px; font-size: 14px; font-weight: 500;"></div>
-                    </div>
+                    <p class="next-draw-info" style="text-align:center; font-size:1.05rem; margin-bottom:18px; color:var(--text-muted); font-weight:500;">
+                        &#128197; {{ _('Date du prochain tirage') }} : <strong id="next-draw-date" style="color:var(--text-primary);"></strong>
+                    </p>
 
                     <div class="form-group">
                         <label>&#127922; {{ _('Nombre de grilles à générer') }}</label>
