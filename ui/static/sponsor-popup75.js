@@ -906,7 +906,7 @@ function openMetaResultPopup(data) {
                         var url = URL.createObjectURL(results[1]);
                         var a = document.createElement('a');
                         a.href = url;
-                        a.download = 'rapport-meta-lotoia.pdf';
+                        a.download = 'rapport-meta-lotoia-' + (window.LotoIA_lang || 'fr') + '.pdf';
                         a.click();
                         pdfBtn.disabled = false;
                     }, 700);

@@ -824,7 +824,7 @@ function openMetaResultPopupEM(data) {
                         var url = URL.createObjectURL(results[1]);
                         var a = document.createElement('a');
                         a.href = url;
-                        a.download = 'rapport-meta-euromillions.pdf';
+                        a.download = 'rapport-meta-euromillions-' + (window.LotoIA_lang || 'fr') + '.pdf';
                         a.click();
                         pdfBtn.disabled = false;
                     }, 700);

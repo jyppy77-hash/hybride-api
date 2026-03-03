@@ -101,10 +101,19 @@ async def em_meta_pdf(request: Request, payload: EMMetaPdfPayload):
             all_freq_boules=payload.all_freq_boules,
             all_freq_secondary=payload.all_freq_secondary,
         )
+        lang = payload.lang or "fr"
+        fname = f"rapport-meta-euromillions-{lang}.pdf"
+        buf.seek(0, 2)
+        size = buf.tell()
+        buf.seek(0)
         return StreamingResponse(
             buf,
             media_type="application/pdf",
-            headers={"Content-Disposition": "inline; filename=meta75_em_report.pdf"},
+            headers={
+                "Content-Disposition": f'attachment; filename="{fname}"',
+                "Content-Length": str(size),
+                "Content-Encoding": "identity",
+            },
         )
     except ImportError:
         raise HTTPException(status_code=500, detail="reportlab non installe")
