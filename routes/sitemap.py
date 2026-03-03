@@ -34,30 +34,54 @@ _LOTO_PAGES = [
 # ── EM page priorities ───────────────────────────────────────────────────
 
 _EM_PAGE_PRIORITY = {
-    "home":         (0.9,  "daily"),
-    "generateur":   (0.85, "daily"),
-    "simulateur":   (0.85, "daily"),
-    "statistiques": (0.85, "daily"),
-    "historique":   (0.7,  "daily"),
-    "faq":          (0.6,  "monthly"),
-    "news":         (0.5,  "weekly"),
-    "a_propos":     (0.6,  "monthly"),
-    "moteur":       (0.8,  "monthly"),
-    "methodologie": (0.8,  "monthly"),
-    "ia":           (0.8,  "monthly"),
-    "hybride_page": (0.7,  "monthly"),
+    "home":             (0.9,  "daily"),
+    "generateur":       (0.85, "daily"),
+    "simulateur":       (0.85, "daily"),
+    "statistiques":     (0.85, "daily"),
+    "historique":       (0.7,  "daily"),
+    "faq":              (0.6,  "monthly"),
+    "news":             (0.5,  "weekly"),
+    "a_propos":         (0.6,  "monthly"),
+    "moteur":           (0.8,  "monthly"),
+    "methodologie":     (0.8,  "monthly"),
+    "ia":               (0.8,  "monthly"),
+    "hybride_page":     (0.7,  "monthly"),
+    "mentions":         (0.3,  "yearly"),
+    "confidentialite":  (0.3,  "yearly"),
+    "cookies":          (0.3,  "yearly"),
+    "disclaimer":       (0.3,  "yearly"),
 }
 
 
-def _url_block(loc: str, lastmod: str, freq: str, priority: float) -> str:
-    return (
-        f"  <url>\n"
-        f"    <loc>{loc}</loc>\n"
-        f"    <lastmod>{lastmod}</lastmod>\n"
-        f"    <changefreq>{freq}</changefreq>\n"
-        f"    <priority>{priority}</priority>\n"
-        f"  </url>"
-    )
+def _url_block(loc: str, lastmod: str, freq: str, priority: float,
+               alternates: list[tuple[str, str]] | None = None) -> str:
+    lines = [
+        f"  <url>",
+        f"    <loc>{loc}</loc>",
+        f"    <lastmod>{lastmod}</lastmod>",
+        f"    <changefreq>{freq}</changefreq>",
+        f"    <priority>{priority}</priority>",
+    ]
+    if alternates:
+        for hreflang, href in alternates:
+            lines.append(
+                f'    <xhtml:link rel="alternate" hreflang="{hreflang}" href="{href}"/>'
+            )
+    lines.append(f"  </url>")
+    return "\n".join(lines)
+
+
+def _hreflang_alternates(page_key: str) -> list[tuple[str, str]]:
+    """Build [(hreflang, absolute_url), ...] for all enabled langs + x-default."""
+    alternates = []
+    for lc in killswitch.ENABLED_LANGS:
+        url = EM_URLS.get(lc, {}).get(page_key)
+        if url:
+            alternates.append((lc, f"{BASE_URL}{url}"))
+    fr_url = EM_URLS["fr"].get(page_key)
+    if fr_url:
+        alternates.append(("x-default", f"{BASE_URL}{fr_url}"))
+    return alternates
 
 
 @router.get("/sitemap.xml", include_in_schema=False)
@@ -78,13 +102,16 @@ async def sitemap():
             page_url = lang_urls.get(page_key)
             if page_url and page_url not in seen:
                 seen.add(page_url)
+                alternates = _hreflang_alternates(page_key)
                 blocks.append(_url_block(
                     f"{BASE_URL}{page_url}", today, freq, priority,
+                    alternates=alternates,
                 ))
 
     xml = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n'
+        '        xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
         + "\n".join(blocks)
         + "\n</urlset>\n"
     )

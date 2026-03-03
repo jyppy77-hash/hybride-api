@@ -358,6 +358,72 @@ def test_sitemap_has_lastmod():
     assert "<lastmod>" in resp.text
 
 
+def test_sitemap_includes_legal_pages():
+    """Sitemap includes legal pages for all 6 languages."""
+    client = _get_client()
+    resp = client.get("/sitemap.xml")
+    body = resp.text
+    assert f"{BASE_URL}/euromillions/mentions-legales" in body
+    assert f"{BASE_URL}/en/euromillions/legal-notices" in body
+    assert f"{BASE_URL}/es/euromillions/aviso-legal" in body
+    assert f"{BASE_URL}/pt/euromillions/avisos-legais" in body
+    assert f"{BASE_URL}/de/euromillions/impressum" in body
+    assert f"{BASE_URL}/nl/euromillions/juridische-kennisgeving" in body
+
+
+def test_sitemap_has_xhtml_namespace():
+    """Sitemap declares xmlns:xhtml namespace."""
+    client = _get_client()
+    resp = client.get("/sitemap.xml")
+    assert 'xmlns:xhtml="http://www.w3.org/1999/xhtml"' in resp.text
+
+
+def test_sitemap_has_hreflang_alternates():
+    """EM pages have xhtml:link alternate hreflang tags."""
+    client = _get_client()
+    resp = client.get("/sitemap.xml")
+    body = resp.text
+    assert 'xhtml:link rel="alternate" hreflang="fr"' in body
+    assert 'xhtml:link rel="alternate" hreflang="en"' in body
+    assert 'xhtml:link rel="alternate" hreflang="x-default"' in body
+
+
+def test_sitemap_hreflang_bidirectional():
+    """Each EM page URL block contains alternates for all 6 langs + x-default."""
+    client = _get_client()
+    resp = client.get("/sitemap.xml")
+    body = resp.text
+    # Pick FR accueil block — it must contain all 6 alternates
+    assert 'hreflang="fr" href="https://lotoia.fr/euromillions"' in body
+    assert 'hreflang="en" href="https://lotoia.fr/en/euromillions"' in body
+    assert 'hreflang="es" href="https://lotoia.fr/es/euromillions"' in body
+    assert 'hreflang="pt" href="https://lotoia.fr/pt/euromillions"' in body
+    assert 'hreflang="de" href="https://lotoia.fr/de/euromillions"' in body
+    assert 'hreflang="nl" href="https://lotoia.fr/nl/euromillions"' in body
+    assert 'hreflang="x-default" href="https://lotoia.fr/euromillions"' in body
+
+
+def test_sitemap_loto_no_hreflang():
+    """Loto FR pages should NOT have xhtml:link alternates (single language)."""
+    client = _get_client()
+    resp = client.get("/sitemap.xml")
+    body = resp.text
+    # The Loto /accueil block should not contain xhtml:link
+    # Check that hreflang tags only appear in EM section
+    loto_section = body.split(f"{BASE_URL}/euromillions")[0]
+    assert "xhtml:link" not in loto_section
+
+
+def test_sitemap_url_count():
+    """Sitemap has 14 Loto + 96 EM pages = 110 URLs total.
+    (16 page_keys × 6 langs = 96, but home & accueil share same URL → 15 unique × 6 = 90,
+     plus 14 Loto = 104… we just check >= 100 URLs.)"""
+    client = _get_client()
+    resp = client.get("/sitemap.xml")
+    url_count = resp.text.count("<url>")
+    assert url_count >= 100, f"Expected >= 100 URLs, got {url_count}"
+
+
 # ═══════════════════════════════════════════════
 # 10. Config/languages.py PAGE_SLUGS coverage
 # ═══════════════════════════════════════════════

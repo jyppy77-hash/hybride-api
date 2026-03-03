@@ -1823,6 +1823,7 @@ Added 4 multilingual legal pages for EuroMillions (6 languages each) and updated
 | 2026-03-01 | Feature: Mobile globe language selector (🌐). Globe button + dropdown on mobile ≤768px, desktop unchanged. **698 tests.** |
 | 2026-03-01 | Feature: Legal pages EM multilingues (4 pages x 6 langs = 24 URLs). mentions-legales, confidentialite, cookies, disclaimer. Footer dynamic URLs. 66 EM routes total. **737 tests.** |
 | 2026-03-03 | Phase A: Argent/money/gambling detection — 13th pipeline phase. Court-circuit (no Gemini). 3-level escalation (L1 pedagogical, L2 firm, L3 help redirection). 6-lang response pools + word lists (FR/EN/ES/PT/DE/NL). Country-specific gambling support links. **972 tests.** |
+| 2026-03-03 | Sprint 4 SEO: Pre-launch audit (score 8.2/10). H1 hero_title optimization (12 edits, "EuroMillions" keyword in all 6 langs). Title tag shortening (5 pages ≤50 chars). BreadcrumbList JSON-LD on 7 pages. Dataset + CollectionPage schemas (historique, news). CLS fix (4 images: width/height/lazy). robots.txt EM Allow rules (6 langs). Loto cross-links in EM footer (FR only). og:title + twitter:title aligned. 14 files modified. **972 tests.** |
 
 ---
 
@@ -1843,7 +1844,7 @@ Added 4 multilingual legal pages for EuroMillions (6 languages each) and updated
 | Cache | Stable | Redis async + in-memory fallback (Phase 6). PDF off-thread. |
 | Testing | Active | **972 tests** (pytest, 25 test files), CI integration |
 | Security | Hardened | CSP+HSTS preload+COOP (Phase 7), aiomysql parameterized queries, rate limiting, correlation IDs |
-| SEO | Stable | Schema.org Dataset (Phase 7), bankability T4 pivot (Phase 8), dynamic sitemap (P5/5), hreflang multilang (P5/5), structured data, canonical redirects |
+| SEO | **Hardened (Sprint 4)** | Schema.org Dataset (Phase 7), bankability T4 pivot (Phase 8), dynamic sitemap (P5/5), hreflang multilang (P5/5). **Sprint 4**: BreadcrumbList JSON-LD (7 pages), Dataset + CollectionPage schemas, H1 keyword optimization (6 langs), title tags ≤50 chars, CLS fix (4 images), robots.txt EM rules, Loto cross-links (FR footer), og:title/twitter:title aligned. Pre-launch audit score **8.2/10**. |
 | Mobile responsive | Stable | Fullscreen chatbot, viewport sync, safe-area support |
 
 ---
@@ -1886,7 +1887,7 @@ Observable characteristics based on development usage:
 | V5c (tests+infra) | 7.1 | +0.3 | Tests, CI pipeline, circuit breaker, 2 workers |
 | **V6 (credentials)** | **7.2** | **+0.1** | **Credential verification confirmed, full 6-section audit** |
 
-**Note**: Phases 1-11 were implemented post-audit. No formal re-audit has been conducted since V6.
+**Note**: Phases 1-11 were implemented post-audit. Sprint 4 SEO audit (03/03/2026) scored **8.2/10** across 8 areas (indexation, meta tags, structured data, content SEO, performance, i18n, security, analytics).
 
 ### V6 Section Scores (10/02/2026)
 
@@ -1914,4 +1915,4 @@ Observable characteristics based on development usage:
 
 ---
 
-*Updated by JyppY & Claude Opus 4.6 — 03/03/2026 (v19.0: Phase A — Argent/money/gambling detection. 13th pipeline phase, court-circuit, 3-level escalation L1/L2/L3, 6-lang response pools FR/EN/ES/PT/DE/NL, country-specific gambling help links. 972 tests, 0 failures. Previous: v18.0 GA4 audit, v17.0 PDF heatmap, v16.0 legal pages, globe selector, chatbot fix. i18n 6/6 COMPLETE, P9 (SSE streaming), P1-P5/5 (i18n infrastructure), Phase 11 (EN multilang), Phases 1-10.)*
+*Updated by JyppY & Claude Opus 4.6 — 03/03/2026 (v20.0: Sprint 4 SEO — pre-launch audit 8.2/10, H1 keyword optimization 6 langs, title tags ≤50 chars, BreadcrumbList JSON-LD 7 pages, Dataset+CollectionPage schemas, CLS fix 4 images, robots.txt EM rules, Loto cross-links FR footer. 972 tests, 0 failures. Previous: v19.0 Phase A argent detection, v18.0 GA4 audit, v17.0 PDF heatmap, v16.0 legal pages, globe selector. i18n 6/6 COMPLETE, P9 (SSE streaming), P1-P5/5 (i18n infrastructure), Phase 11 (EN multilang), Phases 1-10.)*
