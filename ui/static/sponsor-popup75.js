@@ -903,11 +903,18 @@ function openMetaResultPopup(data) {
                 .then(function(results) {
                     labor.finish();
                     setTimeout(function() {
-                        var url = URL.createObjectURL(results[1]);
+                        var pdfBlob = new Blob([results[1]], { type: 'application/pdf' });
+                        var url = URL.createObjectURL(pdfBlob);
                         var a = document.createElement('a');
+                        a.style.display = 'none';
                         a.href = url;
-                        a.download = 'rapport-meta-lotoia-' + (window.LotoIA_lang || 'fr') + '.pdf';
+                        a.download = 'rapport-meta-lotoia-' + (document.documentElement.lang || 'fr') + '.pdf';
+                        document.body.appendChild(a);
                         a.click();
+                        setTimeout(function() {
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                        }, 200);
                         pdfBtn.disabled = false;
                     }, 700);
                 })

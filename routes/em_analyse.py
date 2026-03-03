@@ -7,7 +7,7 @@ Keeps /meta-analyse-texte and /meta-pdf (EM-only, no Loto equivalent).
 import asyncio
 
 from fastapi import APIRouter, HTTPException, Query, Request
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse, Response
 from typing import Optional
 import logging
 
@@ -103,16 +103,13 @@ async def em_meta_pdf(request: Request, payload: EMMetaPdfPayload):
         )
         lang = payload.lang or "fr"
         fname = f"rapport-meta-euromillions-{lang}.pdf"
-        buf.seek(0, 2)
-        size = buf.tell()
-        buf.seek(0)
-        return StreamingResponse(
-            buf,
+        pdf_bytes = buf.getvalue()
+        return Response(
+            content=pdf_bytes,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f'attachment; filename="{fname}"',
-                "Content-Length": str(size),
-                "Content-Encoding": "identity",
+                "Content-Disposition": f'inline; filename="{fname}"',
+                "Content-Length": str(len(pdf_bytes)),
             },
         )
     except ImportError:

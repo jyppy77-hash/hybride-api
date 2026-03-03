@@ -1,7 +1,7 @@
 import asyncio
 
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import Response
 import logging
 
 from schemas import MetaPdfPayload
@@ -45,16 +45,13 @@ async def api_meta_pdf(request: Request, payload: MetaPdfPayload):
         )
         lang = payload.lang or "fr"
         fname = f"rapport-meta-lotoia-{lang}.pdf"
-        buf.seek(0, 2)
-        size = buf.tell()
-        buf.seek(0)
-        return StreamingResponse(
-            buf,
+        pdf_bytes = buf.getvalue()
+        return Response(
+            content=pdf_bytes,
             media_type="application/pdf",
             headers={
-                "Content-Disposition": f'attachment; filename="{fname}"',
-                "Content-Length": str(size),
-                "Content-Encoding": "identity",
+                "Content-Disposition": f'inline; filename="{fname}"',
+                "Content-Length": str(len(pdf_bytes)),
             },
         )
     except ImportError:
