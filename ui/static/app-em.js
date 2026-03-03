@@ -59,7 +59,7 @@ function updateStatsDisplay() {
     fetch('/api/euromillions/database-info')
         .then(function(res) { return res.json(); })
         .then(function(data) {
-            if (data.exists) {
+            if (data.total_draws != null) {
                 var totalDraws = data.total_draws || 0;
 
                 var tiragesEl = document.getElementById('stat-tirages');
@@ -103,6 +103,42 @@ function configureDatePicker() {
     drawDateInput.max = maxDate.toISOString().split('T')[0];
 
     validateDateInput();
+    updateDaysUntilDraw();
+}
+
+/**
+ * Met a jour le message "Prochain tirage dans X jours"
+ * Calcul precis base sur la date selectionnee
+ */
+function updateDaysUntilDraw() {
+    if (!drawDateInput || !drawDateInput.value) return;
+
+    var today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    var drawDate = new Date(drawDateInput.value + 'T00:00:00');
+    drawDate.setHours(0, 0, 0, 0);
+
+    var diffTime = drawDate - today;
+    var daysUntil = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+    var daysElement = document.getElementById('days-until-draw');
+    var urgencyText = document.querySelector('.urgency-text');
+
+    if (!urgencyText) return;
+
+    if (daysUntil === 0) {
+        if (daysElement) daysElement.textContent = '';
+        urgencyText.innerHTML = LI.countdown_tonight || 'Prochain tirage <strong>ce soir</strong>';
+    } else if (daysUntil === 1) {
+        if (daysElement) daysElement.textContent = '';
+        urgencyText.innerHTML = LI.countdown_tomorrow || 'Prochain tirage <strong>demain</strong>';
+    } else if (daysUntil < 0) {
+        if (daysElement) daysElement.textContent = '';
+        urgencyText.innerHTML = LI.countdown_past || 'S\u00e9lectionnez une date de tirage \u00e0 venir';
+    } else {
+        if (daysElement) daysElement.textContent = daysUntil;
+    }
 }
 
 /**
@@ -191,11 +227,13 @@ function validateDateInput() {
                 drawDateInput.value = nextValidDate;
                 hideDateError();
                 disableActionButtons(false);
+                updateDaysUntilDraw();
             }
         }, 1500);
     } else {
         hideDateError();
         disableActionButtons(false);
+        updateDaysUntilDraw();
     }
 }
 

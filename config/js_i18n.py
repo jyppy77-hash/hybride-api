@@ -20,6 +20,11 @@ _LABELS: dict[str, dict[str, str]] = {
         "draw_days_only": "L'EuroMillions est tir\u00e9 uniquement les mardis et vendredis.",
         "no_draw_msg": "Pas de tirage EuroMillions ce jour. Prochain tirage : ",
 
+        # ── app-em — countdown ──
+        "countdown_tonight": "Prochain tirage <strong>ce soir</strong> \u2014 pr\u00e9parez vos grilles",
+        "countdown_tomorrow": "Prochain tirage <strong>demain</strong> \u2014 pr\u00e9parez vos grilles",
+        "countdown_past": "S\u00e9lectionnez une date de tirage \u00e0 venir",
+
         # ── app-em — display ──
         "draws_suffix": " tirages analyses",
         "data_depth_from": "de ",
@@ -190,6 +195,11 @@ _LABELS: dict[str, dict[str, str]] = {
         "draw_days_only": "EuroMillions draws take place on Tuesdays and Fridays only.",
         "no_draw_msg": "No EuroMillions draw on this day. Next draw: ",
 
+        # ── app-em — countdown ──
+        "countdown_tonight": "Next draw <strong>tonight</strong> \u2014 prepare your grids",
+        "countdown_tomorrow": "Next draw <strong>tomorrow</strong> \u2014 prepare your grids",
+        "countdown_past": "Select an upcoming draw date",
+
         # ── app-em — display ──
         "draws_suffix": " draws analysed",
         "data_depth_from": "from ",
@@ -358,7 +368,12 @@ _LABELS: dict[str, dict[str, str]] = {
         "unable_generate": "No se pueden generar las combinaciones. ",
         "select_date": "Por favor, seleccione una fecha de sorteo.",
         "draw_days_only": "EuroMillions solo se sortea los martes y viernes.",
-        "no_draw_msg": "No hay sorteo de EuroMillions este día. Próximo sorteo: ",
+        "no_draw_msg": "No hay sorteo de EuroMillions este d\u00eda. Pr\u00f3ximo sorteo: ",
+
+        # ── app-em — countdown ──
+        "countdown_tonight": "Pr\u00f3ximo sorteo <strong>esta noche</strong> \u2014 prepare sus combinaciones",
+        "countdown_tomorrow": "Pr\u00f3ximo sorteo <strong>ma\u00f1ana</strong> \u2014 prepare sus combinaciones",
+        "countdown_past": "Seleccione una fecha de sorteo futura",
 
         # ── app-em — display ──
         "draws_suffix": " sorteos analizados",
@@ -528,7 +543,12 @@ _LABELS: dict[str, dict[str, str]] = {
         "unable_generate": "Não foi possível gerar as combinações. ",
         "select_date": "Por favor, selecione uma data de sorteio.",
         "draw_days_only": "O EuroMillions só é sorteado às terças e sextas-feiras.",
-        "no_draw_msg": "Não há sorteio EuroMillions neste dia. Próximo sorteio: ",
+        "no_draw_msg": "N\u00e3o h\u00e1 sorteio EuroMillions neste dia. Pr\u00f3ximo sorteio: ",
+
+        # ── app-em — countdown ──
+        "countdown_tonight": "Pr\u00f3ximo sorteio <strong>esta noite</strong> \u2014 prepare as tuas grelhas",
+        "countdown_tomorrow": "Pr\u00f3ximo sorteio <strong>amanh\u00e3</strong> \u2014 prepare as tuas grelhas",
+        "countdown_past": "Seleciona uma data de sorteio futura",
 
         # ── app-em — display ──
         "draws_suffix": " sorteios analisados",
@@ -698,7 +718,12 @@ _LABELS: dict[str, dict[str, str]] = {
         "unable_generate": "Kombinationen konnten nicht generiert werden. ",
         "select_date": "Bitte wählen Sie ein Ziehungsdatum.",
         "draw_days_only": "EuroMillions wird nur dienstags und freitags gezogen.",
-        "no_draw_msg": "Keine EuroMillions-Ziehung an diesem Tag. Nächste Ziehung: ",
+        "no_draw_msg": "Keine EuroMillions-Ziehung an diesem Tag. N\u00e4chste Ziehung: ",
+
+        # ── app-em — countdown ──
+        "countdown_tonight": "N\u00e4chste Ziehung <strong>heute Abend</strong> \u2014 bereiten Sie Ihre Tipps vor",
+        "countdown_tomorrow": "N\u00e4chste Ziehung <strong>morgen</strong> \u2014 bereiten Sie Ihre Tipps vor",
+        "countdown_past": "W\u00e4hlen Sie ein zuk\u00fcnftiges Ziehungsdatum",
 
         # ── app-em — display ──
         "draws_suffix": " Ziehungen analysiert",
@@ -869,6 +894,11 @@ _LABELS: dict[str, dict[str, str]] = {
         "select_date": "Selecteer een trekkingsdatum.",
         "draw_days_only": "EuroMillions wordt alleen op dinsdag en vrijdag getrokken.",
         "no_draw_msg": "Geen EuroMillions-trekking op deze dag. Volgende trekking: ",
+
+        # ── app-em — countdown ──
+        "countdown_tonight": "Volgende trekking <strong>vanavond</strong> \u2014 bereid je combinaties voor",
+        "countdown_tomorrow": "Volgende trekking <strong>morgen</strong> \u2014 bereid je combinaties voor",
+        "countdown_past": "Selecteer een toekomstige trekkingsdatum",
 
         # ── app-em — display ──
         "draws_suffix": " trekkingen geanalyseerd",
