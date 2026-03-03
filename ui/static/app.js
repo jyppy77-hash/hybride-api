@@ -5,9 +5,9 @@
 // State management
 let currentResult = null;
 let selectedGridCount = 3; // Par defaut 3 grilles
+var nextDrawDate = null;
 
 // DOM Elements
-const drawDateInput = document.getElementById('draw-date');
 const btnAnalyze = document.getElementById('btn-analyze');
 const btnStats = document.getElementById('btn-stats');
 const btnUpdate = document.getElementById('btn-update');
@@ -16,7 +16,6 @@ const resultsSection = document.getElementById('results-section');
 const successState = document.getElementById('success-state');
 const errorState = document.getElementById('error-state');
 const updateStatus = document.getElementById('update-status');
-const dateError = document.getElementById('date-error');
 
 // Install Elements
 const dbStatus = document.getElementById('db-status');
@@ -118,11 +117,10 @@ async function afficherDernierTirage() {
 // ================================================================
 
 function init() {
-    // Configure date picker with next draw day
-    configureDatePicker();
+    // Calcul automatique du prochain tirage
+    initNextDraw();
 
     // Event listeners
-    drawDateInput.addEventListener('change', validateDateInput);
     btnAnalyze.addEventListener('click', handleAnalyze);
     btnStats.addEventListener('click', handleStats);
     btnUpdate.addEventListener('click', handleUpdate);
@@ -268,73 +266,55 @@ function updateStatsDisplay() {
 }
 
 /**
- * Configure le date picker avec le prochain jour de tirage
+ * Calcule et affiche la date du prochain tirage Loto.
  */
-async function configureDatePicker() {
-    // Definir la date par defaut : prochain jour de tirage
-    const nextDrawDate = getNextDrawDate();
-    drawDateInput.value = nextDrawDate;
+function initNextDraw() {
+    nextDrawDate = getNextDrawDate();
 
-    // Definir la date min (aujourd'hui)
-    const today = new Date();
-    drawDateInput.min = today.toISOString().split('T')[0];
+    // Afficher la date formatee dans le texte informatif
+    const el = document.getElementById('next-draw-date');
+    if (el) {
+        const dateObj = new Date(nextDrawDate + 'T00:00:00');
+        el.textContent = dateObj.toLocaleDateString('fr-FR', {
+            weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+        });
+    }
 
-    // Definir la date max (3 mois dans le futur)
-    const maxDate = new Date();
-    maxDate.setMonth(maxDate.getMonth() + 3);
-    drawDateInput.max = maxDate.toISOString().split('T')[0];
-
-    // Valider la date initiale
-    validateDateInput();
-
-    // Mettre à jour le message "jours avant tirage"
     updateDaysUntilDraw();
-
-    addLog(`Calendrier configure - Prochain tirage: ${nextDrawDate}`, 'info');
+    addLog(`Prochain tirage: ${nextDrawDate}`, 'info');
 }
 
 /**
- * Met à jour le message "Prochain tirage dans X jours"
- * Calcul précis basé sur la date sélectionnée
+ * Met a jour le message "Prochain tirage dans X jours"
  */
 function updateDaysUntilDraw() {
-    const dateValue = drawDateInput.value;
-    if (!dateValue) return;
+    if (!nextDrawDate) return;
 
-    // Reset des heures pour un calcul précis
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    const drawDate = new Date(dateValue + 'T00:00:00');
+    const drawDate = new Date(nextDrawDate + 'T00:00:00');
     drawDate.setHours(0, 0, 0, 0);
 
-    // Calcul des jours
     const diffTime = drawDate - today;
     const daysUntil = Math.round(diffTime / (1000 * 60 * 60 * 24));
 
-    // Éléments DOM
     const daysElement = document.getElementById('days-until-draw');
     const urgencyText = document.querySelector('.urgency-text');
 
     if (!urgencyText) return;
 
-    // Message adapté selon le nombre de jours
     if (daysUntil === 0) {
-        // Tirage aujourd'hui
-        if (daysElement) daysElement.textContent = 'ce soir';
-        urgencyText.innerHTML = '⏱️ <span class="urgency-icon"></span>Prochain tirage <strong>ce soir</strong> — préparez vos grilles';
+        if (daysElement) daysElement.textContent = '';
+        urgencyText.innerHTML = 'Prochain tirage <strong>ce soir</strong> \u2014 pr\u00e9parez vos grilles';
     } else if (daysUntil === 1) {
-        // Tirage demain
-        if (daysElement) daysElement.textContent = 'demain';
-        urgencyText.innerHTML = '⏱️ <span class="urgency-icon"></span>Prochain tirage <strong>demain</strong> — préparez vos grilles';
+        if (daysElement) daysElement.textContent = '';
+        urgencyText.innerHTML = 'Prochain tirage <strong>demain</strong> \u2014 pr\u00e9parez vos grilles';
     } else if (daysUntil < 0) {
-        // Date passée (ne devrait pas arriver)
-        if (daysElement) daysElement.textContent = 'passé';
-        urgencyText.innerHTML = '⏱️ <span class="urgency-icon"></span>Sélectionnez une date de tirage à venir';
+        if (daysElement) daysElement.textContent = '';
+        urgencyText.innerHTML = 'S\u00e9lectionnez une date de tirage \u00e0 venir';
     } else {
-        // Dans X jours
         if (daysElement) daysElement.textContent = daysUntil;
-        urgencyText.innerHTML = `⏱️ <span class="urgency-icon"></span>Prochain tirage dans <strong>${daysUntil}</strong> jours — préparez vos grilles`;
     }
 }
 
@@ -373,30 +353,6 @@ function getNextDrawDate() {
     nextDate.setDate(nextDate.getDate() + daysToAdd);
 
     return nextDate.toISOString().split('T')[0];
-}
-
-/**
- * Trouve le prochain jour de tirage valide a partir d'une date donnee
- */
-function findNextDrawDate(fromDate) {
-    const date = new Date(fromDate);
-    const dayOfWeek = date.getDay();
-
-    // Si deja un jour valide (1, 3, 6), retourner tel quel
-    if (dayOfWeek === 1 || dayOfWeek === 3 || dayOfWeek === 6) {
-        return fromDate.toISOString ? fromDate.toISOString().split('T')[0] : fromDate;
-    }
-
-    let daysToAdd = 0;
-    switch (dayOfWeek) {
-        case 0: daysToAdd = 1; break; // Dimanche -> Lundi
-        case 2: daysToAdd = 1; break; // Mardi -> Mercredi
-        case 4: daysToAdd = 2; break; // Jeudi -> Samedi
-        case 5: daysToAdd = 1; break; // Vendredi -> Samedi
-    }
-
-    date.setDate(date.getDate() + daysToAdd);
-    return date.toISOString().split('T')[0];
 }
 
 /**
@@ -450,119 +406,11 @@ function getSessionId() {
 
 
 // ================================================================
-// DATE VALIDATION - Autoriser uniquement les jours de tirage officiels
-// ================================================================
-
-/**
- * Vérifie si une date correspond à un jour de tirage officiel du Loto
- * Jours de tirage VALIDES : Lundi (1), Mercredi (3), Samedi (6)
- *
- * @param {Date} date - Date à vérifier
- * @returns {boolean} - true si jour de tirage valide, false sinon
- */
-function isDrawDay(date) {
-    const day = date.getDay(); // 0=Dimanche, 1=Lundi, ..., 6=Samedi
-    return day === 1 || day === 3 || day === 6;
-}
-
-/**
- * Valide la date sélectionnée et affiche un message si jour invalide
- * Propose automatiquement le prochain jour de tirage valide
- */
-function validateDateInput() {
-    const dateValue = drawDateInput.value;
-
-    if (!dateValue) {
-        hideDateError();
-        disableActionButtons(false);
-        return;
-    }
-
-    const selectedDate = new Date(dateValue + 'T00:00:00'); // Force local timezone
-
-    if (!isDrawDay(selectedDate)) {
-        // Trouver le prochain jour de tirage valide
-        const nextValidDate = findNextDrawDate(selectedDate);
-        const nextDateFormatted = new Date(nextValidDate + 'T00:00:00').toLocaleDateString('fr-FR', {
-            weekday: 'long',
-            day: 'numeric',
-            month: 'long'
-        });
-
-        showDateError(`Pas de tirage ce jour. Prochain tirage : ${nextDateFormatted}`);
-        addLog(`Date invalide : ${dateValue} - Suggestion: ${nextValidDate}`, 'warning');
-
-        // Proposer de corriger automatiquement apres 2 secondes
-        setTimeout(() => {
-            if (drawDateInput.value === dateValue) {
-                drawDateInput.value = nextValidDate;
-                hideDateError();
-                disableActionButtons(false);
-                updateDaysUntilDraw(); // Mettre à jour après correction
-                addLog(`Date corrigee automatiquement: ${nextValidDate}`, 'info');
-            }
-        }, 1500);
-
-        disableActionButtons(true);
-    } else {
-        hideDateError();
-        addLog(`Date valide : ${dateValue} (jour de tirage)`, 'success');
-        disableActionButtons(false);
-        updateDaysUntilDraw(); // Mettre à jour le message "jours avant tirage"
-    }
-}
-
-/**
- * Affiche le message d'erreur de date
- */
-function showDateError(message) {
-    dateError.textContent = message;
-    dateError.style.display = 'block';
-    drawDateInput.style.borderColor = '#d32f2f';
-}
-
-/**
- * Masque le message d'erreur de date
- */
-function hideDateError() {
-    dateError.style.display = 'none';
-    drawDateInput.style.borderColor = '';
-}
-
-/**
- * Desactive ou reactive les boutons d'action selon la validite de la date
- */
-function disableActionButtons(disable) {
-    btnAnalyze.disabled = disable;
-
-    // Ajout d'une classe visuelle pour indiquer l'etat desactive
-    if (disable) {
-        btnAnalyze.style.opacity = '0.5';
-        btnAnalyze.style.cursor = 'not-allowed';
-    } else {
-        btnAnalyze.style.opacity = '1';
-        btnAnalyze.style.cursor = 'pointer';
-    }
-}
-
-// ================================================================
 // API CALLS
 // ================================================================
 
 async function handleAnalyze() {
-    const date = drawDateInput.value;
-    if (!date) {
-        showError('Veuillez sélectionner une date de tirage.');
-        return;
-    }
-
-    // Validate draw day
-    const selectedDate = new Date(date + 'T00:00:00');
-    if (!isDrawDay(selectedDate)) {
-        showError('Impossible d\'analyser cette date. Le Loto est uniquement tiré les lundis, mercredis et samedis.');
-        addLog(`Analyse bloquée : ${date} (pas un jour de tirage)`, 'error');
-        return;
-    }
+    const date = nextDrawDate;
 
     setLoading(btnAnalyze, true);
     hideResults();
