@@ -300,6 +300,66 @@ class TestComplimentResponseEM:
 # Response pools — OOR
 # ═══════════════════════════════════════════════════════════════════════
 
+# ═══════════════════════════════════════════════════════════════════════
+# Phase T — Neutralisation par mots statistiques (EM, shared _detect_tirage)
+# ═══════════════════════════════════════════════════════════════════════
+
+from services.chat_detectors import _detect_tirage
+
+
+class TestPhaseTNeutralize:
+    """Statistical words must prevent Phase T from firing."""
+
+    def test_ecart_depuis_dernier_tirage_em_fr(self):
+        """FR: 'écart depuis son dernier tirage EuroMillions' → Phase T NOT triggered."""
+        result = _detect_tirage(
+            "Quel numéro a le plus grand écart actuel depuis son dernier tirage EuroMillions ?"
+        )
+        assert result is None
+
+    def test_dernier_tirage_simple_still_works(self):
+        """Non-regression: 'quel était le dernier tirage' → Phase T triggered."""
+        result = _detect_tirage("Quel était le dernier tirage ?")
+        assert result == "latest"
+
+    def test_gap_since_last_draw_en(self):
+        """EN: 'gap since its last draw' → Phase T NOT triggered."""
+        result = _detect_tirage(
+            "Which number has the largest gap since its last draw?"
+        )
+        assert result is None
+
+    def test_frequency_tirage_neutralise(self):
+        """FR: 'fréquence' neutralise Phase T."""
+        result = _detect_tirage("fréquence des numéros au dernier tirage EuroMillions")
+        assert result is None
+
+    def test_retraso_sorteo_es(self):
+        """ES: 'retraso' neutralise Phase T."""
+        result = _detect_tirage("retraso del número desde el último sorteo")
+        assert result is None
+
+    def test_atraso_sorteio_pt(self):
+        """PT: 'atraso' neutralise Phase T."""
+        result = _detect_tirage("atraso do número desde o último sorteio")
+        assert result is None
+
+    def test_abstand_ziehung_de(self):
+        """DE: 'abstand' neutralise Phase T."""
+        result = _detect_tirage("Abstand seit der letzten Ziehung")
+        assert result is None
+
+    def test_achterstand_trekking_nl(self):
+        """NL: 'achterstand' neutralise Phase T."""
+        result = _detect_tirage("achterstand sinds de laatste trekking")
+        assert result is None
+
+    def test_resultats_seul_still_works(self):
+        """Non-regression: 'résultats' alone → Phase T triggered."""
+        result = _detect_tirage("résultats")
+        assert result == "latest"
+
+
 class TestOorResponseEM:
 
     def test_boule_high_format(self):

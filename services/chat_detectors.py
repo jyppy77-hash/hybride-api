@@ -95,6 +95,29 @@ _MOIS_TO_NUM = {
 _MOIS_NOM_RE = r'(janvier|f[eé]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[eé]cembre)'
 
 
+_STAT_NEUTRALIZE_RE = re.compile(
+    # FR
+    r'\b[eé]cart\b|\bretard\b|\bfr[eé]quence\b|\bcombien\s+de\s+fois\b'
+    r'|\bplus\s+grand\b|\bclassement\b'
+    # EN
+    r'|\bgap\b|\bdelay\b|\bfrequency\b|\bhow\s+many\s+times\b'
+    r'|\blargest\b|\branking\b'
+    # ES
+    r'|\bretraso\b|\bfrecuencia\b|\bcu[aá]ntas\s+veces\b'
+    r'|\bmayor\b|\bclasificaci[oó]n\b'
+    # PT
+    r'|\batraso\b|\bfrequ[eê]ncia\b|\bquantas\s+vezes\b'
+    r'|\bmaior\b|\bclassifica[çc][aã]o\b'
+    # DE
+    r'|\babstand\b|\bverz[oö]gerung\b|\bh[aä]ufigkeit\b|\bwie\s+oft\b'
+    r'|\bgr[oö][sß]te[rs]?\b|\brangliste\b'
+    # NL
+    r'|\bachterstand\b|\bvertraging\b|\bfrequentie\b|\bhoe\s+vaak\b'
+    r'|\bgrootste\b|\branglijst\b',
+    re.IGNORECASE,
+)
+
+
 def _detect_tirage(message: str):
     """
     Detecte si l'utilisateur demande les resultats d'un tirage.
@@ -104,6 +127,11 @@ def _detect_tirage(message: str):
 
     # Exclure "prochain tirage" (gere par Phase 0)
     if re.search(r'prochain', lower):
+        return None
+
+    # Neutralize Phase T if statistical analysis words are present
+    # (e.g. "écart depuis son dernier tirage" → Phase 3/SQL, not Phase T)
+    if _STAT_NEUTRALIZE_RE.search(lower):
         return None
 
     # Date explicite DD/MM/YYYY ou DD/MM ou DD-MM-YYYY

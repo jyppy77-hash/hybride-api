@@ -531,6 +531,30 @@ class TestDetectTirageTextuel:
         result = _detect_tirage("prochain tirage")
         assert result is None
 
+    # --- Neutralisation Phase T par mots statistiques ---
+
+    def test_ecart_depuis_dernier_tirage_neutralise(self):
+        """Mots statistiques ('écart') neutralisent Phase T (Loto FR)."""
+        result = _detect_tirage(
+            "Quel numéro a le plus grand écart depuis son dernier tirage ?"
+        )
+        assert result is None
+
+    def test_frequence_dernier_tirage_neutralise(self):
+        """'fréquence' neutralise Phase T."""
+        result = _detect_tirage("fréquence du numéro 7 au dernier tirage")
+        assert result is None
+
+    def test_retard_tirage_neutralise(self):
+        """'retard' neutralise Phase T."""
+        result = _detect_tirage("quel numéro a le plus gros retard au tirage ?")
+        assert result is None
+
+    def test_classement_tirage_neutralise(self):
+        """'classement' neutralise Phase T."""
+        result = _detect_tirage("classement des numéros par tirage")
+        assert result is None
+
     # --- Anti-hallucination : la date textuelle prime sur "résultats" = latest ---
 
     def test_resultats_avec_date_retourne_date_specifique(self):
