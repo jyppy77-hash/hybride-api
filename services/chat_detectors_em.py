@@ -207,11 +207,25 @@ def _detect_requete_complexe_em(message: str):
 
     if re.search(r'(?:plus\s+(?:gros|grand|long)|plus\s+en)\s+(?:[eé]cart|retard)', lower) or \
        re.search(r'(?:[eé]cart|retard)\s+(?:les?\s+)?plus\s+(?:gros|grand|long|important)', lower) or \
-       re.search(r'(?:plus\s+(?:long|grand)temps?)\s+(?:sans\s+)?sort', lower):
+       re.search(r'(?:plus\s+(?:long|grand)temps?)\s+(?:sans\s+)?sort', lower) or \
+       re.search(r'\b(?:largest|biggest|longest)\s+(?:gap|delay)\b', lower) or \
+       re.search(r'\bmayor\s+(?:retraso|intervalo)\b', lower) or \
+       re.search(r'\bmaior\s+(?:atraso|intervalo)\b', lower) or \
+       re.search(r'\bgr[oö][sß]te[rn]?\s+(?:abstand|verz[oö]gerung)\b', lower) or \
+       re.search(r'\bl[aä]ngste[rn]?\s+(?:abstand|verz[oö]gerung)\b', lower) or \
+       re.search(r'\bgrootste\s+(?:achterstand|vertraging)\b', lower) or \
+       re.search(r'\blangste\s+(?:achterstand|vertraging)\b', lower):
         return {"type": "classement", "tri": "ecart_desc", "limit": limit, "num_type": num_type}
 
     if re.search(r'(?:plus\s+(?:petit|court))\s+(?:[eé]cart|retard)', lower) or \
-       re.search(r'(?:sorti|apparu)\s+(?:le\s+plus\s+)?r[eé]cemment', lower):
+       re.search(r'(?:sorti|apparu)\s+(?:le\s+plus\s+)?r[eé]cemment', lower) or \
+       re.search(r'\b(?:smallest|shortest)\s+(?:gap|delay)\b', lower) or \
+       re.search(r'\bmenor\s+(?:retraso|intervalo)\b', lower) or \
+       re.search(r'\bmenor\s+(?:atraso|intervalo)\b', lower) or \
+       re.search(r'\bkleinste[rn]?\s+(?:abstand|verz[oö]gerung)\b', lower) or \
+       re.search(r'\bk[uü]rzeste[rn]?\s+(?:abstand|verz[oö]gerung)\b', lower) or \
+       re.search(r'\bkleinste\s+(?:achterstand|vertraging)\b', lower) or \
+       re.search(r'\bkortste\s+(?:achterstand|vertraging)\b', lower):
         return {"type": "classement", "tri": "ecart_asc", "limit": limit, "num_type": num_type}
 
     return None

@@ -183,6 +183,72 @@ class TestDetectRequeteComplexeEM:
     def test_no_match_returns_none(self):
         assert _detect_requete_complexe_em("bonjour comment ca va") is None
 
+    # --- ecart_desc multilingual ---
+
+    def test_ecart_desc_pt_maior_atraso(self):
+        """PT: 'maior atraso' → ecart_desc."""
+        r = _detect_requete_complexe_em(
+            "Qual número tem o maior atraso atual desde o seu último sorteio EuroMillions ?"
+        )
+        assert r is not None
+        assert r["tri"] == "ecart_desc"
+
+    def test_ecart_desc_en_largest_gap(self):
+        """EN: 'largest gap' → ecart_desc."""
+        r = _detect_requete_complexe_em("Which number has the largest gap?")
+        assert r is not None
+        assert r["tri"] == "ecart_desc"
+
+    def test_ecart_desc_es_mayor_retraso(self):
+        """ES: 'mayor retraso' → ecart_desc."""
+        r = _detect_requete_complexe_em("¿Qué número tiene el mayor retraso?")
+        assert r is not None
+        assert r["tri"] == "ecart_desc"
+
+    def test_ecart_desc_de_groesster_abstand(self):
+        """DE: 'größter Abstand' → ecart_desc."""
+        r = _detect_requete_complexe_em("Welche Zahl hat den größten Abstand?")
+        assert r is not None
+        assert r["tri"] == "ecart_desc"
+
+    def test_ecart_desc_nl_grootste_achterstand(self):
+        """NL: 'grootste achterstand' → ecart_desc."""
+        r = _detect_requete_complexe_em("Welk nummer heeft de grootste achterstand?")
+        assert r is not None
+        assert r["tri"] == "ecart_desc"
+
+    # --- ecart_asc multilingual ---
+
+    def test_ecart_asc_en_smallest_gap(self):
+        """EN: 'smallest gap' → ecart_asc."""
+        r = _detect_requete_complexe_em("Which number has the smallest gap?")
+        assert r is not None
+        assert r["tri"] == "ecart_asc"
+
+    def test_ecart_asc_pt_menor_atraso(self):
+        """PT: 'menor atraso' → ecart_asc."""
+        r = _detect_requete_complexe_em("Qual número tem o menor atraso?")
+        assert r is not None
+        assert r["tri"] == "ecart_asc"
+
+    def test_ecart_asc_es_menor_retraso(self):
+        """ES: 'menor retraso' → ecart_asc."""
+        r = _detect_requete_complexe_em("¿Qué número tiene el menor retraso?")
+        assert r is not None
+        assert r["tri"] == "ecart_asc"
+
+    def test_ecart_asc_de_kleinster_abstand(self):
+        """DE: 'kleinster Abstand' → ecart_asc."""
+        r = _detect_requete_complexe_em("Welche Zahl hat den kleinsten Abstand?")
+        assert r is not None
+        assert r["tri"] == "ecart_asc"
+
+    def test_ecart_asc_nl_kleinste_achterstand(self):
+        """NL: 'kleinste achterstand' → ecart_asc."""
+        r = _detect_requete_complexe_em("Welk nummer heeft de kleinste achterstand?")
+        assert r is not None
+        assert r["tri"] == "ecart_asc"
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # _detect_out_of_range_em
