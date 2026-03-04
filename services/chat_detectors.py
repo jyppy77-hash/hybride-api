@@ -96,24 +96,38 @@ _MOIS_NOM_RE = r'(janvier|f[eé]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septe
 
 
 _STAT_NEUTRALIZE_RE = re.compile(
-    # FR
+    # FR — statistical / frequency indicators
     r'\b[eé]cart\b|\bretard\b|\bfr[eé]quence\b|\bcombien\s+de\s+fois\b'
     r'|\bplus\s+grand\b|\bclassement\b'
+    r'|\bsouvent\b|\bfr[eé]quemment\b|\brarement\b|\bjamais\b'
+    r'|\ble\s+plus\b|\ble\s+moins\b|\br[eé]cemment\b'
+    r'|\ben\s+moyenne\b|\bstatistique\b|\banalyse\b'
     # EN
     r'|\bgap\b|\bdelay\b|\bfrequency\b|\bhow\s+many\s+times\b'
     r'|\blargest\b|\branking\b'
+    r'|\boften\b|\bfrequently\b|\brarely\b|\bnever\b'
+    r'|\bthe\s+most\b|\bthe\s+least\b|\bmost\s+common\b'
+    r'|\brecently\b|\bon\s+average\b'
     # ES
     r'|\bretraso\b|\bfrecuencia\b|\bcu[aá]ntas\s+veces\b'
     r'|\bmayor\b|\bclasificaci[oó]n\b'
+    r'|\ba\s+menudo\b|\bfrecuentemente\b|\braramente\b|\bnunca\b'
+    r'|\bel\s+m[aá]s\b|\bel\s+menos\b|\brecientemente\b'
     # PT
     r'|\batraso\b|\bfrequ[eê]ncia\b|\bquantas\s+vezes\b'
     r'|\bmaior\b|\bclassifica[çc][aã]o\b'
+    r'|\bfrequentemente\b|\braramente\b|\bnunca\b'
+    r'|\bo\s+mais\b|\bo\s+menos\b|\bcom\s+mais\b|\brecentemente\b'
     # DE
     r'|\babstand\b|\bverz[oö]gerung\b|\bh[aä]ufigkeit\b|\bwie\s+oft\b'
     r'|\bgr[oö][sß]te[rs]?\b|\brangliste\b'
+    r'|\boft\b|\bh[aä]ufig\b|\bselten\b|\bnie\b'
+    r'|\bam\s+meisten\b|\bam\s+wenigsten\b|\bk[uü]rzlich\b'
     # NL
     r'|\bachterstand\b|\bvertraging\b|\bfrequentie\b|\bhoe\s+vaak\b'
-    r'|\bgrootste\b|\branglijst\b',
+    r'|\bgrootste\b|\branglijst\b'
+    r'|\bvaak\b|\bfrequent\b|\bzelden\b|\bnooit\b'
+    r'|\bhet\s+meest\b|\bhet\s+minst\b|\brecentelijk\b',
     re.IGNORECASE,
 )
 
@@ -198,9 +212,16 @@ def _detect_tirage(message: str):
 # Detection filtre temporel → court-circuite les phases regex
 # ────────────────────────────────────────────
 
-_MOIS_RE = r'(?:janvier|f[eé]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[eé]cembre)'
+_MOIS_FR = r'(?:janvier|f[eé]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[eé]cembre)'
+_MOIS_RE = _MOIS_FR  # backward compat (re-exported by api_chat.py)
+_MOIS_EN = r'(?:january|february|march|april|may|june|july|august|september|october|november|december)'
+_MOIS_ES = r'(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre)'
+_MOIS_PT = r'(?:janeiro|fevereiro|mar[cç]o|abril|maio|junho|julho|agosto|setembro|outubro|novembro|dezembro)'
+_MOIS_DE = r'(?:januar|februar|m[aä]rz|april|mai|juni|juli|august|september|oktober|november|dezember)'
+_MOIS_NL = r'(?:januari|februari|maart|april|mei|juni|juli|augustus|september|oktober|november|december)'
 
 _TEMPORAL_PATTERNS = [
+    # ── FR ──
     r'\ben\s+20\d{2}\b',                          # en 2025
     r'\bdepuis\s+20\d{2}\b',                       # depuis 2023
     r'\bavant\s+20\d{2}\b',                        # avant 2025
@@ -211,19 +232,80 @@ _TEMPORAL_PATTERNS = [
     r'\bl.an\s+dernier\b',                         # l'an dernier
     r'\bce\s+mois\b',                              # ce mois
     r'\ble\s+mois\s+dernier\b',                    # le mois dernier
-    r'\ben\s+' + _MOIS_RE,                         # en janvier, en février...
+    r'\ben\s+' + _MOIS_FR,                         # en janvier, en février...
     r'\bces\s+\d+\s+derniers?\s+mois\b',           # ces 6 derniers mois
     r'\bdepuis\s+le\s+d[eé]but\b',                # depuis le début
     r'\bdepuis\s+\d+\s+(?:mois|ans?|semaines?)\b', # depuis 3 mois
-    # "l'année 2024" avec prépositions variées
-    r'(?:dans|pour|sur|pendant)\s+l[\'\u2019]?ann[ée]e\s+20\d{2}',  # dans/pour/sur/pendant l'année 2024
-    r'\bau\s+cours\s+de\s+l[\'\u2019]?ann[ée]e\s+20\d{2}',          # au cours de l'année 2024
-    r'\bl[\'\u2019]?ann[ée]e\s+20\d{2}\b',                           # l'année 2024 (seul)
-    r'\bdepuis\s+l[\'\u2019]?ann[ée]e\s+20\d{2}\b',                  # depuis l'année 2023
-    r'\bavant\s+l[\'\u2019]?ann[ée]e\s+20\d{2}\b',                   # avant l'année 2024
-    r'\bapr[eè]s\s+l[\'\u2019]?ann[ée]e\s+20\d{2}\b',               # après l'année 2023
-    r'\bentre\s+l[\'\u2019]?ann[ée]e\s+20\d{2}\s+et',                # entre l'année 2022 et ...
-    r'\bde\s+l[\'\u2019]?ann[ée]e\s+20\d{2}\b',                      # de l'année 2024
+    r'(?:dans|pour|sur|pendant)\s+l[\'\u2019]?ann[ée]e\s+20\d{2}',
+    r'\bau\s+cours\s+de\s+l[\'\u2019]?ann[ée]e\s+20\d{2}',
+    r'\bl[\'\u2019]?ann[ée]e\s+20\d{2}\b',
+    r'\bdepuis\s+l[\'\u2019]?ann[ée]e\s+20\d{2}\b',
+    r'\bavant\s+l[\'\u2019]?ann[ée]e\s+20\d{2}\b',
+    r'\bapr[eè]s\s+l[\'\u2019]?ann[ée]e\s+20\d{2}\b',
+    r'\bentre\s+l[\'\u2019]?ann[ée]e\s+20\d{2}\s+et',
+    r'\bde\s+l[\'\u2019]?ann[ée]e\s+20\d{2}\b',
+    # ── EN ──
+    r'\bin\s+20\d{2}\b',                           # in 2024
+    r'\bsince\s+20\d{2}\b',                        # since 2023
+    r'\bbefore\s+20\d{2}\b',                       # before 2024
+    r'\bafter\s+20\d{2}\b',                        # after 2024
+    r'\bbetween\s+20\d{2}\s+and\s+20\d{2}',       # between 2023 and 2024
+    r'\bthis\s+year\b',                            # this year
+    r'\blast\s+year\b',                            # last year
+    r'\bthis\s+month\b',                           # this month
+    r'\blast\s+month\b',                           # last month
+    r'\bin\s+' + _MOIS_EN,                         # in January, in February...
+    r'\blast\s+\d+\s+months?\b',                   # last 6 months
+    r'\bsince\s+the\s+beginning\b',               # since the beginning
+    r'\bsince\s+\d+\s+(?:months?|years?|weeks?)\b',  # since 3 months
+    r'\bduring\s+(?:the\s+year\s+)?20\d{2}\b',    # during 2024 / during the year 2024
+    # ── ES ──
+    r'\bdesde\s+20\d{2}\b',                        # desde 2023
+    r'\bantes\s+de\s+20\d{2}\b',                   # antes de 2024
+    r'\bdespu[eé]s\s+de\s+20\d{2}\b',             # después de 2024
+    r'\bentre\s+20\d{2}\s+y\s+20\d{2}',           # entre 2023 y 2024
+    r'\beste\s+a[nñ]o\b',                          # este año
+    r'\bel\s+a[nñ]o\s+pasado\b',                   # el año pasado
+    r'\beste\s+mes\b',                              # este mes
+    r'\bel\s+mes\s+pasado\b',                       # el mes pasado
+    r'\ben\s+' + _MOIS_ES,                         # en enero, en febrero...
+    r'\bdesde\s+\d+\s+(?:meses|a[nñ]os|semanas)\b',  # desde 3 meses
+    # ── PT ──
+    r'\bem\s+20\d{2}\b',                           # em 2024
+    r'\bdesde\s+20\d{2}\b',                        # desde 2023 (shared with ES)
+    r'\bantes\s+de\s+20\d{2}\b',                   # antes de 2024 (shared with ES)
+    r'\bdepois\s+de\s+20\d{2}\b',                  # depois de 2024
+    r'\bentre\s+20\d{2}\s+e\s+20\d{2}',           # entre 2023 e 2024
+    r'\beste\s+ano\b',                              # este ano
+    r'\bo\s+ano\s+passado\b',                       # o ano passado
+    r'\beste\s+m[eê]s\b',                           # este mês
+    r'\bo\s+m[eê]s\s+passado\b',                    # o mês passado
+    r'\bem\s+' + _MOIS_PT,                         # em janeiro, em fevereiro...
+    r'\bdesde\s+\d+\s+(?:meses|anos|semanas)\b',  # desde 3 meses
+    # ── DE ── (patterns lowercase — _has_temporal_filter lowercases input)
+    r'\bim\s+(?:jahr\s+)?20\d{2}\b',              # im 2024 / im Jahr 2024
+    r'\bseit\s+20\d{2}\b',                         # seit 2023
+    r'\bvor\s+20\d{2}\b',                          # vor 2024
+    r'\bnach\s+20\d{2}\b',                         # nach 2024
+    r'\bzwischen\s+20\d{2}\s+und\s+20\d{2}',      # zwischen 2023 und 2024
+    r'\bdieses\s+jahr\b',                           # dieses Jahr
+    r'\bletztes\s+jahr\b',                          # letztes Jahr
+    r'\bdiesen\s+monat\b',                          # diesen Monat
+    r'\bletzten\s+monat\b',                         # letzten Monat
+    r'\bim\s+' + _MOIS_DE,                         # im Januar, im Februar...
+    r'\bseit\s+\d+\s+(?:monaten?|jahren?|wochen?)\b',  # seit 3 Monaten
+    # ── NL ──
+    r'\bin\s+20\d{2}\b',                           # in 2024 (shared with EN)
+    r'\bsinds\s+20\d{2}\b',                        # sinds 2023
+    r'\bv[oó][oó]r\s+20\d{2}\b',                  # vóór 2024
+    r'\bna\s+20\d{2}\b',                           # na 2024
+    r'\btussen\s+20\d{2}\s+en\s+20\d{2}',         # tussen 2023 en 2024
+    r'\bdit\s+jaar\b',                              # dit jaar
+    r'\bvorig\s+jaar\b',                            # vorig jaar
+    r'\bdeze\s+maand\b',                            # deze maand
+    r'\bvorige\s+maand\b',                          # vorige maand
+    r'\bin\s+' + _MOIS_NL,                         # in januari, in februari...
+    r'\bsinds\s+\d+\s+(?:maanden?|jaren?|weken?)\b',  # sinds 3 maanden
 ]
 
 
@@ -327,6 +409,38 @@ def _detect_grille(message: str):
 # Phase 3 : Detection requete complexe
 # ────────────────────────────────────────────
 
+_TOP_N_PATTERNS = [
+    r'\btop\s+(\d{1,2})\b',
+    # FR: "les 10 plus", "les 10 premiers"
+    r'\bles\s+(\d{1,2})\s+(?:plus|premiers?|derniers?|num[eé]ros?)\b',
+    # EN: "the 10 most", "the 10 least"
+    r'\bthe\s+(\d{1,2})\s+(?:most|least|numbers?)\b',
+    # ES: "los 10 más", "los 10 números"
+    r'\blos\s+(\d{1,2})\s+(?:m[aá]s|menos|n[uú]meros?)\b',
+    # PT: "os 10 mais", "os 10 números"
+    r'\bos\s+(\d{1,2})\s+(?:mais|menos|n[uú]meros?)\b',
+    # DE: "die 10 häufigsten", "die 10 Zahlen"
+    r'\bdie\s+(\d{1,2})\s+(?:h[aä]ufigsten|meisten|gr[oö][sß]ten|kleinsten|Zahlen)\b',
+    # NL: "de 10 meest", "de 10 nummers"
+    r'\bde\s+(\d{1,2})\s+(?:meest|minst|grootste|kleinste|nummers?)\b',
+    # "donne-moi 10" / "give me 10" / "dame 10" / "dá-me 10" / "gib mir 10" / "geef me 10"
+    r'\b(?:donne|give|dame|d[aá][\s-]me|gib|geef)[\w\s-]{0,10}?(\d{1,2})\b',
+    # "10 numéros" / "10 numbers" / "10 números" / "10 Zahlen" / "10 nummers"
+    r'\b(\d{1,2})\s+(?:num[eé]ros?|numbers?|n[uú]meros?|Zahlen|nummers?)\b',
+]
+
+
+def _extract_top_n(message: str, default: int = 5, max_n: int = 20) -> int:
+    """Extract the requested top N from a message (multilingual). Default 5, max 20."""
+    for pat in _TOP_N_PATTERNS:
+        m = re.search(pat, message, re.IGNORECASE)
+        if m:
+            n = int(m.group(1))
+            if 1 <= n <= max_n:
+                return n
+    return default
+
+
 def _detect_requete_complexe(message: str):
     """
     Detecte les requetes complexes : classements, comparaisons, categories.
@@ -365,10 +479,7 @@ def _detect_requete_complexe(message: str):
         return {"type": "categorie", "categorie": "froid", "num_type": num_type}
 
     # --- Classement : top/plus frequents/retards ---
-    # Extraire le limit (top N)
-    limit_match = re.search(r'top\s+(\d{1,2})', lower)
-    limit = int(limit_match.group(1)) if limit_match else 5
-    limit = min(limit, 15)
+    limit = _extract_top_n(lower)
 
     num_type = "chance" if "chance" in lower else "principal"
 

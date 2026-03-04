@@ -555,6 +555,48 @@ class TestDetectTirageTextuel:
         result = _detect_tirage("classement des numéros par tirage")
         assert result is None
 
+    # --- P3/3: "sorti le plus souvent" → fréquence, PAS tirage ---
+
+    def test_sorti_le_plus_souvent_neutralise(self):
+        """'sorti le plus souvent' → None (fréquence, pas tirage)."""
+        assert _detect_tirage("Quel numéro est sorti le plus souvent ?") is None
+
+    def test_sorti_le_moins_souvent_neutralise(self):
+        """'sorti le moins souvent' → None."""
+        assert _detect_tirage("Quel numéro est sorti le moins souvent ?") is None
+
+    def test_sortis_recemment_neutralise(self):
+        """'sortis récemment' → None."""
+        assert _detect_tirage("Quels numéros sont sortis récemment ?") is None
+
+    def test_en_most_often_neutralise(self):
+        """EN: 'most often' → None."""
+        assert _detect_tirage("Which number came out most often?") is None
+
+    def test_pt_frequentemente_neutralise(self):
+        """PT: 'frequentemente' → None."""
+        assert _detect_tirage("Qual número saiu mais frequentemente?") is None
+
+    def test_es_a_menudo_neutralise(self):
+        """ES: 'a menudo' → None."""
+        assert _detect_tirage("Qué número salió a menudo?") is None
+
+    def test_de_am_meisten_neutralise(self):
+        """DE: 'am meisten' → None."""
+        assert _detect_tirage("Welche Zahl kam am meisten?") is None
+
+    def test_nl_het_meest_neutralise(self):
+        """NL: 'het meest' → None."""
+        assert _detect_tirage("Welk nummer kwam het meest voor?") is None
+
+    def test_regression_quels_numeros_sortis_still_latest(self):
+        """Non-régression: 'quels numeros sont sortis ?' (sans adverbe) → latest."""
+        assert _detect_tirage("quels numeros sont sortis ?") == "latest"
+
+    def test_regression_dernier_tirage_still_latest(self):
+        """Non-régression: 'dernier tirage' → latest."""
+        assert _detect_tirage("Quel était le dernier tirage ?") == "latest"
+
     # --- Anti-hallucination : la date textuelle prime sur "résultats" = latest ---
 
     def test_resultats_avec_date_retourne_date_specifique(self):

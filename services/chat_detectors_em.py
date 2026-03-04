@@ -10,6 +10,7 @@ import random
 from services.chat_detectors import (
     _detect_insulte, _count_insult_streak,
     _detect_compliment, _count_compliment_streak,
+    _extract_top_n,
 )
 
 META_KEYWORDS = ["meta", "algorithme", "moteur", "pondération", "ponderation"]
@@ -189,9 +190,7 @@ def _detect_requete_complexe_em(message: str):
         return {"type": "categorie", "categorie": "froid", "num_type": num_type}
 
     # --- Classement ---
-    limit_match = re.search(r'top\s+(\d{1,2})', lower)
-    limit = int(limit_match.group(1)) if limit_match else 5
-    limit = min(limit, 15)
+    limit = _extract_top_n(lower)
 
     num_type = "etoile" if ("etoile" in lower or "étoile" in lower) else "boule"
 

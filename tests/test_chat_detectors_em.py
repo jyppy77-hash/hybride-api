@@ -183,6 +183,26 @@ class TestDetectRequeteComplexeEM:
     def test_no_match_returns_none(self):
         assert _detect_requete_complexe_em("bonjour comment ca va") is None
 
+    # --- Top N extraction multilingual ---
+
+    def test_top_10_en(self):
+        """EN: 'give me the top 10 most frequent' → limit=10."""
+        r = _detect_requete_complexe_em("Give me the top 10 most frequent numbers")
+        assert r is not None
+        assert r["limit"] == 10
+
+    def test_top_7_pt(self):
+        """PT: 'top 7' → limit=7."""
+        r = _detect_requete_complexe_em("top 7 dos numeros les plus frequents")
+        assert r is not None
+        assert r["limit"] == 7
+
+    def test_default_limit_no_number(self):
+        """Sans nombre → limit=5 par défaut (non-régression)."""
+        r = _detect_requete_complexe_em("quels numeros sont les plus frequents")
+        assert r is not None
+        assert r["limit"] == 5
+
     # --- ecart_desc multilingual ---
 
     def test_ecart_desc_pt_maior_atraso(self):
@@ -424,6 +444,32 @@ class TestPhaseTNeutralize:
         """Non-regression: 'résultats' alone → Phase T triggered."""
         result = _detect_tirage("résultats")
         assert result == "latest"
+
+    # --- P3/3: "sorti le plus souvent" → fréquence, PAS tirage ---
+
+    def test_sorti_le_plus_souvent_em(self):
+        """FR: 'sorti le plus souvent' → None (fréquence, pas tirage)."""
+        assert _detect_tirage("Quel numéro est sorti le plus souvent à l'EuroMillions ?") is None
+
+    def test_en_most_often_em(self):
+        """EN: 'most often' → None."""
+        assert _detect_tirage("Which EuroMillions number came out most often?") is None
+
+    def test_es_a_menudo_em(self):
+        """ES: 'a menudo' → None."""
+        assert _detect_tirage("Qué número de EuroMillions salió a menudo?") is None
+
+    def test_pt_frequentemente_em(self):
+        """PT: 'frequentemente' → None."""
+        assert _detect_tirage("Qual número do EuroMillions saiu mais frequentemente?") is None
+
+    def test_de_haeufig_em(self):
+        """DE: 'häufig' → None."""
+        assert _detect_tirage("Welche EuroMillions Zahl kam am häufigsten?") is None
+
+    def test_nl_vaakst_em(self):
+        """NL: 'vaak' → None."""
+        assert _detect_tirage("Welk EuroMillions nummer kwam het vaakst voor?") is None
 
 
 class TestOorResponseEM:
