@@ -221,7 +221,11 @@ hybride-api/
 │       ├── hybride-chatbot-lotoia.webp  # HYBRIDE chatbot branding (WebP)
 │       ├── hybride-chatbot-lotoia.png   # HYBRIDE chatbot branding (PNG)
 │       ├── hybride-moteur.png           # HYBRIDE mascot (generator page)
+│       ├── hybride-moteur.webp          # HYBRIDE mascot (WebP, 76% smaller, SEO Phase D)
 │       ├── hybride-stat.png             # HYBRIDE mascot (statistics page)
+│       ├── hybride-stat.webp            # HYBRIDE mascot (WebP, 72% smaller, SEO Phase D)
+│       ├── Hybride-audit.webp           # HYBRIDE audit image (WebP, 72% smaller, SEO Phase D)
+│       ├── Hybride-audit-horizontal.webp # HYBRIDE audit horizontal (WebP, 74% smaller, SEO Phase D)
 │       ├── favicon.ico                  # Favicon (static copy)
 │       ├── favicon.svg                  # Favicon SVG (static copy)
 │       ├── Sponsors_media/              # Sponsor media assets (videos)
@@ -230,7 +234,7 @@ hybride-api/
 │           ├── sponsor-popup-em.js      # EM sponsor popup logic
 │           └── sponsor-popup75-em.css   # EM META ANALYSE 75 popup styling
 │
-├── tests/                               # Unit tests (pytest) — 972 tests
+├── tests/                               # Unit tests (pytest) — 1113 tests
 │   ├── conftest.py                      # Shared fixtures (SmartMockCursor, cache clear)
 │   ├── test_models.py                   # Pydantic models + CONFIG weights (10 tests)
 │   ├── test_hybride.py                  # HYBRIDE engine tests (21 tests)
@@ -248,7 +252,9 @@ hybride-api/
 │   ├── test_js_i18n.py              # JS i18n labels tests (21 tests, P3/5 + chatbot welcome)
 │   ├── test_prompts.py              # Prompt system tests (59 tests, P4/5 + Sprint ES)
 │   ├── test_multilang_routes.py     # Multilang routes + SEO tests (66 tests, P5/5 + legal routes)
-│   └── test_argent.py               # Argent/money detection + response tests (84 tests, Phase A)
+│   ├── test_argent.py               # Argent/money detection + response tests (84 tests, Phase A)
+│   ├── test_seo_headers.py          # SEO infrastructure tests (6 tests, SEO Phase A)
+│   └── test_seo_schema.py           # SEO Schema.org + E-E-A-T tests (31 tests, SEO Phases B-D)
 │
 ├── config/                                # Runtime configuration
 │   ├── __init__.py                      # Package init
@@ -467,9 +473,19 @@ The chatbot is connected to Cloud SQL in real-time via a multi-phase detection p
 ### SEO System
 
 - Per-page Open Graph + Twitter Card meta tags
-- Structured data (JSON-LD: WebPage, FAQPage, Dataset, SoftwareApplication, TechArticle)
+- Structured data (JSON-LD: Organization, WebSite, WebPage, FAQPage, Dataset, CollectionPage, SoftwareApplication, TechArticle, BreadcrumbList, AggregateRating)
 - Canonical redirect: `www.lotoia.fr` → `lotoia.fr` (301)
 - Clean URL rewriting: `/ui/*.html` → `/page-name` (301)
+- WebP images with `<picture><source>` progressive enhancement (SEO Phase D)
+- Critical CSS inline on EM base template + async stylesheet loading (SEO Phase D)
+- AggregateRating conditional on EM accueil (threshold ≥ 5 reviews, SEO Phase D)
+- Schema WebSite on accueil + EM accueil (SEO Phase D)
+- Organization schema unified across all pages (SEO Phase B)
+- E-E-A-T: author bio (Jean-Philippe Godard / JyppY), founder Schema (jobTitle, knowsAbout, sameAs LinkedIn) (SEO Phase C)
+- Editorial SEO intro sections on key Loto pages (SEO Phase C)
+- CTA HYBRIDE sections on 6 pages (3 Loto + 3 EM Jinja2) (SEO Phase C)
+- Last-Modified + Vary: Accept-Language headers (SEO Phase A)
+- Favicon: multi-resolution ICO (16/32/48/64px) + SVG, Bing SERP compatible (`sizes="48x48"`, `apple-touch-icon`)
 
 ### Analytics & GDPR
 
@@ -710,7 +726,7 @@ services/ — 21 modules, ~7600 lines
     ├── penalization.py       (65L)  Post-draw frequency penalization filter
     └── prompt_loader.py     (143L)  Loto PROMPT_MAP (18 keys) + EM file-based multilang loader (P4/5)
 
-tests/ — 972 tests, 25 files (pytest + pytest-cov)
+tests/ — 1113 tests, 28 files (pytest + pytest-cov)
     ├── conftest.py                (247L)  Fixtures (AsyncSmartMockCursor, cache clear)
     ── Foundation Tests ──
     ├── test_models.py             (92L)   Pydantic models + CONFIG weights
@@ -743,6 +759,9 @@ tests/ — 972 tests, 25 files (pytest + pytest-cov)
     ├── test_multilang_routes.py (66 tests)  Kill switch, hreflang, sitemap, routes (44), PAGE_SLUGS, legal URLs
     ── PDF Heatmap Tests ──
     ├── test_pdf_heatmap.py     (37 tests)  Google gradient, text color, grid rendering, legend, full PDF 2-page count, PDF_LABELS, schemas
+    ── SEO Tests (Phases A-D) ──
+    ├── test_seo_headers.py      (6 tests)  Last-Modified, Vary: Accept-Language, Cache-Control headers
+    ├── test_seo_schema.py      (31 tests)  Organization schema unification, WebSite schema, AggregateRating, bio E-E-A-T, editorial SEO, CTA HYBRIDE, WebP images
     ── Stress Tests ──
     └── test_insult_oor.py        (854L)   141 tests: insult detection + out-of-range numbers
 ```
@@ -1781,6 +1800,84 @@ Added 4 multilingual legal pages for EuroMillions (6 languages each) and updated
 
 **Result**: 888 → 972 tests (+84), 0 failures. `source: "hybride_argent"` in analytics.
 
+### SEO Phase A — Infrastructure (2026-03-04)
+
+Server-side SEO infrastructure: min-instances warmup, HTTP headers for crawlers.
+
+| Change | Detail |
+|--------|--------|
+| `main.py` | `Last-Modified` header (RFC 7231 format) on HTML pages — enables `If-Modified-Since` conditional requests |
+| `main.py` | `Vary: Accept-Language` header on EM pages — signals content negotiation to crawlers |
+| Cloud Run | `--min-instances=1` — eliminates cold start for first crawler hit |
+| `tests/test_seo_headers.py` (6 tests) | Last-Modified format, Vary header presence, Cache-Control on static assets |
+
+**Result**: 1076 → 1082 tests, 0 failures.
+
+### SEO Phase B — Schema Organization + legal.css (2026-03-04)
+
+Unified Organization schema across all pages + optimized legal page CSS loading.
+
+| Change | Detail |
+|--------|--------|
+| `seo.py` | Centralized `get_organization_schema()` — single Organization JSON-LD with founder, description, sameAs, contactPoint |
+| `ui/accueil.html`, `ui/templates/em/_base.html` | Replaced inline Organization schemas with unified `get_organization_schema()` call |
+| `ui/static/legal.css` | Conditional loading on legal pages only (was loaded on all pages) |
+| `tests/test_seo_schema.py` (16 tests) | Organization schema fields, founder Person, legal.css conditional, non-legal pages exclusion |
+
+**Result**: 1082 → 1098 tests, 0 failures.
+
+### SEO Phase C — Content & E-E-A-T (2026-03-04)
+
+Author credibility (E-E-A-T), editorial SEO content, and CTA sections.
+
+| Change | Detail |
+|--------|--------|
+| `seo.py` | Schema founder enriched: `jobTitle`, `knowsAbout` (4 domains), `sameAs` (LinkedIn) |
+| `ui/a-propos.html`, `ui/templates/em/a-propos.html` | Bio paragraph: Jean-Philippe Godard (JyppY) — 40+ years, full-stack, data scientist, Google for Startups, EmovisIA. Schema founder enrichment |
+| `ui/statistiques.html`, `ui/loto.html` | Editorial SEO intro sections (~200 words each) before dashboard/generator |
+| 6 pages (3 Loto + 3 EM Jinja2) | CTA HYBRIDE section — chatbot discovery call-to-action with CSS (style.css + style-em.css, night mode) |
+| `ui/accueil.html` | Fixed "Loto IA" → "LotoIA" branding (3 occurrences: title, og:title, twitter:title) |
+| `tests/test_seo_schema.py` (+8 tests) | Bio presence, founder Schema, editorial sections, CTA HYBRIDE |
+
+**Result**: 1098 → 1106 tests, 0 failures.
+
+### SEO Phase D — WebSite Schema + WebP + CSS Async + AggregateRating (2026-03-04)
+
+Advanced SEO: structured data, image optimization, rendering performance, social proof.
+
+| Change | Detail |
+|--------|--------|
+| `main.py` | `_EM_LANG_PREFIXES` pre-computed tuple (was recomputed per-request in middleware) |
+| `ui/accueil.html`, `ui/templates/em/accueil.html` | Schema WebSite JSON-LD (name, url, description, inLanguage) — without SearchAction (/historique doesn't accept ?q=) |
+| `ui/templates/em/accueil.html` | AggregateRating conditional: `{% if em_rating_count >= 5 %}` — only shows when ≥ 5 reviews |
+| `routes/em_pages.py`, `en_em_pages.py`, `multilang_em_pages.py` | EM accueil routes fetch `ratings_aggregate` from DB for AggregateRating context |
+| `ui/static/rating-popup.js` | EM detection: `source = isEM ? 'popup_em' : 'popup_accueil'` — separate Loto/EM rating pools |
+| `ui/templates/em/_base.html` | Critical CSS inline (~2.5KB minified) + async stylesheet loading (`media="print" onload="this.media='all'"`) |
+| 4 WebP images | `Hybride-audit.webp` (72%), `Hybride-audit-horizontal.webp` (74%), `hybride-moteur.webp` (76%), `hybride-stat.webp` (72%) — via Pillow conversion |
+| 8 HTML files | 14 `<img>` → `<picture><source srcset="*.webp" type="image/webp">` progressive enhancement |
+| `tests/test_seo_schema.py` (+7 tests) | WebSite schema, AggregateRating conditional, WebP source tags |
+
+**Result**: 1106 → 1113 tests, 0 failures. Deployed as `7ba13fa`.
+
+### Favicon Fix — Bing SERP Compatibility (2026-03-04)
+
+Favicon not displaying in Bing search results — root cause: no `/favicon.ico` route + inconsistent `<link>` tags.
+
+| Change | Detail |
+|--------|--------|
+| `main.py` | Added `/favicon.ico` FileResponse route with `media_type="image/x-icon"` |
+| 34 HTML files | Updated to Bing-compatible `<link>` tags: `sizes="48x48"` (ICO), `sizes="any"` (SVG), `apple-touch-icon` |
+| Diagnostic | ICO validated: valid MS Windows icon resource (16x16 + 32x32 + 48x48 + 64x64), robots.txt allows access |
+
+**Bing-compatible favicon pattern** (applied to all 34 pages):
+```html
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="icon" href="/ui/static/favicon.svg" sizes="any" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/favicon.ico">
+```
+
+**Result**: 35 files changed, 1113 tests pass, 0 failures. Deployed as `a008a40`.
+
 ### Cumulative Impact
 
 | Metric | Before P1 | After P5/5 |
@@ -1801,7 +1898,11 @@ Added 4 multilingual legal pages for EuroMillions (6 languages each) and updated
 | Legal pages | None | 4 multilingual legal pages (mentions, privacy, cookies, disclaimer) x 6 langs = 24 URLs |
 | Mobile UX | Inline lang buttons (all sizes) | Globe selector on mobile (≤768px), inline buttons on desktop |
 | Chatbot detection | 12 phases | **13 phases** (+ Phase A: argent/money/gambling) |
-| Tests | 248 | **972** |
+| SEO structured data | Basic (WebPage, FAQPage) | **10 schema types** (Organization, WebSite, WebPage, FAQPage, Dataset, CollectionPage, SoftwareApplication, TechArticle, BreadcrumbList, AggregateRating) |
+| Images | PNG only | **WebP + `<picture><source>`** progressive enhancement (4 images, 71-76% savings) |
+| CSS loading | Synchronous | **Critical inline + async** (`media="print" onload`) on EM base template |
+| Favicon | Inconsistent `<link>` tags | **Bing SERP compatible** (multi-resolution ICO, `sizes="48x48"`, `apple-touch-icon`) |
+| Tests | 248 | **1113** |
 | Services modules | 10 | **21** |
 ### Earlier Development History (Condensed)
 
@@ -1832,6 +1933,11 @@ Added 4 multilingual legal pages for EuroMillions (6 languages each) and updated
 | 2026-03-03 | SEO Sitemap Sprint: +24 legal pages in sitemap (4 types × 6 langs). xhtml:link hreflang alternates on all EM entries (7 tags per URL: 6 langs + x-default). xmlns:xhtml namespace. Kill switch respected on both URL generation and alternates. **978 tests.** |
 | 2026-03-04 | Wysistat ACPM intégré (35 pages). Bug fix: `window.isOwner` bridge pour ws.jsa compatibility (ReferenceError → 0 visits). CSP étendue (script-src + connect-src wysistat.com). Triple analytics stack opérationnel (GA4+Umami+Wysistat). 972 → **980 tests**. Score 9.1 → **9.2/10**. |
 | 2026-03-04 | Chat multilang P1-P3: **P1** `_extract_top_n()` shared function (10 multilang patterns, default 5, max 20) — replaces hardcoded "top N" in Loto+EM. **P2** `_has_temporal_filter()` expanded 22→73 patterns (6 langs: year, month, period, month names). **P3** `_STAT_NEUTRALIZE_RE` expanded with frequency adverbs (souvent/often/oft/vaak...) — fixes "sorti le plus souvent" false positive Phase T. 980 → **1076 tests** (+96). Score 9.2 → **9.3/10**. |
+| 2026-03-04 | **SEO Phase A**: Infrastructure — min-instances=1, Last-Modified (RFC 7231), Vary: Accept-Language headers. 1076 → **1082 tests** (+6). |
+| 2026-03-04 | **SEO Phase B**: Schema Organization unification (seo.py `get_organization_schema()`) + legal.css conditional loading. 1082 → **1098 tests** (+16). |
+| 2026-03-04 | **SEO Phase C**: E-E-A-T — Bio JyppY (a-propos FR+EM), Schema founder (jobTitle, knowsAbout, sameAs LinkedIn). Editorial SEO intros (statistiques, loto). CTA HYBRIDE on 6 pages (CSS night mode). "Loto IA" → "LotoIA" branding fix. 1098 → **1106 tests** (+8). |
+| 2026-03-04 | **SEO Phase D**: Schema WebSite (accueil+EM). AggregateRating EM conditional (≥5 reviews). Critical CSS inline + async loading (`_base.html`). 4 WebP images (71-76% savings) + `<picture><source>` on 8 HTML files. `_EM_LANG_PREFIXES` pre-computed. 1106 → **1113 tests** (+7). Score 78→93/100. |
+| 2026-03-04 | **Favicon Bing fix**: `/favicon.ico` FileResponse route. 34 HTML files updated to Bing-compatible `<link>` tags (`sizes="48x48"`, `sizes="any"`, `apple-touch-icon`). ICO validated: 16/32/48/64px multi-resolution. **1113 tests**. |
 
 ---
 
@@ -1850,9 +1956,9 @@ Added 4 multilingual legal pages for EuroMillions (6 languages each) and updated
 | META ANALYSE 75 (Loto) | Stable | Async Gemini enrichment + PDF export, circuit breaker fallback. 18 Loto prompt keys. |
 | META ANALYSE 75 (EM) | Stable | Dual graphs, EM Gemini enrichment, EM PDF (2x2 matplotlib), 14 EM prompt keys. |
 | Cache | Stable | Redis async + in-memory fallback (Phase 6). PDF off-thread. |
-| Testing | Active | **1076 tests** (pytest, 25 test files), CI integration |
+| Testing | Active | **1113 tests** (pytest, 28 test files), CI integration |
 | Security | Hardened | CSP+HSTS preload+COOP (Phase 7), aiomysql parameterized queries, rate limiting, correlation IDs |
-| SEO | **Hardened (Sprint 4+5)** | Schema.org Dataset (Phase 7), bankability T4 pivot (Phase 8), dynamic sitemap (P5/5), hreflang multilang (P5/5). **Sprint 4**: BreadcrumbList JSON-LD (7 pages), Dataset + CollectionPage schemas, H1 keyword optimization (6 langs), title tags ≤50 chars, CLS fix (4 images), robots.txt EM rules, Loto cross-links (FR footer), og:title/twitter:title aligned. **Sprint 5 Sitemap**: +24 legal pages, xhtml:link hreflang alternates (7 per EM URL), xmlns:xhtml namespace. Audit score **9.1/10**. |
+| SEO | **Production-ready (Phases A-D + Sprint 4-5)** | **Phases A-D**: Organization schema unified, WebSite schema, AggregateRating EM (conditional ≥5), E-E-A-T (bio, founder Schema), editorial SEO intros, CTA HYBRIDE (6 pages), WebP images (4, 71-76% savings), critical CSS inline + async, Last-Modified + Vary headers, min-instances=1, Bing favicon compatible. **Sprint 4**: BreadcrumbList JSON-LD (7 pages), Dataset + CollectionPage schemas, H1 keyword optimization (6 langs), title tags ≤50 chars, CLS fix (4 images), robots.txt EM rules, Loto cross-links (FR footer). **Sprint 5 Sitemap**: +24 legal pages, xhtml:link hreflang alternates (7 per EM URL). Audit score **93/100**. |
 | Mobile responsive | Stable | Fullscreen chatbot, viewport sync, safe-area support |
 
 ---
@@ -1877,7 +1983,7 @@ Observable characteristics based on development usage:
 - **Redis optional** — `services/cache.py` falls back to per-process in-memory cache if `REDIS_URL` absent (not shared across 2 workers in fallback mode).
 - **Gemini dependency** — META ANALYSE and chatbot depend on an external API. Mitigated by circuit breaker + fallback messages, but degraded experience when open.
 - **Minimal monitoring** — Production observability relies on Cloud Run metrics + JSON structured logs with correlation IDs. No APM or alerting.
-- **Test coverage** — 1076 tests across 25 files. Core engine, chat pipeline, stats, insult/OOR/argent detection, templates, legal pages, i18n, JS labels, prompts, multilang routes, sitemap, PDF heatmap, multilang temporal filter, top-N extraction, Phase T neutralization well covered. Some route handlers have lower coverage.
+- **Test coverage** — 1113 tests across 28 files. Core engine, chat pipeline, stats, insult/OOR/argent detection, templates, legal pages, i18n, JS labels, prompts, multilang routes, sitemap, PDF heatmap, multilang temporal filter, top-N extraction, Phase T neutralization, SEO headers, SEO schemas well covered. Some route handlers have lower coverage.
 - **i18n residue** — Full i18n pipeline complete (P1-P5/5 + Sprints ES/PT/DE/NL): gettext, Jinja2, JS labels, prompts, routes, sitemap, kill switch. **All 6 languages fully translated and live.** 4 legal pages translated. Cookie consent banner translated (6 langs). 1 minor FR residue: rating popup labels (5 FR strings in `rating-popup.js`). Loto EN not yet planned.
 
 ---
@@ -1897,6 +2003,7 @@ Observable characteristics based on development usage:
 | **V7 (post-multilang)** | **9.1** | **+1.9** | **Phases 1-11 + i18n 6/6 + Sprint 4-5 SEO + 978 tests (see breakdown below)** |
 | **V7.1 (wysistat+seo)** | **9.2** | **+0.1** | **Wysistat ACPM intégré (35 pages, owner filter, CSP), Sprint 4 SEO pre-launch, 980 tests** |
 | **V7.2 (chat multilang)** | **9.3** | **+0.1** | **P1-P3: top-N multilingual, temporal filter 6 langs, Phase T frequency neutralizer. 1076 tests** |
+| **V8 (SEO Phases A-D + favicon)** | **9.3** | **+0.0** | **SEO 360° audit 78→93/100. Organization schema, WebSite, AggregateRating EM, E-E-A-T bio, WebP images, CSS async, Last-Modified/Vary headers, Bing favicon fix. 1113 tests (+37)** |
 
 ### V7 Section Scores (03/03/2026)
 
@@ -1905,8 +2012,8 @@ Observable characteristics based on development usage:
 | Architecture & Structure | 7.5 | **9.5** | +2.0 | Phase 10 unified routes, GameConfig registry, 21 service modules, modular chat pipeline (13 phases), kill switch pattern, factory routes, base class inheritance (BaseStatsService) |
 | Security & Credentials | 8.0 | **9.5** | +1.5 | HSTS preload (1yr), CSP strict, COOP, X-Frame DENY, Permissions-Policy, AI bot blocking (12 bots), rate limiting (10/min PDF), argent/gambling detection (Phase A), HttpOnly press token, triple analytics stack (GA4+Umami+Wysistat ACPM), Wysistat owner IP bridge fix |
 | Performance & Resilience | 7.0 | **8.5** | +1.5 | Redis async cache + in-memory fallback (Phase 6), SSE streaming (P9), circuit breaker, async DB (aiomysql Phase 5), PDF off-thread, GZip middleware, cache headers (7-30d) |
-| Tests & Quality | 6.5 | **9.2** | +2.7 | 248 → **1076 tests** (+334%), 25 test files, sitemap 100% coverage, chat detectors (multilang top-N, temporal filter, Phase T neutralizer), i18n, prompts, multilang routes, hreflang, PDF heatmap, legal pages all tested |
-| Maintainability & Documentation | 7.5 | **9.0** | +1.5 | PROJECT_OVERVIEW 1900+ lines, i18n conventions documented, kill switch pattern, gettext/Babel pipeline, prompt loader with fallback chain, JS i18n centralized |
+| Tests & Quality | 6.5 | **9.2** | +2.7 | 248 → **1113 tests** (+349%), 28 test files, sitemap 100% coverage, chat detectors (multilang top-N, temporal filter, Phase T neutralizer), i18n, prompts, multilang routes, hreflang, PDF heatmap, legal pages, SEO headers+schemas all tested |
+| Maintainability & Documentation | 7.5 | **9.0** | +1.5 | PROJECT_OVERVIEW 2000+ lines, i18n conventions documented, kill switch pattern, gettext/Babel pipeline, prompt loader with fallback chain, JS i18n centralized |
 | Deployment & Infrastructure | 6.5 | **8.5** | +2.0 | CI/CD Cloud Build (push-to-deploy), cloudbuild.yaml (build→test→deploy), 2 workers, correlation IDs, JSON structured logs, dynamic sitemap with xhtml:link hreflang |
 | **Global Average** | **7.2** | **9.2** | **+2.0** | |
 
@@ -1917,11 +2024,11 @@ Observable characteristics based on development usage:
 | P1 | Add monitoring/alerting (Cloud Monitoring or Datadog) | +0.15 |
 | P1 | Add staging environment | +0.1 |
 | P2 | Configure linting (ruff) + type checking (mypy) in CI | +0.1 |
-| ~~P0~~ | ~~Raise test coverage to 60%+~~ | ✅ Done (1076 tests, 58% global coverage) |
+| ~~P0~~ | ~~Raise test coverage to 60%+~~ | ✅ Done (1113 tests, 59% global coverage) |
 | ~~P2~~ | ~~Extract chat detection regex into a dedicated service~~ | ✅ Done (Phase 1+4: chat_detectors.py) |
 | ~~P3~~ | ~~Deduplicate analyze-custom-grid / analyze_grille_for_chat~~ | ✅ Done (Phase 10: unified routes) |
 | P3 | Migrate gcr.io to Artifact Registry | +0.05 |
 
 ---
 
-*Updated by JyppY & Claude Opus 4.6 — 04/03/2026 (v23.0: Chat multilang P1-P3 — top-N extraction (10 multilang patterns), temporal filter (22→73 patterns, 6 langs), Phase T frequency neutralizer. Tech audit V7.2: **9.3/10** (+0.1). 1076 tests, 0 failures. Previous: v22.0 Wysistat ACPM, v21.0 SEO Sitemap Sprint, v20.0 Sprint 4 SEO, v19.0 Phase A argent detection, v18.0 GA4 audit, v17.0 PDF heatmap, v16.0 legal pages, globe selector. i18n 6/6 COMPLETE, P9 (SSE streaming), P1-P5/5 (i18n infrastructure), Phase 11 (EN multilang), Phases 1-10.)*
+*Updated by JyppY & Claude Opus 4.6 — 04/03/2026 (v24.0: SEO Phases A-D + Favicon Bing fix — Organization schema unified, WebSite schema, AggregateRating EM conditional, E-E-A-T bio+founder, editorial SEO intros, CTA HYBRIDE (6 pages), 4 WebP images (71-76% savings), critical CSS inline+async, Last-Modified+Vary headers, min-instances=1, Bing SERP favicon (sizes="48x48", apple-touch-icon, 34 HTML files). SEO audit 78→93/100. Tech audit V8: **9.3/10**. 1113 tests (+37), 0 failures. Previous: v23.0 Chat multilang P1-P3, v22.0 Wysistat ACPM, v21.0 SEO Sitemap Sprint, v20.0 Sprint 4 SEO, v19.0 Phase A argent detection, v18.0 GA4 audit, v17.0 PDF heatmap, v16.0 legal pages, globe selector. i18n 6/6 COMPLETE, P9 (SSE streaming), P1-P5/5 (i18n infrastructure), Phase 11 (EN multilang), Phases 1-10.)*
