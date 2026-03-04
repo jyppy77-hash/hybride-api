@@ -5418,7 +5418,7 @@ body.theme-night .subpage code {
 }
 .editorial-intro {
     margin: 0 0 24px;
-    padding: 32px 32px;
+    padding: 2rem 2rem;
     background: var(--theme-bg-card, #f8fafc);
     border-radius: 12px;
     border-left: 4px solid #4285F4;
@@ -5431,20 +5431,22 @@ body.theme-night .subpage code {
     75%      { border-left-color: #DB4437; }
 }
 .editorial-intro h2 {
-    margin: 0 0 20px;
+    margin: 0 0 2rem;
     font-size: 1.2rem;
     color: var(--theme-text-primary, #1e293b);
 }
 .editorial-intro p {
-    margin: 0 0 18px;
+    margin: 0 0 1.5rem;
     font-size: 0.93rem;
     line-height: 1.65;
     color: var(--theme-text-muted, #475569);
 }
+.editorial-intro p:last-child {
+    margin-top: 2rem;
+}
 .editorial-intro a {
     color: var(--primary, #2563eb);
 }
-.editorial-intro p:last-child { margin-bottom: 0; }
 body.theme-night .editorial-intro {
     background: rgba(255, 255, 255, 0.05);
 }
