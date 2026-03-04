@@ -346,12 +346,22 @@ body.theme-day {
     position: absolute;
     right: 16px;
     top: 50%;
-    transform: translateY(-50%) scaleY(0.94);
+    transform: translateY(-50%);
     transform-origin: center;
     height: 85px;
     width: auto;
+    aspect-ratio: 170 / 141;
+    object-fit: contain;
     opacity: 0.95;
     pointer-events: none;
+}
+
+.band-hybride {
+    width: auto;
+    height: auto;
+    max-height: 80px;
+    object-fit: contain;
+    aspect-ratio: 163 / 173;
 }
 
 .band-hybride-moteur-mobile {
@@ -367,6 +377,8 @@ body.theme-day {
         margin: 12px auto 0;
         height: 50px;
         width: auto;
+        aspect-ratio: 170 / 141;
+        object-fit: contain;
         opacity: 0.9;
     }
 }
