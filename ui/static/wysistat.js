@@ -1,8 +1,10 @@
 /**
  * Wysistat analytics — ACPM-labelled, CNIL-exempt.
  * Owner IP filtered via window.__OWNER__ (set by UmamiOwnerFilterMiddleware).
+ * ws.jsa expects a global `isOwner` variable — bridge it from __OWNER__.
  */
 (function () {
+    window.isOwner = !!window.__OWNER__;
     if (window.__OWNER__) return;
 
     var _wsq = window._wsq = window._wsq || [];
