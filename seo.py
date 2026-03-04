@@ -26,12 +26,20 @@ def generate_jsonld_organization() -> str:
         "alternateName": "LotoIA.fr",
         "url": "https://lotoia.fr",
         "logo": "https://lotoia.fr/ui/static/logo-lotoia.png",
-        "description": "Plateforme d'analyse statistique du Loto par intelligence artificielle",
-        "foundingDate": "2024",
+        "description": "Plateforme d'analyse statistique du Loto et de l'EuroMillions par intelligence artificielle",
+        "foundingDate": "2025",
         "founder": {
-            "@type": "Organization",
-            "name": "EmovisIA"
+            "@type": "Person",
+            "name": "Jean-Philippe Godard",
+            "alternateName": "JyppY"
         },
+        "parentOrganization": {
+            "@type": "Organization",
+            "name": "EmovisIA",
+            "url": "https://emovisia.fr"
+        },
+        "disambiguatingDescription": "Plateforme française d'analyse statistique du Loto et de l'EuroMillions par intelligence artificielle. Sans aucun lien avec les produits de literie ou les accessoires.",
+        "sameAs": ["https://emovisia.fr"],
         "address": {
             "@type": "PostalAddress",
             "streetAddress": "3 rue Alexandre Riou",
