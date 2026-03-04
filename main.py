@@ -79,6 +79,7 @@ logging.root.addFilter(RequestIdFilter())
 # ── SEO routes set (computed once at import from EM_URLS) ──
 from config.templates import EM_URLS as _EM_URLS
 from config import killswitch
+_EM_LANG_PREFIXES = tuple(f"/{lc}/" for lc in killswitch.ENABLED_LANGS if lc != "fr")
 _SEO_ROUTES = {
     "/", "/accueil", "/loto", "/loto/analyse", "/loto/exploration",
     "/loto/statistiques", "/faq", "/news",
@@ -287,9 +288,8 @@ async def add_cache_headers(request: Request, call_next):
             timeval=stamp, localtime=False, usegmt=True,
         )
 
-    # Vary: Accept-Language sur les routes EM multilingues (dynamique via kill switch)
-    _em_prefixes = tuple(f"/{lc}/" for lc in killswitch.ENABLED_LANGS if lc != "fr")
-    if path.startswith(_em_prefixes) or path.startswith("/euromillions"):
+    # Vary: Accept-Language sur les routes EM multilingues
+    if path.startswith(_EM_LANG_PREFIXES) or path.startswith("/euromillions"):
         response.headers["Vary"] = "Accept-Language"
 
     return response

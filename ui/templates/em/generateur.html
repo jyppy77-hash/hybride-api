@@ -95,7 +95,7 @@
                         <span class="badge-text">{{ _('MOTEUR HYBRIDE') }}</span>
                     </div>
                     <p class="generator-subtitle">{{ _('Configurez votre exploration sur') }} <strong id="stat-tirages-inline">---</strong> {{ _('tirages officiels EuroMillions') }} <span class="data-depth">{{ _('depuis 2019') }}</span></p>
-                    <img src="/static/hybride-moteur.png" class="band-hybride-moteur" alt="{{ _('Mascotte HYBRIDE - Moteur d\'analyse statistique EuroMillions') }}" width="170" height="141" loading="lazy">
+                    <picture><source srcset="/static/hybride-moteur.webp" type="image/webp"><img src="/static/hybride-moteur.png" class="band-hybride-moteur" alt="{{ _('Mascotte HYBRIDE - Moteur d\'analyse statistique EuroMillions') }}" width="170" height="141" loading="lazy"></picture>
                 </div>
 
                 <!-- Form (secondary step) -->
@@ -189,7 +189,7 @@
                         <span class="urgency-icon">&#9201;&#65039;</span>
                         <span class="urgency-text">{{ _('Prochain tirage dans') }} <strong id="days-until-draw">--</strong> {{ _('jours') }}</span>
                     </p>
-                    <img src="/static/hybride-moteur.png" class="band-hybride-moteur-mobile" alt="{{ _('Mascotte HYBRIDE') }}" width="170" height="141" loading="lazy">
+                    <picture><source srcset="/static/hybride-moteur.webp" type="image/webp"><img src="/static/hybride-moteur.png" class="band-hybride-moteur-mobile" alt="{{ _('Mascotte HYBRIDE') }}" width="170" height="141" loading="lazy"></picture>
                 </div>
             </div>
         </section>
@@ -336,6 +336,13 @@
                     <span class="arrow">&rarr;</span>
                 </a>
             </div>
+        </section>
+
+        {# ── CTA HYBRIDE ── #}
+        <section class="cta-hybride">
+            <h3>{{ _('Découvrez le chatbot HYBRIDE') }}</h3>
+            <p>{{ _('Notre chatbot intelligent analyse les tirages EuroMillions en temps réel grâce à l\'IA Grounded. Posez vos questions sur les statistiques.')|safe }}</p>
+            <a href="{{ urls.hybride_page }}" class="btn-cta-hybride">{{ _('Essayer le chatbot HYBRIDE') }} &rarr;</a>
         </section>
 
         {% include "em/_footer.html" %}

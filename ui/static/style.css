@@ -5381,3 +5381,64 @@ body.theme-night .subpage code {
     background: rgba(255, 255, 255, 0.1);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   CTA HYBRIDE — Bloc appel à l'action moteur HYBRIDE
+   ═══════════════════════════════════════════════════════════════ */
+.cta-hybride {
+    margin: 40px 0;
+    padding: 28px 32px;
+    background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8e 100%);
+    border-radius: 16px;
+    text-align: center;
+    color: #fff;
+}
+.cta-hybride h3 {
+    margin: 0 0 8px;
+    font-size: 1.15rem;
+    color: #fff;
+}
+.cta-hybride p {
+    margin: 0 0 16px;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.85);
+}
+.cta-hybride .btn-cta-hybride {
+    display: inline-block;
+    padding: 12px 28px;
+    background: #f59e0b;
+    color: #1e3a5f;
+    font-weight: 700;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.2s;
+}
+.cta-hybride .btn-cta-hybride:hover {
+    background: #fbbf24;
+    transform: translateY(-1px);
+}
+.editorial-intro {
+    margin: 0 0 24px;
+    padding: 24px 28px;
+    background: var(--theme-bg-card, #f8fafc);
+    border-radius: 12px;
+    border-left: 4px solid var(--theme-accent, #2563eb);
+}
+.editorial-intro h2 {
+    margin: 0 0 12px;
+    font-size: 1.2rem;
+    color: var(--theme-text, #1e293b);
+}
+.editorial-intro p {
+    margin: 0 0 10px;
+    font-size: 0.93rem;
+    line-height: 1.65;
+    color: var(--theme-text-muted, #475569);
+}
+.editorial-intro p:last-child { margin-bottom: 0; }
+body.theme-night .editorial-intro {
+    background: rgba(255, 255, 255, 0.05);
+}
+body.theme-night .cta-hybride {
+    background: linear-gradient(135deg, #0f2744 0%, #1e3a5f 100%);
+}
+

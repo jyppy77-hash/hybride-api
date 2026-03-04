@@ -31,7 +31,10 @@ def generate_jsonld_organization() -> str:
         "founder": {
             "@type": "Person",
             "name": "Jean-Philippe Godard",
-            "alternateName": "JyppY"
+            "alternateName": "JyppY",
+            "jobTitle": "Fondateur & Lead Developer",
+            "knowsAbout": ["Data Science", "Intelligence Artificielle", "Statistiques", "Probabilités"],
+            "sameAs": ["https://www.linkedin.com/in/jpgodard/"]
         },
         "parentOrganization": {
             "@type": "Organization",

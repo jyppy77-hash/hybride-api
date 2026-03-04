@@ -47,8 +47,26 @@
           "@type": "Offer",
           "price": "0",
           "priceCurrency": "EUR"
-        }
+        }{% if em_rating_count and em_rating_count >= 5 %},
+        "aggregateRating": {
+          "@type": "AggregateRating",
+          "ratingValue": "{{ em_rating_value }}",
+          "ratingCount": "{{ em_rating_count }}",
+          "bestRating": "5",
+          "worstRating": "1"
+        }{% endif %}
       }
+    }
+    </script>
+    <!-- JSON-LD WebSite -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "LotoIA",
+      "url": {{ base_url|tojson }},
+      "description": {{ _('Plateforme française d\'analyse statistique du Loto et de l\'EuroMillions par intelligence artificielle')|tojson }},
+      "inLanguage": "{{ lang }}"
     }
     </script>
     <!-- JSON-LD BreadcrumbList -->

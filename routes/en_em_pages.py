@@ -16,12 +16,26 @@ router = APIRouter()
 
 @router.get("/en/euromillions", include_in_schema=False)
 async def en_em_home(request: Request):
-    """EuroMillions EN — Home (hub)."""
+    """EuroMillions EN — Home (hub) + AggregateRating dynamique."""
+    em_rating_value, em_rating_count = 0, 0
+    try:
+        result = await db_cloudsql.async_fetchone(
+            "SELECT review_count, avg_rating FROM ratings_aggregate WHERE source = %s",
+            ("popup_em",),
+        )
+        if result and result.get("review_count"):
+            em_rating_count = int(result["review_count"])
+            em_rating_value = round(float(result["avg_rating"]), 1)
+    except Exception:
+        pass
+
     return render_template(
         "em/accueil.html", request, lang="en", page_key="accueil",
         nav_back_url="/",
         body_class="accueil-page em-page",
         show_disclaimer_link=True,
+        em_rating_value=em_rating_value,
+        em_rating_count=em_rating_count,
     )
 
 

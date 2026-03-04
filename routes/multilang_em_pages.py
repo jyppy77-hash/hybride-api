@@ -205,6 +205,32 @@ def _make_handler(lang_code, page_key, template, extra):
     return handler
 
 
+def _make_accueil_handler(lang_code, page_key, template, extra):
+    """Create accueil handler with AggregateRating + kill switch check."""
+    async def handler(request: Request):
+        if lang_code not in killswitch.ENABLED_LANGS:
+            return RedirectResponse(url=EM_URLS["fr"][page_key], status_code=302)
+        em_rating_value, em_rating_count = 0, 0
+        try:
+            result = await db_cloudsql.async_fetchone(
+                "SELECT review_count, avg_rating FROM ratings_aggregate WHERE source = %s",
+                ("popup_em",),
+            )
+            if result and result.get("review_count"):
+                em_rating_count = int(result["review_count"])
+                em_rating_value = round(float(result["avg_rating"]), 1)
+        except Exception:
+            pass
+        return render_template(
+            template, request, lang=lang_code, page_key=page_key,
+            em_rating_value=em_rating_value, em_rating_count=em_rating_count,
+            **extra,
+        )
+    handler.__name__ = f"{lang_code}_em_{page_key}"
+    handler.__doc__ = f"EuroMillions {lang_code.upper()} — {page_key}"
+    return handler
+
+
 def _make_db_handler(lang_code, page_key, template, extra):
     """Create handler with DB tirages count + kill switch check."""
     async def handler(request: Request):
@@ -242,7 +268,9 @@ def _register_routes():
                 extra["hero_title"] = hero[0]
                 extra["hero_subtitle"] = hero[1]
 
-            if page_key in ("faq", "ia", "hybride_page"):
+            if page_key == "accueil":
+                handler = _make_accueil_handler(lang_code, page_key, template, extra)
+            elif page_key in ("faq", "ia", "hybride_page"):
                 handler = _make_db_handler(lang_code, page_key, template, extra)
             else:
                 handler = _make_handler(lang_code, page_key, template, extra)

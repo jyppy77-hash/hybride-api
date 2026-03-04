@@ -290,3 +290,42 @@ body.em-page:not(.accueil-page) .engine-nav-btn {
 body.em-page:not(.accueil-page) .engine-nav-btn .nav-arrow {
     font-size: 1rem;
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   CTA HYBRIDE — Bloc appel à l'action moteur HYBRIDE (EM)
+   ═══════════════════════════════════════════════════════════════ */
+.em-page .cta-hybride {
+    margin: 40px 0;
+    padding: 28px 32px;
+    background: linear-gradient(135deg, #1a365d 0%, #2b6cb0 100%);
+    border-radius: 16px;
+    text-align: center;
+    color: #fff;
+}
+.em-page .cta-hybride h3 {
+    margin: 0 0 8px;
+    font-size: 1.15rem;
+    color: #fff;
+}
+.em-page .cta-hybride p {
+    margin: 0 0 16px;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.85);
+}
+.em-page .cta-hybride .btn-cta-hybride {
+    display: inline-block;
+    padding: 12px 28px;
+    background: #f59e0b;
+    color: #1a365d;
+    font-weight: 700;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: background 0.2s, transform 0.2s;
+}
+.em-page .cta-hybride .btn-cta-hybride:hover {
+    background: #fbbf24;
+    transform: translateY(-1px);
+}
+body.theme-night .em-page .cta-hybride {
+    background: linear-gradient(135deg, #0f2744 0%, #1a365d 100%);
+}

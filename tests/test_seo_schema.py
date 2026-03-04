@@ -99,6 +99,26 @@ class TestSeoOrganizationSchema:
         html = generate_jsonld_organization()
         assert "emovisia.fr" in html
 
+    def test_founder_job_title(self):
+        """founder must have jobTitle."""
+        from seo import generate_jsonld_organization
+        html = generate_jsonld_organization()
+        assert "jobTitle" in html
+        assert "Fondateur" in html
+
+    def test_founder_knows_about(self):
+        """founder must have knowsAbout."""
+        from seo import generate_jsonld_organization
+        html = generate_jsonld_organization()
+        assert "knowsAbout" in html
+        assert "Data Science" in html
+
+    def test_founder_same_as_linkedin(self):
+        """founder must have sameAs LinkedIn."""
+        from seo import generate_jsonld_organization
+        html = generate_jsonld_organization()
+        assert "linkedin.com/in/jpgodard" in html
+
 
 # ═══════════════════════════════════════════════
 # 2. Schema Organization in EM a-propos template
@@ -181,3 +201,180 @@ class TestLegalCssConditional:
 
         assert resp.status_code == 200
         assert "legal.css" not in resp.text
+
+
+# ═══════════════════════════════════════════════
+# 4. Phase C — Bio, Editorial, CTA, Branding
+# ═══════════════════════════════════════════════
+
+class TestPhaseC_BioFounder:
+    """Bio JyppY enrichment on about pages."""
+
+    def test_em_about_has_founder_bio(self):
+        """GET /euromillions/a-propos has founder bio paragraph."""
+        cursor = AsyncMock()
+        cursor.fetchone = AsyncMock(return_value=None)
+        cursor.fetchall = AsyncMock(return_value=[])
+        cursor.close = AsyncMock()
+
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            resp = client.get("/euromillions/a-propos")
+
+        assert resp.status_code == 200
+        assert "Google for Startups" in resp.text
+        assert "EmovisIA" in resp.text
+
+    def test_em_about_schema_job_title(self):
+        """GET /euromillions/a-propos schema has jobTitle."""
+        cursor = AsyncMock()
+        cursor.fetchone = AsyncMock(return_value=None)
+        cursor.fetchall = AsyncMock(return_value=[])
+        cursor.close = AsyncMock()
+
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            resp = client.get("/euromillions/a-propos")
+
+        assert "jobTitle" in resp.text
+        assert "linkedin.com/in/jpgodard" in resp.text
+
+
+class TestPhaseC_CtaHybride:
+    """CTA HYBRIDE on EM tool pages."""
+
+    @pytest.mark.parametrize("path", [
+        "/euromillions/statistiques",
+        "/euromillions/generateur",
+        "/euromillions/simulateur",
+    ])
+    def test_em_tool_pages_have_cta_hybride(self, path):
+        """EM tool pages must have CTA HYBRIDE."""
+        cursor = AsyncMock()
+        cursor.fetchone = AsyncMock(return_value=None)
+        cursor.fetchall = AsyncMock(return_value=[])
+        cursor.close = AsyncMock()
+
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            resp = client.get(path)
+
+        assert resp.status_code == 200
+        assert "cta-hybride" in resp.text
+        assert "btn-cta-hybride" in resp.text
+
+
+# ═══════════════════════════════════════════════
+# 5. Phase D — Schema WebSite, WebP, CSS async, _EM_LANG_PREFIXES
+# ═══════════════════════════════════════════════
+
+class TestPhaseD_SchemaWebSite:
+    """Schema WebSite on EM accueil."""
+
+    def test_em_accueil_has_website_schema(self):
+        """GET /euromillions contains WebSite schema."""
+        cursor = AsyncMock()
+        cursor.fetchone = AsyncMock(return_value=None)
+        cursor.fetchall = AsyncMock(return_value=[])
+        cursor.close = AsyncMock()
+
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)), \
+             patch("db_cloudsql.async_fetchone", AsyncMock(return_value=None)):
+            client = _get_client()
+            resp = client.get("/euromillions")
+
+        assert resp.status_code == 200
+        assert '"@type": "WebSite"' in resp.text or '"@type":"WebSite"' in resp.text
+
+    def test_em_accueil_has_software_application(self):
+        """GET /euromillions keeps SoftwareApplication schema."""
+        cursor = AsyncMock()
+        cursor.fetchone = AsyncMock(return_value=None)
+        cursor.fetchall = AsyncMock(return_value=[])
+        cursor.close = AsyncMock()
+
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)), \
+             patch("db_cloudsql.async_fetchone", AsyncMock(return_value=None)):
+            client = _get_client()
+            resp = client.get("/euromillions")
+
+        assert resp.status_code == 200
+        assert "SoftwareApplication" in resp.text
+
+
+class TestPhaseD_CssAsync:
+    """CSS loaded async on EM pages (non-blocking)."""
+
+    def test_em_page_css_media_print(self):
+        """EM pages load style.css with media=print onload pattern."""
+        cursor = AsyncMock()
+        cursor.fetchone = AsyncMock(return_value=None)
+        cursor.fetchall = AsyncMock(return_value=[])
+        cursor.close = AsyncMock()
+
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            resp = client.get("/euromillions/faq")
+
+        assert resp.status_code == 200
+        assert 'media="print"' in resp.text
+        assert "onload=" in resp.text
+
+
+class TestPhaseD_WebPImages:
+    """WebP source in picture tags."""
+
+    @pytest.mark.parametrize("path", [
+        "/euromillions/generateur",
+        "/euromillions/simulateur",
+    ])
+    def test_em_pages_have_webp_source(self, path):
+        """EM tool pages have <source> with webp type."""
+        cursor = AsyncMock()
+        cursor.fetchone = AsyncMock(return_value=None)
+        cursor.fetchall = AsyncMock(return_value=[])
+        cursor.close = AsyncMock()
+
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            resp = client.get(path)
+
+        assert resp.status_code == 200
+        assert ".webp" in resp.text
+        assert "<picture>" in resp.text
+
+
+class TestPhaseD_AggregateRatingEM:
+    """AggregateRating on EM accueil (smart: hidden if < 5)."""
+
+    def test_em_accueil_no_rating_if_low_count(self):
+        """GET /euromillions has NO AggregateRating if < 5 reviews."""
+        cursor = AsyncMock()
+        cursor.fetchone = AsyncMock(return_value=None)
+        cursor.fetchall = AsyncMock(return_value=[])
+        cursor.close = AsyncMock()
+
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)), \
+             patch("db_cloudsql.async_fetchone", AsyncMock(return_value={"review_count": 3, "avg_rating": 4.5})):
+            client = _get_client()
+            resp = client.get("/euromillions")
+
+        assert resp.status_code == 200
+        assert "AggregateRating" not in resp.text
+
+    def test_em_accueil_has_rating_if_enough(self):
+        """GET /euromillions shows AggregateRating if >= 5 reviews."""
+        cursor = AsyncMock()
+        cursor.fetchone = AsyncMock(return_value=None)
+        cursor.fetchall = AsyncMock(return_value=[])
+        cursor.close = AsyncMock()
+
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)), \
+             patch("db_cloudsql.async_fetchone", AsyncMock(return_value={"review_count": 12, "avg_rating": 4.7})):
+            client = _get_client()
+            resp = client.get("/euromillions")
+
+        assert resp.status_code == 200
+        assert "AggregateRating" in resp.text
+        assert '"ratingValue": "4.7"' in resp.text
+        assert '"ratingCount": "12"' in resp.text

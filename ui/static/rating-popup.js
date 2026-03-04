@@ -15,6 +15,7 @@
     // ── Guard : deja vote via n'importe quel canal ? ──
     function hasAlreadyRated() {
         return sessionStorage.getItem('lotoia_rated_popup_accueil')
+            || sessionStorage.getItem('lotoia_rated_popup_em')
             || sessionStorage.getItem('lotoia_rated_chatbot_loto')
             || sessionStorage.getItem('lotoia_rated_chatbot_em')
             || sessionStorage.getItem('lotoia_dismissed_rating');
@@ -139,14 +140,17 @@
             || ('sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
         sessionStorage.setItem('hybride_session_id', sessionId);
 
-        var ratingModule = window.location.pathname.indexOf('/euromillions/') !== -1 ? 'euromillions' : 'loto';
+        var isEM = window.location.pathname.indexOf('/euromillions') !== -1
+                  || document.body.classList.contains('em-page');
+        var ratingSource = isEM ? 'popup_em' : 'popup_accueil';
+        var ratingModule = isEM ? 'euromillions' : 'loto';
         if (typeof umami !== 'undefined') umami.track('rating-submitted', { rating: rating, module: ratingModule });
 
         fetch('/api/rating', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                source: 'popup_accueil',
+                source: ratingSource,
                 rating: rating,
                 session_id: sessionId,
                 page: window.location.pathname
@@ -155,7 +159,7 @@
         .then(function (res) { return res.json(); })
         .then(function (data) {
             if (data.success) {
-                sessionStorage.setItem('lotoia_rated_popup_accueil', 'true');
+                sessionStorage.setItem('lotoia_rated_' + ratingSource, 'true');
                 var feedback = document.getElementById('banner-rating-feedback');
                 if (feedback) feedback.textContent = LI.rating_thanks || 'Merci !';
                 var banner = document.getElementById('rating-banner');

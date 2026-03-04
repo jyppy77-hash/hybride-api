@@ -73,7 +73,7 @@
                     <span>{{ _('Froid (rare)') }}</span>
                 </div>
             </div>
-            <img src="/static/Hybride-audit.png" class="band-hybride" alt="{{ _('Bandeau moteur HYBRIDE') }}" width="163" height="173" loading="lazy">
+            <picture><source srcset="/static/Hybride-audit.webp" type="image/webp"><img src="/static/Hybride-audit.png" class="band-hybride" alt="{{ _('Bandeau moteur HYBRIDE') }}" width="163" height="173" loading="lazy"></picture>
             <p id="stats-tirages" class="stats-info" style="text-align: center; margin-top: 12px; font-size: 0.9rem; color: var(--text-muted);">
                 {{ _('Chargement des statistiques...') }}
             </p>
@@ -107,7 +107,7 @@
                         </div>
                     </div>
                     <div class="hybride-horizontal">
-                        <img src="/static/Hybride-audit-horizontal.png" alt="{{ _('Assistant Hybride analyse de grille') }}" width="1536" height="526" loading="lazy">
+                        <picture><source srcset="/static/Hybride-audit-horizontal.webp" type="image/webp"><img src="/static/Hybride-audit-horizontal.png" alt="{{ _('Assistant Hybride analyse de grille') }}" width="1536" height="526" loading="lazy"></picture>
                     </div>
                 </div>
             </div>
@@ -155,6 +155,13 @@
             <div class="loading-spinner"></div>
             <p>{{ _('Analyse en cours...') }}</p>
         </div>
+
+        {# ── CTA HYBRIDE ── #}
+        <section class="cta-hybride">
+            <h3>{{ _('Découvrez le chatbot HYBRIDE') }}</h3>
+            <p>{{ _('Notre chatbot intelligent analyse les tirages EuroMillions en temps réel grâce à l\'IA Grounded. Posez vos questions sur les statistiques.')|safe }}</p>
+            <a href="{{ urls.hybride_page }}" class="btn-cta-hybride">{{ _('Essayer le chatbot HYBRIDE') }} &rarr;</a>
+        </section>
 
         {% include "em/_footer.html" %}
     </div>
