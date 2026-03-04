@@ -9,7 +9,7 @@ from datetime import date
 from email.utils import formatdate
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, FileResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -540,6 +540,16 @@ app.middleware("http")(em_access_middleware)
 async def block_templates_access(rest: str):
     """Block direct access to Jinja2 template sources."""
     return HTMLResponse(status_code=404, content="Not Found")
+
+
+# =========================
+# Favicon (racine)
+# =========================
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    """Serve favicon.ico from project root with correct Content-Type."""
+    return FileResponse("favicon.ico", media_type="image/x-icon")
 
 
 # =========================
