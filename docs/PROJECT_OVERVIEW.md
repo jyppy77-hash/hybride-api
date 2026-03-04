@@ -473,13 +473,14 @@ The chatbot is connected to Cloud SQL in real-time via a multi-phase detection p
 
 ### Analytics & GDPR
 
-- **Dual analytics**: GA4 (`G-YYJ5LD1ZT3`) + Umami (self-hosted, cookieless)
+- **Triple analytics**: GA4 (`G-YYJ5LD1ZT3`) + Umami (self-hosted, cookieless) + Wysistat ACPM (labellisé ACPM, exempté CNIL, cookieless)
 - GA4 Consent Mode v2: baseline cookieless → enhanced after consent
 - Cookie consent banner i18n: 6 languages (FR/EN/ES/PT/DE/NL), auto-detect via `window.LotoIA_lang`
-- Owner IP filtering: `window.__OWNER__` blocks both GA4 and Umami for admin visits
+- Owner IP filtering: `window.__OWNER__` blocks GA4, Umami, and Wysistat for admin visits
 - 32+ GA4 events: UX (scroll, page_view, session), Product (generate_grid, simulate_grid), Business (sponsor_impression, sponsor_click, sponsor_video_played), Chatbot (8 events), Meta (meta75_launched, meta_pdf_export)
 - 13 Umami events: full parity with GA4 for key actions
-- CSP: img-src + connect-src whitelist GA4/GTM + Umami domains
+- Wysistat ACPM: French audience measurement, daily updates (Free tier), integrated on all 35 pages
+- CSP: img-src + connect-src + script-src whitelist GA4/GTM + Umami + Wysistat domains
 - Graceful adblock degradation: `gtagLoadFailed` flag, no JS errors
 
 ---
@@ -805,6 +806,7 @@ Loto pages are static HTML served by FastAPI. EuroMillions pages use **Jinja2 te
 | `scroll.js` | Scroll-to-top button (shows after 300px scroll, all pages including legal) |
 | `nav-scroll.js` | Navigation scroll behavior |
 | `rating-popup.js` | Rating popup UI logic: GA4 + Umami dual tracking (rating_popup_shown, rating_dismissed, rating-submitted) |
+| `wysistat.js` | Wysistat ACPM analytics — owner IP filtered via `window.__OWNER__`, bridges to `isOwner` for ws.jsa compatibility |
 | `version-inject.js` | Dynamic version injection from `/api/version` into `.app-version` spans |
 | `hybride-chatbot.js` | HYBRIDE chatbot widget — Loto (bubble, chat window, sessionStorage `hybride-history`, GA4 tracking, Gemini API via `/api/hybride-chat`) |
 | `hybride-chatbot-em.js` | HYBRIDE chatbot widget — EuroMillions (sessionStorage `hybride-history-em`, Gemini API via `/api/euromillions/hybride-chat`, GA4 `hybride_em_chat_*` events) |
@@ -1294,8 +1296,8 @@ Phase 1 split `api_chat.py` (2014L) into 4 service modules. Phase 4 applied the 
 | `GEMINI_API_KEY` | Optional | — | Gemini API key (fallback name) |
 | `REDIS_URL` | Optional | — | Redis connection URL for async cache (Phase 6; fallback to in-memory if absent) |
 | `K_SERVICE` | Auto | — | Set by Cloud Run (production detection) |
-| `OWNER_IP` | Optional | — | Owner IPv4 address(es) for GA4 + Umami analytics filtering (pipe-separated) |
-| `OWNER_IPV6` | Optional | — | Owner IPv6 prefix for GA4 + Umami analytics filtering |
+| `OWNER_IP` | Optional | — | Owner IPv4 address(es) for GA4 + Umami + Wysistat analytics filtering (pipe-separated) |
+| `OWNER_IPV6` | Optional | — | Owner IPv6 prefix for GA4 + Umami + Wysistat analytics filtering |
 
 ### Environment Detection
 
@@ -1322,7 +1324,7 @@ Phase 1 split `api_chat.py` (2014L) into 4 service modules. Phase 4 applied the 
 | Canonical URLs | 301 redirect `www` → root domain |
 | HTTPS | Enforced via Cloud Run + `og:image:secure_url` + redirect_http_to_https middleware |
 | API Key Protection | Gemini key stored in env vars, never exposed to client |
-| Owner IP Filtering | UmamiOwnerFilterMiddleware injects `window.__OWNER__=true` for owner IPs → blocks both Umami (via `umamiBeforeSend`) and GA4 (via `bootGtagImmediately` early return) |
+| Owner IP Filtering | UmamiOwnerFilterMiddleware injects `window.__OWNER__=true` for owner IPs → blocks Umami (via `umamiBeforeSend`), GA4 (via `bootGtagImmediately` early return), and Wysistat (via `isOwner` bridge in wysistat.js) |
 | HEAD Method Support | HeadMethodMiddleware converts HEAD to GET (SEO crawlers compatibility) |
 
 ---
@@ -1825,6 +1827,7 @@ Added 4 multilingual legal pages for EuroMillions (6 languages each) and updated
 | 2026-03-03 | Phase A: Argent/money/gambling detection — 13th pipeline phase. Court-circuit (no Gemini). 3-level escalation (L1 pedagogical, L2 firm, L3 help redirection). 6-lang response pools + word lists (FR/EN/ES/PT/DE/NL). Country-specific gambling support links. **972 tests.** |
 | 2026-03-03 | Sprint 4 SEO: Pre-launch audit (score 8.2/10). H1 hero_title optimization (12 edits, "EuroMillions" keyword in all 6 langs). Title tag shortening (5 pages ≤50 chars). BreadcrumbList JSON-LD on 7 pages. Dataset + CollectionPage schemas (historique, news). CLS fix (4 images: width/height/lazy). robots.txt EM Allow rules (6 langs). Loto cross-links in EM footer (FR only). og:title + twitter:title aligned. 14 files modified. **972 tests.** |
 | 2026-03-03 | SEO Sitemap Sprint: +24 legal pages in sitemap (4 types × 6 langs). xhtml:link hreflang alternates on all EM entries (7 tags per URL: 6 langs + x-default). xmlns:xhtml namespace. Kill switch respected on both URL generation and alternates. **978 tests.** |
+| 2026-03-04 | Wysistat ACPM intégré (35 pages). Bug fix: `window.isOwner` bridge pour ws.jsa compatibility (ReferenceError → 0 visits). CSP étendue (script-src + connect-src wysistat.com). Triple analytics stack opérationnel (GA4+Umami+Wysistat). 972 → **980 tests**. Score 9.1 → **9.2/10**. |
 
 ---
 
@@ -1888,13 +1891,14 @@ Observable characteristics based on development usage:
 | V5c (tests+infra) | 7.1 | +0.3 | Tests, CI pipeline, circuit breaker, 2 workers |
 | **V6 (credentials)** | **7.2** | **+0.1** | **Credential verification confirmed, full 6-section audit** |
 | **V7 (post-multilang)** | **9.1** | **+1.9** | **Phases 1-11 + i18n 6/6 + Sprint 4-5 SEO + 978 tests (see breakdown below)** |
+| **V7.1 (wysistat+seo)** | **9.2** | **+0.1** | **Wysistat ACPM intégré (35 pages, owner filter, CSP), Sprint 4 SEO pre-launch, 980 tests** |
 
 ### V7 Section Scores (03/03/2026)
 
 | Section | V6 Score | V7 Score | Delta | Key Improvements |
 |---------|----------|----------|-------|------------------|
 | Architecture & Structure | 7.5 | **9.5** | +2.0 | Phase 10 unified routes, GameConfig registry, 21 service modules, modular chat pipeline (13 phases), kill switch pattern, factory routes, base class inheritance (BaseStatsService) |
-| Security & Credentials | 8.0 | **9.5** | +1.5 | HSTS preload (1yr), CSP strict, COOP, X-Frame DENY, Permissions-Policy, AI bot blocking (12 bots), rate limiting (10/min PDF), argent/gambling detection (Phase A), HttpOnly press token |
+| Security & Credentials | 8.0 | **9.5** | +1.5 | HSTS preload (1yr), CSP strict, COOP, X-Frame DENY, Permissions-Policy, AI bot blocking (12 bots), rate limiting (10/min PDF), argent/gambling detection (Phase A), HttpOnly press token, triple analytics stack (GA4+Umami+Wysistat ACPM), Wysistat owner IP bridge fix |
 | Performance & Resilience | 7.0 | **8.5** | +1.5 | Redis async cache + in-memory fallback (Phase 6), SSE streaming (P9), circuit breaker, async DB (aiomysql Phase 5), PDF off-thread, GZip middleware, cache headers (7-30d) |
 | Tests & Quality | 6.5 | **9.0** | +2.5 | 248 → **978 tests** (+294%), 25 test files, sitemap 100% coverage, chat detectors, i18n, prompts, multilang routes, hreflang, PDF heatmap, legal pages all tested |
 | Maintainability & Documentation | 7.5 | **9.0** | +1.5 | PROJECT_OVERVIEW 1900+ lines, i18n conventions documented, kill switch pattern, gettext/Babel pipeline, prompt loader with fallback chain, JS i18n centralized |
@@ -1915,4 +1919,4 @@ Observable characteristics based on development usage:
 
 ---
 
-*Updated by JyppY & Claude Opus 4.6 — 03/03/2026 (v21.0: SEO Sitemap Sprint — +24 legal pages in sitemap, xhtml:link hreflang alternates on all EM entries, xmlns:xhtml namespace. Tech audit V7 re-score: 7.2 → **9.1** (+1.9). 978 tests, 0 failures. Previous: v20.0 Sprint 4 SEO 8.2/10, v19.0 Phase A argent detection, v18.0 GA4 audit, v17.0 PDF heatmap, v16.0 legal pages, globe selector. i18n 6/6 COMPLETE, P9 (SSE streaming), P1-P5/5 (i18n infrastructure), Phase 11 (EN multilang), Phases 1-10.)*
+*Updated by JyppY & Claude Opus 4.6 — 04/03/2026 (v22.0: Wysistat ACPM — triple analytics stack (GA4+Umami+Wysistat), owner IP bridge fix, 35 pages tracked, CSP extended. Tech audit V7.1: **9.2/10** (+0.1). 980 tests, 0 failures. Previous: v21.0 SEO Sitemap Sprint, v20.0 Sprint 4 SEO, v19.0 Phase A argent detection, v18.0 GA4 audit, v17.0 PDF heatmap, v16.0 legal pages, globe selector. i18n 6/6 COMPLETE, P9 (SSE streaming), P1-P5/5 (i18n infrastructure), Phase 11 (EN multilang), Phases 1-10.)*
