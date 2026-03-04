@@ -5,6 +5,8 @@ import uuid
 import asyncio
 import contextvars
 from contextlib import asynccontextmanager
+from datetime import date
+from email.utils import formatdate
 
 from fastapi import FastAPI, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
@@ -76,6 +78,7 @@ logging.root.addFilter(RequestIdFilter())
 
 # ── SEO routes set (computed once at import from EM_URLS) ──
 from config.templates import EM_URLS as _EM_URLS
+from config import killswitch
 _SEO_ROUTES = {
     "/", "/accueil", "/loto", "/loto/analyse", "/loto/exploration",
     "/loto/statistiques", "/faq", "/news",
@@ -275,6 +278,19 @@ async def add_cache_headers(request: Request, call_next):
     # Cache court pour pages HTML (SEO routes)
     if path.endswith(".html") or path in _SEO_ROUTES:
         response.headers["Cache-Control"] = "public, max-age=3600"  # 1 heure
+
+    # Last-Modified sur les pages HTML uniquement (evite epoch 0 / 1970)
+    content_type = response.headers.get("content-type", "")
+    if "text/html" in content_type:
+        stamp = time.mktime(date.today().timetuple())
+        response.headers["Last-Modified"] = formatdate(
+            timeval=stamp, localtime=False, usegmt=True,
+        )
+
+    # Vary: Accept-Language sur les routes EM multilingues (dynamique via kill switch)
+    _em_prefixes = tuple(f"/{lc}/" for lc in killswitch.ENABLED_LANGS if lc != "fr")
+    if path.startswith(_em_prefixes) or path.startswith("/euromillions"):
+        response.headers["Vary"] = "Accept-Language"
 
     return response
 
