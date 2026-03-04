@@ -342,7 +342,7 @@
         <section class="cta-hybride">
             <h3>{{ _('Découvrez le chatbot HYBRIDE') }}</h3>
             <p>{{ _('Notre chatbot intelligent analyse les tirages EuroMillions en temps réel grâce à l\'IA Grounded. Posez vos questions sur les statistiques.')|safe }}</p>
-            <a href="{{ urls.hybride_page }}" class="btn-cta-hybride">{{ _('Essayer le chatbot HYBRIDE') }} &rarr;</a>
+            <a href="{{ urls.hybride_page }}" class="btn-cta-hybride" onclick="var b=document.querySelector('.hybride-bubble');if(b){b.click();return false;}">{{ _('Essayer le chatbot HYBRIDE') }} &rarr;</a>
         </section>
 
         {% include "em/_footer.html" %}
