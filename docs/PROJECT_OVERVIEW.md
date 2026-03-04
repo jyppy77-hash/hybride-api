@@ -59,8 +59,8 @@ hybride-api/
 │   ├── em_stats_service.py              # EM stats thin wrapper → base_stats (87L, Phase 2)
 │   ├── chat_pipeline.py                 # HYBRIDE chatbot orchestration — Loto (723L, Phase 1+P9 SSE+Phase A)
 │   ├── chat_pipeline_em.py              # HYBRIDE chatbot orchestration — EM (771L, Phase 4+P9 SSE+Phase A)
-│   ├── chat_detectors.py                # 13-phase detection: insults, argent, numbers, grids — Loto (939L, Phase 1+Phase A)
-│   ├── chat_detectors_em.py             # 13-phase detection — EM variant (784L, Phase 4+Phase A)
+│   ├── chat_detectors.py                # 13-phase detection: insults, argent, numbers, grids — Loto (1078L, Phase 1+Phase A+P1-P3)
+│   ├── chat_detectors_em.py             # 13-phase detection — EM variant (797L, Phase 4+Phase A+P1-P2)
 │   ├── chat_sql.py                      # Text-to-SQL generator + executor — Loto (247L, Phase 1)
 │   ├── chat_sql_em.py                   # Text-to-SQL generator — EM (176L, Phase 4)
 │   ├── chat_utils.py                    # Formatting, context, sponsor — Loto (396L, Phase 1)
@@ -688,8 +688,8 @@ services/ — 21 modules, ~7600 lines
     ── Chat Pipeline (Phase 1 Loto, Phase 4 EM, Phase A) ──
     ├── chat_pipeline.py     (723L)  13-phase orchestration + SSE streaming — Loto (P9+Phase A)
     ├── chat_pipeline_em.py  (771L)  13-phase orchestration + SSE streaming — EM (P9+Phase A)
-    ├── chat_detectors.py    (939L)  Regex detectors, insult/OOR/argent pools, streak — Loto
-    ├── chat_detectors_em.py (784L)  EM-specific detectors + response pools (6 langs)
+    ├── chat_detectors.py    (1078L) Regex detectors, insult/OOR/argent pools, streak, _extract_top_n, temporal filter — Loto
+    ├── chat_detectors_em.py (797L)  EM-specific detectors + response pools (6 langs, multilang écart patterns)
     ├── chat_sql.py          (247L)  Text-to-SQL generator + executor — Loto
     ├── chat_sql_em.py       (176L)  Text-to-SQL — EuroMillions
     ├── chat_utils.py        (396L)  Context building, formatting, sponsor — Loto
@@ -727,10 +727,10 @@ tests/ — 972 tests, 25 files (pytest + pytest-cov)
     ── Chat Pipeline Tests (Phase 3) ──
     ├── test_chat_sql.py          (186L)   SQL injection security, _validate_sql, _ensure_limit
     ├── test_chat_utils.py        (190L)   _clean_response, _enrich_with_context, _format_date_fr
-    ├── test_chat_detectors_extra.py (159L) _detect_grille, _detect_mode, _detect_requete_complexe
+    ├── test_chat_detectors_extra.py (364L) _detect_grille, _detect_mode, _detect_requete_complexe, _extract_top_n, _has_temporal_filter
     ├── test_base_stats.py        (219L)   BaseStatsService: categories, pitch, EM paths
     ── EM Chat Tests (Phase 4) ──
-    ├── test_chat_detectors_em.py (319L)   EM detection pipeline
+    ├── test_chat_detectors_em.py (491L)   EM detection pipeline, multilang écart/top-N/temporal/Phase T neutralization
     ├── test_chat_pipeline_em.py  (231L)   EM orchestration
     ├── test_chat_utils_em.py     (232L)   EM context building
     ── Argent/Money Detection Tests (Phase A) ──
@@ -1217,10 +1217,13 @@ Phase 1 split `api_chat.py` (2014L) into 4 service modules. Phase 4 applied the 
 - **SSE Streaming (P9)**: `handle_chat_stream()` async generator yields SSE events (`data: {"chunk", "source", "mode", "is_done"}\n\n`). Early returns (insult, compliment, OOR) yield single event. Gemini responses stream progressively. Sponsor injected as final chunk before done event. Fallback on exception.
 - **Pitch**: `handle_pitch(grilles, httpx_client)` → `dict(pitchs: list[str])`
 
-**services/chat_detectors.py** (939L) / **chat_detectors_em.py** (784L):
+**services/chat_detectors.py** (1078L) / **chat_detectors_em.py** (797L):
 - **Regex patterns**: `_detect_insulte()`, `_detect_argent()` / `_detect_argent_em()`, `_detect_numero()`, `_detect_grille()`, `_detect_requete_complexe()`, `_detect_prochain_tirage()`, `_detect_mode()`
 - **Response pools**: Insult L1-L4, OOR L1-L3, Compliment L1-L3, Argent L1-L3 (6 langs), Menace responses
 - **Argent detection (Phase A)**: 3-level escalation — L1 pedagogical (default), L2 firm (strong money words like "devenir riche"/"get rich"), L3 help redirection (betting/gambling words → country-specific support links). FR/EN/ES/PT/DE/NL each have dedicated response pools and word lists.
+- **Top N extraction (P1/3)**: `_extract_top_n()` shared function — 10 multilingual regex patterns, default 5, max 20. Covers "top 10", "les 10 plus", "the 10 most", "los 10 más", "os 5 mais", "die 10 häufigsten", "de 10 meest", "donne-moi 10", "give me 10".
+- **Temporal filter (P2/3)**: `_has_temporal_filter()` — 73 multilingual patterns (FR/EN/ES/PT/DE/NL) for year, month, period detection. 6 month-name regexes (`_MOIS_FR/EN/ES/PT/DE/NL`). Bypasses Phases 2/3/1 → forces SQL generation.
+- **Phase T neutralizer (P3/3)**: `_STAT_NEUTRALIZE_RE` — statistical/frequency keywords (26 original + 30 frequency adverbs) prevent false positive Phase T activation on queries like "sorti le plus souvent" (6 langs).
 - **Streak tracking**: `_count_oor_streak()`, `_count_insult_streak()` with escalating responses
 
 **services/chat_sql.py** (247L) / **chat_sql_em.py** (176L):
@@ -1345,7 +1348,7 @@ Split `api_chat.py` (2014L) into 4 service modules + thin router.
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `services/chat_detectors.py` | 939 | Regex detection, insult/OOR/compliment/argent pools, streak tracking |
+| `services/chat_detectors.py` | 1078 | Regex detection, insult/OOR/compliment/argent pools, streak tracking, _extract_top_n, temporal filter (73 patterns), Phase T neutralizer |
 | `services/chat_pipeline.py` | 639 | 12-phase orchestration + Gemini pitch |
 | `services/chat_utils.py` | 396 | Context building, formatting, sponsor injection |
 | `services/chat_sql.py` | 247 | Text-to-SQL pipeline + safe DB execution |
@@ -1374,7 +1377,7 @@ Added 110 new tests targeting chat pipeline, SQL security, stats base class.
 | `test_chat_sql.py` | 43 | SQL injection security, `_validate_sql`, `_ensure_limit` |
 | `test_chat_utils.py` | 26 | `_clean_response`, `_enrich_with_context`, `_format_date_fr` |
 | `test_base_stats.py` | 15 | `get_numeros_par_categorie`, pitch context, EM paths |
-| `test_chat_detectors_extra.py` | 26 | `_detect_grille`, `_detect_mode`, `_detect_requete_complexe` |
+| `test_chat_detectors_extra.py` | 80 | `_detect_grille`, `_detect_mode`, `_detect_requete_complexe`, `_extract_top_n` (12 multilang), `_has_temporal_filter` (36 multilang) |
 
 Cloud Run optimized: `--memory=1Gi --cpu=2 --concurrency=40 --max-instances=10 --cpu-boost`.
 
@@ -1386,13 +1389,13 @@ Applied Phase 1 pattern to `api_chat_em.py` (1668L) → 4 service modules + thin
 
 | File | Lines | Purpose |
 |------|-------|---------|
-| `services/chat_detectors_em.py` | 784 | EM-specific regex + response pools (6 langs, Phase A argent) |
+| `services/chat_detectors_em.py` | 797 | EM-specific regex + response pools (6 langs, Phase A argent, multilang écart patterns) |
 | `services/chat_pipeline_em.py` | 771 | EM 13-phase orchestration (Phase A argent) |
 | `services/chat_utils_em.py` | 200 | EM context formatting |
 | `services/chat_sql_em.py` | 176 | EM Text-to-SQL (tirages_euromillions schema) |
 | `routes/api_chat_em.py` | 73 | Thin wrapper + backward compat re-exports |
 
-New test files: `test_chat_detectors_em.py` (319L), `test_chat_pipeline_em.py` (231L), `test_chat_utils_em.py` (232L).
+New test files: `test_chat_detectors_em.py` (491L), `test_chat_pipeline_em.py` (231L), `test_chat_utils_em.py` (232L).
 
 **Result**: 358 → 438 tests, 0 failures.
 
@@ -1761,8 +1764,8 @@ Added 4 multilingual legal pages for EuroMillions (6 languages each) and updated
 
 | File | Lines | Changes |
 |------|-------|---------|
-| `services/chat_detectors.py` | 850→939 | `_detect_argent()`, `_get_argent_response()`, FR word lists + response pools L1/L2/L3 |
-| `services/chat_detectors_em.py` | 495→784 | `_detect_argent_em(msg, lang)`, 6-lang word lists (phrases + mots + strong + betting), response pools FR/ES/PT/DE/NL, `_ARGENT_POOLS_EM` dispatch dict |
+| `services/chat_detectors.py` | 850→939→1078 | `_detect_argent()`, `_get_argent_response()`, FR word lists + response pools L1/L2/L3. P1-P3: `_extract_top_n()`, temporal filter (73 patterns), Phase T neutralizer |
+| `services/chat_detectors_em.py` | 495→784→797 | `_detect_argent_em(msg, lang)`, 6-lang word lists (phrases + mots + strong + betting), response pools FR/ES/PT/DE/NL, `_ARGENT_POOLS_EM` dispatch dict. P1-P2: multilang écart + top-N |
 | `services/chat_responses_em_en.py` | ~250→277 | EN pools L1/L2/L3, `_get_argent_response_em_en()`, strong/betting EN patterns |
 | `services/chat_pipeline.py` | 715→723 | Phase A block after Phase C (Loto FR) |
 | `services/chat_pipeline_em.py` | 760→771 | Phase A block after Phase C (EM, lang-aware dispatch EN vs other) |
@@ -1828,6 +1831,7 @@ Added 4 multilingual legal pages for EuroMillions (6 languages each) and updated
 | 2026-03-03 | Sprint 4 SEO: Pre-launch audit (score 8.2/10). H1 hero_title optimization (12 edits, "EuroMillions" keyword in all 6 langs). Title tag shortening (5 pages ≤50 chars). BreadcrumbList JSON-LD on 7 pages. Dataset + CollectionPage schemas (historique, news). CLS fix (4 images: width/height/lazy). robots.txt EM Allow rules (6 langs). Loto cross-links in EM footer (FR only). og:title + twitter:title aligned. 14 files modified. **972 tests.** |
 | 2026-03-03 | SEO Sitemap Sprint: +24 legal pages in sitemap (4 types × 6 langs). xhtml:link hreflang alternates on all EM entries (7 tags per URL: 6 langs + x-default). xmlns:xhtml namespace. Kill switch respected on both URL generation and alternates. **978 tests.** |
 | 2026-03-04 | Wysistat ACPM intégré (35 pages). Bug fix: `window.isOwner` bridge pour ws.jsa compatibility (ReferenceError → 0 visits). CSP étendue (script-src + connect-src wysistat.com). Triple analytics stack opérationnel (GA4+Umami+Wysistat). 972 → **980 tests**. Score 9.1 → **9.2/10**. |
+| 2026-03-04 | Chat multilang P1-P3: **P1** `_extract_top_n()` shared function (10 multilang patterns, default 5, max 20) — replaces hardcoded "top N" in Loto+EM. **P2** `_has_temporal_filter()` expanded 22→73 patterns (6 langs: year, month, period, month names). **P3** `_STAT_NEUTRALIZE_RE` expanded with frequency adverbs (souvent/often/oft/vaak...) — fixes "sorti le plus souvent" false positive Phase T. 980 → **1076 tests** (+96). Score 9.2 → **9.3/10**. |
 
 ---
 
@@ -1846,7 +1850,7 @@ Added 4 multilingual legal pages for EuroMillions (6 languages each) and updated
 | META ANALYSE 75 (Loto) | Stable | Async Gemini enrichment + PDF export, circuit breaker fallback. 18 Loto prompt keys. |
 | META ANALYSE 75 (EM) | Stable | Dual graphs, EM Gemini enrichment, EM PDF (2x2 matplotlib), 14 EM prompt keys. |
 | Cache | Stable | Redis async + in-memory fallback (Phase 6). PDF off-thread. |
-| Testing | Active | **978 tests** (pytest, 25 test files), CI integration |
+| Testing | Active | **1076 tests** (pytest, 25 test files), CI integration |
 | Security | Hardened | CSP+HSTS preload+COOP (Phase 7), aiomysql parameterized queries, rate limiting, correlation IDs |
 | SEO | **Hardened (Sprint 4+5)** | Schema.org Dataset (Phase 7), bankability T4 pivot (Phase 8), dynamic sitemap (P5/5), hreflang multilang (P5/5). **Sprint 4**: BreadcrumbList JSON-LD (7 pages), Dataset + CollectionPage schemas, H1 keyword optimization (6 langs), title tags ≤50 chars, CLS fix (4 images), robots.txt EM rules, Loto cross-links (FR footer), og:title/twitter:title aligned. **Sprint 5 Sitemap**: +24 legal pages, xhtml:link hreflang alternates (7 per EM URL), xmlns:xhtml namespace. Audit score **9.1/10**. |
 | Mobile responsive | Stable | Fullscreen chatbot, viewport sync, safe-area support |
@@ -1873,7 +1877,7 @@ Observable characteristics based on development usage:
 - **Redis optional** — `services/cache.py` falls back to per-process in-memory cache if `REDIS_URL` absent (not shared across 2 workers in fallback mode).
 - **Gemini dependency** — META ANALYSE and chatbot depend on an external API. Mitigated by circuit breaker + fallback messages, but degraded experience when open.
 - **Minimal monitoring** — Production observability relies on Cloud Run metrics + JSON structured logs with correlation IDs. No APM or alerting.
-- **Test coverage** — 978 tests across 25 files. Core engine, chat pipeline, stats, insult/OOR/argent detection, templates, legal pages, i18n, JS labels, prompts, multilang routes, sitemap, PDF heatmap well covered. Some route handlers have lower coverage.
+- **Test coverage** — 1076 tests across 25 files. Core engine, chat pipeline, stats, insult/OOR/argent detection, templates, legal pages, i18n, JS labels, prompts, multilang routes, sitemap, PDF heatmap, multilang temporal filter, top-N extraction, Phase T neutralization well covered. Some route handlers have lower coverage.
 - **i18n residue** — Full i18n pipeline complete (P1-P5/5 + Sprints ES/PT/DE/NL): gettext, Jinja2, JS labels, prompts, routes, sitemap, kill switch. **All 6 languages fully translated and live.** 4 legal pages translated. Cookie consent banner translated (6 langs). 1 minor FR residue: rating popup labels (5 FR strings in `rating-popup.js`). Loto EN not yet planned.
 
 ---
@@ -1892,6 +1896,7 @@ Observable characteristics based on development usage:
 | **V6 (credentials)** | **7.2** | **+0.1** | **Credential verification confirmed, full 6-section audit** |
 | **V7 (post-multilang)** | **9.1** | **+1.9** | **Phases 1-11 + i18n 6/6 + Sprint 4-5 SEO + 978 tests (see breakdown below)** |
 | **V7.1 (wysistat+seo)** | **9.2** | **+0.1** | **Wysistat ACPM intégré (35 pages, owner filter, CSP), Sprint 4 SEO pre-launch, 980 tests** |
+| **V7.2 (chat multilang)** | **9.3** | **+0.1** | **P1-P3: top-N multilingual, temporal filter 6 langs, Phase T frequency neutralizer. 1076 tests** |
 
 ### V7 Section Scores (03/03/2026)
 
@@ -1900,10 +1905,10 @@ Observable characteristics based on development usage:
 | Architecture & Structure | 7.5 | **9.5** | +2.0 | Phase 10 unified routes, GameConfig registry, 21 service modules, modular chat pipeline (13 phases), kill switch pattern, factory routes, base class inheritance (BaseStatsService) |
 | Security & Credentials | 8.0 | **9.5** | +1.5 | HSTS preload (1yr), CSP strict, COOP, X-Frame DENY, Permissions-Policy, AI bot blocking (12 bots), rate limiting (10/min PDF), argent/gambling detection (Phase A), HttpOnly press token, triple analytics stack (GA4+Umami+Wysistat ACPM), Wysistat owner IP bridge fix |
 | Performance & Resilience | 7.0 | **8.5** | +1.5 | Redis async cache + in-memory fallback (Phase 6), SSE streaming (P9), circuit breaker, async DB (aiomysql Phase 5), PDF off-thread, GZip middleware, cache headers (7-30d) |
-| Tests & Quality | 6.5 | **9.0** | +2.5 | 248 → **978 tests** (+294%), 25 test files, sitemap 100% coverage, chat detectors, i18n, prompts, multilang routes, hreflang, PDF heatmap, legal pages all tested |
+| Tests & Quality | 6.5 | **9.2** | +2.7 | 248 → **1076 tests** (+334%), 25 test files, sitemap 100% coverage, chat detectors (multilang top-N, temporal filter, Phase T neutralizer), i18n, prompts, multilang routes, hreflang, PDF heatmap, legal pages all tested |
 | Maintainability & Documentation | 7.5 | **9.0** | +1.5 | PROJECT_OVERVIEW 1900+ lines, i18n conventions documented, kill switch pattern, gettext/Babel pipeline, prompt loader with fallback chain, JS i18n centralized |
 | Deployment & Infrastructure | 6.5 | **8.5** | +2.0 | CI/CD Cloud Build (push-to-deploy), cloudbuild.yaml (build→test→deploy), 2 workers, correlation IDs, JSON structured logs, dynamic sitemap with xhtml:link hreflang |
-| **Global Average** | **7.2** | **9.1** | **+1.9** | |
+| **Global Average** | **7.2** | **9.2** | **+2.0** | |
 
 ### Priority axes to reach 9.5+
 
@@ -1912,11 +1917,11 @@ Observable characteristics based on development usage:
 | P1 | Add monitoring/alerting (Cloud Monitoring or Datadog) | +0.15 |
 | P1 | Add staging environment | +0.1 |
 | P2 | Configure linting (ruff) + type checking (mypy) in CI | +0.1 |
-| ~~P0~~ | ~~Raise test coverage to 60%+~~ | ✅ Done (978 tests, 58% global coverage) |
+| ~~P0~~ | ~~Raise test coverage to 60%+~~ | ✅ Done (1076 tests, 58% global coverage) |
 | ~~P2~~ | ~~Extract chat detection regex into a dedicated service~~ | ✅ Done (Phase 1+4: chat_detectors.py) |
 | ~~P3~~ | ~~Deduplicate analyze-custom-grid / analyze_grille_for_chat~~ | ✅ Done (Phase 10: unified routes) |
 | P3 | Migrate gcr.io to Artifact Registry | +0.05 |
 
 ---
 
-*Updated by JyppY & Claude Opus 4.6 — 04/03/2026 (v22.0: Wysistat ACPM — triple analytics stack (GA4+Umami+Wysistat), owner IP bridge fix, 35 pages tracked, CSP extended. Tech audit V7.1: **9.2/10** (+0.1). 980 tests, 0 failures. Previous: v21.0 SEO Sitemap Sprint, v20.0 Sprint 4 SEO, v19.0 Phase A argent detection, v18.0 GA4 audit, v17.0 PDF heatmap, v16.0 legal pages, globe selector. i18n 6/6 COMPLETE, P9 (SSE streaming), P1-P5/5 (i18n infrastructure), Phase 11 (EN multilang), Phases 1-10.)*
+*Updated by JyppY & Claude Opus 4.6 — 04/03/2026 (v23.0: Chat multilang P1-P3 — top-N extraction (10 multilang patterns), temporal filter (22→73 patterns, 6 langs), Phase T frequency neutralizer. Tech audit V7.2: **9.3/10** (+0.1). 1076 tests, 0 failures. Previous: v22.0 Wysistat ACPM, v21.0 SEO Sitemap Sprint, v20.0 Sprint 4 SEO, v19.0 Phase A argent detection, v18.0 GA4 audit, v17.0 PDF heatmap, v16.0 legal pages, globe selector. i18n 6/6 COMPLETE, P9 (SSE streaming), P1-P5/5 (i18n infrastructure), Phase 11 (EN multilang), Phases 1-10.)*
