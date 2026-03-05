@@ -61,7 +61,7 @@
                     </select>
                     <input type="number" step="0.0001" name="tarif_prix[]" value="{{ g.prix_unitaire }}" placeholder="Prix unitaire EUR">
                     <input type="text" name="tarif_desc[]" value="{{ g.description or '' }}" placeholder="Description">
-                    <button type="button" class="btn-secondary btn-remove-tarif" onclick="this.closest('.tarif-row').remove()">X</button>
+                    <button type="button" class="btn-remove-tarif" onclick="this.closest('.tarif-row').remove()">X</button>
                 </div>
                 {% endfor %}
             {% else %}
@@ -73,15 +73,15 @@
                     </select>
                     <input type="number" step="0.0001" name="tarif_prix[]" placeholder="Prix unitaire EUR">
                     <input type="text" name="tarif_desc[]" placeholder="Description">
-                    <button type="button" class="btn-secondary btn-remove-tarif" onclick="this.closest('.tarif-row').remove()">X</button>
+                    <button type="button" class="btn-remove-tarif" onclick="this.closest('.tarif-row').remove()">X</button>
                 </div>
             {% endif %}
         </div>
-        <button type="button" class="btn-secondary" id="btn-add-tarif" style="margin:.5rem 0 1.5rem;">+ Ajouter ligne</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="btn-add-tarif">+ Ajouter ligne</button>
 
-        <div>
-            <button type="submit" class="btn-primary" style="padding:.6rem 2rem;">Enregistrer</button>
-            <a href="/admin/sponsors" class="btn-secondary" style="text-decoration:none; padding:.5rem 1rem; margin-left:.5rem;">Annuler</a>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-action">Enregistrer</button>
+            <a href="/admin/sponsors" class="btn btn-ghost">Annuler</a>
         </div>
     </form>
 {% endblock %}
@@ -91,7 +91,7 @@
 document.getElementById('btn-add-tarif').addEventListener('click', function() {
     var row = document.createElement('div');
     row.className = 'tarif-row';
-    row.innerHTML = '<select name="tarif_event[]"><option value="sponsor-popup-shown">Impression</option><option value="sponsor-click">Clic</option><option value="sponsor-video-played">Video</option></select><input type="number" step="0.0001" name="tarif_prix[]" placeholder="Prix unitaire EUR"><input type="text" name="tarif_desc[]" placeholder="Description"><button type="button" class="btn-secondary btn-remove-tarif" onclick="this.closest(\'.tarif-row\').remove()">X</button>';
+    row.innerHTML = '<select name="tarif_event[]"><option value="sponsor-popup-shown">Impression</option><option value="sponsor-click">Clic</option><option value="sponsor-video-played">Video</option></select><input type="number" step="0.0001" name="tarif_prix[]" placeholder="Prix unitaire EUR"><input type="text" name="tarif_desc[]" placeholder="Description"><button type="button" class="btn-remove-tarif" onclick="this.closest(\'.tarif-row\').remove()">X</button>';
     document.getElementById('tarif-rows').appendChild(row);
 });
 </script>

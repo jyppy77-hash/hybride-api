@@ -4,8 +4,8 @@
 {% block content %}
     <h2>Sponsors</h2>
 
-    <div style="margin-bottom: 1rem;">
-        <a href="/admin/sponsors/new" class="btn-primary" style="text-decoration:none; padding:.5rem 1rem;">+ Ajouter un sponsor</a>
+    <div class="form-actions">
+        <a href="/admin/sponsors/new" class="btn btn-nav">+ Ajouter un sponsor</a>
     </div>
 
     <div class="table-wrap">
@@ -28,10 +28,10 @@
                     <td>{{ s.contact_nom or '' }}</td>
                     <td>{{ s.contact_email or '' }}</td>
                     <td>{{ 'Oui' if s.actif else 'Non' }}</td>
-                    <td><a href="/admin/sponsors/{{ s.id }}/edit" style="color:#3b82f6;">Editer</a></td>
+                    <td><a href="/admin/sponsors/{{ s.id }}/edit" class="table-link">Editer</a></td>
                 </tr>
                 {% else %}
-                <tr><td colspan="6" style="text-align:center; color:#9ca3af;">Aucun sponsor</td></tr>
+                <tr><td colspan="6" class="empty-state">Aucun sponsor</td></tr>
                 {% endfor %}
             </tbody>
         </table>

@@ -5,13 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <title>LotoIA Admin — {% block title %}Dashboard{% endblock %}</title>
-    <link rel="stylesheet" href="/static/admin.css">
+    <link rel="stylesheet" href="/static/admin.css?v=2">
     {% block head %}{% endblock %}
 </head>
 <body>
     <header class="admin-header">
         <nav class="admin-topnav">
-            <a href="/admin" class="topnav-brand">LotoIA Admin</a>
+            <a href="/admin" class="topnav-brand"><span>Loto</span>IA Admin</a>
             <a href="/admin" class="topnav-link{% if active == 'dashboard' %} active{% endif %}">Dashboard</a>
             <a href="/admin/impressions" class="topnav-link{% if active == 'impressions' %} active{% endif %}">Impressions</a>
             <a href="/admin/votes" class="topnav-link{% if active == 'votes' %} active{% endif %}">Votes</a>

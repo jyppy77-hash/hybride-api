@@ -4,7 +4,7 @@
 {% block content %}
     <h2>Facture {{ facture.numero }}</h2>
 
-    <div class="kpi-grid" style="margin-bottom:1.5rem;">
+    <div class="kpi-grid">
         <div class="kpi-card">
             <span class="kpi-value">{{ facture.sponsor_nom }}</span>
             <span class="kpi-label">Sponsor</span>
@@ -18,12 +18,12 @@
             <span class="kpi-label">Echeance</span>
         </div>
         <div class="kpi-card">
-            <span class="kpi-value badge-status badge-{{ facture.statut }}">{{ facture.statut }}</span>
+            <span class="kpi-value"><span class="badge-status badge-{{ facture.statut }}">{{ facture.statut }}</span></span>
             <span class="kpi-label">Statut</span>
         </div>
     </div>
 
-    <div class="kpi-bar" style="margin-bottom:1.5rem;">
+    <div class="kpi-bar">
         <span>Periode : <b>{{ facture.periode_debut }}</b> au <b>{{ facture.periode_fin }}</b></span>
     </div>
 
@@ -51,7 +51,8 @@
         </table>
     </div>
 
-    <div class="kpi-grid" style="margin-top:1.5rem;">
+    <h2>Totaux</h2>
+    <div class="kpi-grid">
         <div class="kpi-card">
             <span class="kpi-value">{{ "%.2f"|format(facture.montant_ht) }}</span>
             <span class="kpi-label">Total HT (EUR)</span>
@@ -67,27 +68,27 @@
     </div>
 
     {% if facture.notes %}
-    <div style="margin-top:1rem; color:#9ca3af;">
-        <b>Notes :</b> {{ facture.notes }}
+    <div class="kpi-bar">
+        <span><b>Notes :</b> {{ facture.notes }}</span>
     </div>
     {% endif %}
 
-    <div style="margin-top:1.5rem; display:flex; gap:.5rem;">
-        <a href="/admin/factures/{{ facture.id }}/pdf" class="btn-primary" style="text-decoration:none; padding:.5rem 1rem;">Telecharger PDF</a>
+    <div class="action-bar">
+        <a href="/admin/factures/{{ facture.id }}/pdf" class="btn btn-nav">Telecharger PDF</a>
 
         {% if facture.statut == 'brouillon' %}
-        <form method="POST" action="/admin/factures/{{ facture.id }}/status" style="display:inline;">
+        <form method="POST" action="/admin/factures/{{ facture.id }}/status">
             <input type="hidden" name="statut" value="envoyee">
-            <button type="submit" class="btn-secondary">Marquer envoyee</button>
+            <button type="submit" class="btn btn-action">Marquer envoyee</button>
         </form>
         {% endif %}
         {% if facture.statut == 'envoyee' %}
-        <form method="POST" action="/admin/factures/{{ facture.id }}/status" style="display:inline;">
+        <form method="POST" action="/admin/factures/{{ facture.id }}/status">
             <input type="hidden" name="statut" value="payee">
-            <button type="submit" class="btn-secondary">Marquer payee</button>
+            <button type="submit" class="btn btn-action">Marquer payee</button>
         </form>
         {% endif %}
 
-        <a href="/admin/factures" class="btn-secondary" style="text-decoration:none; padding:.5rem 1rem;">Retour</a>
+        <a href="/admin/factures" class="btn btn-ghost">Retour</a>
     </div>
 {% endblock %}

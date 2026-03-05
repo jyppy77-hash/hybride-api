@@ -4,8 +4,8 @@
 {% block content %}
     <h2>Factures</h2>
 
-    <div style="margin-bottom: 1rem;">
-        <a href="/admin/factures/new" class="btn-primary" style="text-decoration:none; padding:.5rem 1rem;">+ Generer une facture</a>
+    <div class="form-actions">
+        <a href="/admin/factures/new" class="btn btn-nav">+ Generer une facture</a>
     </div>
 
     <div class="table-wrap">
@@ -31,12 +31,12 @@
                     <td>{{ "%.2f"|format(f.montant_ttc) }} EUR</td>
                     <td><span class="badge-status badge-{{ f.statut }}">{{ f.statut }}</span></td>
                     <td>
-                        <a href="/admin/factures/{{ f.id }}" style="color:#3b82f6;">Detail</a>
-                        <a href="/admin/factures/{{ f.id }}/pdf" style="color:#10b981; margin-left:.5rem;">PDF</a>
+                        <a href="/admin/factures/{{ f.id }}" class="table-link">Detail</a>
+                        <a href="/admin/factures/{{ f.id }}/pdf" class="table-link-secondary">PDF</a>
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="7" style="text-align:center; color:#9ca3af;">Aucune facture</td></tr>
+                <tr><td colspan="7" class="empty-state">Aucune facture</td></tr>
                 {% endfor %}
             </tbody>
         </table>

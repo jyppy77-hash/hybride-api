@@ -5,7 +5,7 @@
     <h2>Configuration Entreprise</h2>
 
     {% if success %}
-    <div style="background:#064e3b; color:#6ee7b7; padding:.5rem .8rem; border-radius:4px; margin-bottom:1rem; font-size:.85rem;">Configuration enregistree.</div>
+    <div class="alert-success">Configuration enregistree.</div>
     {% endif %}
 
     <form method="POST" class="admin-form">
@@ -67,8 +67,8 @@
                 <input type="text" name="bic" value="{{ cfg.bic or '' }}">
             </div>
         </div>
-        <div style="margin-top:1rem;">
-            <button type="submit" class="btn-primary" style="padding:.6rem 2rem;">Enregistrer</button>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-action">Enregistrer</button>
         </div>
     </form>
 {% endblock %}
