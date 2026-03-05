@@ -201,6 +201,7 @@ function generatePopupHTML(config) {
 function trackSponsorClick(sponsorId) {
     // Umami — sponsor click
     if (typeof umami !== 'undefined') umami.track('sponsor-click', { sponsor: sponsorId, module: 'loto' });
+    fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-click', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
     // GA4 Analytics - Track sponsor click
     if (window.LotoIAAnalytics && window.LotoIAAnalytics.business) {
         window.LotoIAAnalytics.business.sponsorClick({
@@ -317,6 +318,7 @@ function showSponsorPopup(config) {
 
         // Umami — sponsor popup shown
         if (typeof umami !== 'undefined') umami.track('sponsor-popup-shown', { module: 'loto' });
+        fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-popup-shown', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
 
         // Bouton Annuler (style via CSS)
         const modal = overlay.querySelector('.sponsor-popup-modal');

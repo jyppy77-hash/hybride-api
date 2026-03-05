@@ -263,6 +263,7 @@ function generatePopupHTMLSimulateurEM(config) {
 function trackSponsorClickSimulateurEM(sponsorId) {
     // Umami — sponsor click EM
     if (typeof umami !== 'undefined') umami.track('sponsor-click', { sponsor: sponsorId, module: 'euromillions' });
+    fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-click', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
     if (window.LotoIAAnalytics && window.LotoIAAnalytics.business) {
         window.LotoIAAnalytics.business.sponsorClick({
             sponsor: sponsorId,
@@ -375,6 +376,7 @@ function showSponsorPopupSimulateurEM(config) {
 
         // Umami — sponsor popup shown EM
         if (typeof umami !== 'undefined') umami.track('sponsor-popup-shown', { module: 'euromillions' });
+        fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-popup-shown', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
 
         // Bouton Annuler
         var modal = overlay.querySelector('.sponsor-popup-modal');

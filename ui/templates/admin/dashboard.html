@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>LotoIA Admin — Dashboard</title>
+    <link rel="stylesheet" href="/static/admin.css">
+</head>
+<body>
+    <header class="admin-header">
+        <h1>LotoIA — Back-office Admin</h1>
+        <a href="/admin/logout" class="btn-logout">Deconnexion</a>
+    </header>
+
+    <main class="admin-main">
+        <h2>Sponsor — Aujourd'hui</h2>
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <span class="kpi-value">{{ impressions }}</span>
+                <span class="kpi-label">Impressions</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-value">{{ clicks }}</span>
+                <span class="kpi-label">Clics</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-value">{{ videos }}</span>
+                <span class="kpi-label">Videos</span>
+            </div>
+        </div>
+
+        <h2>Ratings — Global</h2>
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <span class="kpi-value">{{ "%.1f"|format(avg_rating) }}</span>
+                <span class="kpi-label">Note moyenne</span>
+            </div>
+            <div class="kpi-card">
+                <span class="kpi-value">{{ review_count }}</span>
+                <span class="kpi-label">Nb votes</span>
+            </div>
+        </div>
+
+        <h2>Navigation</h2>
+        <nav class="admin-nav">
+            <span class="nav-item disabled">Impressions sponsor (detail) — Phase 2</span>
+            <span class="nav-item disabled">Votes utilisateurs (detail) — Phase 2</span>
+            <span class="nav-item disabled">FacturIA — Phase 4</span>
+            <span class="nav-item disabled">Exports — Phase 4</span>
+        </nav>
+    </main>
+</body>
+</html>

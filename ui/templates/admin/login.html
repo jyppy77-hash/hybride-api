@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>LotoIA Admin — Connexion</title>
+    <link rel="stylesheet" href="/static/admin.css">
+</head>
+<body class="login-body">
+    <div class="login-card">
+        <h1>LotoIA — Admin</h1>
+        {% if error %}
+        <div class="login-error">{{ error }}</div>
+        {% endif %}
+        <form method="POST" action="/admin/login" autocomplete="off">
+            <label for="password">Mot de passe</label>
+            <input type="password" id="password" name="password" required autofocus>
+            <button type="submit">Connexion</button>
+        </form>
+    </div>
+</body>
+</html>

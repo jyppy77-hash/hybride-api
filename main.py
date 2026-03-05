@@ -43,6 +43,8 @@ from routes.api_chat_unified import router as unified_chat_router      # Phase 1
 from routes.en_em_pages import router as en_em_pages_router            # Phase 11 — EN EuroMillions
 from routes.multilang_em_pages import router as multilang_em_router    # P5/5 — PT/ES/DE/NL
 from routes.sitemap import router as sitemap_router                    # P5/5 — Dynamic sitemap
+from routes.api_sponsor_track import router as sponsor_track_router    # Phase 1/4 — Sponsor tracking
+from routes.admin import router as admin_router                        # Phase 1/4 — Admin back-office
 
 # ── JSON structured logging ──
 _log_handler = logging.StreamHandler(sys.stdout)
@@ -591,6 +593,9 @@ app.include_router(en_em_pages_router)
 # P5/5 — Multilingual EM pages (PT/ES/DE/NL) + dynamic sitemap
 app.include_router(multilang_em_router)
 app.include_router(sitemap_router)
+# Phase 1/4 — Admin back-office + sponsor tracking
+app.include_router(sponsor_track_router)
+app.include_router(admin_router)
 
 
 # =========================

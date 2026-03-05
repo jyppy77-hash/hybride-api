@@ -1,0 +1,136 @@
+"""
+Tests for POST /api/sponsor/track endpoint.
+"""
+
+import os
+from unittest.mock import patch, AsyncMock
+
+import pytest
+from starlette.testclient import TestClient
+
+
+_static_patch = patch("fastapi.staticfiles.StaticFiles.__init__", return_value=None)
+_static_call = patch("fastapi.staticfiles.StaticFiles.__call__", return_value=None)
+_db_env = patch.dict(os.environ, {
+    "DB_PASSWORD": "fake", "DB_USER": "test", "DB_NAME": "testdb",
+})
+
+
+def _get_client():
+    with _db_env, _static_patch, _static_call:
+        import importlib
+        import main as main_mod
+        importlib.reload(main_mod)
+        return TestClient(main_mod.app, raise_server_exceptions=False)
+
+
+@pytest.fixture(autouse=True)
+def _mock_db():
+    with patch("routes.api_sponsor_track.db_cloudsql") as mock_db:
+        mock_db.async_query = AsyncMock()
+        yield mock_db
+
+
+class TestSponsorTrack:
+    """POST /api/sponsor/track tests."""
+
+    def test_valid_event_returns_204(self, _mock_db):
+        client = _get_client()
+        resp = client.post("/api/sponsor/track", json={
+            "event_type": "sponsor-popup-shown",
+            "page": "/loto/analyse",
+            "lang": "fr",
+            "device": "desktop",
+        })
+        assert resp.status_code == 204
+        assert resp.content == b""
+
+    def test_invalid_event_type_returns_204_no_insert(self, _mock_db):
+        client = _get_client()
+        resp = client.post("/api/sponsor/track", json={
+            "event_type": "hacked-event",
+            "page": "/loto",
+            "lang": "fr",
+            "device": "desktop",
+        })
+        assert resp.status_code == 204
+        _mock_db.async_query.assert_not_called()
+
+    def test_sponsor_click_event(self, _mock_db):
+        client = _get_client()
+        resp = client.post("/api/sponsor/track", json={
+            "event_type": "sponsor-click",
+            "page": "/euromillions/simulator",
+            "lang": "en",
+            "device": "mobile",
+        })
+        assert resp.status_code == 204
+
+    def test_sponsor_video_played_event(self, _mock_db):
+        client = _get_client()
+        resp = client.post("/api/sponsor/track", json={
+            "event_type": "sponsor-video-played",
+            "page": "/loto",
+            "lang": "fr",
+            "device": "desktop",
+        })
+        assert resp.status_code == 204
+
+    def test_missing_event_type_returns_422(self, _mock_db):
+        client = _get_client()
+        resp = client.post("/api/sponsor/track", json={
+            "page": "/loto",
+        })
+        assert resp.status_code == 422
+
+    def test_missing_page_returns_422(self, _mock_db):
+        client = _get_client()
+        resp = client.post("/api/sponsor/track", json={
+            "event_type": "sponsor-popup-shown",
+        })
+        assert resp.status_code == 422
+
+    def test_owner_ip_filtered(self, _mock_db):
+        """Owner IP should return 204 but NOT insert."""
+        with patch.dict(os.environ, {"OWNER_IP": "1.2.3.4"}):
+            # Need to reimport to pick up env var
+            import importlib
+            import routes.api_sponsor_track as mod
+            importlib.reload(mod)
+
+            client = _get_client()
+            resp = client.post(
+                "/api/sponsor/track",
+                json={
+                    "event_type": "sponsor-popup-shown",
+                    "page": "/loto",
+                    "lang": "fr",
+                    "device": "desktop",
+                },
+                headers={"X-Forwarded-For": "1.2.3.4"},
+            )
+            assert resp.status_code == 204
+
+
+class TestDetectCountry:
+    """Test _detect_country helper."""
+
+    def test_fr_FR(self):
+        from routes.api_sponsor_track import _detect_country
+        assert _detect_country("fr-FR,fr;q=0.9") == "FR"
+
+    def test_en_US(self):
+        from routes.api_sponsor_track import _detect_country
+        assert _detect_country("en-US,en;q=0.8") == "US"
+
+    def test_bare_lang(self):
+        from routes.api_sponsor_track import _detect_country
+        assert _detect_country("de") == "DE"
+
+    def test_empty(self):
+        from routes.api_sponsor_track import _detect_country
+        assert _detect_country("") is None
+
+    def test_none(self):
+        from routes.api_sponsor_track import _detect_country
+        assert _detect_country(None) is None
