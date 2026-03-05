@@ -4585,6 +4585,25 @@ msgstr "Geen gegevens beschikbaar."
 msgid "sorties"
 msgstr "verschijningen"
 
+#: ui/templates/em/simulateur.html ui/templates/em/generateur.html
+#: ui/templates/em/statistiques.html
+msgid "Découvrez le chatbot HYBRIDE"
+msgstr "Ontdek de HYBRIDE chatbot"
+
+#: ui/templates/em/simulateur.html ui/templates/em/generateur.html
+#: ui/templates/em/statistiques.html
+msgid ""
+"Notre chatbot intelligent analyse les tirages EuroMillions en temps réel "
+"grâce à l'IA Grounded. Posez vos questions sur les statistiques."
+msgstr ""
+"Onze intelligente chatbot analyseert de EuroMillions-trekkingen in realtime "
+"dankzij Grounded AI. Stel uw vragen over de statistieken."
+
+#: ui/templates/em/simulateur.html ui/templates/em/generateur.html
+#: ui/templates/em/statistiques.html
+msgid "Essayer le chatbot HYBRIDE"
+msgstr "Probeer de HYBRIDE chatbot"
+
 #~ msgid "Numéros chauds"
 #~ msgstr ""
 
