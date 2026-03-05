@@ -18,7 +18,8 @@
             || sessionStorage.getItem('lotoia_rated_popup_em')
             || sessionStorage.getItem('lotoia_rated_chatbot_loto')
             || sessionStorage.getItem('lotoia_rated_chatbot_em')
-            || sessionStorage.getItem('lotoia_dismissed_rating');
+                || sessionStorage.getItem('lotoia_dismissed_rating')
+            || sessionStorage.getItem('lotoia_rating_banner_shown');
     }
 
     if (hasAlreadyRated()) return;
@@ -52,6 +53,9 @@
         // Double-check (le vote a pu arriver entre-temps via chatbot)
         if (hasAlreadyRated()) return;
         if (document.getElementById('rating-banner')) return;
+
+        // Marquer comme affiché — empêche le ré-affichage sur les pages suivantes
+        sessionStorage.setItem('lotoia_rating_banner_shown', '1');
 
         var banner = document.createElement('div');
         banner.id = 'rating-banner';

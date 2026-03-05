@@ -329,3 +329,100 @@ body.em-page:not(.accueil-page) .engine-nav-btn .nav-arrow {
 body.theme-night .em-page .cta-hybride {
     background: linear-gradient(135deg, #0f2744 0%, #1a365d 100%);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   FOOTER — Mode JOUR : fond clair #b8c9e0–#e8eef6
+   Contraste WCAG AA : liens 7:1, texte 6.5:1, muted 4.5:1
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page.theme-day .footer {
+    color: #2d3b4e;
+    border-top-color: rgba(0, 0, 0, 0.12);
+}
+body.em-page.theme-day .footer-nav a {
+    color: #1e3a5f;
+}
+body.em-page.theme-day .footer-nav a:hover {
+    color: #003399;
+    background: rgba(0, 51, 153, 0.08);
+}
+body.em-page.theme-day .footer-nav a.active {
+    color: #003399;
+}
+body.em-page.theme-day .footer-sep {
+    color: #8a9bb5;
+}
+body.em-page.theme-day .footer-brand {
+    color: #4a5e78;
+}
+body.em-page.theme-day .footer-legal a {
+    color: #1e3a5f;
+    text-decoration: none;
+    font-size: 0.85rem;
+}
+body.em-page.theme-day .footer-legal a:hover {
+    color: #003399;
+    text-decoration: underline;
+}
+body.em-page.theme-day .footer-disclaimer {
+    color: #4a5e78;
+}
+body.em-page.theme-day .footer-help {
+    color: #4a5e78;
+}
+body.em-page.theme-day .footer-help a {
+    color: #1e3a5f;
+}
+body.em-page.theme-day .credits .dev-by {
+    color: #1e293b;
+}
+body.em-page.theme-day .credits .dev-by strong {
+    color: #003399;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FOOTER — Mode NUIT : fond sombre #000d1a–#001a4d
+   ═══════════════════════════════════════════════════════════════ */
+body.em-page.theme-night .footer {
+    color: rgba(255, 255, 255, 0.7);
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+body.em-page.theme-night .footer-nav a {
+    color: rgba(255, 255, 255, 0.7);
+}
+body.em-page.theme-night .footer-nav a:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+}
+body.em-page.theme-night .footer-nav a.active {
+    color: #fff;
+}
+body.em-page.theme-night .footer-sep {
+    color: rgba(255, 255, 255, 0.3);
+}
+body.em-page.theme-night .footer-brand {
+    color: rgba(255, 255, 255, 0.5);
+}
+body.em-page.theme-night .footer-legal a {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    font-size: 0.85rem;
+}
+body.em-page.theme-night .footer-legal a:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+body.em-page.theme-night .footer-disclaimer {
+    color: rgba(255, 255, 255, 0.5);
+}
+body.em-page.theme-night .footer-help {
+    color: rgba(255, 255, 255, 0.5);
+}
+body.em-page.theme-night .footer-help a {
+    color: rgba(255, 255, 255, 0.7);
+}
+body.em-page.theme-night .credits .dev-by {
+    color: rgba(255, 255, 255, 0.9);
+}
+body.em-page.theme-night .credits .dev-by strong {
+    color: #60a5fa;
+}
