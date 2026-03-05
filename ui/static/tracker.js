@@ -57,7 +57,7 @@
 
         try {
             if (navigator.sendBeacon) {
-                navigator.sendBeacon(ENDPOINT, JSON.stringify(payload));
+                navigator.sendBeacon(ENDPOINT, new Blob([JSON.stringify(payload)], {type: 'application/json'}));
             } else {
                 fetch(ENDPOINT, {
                     method: 'POST',
