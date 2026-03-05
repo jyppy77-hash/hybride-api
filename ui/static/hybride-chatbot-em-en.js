@@ -114,11 +114,13 @@
                     has_history: chatHistory.length > 1
                 });
                 if (typeof umami !== 'undefined') umami.track('chatbot-open', { module: 'euromillions-en' });
+                if (window.LotoIA_track) LotoIA_track('chatbot-open', {module: 'euromillions-en'});
             } else {
                 win.classList.remove('visible');
                 bubble.classList.remove('open');
                 root.classList.remove('hybride-fullscreen');
                 if (typeof umami !== 'undefined') umami.track('chatbot-close', { module: 'euromillions-en' });
+                if (window.LotoIA_track) LotoIA_track('chatbot-close', {module: 'euromillions-en'});
                 trackEvent('hybride_em_en_chat_session', {
                     page: detectPage(),
                     message_count: messageCount,
@@ -135,6 +137,7 @@
             bubble.classList.remove('open');
             root.classList.remove('hybride-fullscreen');
             if (typeof umami !== 'undefined') umami.track('chatbot-close', { module: 'euromillions-en' });
+            if (window.LotoIA_track) LotoIA_track('chatbot-close', {module: 'euromillions-en'});
             trackEvent('hybride_em_en_chat_session', {
                 page: detectPage(),
                 message_count: messageCount,
@@ -204,6 +207,7 @@
                 message_count: messageCount
             });
             if (typeof umami !== 'undefined') umami.track('chatbot-message', { module: 'euromillions-en' });
+            if (window.LotoIA_track) LotoIA_track('chatbot-message', {module: 'euromillions-en'});
 
             var controller = new AbortController();
             var timeoutId = setTimeout(function () { controller.abort(); }, 20000);
@@ -387,6 +391,7 @@
                 message_count: messageCount
             });
             if (typeof umami !== 'undefined') umami.track('rating-submitted', { rating: rating, module: 'euromillions-en' });
+            if (window.LotoIA_track) LotoIA_track('rating-submitted', {rating: rating, module: 'euromillions-en'});
         }
 
         /* ══════════════════════════════════

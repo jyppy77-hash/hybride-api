@@ -244,5 +244,73 @@ var LotoAdmin = (function() {
         renderPagination(rows.length, page, renderVotesTable, rows);
     }
 
-    return { initImpressions: initImpressions, initVotes: initVotes };
+    // ══════════════════════════════════════
+    // REALTIME PAGE
+    // ══════════════════════════════════════
+
+    var rtTimer = null;
+
+    function initRealtime() {
+        loadRealtime();
+        qs('#rt-auto').addEventListener('change', function() {
+            if (this.checked) {
+                startAutoRefresh();
+            } else {
+                stopAutoRefresh();
+            }
+        });
+        qs('#f-event-type').addEventListener('change', loadRealtime);
+        startAutoRefresh();
+    }
+
+    function startAutoRefresh() {
+        stopAutoRefresh();
+        rtTimer = setInterval(loadRealtime, 5000);
+    }
+
+    function stopAutoRefresh() {
+        if (rtTimer) { clearInterval(rtTimer); rtTimer = null; }
+    }
+
+    function loadRealtime() {
+        var evType = qs('#f-event-type').value;
+        var url = '/admin/api/realtime?event_type=' + evType;
+        fetchJSON(url).then(function(data) {
+            if (!data) return;
+            renderRtKPI(data.kpi);
+            renderRtTable(data.events);
+            renderRtEventTypes(data.event_types);
+        });
+    }
+
+    function renderRtKPI(kpi) {
+        qs('#kpi-today').textContent = kpi.today || 0;
+        qs('#kpi-hour').textContent = kpi.hour || 0;
+        qs('#kpi-types').textContent = kpi.types || 0;
+    }
+
+    function renderRtTable(events) {
+        var tbody = qs('#rt-tbody');
+        tbody.innerHTML = events.map(function(e) {
+            return '<tr class="rt-row-new"><td>' + escHtml(e.created_at) + '</td>'
+                + '<td><span class="rt-badge rt-badge-' + escHtml(e.event_type).replace(/[^a-z0-9-]/g, '') + '">' + escHtml(e.event_type) + '</span></td>'
+                + '<td>' + escHtml(e.page) + '</td>'
+                + '<td>' + escHtml(e.module) + '</td>'
+                + '<td>' + escHtml(e.lang) + '</td>'
+                + '<td>' + escHtml(e.device) + '</td>'
+                + '<td>' + escHtml(e.country) + '</td></tr>';
+        }).join('');
+    }
+
+    function renderRtEventTypes(types) {
+        var sel = qs('#f-event-type');
+        var current = sel.value;
+        var html = '<option value="all">Tous les events</option>';
+        types.forEach(function(t) {
+            html += '<option value="' + escHtml(t) + '"' + (t === current ? ' selected' : '') + '>' + escHtml(t) + '</option>';
+        });
+        sel.innerHTML = html;
+    }
+
+    return { initImpressions: initImpressions, initVotes: initVotes, initRealtime: initRealtime };
 })();

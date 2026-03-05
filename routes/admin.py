@@ -882,3 +882,69 @@ async def admin_config_save(request: Request):
         pass
     tpl = env.get_template("admin/config.html")
     return HTMLResponse(tpl.render(active="config", cfg=cfg, success=True))
+
+
+# ── Realtime feed ─────────────────────────────────────────────────────────────
+
+@router.get("/admin/realtime", response_class=HTMLResponse, include_in_schema=False)
+async def admin_realtime_page(request: Request):
+    redirect = _require_auth(request)
+    if redirect:
+        return redirect
+    tpl = env.get_template("admin/realtime.html")
+    return HTMLResponse(tpl.render(active="realtime"))
+
+
+@router.get("/admin/api/realtime", include_in_schema=False)
+async def admin_api_realtime(request: Request, event_type: str = "all"):
+    err = _require_auth_json(request)
+    if err:
+        return err
+    try:
+        # Last 100 events
+        where = ""
+        params = []
+        if event_type != "all":
+            where = "WHERE event_type = %s"
+            params.append(event_type)
+        rows = await db_cloudsql.async_fetchall(
+            f"SELECT event_type, page, module, lang, device, country, created_at "
+            f"FROM event_log {where} ORDER BY created_at DESC LIMIT 100",
+            tuple(params),
+        )
+        events = []
+        for r in rows:
+            events.append({
+                "event_type": r["event_type"],
+                "page": r.get("page", ""),
+                "module": r.get("module", ""),
+                "lang": r.get("lang", ""),
+                "device": r.get("device", ""),
+                "country": r.get("country", ""),
+                "created_at": r["created_at"].strftime("%H:%M:%S") if r.get("created_at") else "",
+            })
+
+        # KPI
+        kpi_row = await db_cloudsql.async_fetchone(
+            "SELECT "
+            "  COUNT(*) AS today_count, "
+            "  SUM(CASE WHEN created_at >= NOW() - INTERVAL 1 HOUR THEN 1 ELSE 0 END) AS hour_count, "
+            "  COUNT(DISTINCT event_type) AS type_count "
+            "FROM event_log WHERE created_at >= CURDATE()"
+        )
+        kpi = {
+            "today": kpi_row["today_count"] if kpi_row else 0,
+            "hour": kpi_row["hour_count"] if kpi_row else 0,
+            "types": kpi_row["type_count"] if kpi_row else 0,
+        }
+
+        # Distinct event types for filter dropdown
+        type_rows = await db_cloudsql.async_fetchall(
+            "SELECT DISTINCT event_type FROM event_log ORDER BY event_type"
+        )
+        event_types = [r["event_type"] for r in type_rows]
+
+        return JSONResponse({"events": events, "kpi": kpi, "event_types": event_types})
+    except Exception as e:
+        logger.error("[ADMIN] realtime: %s", e)
+        return JSONResponse({"events": [], "kpi": {"today": 0, "hour": 0, "types": 0}, "event_types": []})

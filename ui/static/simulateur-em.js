@@ -339,6 +339,7 @@ function displayResults(data) {
 
     // Umami — audit de grille EM
     if (typeof umami !== 'undefined') umami.track('simulateur-grille-audited', { module: 'euromillions' });
+    if (window.LotoIA_track) LotoIA_track('simulateur-grille-audited', {module: 'euromillions'});
 
     // Pitch HYBRIDE async (non-blocking) — transmet score conformite + severite
     fetchAndDisplaySimulateurPitchEM(
@@ -685,6 +686,7 @@ async function autoGenerate() {
 
             // Umami — grille generee EM
             if (typeof umami !== 'undefined') umami.track('simulateur-grille-generated', { module: 'euromillions' });
+            if (window.LotoIA_track) LotoIA_track('simulateur-grille-generated', {module: 'euromillions'});
 
             resetSelection();
 

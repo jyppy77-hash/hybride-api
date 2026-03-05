@@ -44,6 +44,7 @@ from routes.en_em_pages import router as en_em_pages_router            # Phase 1
 from routes.multilang_em_pages import router as multilang_em_router    # P5/5 — PT/ES/DE/NL
 from routes.sitemap import router as sitemap_router                    # P5/5 — Dynamic sitemap
 from routes.api_sponsor_track import router as sponsor_track_router    # Phase 1/4 — Sponsor tracking
+from routes.api_track import router as track_router                    # Phase RT-1 — Universal event tracking
 from routes.admin import router as admin_router                        # Phase 1/4 — Admin back-office
 
 # ── JSON structured logging ──
@@ -595,6 +596,7 @@ app.include_router(multilang_em_router)
 app.include_router(sitemap_router)
 # Phase 1/4 — Admin back-office + sponsor tracking
 app.include_router(sponsor_track_router)
+app.include_router(track_router)
 app.include_router(admin_router)
 
 

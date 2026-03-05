@@ -650,3 +650,56 @@ class TestConfig:
             })
         assert resp.status_code == 200
         assert "enregistree" in resp.text
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# REALTIME
+# ══════════════════════════════════════════════════════════════════════════════
+
+class TestRealtime:
+    """Realtime feed page tests."""
+
+    def test_realtime_requires_auth(self):
+        client = _get_client()
+        resp = client.get("/admin/realtime", follow_redirects=False)
+        assert resp.status_code == 302
+
+    def test_realtime_page_renders(self):
+        client = _authed_client()
+        resp = client.get("/admin/realtime")
+        assert resp.status_code == 200
+        assert "Realtime Feed" in resp.text
+
+    def test_realtime_api_requires_auth(self):
+        client = _get_client()
+        resp = client.get("/admin/api/realtime")
+        assert resp.status_code == 401
+
+    def test_realtime_api_returns_json(self):
+        client = _authed_client()
+        from datetime import datetime
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[
+                [{"event_type": "chatbot-open", "page": "/loto", "module": "loto",
+                  "lang": "fr", "device": "desktop", "country": "FR",
+                  "created_at": datetime(2026, 3, 5, 14, 30, 0)}],
+                [{"event_type": "chatbot-open"}, {"event_type": "rating-submitted"}],
+            ])
+            mock_db.async_fetchone = AsyncMock(return_value={
+                "today_count": 42, "hour_count": 5, "type_count": 3,
+            })
+            resp = client.get("/admin/api/realtime")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "events" in data
+        assert "kpi" in data
+        assert data["kpi"]["today"] == 42
+        assert len(data["events"]) == 1
+        assert data["events"][0]["event_type"] == "chatbot-open"
+
+    def test_nav_contains_realtime_link(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0, "review_count": 0, "avg_rating": 0})
+            resp = client.get("/admin")
+        assert "/admin/realtime" in resp.text

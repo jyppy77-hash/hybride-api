@@ -370,6 +370,7 @@ function displayResults(data) {
 
     // Umami — audit de grille
     if (typeof umami !== 'undefined') umami.track('simulateur-grille-audited', { module: 'loto' });
+    if (window.LotoIA_track) LotoIA_track('simulateur-grille-audited', {module: 'loto'});
 
     // Scroll automatique vers la grille sélectionnée (center pour UX mobile/desktop)
     setTimeout(() => {
@@ -781,6 +782,7 @@ async function autoGenerate() {
 
             // Umami — grille generee
             if (typeof umami !== 'undefined') umami.track('simulateur-grille-generated', { module: 'loto' });
+            if (window.LotoIA_track) LotoIA_track('simulateur-grille-generated', {module: 'loto'});
 
             // Reset first
             resetSelection();

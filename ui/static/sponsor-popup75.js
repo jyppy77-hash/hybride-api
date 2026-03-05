@@ -211,6 +211,7 @@ function generatePopupHTML75(config) {
 function trackSponsorClick(sponsorId) {
     // Umami — sponsor click
     if (typeof umami !== 'undefined') umami.track('sponsor-click', { sponsor: sponsorId, module: 'loto' });
+    if (window.LotoIA_track) LotoIA_track('sponsor-click', {sponsor: sponsorId, module: 'loto'});
     fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-click', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
     // GA4 Analytics - Track sponsor click
     if (window.LotoIAAnalytics && window.LotoIAAnalytics.business) {
@@ -329,6 +330,7 @@ function showSponsorPopup75(config) {
 
         // Umami — sponsor popup shown
         if (typeof umami !== 'undefined') umami.track('sponsor-popup-shown', { module: 'loto' });
+        if (window.LotoIA_track) LotoIA_track('sponsor-popup-shown', {module: 'loto'});
         fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-popup-shown', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
 
         // Umami — sponsor video played (autoplay)
@@ -336,6 +338,7 @@ function showSponsorPopup75(config) {
         if (sponsorVideo) {
             sponsorVideo.addEventListener('play', function() {
                 if (typeof umami !== 'undefined') umami.track('sponsor-video-played', { sponsor: SPONSOR_VIDEO_75.id, module: 'loto' });
+                if (window.LotoIA_track) LotoIA_track('sponsor-video-played', {sponsor: SPONSOR_VIDEO_75.id, module: 'loto'});
                 if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('sponsor_video_played', { event_category: 'sponsor', sponsor: SPONSOR_VIDEO_75.id, module: 'loto' });
                 fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-video-played', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
             }, { once: true });
@@ -871,6 +874,7 @@ function openMetaResultPopup(data) {
     if (pdfBtn) {
         pdfBtn.addEventListener('click', () => {
             if (typeof umami !== 'undefined') umami.track('meta75-pdf-download', { module: 'loto' });
+            if (window.LotoIA_track) LotoIA_track('meta75-pdf-download', {module: 'loto'});
             if (window.LotoIAAnalytics?.productEngine?.track) {
                 window.LotoIAAnalytics.productEngine.track('meta_pdf_export', { version: 75 });
             }
@@ -1144,6 +1148,7 @@ async function showMetaAnalysePopup() {
 
     // Umami — meta75 lancee
     if (typeof umami !== 'undefined') umami.track('meta75-launched', { module: 'loto' });
+    if (window.LotoIA_track) LotoIA_track('meta75-launched', {module: 'loto'});
     if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('meta75_launched', { event_category: 'engagement', module: 'loto', version: 75 });
 
     // EVENT 2 - Début tunnel sponsor

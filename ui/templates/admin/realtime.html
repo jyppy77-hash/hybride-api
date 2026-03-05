@@ -1,0 +1,52 @@
+{% extends "admin/_base.html" %}
+{% block title %}Realtime{% endblock %}
+
+{% block content %}
+    <h2>Realtime Feed <span class="rt-dot rt-dot-pulse"></span></h2>
+
+    <div class="filters-bar">
+        <select id="f-event-type">
+            <option value="all" selected>Tous les events</option>
+        </select>
+        <label class="rt-auto-label">
+            <input type="checkbox" id="rt-auto" checked> Auto-refresh (5s)
+        </label>
+    </div>
+
+    <div class="kpi-grid" id="rt-kpi">
+        <div class="kpi-card">
+            <span class="kpi-value" id="kpi-today">-</span>
+            <span class="kpi-label">Events aujourd'hui</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-value" id="kpi-hour">-</span>
+            <span class="kpi-label">Derniere heure</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-value" id="kpi-types">-</span>
+            <span class="kpi-label">Types distincts</span>
+        </div>
+    </div>
+
+    <div class="table-wrap">
+        <table class="admin-table" id="rt-table">
+            <thead>
+                <tr>
+                    <th>Heure</th>
+                    <th>Event</th>
+                    <th>Page</th>
+                    <th>Module</th>
+                    <th>Lang</th>
+                    <th>Device</th>
+                    <th>Country</th>
+                </tr>
+            </thead>
+            <tbody id="rt-tbody"></tbody>
+        </table>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/admin.js"></script>
+<script>LotoAdmin.initRealtime();</script>
+{% endblock %}
