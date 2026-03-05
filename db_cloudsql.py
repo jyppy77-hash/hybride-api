@@ -243,6 +243,14 @@ async def async_fetchone(sql: str, params=None) -> Optional[dict]:
         return await cur.fetchone()
 
 
+async def async_fetchall(sql: str, params=None) -> list[dict]:
+    """Execute SELECT and return all rows as list of dicts."""
+    async with get_connection() as conn:
+        cur = await conn.cursor()
+        await cur.execute(sql, params)
+        return await cur.fetchall()
+
+
 # ============================================================================
 # CLI TEST
 # ============================================================================

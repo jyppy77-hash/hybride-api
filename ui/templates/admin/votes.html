@@ -1,0 +1,79 @@
+{% extends "admin/_base.html" %}
+{% block title %}Votes{% endblock %}
+
+{% block content %}
+    <h2>Votes Utilisateurs</h2>
+
+    <div class="filters-bar" id="filters">
+        <select id="f-period">
+            <option value="all" selected>Toute la periode</option>
+            <option value="today">Aujourd'hui</option>
+            <option value="7d">7 derniers jours</option>
+            <option value="30d">30 derniers jours</option>
+        </select>
+        <select id="f-source">
+            <option value="all">Toutes sources</option>
+            <option value="chatbot_loto">Chatbot Loto</option>
+            <option value="chatbot_em">Chatbot EM</option>
+            <option value="popup_accueil">Popup Accueil</option>
+        </select>
+        <select id="f-rating">
+            <option value="all">Toutes notes</option>
+            <option value="5">5 etoiles</option>
+            <option value="4">4 etoiles</option>
+            <option value="3">3 etoiles</option>
+            <option value="2">2 etoiles</option>
+            <option value="1">1 etoile</option>
+        </select>
+        <button id="btn-filter" class="btn-primary">Filtrer</button>
+        <button id="btn-reset" class="btn-secondary">Reset</button>
+    </div>
+
+    <div class="kpi-grid" id="votes-kpi">
+        <div class="kpi-card">
+            <span class="kpi-value" id="kpi-avg">-</span>
+            <span class="kpi-label">Moyenne</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-value" id="kpi-total">-</span>
+            <span class="kpi-label">Total votes</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-value" id="kpi-loto">-</span>
+            <span class="kpi-label">Chatbot Loto</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-value" id="kpi-popup">-</span>
+            <span class="kpi-label">Popup Accueil</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-value" id="kpi-em">-</span>
+            <span class="kpi-label">Chatbot EM</span>
+        </div>
+    </div>
+
+    <h2>Repartition</h2>
+    <div class="distribution" id="distribution"></div>
+
+    <h2>Detail des votes</h2>
+    <div class="table-wrap">
+        <table class="admin-table" id="votes-table">
+            <thead>
+                <tr>
+                    <th data-sort="created_at">Date</th>
+                    <th data-sort="source">Source</th>
+                    <th data-sort="rating">Note</th>
+                    <th>Commentaire</th>
+                    <th data-sort="page">Page</th>
+                </tr>
+            </thead>
+            <tbody id="votes-tbody"></tbody>
+        </table>
+        <div class="pagination" id="pagination"></div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/admin.js"></script>
+<script>LotoAdmin.initVotes();</script>
+{% endblock %}

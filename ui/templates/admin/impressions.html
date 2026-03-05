@@ -1,0 +1,81 @@
+{% extends "admin/_base.html" %}
+{% block title %}Impressions{% endblock %}
+
+{% block content %}
+    <h2>Impressions Sponsor</h2>
+
+    <div class="filters-bar" id="filters">
+        <select id="f-period">
+            <option value="today">Aujourd'hui</option>
+            <option value="7d" selected>7 derniers jours</option>
+            <option value="30d">30 derniers jours</option>
+            <option value="month">Ce mois</option>
+            <option value="last_month">Mois dernier</option>
+            <option value="custom">Personnalise</option>
+        </select>
+        <input type="date" id="f-date-start" class="hidden">
+        <input type="date" id="f-date-end" class="hidden">
+        <select id="f-event">
+            <option value="all">Tous les events</option>
+            <option value="sponsor-popup-shown">popup-shown</option>
+            <option value="sponsor-click">click</option>
+            <option value="sponsor-video-played">video-played</option>
+        </select>
+        <select id="f-lang">
+            <option value="all">Toutes langues</option>
+            <option value="fr">FR</option>
+            <option value="en">EN</option>
+            <option value="es">ES</option>
+            <option value="pt">PT</option>
+            <option value="de">DE</option>
+            <option value="nl">NL</option>
+        </select>
+        <select id="f-device">
+            <option value="all">Tous devices</option>
+            <option value="mobile">Mobile</option>
+            <option value="desktop">Desktop</option>
+            <option value="tablet">Tablet</option>
+        </select>
+        <button id="btn-filter" class="btn-primary">Filtrer</button>
+        <button id="btn-reset" class="btn-secondary">Reset</button>
+    </div>
+
+    <div class="kpi-bar" id="kpi-bar">
+        <span>Impressions: <b id="kpi-impressions">-</b></span>
+        <span>Clics: <b id="kpi-clicks">-</b></span>
+        <span>Videos: <b id="kpi-videos">-</b></span>
+        <span>CTR: <b id="kpi-ctr">-</b></span>
+        <span>Sessions: <b id="kpi-sessions">-</b></span>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="impressions-chart"></canvas>
+    </div>
+
+    <div class="table-wrap">
+        <table class="admin-table" id="impressions-table">
+            <thead>
+                <tr>
+                    <th data-sort="day">Date</th>
+                    <th data-sort="event_type">Event</th>
+                    <th data-sort="page">Page</th>
+                    <th data-sort="lang">Lang</th>
+                    <th data-sort="device">Device</th>
+                    <th data-sort="country">Country</th>
+                    <th data-sort="cnt">Count</th>
+                </tr>
+            </thead>
+            <tbody id="impressions-tbody"></tbody>
+        </table>
+        <div class="pagination" id="pagination"></div>
+    </div>
+{% endblock %}
+
+{% block head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/admin.js"></script>
+<script>LotoAdmin.initImpressions();</script>
+{% endblock %}

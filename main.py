@@ -189,7 +189,7 @@ async def correlation_id_middleware(request: Request, call_next):
 
 _CSP = (
     "default-src 'self'; "
-    "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cloud.umami.is https://www.wysistat.com; "
+    "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cloud.umami.is https://www.wysistat.com https://cdnjs.cloudflare.com; "
     "style-src 'self' 'unsafe-inline'; "
     "img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com https://*.google.com; "
     "font-src 'self'; "
