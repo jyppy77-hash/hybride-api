@@ -4,6 +4,7 @@
 # FastAPI + Uvicorn (API)
 fastapi==0.115.0
 uvicorn[standard]==0.32.0
+python-multipart>=0.0.9
 
 # MySQL / Cloud SQL (async)
 aiomysql>=0.2.0
