@@ -1,0 +1,48 @@
+{% extends "admin/_base.html" %}
+{% block title %}Nouvelle Facture{% endblock %}
+
+{% block content %}
+    <h2>Generer une facture</h2>
+
+    {% if error %}
+    <div class="login-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" class="admin-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Sponsor *</label>
+                <select name="sponsor_id" required>
+                    <option value="">— Choisir —</option>
+                    {% for s in sponsors %}
+                    <option value="{{ s.id }}">{{ s.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Debut periode *</label>
+                <input type="date" name="periode_debut" required>
+            </div>
+            <div class="form-group">
+                <label>Fin periode *</label>
+                <input type="date" name="periode_fin" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Date echeance</label>
+                <input type="date" name="date_echeance">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Notes</label>
+            <textarea name="notes" rows="2"></textarea>
+        </div>
+        <div>
+            <button type="submit" class="btn-primary" style="padding:.6rem 2rem;">Calculer et generer</button>
+            <a href="/admin/factures" class="btn-secondary" style="text-decoration:none; padding:.5rem 1rem; margin-left:.5rem;">Annuler</a>
+        </div>
+    </form>
+{% endblock %}

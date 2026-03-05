@@ -1,0 +1,93 @@
+{% extends "admin/_base.html" %}
+{% block title %}Facture {{ facture.numero }}{% endblock %}
+
+{% block content %}
+    <h2>Facture {{ facture.numero }}</h2>
+
+    <div class="kpi-grid" style="margin-bottom:1.5rem;">
+        <div class="kpi-card">
+            <span class="kpi-value">{{ facture.sponsor_nom }}</span>
+            <span class="kpi-label">Sponsor</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-value">{{ facture.date_emission }}</span>
+            <span class="kpi-label">Date emission</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-value">{{ facture.date_echeance }}</span>
+            <span class="kpi-label">Echeance</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-value badge-status badge-{{ facture.statut }}">{{ facture.statut }}</span>
+            <span class="kpi-label">Statut</span>
+        </div>
+    </div>
+
+    <div class="kpi-bar" style="margin-bottom:1.5rem;">
+        <span>Periode : <b>{{ facture.periode_debut }}</b> au <b>{{ facture.periode_fin }}</b></span>
+    </div>
+
+    <h2>Lignes</h2>
+    <div class="table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Quantite</th>
+                    <th>Prix unitaire</th>
+                    <th>Total HT</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in lignes %}
+                <tr>
+                    <td>{{ l.description }}</td>
+                    <td>{{ l.quantite }}</td>
+                    <td>{{ "%.4f"|format(l.prix_unitaire) }} EUR</td>
+                    <td>{{ "%.2f"|format(l.total_ht) }} EUR</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="kpi-grid" style="margin-top:1.5rem;">
+        <div class="kpi-card">
+            <span class="kpi-value">{{ "%.2f"|format(facture.montant_ht) }}</span>
+            <span class="kpi-label">Total HT (EUR)</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-value">{{ "%.2f"|format(facture.montant_tva) }}</span>
+            <span class="kpi-label">TVA</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-value">{{ "%.2f"|format(facture.montant_ttc) }}</span>
+            <span class="kpi-label">Total TTC (EUR)</span>
+        </div>
+    </div>
+
+    {% if facture.notes %}
+    <div style="margin-top:1rem; color:#9ca3af;">
+        <b>Notes :</b> {{ facture.notes }}
+    </div>
+    {% endif %}
+
+    <div style="margin-top:1.5rem; display:flex; gap:.5rem;">
+        <a href="/admin/factures/{{ facture.id }}/pdf" class="btn-primary" style="text-decoration:none; padding:.5rem 1rem;">Telecharger PDF</a>
+
+        {% if facture.statut == 'brouillon' %}
+        <form method="POST" action="/admin/factures/{{ facture.id }}/status" style="display:inline;">
+            <input type="hidden" name="statut" value="envoyee">
+            <button type="submit" class="btn-secondary">Marquer envoyee</button>
+        </form>
+        {% endif %}
+        {% if facture.statut == 'envoyee' %}
+        <form method="POST" action="/admin/factures/{{ facture.id }}/status" style="display:inline;">
+            <input type="hidden" name="statut" value="payee">
+            <button type="submit" class="btn-secondary">Marquer payee</button>
+        </form>
+        {% endif %}
+
+        <a href="/admin/factures" class="btn-secondary" style="text-decoration:none; padding:.5rem 1rem;">Retour</a>
+    </div>
+{% endblock %}

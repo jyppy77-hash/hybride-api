@@ -1,0 +1,98 @@
+{% extends "admin/_base.html" %}
+{% block title %}{{ 'Editer' if sponsor else 'Nouveau' }} Sponsor{% endblock %}
+
+{% block content %}
+    <h2>{{ 'Editer' if sponsor else 'Nouveau' }} Sponsor</h2>
+
+    {% if error %}
+    <div class="login-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" class="admin-form">
+        <div class="form-group">
+            <label>Nom *</label>
+            <input type="text" name="nom" value="{{ sponsor.nom if sponsor else '' }}" required>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Contact</label>
+                <input type="text" name="contact_nom" value="{{ sponsor.contact_nom if sponsor else '' }}">
+            </div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="contact_email" value="{{ sponsor.contact_email if sponsor else '' }}">
+            </div>
+            <div class="form-group">
+                <label>Telephone</label>
+                <input type="text" name="contact_tel" value="{{ sponsor.contact_tel if sponsor else '' }}">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Adresse</label>
+            <textarea name="adresse" rows="2">{{ sponsor.adresse if sponsor else '' }}</textarea>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>SIRET</label>
+                <input type="text" name="siret" value="{{ sponsor.siret if sponsor else '' }}">
+            </div>
+            <div class="form-group">
+                <label>Actif</label>
+                <select name="actif">
+                    <option value="1" {{ 'selected' if not sponsor or sponsor.actif else '' }}>Oui</option>
+                    <option value="0" {{ 'selected' if sponsor and not sponsor.actif else '' }}>Non</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Notes</label>
+            <textarea name="notes" rows="2">{{ sponsor.notes if sponsor else '' }}</textarea>
+        </div>
+
+        <h2>Grille tarifaire</h2>
+        <div id="tarif-rows">
+            {% if grille %}
+                {% for g in grille %}
+                <div class="tarif-row">
+                    <select name="tarif_event[]">
+                        <option value="sponsor-popup-shown" {{ 'selected' if g.event_type == 'sponsor-popup-shown' }}>Impression</option>
+                        <option value="sponsor-click" {{ 'selected' if g.event_type == 'sponsor-click' }}>Clic</option>
+                        <option value="sponsor-video-played" {{ 'selected' if g.event_type == 'sponsor-video-played' }}>Video</option>
+                    </select>
+                    <input type="number" step="0.0001" name="tarif_prix[]" value="{{ g.prix_unitaire }}" placeholder="Prix unitaire EUR">
+                    <input type="text" name="tarif_desc[]" value="{{ g.description or '' }}" placeholder="Description">
+                    <button type="button" class="btn-secondary btn-remove-tarif" onclick="this.closest('.tarif-row').remove()">X</button>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="tarif-row">
+                    <select name="tarif_event[]">
+                        <option value="sponsor-popup-shown">Impression</option>
+                        <option value="sponsor-click">Clic</option>
+                        <option value="sponsor-video-played">Video</option>
+                    </select>
+                    <input type="number" step="0.0001" name="tarif_prix[]" placeholder="Prix unitaire EUR">
+                    <input type="text" name="tarif_desc[]" placeholder="Description">
+                    <button type="button" class="btn-secondary btn-remove-tarif" onclick="this.closest('.tarif-row').remove()">X</button>
+                </div>
+            {% endif %}
+        </div>
+        <button type="button" class="btn-secondary" id="btn-add-tarif" style="margin:.5rem 0 1.5rem;">+ Ajouter ligne</button>
+
+        <div>
+            <button type="submit" class="btn-primary" style="padding:.6rem 2rem;">Enregistrer</button>
+            <a href="/admin/sponsors" class="btn-secondary" style="text-decoration:none; padding:.5rem 1rem; margin-left:.5rem;">Annuler</a>
+        </div>
+    </form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('btn-add-tarif').addEventListener('click', function() {
+    var row = document.createElement('div');
+    row.className = 'tarif-row';
+    row.innerHTML = '<select name="tarif_event[]"><option value="sponsor-popup-shown">Impression</option><option value="sponsor-click">Clic</option><option value="sponsor-video-played">Video</option></select><input type="number" step="0.0001" name="tarif_prix[]" placeholder="Prix unitaire EUR"><input type="text" name="tarif_desc[]" placeholder="Description"><button type="button" class="btn-secondary btn-remove-tarif" onclick="this.closest(\'.tarif-row\').remove()">X</button>';
+    document.getElementById('tarif-rows').appendChild(row);
+});
+</script>
+{% endblock %}

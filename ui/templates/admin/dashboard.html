@@ -34,7 +34,15 @@
     <nav class="admin-nav">
         <a href="/admin/impressions" class="nav-item">Impressions sponsor (detail)</a>
         <a href="/admin/votes" class="nav-item">Votes utilisateurs (detail)</a>
-        <span class="nav-item disabled">FacturIA — Phase 4</span>
-        <span class="nav-item disabled">Exports — Phase 4</span>
+        <a href="/admin/sponsors" class="nav-item">Sponsors (FacturIA)</a>
+        <a href="/admin/factures" class="nav-item">Factures (FacturIA)</a>
+        <a href="/admin/config" class="nav-item">Configuration entreprise</a>
+    </nav>
+
+    <h2>Exports</h2>
+    <nav class="admin-nav">
+        <a href="/admin/api/impressions/csv" class="nav-item">Export CSV — Impressions</a>
+        <a href="/admin/api/votes/csv" class="nav-item">Export CSV — Votes</a>
+        <a href="/admin/api/sponsor-report/pdf" class="nav-item">Export PDF — Rapport sponsor</a>
     </nav>
 {% endblock %}

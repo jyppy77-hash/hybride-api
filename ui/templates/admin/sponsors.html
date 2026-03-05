@@ -1,0 +1,39 @@
+{% extends "admin/_base.html" %}
+{% block title %}Sponsors{% endblock %}
+
+{% block content %}
+    <h2>Sponsors</h2>
+
+    <div style="margin-bottom: 1rem;">
+        <a href="/admin/sponsors/new" class="btn-primary" style="text-decoration:none; padding:.5rem 1rem;">+ Ajouter un sponsor</a>
+    </div>
+
+    <div class="table-wrap">
+        <table class="admin-table" id="sponsors-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nom</th>
+                    <th>Contact</th>
+                    <th>Email</th>
+                    <th>Actif</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in sponsors %}
+                <tr>
+                    <td>{{ s.id }}</td>
+                    <td>{{ s.nom }}</td>
+                    <td>{{ s.contact_nom or '' }}</td>
+                    <td>{{ s.contact_email or '' }}</td>
+                    <td>{{ 'Oui' if s.actif else 'Non' }}</td>
+                    <td><a href="/admin/sponsors/{{ s.id }}/edit" style="color:#3b82f6;">Editer</a></td>
+                </tr>
+                {% else %}
+                <tr><td colspan="6" style="text-align:center; color:#9ca3af;">Aucun sponsor</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

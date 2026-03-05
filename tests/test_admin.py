@@ -1,8 +1,10 @@
 """
 Tests for admin back-office routes.
 Auth, login, logout, dashboard, impressions, votes, API endpoints.
+Exports (CSV/PDF), Sponsors CRUD, Factures CRUD, Config.
 """
 
+import json
 import os
 from unittest.mock import patch, AsyncMock
 
@@ -138,6 +140,9 @@ class TestAdminDashboard:
             resp = client.get("/admin")
         assert '/admin/impressions' in resp.text
         assert '/admin/votes' in resp.text
+        assert '/admin/sponsors' in resp.text
+        assert '/admin/factures' in resp.text
+        assert '/admin/config' in resp.text
 
 
 class TestAdminPages:
@@ -331,3 +336,317 @@ class TestPeriodHelper:
         from datetime import date
         ds, de = _period_to_dates("all")
         assert ds == date(2020, 1, 1)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# EXPORTS
+# ══════════════════════════════════════════════════════════════════════════════
+
+class TestExportCSV:
+    """CSV export tests."""
+
+    def test_csv_impressions_requires_auth(self):
+        client = _get_client()
+        resp = client.get("/admin/api/impressions/csv")
+        assert resp.status_code == 401
+
+    def test_csv_impressions_returns_csv(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[
+                {"day": "2026-03-01", "event_type": "sponsor-popup-shown", "page": "/",
+                 "lang": "fr", "device": "mobile", "country": "FR", "cnt": 5}
+            ])
+            resp = client.get("/admin/api/impressions/csv?period=7d")
+
+        assert resp.status_code == 200
+        assert "text/csv" in resp.headers.get("content-type", "")
+        assert "date,event_type" in resp.text
+        assert "sponsor-popup-shown" in resp.text
+
+    def test_csv_votes_requires_auth(self):
+        client = _get_client()
+        resp = client.get("/admin/api/votes/csv")
+        assert resp.status_code == 401
+
+    def test_csv_votes_returns_csv(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[
+                {"created_at": "2026-03-01 10:00:00", "source": "chatbot_loto",
+                 "rating": 5, "comment": "Super", "page": "/"}
+            ])
+            resp = client.get("/admin/api/votes/csv?period=all")
+
+        assert resp.status_code == 200
+        assert "text/csv" in resp.headers.get("content-type", "")
+        assert "date,source,rating" in resp.text
+
+    def test_csv_impressions_db_error_returns_empty(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=Exception("DB down"))
+            resp = client.get("/admin/api/impressions/csv?period=7d")
+
+        assert resp.status_code == 200
+        assert "date,event_type" in resp.text
+
+
+class TestExportPDF:
+    """PDF sponsor report export tests."""
+
+    def test_pdf_report_requires_auth(self):
+        client = _get_client()
+        resp = client.get("/admin/api/sponsor-report/pdf")
+        assert resp.status_code == 401
+
+    def test_pdf_report_returns_pdf(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
+            resp = client.get("/admin/api/sponsor-report/pdf?period=7d")
+
+        assert resp.status_code == 200
+        assert resp.headers.get("content-type") == "application/pdf"
+        assert resp.content[:4] == b"%PDF"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SPONSORS CRUD
+# ══════════════════════════════════════════════════════════════════════════════
+
+class TestSponsors:
+    """Sponsors CRUD tests."""
+
+    def test_sponsors_list_requires_auth(self):
+        client = _get_client()
+        resp = client.get("/admin/sponsors", follow_redirects=False)
+        assert resp.status_code == 302
+
+    def test_sponsors_list_renders(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            resp = client.get("/admin/sponsors")
+        assert resp.status_code == 200
+        assert "Sponsors" in resp.text
+
+    def test_sponsor_new_form_renders(self):
+        client = _authed_client()
+        resp = client.get("/admin/sponsors/new")
+        assert resp.status_code == 200
+        assert "Nouveau" in resp.text
+
+    def test_sponsor_create_missing_name(self):
+        client = _authed_client()
+        resp = client.post("/admin/sponsors/new", data={"nom": ""})
+        assert resp.status_code == 400
+        assert "obligatoire" in resp.text
+
+    def test_sponsor_create_success(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock()
+            mock_db.async_fetchone = AsyncMock(return_value={"id": 1})
+            resp = client.post("/admin/sponsors/new", data={
+                "nom": "TestSponsor",
+                "contact_nom": "Jean",
+                "contact_email": "j@test.fr",
+                "actif": "1",
+            }, follow_redirects=False)
+        assert resp.status_code == 302
+        assert "/admin/sponsors" in resp.headers["location"]
+
+    def test_sponsor_edit_form_renders(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={
+                "id": 1, "nom": "Test", "contact_nom": "", "contact_email": "",
+                "contact_tel": "", "adresse": "", "siret": "", "notes": "", "actif": 1,
+            })
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            resp = client.get("/admin/sponsors/1/edit")
+        assert resp.status_code == 200
+        assert "Editer" in resp.text
+
+    def test_sponsor_edit_not_found_redirects(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value=None)
+            resp = client.get("/admin/sponsors/999/edit", follow_redirects=False)
+        assert resp.status_code == 302
+
+    def test_sponsor_update_success(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock()
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            resp = client.post("/admin/sponsors/1/edit", data={
+                "nom": "Updated",
+                "actif": "1",
+            }, follow_redirects=False)
+        assert resp.status_code == 302
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# FACTURES CRUD
+# ══════════════════════════════════════════════════════════════════════════════
+
+class TestFactures:
+    """Factures CRUD tests."""
+
+    def test_factures_list_requires_auth(self):
+        client = _get_client()
+        resp = client.get("/admin/factures", follow_redirects=False)
+        assert resp.status_code == 302
+
+    def test_factures_list_renders(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            resp = client.get("/admin/factures")
+        assert resp.status_code == 200
+        assert "Factures" in resp.text
+
+    def test_facture_new_form_renders(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "Sponsor1"}])
+            resp = client.get("/admin/factures/new")
+        assert resp.status_code == 200
+        assert "Generer" in resp.text
+
+    def test_facture_create_missing_fields(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            resp = client.post("/admin/factures/new", data={"sponsor_id": "", "periode_debut": "", "periode_fin": ""})
+        assert resp.status_code == 400
+
+    def test_facture_create_success(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[
+                [{"id": 1, "nom": "S1"}],  # sponsors list
+                [{"id": 1, "event_type": "sponsor-popup-shown", "prix_unitaire": 0.01, "description": "Impression"}],  # grille
+            ])
+            mock_db.async_fetchone = AsyncMock(side_effect=[
+                {"cnt": 100},  # count events
+                {"taux_tva": 20},  # config
+                {"cnt": 0},  # invoice count
+            ])
+            mock_db.async_query = AsyncMock()
+            resp = client.post("/admin/factures/new", data={
+                "sponsor_id": "1",
+                "periode_debut": "2026-02-01",
+                "periode_fin": "2026-02-28",
+            }, follow_redirects=False)
+        assert resp.status_code == 302
+        assert "/admin/factures" in resp.headers["location"]
+
+    def test_facture_detail_renders(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={
+                "id": 1, "numero": "FIA-202603-0001", "sponsor_id": 1,
+                "sponsor_nom": "TestSponsor", "date_emission": "2026-03-01",
+                "date_echeance": "2026-03-31", "periode_debut": "2026-02-01",
+                "periode_fin": "2026-02-28", "montant_ht": 1.0, "montant_tva": 0.2,
+                "montant_ttc": 1.2, "statut": "brouillon", "notes": "",
+                "lignes": json.dumps([{"description": "Impressions", "quantite": 100, "prix_unitaire": 0.01, "total_ht": 1.0}]),
+            })
+            resp = client.get("/admin/factures/1")
+        assert resp.status_code == 200
+        assert "FIA-202603-0001" in resp.text
+
+    def test_facture_detail_not_found(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value=None)
+            resp = client.get("/admin/factures/999", follow_redirects=False)
+        assert resp.status_code == 302
+
+    def test_facture_status_update(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock()
+            resp = client.post("/admin/factures/1/status", data={"statut": "envoyee"}, follow_redirects=False)
+        assert resp.status_code == 302
+
+    def test_facture_status_invalid_ignored(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock()
+            resp = client.post("/admin/factures/1/status", data={"statut": "hacked"}, follow_redirects=False)
+        assert resp.status_code == 302
+        mock_db.async_query.assert_not_called()
+
+    def test_facture_pdf_download(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(side_effect=[
+                {  # facture
+                    "id": 1, "numero": "FIA-202603-0001", "sponsor_id": 1,
+                    "sponsor_nom": "Test", "sponsor_adresse": "1 rue test",
+                    "date_emission": "2026-03-01", "date_echeance": "2026-03-31",
+                    "periode_debut": "2026-02-01", "periode_fin": "2026-02-28",
+                    "montant_ht": 1.0, "montant_tva": 0.2, "montant_ttc": 1.2,
+                    "statut": "brouillon", "notes": "",
+                    "lignes": json.dumps([{"description": "Impressions", "quantite": 100, "prix_unitaire": 0.01, "total_ht": 1.0}]),
+                },
+                {  # config
+                    "raison_sociale": "LotoIA", "siret": "123", "adresse": "Paris",
+                    "code_postal": "75000", "ville": "Paris", "pays": "France",
+                    "email": "a@b.fr", "telephone": "", "tva_intra": "",
+                    "taux_tva": 20, "iban": "", "bic": "", "logo_url": "",
+                },
+            ])
+            resp = client.get("/admin/factures/1/pdf")
+        assert resp.status_code == 200
+        assert resp.headers.get("content-type") == "application/pdf"
+        assert resp.content[:4] == b"%PDF"
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CONFIG
+# ══════════════════════════════════════════════════════════════════════════════
+
+class TestConfig:
+    """Enterprise config tests."""
+
+    def test_config_requires_auth(self):
+        client = _get_client()
+        resp = client.get("/admin/config", follow_redirects=False)
+        assert resp.status_code == 302
+
+    def test_config_page_renders(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={
+                "raison_sociale": "LotoIA", "siret": "", "adresse": "",
+                "code_postal": "", "ville": "", "pays": "France",
+                "email": "", "telephone": "", "tva_intra": "",
+                "taux_tva": 20, "iban": "", "bic": "", "logo_url": "",
+            })
+            resp = client.get("/admin/config")
+        assert resp.status_code == 200
+        assert "Configuration" in resp.text
+
+    def test_config_save(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock()
+            mock_db.async_fetchone = AsyncMock(return_value={
+                "raison_sociale": "Updated", "siret": "123",
+                "adresse": "", "code_postal": "", "ville": "",
+                "pays": "France", "email": "", "telephone": "",
+                "tva_intra": "", "taux_tva": 20, "iban": "", "bic": "", "logo_url": "",
+            })
+            resp = client.post("/admin/config", data={
+                "raison_sociale": "Updated",
+                "siret": "123",
+                "taux_tva": "20",
+            })
+        assert resp.status_code == 200
+        assert "enregistree" in resp.text

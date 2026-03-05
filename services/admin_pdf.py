@@ -1,0 +1,289 @@
+"""
+Admin PDF generation — sponsor reports + invoices.
+Aligned with FacturIA visual style (bleu fonce / dore / gris).
+"""
+
+import io
+from datetime import date, datetime
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.units import mm
+from reportlab.lib.colors import HexColor
+from reportlab.lib.enums import TA_RIGHT, TA_CENTER
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
+
+
+# FacturIA palette
+BLEU_FONCE = HexColor('#1a2744')
+BLEU = HexColor('#2c4a7c')
+DORE = HexColor('#d4a843')
+GRIS = HexColor('#8891a4')
+GRIS_CLAIR = HexColor('#f7f8fa')
+NOIR = HexColor('#1a202c')
+BLANC = HexColor('#ffffff')
+
+_base = getSampleStyleSheet()
+
+_LOGO = ParagraphStyle('Logo', fontName='Helvetica-Bold', fontSize=18, textColor=BLEU_FONCE, leading=22)
+_TITLE_R = ParagraphStyle('TitleR', fontName='Helvetica-Bold', fontSize=16, textColor=BLEU_FONCE, alignment=TA_RIGHT, leading=20)
+_SECTION = ParagraphStyle('Section', parent=_base['Heading2'], fontName='Helvetica-Bold', fontSize=11, textColor=BLEU, spaceBefore=6*mm, spaceAfter=3*mm)
+_NORMAL = ParagraphStyle('Normal2', parent=_base['Normal'], fontName='Helvetica', fontSize=9, textColor=NOIR, leading=13)
+_PETIT = ParagraphStyle('Petit', parent=_base['Normal'], fontName='Helvetica', fontSize=8, textColor=GRIS, leading=11)
+_FOOTER = ParagraphStyle('Footer', parent=_base['Normal'], fontName='Helvetica', fontSize=7, textColor=GRIS, alignment=TA_CENTER)
+
+
+def _format_euros(montant):
+    return f"{montant:,.2f} EUR".replace(",", " ").replace(".", ",").replace(" ", " ")
+
+
+def _format_date_fr(d):
+    if isinstance(d, (date, datetime)):
+        return d.strftime("%d/%m/%Y")
+    if isinstance(d, str) and len(d) >= 10:
+        try:
+            return datetime.strptime(d[:10], "%Y-%m-%d").strftime("%d/%m/%Y")
+        except ValueError:
+            pass
+    return str(d) if d else ""
+
+
+def _detail_table_style(num_rows):
+    styles = [
+        ('BACKGROUND', (0, 0), (-1, 0), BLEU_FONCE),
+        ('TEXTCOLOR', (0, 0), (-1, 0), BLANC),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 9),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 3*mm),
+        ('TOPPADDING', (0, 0), (-1, 0), 3*mm),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 1), (-1, -1), 9),
+        ('TEXTCOLOR', (0, 1), (-1, -1), NOIR),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 2.5*mm),
+        ('TOPPADDING', (0, 1), (-1, -1), 2.5*mm),
+        ('LINEBELOW', (0, 0), (-1, -2), 0.5, GRIS_CLAIR),
+        ('LINEBELOW', (0, -1), (-1, -1), 1, GRIS),
+        ('ALIGN', (1, 0), (-1, -1), 'RIGHT'),
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+    ]
+    for i in range(2, num_rows, 2):
+        styles.append(('BACKGROUND', (0, i), (-1, i), GRIS_CLAIR))
+    return TableStyle(styles)
+
+
+# ═══════════════════════════════════════════════════════════════
+# Sponsor report PDF
+# ═══════════════════════════════════════════════════════════════
+
+def generate_sponsor_report_pdf(kpi: dict, table_data: list, period_label: str) -> io.BytesIO:
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=20*mm, rightMargin=20*mm, topMargin=20*mm, bottomMargin=25*mm)
+    elements = []
+
+    # Header
+    header = Table([
+        [
+            Paragraph("<font color='#d4a843'>⚡</font> <b>Loto<font color='#d4a843'>IA</font></b>", _LOGO),
+            Paragraph("<b>RAPPORT SPONSOR</b>", _TITLE_R),
+        ]
+    ], colWidths=[90*mm, 80*mm])
+    header.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')]))
+    elements.append(header)
+    elements.append(Spacer(1, 4*mm))
+
+    elements.append(Paragraph(f"Periode : {period_label} | Genere le {_format_date_fr(date.today())}", _PETIT))
+    elements.append(Spacer(1, 8*mm))
+
+    # KPI block
+    elements.append(Paragraph("INDICATEURS", _SECTION))
+    kpi_rows = [
+        ["Impressions", "Clics", "Videos", "CTR", "Sessions"],
+        [
+            str(kpi.get("impressions", 0)),
+            str(kpi.get("clicks", 0)),
+            str(kpi.get("videos", 0)),
+            kpi.get("ctr", "0.00%"),
+            str(kpi.get("sessions", 0)),
+        ],
+    ]
+    t = Table(kpi_rows, colWidths=[34*mm]*5)
+    t.setStyle(_detail_table_style(2))
+    elements.append(t)
+    elements.append(Spacer(1, 10*mm))
+
+    # Detail table
+    if table_data:
+        elements.append(Paragraph("DETAIL PAR JOUR / EVENT / PAGE", _SECTION))
+        headers = ["Date", "Event", "Page", "Lang", "Device", "Pays", "Nb"]
+        rows = [headers]
+        for r in table_data[:200]:
+            rows.append([
+                r.get("day", ""), r.get("event_type", ""), r.get("page", ""),
+                r.get("lang", ""), r.get("device", ""), r.get("country", ""),
+                str(r.get("cnt", 0)),
+            ])
+        t = Table(rows, colWidths=[22*mm, 32*mm, 38*mm, 12*mm, 18*mm, 15*mm, 15*mm])
+        t.setStyle(_detail_table_style(len(rows)))
+        elements.append(t)
+
+    def footer(canvas_obj, doc_obj):
+        canvas_obj.saveState()
+        canvas_obj.setFont('Helvetica', 7)
+        canvas_obj.setFillColor(GRIS)
+        canvas_obj.drawCentredString(A4[0] / 2, 12*mm, "LotoIA — Rapport genere automatiquement")
+        canvas_obj.restoreState()
+
+    doc.build(elements, onFirstPage=footer, onLaterPages=footer)
+    buf.seek(0)
+    return buf
+
+
+# ═══════════════════════════════════════════════════════════════
+# Invoice PDF (FacturIA style)
+# ═══════════════════════════════════════════════════════════════
+
+def generate_invoice_pdf(facture: dict, config: dict, lignes: list) -> io.BytesIO:
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=20*mm, rightMargin=20*mm, topMargin=20*mm, bottomMargin=25*mm)
+    elements = []
+
+    # Header
+    numero = facture.get('numero', '')
+    header = Table([
+        [
+            Paragraph("<font color='#d4a843'>⚡</font> <b>Factur<font color='#d4a843'>IA</font></b>", _LOGO),
+            Paragraph(f"<b>FACTURE</b><br/><font size=10 color='#8891a4'>{numero}</font>", _TITLE_R),
+        ]
+    ], colWidths=[90*mm, 80*mm])
+    header.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')]))
+    elements.append(header)
+    elements.append(Spacer(1, 8*mm))
+
+    # Emitter / Client side by side
+    rs = config.get("raison_sociale", "")
+    addr = config.get("adresse", "")
+    cp = config.get("code_postal", "")
+    ville = config.get("ville", "")
+    siret = config.get("siret", "")
+    emitter_parts = [f"<b>{rs}</b>"]
+    if addr:
+        emitter_parts.append(addr.replace('\n', '<br/>'))
+    if cp or ville:
+        emitter_parts.append(f"{cp} {ville}".strip())
+    if siret:
+        emitter_parts.append(f"SIRET : {siret}")
+    email = config.get("email", "")
+    if email:
+        emitter_parts.append(email)
+
+    client_parts = [f"<b>{facture.get('sponsor_nom', '')}</b>"]
+    sponsor_addr = facture.get("sponsor_adresse", "")
+    if sponsor_addr:
+        client_parts.append(sponsor_addr.replace('\n', '<br/>'))
+
+    addr_table = Table([
+        [Paragraph("<br/>".join(emitter_parts), _NORMAL), Paragraph("<br/>".join(client_parts), _NORMAL)]
+    ], colWidths=[85*mm, 85*mm])
+    addr_table.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('BACKGROUND', (0, 0), (-1, -1), GRIS_CLAIR),
+        ('TOPPADDING', (0, 0), (-1, -1), 3*mm),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3*mm),
+        ('LEFTPADDING', (0, 0), (-1, -1), 3*mm),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 3*mm),
+    ]))
+    elements.append(addr_table)
+    elements.append(Spacer(1, 6*mm))
+
+    # Dates
+    de = _format_date_fr(facture.get('date_emission', ''))
+    dec = _format_date_fr(facture.get('date_echeance', ''))
+    pd = _format_date_fr(facture.get('periode_debut', ''))
+    pf = _format_date_fr(facture.get('periode_fin', ''))
+    info = Table(
+        [["Date d'emission :", de, "Periode :", f"{pd} au {pf}"]],
+        colWidths=[35*mm, 50*mm, 25*mm, 60*mm],
+    )
+    info.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTNAME', (2, 0), (2, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('TEXTCOLOR', (0, 0), (0, -1), GRIS),
+        ('TEXTCOLOR', (2, 0), (2, -1), GRIS),
+        ('TEXTCOLOR', (1, 0), (1, -1), NOIR),
+        ('TEXTCOLOR', (3, 0), (3, -1), NOIR),
+    ]))
+    elements.append(info)
+    elements.append(Spacer(1, 8*mm))
+
+    # Detail lines
+    elements.append(Paragraph("DETAIL DE LA PRESTATION", _SECTION))
+    rows = [["Designation", "Quantite", "Prix unit.", "Montant HT"]]
+    for l in lignes:
+        rows.append([
+            l.get("description", ""),
+            str(l.get("quantite", 0)),
+            _format_euros(l.get("prix_unitaire", 0)),
+            _format_euros(l.get("total_ht", 0)),
+        ])
+    t = Table(rows, colWidths=[75*mm, 30*mm, 30*mm, 35*mm])
+    t.setStyle(_detail_table_style(len(rows)))
+    elements.append(t)
+    elements.append(Spacer(1, 6*mm))
+
+    # Totals (aligned right, TTC in bleu fonce)
+    taux = config.get("taux_tva", 20)
+    totaux = [
+        ["Total HT", _format_euros(facture.get("montant_ht", 0))],
+        [f"TVA ({taux}%)", _format_euros(facture.get("montant_tva", 0))],
+        ["TOTAL TTC", _format_euros(facture.get("montant_ttc", 0))],
+    ]
+    tt = Table(totaux, colWidths=[35*mm, 35*mm], hAlign='RIGHT')
+    nb = len(totaux)
+    tt.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('TOPPADDING', (0, 0), (-1, -1), 2*mm),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2*mm),
+        ('TEXTCOLOR', (0, 0), (-1, -2), NOIR),
+        ('LINEBELOW', (0, 0), (-1, nb - 2), 0.5, GRIS),
+        ('FONTNAME', (0, nb - 1), (-1, nb - 1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, nb - 1), (-1, nb - 1), 12),
+        ('BACKGROUND', (0, nb - 1), (-1, nb - 1), BLEU_FONCE),
+        ('TEXTCOLOR', (0, nb - 1), (-1, nb - 1), BLANC),
+        ('TOPPADDING', (0, nb - 1), (-1, nb - 1), 3*mm),
+        ('BOTTOMPADDING', (0, nb - 1), (-1, nb - 1), 3*mm),
+        ('LEFTPADDING', (0, nb - 1), (-1, nb - 1), 3*mm),
+        ('RIGHTPADDING', (0, nb - 1), (-1, nb - 1), 3*mm),
+    ]))
+    elements.append(tt)
+    elements.append(Spacer(1, 6*mm))
+
+    # Payment conditions
+    elements.append(HRFlowable(width="100%", thickness=0.5, color=GRIS, spaceBefore=2*mm, spaceAfter=2*mm))
+    elements.append(Paragraph(
+        "Conditions de paiement : reglement a 30 jours a compter de la date d'emission.",
+        _PETIT,
+    ))
+
+    # Bank info
+    iban = config.get("iban", "")
+    bic = config.get("bic", "")
+    if iban:
+        elements.append(Spacer(1, 3*mm))
+        elements.append(Paragraph(f"Coordonnees bancaires : IBAN {iban} | BIC {bic}", _PETIT))
+
+    # Footer
+    footer_text = f"{rs} — SIRET : {siret}" if siret else rs
+
+    def add_footer(canvas_obj, doc_obj):
+        canvas_obj.saveState()
+        canvas_obj.setFont('Helvetica', 7)
+        canvas_obj.setFillColor(GRIS)
+        canvas_obj.drawCentredString(A4[0] / 2, 12*mm, footer_text)
+        canvas_obj.restoreState()
+
+    doc.build(elements, onFirstPage=add_footer, onLaterPages=add_footer)
+    buf.seek(0)
+    return buf

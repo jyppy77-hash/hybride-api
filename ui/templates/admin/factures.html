@@ -1,0 +1,44 @@
+{% extends "admin/_base.html" %}
+{% block title %}Factures{% endblock %}
+
+{% block content %}
+    <h2>Factures</h2>
+
+    <div style="margin-bottom: 1rem;">
+        <a href="/admin/factures/new" class="btn-primary" style="text-decoration:none; padding:.5rem 1rem;">+ Generer une facture</a>
+    </div>
+
+    <div class="table-wrap">
+        <table class="admin-table" id="factures-table">
+            <thead>
+                <tr>
+                    <th>Numero</th>
+                    <th>Sponsor</th>
+                    <th>Date</th>
+                    <th>Periode</th>
+                    <th>Montant TTC</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for f in factures %}
+                <tr>
+                    <td>{{ f.numero }}</td>
+                    <td>{{ f.sponsor_nom or f.sponsor_id }}</td>
+                    <td>{{ f.date_emission }}</td>
+                    <td>{{ f.periode_debut }} — {{ f.periode_fin }}</td>
+                    <td>{{ "%.2f"|format(f.montant_ttc) }} EUR</td>
+                    <td><span class="badge-status badge-{{ f.statut }}">{{ f.statut }}</span></td>
+                    <td>
+                        <a href="/admin/factures/{{ f.id }}" style="color:#3b82f6;">Detail</a>
+                        <a href="/admin/factures/{{ f.id }}/pdf" style="color:#10b981; margin-left:.5rem;">PDF</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="7" style="text-align:center; color:#9ca3af;">Aucune facture</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
