@@ -156,13 +156,17 @@ var LotoAdmin = (function() {
         });
 
         if (chart) chart.destroy();
+        var cs = getComputedStyle(document.body);
+        var tickColor = cs.getPropertyValue('--chart-tick').trim() || '#9ca3af';
+        var gridColor = cs.getPropertyValue('--chart-grid').trim() || '#2a2d3a';
+        var legendColor = cs.getPropertyValue('--chart-legend').trim() || '#e0e0e0';
         chart = new Chart(ctx, {
             type: 'bar',
             data: { labels: labels, datasets: datasets },
             options: {
                 responsive: true,
-                scales: { y: { beginAtZero: true, ticks: { color: '#9ca3af' }, grid: { color: '#2a2d3a' } }, x: { ticks: { color: '#9ca3af' }, grid: { color: '#2a2d3a' } } },
-                plugins: { legend: { labels: { color: '#e0e0e0' } } }
+                scales: { y: { beginAtZero: true, ticks: { color: tickColor }, grid: { color: gridColor } }, x: { ticks: { color: tickColor }, grid: { color: gridColor } } },
+                plugins: { legend: { labels: { color: legendColor } } }
             }
         });
     }
