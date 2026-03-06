@@ -349,12 +349,48 @@ function displayResults(data) {
         data.severity
     );
 
+    injectSponsorBannerEM();
+
     setTimeout(function() {
         var target = document.getElementById('selected-numbers') || document.querySelector('.selected-grid');
         if (target) {
             target.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
     }, 150);
+}
+
+/**
+ * Inject sponsor banner (E5) after EM results
+ */
+function injectSponsorBannerEM() {
+    var existing = document.querySelector('.sponsor-result-banner');
+    if (existing) existing.remove();
+
+    var resultsSection = document.getElementById('results-section');
+    if (!resultsSection) return;
+
+    var emLang = (LI.locale || 'fr-FR').split('-')[0].toLowerCase() || 'fr';
+    var sponsorId = 'EM_' + emLang.toUpperCase() + '_A';
+
+    var banner = document.createElement('div');
+    banner.className = 'sponsor-result-banner';
+    banner.innerHTML = '<a href="mailto:partenariats@lotoia.fr" target="_blank" rel="noopener noreferrer">' +
+        '<span>\u2B50</span> ' + (LI.sponsor1_name || 'Espace Premium') + ' — ' + (LI.sponsor1_desc || '') +
+        ' | <span>partenariats@lotoia.fr</span></a>';
+
+    resultsSection.insertAdjacentElement('afterend', banner);
+
+    fetch('/api/sponsor/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            event_type: 'sponsor-result-shown',
+            sponsor_id: sponsorId,
+            page: window.location.pathname,
+            lang: emLang,
+            device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop'
+        })
+    }).catch(function() {});
 }
 
 /**

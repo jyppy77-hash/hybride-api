@@ -83,12 +83,15 @@ function stopFloatingStars() {
 }
 
 // ============================================
-// CONFIGURATION DES SPONSORS
+// CONFIGURATION DES SPONSORS (dynamique EM par langue)
 // ============================================
+
+var _EM_LANG = (LI.locale || 'fr-FR').split('-')[0].toLowerCase() || 'fr';
+var _EM_PREFIX = 'EM_' + _EM_LANG.toUpperCase();
 
 var SPONSORS_CONFIG_EM = [
     {
-        id: 'LOTO_FR_A',
+        id: _EM_PREFIX + '_A',
         name: LI.sponsor1_name,
         url: 'mailto:partenariats@lotoia.fr',
         icon: '\u2B50',
@@ -98,7 +101,7 @@ var SPONSORS_CONFIG_EM = [
         badgeType: 'primary'
     },
     {
-        id: 'LOTO_FR_B',
+        id: _EM_PREFIX + '_B',
         name: LI.sponsor2_name,
         url: 'mailto:partenariats@lotoia.fr',
         icon: '\uD83D\uDCE3',
@@ -264,7 +267,7 @@ function trackSponsorClickSimulateurEM(sponsorId) {
     // Umami — sponsor click EM
     if (typeof umami !== 'undefined') umami.track('sponsor-click', { sponsor: sponsorId, module: 'euromillions' });
     if (window.LotoIA_track) LotoIA_track('sponsor-click', {sponsor: sponsorId, module: 'euromillions'});
-    fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-click', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+    fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-click', sponsor_id: sponsorId, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
     if (window.LotoIAAnalytics && window.LotoIAAnalytics.business) {
         window.LotoIAAnalytics.business.sponsorClick({
             sponsor: sponsorId,
@@ -378,7 +381,9 @@ function showSponsorPopupSimulateurEM(config) {
         // Umami — sponsor popup shown EM
         if (typeof umami !== 'undefined') umami.track('sponsor-popup-shown', { module: 'euromillions' });
         if (window.LotoIA_track) LotoIA_track('sponsor-popup-shown', {module: 'euromillions'});
-        fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-popup-shown', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+        SPONSORS_CONFIG_EM.forEach(function(s) {
+            fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-popup-shown', sponsor_id: s.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+        });
 
         // Bouton Annuler
         var modal = overlay.querySelector('.sponsor-popup-modal');

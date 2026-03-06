@@ -90,8 +90,9 @@ const META_ANALYSE_TIMER_DURATION_EM = 30;
 // CONFIGURATION DES SPONSORS (VIDEO UNIQUEMENT)
 // ============================================
 
+var _EM_LANG_75 = (LI.locale || 'fr-FR').split('-')[0].toLowerCase() || 'fr';
 const SPONSOR_VIDEO_75_EM = {
-    id: 'lotoia_video',
+    id: 'EM_' + _EM_LANG_75.toUpperCase() + '_A',
     url: 'mailto:partenariats@lotoia.fr',
     videoSrc: '/static/Sponsors_media/Sponsor75lotoia.mp4'
 };
@@ -240,7 +241,7 @@ function trackSponsorClickEM(sponsorId) {
     // Umami — sponsor click EM
     if (typeof umami !== 'undefined') umami.track('sponsor-click', { sponsor: sponsorId, module: 'euromillions' });
     if (window.LotoIA_track) LotoIA_track('sponsor-click', {sponsor: sponsorId, module: 'euromillions'});
-    fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-click', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+    fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-click', sponsor_id: sponsorId, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
     if (window.LotoIAAnalytics && window.LotoIAAnalytics.business) {
         window.LotoIAAnalytics.business.sponsorClick({
             sponsor: sponsorId,
@@ -333,7 +334,7 @@ function showSponsorPopup75EM(config) {
         // Umami — sponsor popup shown EM
         if (typeof umami !== 'undefined') umami.track('sponsor-popup-shown', { module: 'euromillions' });
         if (window.LotoIA_track) LotoIA_track('sponsor-popup-shown', {module: 'euromillions'});
-        fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-popup-shown', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+        fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-popup-shown', sponsor_id: SPONSOR_VIDEO_75_EM.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
 
         // Umami — sponsor video played (autoplay) EM
         var sponsorVideo = overlay.querySelector('.sponsor-video');
@@ -342,7 +343,7 @@ function showSponsorPopup75EM(config) {
                 if (typeof umami !== 'undefined') umami.track('sponsor-video-played', { sponsor: SPONSOR_VIDEO_75_EM.id, module: 'euromillions' });
                 if (window.LotoIA_track) LotoIA_track('sponsor-video-played', {sponsor: SPONSOR_VIDEO_75_EM.id, module: 'euromillions'});
                 if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('sponsor_video_played', { event_category: 'sponsor', sponsor: SPONSOR_VIDEO_75_EM.id, module: 'euromillions' });
-                fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-video-played', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+                fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-video-played', sponsor_id: SPONSOR_VIDEO_75_EM.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
             }, { once: true });
         }
 
@@ -791,9 +792,9 @@ function openMetaResultPopupEM(data) {
 
     if (pdfBtn) {
         pdfBtn.addEventListener('click', function() {
-            if (typeof umami !== 'undefined') umami.track('meta75-pdf-download', { module: 'euromillions', sponsor_id: 'LOTO_FR_A' });
-            if (window.LotoIA_track) LotoIA_track('meta75-pdf-download', {module: 'euromillions', sponsor_id: 'LOTO_FR_A'});
-            fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-pdf-downloaded', sponsor_id: 'LOTO_FR_A', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+            if (typeof umami !== 'undefined') umami.track('meta75-pdf-download', { module: 'euromillions', sponsor_id: SPONSOR_VIDEO_75_EM.id });
+            if (window.LotoIA_track) LotoIA_track('meta75-pdf-download', {module: 'euromillions', sponsor_id: SPONSOR_VIDEO_75_EM.id});
+            fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-pdf-downloaded', sponsor_id: SPONSOR_VIDEO_75_EM.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
             if (window.LotoIAAnalytics?.productEngine?.track) {
                 window.LotoIAAnalytics.productEngine.track('meta_pdf_export_em', { version: 75 });
             }

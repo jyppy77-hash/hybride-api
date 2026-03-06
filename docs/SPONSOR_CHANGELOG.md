@@ -199,3 +199,33 @@ sponsor-pdf-downloaded
 **Reste a faire** :
 - Etape 4b/5 : Frontend JS EM (sponsor-popup-em.js, sponsor-popup75-em.js, simulateur EM, hybride-chatbot-em.js)
 - Etape 5/5 : Dashboard admin + facturation FacturIA
+
+---
+
+## 2026-03-06 — Etape 4b/5 : Frontend EM + Sponsors_media + Grille tarifaire EM UE
+
+**Fichiers modifies** :
+
+| Fichier | Lignes | MD5 |
+|---------|--------|-----|
+| `ui/static/em/sponsor-popup-em.js` | 701 | `f434465d` |
+| `ui/static/sponsor-popup75-em.js` | 1117 | `c79e096f` |
+| `ui/static/hybride-chatbot-em.js` | 607 | `9851b0a7` |
+| `ui/static/hybride-chatbot-em-en.js` | 512 | `86186793` |
+| `ui/static/simulateur-em.js` | 762 | `08b91563` |
+| `ui/static/Sponsors_media/` | 14 dossiers + _templates | — |
+| `docs/PDF Sponsors/grille_tarifaire_em_ue_v1.pdf` | 5 pages | — |
+
+**Tests** : 1217 passed / 0 failed (4 pre-existing SEO)
+
+**Resume** :
+- `sponsor-popup-em.js` : LOTO_FR_A/B -> EM_{lang}_A/B dynamique via LI.locale + sponsor_id dans tracking
+- `sponsor-popup75-em.js` : id lotoia_video -> EM_{lang}_A dynamique, LOTO_FR_A -> SPONSOR_VIDEO_75_EM.id dans 4 POST tracking
+- `hybride-chatbot-em.js` : hasSponsor() text-based -> extractSponsorId() regex [SPONSOR:xx] + POST sponsor-inline-shown
+- `hybride-chatbot-em-en.js` : idem (JSON response, pas SSE)
+- `simulateur-em.js` : ajout injectSponsorBannerEM() E5 avec EM_{lang}_A dynamique + POST sponsor-result-shown
+- 14 dossiers Sponsors_media crees (LOTO_FR_A/B + 12 EM_xx_A/B) + specs.md
+- Grille tarifaire EM UE v1 PDF generee (5 pages : nomenclature, emplacements, packs, revision, contact)
+
+**Reste a faire** :
+- Etape 5/5 : Dashboard admin + facturation FacturIA

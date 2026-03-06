@@ -188,8 +188,12 @@
            Send message (API EuroMillions, lang=en)
            ══════════════════════════════════ */
 
+        function extractSponsorId(text) {
+            var m = text.match(/\[SPONSOR:([^\]]+)\]/);
+            return m ? m[1] : null;
+        }
         function hasSponsor(text) {
-            return text.indexOf('partenaires') !== -1 || text.indexOf('Espace partenaire') !== -1;
+            return extractSponsorId(text) !== null;
         }
 
         function send() {
@@ -231,19 +235,34 @@
             .then(function (data) {
                 removeTyping();
                 var botText = data.response || '\uD83E\uDD16 Response unavailable.';
+                var sponsorId = extractSponsorId(botText);
+                if (sponsorId) {
+                    botText = botText.replace(/\[SPONSOR:[^\]]+\]/, '');
+                }
                 addMessage(botText, 'bot');
                 chatHistory.push({ role: 'user', content: text });
                 chatHistory.push({ role: 'assistant', content: botText });
                 if (chatHistory.length > 20) chatHistory = [chatHistory[0]].concat(chatHistory.slice(-19));
                 saveHistory();
 
-                if (hasSponsor(botText)) {
+                if (sponsorId) {
                     sponsorViews++;
                     trackEvent('hybride_em_en_chat_sponsor_view', {
                         page: detectPage(),
-                        sponsor_style: botText.indexOf('partenaires') !== -1 ? 'A' : 'B',
+                        sponsor_id: sponsorId,
                         message_position: messageCount
                     });
+                    fetch('/api/sponsor/track', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            event_type: 'sponsor-inline-shown',
+                            sponsor_id: sponsorId,
+                            page: window.location.pathname,
+                            lang: 'en',
+                            device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop'
+                        })
+                    }).catch(function() {});
                 }
 
                 if (messageCount === 5) {
