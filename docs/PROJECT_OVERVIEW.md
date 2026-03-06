@@ -223,7 +223,7 @@ hybride-api/
 │       ├── analytics.js                 # GA4 analytics v2.5.2 (Consent Mode v2, owner IP filter, 32+ events)
 │       ├── tracker.js                   # Universal event tracker — LotoIA_track() (Phase RT-1, dedup, sendBeacon, owner filter)
 │       ├── admin.css                    # Admin back-office styles (dark/light theme, FacturIA palette, realtime feed)
-│       ├── admin.js                     # Admin AJAX logic (impressions, votes, realtime polling, chart.js)
+│       ├── admin.js                     # Admin AJAX logic (impressions, votes, realtime polling, chart.js, 6/6 sponsor events)
 │       ├── cookie-consent.js            # Cookie consent banner v2.0.0 (CNIL, i18n 6 langs)
 │       ├── faq.js                       # FAQ accordion logic (Loto)
 │       ├── faq-em.js                    # FAQ accordion logic (EuroMillions)
@@ -2032,7 +2032,7 @@ Favicon not displaying in Bing search results — root cause: no `/favicon.ico` 
 
 **Tests**: 1217 passed / 0 failed (+15 sponsor tests)
 
-**Docs**: `grille_tarifaire_lotoia_v6.pdf`, `grille_tarifaire_em_ue_v1.pdf`, `SPONSOR_CHANGELOG.md`, `SPONSOR_COHERENCE_AUDIT.md`, `Sponsors_media/_templates/specs.md`
+**Docs**: `grille_tarifaire_lotoia_v6.pdf`, `grille_tarifaire_em_ue_v1.pdf`, `SPONSOR_CHANGELOG.md`, `SPONSOR_COHERENCE_AUDIT.md`, `SPONSOR_FINAL_AUDIT.md`, `Sponsors_media/_templates/specs.md`, 14 `Sponsors_media/*/README.md`
 | `tests/test_admin.py` | +5 realtime tests → 65 total |
 
 **Result**: 56 files changed, 1217 tests pass, 0 regressions.
@@ -2107,6 +2107,7 @@ Favicon not displaying in Bing search results — root cause: no `/favicon.ico` 
 | 2026-03-05 | **Admin Styling + Theme**: Complete UI overhaul (40+ CSS variables, dark/light toggle, cookie persistence, flash prevention). FacturIA palette #1a237e + #d4a843. |
 | 2026-03-05 | **Phase RT-1**: Universal event tracking + realtime feed. `event_log` table, POST /api/track, `tracker.js` (36 LotoIA_track calls in 10 JS files, included in 35 HTML files). `/admin/realtime` live feed (5s polling, colored badges, KPI). 21 routers. **1198 tests** (+85). |
 | 2026-03-06 | **Sponsor V3**: 5-step refactoring — 14 product codes (LOTO_FR_A/B + 12 EM_XX_A/B), `sponsors.json` V3 (7 slot groups), A/B rotation chatbot, `[SPONSOR:ID]` marker, 6 emplacements, 6 tracking events, dynamic EM lang derivation (`LI.locale` JS / `lang` param Python), `extractSponsorId()` regex in 3 chatbot files, `injectSponsorBannerEM()`, `_VALID_EVENTS` aligned (3→6). Grilles tarifaires PDF (Loto V6 + EM UE V1). 14 `Sponsors_media/` folders. 360 coherence audit (42/42 OK). **1217 tests** (+19). Score 9.4 → **9.5/10**. |
+| 2026-03-06 | **Sponsor V3 fix A1+A2**: `admin.js` chart 6/6 events (added inline-shown, result-shown, pdf-downloaded). 14 `README.md` in `Sponsors_media/` folders (tier-specific asset specs). Final pre-launch audit (`SPONSOR_FINAL_AUDIT.md`): 10-point check, all clear, system locked for March 15 launch. |
 
 ---
 
@@ -2129,7 +2130,7 @@ Favicon not displaying in Bing search results — root cause: no `/favicon.ico` 
 | Security | Hardened | CSP+HSTS preload+COOP (Phase 7), aiomysql parameterized queries, rate limiting, correlation IDs |
 | SEO | **Production-ready (Phases A-D + Sprint 4-5)** | **Phases A-D**: Organization schema unified, WebSite schema, AggregateRating EM (conditional ≥5), E-E-A-T (bio, founder Schema), editorial SEO intros, CTA HYBRIDE (6 pages), WebP images (4, 71-76% savings), critical CSS inline + async, Last-Modified + Vary headers, min-instances=1, Bing favicon compatible. **Sprint 4**: BreadcrumbList JSON-LD (7 pages), Dataset + CollectionPage schemas, H1 keyword optimization (6 langs), title tags ≤50 chars, CLS fix (4 images), robots.txt EM rules, Loto cross-links (FR footer). **Sprint 5 Sitemap**: +24 legal pages, xhtml:link hreflang alternates (7 per EM URL). Audit score **93/100**. |
 | Admin Back-Office | **Stable (Phase 2-4/4 + RT-1)** | Dashboard KPI, impressions/votes detail (AJAX+Chart.js), realtime event feed (5s polling), sponsors CRUD, invoices CRUD+PDF, config. Dark/light theme (FacturIA palette). CSV/PDF exports. Cookie auth (timing-safe). 65 admin tests |
-| Sponsor System | **Stable (V3)** | 14 product codes (LOTO_FR_A/B + 12 EM_XX_A/B). 6 emplacements (popup, video, PDF, chatbot, banner, PDF download). A/B rotation. `[SPONSOR:ID]` marker. 6 tracking events. Dynamic lang derivation (JS: `LI.locale`, Python: `lang` param). `sponsors.json` V3 (7 slot groups). Grilles tarifaires PDF (Loto V6 + EM UE V1). 15 sponsor tests |
+| Sponsor System | **Locked for launch (V3)** | 14 product codes (LOTO_FR_A/B + 12 EM_XX_A/B). 5 emplacements (E1-E5: popup, video, PDF, chatbot, banner). A/B rotation. `[SPONSOR:ID]` marker. 6 tracking events (admin chart 6/6). Dynamic lang derivation (JS: `LI.locale`, Python: `lang` param). `sponsors.json` V3 (7 slot groups). Grilles tarifaires PDF (Loto V6 + EM UE V1). 14 `Sponsors_media/*/README.md`. Final audit: 10/10 OK. 15 sponsor tests |
 | Event Tracking | **Stable (Phase RT-1)** | Universal `event_log` table + POST /api/track. `tracker.js` (LotoIA_track) on all pages (35 HTML + EM base template). 36 tracked events (chatbot, rating, sponsor, simulateur, meta75). Owner IP filter, SHA-256 session hash, RGPD compliant. 12 track tests |
 | Mobile responsive | Stable | Fullscreen chatbot, viewport sync, safe-area support |
 
@@ -2205,4 +2206,4 @@ Observable characteristics based on development usage:
 
 ---
 
-*Updated by JyppY & Claude Opus 4.6 — 06/03/2026 (v26.0: Sponsor V3 — 14 product codes, 6 emplacements, A/B rotation, 1217 tests (32 files), 23 service modules (~8073L), 749 .po entries per lang. Previous: v25.1 Counter refresh, v25.0 Admin Back-Office + Phase RT-1, v24.0 SEO Phases A-D + Favicon, v23.0 Chat multilang P1-P3, v22.0 Wysistat ACPM, v21.0 SEO Sitemap Sprint, v20.0 Sprint 4 SEO, v19.0 Phase A argent detection, v18.0 GA4 audit, v17.0 PDF heatmap, v16.0 legal pages, globe selector. i18n 6/6 COMPLETE, P9 (SSE streaming), P1-P5/5 (i18n infrastructure), Phase 11 (EN multilang), Phases 1-10. Tech audit V10: **9.5/10**.)*
+*Updated by JyppY & Claude Opus 4.6 — 06/03/2026 (v26.1: Sponsor V3 locked for launch — fix A1+A2 (admin chart 6/6, 14 README.md), final audit 10/10 OK. 1217 tests (32 files), 23 service modules (~8073L), 749 .po entries per lang. Previous: v26.0 Sponsor V3, v25.1 Counter refresh, v25.0 Admin Back-Office + Phase RT-1, v24.0 SEO Phases A-D + Favicon, v23.0 Chat multilang P1-P3. Tech audit V10: **9.5/10**.)*
