@@ -130,8 +130,8 @@ class TestIsEmRoute:
         "/en/euromillions/statistics",
         "/es/euromillions",
         "/es/euromillions/generador",
-        "/pt/euromilhoes",
-        "/pt/euromilhoes/gerador",
+        "/pt/euromillions",
+        "/pt/euromillions/gerador",
         "/de/euromillionen",
         "/de/euromillionen/generator",
         "/nl/euromillions",
@@ -148,7 +148,7 @@ class TestIsEmRoute:
         "/EUROMILLIONS/statistiques",
         "/En/EuroMillions",
         "/API/EUROMILLIONS/stats",
-        "/PT/EuroMilhoes",
+        "/PT/EuroMillions",
         "/Static/Pdf/EM_report.pdf",
     ])
     def test_em_routes_blocked(self, path):
@@ -204,7 +204,7 @@ class TestGetRedirectUrl:
         assert get_redirect_url("/es/euromillions/generador") == "/es"
 
     def test_pt(self):
-        assert get_redirect_url("/pt/euromilhoes") == "/pt"
+        assert get_redirect_url("/pt/euromillions") == "/pt"
 
     def test_de(self):
         assert get_redirect_url("/de/euromillionen/statistiken") == "/de"
