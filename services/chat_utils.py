@@ -93,11 +93,12 @@ def _load_sponsors_config() -> dict:
     return _sponsors_config
 
 
-def _get_sponsor_if_due(history: list, lang: str = "fr") -> str | None:
+def _get_sponsor_if_due(history: list, lang: str = "fr", module: str = "loto") -> str | None:
     """Retourne le texte sponsor si c'est le moment, None sinon.
 
     Alterne slot_a (Premium) / slot_b (Standard) : A/B/A/B...
     Le message contient un marqueur [SPONSOR:<id>] pour le tracking frontend.
+    module = 'loto' ou 'em'. Si 'em', utilise em_{lang} comme cle de slot.
     """
     config = _load_sponsors_config()
     if not config.get("enabled"):
@@ -115,8 +116,17 @@ def _get_sponsor_if_due(history: list, lang: str = "fr") -> str | None:
 
     cycle = bot_count // frequency  # 1, 2, 3, 4...
 
+    # Determine slot key based on module
+    if module == "em":
+        slot_key_root = f"em_{lang}"
+    else:
+        slot_key_root = "loto_fr"
+
+    slots = config.get("slots", {}).get(slot_key_root, {})
+    if not slots:
+        return None
+
     # Alternate: odd cycle -> slot A (Premium first), even -> slot B
-    slots = config.get("slots", {}).get("loto_fr", {})
     slot_key = "slot_a" if cycle % 2 == 1 else "slot_b"
     slot = slots.get(slot_key)
 
@@ -126,7 +136,8 @@ def _get_sponsor_if_due(history: list, lang: str = "fr") -> str | None:
         if not slot or not slot.get("active"):
             return None
 
-    sponsor_id = slot.get("id", "LOTO_FR_A")
+    _default_id = "LOTO_FR_A" if module != "em" else f"EM_{lang.upper()}_A"
+    sponsor_id = slot.get("id", _default_id)
     tagline = slot.get("tagline", {})
     text = tagline.get(lang, tagline.get("fr", ""))
     email = slot.get("url", "mailto:partenariats@lotoia.fr").replace("mailto:", "")

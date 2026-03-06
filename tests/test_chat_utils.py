@@ -196,7 +196,7 @@ class TestFormatComplexContext:
 # ═══════════════════════════════════════════════════════════════════════
 
 _SPONSORS_V2 = {
-    "version": 2,
+    "version": 3,
     "enabled": True,
     "frequency": 3,
     "slots": {
@@ -211,7 +211,43 @@ _SPONSORS_V2 = {
                 "tagline": {"fr": "Espace partenaires", "en": "Partner space"},
                 "url": "mailto:partenariats@lotoia.fr", "active": True,
             },
-        }
+        },
+        "em_fr": {
+            "slot_a": {
+                "id": "EM_FR_A", "tier": "premium", "name": "Espace Premium EM",
+                "tagline": {"fr": "Espace premium EuroMillions partenaire officiel"},
+                "url": "mailto:partenariats@lotoia.fr", "active": True,
+            },
+            "slot_b": {
+                "id": "EM_FR_B", "tier": "standard", "name": "Espace Standard EM",
+                "tagline": {"fr": "Espace EuroMillions partenaires"},
+                "url": "mailto:partenariats@lotoia.fr", "active": True,
+            },
+        },
+        "em_en": {
+            "slot_a": {
+                "id": "EM_EN_A", "tier": "premium", "name": "Premium EM Space",
+                "tagline": {"en": "Premium EuroMillions official partner"},
+                "url": "mailto:partenariats@lotoia.fr", "active": True,
+            },
+            "slot_b": {
+                "id": "EM_EN_B", "tier": "standard", "name": "Standard EM Space",
+                "tagline": {"en": "EuroMillions partner space"},
+                "url": "mailto:partenariats@lotoia.fr", "active": True,
+            },
+        },
+        "em_pt": {
+            "slot_a": {
+                "id": "EM_PT_A", "tier": "premium", "name": "Espaco Premium EM",
+                "tagline": {"pt": "Espaco premium EuroMillions parceiro oficial"},
+                "url": "mailto:partenariats@lotoia.fr", "active": True,
+            },
+            "slot_b": {
+                "id": "EM_PT_B", "tier": "standard", "name": "Espaco Standard EM",
+                "tagline": {"pt": "Espaco EuroMillions parceiros"},
+                "url": "mailto:partenariats@lotoia.fr", "active": True,
+            },
+        },
     },
 }
 
@@ -290,3 +326,33 @@ class TestGetSponsorIfDue:
         with patch("services.chat_utils._load_sponsors_config", return_value=_SPONSORS_V2):
             result = _get_sponsor_if_due(self._history(2), lang="fr")
             assert "partenariats@lotoia.fr" in result
+
+    # ── EM module tests ──────────────────────────────────────────────
+
+    def test_em_fr_3_bot_messages_returns_em_fr_a(self):
+        with patch("services.chat_utils._load_sponsors_config", return_value=_SPONSORS_V2):
+            result = _get_sponsor_if_due(self._history(2), lang="fr", module="em")
+            assert result is not None
+            assert "[SPONSOR:EM_FR_A]" in result
+
+    def test_em_en_3_bot_messages_returns_em_en_a(self):
+        with patch("services.chat_utils._load_sponsors_config", return_value=_SPONSORS_V2):
+            result = _get_sponsor_if_due(self._history(2), lang="en", module="em")
+            assert result is not None
+            assert "[SPONSOR:EM_EN_A]" in result
+
+    def test_em_pt_6_bot_messages_returns_em_pt_b(self):
+        with patch("services.chat_utils._load_sponsors_config", return_value=_SPONSORS_V2):
+            result = _get_sponsor_if_due(self._history(5), lang="pt", module="em")
+            assert result is not None
+            assert "[SPONSOR:EM_PT_B]" in result
+
+    def test_em_unknown_lang_returns_none(self):
+        with patch("services.chat_utils._load_sponsors_config", return_value=_SPONSORS_V2):
+            result = _get_sponsor_if_due(self._history(2), lang="ja", module="em")
+            assert result is None
+
+    def test_em_module_does_not_use_loto_slots(self):
+        with patch("services.chat_utils._load_sponsors_config", return_value=_SPONSORS_V2):
+            result = _get_sponsor_if_due(self._history(2), lang="fr", module="em")
+            assert "LOTO_FR" not in result

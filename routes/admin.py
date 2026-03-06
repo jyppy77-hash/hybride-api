@@ -28,7 +28,7 @@ _ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "").strip()
 _ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "").strip()
 _COOKIE_NAME = "lotoia_admin_token"
 
-_VALID_EVENTS = {"sponsor-popup-shown", "sponsor-click", "sponsor-video-played"}
+_VALID_EVENTS = {"sponsor-popup-shown", "sponsor-click", "sponsor-video-played", "sponsor-inline-shown", "sponsor-result-shown", "sponsor-pdf-downloaded"}
 _VALID_LANGS = {"fr", "en", "es", "pt", "de", "nl"}
 _VALID_DEVICES = {"mobile", "desktop", "tablet"}
 _VALID_SOURCES = {"chatbot_loto", "chatbot_em", "popup_accueil"}

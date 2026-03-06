@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "enabled": true,
   "frequency": 3,
   "slots": {
@@ -9,12 +9,12 @@
         "tier": "premium",
         "name": "Espace Premium",
         "tagline": {
-          "fr": "Cet espace premium est r\u00e9serv\u00e9 \u00e0 un partenaire officiel",
+          "fr": "Cet espace premium est réservé à un partenaire officiel",
           "en": "This premium space is reserved for an official partner",
-          "es": "Este espacio premium est\u00e1 reservado para un socio oficial",
-          "pt": "Este espa\u00e7o premium \u00e9 reservado para um parceiro oficial",
+          "es": "Este espacio premium está reservado para un socio oficial",
+          "pt": "Este espaço premium é reservado para um parceiro oficial",
           "de": "Dieser Premium-Platz ist einem offiziellen Partner vorbehalten",
-          "nl": "Deze premiumruimte is gereserveerd voor een offici\u00eble partner"
+          "nl": "Deze premiumruimte is gereserveerd voor een officiële partner"
         },
         "url": "mailto:partenariats@lotoia.fr",
         "active": true
@@ -24,12 +24,144 @@
         "tier": "standard",
         "name": "Espace Standard",
         "tagline": {
-          "fr": "Cet espace est r\u00e9serv\u00e9 \u00e0 nos partenaires",
+          "fr": "Cet espace est réservé à nos partenaires",
           "en": "This space is reserved for our partners",
-          "es": "Este espacio est\u00e1 reservado para nuestros socios",
-          "pt": "Este espa\u00e7o \u00e9 reservado para os nossos parceiros",
-          "de": "Dieser Platz ist f\u00fcr unsere Partner reserviert",
+          "es": "Este espacio está reservado para nuestros socios",
+          "pt": "Este espaço é reservado para os nossos parceiros",
+          "de": "Dieser Platz ist für unsere Partner reserviert",
           "nl": "Deze ruimte is gereserveerd voor onze partners"
+        },
+        "url": "mailto:partenariats@lotoia.fr",
+        "active": true
+      }
+    },
+    "em_fr": {
+      "slot_a": {
+        "id": "EM_FR_A",
+        "tier": "premium",
+        "name": "Espace Premium EM",
+        "tagline": {
+          "fr": "Cet espace premium EuroMillions est réservé à un partenaire officiel"
+        },
+        "url": "mailto:partenariats@lotoia.fr",
+        "active": true
+      },
+      "slot_b": {
+        "id": "EM_FR_B",
+        "tier": "standard",
+        "name": "Espace Standard EM",
+        "tagline": {
+          "fr": "Cet espace EuroMillions est réservé à nos partenaires"
+        },
+        "url": "mailto:partenariats@lotoia.fr",
+        "active": true
+      }
+    },
+    "em_en": {
+      "slot_a": {
+        "id": "EM_EN_A",
+        "tier": "premium",
+        "name": "Premium EuroMillions Space",
+        "tagline": {
+          "en": "This premium EuroMillions space is reserved for an official partner"
+        },
+        "url": "mailto:partenariats@lotoia.fr",
+        "active": true
+      },
+      "slot_b": {
+        "id": "EM_EN_B",
+        "tier": "standard",
+        "name": "Standard EuroMillions Space",
+        "tagline": {
+          "en": "This EuroMillions space is reserved for our partners"
+        },
+        "url": "mailto:partenariats@lotoia.fr",
+        "active": true
+      }
+    },
+    "em_es": {
+      "slot_a": {
+        "id": "EM_ES_A",
+        "tier": "premium",
+        "name": "Espacio Premium EuroMillions",
+        "tagline": {
+          "es": "Este espacio premium EuroMillions está reservado para un socio oficial"
+        },
+        "url": "mailto:partenariats@lotoia.fr",
+        "active": true
+      },
+      "slot_b": {
+        "id": "EM_ES_B",
+        "tier": "standard",
+        "name": "Espacio Estándar EuroMillions",
+        "tagline": {
+          "es": "Este espacio EuroMillions está reservado para nuestros socios"
+        },
+        "url": "mailto:partenariats@lotoia.fr",
+        "active": true
+      }
+    },
+    "em_pt": {
+      "slot_a": {
+        "id": "EM_PT_A",
+        "tier": "premium",
+        "name": "Espaço Premium EuroMillions",
+        "tagline": {
+          "pt": "Este espaço premium EuroMillions é reservado para um parceiro oficial"
+        },
+        "url": "mailto:partenariats@lotoia.fr",
+        "active": true
+      },
+      "slot_b": {
+        "id": "EM_PT_B",
+        "tier": "standard",
+        "name": "Espaço Standard EuroMillions",
+        "tagline": {
+          "pt": "Este espaço EuroMillions é reservado para os nossos parceiros"
+        },
+        "url": "mailto:partenariats@lotoia.fr",
+        "active": true
+      }
+    },
+    "em_de": {
+      "slot_a": {
+        "id": "EM_DE_A",
+        "tier": "premium",
+        "name": "Premium EuroMillions-Platz",
+        "tagline": {
+          "de": "Dieser Premium EuroMillions-Platz ist einem offiziellen Partner vorbehalten"
+        },
+        "url": "mailto:partenariats@lotoia.fr",
+        "active": true
+      },
+      "slot_b": {
+        "id": "EM_DE_B",
+        "tier": "standard",
+        "name": "Standard EuroMillions-Platz",
+        "tagline": {
+          "de": "Dieser EuroMillions-Platz ist für unsere Partner reserviert"
+        },
+        "url": "mailto:partenariats@lotoia.fr",
+        "active": true
+      }
+    },
+    "em_nl": {
+      "slot_a": {
+        "id": "EM_NL_A",
+        "tier": "premium",
+        "name": "Premium EuroMillions-ruimte",
+        "tagline": {
+          "nl": "Deze premium EuroMillions-ruimte is gereserveerd voor een officiële partner"
+        },
+        "url": "mailto:partenariats@lotoia.fr",
+        "active": true
+      },
+      "slot_b": {
+        "id": "EM_NL_B",
+        "tier": "standard",
+        "name": "Standaard EuroMillions-ruimte",
+        "tagline": {
+          "nl": "Deze EuroMillions-ruimte is gereserveerd voor onze partners"
         },
         "url": "mailto:partenariats@lotoia.fr",
         "active": true

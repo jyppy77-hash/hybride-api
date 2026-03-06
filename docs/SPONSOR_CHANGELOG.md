@@ -138,3 +138,64 @@ sponsor-inline-shown
 sponsor-result-shown
 sponsor-pdf-downloaded
 ```
+
+---
+
+## 2026-03-06 — Fix admin _VALID_EVENTS + Grille tarifaire V6
+
+**Fichiers modifies** :
+
+| Fichier | Action |
+|---------|--------|
+| `routes/admin.py` | `_VALID_EVENTS` : 3 events -> 6 events (ajout inline-shown, result-shown, pdf-downloaded) |
+| `docs/PDF Sponsors/grille_tarifaire_lotoia_v6.pdf` | Deja a jour — V6 avec codes produit LOTO_FR_A/B, rotation A/B, vision EM multi-langue |
+
+**Resume** :
+- `_VALID_EVENTS` dans admin.py n'avait que 3 events (popup-shown, click, video-played)
+- Aligne avec les 6 events reels du tracking endpoint (`api_sponsor_track.py`)
+- Sans ce fix, l'admin dashboard ne pouvait pas creer de tarifs pour les 3 nouveaux events
+- Grille tarifaire V6 PDF deja generee avec : nomenclature produit, rotation chatbot A/B, packs LOTO_FR_A/B, vision EM 14 codes
+
+**Reste a faire** :
+- Etape 4/5 : Replication pattern EM (codes EM_FR_A/B, rotation chatbot EM, tracking EM)
+- Etape 5/5 : Dashboard admin + facturation FacturIA
+- Migration SQL : ajouter colonne `slot` ou `tier` dans `fia_grille_tarifaire` (optionnel, le `sponsor_id` FK suffit)
+
+---
+
+## 2026-03-06 — Etape 4a/5 : Config + Backend — 12 slots EuroMillions
+
+**Fichiers modifies** :
+
+| Fichier | Lignes | MD5 |
+|---------|--------|-----|
+| `config/sponsors.json` | 174 | `fa933740` |
+| `services/chat_utils.py` | 433 | `23ca08a2` |
+| `services/chat_pipeline_em.py` | 771 | `6e1e103e` |
+| `services/em_pdf_generator.py` | 649 | `d3658531` |
+| `tests/test_chat_utils.py` | 358 | `d4798b9d` |
+
+**Tests** : 1217 passed / 0 failed (4 pre-existing SEO failures non lies)
+
+**Resume** :
+- `sponsors.json` V2 -> V3 : ajout 12 slots EM (em_fr, em_en, em_es, em_pt, em_de, em_nl) x 2 (A/B)
+- `_get_sponsor_if_due()` : nouveau param `module="loto"|"em"`, slot_key = `em_{lang}` si EM
+- `chat_pipeline_em.py` : 2 appels mis a jour avec `module="em"`
+- `em_pdf_generator.py` : sponsor name dynamique depuis `em_{lang}.slot_a` (fallback `loto_fr`)
+- 5 tests EM ajoutes : rotation FR/EN/PT, lang inconnue -> None, isolation EM/Loto
+
+**Nomenclature des 14 codes produit** :
+
+| Module | Slot A (Premium) | Slot B (Standard) |
+|--------|-----------------|-------------------|
+| Loto FR | LOTO_FR_A | LOTO_FR_B |
+| EM FR | EM_FR_A | EM_FR_B |
+| EM EN | EM_EN_A | EM_EN_B |
+| EM ES | EM_ES_A | EM_ES_B |
+| EM PT | EM_PT_A | EM_PT_B |
+| EM DE | EM_DE_A | EM_DE_B |
+| EM NL | EM_NL_A | EM_NL_B |
+
+**Reste a faire** :
+- Etape 4b/5 : Frontend JS EM (sponsor-popup-em.js, sponsor-popup75-em.js, simulateur EM, hybride-chatbot-em.js)
+- Etape 5/5 : Dashboard admin + facturation FacturIA

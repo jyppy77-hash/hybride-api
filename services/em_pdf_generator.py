@@ -490,14 +490,17 @@ def generate_em_meta_pdf(analysis: str = "", window: str = "75 tirages",
             c.line(15 * mm, y, w - 15 * mm, y)
             y -= 8 * mm
 
-            # Sponsor name dynamique depuis sponsors.json (Premium = slot_a)
+            # Sponsor name dynamique depuis sponsors.json (EM slot par langue, fallback loto_fr)
             sponsor_title = L["sponsor_title"]
             sponsor_email = "partenariats@lotoia.fr"
             try:
                 _cfg_path = os.path.join(os.path.dirname(__file__), "..", "config", "sponsors.json")
                 with open(_cfg_path, encoding="utf-8") as _sf:
                     _scfg = json.load(_sf)
-                _slot_a = _scfg.get("slots", {}).get("loto_fr", {}).get("slot_a", {})
+                _em_key = f"em_{lang}"
+                _slot_a = _scfg.get("slots", {}).get(_em_key, {}).get("slot_a", {})
+                if not _slot_a:
+                    _slot_a = _scfg.get("slots", {}).get("loto_fr", {}).get("slot_a", {})
                 _sname = _slot_a.get("name")
                 if _sname and " par " in sponsor_title:
                     sponsor_title = sponsor_title.split(" par ")[0] + " par " + _sname

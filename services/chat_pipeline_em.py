@@ -464,7 +464,7 @@ async def handle_chat_em(message: str, history: list, page: str, http_client, la
                         text = _clean_response(text)
                         if ctx["insult_prefix"]:
                             text = ctx["insult_prefix"] + "\n\n" + text
-                        sponsor_line = _get_sponsor_if_due(ctx["history"], lang=ctx["lang"])
+                        sponsor_line = _get_sponsor_if_due(ctx["history"], lang=ctx["lang"], module="em")
                         if sponsor_line:
                             text += "\n\n" + sponsor_line
                         logger.info(
@@ -535,7 +535,7 @@ async def handle_chat_stream_em(message: str, history: list, page: str, http_cli
             })
             return
 
-        sponsor_line = _get_sponsor_if_due(ctx["history"], lang=ctx["lang"])
+        sponsor_line = _get_sponsor_if_due(ctx["history"], lang=ctx["lang"], module="em")
         if sponsor_line:
             yield _sse_event_em({
                 "chunk": "\n\n" + sponsor_line,
