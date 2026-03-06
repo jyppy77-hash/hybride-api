@@ -43,7 +43,15 @@
       "name": "LotoIA",
       "url": "https://lotoia.fr",
       "inLanguage": "fr-FR",
-      "description": "Plateforme d’analyse statistique du Loto basée sur un moteur algorithmique."
+      "description": "Plateforme d’analyse statistique du Loto basée sur un moteur algorithmique.",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": {
+          "@type": "EntryPoint",
+          "urlTemplate": "https://lotoia.fr/faq?q={search_term_string}"
+        },
+        "query-input": "required name=search_term_string"
+      }
     },
     {
       "@type": "SoftwareApplication",

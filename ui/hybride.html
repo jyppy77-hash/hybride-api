@@ -108,7 +108,12 @@
       ]
     }
     </script>
-    <link rel="stylesheet" href="/ui/static/style.css">
+    <!-- Critical CSS inline (above-the-fold) -->
+    <style>
+    *{margin:0;padding:0;box-sizing:border-box}:root{--app-max-width:1140px;--app-padding-x:24px;--app-padding-y:40px;--primary:#1a73e8;--radius-sm:8px;--radius-md:12px;--radius-lg:16px;--theme-bg-main:linear-gradient(180deg,#0a0f1a 0%,#0f172a 50%,#1e1b4b 100%);--theme-bg-nav:linear-gradient(180deg,#0f172a 0%,#1e1b4b 100%);--theme-bg-header:linear-gradient(180deg,#0f172a 0%,#1e1b4b 100%);--theme-bg-card:#ffffff;--theme-text-primary:#1f2937;--theme-text-secondary:#6b7280;--theme-text-on-dark:rgba(255,255,255,.95);--theme-border:#e5e7eb;--theme-border-light:rgba(255,255,255,.1);--theme-shadow:0 2px 8px rgba(0,0,0,.1)}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;line-height:1.6;color:var(--theme-text-primary);min-height:100vh;font-size:16px;background:var(--theme-bg-main)}body.theme-night{--theme-bg-main:linear-gradient(180deg,#0a0f1a 0%,#0f172a 50%,#1e1b4b 100%);--theme-bg-nav:linear-gradient(180deg,#0f172a 0%,#1e1b4b 100%);--theme-bg-card:#1e293b;--theme-text-primary:#e2e8f0;--theme-text-secondary:#94a3b8;--theme-border:rgba(255,255,255,.1)}body.theme-day{--theme-bg-main:linear-gradient(180deg,#f0f4f8 0%,#e2e8f0 50%,#cbd5e1 100%);--theme-bg-nav:linear-gradient(180deg,#1e293b 0%,#334155 100%);--theme-bg-card:#ffffff;--theme-text-primary:#0f172a;--theme-text-secondary:#475569;--theme-border:#e2e8f0}.engine-nav-subpage{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:var(--theme-bg-nav);position:relative;z-index:100}.engine-nav-subpage .engine-nav-right{display:flex;align-items:center;gap:12px}.container,.stats-container,.loto-container{max-width:var(--app-max-width);width:100%;margin:0 auto;padding:var(--app-padding-y) var(--app-padding-x);box-sizing:border-box}.engine-nav-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:rgba(255,255,255,.08);color:var(--theme-text-on-dark);border-radius:var(--radius-sm);text-decoration:none;font-size:.88rem;font-weight:500}.engine-badge{display:inline-block;padding:4px 12px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);color:#10b981;border-radius:20px;font-size:.75rem;font-weight:600}.page-header{background:var(--theme-bg-header);color:var(--theme-text-on-dark);padding:30px 20px 60px;text-align:center;position:relative;overflow:hidden}.theme-switch{display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;background:var(--theme-border-light);border:1px solid var(--theme-border-light);border-radius:50%;color:var(--theme-text-on-dark);cursor:pointer;font-size:1.2rem}
+    </style>
+    <link rel="stylesheet" href="/ui/static/style.css?v=11" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/ui/static/style.css?v=11"></noscript>
     <link rel="stylesheet" href="/ui/static/legal.css">
     <script src="/ui/static/theme.js"></script>
     <!-- Preconnect tiers -->
@@ -501,6 +506,14 @@
                 <a href="/politique-confidentialite">Confidentialité</a>
                 <span class="footer-sep">•</span>
                 <a href="/politique-cookies">Cookies</a>
+            </div>
+            <!-- ACTIVER POST-LAUNCH 15 MARS : retirer style="display:none" -->
+            <div class="footer-crosslink" style="display:none;margin:12px 0;padding:8px 0;border-top:1px solid var(--theme-border);font-size:.85rem;">
+                <a href="/euromillions">EuroMillions IA</a>
+                <span class="footer-sep">•</span>
+                <a href="/euromillions/statistiques">Stats EM</a>
+                <span class="footer-sep">•</span>
+                <a href="/euromillions/generateur">Générateur EM</a>
             </div>
             <p class="footer-brand">LotoIA.fr <span class="app-version">v1.001</span></p>
             <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dépendance. Appelez le 09 74 75 13 13 (appel non surtaxé).</p>

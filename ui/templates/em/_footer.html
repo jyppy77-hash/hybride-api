@@ -37,7 +37,6 @@
         <a href="{{ urls.disclaimer }}">{{ _('Avertissements') }}</a>
         {% endif %}
     </div>
-    {% if lang == "fr" %}
     <div class="footer-nav footer-crosslink">
         <span class="footer-crosslink-label">{{ _('Voir aussi') }} :</span>
         <a href="/loto/analyse">{{ _('Analyse Loto France') }}</a>
@@ -46,7 +45,6 @@
         <span class="footer-sep">&bull;</span>
         <a href="/loto">{{ _('Générateur Loto') }}</a>
     </div>
-    {% endif %}
     <p class="footer-brand">LotoIA.fr <span class="app-version">v1.001</span></p>
     <p class="footer-disclaimer">{{ _('Jouer comporte des risques : endettement, isolement, dépendance. Appelez le 09 74 75 13 13 (appel non surtaxé).') }}</p>
     <p class="footer-help">{{ _('Interdiction de jeu aux mineurs.') }} <a href="{{ gambling_help_url }}" target="_blank" rel="noopener">{{ gambling_help_name }}</a></p>
