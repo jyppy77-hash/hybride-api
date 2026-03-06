@@ -452,12 +452,16 @@ def generate_meta_pdf(analysis: str = "", window: str = "75 tirages",
                     _scfg = json.load(_sf)
                 _slot_a = _scfg.get("slots", {}).get("loto_fr", {}).get("slot_a", {})
                 _sname = _slot_a.get("name")
-                if _sname and _sname != "Espace Premium":
-                    # Vrai sponsor signe : afficher son nom
-                    sponsor_title = sponsor_title.replace(
-                        sponsor_title.split(" — ")[0] if " — " in sponsor_title else sponsor_title,
-                        _sname,
-                    ) if " — " in sponsor_title else _sname
+                if _sname and " par " in sponsor_title:
+                    sponsor_title = sponsor_title.split(" par ")[0] + " par " + _sname
+                elif _sname and " by " in sponsor_title:
+                    sponsor_title = sponsor_title.split(" by ")[0] + " by " + _sname
+                elif _sname and " por " in sponsor_title:
+                    sponsor_title = sponsor_title.split(" por ")[0] + " por " + _sname
+                elif _sname and " von " in sponsor_title:
+                    sponsor_title = sponsor_title.split(" von ")[0] + " von " + _sname
+                elif _sname and " door " in sponsor_title:
+                    sponsor_title = sponsor_title.split(" door ")[0] + " door " + _sname
                 _surl = _slot_a.get("url", "")
                 if _surl:
                     sponsor_email = _surl.replace("mailto:", "")

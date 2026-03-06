@@ -874,8 +874,9 @@ function openMetaResultPopup(data) {
     // EVENT 4 - Export PDF — labor illusion + fetch parallèle
     if (pdfBtn) {
         pdfBtn.addEventListener('click', () => {
-            if (typeof umami !== 'undefined') umami.track('meta75-pdf-download', { module: 'loto' });
-            if (window.LotoIA_track) LotoIA_track('meta75-pdf-download', {module: 'loto'});
+            if (typeof umami !== 'undefined') umami.track('meta75-pdf-download', { module: 'loto', sponsor_id: 'LOTO_FR_A' });
+            if (window.LotoIA_track) LotoIA_track('meta75-pdf-download', {module: 'loto', sponsor_id: 'LOTO_FR_A'});
+            fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-pdf-downloaded', sponsor_id: 'LOTO_FR_A', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
             if (window.LotoIAAnalytics?.productEngine?.track) {
                 window.LotoIAAnalytics.productEngine.track('meta_pdf_export', { version: 75 });
             }

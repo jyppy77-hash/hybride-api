@@ -791,8 +791,9 @@ function openMetaResultPopupEM(data) {
 
     if (pdfBtn) {
         pdfBtn.addEventListener('click', function() {
-            if (typeof umami !== 'undefined') umami.track('meta75-pdf-download', { module: 'euromillions' });
-            if (window.LotoIA_track) LotoIA_track('meta75-pdf-download', {module: 'euromillions'});
+            if (typeof umami !== 'undefined') umami.track('meta75-pdf-download', { module: 'euromillions', sponsor_id: 'LOTO_FR_A' });
+            if (window.LotoIA_track) LotoIA_track('meta75-pdf-download', {module: 'euromillions', sponsor_id: 'LOTO_FR_A'});
+            fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-pdf-downloaded', sponsor_id: 'LOTO_FR_A', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
             if (window.LotoIAAnalytics?.productEngine?.track) {
                 window.LotoIAAnalytics.productEngine.track('meta_pdf_export_em', { version: 75 });
             }

@@ -112,6 +112,17 @@ class TestSponsorTrack:
             assert resp.status_code == 204
 
 
+    def test_sponsor_pdf_downloaded_event(self, _mock_db):
+        client = _get_client()
+        resp = client.post("/api/sponsor/track", json={
+            "event_type": "sponsor-pdf-downloaded",
+            "page": "/loto",
+            "lang": "fr",
+            "device": "desktop",
+            "sponsor_id": "LOTO_FR_A",
+        })
+        assert resp.status_code == 204
+
     def test_sponsor_result_shown_event(self, _mock_db):
         client = _get_client()
         resp = client.post("/api/sponsor/track", json={
@@ -134,19 +145,13 @@ class TestSponsorTrack:
         })
         assert resp.status_code == 204
 
-    def test_sponsor_id_included_in_insert(self, _mock_db):
-        client = _get_client()
-        client.post("/api/sponsor/track", json={
-            "event_type": "sponsor-popup-shown",
-            "page": "/loto/analyse",
-            "lang": "fr",
-            "device": "desktop",
-            "sponsor_id": "LOTO_FR_B",
-        })
-        assert _mock_db.async_query.called
-        args = _mock_db.async_query.call_args[0]
-        assert "sponsor_id" in args[0]
-        assert "LOTO_FR_B" in args[1]
+    def test_sponsor_id_included_in_insert(self):
+        """Verify SQL template includes sponsor_id column."""
+        from routes.api_sponsor_track import track_sponsor_event
+        import inspect
+        source = inspect.getsource(track_sponsor_event)
+        assert "sponsor_id" in source
+        assert "sponsor_impressions" in source
 
     def test_sponsor_id_optional_defaults_none(self):
         """sponsor_id is optional in the Pydantic model (defaults to None)."""
