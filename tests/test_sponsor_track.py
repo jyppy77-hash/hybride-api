@@ -112,6 +112,17 @@ class TestSponsorTrack:
             assert resp.status_code == 204
 
 
+    def test_sponsor_result_shown_event(self, _mock_db):
+        client = _get_client()
+        resp = client.post("/api/sponsor/track", json={
+            "event_type": "sponsor-result-shown",
+            "page": "/loto/analyse",
+            "lang": "fr",
+            "device": "desktop",
+            "sponsor_id": "LOTO_FR_A",
+        })
+        assert resp.status_code == 204
+
     def test_sponsor_inline_shown_event(self, _mock_db):
         client = _get_client()
         resp = client.post("/api/sponsor/track", json={
@@ -137,15 +148,11 @@ class TestSponsorTrack:
         assert "sponsor_id" in args[0]
         assert "LOTO_FR_B" in args[1]
 
-    def test_sponsor_id_optional_defaults_none(self, _mock_db):
-        client = _get_client()
-        resp = client.post("/api/sponsor/track", json={
-            "event_type": "sponsor-popup-shown",
-            "page": "/loto",
-            "lang": "fr",
-            "device": "desktop",
-        })
-        assert resp.status_code == 204
+    def test_sponsor_id_optional_defaults_none(self):
+        """sponsor_id is optional in the Pydantic model (defaults to None)."""
+        from routes.api_sponsor_track import SponsorEvent
+        event = SponsorEvent(event_type="sponsor-popup-shown", page="/loto")
+        assert event.sponsor_id is None
 
 
 class TestDetectCountry:

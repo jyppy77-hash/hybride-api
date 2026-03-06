@@ -372,6 +372,9 @@ function displayResults(data) {
     if (typeof umami !== 'undefined') umami.track('simulateur-grille-audited', { module: 'loto' });
     if (window.LotoIA_track) LotoIA_track('simulateur-grille-audited', {module: 'loto'});
 
+    // Bannière sponsor E5 sous les résultats
+    injectSponsorBanner();
+
     // Scroll automatique vers la grille sélectionnée (center pour UX mobile/desktop)
     setTimeout(() => {
         const target = document.getElementById('selected-numbers')
@@ -858,6 +861,43 @@ async function fetchAndDisplaySimulateurPitch(nums, chance, scoreConformite, sev
         console.warn('[PITCH SIMULATEUR] Erreur:', e);
         pitchDiv.remove();
     }
+}
+
+/**
+ * Inject sponsor banner (E5) after results, before CTA HYBRIDE
+ */
+function injectSponsorBanner() {
+    // Remove previous banner if any
+    const existing = document.querySelector('.sponsor-result-banner');
+    if (existing) existing.remove();
+
+    const resultsSection = document.getElementById('results-section');
+    if (!resultsSection) return;
+
+    const sponsorA = SPONSORS_CONFIG[0];
+    if (!sponsorA) return;
+
+    const banner = document.createElement('div');
+    banner.className = 'sponsor-result-banner';
+    banner.innerHTML = '<a href="' + sponsorA.url + '" target="_blank" rel="noopener noreferrer" onclick="trackSponsorClick(\'' + sponsorA.id + '\')">' +
+        '<span>' + sponsorA.icon + '</span> ' + sponsorA.name + ' — ' + sponsorA.description +
+        ' | <span>' + sponsorA.displayUrl + '</span></a>';
+
+    // Insert after results-section (before CTA HYBRIDE)
+    resultsSection.insertAdjacentElement('afterend', banner);
+
+    // Track impression
+    fetch('/api/sponsor/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            event_type: 'sponsor-result-shown',
+            sponsor_id: sponsorA.id,
+            page: window.location.pathname,
+            lang: 'fr',
+            device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop'
+        })
+    }).catch(function() {});
 }
 
 /**

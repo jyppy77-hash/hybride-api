@@ -1,5 +1,6 @@
 import os
 import io
+import json
 import tempfile
 import logging
 
@@ -442,21 +443,41 @@ def generate_meta_pdf(analysis: str = "", window: str = "75 tirages",
             c.line(15 * mm, y, w - 15 * mm, y)
             y -= 8 * mm
 
+            # Sponsor name dynamique depuis sponsors.json (Premium = slot_a)
+            sponsor_title = L["sponsor_title"]
+            sponsor_email = "partenariats@lotoia.fr"
+            try:
+                _cfg_path = os.path.join(os.path.dirname(__file__), "..", "config", "sponsors.json")
+                with open(_cfg_path, encoding="utf-8") as _sf:
+                    _scfg = json.load(_sf)
+                _slot_a = _scfg.get("slots", {}).get("loto_fr", {}).get("slot_a", {})
+                _sname = _slot_a.get("name")
+                if _sname and _sname != "Espace Premium":
+                    # Vrai sponsor signe : afficher son nom
+                    sponsor_title = sponsor_title.replace(
+                        sponsor_title.split(" — ")[0] if " — " in sponsor_title else sponsor_title,
+                        _sname,
+                    ) if " — " in sponsor_title else _sname
+                _surl = _slot_a.get("url", "")
+                if _surl:
+                    sponsor_email = _surl.replace("mailto:", "")
+            except Exception:
+                pass
+
             c.setFillColorRGB(0.1, 0.1, 0.1)
             c.setFont("DejaVuSans", 10)
-            c.drawCentredString(w / 2, y, L["sponsor_title"])
+            c.drawCentredString(w / 2, y, sponsor_title)
             y -= 6 * mm
 
             c.setFont("DejaVuSans", 9)
             c.drawCentredString(w / 2, y, L["sponsor_contact"])
             y -= 5 * mm
 
-            email_text = "contact@lotoia.fr"
-            email_width = c.stringWidth(email_text, "DejaVuSans", 9)
+            email_width = c.stringWidth(sponsor_email, "DejaVuSans", 9)
             email_x1 = (w - email_width) / 2
             email_x2 = email_x1 + email_width
-            c.drawCentredString(w / 2, y, email_text)
-            c.linkURL("mailto:contact@lotoia.fr", (email_x1, y - 2, email_x2, y + 10), relative=0)
+            c.drawCentredString(w / 2, y, sponsor_email)
+            c.linkURL(f"mailto:{sponsor_email}", (email_x1, y - 2, email_x2, y + 10), relative=0)
             y -= 10 * mm
 
         # ============ PAGE 2 — HEATMAP (or footer on page 1) ============

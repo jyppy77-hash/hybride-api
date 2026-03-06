@@ -5493,3 +5493,31 @@ body.theme-night .cta-hybride {
     background: linear-gradient(135deg, #0f2744 0%, #1e3a5f 100%);
 }
 
+/* ── Sponsor Result Banner (E5) ── */
+.sponsor-result-banner {
+    background: linear-gradient(135deg, #f0f4ff 0%, #e8eeff 100%);
+    border: 1px solid #d0d8f0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 16px 0;
+    text-align: center;
+    font-size: 14px;
+    color: #555;
+}
+.sponsor-result-banner a {
+    color: #3366cc;
+    text-decoration: none;
+    font-weight: 500;
+}
+.sponsor-result-banner a:hover {
+    text-decoration: underline;
+}
+body.theme-night .sponsor-result-banner {
+    background: linear-gradient(135deg, #1e293b 0%, #1a2332 100%);
+    border-color: rgba(255,255,255,.1);
+    color: #94a3b8;
+}
+body.theme-night .sponsor-result-banner a {
+    color: #60a5fa;
+}
+

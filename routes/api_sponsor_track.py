@@ -22,7 +22,7 @@ from rate_limit import limiter
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["sponsor-tracking"])
 
-_ALLOWED_EVENTS = frozenset(["sponsor-popup-shown", "sponsor-click", "sponsor-video-played", "sponsor-inline-shown"])
+_ALLOWED_EVENTS = frozenset(["sponsor-popup-shown", "sponsor-click", "sponsor-video-played", "sponsor-inline-shown", "sponsor-result-shown"])
 _ALLOWED_DEVICES = frozenset(["mobile", "desktop", "tablet"])
 
 # Owner IP filtering (reuse same env vars as main.py UmamiOwnerFilter)

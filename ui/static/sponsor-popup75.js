@@ -22,7 +22,8 @@ const META_ANALYSE_TIMER_DURATION = 30;
 // ============================================
 
 const SPONSOR_VIDEO_75 = {
-    id: 'lotoia_video',
+    id: 'LOTO_FR_A',
+    name: 'Espace Premium',
     url: 'mailto:partenariats@lotoia.fr',
     videoSrc: '/static/Sponsors_media/Sponsor75lotoia.mp4'
 };
@@ -212,7 +213,7 @@ function trackSponsorClick(sponsorId) {
     // Umami — sponsor click
     if (typeof umami !== 'undefined') umami.track('sponsor-click', { sponsor: sponsorId, module: 'loto' });
     if (window.LotoIA_track) LotoIA_track('sponsor-click', {sponsor: sponsorId, module: 'loto'});
-    fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-click', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+    fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-click', sponsor_id: sponsorId, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
     // GA4 Analytics - Track sponsor click
     if (window.LotoIAAnalytics && window.LotoIAAnalytics.business) {
         window.LotoIAAnalytics.business.sponsorClick({
@@ -331,7 +332,7 @@ function showSponsorPopup75(config) {
         // Umami — sponsor popup shown
         if (typeof umami !== 'undefined') umami.track('sponsor-popup-shown', { module: 'loto' });
         if (window.LotoIA_track) LotoIA_track('sponsor-popup-shown', {module: 'loto'});
-        fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-popup-shown', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+        fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-popup-shown', sponsor_id: SPONSOR_VIDEO_75.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
 
         // Umami — sponsor video played (autoplay)
         var sponsorVideo = overlay.querySelector('.sponsor-video');
@@ -340,7 +341,7 @@ function showSponsorPopup75(config) {
                 if (typeof umami !== 'undefined') umami.track('sponsor-video-played', { sponsor: SPONSOR_VIDEO_75.id, module: 'loto' });
                 if (window.LotoIA_track) LotoIA_track('sponsor-video-played', {sponsor: SPONSOR_VIDEO_75.id, module: 'loto'});
                 if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('sponsor_video_played', { event_category: 'sponsor', sponsor: SPONSOR_VIDEO_75.id, module: 'loto' });
-                fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-video-played', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+                fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-video-played', sponsor_id: SPONSOR_VIDEO_75.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
             }, { once: true });
         }
 
@@ -898,7 +899,7 @@ function openMetaResultPopup(data) {
                     engine: 'HYBRIDE',
                     graph_data: metaResultData && metaResultData.graph ? metaResultData.graph : null,
                     chance_data: metaResultData && metaResultData.chance ? metaResultData.chance : null,
-                    sponsor: 'Espace disponible',
+                    sponsor: 'LOTO_FR_A',
                     lang: window.LotoIA_lang || 'fr',
                     all_freq_boules: metaResultData && metaResultData.all_frequencies ? metaResultData.all_frequencies.boules : null,
                     all_freq_secondary: metaResultData && metaResultData.all_frequencies ? metaResultData.all_frequencies.secondary : null
