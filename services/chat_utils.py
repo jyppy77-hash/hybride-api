@@ -89,20 +89,21 @@ def _load_sponsors_config() -> dict:
             _sponsors_config = json.load(f)
     except (FileNotFoundError, json.JSONDecodeError) as e:
         logger.warning(f"[SPONSOR] Config introuvable ou invalide: {e}")
-        _sponsors_config = {"enabled": False, "frequency": 3, "sponsors": []}
+        _sponsors_config = {"enabled": False, "frequency": 3, "slots": {}}
     return _sponsors_config
 
 
 def _get_sponsor_if_due(history: list, lang: str = "fr") -> str | None:
-    """Retourne le texte sponsor si c'est le moment, None sinon."""
+    """Retourne le texte sponsor si c'est le moment, None sinon.
+
+    Alterne slot_a (Premium) / slot_b (Standard) : A/B/A/B...
+    Le message contient un marqueur [SPONSOR:<id>] pour le tracking frontend.
+    """
     config = _load_sponsors_config()
     if not config.get("enabled"):
         return None
 
     frequency = config.get("frequency", 3)
-    active = [s for s in config.get("sponsors", []) if s.get("active")]
-    if not active:
-        return None
 
     # Compter les reponses assistant dans l'historique
     bot_count = sum(1 for msg in history if msg.role == "assistant")
@@ -112,41 +113,30 @@ def _get_sponsor_if_due(history: list, lang: str = "fr") -> str | None:
     if bot_count % frequency != 0:
         return None
 
-    # Rotation parmi les sponsors actifs
-    cycle = bot_count // frequency
-    sponsor = active[(cycle - 1) % len(active)]
+    cycle = bot_count // frequency  # 1, 2, 3, 4...
 
-    # Alterner style A (naturel) / style B (encart)
-    if lang == "en":
-        if cycle % 2 == 1:
-            return "\U0001f4e2 This space is reserved for our partners \u2014 Learn more: partenariats@lotoia.fr"
-        else:
-            return "\u2014 Partner space available | partenariats@lotoia.fr"
-    elif lang == "es":
-        if cycle % 2 == 1:
-            return "\U0001f4e2 Este espacio está reservado para nuestros colaboradores \u2014 Más información: partenariats@lotoia.fr"
-        else:
-            return "\u2014 Espacio de colaborador disponible | partenariats@lotoia.fr"
-    elif lang == "pt":
-        if cycle % 2 == 1:
-            return "\U0001f4e2 Este espaço é reservado aos nossos parceiros \u2014 Saber mais: partenariats@lotoia.fr"
-        else:
-            return "\u2014 Espaço de parceiro disponível | partenariats@lotoia.fr"
-    elif lang == "de":
-        if cycle % 2 == 1:
-            return "\U0001f4e2 Dieser Platz ist unseren Partnern vorbehalten \u2014 Mehr erfahren: partenariats@lotoia.fr"
-        else:
-            return "\u2014 Partnerplatz verfügbar | partenariats@lotoia.fr"
-    elif lang == "nl":
-        if cycle % 2 == 1:
-            return "\U0001f4e2 Deze ruimte is gereserveerd voor onze partners \u2014 Meer informatie: partenariats@lotoia.fr"
-        else:
-            return "\u2014 Partnerruimte beschikbaar | partenariats@lotoia.fr"
+    # Alternate: odd cycle -> slot A (Premium first), even -> slot B
+    slots = config.get("slots", {}).get("loto_fr", {})
+    slot_key = "slot_a" if cycle % 2 == 1 else "slot_b"
+    slot = slots.get(slot_key)
+
+    if not slot or not slot.get("active"):
+        other_key = "slot_b" if slot_key == "slot_a" else "slot_a"
+        slot = slots.get(other_key)
+        if not slot or not slot.get("active"):
+            return None
+
+    sponsor_id = slot.get("id", "LOTO_FR_A")
+    tagline = slot.get("tagline", {})
+    text = tagline.get(lang, tagline.get("fr", ""))
+    email = slot.get("url", "mailto:partenariats@lotoia.fr").replace("mailto:", "")
+
+    if cycle % 2 == 1:
+        msg = f"\U0001f4e2 {text} \u2014 {email}"
     else:
-        if cycle % 2 == 1:
-            return "\U0001f4e2 Cet espace est réservé à nos partenaires \u2014 Pour en savoir plus : partenariats@lotoia.fr"
-        else:
-            return "\u2014 Espace partenaire disponible | partenariats@lotoia.fr"
+        msg = f"\u2014 {text} | {email}"
+
+    return f"[SPONSOR:{sponsor_id}]{msg}"
 
 
 def _strip_sponsor_from_text(text: str) -> str:
@@ -154,7 +144,8 @@ def _strip_sponsor_from_text(text: str) -> str:
     lines = text.split('\n')
     cleaned = [
         line for line in lines
-        if 'partenaires' not in line
+        if '[SPONSOR:' not in line
+        and 'partenaires' not in line
         and 'Espace partenaire' not in line
         and 'Partner space' not in line
         and 'colaboradores' not in line

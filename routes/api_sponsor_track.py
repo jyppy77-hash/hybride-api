@@ -22,7 +22,7 @@ from rate_limit import limiter
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["sponsor-tracking"])
 
-_ALLOWED_EVENTS = frozenset(["sponsor-popup-shown", "sponsor-click", "sponsor-video-played"])
+_ALLOWED_EVENTS = frozenset(["sponsor-popup-shown", "sponsor-click", "sponsor-video-played", "sponsor-inline-shown"])
 _ALLOWED_DEVICES = frozenset(["mobile", "desktop", "tablet"])
 
 # Owner IP filtering (reuse same env vars as main.py UmamiOwnerFilter)
@@ -69,6 +69,7 @@ class SponsorEvent(BaseModel):
     page: str = Field(..., min_length=1, max_length=200)
     lang: str = Field(default="fr", max_length=5)
     device: str = Field(default="desktop", max_length=20)
+    sponsor_id: str | None = Field(default=None, max_length=50)
 
 
 @router.post("/sponsor/track", status_code=204, response_class=Response)
@@ -100,10 +101,10 @@ async def track_sponsor_event(data: SponsorEvent, request: Request):
         await db_cloudsql.async_query(
             """
             INSERT INTO sponsor_impressions
-                (event_type, page, lang, country, device, session_hash, user_agent_hash)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
+                (event_type, page, lang, country, device, session_hash, user_agent_hash, sponsor_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """,
-            (data.event_type, data.page, data.lang, country, device, session_hash, user_agent_hash),
+            (data.event_type, data.page, data.lang, country, device, session_hash, user_agent_hash, data.sponsor_id),
         )
     except Exception as e:
         logger.error("[SPONSOR TRACK] insert failed: %s", e)

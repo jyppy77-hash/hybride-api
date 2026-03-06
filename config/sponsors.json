@@ -1,12 +1,42 @@
 {
+  "version": 2,
   "enabled": true,
   "frequency": 3,
-  "sponsors": [
-    {
-      "name": "Votre marque ici",
-      "tagline": "Votre message personnalisé",
-      "url": "mailto:partenariats@lotoia.fr",
-      "active": true
+  "slots": {
+    "loto_fr": {
+      "slot_a": {
+        "id": "LOTO_FR_A",
+        "tier": "premium",
+        "name": "Espace Premium",
+        "tagline": {
+          "fr": "Cet espace premium est r\u00e9serv\u00e9 \u00e0 un partenaire officiel",
+          "en": "This premium space is reserved for an official partner",
+          "es": "Este espacio premium est\u00e1 reservado para un socio oficial",
+          "pt": "Este espa\u00e7o premium \u00e9 reservado para um parceiro oficial",
+          "de": "Dieser Premium-Platz ist einem offiziellen Partner vorbehalten",
+          "nl": "Deze premiumruimte is gereserveerd voor een offici\u00eble partner"
+        },
+        "url": "mailto:partenariats@lotoia.fr",
+        "active": true
+      },
+      "slot_b": {
+        "id": "LOTO_FR_B",
+        "tier": "standard",
+        "name": "Espace Standard",
+        "tagline": {
+          "fr": "Cet espace est r\u00e9serv\u00e9 \u00e0 nos partenaires",
+          "en": "This space is reserved for our partners",
+          "es": "Este espacio est\u00e1 reservado para nuestros socios",
+          "pt": "Este espa\u00e7o \u00e9 reservado para os nossos parceiros",
+          "de": "Dieser Platz ist f\u00fcr unsere Partner reserviert",
+          "nl": "Deze ruimte is gereserveerd voor onze partners"
+        },
+        "url": "mailto:partenariats@lotoia.fr",
+        "active": true
+      }
     }
-  ]
+  },
+  "defaults": {
+    "contact_email": "partenariats@lotoia.fr"
+  }
 }

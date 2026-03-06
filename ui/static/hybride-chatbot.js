@@ -221,8 +221,12 @@
            Envoi message (API Gemini)
            ══════════════════════════════════ */
 
+        function extractSponsorId(text) {
+            var m = text.match(/\[SPONSOR:([^\]]+)\]/);
+            return m ? m[1] : null;
+        }
         function hasSponsor(text) {
-            return text.indexOf('partenaires') !== -1 || text.indexOf('Espace partenaire') !== -1;
+            return extractSponsorId(text) !== null;
         }
 
         function send() {
@@ -309,18 +313,34 @@
                         removeTyping();
                         addMessage(botText, 'bot');
                     }
+                    var sponsorId = extractSponsorId(botText);
+                    if (sponsorId) {
+                        botText = botText.replace(/\[SPONSOR:[^\]]+\]/, '');
+                        if (msgEl) updateBubbleText(msgEl, botText);
+                    }
                     chatHistory.push({ role: 'user', content: text });
                     chatHistory.push({ role: 'assistant', content: botText });
                     if (chatHistory.length > 20) chatHistory = [chatHistory[0]].concat(chatHistory.slice(-19));
                     saveHistory();
 
-                    if (hasSponsor(botText)) {
+                    if (sponsorId) {
                         sponsorViews++;
                         trackEvent('hybride_chat_sponsor_view', {
                             page: detectPage(),
-                            sponsor_style: botText.indexOf('partenaires') !== -1 ? 'A' : 'B',
+                            sponsor_id: sponsorId,
                             message_position: messageCount
                         });
+                        fetch('/api/sponsor/track', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                event_type: 'sponsor-inline-shown',
+                                sponsor_id: sponsorId,
+                                page: window.location.pathname,
+                                lang: 'fr',
+                                device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop'
+                            })
+                        }).catch(function() {});
                     }
 
                     if (messageCount === 5) {

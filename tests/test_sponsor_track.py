@@ -112,6 +112,42 @@ class TestSponsorTrack:
             assert resp.status_code == 204
 
 
+    def test_sponsor_inline_shown_event(self, _mock_db):
+        client = _get_client()
+        resp = client.post("/api/sponsor/track", json={
+            "event_type": "sponsor-inline-shown",
+            "page": "/loto",
+            "lang": "fr",
+            "device": "desktop",
+            "sponsor_id": "LOTO_FR_A",
+        })
+        assert resp.status_code == 204
+
+    def test_sponsor_id_included_in_insert(self, _mock_db):
+        client = _get_client()
+        client.post("/api/sponsor/track", json={
+            "event_type": "sponsor-popup-shown",
+            "page": "/loto/analyse",
+            "lang": "fr",
+            "device": "desktop",
+            "sponsor_id": "LOTO_FR_B",
+        })
+        assert _mock_db.async_query.called
+        args = _mock_db.async_query.call_args[0]
+        assert "sponsor_id" in args[0]
+        assert "LOTO_FR_B" in args[1]
+
+    def test_sponsor_id_optional_defaults_none(self, _mock_db):
+        client = _get_client()
+        resp = client.post("/api/sponsor/track", json={
+            "event_type": "sponsor-popup-shown",
+            "page": "/loto",
+            "lang": "fr",
+            "device": "desktop",
+        })
+        assert resp.status_code == 204
+
+
 class TestDetectCountry:
     """Test _detect_country helper."""
 

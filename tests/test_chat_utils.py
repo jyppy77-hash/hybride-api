@@ -3,11 +3,12 @@ Tests unitaires pour services/chat_utils.py.
 Fonctions de formatage, nettoyage, enrichissement contextuel.
 """
 
-from unittest.mock import MagicMock
+import json
+from unittest.mock import MagicMock, patch
 
 from services.chat_utils import (
     _enrich_with_context, _clean_response, _strip_sponsor_from_text,
-    _format_date_fr, _format_complex_context,
+    _get_sponsor_if_due, _format_date_fr, _format_complex_context,
 )
 
 
@@ -188,3 +189,104 @@ class TestFormatComplexContext:
         result = _format_complex_context(intent, data)
         assert "CHAUD" in result
         assert "7" in result
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# _get_sponsor_if_due — rotation A/B
+# ═══════════════════════════════════════════════════════════════════════
+
+_SPONSORS_V2 = {
+    "version": 2,
+    "enabled": True,
+    "frequency": 3,
+    "slots": {
+        "loto_fr": {
+            "slot_a": {
+                "id": "LOTO_FR_A", "tier": "premium", "name": "Espace Premium",
+                "tagline": {"fr": "Espace premium partenaire officiel", "en": "Premium official partner"},
+                "url": "mailto:partenariats@lotoia.fr", "active": True,
+            },
+            "slot_b": {
+                "id": "LOTO_FR_B", "tier": "standard", "name": "Espace Standard",
+                "tagline": {"fr": "Espace partenaires", "en": "Partner space"},
+                "url": "mailto:partenariats@lotoia.fr", "active": True,
+            },
+        }
+    },
+}
+
+
+def _reset_sponsor_cache():
+    """Reset the module-level sponsor config cache."""
+    import services.chat_utils as mod
+    mod._sponsors_config = None
+
+
+class TestGetSponsorIfDue:
+
+    def setup_method(self):
+        _reset_sponsor_cache()
+
+    def teardown_method(self):
+        _reset_sponsor_cache()
+
+    def _history(self, n_bot):
+        """Build a fake history with n_bot assistant messages."""
+        h = []
+        for _ in range(n_bot):
+            h.append(_msg("user", "question"))
+            h.append(_msg("assistant", "reponse"))
+        return h
+
+    def test_3_bot_messages_returns_slot_a(self):
+        with patch("services.chat_utils._load_sponsors_config", return_value=_SPONSORS_V2):
+            result = _get_sponsor_if_due(self._history(2), lang="fr")
+            assert result is not None
+            assert "[SPONSOR:LOTO_FR_A]" in result
+
+    def test_6_bot_messages_returns_slot_b(self):
+        with patch("services.chat_utils._load_sponsors_config", return_value=_SPONSORS_V2):
+            result = _get_sponsor_if_due(self._history(5), lang="fr")
+            assert result is not None
+            assert "[SPONSOR:LOTO_FR_B]" in result
+
+    def test_9_bot_messages_returns_slot_a_again(self):
+        with patch("services.chat_utils._load_sponsors_config", return_value=_SPONSORS_V2):
+            result = _get_sponsor_if_due(self._history(8), lang="fr")
+            assert result is not None
+            assert "[SPONSOR:LOTO_FR_A]" in result
+
+    def test_12_bot_messages_returns_slot_b_again(self):
+        with patch("services.chat_utils._load_sponsors_config", return_value=_SPONSORS_V2):
+            result = _get_sponsor_if_due(self._history(11), lang="fr")
+            assert result is not None
+            assert "[SPONSOR:LOTO_FR_B]" in result
+
+    def test_2_bot_messages_returns_none(self):
+        with patch("services.chat_utils._load_sponsors_config", return_value=_SPONSORS_V2):
+            result = _get_sponsor_if_due(self._history(1), lang="fr")
+            assert result is None
+
+    def test_disabled_returns_none(self):
+        config = {**_SPONSORS_V2, "enabled": False}
+        with patch("services.chat_utils._load_sponsors_config", return_value=config):
+            result = _get_sponsor_if_due(self._history(2), lang="fr")
+            assert result is None
+
+    def test_slot_a_inactive_falls_back_to_b(self):
+        config = json.loads(json.dumps(_SPONSORS_V2))
+        config["slots"]["loto_fr"]["slot_a"]["active"] = False
+        with patch("services.chat_utils._load_sponsors_config", return_value=config):
+            result = _get_sponsor_if_due(self._history(2), lang="fr")
+            assert result is not None
+            assert "[SPONSOR:LOTO_FR_B]" in result
+
+    def test_english_lang_uses_en_tagline(self):
+        with patch("services.chat_utils._load_sponsors_config", return_value=_SPONSORS_V2):
+            result = _get_sponsor_if_due(self._history(2), lang="en")
+            assert "Premium official partner" in result
+
+    def test_contains_email(self):
+        with patch("services.chat_utils._load_sponsors_config", return_value=_SPONSORS_V2):
+            result = _get_sponsor_if_due(self._history(2), lang="fr")
+            assert "partenariats@lotoia.fr" in result
