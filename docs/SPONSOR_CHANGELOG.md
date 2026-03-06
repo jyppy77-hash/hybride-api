@@ -4,6 +4,30 @@ Historique complet des modifications du systeme sponsor LotoIA.
 
 ---
 
+## 2026-03-06 — Fix A1 + A2 (Audit final)
+
+**Commit** : `fix(sponsor): admin chart 6/6 events + 14 README.md Sponsors_media`
+
+### A1 — Admin chart : 6/6 event types
+
+`ui/static/admin.js:148` — Ajout des 3 events manquants dans le graphique dashboard :
+- `sponsor-inline-shown` (Chatbot, violet `#8b5cf6`)
+- `sponsor-result-shown` (Resultats, rose `#ec4899`)
+- `sponsor-pdf-downloaded` (PDF, cyan `#06b6d4`)
+
+Le chart visualise desormais les 6 event types, aligne avec `_ALLOWED_EVENTS` et `_VALID_EVENTS`.
+
+### A2 — 14 README.md dans Sponsors_media
+
+Creation d'un README.md dans chacun des 14 dossiers produit :
+- Tier Premium (slot A) : inclut ligne video_meta75.mp4
+- Tier Standard (slot B) : logo + banner uniquement
+- Renvoi vers `_templates/specs.md` pour specs completes
+
+**Tests** : 1217 passed / 0 failed (4 echecs pre-existants dans test_seo_schema.py, non lies)
+
+---
+
 ## 2026-03-06 — Etape 1/5 : Virer EmovisIA + Poser codes produit
 
 **Commit** : `2b4011b` — `refactor(sponsor): remove EmovisIA promo, add LOTO_FR_A/B product codes`

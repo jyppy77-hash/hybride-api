@@ -145,7 +145,7 @@ var LotoAdmin = (function() {
         var seen = {};
         chartData.forEach(function(r) { if (!seen[r.day]) { labels.push(r.day); seen[r.day] = true; } });
 
-        var types = { 'sponsor-popup-shown': { label: 'Impressions', color: '#3b82f6' }, 'sponsor-click': { label: 'Clics', color: '#10b981' }, 'sponsor-video-played': { label: 'Videos', color: '#f59e0b' } };
+        var types = { 'sponsor-popup-shown': { label: 'Impressions', color: '#3b82f6' }, 'sponsor-click': { label: 'Clics', color: '#10b981' }, 'sponsor-video-played': { label: 'Videos', color: '#f59e0b' }, 'sponsor-inline-shown': { label: 'Chatbot', color: '#8b5cf6' }, 'sponsor-result-shown': { label: 'Résultats', color: '#ec4899' }, 'sponsor-pdf-downloaded': { label: 'PDF', color: '#06b6d4' } };
         var datasets = [];
         Object.keys(types).forEach(function(evType) {
             var vals = labels.map(function(d) {
