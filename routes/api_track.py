@@ -15,7 +15,6 @@ from datetime import date
 
 from fastapi import APIRouter, Request
 from fastapi.responses import Response
-from pydantic import BaseModel, Field
 
 import db_cloudsql
 from rate_limit import limiter
@@ -63,19 +62,26 @@ def _detect_country(accept_lang: str) -> str:
     return ""
 
 
-class TrackEvent(BaseModel):
-    event: str = Field(..., min_length=1, max_length=80)
-    page: str = Field(default="", max_length=200)
-    module: str = Field(default="", max_length=80)
-    lang: str = Field(default="", max_length=5)
-    device: str = Field(default="desktop", max_length=20)
-    meta: dict | None = None
-
-
 @router.post("/track", status_code=204, response_class=Response)
 @limiter.limit("30/minute")
-async def track_event(data: TrackEvent, request: Request):
-    """Record a universal frontend event."""
+async def track_event(request: Request):
+    """Record a universal frontend event (fire-and-forget).
+
+    Parses body with json.loads to accept any Content-Type
+    (sendBeacon may send text/plain despite Blob hint).
+    """
+    # Robust JSON parsing — accept text/plain AND application/json
+    try:
+        body = await request.body()
+        data = json.loads(body)
+    except (json.JSONDecodeError, Exception):
+        return Response(status_code=204)
+
+    # Validate required field
+    event = data.get("event", "")
+    if not event or not isinstance(event, str) or len(event) > _MAX_EVENT_LEN:
+        return Response(status_code=204)
+
     # Filter owner IP — silent 204
     client_ip = _get_client_ip(request)
     if _is_owner_ip(client_ip):
@@ -86,10 +92,16 @@ async def track_event(data: TrackEvent, request: Request):
     today = date.today().isoformat()
     session_hash = hashlib.sha256(f"{client_ip}|{ua}|{today}".encode()).hexdigest()
 
-    # Sanitize
-    device = data.device if data.device in _ALLOWED_DEVICES else "desktop"
+    # Extract and sanitize fields
+    page = str(data.get("page", ""))[:_MAX_PAGE_LEN]
+    module = str(data.get("module", ""))[:80]
+    lang = str(data.get("lang", ""))[:5]
+    device = str(data.get("device", "desktop"))
+    if device not in _ALLOWED_DEVICES:
+        device = "desktop"
     country = _detect_country(request.headers.get("accept-language", ""))
-    meta_json = json.dumps(data.meta) if data.meta else None
+    meta = data.get("meta")
+    meta_json = json.dumps(meta) if isinstance(meta, dict) else None
 
     try:
         await db_cloudsql.async_query(
@@ -98,7 +110,7 @@ async def track_event(data: TrackEvent, request: Request):
                 (event_type, page, module, lang, device, country, session_hash, meta_json)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """,
-            (data.event, data.page, data.module, data.lang, device,
+            (event, page, module, lang, device,
              country, session_hash, meta_json),
         )
     except Exception as e:

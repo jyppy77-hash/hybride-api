@@ -52,15 +52,21 @@ class TestTrackEndpoint:
             }, headers=_unique_headers())
         assert resp.status_code == 204
 
-    def test_missing_event_returns_422(self):
+    def test_missing_event_returns_204_no_insert(self):
         client = _get_client()
-        resp = client.post("/api/track", json={"page": "/loto"}, headers=_unique_headers())
-        assert resp.status_code == 422
+        with patch("routes.api_track.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(return_value=None)
+            resp = client.post("/api/track", json={"page": "/loto"}, headers=_unique_headers())
+        assert resp.status_code == 204
+        mock_db.async_query.assert_not_called()
 
-    def test_empty_event_returns_422(self):
+    def test_empty_event_returns_204_no_insert(self):
         client = _get_client()
-        resp = client.post("/api/track", json={"event": ""}, headers=_unique_headers())
-        assert resp.status_code == 422
+        with patch("routes.api_track.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(return_value=None)
+            resp = client.post("/api/track", json={"event": ""}, headers=_unique_headers())
+        assert resp.status_code == 204
+        mock_db.async_query.assert_not_called()
 
     def test_event_with_meta(self):
         client = _get_client()
@@ -132,10 +138,13 @@ class TestTrackEndpoint:
             resp = client.post("/api/track", json={"event": "page-view"}, headers=_unique_headers())
         assert resp.status_code == 204
 
-    def test_event_too_long_returns_422(self):
+    def test_event_too_long_returns_204_no_insert(self):
         client = _get_client()
-        resp = client.post("/api/track", json={"event": "x" * 81}, headers=_unique_headers())
-        assert resp.status_code == 422
+        with patch("routes.api_track.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(return_value=None)
+            resp = client.post("/api/track", json={"event": "x" * 81}, headers=_unique_headers())
+        assert resp.status_code == 204
+        mock_db.async_query.assert_not_called()
 
     def test_meta_json_stored(self):
         client = _get_client()

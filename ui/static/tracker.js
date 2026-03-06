@@ -56,18 +56,17 @@
         }
 
         try {
-            if (navigator.sendBeacon) {
-                navigator.sendBeacon(ENDPOINT, new Blob([JSON.stringify(payload)], {type: 'application/json'}));
-            } else {
-                fetch(ENDPOINT, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                    keepalive: true
-                }).catch(function() {});
-            }
+            fetch(ENDPOINT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                keepalive: true
+            }).catch(function() {});
         } catch (e) {
-            // Silent fail — tracking should never break the page
+            // Fallback sendBeacon if fetch throws (e.g. page unload race)
+            try {
+                navigator.sendBeacon(ENDPOINT, new Blob([JSON.stringify(payload)], {type: 'application/json'}));
+            } catch (e2) {}
         }
     };
 })();
