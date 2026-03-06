@@ -88,17 +88,17 @@ function stopFloatingStars() {
 
 var SPONSORS_CONFIG_EM = [
     {
-        id: 'emovisia',
-        name: 'EmovisIA',
-        url: 'https://www.emovisia.fr',
-        icon: '\uD83C\uDFA8',
+        id: 'LOTO_FR_A',
+        name: LI.sponsor1_name,
+        url: 'mailto:partenariats@lotoia.fr',
+        icon: '\u2B50',
         description: LI.sponsor1_desc,
-        displayUrl: 'www.emovisia.fr',
+        displayUrl: 'partenariats@lotoia.fr',
         badge: LI.sponsor1_badge,
         badgeType: 'primary'
     },
     {
-        id: 'annonceur',
+        id: 'LOTO_FR_B',
         name: LI.sponsor2_name,
         url: 'mailto:partenariats@lotoia.fr',
         icon: '\uD83D\uDCE3',

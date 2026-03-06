@@ -12,25 +12,25 @@
 
 const SPONSORS_CONFIG = [
     {
-        id: 'emovisia',
-        name: 'EmovisIA',
-        url: 'https://www.emovisia.fr',
-        icon: '🎨',
-        description: 'Restauration photo artisanale',
-        displayUrl: 'www.emovisia.fr',
+        id: 'LOTO_FR_A',
+        name: 'Espace Premium',
+        url: 'mailto:partenariats@lotoia.fr',
+        icon: '⭐',
+        description: 'Emplacement sponsor premium',
+        displayUrl: 'partenariats@lotoia.fr',
         badge: 'Propulsé par',
         badgeType: 'primary'
     },
-{
-    id: 'annonceur',
-    name: 'Votre marque ici',
-    url: 'mailto:partenariats@lotoia.fr',
-    icon: '📣',
-    description: 'Audience forte • trafic qualifié',
-    displayUrl: 'partenariats@lotoia.fr',
-    badge: 'Avec le soutien de',
-    badgeType: 'partner'
-}
+    {
+        id: 'LOTO_FR_B',
+        name: 'Votre marque ici',
+        url: 'mailto:partenariats@lotoia.fr',
+        icon: '📣',
+        description: 'Audience forte • trafic qualifié',
+        displayUrl: 'partenariats@lotoia.fr',
+        badge: 'Avec le soutien de',
+        badgeType: 'partner'
+    }
 ];
 
 // ============================================

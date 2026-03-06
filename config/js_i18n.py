@@ -81,7 +81,8 @@ _LABELS: dict[str, dict[str, str]] = {
         "history_best": "\U0001f9e0 Meilleure correspondance : <strong>{n} num\u00e9ro{s} identique{s}</strong>",
 
         # ── sponsor-popup-em ──
-        "sponsor1_desc": "Restauration photo artisanale",
+        "sponsor1_name": "Espace Premium",
+        "sponsor1_desc": "Emplacement sponsor premium",
         "sponsor1_badge": "Propuls\u00e9 par",
         "sponsor2_name": "Votre marque ici",
         "sponsor2_desc": "Audience forte \u2022 trafic qualifi\u00e9",
@@ -256,7 +257,8 @@ _LABELS: dict[str, dict[str, str]] = {
         "history_best": "\U0001f9e0 Best match: <strong>{n} identical number{s}</strong>",
 
         # ── sponsor-popup-em ──
-        "sponsor1_desc": "Artisan photo restoration",
+        "sponsor1_name": "Premium Space",
+        "sponsor1_desc": "Premium sponsor placement",
         "sponsor1_badge": "Powered by",
         "sponsor2_name": "Your brand here",
         "sponsor2_desc": "High audience \u2022 qualified traffic",
@@ -431,7 +433,8 @@ _LABELS: dict[str, dict[str, str]] = {
         "history_best": "\U0001f9e0 Mejor coincidencia: <strong>{n} número{s} idéntico{s}</strong>",
 
         # ── sponsor-popup-em ──
-        "sponsor1_desc": "Restauración artesanal de fotografías",
+        "sponsor1_name": "Espacio Premium",
+        "sponsor1_desc": "Espacio de patrocinio premium",
         "sponsor1_badge": "Impulsado por",
         "sponsor2_name": "Su marca aquí",
         "sponsor2_desc": "Audiencia amplia \u2022 tráfico cualificado",
@@ -606,7 +609,8 @@ _LABELS: dict[str, dict[str, str]] = {
         "history_best": "\U0001f9e0 Melhor correspondência: <strong>{n} número{s} idêntico{s}</strong>",
 
         # ── sponsor-popup-em ──
-        "sponsor1_desc": "Restauro artesanal de fotografias",
+        "sponsor1_name": "Espaço Premium",
+        "sponsor1_desc": "Espaço de patrocínio premium",
         "sponsor1_badge": "Impulsionado por",
         "sponsor2_name": "A sua marca aqui",
         "sponsor2_desc": "Audiência ampla \u2022 tráfego qualificado",
@@ -781,7 +785,8 @@ _LABELS: dict[str, dict[str, str]] = {
         "history_best": "\U0001f9e0 Beste Übereinstimmung: <strong>{n} identische Zahl{s}</strong>",
 
         # ── sponsor-popup-em ──
-        "sponsor1_desc": "Handwerkliche Fotorestaurierung",
+        "sponsor1_name": "Premium-Platz",
+        "sponsor1_desc": "Premium-Werbeplatz",
         "sponsor1_badge": "Unterstützt von",
         "sponsor2_name": "Ihre Marke hier",
         "sponsor2_desc": "Große Reichweite \u2022 qualifizierter Traffic",
@@ -956,7 +961,8 @@ _LABELS: dict[str, dict[str, str]] = {
         "history_best": "\U0001f9e0 Beste overeenkomst: <strong>{n} identiek{s} nummer{s}</strong>",
 
         # ── sponsor-popup-em ──
-        "sponsor1_desc": "Ambachtelijke fotorestauratie",
+        "sponsor1_name": "Premiumruimte",
+        "sponsor1_desc": "Premium sponsorplaats",
         "sponsor1_badge": "Mogelijk gemaakt door",
         "sponsor2_name": "Uw merk hier",
         "sponsor2_desc": "Sterk bereik \u2022 gekwalificeerd verkeer",
