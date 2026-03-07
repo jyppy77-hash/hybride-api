@@ -22,6 +22,13 @@ import db_cloudsql
 from config.templates import env
 
 logger = logging.getLogger(__name__)
+
+
+def _dec(v):
+    """Convert Decimal to int/float for JSON serialization."""
+    if isinstance(v, Decimal):
+        return int(v) if v == int(v) else float(v)
+    return v
 router = APIRouter(tags=["admin"])
 
 _ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "").strip()
@@ -155,7 +162,7 @@ async def admin_dashboard(request: Request):
         for r in rows:
             key = _kpi_map.get(r["event_type"])
             if key:
-                _kpi_vals[key] = r["cnt"]
+                _kpi_vals[key] = _dec(r["cnt"])
         impressions = _kpi_vals["impressions"]
         clicks = _kpi_vals["clicks"]
         videos = _kpi_vals["videos"]
@@ -260,19 +267,19 @@ async def admin_api_impressions(
         for r in rows:
             et = r["event_type"]
             if et == "sponsor-popup-shown":
-                kpi["impressions"] = r["cnt"]
-                total_imp = r["cnt"]
+                kpi["impressions"] = _dec(r["cnt"])
+                total_imp = _dec(r["cnt"])
             elif et == "sponsor-click":
-                kpi["clicks"] = r["cnt"]
-                total_clicks = r["cnt"]
+                kpi["clicks"] = _dec(r["cnt"])
+                total_clicks = _dec(r["cnt"])
             elif et == "sponsor-video-played":
-                kpi["videos"] = r["cnt"]
+                kpi["videos"] = _dec(r["cnt"])
 
         sess_row = await db_cloudsql.async_fetchone(
             f"SELECT COUNT(DISTINCT session_hash) AS s FROM sponsor_impressions WHERE {w}",
             tuple(params),
         )
-        kpi["sessions"] = sess_row["s"] if sess_row else 0
+        kpi["sessions"] = _dec(sess_row["s"]) if sess_row else 0
         if total_imp > 0:
             kpi["ctr"] = f"{(total_clicks / total_imp * 100):.2f}%"
     except Exception as e:
@@ -287,7 +294,7 @@ async def admin_api_impressions(
             f"GROUP BY day, event_type ORDER BY day",
             tuple(params),
         )
-        chart_data = [{"day": str(r["day"]), "event_type": r["event_type"], "cnt": r["cnt"]} for r in rows]
+        chart_data = [{"day": str(r["day"]), "event_type": r["event_type"], "cnt": _dec(r["cnt"])} for r in rows]
     except Exception as e:
         logger.error("[ADMIN API] impressions chart failed: %s", e)
 
@@ -303,7 +310,7 @@ async def admin_api_impressions(
         )
         table_data = [
             {"day": str(r["day"]), "event_type": r["event_type"], "page": r["page"],
-             "lang": r["lang"], "device": r["device"], "country": r["country"] or "", "cnt": r["cnt"]}
+             "lang": r["lang"], "device": r["device"], "country": r["country"] or "", "cnt": _dec(r["cnt"])}
             for r in rows
         ]
     except Exception as e:
@@ -348,7 +355,7 @@ async def admin_api_votes(
             tuple(params),
         )
         if row:
-            summary["total"] = row["total"] or 0
+            summary["total"] = _dec(row["total"]) or 0
             summary["avg_rating"] = str(row["avg_rating"] or "0.0")
 
         src_rows = await db_cloudsql.async_fetchall(
@@ -357,7 +364,7 @@ async def admin_api_votes(
         )
         for r in src_rows:
             if r["source"] in summary:
-                summary[r["source"]] = r["cnt"]
+                summary[r["source"]] = _dec(r["cnt"])
     except Exception as e:
         logger.error("[ADMIN API] votes summary failed: %s", e)
 
@@ -369,7 +376,7 @@ async def admin_api_votes(
             f"SELECT rating, COUNT(*) AS cnt FROM ratings WHERE {w} GROUP BY rating",
             tuple(params),
         )
-        dist_map = {r["rating"]: r["cnt"] for r in dist_rows}
+        dist_map = {r["rating"]: _dec(r["cnt"]) for r in dist_rows}
         for s in range(5, 0, -1):
             distribution.append({"stars": s, "count": dist_map.get(s, 0), "total": total})
     except Exception as e:
@@ -502,14 +509,14 @@ async def admin_export_sponsor_report_pdf(
         for r in rows:
             et = r["event_type"]
             if et == "sponsor-popup-shown":
-                kpi["impressions"] = r["cnt"]; total_imp = r["cnt"]
+                kpi["impressions"] = _dec(r["cnt"]); total_imp = _dec(r["cnt"])
             elif et == "sponsor-click":
-                kpi["clicks"] = r["cnt"]; total_clicks = r["cnt"]
+                kpi["clicks"] = _dec(r["cnt"]); total_clicks = _dec(r["cnt"])
             elif et == "sponsor-video-played":
-                kpi["videos"] = r["cnt"]
+                kpi["videos"] = _dec(r["cnt"])
         sess = await db_cloudsql.async_fetchone(
             f"SELECT COUNT(DISTINCT session_hash) AS s FROM sponsor_impressions WHERE {w}", tuple(params))
-        kpi["sessions"] = sess["s"] if sess else 0
+        kpi["sessions"] = _dec(sess["s"]) if sess else 0
         if total_imp > 0:
             kpi["ctr"] = f"{(total_clicks / total_imp * 100):.2f}%"
 
@@ -521,7 +528,7 @@ async def admin_export_sponsor_report_pdf(
         )
         table_data = [
             {"day": str(r["day"]), "event_type": r["event_type"], "page": r["page"],
-             "lang": r["lang"], "device": r["device"], "country": r["country"] or "", "cnt": r["cnt"]}
+             "lang": r["lang"], "device": r["device"], "country": r["country"] or "", "cnt": _dec(r["cnt"])}
             for r in table_rows
         ]
     except Exception as e:
@@ -943,9 +950,9 @@ async def admin_api_realtime(request: Request, event_type: str = "all"):
             "FROM event_log WHERE created_at >= CURDATE()"
         )
         kpi = {
-            "today": kpi_row["today_count"] if kpi_row else 0,
-            "hour": kpi_row["hour_count"] if kpi_row else 0,
-            "types": kpi_row["type_count"] if kpi_row else 0,
+            "today": _dec(kpi_row["today_count"]) if kpi_row else 0,
+            "hour": _dec(kpi_row["hour_count"]) if kpi_row else 0,
+            "types": _dec(kpi_row["type_count"]) if kpi_row else 0,
         }
 
         # Distinct event types for filter dropdown
