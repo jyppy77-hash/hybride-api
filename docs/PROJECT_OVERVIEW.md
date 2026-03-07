@@ -53,7 +53,7 @@ hybride-api/
 │   ├── sitemap.py                       # Dynamic XML sitemap — Loto FR + EM multilang (P5/5)
 │   ├── api_sponsor_track.py             # Sponsor event tracking — POST /api/sponsor/track (Phase 1/4)
 │   ├── api_track.py                     # Universal event tracking — POST /api/track (Phase RT-1, ~100L)
-│   └── admin.py                         # Admin back-office — dashboard, impressions, votes, realtime, sponsors CRUD, factures CRUD, config (~950L, Phase 2-4/4 + RT-1)
+│   └── admin.py                         # Admin back-office — dashboard, impressions, votes, realtime, sponsors CRUD, factures CRUD, tarifs EU (EI/SASU switch), config (~1100L, Phase 2-4/4 + RT-1 + Tarifs)
 │
 ├── services/                            # Business logic layer (23 modules, ~8073L)
 │   ├── __init__.py                      # Package init
@@ -180,18 +180,19 @@ hybride-api/
 │   │   ├── cookies.html                # EM cookie policy (6 langs: 8 sections, JS settings buttons)
 │   │   └── disclaimer.html             # EM disclaimer (6 langs: gambling warning, AI warning, liability limitation)
 │   │
-│   ├── templates/admin/                 # Jinja2 templates — Admin back-office (Phase 2-4/4 + RT-1)
-│   │   ├── _base.html                  # Admin base layout (nav, theme toggle, dark/light cookie)
-│   │   ├── login.html                  # Admin login page (password auth)
-│   │   ├── dashboard.html              # Dashboard KPI (impressions, votes, avg rating)
+│   ├── templates/admin/                 # Jinja2 templates — Admin back-office (Glassmorphism UI, Phase 2-4/4 + RT-1 + Tarifs)
+│   │   ├── _base.html                  # Admin base layout (sticky glass nav, theme toggle, Inter font)
+│   │   ├── login.html                  # Admin login page (glass card, gradient buttons)
+│   │   ├── dashboard.html              # Dashboard KPI (glass cards, nav links)
 │   │   ├── impressions.html            # Impressions detail (AJAX filters, Chart.js, pagination)
 │   │   ├── votes.html                  # Votes detail (distribution, filters, pagination)
-│   │   ├── realtime.html               # Realtime event feed (5s polling, event badges, KPI)
+│   │   ├── realtime.html               # Realtime feed (card-based feed, activity heatmap, filter pills, LIVE pulse)
 │   │   ├── sponsors.html               # Sponsors list (CRUD)
 │   │   ├── sponsor_form.html           # Sponsor create/edit form
 │   │   ├── factures.html               # Invoices list (CRUD, status badges)
 │   │   ├── facture_form.html           # Invoice create/edit form
 │   │   ├── facture_detail.html         # Invoice detail + PDF download
+│   │   ├── tarifs.html                 # Grille tarifaire EU — 14 codes cards by lang, EI/SASU toggle, packs, paliers
 │   │   └── config.html                 # Enterprise config (FacturIA settings)
 │   │
 │   ├── en/                              # English (GB) pages (Phase 11)
@@ -222,8 +223,8 @@ hybride-api/
 │       ├── theme.js                     # Dark/light mode toggle
 │       ├── analytics.js                 # GA4 analytics v2.5.2 (Consent Mode v2, owner IP filter, 32+ events)
 │       ├── tracker.js                   # Universal event tracker — LotoIA_track() (Phase RT-1, dedup, sendBeacon, owner filter)
-│       ├── admin.css                    # Admin back-office styles (dark/light theme, FacturIA palette, realtime feed)
-│       ├── admin.js                     # Admin AJAX logic (impressions, votes, realtime polling, chart.js, 6/6 sponsor events)
+│       ├── admin.css                    # Admin glassmorphism UI (gradient bg, glass cards, Inter font, dark/light theme, 700+L)
+│       ├── admin.js                     # Admin AJAX logic (impressions, votes, realtime card feed + heatmap + pills, chart.js, 6/6 sponsor events)
 │       ├── cookie-consent.js            # Cookie consent banner v2.0.0 (CNIL, i18n 6 langs)
 │       ├── faq.js                       # FAQ accordion logic (Loto)
 │       ├── faq-em.js                    # FAQ accordion logic (EuroMillions)
@@ -255,7 +256,7 @@ hybride-api/
 │           ├── sponsor-popup-em.js      # EM sponsor popup logic
 │           └── sponsor-popup75-em.css   # EM META ANALYSE 75 popup styling
 │
-├── tests/                               # Unit tests (pytest) — 1217 tests
+├── tests/                               # Unit tests (pytest) — 1244 tests
 │   ├── conftest.py                      # Shared fixtures (SmartMockCursor, cache clear)
 │   ├── test_models.py                   # Pydantic models + CONFIG weights (10 tests)
 │   ├── test_hybride.py                  # HYBRIDE engine tests (21 tests)
@@ -276,7 +277,7 @@ hybride-api/
 │   ├── test_argent.py               # Argent/money detection + response tests (84 tests, Phase A)
 │   ├── test_seo_headers.py          # SEO infrastructure tests (6 tests, SEO Phase A)
 │   ├── test_seo_schema.py           # SEO Schema.org + E-E-A-T tests (31 tests, SEO Phases B-D)
-│   ├── test_admin.py                # Admin back-office tests (65 tests, Phase 2-4/4 + RT-1)
+│   ├── test_admin.py                # Admin back-office tests (83 tests, Phase 2-4/4 + RT-1 + Tarifs)
 │   └── test_track.py               # Universal event tracking tests (12 tests, Phase RT-1)
 │
 ├── config/                                # Runtime configuration
@@ -293,7 +294,8 @@ hybride-api/
 ├── migrations/                            # Database migrations (manual)
 │   ├── add_indexes.sql                  # Critical indexes (boule_1-5, date, chance)
 │   ├── 003_create_facturia_tables.sql   # FacturIA tables: fia_config_entreprise, fia_sponsors, fia_grille_tarifaire, fia_factures (Phase 3+4/4)
-│   └── 004_create_event_log.sql         # Universal event_log table with indexes (Phase RT-1)
+│   ├── 004_create_event_log.sql         # Universal event_log table with indexes (Phase RT-1)
+│   └── 005_create_tarifs_tables.sql     # admin_config (EI/SASU switch) + sponsor_tarifs (14 product codes EU) (Tarifs phase)
 │
 ├── data/
 │   └── loto_db.sql                      # SQL dump (official FDJ Loto draws)
@@ -752,7 +754,7 @@ services/ — 23 modules, ~8073 lines
     ├── penalization.py       (65L)  Post-draw frequency penalization filter
     └── prompt_loader.py     (143L)  Loto PROMPT_MAP (18 keys) + EM file-based multilang loader (P4/5)
 
-tests/ — 1217 tests, 31 files (pytest + pytest-cov)
+tests/ — 1244 tests, 31 files (pytest + pytest-cov)
     ├── conftest.py                (247L)  Fixtures (AsyncSmartMockCursor, cache clear)
     ── Foundation Tests ──
     ├── test_models.py             (92L)   Pydantic models + CONFIG weights
@@ -1174,6 +1176,10 @@ Auth: cookie-based (`lotoia_admin_token`), timing-safe comparison (`secrets.comp
 | `/admin/factures/{id}` | GET | Invoice detail |
 | `/admin/factures/{id}/pdf` | GET | Download invoice PDF (FacturIA style) |
 | `/admin/factures/{id}/status` | POST | Update invoice status (brouillon → envoyee → payee) |
+| `/admin/tarifs` | GET | Grille tarifaire EU — 14 product codes, EI/SASU toggle, packs, paliers |
+| `/admin/api/tarifs` | GET | JSON: tarifs + packs + paliers + billing_mode |
+| `/admin/api/tarifs/mode` | POST | Switch billing mode EI/SASU (persisted in admin_config table) |
+| `/admin/api/tarifs/{code}` | PUT | Update tarif (price, engagement, reductions, active status) |
 | `/admin/config` | GET/POST | Enterprise config (raison sociale, SIRET, TVA, IBAN) |
 | `/admin/export/impressions/csv` | GET | CSV export of impressions |
 | `/admin/export/impressions/pdf` | GET | PDF report of impressions |
@@ -2035,7 +2041,7 @@ Favicon not displaying in Bing search results — root cause: no `/favicon.ico` 
 **Docs**: `grille_tarifaire_lotoia_v6.pdf`, `grille_tarifaire_em_ue_v1.pdf`, `SPONSOR_CHANGELOG.md`, `SPONSOR_COHERENCE_AUDIT.md`, `SPONSOR_FINAL_AUDIT.md`, `Sponsors_media/_templates/specs.md`, 14 `Sponsors_media/*/README.md`
 | `tests/test_admin.py` | +5 realtime tests → 65 total |
 
-**Result**: 56 files changed, 1217 tests pass, 0 regressions.
+**Result**: 56 files changed, 1244 tests pass, 0 regressions.
 
 ### Cumulative Impact
 
@@ -2106,8 +2112,13 @@ Favicon not displaying in Bing search results — root cause: no `/favicon.ico` 
 | 2026-03-05 | **Admin Phase 3+4/4**: Exports CSV/PDF + FacturIA (sponsors CRUD, invoices CRUD, config). `services/admin_pdf.py` (FacturIA palette). 4 MySQL tables. 6 new templates. 60 admin tests. |
 | 2026-03-05 | **Admin Styling + Theme**: Complete UI overhaul (40+ CSS variables, dark/light toggle, cookie persistence, flash prevention). FacturIA palette #1a237e + #d4a843. |
 | 2026-03-05 | **Phase RT-1**: Universal event tracking + realtime feed. `event_log` table, POST /api/track, `tracker.js` (36 LotoIA_track calls in 10 JS files, included in 35 HTML files). `/admin/realtime` live feed (5s polling, colored badges, KPI). 21 routers. **1198 tests** (+85). |
-| 2026-03-06 | **Sponsor V3**: 5-step refactoring — 14 product codes (LOTO_FR_A/B + 12 EM_XX_A/B), `sponsors.json` V3 (7 slot groups), A/B rotation chatbot, `[SPONSOR:ID]` marker, 6 emplacements, 6 tracking events, dynamic EM lang derivation (`LI.locale` JS / `lang` param Python), `extractSponsorId()` regex in 3 chatbot files, `injectSponsorBannerEM()`, `_VALID_EVENTS` aligned (3→6). Grilles tarifaires PDF (Loto V6 + EM UE V1). 14 `Sponsors_media/` folders. 360 coherence audit (42/42 OK). **1217 tests** (+19). Score 9.4 → **9.5/10**. |
+| 2026-03-06 | **Sponsor V3**: 5-step refactoring — 14 product codes (LOTO_FR_A/B + 12 EM_XX_A/B), `sponsors.json` V3 (7 slot groups), A/B rotation chatbot, `[SPONSOR:ID]` marker, 6 emplacements, 6 tracking events, dynamic EM lang derivation (`LI.locale` JS / `lang` param Python), `extractSponsorId()` regex in 3 chatbot files, `injectSponsorBannerEM()`, `_VALID_EVENTS` aligned (3→6). Grilles tarifaires PDF (Loto V6 + EM UE V1). 14 `Sponsors_media/` folders. 360 coherence audit (42/42 OK). **1244 tests** (+19). Score 9.4 → **9.5/10**. |
 | 2026-03-06 | **Sponsor V3 fix A1+A2**: `admin.js` chart 6/6 events (added inline-shown, result-shown, pdf-downloaded). 14 `README.md` in `Sponsors_media/` folders (tier-specific asset specs). Final pre-launch audit (`SPONSOR_FINAL_AUDIT.md`): 10-point check, all clear, system locked for March 15 launch. |
+| 2026-03-07 | **Admin fix**: Decimal JSON serialization in all admin API endpoints (`_dec()` helper). MySQL COUNT/SUM/AVG aggregates return Decimal via aiomysql → converted to int/float before JSONResponse. Fixed `/admin/api/realtime` 5s error loop + impressions + votes + dashboard + PDF report. |
+| 2026-03-07 | **Test fix**: 4 `TestLegalCssConditional` tests updated — `legal.css` moved to `_base.html` (Phase 1.5 hero overlap fix) so all EM pages load it. Tests adapted to match reality. 1226 → **1226 tests** (0 failed). |
+| 2026-03-07 | **Admin Tarifs**: Grille tarifaire EU + switch EI/SASU. `/admin/tarifs` page with 14 product codes (4 FR + 10 EU), CRUD via AJAX modal, EI mode locks EU codes. Regional packs (6), audience tiers (4), overage models (CPC/CPM). Migration 005: `admin_config` + `sponsor_tarifs` tables. 18 new tests → 1244 total. |
+| 2026-03-07 | **Admin Glassmorphism UI**: Complete visual overhaul — gradient bg (#0f0c29→#302b63→#24243e), glass cards (backdrop-filter blur), Inter font, sticky glass nav with animated underlines, gradient buttons with hover glow, gold/blue accent palette, custom scrollbar. All 8 admin pages restyled. Tarifs: card-based layout grouped by lang with color-coded badges. iOS-style EI/SASU toggle. |
+| 2026-03-07 | **Realtime Feed Redesign**: Card-based event feed replacing table. Activity heatmap (60-block bar). Filter pills (Tous/Sponsor/Rating/Simulateur/Chatbot/Meta75). LIVE pulse animation. Animated KPI counting. Color-coded event dots (orange sponsor, green rating, blue simulateur, violet chatbot, gold meta75). Device icons + country flag emojis. Slide-in animation for new events. **1244 tests**. |
 
 ---
 
@@ -2126,10 +2137,10 @@ Favicon not displaying in Bing search results — root cause: no `/favicon.ico` 
 | META ANALYSE 75 (Loto) | Stable | Async Gemini enrichment + PDF export, circuit breaker fallback. 18 Loto prompt keys. |
 | META ANALYSE 75 (EM) | Stable | Dual graphs, EM Gemini enrichment, EM PDF (2x2 matplotlib), 14 EM prompt keys. |
 | Cache | Stable | Redis async + in-memory fallback (Phase 6). PDF off-thread. |
-| Testing | Active | **1217 tests** (pytest, 32 test files), CI integration |
+| Testing | Active | **1244 tests** (pytest, 32 test files), CI integration |
 | Security | Hardened | CSP+HSTS preload+COOP (Phase 7), aiomysql parameterized queries, rate limiting, correlation IDs |
 | SEO | **Production-ready (Phases A-D + Sprint 4-5)** | **Phases A-D**: Organization schema unified, WebSite schema, AggregateRating EM (conditional ≥5), E-E-A-T (bio, founder Schema), editorial SEO intros, CTA HYBRIDE (6 pages), WebP images (4, 71-76% savings), critical CSS inline + async, Last-Modified + Vary headers, min-instances=1, Bing favicon compatible. **Sprint 4**: BreadcrumbList JSON-LD (7 pages), Dataset + CollectionPage schemas, H1 keyword optimization (6 langs), title tags ≤50 chars, CLS fix (4 images), robots.txt EM rules, Loto cross-links (FR footer). **Sprint 5 Sitemap**: +24 legal pages, xhtml:link hreflang alternates (7 per EM URL). Audit score **93/100**. |
-| Admin Back-Office | **Stable (Phase 2-4/4 + RT-1)** | Dashboard KPI, impressions/votes detail (AJAX+Chart.js), realtime event feed (5s polling), sponsors CRUD, invoices CRUD+PDF, config. Dark/light theme (FacturIA palette). CSV/PDF exports. Cookie auth (timing-safe). 65 admin tests |
+| Admin Back-Office | **Stable (Phase 2-4/4 + RT-1 + Tarifs)** | Premium glassmorphism UI. Dashboard KPI, impressions/votes detail (AJAX+Chart.js), realtime card feed (activity heatmap, filter pills, LIVE pulse), sponsors CRUD, invoices CRUD+PDF, tarifs EU (14 codes, EI/SASU switch, packs, paliers), config. Dark/light theme. CSV/PDF exports. Cookie auth (timing-safe). 83 admin tests |
 | Sponsor System | **Locked for launch (V3)** | 14 product codes (LOTO_FR_A/B + 12 EM_XX_A/B). 5 emplacements (E1-E5: popup, video, PDF, chatbot, banner). A/B rotation. `[SPONSOR:ID]` marker. 6 tracking events (admin chart 6/6). Dynamic lang derivation (JS: `LI.locale`, Python: `lang` param). `sponsors.json` V3 (7 slot groups). Grilles tarifaires PDF (Loto V6 + EM UE V1). 14 `Sponsors_media/*/README.md`. Final audit: 10/10 OK. 15 sponsor tests |
 | Event Tracking | **Stable (Phase RT-1)** | Universal `event_log` table + POST /api/track. `tracker.js` (LotoIA_track) on all pages (35 HTML + EM base template). 36 tracked events (chatbot, rating, sponsor, simulateur, meta75). Owner IP filter, SHA-256 session hash, RGPD compliant. 12 track tests |
 | Mobile responsive | Stable | Fullscreen chatbot, viewport sync, safe-area support |
@@ -2156,7 +2167,7 @@ Observable characteristics based on development usage:
 - **Redis optional** — `services/cache.py` falls back to per-process in-memory cache if `REDIS_URL` absent (not shared across 2 workers in fallback mode).
 - **Gemini dependency** — META ANALYSE and chatbot depend on an external API. Mitigated by circuit breaker + fallback messages, but degraded experience when open.
 - **Minimal monitoring** — Production observability relies on Cloud Run metrics + JSON structured logs with correlation IDs. No APM or alerting.
-- **Test coverage** — 1217 tests across 32 files. Core engine, chat pipeline, stats, insult/OOR/argent detection, templates, legal pages, i18n, JS labels, prompts, multilang routes, sitemap, PDF heatmap, multilang temporal filter, top-N extraction, Phase T neutralization, SEO headers, SEO schemas, admin back-office (65 tests), event tracking (12 tests) well covered. Some route handlers have lower coverage.
+- **Test coverage** — 1244 tests across 32 files. Core engine, chat pipeline, stats, insult/OOR/argent detection, templates, legal pages, i18n, JS labels, prompts, multilang routes, sitemap, PDF heatmap, multilang temporal filter, top-N extraction, Phase T neutralization, SEO headers, SEO schemas, admin back-office (83 tests), event tracking (12 tests) well covered. Some route handlers have lower coverage.
 - **i18n residue** — Full i18n pipeline complete (P1-P5/5 + Sprints ES/PT/DE/NL): gettext, Jinja2, JS labels, prompts, routes, sitemap, kill switch. **All 6 languages fully translated and live.** 4 legal pages translated. Cookie consent banner translated (6 langs). 1 minor FR residue: rating popup labels (5 FR strings in `rating-popup.js`). Loto EN not yet planned.
 
 ---
@@ -2178,7 +2189,8 @@ Observable characteristics based on development usage:
 | **V7.2 (chat multilang)** | **9.3** | **+0.1** | **P1-P3: top-N multilingual, temporal filter 6 langs, Phase T frequency neutralizer. 1076 tests** |
 | **V8 (SEO Phases A-D + favicon)** | **9.3** | **+0.0** | **SEO 360° audit 78→93/100. Organization schema, WebSite, AggregateRating EM, E-E-A-T bio, WebP images, CSS async, Last-Modified/Vary headers, Bing favicon fix. 1113 tests (+37)** |
 | **V9 (Admin + RT-1)** | **9.4** | **+0.1** | **Admin back-office (dashboard, impressions, votes, realtime, sponsors CRUD, invoices CRUD+PDF, config). Dark/light theme. Universal event tracking (event_log + tracker.js + 36 tracked events). Realtime feed (5s polling). 1198 tests (+85)** |
-| **V10 (Sponsor V3)** | **9.5** | **+0.1** | **Sponsor system V3: 14 product codes (LOTO_FR_A/B + 12 EM), 6 emplacements, A/B rotation, [SPONSOR:ID] marker, 6 tracking events, dynamic EM lang derivation, sponsors.json V3, grilles tarifaires PDF (Loto V6 + EM UE V1), 360 coherence audit. 1217 tests (+19)** |
+| **V10 (Sponsor V3)** | **9.5** | **+0.1** | **Sponsor system V3: 14 product codes (LOTO_FR_A/B + 12 EM), 6 emplacements, A/B rotation, [SPONSOR:ID] marker, 6 tracking events, dynamic EM lang derivation, sponsors.json V3, grilles tarifaires PDF (Loto V6 + EM UE V1), 360 coherence audit. 1244 tests (+19)** |
+| **V11 (Admin Premium)** | **9.6** | **+0.1** | **Decimal JSON fix, Tarifs EU page (14 codes CRUD, EI/SASU switch, migration 005), Glassmorphism UI refonte (8 pages, glass cards, gradient bg, Inter font), Realtime redesign (card feed, heatmap, filter pills, animated KPI, LIVE pulse). 1244 tests (+18 tarifs)** |
 
 ### V7 Section Scores (03/03/2026)
 
@@ -2187,7 +2199,7 @@ Observable characteristics based on development usage:
 | Architecture & Structure | 7.5 | **9.5** | +2.0 | Phase 10 unified routes, GameConfig registry, 21 service modules, modular chat pipeline (13 phases), kill switch pattern, factory routes, base class inheritance (BaseStatsService) |
 | Security & Credentials | 8.0 | **9.5** | +1.5 | HSTS preload (1yr), CSP strict, COOP, X-Frame DENY, Permissions-Policy, AI bot blocking (12 bots), rate limiting (10/min PDF), argent/gambling detection (Phase A), HttpOnly press token, triple analytics stack (GA4+Umami+Wysistat ACPM), Wysistat owner IP bridge fix |
 | Performance & Resilience | 7.0 | **8.5** | +1.5 | Redis async cache + in-memory fallback (Phase 6), SSE streaming (P9), circuit breaker, async DB (aiomysql Phase 5), PDF off-thread, GZip middleware, cache headers (7-30d) |
-| Tests & Quality | 6.5 | **9.3** | +2.8 | 248 → **1217 tests** (+385%), 31 test files, sitemap 100% coverage, chat detectors (multilang top-N, temporal filter, Phase T neutralizer), i18n, prompts, multilang routes, hreflang, PDF heatmap, legal pages, SEO headers+schemas, admin back-office (65 tests), event tracking (12 tests) all tested |
+| Tests & Quality | 6.5 | **9.3** | +2.8 | 248 → **1244 tests** (+385%), 31 test files, sitemap 100% coverage, chat detectors (multilang top-N, temporal filter, Phase T neutralizer), i18n, prompts, multilang routes, hreflang, PDF heatmap, legal pages, SEO headers+schemas, admin back-office (83 tests), event tracking (12 tests) all tested |
 | Maintainability & Documentation | 7.5 | **9.0** | +1.5 | PROJECT_OVERVIEW 2000+ lines, i18n conventions documented, kill switch pattern, gettext/Babel pipeline, prompt loader with fallback chain, JS i18n centralized |
 | Deployment & Infrastructure | 6.5 | **8.5** | +2.0 | CI/CD Cloud Build (push-to-deploy), cloudbuild.yaml (build→test→deploy), 2 workers, correlation IDs, JSON structured logs, dynamic sitemap with xhtml:link hreflang |
 | **Global Average** | **7.2** | **9.3** | **+2.1** | |
@@ -2199,11 +2211,11 @@ Observable characteristics based on development usage:
 | P1 | Add monitoring/alerting (Cloud Monitoring or Datadog) | +0.15 |
 | P1 | Add staging environment | +0.1 |
 | P2 | Configure linting (ruff) + type checking (mypy) in CI | +0.1 |
-| ~~P0~~ | ~~Raise test coverage to 60%+~~ | ✅ Done (1217 tests, 63% global coverage) |
+| ~~P0~~ | ~~Raise test coverage to 60%+~~ | ✅ Done (1244 tests, 63% global coverage) |
 | ~~P2~~ | ~~Extract chat detection regex into a dedicated service~~ | ✅ Done (Phase 1+4: chat_detectors.py) |
 | ~~P3~~ | ~~Deduplicate analyze-custom-grid / analyze_grille_for_chat~~ | ✅ Done (Phase 10: unified routes) |
 | P3 | Migrate gcr.io to Artifact Registry | +0.05 |
 
 ---
 
-*Updated by JyppY & Claude Opus 4.6 — 06/03/2026 (v26.1: Sponsor V3 locked for launch — fix A1+A2 (admin chart 6/6, 14 README.md), final audit 10/10 OK. 1217 tests (32 files), 23 service modules (~8073L), 749 .po entries per lang. Previous: v26.0 Sponsor V3, v25.1 Counter refresh, v25.0 Admin Back-Office + Phase RT-1, v24.0 SEO Phases A-D + Favicon, v23.0 Chat multilang P1-P3. Tech audit V10: **9.5/10**.)*
+*Updated by JyppY & Claude Opus 4.6 — 07/03/2026 (v27.0: Admin Premium — Decimal fix, Tarifs EU (14 codes CRUD, EI/SASU switch), Glassmorphism UI refonte (8 pages), Realtime redesign (card feed, heatmap, filter pills, animated KPI). 1244 tests (32 files), 23 service modules (~8073L), 749 .po entries per lang. Previous: v26.1 Sponsor V3 locked, v26.0 Sponsor V3, v25.1 Counter refresh, v25.0 Admin Back-Office + Phase RT-1. Tech audit V11: **9.6/10**.)*
