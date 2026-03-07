@@ -7,15 +7,15 @@
     <div class="billing-switch-card">
         <div class="billing-switch-row">
             <div class="billing-label {% if billing_mode == 'EI' %}billing-active{% endif %}" id="label-ei">
-                <strong>EI</strong> — EmovisIA (auto-entrepreneur)
-                <span class="billing-sub">4 codes FR uniquement</span>
+                <strong>EI</strong>
+                <span class="billing-sub">Auto-entrepreneur — 4 codes FR</span>
             </div>
             <label class="toggle-switch">
                 <input type="checkbox" id="billing-toggle" {% if billing_mode == 'SASU' %}checked{% endif %}>
                 <span class="toggle-slider"></span>
             </label>
             <div class="billing-label {% if billing_mode == 'SASU' %}billing-active{% endif %}" id="label-sasu">
-                <strong>SASU</strong> — LotoIA SASU
+                <strong>SASU</strong>
                 <span class="billing-sub">14 codes EU + packs regionaux</span>
             </div>
         </div>
@@ -30,54 +30,66 @@
         </div>
     </div>
 
-    <!-- ── Grille tarifaire (14 codes) ───────────────────────────── -->
+    <!-- ── Grille tarifaire (14 codes) — Cards by lang ───────────── -->
     <h2>Grille tarifaire — 14 codes produit</h2>
-    <div class="table-wrap">
-        <table class="admin-table" id="tarifs-table">
-            <thead>
-                <tr>
-                    <th>Code</th>
-                    <th>Langue</th>
-                    <th>Pays couverts</th>
-                    <th>Tier</th>
-                    <th>Tarif mensuel</th>
-                    <th>Engagement min</th>
-                    <th>Red. 6m / 12m</th>
-                    <th>Emplacements</th>
-                    <th>Statut</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for t in tarifs %}
-                <tr class="tarif-row-data{% if t.requires_sasu and billing_mode == 'EI' %} row-locked{% endif %}" data-code="{{ t.code }}">
-                    <td><strong>{{ t.code }}</strong></td>
-                    <td>{{ t.langue|upper }}</td>
-                    <td>{{ t.pays }}</td>
-                    <td><span class="badge-tier badge-{{ t.tier }}">{{ t.tier|capitalize }}</span></td>
-                    <td class="cell-tarif">{{ t.tarif_mensuel }}€</td>
-                    <td class="cell-engagement">{{ t.engagement_min_mois }} mois</td>
-                    <td class="cell-reduc">-{{ t.reduction_6m }}% / -{{ t.reduction_12m }}%</td>
-                    <td>{{ t.emplacements }}</td>
-                    <td>
-                        {% if t.requires_sasu and billing_mode == 'EI' %}
-                            <span class="badge-lock">SASU</span>
-                        {% elif t.active %}
-                            <span class="badge-actif">Actif</span>
-                        {% else %}
-                            <span class="badge-inactif">Inactif</span>
-                        {% endif %}
-                    </td>
-                    <td>
-                        {% if not (t.requires_sasu and billing_mode == 'EI') %}
-                            <button class="btn btn-sm btn-ghost btn-edit-tarif" data-code="{{ t.code }}">Modifier</button>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+
+    {% set lang_meta = {
+        'fr': {'flag': 'FR', 'name': 'France / Francophone', 'css': 'lang-fr'},
+        'en': {'flag': 'EN', 'name': 'English / UK & Ireland', 'css': 'lang-en'},
+        'es': {'flag': 'ES', 'name': 'Espanol / Espagne', 'css': 'lang-es'},
+        'pt': {'flag': 'PT', 'name': 'Portugues / Portugal', 'css': 'lang-pt'},
+        'de': {'flag': 'DE', 'name': 'Deutsch / DACH', 'css': 'lang-de'},
+        'nl': {'flag': 'NL', 'name': 'Nederlands / Benelux', 'css': 'lang-nl'}
+    } %}
+
+    {% set ns = namespace(current_lang='') %}
+    {% for t in tarifs %}
+        {% if t.langue != ns.current_lang %}
+            {% if ns.current_lang != '' %}
+                </div></div>
+            {% endif %}
+            {% set ns.current_lang = t.langue %}
+            {% set meta = lang_meta.get(t.langue, {'flag': t.langue|upper, 'name': t.langue, 'css': ''}) %}
+            <div class="tarif-lang-group">
+                <div class="tarif-lang-header">
+                    <span class="tarif-lang-badge {{ meta.css }}">{{ meta.flag }}</span>
+                    <span class="tarif-lang-name">{{ meta.name }}</span>
+                </div>
+                <div class="tarif-cards">
+        {% endif %}
+
+        {% set is_locked = t.requires_sasu and billing_mode == 'EI' %}
+        <div class="tarif-card {{ 'tarif-card-premium' if t.tier == 'premium' else 'tarif-card-standard' }} {{ 'tarif-card-locked' if is_locked else '' }}"
+             data-code="{{ t.code }}" data-tarif="{{ t.tarif_mensuel }}" data-engagement="{{ t.engagement_min_mois }}"
+             data-red6="{{ t.reduction_6m }}" data-red12="{{ t.reduction_12m }}" data-active="{{ t.active }}">
+            {% if is_locked %}
+                <span class="tarif-card-lock">SASU</span>
+            {% endif %}
+            <div class="tarif-card-code">{{ t.code }}</div>
+            <span class="tarif-card-tier {{ 'tier-premium' if t.tier == 'premium' else 'tier-standard' }}">
+                {{ t.tier|capitalize }}
+            </span>
+            <div class="tarif-card-price">{{ t.tarif_mensuel }}€ <small>/mois</small></div>
+            <div class="tarif-card-meta">
+                <span>{{ t.pays }}</span>
+                <span>{{ t.emplacements }} — {{ t.engagement_min_mois }} mois min</span>
+                <span>-{{ t.reduction_6m }}% a 6m / -{{ t.reduction_12m }}% a 12m</span>
+            </div>
+            <div class="tarif-card-actions">
+                {% if not is_locked %}
+                    {% if t.active %}
+                        <span class="badge-actif">Actif</span>
+                    {% else %}
+                        <span class="badge-inactif">Inactif</span>
+                    {% endif %}
+                    <button class="btn btn-sm btn-ghost btn-edit-tarif" data-code="{{ t.code }}">Modifier</button>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+    {% if tarifs %}
+        </div></div>
+    {% endif %}
 
     <!-- ── Modal edit tarif ──────────────────────────────────────── -->
     <div class="modal-overlay hidden" id="modal-overlay">
@@ -122,64 +134,53 @@
 
     <!-- ── Packs regionaux ───────────────────────────────────────── -->
     <h2>Packs regionaux</h2>
-    <div class="table-wrap">
-        <table class="admin-table">
-            <thead>
-                <tr><th>Pack</th><th>Codes inclus</th><th>Pays</th><th>Tarif</th><th>Statut</th></tr>
-            </thead>
-            <tbody>
-                {% for p in packs %}
-                <tr class="{% if p.requires_sasu and billing_mode == 'EI' %}row-locked{% endif %}">
-                    <td><strong>{{ p.name }}</strong></td>
-                    <td>{{ p.codes }}</td>
-                    <td>{{ p.pays }}</td>
-                    <td>{{ p.tarif }}</td>
-                    <td>
-                        {% if p.requires_sasu and billing_mode == 'EI' %}
-                            <span class="badge-lock">SASU</span>
-                        {% else %}
-                            <span class="badge-actif">{{ 'EI' if not p.requires_sasu else 'SASU' }}</span>
-                        {% endif %}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="pack-cards">
+        {% for p in packs %}
+        <div class="pack-card {{ 'pack-card-locked' if p.requires_sasu and billing_mode == 'EI' else '' }}">
+            <div class="pack-card-name">{{ p.name }}</div>
+            <div class="pack-card-codes">{{ p.codes }}</div>
+            <div class="pack-card-detail">{{ p.pays }} — {{ p.tarif }}</div>
+            <div class="pack-card-status">
+                {% if p.requires_sasu and billing_mode == 'EI' %}
+                    <span class="badge-lock">Requiert SASU</span>
+                {% elif p.requires_sasu %}
+                    <span class="badge-actif">SASU</span>
+                {% else %}
+                    <span class="badge-actif">EI</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
     </div>
 
     <!-- ── Paliers d'audience ────────────────────────────────────── -->
     <h2>Paliers d'audience (reference)</h2>
-    <div class="table-wrap">
-        <table class="admin-table">
-            <thead>
-                <tr><th>Palier</th><th>Impressions/mois</th><th>Standard</th><th>Premium</th><th>Hausse max</th></tr>
-            </thead>
-            <tbody>
-                {% for pl in paliers %}
-                <tr>
-                    <td><strong>{{ pl.name }}</strong></td>
-                    <td>{{ pl.impressions }}</td>
-                    <td>{{ pl.standard }}</td>
-                    <td>{{ pl.premium }}</td>
-                    <td>{{ pl.hausse }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+    <div class="ref-cards">
+        {% for pl in paliers %}
+        <div class="ref-card">
+            <div class="ref-card-title">{{ pl.name }}</div>
+            <div class="ref-card-sub">{{ pl.impressions }} impressions/mois — {{ pl.hausse }}</div>
+            <div class="ref-card-prices">
+                <span class="ref-card-price">Std: <b>{{ pl.standard }}</b></span>
+                <span class="ref-card-price">Prem: <b>{{ pl.premium }}</b></span>
+            </div>
+        </div>
+        {% endfor %}
     </div>
 
     <!-- ── Modeles overage ───────────────────────────────────────── -->
     <h2>Modeles overage (CPC / CPM)</h2>
-    <div class="table-wrap">
-        <table class="admin-table">
-            <thead>
-                <tr><th>Modele</th><th>Tarif</th><th>Ideal pour</th></tr>
-            </thead>
-            <tbody>
-                <tr><td><strong>CPC</strong></td><td>0.30 EUR / clic</td><td>Performance (leads)</td></tr>
-                <tr><td><strong>CPM</strong></td><td>15 EUR / 1000 impressions</td><td>Notoriete (branding)</td></tr>
-            </tbody>
-        </table>
+    <div class="ref-cards">
+        <div class="ref-card">
+            <div class="ref-card-title">CPC</div>
+            <div class="ref-card-sub">Performance (leads)</div>
+            <div class="ref-card-prices"><span class="ref-card-price"><b>0.30 EUR</b> / clic</span></div>
+        </div>
+        <div class="ref-card">
+            <div class="ref-card-title">CPM</div>
+            <div class="ref-card-sub">Notoriete (branding)</div>
+            <div class="ref-card-prices"><span class="ref-card-price"><b>15 EUR</b> / 1000 impressions</span></div>
+        </div>
     </div>
 {% endblock %}
 
@@ -209,22 +210,14 @@
     document.querySelectorAll('.btn-edit-tarif').forEach(function(btn){
         btn.addEventListener('click', function(){
             var code = btn.dataset.code;
-            var row = document.querySelector('tr[data-code="' + code + '"]');
+            var card = document.querySelector('.tarif-card[data-code="' + code + '"]');
             document.getElementById('edit-code').value = code;
             document.getElementById('modal-title').textContent = 'Modifier ' + code;
-
-            var tarif = row.querySelector('.cell-tarif').textContent.replace(/[^0-9.]/g, '');
-            var eng = row.querySelector('.cell-engagement').textContent.replace(/[^0-9]/g, '');
-            var reduc = row.querySelector('.cell-reduc').textContent.match(/-?([\d.]+)%\s*\/\s*-?([\d.]+)%/);
-
-            document.getElementById('edit-tarif').value = tarif;
-            document.getElementById('edit-engagement').value = eng;
-            document.getElementById('edit-red6').value = reduc ? reduc[1] : '10';
-            document.getElementById('edit-red12').value = reduc ? reduc[2] : '20';
-
-            var isActive = row.querySelector('.badge-actif') !== null;
-            document.getElementById('edit-active').value = isActive ? '1' : '0';
-
+            document.getElementById('edit-tarif').value = card.dataset.tarif;
+            document.getElementById('edit-engagement').value = card.dataset.engagement;
+            document.getElementById('edit-red6').value = card.dataset.red6;
+            document.getElementById('edit-red12').value = card.dataset.red12;
+            document.getElementById('edit-active').value = card.dataset.active;
             overlay.classList.remove('hidden');
         });
     });

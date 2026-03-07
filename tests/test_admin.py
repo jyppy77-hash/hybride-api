@@ -772,7 +772,7 @@ class TestTarifs:
             resp = client.get("/admin/tarifs")
         assert resp.status_code == 200
         assert "SASU" in resp.text  # badge-lock SASU on EN codes
-        assert "row-locked" in resp.text
+        assert "tarif-card-locked" in resp.text
 
     def test_tarifs_page_sasu_mode(self):
         client = _authed_client()
@@ -784,7 +784,7 @@ class TestTarifs:
             ])
             resp = client.get("/admin/tarifs")
         assert resp.status_code == 200
-        assert "row-locked" not in resp.text
+        assert "tarif-card-locked" not in resp.text
 
     def test_tarifs_page_db_error(self):
         client = _authed_client()
