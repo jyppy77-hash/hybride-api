@@ -188,8 +188,8 @@ class TestLegalCssConditional:
         "/euromillions/faq",
         "/euromillions/hybride",
     ])
-    def test_non_legal_pages_no_legal_css(self, path):
-        """Non-legal EM pages must NOT load legal.css."""
+    def test_non_legal_pages_also_have_legal_css(self, path):
+        """All EM pages load legal.css via _base.html (hero overlap fix Phase 1.5)."""
         cursor = AsyncMock()
         cursor.fetchone = AsyncMock(return_value=None)
         cursor.fetchall = AsyncMock(return_value=[])
@@ -200,7 +200,7 @@ class TestLegalCssConditional:
             resp = client.get(path)
 
         assert resp.status_code == 200
-        assert "legal.css" not in resp.text
+        assert "legal.css" in resp.text
 
 
 # ═══════════════════════════════════════════════
