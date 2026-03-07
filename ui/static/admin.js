@@ -249,17 +249,63 @@ var LotoAdmin = (function() {
     // ══════════════════════════════════════
 
     var rtTimer = null;
+    var rtPreviousIds = [];
+    var rtActivePill = 'all';
+
+    var RT_COLORS = {
+        'sponsor': '#ff9800', 'rating': '#00c853', 'simulateur': '#4f8cff',
+        'chatbot': '#e040fb', 'meta75': '#d4a843'
+    };
+    var RT_FLAGS = {
+        'fr': '\uD83C\uDDEB\uD83C\uDDF7', 'en': '\uD83C\uDDEC\uD83C\uDDE7',
+        'es': '\uD83C\uDDEA\uD83C\uDDF8', 'pt': '\uD83C\uDDF5\uD83C\uDDF9',
+        'de': '\uD83C\uDDE9\uD83C\uDDEA', 'nl': '\uD83C\uDDF3\uD83C\uDDF1',
+        'FR': '\uD83C\uDDEB\uD83C\uDDF7', 'BE': '\uD83C\uDDE7\uD83C\uDDEA',
+        'CH': '\uD83C\uDDE8\uD83C\uDDED', 'LU': '\uD83C\uDDF1\uD83C\uDDFA',
+        'AT': '\uD83C\uDDE6\uD83C\uDDF9', 'IE': '\uD83C\uDDEE\uD83C\uDDEA',
+        'UK': '\uD83C\uDDEC\uD83C\uDDE7'
+    };
+
+    function rtEventCategory(evType) {
+        if (evType.indexOf('sponsor') === 0) return 'sponsor';
+        if (evType.indexOf('rating') === 0) return 'rating';
+        if (evType.indexOf('simulateur') === 0) return 'simulateur';
+        if (evType.indexOf('chatbot') === 0) return 'chatbot';
+        if (evType.indexOf('meta75') === 0) return 'meta75';
+        return 'other';
+    }
+
+    function rtDotColor(evType) {
+        return RT_COLORS[rtEventCategory(evType)] || '#8b8b9e';
+    }
 
     function initRealtime() {
         loadRealtime();
         qs('#rt-auto').addEventListener('change', function() {
-            if (this.checked) {
-                startAutoRefresh();
-            } else {
-                stopAutoRefresh();
-            }
+            if (this.checked) { startAutoRefresh(); } else { stopAutoRefresh(); }
         });
         qs('#f-event-type').addEventListener('change', loadRealtime);
+
+        // Pill filters (client-side)
+        qsa('.rt-pill').forEach(function(pill) {
+            pill.addEventListener('click', function() {
+                qsa('.rt-pill').forEach(function(p) { p.classList.remove('active'); });
+                pill.classList.add('active');
+                rtActivePill = pill.getAttribute('data-filter');
+                filterFeedCards();
+            });
+        });
+
+        // Init heatmap (60 empty blocks)
+        var hm = qs('#rt-heatmap');
+        if (hm) {
+            for (var i = 0; i < 60; i++) {
+                var b = document.createElement('div');
+                b.className = 'rt-hm-block';
+                hm.appendChild(b);
+            }
+        }
+
         startAutoRefresh();
     }
 
@@ -275,31 +321,80 @@ var LotoAdmin = (function() {
     function loadRealtime() {
         var evType = qs('#f-event-type').value;
         var url = '/admin/api/realtime?event_type=' + evType;
+        // Pulse title on refresh
+        var title = qs('#rt-title');
+        if (title) { title.classList.remove('rt-title-pulse'); void title.offsetWidth; title.classList.add('rt-title-pulse'); }
+
         fetchJSON(url).then(function(data) {
             if (!data) return;
-            renderRtKPI(data.kpi);
-            renderRtTable(data.events);
+            animateKPI('kpi-today', data.kpi.today || 0);
+            animateKPI('kpi-hour', data.kpi.hour || 0);
+            animateKPI('kpi-types', data.kpi.types || 0);
+            renderRtFeed(data.events);
             renderRtEventTypes(data.event_types);
+            renderRtHeatmap(data.events);
         });
     }
 
-    function renderRtKPI(kpi) {
-        qs('#kpi-today').textContent = kpi.today || 0;
-        qs('#kpi-hour').textContent = kpi.hour || 0;
-        qs('#kpi-types').textContent = kpi.types || 0;
+    function animateKPI(id, target) {
+        var el = qs('#' + id);
+        if (!el) return;
+        var current = parseInt(el.textContent) || 0;
+        if (current === target) return;
+        var diff = target - current;
+        var steps = Math.min(Math.abs(diff), 15);
+        var step = 0;
+        var interval = setInterval(function() {
+            step++;
+            var val = Math.round(current + (diff * step / steps));
+            el.textContent = val;
+            if (step >= steps) { el.textContent = target; clearInterval(interval); }
+        }, 30);
     }
 
-    function renderRtTable(events) {
-        var tbody = qs('#rt-tbody');
-        tbody.innerHTML = events.map(function(e) {
-            return '<tr class="rt-row-new"><td>' + escHtml(e.created_at) + '</td>'
-                + '<td><span class="rt-badge rt-badge-' + escHtml(e.event_type).replace(/[^a-z0-9-]/g, '') + '">' + escHtml(e.event_type) + '</span></td>'
-                + '<td>' + escHtml(e.page) + '</td>'
-                + '<td>' + escHtml(e.module) + '</td>'
-                + '<td>' + escHtml(e.lang) + '</td>'
-                + '<td>' + escHtml(e.device) + '</td>'
-                + '<td>' + escHtml(e.country) + '</td></tr>';
+    function renderRtFeed(events) {
+        var feed = qs('#rt-feed');
+        if (!feed) return;
+        var newIds = events.map(function(e) { return e.event_type + e.created_at + e.page; });
+        var isNew = rtPreviousIds.length > 0;
+
+        feed.innerHTML = events.map(function(e, idx) {
+            var cat = rtEventCategory(e.event_type);
+            var color = rtDotColor(e.event_type);
+            var deviceIcon = (e.device === 'mobile') ? '\uD83D\uDCF1' : ((e.device === 'tablet') ? '\uD83D\uDCF1' : '\uD83D\uDDA5\uFE0F');
+            var flag = RT_FLAGS[e.lang] || RT_FLAGS[e.country] || '';
+            var slideClass = (isNew && rtPreviousIds.indexOf(newIds[idx]) === -1) ? ' rt-card-new' : '';
+
+            return '<div class="rt-event-card' + slideClass + '" data-category="' + cat + '">'
+                + '<div class="rt-event-dot" style="background:' + color + ';box-shadow:0 0 8px ' + color + '"></div>'
+                + '<div class="rt-event-body">'
+                + '<div class="rt-event-top">'
+                + '<span class="rt-badge rt-badge-' + escHtml(e.event_type).replace(/[^a-z0-9-]/g, '') + '">' + escHtml(e.event_type) + '</span>'
+                + '<span class="rt-event-time">' + escHtml(e.created_at) + '</span>'
+                + '<span class="rt-event-device">' + deviceIcon + ' ' + escHtml(e.device || '') + '</span>'
+                + '<span class="rt-event-flag">' + flag + '</span>'
+                + '</div>'
+                + '<div class="rt-event-bottom">'
+                + '<span class="rt-event-page">' + escHtml(e.page || '') + '</span>'
+                + (e.module ? '<span class="rt-event-module">' + escHtml(e.module) + '</span>' : '')
+                + '<span class="rt-event-country">' + escHtml(e.country || '') + '</span>'
+                + '</div>'
+                + '</div>'
+                + '</div>';
         }).join('');
+
+        rtPreviousIds = newIds;
+        filterFeedCards();
+    }
+
+    function filterFeedCards() {
+        qsa('.rt-event-card').forEach(function(card) {
+            if (rtActivePill === 'all') {
+                card.style.display = '';
+            } else {
+                card.style.display = (card.getAttribute('data-category') === rtActivePill) ? '' : 'none';
+            }
+        });
     }
 
     function renderRtEventTypes(types) {
@@ -310,6 +405,32 @@ var LotoAdmin = (function() {
             html += '<option value="' + escHtml(t) + '"' + (t === current ? ' selected' : '') + '>' + escHtml(t) + '</option>';
         });
         sel.innerHTML = html;
+    }
+
+    function renderRtHeatmap(events) {
+        var blocks = qsa('.rt-hm-block');
+        if (!blocks.length) return;
+        // Parse event times, count per minute bucket (0=now, 59=60min ago)
+        var counts = new Array(60);
+        for (var i = 0; i < 60; i++) counts[i] = 0;
+        events.forEach(function(e) {
+            if (!e.created_at) return;
+            var parts = e.created_at.split(':');
+            if (parts.length < 3) return;
+            var now = new Date();
+            var evDate = new Date();
+            evDate.setHours(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]), 0);
+            var diffMin = Math.floor((now - evDate) / 60000);
+            if (diffMin >= 0 && diffMin < 60) counts[diffMin]++;
+        });
+        // Render blocks (rightmost = now)
+        for (var j = 0; j < 60; j++) {
+            var c = counts[59 - j];
+            var block = blocks[j];
+            if (c === 0) { block.className = 'rt-hm-block rt-hm-0'; }
+            else if (c <= 2) { block.className = 'rt-hm-block rt-hm-1'; }
+            else { block.className = 'rt-hm-block rt-hm-2'; }
+        }
     }
 
     return { initImpressions: initImpressions, initVotes: initVotes, initRealtime: initRealtime };

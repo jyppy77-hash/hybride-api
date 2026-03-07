@@ -2,51 +2,59 @@
 {% block title %}Realtime{% endblock %}
 
 {% block content %}
-    <h2>Realtime Feed <span class="rt-dot rt-dot-pulse"></span></h2>
+    <h2 id="rt-title">Realtime Feed <span class="rt-dot rt-dot-live"></span></h2>
 
-    <div class="filters-bar">
-        <select id="f-event-type">
-            <option value="all" selected>Tous les events</option>
-        </select>
-        <label class="rt-auto-label">
-            <input type="checkbox" id="rt-auto" checked> Auto-refresh (5s)
-        </label>
-    </div>
-
+    <!-- ── KPI ────────────────────────────────────────────────────── -->
     <div class="kpi-grid" id="rt-kpi">
-        <div class="kpi-card">
-            <span class="kpi-value" id="kpi-today">-</span>
+        <div class="kpi-card rt-kpi-today">
+            <span class="kpi-value rt-kpi-accent-gold" id="kpi-today">-</span>
             <span class="kpi-label">Events aujourd'hui</span>
         </div>
-        <div class="kpi-card">
-            <span class="kpi-value" id="kpi-hour">-</span>
+        <div class="kpi-card rt-kpi-hour">
+            <span class="kpi-value rt-kpi-accent-muted" id="kpi-hour">-</span>
             <span class="kpi-label">Derniere heure</span>
         </div>
-        <div class="kpi-card">
-            <span class="kpi-value" id="kpi-types">-</span>
+        <div class="kpi-card rt-kpi-types">
+            <span class="kpi-value rt-kpi-accent-blue" id="kpi-types">-</span>
             <span class="kpi-label">Types distincts</span>
         </div>
     </div>
 
-    <div class="table-wrap">
-        <table class="admin-table" id="rt-table">
-            <thead>
-                <tr>
-                    <th>Heure</th>
-                    <th>Event</th>
-                    <th>Page</th>
-                    <th>Module</th>
-                    <th>Lang</th>
-                    <th>Device</th>
-                    <th>Country</th>
-                </tr>
-            </thead>
-            <tbody id="rt-tbody"></tbody>
-        </table>
+    <!-- ── Activity heatmap (60 min) ─────────────────────────────── -->
+    <div class="rt-heatmap-wrap">
+        <div class="rt-heatmap-label">Activite (60 dernières min)</div>
+        <div class="rt-heatmap" id="rt-heatmap"></div>
     </div>
+
+    <!-- ── Filters ────────────────────────────────────────────────── -->
+    <div class="rt-filters-card">
+        <div class="rt-filters-top">
+            <select id="f-event-type" class="rt-select">
+                <option value="all" selected>Tous les events</option>
+            </select>
+            <label class="rt-toggle-auto">
+                <span class="rt-toggle-label">Auto-refresh</span>
+                <span class="rt-pill-toggle">
+                    <input type="checkbox" id="rt-auto" checked>
+                    <span class="rt-pill-slider"></span>
+                </span>
+            </label>
+        </div>
+        <div class="rt-pills" id="rt-pills">
+            <button class="rt-pill active" data-filter="all">Tous</button>
+            <button class="rt-pill" data-filter="sponsor">Sponsor</button>
+            <button class="rt-pill" data-filter="rating">Rating</button>
+            <button class="rt-pill" data-filter="simulateur">Simulateur</button>
+            <button class="rt-pill" data-filter="chatbot">Chatbot</button>
+            <button class="rt-pill" data-filter="meta75">Meta75</button>
+        </div>
+    </div>
+
+    <!-- ── Event feed ─────────────────────────────────────────────── -->
+    <div class="rt-feed" id="rt-feed"></div>
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/admin.js?v=2"></script>
+<script src="/static/admin.js?v=3"></script>
 <script>LotoAdmin.initRealtime();</script>
 {% endblock %}
