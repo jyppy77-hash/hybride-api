@@ -2828,12 +2828,12 @@ msgid "Gratuit"
 msgstr "Gratuito"
 
 #: ui/templates/em/hybride.html:369
-msgid "Sans inscription"
-msgstr "Sin registro"
+msgid "100%% gratuit — sans inscription"
+msgstr "100%% gratuito — sin registro"
 
 #: ui/templates/em/hybride.html:370
-msgid "Limité sans abonnement"
-msgstr "Limitado sin suscripción"
+msgid "Freemium"
+msgstr "Freemium"
 
 #: ui/templates/em/hybride.html:373
 msgid "Personnalité"

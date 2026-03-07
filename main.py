@@ -279,8 +279,8 @@ async def add_cache_headers(request: Request, call_next):
         elif path.endswith((".png", ".jpg", ".jpeg", ".svg", ".ico", ".webp")):
             response.headers["Cache-Control"] = "public, max-age=2592000"  # 30 jours
 
-    # Cache court pour pages HTML (SEO routes)
-    if path.endswith(".html") or path in _SEO_ROUTES:
+    # Cache court pour pages HTML (SEO routes) — skip redirects (kill switch 302)
+    if (path.endswith(".html") or path in _SEO_ROUTES) and response.status_code < 300:
         response.headers["Cache-Control"] = "public, max-age=3600"  # 1 heure
 
     # Last-Modified sur les pages HTML uniquement (evite epoch 0 / 1970)

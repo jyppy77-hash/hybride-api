@@ -2750,12 +2750,12 @@ msgid "Gratuit"
 msgstr "Gratis"
 
 #: ui/templates/em/hybride.html:369
-msgid "Sans inscription"
-msgstr "Zonder registratie"
+msgid "100%% gratuit — sans inscription"
+msgstr "100%% gratis — zonder registratie"
 
 #: ui/templates/em/hybride.html:370
-msgid "Limité sans abonnement"
-msgstr "Beperkt zonder abonnement"
+msgid "Freemium"
+msgstr "Freemium"
 
 #: ui/templates/em/hybride.html:373
 msgid "Personnalité"

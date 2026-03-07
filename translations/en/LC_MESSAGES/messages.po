@@ -2661,12 +2661,12 @@ msgid "Gratuit"
 msgstr "Free"
 
 #: ui/templates/em/hybride.html:369
-msgid "Sans inscription"
-msgstr "No registration required"
+msgid "100%% gratuit — sans inscription"
+msgstr "100% free — no registration"
 
 #: ui/templates/em/hybride.html:370
-msgid "Limité sans abonnement"
-msgstr "Limited without subscription"
+msgid "Freemium"
+msgstr "Freemium"
 
 #: ui/templates/em/hybride.html:373
 msgid "Personnalité"

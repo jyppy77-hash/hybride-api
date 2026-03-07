@@ -198,7 +198,7 @@ def _make_handler(lang_code, page_key, template, extra):
     """Create a standard page handler with kill switch check."""
     async def handler(request: Request):
         if lang_code not in killswitch.ENABLED_LANGS:
-            return RedirectResponse(url=EM_URLS["fr"][page_key], status_code=302)
+            return RedirectResponse(url=EM_URLS["fr"][page_key], status_code=302, headers={"Cache-Control": "no-cache, no-store"})
         return render_template(template, request, lang=lang_code, page_key=page_key, **extra)
     handler.__name__ = f"{lang_code}_em_{page_key}"
     handler.__doc__ = f"EuroMillions {lang_code.upper()} — {page_key}"
@@ -209,7 +209,7 @@ def _make_accueil_handler(lang_code, page_key, template, extra):
     """Create accueil handler with AggregateRating + kill switch check."""
     async def handler(request: Request):
         if lang_code not in killswitch.ENABLED_LANGS:
-            return RedirectResponse(url=EM_URLS["fr"][page_key], status_code=302)
+            return RedirectResponse(url=EM_URLS["fr"][page_key], status_code=302, headers={"Cache-Control": "no-cache, no-store"})
         em_rating_value, em_rating_count = 0, 0
         try:
             result = await db_cloudsql.async_fetchone(
@@ -235,7 +235,7 @@ def _make_db_handler(lang_code, page_key, template, extra):
     """Create handler with DB tirages count + kill switch check."""
     async def handler(request: Request):
         if lang_code not in killswitch.ENABLED_LANGS:
-            return RedirectResponse(url=EM_URLS["fr"][page_key], status_code=302)
+            return RedirectResponse(url=EM_URLS["fr"][page_key], status_code=302, headers={"Cache-Control": "no-cache, no-store"})
         try:
             total = await db_cloudsql.get_em_tirages_count()
         except Exception:

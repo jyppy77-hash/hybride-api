@@ -2259,11 +2259,11 @@ msgid "Gratuit"
 msgstr ""
 
 #: ui/templates/em/hybride.html:369
-msgid "Sans inscription"
+msgid "100%% gratuit — sans inscription"
 msgstr ""
 
 #: ui/templates/em/hybride.html:370
-msgid "Limité sans abonnement"
+msgid "Freemium"
 msgstr ""
 
 #: ui/templates/em/hybride.html:373

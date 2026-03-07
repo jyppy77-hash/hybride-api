@@ -266,6 +266,55 @@ def test_de_enabled_returns_200():
     assert resp.status_code == 200
 
 
+def test_fr_enabled_returns_200():
+    """FR is enabled — /euromillions returns 200, not redirect."""
+    client = _get_client()
+    resp = client.get("/euromillions", follow_redirects=False)
+    assert resp.status_code == 200
+
+
+def test_en_enabled_returns_200():
+    """EN is enabled — /en/euromillions returns 200, not redirect."""
+    client = _get_client()
+    resp = client.get("/en/euromillions", follow_redirects=False)
+    assert resp.status_code == 200
+
+
+def test_fr_disabled_returns_302():
+    """FR disabled — /euromillions redirects 302 to /accueil."""
+    from unittest.mock import patch
+    from config import killswitch
+    client = _get_client()
+    with patch.object(killswitch, "ENABLED_LANGS", ["en", "es", "pt", "de", "nl"]):
+        resp = client.get("/euromillions", follow_redirects=False)
+    assert resp.status_code == 302
+    assert resp.headers["location"] == "/accueil"
+    assert "no-store" in resp.headers.get("cache-control", "")
+
+
+def test_en_disabled_returns_302():
+    """EN disabled — /en/euromillions redirects 302 to /accueil."""
+    from unittest.mock import patch
+    from config import killswitch
+    client = _get_client()
+    with patch.object(killswitch, "ENABLED_LANGS", ["fr", "es", "pt", "de", "nl"]):
+        resp = client.get("/en/euromillions", follow_redirects=False)
+    assert resp.status_code == 302
+    assert resp.headers["location"] == "/accueil"
+    assert "no-store" in resp.headers.get("cache-control", "")
+
+
+def test_multilang_disabled_302_has_cache_control():
+    """PT/ES/DE/NL disabled — 302 redirect includes Cache-Control: no-cache, no-store."""
+    from unittest.mock import patch
+    from config import killswitch
+    client = _get_client()
+    with patch.object(killswitch, "ENABLED_LANGS", ["fr", "en"]):
+        resp = client.get("/es/euromillions", follow_redirects=False)
+    assert resp.status_code == 302
+    assert "no-store" in resp.headers.get("cache-control", "")
+
+
 # ═══════════════════════════════════════════════
 # 8. Dynamic sitemap
 # ═══════════════════════════════════════════════

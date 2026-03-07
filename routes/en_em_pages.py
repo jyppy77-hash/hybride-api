@@ -3,9 +3,13 @@ Routes — English EuroMillions HTML pages.
 P2/5 — Same Jinja2 templates as FR, with lang="en".
 """
 from fastapi import APIRouter, Request
+from fastapi.responses import RedirectResponse
 import db_cloudsql
 
+from config import killswitch
 from config.templates import render_template
+
+_KS_HEADERS = {"Cache-Control": "no-cache, no-store"}
 
 router = APIRouter()
 
@@ -17,6 +21,8 @@ router = APIRouter()
 @router.get("/en/euromillions", include_in_schema=False)
 async def en_em_home(request: Request):
     """EuroMillions EN — Home (hub) + AggregateRating dynamique."""
+    if "en" not in killswitch.ENABLED_LANGS:
+        return RedirectResponse(url="/accueil", status_code=302, headers=_KS_HEADERS)
     em_rating_value, em_rating_count = 0, 0
     try:
         result = await db_cloudsql.async_fetchone(
@@ -42,6 +48,8 @@ async def en_em_home(request: Request):
 @router.get("/en/euromillions/generator", include_in_schema=False)
 async def en_em_generator(request: Request):
     """EuroMillions EN — Grid Explorer (generator)."""
+    if "en" not in killswitch.ENABLED_LANGS:
+        return RedirectResponse(url="/accueil", status_code=302, headers=_KS_HEADERS)
     return render_template(
         "em/generateur.html", request, lang="en", page_key="generateur",
         body_class="loto-page em-page",
@@ -56,6 +64,8 @@ async def en_em_generator(request: Request):
 @router.get("/en/euromillions/simulator", include_in_schema=False)
 async def en_em_simulator(request: Request):
     """EuroMillions EN — Grid Analysis (simulator)."""
+    if "en" not in killswitch.ENABLED_LANGS:
+        return RedirectResponse(url="/accueil", status_code=302, headers=_KS_HEADERS)
     return render_template(
         "em/simulateur.html", request, lang="en", page_key="simulateur",
         body_class="simulator-page em-page",
@@ -69,6 +79,8 @@ async def en_em_simulator(request: Request):
 @router.get("/en/euromillions/statistics", include_in_schema=False)
 async def en_em_statistics(request: Request):
     """EuroMillions EN — Statistics and history."""
+    if "en" not in killswitch.ENABLED_LANGS:
+        return RedirectResponse(url="/accueil", status_code=302, headers=_KS_HEADERS)
     return render_template(
         "em/statistiques.html", request, lang="en", page_key="statistiques",
         include_nav_scroll=True,
@@ -82,6 +94,8 @@ async def en_em_statistics(request: Request):
 @router.get("/en/euromillions/history", include_in_schema=False)
 async def en_em_history(request: Request):
     """EuroMillions EN — Draw history."""
+    if "en" not in killswitch.ENABLED_LANGS:
+        return RedirectResponse(url="/accueil", status_code=302, headers=_KS_HEADERS)
     return render_template(
         "em/historique.html", request, lang="en", page_key="historique",
         hero_icon="📅",
@@ -94,6 +108,8 @@ async def en_em_history(request: Request):
 @router.get("/en/euromillions/faq", include_in_schema=False)
 async def en_em_faq(request: Request):
     """EuroMillions EN — FAQ with injected DB stats."""
+    if "en" not in killswitch.ENABLED_LANGS:
+        return RedirectResponse(url="/accueil", status_code=302, headers=_KS_HEADERS)
     try:
         total = await db_cloudsql.get_em_tirages_count()
     except Exception:
@@ -110,6 +126,8 @@ async def en_em_faq(request: Request):
 @router.get("/en/euromillions/news", include_in_schema=False)
 async def en_em_news(request: Request):
     """EuroMillions EN — News."""
+    if "en" not in killswitch.ENABLED_LANGS:
+        return RedirectResponse(url="/accueil", status_code=302, headers=_KS_HEADERS)
     return render_template(
         "em/news.html", request, lang="en", page_key="news",
         include_nav_scroll=True,
@@ -126,6 +144,8 @@ async def en_em_news(request: Request):
 @router.get("/en/euromillions/hybride", include_in_schema=False)
 async def en_em_hybride_page(request: Request):
     """EuroMillions EN — HYBRIDE Chatbot."""
+    if "en" not in killswitch.ENABLED_LANGS:
+        return RedirectResponse(url="/accueil", status_code=302, headers=_KS_HEADERS)
     try:
         total = await db_cloudsql.get_em_tirages_count()
     except Exception:
@@ -144,6 +164,8 @@ async def en_em_hybride_page(request: Request):
 @router.get("/en/euromillions/artificial-intelligence", include_in_schema=False)
 async def en_em_ai(request: Request):
     """EuroMillions EN — Artificial Intelligence."""
+    if "en" not in killswitch.ENABLED_LANGS:
+        return RedirectResponse(url="/accueil", status_code=302, headers=_KS_HEADERS)
     try:
         total = await db_cloudsql.get_em_tirages_count()
     except Exception:
@@ -162,6 +184,8 @@ async def en_em_ai(request: Request):
 @router.get("/en/euromillions/engine", include_in_schema=False)
 async def en_em_engine(request: Request):
     """EuroMillions EN — HYBRIDE Engine."""
+    if "en" not in killswitch.ENABLED_LANGS:
+        return RedirectResponse(url="/accueil", status_code=302, headers=_KS_HEADERS)
     return render_template(
         "em/moteur.html", request, lang="en", page_key="moteur",
         body_class="subpage em-page",
@@ -175,6 +199,8 @@ async def en_em_engine(request: Request):
 @router.get("/en/euromillions/methodology", include_in_schema=False)
 async def en_em_methodology(request: Request):
     """EuroMillions EN — Methodology."""
+    if "en" not in killswitch.ENABLED_LANGS:
+        return RedirectResponse(url="/accueil", status_code=302, headers=_KS_HEADERS)
     return render_template(
         "em/methodologie.html", request, lang="en", page_key="methodologie",
         body_class="subpage em-page",
@@ -188,6 +214,8 @@ async def en_em_methodology(request: Request):
 @router.get("/en/euromillions/about", include_in_schema=False)
 async def en_em_about(request: Request):
     """EuroMillions EN — About."""
+    if "en" not in killswitch.ENABLED_LANGS:
+        return RedirectResponse(url="/accueil", status_code=302, headers=_KS_HEADERS)
     return render_template(
         "em/a-propos.html", request, lang="en", page_key="a_propos",
         body_class="subpage em-page",
@@ -201,6 +229,8 @@ async def en_em_about(request: Request):
 @router.get("/en/euromillions/legal-notices", include_in_schema=False)
 async def en_em_mentions(request: Request):
     """EuroMillions EN — Legal Notices."""
+    if "en" not in killswitch.ENABLED_LANGS:
+        return RedirectResponse(url="/accueil", status_code=302, headers=_KS_HEADERS)
     return render_template(
         "em/mentions-legales.html", request, lang="en", page_key="mentions",
         body_class="subpage legal-page em-page",
@@ -210,6 +240,8 @@ async def en_em_mentions(request: Request):
 @router.get("/en/euromillions/privacy", include_in_schema=False)
 async def en_em_privacy(request: Request):
     """EuroMillions EN — Privacy Policy."""
+    if "en" not in killswitch.ENABLED_LANGS:
+        return RedirectResponse(url="/accueil", status_code=302, headers=_KS_HEADERS)
     return render_template(
         "em/confidentialite.html", request, lang="en", page_key="confidentialite",
         body_class="subpage legal-page em-page",
@@ -219,6 +251,8 @@ async def en_em_privacy(request: Request):
 @router.get("/en/euromillions/cookies", include_in_schema=False)
 async def en_em_cookies(request: Request):
     """EuroMillions EN — Cookie Policy."""
+    if "en" not in killswitch.ENABLED_LANGS:
+        return RedirectResponse(url="/accueil", status_code=302, headers=_KS_HEADERS)
     return render_template(
         "em/cookies.html", request, lang="en", page_key="cookies",
         body_class="subpage legal-page em-page",
@@ -228,6 +262,8 @@ async def en_em_cookies(request: Request):
 @router.get("/en/euromillions/disclaimer", include_in_schema=False)
 async def en_em_disclaimer(request: Request):
     """EuroMillions EN — Disclaimer."""
+    if "en" not in killswitch.ENABLED_LANGS:
+        return RedirectResponse(url="/accueil", status_code=302, headers=_KS_HEADERS)
     return render_template(
         "em/disclaimer.html", request, lang="en", page_key="disclaimer",
         body_class="subpage legal-page em-page",
