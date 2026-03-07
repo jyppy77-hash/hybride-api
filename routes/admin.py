@@ -965,3 +965,137 @@ async def admin_api_realtime(request: Request, event_type: str = "all"):
     except Exception as e:
         logger.error("[ADMIN] realtime: %s", e)
         return JSONResponse({"events": [], "kpi": {"today": 0, "hour": 0, "types": 0}, "event_types": []})
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TARIFS — Grille tarifaire EU + Switch EI/SASU
+# ══════════════════════════════════════════════════════════════════════════════
+
+_PACKS = [
+    {"name": "FR Complet", "codes": "LOTO_FR_A + EM_FR_A", "pays": "France (Loto+EM)", "tarif": "Sur mesure", "requires_sasu": False},
+    {"name": "DACH", "codes": "EM_DE_A", "pays": "DE, AT, CH", "tarif": "349 EUR", "requires_sasu": True},
+    {"name": "Benelux", "codes": "EM_FR_A + EM_NL_A", "pays": "BE, NL, LU", "tarif": "Sur mesure", "requires_sasu": True},
+    {"name": "Iberique", "codes": "EM_ES_A + EM_PT_A", "pays": "ES, PT", "tarif": "Sur mesure", "requires_sasu": True},
+    {"name": "Continental A", "codes": "LOTO_FR_A + tous EM_*_A", "pays": "9 pays Premium", "tarif": "Sur mesure", "requires_sasu": True},
+    {"name": "Continental B", "codes": "LOTO_FR_B + tous EM_*_B", "pays": "9 pays Standard", "tarif": "Sur mesure", "requires_sasu": True},
+]
+
+_PALIERS = [
+    {"name": "Lancement", "impressions": "0-10K", "standard": "149 EUR (gel)", "premium": "349 EUR (gel)", "hausse": "—"},
+    {"name": "Croissance", "impressions": "10K-30K", "standard": "199 EUR", "premium": "449 EUR", "hausse": "+25% max"},
+    {"name": "Traction", "impressions": "30K-100K", "standard": "299 EUR", "premium": "599 EUR", "hausse": "+25% max"},
+    {"name": "Scale", "impressions": "100K+", "standard": "Sur mesure", "premium": "Sur mesure", "hausse": "Negocie"},
+]
+
+_VALID_TARIF_CODES = frozenset([
+    "LOTO_FR_A", "LOTO_FR_B", "EM_FR_A", "EM_FR_B",
+    "EM_EN_A", "EM_EN_B", "EM_ES_A", "EM_ES_B",
+    "EM_PT_A", "EM_PT_B", "EM_DE_A", "EM_DE_B",
+    "EM_NL_A", "EM_NL_B",
+])
+
+
+async def _get_admin_config():
+    """Read admin_config key-value pairs into a dict."""
+    cfg = {"billing_mode": "EI", "ei_raison_sociale": "EmovisIA — Jean-Philippe Godard",
+           "ei_siret": "", "sasu_raison_sociale": "LotoIA SASU", "sasu_siret": ""}
+    try:
+        rows = await db_cloudsql.async_fetchall("SELECT config_key, config_value FROM admin_config")
+        for r in rows:
+            cfg[r["config_key"]] = r["config_value"]
+    except Exception as e:
+        logger.error("[ADMIN] admin_config read: %s", e)
+    return cfg
+
+
+@router.get("/admin/tarifs", response_class=HTMLResponse, include_in_schema=False)
+async def admin_tarifs_page(request: Request):
+    redir = _require_auth(request)
+    if redir:
+        return redir
+
+    cfg = await _get_admin_config()
+    tarifs = []
+    try:
+        tarifs = await db_cloudsql.async_fetchall(
+            "SELECT * FROM sponsor_tarifs ORDER BY FIELD(langue,'fr','en','es','pt','de','nl'), tier DESC"
+        )
+        tarifs = [{k: (_dec(v) if isinstance(v, Decimal) else v) for k, v in row.items()} for row in tarifs]
+    except Exception as e:
+        logger.error("[ADMIN] tarifs read: %s", e)
+
+    tpl = env.get_template("admin/tarifs.html")
+    return HTMLResponse(tpl.render(
+        active="tarifs",
+        billing_mode=cfg["billing_mode"],
+        ei_raison_sociale=cfg["ei_raison_sociale"],
+        ei_siret=cfg["ei_siret"],
+        sasu_raison_sociale=cfg["sasu_raison_sociale"],
+        sasu_siret=cfg["sasu_siret"],
+        tarifs=tarifs,
+        packs=_PACKS,
+        paliers=_PALIERS,
+    ))
+
+
+@router.post("/admin/api/tarifs/mode", include_in_schema=False)
+async def admin_api_tarifs_mode(request: Request):
+    err = _require_auth_json(request)
+    if err:
+        return err
+    try:
+        body = await request.json()
+        mode = body.get("mode", "")
+        if mode not in ("EI", "SASU"):
+            return JSONResponse({"ok": False, "error": "Mode invalide"}, status_code=400)
+        await db_cloudsql.async_query(
+            "INSERT INTO admin_config (config_key, config_value) VALUES ('billing_mode', %s) "
+            "ON DUPLICATE KEY UPDATE config_value = %s",
+            (mode, mode),
+        )
+        return JSONResponse({"ok": True, "mode": mode})
+    except Exception as e:
+        logger.error("[ADMIN] tarifs mode switch: %s", e)
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+@router.put("/admin/api/tarifs/{code}", include_in_schema=False)
+async def admin_api_tarifs_update(request: Request, code: str):
+    err = _require_auth_json(request)
+    if err:
+        return err
+    if code not in _VALID_TARIF_CODES:
+        return JSONResponse({"ok": False, "error": "Code invalide"}, status_code=400)
+    try:
+        body = await request.json()
+        tarif = float(body.get("tarif_mensuel", 0))
+        engagement = int(body.get("engagement_min_mois", 3))
+        red6 = float(body.get("reduction_6m", 10))
+        red12 = float(body.get("reduction_12m", 20))
+        active = int(body.get("active", 1))
+        if tarif < 0 or engagement < 1 or not (0 <= red6 <= 100) or not (0 <= red12 <= 100):
+            return JSONResponse({"ok": False, "error": "Valeurs invalides"}, status_code=400)
+        await db_cloudsql.async_query(
+            "UPDATE sponsor_tarifs SET tarif_mensuel=%s, engagement_min_mois=%s, "
+            "reduction_6m=%s, reduction_12m=%s, active=%s WHERE code=%s",
+            (tarif, engagement, red6, red12, active, code),
+        )
+        return JSONResponse({"ok": True, "code": code})
+    except Exception as e:
+        logger.error("[ADMIN] tarif update %s: %s", code, e)
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
+@router.get("/admin/api/tarifs", include_in_schema=False)
+async def admin_api_tarifs_data(request: Request):
+    err = _require_auth_json(request)
+    if err:
+        return err
+    try:
+        cfg = await _get_admin_config()
+        tarifs = await db_cloudsql.async_fetchall("SELECT * FROM sponsor_tarifs ORDER BY code")
+        tarifs = [{k: (_dec(v) if isinstance(v, Decimal) else v) for k, v in row.items()} for row in tarifs]
+        return JSONResponse({"billing_mode": cfg["billing_mode"], "tarifs": tarifs, "packs": _PACKS, "paliers": _PALIERS})
+    except Exception as e:
+        logger.error("[ADMIN] tarifs API: %s", e)
+        return JSONResponse({"billing_mode": "EI", "tarifs": [], "packs": [], "paliers": []}, status_code=500)

@@ -154,6 +154,7 @@ class TestAdminDashboard:
         assert '/admin/votes' in resp.text
         assert '/admin/sponsors' in resp.text
         assert '/admin/factures' in resp.text
+        assert '/admin/tarifs' in resp.text
         assert '/admin/config' in resp.text
 
 
@@ -716,3 +717,186 @@ class TestRealtime:
             mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0, "review_count": 0, "avg_rating": 0})
             resp = client.get("/admin")
         assert "/admin/realtime" in resp.text
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# TARIFS
+# ══════════════════════════════════════════════════════════════════════════════
+
+class TestTarifs:
+    """Tarifs page and API tests."""
+
+    _SAMPLE_TARIFS = [
+        {"code": "LOTO_FR_A", "langue": "fr", "pays": "France", "tier": "premium",
+         "tarif_mensuel": 349.00, "engagement_min_mois": 6, "reduction_6m": 10.00,
+         "reduction_12m": 20.00, "emplacements": "E1-E5", "requires_sasu": 0, "active": 1},
+        {"code": "EM_EN_A", "langue": "en", "pays": "UK,IE", "tier": "premium",
+         "tarif_mensuel": 349.00, "engagement_min_mois": 6, "reduction_6m": 10.00,
+         "reduction_12m": 20.00, "emplacements": "E1-E5", "requires_sasu": 1, "active": 1},
+    ]
+
+    _SAMPLE_CONFIG = [
+        {"config_key": "billing_mode", "config_value": "EI"},
+        {"config_key": "ei_raison_sociale", "config_value": "EmovisIA"},
+        {"config_key": "ei_siret", "config_value": "123"},
+        {"config_key": "sasu_raison_sociale", "config_value": "LotoIA SASU"},
+        {"config_key": "sasu_siret", "config_value": ""},
+    ]
+
+    def test_tarifs_page_requires_auth(self):
+        client = _get_client()
+        resp = client.get("/admin/tarifs", follow_redirects=False)
+        assert resp.status_code == 302
+        assert "/admin/login" in resp.headers["location"]
+
+    def test_tarifs_page_renders(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[
+                self._SAMPLE_CONFIG,   # admin_config
+                self._SAMPLE_TARIFS,   # sponsor_tarifs
+            ])
+            resp = client.get("/admin/tarifs")
+        assert resp.status_code == 200
+        assert "Grille tarifaire" in resp.text
+        assert "LOTO_FR_A" in resp.text
+        assert "EmovisIA" in resp.text
+
+    def test_tarifs_page_shows_locked_in_ei_mode(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[
+                self._SAMPLE_CONFIG,
+                self._SAMPLE_TARIFS,
+            ])
+            resp = client.get("/admin/tarifs")
+        assert resp.status_code == 200
+        assert "SASU" in resp.text  # badge-lock SASU on EN codes
+        assert "row-locked" in resp.text
+
+    def test_tarifs_page_sasu_mode(self):
+        client = _authed_client()
+        sasu_config = [{"config_key": "billing_mode", "config_value": "SASU"}] + self._SAMPLE_CONFIG[1:]
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[
+                sasu_config,
+                self._SAMPLE_TARIFS,
+            ])
+            resp = client.get("/admin/tarifs")
+        assert resp.status_code == 200
+        assert "row-locked" not in resp.text
+
+    def test_tarifs_page_db_error(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=Exception("DB down"))
+            resp = client.get("/admin/tarifs")
+        assert resp.status_code == 200
+        assert "Grille tarifaire" in resp.text
+
+    def test_api_tarifs_mode_requires_auth(self):
+        client = _get_client()
+        resp = client.post("/admin/api/tarifs/mode", json={"mode": "SASU"})
+        assert resp.status_code == 401
+
+    def test_api_tarifs_mode_switch_to_sasu(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock()
+            resp = client.post("/admin/api/tarifs/mode", json={"mode": "SASU"})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["ok"] is True
+        assert data["mode"] == "SASU"
+
+    def test_api_tarifs_mode_switch_to_ei(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock()
+            resp = client.post("/admin/api/tarifs/mode", json={"mode": "EI"})
+        assert resp.status_code == 200
+        assert resp.json()["ok"] is True
+
+    def test_api_tarifs_mode_invalid(self):
+        client = _authed_client()
+        resp = client.post("/admin/api/tarifs/mode", json={"mode": "INVALID"})
+        assert resp.status_code == 400
+
+    def test_api_tarifs_mode_db_error(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(side_effect=Exception("DB down"))
+            resp = client.post("/admin/api/tarifs/mode", json={"mode": "SASU"})
+        assert resp.status_code == 500
+
+    def test_api_tarifs_update_requires_auth(self):
+        client = _get_client()
+        resp = client.put("/admin/api/tarifs/LOTO_FR_A", json={"tarif_mensuel": 399})
+        assert resp.status_code == 401
+
+    def test_api_tarifs_update_success(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock()
+            resp = client.put("/admin/api/tarifs/LOTO_FR_A", json={
+                "tarif_mensuel": 399.00,
+                "engagement_min_mois": 6,
+                "reduction_6m": 10,
+                "reduction_12m": 20,
+                "active": 1,
+            })
+        assert resp.status_code == 200
+        assert resp.json()["ok"] is True
+        assert resp.json()["code"] == "LOTO_FR_A"
+
+    def test_api_tarifs_update_invalid_code(self):
+        client = _authed_client()
+        resp = client.put("/admin/api/tarifs/HACKED", json={"tarif_mensuel": 100})
+        assert resp.status_code == 400
+
+    def test_api_tarifs_update_negative_tarif(self):
+        client = _authed_client()
+        resp = client.put("/admin/api/tarifs/LOTO_FR_A", json={
+            "tarif_mensuel": -10, "engagement_min_mois": 3, "reduction_6m": 10, "reduction_12m": 20, "active": 1,
+        })
+        assert resp.status_code == 400
+
+    def test_api_tarifs_update_db_error(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(side_effect=Exception("DB down"))
+            resp = client.put("/admin/api/tarifs/EM_FR_A", json={
+                "tarif_mensuel": 349, "engagement_min_mois": 6, "reduction_6m": 10, "reduction_12m": 20, "active": 1,
+            })
+        assert resp.status_code == 500
+
+    def test_api_tarifs_data_requires_auth(self):
+        client = _get_client()
+        resp = client.get("/admin/api/tarifs")
+        assert resp.status_code == 401
+
+    def test_api_tarifs_data_returns_json(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[
+                self._SAMPLE_CONFIG,
+                self._SAMPLE_TARIFS,
+            ])
+            resp = client.get("/admin/api/tarifs")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "billing_mode" in data
+        assert "tarifs" in data
+        assert "packs" in data
+        assert "paliers" in data
+        assert data["billing_mode"] == "EI"
+        assert len(data["tarifs"]) == 2
+
+    def test_api_tarifs_data_db_error(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=Exception("DB down"))
+            resp = client.get("/admin/api/tarifs")
+        assert resp.status_code == 500
+        data = resp.json()
+        assert data["tarifs"] == []
