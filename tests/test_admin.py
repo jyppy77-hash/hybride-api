@@ -107,14 +107,25 @@ class TestAdminDashboard:
     def test_dashboard_shows_kpi_values(self):
         client = _authed_client()
 
-        async def mock_fetchone(sql, params=None):
+        async def mock_fetchall(sql, params=None):
             if "sponsor_impressions" in sql:
-                return {"cnt": 42}
+                return [
+                    {"event_type": "sponsor-popup-shown", "cnt": 42},
+                    {"event_type": "sponsor-click", "cnt": 7},
+                    {"event_type": "sponsor-video-played", "cnt": 3},
+                    {"event_type": "sponsor-inline-shown", "cnt": 5},
+                    {"event_type": "sponsor-result-shown", "cnt": 2},
+                    {"event_type": "sponsor-pdf-downloaded", "cnt": 1},
+                ]
+            return []
+
+        async def mock_fetchone(sql, params=None):
             if "ratings" in sql:
                 return {"review_count": 10, "avg_rating": 4.5}
             return None
 
         with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
             mock_db.async_fetchone = AsyncMock(side_effect=mock_fetchone)
             resp = client.get("/admin")
 
@@ -127,6 +138,7 @@ class TestAdminDashboard:
         client = _authed_client()
 
         with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=Exception("DB down"))
             mock_db.async_fetchone = AsyncMock(side_effect=Exception("DB down"))
             resp = client.get("/admin")
 
@@ -354,14 +366,15 @@ class TestExportCSV:
         client = _authed_client()
         with patch("routes.admin.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[
-                {"day": "2026-03-01", "event_type": "sponsor-popup-shown", "page": "/",
+                {"day": "2026-03-01", "sponsor_id": "EM_FR_A", "event_type": "sponsor-popup-shown", "page": "/",
                  "lang": "fr", "device": "mobile", "country": "FR", "cnt": 5}
             ])
             resp = client.get("/admin/api/impressions/csv?period=7d")
 
         assert resp.status_code == 200
         assert "text/csv" in resp.headers.get("content-type", "")
-        assert "date,event_type" in resp.text
+        assert "date,sponsor_id,event_type" in resp.text
+        assert "EM_FR_A" in resp.text
         assert "sponsor-popup-shown" in resp.text
 
     def test_csv_votes_requires_auth(self):
@@ -389,7 +402,7 @@ class TestExportCSV:
             resp = client.get("/admin/api/impressions/csv?period=7d")
 
         assert resp.status_code == 200
-        assert "date,event_type" in resp.text
+        assert "date,sponsor_id,event_type" in resp.text
 
 
 class TestExportPDF:

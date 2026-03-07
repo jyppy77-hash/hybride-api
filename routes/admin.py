@@ -136,25 +136,32 @@ async def admin_dashboard(request: Request):
     if redir:
         return redir
 
-    impressions = clicks = videos = 0
+    impressions = clicks = videos = inline_shown = result_shown = pdf_downloaded = 0
     try:
-        for event_type, label in [
-            ("sponsor-popup-shown", "impressions"),
-            ("sponsor-click", "clicks"),
-            ("sponsor-video-played", "videos"),
-        ]:
-            row = await db_cloudsql.async_fetchone(
-                "SELECT COUNT(*) AS cnt FROM sponsor_impressions "
-                "WHERE event_type = %s AND DATE(created_at) = CURDATE()",
-                (event_type,),
-            )
-            val = row["cnt"] if row else 0
-            if label == "impressions":
-                impressions = val
-            elif label == "clicks":
-                clicks = val
-            else:
-                videos = val
+        rows = await db_cloudsql.async_fetchall(
+            "SELECT event_type, COUNT(*) AS cnt FROM sponsor_impressions "
+            "WHERE DATE(created_at) = CURDATE() GROUP BY event_type",
+        )
+        _kpi_map = {
+            "sponsor-popup-shown": "impressions",
+            "sponsor-click": "clicks",
+            "sponsor-video-played": "videos",
+            "sponsor-inline-shown": "inline_shown",
+            "sponsor-result-shown": "result_shown",
+            "sponsor-pdf-downloaded": "pdf_downloaded",
+        }
+        _kpi_vals = {"impressions": 0, "clicks": 0, "videos": 0,
+                     "inline_shown": 0, "result_shown": 0, "pdf_downloaded": 0}
+        for r in rows:
+            key = _kpi_map.get(r["event_type"])
+            if key:
+                _kpi_vals[key] = r["cnt"]
+        impressions = _kpi_vals["impressions"]
+        clicks = _kpi_vals["clicks"]
+        videos = _kpi_vals["videos"]
+        inline_shown = _kpi_vals["inline_shown"]
+        result_shown = _kpi_vals["result_shown"]
+        pdf_downloaded = _kpi_vals["pdf_downloaded"]
     except Exception as e:
         logger.error("[ADMIN] sponsor query failed: %s", e)
 
@@ -176,6 +183,9 @@ async def admin_dashboard(request: Request):
         impressions=impressions,
         clicks=clicks,
         videos=videos,
+        inline_shown=inline_shown,
+        result_shown=result_shown,
+        pdf_downloaded=pdf_downloaded,
         avg_rating=avg_rating,
         review_count=review_count,
     ))
@@ -408,9 +418,9 @@ async def admin_export_impressions_csv(
     rows = []
     try:
         rows = await db_cloudsql.async_fetchall(
-            f"SELECT DATE(created_at) AS day, event_type, page, lang, device, country, COUNT(*) AS cnt "
+            f"SELECT DATE(created_at) AS day, sponsor_id, event_type, page, lang, device, country, COUNT(*) AS cnt "
             f"FROM sponsor_impressions WHERE {w} "
-            f"GROUP BY day, event_type, page, lang, device, country "
+            f"GROUP BY day, sponsor_id, event_type, page, lang, device, country "
             f"ORDER BY day DESC, cnt DESC LIMIT 5000",
             tuple(params),
         )
@@ -419,9 +429,9 @@ async def admin_export_impressions_csv(
 
     buf = io.StringIO()
     writer = csv.writer(buf)
-    writer.writerow(["date", "event_type", "page", "lang", "device", "country", "count"])
+    writer.writerow(["date", "sponsor_id", "event_type", "page", "lang", "device", "country", "count"])
     for r in rows:
-        writer.writerow([str(r["day"]), r["event_type"], r["page"], r["lang"], r["device"], r["country"] or "", r["cnt"]])
+        writer.writerow([str(r["day"]), r["sponsor_id"] or "", r["event_type"], r["page"], r["lang"], r["device"], r["country"] or "", r["cnt"]])
 
     output = buf.getvalue().encode("utf-8-sig")
     return StreamingResponse(
