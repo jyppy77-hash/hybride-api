@@ -116,7 +116,7 @@ function generatePopupHTML(config) {
     const { title, duration } = config;
 
     const sponsorsHTML = SPONSORS_CONFIG.map(sponsor => `
-        <a href="${sponsor.url}" target="_blank" rel="noopener noreferrer"
+        <a href="${sponsor.url}" target="_blank" rel="noopener noreferrer nofollow sponsored"
            class="sponsor-card" data-sponsor="${sponsor.id}"
            onclick="trackSponsorClick('${sponsor.id}')">
             <span class="sponsor-badge ${sponsor.badgeType}">${sponsor.badge}</span>

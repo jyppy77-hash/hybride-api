@@ -174,7 +174,7 @@ function generatePopupHTML75EM(config) {
                     ' loop' +
                     ' muted' +
                     ' playsinline' +
-                    ' preload="auto"' +
+                    ' preload="none"' +
                     ' src="' + SPONSOR_VIDEO_75_EM.videoSrc + '"' +
                 '></video>' +
             '</a>' +

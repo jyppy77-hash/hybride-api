@@ -188,7 +188,7 @@ function generatePopupHTMLSimulateurEM(config) {
     var duration = config.duration;
 
     var sponsorsHTML = SPONSORS_CONFIG_EM.map(function(sponsor) {
-        return '<a href="' + sponsor.url + '" target="_blank" rel="noopener noreferrer"' +
+        return '<a href="' + sponsor.url + '" target="_blank" rel="noopener noreferrer nofollow sponsored"' +
            ' class="sponsor-card" data-sponsor="' + sponsor.id + '"' +
            ' onclick="trackSponsorClickSimulateurEM(\'' + sponsor.id + '\')">' +
             '<span class="sponsor-badge ' + sponsor.badgeType + '">' + sponsor.badge + '</span>' +

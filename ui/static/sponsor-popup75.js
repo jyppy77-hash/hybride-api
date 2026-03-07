@@ -135,7 +135,7 @@ function generatePopupHTML75(config) {
                     loop
                     muted
                     playsinline
-                    preload="auto"
+                    preload="none"
                     src="${SPONSOR_VIDEO_75.videoSrc}"
                 ></video>
             </a>

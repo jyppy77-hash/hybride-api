@@ -879,7 +879,7 @@ function injectSponsorBanner() {
 
     const banner = document.createElement('div');
     banner.className = 'sponsor-result-banner';
-    banner.innerHTML = '<a href="' + sponsorA.url + '" target="_blank" rel="noopener noreferrer" onclick="trackSponsorClick(\'' + sponsorA.id + '\')">' +
+    banner.innerHTML = '<a href="' + sponsorA.url + '" target="_blank" rel="noopener noreferrer nofollow sponsored" onclick="trackSponsorClick(\'' + sponsorA.id + '\')">' +
         '<span>' + sponsorA.icon + '</span> ' + sponsorA.name + ' — ' + sponsorA.description +
         ' | <span>' + sponsorA.displayUrl + '</span></a>';
 

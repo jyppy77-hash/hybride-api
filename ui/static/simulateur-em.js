@@ -374,7 +374,7 @@ function injectSponsorBannerEM() {
 
     var banner = document.createElement('div');
     banner.className = 'sponsor-result-banner';
-    banner.innerHTML = '<a href="mailto:partenariats@lotoia.fr" target="_blank" rel="noopener noreferrer">' +
+    banner.innerHTML = '<a href="mailto:partenariats@lotoia.fr" target="_blank" rel="noopener noreferrer nofollow sponsored">' +
         '<span>\u2B50</span> ' + (LI.sponsor1_name || 'Espace Premium') + ' — ' + (LI.sponsor1_desc || '') +
         ' | <span>partenariats@lotoia.fr</span></a>';
 

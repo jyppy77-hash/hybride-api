@@ -109,4 +109,4 @@ async def track_sponsor_event(data: SponsorEvent, request: Request):
     except Exception as e:
         logger.error("[SPONSOR TRACK] insert failed: %s", e)
 
-    return Response(status_code=204)
+    return Response(status_code=204, headers={"Cache-Control": "no-store"})
