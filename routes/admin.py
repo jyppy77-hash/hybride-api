@@ -20,6 +20,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Stre
 
 import db_cloudsql
 from config.templates import env
+from rate_limit import limiter
 
 logger = logging.getLogger(__name__)
 
@@ -110,6 +111,7 @@ async def admin_login_page(request: Request):
 
 
 @router.post("/admin/login", response_class=HTMLResponse, include_in_schema=False)
+@limiter.limit("5/minute")
 async def admin_login(request: Request, password: str = Form(...)):
     if not _ADMIN_PASSWORD or not secrets.compare_digest(password, _ADMIN_PASSWORD):
         tpl = env.get_template("admin/login.html")

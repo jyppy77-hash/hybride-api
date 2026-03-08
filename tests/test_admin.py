@@ -31,6 +31,9 @@ def _get_client():
         importlib.reload(admin_mod)
         import main as main_mod
         importlib.reload(main_mod)
+        # Reset rate limiter state to avoid cross-test 429s
+        from rate_limit import limiter
+        limiter.reset()
         return TestClient(main_mod.app, raise_server_exceptions=False)
 
 
