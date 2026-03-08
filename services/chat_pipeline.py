@@ -12,13 +12,13 @@ from services.circuit_breaker import gemini_breaker, CircuitOpenError
 from services.stats_service import (
     get_numero_stats, analyze_grille_for_chat,
     get_classement_numeros, get_comparaison_numeros, get_numeros_par_categorie,
-    prepare_grilles_pitch_context, get_pair_correlations,
+    prepare_grilles_pitch_context, get_pair_correlations, get_triplet_correlations,
 )
 
 from services.chat_detectors import (
     _detect_mode, _is_short_continuation, _detect_prochain_tirage,
     _detect_tirage, _has_temporal_filter, _detect_numero, _detect_grille,
-    _detect_requete_complexe, _detect_paires, _detect_insulte,
+    _detect_requete_complexe, _detect_paires, _detect_triplets, _detect_insulte,
     _count_insult_streak, _get_insult_response, _get_insult_short,
     _get_menace_response, _detect_compliment, _count_compliment_streak,
     _get_compliment_response, _detect_out_of_range, _count_oor_streak,
@@ -33,8 +33,8 @@ from services.chat_utils import (
     FALLBACK_RESPONSE, _enrich_with_context, _clean_response, _strip_non_latin,
     _strip_sponsor_from_text, _get_sponsor_if_due, _format_date_fr,
     _format_tirage_context, _format_stats_context, _format_grille_context,
-    _format_complex_context, _format_pairs_context, _build_session_context,
-    _format_generation_context,
+    _format_complex_context, _format_pairs_context, _format_triplets_context,
+    _build_session_context, _format_generation_context,
 )
 
 logger = logging.getLogger(__name__)
@@ -250,6 +250,19 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
                     logger.info(f"[HYBRIDE CHAT] Requete complexe: {intent['type']}")
             except Exception as e:
                 logger.warning(f"[HYBRIDE CHAT] Erreur requete complexe: {e}")
+
+    # Phase P : triplets de numéros (testé avant paires)
+    if not _continuation_mode and not force_sql and not enrichment_context:
+        if _detect_triplets(message):
+            try:
+                triplets_data = await asyncio.wait_for(
+                    get_triplet_correlations(top_n=5), timeout=30.0
+                )
+                if triplets_data:
+                    enrichment_context = _format_triplets_context(triplets_data)
+                    logger.info("[HYBRIDE CHAT] Triplets injectes")
+            except Exception as e:
+                logger.warning(f"[HYBRIDE CHAT] Erreur triplets: {e}")
 
     # Phase P : paires de numéros
     if not _continuation_mode and not force_sql and not enrichment_context:

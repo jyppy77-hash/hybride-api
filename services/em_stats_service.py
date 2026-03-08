@@ -81,6 +81,7 @@ get_comparaison_numeros = _svc.get_comparaison_numeros
 get_numeros_par_categorie = _svc.get_numeros_par_categorie
 prepare_grilles_pitch_context = _svc.prepare_grilles_pitch_context
 get_pair_correlations = _svc.get_pair_correlations
+get_triplet_correlations = _svc.get_triplet_correlations
 get_star_pair_correlations = _svc.get_star_pair_correlations
 
 

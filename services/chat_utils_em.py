@@ -235,6 +235,28 @@ def _format_star_pairs_context_em(star_data: dict) -> str:
 
 
 # ────────────────────────────────────────────
+# Formatage triplets EM / corrélations de 3
+# ────────────────────────────────────────────
+
+def _format_triplets_context_em(triplets_data: dict) -> str:
+    """Formate les correlations de triplets EM en contexte pour Gemini."""
+    lines = ["[CORRÉLATIONS DE TRIPLETS — Boules EuroMillions]"]
+    lines.append(f"Total tirages analysés : {triplets_data['total_draws']}")
+    if triplets_data.get("window"):
+        lines.append(f"Fenêtre : {triplets_data['window']}")
+    for i, t in enumerate(triplets_data["triplets"], 1):
+        lines.append(
+            f"{i}. {t['num_a']} + {t['num_b']} + {t['num_c']} "
+            f"\u2192 {t['count']} fois ({t['percentage']}%)"
+        )
+    lines.append(
+        "IMPORTANT : Le hasard reste souverain. "
+        "Ces corrélations sont purement statistiques."
+    )
+    return "\n".join(lines)
+
+
+# ────────────────────────────────────────────
 # Formatage génération de grille EM (Phase G)
 # ────────────────────────────────────────────
 

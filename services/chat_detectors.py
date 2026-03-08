@@ -1089,6 +1089,39 @@ def _detect_paires(message: str) -> bool:
 
 
 # ═══════════════════════════════════════════════════════
+# Phase P — Détection triplets / corrélations de 3 (6 langues)
+# ═══════════════════════════════════════════════════════
+
+_TRIPLETS_PATTERN = re.compile(
+    # FR — triplet, trio(s), combinaison de 3, 3 numéros ensemble
+    r'triplet|trio(?:s|\b)|combinaison\s+de\s+3|3\s+num[eé]ros\s+ensemble|'
+    r'sortent\s+ensemble.*\b3\b|group(?:e|ement)\s+de\s+3|'
+    r'3\s+boules?\s+ensemble|trois\s+num[eé]ros|'
+    # EN — triplet, combination of 3, 3 numbers together
+    r'triplet|combination\s+of\s+3|3\s+numbers?\s+together|'
+    r'group\s+of\s+3|three\s+numbers?|'
+    # ES — triplete, trío(s), combinación de 3
+    r'triplete|tr[ií]o(?:s|\b)|combinaci[oó]n\s+de\s+3|3\s+n[uú]meros?\s+juntos|'
+    r'tres\s+n[uú]meros|'
+    # PT — tripleto, trio, combinação de 3
+    r'tripleto|combina[çc][aã]o\s+de\s+3|3\s+n[uú]meros?\s+juntos|'
+    r'tr[eê]s\s+n[uú]meros|'
+    # DE — Triplett, Dreiergruppe, Kombination von 3
+    r'triplett|dreiergruppe|kombination\s+von\s+3|3\s+zahlen\s+zusammen|'
+    r'drei\s+zahlen|'
+    # NL — triplet, drietal, combinatie van 3
+    r'drietal|combinatie\s+van\s+3|3\s+nummers?\s+samen|'
+    r'drie\s+nummers',
+    re.IGNORECASE
+)
+
+
+def _detect_triplets(message: str) -> bool:
+    """Detecte si l'utilisateur demande les correlations de triplets (6 langues)."""
+    return bool(_TRIPLETS_PATTERN.search(message))
+
+
+# ═══════════════════════════════════════════════════════
 # Phase OOR — Détection numéros hors range
 # ═══════════════════════════════════════════════════════
 

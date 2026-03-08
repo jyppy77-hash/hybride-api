@@ -11,7 +11,7 @@ from services.chat_detectors import (
     _detect_insulte, _count_insult_streak,
     _detect_compliment, _count_compliment_streak,
     _extract_top_n,
-    _detect_paires,
+    _detect_paires, _detect_triplets,
     _detect_generation, _detect_generation_mode,
 )
 
@@ -19,6 +19,11 @@ from services.chat_detectors import (
 def _detect_paires_em(message: str) -> bool:
     """Detecte les questions sur les paires EM (meme regex multilingue que Loto)."""
     return _detect_paires(message)
+
+
+def _detect_triplets_em(message: str) -> bool:
+    """Detecte les questions sur les triplets EM (meme regex multilingue que Loto)."""
+    return _detect_triplets(message)
 
 META_KEYWORDS = ["meta", "algorithme", "moteur", "pondération", "ponderation"]
 

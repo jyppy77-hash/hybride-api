@@ -18,7 +18,7 @@ from services.circuit_breaker import gemini_breaker, CircuitOpenError
 from services.em_stats_service import (
     get_numero_stats, analyze_grille_for_chat,
     get_classement_numeros, get_comparaison_numeros, get_numeros_par_categorie,
-    prepare_grilles_pitch_context, get_pair_correlations,
+    prepare_grilles_pitch_context, get_pair_correlations, get_triplet_correlations,
     get_star_pair_correlations,
 )
 
@@ -31,8 +31,8 @@ from services.chat_detectors import (
 from services.chat_detectors_em import (
     _detect_mode_em, _detect_prochain_tirage_em,
     _detect_numero_em, _detect_grille_em,
-    _detect_requete_complexe_em, _detect_paires_em, _detect_out_of_range_em,
-    _count_oor_streak_em, _get_oor_response_em,
+    _detect_requete_complexe_em, _detect_paires_em, _detect_triplets_em,
+    _detect_out_of_range_em, _count_oor_streak_em, _get_oor_response_em,
     _get_insult_response_em, _get_insult_short_em, _get_menace_response_em,
     _get_compliment_response_em,
     _detect_argent_em, _get_argent_response_em,
@@ -56,7 +56,8 @@ from services.chat_utils_em import (
     FALLBACK_RESPONSE_EM,
     _format_tirage_context_em, _format_stats_context_em,
     _format_grille_context_em, _format_complex_context_em,
-    _format_pairs_context_em, _format_star_pairs_context_em,
+    _format_pairs_context_em, _format_triplets_context_em,
+    _format_star_pairs_context_em,
     _build_session_context_em,
     _format_generation_context_em,
 )
@@ -281,6 +282,19 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                     logger.info(f"[EM CHAT] Requete complexe: {intent['type']}")
             except Exception as e:
                 logger.warning(f"[EM CHAT] Erreur requete complexe: {e}")
+
+    # Phase P : triplets de numéros (testé avant paires)
+    if not _continuation_mode and not force_sql and not enrichment_context:
+        if _detect_triplets_em(message):
+            try:
+                triplets_data = await asyncio.wait_for(
+                    get_triplet_correlations(top_n=5), timeout=30.0
+                )
+                if triplets_data:
+                    enrichment_context = _format_triplets_context_em(triplets_data)
+                    logger.info("[EM CHAT] Triplets injectes")
+            except Exception as e:
+                logger.warning(f"[EM CHAT] Erreur triplets: {e}")
 
     # Phase P : paires de numéros
     if not _continuation_mode and not force_sql and not enrichment_context:

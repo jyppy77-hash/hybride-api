@@ -635,6 +635,30 @@ async def unified_stats_pairs(
 
 
 # =========================
+# Triplet correlations
+# =========================
+
+@router.get("/stats/triplets")
+@limiter.limit("60/minute")
+async def unified_stats_triplets(
+    request: Request, game: ValidGame,
+    top_n: int = Query(default=10, ge=1, le=50),
+    window: Optional[str] = Query(default=None, pattern="^[1-9]A$"),
+):
+    cfg = get_config(game)
+    svc = get_stats_service(cfg)
+
+    result = await svc.get_triplet_correlations(top_n=top_n, window=window)
+    if result is None:
+        return JSONResponse(status_code=500, content={
+            "success": False, "data": None,
+            "error": "Erreur interne du serveur",
+        })
+
+    return {"success": True, "game": game.value, **result}
+
+
+# =========================
 # Hybride Stats (chatbot BDD)
 # =========================
 

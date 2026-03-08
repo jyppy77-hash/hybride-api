@@ -878,6 +878,117 @@ class BaseStatsService:
             )
             return None
 
+    async def get_triplet_correlations(self, *, top_n=10, window=None):
+        """
+        Top triplets de boules co-occurrents (C(5,3)=10 triplets par tirage).
+        window: "2A","5A" etc. = filtre date en annees, None = global.
+        Cache: {prefix}triplets:{window}:{top_n}, TTL 1h.
+        Retour: dict(triplets=[{num_a, num_b, num_c, count, percentage, rank}], total_draws, window)
+        """
+        cache_key = f"{self.cfg.cache_prefix}triplets:{window}:{top_n}"
+        cached = await cache_get(cache_key)
+        if cached is not None:
+            return cached
+
+        async with self._get_connection() as conn:
+          try:
+            cursor = await conn.cursor()
+
+            # Build optional date filter
+            if window:
+                years = int(window.replace("A", ""))
+                await cursor.execute(
+                    f"SELECT MAX(date_de_tirage) as d FROM {self.cfg.table}"
+                )
+                date_max = (await cursor.fetchone())['d']
+                from datetime import timedelta
+                date_from = date_max - timedelta(days=365 * years)
+                date_filter = "WHERE date_de_tirage >= %s"
+                params_per_union = [date_from]
+            else:
+                date_filter = ""
+                params_per_union = []
+
+            # Count total draws in window
+            if date_filter:
+                await cursor.execute(
+                    f"SELECT COUNT(*) as total FROM {self.cfg.table} {date_filter}",
+                    params_per_union,
+                )
+            else:
+                await cursor.execute(
+                    f"SELECT COUNT(*) as total FROM {self.cfg.table}"
+                )
+            total_draws = (await cursor.fetchone())['total']
+
+            if total_draws == 0:
+                result = {"triplets": [], "total_draws": 0, "window": window}
+                await cache_set(cache_key, result)
+                return result
+
+            # 10 UNION ALL for C(5,3) triplets
+            # Canonical ordering: LEAST for num_a, GREATEST for num_c,
+            # middle = sum - min - max for num_b
+            triplet_cols = [
+                ("boule_1", "boule_2", "boule_3"),
+                ("boule_1", "boule_2", "boule_4"),
+                ("boule_1", "boule_2", "boule_5"),
+                ("boule_1", "boule_3", "boule_4"),
+                ("boule_1", "boule_3", "boule_5"),
+                ("boule_1", "boule_4", "boule_5"),
+                ("boule_2", "boule_3", "boule_4"),
+                ("boule_2", "boule_3", "boule_5"),
+                ("boule_2", "boule_4", "boule_5"),
+                ("boule_3", "boule_4", "boule_5"),
+            ]
+            unions = []
+            all_params = []
+            for a, b, c in triplet_cols:
+                unions.append(
+                    f"SELECT LEAST({a}, {b}, {c}) AS num_a, "
+                    f"({a} + {b} + {c} - LEAST({a}, {b}, {c}) - GREATEST({a}, {b}, {c})) AS num_b, "
+                    f"GREATEST({a}, {b}, {c}) AS num_c "
+                    f"FROM {self.cfg.table} {date_filter}"
+                )
+                all_params.extend(params_per_union)
+
+            sql = (
+                f"SELECT num_a, num_b, num_c, COUNT(*) AS triplet_count FROM ("
+                f"{' UNION ALL '.join(unions)}"
+                f") AS triplets GROUP BY num_a, num_b, num_c "
+                f"ORDER BY triplet_count DESC LIMIT %s"
+            )
+            all_params.append(top_n)
+
+            await cursor.execute(sql, all_params)
+            rows = await cursor.fetchall()
+
+            triplets = []
+            for rank, row in enumerate(rows, 1):
+                pct = round(row['triplet_count'] / total_draws * 100, 1)
+                triplets.append({
+                    "num_a": row['num_a'],
+                    "num_b": row['num_b'],
+                    "num_c": row['num_c'],
+                    "count": row['triplet_count'],
+                    "percentage": pct,
+                    "rank": rank,
+                })
+
+            result = {
+                "triplets": triplets,
+                "total_draws": total_draws,
+                "window": window,
+            }
+            await cache_set(cache_key, result)
+            return result
+
+          except Exception as e:
+            logger.error(
+                f"Erreur get_triplet_correlations{self.cfg.log_label}: {e}"
+            )
+            return None
+
     async def get_star_pair_correlations(self, *, top_n=10, window=None):
         """
         Paires d'etoiles EM (1 seule paire par tirage → simple GROUP BY).
