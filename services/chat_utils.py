@@ -189,6 +189,8 @@ def _clean_response(text: str) -> str:
         r'\[PROCHAIN TIRAGE[^\]]*\]',
         r'\[CORR[EÉ]LATIONS? DE PAIRES[^\]]*\]',
         r'\[CORRELATIONS? DE PAIRES[^\]]*\]',
+        r'\[GRILLE G[EÉ]N[EÉ]R[EÉ]E PAR HYBRIDE[^\]]*\]',
+        r'\[GRILLE GENEREE PAR HYBRIDE[^\]]*\]',
         r'\[Page:\s*[^\]]*\]',
         r'\[Question utilisateur[^\]]*\]',
         r'\[CONTEXTE CONTINUATION[^\]]*\]',
@@ -453,5 +455,25 @@ def _format_pairs_context(pairs_data: dict) -> str:
     lines.append(
         "IMPORTANT : Le hasard reste souverain. "
         "Ces corrélations sont purement statistiques."
+    )
+    return "\n".join(lines)
+
+
+# ────────────────────────────────────────────
+# Formatage génération de grille (Phase G)
+# ────────────────────────────────────────────
+
+def _format_generation_context(grid_data: dict) -> str:
+    """Formate une grille Loto generee en contexte pour Gemini."""
+    lines = ["[GRILLE GÉNÉRÉE PAR HYBRIDE]"]
+    lines.append(f"Numéros : {grid_data['nums']}")
+    lines.append(f"Numéro Chance : {grid_data['chance']}")
+    lines.append(f"Score de conformité : {grid_data['score']}/100")
+    lines.append(f"Badges : {', '.join(grid_data.get('badges', []))}")
+    lines.append(f"Mode : {grid_data.get('mode', 'balanced')}")
+    lines.append(
+        "IMPORTANT : Présente cette grille de manière engageante. "
+        "Explique les critères (équilibre pair/impair, bas/haut, fréquences, retards). "
+        "Rappelle que le Loto reste un jeu de pur hasard et qu'aucune grille ne garantit de gain."
     )
     return "\n".join(lines)

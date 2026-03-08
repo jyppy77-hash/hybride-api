@@ -232,3 +232,24 @@ def _format_star_pairs_context_em(star_data: dict) -> str:
             f"\u2192 {p['count']} fois ({p['percentage']}%)"
         )
     return "\n".join(lines)
+
+
+# ────────────────────────────────────────────
+# Formatage génération de grille EM (Phase G)
+# ────────────────────────────────────────────
+
+def _format_generation_context_em(grid_data: dict) -> str:
+    """Formate une grille EuroMillions generee en contexte pour Gemini."""
+    lines = ["[GRILLE GÉNÉRÉE PAR HYBRIDE]"]
+    lines.append(f"Numéros : {grid_data['nums']}")
+    if grid_data.get('etoiles'):
+        lines.append(f"Étoiles : {grid_data['etoiles']}")
+    lines.append(f"Score de conformité : {grid_data['score']}/100")
+    lines.append(f"Badges : {', '.join(grid_data.get('badges', []))}")
+    lines.append(f"Mode : {grid_data.get('mode', 'balanced')}")
+    lines.append(
+        "IMPORTANT : Présente cette grille de manière engageante. "
+        "Explique les critères (équilibre pair/impair, bas/haut, fréquences, retards). "
+        "Rappelle que l'EuroMillions reste un jeu de pur hasard et qu'aucune grille ne garantit de gain."
+    )
+    return "\n".join(lines)

@@ -26,6 +26,7 @@ from services.chat_detectors import (
     _detect_insulte, _count_insult_streak,
     _detect_compliment, _count_compliment_streak,
     _is_short_continuation, _detect_tirage, _has_temporal_filter,
+    _detect_generation, _detect_generation_mode,
 )
 from services.chat_detectors_em import (
     _detect_mode_em, _detect_prochain_tirage_em,
@@ -57,6 +58,7 @@ from services.chat_utils_em import (
     _format_grille_context_em, _format_complex_context_em,
     _format_pairs_context_em, _format_star_pairs_context_em,
     _build_session_context_em,
+    _format_generation_context_em,
 )
 
 logger = logging.getLogger(__name__)
@@ -170,6 +172,23 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                     f"[EM CHAT] Compliment + question (type={_compliment_type}), passage au flow normal"
                 )
 
+    # ── Phase G : Détection génération de grille ──
+    _generation_context = ""
+    if _detect_generation(message):
+        try:
+            from engine.hybride_em import generate_grids as _gen_em
+            _gen_mode = _detect_generation_mode(message)
+            _gen_result = await asyncio.wait_for(
+                _gen_em(n=1, mode=_gen_mode, lang=lang), timeout=30.0
+            )
+            if _gen_result and _gen_result.get("grids"):
+                _grid = _gen_result["grids"][0]
+                _grid["mode"] = _gen_mode
+                _generation_context = _format_generation_context_em(_grid)
+                logger.info(f"[EM CHAT] Phase G — grille EM generee mode={_gen_mode}")
+        except Exception as e:
+            logger.warning(f"[EM CHAT] Phase G erreur: {e}")
+
     # ── Phase A : Détection argent / gains / paris ──
     if _detect_argent_em(message, lang):
         _argent_resp = (_get_argent_response_em_en(message)
@@ -192,7 +211,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                 f"→ enrichissement contextuel"
             )
 
-    enrichment_context = ""
+    enrichment_context = _generation_context
 
     # Phase 0-bis : prochain tirage
     if not _continuation_mode and _detect_prochain_tirage_em(message):

@@ -917,7 +917,10 @@ _ARGENT_L3 = [
 
 
 def _detect_argent(message: str) -> bool:
-    """Detecte si le message concerne l'argent, les gains ou les paris."""
+    """Detecte si le message concerne l'argent, les gains ou les paris.
+    Exclut les demandes de generation de grilles (Phase G prioritaire)."""
+    if _detect_generation(message):
+        return False
     lower = message.lower()
     for pattern in _ARGENT_PHRASES_FR:
         if re.search(pattern, lower):
@@ -941,6 +944,93 @@ def _get_argent_response(message: str) -> str:
             return random.choice(_ARGENT_L2)
     # L1 : defaut
     return random.choice(_ARGENT_L1)
+
+
+# ═══════════════════════════════════════════════════════
+# Phase G — Détection génération de grilles (6 langues)
+# ═══════════════════════════════════════════════════════
+
+_GENERATION_PATTERN = re.compile(
+    # FR
+    r'g[eé]n[eè]re|g[eé]n[eé]rer|'
+    r'donne[\s-]moi\s+.{0,20}(?:grille|combinaison|num[eé]ros)|'
+    r'propose[\s-]moi\s+.{0,20}(?:grille|combinaison|num[eé]ros)|'
+    r'cr[eé]e[\s-]moi\s+.{0,20}(?:grille|combinaison)|'
+    r'fais[\s-]moi\s+.{0,20}(?:grille|combinaison)|'
+    r'grille\s+.{0,15}optim|combinaison\s+.{0,15}optim|'
+    r'choisis[\s-]moi\s+.{0,15}num[eé]ros|'
+    r'tire[\s-]moi\s+.{0,15}num[eé]ros|'
+    # EN
+    r'\bgenerate\b|'
+    r'give\s+me\s+.{0,20}(?:grid|combination|numbers)|'
+    r'create\s+.{0,20}(?:grid|combination)|'
+    r'make\s+me\s+.{0,20}(?:grid|combination)|'
+    r'optimized\s+grid|'
+    r'pick\s+.{0,15}numbers\s+for\s+me|'
+    # ES
+    r'\bgenera\b|generar\b|'
+    r'dame\s+.{0,20}(?:combinaci[oó]n|n[uú]meros)|'
+    r'crea\s+.{0,20}combinaci[oó]n|'
+    r'combinaci[oó]n\s+.{0,15}optim|'
+    r'hazme\s+.{0,20}combinaci[oó]n|'
+    # PT
+    r'\bgera\b|\bgerar\b|\bgere\b|'
+    r'd[aá][\s-]me\s+.{0,20}(?:combina[cç][aã]o|n[uú]meros)|'
+    r'cria\s+.{0,20}combina[cç][aã]o|'
+    r'combina[cç][aã]o\s+.{0,15}optim|'
+    r'faz[\s-]me\s+.{0,20}combina[cç][aã]o|'
+    # DE
+    r'generier|erstell\w*\s+.{0,20}(?:kombination|zahlen|gitter)|'
+    r'gib\s+mir\s+.{0,20}(?:kombination|zahlen)|'
+    r'erzeug\w*\s+.{0,20}kombination|'
+    r'kombination\s+.{0,15}optim|'
+    r'w[aä]hl\w*\s+.{0,15}zahlen|'
+    # NL
+    r'genereer|'
+    r'maak\s+.{0,20}(?:combinatie|nummers)|'
+    r'geef\s+me\s+.{0,20}(?:combinatie|nummers)|'
+    r'combinatie\s+.{0,15}optim|'
+    r'kies\s+.{0,15}nummers',
+    re.IGNORECASE
+)
+
+# Mots-clés de contexte grille pour disambiguër
+_GENERATION_CONTEXT = re.compile(
+    r'grille|combinaison|grid|combination|combinaci[oó]n|combina[cç][aã]o|'
+    r'kombination|combinatie|num[eé]ros|numbers|n[uú]meros|zahlen|nummers|'
+    r'gitter',
+    re.IGNORECASE
+)
+
+
+def _detect_generation(message: str) -> bool:
+    """Detecte si le message est une demande de generation de grille (6 langues)."""
+    lower = message.lower()
+    if not _GENERATION_PATTERN.search(lower):
+        return False
+    # Pour les verbes courts (genera, gera, gere), exiger un contexte grille
+    if re.search(r'\b(?:genera|gera|gere)\b', lower) and not _GENERATION_CONTEXT.search(lower):
+        return False
+    return True
+
+
+_MODE_PATTERN_CONSERVATIVE = re.compile(
+    r'\bconservat\w+|\bprudent\w*|\bs[ûü]re?\b|\bsafe\b|\bseguro\b|\bsicher\b|\bveilig\b|\bconservador\b',
+    re.IGNORECASE
+)
+_MODE_PATTERN_RECENT = re.compile(
+    r'r[eé]cent\w*|tendance|trend|reciente|tendencia|tendência|aktuell',
+    re.IGNORECASE
+)
+
+
+def _detect_generation_mode(message: str) -> str:
+    """Extrait le mode de generation depuis le message. Retourne conservative/recent/balanced."""
+    if _MODE_PATTERN_CONSERVATIVE.search(message):
+        return "conservative"
+    if _MODE_PATTERN_RECENT.search(message):
+        return "recent"
+    return "balanced"
 
 
 # ═══════════════════════════════════════════════════════

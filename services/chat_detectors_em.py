@@ -12,6 +12,7 @@ from services.chat_detectors import (
     _detect_compliment, _count_compliment_streak,
     _extract_top_n,
     _detect_paires,
+    _detect_generation, _detect_generation_mode,
 )
 
 
@@ -598,7 +599,10 @@ _ARGENT_BETTING_EM = {
 
 
 def _detect_argent_em(message: str, lang: str) -> bool:
-    """Detecte si le message EM concerne l'argent/gains/paris (multilingue)."""
+    """Detecte si le message EM concerne l'argent/gains/paris (multilingue).
+    Exclut les demandes de generation de grilles (Phase G prioritaire)."""
+    if _detect_generation(message):
+        return False
     lower = message.lower()
     phrases = _ARGENT_PHRASES_EM.get(lang, _ARGENT_PHRASES_EM["fr"])
     for pattern in phrases:

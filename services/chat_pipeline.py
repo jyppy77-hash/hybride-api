@@ -23,6 +23,7 @@ from services.chat_detectors import (
     _get_menace_response, _detect_compliment, _count_compliment_streak,
     _get_compliment_response, _detect_out_of_range, _count_oor_streak,
     _get_oor_response, _detect_argent, _get_argent_response,
+    _detect_generation, _detect_generation_mode,
 )
 from services.chat_sql import (
     _get_prochain_tirage, _get_tirage_data, _generate_sql, _validate_sql,
@@ -33,6 +34,7 @@ from services.chat_utils import (
     _strip_sponsor_from_text, _get_sponsor_if_due, _format_date_fr,
     _format_tirage_context, _format_stats_context, _format_grille_context,
     _format_complex_context, _format_pairs_context, _build_session_context,
+    _format_generation_context,
 )
 
 logger = logging.getLogger(__name__)
@@ -140,6 +142,23 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
                     f"[HYBRIDE CHAT] Compliment + question (type={_compliment_type}), passage au flow normal"
                 )
 
+    # ── Phase G : Détection génération de grille ──
+    _generation_context = ""
+    if _detect_generation(message):
+        try:
+            from engine.hybride import generate_grids as _gen_loto
+            _gen_mode = _detect_generation_mode(message)
+            _gen_result = await asyncio.wait_for(
+                _gen_loto(n=1, mode=_gen_mode), timeout=30.0
+            )
+            if _gen_result and _gen_result.get("grids"):
+                _grid = _gen_result["grids"][0]
+                _grid["mode"] = _gen_mode
+                _generation_context = _format_generation_context(_grid)
+                logger.info(f"[HYBRIDE CHAT] Phase G — grille Loto generee mode={_gen_mode}")
+        except Exception as e:
+            logger.warning(f"[HYBRIDE CHAT] Phase G erreur: {e}")
+
     # ── Phase A : Détection argent / gains / paris ──
     if _detect_argent(message):
         _argent_resp = _get_argent_response(message)
@@ -161,7 +180,7 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
                 f"→ enrichissement contextuel"
             )
 
-    enrichment_context = ""
+    enrichment_context = _generation_context
 
     # Phase 0-bis : prochain tirage
     if not _continuation_mode and _detect_prochain_tirage(message):
