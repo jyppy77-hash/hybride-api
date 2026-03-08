@@ -948,18 +948,27 @@ def _get_argent_response(message: str) -> str:
 # ═══════════════════════════════════════════════════════
 
 _PAIRS_PATTERN = re.compile(
+    # FR — termes techniques
     r'paire|duo|ensemble|associ[eé]|combinaison.*fr[eé]quent|sortent.*ensemble|'
     r'num[eé]ros.*li[eé]s|co.?occurrence|corr[eé]lation|'
-    # EN
+    # FR — formulations naturelles
+    r'sort\w*\s+.*avec|avec\s+le\s+\d|accompagn|v(?:a|ont)\s+avec|[àa]\s+c[oô]t[eé]\s+du?\s+\d|'
+    # EN — termes techniques
     r'\bpair\b|together|associated|combination.*frequent|numbers.*linked|co.?occurrence|correlation|'
-    # ES
+    # EN — formulations naturelles
+    r'comes?\s+with|goes?\s+with|alongside|appears?\s+next\s+to|'
+    # ES — termes techniques + naturels
     r'pareja|juntos|asociados|combinaci[oó]n.*frecuente|'
-    # PT
+    r'sale[ns]?\s+con|junto\s+(?:con|al)|acompa[ñn]a|'
+    # PT — termes techniques + naturels
     r'dupla|associados|combina[çc][aã]o.*frequente|'
-    # DE
+    r'sa(?:i|em)\s+com|junto\s+(?:com|ao)|acompanha|'
+    # DE — termes techniques + naturels
     r'\bpaar\b|zusammen|verbunden|kombination.*h[aä]ufig|'
-    # NL
-    r'\bsamen\b|verbonden|combinatie.*frequent',
+    r'kommt?\s+.*\bmit\b|zusammen\s+mit|neben\s+de[rn]?\s+\d|begleitet|'
+    # NL — termes techniques + naturels
+    r'\bsamen\b|verbonden|combinatie.*frequent|'
+    r'komt?\s+.*\bmet\b|samen\s+met|naast\s+de?\s+\d|begeleidt',
     re.IGNORECASE
 )
 

@@ -237,9 +237,53 @@ def test_detect_paires_nl():
     assert _detect_paires("combinatie frequent")
 
 
+def test_detect_paires_natural_fr():
+    """Formulations naturelles FR."""
+    assert _detect_paires("quel numéro sort le plus souvent avec le 15")
+    assert _detect_paires("quels numéros accompagnent le 7")
+    assert _detect_paires("le 15 sort avec quoi")
+    assert _detect_paires("quels numéros vont avec le 23")
+    assert _detect_paires("il sort à côté du 15 souvent ?")
+
+
+def test_detect_paires_natural_en():
+    assert _detect_paires("which number comes with 15")
+    assert _detect_paires("what goes with 15")
+    assert _detect_paires("numbers alongside 15")
+    assert _detect_paires("appears next to 7")
+
+
+def test_detect_paires_natural_es():
+    assert _detect_paires("qué número sale con el 15")
+    assert _detect_paires("junto con el 15")
+    assert _detect_paires("qué número acompaña al 7")
+
+
+def test_detect_paires_natural_pt():
+    assert _detect_paires("que número sai com o 15")
+    assert _detect_paires("junto com o 15")
+    assert _detect_paires("que número acompanha o 7")
+
+
+def test_detect_paires_natural_de():
+    assert _detect_paires("welche Zahl kommt mit der 15")
+    assert _detect_paires("zusammen mit der 15")
+    assert _detect_paires("neben der 15")
+    assert _detect_paires("begleitet die 15")
+
+
+def test_detect_paires_natural_nl():
+    assert _detect_paires("welk nummer komt met 15")
+    assert _detect_paires("samen met de 15")
+    assert _detect_paires("naast de 15")
+    assert _detect_paires("begeleidt de 15")
+
+
 def test_detect_paires_negative():
     """Messages qui ne doivent PAS declencher la detection paires."""
     assert not _detect_paires("quel numéro sort le plus ?")
+    assert not _detect_paires("sort le plus souvent")
+    assert not _detect_paires("avec combien de chance")
     assert not _detect_paires("donne moi le classement")
     assert not _detect_paires("analyse ma grille 5 12 23 34 45")
     assert not _detect_paires("bonjour comment ça va")
@@ -248,6 +292,7 @@ def test_detect_paires_negative():
 def test_detect_paires_em():
     """_detect_paires_em reutilise le meme regex."""
     assert _detect_paires_em("quelles paires de boules sortent ensemble ?")
+    assert _detect_paires_em("quel numéro sort avec le 15 ?")
     assert not _detect_paires_em("quel numéro sort le plus ?")
 
 
