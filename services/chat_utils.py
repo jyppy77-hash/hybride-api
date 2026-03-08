@@ -187,6 +187,8 @@ def _clean_response(text: str) -> str:
         r'\[DONNÉES TEMPS RÉEL[^\]]*\]',
         r'\[DONNEES TEMPS REEL[^\]]*\]',
         r'\[PROCHAIN TIRAGE[^\]]*\]',
+        r'\[CORR[EÉ]LATIONS? DE PAIRES[^\]]*\]',
+        r'\[CORRELATIONS? DE PAIRES[^\]]*\]',
         r'\[Page:\s*[^\]]*\]',
         r'\[Question utilisateur[^\]]*\]',
         r'\[CONTEXTE CONTINUATION[^\]]*\]',
@@ -431,3 +433,25 @@ def _build_session_context(history, current_message: str) -> str:
         parts.append(f"Tirages consultés : {tir_str}")
 
     return "[SESSION]\n" + "\n".join(parts)
+
+
+# ────────────────────────────────────────────
+# Formatage paires / corrélations
+# ────────────────────────────────────────────
+
+def _format_pairs_context(pairs_data: dict) -> str:
+    """Formate les correlations de paires en contexte pour Gemini."""
+    lines = ["[CORRÉLATIONS DE PAIRES — Numéros principaux]"]
+    lines.append(f"Total tirages analysés : {pairs_data['total_draws']}")
+    if pairs_data.get("window"):
+        lines.append(f"Fenêtre : {pairs_data['window']}")
+    for i, p in enumerate(pairs_data["pairs"], 1):
+        lines.append(
+            f"{i}. {p['num_a']} + {p['num_b']} "
+            f"\u2192 {p['count']} fois ({p['percentage']}%)"
+        )
+    lines.append(
+        "IMPORTANT : Le hasard reste souverain. "
+        "Ces corrélations sont purement statistiques."
+    )
+    return "\n".join(lines)

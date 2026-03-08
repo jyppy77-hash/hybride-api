@@ -18,7 +18,8 @@ from services.circuit_breaker import gemini_breaker, CircuitOpenError
 from services.em_stats_service import (
     get_numero_stats, analyze_grille_for_chat,
     get_classement_numeros, get_comparaison_numeros, get_numeros_par_categorie,
-    prepare_grilles_pitch_context,
+    prepare_grilles_pitch_context, get_pair_correlations,
+    get_star_pair_correlations,
 )
 
 from services.chat_detectors import (
@@ -29,7 +30,7 @@ from services.chat_detectors import (
 from services.chat_detectors_em import (
     _detect_mode_em, _detect_prochain_tirage_em,
     _detect_numero_em, _detect_grille_em,
-    _detect_requete_complexe_em, _detect_out_of_range_em,
+    _detect_requete_complexe_em, _detect_paires_em, _detect_out_of_range_em,
     _count_oor_streak_em, _get_oor_response_em,
     _get_insult_response_em, _get_insult_short_em, _get_menace_response_em,
     _get_compliment_response_em,
@@ -54,6 +55,7 @@ from services.chat_utils_em import (
     FALLBACK_RESPONSE_EM,
     _format_tirage_context_em, _format_stats_context_em,
     _format_grille_context_em, _format_complex_context_em,
+    _format_pairs_context_em, _format_star_pairs_context_em,
     _build_session_context_em,
 )
 
@@ -260,6 +262,24 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                     logger.info(f"[EM CHAT] Requete complexe: {intent['type']}")
             except Exception as e:
                 logger.warning(f"[EM CHAT] Erreur requete complexe: {e}")
+
+    # Phase P : paires de numéros
+    if not _continuation_mode and not force_sql and not enrichment_context:
+        if _detect_paires_em(message):
+            try:
+                pairs_data = await asyncio.wait_for(
+                    get_pair_correlations(top_n=5), timeout=30.0
+                )
+                if pairs_data:
+                    enrichment_context = _format_pairs_context_em(pairs_data)
+                    star_data = await asyncio.wait_for(
+                        get_star_pair_correlations(top_n=5), timeout=30.0
+                    )
+                    if star_data:
+                        enrichment_context += "\n\n" + _format_star_pairs_context_em(star_data)
+                    logger.info("[EM CHAT] Paires injectees")
+            except Exception as e:
+                logger.warning(f"[EM CHAT] Erreur paires: {e}")
 
     # ── Phase OOR : Détection numéro hors range ──
     if not _continuation_mode and not force_sql and not enrichment_context:

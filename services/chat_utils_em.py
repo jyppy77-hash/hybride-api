@@ -198,3 +198,37 @@ def _build_session_context_em(history, current_message: str) -> str:
         parts.append(f"Tirages consultés : {tir_str}")
 
     return "[SESSION]\n" + "\n".join(parts)
+
+
+# ────────────────────────────────────────────
+# Formatage paires / corrélations EM
+# ────────────────────────────────────────────
+
+def _format_pairs_context_em(pairs_data: dict) -> str:
+    """Formate les correlations de paires EM en contexte pour Gemini."""
+    lines = ["[CORRÉLATIONS DE PAIRES — Boules EuroMillions]"]
+    lines.append(f"Total tirages analysés : {pairs_data['total_draws']}")
+    if pairs_data.get("window"):
+        lines.append(f"Fenêtre : {pairs_data['window']}")
+    for i, p in enumerate(pairs_data["pairs"], 1):
+        lines.append(
+            f"{i}. {p['num_a']} + {p['num_b']} "
+            f"\u2192 {p['count']} fois ({p['percentage']}%)"
+        )
+    lines.append(
+        "IMPORTANT : Le hasard reste souverain. "
+        "Ces corrélations sont purement statistiques."
+    )
+    return "\n".join(lines)
+
+
+def _format_star_pairs_context_em(star_data: dict) -> str:
+    """Formate les paires d'etoiles EM en contexte pour Gemini."""
+    lines = ["[CORRÉLATIONS DE PAIRES — Étoiles]"]
+    lines.append(f"Total tirages analysés : {star_data['total_draws']}")
+    for i, p in enumerate(star_data["pairs"], 1):
+        lines.append(
+            f"{i}. \u2b50{p['num_a']} + \u2b50{p['num_b']} "
+            f"\u2192 {p['count']} fois ({p['percentage']}%)"
+        )
+    return "\n".join(lines)

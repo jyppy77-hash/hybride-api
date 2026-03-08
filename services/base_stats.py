@@ -771,3 +771,189 @@ class BaseStatsService:
             blocks.append("\n".join(lines))
 
         return "\n\n".join(blocks)
+
+    # ──────────────────────────────────────
+    # Corrélations de paires
+    # ──────────────────────────────────────
+
+    async def get_pair_correlations(self, *, top_n=10, window=None):
+        """
+        Top paires de boules co-occurrentes (C(5,2)=10 paires par tirage).
+        window: "2A","5A" etc. = filtre date en annees, None = global.
+        Cache: {prefix}pairs:{window}:{top_n}, TTL 1h.
+        Retour: dict(pairs=[{num_a, num_b, count, percentage, rank}], total_draws, window)
+        """
+        cache_key = f"{self.cfg.cache_prefix}pairs:{window}:{top_n}"
+        cached = await cache_get(cache_key)
+        if cached is not None:
+            return cached
+
+        async with self._get_connection() as conn:
+          try:
+            cursor = await conn.cursor()
+
+            # Build optional date filter
+            if window:
+                years = int(window.replace("A", ""))
+                await cursor.execute(
+                    f"SELECT MAX(date_de_tirage) as d FROM {self.cfg.table}"
+                )
+                date_max = (await cursor.fetchone())['d']
+                from datetime import timedelta
+                date_from = date_max - timedelta(days=365 * years)
+                date_filter = "WHERE date_de_tirage >= %s"
+                params_per_union = [date_from]
+            else:
+                date_filter = ""
+                params_per_union = []
+
+            # Count total draws in window
+            if date_filter:
+                await cursor.execute(
+                    f"SELECT COUNT(*) as total FROM {self.cfg.table} {date_filter}",
+                    params_per_union,
+                )
+            else:
+                await cursor.execute(
+                    f"SELECT COUNT(*) as total FROM {self.cfg.table}"
+                )
+            total_draws = (await cursor.fetchone())['total']
+
+            if total_draws == 0:
+                result = {"pairs": [], "total_draws": 0, "window": window}
+                await cache_set(cache_key, result)
+                return result
+
+            # 10 UNION ALL for C(5,2) pairs
+            pair_cols = [
+                ("boule_1", "boule_2"), ("boule_1", "boule_3"),
+                ("boule_1", "boule_4"), ("boule_1", "boule_5"),
+                ("boule_2", "boule_3"), ("boule_2", "boule_4"),
+                ("boule_2", "boule_5"), ("boule_3", "boule_4"),
+                ("boule_3", "boule_5"), ("boule_4", "boule_5"),
+            ]
+            unions = []
+            all_params = []
+            for a, b in pair_cols:
+                unions.append(
+                    f"SELECT LEAST({a}, {b}) AS num_a, "
+                    f"GREATEST({a}, {b}) AS num_b "
+                    f"FROM {self.cfg.table} {date_filter}"
+                )
+                all_params.extend(params_per_union)
+
+            sql = (
+                f"SELECT num_a, num_b, COUNT(*) AS pair_count FROM ("
+                f"{' UNION ALL '.join(unions)}"
+                f") AS pairs GROUP BY num_a, num_b "
+                f"ORDER BY pair_count DESC LIMIT %s"
+            )
+            all_params.append(top_n)
+
+            await cursor.execute(sql, all_params)
+            rows = await cursor.fetchall()
+
+            pairs = []
+            for rank, row in enumerate(rows, 1):
+                pct = round(row['pair_count'] / total_draws * 100, 1)
+                pairs.append({
+                    "num_a": row['num_a'],
+                    "num_b": row['num_b'],
+                    "count": row['pair_count'],
+                    "percentage": pct,
+                    "rank": rank,
+                })
+
+            result = {
+                "pairs": pairs,
+                "total_draws": total_draws,
+                "window": window,
+            }
+            await cache_set(cache_key, result)
+            return result
+
+          except Exception as e:
+            logger.error(
+                f"Erreur get_pair_correlations{self.cfg.log_label}: {e}"
+            )
+            return None
+
+    async def get_star_pair_correlations(self, *, top_n=10, window=None):
+        """
+        Paires d'etoiles EM (1 seule paire par tirage → simple GROUP BY).
+        Ne fait rien si le jeu n'a pas exactement 2 colonnes secondaires.
+        """
+        if len(self.cfg.secondary_columns) != 2:
+            return None
+
+        col_a, col_b = self.cfg.secondary_columns
+        cache_key = f"{self.cfg.cache_prefix}star_pairs:{window}:{top_n}"
+        cached = await cache_get(cache_key)
+        if cached is not None:
+            return cached
+
+        async with self._get_connection() as conn:
+          try:
+            cursor = await conn.cursor()
+
+            if window:
+                years = int(window.replace("A", ""))
+                await cursor.execute(
+                    f"SELECT MAX(date_de_tirage) as d FROM {self.cfg.table}"
+                )
+                date_max = (await cursor.fetchone())['d']
+                from datetime import timedelta
+                date_from = date_max - timedelta(days=365 * years)
+                date_filter = "WHERE date_de_tirage >= %s"
+                params = [date_from]
+            else:
+                date_filter = ""
+                params = []
+
+            if params:
+                await cursor.execute(
+                    f"SELECT COUNT(*) as total FROM {self.cfg.table} {date_filter}",
+                    params,
+                )
+            else:
+                await cursor.execute(
+                    f"SELECT COUNT(*) as total FROM {self.cfg.table}"
+                )
+            total_draws = (await cursor.fetchone())['total']
+
+            sql = (
+                f"SELECT LEAST({col_a}, {col_b}) AS num_a, "
+                f"GREATEST({col_a}, {col_b}) AS num_b, "
+                f"COUNT(*) AS pair_count "
+                f"FROM {self.cfg.table} {date_filter} "
+                f"GROUP BY num_a, num_b "
+                f"ORDER BY pair_count DESC LIMIT %s"
+            )
+            params.append(top_n)
+            await cursor.execute(sql, params)
+            rows = await cursor.fetchall()
+
+            pairs = []
+            for rank, row in enumerate(rows, 1):
+                pct = round(row['pair_count'] / total_draws * 100, 1) if total_draws else 0
+                pairs.append({
+                    "num_a": row['num_a'],
+                    "num_b": row['num_b'],
+                    "count": row['pair_count'],
+                    "percentage": pct,
+                    "rank": rank,
+                })
+
+            result = {
+                "pairs": pairs,
+                "total_draws": total_draws,
+                "window": window,
+            }
+            await cache_set(cache_key, result)
+            return result
+
+          except Exception as e:
+            logger.error(
+                f"Erreur get_star_pair_correlations{self.cfg.log_label}: {e}"
+            )
+            return None

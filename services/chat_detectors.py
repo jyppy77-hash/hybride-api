@@ -944,6 +944,32 @@ def _get_argent_response(message: str) -> str:
 
 
 # ═══════════════════════════════════════════════════════
+# Phase P — Détection paires / corrélations (6 langues)
+# ═══════════════════════════════════════════════════════
+
+_PAIRS_PATTERN = re.compile(
+    r'paire|duo|ensemble|associ[eé]|combinaison.*fr[eé]quent|sortent.*ensemble|'
+    r'num[eé]ros.*li[eé]s|co.?occurrence|corr[eé]lation|'
+    # EN
+    r'\bpair\b|together|associated|combination.*frequent|numbers.*linked|co.?occurrence|correlation|'
+    # ES
+    r'pareja|juntos|asociados|combinaci[oó]n.*frecuente|'
+    # PT
+    r'dupla|associados|combina[çc][aã]o.*frequente|'
+    # DE
+    r'\bpaar\b|zusammen|verbunden|kombination.*h[aä]ufig|'
+    # NL
+    r'\bsamen\b|verbonden|combinatie.*frequent',
+    re.IGNORECASE
+)
+
+
+def _detect_paires(message: str) -> bool:
+    """Detecte si l'utilisateur demande les correlations de paires (6 langues)."""
+    return bool(_PAIRS_PATTERN.search(message))
+
+
+# ═══════════════════════════════════════════════════════
 # Phase OOR — Détection numéros hors range
 # ═══════════════════════════════════════════════════════
 
