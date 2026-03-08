@@ -355,6 +355,122 @@ class TestPeriodHelper:
 # EXPORTS
 # ══════════════════════════════════════════════════════════════════════════════
 
+class TestAdminAPIImpressionsSponsor:
+    """Phase 1 — Codes Produit dans Impressions."""
+
+    def test_impressions_api_returns_by_sponsor(self):
+        """by_sponsor bloc present dans la reponse JSON."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
+            resp = client.get("/admin/api/impressions?period=7d")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "by_sponsor" in data
+        assert isinstance(data["by_sponsor"], list)
+
+    def test_impressions_api_filter_by_sponsor_id(self):
+        """Filtre sponsor_id=LOTO_FR_A retourne uniquement ce code."""
+        client = _authed_client()
+        calls = []
+
+        async def mock_fetchall(sql, params=None):
+            calls.append((sql, params))
+            return []
+
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
+            resp = client.get("/admin/api/impressions?period=7d&sponsor_id=LOTO_FR_A")
+
+        assert resp.status_code == 200
+        # All SQL queries should contain the sponsor_id filter
+        for sql, params in calls:
+            assert "sponsor_id = %s" in sql
+            assert "LOTO_FR_A" in params
+
+    def test_impressions_api_sponsor_id_in_table_rows(self):
+        """Chaque ligne de la table inclut sponsor_id."""
+        client = _authed_client()
+
+        async def mock_fetchall(sql, params=None):
+            if "GROUP BY day, sponsor_id" in sql:
+                return [{"day": "2026-03-01", "sponsor_id": "EM_FR_A", "event_type": "sponsor-popup-shown",
+                         "page": "/", "lang": "fr", "device": "desktop", "country": "FR", "cnt": 10}]
+            return []
+
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 5})
+            resp = client.get("/admin/api/impressions?period=7d")
+
+        data = resp.json()
+        assert len(data["table"]) == 1
+        assert data["table"][0]["sponsor_id"] == "EM_FR_A"
+
+    def test_impressions_api_by_sponsor_kpi(self):
+        """by_sponsor contient les KPI ventiles par code produit."""
+        client = _authed_client()
+
+        async def mock_fetchall(sql, params=None):
+            if "GROUP BY sponsor_id" in sql:
+                return [
+                    {"sponsor_id": "LOTO_FR_A", "total": 50, "impressions": 40, "clics": 5, "videos": 3, "sessions": 20},
+                    {"sponsor_id": "LOTO_FR_B", "total": 30, "impressions": 25, "clics": 2, "videos": 1, "sessions": 15},
+                ]
+            return []
+
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 35})
+            resp = client.get("/admin/api/impressions?period=7d")
+
+        data = resp.json()
+        assert len(data["by_sponsor"]) == 2
+        a = data["by_sponsor"][0]
+        assert a["sponsor_id"] == "LOTO_FR_A"
+        assert a["impressions"] == 40
+        assert a["clics"] == 5
+        assert a["videos"] == 3
+        assert a["sessions"] == 20
+        assert a["ctr"] == "12.50%"
+
+    def test_impressions_api_unknown_sponsor_id_returns_empty(self):
+        """sponsor_id=FAKE_CODE (invalide) est ignore, pas de filtre applique."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
+            resp = client.get("/admin/api/impressions?sponsor_id=FAKE_CODE")
+
+        assert resp.status_code == 200
+
+    def test_impressions_html_sponsor_dropdown(self):
+        """Le template contient le dropdown #f-sponsor avec 14 codes."""
+        client = _authed_client()
+        resp = client.get("/admin/impressions")
+        assert resp.status_code == 200
+        assert 'id="f-sponsor"' in resp.text
+        assert "LOTO_FR_A" in resp.text
+        assert "LOTO_FR_B" in resp.text
+        assert "EM_FR_A" in resp.text
+        assert "EM_NL_B" in resp.text
+
+    def test_impressions_html_sponsor_summary_table(self):
+        """Le template contient le tableau #sponsor-table-summary."""
+        client = _authed_client()
+        resp = client.get("/admin/impressions")
+        assert 'id="sponsor-table-summary"' in resp.text
+        assert "Code Produit" in resp.text
+
+    def test_impressions_html_sponsor_column_in_detail(self):
+        """La table detail a une colonne Sponsor."""
+        client = _authed_client()
+        resp = client.get("/admin/impressions")
+        assert ">Sponsor<" in resp.text
+
+
 class TestExportCSV:
     """CSV export tests."""
 
@@ -664,6 +780,211 @@ class TestConfig:
             })
         assert resp.status_code == 200
         assert "enregistree" in resp.text
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# ENGAGEMENT
+# ══════════════════════════════════════════════════════════════════════════════
+
+class TestAdminEngagement:
+    """Tests Phase 2 — Dashboard Engagement."""
+
+    def test_engagement_page_requires_auth(self):
+        client = _get_client()
+        resp = client.get("/admin/engagement", follow_redirects=False)
+        assert resp.status_code == 302
+        assert "/admin/login" in resp.headers["location"]
+
+    def test_engagement_page_loads(self):
+        client = _authed_client()
+        resp = client.get("/admin/engagement")
+        assert resp.status_code == 200
+        assert "Engagement" in resp.text
+
+    def test_engagement_api_requires_auth(self):
+        client = _get_client()
+        resp = client.get("/admin/api/engagement")
+        assert resp.status_code == 401
+
+    def test_engagement_api_returns_structure(self):
+        """Reponse JSON contient kpi, by_category, chart, table."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
+            resp = client.get("/admin/api/engagement?period=7d")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "kpi" in data
+        assert "by_category" in data
+        assert "chart" in data
+        assert "table" in data
+
+    def test_engagement_api_kpi_keys(self):
+        """KPI contient les 6 cles attendues."""
+        client = _authed_client()
+
+        async def mock_fetchall(sql, params=None):
+            if "GROUP BY event_type" in sql and "GROUP BY day" not in sql:
+                return [
+                    {"event_type": "chatbot-open", "cnt": 50, "sessions": 30},
+                    {"event_type": "rating-submitted", "cnt": 20, "sessions": 18},
+                    {"event_type": "simulateur-grille-generated", "cnt": 15, "sessions": 12},
+                    {"event_type": "meta75-launched", "cnt": 10, "sessions": 8},
+                ]
+            return []
+
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 60})
+            resp = client.get("/admin/api/engagement?period=7d")
+
+        data = resp.json()
+        kpi = data["kpi"]
+        assert kpi["total_events"] == 95
+        assert kpi["chatbot_events"] == 50
+        assert kpi["rating_events"] == 20
+        assert kpi["simulateur_events"] == 15
+        assert kpi["meta75_events"] == 10
+        assert kpi["unique_sessions"] == 60
+
+    def test_engagement_api_by_category_structure(self):
+        """by_category contient les categories avec events et sessions."""
+        client = _authed_client()
+
+        async def mock_fetchall(sql, params=None):
+            if "GROUP BY event_type" in sql and "GROUP BY day" not in sql:
+                return [
+                    {"event_type": "chatbot-open", "cnt": 40, "sessions": 25},
+                    {"event_type": "chatbot-message", "cnt": 30, "sessions": 25},
+                ]
+            return []
+
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 25})
+            resp = client.get("/admin/api/engagement?period=7d")
+
+        data = resp.json()
+        cats = data["by_category"]
+        assert isinstance(cats, list)
+        # chatbot should be present (from the mock data)
+        chatbot = [c for c in cats if c["category"] == "chatbot"]
+        if chatbot:
+            assert chatbot[0]["events"] == 70
+
+    def test_engagement_api_filter_by_module(self):
+        """Filtre module=loto ajoute le filtre SQL."""
+        client = _authed_client()
+        calls = []
+
+        async def mock_fetchall(sql, params=None):
+            calls.append((sql, params))
+            return []
+
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
+            resp = client.get("/admin/api/engagement?period=7d&module=loto")
+
+        assert resp.status_code == 200
+        for sql, params in calls:
+            assert "module = %s" in sql
+            assert "loto" in params
+
+    def test_engagement_api_filter_by_event(self):
+        """Filtre event_type=chatbot-open ajoute le filtre SQL."""
+        client = _authed_client()
+        calls = []
+
+        async def mock_fetchall(sql, params=None):
+            calls.append((sql, params))
+            return []
+
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
+            resp = client.get("/admin/api/engagement?event_type=chatbot-open")
+
+        assert resp.status_code == 200
+        for sql, params in calls:
+            assert "event_type = %s" in sql
+            assert "chatbot-open" in params
+
+    def test_engagement_api_filter_by_lang(self):
+        """Filtre lang=fr ajoute le filtre SQL."""
+        client = _authed_client()
+        calls = []
+
+        async def mock_fetchall(sql, params=None):
+            calls.append((sql, params))
+            return []
+
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
+            resp = client.get("/admin/api/engagement?lang=fr")
+
+        assert resp.status_code == 200
+        for sql, params in calls:
+            assert "lang = %s" in sql
+            assert "fr" in params
+
+    def test_engagement_api_excludes_sponsor_events(self):
+        """Les events sponsor-* sont exclus via WHERE."""
+        client = _authed_client()
+        calls = []
+
+        async def mock_fetchall(sql, params=None):
+            calls.append(sql)
+            return []
+
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
+            resp = client.get("/admin/api/engagement?period=7d")
+
+        assert resp.status_code == 200
+        for sql in calls:
+            assert "NOT LIKE" in sql
+
+    def test_engagement_api_db_error(self):
+        """DB error retourne structure vide."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=Exception("DB down"))
+            mock_db.async_fetchone = AsyncMock(side_effect=Exception("DB down"))
+            resp = client.get("/admin/api/engagement?period=7d")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["kpi"]["total_events"] == 0
+        assert data["chart"] == []
+        assert data["table"] == []
+
+    def test_engagement_nav_link_present(self):
+        """Le lien Engagement est dans la nav admin."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0, "review_count": 0, "avg_rating": 0})
+            resp = client.get("/admin")
+        assert "/admin/engagement" in resp.text
+
+    def test_engagement_html_has_filters(self):
+        """Le template contient les 5 dropdowns de filtres."""
+        client = _authed_client()
+        resp = client.get("/admin/engagement")
+        assert 'id="f-event"' in resp.text
+        assert 'id="f-module"' in resp.text
+        assert 'id="f-lang"' in resp.text
+        assert 'id="f-device"' in resp.text
+        assert 'id="f-period"' in resp.text
+
+    def test_engagement_html_has_category_table(self):
+        """Le template contient le tableau par categorie."""
+        client = _authed_client()
+        resp = client.get("/admin/engagement")
+        assert 'id="category-table"' in resp.text
+        assert "Categorie" in resp.text
 
 
 # ══════════════════════════════════════════════════════════════════════════════

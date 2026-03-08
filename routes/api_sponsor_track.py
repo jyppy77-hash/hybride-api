@@ -22,6 +22,9 @@ from rate_limit import limiter
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["sponsor-tracking"])
 
+# E5 banner (sponsor-result-shown / sponsor-inline-shown) is tracked via
+# simulateur.js (Loto) and simulateur-em.js (EM) — inline sponsors shown
+# after grille generation. sponsor-pdf-downloaded is tracked from PDF CTA.
 _ALLOWED_EVENTS = frozenset(["sponsor-popup-shown", "sponsor-click", "sponsor-video-played", "sponsor-inline-shown", "sponsor-result-shown", "sponsor-pdf-downloaded"])
 _ALLOWED_DEVICES = frozenset(["mobile", "desktop", "tablet"])
 

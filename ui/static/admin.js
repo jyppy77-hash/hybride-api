@@ -95,6 +95,7 @@ var LotoAdmin = (function() {
         qs('#btn-reset').addEventListener('click', function() {
             qs('#f-period').value = '7d';
             qs('#f-event').value = 'all';
+            qs('#f-sponsor').value = 'all';
             qs('#f-lang').value = 'all';
             qs('#f-device').value = 'all';
             toggleCustomDates();
@@ -112,6 +113,8 @@ var LotoAdmin = (function() {
         }
         var ev = qs('#f-event').value;
         if (ev !== 'all') url += '&event_type=' + ev;
+        var sp = qs('#f-sponsor');
+        if (sp && sp.value !== 'all') url += '&sponsor_id=' + sp.value;
         var lang = qs('#f-lang').value;
         if (lang !== 'all') url += '&lang=' + lang;
         var dev = qs('#f-device').value;
@@ -123,10 +126,30 @@ var LotoAdmin = (function() {
         fetchJSON(buildImpressionsURL()).then(function(data) {
             if (!data) return;
             renderImpKPI(data.kpi);
+            renderSponsorBreakdown(data.by_sponsor || []);
             renderImpChart(data.chart);
             renderImpTable(data.table, 0);
             enableSort('impressions-table', data.table, renderImpTable);
         });
+    }
+
+    function renderSponsorBreakdown(bySponsor) {
+        var tbody = qs('#sponsor-summary-body');
+        if (!tbody) return;
+        if (!bySponsor.length) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:1rem">Aucune donnee</td></tr>';
+            return;
+        }
+        tbody.innerHTML = bySponsor.map(function(r) {
+            return '<tr>'
+                + '<td style="font-weight:700;color:var(--accent)">' + escHtml(r.sponsor_id || '\u2014') + '</td>'
+                + '<td>' + (r.impressions || 0) + '</td>'
+                + '<td>' + (r.clics || 0) + '</td>'
+                + '<td>' + (r.videos || 0) + '</td>'
+                + '<td>' + escHtml(r.ctr || '0.00%') + '</td>'
+                + '<td>' + (r.sessions || 0) + '</td>'
+                + '</tr>';
+        }).join('');
     }
 
     function renderImpKPI(kpi) {
@@ -176,7 +199,7 @@ var LotoAdmin = (function() {
         var start = page * PAGE_SIZE;
         var slice = rows.slice(start, start + PAGE_SIZE);
         tbody.innerHTML = slice.map(function(r) {
-            return '<tr><td>' + escHtml(r.day) + '</td><td>' + escHtml(r.event_type) + '</td><td>' + escHtml(r.page) + '</td><td>' + escHtml(r.lang) + '</td><td>' + escHtml(r.device) + '</td><td>' + escHtml(r.country) + '</td><td>' + r.cnt + '</td></tr>';
+            return '<tr><td>' + escHtml(r.day) + '</td><td style="font-weight:600;color:var(--accent)">' + escHtml(r.sponsor_id || '\u2014') + '</td><td>' + escHtml(r.event_type) + '</td><td>' + escHtml(r.page) + '</td><td>' + escHtml(r.lang) + '</td><td>' + escHtml(r.device) + '</td><td>' + escHtml(r.country) + '</td><td>' + r.cnt + '</td></tr>';
         }).join('');
         renderPagination(rows.length, page, renderImpTable, rows);
     }
@@ -433,5 +456,137 @@ var LotoAdmin = (function() {
         }
     }
 
-    return { initImpressions: initImpressions, initVotes: initVotes, initRealtime: initRealtime };
+    // ══════════════════════════════════════
+    // ENGAGEMENT PAGE
+    // ══════════════════════════════════════
+
+    var ENG_COLORS = {
+        chatbot: '#a855f7',
+        rating: '#22c55e',
+        simulateur: '#3b82f6',
+        meta75: '#d4a843'
+    };
+
+    function initEngagement() {
+        toggleCustomDates();
+        qs('#f-period').addEventListener('change', toggleCustomDates);
+        qs('#btn-filter').addEventListener('click', loadEngagement);
+        qs('#btn-reset').addEventListener('click', function() {
+            qs('#f-period').value = '7d';
+            qs('#f-event').value = 'all';
+            qs('#f-module').value = 'all';
+            qs('#f-lang').value = 'all';
+            qs('#f-device').value = 'all';
+            toggleCustomDates();
+            loadEngagement();
+        });
+        loadEngagement();
+    }
+
+    function buildEngagementURL() {
+        var p = qs('#f-period').value;
+        var url = '/admin/api/engagement?period=' + p;
+        if (p === 'custom') {
+            url += '&date_start=' + (qs('#f-date-start').value || '');
+            url += '&date_end=' + (qs('#f-date-end').value || '');
+        }
+        var ev = qs('#f-event').value;
+        if (ev !== 'all') url += '&event_type=' + ev;
+        var mod = qs('#f-module');
+        if (mod && mod.value !== 'all') url += '&module=' + mod.value;
+        var lang = qs('#f-lang').value;
+        if (lang !== 'all') url += '&lang=' + lang;
+        var dev = qs('#f-device').value;
+        if (dev !== 'all') url += '&device=' + dev;
+        return url;
+    }
+
+    function loadEngagement() {
+        fetchJSON(buildEngagementURL()).then(function(data) {
+            if (!data) return;
+            renderEngKPI(data.kpi);
+            renderCategoryBreakdown(data.by_category || []);
+            renderEngChart(data.chart);
+            renderEngTable(data.table, 0);
+            enableSort('engagement-table', data.table, renderEngTable);
+        });
+    }
+
+    function renderEngKPI(kpi) {
+        qs('#kpi-total').textContent = kpi.total_events || 0;
+        qs('#kpi-chatbot').textContent = kpi.chatbot_events || 0;
+        qs('#kpi-rating').textContent = kpi.rating_events || 0;
+        qs('#kpi-simulateur').textContent = kpi.simulateur_events || 0;
+        qs('#kpi-meta75').textContent = kpi.meta75_events || 0;
+        qs('#kpi-sessions').textContent = kpi.unique_sessions || 0;
+    }
+
+    function renderCategoryBreakdown(cats) {
+        var tbody = qs('#category-tbody');
+        if (!tbody) return;
+        if (!cats.length) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);padding:1rem">Aucune donnee</td></tr>';
+            return;
+        }
+        var total = 0;
+        cats.forEach(function(c) { total += c.events; });
+        tbody.innerHTML = cats.map(function(c) {
+            var pct = total > 0 ? ((c.events / total) * 100).toFixed(1) + '%' : '0.0%';
+            var color = ENG_COLORS[c.category] || 'var(--text)';
+            return '<tr>'
+                + '<td style="font-weight:700;color:' + color + '">' + escHtml(c.category) + '</td>'
+                + '<td>' + c.events + '</td>'
+                + '<td>' + c.sessions + '</td>'
+                + '<td>' + pct + '</td>'
+                + '</tr>';
+        }).join('');
+    }
+
+    function renderEngChart(chartData) {
+        var ctx = qs('#engagement-chart');
+        if (!ctx) return;
+
+        var labels = chartData.map(function(r) { return r.day; });
+        var cats = ['chatbot', 'rating', 'simulateur', 'meta75'];
+        var catLabels = { chatbot: 'Chatbot', rating: 'Rating', simulateur: 'Simulateur', meta75: 'Meta75' };
+        var datasets = cats.map(function(cat) {
+            return {
+                label: catLabels[cat],
+                data: chartData.map(function(r) { return r[cat] || 0; }),
+                backgroundColor: ENG_COLORS[cat],
+                borderColor: ENG_COLORS[cat],
+                borderWidth: 1
+            };
+        });
+
+        if (chart) chart.destroy();
+        var cs = getComputedStyle(document.body);
+        var tickColor = cs.getPropertyValue('--chart-tick').trim() || '#9ca3af';
+        var gridColor = cs.getPropertyValue('--chart-grid').trim() || '#2a2d3a';
+        var legendColor = cs.getPropertyValue('--chart-legend').trim() || '#e0e0e0';
+        chart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: labels, datasets: datasets },
+            options: {
+                responsive: true,
+                scales: {
+                    y: { beginAtZero: true, stacked: true, ticks: { color: tickColor }, grid: { color: gridColor } },
+                    x: { stacked: true, ticks: { color: tickColor }, grid: { color: gridColor } }
+                },
+                plugins: { legend: { labels: { color: legendColor } } }
+            }
+        });
+    }
+
+    function renderEngTable(rows, page) {
+        var tbody = qs('#engagement-tbody');
+        var start = page * PAGE_SIZE;
+        var slice = rows.slice(start, start + PAGE_SIZE);
+        tbody.innerHTML = slice.map(function(r) {
+            return '<tr><td>' + escHtml(r.day) + '</td><td>' + escHtml(r.event_type) + '</td><td>' + escHtml(r.page) + '</td><td>' + escHtml(r.module) + '</td><td>' + escHtml(r.lang) + '</td><td>' + escHtml(r.device) + '</td><td>' + escHtml(r.country) + '</td><td>' + r.cnt + '</td></tr>';
+        }).join('');
+        renderPagination(rows.length, page, renderEngTable, rows);
+    }
+
+    return { initImpressions: initImpressions, initVotes: initVotes, initRealtime: initRealtime, initEngagement: initEngagement };
 })();

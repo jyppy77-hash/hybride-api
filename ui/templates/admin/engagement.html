@@ -1,8 +1,8 @@
 {% extends "admin/_base.html" %}
-{% block title %}Impressions{% endblock %}
+{% block title %}Engagement{% endblock %}
 
 {% block content %}
-    <h2>Impressions Sponsor</h2>
+    <h2>Engagement Utilisateurs</h2>
 
     <div class="filters-bar" id="filters">
         <select id="f-period">
@@ -11,35 +11,28 @@
             <option value="30d">30 derniers jours</option>
             <option value="month">Ce mois</option>
             <option value="last_month">Mois dernier</option>
+            <option value="all">Tout</option>
             <option value="custom">Personnalise</option>
         </select>
         <input type="date" id="f-date-start" class="hidden">
         <input type="date" id="f-date-end" class="hidden">
         <select id="f-event">
             <option value="all">Tous les events</option>
-            <option value="sponsor-popup-shown">popup-shown</option>
-            <option value="sponsor-click">click</option>
-            <option value="sponsor-video-played">video-played</option>
-            <option value="sponsor-inline-shown">inline-shown</option>
-            <option value="sponsor-result-shown">result-shown</option>
-            <option value="sponsor-pdf-downloaded">pdf-downloaded</option>
+            <option value="chatbot-open">chatbot-open</option>
+            <option value="chatbot-close">chatbot-close</option>
+            <option value="chatbot-message">chatbot-message</option>
+            <option value="rating-submitted">rating-submitted</option>
+            <option value="rating-popup-shown">rating-popup-shown</option>
+            <option value="rating-dismissed">rating-dismissed</option>
+            <option value="simulateur-grille-generated">simulateur-grille-generated</option>
+            <option value="simulateur-grille-audited">simulateur-grille-audited</option>
+            <option value="meta75-launched">meta75-launched</option>
+            <option value="meta75-pdf-download">meta75-pdf-download</option>
         </select>
-        <select id="f-sponsor">
-            <option value="all">Tous les sponsors</option>
-            <option value="LOTO_FR_A">LOTO_FR_A</option>
-            <option value="LOTO_FR_B">LOTO_FR_B</option>
-            <option value="EM_FR_A">EM_FR_A</option>
-            <option value="EM_FR_B">EM_FR_B</option>
-            <option value="EM_EN_A">EM_EN_A</option>
-            <option value="EM_EN_B">EM_EN_B</option>
-            <option value="EM_ES_A">EM_ES_A</option>
-            <option value="EM_ES_B">EM_ES_B</option>
-            <option value="EM_PT_A">EM_PT_A</option>
-            <option value="EM_PT_B">EM_PT_B</option>
-            <option value="EM_DE_A">EM_DE_A</option>
-            <option value="EM_DE_B">EM_DE_B</option>
-            <option value="EM_NL_A">EM_NL_A</option>
-            <option value="EM_NL_B">EM_NL_B</option>
+        <select id="f-module">
+            <option value="all">Tous modules</option>
+            <option value="loto">Loto</option>
+            <option value="euromillions">EuroMillions</option>
         </select>
         <select id="f-lang">
             <option value="all">Toutes langues</option>
@@ -61,48 +54,47 @@
     </div>
 
     <div class="kpi-bar" id="kpi-bar">
-        <span>Impressions: <b id="kpi-impressions">-</b></span>
-        <span>Clics: <b id="kpi-clicks">-</b></span>
-        <span>Videos: <b id="kpi-videos">-</b></span>
-        <span>CTR: <b id="kpi-ctr">-</b></span>
+        <span>Events: <b id="kpi-total">-</b></span>
+        <span>Chatbot: <b id="kpi-chatbot">-</b></span>
+        <span>Rating: <b id="kpi-rating">-</b></span>
+        <span>Simulateur: <b id="kpi-simulateur">-</b></span>
+        <span>Meta75: <b id="kpi-meta75">-</b></span>
         <span>Sessions: <b id="kpi-sessions">-</b></span>
     </div>
 
-    <div class="table-wrap" id="sponsor-breakdown" style="margin-bottom:1.2rem">
-        <table class="admin-table" id="sponsor-table-summary">
+    <div class="table-wrap" id="category-breakdown" style="margin-bottom:1.2rem">
+        <table class="admin-table" id="category-table">
             <thead>
                 <tr>
-                    <th>Code Produit</th>
-                    <th>Impressions</th>
-                    <th>Clics</th>
-                    <th>Videos</th>
-                    <th>CTR</th>
+                    <th>Categorie</th>
+                    <th>Events</th>
                     <th>Sessions</th>
+                    <th>% Total</th>
                 </tr>
             </thead>
-            <tbody id="sponsor-summary-body"></tbody>
+            <tbody id="category-tbody"></tbody>
         </table>
     </div>
 
     <div class="chart-container">
-        <canvas id="impressions-chart"></canvas>
+        <canvas id="engagement-chart"></canvas>
     </div>
 
     <div class="table-wrap">
-        <table class="admin-table" id="impressions-table">
+        <table class="admin-table" id="engagement-table">
             <thead>
                 <tr>
                     <th data-sort="day">Date</th>
-                    <th data-sort="sponsor_id">Sponsor</th>
                     <th data-sort="event_type">Event</th>
                     <th data-sort="page">Page</th>
+                    <th data-sort="module">Module</th>
                     <th data-sort="lang">Lang</th>
                     <th data-sort="device">Device</th>
                     <th data-sort="country">Country</th>
                     <th data-sort="cnt">Count</th>
                 </tr>
             </thead>
-            <tbody id="impressions-tbody"></tbody>
+            <tbody id="engagement-tbody"></tbody>
         </table>
         <div class="pagination" id="pagination"></div>
     </div>
@@ -114,5 +106,5 @@
 
 {% block scripts %}
 <script src="/static/admin.js?v=3"></script>
-<script>LotoAdmin.initImpressions();</script>
+<script>LotoAdmin.initEngagement();</script>
 {% endblock %}

@@ -209,6 +209,17 @@ async def admin_impressions_page(request: Request):
     return HTMLResponse(tpl.render(active="impressions"))
 
 
+# ── Engagement page ──────────────────────────────────────────────────────────
+
+@router.get("/admin/engagement", response_class=HTMLResponse, include_in_schema=False)
+async def admin_engagement_page(request: Request):
+    redir = _require_auth(request)
+    if redir:
+        return redir
+    tpl = env.get_template("admin/engagement.html")
+    return HTMLResponse(tpl.render(active="engagement"))
+
+
 # ── Votes page ────────────────────────────────────────────────────────────────
 
 @router.get("/admin/votes", response_class=HTMLResponse, include_in_schema=False)
@@ -222,7 +233,15 @@ async def admin_votes_page(request: Request):
 
 # ── API: Impressions data ─────────────────────────────────────────────────────
 
-def _build_impressions_where(period, date_start, date_end, event_type, lang, device):
+_VALID_SPONSORS = frozenset([
+    "LOTO_FR_A", "LOTO_FR_B", "EM_FR_A", "EM_FR_B",
+    "EM_EN_A", "EM_EN_B", "EM_ES_A", "EM_ES_B",
+    "EM_PT_A", "EM_PT_B", "EM_DE_A", "EM_DE_B",
+    "EM_NL_A", "EM_NL_B",
+])
+
+
+def _build_impressions_where(period, date_start, date_end, event_type, lang, device, sponsor_id=""):
     ds, de = _period_to_dates(period, date_start, date_end)
     where = ["created_at >= %s", "created_at < %s"]
     params = [ds.isoformat(), de.isoformat()]
@@ -235,6 +254,9 @@ def _build_impressions_where(period, date_start, date_end, event_type, lang, dev
     if device and device in _VALID_DEVICES:
         where.append("device = %s")
         params.append(device)
+    if sponsor_id and sponsor_id in _VALID_SPONSORS:
+        where.append("sponsor_id = %s")
+        params.append(sponsor_id)
     return " AND ".join(where), params, ds, de
 
 
@@ -247,12 +269,13 @@ async def admin_api_impressions(
     event_type: str = Query(""),
     lang: str = Query(""),
     device: str = Query(""),
+    sponsor_id: str = Query(""),
 ):
     err = _require_auth_json(request)
     if err:
         return err
 
-    w, params, ds, de = _build_impressions_where(period, date_start, date_end, event_type, lang, device)
+    w, params, ds, de = _build_impressions_where(period, date_start, date_end, event_type, lang, device, sponsor_id)
 
     # KPI
     kpi = {"impressions": 0, "clicks": 0, "videos": 0, "ctr": "0.00%", "sessions": 0}
@@ -285,6 +308,34 @@ async def admin_api_impressions(
     except Exception as e:
         logger.error("[ADMIN API] impressions KPI failed: %s", e)
 
+    # By-sponsor breakdown
+    by_sponsor = []
+    try:
+        rows = await db_cloudsql.async_fetchall(
+            f"SELECT sponsor_id, "
+            f"  COUNT(*) AS total, "
+            f"  SUM(CASE WHEN event_type = 'sponsor-popup-shown' THEN 1 ELSE 0 END) AS impressions, "
+            f"  SUM(CASE WHEN event_type = 'sponsor-click' THEN 1 ELSE 0 END) AS clics, "
+            f"  SUM(CASE WHEN event_type = 'sponsor-video-played' THEN 1 ELSE 0 END) AS videos, "
+            f"  COUNT(DISTINCT session_hash) AS sessions "
+            f"FROM sponsor_impressions WHERE {w} "
+            f"GROUP BY sponsor_id ORDER BY total DESC",
+            tuple(params),
+        )
+        for r in rows:
+            imp = _dec(r["impressions"])
+            cli = _dec(r["clics"])
+            by_sponsor.append({
+                "sponsor_id": r["sponsor_id"] or "",
+                "impressions": imp,
+                "clics": cli,
+                "videos": _dec(r["videos"]),
+                "sessions": _dec(r["sessions"]),
+                "ctr": f"{(cli / imp * 100):.2f}%" if imp > 0 else "0.00%",
+            })
+    except Exception as e:
+        logger.error("[ADMIN API] impressions by_sponsor failed: %s", e)
+
     # Chart data
     chart_data = []
     try:
@@ -298,25 +349,26 @@ async def admin_api_impressions(
     except Exception as e:
         logger.error("[ADMIN API] impressions chart failed: %s", e)
 
-    # Table data
+    # Table data (now includes sponsor_id)
     table_data = []
     try:
         rows = await db_cloudsql.async_fetchall(
-            f"SELECT DATE(created_at) AS day, event_type, page, lang, device, country, COUNT(*) AS cnt "
+            f"SELECT DATE(created_at) AS day, sponsor_id, event_type, page, lang, device, country, COUNT(*) AS cnt "
             f"FROM sponsor_impressions WHERE {w} "
-            f"GROUP BY day, event_type, page, lang, device, country "
+            f"GROUP BY day, sponsor_id, event_type, page, lang, device, country "
             f"ORDER BY day DESC, cnt DESC LIMIT 500",
             tuple(params),
         )
         table_data = [
-            {"day": str(r["day"]), "event_type": r["event_type"], "page": r["page"],
-             "lang": r["lang"], "device": r["device"], "country": r["country"] or "", "cnt": _dec(r["cnt"])}
+            {"day": str(r["day"]), "sponsor_id": r["sponsor_id"] or "", "event_type": r["event_type"],
+             "page": r["page"], "lang": r["lang"], "device": r["device"],
+             "country": r["country"] or "", "cnt": _dec(r["cnt"])}
             for r in rows
         ]
     except Exception as e:
         logger.error("[ADMIN API] impressions table failed: %s", e)
 
-    return JSONResponse({"kpi": kpi, "chart": chart_data, "table": table_data})
+    return JSONResponse({"kpi": kpi, "by_sponsor": by_sponsor, "chart": chart_data, "table": table_data})
 
 
 # ── API: Votes data ───────────────────────────────────────────────────────────
@@ -415,12 +467,13 @@ async def admin_export_impressions_csv(
     event_type: str = Query(""),
     lang: str = Query(""),
     device: str = Query(""),
+    sponsor_id: str = Query(""),
 ):
     err = _require_auth_json(request)
     if err:
         return err
 
-    w, params, ds, de = _build_impressions_where(period, date_start, date_end, event_type, lang, device)
+    w, params, ds, de = _build_impressions_where(period, date_start, date_end, event_type, lang, device, sponsor_id)
 
     rows = []
     try:
@@ -965,6 +1018,168 @@ async def admin_api_realtime(request: Request, event_type: str = "all"):
     except Exception as e:
         logger.error("[ADMIN] realtime: %s", e)
         return JSONResponse({"events": [], "kpi": {"today": 0, "hour": 0, "types": 0}, "event_types": []})
+
+
+# ── Engagement API ────────────────────────────────────────────────────────────
+
+_ENGAGEMENT_EVENTS = frozenset([
+    "chatbot-open", "chatbot-close", "chatbot-message",
+    "rating-submitted", "rating-popup-shown", "rating-dismissed",
+    "simulateur-grille-generated", "simulateur-grille-audited",
+    "meta75-launched", "meta75-pdf-download",
+])
+
+_EVENT_CATEGORIES = {
+    "chatbot-open": "chatbot", "chatbot-close": "chatbot", "chatbot-message": "chatbot",
+    "rating-submitted": "rating", "rating-popup-shown": "rating", "rating-dismissed": "rating",
+    "simulateur-grille-generated": "simulateur", "simulateur-grille-audited": "simulateur",
+    "meta75-launched": "meta75", "meta75-pdf-download": "meta75",
+}
+
+_VALID_MODULES = {"loto", "euromillions"}
+
+
+def _build_engagement_where(period, date_start, date_end, event_type, module, lang, device):
+    ds, de = _period_to_dates(period, date_start, date_end)
+    where = ["created_at >= %s", "created_at < %s", "event_type NOT LIKE 'sponsor-%%'"]
+    params = [ds.isoformat(), de.isoformat()]
+    if event_type and event_type in _ENGAGEMENT_EVENTS:
+        where.append("event_type = %s")
+        params.append(event_type)
+    if module and module in _VALID_MODULES:
+        where.append("module = %s")
+        params.append(module)
+    if lang and lang in _VALID_LANGS:
+        where.append("lang = %s")
+        params.append(lang)
+    if device and device in _VALID_DEVICES:
+        where.append("device = %s")
+        params.append(device)
+    return " AND ".join(where), params, ds, de
+
+
+@router.get("/admin/api/engagement", include_in_schema=False)
+async def admin_api_engagement(
+    request: Request,
+    period: str = Query("7d"),
+    date_start: str = Query(""),
+    date_end: str = Query(""),
+    event_type: str = Query(""),
+    module: str = Query(""),
+    lang: str = Query(""),
+    device: str = Query(""),
+):
+    err = _require_auth_json(request)
+    if err:
+        return err
+
+    w, params, ds, de = _build_engagement_where(period, date_start, date_end, event_type, module, lang, device)
+
+    # KPI
+    kpi = {"total_events": 0, "chatbot_events": 0, "rating_events": 0,
+           "simulateur_events": 0, "meta75_events": 0, "unique_sessions": 0}
+    try:
+        rows = await db_cloudsql.async_fetchall(
+            f"SELECT event_type, COUNT(*) AS cnt "
+            f"FROM event_log WHERE {w} GROUP BY event_type",
+            tuple(params),
+        )
+        total = 0
+        for r in rows:
+            cnt = _dec(r["cnt"])
+            total += cnt
+            cat = _EVENT_CATEGORIES.get(r["event_type"])
+            if cat == "chatbot":
+                kpi["chatbot_events"] += cnt
+            elif cat == "rating":
+                kpi["rating_events"] += cnt
+            elif cat == "simulateur":
+                kpi["simulateur_events"] += cnt
+            elif cat == "meta75":
+                kpi["meta75_events"] += cnt
+        kpi["total_events"] = total
+
+        sess_row = await db_cloudsql.async_fetchone(
+            f"SELECT COUNT(DISTINCT session_hash) AS s FROM event_log WHERE {w}",
+            tuple(params),
+        )
+        kpi["unique_sessions"] = _dec(sess_row["s"]) if sess_row else 0
+    except Exception as e:
+        logger.error("[ADMIN API] engagement KPI failed: %s", e)
+
+    # By category
+    by_category = []
+    try:
+        rows = await db_cloudsql.async_fetchall(
+            f"SELECT event_type, COUNT(*) AS cnt, COUNT(DISTINCT session_hash) AS sessions "
+            f"FROM event_log WHERE {w} GROUP BY event_type",
+            tuple(params),
+        )
+        cat_map = {}
+        for r in rows:
+            cat = _EVENT_CATEGORIES.get(r["event_type"], "other")
+            if cat not in cat_map:
+                cat_map[cat] = {"events": 0, "sessions": set()}
+            cat_map[cat]["events"] += _dec(r["cnt"])
+        # Sessions per category need a separate query (DISTINCT across event types)
+        for cat_name in ("chatbot", "rating", "simulateur", "meta75"):
+            cat_events = [ev for ev, c in _EVENT_CATEGORIES.items() if c == cat_name]
+            if not cat_events:
+                continue
+            placeholders = ",".join(["%s"] * len(cat_events))
+            cat_sess = await db_cloudsql.async_fetchone(
+                f"SELECT COUNT(DISTINCT session_hash) AS s FROM event_log "
+                f"WHERE {w} AND event_type IN ({placeholders})",
+                tuple(params) + tuple(cat_events),
+            )
+            sessions = _dec(cat_sess["s"]) if cat_sess else 0
+            events = cat_map.get(cat_name, {}).get("events", 0)
+            by_category.append({"category": cat_name, "events": events, "sessions": sessions})
+        by_category.sort(key=lambda x: x["events"], reverse=True)
+    except Exception as e:
+        logger.error("[ADMIN API] engagement by_category failed: %s", e)
+
+    # Chart data (pivoted by category per day)
+    chart_data = []
+    try:
+        rows = await db_cloudsql.async_fetchall(
+            f"SELECT DATE(created_at) AS day, event_type, COUNT(*) AS cnt "
+            f"FROM event_log WHERE {w} "
+            f"GROUP BY day, event_type ORDER BY day",
+            tuple(params),
+        )
+        day_map = {}
+        for r in rows:
+            d = str(r["day"])
+            cat = _EVENT_CATEGORIES.get(r["event_type"], "other")
+            if d not in day_map:
+                day_map[d] = {"day": d, "chatbot": 0, "rating": 0, "simulateur": 0, "meta75": 0}
+            if cat in day_map[d]:
+                day_map[d][cat] += _dec(r["cnt"])
+        chart_data = list(day_map.values())
+    except Exception as e:
+        logger.error("[ADMIN API] engagement chart failed: %s", e)
+
+    # Table data
+    table_data = []
+    try:
+        rows = await db_cloudsql.async_fetchall(
+            f"SELECT DATE(created_at) AS day, event_type, page, module, lang, device, country, COUNT(*) AS cnt "
+            f"FROM event_log WHERE {w} "
+            f"GROUP BY day, event_type, page, module, lang, device, country "
+            f"ORDER BY day DESC, cnt DESC LIMIT 500",
+            tuple(params),
+        )
+        table_data = [
+            {"day": str(r["day"]), "event_type": r["event_type"], "page": r["page"] or "",
+             "module": r["module"] or "", "lang": r["lang"] or "", "device": r["device"] or "",
+             "country": r["country"] or "", "cnt": _dec(r["cnt"])}
+            for r in rows
+        ]
+    except Exception as e:
+        logger.error("[ADMIN API] engagement table failed: %s", e)
+
+    return JSONResponse({"kpi": kpi, "by_category": by_category, "chart": chart_data, "table": table_data})
 
 
 # ══════════════════════════════════════════════════════════════════════════════

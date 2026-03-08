@@ -240,7 +240,6 @@ function generatePopupHTML75EM(config) {
 function trackSponsorClickEM(sponsorId) {
     // Umami — sponsor click EM
     if (typeof umami !== 'undefined') umami.track('sponsor-click', { sponsor: sponsorId, module: 'euromillions' });
-    if (window.LotoIA_track) LotoIA_track('sponsor-click', {sponsor: sponsorId, module: 'euromillions'});
     fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-click', sponsor_id: sponsorId, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
     if (window.LotoIAAnalytics && window.LotoIAAnalytics.business) {
         window.LotoIAAnalytics.business.sponsorClick({
@@ -333,7 +332,6 @@ function showSponsorPopup75EM(config) {
 
         // Umami — sponsor popup shown EM
         if (typeof umami !== 'undefined') umami.track('sponsor-popup-shown', { module: 'euromillions' });
-        if (window.LotoIA_track) LotoIA_track('sponsor-popup-shown', {module: 'euromillions'});
         fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-popup-shown', sponsor_id: SPONSOR_VIDEO_75_EM.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
 
         // Umami — sponsor video played (autoplay) EM
@@ -341,7 +339,6 @@ function showSponsorPopup75EM(config) {
         if (sponsorVideo) {
             sponsorVideo.addEventListener('play', function() {
                 if (typeof umami !== 'undefined') umami.track('sponsor-video-played', { sponsor: SPONSOR_VIDEO_75_EM.id, module: 'euromillions' });
-                if (window.LotoIA_track) LotoIA_track('sponsor-video-played', {sponsor: SPONSOR_VIDEO_75_EM.id, module: 'euromillions'});
                 if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('sponsor_video_played', { event_category: 'sponsor', sponsor: SPONSOR_VIDEO_75_EM.id, module: 'euromillions' });
                 fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-video-played', sponsor_id: SPONSOR_VIDEO_75_EM.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
             }, { once: true });
