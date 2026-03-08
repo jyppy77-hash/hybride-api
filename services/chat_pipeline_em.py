@@ -397,35 +397,15 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                     f'time={int((time.monotonic() - t0) * 1000)}ms'
                 )
 
-    # Fallback regex quand Phase SQL echoue avec filtre temporel
+    # Quand force_sql=True et Phase SQL echoue, NE PAS fallback vers
+    # Phase 3 (donnees globales sans filtre date) — cela retournerait
+    # des stats all-time alors que l'utilisateur demande une periode.
     if force_sql and not enrichment_context:
-        logger.info("[EM CHAT] Phase SQL echouee, fallback phases regex (donnees globales)")
-        intent = _detect_requete_complexe_em(message)
-        if intent:
-            try:
-                if intent["type"] == "classement":
-                    data = await asyncio.wait_for(get_classement_numeros(intent["num_type"], intent["tri"], intent["limit"]), timeout=30.0)
-                elif intent["type"] == "comparaison":
-                    data = await asyncio.wait_for(get_comparaison_numeros(intent["num1"], intent["num2"], intent["num_type"]), timeout=30.0)
-                elif intent["type"] == "categorie":
-                    data = await asyncio.wait_for(get_numeros_par_categorie(intent["categorie"], intent["num_type"]), timeout=30.0)
-                else:
-                    data = None
-                if data:
-                    enrichment_context = _format_complex_context_em(intent, data)
-                    logger.info(f"[EM CHAT] Fallback Phase 3: {intent['type']}")
-            except Exception as e:
-                logger.warning(f"[EM CHAT] Fallback Phase 3 erreur: {e}")
-        if not enrichment_context:
-            numero, type_num = _detect_numero_em(message)
-            if numero is not None:
-                try:
-                    stats = await asyncio.wait_for(get_numero_stats(numero, type_num), timeout=30.0)
-                    if stats:
-                        enrichment_context = _format_stats_context_em(stats)
-                        logger.info(f"[EM CHAT] Fallback Phase 1: numero={numero}")
-                except Exception as e:
-                    logger.warning(f"[EM CHAT] Fallback Phase 1 erreur: {e}")
+        logger.warning(
+            f"[EM CHAT] Phase SQL echouee avec filtre temporel, "
+            f"PAS de fallback Phase 3 (evite stats all-time incorrectes) | "
+            f'question="{message[:80]}"'
+        )
 
     logger.info(
         f"[EM DEBUG] force_sql={force_sql} | continuation={_continuation_mode} | "

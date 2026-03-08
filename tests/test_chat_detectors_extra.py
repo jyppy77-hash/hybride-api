@@ -421,3 +421,17 @@ class TestHasTemporalFilter:
 
     def test_nl_de_laatste_3_maanden(self):
         assert _has_temporal_filter("nummers van de laatste 3 maanden") is True
+
+    # ── Bug regression: "SEULEMENT" suffix must not break detection ──
+
+    def test_fr_depuis_seulement_suffix(self):
+        assert _has_temporal_filter("les 5 numéros les plus sortis depuis le 1er janvier 2026 SEULEMENT") is True
+
+    def test_fr_top5_depuis_janvier_seulement(self):
+        assert _has_temporal_filter("top 5 depuis janvier 2026 seulement") is True
+
+    def test_en_since_only(self):
+        assert _has_temporal_filter("top 5 since January 2026 only") is True
+
+    def test_es_desde_solamente(self):
+        assert _has_temporal_filter("top 5 desde enero 2026 solamente") is True
