@@ -60,8 +60,8 @@ hybride-api/
 │   ├── base_stats.py                    # GameConfig-driven base class Loto/EM (1070L, Phase 2+Pairs+Triplets)
 │   ├── stats_service.py                 # Loto stats thin wrapper → base_stats (123L, Phase 2+Pairs+Triplets)
 │   ├── em_stats_service.py              # EM stats thin wrapper → base_stats (90L, Phase 2+Pairs+Triplets)
-│   ├── chat_pipeline.py                 # HYBRIDE chatbot orchestration — Loto (748L, Phase 1+P9 SSE+Phase A+Phase G+Phase P+Triplets+temporal bypass fix)
-│   ├── chat_pipeline_em.py              # HYBRIDE chatbot orchestration — EM (804L, Phase 4+P9 SSE+Phase A+Phase G+Sponsor V3+Phase P+Triplets+temporal bypass fix)
+│   ├── chat_pipeline.py                 # HYBRIDE chatbot orchestration — Loto (750L, Phase 1+P9 SSE+Phase A+Phase G+Phase P+Triplets+force_sql fix)
+│   ├── chat_pipeline_em.py              # HYBRIDE chatbot orchestration — EM (806L, Phase 4+P9 SSE+Phase A+Phase G+Sponsor V3+Phase P+Triplets+force_sql fix)
 │   ├── chat_detectors.py                # 15-phase detection: insults, generation, argent, numbers, grids, pairs, triplets — Loto (1256L, Phase 1+Phase A+Phase G+P1-P3+Phase P+Triplets)
 │   ├── chat_detectors_em.py             # 15-phase detection — EM variant (812L, Phase 4+Phase A+Phase G+P1-P2+Phase P+Triplets)
 │   ├── chat_sql.py                      # Text-to-SQL generator + executor — Loto (251L, Phase 1, UNION ALL fix)
@@ -737,8 +737,8 @@ routes/ — 18 routers (3 unified + 8 legacy Loto + 4 legacy EM + 1 EN Phase 11 
 
 services/ — 23 modules, ~8717 lines
     ── Chat Pipeline (Phase 1 Loto, Phase 4 EM, Phase A, Phase G, Phase P) ──
-    ├── chat_pipeline.py     (748L)  14-phase orchestration + SSE streaming — Loto (P9+Phase A+Phase G+Phase P triplets+temporal bypass fix)
-    ├── chat_pipeline_em.py  (804L)  14-phase orchestration + SSE streaming — EM (P9+Phase A+Phase G+Phase P triplets+temporal bypass fix)
+    ├── chat_pipeline.py     (750L)  14-phase orchestration + SSE streaming — Loto (P9+Phase A+Phase G+Phase P triplets+force_sql fix)
+    ├── chat_pipeline_em.py  (806L)  14-phase orchestration + SSE streaming — EM (P9+Phase A+Phase G+Phase P triplets+force_sql fix)
     ├── chat_detectors.py    (1256L) Regex detectors, insult/OOR/argent/generation/triplets pools, streak, _extract_top_n, temporal filter — Loto
     ├── chat_detectors_em.py (812L)  EM-specific detectors + response pools (6 langs, multilang écart patterns, triplets)
     ├── chat_sql.py          (251L)  Text-to-SQL generator + executor — Loto
@@ -1473,7 +1473,7 @@ Split `api_chat.py` (2014L) into 4 service modules + thin router.
 | File | Lines | Purpose |
 |------|-------|---------|
 | `services/chat_detectors.py` | 1256 | Regex detection, insult/OOR/compliment/argent/generation/triplets pools, streak tracking, _extract_top_n, temporal filter (73 patterns), Phase T neutralizer, Phase G generation, Phase P triplets (6 langs) |
-| `services/chat_pipeline.py` | 748 | 14-phase orchestration + Gemini pitch (Phase G: grid generation, Phase P: triplets before pairs). Temporal bypass: no Phase 3 fallback on SQL fail |
+| `services/chat_pipeline.py` | 750 | 14-phase orchestration + Gemini pitch (Phase G: grid generation, Phase P: triplets before pairs, no force_sql guard). Temporal bypass: no Phase 3 fallback on SQL fail |
 | `services/chat_utils.py` | 501 | Context building, formatting, sponsor injection, generation context, triplets context |
 | `services/chat_sql.py` | 251 | Text-to-SQL pipeline + safe DB execution (UNION ALL fix) |
 | `routes/api_chat.py` | 85 | Thin FastAPI wrapper + backward compat re-exports |
@@ -2149,6 +2149,7 @@ Favicon not displaying in Bing search results — root cause: no `/favicon.ico` 
 | 2026-03-08 | **Fix temporal bypass bug** — "top 5 depuis janvier 2026" returned all-time stats because Phase SQL fail triggered a fallback to `get_classement_numeros()` (no date filter). Fix: remove Phase 3 fallback when `force_sql=True`. Applied to both Loto + EM pipelines. Also: enriched SQL prompts with temporal few-shot examples (9 files, 6 langs). 13 new tests (temporal bypass + pipeline regression). **1437 tests**. |
 | 2026-03-08 | **Fix SQL UNION ALL bug** — `"UNION"` in `_SQL_FORBIDDEN` blanket-blocked all `UNION ALL` unpivot queries (frequency counting). Gemini generated correct SQL but `_validate_sql()` silently rejected it → cascaded to Phase 3 fallback → incoherent frequencies. Fix: removed `"UNION"` from forbidden list, added smart check (bare `UNION` blocked, `UNION ALL` allowed). 3 new tests. **1437 tests**. |
 | 2026-03-08 | **Triplet correlations** — C(5,3)=10 co-occurrence analysis. `get_triplet_correlations()` in base_stats (UNION ALL unpivot, canonical ordering via LEAST/GREATEST/SUM). `_detect_triplets()` regex 6 langs (~30 patterns: triplet/trio/combinaison de 3/Dreiergruppe/drietal). Phase P pipeline: triplets tested before pairs. `_format_triplets_context()` + EM variant. API: `GET /api/{game}/stats/triplets?top_n=10&window=5A`. 11 files, 22 new tests. **1437 tests**. |
+| 2026-03-08 | **Fix Phase P force_sql guard** — `force_sql=True` (triggered by `_has_temporal_filter()`) blocked Phase P (triplets AND pairs), preventing any correlation query with temporal context ("triplets depuis janvier 2026"). Fix: removed `not force_sql` guard on Phase P in both Loto + EM pipelines. Phase P uses structured queries, not text-to-SQL. |
 | 2026-03-08 | **Phase G: Grid generation in chatbot** — 14th pipeline phase. Inserted between Compliment and Argent. `_detect_generation()` regex (6 langs, ~40 patterns: FR/EN/ES/PT/DE/NL). `_detect_generation_mode()` extracts conservative/balanced/recent. Calls `engine/hybride.py` (Loto) or `engine/hybride_em.py` (EM) `generate_grids(n=1)`. Context injected as `[GRILLE GÉNÉRÉE PAR HYBRIDE]` → Gemini formulates natural response. Double protection: Phase G runs first + `_detect_argent()`/`_detect_argent_em()` exclude generation requests. Tag cleanup in `_clean_response()`. 7 files modified, 59 new tests. 1266 → **1355 tests** (+89). |
 
 ---
@@ -2161,14 +2162,14 @@ Favicon not displaying in Bing search results — root cause: no `/favicon.ico` 
 | Unified Routes | Stable | `/api/{game}/...` with `game = loto \| euromillions` (Phase 10), backward compat preserved |
 | HYBRIDE Engine (Loto) | Stable | Scoring, constraints, badges functional |
 | HYBRIDE Engine (EuroMillions) | Stable | 5 boules [1-50] + 2 etoiles [1-12] |
-| HYBRIDE Chatbot (Loto) | Stable | Modular: 4 service modules (Phase 1). 14-phase detection (Phase A: argent, Phase G: grid generation), Text-to-SQL (temporal few-shot, no Phase 3 fallback on SQL fail), SSE streaming (P9), session persistence, GA4 tracking, sponsor system. 6 pages. |
-| HYBRIDE Chatbot (EuroMillions) | Stable | Modular: 4 service modules (Phase 4). 14-phase detection (Phase A: argent, Phase G: grid generation, 6 langs). Text-to-SQL (temporal few-shot, no Phase 3 fallback). SSE streaming (P9). Same architecture as Loto. 7 FR + 7 EN pages (Phase 11). Isolated sessionStorage. EN response pools + EN prompts. Sponsor V3: `module="em"`, dynamic EM codes. |
+| HYBRIDE Chatbot (Loto) | Stable | Modular: 4 service modules (Phase 1). 14-phase detection (Phase A: argent, Phase G: grid generation, Phase P: pairs+triplets). Text-to-SQL (temporal few-shot, no Phase 3 fallback on SQL fail). Phase P runs without force_sql guard (structured queries). SSE streaming (P9), session persistence, GA4 tracking, sponsor system. 6 pages. |
+| HYBRIDE Chatbot (EuroMillions) | Stable | Modular: 4 service modules (Phase 4). 14-phase detection (Phase A: argent, Phase G: grid generation, Phase P: pairs+triplets, 6 langs). Text-to-SQL (temporal few-shot, no Phase 3 fallback). Phase P runs without force_sql guard. SSE streaming (P9). Same architecture as Loto. 7 FR + 7 EN pages (Phase 11). Isolated sessionStorage. EN response pools + EN prompts. Sponsor V3: `module="em"`, dynamic EM codes. |
 | i18n / Multilang | **Complete (P1-P5/5 + Sprints ES/PT/DE/NL)** | Babel/gettext (P1/5), Jinja2 templates (P2/5), JS i18n (P3/5), multilang prompts (P4/5), routes+sitemap+killswitch (P5/5). **All 6 languages fully translated and live**: FR, EN, ES, PT, DE, NL. 66 EM routes (11 pages x 6 langs). 749 .po entries, 160+ JS keys, 25 PDF labels, 18 AI prompts per lang. `ENABLED_LANGS = ["fr", "en", "es", "pt", "de", "nl"]`. 4 multilingual legal pages. Mobile globe lang selector. Remaining: rating popup (5 FR strings). Loto EN not yet planned. |
 | Stats Layer | Stable | Base class (Phase 2): 1070L base + 2 thin wrappers, GameConfig-driven, pairs+triplets |
 | META ANALYSE 75 (Loto) | Stable | Async Gemini enrichment + PDF export, circuit breaker fallback. 18 Loto prompt keys. |
 | META ANALYSE 75 (EM) | Stable | Dual graphs, EM Gemini enrichment, EM PDF (2x2 matplotlib), 14 EM prompt keys. |
 | Cache | Stable | Redis async + in-memory fallback (Phase 6). PDF off-thread. |
-| Testing | Active | **1437 tests** (pytest, 33 test files), CI integration |
+| Testing | Active | **1437 tests** (pytest, 34 test files), CI integration |
 | Sponsor Tracking Cleanup | **Done** | 10 duplicate `LotoIA_track()` calls removed from 4 JS files. E5 banner documented. LOTO_FR_A hardcode documented (Loto = FR-only). |
 | Security | Hardened | CSP+HSTS preload+COOP (Phase 7), aiomysql parameterized queries, rate limiting, correlation IDs |
 | SEO | **Production-ready (Phases A-D + Sprint 4-5)** | **Phases A-D**: Organization schema unified, WebSite schema, AggregateRating EM (conditional ≥5), E-E-A-T (bio, founder Schema), editorial SEO intros, CTA HYBRIDE (6 pages), WebP images (4, 71-76% savings), critical CSS inline + async, Last-Modified + Vary headers, min-instances=1, Bing favicon compatible. **Sprint 4**: BreadcrumbList JSON-LD (7 pages), Dataset + CollectionPage schemas, H1 keyword optimization (6 langs), title tags ≤50 chars, CLS fix (4 images), robots.txt EM rules, Loto cross-links (FR footer). **Sprint 5 Sitemap**: +24 legal pages, xhtml:link hreflang alternates (7 per EM URL). Audit score **93/100**. |
@@ -2225,7 +2226,7 @@ Observable characteristics based on development usage:
 | **V11 (Admin Premium)** | **9.6** | **+0.1** | **Decimal JSON fix, Tarifs EU page (14 codes CRUD, EI/SASU switch, migration 005), Glassmorphism UI refonte (8 pages, glass cards, gradient bg, Inter font), Realtime redesign (card feed, heatmap, filter pills, animated KPI, LIVE pulse). 1244 tests (+18 tarifs)** |
 | **V12 (Sponsor Audit + Engagement)** | **9.6** | **+0.0** | **Phase 1: Impressions dashboard `sponsor_id` filter + `by_sponsor` breakdown (14 product codes, summary table, chart, CSV export). Phase 2: New `/admin/engagement` page (chatbot/rating/simulateur/meta75 KPI, category breakdown, stacked bar chart, paginated detail table). Phase 3: Tracking cleanup — 10 duplicate `LotoIA_track()` removed from 4 JS files, E5 banner documented, `LOTO_FR_A` hardcode documented. 1266 tests (+22)** |
 | **V13 (RT-2 + Temporal Fix + UNION ALL)** | **9.7** | **+0.1** | **Admin RT-2: Realtime period toggle (today/7d/30d), by-type KPI cards, CSV+PDF export. Tarif filter (A/B) on impressions. Fix temporal bypass bug: Phase 3 fallback removed when force_sql=True. Fix SQL UNION ALL: `_SQL_FORBIDDEN` blanket-blocked UNION ALL unpivot queries → smart check (bare UNION blocked, UNION ALL allowed). SQL prompts enriched with temporal few-shot examples (6 langs). 1415 tests (+60)** |
-| **V14 (Triplet Correlations)** | **9.7** | **+0.0** | **Triplet correlations: C(5,3)=10 co-occurrence analysis via UNION ALL unpivot. `get_triplet_correlations()` in base_stats. `_detect_triplets()` regex 6 langs (~30 patterns). Phase P pipeline: triplets before pairs. API: `GET /api/{game}/stats/triplets`. Formatting context for Gemini. 1437 tests (+22)** |
+| **V14 (Triplets + Phase P fix)** | **9.7** | **+0.0** | **Triplet correlations: C(5,3)=10 co-occurrence analysis via UNION ALL unpivot. `get_triplet_correlations()` in base_stats. `_detect_triplets()` regex 6 langs (~30 patterns). Phase P pipeline: triplets before pairs. API: `GET /api/{game}/stats/triplets`. Fix: removed `force_sql` guard on Phase P — temporal filter no longer blocks pairs/triplets (structured queries). 1437 tests (+22)** |
 
 ### V7 Section Scores (03/03/2026)
 
@@ -2253,4 +2254,4 @@ Observable characteristics based on development usage:
 
 ---
 
-*Updated by JyppY & Claude Opus 4.6 — 08/03/2026 (v31.0: Triplet correlations — C(5,3)=10 co-occurrence analysis via UNION ALL unpivot. `get_triplet_correlations()` in base_stats (1070L). `_detect_triplets()` regex 6 langs. Phase P pipeline: triplets before pairs. API: `GET /api/{game}/stats/triplets`. 1437 tests (34 files), 23 service modules (~8717L), 749 .po entries per lang. Previous: v30.0 UNION ALL fix, v29.0 RT-2 + Temporal fix. Tech audit V14: **9.7/10**. Security audit V2: all admin vectors covered.)*
+*Updated by JyppY & Claude Opus 4.6 — 08/03/2026 (v32.0: Triplets + Phase P force_sql fix — C(5,3) triplet correlations + fix `force_sql` guard blocking Phase P (pairs+triplets) on temporal queries. 1437 tests (34 files), 23 service modules (~8717L), 749 .po entries per lang. Previous: v31.0 Triplets, v30.0 UNION ALL fix. Tech audit V14: **9.7/10**. Security audit V2: all admin vectors covered.)*
