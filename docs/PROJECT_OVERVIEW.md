@@ -64,7 +64,7 @@ hybride-api/
 │   ├── chat_pipeline_em.py              # HYBRIDE chatbot orchestration — EM (790L, Phase 4+P9 SSE+Phase A+Phase G+Sponsor V3+Phase P+temporal bypass fix)
 │   ├── chat_detectors.py                # 15-phase detection: insults, generation, argent, numbers, grids, pairs — Loto (1203L, Phase 1+Phase A+Phase G+P1-P3+Phase P)
 │   ├── chat_detectors_em.py             # 15-phase detection — EM variant (807L, Phase 4+Phase A+Phase G+P1-P2+Phase P)
-│   ├── chat_sql.py                      # Text-to-SQL generator + executor — Loto (247L, Phase 1)
+│   ├── chat_sql.py                      # Text-to-SQL generator + executor — Loto (251L, Phase 1, UNION ALL fix)
 │   ├── chat_sql_em.py                   # Text-to-SQL generator — EM (176L, Phase 4)
 │   ├── chat_utils.py                    # Formatting, context, sponsor — Loto+EM (479L, Phase 1 + Sponsor V3 + Pairs + Phase G)
 │   ├── chat_utils_em.py                 # Formatting, context — EM (255L, Phase 4 + Pairs + Phase G)
@@ -775,7 +775,7 @@ tests/ — 1244 tests, 31 files (pytest + pytest-cov)
     ├── test_en_routes.py         (~220L)  EN EuroMillions pages + static JS (Phase 11)
     ├── test_ratings.py           (382L)   Rating system (submit, global stats, validation)
     ── Chat Pipeline Tests (Phase 3) ──
-    ├── test_chat_sql.py          (186L)   SQL injection security, _validate_sql, _ensure_limit
+    ├── test_chat_sql.py          (271L)   SQL injection security, _validate_sql, _ensure_limit, UNION ALL
     ├── test_chat_utils.py        (190L)   _clean_response, _enrich_with_context, _format_date_fr
     ├── test_chat_detectors_extra.py (437L) _detect_grille, _detect_mode, _detect_requete_complexe, _extract_top_n, _has_temporal_filter (incl. SEULEMENT variants)
     ├── test_chat_temporal_bypass.py (129L) Temporal bypass regression: force_sql + SQL fail → no Phase 3 fallback (Loto + EM)
@@ -1331,9 +1331,9 @@ Phase 1 split `api_chat.py` (2014L) into 4 service modules. Phase 4 applied the 
 - **Phase T neutralizer (P3/3)**: `_STAT_NEUTRALIZE_RE` — statistical/frequency keywords (26 original + 30 frequency adverbs) prevent false positive Phase T activation on queries like "sorti le plus souvent" (6 langs).
 - **Streak tracking**: `_count_oor_streak()`, `_count_insult_streak()` with escalating responses
 
-**services/chat_sql.py** (247L) / **chat_sql_em.py** (176L):
+**services/chat_sql.py** (251L) / **chat_sql_em.py** (176L):
 - **Text-to-SQL**: Gemini generates SQL (temperature 0.0) → Python validates → executes on Cloud SQL
-- **Security**: SELECT only, no forbidden keywords, max 1000 chars, no SQL comments, 5s timeout
+- **Security**: SELECT only, no forbidden keywords, max 1000 chars, no SQL comments, 5s timeout. UNION ALL allowed (unpivot frequency counting), bare UNION blocked (injection vector)
 - **Functions**: `_generate_sql()`, `_validate_sql()`, `_ensure_limit()`, `_execute_safe_sql()`, `_format_sql_result()`
 - **Limit**: 10 SQL queries per session
 
@@ -1469,7 +1469,7 @@ Split `api_chat.py` (2014L) into 4 service modules + thin router.
 | `services/chat_detectors.py` | 1203 | Regex detection, insult/OOR/compliment/argent/generation pools, streak tracking, _extract_top_n, temporal filter (73 patterns), Phase T neutralizer, Phase G generation (6 langs) |
 | `services/chat_pipeline.py` | 735 | 14-phase orchestration + Gemini pitch (Phase G: grid generation). Temporal bypass: no Phase 3 fallback on SQL fail |
 | `services/chat_utils.py` | 479 | Context building, formatting, sponsor injection, generation context |
-| `services/chat_sql.py` | 247 | Text-to-SQL pipeline + safe DB execution |
+| `services/chat_sql.py` | 251 | Text-to-SQL pipeline + safe DB execution (UNION ALL fix) |
 | `routes/api_chat.py` | 85 | Thin FastAPI wrapper + backward compat re-exports |
 
 **Result**: 2014L monolith → 5 focused modules, 248 tests pass, zero regression.
@@ -1492,7 +1492,7 @@ Added 110 new tests targeting chat pipeline, SQL security, stats base class.
 
 | File | Tests | Focus |
 |------|-------|-------|
-| `test_chat_sql.py` | 43 | SQL injection security, `_validate_sql`, `_ensure_limit` |
+| `test_chat_sql.py` | 55 | SQL injection security, `_validate_sql`, `_ensure_limit`, UNION ALL validation |
 | `test_chat_utils.py` | 26 | `_clean_response`, `_enrich_with_context`, `_format_date_fr` |
 | `test_base_stats.py` | 15 | `get_numeros_par_categorie`, pitch context, EM paths |
 | `test_chat_detectors_extra.py` | 84 | `_detect_grille`, `_detect_mode`, `_detect_requete_complexe`, `_extract_top_n` (12 multilang), `_has_temporal_filter` (40 multilang incl. "SEULEMENT" variants) |
@@ -2140,7 +2140,8 @@ Favicon not displaying in Bing search results — root cause: no `/favicon.ico` 
 | 2026-03-08 | **Tracking Cleanup (Phase 3)**: R4: Removed 10 duplicate `LotoIA_track()` calls for sponsor events from 4 JS files (sponsor-popup75.js, sponsor-popup75-em.js, sponsor-popup.js, em/sponsor-popup-em.js). R5: Documented intentional `LOTO_FR_A` hardcode. R6: Documented E5 banner status in `api_sponsor_track.py`. **1266 tests** (+22). |
 | 2026-03-08 | **Pair correlations**: Co-occurrence analysis for balls & stars. Pair detection regex enriched with natural language patterns (6 langs). |
 | 2026-03-08 | **Admin RT-2: Realtime upgrade** — Period toggle (today/7d/30d), by-type KPI cards (glassmorphism, live counters, clickable filter), CSV+PDF export routes, `generate_realtime_report_pdf()` (FacturIA style). Backend `period` param on API, `by_type` counts in response. 13 new tests. Also: tarif filter (Standard A/Premium B) on impressions page + CSV/PDF export. |
-| 2026-03-08 | **Fix temporal bypass bug** — "top 5 depuis janvier 2026" returned all-time stats because Phase SQL fail triggered a fallback to `get_classement_numeros()` (no date filter). Fix: remove Phase 3 fallback when `force_sql=True`. Applied to both Loto + EM pipelines. Also: enriched SQL prompts with temporal few-shot examples (9 files, 6 langs). 13 new tests (temporal bypass + pipeline regression). **1413 tests**. |
+| 2026-03-08 | **Fix temporal bypass bug** — "top 5 depuis janvier 2026" returned all-time stats because Phase SQL fail triggered a fallback to `get_classement_numeros()` (no date filter). Fix: remove Phase 3 fallback when `force_sql=True`. Applied to both Loto + EM pipelines. Also: enriched SQL prompts with temporal few-shot examples (9 files, 6 langs). 13 new tests (temporal bypass + pipeline regression). **1415 tests**. |
+| 2026-03-08 | **Fix SQL UNION ALL bug** — `"UNION"` in `_SQL_FORBIDDEN` blanket-blocked all `UNION ALL` unpivot queries (frequency counting). Gemini generated correct SQL but `_validate_sql()` silently rejected it → cascaded to Phase 3 fallback → incoherent frequencies. Fix: removed `"UNION"` from forbidden list, added smart check (bare `UNION` blocked, `UNION ALL` allowed). 3 new tests. **1415 tests**. |
 | 2026-03-08 | **Phase G: Grid generation in chatbot** — 14th pipeline phase. Inserted between Compliment and Argent. `_detect_generation()` regex (6 langs, ~40 patterns: FR/EN/ES/PT/DE/NL). `_detect_generation_mode()` extracts conservative/balanced/recent. Calls `engine/hybride.py` (Loto) or `engine/hybride_em.py` (EM) `generate_grids(n=1)`. Context injected as `[GRILLE GÉNÉRÉE PAR HYBRIDE]` → Gemini formulates natural response. Double protection: Phase G runs first + `_detect_argent()`/`_detect_argent_em()` exclude generation requests. Tag cleanup in `_clean_response()`. 7 files modified, 59 new tests. 1266 → **1355 tests** (+89). |
 
 ---
@@ -2160,7 +2161,7 @@ Favicon not displaying in Bing search results — root cause: no `/favicon.ico` 
 | META ANALYSE 75 (Loto) | Stable | Async Gemini enrichment + PDF export, circuit breaker fallback. 18 Loto prompt keys. |
 | META ANALYSE 75 (EM) | Stable | Dual graphs, EM Gemini enrichment, EM PDF (2x2 matplotlib), 14 EM prompt keys. |
 | Cache | Stable | Redis async + in-memory fallback (Phase 6). PDF off-thread. |
-| Testing | Active | **1413 tests** (pytest, 33 test files), CI integration |
+| Testing | Active | **1415 tests** (pytest, 33 test files), CI integration |
 | Sponsor Tracking Cleanup | **Done** | 10 duplicate `LotoIA_track()` calls removed from 4 JS files. E5 banner documented. LOTO_FR_A hardcode documented (Loto = FR-only). |
 | Security | Hardened | CSP+HSTS preload+COOP (Phase 7), aiomysql parameterized queries, rate limiting, correlation IDs |
 | SEO | **Production-ready (Phases A-D + Sprint 4-5)** | **Phases A-D**: Organization schema unified, WebSite schema, AggregateRating EM (conditional ≥5), E-E-A-T (bio, founder Schema), editorial SEO intros, CTA HYBRIDE (6 pages), WebP images (4, 71-76% savings), critical CSS inline + async, Last-Modified + Vary headers, min-instances=1, Bing favicon compatible. **Sprint 4**: BreadcrumbList JSON-LD (7 pages), Dataset + CollectionPage schemas, H1 keyword optimization (6 langs), title tags ≤50 chars, CLS fix (4 images), robots.txt EM rules, Loto cross-links (FR footer). **Sprint 5 Sitemap**: +24 legal pages, xhtml:link hreflang alternates (7 per EM URL). Audit score **93/100**. |
@@ -2191,7 +2192,7 @@ Observable characteristics based on development usage:
 - **Redis optional** — `services/cache.py` falls back to per-process in-memory cache if `REDIS_URL` absent (not shared across 2 workers in fallback mode).
 - **Gemini dependency** — META ANALYSE and chatbot depend on an external API. Mitigated by circuit breaker + fallback messages, but degraded experience when open.
 - **Minimal monitoring** — Production observability relies on Cloud Run metrics + JSON structured logs with correlation IDs. No APM or alerting.
-- **Test coverage** — 1413 tests across 33 files. Core engine, chat pipeline (temporal bypass regression tests), stats, insult/OOR/argent detection, templates, legal pages, i18n, JS labels, prompts, multilang routes, sitemap, PDF heatmap, multilang temporal filter, top-N extraction, Phase T neutralization, SEO headers, SEO schemas, admin back-office (135 tests: impressions sponsor+tarif filter, engagement dashboard, realtime period+by_type+CSV/PDF export), event tracking (12 tests) well covered. Some route handlers have lower coverage.
+- **Test coverage** — 1415 tests across 33 files. Core engine, chat pipeline (temporal bypass regression tests), stats, insult/OOR/argent detection, templates, legal pages, i18n, JS labels, prompts, multilang routes, sitemap, PDF heatmap, multilang temporal filter, top-N extraction, Phase T neutralization, SEO headers, SEO schemas, admin back-office (135 tests: impressions sponsor+tarif filter, engagement dashboard, realtime period+by_type+CSV/PDF export), event tracking (12 tests) well covered. Some route handlers have lower coverage.
 - **i18n residue** — Full i18n pipeline complete (P1-P5/5 + Sprints ES/PT/DE/NL): gettext, Jinja2, JS labels, prompts, routes, sitemap, kill switch. **All 6 languages fully translated and live.** 4 legal pages translated. Cookie consent banner translated (6 langs). 1 minor FR residue: rating popup labels (5 FR strings in `rating-popup.js`). Loto EN not yet planned.
 
 ---
@@ -2216,7 +2217,7 @@ Observable characteristics based on development usage:
 | **V10 (Sponsor V3)** | **9.5** | **+0.1** | **Sponsor system V3: 14 product codes (LOTO_FR_A/B + 12 EM), 6 emplacements, A/B rotation, [SPONSOR:ID] marker, 6 tracking events, dynamic EM lang derivation, sponsors.json V3, grilles tarifaires PDF (Loto V6 + EM UE V1), 360 coherence audit. 1244 tests (+19)** |
 | **V11 (Admin Premium)** | **9.6** | **+0.1** | **Decimal JSON fix, Tarifs EU page (14 codes CRUD, EI/SASU switch, migration 005), Glassmorphism UI refonte (8 pages, glass cards, gradient bg, Inter font), Realtime redesign (card feed, heatmap, filter pills, animated KPI, LIVE pulse). 1244 tests (+18 tarifs)** |
 | **V12 (Sponsor Audit + Engagement)** | **9.6** | **+0.0** | **Phase 1: Impressions dashboard `sponsor_id` filter + `by_sponsor` breakdown (14 product codes, summary table, chart, CSV export). Phase 2: New `/admin/engagement` page (chatbot/rating/simulateur/meta75 KPI, category breakdown, stacked bar chart, paginated detail table). Phase 3: Tracking cleanup — 10 duplicate `LotoIA_track()` removed from 4 JS files, E5 banner documented, `LOTO_FR_A` hardcode documented. 1266 tests (+22)** |
-| **V13 (RT-2 + Temporal Fix)** | **9.7** | **+0.1** | **Admin RT-2: Realtime period toggle (today/7d/30d), by-type KPI cards, CSV+PDF export. Tarif filter (A/B) on impressions. Fix temporal bypass bug: Phase 3 fallback removed when force_sql=True (prevents all-time stats on SQL fail). SQL prompts enriched with temporal few-shot examples (6 langs). 1413 tests (+58)** |
+| **V13 (RT-2 + Temporal Fix + UNION ALL)** | **9.7** | **+0.1** | **Admin RT-2: Realtime period toggle (today/7d/30d), by-type KPI cards, CSV+PDF export. Tarif filter (A/B) on impressions. Fix temporal bypass bug: Phase 3 fallback removed when force_sql=True. Fix SQL UNION ALL: `_SQL_FORBIDDEN` blanket-blocked UNION ALL unpivot queries → smart check (bare UNION blocked, UNION ALL allowed). SQL prompts enriched with temporal few-shot examples (6 langs). 1415 tests (+60)** |
 
 ### V7 Section Scores (03/03/2026)
 
@@ -2225,7 +2226,7 @@ Observable characteristics based on development usage:
 | Architecture & Structure | 7.5 | **9.5** | +2.0 | Phase 10 unified routes, GameConfig registry, 21 service modules, modular chat pipeline (14 phases incl. Phase G grid generation), kill switch pattern, factory routes, base class inheritance (BaseStatsService) |
 | Security & Credentials | 8.0 | **9.5** | +1.5 | HSTS preload (1yr), CSP strict, COOP, X-Frame DENY, Permissions-Policy, AI bot blocking (12 bots), rate limiting (10/min PDF), argent/gambling detection (Phase A), HttpOnly press token, triple analytics stack (GA4+Umami+Wysistat ACPM), Wysistat owner IP bridge fix |
 | Performance & Resilience | 7.0 | **8.5** | +1.5 | Redis async cache + in-memory fallback (Phase 6), SSE streaming (P9), circuit breaker, async DB (aiomysql Phase 5), PDF off-thread, GZip middleware, cache headers (7-30d) |
-| Tests & Quality | 6.5 | **9.4** | +2.9 | 248 → **1413 tests** (+470%), 33 test files, sitemap 100% coverage, chat detectors (multilang top-N, temporal filter, Phase T neutralizer, Phase G generation), temporal bypass regression tests, i18n, prompts, multilang routes, hreflang, PDF heatmap, legal pages, SEO headers+schemas, admin back-office (135 tests: realtime period+export, impressions tarif filter), event tracking (12 tests) all tested |
+| Tests & Quality | 6.5 | **9.4** | +2.9 | 248 → **1415 tests** (+470%), 33 test files, sitemap 100% coverage, chat detectors (multilang top-N, temporal filter, Phase T neutralizer, Phase G generation), temporal bypass regression tests, i18n, prompts, multilang routes, hreflang, PDF heatmap, legal pages, SEO headers+schemas, admin back-office (135 tests: realtime period+export, impressions tarif filter), event tracking (12 tests) all tested |
 | Maintainability & Documentation | 7.5 | **9.0** | +1.5 | PROJECT_OVERVIEW 2000+ lines, i18n conventions documented, kill switch pattern, gettext/Babel pipeline, prompt loader with fallback chain, JS i18n centralized |
 | Deployment & Infrastructure | 6.5 | **8.5** | +2.0 | CI/CD Cloud Build (push-to-deploy), cloudbuild.yaml (build→test→deploy), 2 workers, correlation IDs, JSON structured logs, dynamic sitemap with xhtml:link hreflang |
 | **Global Average** | **7.2** | **9.3** | **+2.1** | |
@@ -2244,4 +2245,4 @@ Observable characteristics based on development usage:
 
 ---
 
-*Updated by JyppY & Claude Opus 4.6 — 08/03/2026 (v29.0: RT-2 Realtime upgrade + Temporal bypass fix — Realtime period toggle (today/7d/30d), by-type KPI cards, CSV+PDF export. Tarif filter (A/B) on impressions. Temporal SQL bypass bug fixed (no Phase 3 fallback on force_sql). SQL prompts enriched with temporal few-shot examples (6 langs). 1413 tests (33 files), 23 service modules (~8073L), 749 .po entries per lang. Previous: v28.0 Sponsor Audit + Engagement, v27.0 Admin Premium, v26.1 Sponsor V3 locked. Tech audit V13: **9.7/10**. Security audit V2: all admin vectors covered.)*
+*Updated by JyppY & Claude Opus 4.6 — 08/03/2026 (v30.0: UNION ALL fix + RT-2 + Temporal bypass — Fix `_SQL_FORBIDDEN` blanket-blocking UNION ALL unpivot queries (frequency counting). Smart validation: bare UNION blocked, UNION ALL allowed. RT-2 Realtime upgrade (period toggle, by-type KPI cards, CSV+PDF export). Temporal bypass fix (no Phase 3 fallback on force_sql). 1415 tests (33 files), 23 service modules (~8073L), 749 .po entries per lang. Previous: v29.0 RT-2 + Temporal fix, v28.0 Sponsor Audit + Engagement. Tech audit V13: **9.7/10**. Security audit V2: all admin vectors covered.)*
