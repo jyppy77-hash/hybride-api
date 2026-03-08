@@ -45,6 +45,15 @@ ui/sitemap.xml
 
 # Documentation interne
 docs/
+AUDIT_GA4_REPORT.md
+SEO_STRATEGY.md
+SEO_SNIPPETS.md
+
+# Scripts locaux
+update_owner_ip.bat
+
+# SEO verification files
+BingSiteAuth.xml
 
 # Binaires / outils locaux
 cloud-sql-proxy.exe
