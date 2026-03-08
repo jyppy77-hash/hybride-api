@@ -71,6 +71,13 @@ Años explícitos:
 - "después de 2023" → YEAR(date_de_tirage) > 2023
 - "entre 2022 y 2024" → YEAR(date_de_tirage) BETWEEN 2022 AND 2024
 
+Fechas precisas con "desde" / "a partir de":
+- "desde el 1 de enero de 2026" / "desde enero 2026" → date_de_tirage >= '2026-01-01'
+- "desde el 15 de marzo de 2025" → date_de_tirage >= '2025-03-15'
+- "a partir de marzo 2025" / "a partir del 1 de febrero de 2026" → date_de_tirage >= '2025-03-01' / '2026-02-01'
+- "los últimos 3 meses" / "los últimos 6 meses" → date_de_tirage >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+- "entre enero y marzo 2026" → date_de_tirage BETWEEN '2026-01-01' AND '2026-03-31'
+
 Fechas relativas (la fecha de hoy {TODAY} te da el año):
 - "en enero", "en marzo" (sin año) → MONTH(...) = X AND YEAR(...) = YEAR(CURDATE())
   NUNCA uses MONTH() solo sin YEAR(). "en enero" = enero de este año.
@@ -142,6 +149,18 @@ SELECT date_de_tirage, jackpot_euros, boule_1, boule_2, boule_3, boule_4, boule_
 
 P: ¿sorteos con un bote superior a 100 millones?
 SELECT date_de_tirage, jackpot_euros, boule_1, boule_2, boule_3, boule_4, boule_5, etoile_1, etoile_2 FROM tirages_euromillions WHERE jackpot_euros > 100000000 ORDER BY jackpot_euros DESC LIMIT 20
+
+P: los 5 números más sorteados desde el 1 de enero de 2026
+SELECT num, COUNT(*) as freq FROM (SELECT boule_1 as num FROM tirages_euromillions WHERE date_de_tirage >= '2026-01-01' UNION ALL SELECT boule_2 FROM tirages_euromillions WHERE date_de_tirage >= '2026-01-01' UNION ALL SELECT boule_3 FROM tirages_euromillions WHERE date_de_tirage >= '2026-01-01' UNION ALL SELECT boule_4 FROM tirages_euromillions WHERE date_de_tirage >= '2026-01-01' UNION ALL SELECT boule_5 FROM tirages_euromillions WHERE date_de_tirage >= '2026-01-01') t GROUP BY num ORDER BY freq DESC LIMIT 5
+
+P: top 3 desde marzo 2025
+SELECT num, COUNT(*) as freq FROM (SELECT boule_1 as num FROM tirages_euromillions WHERE date_de_tirage >= '2025-03-01' UNION ALL SELECT boule_2 FROM tirages_euromillions WHERE date_de_tirage >= '2025-03-01' UNION ALL SELECT boule_3 FROM tirages_euromillions WHERE date_de_tirage >= '2025-03-01' UNION ALL SELECT boule_4 FROM tirages_euromillions WHERE date_de_tirage >= '2025-03-01' UNION ALL SELECT boule_5 FROM tirages_euromillions WHERE date_de_tirage >= '2025-03-01') t GROUP BY num ORDER BY freq DESC LIMIT 3
+
+P: números más frecuentes a partir de febrero 2026
+SELECT num, COUNT(*) as freq FROM (SELECT boule_1 as num FROM tirages_euromillions WHERE date_de_tirage >= '2026-02-01' UNION ALL SELECT boule_2 FROM tirages_euromillions WHERE date_de_tirage >= '2026-02-01' UNION ALL SELECT boule_3 FROM tirages_euromillions WHERE date_de_tirage >= '2026-02-01' UNION ALL SELECT boule_4 FROM tirages_euromillions WHERE date_de_tirage >= '2026-02-01' UNION ALL SELECT boule_5 FROM tirages_euromillions WHERE date_de_tirage >= '2026-02-01') t GROUP BY num ORDER BY freq DESC LIMIT 5
+
+P: ¿cuántos sorteos en los últimos 3 meses?
+SELECT COUNT(*) as nb_tirages FROM tirages_euromillions WHERE date_de_tirage >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH) LIMIT 1
 
 CONTEXTO CONVERSACIONAL:
 Puedes recibir un historial de conversación (mensajes anteriores).

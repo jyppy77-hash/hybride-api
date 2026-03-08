@@ -71,6 +71,13 @@ Expliciete jaren:
 - "na 2023" -> YEAR(date_de_tirage) > 2023
 - "tussen 2022 en 2024" -> YEAR(date_de_tirage) BETWEEN 2022 AND 2024
 
+Precieze data met "sinds" / "vanaf":
+- "sinds 1 januari 2026" / "sinds januari 2026" -> date_de_tirage >= '2026-01-01'
+- "sinds 15 maart 2025" -> date_de_tirage >= '2025-03-15'
+- "vanaf maart 2025" / "vanaf 1 februari 2026" -> date_de_tirage >= '2025-03-01' / '2026-02-01'
+- "de laatste 3 maanden" / "de laatste 6 maanden" -> date_de_tirage >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH)
+- "tussen januari en maart 2026" -> date_de_tirage BETWEEN '2026-01-01' AND '2026-03-31'
+
 Relatieve data (de datum van vandaag {TODAY} geeft je het jaar):
 - "in januari", "in maart" (zonder jaar) -> MONTH(...) = X AND YEAR(...) = YEAR(CURDATE())
   Gebruik NOOIT MONTH() alleen zonder YEAR(). "in januari" = januari dit jaar.
@@ -142,6 +149,18 @@ SELECT date_de_tirage, jackpot_euros, boule_1, boule_2, boule_3, boule_4, boule_
 
 V: Trekkingen met een jackpot boven de 100 miljoen?
 SELECT date_de_tirage, jackpot_euros, boule_1, boule_2, boule_3, boule_4, boule_5, etoile_1, etoile_2 FROM tirages_euromillions WHERE jackpot_euros > 100000000 ORDER BY jackpot_euros DESC LIMIT 20
+
+V: De 5 vaakst getrokken nummers sinds 1 januari 2026
+SELECT num, COUNT(*) as freq FROM (SELECT boule_1 as num FROM tirages_euromillions WHERE date_de_tirage >= '2026-01-01' UNION ALL SELECT boule_2 FROM tirages_euromillions WHERE date_de_tirage >= '2026-01-01' UNION ALL SELECT boule_3 FROM tirages_euromillions WHERE date_de_tirage >= '2026-01-01' UNION ALL SELECT boule_4 FROM tirages_euromillions WHERE date_de_tirage >= '2026-01-01' UNION ALL SELECT boule_5 FROM tirages_euromillions WHERE date_de_tirage >= '2026-01-01') t GROUP BY num ORDER BY freq DESC LIMIT 5
+
+V: Top 3 sinds maart 2025
+SELECT num, COUNT(*) as freq FROM (SELECT boule_1 as num FROM tirages_euromillions WHERE date_de_tirage >= '2025-03-01' UNION ALL SELECT boule_2 FROM tirages_euromillions WHERE date_de_tirage >= '2025-03-01' UNION ALL SELECT boule_3 FROM tirages_euromillions WHERE date_de_tirage >= '2025-03-01' UNION ALL SELECT boule_4 FROM tirages_euromillions WHERE date_de_tirage >= '2025-03-01' UNION ALL SELECT boule_5 FROM tirages_euromillions WHERE date_de_tirage >= '2025-03-01') t GROUP BY num ORDER BY freq DESC LIMIT 3
+
+V: Meest voorkomende nummers vanaf februari 2026
+SELECT num, COUNT(*) as freq FROM (SELECT boule_1 as num FROM tirages_euromillions WHERE date_de_tirage >= '2026-02-01' UNION ALL SELECT boule_2 FROM tirages_euromillions WHERE date_de_tirage >= '2026-02-01' UNION ALL SELECT boule_3 FROM tirages_euromillions WHERE date_de_tirage >= '2026-02-01' UNION ALL SELECT boule_4 FROM tirages_euromillions WHERE date_de_tirage >= '2026-02-01' UNION ALL SELECT boule_5 FROM tirages_euromillions WHERE date_de_tirage >= '2026-02-01') t GROUP BY num ORDER BY freq DESC LIMIT 5
+
+V: Hoeveel trekkingen in de laatste 3 maanden?
+SELECT COUNT(*) as nb_tirages FROM tirages_euromillions WHERE date_de_tirage >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH) LIMIT 1
 
 GESPREKSCONTEXT:
 Je kunt een gespreksgeschiedenis ontvangen (eerdere berichten).

@@ -362,3 +362,62 @@ class TestHasTemporalFilter:
 
     def test_nl_no_temporal(self):
         assert _has_temporal_filter("Hoe vaak kwam 12 voor?") is False
+
+    # ── "depuis le [date]" / "since [month] [year]" patterns ──
+
+    def test_fr_depuis_le_1er_janvier_2026(self):
+        assert _has_temporal_filter("les 5 numéros les plus sortis depuis le 1er janvier 2026") is True
+
+    def test_fr_depuis_janvier_2026(self):
+        assert _has_temporal_filter("top 5 depuis janvier 2026") is True
+
+    def test_fr_a_partir_de(self):
+        assert _has_temporal_filter("numéros les plus fréquents à partir de février 2026") is True
+
+    def test_fr_les_3_derniers_mois(self):
+        assert _has_temporal_filter("les 3 derniers mois quels numéros ?") is True
+
+    def test_en_since_january_2026(self):
+        assert _has_temporal_filter("top 5 since January 2026") is True
+
+    def test_en_from_march_2025(self):
+        assert _has_temporal_filter("most drawn from March 2025") is True
+
+    def test_en_last_3_months(self):
+        assert _has_temporal_filter("most drawn in the last 3 months") is True
+
+    def test_en_past_6_months(self):
+        assert _has_temporal_filter("numbers in the past 6 months") is True
+
+    def test_es_desde_el_1_de_enero(self):
+        assert _has_temporal_filter("los 5 más sorteados desde el 1 de enero de 2026") is True
+
+    def test_es_desde_enero_2026(self):
+        assert _has_temporal_filter("top 5 desde enero 2026") is True
+
+    def test_es_los_ultimos_3_meses(self):
+        assert _has_temporal_filter("números más frecuentes los últimos 3 meses") is True
+
+    def test_pt_desde_janeiro_2026(self):
+        assert _has_temporal_filter("os mais sorteados desde janeiro 2026") is True
+
+    def test_pt_os_ultimos_3_meses(self):
+        assert _has_temporal_filter("números dos os últimos 3 meses") is True
+
+    def test_de_seit_januar_2026(self):
+        assert _has_temporal_filter("die häufigsten seit Januar 2026") is True
+
+    def test_de_ab_maerz_2025(self):
+        assert _has_temporal_filter("top 3 ab märz 2025") is True
+
+    def test_de_die_letzten_3_monate(self):
+        assert _has_temporal_filter("die letzten 3 monate welche Zahlen?") is True
+
+    def test_nl_sinds_januari_2026(self):
+        assert _has_temporal_filter("de meest getrokken sinds januari 2026") is True
+
+    def test_nl_vanaf_maart_2025(self):
+        assert _has_temporal_filter("top 3 vanaf maart 2025") is True
+
+    def test_nl_de_laatste_3_maanden(self):
+        assert _has_temporal_filter("nummers van de laatste 3 maanden") is True

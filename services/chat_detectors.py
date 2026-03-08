@@ -244,6 +244,10 @@ _TEMPORAL_PATTERNS = [
     r'\bapr[eè]s\s+l[\'\u2019]?ann[ée]e\s+20\d{2}\b',
     r'\bentre\s+l[\'\u2019]?ann[ée]e\s+20\d{2}\s+et',
     r'\bde\s+l[\'\u2019]?ann[ée]e\s+20\d{2}\b',
+    r'\bdepuis\s+(?:le\s+)?\d+(?:er)?\s+' + _MOIS_FR + r'\s+20\d{2}',  # depuis le 1er janvier 2026
+    r'\bdepuis\s+' + _MOIS_FR + r'\s+20\d{2}',  # depuis janvier 2026
+    r'\b[àa]\s+partir\s+d[eu]\b',               # à partir de / à partir du
+    r'\bles\s+\d+\s+derniers?\s+mois\b',         # les 3 derniers mois
     # ── EN ──
     r'\bin\s+20\d{2}\b',                           # in 2024
     r'\bsince\s+20\d{2}\b',                        # since 2023
@@ -259,6 +263,9 @@ _TEMPORAL_PATTERNS = [
     r'\bsince\s+the\s+beginning\b',               # since the beginning
     r'\bsince\s+\d+\s+(?:months?|years?|weeks?)\b',  # since 3 months
     r'\bduring\s+(?:the\s+year\s+)?20\d{2}\b',    # during 2024 / during the year 2024
+    r'\bsince\s+' + _MOIS_EN,                    # since January 2026
+    r'\bfrom\s+' + _MOIS_EN,                     # from March 2025
+    r'\b(?:the\s+)?(?:last|past)\s+\d+\s+months?\b',  # the last 3 months / past 6 months
     # ── ES ──
     r'\bdesde\s+20\d{2}\b',                        # desde 2023
     r'\bantes\s+de\s+20\d{2}\b',                   # antes de 2024
@@ -270,6 +277,10 @@ _TEMPORAL_PATTERNS = [
     r'\bel\s+mes\s+pasado\b',                       # el mes pasado
     r'\ben\s+' + _MOIS_ES,                         # en enero, en febrero...
     r'\bdesde\s+\d+\s+(?:meses|a[nñ]os|semanas)\b',  # desde 3 meses
+    r'\bdesde\s+(?:el\s+)?\d+\s+de\s+' + _MOIS_ES,  # desde el 1 de enero de 2026
+    r'\bdesde\s+' + _MOIS_ES,                    # desde enero 2026
+    r'\ba\s+partir\s+de\b',                      # a partir de (ES/PT shared)
+    r'\blos\s+[úu]ltimos\s+\d+\s+meses\b',      # los últimos 3 meses
     # ── PT ──
     r'\bem\s+20\d{2}\b',                           # em 2024
     r'\bdesde\s+20\d{2}\b',                        # desde 2023 (shared with ES)
@@ -282,6 +293,8 @@ _TEMPORAL_PATTERNS = [
     r'\bo\s+m[eê]s\s+passado\b',                    # o mês passado
     r'\bem\s+' + _MOIS_PT,                         # em janeiro, em fevereiro...
     r'\bdesde\s+\d+\s+(?:meses|anos|semanas)\b',  # desde 3 meses
+    r'\bdesde\s+(?:\d+\s+de\s+)?' + _MOIS_PT,   # desde 1 de janeiro / desde janeiro
+    r'\bos\s+[úu]ltimos\s+\d+\s+meses\b',       # os últimos 3 meses
     # ── DE ── (patterns lowercase — _has_temporal_filter lowercases input)
     r'\bim\s+(?:jahr\s+)?20\d{2}\b',              # im 2024 / im Jahr 2024
     r'\bseit\s+20\d{2}\b',                         # seit 2023
@@ -294,6 +307,10 @@ _TEMPORAL_PATTERNS = [
     r'\bletzten\s+monat\b',                         # letzten Monat
     r'\bim\s+' + _MOIS_DE,                         # im Januar, im Februar...
     r'\bseit\s+\d+\s+(?:monaten?|jahren?|wochen?)\b',  # seit 3 Monaten
+    r'\bseit\s+(?:dem\s+)?\d+\.\s*' + _MOIS_DE,  # seit dem 1. Januar 2026
+    r'\bseit\s+' + _MOIS_DE,                     # seit Januar 2026
+    r'\bab\s+' + _MOIS_DE,                       # ab März 2025
+    r'\bdie\s+letzten\s+\d+\s+monate\b',         # die letzten 3 Monate
     # ── NL ──
     r'\bin\s+20\d{2}\b',                           # in 2024 (shared with EN)
     r'\bsinds\s+20\d{2}\b',                        # sinds 2023
@@ -306,6 +323,9 @@ _TEMPORAL_PATTERNS = [
     r'\bvorige\s+maand\b',                          # vorige maand
     r'\bin\s+' + _MOIS_NL,                         # in januari, in februari...
     r'\bsinds\s+\d+\s+(?:maanden?|jaren?|weken?)\b',  # sinds 3 maanden
+    r'\bsinds\s+(?:\d+\s+)?' + _MOIS_NL,        # sinds 1 januari / sinds januari
+    r'\bvanaf\s+' + _MOIS_NL,                    # vanaf maart 2025
+    r'\bde\s+laatste\s+\d+\s+maanden?\b',        # de laatste 3 maanden
 ]
 
 

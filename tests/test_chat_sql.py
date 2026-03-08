@@ -14,6 +14,7 @@ from services.chat_sql import (
     _validate_sql, _ensure_limit, _format_sql_result,
     _get_tirage_data, _execute_safe_sql, _SQL_FORBIDDEN,
 )
+from services.prompt_loader import load_prompt, load_prompt_em
 
 
 @asynccontextmanager
@@ -184,3 +185,56 @@ class TestExecuteSafeSql:
         cursor.execute = AsyncMock(side_effect=Exception("DB error"))
 
         assert await _execute_safe_sql("SELECT 1") is None
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Prompt temporal few-shot examples — regression tests
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestPromptTemporalExamples:
+    """Verify SQL prompts contain 'depuis/since' temporal few-shot examples."""
+
+    def test_loto_prompt_has_depuis_janvier(self):
+        prompt = load_prompt("SQL_GENERATOR")
+        assert "depuis le 1er janvier 2026" in prompt
+        assert "date_de_tirage >= '2026-01-01'" in prompt
+
+    def test_loto_prompt_has_depuis_mars(self):
+        prompt = load_prompt("SQL_GENERATOR")
+        assert "depuis mars 2025" in prompt
+        assert "date_de_tirage >= '2025-03-01'" in prompt
+
+    def test_loto_prompt_has_a_partir_de(self):
+        prompt = load_prompt("SQL_GENERATOR")
+        assert "à partir de" in prompt
+        assert "date_de_tirage >= '2026-02-01'" in prompt
+
+    def test_em_fr_prompt_has_depuis_examples(self):
+        prompt = load_prompt_em("prompt_sql_generator_em", lang="fr")
+        assert "depuis le 1er janvier 2026" in prompt
+        assert "date_de_tirage >= '2026-01-01'" in prompt
+
+    def test_em_en_prompt_has_since_examples(self):
+        prompt = load_prompt_em("prompt_sql_generator_em", lang="en")
+        assert "since January 1st 2026" in prompt
+        assert "date_de_tirage >= '2026-01-01'" in prompt
+
+    def test_em_es_prompt_has_desde_examples(self):
+        prompt = load_prompt_em("prompt_sql_generator_em", lang="es")
+        assert "desde el 1 de enero de 2026" in prompt
+        assert "date_de_tirage >= '2026-01-01'" in prompt
+
+    def test_em_pt_prompt_has_desde_examples(self):
+        prompt = load_prompt_em("prompt_sql_generator_em", lang="pt")
+        assert "desde 1 de janeiro de 2026" in prompt
+        assert "date_de_tirage >= '2026-01-01'" in prompt
+
+    def test_em_de_prompt_has_seit_examples(self):
+        prompt = load_prompt_em("prompt_sql_generator_em", lang="de")
+        assert "seit dem 1. Januar 2026" in prompt
+        assert "date_de_tirage >= '2026-01-01'" in prompt
+
+    def test_em_nl_prompt_has_sinds_examples(self):
+        prompt = load_prompt_em("prompt_sql_generator_em", lang="nl")
+        assert "sinds 1 januari 2026" in prompt
+        assert "date_de_tirage >= '2026-01-01'" in prompt
