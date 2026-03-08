@@ -4,11 +4,24 @@
 {% block content %}
     <h2 id="rt-title">Realtime Feed <span class="rt-dot rt-dot-live"></span></h2>
 
-    <!-- ── KPI ────────────────────────────────────────────────────── -->
+    <!-- ── Period toggle + Export ────────────────────────────────── -->
+    <div class="rt-toolbar">
+        <div class="rt-period-toggle" id="rt-period-toggle">
+            <button class="rt-period-btn active" data-period="today">Aujourd'hui</button>
+            <button class="rt-period-btn" data-period="week">7 jours</button>
+            <button class="rt-period-btn" data-period="month">30 jours</button>
+        </div>
+        <div class="rt-export-bar">
+            <a id="rt-export-csv" class="btn-secondary btn-sm" href="/admin/export/realtime/csv?period=today">📥 CSV</a>
+            <a id="rt-export-pdf" class="btn-secondary btn-sm" href="/admin/export/realtime/pdf?period=today">📄 PDF</a>
+        </div>
+    </div>
+
+    <!-- ── Summary KPI ──────────────────────────────────────────── -->
     <div class="kpi-grid" id="rt-kpi">
-        <div class="kpi-card rt-kpi-today">
-            <span class="kpi-value rt-kpi-accent-gold" id="kpi-today">-</span>
-            <span class="kpi-label">Events aujourd'hui</span>
+        <div class="kpi-card rt-kpi-total">
+            <span class="kpi-value rt-kpi-accent-gold" id="kpi-total">-</span>
+            <span class="kpi-label" id="kpi-total-label">Events aujourd'hui</span>
         </div>
         <div class="kpi-card rt-kpi-hour">
             <span class="kpi-value rt-kpi-accent-muted" id="kpi-hour">-</span>
@@ -20,9 +33,12 @@
         </div>
     </div>
 
+    <!-- ── KPI cards by type ────────────────────────────────────── -->
+    <div class="rt-type-cards" id="rt-type-cards"></div>
+
     <!-- ── Activity heatmap (60 min) ─────────────────────────────── -->
     <div class="rt-heatmap-wrap">
-        <div class="rt-heatmap-label">Activite (60 dernières min)</div>
+        <div class="rt-heatmap-label">Activite (60 dernieres min)</div>
         <div class="rt-heatmap" id="rt-heatmap"></div>
     </div>
 
@@ -40,14 +56,6 @@
                 </span>
             </label>
         </div>
-        <div class="rt-pills" id="rt-pills">
-            <button class="rt-pill active" data-filter="all">Tous</button>
-            <button class="rt-pill" data-filter="sponsor">Sponsor</button>
-            <button class="rt-pill" data-filter="rating">Rating</button>
-            <button class="rt-pill" data-filter="simulateur">Simulateur</button>
-            <button class="rt-pill" data-filter="chatbot">Chatbot</button>
-            <button class="rt-pill" data-filter="meta75">Meta75</button>
-        </div>
     </div>
 
     <!-- ── Event feed ─────────────────────────────────────────────── -->
@@ -55,6 +63,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/admin.js?v=3"></script>
+<script src="/static/admin.js?v=5"></script>
 <script>LotoAdmin.initRealtime();</script>
 {% endblock %}

@@ -286,7 +286,8 @@ var LotoAdmin = (function() {
 
     var rtTimer = null;
     var rtPreviousIds = [];
-    var rtActivePill = 'all';
+    var rtActiveFilter = 'all';
+    var rtActivePeriod = 'today';
 
     var RT_COLORS = {
         'sponsor': '#ff9800', 'rating': '#00c853', 'simulateur': '#4f8cff',
@@ -301,6 +302,7 @@ var LotoAdmin = (function() {
         'AT': '\uD83C\uDDE6\uD83C\uDDF9', 'IE': '\uD83C\uDDEE\uD83C\uDDEA',
         'UK': '\uD83C\uDDEC\uD83C\uDDE7'
     };
+    var PERIOD_LABELS = { 'today': "Aujourd'hui", 'week': '7 derniers jours', 'month': '30 derniers jours' };
 
     function rtEventCategory(evType) {
         if (evType.indexOf('sponsor') === 0) return 'sponsor';
@@ -315,20 +317,36 @@ var LotoAdmin = (function() {
         return RT_COLORS[rtEventCategory(evType)] || '#8b8b9e';
     }
 
+    function rtBuildParams() {
+        var evType = qs('#f-event-type').value;
+        return 'event_type=' + encodeURIComponent(evType) + '&period=' + encodeURIComponent(rtActivePeriod);
+    }
+
+    function rtUpdateExportLinks() {
+        var p = rtBuildParams();
+        var csvEl = qs('#rt-export-csv');
+        var pdfEl = qs('#rt-export-pdf');
+        if (csvEl) csvEl.href = '/admin/export/realtime/csv?' + p;
+        if (pdfEl) pdfEl.href = '/admin/export/realtime/pdf?' + p;
+    }
+
     function initRealtime() {
         loadRealtime();
         qs('#rt-auto').addEventListener('change', function() {
             if (this.checked) { startAutoRefresh(); } else { stopAutoRefresh(); }
         });
-        qs('#f-event-type').addEventListener('change', loadRealtime);
+        qs('#f-event-type').addEventListener('change', function() {
+            rtActiveFilter = 'all';
+            loadRealtime();
+        });
 
-        // Pill filters (client-side)
-        qsa('.rt-pill').forEach(function(pill) {
-            pill.addEventListener('click', function() {
-                qsa('.rt-pill').forEach(function(p) { p.classList.remove('active'); });
-                pill.classList.add('active');
-                rtActivePill = pill.getAttribute('data-filter');
-                filterFeedCards();
+        // Period toggle
+        qsa('.rt-period-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                qsa('.rt-period-btn').forEach(function(b) { b.classList.remove('active'); });
+                btn.classList.add('active');
+                rtActivePeriod = btn.getAttribute('data-period');
+                loadRealtime();
             });
         });
 
@@ -355,17 +373,21 @@ var LotoAdmin = (function() {
     }
 
     function loadRealtime() {
-        var evType = qs('#f-event-type').value;
-        var url = '/admin/api/realtime?event_type=' + evType;
+        var url = '/admin/api/realtime?' + rtBuildParams();
+        rtUpdateExportLinks();
         // Pulse title on refresh
         var title = qs('#rt-title');
         if (title) { title.classList.remove('rt-title-pulse'); void title.offsetWidth; title.classList.add('rt-title-pulse'); }
 
         fetchJSON(url).then(function(data) {
             if (!data) return;
-            animateKPI('kpi-today', data.kpi.today || 0);
+            animateKPI('kpi-total', data.kpi.total || 0);
             animateKPI('kpi-hour', data.kpi.hour || 0);
             animateKPI('kpi-types', data.kpi.types || 0);
+            // Update period label
+            var lbl = qs('#kpi-total-label');
+            if (lbl) lbl.textContent = 'Events ' + (PERIOD_LABELS[rtActivePeriod] || '').toLowerCase();
+            renderRtTypeCards(data.by_type || {});
             renderRtFeed(data.events);
             renderRtEventTypes(data.event_types);
             renderRtHeatmap(data.events);
@@ -386,6 +408,38 @@ var LotoAdmin = (function() {
             el.textContent = val;
             if (step >= steps) { el.textContent = target; clearInterval(interval); }
         }, 30);
+    }
+
+    function renderRtTypeCards(byType) {
+        var container = qs('#rt-type-cards');
+        if (!container) return;
+        var types = Object.keys(byType);
+        if (!types.length) { container.innerHTML = ''; return; }
+        container.innerHTML = types.map(function(t) {
+            var cat = rtEventCategory(t);
+            var color = RT_COLORS[cat] || '#8b8b9e';
+            var activeClass = (rtActiveFilter === t) ? ' active' : '';
+            return '<div class="rt-type-card' + activeClass + '" data-event-type="' + escHtml(t) + '">'
+                + '<div><span class="rt-type-card-dot" style="background:' + color + ';box-shadow:0 0 6px ' + color + '"></span>'
+                + '<span class="rt-type-card-name">' + escHtml(t) + '</span></div>'
+                + '<div class="rt-type-card-count">' + byType[t] + '</div>'
+                + '</div>';
+        }).join('');
+
+        // Click → filter by event_type
+        qsa('.rt-type-card').forEach(function(card) {
+            card.addEventListener('click', function() {
+                var evType = card.getAttribute('data-event-type');
+                if (rtActiveFilter === evType) {
+                    rtActiveFilter = 'all';
+                    qs('#f-event-type').value = 'all';
+                } else {
+                    rtActiveFilter = evType;
+                    qs('#f-event-type').value = evType;
+                }
+                loadRealtime();
+            });
+        });
     }
 
     function renderRtFeed(events) {
@@ -420,17 +474,6 @@ var LotoAdmin = (function() {
         }).join('');
 
         rtPreviousIds = newIds;
-        filterFeedCards();
-    }
-
-    function filterFeedCards() {
-        qsa('.rt-event-card').forEach(function(card) {
-            if (rtActivePill === 'all') {
-                card.style.display = '';
-            } else {
-                card.style.display = (card.getAttribute('data-category') === rtActivePill) ? '' : 'none';
-            }
-        });
     }
 
     function renderRtEventTypes(types) {

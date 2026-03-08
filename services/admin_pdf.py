@@ -287,3 +287,74 @@ def generate_invoice_pdf(facture: dict, config: dict, lignes: list) -> io.BytesI
     doc.build(elements, onFirstPage=add_footer, onLaterPages=add_footer)
     buf.seek(0)
     return buf
+
+
+# ═══════════════════════════════════════════════════════════════
+# Realtime report PDF
+# ═══════════════════════════════════════════════════════════════
+
+def generate_realtime_report_pdf(kpi: dict, by_type: dict, table_data: list, period_label: str) -> io.BytesIO:
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=20*mm, rightMargin=20*mm, topMargin=20*mm, bottomMargin=25*mm)
+    elements = []
+
+    # Header
+    header = Table([
+        [
+            Paragraph("<font color='#d4a843'>⚡</font> <b>Loto<font color='#d4a843'>IA</font></b>", _LOGO),
+            Paragraph("<b>RAPPORT REALTIME</b>", _TITLE_R),
+        ]
+    ], colWidths=[90*mm, 80*mm])
+    header.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')]))
+    elements.append(header)
+    elements.append(Spacer(1, 4*mm))
+
+    elements.append(Paragraph(f"Periode : {period_label} | Genere le {_format_date_fr(date.today())}", _PETIT))
+    elements.append(Spacer(1, 8*mm))
+
+    # KPI block
+    elements.append(Paragraph("INDICATEURS", _SECTION))
+    kpi_rows = [
+        ["Total events", "Derniere heure", "Types distincts"],
+        [str(kpi.get("total", 0)), str(kpi.get("hour", 0)), str(kpi.get("types", 0))],
+    ]
+    t = Table(kpi_rows, colWidths=[56*mm]*3)
+    t.setStyle(_detail_table_style(2))
+    elements.append(t)
+    elements.append(Spacer(1, 8*mm))
+
+    # By type breakdown
+    if by_type:
+        elements.append(Paragraph("REPARTITION PAR TYPE", _SECTION))
+        bt_rows = [["Type", "Nombre"]]
+        for etype, cnt in sorted(by_type.items(), key=lambda x: -x[1]):
+            bt_rows.append([etype, str(cnt)])
+        t = Table(bt_rows, colWidths=[120*mm, 40*mm])
+        t.setStyle(_detail_table_style(len(bt_rows)))
+        elements.append(t)
+        elements.append(Spacer(1, 8*mm))
+
+    # Detail table
+    if table_data:
+        elements.append(Paragraph("DETAIL DES EVENEMENTS", _SECTION))
+        headers = ["Date/Heure", "Event", "Page", "Lang", "Device", "Pays"]
+        rows = [headers]
+        for r in table_data[:200]:
+            rows.append([
+                r.get("created_at", ""), r.get("event_type", ""), r.get("page", ""),
+                r.get("lang", ""), r.get("device", ""), r.get("country", ""),
+            ])
+        t = Table(rows, colWidths=[32*mm, 35*mm, 38*mm, 14*mm, 18*mm, 18*mm])
+        t.setStyle(_detail_table_style(len(rows)))
+        elements.append(t)
+
+    def footer(canvas_obj, doc_obj):
+        canvas_obj.saveState()
+        canvas_obj.setFont('Helvetica', 7)
+        canvas_obj.setFillColor(GRIS)
+        canvas_obj.drawCentredString(A4[0] / 2, 12*mm, "LotoIA — Rapport realtime genere automatiquement")
+        canvas_obj.restoreState()
+
+    doc.build(elements, onFirstPage=footer, onLaterPages=footer)
+    buf.seek(0)
+    return buf

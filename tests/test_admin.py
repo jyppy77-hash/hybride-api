@@ -1104,17 +1104,19 @@ class TestRealtime:
                 [{"event_type": "chatbot-open", "page": "/loto", "module": "loto",
                   "lang": "fr", "device": "desktop", "country": "FR",
                   "created_at": datetime(2026, 3, 5, 14, 30, 0)}],
+                [{"event_type": "chatbot-open", "cnt": 1}],
                 [{"event_type": "chatbot-open"}, {"event_type": "rating-submitted"}],
             ])
             mock_db.async_fetchone = AsyncMock(return_value={
-                "today_count": 42, "hour_count": 5, "type_count": 3,
+                "total_count": 42, "hour_count": 5, "type_count": 3,
             })
             resp = client.get("/admin/api/realtime")
         assert resp.status_code == 200
         data = resp.json()
         assert "events" in data
         assert "kpi" in data
-        assert data["kpi"]["today"] == 42
+        assert data["kpi"]["total"] == 42
+        assert "by_type" in data
         assert len(data["events"]) == 1
         assert data["events"][0]["event_type"] == "chatbot-open"
 
@@ -1307,3 +1309,158 @@ class TestTarifs:
         assert resp.status_code == 500
         data = resp.json()
         assert data["tarifs"] == []
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Realtime — period filter + by_type + exports
+# ═══════════════════════════════════════════════════════════════════════
+
+from datetime import datetime
+
+
+def _rt_mock_rows():
+    """Fake event_log rows for realtime tests."""
+    return [
+        {"event_type": "chatbot-open", "page": "/loto", "module": "", "lang": "fr", "device": "desktop", "country": "FR", "created_at": datetime(2026, 3, 8, 10, 30, 0)},
+        {"event_type": "rating-submitted", "page": "/loto", "module": "", "lang": "fr", "device": "mobile", "country": "FR", "created_at": datetime(2026, 3, 8, 10, 31, 0)},
+    ]
+
+
+class TestAdminRealtimePeriod:
+    """Period param on /admin/api/realtime."""
+
+    def test_default_period_today(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[_rt_mock_rows(), [{"event_type": "chatbot-open", "cnt": 1}], [{"event_type": "chatbot-open"}]])
+            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 2, "hour_count": 2, "type_count": 2})
+            resp = client.get("/admin/api/realtime")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "total" in data["kpi"]
+        assert "by_type" in data
+
+    def test_period_week(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[_rt_mock_rows(), [{"event_type": "chatbot-open", "cnt": 5}], [{"event_type": "chatbot-open"}]])
+            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 5, "hour_count": 2, "type_count": 1})
+            resp = client.get("/admin/api/realtime?period=week")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["kpi"]["total"] == 5
+
+    def test_period_month(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[_rt_mock_rows(), [{"event_type": "chatbot-open", "cnt": 20}], [{"event_type": "chatbot-open"}]])
+            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 20, "hour_count": 2, "type_count": 1})
+            resp = client.get("/admin/api/realtime?period=month")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["kpi"]["total"] == 20
+
+    def test_invalid_period_defaults_today(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[_rt_mock_rows(), [{"event_type": "chatbot-open", "cnt": 2}], [{"event_type": "chatbot-open"}]])
+            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 2, "hour_count": 2, "type_count": 1})
+            resp = client.get("/admin/api/realtime?period=invalid")
+        assert resp.status_code == 200
+
+    def test_combined_event_type_and_period(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[_rt_mock_rows(), [{"event_type": "chatbot-open", "cnt": 3}], [{"event_type": "chatbot-open"}]])
+            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 3, "hour_count": 1, "type_count": 1})
+            resp = client.get("/admin/api/realtime?event_type=chatbot-open&period=week")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["kpi"]["total"] == 3
+
+
+class TestAdminRealtimeByType:
+    """by_type in API response."""
+
+    def test_by_type_present(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[
+                _rt_mock_rows(),
+                [{"event_type": "chatbot-open", "cnt": 1}, {"event_type": "rating-submitted", "cnt": 1}],
+                [{"event_type": "chatbot-open"}, {"event_type": "rating-submitted"}],
+            ])
+            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 2, "hour_count": 2, "type_count": 2})
+            resp = client.get("/admin/api/realtime")
+        data = resp.json()
+        assert "chatbot-open" in data["by_type"]
+        assert "rating-submitted" in data["by_type"]
+        assert data["by_type"]["chatbot-open"] == 1
+
+    def test_by_type_empty_on_error(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=Exception("DB down"))
+            resp = client.get("/admin/api/realtime")
+        data = resp.json()
+        assert data["by_type"] == {}
+
+
+class TestAdminExportRealtimeCSV:
+    """CSV export for realtime events."""
+
+    def test_csv_export_returns_csv(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=_rt_mock_rows())
+            resp = client.get("/admin/export/realtime/csv?period=today")
+        assert resp.status_code == 200
+        assert "text/csv" in resp.headers["content-type"]
+        assert "event_type" in resp.text
+        assert "chatbot-open" in resp.text
+
+    def test_csv_export_requires_auth(self):
+        client = _get_client()
+        resp = client.get("/admin/export/realtime/csv", follow_redirects=False)
+        assert resp.status_code == 302
+
+    def test_csv_export_with_period_week(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=_rt_mock_rows())
+            resp = client.get("/admin/export/realtime/csv?period=week")
+        assert resp.status_code == 200
+        assert "realtime_week.csv" in resp.headers.get("content-disposition", "")
+
+
+class TestAdminExportRealtimePDF:
+    """PDF export for realtime events."""
+
+    def test_pdf_export_returns_pdf(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[
+                [{"event_type": "chatbot-open", "cnt": 2}],
+                _rt_mock_rows(),
+            ])
+            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 2, "hour_count": 1, "type_count": 1})
+            resp = client.get("/admin/export/realtime/pdf?period=today")
+        assert resp.status_code == 200
+        assert "application/pdf" in resp.headers["content-type"]
+
+    def test_pdf_export_requires_auth(self):
+        client = _get_client()
+        resp = client.get("/admin/export/realtime/pdf", follow_redirects=False)
+        assert resp.status_code == 302
+
+    def test_pdf_export_with_period_month(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[
+                [{"event_type": "chatbot-open", "cnt": 10}],
+                _rt_mock_rows(),
+            ])
+            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 10, "hour_count": 2, "type_count": 1})
+            resp = client.get("/admin/export/realtime/pdf?period=month")
+        assert resp.status_code == 200
+        assert "realtime_month.pdf" in resp.headers.get("content-disposition", "")

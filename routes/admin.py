@@ -977,18 +977,37 @@ async def admin_realtime_page(request: Request):
     return HTMLResponse(tpl.render(active="realtime"))
 
 
+_PERIOD_SQL = {
+    "today": "created_at >= CURDATE()",
+    "week": "created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)",
+    "month": "created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)",
+}
+_PERIOD_LABELS = {"today": "Aujourd'hui", "week": "7 derniers jours", "month": "30 derniers jours"}
+
+
+def _build_realtime_where(event_type: str, period: str):
+    clauses = []
+    params: list = []
+    p = _PERIOD_SQL.get(period, _PERIOD_SQL["today"])
+    clauses.append(p)
+    if event_type != "all":
+        clauses.append("event_type = %s")
+        params.append(event_type)
+    where = "WHERE " + " AND ".join(clauses)
+    return where, params
+
+
 @router.get("/admin/api/realtime", include_in_schema=False)
-async def admin_api_realtime(request: Request, event_type: str = "all"):
+async def admin_api_realtime(request: Request, event_type: str = "all", period: str = "today"):
     err = _require_auth_json(request)
     if err:
         return err
+    if period not in _PERIOD_SQL:
+        period = "today"
     try:
+        where, params = _build_realtime_where(event_type, period)
+
         # Last 100 events
-        where = ""
-        params = []
-        if event_type != "all":
-            where = "WHERE event_type = %s"
-            params.append(event_type)
         rows = await db_cloudsql.async_fetchall(
             f"SELECT event_type, page, module, lang, device, country, created_at "
             f"FROM event_log {where} ORDER BY created_at DESC LIMIT 100",
@@ -1008,17 +1027,25 @@ async def admin_api_realtime(request: Request, event_type: str = "all"):
 
         # KPI
         kpi_row = await db_cloudsql.async_fetchone(
-            "SELECT "
-            "  COUNT(*) AS today_count, "
-            "  SUM(CASE WHEN created_at >= NOW() - INTERVAL 1 HOUR THEN 1 ELSE 0 END) AS hour_count, "
-            "  COUNT(DISTINCT event_type) AS type_count "
-            "FROM event_log WHERE created_at >= CURDATE()"
+            f"SELECT "
+            f"  COUNT(*) AS total_count, "
+            f"  SUM(CASE WHEN created_at >= NOW() - INTERVAL 1 HOUR THEN 1 ELSE 0 END) AS hour_count, "
+            f"  COUNT(DISTINCT event_type) AS type_count "
+            f"FROM event_log {where}",
+            tuple(params),
         )
         kpi = {
-            "today": _dec(kpi_row["today_count"]) if kpi_row else 0,
+            "total": _dec(kpi_row["total_count"]) if kpi_row else 0,
             "hour": _dec(kpi_row["hour_count"]) if kpi_row else 0,
             "types": _dec(kpi_row["type_count"]) if kpi_row else 0,
         }
+
+        # Counts by event type (for KPI cards)
+        bt_rows = await db_cloudsql.async_fetchall(
+            f"SELECT event_type, COUNT(*) AS cnt FROM event_log {where} GROUP BY event_type ORDER BY cnt DESC",
+            tuple(params),
+        )
+        by_type = {r["event_type"]: _dec(r["cnt"]) for r in bt_rows}
 
         # Distinct event types for filter dropdown
         type_rows = await db_cloudsql.async_fetchall(
@@ -1026,10 +1053,101 @@ async def admin_api_realtime(request: Request, event_type: str = "all"):
         )
         event_types = [r["event_type"] for r in type_rows]
 
-        return JSONResponse({"events": events, "kpi": kpi, "event_types": event_types})
+        return JSONResponse({"events": events, "kpi": kpi, "by_type": by_type, "event_types": event_types})
     except Exception as e:
         logger.error("[ADMIN] realtime: %s", e)
-        return JSONResponse({"events": [], "kpi": {"today": 0, "hour": 0, "types": 0}, "event_types": []})
+        return JSONResponse({"events": [], "kpi": {"total": 0, "hour": 0, "types": 0}, "by_type": {}, "event_types": []})
+
+
+# ── Realtime exports ──────────────────────────────────────────────────────────
+
+@router.get("/admin/export/realtime/csv", include_in_schema=False)
+async def admin_export_realtime_csv(request: Request, event_type: str = "all", period: str = "today"):
+    redirect = _require_auth(request)
+    if redirect:
+        return redirect
+    if period not in _PERIOD_SQL:
+        period = "today"
+    try:
+        where, params = _build_realtime_where(event_type, period)
+        rows = await db_cloudsql.async_fetchall(
+            f"SELECT event_type, page, module, lang, device, country, created_at "
+            f"FROM event_log {where} ORDER BY created_at DESC LIMIT 5000",
+            tuple(params),
+        )
+        buf = io.StringIO()
+        w = csv.writer(buf)
+        w.writerow(["event_type", "page", "module", "lang", "device", "country", "created_at"])
+        for r in rows:
+            w.writerow([
+                r["event_type"], r.get("page", ""), r.get("module", ""),
+                r.get("lang", ""), r.get("device", ""), r.get("country", ""),
+                r["created_at"].strftime("%Y-%m-%d %H:%M:%S") if r.get("created_at") else "",
+            ])
+        return StreamingResponse(
+            iter([buf.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=realtime_{period}.csv"},
+        )
+    except Exception as e:
+        logger.error("[ADMIN] realtime CSV: %s", e)
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@router.get("/admin/export/realtime/pdf", include_in_schema=False)
+async def admin_export_realtime_pdf(request: Request, event_type: str = "all", period: str = "today"):
+    redirect = _require_auth(request)
+    if redirect:
+        return redirect
+    if period not in _PERIOD_SQL:
+        period = "today"
+    try:
+        where, params = _build_realtime_where(event_type, period)
+
+        kpi_row = await db_cloudsql.async_fetchone(
+            f"SELECT COUNT(*) AS total_count, "
+            f"SUM(CASE WHEN created_at >= NOW() - INTERVAL 1 HOUR THEN 1 ELSE 0 END) AS hour_count, "
+            f"COUNT(DISTINCT event_type) AS type_count "
+            f"FROM event_log {where}",
+            tuple(params),
+        )
+        kpi = {
+            "total": _dec(kpi_row["total_count"]) if kpi_row else 0,
+            "hour": _dec(kpi_row["hour_count"]) if kpi_row else 0,
+            "types": _dec(kpi_row["type_count"]) if kpi_row else 0,
+        }
+
+        bt_rows = await db_cloudsql.async_fetchall(
+            f"SELECT event_type, COUNT(*) AS cnt FROM event_log {where} GROUP BY event_type ORDER BY cnt DESC",
+            tuple(params),
+        )
+        by_type = {r["event_type"]: _dec(r["cnt"]) for r in bt_rows}
+
+        rows = await db_cloudsql.async_fetchall(
+            f"SELECT event_type, page, module, lang, device, country, created_at "
+            f"FROM event_log {where} ORDER BY created_at DESC LIMIT 200",
+            tuple(params),
+        )
+        table_data = []
+        for r in rows:
+            table_data.append({
+                "event_type": r["event_type"], "page": r.get("page", ""),
+                "module": r.get("module", ""), "lang": r.get("lang", ""),
+                "device": r.get("device", ""), "country": r.get("country", ""),
+                "created_at": r["created_at"].strftime("%Y-%m-%d %H:%M:%S") if r.get("created_at") else "",
+            })
+
+        from services.admin_pdf import generate_realtime_report_pdf
+        period_label = _PERIOD_LABELS.get(period, period)
+        buf = generate_realtime_report_pdf(kpi, by_type, table_data, period_label)
+        return StreamingResponse(
+            buf,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f"attachment; filename=realtime_{period}.pdf"},
+        )
+    except Exception as e:
+        logger.error("[ADMIN] realtime PDF: %s", e)
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 
 # ── Engagement API ────────────────────────────────────────────────────────────
