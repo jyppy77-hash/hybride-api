@@ -284,7 +284,9 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                 logger.warning(f"[EM CHAT] Erreur requete complexe: {e}")
 
     # Phase P : triplets de numéros (testé avant paires)
-    if not _continuation_mode and not force_sql and not enrichment_context:
+    # Note: pas de guard force_sql — triplets sont des requêtes structurées,
+    # pas du text-to-SQL. Le filtre temporel ne doit pas les bloquer.
+    if not _continuation_mode and not enrichment_context:
         if _detect_triplets_em(message):
             try:
                 triplets_data = await asyncio.wait_for(
@@ -297,7 +299,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                 logger.warning(f"[EM CHAT] Erreur triplets: {e}")
 
     # Phase P : paires de numéros
-    if not _continuation_mode and not force_sql and not enrichment_context:
+    if not _continuation_mode and not enrichment_context:
         if _detect_paires_em(message):
             try:
                 pairs_data = await asyncio.wait_for(
