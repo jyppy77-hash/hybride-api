@@ -474,6 +474,89 @@ class TestAdminAPIImpressionsSponsor:
         assert ">Sponsor<" in resp.text
 
 
+class TestAdminTarifFilter:
+    """Filtre tarif (A=Standard, B=Premium) sur impressions."""
+
+    def test_api_impressions_tarif_a_filters_standard(self):
+        """tarif=A filtre uniquement les codes _A."""
+        client = _authed_client()
+        calls = []
+
+        async def mock_fetchall(sql, params=None):
+            calls.append((sql, params))
+            return []
+
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
+            resp = client.get("/admin/api/impressions?period=7d&tarif=A")
+
+        assert resp.status_code == 200
+        for sql, params in calls:
+            assert "sponsor_id LIKE %s" in sql
+            assert "%_A" in params
+
+    def test_api_impressions_tarif_b_filters_premium(self):
+        """tarif=B filtre uniquement les codes _B."""
+        client = _authed_client()
+        calls = []
+
+        async def mock_fetchall(sql, params=None):
+            calls.append((sql, params))
+            return []
+
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
+            resp = client.get("/admin/api/impressions?period=7d&tarif=B")
+
+        assert resp.status_code == 200
+        for sql, params in calls:
+            assert "sponsor_id LIKE %s" in sql
+            assert "%_B" in params
+
+    def test_csv_export_with_tarif_filter(self):
+        """Export CSV avec tarif=A applique le filtre LIKE."""
+        client = _authed_client()
+        calls = []
+
+        async def mock_fetchall(sql, params=None):
+            calls.append((sql, params))
+            return [{"day": "2026-03-01", "sponsor_id": "EM_FR_A", "event_type": "sponsor-popup-shown",
+                     "page": "/", "lang": "fr", "device": "mobile", "country": "FR", "cnt": 3}]
+
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
+            resp = client.get("/admin/api/impressions/csv?period=7d&tarif=A")
+
+        assert resp.status_code == 200
+        assert "text/csv" in resp.headers.get("content-type", "")
+        assert "EM_FR_A" in resp.text
+        for sql, params in calls:
+            assert "sponsor_id LIKE %s" in sql
+            assert "%_A" in params
+
+    def test_pdf_export_with_tarif_filter(self):
+        """Export PDF avec tarif=B applique le filtre LIKE."""
+        client = _authed_client()
+        calls = []
+
+        async def mock_fetchall(sql, params=None):
+            calls.append((sql, params))
+            return []
+
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
+            resp = client.get("/admin/api/sponsor-report/pdf?period=7d&tarif=B")
+
+        assert resp.status_code == 200
+        assert resp.headers.get("content-type") == "application/pdf"
+        for sql, params in calls:
+            assert "sponsor_id LIKE %s" in sql
+            assert "%_B" in params
+
+
 class TestExportCSV:
     """CSV export tests."""
 

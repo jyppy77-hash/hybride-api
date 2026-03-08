@@ -243,7 +243,7 @@ _VALID_SPONSORS = frozenset([
 ])
 
 
-def _build_impressions_where(period, date_start, date_end, event_type, lang, device, sponsor_id=""):
+def _build_impressions_where(period, date_start, date_end, event_type, lang, device, sponsor_id="", tarif=""):
     ds, de = _period_to_dates(period, date_start, date_end)
     where = ["created_at >= %s", "created_at < %s"]
     params = [ds.isoformat(), de.isoformat()]
@@ -259,6 +259,9 @@ def _build_impressions_where(period, date_start, date_end, event_type, lang, dev
     if sponsor_id and sponsor_id in _VALID_SPONSORS:
         where.append("sponsor_id = %s")
         params.append(sponsor_id)
+    if tarif and tarif in ("A", "B"):
+        where.append("sponsor_id LIKE %s")
+        params.append(f"%_{tarif}")
     return " AND ".join(where), params, ds, de
 
 
@@ -272,12 +275,13 @@ async def admin_api_impressions(
     lang: str = Query(""),
     device: str = Query(""),
     sponsor_id: str = Query(""),
+    tarif: str = Query(""),
 ):
     err = _require_auth_json(request)
     if err:
         return err
 
-    w, params, ds, de = _build_impressions_where(period, date_start, date_end, event_type, lang, device, sponsor_id)
+    w, params, ds, de = _build_impressions_where(period, date_start, date_end, event_type, lang, device, sponsor_id, tarif)
 
     # KPI
     kpi = {"impressions": 0, "clicks": 0, "videos": 0, "ctr": "0.00%", "sessions": 0}
@@ -470,12 +474,13 @@ async def admin_export_impressions_csv(
     lang: str = Query(""),
     device: str = Query(""),
     sponsor_id: str = Query(""),
+    tarif: str = Query(""),
 ):
     err = _require_auth_json(request)
     if err:
         return err
 
-    w, params, ds, de = _build_impressions_where(period, date_start, date_end, event_type, lang, device, sponsor_id)
+    w, params, ds, de = _build_impressions_where(period, date_start, date_end, event_type, lang, device, sponsor_id, tarif)
 
     rows = []
     try:
@@ -546,12 +551,17 @@ async def admin_export_sponsor_report_pdf(
     period: str = Query("7d"),
     date_start: str = Query(""),
     date_end: str = Query(""),
+    event_type: str = Query(""),
+    lang: str = Query(""),
+    device: str = Query(""),
+    sponsor_id: str = Query(""),
+    tarif: str = Query(""),
 ):
     err = _require_auth_json(request)
     if err:
         return err
 
-    w, params, ds, de = _build_impressions_where(period, date_start, date_end, "", "", "")
+    w, params, ds, de = _build_impressions_where(period, date_start, date_end, event_type, lang, device, sponsor_id, tarif)
 
     kpi = {"impressions": 0, "clicks": 0, "videos": 0, "ctr": "0.00%", "sessions": 0}
     table_data = []

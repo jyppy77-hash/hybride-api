@@ -41,6 +41,11 @@
             <option value="EM_NL_A">EM_NL_A</option>
             <option value="EM_NL_B">EM_NL_B</option>
         </select>
+        <select id="f-tarif">
+            <option value="all">Tous les tarifs</option>
+            <option value="A">Standard (A) — 199€</option>
+            <option value="B">Premium (B) — 449€</option>
+        </select>
         <select id="f-lang">
             <option value="all">Toutes langues</option>
             <option value="fr">FR</option>
@@ -58,6 +63,8 @@
         </select>
         <button id="btn-filter" class="btn-primary">Filtrer</button>
         <button id="btn-reset" class="btn-secondary">Reset</button>
+        <button id="btn-export-csv" class="btn-secondary" title="Export CSV">&#128196; CSV</button>
+        <button id="btn-export-pdf" class="btn-secondary" title="Export PDF">&#128462; PDF</button>
     </div>
 
     <div class="kpi-bar" id="kpi-bar">
@@ -113,6 +120,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/admin.js?v=3"></script>
+<script src="/static/admin.js?v=4"></script>
 <script>LotoAdmin.initImpressions();</script>
 {% endblock %}

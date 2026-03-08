@@ -96,30 +96,43 @@ var LotoAdmin = (function() {
             qs('#f-period').value = '7d';
             qs('#f-event').value = 'all';
             qs('#f-sponsor').value = 'all';
+            qs('#f-tarif').value = 'all';
             qs('#f-lang').value = 'all';
             qs('#f-device').value = 'all';
             toggleCustomDates();
             loadImpressions();
         });
+        qs('#btn-export-csv').addEventListener('click', function() {
+            window.location = '/admin/api/impressions/csv?' + buildImpressionsParams();
+        });
+        qs('#btn-export-pdf').addEventListener('click', function() {
+            window.location = '/admin/api/sponsor-report/pdf?' + buildImpressionsParams();
+        });
         loadImpressions();
     }
 
-    function buildImpressionsURL() {
+    function buildImpressionsParams() {
         var p = qs('#f-period').value;
-        var url = '/admin/api/impressions?period=' + p;
+        var params = 'period=' + p;
         if (p === 'custom') {
-            url += '&date_start=' + (qs('#f-date-start').value || '');
-            url += '&date_end=' + (qs('#f-date-end').value || '');
+            params += '&date_start=' + (qs('#f-date-start').value || '');
+            params += '&date_end=' + (qs('#f-date-end').value || '');
         }
         var ev = qs('#f-event').value;
-        if (ev !== 'all') url += '&event_type=' + ev;
+        if (ev !== 'all') params += '&event_type=' + ev;
         var sp = qs('#f-sponsor');
-        if (sp && sp.value !== 'all') url += '&sponsor_id=' + sp.value;
+        if (sp && sp.value !== 'all') params += '&sponsor_id=' + sp.value;
+        var tarif = qs('#f-tarif');
+        if (tarif && tarif.value !== 'all') params += '&tarif=' + tarif.value;
         var lang = qs('#f-lang').value;
-        if (lang !== 'all') url += '&lang=' + lang;
+        if (lang !== 'all') params += '&lang=' + lang;
         var dev = qs('#f-device').value;
-        if (dev !== 'all') url += '&device=' + dev;
-        return url;
+        if (dev !== 'all') params += '&device=' + dev;
+        return params;
+    }
+
+    function buildImpressionsURL() {
+        return '/admin/api/impressions?' + buildImpressionsParams();
     }
 
     function loadImpressions() {
