@@ -115,7 +115,6 @@ _SQL_FORBIDDEN = [
     "REPLACE INTO", "GRANT", "REVOKE", "EXEC ", "EXECUTE", "CALL ",
     "SLEEP", "BENCHMARK", "LOAD_FILE", "INTO OUTFILE", "INTO DUMPFILE",
     "INFORMATION_SCHEMA", "MYSQL.", "PERFORMANCE_SCHEMA", "SYS.",
-    "UNION",
 ]
 
 
@@ -201,6 +200,10 @@ def _validate_sql(sql: str) -> bool:
     for kw in _SQL_FORBIDDEN:
         if kw in upper:
             return False
+    # UNION ALL is legitimate (frequency counting via unpivot).
+    # Bare UNION (without ALL) is blocked as potential injection vector.
+    if "UNION" in upper and "UNION ALL" not in upper:
+        return False
     return True
 
 

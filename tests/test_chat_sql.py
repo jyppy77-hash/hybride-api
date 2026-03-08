@@ -62,6 +62,37 @@ class TestValidateSql:
         sql = f"SELECT * FROM tirages WHERE {kw} something"
         assert _validate_sql(sql) is False
 
+    def test_allows_union_all(self):
+        """UNION ALL is legitimate for frequency counting (unpivot pattern)."""
+        sql = (
+            "SELECT num, COUNT(*) as freq FROM ("
+            "SELECT boule_1 as num FROM tirages WHERE date_de_tirage >= '2026-01-01' "
+            "UNION ALL SELECT boule_2 FROM tirages WHERE date_de_tirage >= '2026-01-01' "
+            "UNION ALL SELECT boule_3 FROM tirages WHERE date_de_tirage >= '2026-01-01' "
+            "UNION ALL SELECT boule_4 FROM tirages WHERE date_de_tirage >= '2026-01-01' "
+            "UNION ALL SELECT boule_5 FROM tirages WHERE date_de_tirage >= '2026-01-01'"
+            ") t GROUP BY num ORDER BY freq DESC LIMIT 5"
+        )
+        assert _validate_sql(sql) is True
+
+    def test_rejects_bare_union(self):
+        """Bare UNION (without ALL) is blocked as SQL injection vector."""
+        sql = "SELECT boule_1 FROM tirages UNION SELECT password FROM users"
+        assert _validate_sql(sql) is False
+
+    def test_allows_union_all_no_where(self):
+        """UNION ALL for all-time frequency query."""
+        sql = (
+            "SELECT num, COUNT(*) as freq FROM ("
+            "SELECT boule_1 as num FROM tirages "
+            "UNION ALL SELECT boule_2 FROM tirages "
+            "UNION ALL SELECT boule_3 FROM tirages "
+            "UNION ALL SELECT boule_4 FROM tirages "
+            "UNION ALL SELECT boule_5 FROM tirages"
+            ") t GROUP BY num ORDER BY freq DESC LIMIT 1"
+        )
+        assert _validate_sql(sql) is True
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # _ensure_limit
