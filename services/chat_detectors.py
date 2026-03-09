@@ -1282,15 +1282,19 @@ _COOCCURRENCE_HIGH_N_RESPONSES = {
     ],
     "es": [
         "📊 Aún no tengo el análisis de combinaciones de {n} números, pero puedo mostrarte los **pares** (2 números) o **tripletes** (3 números) más frecuentes. ¿Te interesa?",
+        "🔢 Las co-ocurrencias de {n} números no están disponibles de momento. Pero tengo los **pares** y **tripletes** más frecuentes en la base de datos. ¿Quieres ver?",
     ],
     "pt": [
         "📊 Ainda não tenho a análise de combinações de {n} números, mas posso mostrar-te os **pares** (2 números) ou **tripletos** (3 números) mais frequentes! Queres ver?",
+        "🔢 As co-ocorrências de {n} números ainda não estão disponíveis. Mas tenho os **pares** e **tripletos** mais frequentes na base de dados — interessa-te?",
     ],
     "de": [
         "📊 Die Analyse von {n}-Zahlen-Kombinationen habe ich noch nicht, aber ich kann dir die häufigsten **Paare** (2 Zahlen) oder **Drillinge** (3 Zahlen) zeigen! Interesse?",
+        "🔢 Co-Vorkommen von {n} Zahlen sind derzeit nicht verfügbar. Aber ich habe die häufigsten **Paare** und **Drillinge** in der Datenbank — interessiert?",
     ],
     "nl": [
         "📊 Ik heb nog geen analyse van combinaties van {n} nummers, maar ik kan je de meest voorkomende **paren** (2 nummers) of **drietallen** (3 nummers) tonen! Interesse?",
+        "🔢 Co-voorkomens van {n} nummers zijn momenteel niet beschikbaar. Maar ik heb de meest voorkomende **paren** en **drietallen** in de database — interesse?",
     ],
 }
 
