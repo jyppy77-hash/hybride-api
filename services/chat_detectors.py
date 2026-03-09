@@ -507,7 +507,8 @@ def _detect_requete_complexe(message: str):
     if re.search(r'(?:plus|les?\s+plus)\s+(?:fr[eé]quent|sorti|courant|pr[eé]sent)', lower) or \
        re.search(r'(?:top|meilleur|premier)\s+\d{0,2}\s*(?:num[eé]ro|boule|chance)?', lower) or \
        re.search(r'num[eé]ros?\s+(?:les?\s+)?plus\s+(?:sorti|fr[eé]quent)', lower) or \
-       re.search(r'(?:quels?|quel)\s+(?:est|sont)\s+(?:le|les)\s+num[eé]ro', lower):
+       re.search(r'(?:quels?|quel)\s+(?:est|sont)\s+(?:le|les)\s+num[eé]ro', lower) or \
+       re.search(r'(?:sort\w*|tir[eé]\w*|appara[iî]\w*)\s+le\s+plus\s+(?:souvent|fr[eé]quemment)', lower):
         return {"type": "classement", "tri": "frequence_desc", "limit": limit, "num_type": num_type}
 
     # Moins frequents / moins sortis
@@ -1048,6 +1049,15 @@ _ARGENT_PHRASES_FR = [
     r'\bcombien\s+(?:on|je|tu|peut[\s-]on)\s+gagn',
     r'\bcombien\s+[çc]a\s+rapporte',
     r'\bstrat[eé]gie\s+pour\s+gagner',
+    # Argent indirect — rentabilité, investissement, budget jeu
+    r'\best[\s-]ce\s+rentable',
+    r'\b[çc]a\s+rapporte',
+    r'\bretour\s+sur\s+investissement',
+    r'\b(?:vaut|vaudrait)\s+le\s+coup',
+    r'\bjoue[rs]?\s+\d+\s*[€$]',
+    r'\bmise\s+de\s+\d+',
+    r'\bbudget\s+de\s+\d+',
+    r'\b\d+\s*[€$]\s+par\s+(?:mois|semaine|an|jour)',
 ]
 
 _ARGENT_MOTS_FR = {
@@ -1063,6 +1073,9 @@ _ARGENT_MOTS_FR = {
     "riche", "fortune",
     "profit", "bénéfice", "benefice",
     "remporter",
+    # Argent indirect
+    "rentable", "rentabilité", "rentabilite",
+    "profitable", "investissement", "investir",
 }
 
 # Mots forts → déclenche L2

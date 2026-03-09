@@ -943,3 +943,83 @@ class TestStarDetectionMultilang:
         # But if it does, num_type must be etoile
         if r is not None:
             assert r["num_type"] == "etoile"
+
+
+# ═══════════════════════════════════════════════════════════
+#  FIX P0 — Argent indirect Loto FR
+# ═══════════════════════════════════════════════════════════
+
+class TestArgentIndirectLotoFR:
+    """Verify indirect money/gambling phrases are detected by _detect_argent."""
+
+    def _detect(self, msg):
+        from services.chat_detectors import _detect_argent
+        return _detect_argent(msg)
+
+    def test_rentable(self):
+        assert self._detect("si je joue 100€ par mois pendant un an, est-ce rentable ?")
+
+    def test_rentabilite(self):
+        assert self._detect("quelle est la rentabilité du Loto ?")
+
+    def test_profitable(self):
+        assert self._detect("est-ce profitable de jouer au Loto ?")
+
+    def test_investissement(self):
+        assert self._detect("le Loto est-il un bon investissement ?")
+
+    def test_investir(self):
+        assert self._detect("est-ce que je devrais investir dans le Loto ?")
+
+    def test_vaut_le_coup(self):
+        assert self._detect("est-ce que ça vaut le coup de jouer ?")
+
+    def test_joue_euros(self):
+        assert self._detect("je joue 50€ par semaine")
+
+    def test_budget(self):
+        assert self._detect("budget de 200€ par mois pour le Loto")
+
+    def test_ca_rapporte(self):
+        assert self._detect("ça rapporte combien le Loto ?")
+
+    # Sanity: generation NOT blocked
+    def test_generation_not_blocked(self):
+        assert not self._detect("génère-moi une grille optimisée")
+
+    # Sanity: normal stats question NOT flagged
+    def test_stats_not_flagged(self):
+        assert not self._detect("quels numéros sortent le plus ?")
+
+
+# ═══════════════════════════════════════════════════════════
+#  FIX P2 — Pattern inversé "sort le plus souvent" (Loto)
+# ═══════════════════════════════════════════════════════════
+
+class TestInvertedFrequencyPatternLoto:
+    """Verify 'sort le plus souvent' is detected as frequence_desc."""
+
+    def _detect(self, msg):
+        from services.chat_detectors import _detect_requete_complexe
+        return _detect_requete_complexe(msg)
+
+    def test_sort_le_plus_souvent(self):
+        r = self._detect("Quel numéro sort le plus souvent ?")
+        assert r is not None
+        assert r["tri"] == "frequence_desc"
+
+    def test_chance_sort_le_plus_souvent(self):
+        r = self._detect("Quel numéro Chance sort le plus souvent ?")
+        assert r is not None
+        assert r["tri"] == "frequence_desc"
+        assert r["num_type"] == "chance"
+
+    def test_sortent_le_plus_souvent(self):
+        r = self._detect("quels numéros sortent le plus souvent ?")
+        assert r is not None
+        assert r["tri"] == "frequence_desc"
+
+    def test_apparait_le_plus_frequemment(self):
+        r = self._detect("quel numéro apparaît le plus fréquemment ?")
+        assert r is not None
+        assert r["tri"] == "frequence_desc"
