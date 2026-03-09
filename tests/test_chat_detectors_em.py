@@ -12,6 +12,7 @@ from services.chat_detectors_em import (
     _count_oor_streak_em, _get_oor_response_em,
     _get_insult_response_em, _get_insult_short_em, _get_menace_response_em,
     _get_compliment_response_em,
+    _detect_country_em, _get_country_context_em,
     _INSULT_L1_EM, _INSULT_L2_EM, _INSULT_L3_EM, _INSULT_L4_EM,
     _INSULT_SHORT_EM, _MENACE_RESPONSES_EM,
     _COMPLIMENT_L1_EM, _COMPLIMENT_L2_EM, _COMPLIMENT_L3_EM,
@@ -489,3 +490,185 @@ class TestOorResponseEM:
     def test_zero_neg_format(self):
         resp = _get_oor_response_em(0, "zero_neg", 0)
         assert "0" in resp
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Phase GEO — _detect_country_em (6 langues)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestDetectCountryEmPositive:
+    """Messages mentionnant un pays participant → TRUE."""
+
+    # FR
+    def test_fr_france(self):
+        assert _detect_country_em("les stats en France ?") is True
+
+    def test_fr_espagne(self):
+        assert _detect_country_em("Espagne a-t-elle le même tirage ?") is True
+
+    def test_fr_royaume_uni(self):
+        assert _detect_country_em("et au Royaume-Uni ?") is True
+
+    def test_fr_belgique(self):
+        assert _detect_country_em("les résultats en Belgique") is True
+
+    def test_fr_suisse(self):
+        assert _detect_country_em("est-ce pareil en Suisse ?") is True
+
+    def test_fr_portugal(self):
+        assert _detect_country_em("Portugal a les mêmes tirages ?") is True
+
+    def test_fr_autriche(self):
+        assert _detect_country_em("et en Autriche ?") is True
+
+    def test_fr_irlande(self):
+        assert _detect_country_em("Irlande joue aussi ?") is True
+
+    def test_fr_luxembourg(self):
+        assert _detect_country_em("Luxembourg participe ?") is True
+
+    # EN
+    def test_en_spain(self):
+        assert _detect_country_em("are the draws the same in Spain?") is True
+
+    def test_en_united_kingdom(self):
+        assert _detect_country_em("United Kingdom EuroMillions results") is True
+
+    def test_en_england(self):
+        assert _detect_country_em("stats in England") is True
+
+    def test_en_uk(self):
+        assert _detect_country_em("What are the most common EuroMillions numbers in the UK?") is True
+
+    def test_en_britain(self):
+        assert _detect_country_em("EuroMillions results in Britain") is True
+
+    def test_en_great_britain(self):
+        assert _detect_country_em("stats for Great Britain") is True
+
+    def test_en_ireland(self):
+        assert _detect_country_em("is Ireland part of EuroMillions?") is True
+
+    def test_en_belgium(self):
+        assert _detect_country_em("Belgium draws") is True
+
+    def test_en_luxembourg(self):
+        assert _detect_country_em("Luxembourg EuroMillions results") is True
+
+    def test_en_austria(self):
+        assert _detect_country_em("Austria statistics") is True
+
+    def test_en_switzerland(self):
+        assert _detect_country_em("same draw in Switzerland?") is True
+
+    # ES
+    def test_es_francia(self):
+        assert _detect_country_em("las estadísticas de Francia") is True
+
+    def test_es_espana(self):
+        assert _detect_country_em("en España es igual?") is True
+
+    def test_es_reino_unido(self):
+        assert _detect_country_em("el Reino Unido participa?") is True
+
+    # PT
+    def test_pt_franca(self):
+        assert _detect_country_em("as estatísticas da França") is True
+
+    def test_pt_espanha(self):
+        assert _detect_country_em("Espanha tem o mesmo sorteio?") is True
+
+    # DE
+    def test_de_frankreich(self):
+        assert _detect_country_em("die Statistiken aus Frankreich") is True
+
+    def test_de_spanien(self):
+        assert _detect_country_em("ist Spanien dabei?") is True
+
+    def test_de_osterreich(self):
+        assert _detect_country_em("Österreich EuroMillions") is True
+
+    def test_de_deutschland(self):
+        assert _detect_country_em("Deutschland auch?") is True
+
+    # NL
+    def test_nl_frankrijk(self):
+        assert _detect_country_em("de statistieken van Frankrijk") is True
+
+    def test_nl_spanje(self):
+        assert _detect_country_em("Spanje doet ook mee?") is True
+
+    def test_nl_belgie(self):
+        assert _detect_country_em("België trekkingen") is True
+
+    def test_nl_duitsland(self):
+        assert _detect_country_em("Duitsland ook?") is True
+
+
+class TestDetectCountryEmNegative:
+    """Messages sans mention de pays → FALSE."""
+
+    def test_simple_stats(self):
+        assert _detect_country_em("donne-moi les stats du numéro 7") is False
+
+    def test_generation(self):
+        assert _detect_country_em("génère-moi une grille") is False
+
+    def test_pairs(self):
+        assert _detect_country_em("quels numéros sortent ensemble ?") is False
+
+    def test_next_draw(self):
+        assert _detect_country_em("c'est quand le prochain tirage ?") is False
+
+    def test_number_only(self):
+        assert _detect_country_em("le 42 est-il fréquent ?") is False
+
+    def test_empty(self):
+        assert _detect_country_em("") is False
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# _get_country_context_em — contenu 6 langues
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestGetCountryContextEm:
+    """Verifie le contexte geographique pour chaque langue."""
+
+    def test_fr_content(self):
+        ctx = _get_country_context_em("fr")
+        assert "IDENTIQUES" in ctx
+        assert "9 pays" in ctx
+
+    def test_en_content(self):
+        ctx = _get_country_context_em("en")
+        assert "IDENTICAL" in ctx
+        assert "9 participating countries" in ctx
+
+    def test_es_content(self):
+        ctx = _get_country_context_em("es")
+        assert "IDÉNTICOS" in ctx
+        assert "9 países" in ctx
+
+    def test_pt_content(self):
+        ctx = _get_country_context_em("pt")
+        assert "IDÊNTICOS" in ctx
+        assert "9 países" in ctx
+
+    def test_de_content(self):
+        ctx = _get_country_context_em("de")
+        assert "IDENTISCH" in ctx
+        assert "9 teilnehmenden" in ctx
+
+    def test_nl_content(self):
+        ctx = _get_country_context_em("nl")
+        assert "IDENTIEK" in ctx
+        assert "9 deelnemende" in ctx
+
+    def test_unknown_lang_fallback_fr(self):
+        ctx = _get_country_context_em("ja")
+        assert "IDENTIQUES" in ctx  # falls back to FR
+
+    def test_all_langs_mention_9_countries(self):
+        for lang in ("fr", "en", "es", "pt", "de", "nl"):
+            ctx = _get_country_context_em(lang)
+            assert "Luxembourg" in ctx or "Luxemburg" in ctx or "Luxemburgo" in ctx

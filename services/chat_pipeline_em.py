@@ -27,6 +27,7 @@ from services.chat_detectors import (
     _detect_compliment, _count_compliment_streak,
     _is_short_continuation, _detect_tirage, _has_temporal_filter,
     _detect_generation, _detect_generation_mode,
+    _detect_cooccurrence_high_n, _get_cooccurrence_high_n_response,
 )
 from services.chat_detectors_em import (
     _detect_mode_em, _detect_prochain_tirage_em,
@@ -36,6 +37,7 @@ from services.chat_detectors_em import (
     _get_insult_response_em, _get_insult_short_em, _get_menace_response_em,
     _get_compliment_response_em,
     _detect_argent_em, _get_argent_response_em,
+    _detect_country_em, _get_country_context_em,
 )
 from services.chat_responses_em_en import (
     _get_insult_response_em_en, _get_insult_short_em_en,
@@ -199,6 +201,14 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
         logger.info(f"[EM CHAT] Argent detecte — court-circuit Phase A (lang={lang})")
         return {"response": _argent_resp, "source": "hybride_argent", "mode": mode}, None
 
+    # ── Phase GEO : Détection pays participants EM ──
+    # Injecte le contexte "tirages communs" comme préfixe — ne bloque PAS le pipeline,
+    # les phases suivantes ajoutent les stats demandées.
+    _country_context = ""
+    if _detect_country_em(message):
+        _country_context = _get_country_context_em(lang)
+        logger.info(f"[EM CHAT] Phase GEO — pays detecte, contexte injecte (lang={lang})")
+
     # ── Phase 0 : Continuation contextuelle ──
     _continuation_mode = False
     _enriched_message = None
@@ -282,6 +292,15 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                     logger.info(f"[EM CHAT] Requete complexe: {intent['type']}")
             except Exception as e:
                 logger.warning(f"[EM CHAT] Erreur requete complexe: {e}")
+
+    # Phase P+ : co-occurrences N>3 — réponse honnête "pas implémenté"
+    if not _continuation_mode and not enrichment_context:
+        if _detect_cooccurrence_high_n(message):
+            _high_n_resp = _get_cooccurrence_high_n_response(message, lang=lang)
+            if _insult_prefix:
+                _high_n_resp = _insult_prefix + "\n\n" + _high_n_resp
+            logger.info(f"[EM CHAT] Co-occurrence N>3 — redirection paires/triplets (lang={lang})")
+            return {"response": _high_n_resp, "source": "hybride_cooccurrence", "mode": mode}, None
 
     # Phase P : triplets de numéros (testé avant paires)
     # Note: pas de guard force_sql — triplets sont des requêtes structurées,
@@ -430,6 +449,13 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
     )
 
     _session_ctx = _build_session_context_em(history, message)
+
+    # Prepend country context (Phase GEO) if detected
+    if _country_context:
+        if enrichment_context:
+            enrichment_context = _country_context + "\n\n" + enrichment_context
+        else:
+            enrichment_context = _country_context
 
     if _continuation_mode and _enriched_message:
         user_text = f"[Page: {page}]\n\n{_enriched_message}"

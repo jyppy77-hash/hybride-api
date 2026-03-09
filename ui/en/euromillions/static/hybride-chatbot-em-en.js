@@ -185,8 +185,32 @@
            Send message (API EuroMillions, lang=en)
            ══════════════════════════════════ */
 
+        function extractSponsorId(text) {
+            var m = text.match(/\[SPONSOR:([^\]]+)\]/);
+            return m ? m[1] : null;
+        }
         function hasSponsor(text) {
-            return text.indexOf('partners') !== -1 || text.indexOf('Partner space') !== -1;
+            return extractSponsorId(text) !== null;
+        }
+
+        function createBotBubble() {
+            var msg = document.createElement('div');
+            msg.className = 'hybride-msg hybride-msg-bot';
+            var textSpan = document.createElement('span');
+            var timeSpan = document.createElement('span');
+            timeSpan.className = 'hybride-msg-time';
+            timeSpan.textContent = getTime();
+            msg.appendChild(textSpan);
+            msg.appendChild(timeSpan);
+            messagesArea.appendChild(msg);
+            scrollToBottom();
+            return msg;
+        }
+
+        function updateBubbleText(msgEl, text) {
+            var span = msgEl.querySelector('span:first-child');
+            span.textContent = text;
+            scrollToBottom();
         }
 
         function send() {
@@ -206,7 +230,7 @@
             if (typeof umami !== 'undefined') umami.track('chatbot-message', { module: 'euromillions-en' });
 
             var controller = new AbortController();
-            var timeoutId = setTimeout(function () { controller.abort(); }, 20000);
+            var timeoutId = setTimeout(function () { controller.abort(); }, 30000);
 
             fetch('/api/euromillions/hybride-chat', {
                 method: 'POST',
@@ -222,29 +246,93 @@
             .then(function (res) {
                 clearTimeout(timeoutId);
                 if (!res.ok) throw new Error('HTTP ' + res.status);
-                return res.json();
-            })
-            .then(function (data) {
-                removeTyping();
-                var botText = data.response || '\uD83E\uDD16 Response unavailable.';
-                addMessage(botText, 'bot');
-                chatHistory.push({ role: 'user', content: text });
-                chatHistory.push({ role: 'assistant', content: botText });
-                if (chatHistory.length > 20) chatHistory = [chatHistory[0]].concat(chatHistory.slice(-19));
-                saveHistory();
 
-                if (hasSponsor(botText)) {
-                    sponsorViews++;
-                    trackEvent('hybride_em_en_chat_sponsor_view', {
-                        page: detectPage(),
-                        sponsor_style: botText.indexOf('partners') !== -1 ? 'A' : 'B',
-                        message_position: messageCount
+                var reader = res.body.getReader();
+                var decoder = new TextDecoder();
+                var botText = '';
+                var msgEl = null;
+                var buffer = '';
+
+                function processStream() {
+                    return reader.read().then(function (result) {
+                        if (result.done) {
+                            finalize();
+                            return;
+                        }
+
+                        buffer += decoder.decode(result.value, { stream: true });
+                        var parts = buffer.split('\n\n');
+                        buffer = parts.pop();
+
+                        for (var i = 0; i < parts.length; i++) {
+                            var lines = parts[i].split('\n');
+                            for (var j = 0; j < lines.length; j++) {
+                                var line = lines[j].trim();
+                                if (line.indexOf('data: ') === 0) {
+                                    try {
+                                        var evt = JSON.parse(line.substring(6));
+                                        if (evt.chunk) {
+                                            botText += evt.chunk;
+                                            if (!msgEl) {
+                                                removeTyping();
+                                                msgEl = createBotBubble();
+                                            }
+                                            updateBubbleText(msgEl, botText);
+                                        }
+                                        if (evt.is_done) {
+                                            finalize();
+                                            return;
+                                        }
+                                    } catch (e) { /* ignore parse errors */ }
+                                }
+                            }
+                        }
+                        return processStream();
                     });
                 }
 
-                if (messageCount === 5) {
-                    setTimeout(function () { showRatingWidget(); }, 1500);
+                function finalize() {
+                    if (!botText) botText = '\uD83E\uDD16 Response unavailable.';
+                    if (!msgEl) {
+                        removeTyping();
+                        addMessage(botText, 'bot');
+                    }
+                    var sponsorId = extractSponsorId(botText);
+                    if (sponsorId) {
+                        botText = botText.replace(/\[SPONSOR:[^\]]+\]/, '');
+                        if (msgEl) updateBubbleText(msgEl, botText);
+                    }
+                    chatHistory.push({ role: 'user', content: text });
+                    chatHistory.push({ role: 'assistant', content: botText });
+                    if (chatHistory.length > 20) chatHistory = [chatHistory[0]].concat(chatHistory.slice(-19));
+                    saveHistory();
+
+                    if (sponsorId) {
+                        sponsorViews++;
+                        trackEvent('hybride_em_en_chat_sponsor_view', {
+                            page: detectPage(),
+                            sponsor_id: sponsorId,
+                            message_position: messageCount
+                        });
+                        fetch('/api/sponsor/track', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                event_type: 'sponsor-inline-shown',
+                                sponsor_id: sponsorId,
+                                page: window.location.pathname,
+                                lang: 'en',
+                                device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop'
+                            })
+                        }).catch(function() {});
+                    }
+
+                    if (messageCount === 5) {
+                        setTimeout(function () { showRatingWidget(); }, 1500);
+                    }
                 }
+
+                return processStream();
             })
             .catch(function () {
                 clearTimeout(timeoutId);

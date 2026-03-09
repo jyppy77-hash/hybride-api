@@ -1022,6 +1022,23 @@ _GENERATION_CONTEXT = re.compile(
     re.IGNORECASE
 )
 
+# Mots-clés de co-occurrence — excluent la detection generation (Phase P prioritaire)
+_COOCCURRENCE_EXCLUSION = re.compile(
+    # FR
+    r'ensemble|paire|duo|associ[eé]|co.?occurrence|corr[eé]lation|accompagn|'
+    # EN
+    r'\btogether\b|co.?occurrence|correlation|alongside|'
+    # ES
+    r'\bjuntos\b|pareja|asociados|'
+    # PT
+    r'\bjuntos\b|dupla|associados|'
+    # DE
+    r'\bzusammen\b|\bpaar\b|verbunden|'
+    # NL
+    r'\bsamen\b|verbonden',
+    re.IGNORECASE
+)
+
 
 def _detect_generation(message: str) -> bool:
     """Detecte si le message est une demande de generation de grille (6 langues)."""
@@ -1030,6 +1047,9 @@ def _detect_generation(message: str) -> bool:
         return False
     # Pour les verbes courts (genera, gera, gere), exiger un contexte grille
     if re.search(r'\b(?:genera|gera|gere)\b', lower) and not _GENERATION_CONTEXT.search(lower):
+        return False
+    # Co-occurrence keywords → NOT generation (Phase P handles these)
+    if _COOCCURRENCE_EXCLUSION.search(lower):
         return False
     return True
 
@@ -1119,6 +1139,80 @@ _TRIPLETS_PATTERN = re.compile(
 def _detect_triplets(message: str) -> bool:
     """Detecte si l'utilisateur demande les correlations de triplets (6 langues)."""
     return bool(_TRIPLETS_PATTERN.search(message))
+
+
+# ═══════════════════════════════════════════════════════
+# Phase P+ — Détection co-occurrences N>3 (4+, 5+ numéros ensemble)
+# Redirige vers paires/triplets avec réponse honnête
+# ═══════════════════════════════════════════════════════
+
+_COOCCURRENCE_HIGH_N_PATTERN = re.compile(
+    # FR — "4/5/6/7 numéros ensemble", "4 numéros qui sortent ensemble", "quadruplet"
+    r'(?:[4-9]|1[0-9])\s+num[eé]ros?\s+(?:ensemble|qui\s+sort)|'
+    r'(?:[4-9]|1[0-9])\s+num[eé]ros?\s+.{0,30}ensemble|'
+    r'(?:[4-9]|1[0-9])\s+boules?\s+(?:ensemble|qui\s+sort)|'
+    r'(?:[4-9]|1[0-9])\s+boules?\s+.{0,30}ensemble|'
+    r'quadruplet|quintuplet|'
+    r'combinaison\s+de\s+(?:[4-9]|1[0-9])|'
+    r'group(?:e|ement)\s+de\s+(?:[4-9]|1[0-9])|'
+    # EN — "4/5 numbers together", "5 numbers that come together", "quadruplet"
+    r'(?:[4-9]|1[0-9])\s+numbers?\s+(?:together|that\s+c(?:o|a)me)|'
+    r'(?:[4-9]|1[0-9])\s+numbers?\s+.{0,30}together|'
+    r'combination\s+of\s+(?:[4-9]|1[0-9])|'
+    r'group\s+of\s+(?:[4-9]|1[0-9])|'
+    # ES — "4/5 números juntos"
+    r'(?:[4-9]|1[0-9])\s+n[uú]meros?\s+(?:juntos|.{0,30}juntos)|'
+    r'combinaci[oó]n\s+de\s+(?:[4-9]|1[0-9])|'
+    # PT — "4/5 números juntos"
+    r'(?:[4-9]|1[0-9])\s+n[uú]meros?\s+(?:juntos|.{0,30}juntos)|'
+    r'combina[çc][aã]o\s+de\s+(?:[4-9]|1[0-9])|'
+    # DE — "4/5 Zahlen zusammen"
+    r'(?:[4-9]|1[0-9])\s+zahlen\s+(?:zusammen|.{0,30}zusammen)|'
+    r'kombination\s+von\s+(?:[4-9]|1[0-9])|'
+    # NL — "4/5 nummers samen"
+    r'(?:[4-9]|1[0-9])\s+nummers?\s+(?:samen|.{0,30}samen)|'
+    r'combinatie\s+van\s+(?:[4-9]|1[0-9])',
+    re.IGNORECASE
+)
+
+
+def _detect_cooccurrence_high_n(message: str) -> bool:
+    """Detecte les demandes de co-occurrences N>3 (quadruplets, quintuplets, etc.)."""
+    return bool(_COOCCURRENCE_HIGH_N_PATTERN.search(message))
+
+
+# Réponses honnêtes "pas encore implémenté" — redirige vers paires/triplets
+_COOCCURRENCE_HIGH_N_RESPONSES = {
+    "fr": [
+        "📊 Je n'ai pas encore l'analyse des combinaisons de {n} numéros, mais je peux te montrer les **paires** (2 numéros) ou les **triplets** (3 numéros) les plus fréquents ! Tu veux voir ?",
+        "🔢 Les co-occurrences de {n} numéros ne sont pas disponibles pour le moment. Par contre, j'ai les **paires** et les **triplets** les plus fréquents dans la base — ça t'intéresse ?",
+    ],
+    "en": [
+        "📊 I don't have {n}-number combination analysis yet, but I can show you the most frequent **pairs** (2 numbers) or **triplets** (3 numbers)! Want to see?",
+        "🔢 Co-occurrences of {n} numbers aren't available yet. However, I do have the most frequent **pairs** and **triplets** from the database — interested?",
+    ],
+    "es": [
+        "📊 Aún no tengo el análisis de combinaciones de {n} números, pero puedo mostrarte los **pares** (2 números) o **tripletes** (3 números) más frecuentes. ¿Te interesa?",
+    ],
+    "pt": [
+        "📊 Ainda não tenho a análise de combinações de {n} números, mas posso mostrar-te os **pares** (2 números) ou **tripletos** (3 números) mais frequentes! Queres ver?",
+    ],
+    "de": [
+        "📊 Die Analyse von {n}-Zahlen-Kombinationen habe ich noch nicht, aber ich kann dir die häufigsten **Paare** (2 Zahlen) oder **Drillinge** (3 Zahlen) zeigen! Interesse?",
+    ],
+    "nl": [
+        "📊 Ik heb nog geen analyse van combinaties van {n} nummers, maar ik kan je de meest voorkomende **paren** (2 nummers) of **drietallen** (3 nummers) tonen! Interesse?",
+    ],
+}
+
+
+def _get_cooccurrence_high_n_response(message: str, lang: str = "fr") -> str:
+    """Retourne une reponse honnete pour les co-occurrences N>3."""
+    # Extraire N du message
+    m = re.search(r'(\d+)\s+(?:num[eé]ros?|numbers?|n[uú]meros?|zahlen|nummers?|boules?)', message, re.IGNORECASE)
+    n = int(m.group(1)) if m else 5
+    pool = _COOCCURRENCE_HIGH_N_RESPONSES.get(lang, _COOCCURRENCE_HIGH_N_RESPONSES["fr"])
+    return random.choice(pool).format(n=n)
 
 
 # ═══════════════════════════════════════════════════════

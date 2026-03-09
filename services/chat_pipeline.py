@@ -24,6 +24,7 @@ from services.chat_detectors import (
     _get_compliment_response, _detect_out_of_range, _count_oor_streak,
     _get_oor_response, _detect_argent, _get_argent_response,
     _detect_generation, _detect_generation_mode,
+    _detect_cooccurrence_high_n, _get_cooccurrence_high_n_response,
 )
 from services.chat_sql import (
     _get_prochain_tirage, _get_tirage_data, _generate_sql, _validate_sql,
@@ -250,6 +251,15 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
                     logger.info(f"[HYBRIDE CHAT] Requete complexe: {intent['type']}")
             except Exception as e:
                 logger.warning(f"[HYBRIDE CHAT] Erreur requete complexe: {e}")
+
+    # Phase P+ : co-occurrences N>3 — réponse honnête "pas implémenté"
+    if not _continuation_mode and not enrichment_context:
+        if _detect_cooccurrence_high_n(message):
+            _high_n_resp = _get_cooccurrence_high_n_response(message, lang="fr")
+            if _insult_prefix:
+                _high_n_resp = _insult_prefix + "\n\n" + _high_n_resp
+            logger.info("[HYBRIDE CHAT] Co-occurrence N>3 — redirection paires/triplets")
+            return {"response": _high_n_resp, "source": "hybride_cooccurrence", "mode": mode}, None
 
     # Phase P : triplets de numéros (testé avant paires)
     # Note: pas de guard force_sql — triplets sont des requêtes structurées,

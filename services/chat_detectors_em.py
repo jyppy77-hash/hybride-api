@@ -810,3 +810,95 @@ def _get_oor_response_em(numero: int, context: str, streak: int) -> str:
         s=s,
         streak=streak + 1,
     )
+
+
+# ═══════════════════════════════════════════════════════
+# Phase GEO — Détection pays participants EuroMillions
+# Les tirages EM sont IDENTIQUES pour les 9 pays.
+# ═══════════════════════════════════════════════════════
+
+# 9 pays participants + variantes linguistiques (6 langues)
+_EM_COUNTRY_PATTERN = re.compile(
+    # FR variants
+    r'\b(?:france|espagne|portugal|royaume[\s-]uni|angleterre|irlande|'
+    r'belgique|autriche|suisse|luxembourg)\b|'
+    # EN variants
+    r'\b(?:spain|united\s+kingdom|great\s+britain|britain|england|ireland|'
+    r'belgium|austria|switzerland|luxembourg)\b|'
+    r'\bUK\b|'
+    # ES variants
+    r'\b(?:francia|espa[ñn]a|reino\s+unido|inglaterra|irlanda|'
+    r'b[eé]lgica|austria|suiza|luxemburgo)\b|'
+    # PT variants
+    r'\b(?:fran[çc]a|espanha|reino\s+unido|inglaterra|irlanda|'
+    r'b[eé]lgica|[aá]ustria|su[ií][çc]a|luxemburgo)\b|'
+    # DE variants
+    r'\b(?:frankreich|spanien|vereinigtes\s+k[oö]nigreich|england|irland|'
+    r'belgien|[oö]sterreich|schweiz|luxemburg|deutschland)\b|'
+    # NL variants
+    r'\b(?:frankrijk|spanje|verenigd\s+koninkrijk|engeland|ierland|'
+    r'belgi[eë]|oostenrijk|zwitserland|luxemburg|duitsland)\b',
+    re.IGNORECASE
+)
+
+# Contexte "tirages communs" à injecter avant la réponse Gemini
+_EM_COUNTRY_CONTEXT = {
+    "fr": (
+        "[CONTEXTE GÉOGRAPHIQUE EUROMILLIONS]\n"
+        "FAIT IMPORTANT : Les tirages EuroMillions sont IDENTIQUES pour les 9 pays participants "
+        "(France, Espagne, Portugal, Royaume-Uni, Irlande, Belgique, Autriche, Suisse, Luxembourg). "
+        "Il n'existe PAS de tirages différents par pays — les mêmes numéros sont tirés pour tout le monde. "
+        "Les statistiques ci-dessous sont donc valables pour TOUS les pays.\n"
+        "INSTRUCTION : Commence ta réponse en clarifiant ce fait, puis donne les statistiques demandées."
+    ),
+    "en": (
+        "[EUROMILLIONS GEOGRAPHIC CONTEXT]\n"
+        "IMPORTANT FACT: EuroMillions draws are IDENTICAL across all 9 participating countries "
+        "(France, Spain, Portugal, United Kingdom, Ireland, Belgium, Austria, Switzerland, Luxembourg). "
+        "There are NO country-specific draws — the same numbers are drawn for everyone. "
+        "The statistics below apply to ALL countries.\n"
+        "INSTRUCTION: Start your answer by clarifying this fact, then provide the requested statistics."
+    ),
+    "es": (
+        "[CONTEXTO GEOGRÁFICO EUROMILLIONS]\n"
+        "HECHO IMPORTANTE: Los sorteos de EuroMillions son IDÉNTICOS en los 9 países participantes "
+        "(Francia, España, Portugal, Reino Unido, Irlanda, Bélgica, Austria, Suiza, Luxemburgo). "
+        "NO existen sorteos diferentes por país — los mismos números se sortean para todos. "
+        "Las estadísticas siguientes son válidas para TODOS los países.\n"
+        "INSTRUCCIÓN: Comienza tu respuesta aclarando este hecho, luego proporciona las estadísticas solicitadas."
+    ),
+    "pt": (
+        "[CONTEXTO GEOGRÁFICO EUROMILLIONS]\n"
+        "FACTO IMPORTANTE: Os sorteios do EuroMillions são IDÊNTICOS nos 9 países participantes "
+        "(França, Espanha, Portugal, Reino Unido, Irlanda, Bélgica, Áustria, Suíça, Luxemburgo). "
+        "NÃO existem sorteios diferentes por país — os mesmos números são sorteados para todos. "
+        "As estatísticas abaixo são válidas para TODOS os países.\n"
+        "INSTRUÇÃO: Começa a tua resposta esclarecendo este facto, depois fornece as estatísticas pedidas."
+    ),
+    "de": (
+        "[EUROMILLIONS GEOGRAFISCHER KONTEXT]\n"
+        "WICHTIGER FAKT: Die EuroMillions-Ziehungen sind IDENTISCH in allen 9 teilnehmenden Ländern "
+        "(Frankreich, Spanien, Portugal, Vereinigtes Königreich, Irland, Belgien, Österreich, Schweiz, Luxemburg). "
+        "Es gibt KEINE länderspezifischen Ziehungen — dieselben Zahlen werden für alle gezogen. "
+        "Die folgenden Statistiken gelten für ALLE Länder.\n"
+        "ANWEISUNG: Beginne deine Antwort mit der Klarstellung dieses Fakts, dann liefere die gewünschten Statistiken."
+    ),
+    "nl": (
+        "[EUROMILLIONS GEOGRAFISCHE CONTEXT]\n"
+        "BELANGRIJK FEIT: De EuroMillions-trekkingen zijn IDENTIEK in alle 9 deelnemende landen "
+        "(Frankrijk, Spanje, Portugal, Verenigd Koninkrijk, Ierland, België, Oostenrijk, Zwitserland, Luxemburg). "
+        "Er zijn GEEN landspecifieke trekkingen — dezelfde nummers worden voor iedereen getrokken. "
+        "De onderstaande statistieken gelden voor ALLE landen.\n"
+        "INSTRUCTIE: Begin je antwoord met het verduidelijken van dit feit, en geef daarna de gevraagde statistieken."
+    ),
+}
+
+
+def _detect_country_em(message: str) -> bool:
+    """Detecte si le message mentionne un pays participant EuroMillions (6 langues)."""
+    return bool(_EM_COUNTRY_PATTERN.search(message))
+
+
+def _get_country_context_em(lang: str = "fr") -> str:
+    """Retourne le contexte geographique EM a injecter pour Gemini."""
+    return _EM_COUNTRY_CONTEXT.get(lang, _EM_COUNTRY_CONTEXT["fr"])
