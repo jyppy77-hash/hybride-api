@@ -818,23 +818,82 @@ def _get_menace_response() -> str:
 # ═══════════════════════════════════════════════════════
 
 _COMPLIMENT_PHRASES = [
-    "t'es génial", "tu es génial", "t'es bon", "tu es bon",
+    # FR
+    "t'es génial", "t'es genial", "tu es génial", "tu es genial",
+    "t'es bon", "tu es bon",
     "t'es fort", "tu es fort", "t'es le meilleur", "tu es le meilleur",
     "t'es un amour", "tu es un amour", "t'es cool", "tu es cool",
-    "t'es trop fort", "t'es super", "tu es super", "bien joué",
-    "tu gères", "tu déchires",
+    "t'es trop fort", "t'es super", "tu es super", "bien joué", "bien joue",
+    "tu gères", "tu geres", "tu déchires", "tu dechires",
     "t'assures", "tu assures", "t'es intelligent", "tu es intelligent",
     "merci beaucoup",
+    "vraiment génial", "vraiment genial", "vraiment bon", "vraiment fort",
+    "vraiment super", "vraiment top", "trop fort",
+    # EN
+    "you're amazing", "you are amazing", "you're great", "you are great",
+    "you're awesome", "you are awesome", "well done", "good job", "nice job",
+    "you're the best", "you are the best", "you're brilliant", "you are brilliant",
+    "you're smart", "you are smart", "really amazing", "really great",
+    "really awesome", "really good", "so helpful", "very helpful",
+    "thank you so much", "thanks a lot",
+    # ES
+    "eres genial", "eres increíble", "eres increible", "buen trabajo",
+    "eres el mejor", "eres brillante", "realmente genial", "muy bueno",
+    "eres asombroso", "que bueno eres", "eres la mejor",
+    "muchas gracias",
+    # PT
+    "és incrível", "es incrivel", "és genial", "es genial",
+    "és o melhor", "es o melhor", "bom trabalho", "muito bom",
+    "realmente incrível", "realmente incrivel", "és brilhante", "es brilhante",
+    "muito obrigado", "muito obrigada",
+    # DE
+    "du bist toll", "du bist super", "du bist klasse", "du bist genial",
+    "du bist der beste", "du bist die beste", "du bist brilliant",
+    "echt toll", "echt super", "echt gut", "wirklich toll", "wirklich gut",
+    "gut gemacht", "sehr hilfreich", "vielen dank",
+    # NL
+    "je bent geweldig", "je bent super", "je bent de beste", "je bent geniaal",
+    "je bent briljant", "echt geweldig", "echt super", "echt goed",
+    "goed gedaan", "heel goed", "zeer behulpzaam",
+    "heel erg bedankt",
 ]
 
 _COMPLIMENT_LOVE_PHRASES = [
+    # FR
     "je t'aime", "je t'adore", "t'es un amour", "tu es un amour",
+    # EN
+    "i love you", "you're adorable", "you are adorable",
+    # ES
+    "te quiero", "te adoro", "eres un amor",
+    # PT
+    "adoro-te", "és um amor", "es um amor",
+    # DE
+    "ich liebe dich", "du bist ein schatz",
+    # NL
+    "ik hou van je", "je bent een schat",
 ]
 
 _COMPLIMENT_SOLO_WORDS = {
-    "génial", "bravo", "chapeau", "respect", "impressionnant",
+    # FR
+    "génial", "genial", "bravo", "chapeau", "respect", "impressionnant",
     "incroyable", "excellent", "parfait", "formidable",
-    "génialissime", "magnifique", "wahou", "wow", "classe",
+    "génialissime", "magnifique", "wahou", "wow", "classe", "top",
+    # EN
+    "amazing", "awesome", "brilliant", "fantastic", "wonderful",
+    "impressive", "outstanding", "superb", "great", "incredible",
+    "perfect", "excellent",
+    # ES
+    "genial", "increíble", "increible", "fantástico", "fantastico",
+    "impresionante", "excelente", "perfecto", "brillante", "asombroso",
+    # PT
+    "incrível", "incrivel", "fantástico", "fantastico",
+    "impressionante", "excelente", "perfeito", "brilhante",
+    # DE
+    "toll", "super", "klasse", "genial", "fantastisch",
+    "beeindruckend", "ausgezeichnet", "perfekt", "brilliant",
+    # NL
+    "geweldig", "fantastisch", "geniaal", "briljant",
+    "indrukwekkend", "uitstekend", "perfect",
 }
 
 # Niveau 1 — Premier compliment : modeste mais fier
@@ -880,8 +939,21 @@ _COMPLIMENT_MERCI = [
 def _compliment_targets_bot(message: str) -> bool:
     """Verifie si le compliment vise le bot (True) ou le Loto/FDJ (False)."""
     lower = message.lower()
-    bot_words = ("tu ", "t'", "\u2019", " toi", " te ", "bot", "chatbot", "hybride", " ia ")
-    loto_words = ("loto", "fdj", "française des jeux", "tirage")
+    bot_words = (
+        # FR
+        "tu ", "t'", "\u2019", " toi", " te ", "bot", "chatbot", "hybride", " ia ",
+        # EN
+        "you ", "you'", " your",
+        # ES
+        "eres ", "tú ", " ti ",
+        # PT
+        "és ", "tu ",
+        # DE
+        "du ", "dich ", " dir ",
+        # NL
+        "je ", "jij ", " jou",
+    )
+    loto_words = ("loto", "fdj", "française des jeux", "tirage", "lottery", "lotería", "loteria")
     has_bot = any(w in lower for w in bot_words)
     has_loto = any(w in lower for w in loto_words)
     if has_loto and not has_bot:
@@ -904,7 +976,8 @@ def _detect_compliment(message: str):
             return "love"
 
     # Remerciement simple (court)
-    if lower.startswith("merci") and len(lower) < 30:
+    _merci_starts = ("merci", "thanks", "thank you", "gracias", "obrigado", "obrigada", "danke", "bedankt", "dank je")
+    if any(lower.startswith(m) for m in _merci_starts) and len(lower) < 40:
         return "merci"
 
     # Phrases complimentaires
