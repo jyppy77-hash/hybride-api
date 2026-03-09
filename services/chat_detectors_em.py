@@ -191,14 +191,25 @@ def _detect_requete_complexe_em(message: str):
     # --- Categorie chaud/froid ---
     if re.search(r'(?:quels?|les?|num[eé]ros?)\s+.*chauds?', lower) or \
        re.search(r'chauds?\s+(?:en ce moment|actuellement)', lower) or \
-       re.search(r'(?:num[eé]ros?|lesquels)\s+(?:sont|en)\s+tendance', lower):
-        num_type = "etoile" if ("etoile" in lower or "étoile" in lower) else "boule"
+       re.search(r'(?:num[eé]ros?|lesquels)\s+(?:sont|en)\s+tendance', lower) or \
+       re.search(r'\b(?:hot|hottest)\s+numbers?\b', lower) or \
+       re.search(r'\bnumbers?\s+(?:on\s+a\s+)?(?:hot\s+streak|trending)\b', lower) or \
+       re.search(r'\bn[uú]meros?\s+calientes?\b', lower) or \
+       re.search(r'\bn[uú]meros?\s+quentes?\b', lower) or \
+       re.search(r'\bhei[sß]e\s+zahlen\b', lower) or \
+       re.search(r'\bhete\s+nummers\b', lower):
+        num_type = "etoile" if ("etoile" in lower or "étoile" in lower or "star" in lower or "estrella" in lower or "estrela" in lower or "stern" in lower or "ster" in lower) else "boule"
         return {"type": "categorie", "categorie": "chaud", "num_type": num_type}
 
     if re.search(r'(?:quels?|les?|num[eé]ros?)\s+.*froids?', lower) or \
        re.search(r'froids?\s+(?:en ce moment|actuellement)', lower) or \
-       re.search(r'num[eé]ros?\s+(?:en\s+retard|qui\s+sort\w*\s+(?:pas|plus|jamais))', lower):
-        num_type = "etoile" if ("etoile" in lower or "étoile" in lower) else "boule"
+       re.search(r'num[eé]ros?\s+(?:en\s+retard|qui\s+sort\w*\s+(?:pas|plus|jamais))', lower) or \
+       re.search(r'\b(?:cold|coldest)\s+numbers?\b', lower) or \
+       re.search(r'\bnumbers?\s+(?:overdue|not\s+drawn)\b', lower) or \
+       re.search(r'\bn[uú]meros?\s+fr[ií]os?\b', lower) or \
+       re.search(r'\bkalte\s+zahlen\b', lower) or \
+       re.search(r'\bkoude\s+nummers\b', lower):
+        num_type = "etoile" if ("etoile" in lower or "étoile" in lower or "star" in lower or "estrella" in lower or "estrela" in lower or "stern" in lower or "ster" in lower) else "boule"
         return {"type": "categorie", "categorie": "froid", "num_type": num_type}
 
     # --- Classement ---
@@ -209,11 +220,22 @@ def _detect_requete_complexe_em(message: str):
     if re.search(r'(?:plus|les?\s+plus)\s+(?:fr[eé]quent|sorti|courant|pr[eé]sent)', lower) or \
        re.search(r'(?:top|meilleur|premier)\s+\d{0,2}\s*(?:num[eé]ro|boule|[eé]toile)?', lower) or \
        re.search(r'num[eé]ros?\s+(?:les?\s+)?plus\s+(?:sorti|fr[eé]quent)', lower) or \
-       re.search(r'(?:quels?|quel)\s+(?:est|sont)\s+(?:le|les)\s+num[eé]ro', lower):
+       re.search(r'(?:quels?|quel)\s+(?:est|sont)\s+(?:le|les)\s+num[eé]ro', lower) or \
+       re.search(r'\b(?:most\s+(?:drawn|common|frequent)|most\s+often|hottest)\b', lower) or \
+       re.search(r'\bm[aá]s\s+(?:sorteados?|frecuentes?|comunes?)\b', lower) or \
+       re.search(r'\bmais\s+(?:sorteados?|frequentes?|comuns?)\b', lower) or \
+       re.search(r'\b(?:am\s+h[aä]ufigsten|h[aä]ufigsten?\s+gezogen|meistgezogen)\b', lower) or \
+       re.search(r'\b(?:meest\s+getrokken|meest\s+voorkomend|vaakst\s+getrokken|vaakst\s+voor)\b', lower) or \
+       re.search(r'\branking\b|\brangliste\b|\branglijst\b|\bclasificaci[oó]n\b|\bclassifica[çc][aã]o\b', lower):
         return {"type": "classement", "tri": "frequence_desc", "limit": limit, "num_type": num_type}
 
     if re.search(r'(?:moins|les?\s+moins)\s+(?:fr[eé]quent|sorti|courant)', lower) or \
-       re.search(r'(?:flop|dernier|pire)\s+\d{0,2}', lower):
+       re.search(r'(?:flop|dernier|pire)\s+\d{0,2}', lower) or \
+       re.search(r'\b(?:least\s+(?:drawn|common|frequent)|coldest)\b', lower) or \
+       re.search(r'\bmenos\s+(?:sorteados?|frecuentes?|comunes?)\b', lower) or \
+       re.search(r'\bmenos\s+(?:sorteados?|frequentes?|comuns?)\b', lower) or \
+       re.search(r'\b(?:am\s+seltensten|seltensten?\s+gezogen|wenigsten?\s+gezogen)\b', lower) or \
+       re.search(r'\b(?:minst\s+getrokken|minst\s+voorkomend)\b', lower):
         return {"type": "classement", "tri": "frequence_asc", "limit": limit, "num_type": num_type}
 
     if re.search(r'(?:plus\s+(?:gros|grand|long)|plus\s+en)\s+(?:[eé]cart|retard)', lower) or \
@@ -717,8 +739,13 @@ _ARGENT_L3_EM_NL = [
 
 # --- Pool dispatch par langue ---
 
+from services.chat_responses_em_en import (
+    _ARGENT_L1_EM_EN, _ARGENT_L2_EM_EN, _ARGENT_L3_EM_EN,
+)
+
 _ARGENT_POOLS_EM = {
     "fr": (_ARGENT_L1_EM, _ARGENT_L2_EM, _ARGENT_L3_EM),
+    "en": (_ARGENT_L1_EM_EN, _ARGENT_L2_EM_EN, _ARGENT_L3_EM_EN),
     "es": (_ARGENT_L1_EM_ES, _ARGENT_L2_EM_ES, _ARGENT_L3_EM_ES),
     "pt": (_ARGENT_L1_EM_PT, _ARGENT_L2_EM_PT, _ARGENT_L3_EM_PT),
     "de": (_ARGENT_L1_EM_DE, _ARGENT_L2_EM_DE, _ARGENT_L3_EM_DE),

@@ -534,6 +534,7 @@ def _detect_requete_complexe(message: str):
 # ═══════════════════════════════════════════════════════
 
 _INSULTE_MOTS = {
+    # FR
     "connard", "connards", "connasse", "connasses",
     "débile", "debile", "débiles", "debiles",
     "idiot", "idiote", "idiots", "idiotes",
@@ -552,9 +553,33 @@ _INSULTE_MOTS = {
     "salope", "salopes",
     "con", "cons",
     "nul", "nulle", "nuls", "nulles",
+    # EN
+    "useless", "stupid", "dumb", "trash", "garbage", "worthless",
+    "pathetic", "rubbish", "crap", "terrible", "horrible", "awful",
+    "moron", "morons", "shit", "fuck", "damn",
+    # ES
+    "inútil", "inutil", "tonto", "tonta", "estúpido", "estupido", "estúpida", "estupida",
+    "basura", "mierda", "imbécil", "imbecil", "payaso", "ridículo", "ridiculo",
+    "porquería", "porqueria", "asqueroso", "mediocre", "patético", "patetico",
+    "gilipollas", "subnormal",
+    # PT
+    "inútil", "estúpido", "estupido", "burro", "burra",
+    "lixo", "horrível", "horrivel", "terrível", "terrivel",
+    "palhaço", "palhaco", "ridículo", "porcaria", "nojento",
+    "medíocre", "otário", "otario", "besta", "incompetente",
+    # DE
+    "nutzlos", "dumm", "blöd", "blod", "müll", "mull", "schrott",
+    "wertlos", "erbärmlich", "erbarmlich", "scheiße", "scheisse",
+    "mist", "furchtbar", "schrecklich", "dämlich", "damlich",
+    "bescheuert", "trottel", "depp", "vollidiot", "schwachsinn", "unfähig", "unfahig",
+    # NL
+    "nutteloos", "dom", "idioot", "stom", "waardeloos", "rommel",
+    "slecht", "verschrikkelijk", "vreselijk", "belachelijk", "onzin",
+    "achterlijk", "debiel", "klote", "kut", "sukkel", "eikel", "onbekwaam", "hopeloos",
 }
 
 _INSULTE_PHRASES = [
+    # FR
     r"\bta\s+gueule\b",
     r"\bferme[\s-]la\b",
     r"\bcasse[\s-]toi\b",
@@ -574,11 +599,60 @@ _INSULTE_PHRASES = [
     r"\bt['\u2019]es?\s+b[eê]te",
     r"\btu\s+fais?\s+piti[eé]",
     r"\b(?:lol|mdr|ptdr)\s+t['\u2019]es?\s+(?:nul|b[eê]te|con)",
+    # EN
+    r"\byou['\u2019]?re\s+(?:useless|stupid|dumb|worthless|pathetic|terrible|horrible|awful)\b",
+    r"\byou\s+(?:are|r)\s+(?:useless|stupid|dumb|worthless|pathetic|terrible)\b",
+    r"\byou\s+suck\b",
+    r"\bshut\s+up\b",
+    r"\bgo\s+away\b",
+    r"\bget\s+lost\b",
+    r"\bwhat\s+a\s+(?:waste|joke|garbage)\b",
+    r"\bthis\s+(?:bot|thing|ai)\s+(?:is\s+)?(?:useless|trash|garbage|crap|terrible|stupid)\b",
+    # ES
+    r"\beres\s+(?:in[uú]til|tonto|est[uú]pido|idiota|pat[eé]tico|rid[ií]culo)\b",
+    r"\bt[uú]\s+eres\s+(?:in[uú]til|tonto|est[uú]pido|idiota)\b",
+    r"\bcallate\b",
+    r"\bc[aá]llate\b",
+    r"\bvete\b",
+    r"\bno\s+sirves?\s+para\s+nada\b",
+    r"\beste\s+(?:bot|chatbot)\s+(?:es\s+)?(?:basura|in[uú]til|horrible)\b",
+    # PT
+    r"\b[eé]s\s+(?:in[uú]til|est[uú]pido|idiota|pat[eé]tico|rid[ií]culo)\b",
+    r"\btu\s+[eé]s\s+(?:in[uú]til|est[uú]pido|idiota)\b",
+    r"\bvoc[eê]\s+[eé]\s+(?:in[uú]til|est[uú]pido|idiota)\b",
+    r"\bcala[\s-]te\b",
+    r"\bvai[\s-]te\s+embora\b",
+    r"\bn[aã]o\s+serves?\s+para\s+nada\b",
+    r"\beste\s+(?:bot|chatbot)\s+[eé]\s+(?:lixo|in[uú]til|horr[ií]vel)\b",
+    # DE
+    r"\bdu\s+bist\s+(?:nutzlos|dumm|bl[oö]d|wertlos|erb[aä]rmlich|unf[aä]hig|bescheuert)\b",
+    r"\bhalt[\s\']?s?\s+maul\b",
+    r"\bverzieh\s+dich\b",
+    r"\bverpiss\s+dich\b",
+    r"\bdieser?\s+(?:bot|chatbot|ding)\s+(?:ist\s+)?(?:m[uü]ll|schrott|nutzlos|schrecklich)\b",
+    # NL
+    r"\bje\s+bent\s+(?:nutteloos|dom|stom|waardeloos|hopeloos|onbekwaam|belachelijk)\b",
+    r"\bjij\s+bent\s+(?:nutteloos|dom|stom|waardeloos|hopeloos)\b",
+    r"\bhou\s+(?:je\s+)?(?:mond|bek)\b",
+    r"\bga\s+weg\b",
+    r"\bophoepelen\b",
+    r"\bdeze?\s+(?:bot|chatbot|ding)\s+(?:is\s+)?(?:waardeloos|nutteloos|rommel|slecht)\b",
 ]
 
 _MENACE_PATTERNS = [
+    # FR
     r"\bje\s+vais?\s+te\s+(?:hacker|pirater|casser|d[eé]truire|supprimer)",
     r"\bje\s+vais?\s+(?:hacker|pirater)\s",
+    # EN
+    r"\bi['\u2019]?(?:m\s+going\s+to|ll|will)\s+(?:hack|destroy|break|delete|kill)\b",
+    # ES
+    r"\bvoy\s+a\s+(?:hackear|destruir|romper|eliminar)\b",
+    # PT
+    r"\bvou\s+(?:hackear|destruir|partir|eliminar)\b",
+    # DE
+    r"\bich\s+werde?\s+(?:dich\s+)?(?:hacken|zerst[oö]ren|l[oö]schen|kaputt)\b",
+    # NL
+    r"\bik\s+(?:ga|zal)\s+(?:je\s+)?(?:hacken|vernietigen|verwijderen|kapot)\b",
 ]
 
 # Niveau 1 — Première insulte : ZEN & CLASSE
@@ -637,8 +711,23 @@ _MENACE_RESPONSES = [
 
 def _insult_targets_bot(message: str) -> bool:
     """Verifie si l'insulte vise le bot (True) ou le Loto/FDJ (False)."""
-    bot_words = ("tu ", "t'", "\u2019", " toi", " te ", "bot", "chatbot", "hybride", " ia ")
-    loto_words = ("loto", "fdj", "fran\u00e7aise des jeux", "tirage")
+    bot_words = (
+        # FR
+        "tu ", "t'", "\u2019", " toi", " te ", " ia ",
+        # EN
+        "you", "your", "this bot", "this thing", "this ai",
+        # ES
+        "eres", "este bot", "esta cosa", " tu ",
+        # PT
+        "voc\u00ea", "este bot", "esta coisa",
+        # DE
+        "du ", "du bist", "dieser bot", "dieses ding",
+        # NL
+        "je ", "je bent", "jij ", "deze bot", "dit ding",
+        # Generic
+        "bot", "chatbot", "hybride",
+    )
+    loto_words = ("loto", "fdj", "fran\u00e7aise des jeux", "tirage", "euromillion")
     has_bot = any(w in message for w in bot_words)
     has_loto = any(w in message for w in loto_words)
     if has_loto and not has_bot:
@@ -1079,25 +1168,25 @@ def _detect_generation_mode(message: str) -> str:
 
 _PAIRS_PATTERN = re.compile(
     # FR — termes techniques
-    r'paire|duo|ensemble|associ[eé]|combinaison.*fr[eé]quent|sortent.*ensemble|'
+    r'paires?|duo|ensemble|associ[eé]|combinaison.*fr[eé]quent|sortent.*ensemble|'
     r'num[eé]ros.*li[eé]s|co.?occurrence|corr[eé]lation|'
     # FR — formulations naturelles
     r'sort\w*\s+.*avec|avec\s+le\s+\d|accompagn|v(?:a|ont)\s+avec|[àa]\s+c[oô]t[eé]\s+du?\s+\d|'
     # EN — termes techniques
-    r'\bpair\b|together|associated|combination.*frequent|numbers.*linked|co.?occurrence|correlation|'
+    r'\bpairs?\b|together|associated|combination.*frequent|numbers.*linked|co.?occurrence|correlation|'
     # EN — formulations naturelles
     r'comes?\s+with|goes?\s+with|alongside|appears?\s+next\s+to|'
     # ES — termes techniques + naturels
-    r'pareja|juntos|asociados|combinaci[oó]n.*frecuente|'
+    r'parejas?|pares|juntos|asociados|combinaci[oó]n.*frecuente|'
     r'sale[ns]?\s+con|junto\s+(?:con|al)|acompa[ñn]a|'
     # PT — termes techniques + naturels
-    r'dupla|associados|combina[çc][aã]o.*frequente|'
+    r'duplas?|pares|associados|combina[çc][aã]o.*frequente|'
     r'sa(?:i|em)\s+com|junto\s+(?:com|ao)|acompanha|'
     # DE — termes techniques + naturels
-    r'\bpaar\b|zusammen|verbunden|kombination.*h[aä]ufig|'
+    r'\bpaare?\b|zusammen|verbunden|kombination.*h[aä]ufig|'
     r'kommt?\s+.*\bmit\b|zusammen\s+mit|neben\s+de[rn]?\s+\d|begleitet|'
     # NL — termes techniques + naturels
-    r'\bsamen\b|verbonden|combinatie.*frequent|'
+    r'\bparen\b|\bsamen\b|verbonden|combinatie.*frequent|'
     r'komt?\s+.*\bmet\b|samen\s+met|naast\s+de?\s+\d|begeleidt',
     re.IGNORECASE
 )

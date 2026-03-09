@@ -33,17 +33,13 @@ from services.chat_detectors_em import (
     _detect_mode_em, _detect_prochain_tirage_em,
     _detect_numero_em, _detect_grille_em,
     _detect_requete_complexe_em, _detect_paires_em, _detect_triplets_em,
-    _detect_out_of_range_em, _count_oor_streak_em, _get_oor_response_em,
-    _get_insult_response_em, _get_insult_short_em, _get_menace_response_em,
-    _get_compliment_response_em,
+    _detect_out_of_range_em, _count_oor_streak_em,
     _detect_argent_em, _get_argent_response_em,
     _detect_country_em, _get_country_context_em,
 )
-from services.chat_responses_em_en import (
-    _get_insult_response_em_en, _get_insult_short_em_en,
-    _get_menace_response_em_en, _get_compliment_response_em_en,
-    _get_oor_response_em_en, FALLBACK_RESPONSE_EM_EN,
-    _get_argent_response_em_en,
+from services.chat_responses_em_multilang import (
+    get_insult_response, get_insult_short, get_menace_response,
+    get_compliment_response, get_oor_response, get_fallback,
 )
 from services.chat_sql_em import (
     _get_prochain_tirage_em, _get_tirage_data_em, _generate_sql_em,
@@ -55,7 +51,6 @@ from services.chat_utils import (
     _get_sponsor_if_due, _strip_sponsor_from_text, _format_date_fr,
 )
 from services.chat_utils_em import (
-    FALLBACK_RESPONSE_EM,
     _format_tirage_context_em, _format_stats_context_em,
     _format_grille_context_em, _format_complex_context_em,
     _format_pairs_context_em, _format_triplets_context_em,
@@ -76,8 +71,8 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
     Phases I-SQL EM : prepare le contexte pour l'appel Gemini.
     Retourne (early_return_or_None, ctx_dict_or_None).
     """
-    is_en = lang == "en"
-    _fallback = FALLBACK_RESPONSE_EM_EN if is_en else FALLBACK_RESPONSE_EM
+
+    _fallback = get_fallback(lang)
     mode = _detect_mode_em(message, page)
 
     system_prompt = load_prompt_em("prompt_hybride_em", lang=lang)
@@ -133,16 +128,15 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
             ))
         )
         if _has_question:
-            _insult_prefix = _get_insult_short_em_en() if is_en else _get_insult_short_em()
+            _insult_prefix = get_insult_short(lang)
             logger.info(
                 f"[EM CHAT] Insulte + question (type={_insult_type}, streak={_insult_streak})"
             )
         else:
             if _insult_type == "menace":
-                _insult_resp = _get_menace_response_em_en() if is_en else _get_menace_response_em()
+                _insult_resp = get_menace_response(lang)
             else:
-                _insult_resp = (_get_insult_response_em_en(_insult_streak, history)
-                                if is_en else _get_insult_response_em(_insult_streak, history))
+                _insult_resp = get_insult_response(lang, _insult_streak, history)
             logger.info(
                 f"[EM CHAT] Insulte detectee (type={_insult_type}, streak={_insult_streak})"
             )
@@ -164,8 +158,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
             )
             if not _has_question_c:
                 _comp_streak = _count_compliment_streak(history)
-                _comp_resp = (_get_compliment_response_em_en(_compliment_type, _comp_streak, history)
-                              if is_en else _get_compliment_response_em(_compliment_type, _comp_streak, history))
+                _comp_resp = get_compliment_response(lang, _compliment_type, _comp_streak, history)
                 logger.info(
                     f"[EM CHAT] Compliment detecte (type={_compliment_type}, streak={_comp_streak})"
                 )
@@ -194,8 +187,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
 
     # ── Phase A : Détection argent / gains / paris ──
     if _detect_argent_em(message, lang):
-        _argent_resp = (_get_argent_response_em_en(message)
-                        if is_en else _get_argent_response_em(message, lang))
+        _argent_resp = _get_argent_response_em(message, lang)
         if _insult_prefix:
             _argent_resp = _insult_prefix + "\n\n" + _argent_resp
         logger.info(f"[EM CHAT] Argent detecte — court-circuit Phase A (lang={lang})")
@@ -340,8 +332,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
         _oor_num, _oor_type = _detect_out_of_range_em(message)
         if _oor_num is not None:
             _oor_streak = _count_oor_streak_em(history)
-            _oor_resp = (_get_oor_response_em_en(_oor_num, _oor_type, _oor_streak)
-                         if is_en else _get_oor_response_em(_oor_num, _oor_type, _oor_streak))
+            _oor_resp = get_oor_response(lang, _oor_num, _oor_type, _oor_streak)
             if _insult_prefix:
                 _oor_resp = _insult_prefix + "\n\n" + _oor_resp
             logger.info(

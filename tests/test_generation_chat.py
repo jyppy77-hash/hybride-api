@@ -499,3 +499,355 @@ class TestCooccurrenceHighNResponse:
     def test_fallback_n_when_no_digit(self):
         resp = _get_cooccurrence_high_n_response("quadruplet", "fr")
         assert "5" in resp  # default N=5
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# FIX AUDIT 360 — Insultes multilingues
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestInsultesMultilang:
+    """Insultes EN/ES/PT/DE/NL doivent etre detectees par Phase I."""
+
+    def test_en_useless(self):
+        assert _detect_generation is not None  # import check
+        from services.chat_detectors import _detect_insulte
+        assert _detect_insulte("You're useless") == "directe"
+
+    def test_en_stupid(self):
+        from services.chat_detectors import _detect_insulte
+        assert _detect_insulte("This is stupid") == "directe"
+
+    def test_en_shut_up(self):
+        from services.chat_detectors import _detect_insulte
+        assert _detect_insulte("Shut up already") == "directe"
+
+    def test_en_you_suck(self):
+        from services.chat_detectors import _detect_insulte
+        assert _detect_insulte("You suck") == "directe"
+
+    def test_es_inutil(self):
+        from services.chat_detectors import _detect_insulte
+        assert _detect_insulte("Eres inútil") == "directe"
+
+    def test_es_tonto(self):
+        from services.chat_detectors import _detect_insulte
+        assert _detect_insulte("Eres tonto") == "directe"
+
+    def test_pt_inutil(self):
+        from services.chat_detectors import _detect_insulte
+        assert _detect_insulte("És inútil") == "directe"
+
+    def test_pt_estupido(self):
+        from services.chat_detectors import _detect_insulte
+        assert _detect_insulte("Você é estúpido") == "directe"
+
+    def test_de_nutzlos(self):
+        from services.chat_detectors import _detect_insulte
+        assert _detect_insulte("Du bist nutzlos") == "directe"
+
+    def test_de_dumm(self):
+        from services.chat_detectors import _detect_insulte
+        assert _detect_insulte("Du bist dumm") == "directe"
+
+    def test_nl_nutteloos(self):
+        from services.chat_detectors import _detect_insulte
+        assert _detect_insulte("Je bent nutteloos") == "directe"
+
+    def test_nl_dom(self):
+        from services.chat_detectors import _detect_insulte
+        assert _detect_insulte("Je bent dom") == "directe"
+
+    def test_en_this_bot_useless(self):
+        from services.chat_detectors import _detect_insulte
+        assert _detect_insulte("This bot is useless") == "directe"
+
+    def test_de_dieser_bot_schrott(self):
+        from services.chat_detectors import _detect_insulte
+        assert _detect_insulte("Dieser bot ist schrott") == "directe"
+
+    def test_nl_deze_bot_waardeloos(self):
+        from services.chat_detectors import _detect_insulte
+        assert _detect_insulte("Deze bot is waardeloos") == "directe"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# FIX AUDIT 360 — Paires pluriels multilingues
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestPairesMultilangPlurals:
+    """Les pluriels 'pairs/pares/Paare/paren' doivent etre detectes."""
+
+    def test_en_pairs_plural(self):
+        from services.chat_detectors import _detect_paires
+        assert _detect_paires("Which pairs appear most often?") is True
+
+    def test_en_pair_singular(self):
+        from services.chat_detectors import _detect_paires
+        assert _detect_paires("Which pair is most common?") is True
+
+    def test_es_pares(self):
+        from services.chat_detectors import _detect_paires
+        assert _detect_paires("¿Qué pares salen más a menudo?") is True
+
+    def test_es_pareja(self):
+        from services.chat_detectors import _detect_paires
+        assert _detect_paires("¿Qué parejas salen juntas?") is True
+
+    def test_pt_pares(self):
+        from services.chat_detectors import _detect_paires
+        assert _detect_paires("Quais pares saem com mais frequência?") is True
+
+    def test_de_paare(self):
+        from services.chat_detectors import _detect_paires
+        assert _detect_paires("Welche Paare kommen am häufigsten vor?") is True
+
+    def test_de_paar_singular(self):
+        from services.chat_detectors import _detect_paires
+        assert _detect_paires("Welches Paar ist am häufigsten?") is True
+
+    def test_nl_paren(self):
+        from services.chat_detectors import _detect_paires
+        assert _detect_paires("Welke paren komen het vaakst voor?") is True
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# FIX AUDIT 360 — Requete complexe multilingue
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestRequeteComplexeMultilang:
+    """_detect_requete_complexe_em doit detecter les classements en 6 langues."""
+
+    def test_fr_plus_sortis(self):
+        from services.chat_detectors_em import _detect_requete_complexe_em
+        r = _detect_requete_complexe_em("Quels sont les numéros les plus sortis ?")
+        assert r is not None
+        assert r["tri"] == "frequence_desc"
+
+    def test_en_most_drawn(self):
+        from services.chat_detectors_em import _detect_requete_complexe_em
+        r = _detect_requete_complexe_em("What are the most drawn numbers?")
+        assert r is not None
+        assert r["tri"] == "frequence_desc"
+
+    def test_en_most_common(self):
+        from services.chat_detectors_em import _detect_requete_complexe_em
+        r = _detect_requete_complexe_em("What are the most common EuroMillions numbers?")
+        assert r is not None
+        assert r["tri"] == "frequence_desc"
+
+    def test_en_least_drawn(self):
+        from services.chat_detectors_em import _detect_requete_complexe_em
+        r = _detect_requete_complexe_em("What are the least drawn numbers?")
+        assert r is not None
+        assert r["tri"] == "frequence_asc"
+
+    def test_es_mas_sorteados(self):
+        from services.chat_detectors_em import _detect_requete_complexe_em
+        r = _detect_requete_complexe_em("¿Cuáles son los números más sorteados?")
+        assert r is not None
+        assert r["tri"] == "frequence_desc"
+
+    def test_es_menos_frecuentes(self):
+        from services.chat_detectors_em import _detect_requete_complexe_em
+        r = _detect_requete_complexe_em("¿Cuáles son los números menos frecuentes?")
+        assert r is not None
+        assert r["tri"] == "frequence_asc"
+
+    def test_pt_mais_sorteados(self):
+        from services.chat_detectors_em import _detect_requete_complexe_em
+        r = _detect_requete_complexe_em("Quais são os números mais sorteados?")
+        assert r is not None
+        assert r["tri"] == "frequence_desc"
+
+    def test_de_haufigsten(self):
+        from services.chat_detectors_em import _detect_requete_complexe_em
+        r = _detect_requete_complexe_em("Welche Zahlen werden am häufigsten gezogen?")
+        assert r is not None
+        assert r["tri"] == "frequence_desc"
+
+    def test_de_seltensten(self):
+        from services.chat_detectors_em import _detect_requete_complexe_em
+        r = _detect_requete_complexe_em("Welche Zahlen werden am seltensten gezogen?")
+        assert r is not None
+        assert r["tri"] == "frequence_asc"
+
+    def test_nl_vaakst(self):
+        from services.chat_detectors_em import _detect_requete_complexe_em
+        r = _detect_requete_complexe_em("Welke nummers worden het vaakst getrokken?")
+        assert r is not None
+        assert r["tri"] == "frequence_desc"
+
+    def test_nl_minst(self):
+        from services.chat_detectors_em import _detect_requete_complexe_em
+        r = _detect_requete_complexe_em("Welke nummers worden het minst getrokken?")
+        assert r is not None
+        assert r["tri"] == "frequence_asc"
+
+    def test_en_ranking(self):
+        from services.chat_detectors_em import _detect_requete_complexe_em
+        r = _detect_requete_complexe_em("Show me the ranking of numbers")
+        assert r is not None
+        assert r["tri"] == "frequence_desc"
+
+
+# ═══════════════════════════════════════════════════════════
+# Multilang insult/compliment/menace RESPONSE dispatch tests
+# ═══════════════════════════════════════════════════════════
+
+class TestInsultResponseMultilang:
+    """Verify insult responses are returned in the correct language."""
+
+    def _pool_check(self, lang, pool_module_attr):
+        """Verify response comes from the expected pool."""
+        from services.chat_responses_em_multilang import get_insult_response
+        import services.chat_responses_em_multilang as ml
+        pool = getattr(ml, pool_module_attr)
+        for _ in range(10):
+            resp = get_insult_response(lang, 0, [])
+            assert resp in pool, f"Response not in {pool_module_attr}: {resp[:60]}"
+
+    def test_es_response_from_pool(self):
+        self._pool_check("es", "_INSULT_L1_ES")
+
+    def test_pt_response_from_pool(self):
+        self._pool_check("pt", "_INSULT_L1_PT")
+
+    def test_de_response_from_pool(self):
+        self._pool_check("de", "_INSULT_L1_DE")
+
+    def test_nl_response_from_pool(self):
+        self._pool_check("nl", "_INSULT_L1_NL")
+
+    def test_fr_not_returned_for_es(self):
+        from services.chat_responses_em_multilang import get_insult_response
+        from services.chat_detectors_em import _INSULT_L1_EM
+        for _ in range(10):
+            resp = get_insult_response("es", 0, [])
+            assert resp not in _INSULT_L1_EM
+
+    def test_fr_not_returned_for_de(self):
+        from services.chat_responses_em_multilang import get_insult_response
+        from services.chat_detectors_em import _INSULT_L1_EM
+        for _ in range(10):
+            resp = get_insult_response("de", 0, [])
+            assert resp not in _INSULT_L1_EM
+
+
+class TestInsultShortMultilang:
+    """Verify insult-short prefix is in the correct language."""
+
+    def test_fr_short(self):
+        from services.chat_responses_em_multilang import get_insult_short
+        resp = get_insult_short("fr")
+        assert any(w in resp.lower() for w in ("charmant", "glisse", "classe", "noté", "abstraction"))
+
+    def test_en_short(self):
+        from services.chat_responses_em_multilang import get_insult_short
+        resp = get_insult_short("en")
+        assert any(w in resp.lower() for w in ("charming", "duck", "classy", "noted", "slide"))
+
+    def test_es_short(self):
+        from services.chat_responses_em_multilang import get_insult_short
+        resp = get_insult_short("es")
+        assert any(w in resp.lower() for w in ("encantador", "resbala", "clase", "anotado", "pasar"))
+
+    def test_pt_short(self):
+        from services.chat_responses_em_multilang import get_insult_short
+        resp = get_insult_short("pt")
+        assert any(w in resp.lower() for w in ("encantador", "escorrega", "classe", "anotado", "passar"))
+
+    def test_de_short(self):
+        from services.chat_responses_em_multilang import get_insult_short
+        resp = get_insult_short("de")
+        assert any(w in resp.lower() for w in ("charmant", "perlt", "stilvoll", "notiert", "überhöre"))
+
+    def test_nl_short(self):
+        from services.chat_responses_em_multilang import get_insult_short
+        resp = get_insult_short("nl")
+        assert any(w in resp.lower() for w in ("charmant", "glijdt", "stijlvol", "genoteerd", "gaan"))
+
+
+class TestMenaceResponseMultilang:
+    """Verify menace responses are in the correct language."""
+
+    def test_es_menace(self):
+        from services.chat_responses_em_multilang import get_menace_response
+        resp = get_menace_response("es")
+        assert "Google Cloud" in resp
+
+    def test_pt_menace(self):
+        from services.chat_responses_em_multilang import get_menace_response
+        resp = get_menace_response("pt")
+        assert "Google Cloud" in resp
+
+    def test_de_menace(self):
+        from services.chat_responses_em_multilang import get_menace_response
+        resp = get_menace_response("de")
+        assert "Google Cloud" in resp
+
+    def test_nl_menace(self):
+        from services.chat_responses_em_multilang import get_menace_response
+        resp = get_menace_response("nl")
+        assert "Google Cloud" in resp
+
+
+class TestComplimentResponseMultilang:
+    """Verify compliment responses are in the correct language."""
+
+    def test_es_compliment(self):
+        from services.chat_responses_em_multilang import get_compliment_response
+        resp = get_compliment_response("es", "normal", 0)
+        assert isinstance(resp, str) and len(resp) > 10
+
+    def test_pt_compliment(self):
+        from services.chat_responses_em_multilang import get_compliment_response
+        resp = get_compliment_response("pt", "normal", 0)
+        assert isinstance(resp, str) and len(resp) > 10
+
+    def test_de_compliment(self):
+        from services.chat_responses_em_multilang import get_compliment_response
+        resp = get_compliment_response("de", "normal", 0)
+        assert isinstance(resp, str) and len(resp) > 10
+
+    def test_nl_compliment(self):
+        from services.chat_responses_em_multilang import get_compliment_response
+        resp = get_compliment_response("nl", "normal", 0)
+        assert isinstance(resp, str) and len(resp) > 10
+
+    def test_es_love(self):
+        from services.chat_responses_em_multilang import get_compliment_response
+        resp = get_compliment_response("es", "love", 0)
+        assert isinstance(resp, str) and len(resp) > 10
+
+    def test_pt_merci(self):
+        from services.chat_responses_em_multilang import get_compliment_response
+        resp = get_compliment_response("pt", "merci", 0)
+        assert isinstance(resp, str) and len(resp) > 10
+
+
+class TestFallbackMultilang:
+    """Verify fallback responses are in the correct language."""
+
+    def test_fr_fallback(self):
+        from services.chat_responses_em_multilang import get_fallback
+        assert "indisponible" in get_fallback("fr").lower()
+
+    def test_en_fallback(self):
+        from services.chat_responses_em_multilang import get_fallback
+        assert "unavailable" in get_fallback("en").lower()
+
+    def test_es_fallback(self):
+        from services.chat_responses_em_multilang import get_fallback
+        assert "disponible" in get_fallback("es").lower()
+
+    def test_pt_fallback(self):
+        from services.chat_responses_em_multilang import get_fallback
+        assert "indisponível" in get_fallback("pt").lower()
+
+    def test_de_fallback(self):
+        from services.chat_responses_em_multilang import get_fallback
+        assert "verfügbar" in get_fallback("de").lower()
+
+    def test_nl_fallback(self):
+        from services.chat_responses_em_multilang import get_fallback
+        assert "beschikbaar" in get_fallback("nl").lower()
