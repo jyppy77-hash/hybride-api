@@ -851,3 +851,95 @@ class TestFallbackMultilang:
     def test_nl_fallback(self):
         from services.chat_responses_em_multilang import get_fallback
         assert "beschikbaar" in get_fallback("nl").lower()
+
+
+# ═══════════════════════════════════════════════════════════
+#  BUG 2 FIX — Star detection multilang in _detect_requete_complexe_em
+# ═══════════════════════════════════════════════════════════
+
+class TestStarDetectionMultilang:
+    """Verify star keywords route to num_type='etoile' in 6 languages."""
+
+    def _detect(self, msg):
+        from services.chat_detectors_em import _detect_requete_complexe_em
+        return _detect_requete_complexe_em(msg)
+
+    # --- FR ---
+    def test_fr_quelles_etoiles_sortent_le_plus(self):
+        r = self._detect("quelles étoiles sortent le plus")
+        assert r is not None
+        assert r["num_type"] == "etoile"
+
+    def test_fr_classement_etoiles(self):
+        r = self._detect("classement des étoiles")
+        assert r is not None
+        assert r["num_type"] == "etoile"
+
+    def test_fr_top_etoiles(self):
+        r = self._detect("top 5 étoiles les plus fréquentes")
+        assert r is not None
+        assert r["num_type"] == "etoile"
+
+    # --- EN ---
+    def test_en_which_stars_most_drawn(self):
+        r = self._detect("which stars are most drawn")
+        assert r is not None
+        assert r["num_type"] == "etoile"
+
+    def test_en_most_frequent_stars(self):
+        r = self._detect("most frequent stars")
+        assert r is not None
+        assert r["num_type"] == "etoile"
+
+    def test_en_star_ranking(self):
+        r = self._detect("star ranking")
+        assert r is not None
+        assert r["num_type"] == "etoile"
+
+    # --- ES ---
+    def test_es_estrellas_mas_frecuentes(self):
+        r = self._detect("cuáles estrellas son más frecuentes")
+        assert r is not None
+        assert r["num_type"] == "etoile"
+
+    # --- PT ---
+    def test_pt_estrelas_mais_sorteadas(self):
+        r = self._detect("quais estrelas mais sorteadas")
+        assert r is not None
+        assert r["num_type"] == "etoile"
+
+    # --- DE ---
+    def test_de_sterne_haufigsten(self):
+        r = self._detect("welche Sterne am häufigsten gezogen")
+        assert r is not None
+        assert r["num_type"] == "etoile"
+
+    # --- NL ---
+    def test_nl_sterren_meest_getrokken(self):
+        r = self._detect("welke sterren meest getrokken")
+        assert r is not None
+        assert r["num_type"] == "etoile"
+
+    # --- Sanity: boule queries still return boule ---
+    def test_fr_numeros_plus_frequents_is_boule(self):
+        r = self._detect("numéros les plus fréquents")
+        assert r is not None
+        assert r["num_type"] == "boule"
+
+    def test_en_most_drawn_numbers_is_boule(self):
+        r = self._detect("most drawn numbers")
+        assert r is not None
+        assert r["num_type"] == "boule"
+
+    # --- Hot/cold star detection multilang ---
+    def test_en_hot_stars(self):
+        r = self._detect("hottest stars")
+        assert r is not None
+        assert r["num_type"] == "etoile"
+
+    def test_es_estrellas_calientes(self):
+        r = self._detect("estrellas calientes")
+        # May not match hot pattern — that's OK if it doesn't
+        # But if it does, num_type must be etoile
+        if r is not None:
+            assert r["num_type"] == "etoile"

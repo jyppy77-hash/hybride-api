@@ -215,7 +215,21 @@ def _detect_requete_complexe_em(message: str):
     # --- Classement ---
     limit = _extract_top_n(lower)
 
-    num_type = "etoile" if ("etoile" in lower or "étoile" in lower) else "boule"
+    _star_kw = ("etoile" in lower or "étoile" in lower or "star" in lower
+                or "estrella" in lower or "estrela" in lower
+                or "stern" in lower or "ster" in lower)
+    num_type = "etoile" if _star_kw else "boule"
+
+    # --- Requêtes directes étoiles + fréquence (6 langues) ---
+    if _star_kw and (
+        re.search(r'(?:sort\w*|tir[eé]\w*|apparai)\w*\s+le\s+plus', lower) or
+        re.search(r'(?:come|drawn|appear)\w*\s+(?:out\s+)?(?:the\s+)?most', lower) or
+        re.search(r'(?:plus|most|m[aá]s|mais|meist|meest)\s+(?:fr[eé]quent|sorti|drawn|frecuent|frequent|getrokken|gezogen)', lower) or
+        re.search(r'(?:sort\w*|sal\w*|saem|sair|gezogen|getrokken)\w*\s+(?:le\s+plus|the\s+most|m[aá]s|mais|am\s+meisten|het\s+meest)', lower) or
+        re.search(r'(?:quell?e?s?|which|cu[aá]le?s?|quais|welche|welke)\b', lower) or
+        re.search(r'(?:class\w+|rank|top|fr[eé]quenc|frequenc|h[aä]ufig|vaak)', lower)
+    ):
+        return {"type": "classement", "tri": "frequence_desc", "limit": limit, "num_type": "etoile"}
 
     if re.search(r'(?:plus|les?\s+plus)\s+(?:fr[eé]quent|sorti|courant|pr[eé]sent)', lower) or \
        re.search(r'(?:top|meilleur|premier)\s+\d{0,2}\s*(?:num[eé]ro|boule|[eé]toile)?', lower) or \
