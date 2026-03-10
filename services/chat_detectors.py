@@ -1120,10 +1120,36 @@ _ARGENT_L3 = [
 ]
 
 
+# Exclusion Phase A — questions sur le score de conformité
+# (l'utilisateur demande ce que signifie le score, pas une question d'argent)
+_SCORE_QUESTION_FR = [
+    r'\bscore\b.*\b(?:chances?|gagner|probabilit[eé])',
+    r'\b(?:chances?|gagner|probabilit[eé]).*\bscore\b',
+    r'\b\d+\s*/\s*\d+\b.*\b(?:chances?|gagner|probabilit[eé])',
+    r'\b(?:chances?|gagner|probabilit[eé]).*\b\d+\s*/\s*\d+\b',
+    r'\bconformit[eé]\b.*\b(?:chances?|gagner|probabilit[eé])',
+    r'\bscore\s+interne\b',
+    r'\bscore\s+de\s+conformit[eé]\b',
+]
+
+
+def _detect_score_question(message: str) -> bool:
+    """Detecte si le message porte sur l'explication du score de conformite.
+    Ces questions ne doivent PAS declencher Phase A."""
+    lower = message.lower()
+    for pattern in _SCORE_QUESTION_FR:
+        if re.search(pattern, lower):
+            return True
+    return False
+
+
 def _detect_argent(message: str) -> bool:
     """Detecte si le message concerne l'argent, les gains ou les paris.
-    Exclut les demandes de generation de grilles (Phase G prioritaire)."""
+    Exclut les demandes de generation de grilles (Phase G prioritaire)
+    et les questions sur le score de conformite."""
     if _detect_generation(message):
+        return False
+    if _detect_score_question(message):
         return False
     lower = message.lower()
     for pattern in _ARGENT_PHRASES_FR:

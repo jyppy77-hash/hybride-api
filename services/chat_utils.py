@@ -532,4 +532,10 @@ def _format_generation_context(grid_data: dict) -> str:
         "Si des numéros ont été imposés, mentionne-le clairement. "
         "Rappelle que le Loto reste un jeu de pur hasard et qu'aucune grille ne garantit de gain."
     )
+    lines.append(
+        "DISCLAIMER SCORE : Quand tu mentionnes le score de conformité, TOUJOURS préciser que "
+        "c'est un score interne basé sur les critères du moteur (équilibre, dispersion, fréquences) "
+        "et que chaque combinaison a exactement la même probabilité mathématique de sortir au tirage. "
+        "Le score NE mesure PAS une probabilité de gain."
+    )
     return "\n".join(lines)

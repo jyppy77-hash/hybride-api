@@ -639,10 +639,75 @@ _ARGENT_BETTING_EM = {
 }
 
 
+# Exclusion Phase A — questions sur le score de conformité (multilingue)
+_SCORE_QUESTION_EM = {
+    "fr": [
+        r'\bscore\b.*\b(?:chances?|gagner|probabilit[eé])',
+        r'\b(?:chances?|gagner|probabilit[eé]).*\bscore\b',
+        r'\b\d+\s*/\s*\d+\b.*\b(?:chances?|gagner|probabilit[eé])',
+        r'\b(?:chances?|gagner|probabilit[eé]).*\b\d+\s*/\s*\d+\b',
+        r'\bconformit[eé]\b.*\b(?:chances?|gagner|probabilit[eé])',
+        r'\bscore\s+interne\b',
+        r'\bscore\s+de\s+conformit[eé]\b',
+    ],
+    "en": [
+        r'\bscore\b.*\b(?:chances?|winning|odds|probability)',
+        r'\b(?:chances?|winning|odds|probability).*\bscore\b',
+        r'\b\d+\s*/\s*\d+\b.*\b(?:chances?|winning|odds|probability)',
+        r'\b(?:chances?|winning|odds|probability).*\b\d+\s*/\s*\d+\b',
+        r'\bconformity\b.*\b(?:chances?|winning|odds|probability)',
+        r'\binternal\s+score\b',
+        r'\bconformity\s+score\b',
+    ],
+    "es": [
+        r'\bpuntuaci[oó]n\b.*\b(?:probabilidad|ganar|posibilidad)',
+        r'\b(?:probabilidad|ganar|posibilidad).*\bpuntuaci[oó]n\b',
+        r'\b\d+\s*/\s*\d+\b.*\b(?:probabilidad|ganar|posibilidad)',
+        r'\bconformidad\b.*\b(?:probabilidad|ganar|posibilidad)',
+        r'\bpuntuaci[oó]n\s+intern[ao]\b',
+    ],
+    "pt": [
+        r'\bpontua[çc][ãa]o\b.*\b(?:probabilidade|ganhar|hip[oó]tese)',
+        r'\b(?:probabilidade|ganhar|hip[oó]tese).*\bpontua[çc][ãa]o\b',
+        r'\b\d+\s*/\s*\d+\b.*\b(?:probabilidade|ganhar|hip[oó]tese)',
+        r'\bconformidade\b.*\b(?:probabilidade|ganhar|hip[oó]tese)',
+        r'\bpontua[çc][ãa]o\s+intern[ao]\b',
+    ],
+    "de": [
+        r'\b(?:punktzahl|score)\b.*\b(?:chancen?|gewinnen|wahrscheinlichkeit)',
+        r'\b(?:chancen?|gewinnen|wahrscheinlichkeit).*\b(?:punktzahl|score)\b',
+        r'\b\d+\s*/\s*\d+\b.*\b(?:chancen?|gewinnen|wahrscheinlichkeit)',
+        r'\bkonformit[aä]t\b.*\b(?:chancen?|gewinnen|wahrscheinlichkeit)',
+        r'\binterner?\s+(?:punktzahl|score)\b',
+    ],
+    "nl": [
+        r'\bscore\b.*\b(?:kans(?:en)?|winnen|waarschijnlijkheid)',
+        r'\b(?:kans(?:en)?|winnen|waarschijnlijkheid).*\bscore\b',
+        r'\b\d+\s*/\s*\d+\b.*\b(?:kans(?:en)?|winnen|waarschijnlijkheid)',
+        r'\bconformiteit\b.*\b(?:kans(?:en)?|winnen|waarschijnlijkheid)',
+        r'\binterne\s+score\b',
+    ],
+}
+
+
+def _detect_score_question_em(message: str, lang: str) -> bool:
+    """Detecte si le message EM porte sur l'explication du score (multilingue).
+    Ces questions ne doivent PAS declencher Phase A."""
+    lower = message.lower()
+    patterns = _SCORE_QUESTION_EM.get(lang, _SCORE_QUESTION_EM["fr"])
+    for pattern in patterns:
+        if re.search(pattern, lower):
+            return True
+    return False
+
+
 def _detect_argent_em(message: str, lang: str) -> bool:
     """Detecte si le message EM concerne l'argent/gains/paris (multilingue).
-    Exclut les demandes de generation de grilles (Phase G prioritaire)."""
+    Exclut les demandes de generation de grilles (Phase G prioritaire)
+    et les questions sur le score de conformite."""
     if _detect_generation(message):
+        return False
+    if _detect_score_question_em(message, lang):
         return False
     lower = message.lower()
     phrases = _ARGENT_PHRASES_EM.get(lang, _ARGENT_PHRASES_EM["fr"])
