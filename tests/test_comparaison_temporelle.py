@@ -330,3 +330,85 @@ class TestComparaisonMultilangEM:
     def test_nl_compare(self):
         intent = _detect_requete_complexe_em("vergelijk 7 vs 23")
         assert intent is not None and intent["type"] == "comparaison"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# _clean_response — tags internes jamais visibles par l'utilisateur
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestCleanResponseStripsTags:
+    """_clean_response doit supprimer tous les tags internes du contexte."""
+
+    def test_strip_comparaison_sur_periode(self):
+        from services.chat_utils import _clean_response
+        text = "[COMPARAISON SUR PÉRIODE — 12 vs 45] Voici les résultats."
+        result = _clean_response(text)
+        assert "[COMPARAISON" not in result
+        assert "Voici les résultats" in result
+
+    def test_strip_frequence_sur_periode(self):
+        from services.chat_utils import _clean_response
+        text = "[FRÉQUENCE SUR LA PÉRIODE — C'EST CE CHIFFRE QUE TU DOIS CITER] 22 apparitions"
+        result = _clean_response(text)
+        assert "[FRÉQUENCE" not in result
+        assert "22 apparitions" in result
+
+    def test_strip_progression(self):
+        from services.chat_utils import _clean_response
+        text = "[PROGRESSION PAR RAPPORT À LA MOYENNE HISTORIQUE] +16.4%"
+        result = _clean_response(text)
+        assert "[PROGRESSION" not in result
+        assert "+16.4%" in result
+
+    def test_strip_reference(self):
+        from services.chat_utils import _clean_response
+        text = "[RÉFÉRENCE — fréquence totale historique (ne PAS citer en premier)] 120 fois"
+        result = _clean_response(text)
+        assert "[RÉFÉRENCE" not in result
+        assert "120 fois" in result
+
+    def test_strip_breakdown(self):
+        from services.chat_utils import _clean_response
+        text = "[BREAKDOWN — Critères de sélection] pair/impair 3/2"
+        result = _clean_response(text)
+        assert "[BREAKDOWN" not in result
+        assert "pair/impair" in result
+
+    def test_strip_message_a_adapter(self):
+        from services.chat_utils import _clean_response
+        text = "[MESSAGE A ADAPTER] Reformule en allemand."
+        result = _clean_response(text)
+        assert "[MESSAGE A ADAPTER]" not in result
+
+    def test_strip_all_period_tags_combined(self):
+        """Simule une réponse Gemini qui aurait échoé à reformuler le contexte brut."""
+        from services.chat_utils import _clean_response
+        raw = (
+            "[COMPARAISON SUR PÉRIODE — 12 vs 45]\n"
+            "[FRÉQUENCE SUR LA PÉRIODE — C'EST CE CHIFFRE QUE TU DOIS CITER]\n"
+            "N°12 : 22 apparitions\n"
+            "[PROGRESSION PAR RAPPORT À LA MOYENNE HISTORIQUE]\n"
+            "+16.4%\n"
+            "[RÉFÉRENCE — fréquence totale historique (ne PAS citer en premier)]\n"
+            "120 fois\n"
+            "[MESSAGE A ADAPTER]\n"
+            "Voici la comparaison."
+        )
+        result = _clean_response(raw)
+        assert "[COMPARAISON" not in result
+        assert "[FRÉQUENCE" not in result
+        assert "[PROGRESSION" not in result
+        assert "[RÉFÉRENCE" not in result
+        assert "[MESSAGE A ADAPTER]" not in result
+        assert "22 apparitions" in result
+        assert "+16.4%" in result
+        assert "Voici la comparaison" in result
+
+    def test_existing_tags_still_stripped(self):
+        """Vérifie que les tags existants (pre-Fix 8c) sont toujours nettoyés."""
+        from services.chat_utils import _clean_response
+        text = "[RÉSULTAT SQL] données [CLASSEMENT top 10] résultats [ANALYSE DE GRILLE 5/5]"
+        result = _clean_response(text)
+        assert "[RÉSULTAT SQL]" not in result
+        assert "[CLASSEMENT" not in result
+        assert "[ANALYSE DE GRILLE" not in result

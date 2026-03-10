@@ -194,6 +194,13 @@ def _clean_response(text: str) -> str:
         r'\[Page:\s*[^\]]*\]',
         r'\[Question utilisateur[^\]]*\]',
         r'\[CONTEXTE CONTINUATION[^\]]*\]',
+        r'\[FR[EÉ]QUENCE SUR LA P[EÉ]RIODE[^\]]*\]',
+        r'\[FREQUENCE SUR LA PERIODE[^\]]*\]',
+        r'\[PROGRESSION[^\]]*\]',
+        r'\[R[EÉ]F[EÉ]RENCE[^\]]*\]',
+        r'\[REFERENCE[^\]]*\]',
+        r'\[BREAKDOWN[^\]]*\]',
+        r'\[MESSAGE A ADAPTER[^\]]*\]',
     ]
     for tag in internal_tags:
         text = re.sub(tag, '', text)
