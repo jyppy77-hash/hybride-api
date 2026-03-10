@@ -1317,18 +1317,18 @@ async def admin_api_engagement(
 # ══════════════════════════════════════════════════════════════════════════════
 
 _PACKS = [
-    {"name": "FR Complet", "codes": "LOTO_FR_A + EM_FR_A", "pays": "France (Loto+EM)", "tarif": "Sur mesure", "requires_sasu": False},
-    {"name": "DACH", "codes": "EM_DE_A", "pays": "DE, AT, CH", "tarif": "349 EUR", "requires_sasu": True},
-    {"name": "Benelux", "codes": "EM_FR_A + EM_NL_A", "pays": "BE, NL, LU", "tarif": "Sur mesure", "requires_sasu": True},
-    {"name": "Iberique", "codes": "EM_ES_A + EM_PT_A", "pays": "ES, PT", "tarif": "Sur mesure", "requires_sasu": True},
-    {"name": "Continental A", "codes": "LOTO_FR_A + tous EM_*_A", "pays": "9 pays Premium", "tarif": "Sur mesure", "requires_sasu": True},
-    {"name": "Continental B", "codes": "LOTO_FR_B + tous EM_*_B", "pays": "9 pays Standard", "tarif": "Sur mesure", "requires_sasu": True},
+    {"name": "FR Complet", "codes": "LOTO_FR_A + EM_FR_A", "pays": "France (Loto+EM)", "tarif": "799 EUR (-10%)", "requires_sasu": False},
+    {"name": "DACH", "codes": "EM_DE_A", "pays": "DE, AT, CH", "tarif": "549 EUR", "requires_sasu": True},
+    {"name": "Benelux", "codes": "EM_FR_A + EM_NL_A", "pays": "BE, NL, LU", "tarif": "799 EUR (-10%)", "requires_sasu": True},
+    {"name": "Iberique", "codes": "EM_ES_A + EM_PT_A", "pays": "ES, PT", "tarif": "759 EUR (-15%)", "requires_sasu": True},
+    {"name": "Continental A", "codes": "LOTO_FR_A + 6x EM_*_A", "pays": "9 pays Premium", "tarif": "2 499 EUR (-25%)", "requires_sasu": True},
+    {"name": "Continental B", "codes": "LOTO_FR_B + 6x EM_*_B", "pays": "9 pays Standard", "tarif": "1 189 EUR (-20%)", "requires_sasu": True},
 ]
 
 _PALIERS = [
-    {"name": "Lancement", "impressions": "0-10K", "standard": "149 EUR (gel)", "premium": "349 EUR (gel)", "hausse": "—"},
-    {"name": "Croissance", "impressions": "10K-30K", "standard": "199 EUR", "premium": "449 EUR", "hausse": "+25% max"},
-    {"name": "Traction", "impressions": "30K-100K", "standard": "299 EUR", "premium": "599 EUR", "hausse": "+25% max"},
+    {"name": "Lancement", "impressions": "0-10K", "standard": "199 EUR (gel)", "premium": "449 EUR / 549 EUR T1", "hausse": "—"},
+    {"name": "Croissance", "impressions": "10K-30K", "standard": "249 EUR", "premium": "549 EUR / 649 EUR T1", "hausse": "+25% max"},
+    {"name": "Traction", "impressions": "30K-100K", "standard": "349 EUR", "premium": "699 EUR / 799 EUR T1", "hausse": "+25% max"},
     {"name": "Scale", "impressions": "100K+", "standard": "Sur mesure", "premium": "Sur mesure", "hausse": "Negocie"},
 ]
 

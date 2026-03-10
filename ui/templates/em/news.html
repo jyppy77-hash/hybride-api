@@ -34,6 +34,30 @@
       }
     }
     </script>
+    <!-- JSON-LD Article -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": {{ _('Actualités EuroMillions — Moteur HYBRIDE et Nouvelles Fonctionnalités')|tojson }},
+      "description": {{ _('Suivez les actualités du module EuroMillions de LotoIA : moteur HYBRIDE, chatbot IA et mises à jour.')|tojson }},
+      "image": "{{ base_url }}/static/og-image.jpg",
+      "author": {
+        "@type": "Person",
+        "name": "Jean-Philippe Godard",
+        "alternateName": "JyppY",
+        "sameAs": ["https://www.linkedin.com/in/jpgodard/"]
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "LotoIA",
+        "url": {{ base_url|tojson }}
+      },
+      "mainEntityOfPage": {{ canonical_url|tojson }},
+      "datePublished": "2026-03-02",
+      "dateModified": "2026-03-09"
+    }
+    </script>
     <!-- JSON-LD BreadcrumbList -->
     <script type="application/ld+json">
     {

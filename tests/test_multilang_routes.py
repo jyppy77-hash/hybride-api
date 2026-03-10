@@ -407,17 +407,23 @@ def test_sitemap_has_lastmod():
     assert "<lastmod>" in resp.text
 
 
-def test_sitemap_includes_legal_pages():
-    """Sitemap includes legal pages for all 6 languages."""
+def test_sitemap_excludes_noindex_legal_pages():
+    """Sitemap must NOT include legal pages (they have noindex meta tag)."""
     client = _get_client()
     resp = client.get("/sitemap.xml")
     body = resp.text
-    assert f"{BASE_URL}/euromillions/mentions-legales" in body
-    assert f"{BASE_URL}/en/euromillions/legal-notices" in body
-    assert f"{BASE_URL}/es/euromillions/aviso-legal" in body
-    assert f"{BASE_URL}/pt/euromillions/avisos-legais" in body
-    assert f"{BASE_URL}/de/euromillions/impressum" in body
-    assert f"{BASE_URL}/nl/euromillions/juridische-kennisgeving" in body
+    # EM legal pages have noindex,follow → must NOT be in sitemap
+    assert f"{BASE_URL}/euromillions/mentions-legales" not in body
+    assert f"{BASE_URL}/en/euromillions/legal-notices" not in body
+    assert f"{BASE_URL}/es/euromillions/aviso-legal" not in body
+    assert f"{BASE_URL}/pt/euromillions/avisos-legais" not in body
+    assert f"{BASE_URL}/de/euromillions/impressum" not in body
+    assert f"{BASE_URL}/nl/euromillions/juridische-kennisgeving" not in body
+    # Loto legal pages also have noindex → verify not in sitemap
+    assert "/mentions-legales</loc>" not in body
+    assert "/disclaimer</loc>" not in body
+    assert "/politique-confidentialite</loc>" not in body
+    assert "/politique-cookies</loc>" not in body
 
 
 def test_sitemap_has_xhtml_namespace():
@@ -464,13 +470,13 @@ def test_sitemap_loto_no_hreflang():
 
 
 def test_sitemap_url_count():
-    """Sitemap has 14 Loto + 96 EM pages = 110 URLs total.
-    (16 page_keys × 6 langs = 96, but home & accueil share same URL → 15 unique × 6 = 90,
-     plus 14 Loto = 104… we just check >= 100 URLs.)"""
+    """Sitemap has 14 Loto + 72 EM pages = 86 URLs total.
+    (12 page_keys × 6 langs = 72 unique, home & accueil share same URL,
+     legal pages excluded because they have noindex.)"""
     client = _get_client()
     resp = client.get("/sitemap.xml")
     url_count = resp.text.count("<url>")
-    assert url_count >= 100, f"Expected >= 100 URLs, got {url_count}"
+    assert url_count >= 80, f"Expected >= 80 URLs, got {url_count}"
 
 
 # ═══════════════════════════════════════════════

@@ -46,10 +46,8 @@ _EM_PAGE_PRIORITY = {
     "methodologie":     (0.8,  "monthly"),
     "ia":               (0.8,  "monthly"),
     "hybride_page":     (0.7,  "monthly"),
-    "mentions":         (0.3,  "yearly"),
-    "confidentialite":  (0.3,  "yearly"),
-    "cookies":          (0.3,  "yearly"),
-    "disclaimer":       (0.3,  "yearly"),
+    # Legal pages excluded — they have noindex,follow meta tag
+    # "mentions", "confidentialite", "cookies", "disclaimer" → not in sitemap
 }
 
 

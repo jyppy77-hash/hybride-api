@@ -53,6 +53,30 @@
       }
     }
     </script>
+    <!-- JSON-LD Article -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": {{ _('À propos de LotoIA — Analyse Statistique EuroMillions')|tojson }},
+      "description": {{ _('Découvrez LotoIA : mission, technologie HYBRIDE, données officielles EuroMillions et Loto, jeu responsable.')|tojson }},
+      "image": "{{ base_url }}/static/og-image.jpg",
+      "author": {
+        "@type": "Person",
+        "name": "Jean-Philippe Godard",
+        "alternateName": "JyppY",
+        "sameAs": ["https://www.linkedin.com/in/jpgodard/"]
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "LotoIA",
+        "url": {{ base_url|tojson }}
+      },
+      "mainEntityOfPage": {{ canonical_url|tojson }},
+      "datePublished": "2026-03-02",
+      "dateModified": "2026-03-09"
+    }
+    </script>
     <!-- JSON-LD BreadcrumbList -->
     <script type="application/ld+json">
     {
