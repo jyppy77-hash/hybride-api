@@ -34,3 +34,6 @@ Babel>=2.14.0
 
 # Templates (Jinja2 i18n)
 Jinja2>=3.1.0
+
+# GCP Monitoring (Cloud Run metrics)
+google-cloud-monitoring>=2.21.0

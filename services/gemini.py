@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import time
 import httpx
 
 from services.prompt_loader import load_prompt
@@ -64,6 +65,7 @@ Texte a reformuler :
 
     try:
         logger.debug("[META TEXTE] POST vers Gemini en cours...")
+        _t0 = time.monotonic()
         response = await gemini_breaker.call(
             http_client,
             GEMINI_MODEL_URL,
@@ -100,8 +102,19 @@ Texte a reformuler :
 
         logger.debug(f"[META TEXTE] Gemini HTTP status: {response.status_code}")
 
+        _dur_ms = (time.monotonic() - _t0) * 1000
         if response.status_code == 200:
             data = response.json()
+            # Track Gemini usage (tokens from usage_metadata)
+            _usage = data.get("usageMetadata", {})
+            _tin = _usage.get("promptTokenCount", 0)
+            _tout = _usage.get("candidatesTokenCount", 0)
+            try:
+                from services.gcp_monitoring import track_gemini_call
+                import asyncio
+                asyncio.ensure_future(track_gemini_call(_dur_ms, _tin, _tout))
+            except Exception:
+                pass
             candidates = data.get("candidates", [])
             logger.debug(f"[META TEXTE] candidates count: {len(candidates)}")
             if candidates:
@@ -121,6 +134,12 @@ Texte a reformuler :
                 logger.warning("[META TEXTE] candidates vide dans la reponse Gemini")
         else:
             logger.warning(f"[META TEXTE] Reponse Gemini HTTP {response.status_code}: {response.text[:500]}")
+            try:
+                from services.gcp_monitoring import track_gemini_call
+                import asyncio
+                asyncio.ensure_future(track_gemini_call(_dur_ms, error=True))
+            except Exception:
+                pass
 
         return {"analysis_enriched": analysis_local, "source": "hybride_local"}
 
@@ -139,10 +158,15 @@ async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, 
     """
     Async generator — stream text chunks from Gemini streaming API.
     Yields str chunks. Manages circuit breaker state manually.
+    Tracks Gemini usage (tokens, duration) via gcp_monitoring.
     """
     current = gemini_breaker.state
     if current == gemini_breaker.OPEN:
         raise CircuitOpenError("Circuit ouvert — fallback immediat")
+
+    _t0 = time.monotonic()
+    _usage_tin = 0
+    _usage_tout = 0
 
     try:
         async with http_client.stream(
@@ -175,6 +199,11 @@ async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, 
                     continue
                 try:
                     data = json.loads(line[6:])
+                    # Capture usage_metadata from last chunk
+                    _um = data.get("usageMetadata")
+                    if _um:
+                        _usage_tin = _um.get("promptTokenCount", _usage_tin)
+                        _usage_tout = _um.get("candidatesTokenCount", _usage_tout)
                     candidates = data.get("candidates", [])
                     if candidates:
                         parts = candidates[0].get("content", {}).get("parts", [])
@@ -187,6 +216,22 @@ async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, 
 
             gemini_breaker._record_success()
 
+            # Track usage after stream completes
+            _dur_ms = (time.monotonic() - _t0) * 1000
+            try:
+                import asyncio
+                from services.gcp_monitoring import track_gemini_call
+                asyncio.ensure_future(track_gemini_call(_dur_ms, _usage_tin, _usage_tout))
+            except Exception:
+                pass
+
     except (httpx.TimeoutException, httpx.ConnectError, OSError):
         gemini_breaker._record_failure()
+        _dur_ms = (time.monotonic() - _t0) * 1000
+        try:
+            import asyncio
+            from services.gcp_monitoring import track_gemini_call
+            asyncio.ensure_future(track_gemini_call(_dur_ms, error=True))
+        except Exception:
+            pass
         raise

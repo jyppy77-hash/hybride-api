@@ -1444,3 +1444,20 @@ async def admin_api_tarifs_data(request: Request):
     except Exception as e:
         logger.error("[ADMIN] tarifs API: %s", e)
         return JSONResponse({"billing_mode": "EI", "tarifs": [], "packs": [], "paliers": []}, status_code=500)
+
+
+# ── GCP Monitoring ────────────────────────────────────────────────────────────
+
+@router.get("/admin/api/gcp-metrics", include_in_schema=False)
+async def admin_api_gcp_metrics(request: Request):
+    """Real-time Cloud Run metrics + Gemini tracking + cost estimation."""
+    err = _require_auth_json(request)
+    if err:
+        return err
+    try:
+        from services.gcp_monitoring import get_gcp_metrics
+        data = await get_gcp_metrics()
+        return JSONResponse(data)
+    except Exception as e:
+        logger.error("[ADMIN] gcp-metrics: %s", e)
+        return JSONResponse({"status": "unknown", "error": str(e)}, status_code=500)

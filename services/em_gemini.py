@@ -6,6 +6,7 @@ Equivalent EM de services/gemini.py (ZERO modification au fichier Loto).
 
 import os
 import logging
+import time
 import httpx
 
 from services.prompt_loader import load_prompt_em, em_window_to_prompt
@@ -123,6 +124,7 @@ Texte a reformuler :
     logger.debug(f"[META TEXTE EM] Prompt construit ({len(prompt)} chars), appel Gemini...")
 
     try:
+        _t0 = time.monotonic()
         response = await gemini_breaker.call(
             http_client,
             GEMINI_MODEL_URL,
@@ -146,8 +148,18 @@ Texte a reformuler :
             }
         )
 
+        _dur_ms = (time.monotonic() - _t0) * 1000
         if response.status_code == 200:
             data = response.json()
+            _usage = data.get("usageMetadata", {})
+            _tin = _usage.get("promptTokenCount", 0)
+            _tout = _usage.get("candidatesTokenCount", 0)
+            try:
+                from services.gcp_monitoring import track_gemini_call
+                import asyncio
+                asyncio.ensure_future(track_gemini_call(_dur_ms, _tin, _tout))
+            except Exception:
+                pass
             candidates = data.get("candidates", [])
             if candidates:
                 content = candidates[0].get("content", {})
@@ -157,6 +169,13 @@ Texte a reformuler :
                     if enriched_text:
                         logger.info(f"[META TEXTE EM] Gemini OK (window={window_key})")
                         return {"analysis_enriched": enriched_text, "source": "gemini_enriched"}
+        else:
+            try:
+                from services.gcp_monitoring import track_gemini_call
+                import asyncio
+                asyncio.ensure_future(track_gemini_call(_dur_ms, error=True))
+            except Exception:
+                pass
 
         logger.warning(f"[META TEXTE EM] Reponse Gemini incomplete — fallback local")
         return {"analysis_enriched": analysis_local, "source": "hybride_local"}
