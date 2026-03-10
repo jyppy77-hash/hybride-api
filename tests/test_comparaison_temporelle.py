@@ -203,9 +203,13 @@ class TestComparaisonContextProgression:
         "favori_frequence": 31,
     }
 
-    def test_loto_with_period_has_progression(self):
+    def test_loto_with_period_has_comparaison_sur_periode(self):
         ctx = _format_complex_context(self._INTENT, self._DATA_WITH_PERIOD)
-        assert "[PROGRESSION TEMPORELLE" in ctx
+        assert "[COMPARAISON SUR PÉRIODE" in ctx
+
+    def test_loto_with_period_has_freq_sur_periode_section(self):
+        ctx = _format_complex_context(self._INTENT, self._DATA_WITH_PERIOD)
+        assert "[FRÉQUENCE SUR LA PÉRIODE" in ctx
 
     def test_loto_with_period_has_freq_period(self):
         ctx = _format_complex_context(self._INTENT, self._DATA_WITH_PERIOD)
@@ -214,7 +218,7 @@ class TestComparaisonContextProgression:
 
     def test_loto_with_period_has_expected(self):
         ctx = _format_complex_context(self._INTENT, self._DATA_WITH_PERIOD)
-        assert "attendu historique" in ctx
+        assert "attendu" in ctx
         assert "18.9" in ctx
 
     def test_loto_with_period_has_progression_pct(self):
@@ -226,9 +230,28 @@ class TestComparaisonContextProgression:
         ctx = _format_complex_context(self._INTENT, self._DATA_WITH_PERIOD)
         assert "31 a le plus progressé" in ctx
 
-    def test_loto_without_period_no_progression(self):
+    def test_loto_with_period_has_reference_section(self):
+        """Fréquence totale historique est en RÉFÉRENCE, pas en principal."""
+        ctx = _format_complex_context(self._INTENT, self._DATA_WITH_PERIOD)
+        assert "[RÉFÉRENCE" in ctx
+        assert "historique total" in ctx
+
+    def test_loto_with_period_has_important_instruction(self):
+        ctx = _format_complex_context(self._INTENT, self._DATA_WITH_PERIOD)
+        assert "IMPORTANT" in ctx
+        assert "PÉRIODE" in ctx
+
+    def test_loto_with_period_freq_period_before_total(self):
+        """freq_period apparaît AVANT freq_total dans le contexte."""
+        ctx = _format_complex_context(self._INTENT, self._DATA_WITH_PERIOD)
+        pos_period = ctx.index("22 apparitions")
+        pos_total = ctx.index("120 apparitions")
+        assert pos_period < pos_total
+
+    def test_loto_without_period_no_periode_section(self):
         ctx = _format_complex_context(self._INTENT, self._DATA_WITHOUT_PERIOD)
-        assert "[PROGRESSION TEMPORELLE" not in ctx
+        assert "[COMPARAISON SUR PÉRIODE" not in ctx
+        assert "[FRÉQUENCE SUR LA PÉRIODE" not in ctx
 
     def test_loto_without_period_still_has_comparaison(self):
         ctx = _format_complex_context(self._INTENT, self._DATA_WITHOUT_PERIOD)
@@ -238,14 +261,21 @@ class TestComparaisonContextProgression:
     # EM variant
     _INTENT_EM = {"type": "comparaison", "num1": 31, "num2": 24, "num_type": "boule"}
 
-    def test_em_with_period_has_progression(self):
+    def test_em_with_period_has_periode_section(self):
         ctx = _format_complex_context_em(self._INTENT_EM, self._DATA_WITH_PERIOD)
-        assert "[PROGRESSION TEMPORELLE" in ctx
+        assert "[COMPARAISON SUR PÉRIODE" in ctx
+        assert "[FRÉQUENCE SUR LA PÉRIODE" in ctx
         assert "+16.4%" in ctx
 
-    def test_em_without_period_no_progression(self):
+    def test_em_with_period_freq_period_before_total(self):
+        ctx = _format_complex_context_em(self._INTENT_EM, self._DATA_WITH_PERIOD)
+        pos_period = ctx.index("22 apparitions")
+        pos_total = ctx.index("120 apparitions")
+        assert pos_period < pos_total
+
+    def test_em_without_period_no_periode_section(self):
         ctx = _format_complex_context_em(self._INTENT_EM, self._DATA_WITHOUT_PERIOD)
-        assert "[PROGRESSION TEMPORELLE" not in ctx
+        assert "[COMPARAISON SUR PÉRIODE" not in ctx
 
 
 # ═══════════════════════════════════════════════════════════════════════

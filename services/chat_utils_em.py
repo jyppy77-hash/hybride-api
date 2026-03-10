@@ -127,40 +127,27 @@ def _format_complex_context_em(intent: dict, data) -> str:
         diff = data["diff_frequence"]
         sign = "+" if diff > 0 else ""
 
-        lines = [f"[COMPARAISON - Numéro {s1['numero']} vs Numéro {s2['numero']}]"]
-        lines.append(
-            f"Numéro {s1['numero']} : {s1['frequence_totale']} apparitions "
-            f"({s1['pourcentage_apparition']}) | Écart : {s1['ecart_actuel']} | "
-            f"Catégorie : {s1['categorie'].upper()}"
-        )
-        lines.append(
-            f"Numéro {s2['numero']} : {s2['frequence_totale']} apparitions "
-            f"({s2['pourcentage_apparition']}) | Écart : {s2['ecart_actuel']} | "
-            f"Catégorie : {s2['categorie'].upper()}"
-        )
-        if diff != 0:
-            favori = data["favori_frequence"]
-            lines.append(
-                f"Différence de fréquence : {sign}{diff} apparitions "
-                f"en faveur du {favori}"
-            )
-        else:
-            lines.append("Fréquences identiques")
-
         if data.get("period"):
+            # ── Comparaison avec période : fréquence PÉRIODE en principal ──
             p = data["period"]
-            lines.append("")
-            lines.append(f"[PROGRESSION TEMPORELLE — depuis {p['date_from']}]")
-            lines.append(f"Tirages dans la période : {p['total_tirages_period']}")
             _s1 = "+" if p["num1_progression_pct"] > 0 else ""
             _s2 = "+" if p["num2_progression_pct"] > 0 else ""
+
+            lines = [f"[COMPARAISON SUR PÉRIODE - Numéro {s1['numero']} vs Numéro {s2['numero']}]"]
+            lines.append(f"Période analysée : depuis {p['date_from']} ({p['total_tirages_period']} tirages)")
+            lines.append("")
+            lines.append(f"[FRÉQUENCE SUR LA PÉRIODE — C'EST CE CHIFFRE QUE TU DOIS CITER]")
+            lines.append(f"Numéro {s1['numero']} sur la période : {p['num1_freq_period']} apparitions")
+            lines.append(f"Numéro {s2['numero']} sur la période : {p['num2_freq_period']} apparitions")
+            lines.append("")
+            lines.append(f"[PROGRESSION PAR RAPPORT À LA MOYENNE HISTORIQUE]")
             lines.append(
-                f"Numéro {s1['numero']} sur la période : {p['num1_freq_period']} apparitions "
-                f"(attendu historique : {p['num1_expected']}, progression : {_s1}{p['num1_progression_pct']}%)"
+                f"Numéro {s1['numero']} : attendu {p['num1_expected']} → observé {p['num1_freq_period']} "
+                f"→ progression {_s1}{p['num1_progression_pct']}%"
             )
             lines.append(
-                f"Numéro {s2['numero']} sur la période : {p['num2_freq_period']} apparitions "
-                f"(attendu historique : {p['num2_expected']}, progression : {_s2}{p['num2_progression_pct']}%)"
+                f"Numéro {s2['numero']} : attendu {p['num2_expected']} → observé {p['num2_freq_period']} "
+                f"→ progression {_s2}{p['num2_progression_pct']}%"
             )
             if p["plus_progresse"]:
                 lines.append(
@@ -168,6 +155,43 @@ def _format_complex_context_em(intent: dict, data) -> str:
                 )
             else:
                 lines.append("Progressions identiques.")
+            lines.append("")
+            lines.append(f"[RÉFÉRENCE — fréquence totale historique (ne PAS citer en premier)]")
+            lines.append(
+                f"Numéro {s1['numero']} historique total : {s1['frequence_totale']} apparitions "
+                f"({s1['pourcentage_apparition']}) | Catégorie : {s1['categorie'].upper()}"
+            )
+            lines.append(
+                f"Numéro {s2['numero']} historique total : {s2['frequence_totale']} apparitions "
+                f"({s2['pourcentage_apparition']}) | Catégorie : {s2['categorie'].upper()}"
+            )
+            lines.append("")
+            lines.append(
+                "IMPORTANT : L'utilisateur a demandé une comparaison SUR UNE PÉRIODE. "
+                "Cite en PREMIER la fréquence sur la période demandée (section [FRÉQUENCE SUR LA PÉRIODE]). "
+                "La fréquence totale historique est une RÉFÉRENCE secondaire, ne la cite PAS comme chiffre principal."
+            )
+        else:
+            # ── Comparaison sans période : fréquence totale ──
+            lines = [f"[COMPARAISON - Numéro {s1['numero']} vs Numéro {s2['numero']}]"]
+            lines.append(
+                f"Numéro {s1['numero']} : {s1['frequence_totale']} apparitions "
+                f"({s1['pourcentage_apparition']}) | Écart : {s1['ecart_actuel']} | "
+                f"Catégorie : {s1['categorie'].upper()}"
+            )
+            lines.append(
+                f"Numéro {s2['numero']} : {s2['frequence_totale']} apparitions "
+                f"({s2['pourcentage_apparition']}) | Écart : {s2['ecart_actuel']} | "
+                f"Catégorie : {s2['categorie'].upper()}"
+            )
+            if diff != 0:
+                favori = data["favori_frequence"]
+                lines.append(
+                    f"Différence de fréquence : {sign}{diff} apparitions "
+                    f"en faveur du {favori}"
+                )
+            else:
+                lines.append("Fréquences identiques")
 
         return "\n".join(lines)
 
