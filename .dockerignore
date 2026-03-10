@@ -1,25 +1,19 @@
-# Tests & dev
-tests/
-.pytest_cache/
-.coverage
-pytest.ini
-requirements-dev.txt
-
 # Environment & secrets
 .env
 
 # Cache & bytecode
 __pycache__/
 *.pyc
-
-# Documentation
-*.md
+.pytest_cache/
+.coverage
 
 # VCS & IDE
 .git/
 .gitignore
 .claude/
 
-# Build artifacts
+# Documentation (heavy, not needed in image)
+docs/
+
+# Build meta
 .dockerignore
-cloudbuild.yaml

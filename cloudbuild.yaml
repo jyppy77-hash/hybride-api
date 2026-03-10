@@ -1,31 +1,52 @@
 steps:
-  # Build Docker image
+  # Build Docker image (builder stage — includes tests/)
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/hybride-api', '.']
+    args:
+      - 'build'
+      - '--target=builder'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/hybride-api:test'
+      - '.'
 
-  # Run tests: install dev deps then pytest (blocks deploy on failure)
-  - name: 'gcr.io/$PROJECT_ID/hybride-api'
+  # Run 1978 tests inside the builder image (blocks deploy on failure)
+  - name: 'gcr.io/$PROJECT_ID/hybride-api:test'
     entrypoint: 'sh'
     args:
       - '-c'
-      - 'pip install --no-cache-dir pytest pytest-asyncio && python -m pytest -v --tb=short -o addopts='
+      - 'pip install --no-cache-dir pytest pytest-asyncio pytest-cov && python -m pytest tests/ -v --tb=short -o addopts='
     env:
       - 'DB_PASSWORD=fake'
       - 'DB_USER=test'
       - 'DB_NAME=testdb'
       - 'HOME=/tmp'
 
-  # Push image to Container Registry / Artifact Registry
+  # Build final runtime image (lean, no tests)
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/hybride-api']
+    args:
+      - 'build'
+      - '--target=runtime'
+      - '--cache-from'
+      - 'gcr.io/$PROJECT_ID/hybride-api:latest'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/hybride-api:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/hybride-api:latest'
+      - '.'
 
-  # Deploy to Cloud Run (WEST1)
+  # Push image to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/hybride-api:$COMMIT_SHA']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'gcr.io/$PROJECT_ID/hybride-api:latest']
+
+  # Deploy to Cloud Run (europe-west1)
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - run
       - deploy
       - hybride-api-eu
-      - --image=gcr.io/$PROJECT_ID/hybride-api
+      - --image=gcr.io/$PROJECT_ID/hybride-api:$COMMIT_SHA
       - --region=europe-west1
       - --platform=managed
       - --allow-unauthenticated
@@ -40,4 +61,5 @@ steps:
       - '--update-env-vars=OWNER_IP=86.212.92.243,OWNER_IPV6=2a01:cb05:8700:5900:'
 
 images:
-  - gcr.io/$PROJECT_ID/hybride-api
+  - gcr.io/$PROJECT_ID/hybride-api:$COMMIT_SHA
+  - gcr.io/$PROJECT_ID/hybride-api:latest
