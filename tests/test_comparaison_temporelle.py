@@ -504,3 +504,50 @@ class TestNoRawContextLeak:
         text = "Le numéro 45 est sorti 4 fois sur les 12 derniers mois."
         from services.chat_utils import _clean_response
         assert _clean_response(text) == text
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Cohérence prompts chatbot — règle de langue obligatoire
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestPromptLanguageRule:
+    """Chaque prompt chatbot EM non-FR doit avoir une règle de langue obligatoire."""
+
+    _LANG_HEADERS = {
+        "en": "[LANGUAGE — MANDATORY RULE]",
+        "es": "[IDIOMA — REGLA OBLIGATORIA]",
+        "pt": "[IDIOMA — REGRA OBRIGATÓRIA]",
+        "de": "[SPRACHE — PFLICHT-REGEL]",
+        "nl": "[TAAL — VERPLICHTE REGEL]",
+    }
+
+    def _read_prompt(self, lang: str) -> str:
+        import os
+        path = os.path.join("prompts", "em", lang, "prompt_hybride_em.txt")
+        with open(path, encoding="utf-8") as f:
+            return f.read()
+
+    def test_en_has_language_rule(self):
+        content = self._read_prompt("en")
+        assert self._LANG_HEADERS["en"] in content
+
+    def test_es_has_language_rule(self):
+        content = self._read_prompt("es")
+        assert self._LANG_HEADERS["es"] in content
+
+    def test_pt_has_language_rule(self):
+        content = self._read_prompt("pt")
+        assert self._LANG_HEADERS["pt"] in content
+
+    def test_de_has_language_rule(self):
+        content = self._read_prompt("de")
+        assert self._LANG_HEADERS["de"] in content
+
+    def test_nl_has_language_rule(self):
+        content = self._read_prompt("nl")
+        assert self._LANG_HEADERS["nl"] in content
+
+    def test_pt_has_anti_spanish_rule(self):
+        """PT doit explicitement interdire le basculement en espagnol."""
+        content = self._read_prompt("pt")
+        assert "NUNCA" in content and "espanhol" in content
