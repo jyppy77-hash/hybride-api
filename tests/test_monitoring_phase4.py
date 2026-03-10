@@ -1,168 +1,275 @@
 """
 Tests — Monitoring Phase 4
-metrics_history snapshot, history endpoint, gemini breakdown, call_type/lang tracking.
+gemini_tracking DB persistence, breakdown, history, cleanup.
 """
 
 import pytest
 from unittest.mock import patch, AsyncMock, MagicMock
 from datetime import datetime
 
+from services.gcp_monitoring import (
+    track_gemini_call,
+    _get_gemini_counters,
+    get_gemini_breakdown,
+    cleanup_gemini_tracking,
+    _LOCAL_CACHE,
+    _CALL_TYPES,
+    _LANGS,
+    _SNAPSHOT_COOLDOWN,
+    _local_cache_get,
+    _local_cache_set,
+)
+
 
 # ═══════════════════════════════════════════════════════════════════════
-# track_gemini_call with call_type / lang
+# track_gemini_call — DB insert
 # ═══════════════════════════════════════════════════════════════════════
 
-class TestTrackGeminiCallBreakdown:
+class TestTrackGeminiCallDB:
 
     @pytest.mark.asyncio
-    async def test_call_type_counters(self):
-        """track_gemini_call increments per-type breakdown counters."""
-        mock_pipe = MagicMock()
-        mock_pipe.incr = MagicMock(return_value=mock_pipe)
-        mock_pipe.incrby = MagicMock(return_value=mock_pipe)
-        mock_pipe.execute = AsyncMock(return_value=[])
-
-        mock_redis = MagicMock()
-        mock_redis.pipeline = MagicMock(return_value=mock_pipe)
-        mock_redis.expire = AsyncMock()
-
-        with patch("services.cache._redis", mock_redis):
-            from services.gcp_monitoring import track_gemini_call
+    async def test_inserts_with_call_type_and_lang(self):
+        import asyncio
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock()
             await track_gemini_call(200.0, 100, 50, call_type="chat_loto", lang="fr")
-
-            # Should have incr for: global calls, bt:chat_loto:calls, bl:fr:calls
-            incr_calls = [str(c) for c in mock_pipe.incr.call_args_list]
-            assert any("chat_loto" in c for c in incr_calls)
-            assert any("bl:fr" in c for c in incr_calls)
+            await asyncio.sleep(0.05)
+            mock_db.async_query.assert_called_once()
+            sql, params = mock_db.async_query.call_args[0]
+            assert "INSERT INTO gemini_tracking" in sql
+            assert params[0] == "chat_loto"
+            assert params[1] == "fr"
+            assert params[2] == 100   # tokens_in
+            assert params[3] == 50    # tokens_out
+            assert params[4] == 200   # duration_ms
+            assert params[5] == 0     # is_error
 
     @pytest.mark.asyncio
-    async def test_call_type_empty_skips_breakdown(self):
-        """No breakdown keys when call_type is empty."""
-        mock_pipe = MagicMock()
-        mock_pipe.incr = MagicMock(return_value=mock_pipe)
-        mock_pipe.incrby = MagicMock(return_value=mock_pipe)
-        mock_pipe.execute = AsyncMock(return_value=[])
-
-        mock_redis = MagicMock()
-        mock_redis.pipeline = MagicMock(return_value=mock_pipe)
-        mock_redis.expire = AsyncMock()
-
-        with patch("services.cache._redis", mock_redis):
-            from services.gcp_monitoring import track_gemini_call
+    async def test_empty_call_type_inserts_empty_string(self):
+        import asyncio
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock()
             await track_gemini_call(100.0, 50, 25)
-
-            incr_calls = [str(c) for c in mock_pipe.incr.call_args_list]
-            assert not any("bt:" in c for c in incr_calls)
-            assert not any("bl:" in c for c in incr_calls)
+            await asyncio.sleep(0.05)
+            _, params = mock_db.async_query.call_args[0]
+            assert params[0] == ""  # call_type
+            assert params[1] == ""  # lang
 
     @pytest.mark.asyncio
-    async def test_error_with_call_type(self):
-        """Error flag also increments per-type error counter."""
-        mock_pipe = MagicMock()
-        mock_pipe.incr = MagicMock(return_value=mock_pipe)
-        mock_pipe.incrby = MagicMock(return_value=mock_pipe)
-        mock_pipe.execute = AsyncMock(return_value=[])
-
-        mock_redis = MagicMock()
-        mock_redis.pipeline = MagicMock(return_value=mock_pipe)
-        mock_redis.expire = AsyncMock()
-
-        with patch("services.cache._redis", mock_redis):
-            from services.gcp_monitoring import track_gemini_call
+    async def test_error_flag_set(self):
+        import asyncio
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock()
             await track_gemini_call(100.0, error=True, call_type="enrichment_em", lang="pt")
-
-            incr_calls = [str(c) for c in mock_pipe.incr.call_args_list]
-            # Global calls + global errors + bt:enrichment_em:calls + bt:enrichment_em:errors + bl:pt:calls
-            assert mock_pipe.incr.call_count == 5
+            await asyncio.sleep(0.05)
+            _, params = mock_db.async_query.call_args[0]
+            assert params[0] == "enrichment_em"
+            assert params[1] == "pt"
+            assert params[5] == 1  # is_error
 
     @pytest.mark.asyncio
-    async def test_lang_only(self):
-        """Can pass lang without call_type."""
-        mock_pipe = MagicMock()
-        mock_pipe.incr = MagicMock(return_value=mock_pipe)
-        mock_pipe.incrby = MagicMock(return_value=mock_pipe)
-        mock_pipe.execute = AsyncMock(return_value=[])
-
-        mock_redis = MagicMock()
-        mock_redis.pipeline = MagicMock(return_value=mock_pipe)
-        mock_redis.expire = AsyncMock()
-
-        with patch("services.cache._redis", mock_redis):
-            from services.gcp_monitoring import track_gemini_call
+    async def test_lang_only_no_type(self):
+        import asyncio
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock()
             await track_gemini_call(150.0, 100, 50, lang="de")
+            await asyncio.sleep(0.05)
+            _, params = mock_db.async_query.call_args[0]
+            assert params[0] == ""    # call_type empty
+            assert params[1] == "de"  # lang set
 
-            incr_calls = [str(c) for c in mock_pipe.incr.call_args_list]
-            assert any("bl:de" in c for c in incr_calls)
-            assert not any("bt:" in c for c in incr_calls)
+    @pytest.mark.asyncio
+    async def test_db_error_does_not_raise(self):
+        import asyncio
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(side_effect=Exception("DB error"))
+            await track_gemini_call(100.0, 50, 25, call_type="chat_loto")
+            await asyncio.sleep(0.05)
+            # Should not raise
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# Gemini breakdown
+# _get_gemini_counters — DB SELECT with local cache
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestGeminiCountersDB:
+
+    def setup_method(self):
+        _LOCAL_CACHE.clear()
+
+    @pytest.mark.asyncio
+    async def test_reads_from_db(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={
+                "calls": 42, "errors": 2, "tokens_in": 10000, "tokens_out": 3000, "total_ms": 50000,
+            })
+            counters = await _get_gemini_counters()
+            assert counters["calls"] == 42
+            assert counters["errors"] == 2
+            assert counters["tokens_in"] == 10000
+            assert counters["tokens_out"] == 3000
+            assert counters["total_ms"] == 50000
+            sql = mock_db.async_fetchone.call_args[0][0]
+            assert "CURDATE()" in sql
+
+    @pytest.mark.asyncio
+    async def test_cached_locally_60s(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={
+                "calls": 5, "errors": 0, "tokens_in": 100, "tokens_out": 50, "total_ms": 500,
+            })
+            first = await _get_gemini_counters()
+            second = await _get_gemini_counters()
+            assert first == second
+            assert mock_db.async_fetchone.call_count == 1  # only one DB call
+
+    @pytest.mark.asyncio
+    async def test_db_error_returns_defaults(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(side_effect=Exception("Connection lost"))
+            counters = await _get_gemini_counters()
+            assert counters["calls"] == 0
+            assert counters["errors"] == 0
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Gemini breakdown — DB GROUP BY
 # ═══════════════════════════════════════════════════════════════════════
 
 class TestGeminiBreakdown:
 
-    @pytest.mark.asyncio
-    async def test_no_redis_returns_fallback(self):
-        """Without Redis, returns in-memory fallback (zero-valued structure)."""
-        with patch("services.cache._redis", None):
-            from services.gcp_monitoring import get_gemini_breakdown, _mem_counters
-            _mem_counters.clear()
-            result = await get_gemini_breakdown()
-            assert len(result["by_type"]) == 5
-            assert len(result["by_lang"]) == 6
-            assert all(e["calls"] == 0 for e in result["by_type"])
-            assert all(e["calls"] == 0 for e in result["by_lang"])
+    def setup_method(self):
+        _LOCAL_CACHE.clear()
 
     @pytest.mark.asyncio
-    async def test_breakdown_structure(self):
-        """Returns correct structure with by_type and by_lang."""
-        # 5 types × 5 fields = 25 values for type pipe
-        type_vals = [b"10", b"5000", b"1200", b"8000", b"1"] * 5
-        # 6 langs × 3 fields = 18 values for lang pipe
-        lang_vals = [b"5", b"2500", b"600"] * 6
-
-        mock_pipe1 = MagicMock()
-        mock_pipe1.get = MagicMock(return_value=mock_pipe1)
-        mock_pipe1.execute = AsyncMock(return_value=type_vals)
-
-        mock_pipe2 = MagicMock()
-        mock_pipe2.get = MagicMock(return_value=mock_pipe2)
-        mock_pipe2.execute = AsyncMock(return_value=lang_vals)
-
-        call_count = [0]
-        def mock_pipeline(**kwargs):
-            call_count[0] += 1
-            return mock_pipe1 if call_count[0] == 1 else mock_pipe2
-
-        mock_redis = MagicMock()
-        mock_redis.pipeline = mock_pipeline
-
-        with patch("services.cache._redis", mock_redis):
-            from services.gcp_monitoring import get_gemini_breakdown
+    async def test_breakdown_by_type(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[
+                # by_type query
+                [
+                    {"call_type": "chat_loto", "calls": 10, "tokens_in": 5000, "tokens_out": 1200, "total_ms": 8000, "errors": 1},
+                    {"call_type": "chat_em", "calls": 5, "tokens_in": 2000, "tokens_out": 600, "total_ms": 3000, "errors": 0},
+                ],
+                # by_lang query
+                [
+                    {"lang": "fr", "calls": 8, "tokens_in": 4000, "tokens_out": 1000},
+                    {"lang": "en", "calls": 7, "tokens_in": 3000, "tokens_out": 800},
+                ],
+            ])
             result = await get_gemini_breakdown()
 
             assert len(result["by_type"]) == 5
-            assert result["by_type"][0]["type"] == "chat_loto"
-            assert result["by_type"][0]["calls"] == 10
-            assert result["by_type"][0]["tokens_in"] == 5000
-            assert result["by_type"][0]["avg_ms"] == 800
+            chat_loto = next(e for e in result["by_type"] if e["type"] == "chat_loto")
+            assert chat_loto["calls"] == 10
+            assert chat_loto["tokens_in"] == 5000
+            assert chat_loto["avg_ms"] == 800
+            assert chat_loto["errors"] == 1
 
-            assert len(result["by_lang"]) == 6
-            assert result["by_lang"][0]["lang"] == "fr"
-            assert result["by_lang"][0]["calls"] == 5
+            # Types not in DB should be zero
+            enrichment_loto = next(e for e in result["by_type"] if e["type"] == "enrichment_loto")
+            assert enrichment_loto["calls"] == 0
 
     @pytest.mark.asyncio
-    async def test_breakdown_redis_error(self):
-        """Redis error returns empty breakdown gracefully."""
-        mock_redis = MagicMock()
-        mock_redis.pipeline = MagicMock(side_effect=Exception("Redis down"))
+    async def test_breakdown_by_lang(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[
+                [],  # no type data
+                [{"lang": "fr", "calls": 3, "tokens_in": 1000, "tokens_out": 300}],
+            ])
+            result = await get_gemini_breakdown()
 
-        with patch("services.cache._redis", mock_redis):
-            from services.gcp_monitoring import get_gemini_breakdown
+            assert len(result["by_lang"]) == 6
+            fr = next(e for e in result["by_lang"] if e["lang"] == "fr")
+            assert fr["calls"] == 3
+            assert fr["tokens_in"] == 1000
+            # Langs not in DB should be zero
+            de = next(e for e in result["by_lang"] if e["lang"] == "de")
+            assert de["calls"] == 0
+
+    @pytest.mark.asyncio
+    async def test_breakdown_db_error(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=Exception("DB down"))
             result = await get_gemini_breakdown()
             assert result["by_type"] == []
             assert result["by_lang"] == []
+
+    @pytest.mark.asyncio
+    async def test_breakdown_cached_60s(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[
+                [{"call_type": "chat_loto", "calls": 1, "tokens_in": 100, "tokens_out": 50, "total_ms": 200, "errors": 0}],
+                [{"lang": "fr", "calls": 1, "tokens_in": 100, "tokens_out": 50}],
+            ])
+            first = await get_gemini_breakdown()
+            second = await get_gemini_breakdown()
+            assert first == second
+            assert mock_db.async_fetchall.call_count == 2  # two queries (type + lang) on first call only
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Local cache helper
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestLocalCache:
+
+    def setup_method(self):
+        _LOCAL_CACHE.clear()
+
+    def test_get_miss(self):
+        assert _local_cache_get("nonexistent") is None
+
+    def test_set_and_get(self):
+        _local_cache_set("key1", {"foo": "bar"})
+        assert _local_cache_get("key1") == {"foo": "bar"}
+
+    def test_expired_returns_none(self):
+        import time
+        _LOCAL_CACHE["expired"] = (time.monotonic() - 120, "old_value")
+        assert _local_cache_get("expired") is None
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Cleanup (90-day retention)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestGeminiCleanup:
+
+    @pytest.mark.asyncio
+    async def test_cleanup_deletes_old_rows(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 150})
+            mock_db.async_query = AsyncMock()
+            count = await cleanup_gemini_tracking(90)
+            assert count == 150
+            mock_db.async_query.assert_called_once()
+            sql = mock_db.async_query.call_args[0][0]
+            assert "DELETE FROM gemini_tracking" in sql
+
+    @pytest.mark.asyncio
+    async def test_cleanup_nothing_to_delete(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0})
+            mock_db.async_query = AsyncMock()
+            count = await cleanup_gemini_tracking(90)
+            assert count == 0
+            mock_db.async_query.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_cleanup_db_error(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(side_effect=Exception("DB error"))
+            count = await cleanup_gemini_tracking(90)
+            assert count == 0
+
+    @pytest.mark.asyncio
+    async def test_cleanup_custom_days(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 10})
+            mock_db.async_query = AsyncMock()
+            await cleanup_gemini_tracking(30)
+            params = mock_db.async_fetchone.call_args[0][1]
+            assert params == (30,)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -375,13 +482,12 @@ class TestAdminHistoryRoute:
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# Call types constants
+# Constants
 # ═══════════════════════════════════════════════════════════════════════
 
 class TestConstants:
 
     def test_call_types_list(self):
-        from services.gcp_monitoring import _CALL_TYPES
         assert "chat_loto" in _CALL_TYPES
         assert "chat_em" in _CALL_TYPES
         assert "enrichment_loto" in _CALL_TYPES
@@ -389,85 +495,17 @@ class TestConstants:
         assert "meta_analyse" in _CALL_TYPES
 
     def test_langs_list(self):
-        from services.gcp_monitoring import _LANGS
         assert set(_LANGS) == {"fr", "en", "es", "pt", "de", "nl"}
 
     def test_snapshot_cooldown(self):
-        from services.gcp_monitoring import _SNAPSHOT_COOLDOWN
         assert _SNAPSHOT_COOLDOWN == 300
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# In-memory fallback (no Redis)
+# Alerting cooldown (still in-memory — unrelated to Gemini tracking)
 # ═══════════════════════════════════════════════════════════════════════
 
-class TestInMemoryFallback:
-
-    @pytest.mark.asyncio
-    async def test_track_without_redis_increments_mem(self):
-        """track_gemini_call increments in-memory counters when Redis is None."""
-        from services.gcp_monitoring import track_gemini_call, _mem_counters, _mem_reset_if_new_day
-        _mem_counters.clear()
-        _mem_reset_if_new_day()
-        with patch("services.cache._redis", None):
-            await track_gemini_call(200.0, 100, 50, call_type="chat_loto", lang="fr")
-            await track_gemini_call(300.0, 200, 80, call_type="chat_em", lang="en")
-        assert _mem_counters.get("hybride:gemini:calls_today") == 2
-        assert _mem_counters.get("hybride:gemini:tokens_in_today") == 300
-        assert _mem_counters.get("hybride:gemini:tokens_out_today") == 130
-        assert _mem_counters.get("hybride:gemini:total_ms_today") == 500
-
-    @pytest.mark.asyncio
-    async def test_get_counters_without_redis_reads_mem(self):
-        """_get_gemini_counters returns in-memory values when Redis is None."""
-        from services.gcp_monitoring import _get_gemini_counters, _mem_counters, _mem_reset_if_new_day
-        _mem_counters.clear()
-        _mem_reset_if_new_day()
-        _mem_counters["hybride:gemini:calls_today"] = 5
-        _mem_counters["hybride:gemini:tokens_in_today"] = 999
-        with patch("services.cache._redis", None):
-            counters = await _get_gemini_counters()
-        assert counters["calls"] == 5
-        assert counters["tokens_in"] == 999
-        assert counters["errors"] == 0
-
-    @pytest.mark.asyncio
-    async def test_track_error_without_redis(self):
-        """Error flag increments error counter in-memory."""
-        from services.gcp_monitoring import track_gemini_call, _mem_counters, _mem_reset_if_new_day
-        _mem_counters.clear()
-        _mem_reset_if_new_day()
-        with patch("services.cache._redis", None):
-            await track_gemini_call(100.0, error=True, call_type="enrichment_em")
-        assert _mem_counters.get("hybride:gemini:calls_today") == 1
-        assert _mem_counters.get("hybride:gemini:errors_today") == 1
-        assert _mem_counters.get("hybride:gemini:bt:enrichment_em:errors") == 1
-
-    def test_daily_reset(self):
-        """Counters reset when date changes."""
-        from services.gcp_monitoring import _mem_counters, _mem_reset_if_new_day
-        import services.gcp_monitoring as gm
-        _mem_counters.clear()
-        _mem_counters["hybride:gemini:calls_today"] = 42
-        # Force a stale date
-        gm._mem_counters_date = "2020-01-01"
-        _mem_reset_if_new_day()
-        assert _mem_counters.get("hybride:gemini:calls_today", 0) == 0
-
-    @pytest.mark.asyncio
-    async def test_breakdown_without_redis_after_tracking(self):
-        """get_gemini_breakdown returns in-memory breakdown data."""
-        from services.gcp_monitoring import track_gemini_call, get_gemini_breakdown, _mem_counters, _mem_reset_if_new_day
-        _mem_counters.clear()
-        _mem_reset_if_new_day()
-        with patch("services.cache._redis", None):
-            await track_gemini_call(200.0, 100, 50, call_type="chat_loto", lang="fr")
-            result = await get_gemini_breakdown()
-        chat_loto = next(e for e in result["by_type"] if e["type"] == "chat_loto")
-        assert chat_loto["calls"] == 1
-        assert chat_loto["tokens_in"] == 100
-        fr = next(e for e in result["by_lang"] if e["lang"] == "fr")
-        assert fr["calls"] == 1
+class TestAlertingCooldown:
 
     @pytest.mark.asyncio
     async def test_alerting_cooldown_without_redis(self):

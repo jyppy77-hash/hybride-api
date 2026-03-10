@@ -2,11 +2,14 @@
 GCP Monitoring — Cloud Run metrics + Gemini tracking + cost estimation.
 
 Fetches real-time Cloud Run metrics via Cloud Monitoring API,
-reads Gemini usage counters from Redis, estimates daily costs.
+reads Gemini usage counters from MySQL (gemini_tracking table),
+estimates daily costs.
 
-Cache: 60s Redis (key "gcp_metrics") to avoid spamming Google API.
+Cache: 60s Redis (key "gcp_metrics") for full payload.
+Gemini counters: 60s local in-memory cache to avoid spamming DB.
 """
 
+import asyncio
 import logging
 import os
 import time
@@ -14,7 +17,7 @@ from datetime import datetime, timezone
 
 import db_cloudsql
 import services.cache as _cache
-from services.cache import cache_get, cache_set, _REDIS_PREFIX
+from services.cache import cache_get, cache_set
 
 logger = logging.getLogger(__name__)
 
@@ -42,40 +45,23 @@ COST_CONFIG = {
     "usd_to_eur": 0.92,
 }
 
-# Gemini Redis keys (incremented by tracking helper)
-_GEMINI_KEYS = {
-    "calls": "gemini:calls_today",
-    "errors": "gemini:errors_today",
-    "tokens_in": "gemini:tokens_in_today",
-    "tokens_out": "gemini:tokens_out_today",
-    "total_ms": "gemini:total_ms_today",
-}
+# ── Local cache for Gemini DB queries (60s TTL) ──────────────────────────────
 
-_GEMINI_TTL = 86400  # 24h — auto-reset daily
-
-# ── In-memory fallback (when Redis unavailable) ──────────────────────────────
-
-_mem_counters: dict[str, int] = {}
-_mem_counters_date: str = ""  # YYYY-MM-DD, reset when day changes
+_LOCAL_CACHE: dict[str, tuple[float, object]] = {}
+_LOCAL_CACHE_TTL = 60  # seconds
 
 
-def _mem_reset_if_new_day() -> None:
-    """Reset in-memory counters at midnight (UTC)."""
-    global _mem_counters_date
-    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    if today != _mem_counters_date:
-        _mem_counters.clear()
-        _mem_counters_date = today
+def _local_cache_get(key: str):
+    """Return cached value if still valid, else None."""
+    entry = _LOCAL_CACHE.get(key)
+    if entry and time.monotonic() - entry[0] < _LOCAL_CACHE_TTL:
+        return entry[1]
+    return None
 
 
-def _mem_incr(key: str, amount: int = 1) -> None:
-    _mem_reset_if_new_day()
-    _mem_counters[key] = _mem_counters.get(key, 0) + amount
-
-
-def _mem_get(key: str) -> int:
-    _mem_reset_if_new_day()
-    return _mem_counters.get(key, 0)
+def _local_cache_set(key: str, value):
+    """Store value with current timestamp."""
+    _LOCAL_CACHE[key] = (time.monotonic(), value)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -102,6 +88,26 @@ def _determine_status(error_rate: float, latency_p95_ms: float) -> str:
 
 # ── Gemini tracking (called from gemini.py / pipelines) ──────────────────────
 
+_TRACK_INSERT_SQL = (
+    "INSERT INTO gemini_tracking (call_type, lang, tokens_in, tokens_out, duration_ms, is_error) "
+    "VALUES (%s, %s, %s, %s, %s, %s)"
+)
+
+
+async def _do_track_insert(
+    call_type: str, lang: str, tokens_in: int, tokens_out: int,
+    duration_ms: int, is_error: int,
+) -> None:
+    """Fire-and-forget DB insert. Errors are logged, never raised."""
+    try:
+        await db_cloudsql.async_query(
+            _TRACK_INSERT_SQL,
+            (call_type, lang, tokens_in, tokens_out, duration_ms, is_error),
+        )
+    except Exception as e:
+        logger.warning("[TRACK_GEMINI] DB insert error: %s", e)
+
+
 async def track_gemini_call(
     duration_ms: float,
     tokens_in: int = 0,
@@ -110,106 +116,56 @@ async def track_gemini_call(
     call_type: str = "",
     lang: str = "",
 ) -> None:
-    """Increment Gemini usage counters in Redis (or in-memory fallback)."""
-    _redis = _cache._redis
-    if not _redis:
-        # In-memory fallback
-        kp = _REDIS_PREFIX
-        _mem_incr(f"{kp}{_GEMINI_KEYS['calls']}")
-        if error:
-            _mem_incr(f"{kp}{_GEMINI_KEYS['errors']}")
-        if tokens_in > 0:
-            _mem_incr(f"{kp}{_GEMINI_KEYS['tokens_in']}", tokens_in)
-        if tokens_out > 0:
-            _mem_incr(f"{kp}{_GEMINI_KEYS['tokens_out']}", tokens_out)
-        _mem_incr(f"{kp}{_GEMINI_KEYS['total_ms']}", int(duration_ms))
-        if call_type:
-            bt = f"{kp}gemini:bt:{call_type}"
-            _mem_incr(f"{bt}:calls")
-            if tokens_in > 0:
-                _mem_incr(f"{bt}:tokens_in", tokens_in)
-            if tokens_out > 0:
-                _mem_incr(f"{bt}:tokens_out", tokens_out)
-            _mem_incr(f"{bt}:total_ms", int(duration_ms))
-            if error:
-                _mem_incr(f"{bt}:errors")
-        if lang:
-            bl = f"{kp}gemini:bl:{lang}"
-            _mem_incr(f"{bl}:calls")
-            if tokens_in > 0:
-                _mem_incr(f"{bl}:tokens_in", tokens_in)
-            if tokens_out > 0:
-                _mem_incr(f"{bl}:tokens_out", tokens_out)
-        logger.info("[TRACK_GEMINI] OK (mem) calls+1 tin=%d tout=%d dur=%.0fms type=%s lang=%s",
-                     tokens_in, tokens_out, duration_ms, call_type, lang)
-        return
+    """Insert a Gemini usage row into gemini_tracking (non-blocking)."""
+    logger.info(
+        "[TRACK_GEMINI] calls+1 tin=%d tout=%d dur=%.0fms type=%s lang=%s",
+        tokens_in, tokens_out, duration_ms, call_type, lang,
+    )
     try:
-        pipe = _redis.pipeline(transaction=False)
-        key_prefix = _REDIS_PREFIX
-        pipe.incr(f"{key_prefix}{_GEMINI_KEYS['calls']}")
-        if error:
-            pipe.incr(f"{key_prefix}{_GEMINI_KEYS['errors']}")
-        if tokens_in > 0:
-            pipe.incrby(f"{key_prefix}{_GEMINI_KEYS['tokens_in']}", tokens_in)
-        if tokens_out > 0:
-            pipe.incrby(f"{key_prefix}{_GEMINI_KEYS['tokens_out']}", tokens_out)
-        pipe.incrby(f"{key_prefix}{_GEMINI_KEYS['total_ms']}", int(duration_ms))
-
-        # Per-type / per-lang breakdown counters
-        if call_type:
-            bt = f"{key_prefix}gemini:bt:{call_type}"
-            pipe.incr(f"{bt}:calls")
-            if tokens_in > 0:
-                pipe.incrby(f"{bt}:tokens_in", tokens_in)
-            if tokens_out > 0:
-                pipe.incrby(f"{bt}:tokens_out", tokens_out)
-            pipe.incrby(f"{bt}:total_ms", int(duration_ms))
-            if error:
-                pipe.incr(f"{bt}:errors")
-        if lang:
-            bl = f"{key_prefix}gemini:bl:{lang}"
-            pipe.incr(f"{bl}:calls")
-            if tokens_in > 0:
-                pipe.incrby(f"{bl}:tokens_in", tokens_in)
-            if tokens_out > 0:
-                pipe.incrby(f"{bl}:tokens_out", tokens_out)
-
-        await pipe.execute()
-
-        # Set TTL on all keys (idempotent)
-        ttl_keys = [f"{key_prefix}{k}" for k in _GEMINI_KEYS.values()]
-        if call_type:
-            bt = f"{key_prefix}gemini:bt:{call_type}"
-            ttl_keys += [f"{bt}:calls", f"{bt}:tokens_in", f"{bt}:tokens_out",
-                         f"{bt}:total_ms", f"{bt}:errors"]
-        if lang:
-            bl = f"{key_prefix}gemini:bl:{lang}"
-            ttl_keys += [f"{bl}:calls", f"{bl}:tokens_in", f"{bl}:tokens_out"]
-        for k in ttl_keys:
-            await _redis.expire(k, _GEMINI_TTL)
-        logger.info("[TRACK_GEMINI] OK calls+1 tin=%d tout=%d dur=%.0fms type=%s lang=%s",
-                     tokens_in, tokens_out, duration_ms, call_type, lang)
-    except Exception as e:
-        logger.warning("[TRACK_GEMINI] Redis error: %s", e)
+        asyncio.create_task(
+            _do_track_insert(
+                call_type, lang, tokens_in, tokens_out,
+                int(duration_ms), int(error),
+            )
+        )
+    except RuntimeError:
+        # No running event loop (e.g. during shutdown) — run inline
+        await _do_track_insert(
+            call_type, lang, tokens_in, tokens_out,
+            int(duration_ms), int(error),
+        )
 
 
 async def _get_gemini_counters() -> dict:
-    """Read Gemini counters from Redis (or in-memory fallback)."""
+    """Read today's Gemini counters from gemini_tracking table (cached 60s)."""
+    cached = _local_cache_get("gemini_counters")
+    if cached is not None:
+        return cached
     defaults = {"calls": 0, "errors": 0, "tokens_in": 0, "tokens_out": 0, "total_ms": 0}
-    _redis = _cache._redis
-    if not _redis:
-        # In-memory fallback
-        return {k: _mem_get(f"{_REDIS_PREFIX}{v}") for k, v in _GEMINI_KEYS.items()}
     try:
-        pipe = _redis.pipeline(transaction=False)
-        for k in _GEMINI_KEYS.values():
-            pipe.get(f"{_REDIS_PREFIX}{k}")
-        results = await pipe.execute()
-        keys = list(_GEMINI_KEYS.keys())
-        return {keys[i]: int(results[i] or 0) for i in range(len(keys))}
+        row = await db_cloudsql.async_fetchone(
+            "SELECT COUNT(*) AS calls, "
+            "COALESCE(SUM(is_error), 0) AS errors, "
+            "COALESCE(SUM(tokens_in), 0) AS tokens_in, "
+            "COALESCE(SUM(tokens_out), 0) AS tokens_out, "
+            "COALESCE(SUM(duration_ms), 0) AS total_ms "
+            "FROM gemini_tracking WHERE ts >= CURDATE()"
+        )
+        if row:
+            result = {
+                "calls": int(row["calls"]),
+                "errors": int(row["errors"]),
+                "tokens_in": int(row["tokens_in"]),
+                "tokens_out": int(row["tokens_out"]),
+                "total_ms": int(row["total_ms"]),
+            }
+        else:
+            result = defaults
     except Exception as e:
-        logger.warning("[GEMINI_COUNTERS] Redis read error: %s", e)
-        return defaults
+        logger.warning("[GEMINI_COUNTERS] DB read error: %s", e)
+        result = defaults
+    _local_cache_set("gemini_counters", result)
+    return result
 
 
 # ── Cloud Monitoring fetch ────────────────────────────────────────────────────
@@ -506,7 +462,7 @@ async def get_gcp_metrics() -> dict:
 
 # ── Snapshot to metrics_history ──────────────────────────────────────────────
 
-_SNAPSHOT_LOCK_KEY = f"{_REDIS_PREFIX}metrics_snapshot_lock"
+_SNAPSHOT_LOCK_KEY = f"{_cache._REDIS_PREFIX}metrics_snapshot_lock"
 _SNAPSHOT_COOLDOWN = 300  # 5 minutes
 
 async def _maybe_snapshot(payload: dict) -> None:
@@ -625,81 +581,82 @@ _LANGS = ["fr", "en", "es", "pt", "de", "nl"]
 
 async def get_gemini_breakdown() -> dict:
     """
-    Read per-type and per-lang Gemini counters from Redis.
+    Read per-type and per-lang Gemini counters from gemini_tracking table.
     Returns {by_type: [...], by_lang: [...]}.
+    Cached locally for 60s.
     """
-    result = {"by_type": [], "by_lang": []}
-    _redis = _cache._redis
-    if not _redis:
-        # In-memory fallback
-        kp = _REDIS_PREFIX
-        for ct in _CALL_TYPES:
-            bt = f"{kp}gemini:bt:{ct}"
-            calls = _mem_get(f"{bt}:calls")
-            tin = _mem_get(f"{bt}:tokens_in")
-            tout = _mem_get(f"{bt}:tokens_out")
-            total_ms = _mem_get(f"{bt}:total_ms")
-            errors = _mem_get(f"{bt}:errors")
-            result["by_type"].append({
-                "type": ct, "calls": calls, "tokens_in": tin, "tokens_out": tout,
-                "avg_ms": round(total_ms / calls) if calls else 0, "errors": errors,
-            })
-        for lang in _LANGS:
-            bl = f"{kp}gemini:bl:{lang}"
-            result["by_lang"].append({
-                "lang": lang, "calls": _mem_get(f"{bl}:calls"),
-                "tokens_in": _mem_get(f"{bl}:tokens_in"), "tokens_out": _mem_get(f"{bl}:tokens_out"),
-            })
-        return result
-    try:
-        # By type
-        pipe = _redis.pipeline(transaction=False)
-        for ct in _CALL_TYPES:
-            bt = f"{_REDIS_PREFIX}gemini:bt:{ct}"
-            pipe.get(f"{bt}:calls")
-            pipe.get(f"{bt}:tokens_in")
-            pipe.get(f"{bt}:tokens_out")
-            pipe.get(f"{bt}:total_ms")
-            pipe.get(f"{bt}:errors")
-        type_vals = await pipe.execute()
+    cached = _local_cache_get("gemini_breakdown")
+    if cached is not None:
+        return cached
 
-        for i, ct in enumerate(_CALL_TYPES):
-            off = i * 5
-            calls = int(type_vals[off] or 0)
-            tin = int(type_vals[off + 1] or 0)
-            tout = int(type_vals[off + 2] or 0)
-            total_ms = int(type_vals[off + 3] or 0)
-            errors = int(type_vals[off + 4] or 0)
+    result = {"by_type": [], "by_lang": []}
+    try:
+        # By call_type
+        type_rows = await db_cloudsql.async_fetchall(
+            "SELECT call_type, COUNT(*) AS calls, "
+            "COALESCE(SUM(tokens_in), 0) AS tokens_in, "
+            "COALESCE(SUM(tokens_out), 0) AS tokens_out, "
+            "COALESCE(SUM(duration_ms), 0) AS total_ms, "
+            "COALESCE(SUM(is_error), 0) AS errors "
+            "FROM gemini_tracking WHERE ts >= CURDATE() "
+            "GROUP BY call_type"
+        )
+        type_map = {r["call_type"]: r for r in type_rows} if type_rows else {}
+        for ct in _CALL_TYPES:
+            r = type_map.get(ct, {})
+            calls = int(r.get("calls", 0))
             result["by_type"].append({
                 "type": ct,
                 "calls": calls,
-                "tokens_in": tin,
-                "tokens_out": tout,
-                "avg_ms": round(total_ms / calls) if calls else 0,
-                "errors": errors,
+                "tokens_in": int(r.get("tokens_in", 0)),
+                "tokens_out": int(r.get("tokens_out", 0)),
+                "avg_ms": round(int(r.get("total_ms", 0)) / calls) if calls else 0,
+                "errors": int(r.get("errors", 0)),
             })
 
         # By lang
-        pipe2 = _redis.pipeline(transaction=False)
+        lang_rows = await db_cloudsql.async_fetchall(
+            "SELECT lang, COUNT(*) AS calls, "
+            "COALESCE(SUM(tokens_in), 0) AS tokens_in, "
+            "COALESCE(SUM(tokens_out), 0) AS tokens_out "
+            "FROM gemini_tracking WHERE ts >= CURDATE() "
+            "GROUP BY lang"
+        )
+        lang_map = {r["lang"]: r for r in lang_rows} if lang_rows else {}
         for lang in _LANGS:
-            bl = f"{_REDIS_PREFIX}gemini:bl:{lang}"
-            pipe2.get(f"{bl}:calls")
-            pipe2.get(f"{bl}:tokens_in")
-            pipe2.get(f"{bl}:tokens_out")
-        lang_vals = await pipe2.execute()
-
-        for i, lang in enumerate(_LANGS):
-            off = i * 3
-            calls = int(lang_vals[off] or 0)
-            tin = int(lang_vals[off + 1] or 0)
-            tout = int(lang_vals[off + 2] or 0)
+            r = lang_map.get(lang, {})
             result["by_lang"].append({
                 "lang": lang,
-                "calls": calls,
-                "tokens_in": tin,
-                "tokens_out": tout,
+                "calls": int(r.get("calls", 0)),
+                "tokens_in": int(r.get("tokens_in", 0)),
+                "tokens_out": int(r.get("tokens_out", 0)),
             })
     except Exception as e:
-        logger.warning("[GEMINI_BREAKDOWN] Redis error: %s", e)
+        logger.warning("[GEMINI_BREAKDOWN] DB error: %s", e)
 
+    _local_cache_set("gemini_breakdown", result)
     return result
+
+
+# ── Cleanup (retention 90 days) ──────────────────────────────────────────────
+
+async def cleanup_gemini_tracking(days: int = 90) -> int:
+    """Delete gemini_tracking rows older than *days*. Returns deleted count."""
+    try:
+        row = await db_cloudsql.async_fetchone(
+            "SELECT COUNT(*) AS cnt FROM gemini_tracking "
+            "WHERE ts < DATE_SUB(NOW(), INTERVAL %s DAY)",
+            (days,),
+        )
+        count = int(row["cnt"]) if row else 0
+        if count > 0:
+            await db_cloudsql.async_query(
+                "DELETE FROM gemini_tracking "
+                "WHERE ts < DATE_SUB(NOW(), INTERVAL %s DAY)",
+                (days,),
+            )
+            logger.info("[GEMINI_CLEANUP] Deleted %d rows older than %d days", count, days)
+        return count
+    except Exception as e:
+        logger.warning("[GEMINI_CLEANUP] Error: %s", e)
+        return 0

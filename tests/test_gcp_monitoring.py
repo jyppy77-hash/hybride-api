@@ -1,6 +1,6 @@
 """
 Tests — services/gcp_monitoring.py
-Monitoring endpoint: Cloud Run metrics, Gemini tracking, cost estimation, status.
+Monitoring endpoint: Cloud Run metrics, Gemini tracking (DB), cost estimation, status.
 """
 
 import pytest
@@ -14,8 +14,7 @@ from services.gcp_monitoring import (
     get_gcp_metrics,
     track_gemini_call,
     COST_CONFIG,
-    _GEMINI_KEYS,
-    _REDIS_PREFIX,
+    _LOCAL_CACHE,
 )
 
 
@@ -97,29 +96,20 @@ class TestCostEstimation:
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# Gemini counters (Redis)
+# Gemini counters (DB)
 # ═══════════════════════════════════════════════════════════════════════
 
 class TestGeminiCounters:
 
-    @pytest.mark.asyncio
-    async def test_no_redis_returns_defaults(self):
-        from services.gcp_monitoring import _mem_counters
-        _mem_counters.clear()
-        with patch("services.cache._redis", None):
-            counters = await _get_gemini_counters()
-            assert counters == {"calls": 0, "errors": 0, "tokens_in": 0, "tokens_out": 0, "total_ms": 0}
+    def setup_method(self):
+        _LOCAL_CACHE.clear()
 
     @pytest.mark.asyncio
-    async def test_redis_returns_values(self):
-        mock_pipe = MagicMock()
-        mock_pipe.get = MagicMock(return_value=mock_pipe)
-        mock_pipe.execute = AsyncMock(return_value=[b"10", b"1", b"5000", b"1200", b"8000"])
-
-        mock_redis = MagicMock()
-        mock_redis.pipeline = MagicMock(return_value=mock_pipe)
-
-        with patch("services.cache._redis", mock_redis):
+    async def test_returns_db_values(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={
+                "calls": 10, "errors": 1, "tokens_in": 5000, "tokens_out": 1200, "total_ms": 8000,
+            })
             counters = await _get_gemini_counters()
             assert counters["calls"] == 10
             assert counters["errors"] == 1
@@ -128,57 +118,76 @@ class TestGeminiCounters:
             assert counters["total_ms"] == 8000
 
     @pytest.mark.asyncio
-    async def test_redis_error_returns_defaults(self):
-        mock_redis = MagicMock()
-        mock_redis.pipeline = MagicMock(side_effect=Exception("Connection lost"))
-
-        with patch("services.cache._redis", mock_redis):
+    async def test_db_error_returns_defaults(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(side_effect=Exception("DB down"))
             counters = await _get_gemini_counters()
             assert counters["calls"] == 0
 
+    @pytest.mark.asyncio
+    async def test_none_row_returns_defaults(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value=None)
+            counters = await _get_gemini_counters()
+            assert counters == {"calls": 0, "errors": 0, "tokens_in": 0, "tokens_out": 0, "total_ms": 0}
+
+    @pytest.mark.asyncio
+    async def test_cached_60s(self):
+        """Second call within 60s returns cached value without hitting DB."""
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={
+                "calls": 5, "errors": 0, "tokens_in": 100, "tokens_out": 50, "total_ms": 500,
+            })
+            first = await _get_gemini_counters()
+            second = await _get_gemini_counters()
+            assert first == second
+            assert mock_db.async_fetchone.call_count == 1
+
 
 # ═══════════════════════════════════════════════════════════════════════
-# Track Gemini call
+# Track Gemini call (DB insert)
 # ═══════════════════════════════════════════════════════════════════════
 
 class TestTrackGeminiCall:
 
     @pytest.mark.asyncio
-    async def test_no_redis_noop(self):
-        with patch("services.cache._redis", None):
-            await track_gemini_call(150.0, 100, 50)  # should not raise
-
-    @pytest.mark.asyncio
-    async def test_tracks_successful_call(self):
-        mock_pipe = MagicMock()
-        mock_pipe.incr = MagicMock(return_value=mock_pipe)
-        mock_pipe.incrby = MagicMock(return_value=mock_pipe)
-        mock_pipe.execute = AsyncMock(return_value=[])
-
-        mock_redis = MagicMock()
-        mock_redis.pipeline = MagicMock(return_value=mock_pipe)
-        mock_redis.expire = AsyncMock()
-
-        with patch("services.cache._redis", mock_redis):
+    async def test_inserts_into_db(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock()
             await track_gemini_call(250.0, 500, 100)
-            mock_pipe.incr.assert_called_once()
-            assert mock_pipe.incrby.call_count == 3  # tokens_in, tokens_out, total_ms
+            # create_task fires, but await _do_track_insert is the fallback
+            # Give the task a chance to complete
+            import asyncio
+            await asyncio.sleep(0.05)
+            mock_db.async_query.assert_called_once()
+            sql, params = mock_db.async_query.call_args[0]
+            assert "INSERT INTO gemini_tracking" in sql
+            assert params[2] == 500  # tokens_in
+            assert params[3] == 100  # tokens_out
+            assert params[4] == 250  # duration_ms
+            assert params[5] == 0   # is_error
 
     @pytest.mark.asyncio
-    async def test_tracks_error_call(self):
-        mock_pipe = MagicMock()
-        mock_pipe.incr = MagicMock(return_value=mock_pipe)
-        mock_pipe.incrby = MagicMock(return_value=mock_pipe)
-        mock_pipe.execute = AsyncMock(return_value=[])
+    async def test_inserts_error_flag(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock()
+            await track_gemini_call(100.0, error=True, call_type="chat_em", lang="fr")
+            import asyncio
+            await asyncio.sleep(0.05)
+            mock_db.async_query.assert_called_once()
+            _, params = mock_db.async_query.call_args[0]
+            assert params[0] == "chat_em"  # call_type
+            assert params[1] == "fr"       # lang
+            assert params[5] == 1          # is_error
 
-        mock_redis = MagicMock()
-        mock_redis.pipeline = MagicMock(return_value=mock_pipe)
-        mock_redis.expire = AsyncMock()
-
-        with patch("services.cache._redis", mock_redis):
-            await track_gemini_call(100.0, error=True)
-            # incr called twice: calls + errors
-            assert mock_pipe.incr.call_count == 2
+    @pytest.mark.asyncio
+    async def test_db_error_does_not_raise(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(side_effect=Exception("DB error"))
+            await track_gemini_call(150.0, 100, 50)
+            import asyncio
+            await asyncio.sleep(0.05)
+            # Should not raise
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -196,6 +205,7 @@ class TestGetGcpMetrics:
 
     @pytest.mark.asyncio
     async def test_cloud_monitoring_unavailable_returns_unknown(self):
+        _LOCAL_CACHE.clear()
         with (
             patch("services.gcp_monitoring.cache_get", AsyncMock(return_value=None)),
             patch("services.gcp_monitoring.cache_set", AsyncMock()),
@@ -213,6 +223,7 @@ class TestGetGcpMetrics:
 
     @pytest.mark.asyncio
     async def test_healthy_metrics(self):
+        _LOCAL_CACHE.clear()
         cloud_metrics = {
             "requests_per_second": 2.5,
             "error_rate_5xx": 0.002,
@@ -248,6 +259,7 @@ class TestGetGcpMetrics:
 
     @pytest.mark.asyncio
     async def test_degraded_status(self):
+        _LOCAL_CACHE.clear()
         cloud_metrics = {
             "error_rate_5xx": 0.03,
             "latency_p95_ms": 4000,
@@ -265,6 +277,7 @@ class TestGetGcpMetrics:
 
     @pytest.mark.asyncio
     async def test_payload_structure(self):
+        _LOCAL_CACHE.clear()
         with (
             patch("services.gcp_monitoring.cache_get", AsyncMock(return_value=None)),
             patch("services.gcp_monitoring.cache_set", AsyncMock()),
@@ -306,6 +319,7 @@ class TestGetGcpMetrics:
 
     @pytest.mark.asyncio
     async def test_caches_result(self):
+        _LOCAL_CACHE.clear()
         mock_set = AsyncMock()
         with (
             patch("services.gcp_monitoring.cache_get", AsyncMock(return_value=None)),
