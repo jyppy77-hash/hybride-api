@@ -584,6 +584,9 @@ async def handle_chat_stream(message: str, history: list, page: str, http_client
             http_client, ctx["gem_api_key"], ctx["system_prompt"],
             ctx["contents"], timeout=15.0,
         ):
+            chunk = _clean_response(chunk)
+            if not chunk:
+                continue
             has_chunks = True
             yield _sse_event({
                 "chunk": chunk, "source": "gemini", "mode": mode, "is_done": False,

@@ -6,6 +6,7 @@ Tests unitaires — Fix 8 : comparaison multi-numeros avec progression temporell
 - Phase A toujours active sur les vraies questions d'argent
 """
 
+import re
 import pytest
 from datetime import date, timedelta
 
@@ -412,3 +413,94 @@ class TestCleanResponseStripsTags:
         assert "[RÉSULTAT SQL]" not in result
         assert "[CLASSEMENT" not in result
         assert "[ANALYSE DE GRILLE" not in result
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# test_no_raw_context_leak — aucun tag technique ne fuit dans la réponse
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestNoRawContextLeak:
+    """Aucun tag technique entre crochets ne doit apparaître dans la réponse finale."""
+
+    # Regex couvrant TOUS les tags internes connus
+    _LEAK_RE = re.compile(
+        r'\['
+        r'(?:COMPARAISON|FRÉQUENCE|FREQUENCE|RÉFÉRENCE|REFERENCE|'
+        r'PROGRESSION|BREAKDOWN|MESSAGE A ADAPTER|'
+        r'RÉSULTAT SQL|RESULTAT SQL|RÉSULTAT TIRAGE|RESULTAT TIRAGE|'
+        r'ANALYSE DE GRILLE|CLASSEMENT|'
+        r'NUMÉROS? (?:CHAUDS?|FROIDS?)|NUMEROS? (?:CHAUDS?|FROIDS?)|'
+        r'DONNÉES TEMPS RÉEL|DONNEES TEMPS REEL|'
+        r'PROCHAIN TIRAGE|'
+        r'CORR[EÉ]LATIONS? DE PAIRES|CORRELATIONS? DE PAIRES|'
+        r'GRILLE G[EÉ]N[EÉ]R[EÉ]E PAR HYBRIDE|GRILLE GENEREE PAR HYBRIDE|'
+        r'Page:|Question utilisateur|CONTEXTE CONTINUATION)'
+    )
+
+    def _assert_no_leak(self, text: str):
+        from services.chat_utils import _clean_response
+        cleaned = _clean_response(text)
+        match = self._LEAK_RE.search(cleaned)
+        assert match is None, f"Tag technique fuite dans la réponse : {match.group()}"
+
+    def test_comparison_period_full_context_de(self):
+        """Simule un contexte brut DE retourné par Gemini."""
+        raw = (
+            "[COMPARAISON SUR PÉRIODE — Nummer 12 vs Nummer 45]\n"
+            "[FRÉQUENCE SUR LA PÉRIODE — C'EST CE CHIFFRE QUE TU DOIS CITER]\n"
+            "Nummer 12: 1 Auftritt, Nummer 45: 4 Auftritte\n"
+            "[PROGRESSION PAR RAPPORT À LA MOYENNE HISTORIQUE]\n"
+            "Nr. 12: -85.7%, Nr. 45: +42.9%\n"
+            "[RÉFÉRENCE — fréquence totale historique (ne PAS citer en premier)]\n"
+            "Nummer 12: 72 Auftritte, Nummer 45: 68 Auftritte\n"
+            "In den letzten 12 Monaten wurde die 45 also 4 Mal gezogen."
+        )
+        self._assert_no_leak(raw)
+
+    def test_comparison_period_full_context_es(self):
+        raw = (
+            "[COMPARAISON SUR PÉRIODE — Número 12 vs Número 45]\n"
+            "[FRÉQUENCE SUR LA PÉRIODE — C'EST CE CHIFFRE QUE TU DOIS CITER]\n"
+            "Número 12: 1 aparición, Número 45: 4 apariciones\n"
+            "[RÉFÉRENCE — fréquence totale historique (ne PAS citer en premier)]\n"
+            "Número 12: 72 apariciones\n"
+            "En los últimos 12 meses el 45 salió 4 veces."
+        )
+        self._assert_no_leak(raw)
+
+    def test_comparison_period_full_context_pt(self):
+        raw = (
+            "[COMPARAISON SUR PÉRIODE — Número 12 vs Número 45]\n"
+            "[FRÉQUENCE SUR LA PÉRIODE — C'EST CE CHIFFRE QUE TU DOIS CITER]\n"
+            "Número 12: 1 aparição, Número 45: 4 aparições\n"
+            "[RÉFÉRENCE — fréquence totale historique (ne PAS citer en premier)]\n"
+            "Número 12: 72 aparições\n"
+            "Nos últimos 12 meses o 45 saiu 4 vezes."
+        )
+        self._assert_no_leak(raw)
+
+    def test_comparison_period_full_context_nl(self):
+        raw = (
+            "[COMPARAISON SUR PÉRIODE — Nummer 12 vs Nummer 45]\n"
+            "[FRÉQUENCE SUR LA PÉRIODE — C'EST CE CHIFFRE QUE TU DOIS CITER]\n"
+            "Nummer 12: 1 keer, Nummer 45: 4 keer\n"
+            "[RÉFÉRENCE — fréquence totale historique (ne PAS citer en premier)]\n"
+            "Nummer 12: 72 keer\n"
+            "In de laatste 12 maanden kwam 45 vier keer voor."
+        )
+        self._assert_no_leak(raw)
+
+    def test_sql_result_tag(self):
+        self._assert_no_leak("[RÉSULTAT SQL] SELECT * FROM tirages LIMIT 10")
+
+    def test_breakdown_tag(self):
+        self._assert_no_leak("[BREAKDOWN — Critères de sélection] pair/impair 3/2")
+
+    def test_grille_generee_tag(self):
+        self._assert_no_leak("[GRILLE GÉNÉRÉE PAR HYBRIDE — mode equilibre] 5 12 23 34 45")
+
+    def test_clean_text_passes(self):
+        """Texte normal sans tag ne doit pas être modifié."""
+        text = "Le numéro 45 est sorti 4 fois sur les 12 derniers mois."
+        from services.chat_utils import _clean_response
+        assert _clean_response(text) == text
