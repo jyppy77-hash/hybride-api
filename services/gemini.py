@@ -112,7 +112,8 @@ Texte a reformuler :
             try:
                 from services.gcp_monitoring import track_gemini_call
                 import asyncio
-                asyncio.ensure_future(track_gemini_call(_dur_ms, _tin, _tout))
+                asyncio.ensure_future(track_gemini_call(
+                    _dur_ms, _tin, _tout, call_type="enrichment_loto", lang="fr"))
             except Exception:
                 pass
             candidates = data.get("candidates", [])
@@ -137,7 +138,8 @@ Texte a reformuler :
             try:
                 from services.gcp_monitoring import track_gemini_call
                 import asyncio
-                asyncio.ensure_future(track_gemini_call(_dur_ms, error=True))
+                asyncio.ensure_future(track_gemini_call(
+                    _dur_ms, error=True, call_type="enrichment_loto", lang="fr"))
             except Exception:
                 pass
 
@@ -154,7 +156,8 @@ Texte a reformuler :
         return {"analysis_enriched": analysis_local, "source": "fallback"}
 
 
-async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, timeout=15.0):
+async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, timeout=15.0,
+                             call_type="", lang=""):
     """
     Async generator — stream text chunks from Gemini streaming API.
     Yields str chunks. Manages circuit breaker state manually.
@@ -221,7 +224,8 @@ async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, 
             try:
                 import asyncio
                 from services.gcp_monitoring import track_gemini_call
-                asyncio.ensure_future(track_gemini_call(_dur_ms, _usage_tin, _usage_tout))
+                asyncio.ensure_future(track_gemini_call(
+                    _dur_ms, _usage_tin, _usage_tout, call_type=call_type, lang=lang))
             except Exception:
                 pass
 
@@ -231,7 +235,8 @@ async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, 
         try:
             import asyncio
             from services.gcp_monitoring import track_gemini_call
-            asyncio.ensure_future(track_gemini_call(_dur_ms, error=True))
+            asyncio.ensure_future(track_gemini_call(
+                _dur_ms, error=True, call_type=call_type, lang=lang))
         except Exception:
             pass
         raise

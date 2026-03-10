@@ -71,4 +71,74 @@
             <button type="submit" class="btn btn-action">Enregistrer</button>
         </div>
     </form>
+
+    <h2 style="margin-top:2.5rem;">Alertes Monitoring</h2>
+    {% if alert_success %}
+    <div class="alert-success">Seuils d'alertes enregistres.</div>
+    {% endif %}
+    <form method="POST" action="/admin/config/alerts" class="admin-form">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Taux erreur 5xx — warning (%)</label>
+                <input type="number" step="0.1" name="alert_error_rate_warn" value="{{ alert_cfg.alert_error_rate_warn }}">
+            </div>
+            <div class="form-group">
+                <label>Taux erreur 5xx — critical (%)</label>
+                <input type="number" step="0.1" name="alert_error_rate_crit" value="{{ alert_cfg.alert_error_rate_crit }}">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Latence P95 — warning (ms)</label>
+                <input type="number" step="100" name="alert_latency_p95_warn" value="{{ alert_cfg.alert_latency_p95_warn }}">
+            </div>
+            <div class="form-group">
+                <label>Latence P95 — critical (ms)</label>
+                <input type="number" step="100" name="alert_latency_p95_crit" value="{{ alert_cfg.alert_latency_p95_crit }}">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>CPU — warning (%)</label>
+                <input type="number" step="1" name="alert_cpu_warn" value="{{ (alert_cfg.alert_cpu_warn|float * 100)|round(0)|int }}">
+            </div>
+            <div class="form-group">
+                <label>CPU — critical (%)</label>
+                <input type="number" step="1" name="alert_cpu_crit" value="{{ (alert_cfg.alert_cpu_crit|float * 100)|round(0)|int }}">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>RAM — warning (%)</label>
+                <input type="number" step="1" name="alert_memory_warn" value="{{ (alert_cfg.alert_memory_warn|float * 100)|round(0)|int }}">
+            </div>
+            <div class="form-group">
+                <label>RAM — critical (%)</label>
+                <input type="number" step="1" name="alert_memory_crit" value="{{ (alert_cfg.alert_memory_crit|float * 100)|round(0)|int }}">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Gemini temps moyen — warning (ms)</label>
+                <input type="number" step="100" name="alert_gemini_avg_warn" value="{{ alert_cfg.alert_gemini_avg_warn }}">
+            </div>
+            <div class="form-group">
+                <label>Gemini temps moyen — critical (ms)</label>
+                <input type="number" step="100" name="alert_gemini_avg_crit" value="{{ alert_cfg.alert_gemini_avg_crit }}">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Cout mensuel — warning (EUR)</label>
+                <input type="number" step="1" name="alert_cost_month_warn" value="{{ alert_cfg.alert_cost_month_warn }}">
+            </div>
+            <div class="form-group">
+                <label>Cout mensuel — critical (EUR)</label>
+                <input type="number" step="1" name="alert_cost_month_crit" value="{{ alert_cfg.alert_cost_month_crit }}">
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-action">Enregistrer les seuils</button>
+        </div>
+    </form>
 {% endblock %}

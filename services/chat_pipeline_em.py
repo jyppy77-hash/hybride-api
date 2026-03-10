@@ -635,6 +635,7 @@ async def handle_chat_stream_em(message: str, history: list, page: str, http_cli
         async for chunk in stream_gemini_chat(
             http_client, ctx["gem_api_key"], ctx["system_prompt"],
             ctx["contents"], timeout=15.0,
+            call_type="chat_em", lang=lang,
         ):
             safe = _buf.add_chunk(chunk)
             if not safe:

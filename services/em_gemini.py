@@ -157,7 +157,8 @@ Texte a reformuler :
             try:
                 from services.gcp_monitoring import track_gemini_call
                 import asyncio
-                asyncio.ensure_future(track_gemini_call(_dur_ms, _tin, _tout))
+                asyncio.ensure_future(track_gemini_call(
+                    _dur_ms, _tin, _tout, call_type="enrichment_em", lang=lang))
             except Exception:
                 pass
             candidates = data.get("candidates", [])
@@ -173,7 +174,8 @@ Texte a reformuler :
             try:
                 from services.gcp_monitoring import track_gemini_call
                 import asyncio
-                asyncio.ensure_future(track_gemini_call(_dur_ms, error=True))
+                asyncio.ensure_future(track_gemini_call(
+                    _dur_ms, error=True, call_type="enrichment_em", lang=lang))
             except Exception:
                 pass
 

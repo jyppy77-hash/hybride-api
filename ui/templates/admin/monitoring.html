@@ -152,6 +152,100 @@
 /* ── Cost green/orange ──────────────────────────────────────── */
 .mon-cost-ok   .mon-card-value { color: #00c853; }
 .mon-cost-warn .mon-card-value { color: #ff9800; }
+
+/* ── Charts ─────────────────────────────────────────────────── */
+.mon-chart-wrap {
+    background: var(--bg-card);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 32px var(--shadow);
+    padding: 1rem 1.2rem;
+    margin-bottom: 1rem;
+    position: relative;
+}
+.mon-chart-wrap canvas { max-height: 220px; }
+.mon-chart-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+@media (max-width: 700px) { .mon-chart-grid { grid-template-columns: 1fr; } }
+
+/* ── Period toggle ──────────────────────────────────────────── */
+.mon-period-toggle {
+    display: flex;
+    gap: .3rem;
+    margin-bottom: 1rem;
+}
+.mon-period-btn {
+    padding: .3rem .7rem;
+    font-size: .7rem;
+    font-weight: 600;
+    border: 1px solid rgba(255,255,255,.1);
+    border-radius: 4px;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all .2s;
+}
+.mon-period-btn.active {
+    background: rgba(79,140,255,.2);
+    color: #4f8cff;
+    border-color: rgba(79,140,255,.3);
+}
+
+/* ── Breakdown tables ───────────────────────────────────────── */
+.mon-breakdown-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: .5rem;
+}
+@media (max-width: 700px) { .mon-breakdown-grid { grid-template-columns: 1fr; } }
+.mon-table-wrap {
+    background: var(--bg-card);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 32px var(--shadow);
+    padding: 1rem;
+    overflow-x: auto;
+}
+.mon-table-wrap h4 {
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin: 0 0 .6rem;
+}
+.mon-mini-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .75rem;
+}
+.mon-mini-table th {
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: .35rem .5rem;
+    border-bottom: 1px solid rgba(255,255,255,.06);
+    font-size: .65rem;
+    text-transform: uppercase;
+}
+.mon-mini-table td {
+    padding: .35rem .5rem;
+    color: var(--text);
+    border-bottom: 1px solid rgba(255,255,255,.03);
+    font-variant-numeric: tabular-nums;
+}
+.mon-mini-table tr:hover td { background: rgba(255,255,255,.02); }
+
+/* ── Donut chart container ──────────────────────────────────── */
+.mon-donut-wrap { max-width: 180px; margin: .5rem auto 0; }
 </style>
 {% endblock %}
 
@@ -163,6 +257,9 @@
     <div class="mon-status-text">
         Service : <strong id="mon-status-label">chargement...</strong>
         <span id="mon-timestamp"></span>
+    </div>
+    <div id="mon-alert-badge" style="display:none;margin-left:auto;font-size:.75rem;font-weight:700;padding:.25rem .7rem;border-radius:20px;background:rgba(255,82,82,.15);color:#ff5252;">
+        <span id="mon-alert-count">0</span> alerte(s) active(s)
     </div>
 </div>
 
@@ -268,45 +365,109 @@
     </div>
 </div>
 
+<!-- ROW 5 — Business -->
+<div class="mon-section">Business</div>
+<div class="mon-grid">
+    <div class="mon-card">
+        <span class="mon-card-icon">💶</span>
+        <span class="mon-card-value" id="v-biz-margin">—</span>
+        <span class="mon-card-label">Marge API / jour</span>
+    </div>
+    <div class="mon-card">
+        <span class="mon-card-icon">📢</span>
+        <span class="mon-card-value" id="v-biz-sponsors">—</span>
+        <span class="mon-card-label">Revenue sponsors</span>
+    </div>
+    <div class="mon-card">
+        <span class="mon-card-icon">👁️</span>
+        <span class="mon-card-value" id="v-biz-cpv">—</span>
+        <span class="mon-card-label">Cout / visite</span>
+    </div>
+    <div class="mon-card" id="card-biz-roi">
+        <span class="mon-card-icon">📈</span>
+        <span class="mon-card-value" id="v-biz-roi">—</span>
+        <span class="mon-card-label">ROI sponsors</span>
+    </div>
+</div>
+
+<!-- ── Historique (Charts) ─────────────────────────────────────── -->
+<div class="mon-section">Historique</div>
+<div class="mon-period-toggle" id="chart-period-toggle">
+    <button class="mon-period-btn active" data-period="24h">24h</button>
+    <button class="mon-period-btn" data-period="7d">7 jours</button>
+    <button class="mon-period-btn" data-period="30d">30 jours</button>
+</div>
+<div class="mon-chart-grid">
+    <div class="mon-chart-wrap">
+        <canvas id="chart-req-err"></canvas>
+    </div>
+    <div class="mon-chart-wrap">
+        <canvas id="chart-latency"></canvas>
+    </div>
+    <div class="mon-chart-wrap">
+        <canvas id="chart-gemini"></canvas>
+    </div>
+    <div class="mon-chart-wrap">
+        <canvas id="chart-costs"></canvas>
+    </div>
+</div>
+
+<!-- ── Gemini Breakdown ────────────────────────────────────────── -->
+<div class="mon-section">Gemini — Repartition</div>
+<div class="mon-breakdown-grid">
+    <div class="mon-table-wrap">
+        <h4>Par type</h4>
+        <table class="mon-mini-table" id="tbl-by-type">
+            <thead><tr><th>Type</th><th>Appels</th><th>Tokens IN</th><th>Tokens OUT</th><th>Avg ms</th><th>Err</th></tr></thead>
+            <tbody id="tbl-by-type-body"><tr><td colspan="6" style="text-align:center;color:var(--text-muted)">Chargement...</td></tr></tbody>
+        </table>
+    </div>
+    <div class="mon-table-wrap">
+        <h4>Par langue</h4>
+        <table class="mon-mini-table" id="tbl-by-lang">
+            <thead><tr><th>Langue</th><th>Appels</th><th>Tokens IN</th><th>Tokens OUT</th></tr></thead>
+            <tbody id="tbl-by-lang-body"><tr><td colspan="4" style="text-align:center;color:var(--text-muted)">Chargement...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
 <!-- Footer -->
 <div class="mon-footer">
-    <span>Donnees rafraichies toutes les 30s — Cache API 60s</span>
+    <span>Donnees rafraichies toutes les 30s — Cache API 60s — Snapshot 5 min</span>
     <button class="btn btn-ghost" id="btn-refresh">Rafraichir maintenant</button>
 </div>
 
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script>
 (function(){
     var REFRESH_MS = 30000;
     var timer = null;
+    var currentPeriod = '24h';
 
+    /* ── Formatters ─────────────────────────────────────────── */
     function fmt(n) {
         if (n == null) return '—';
         if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
-        if (n >= 10000)   return (n/1000).toFixed(1) + 'K';
-        if (n >= 1000)    return (n/1000).toFixed(1) + 'K';
+        if (n >= 1000) return (n/1000).toFixed(1) + 'K';
         return String(n);
     }
-
     function fmtMs(n) {
         if (n == null) return '—';
         if (n >= 1000) return (n/1000).toFixed(1) + 's';
         return Math.round(n) + 'ms';
     }
-
     function fmtPct(n) {
         if (n == null) return '—';
         return (n * 100).toFixed(1) + '%';
     }
-
     function fmtEur(n) {
         if (n == null) return '—';
         if (n < 0.01) return '0.00 €';
         return n.toFixed(2) + ' €';
     }
-
     function fmtEurMonth(n) {
         if (n == null) return '—';
         return n.toFixed(1) + ' €';
@@ -318,7 +479,6 @@
         el.classList.remove('mon-card-warn', 'mon-card-crit', 'mon-cost-ok', 'mon-cost-warn');
         if (cls) el.classList.add(cls);
     }
-
     function setBar(id, pct, warn, crit) {
         var bar = document.getElementById(id);
         if (!bar) return;
@@ -327,7 +487,6 @@
         if (pct >= crit) bar.classList.add('mon-bar-crit');
         else if (pct >= warn) bar.classList.add('mon-bar-warn');
     }
-
     function animateValue(el, newText) {
         if (!el) return;
         if (el.textContent === newText) return;
@@ -338,12 +497,11 @@
         }, 150);
     }
 
+    /* ── KPI Update ─────────────────────────────────────────── */
     function updateUI(data) {
-        // Status bar
         var dot = document.getElementById('mon-dot');
         var label = document.getElementById('mon-status-label');
         var ts = document.getElementById('mon-timestamp');
-        var bar = document.getElementById('mon-status-bar');
         var s = data.status || 'unknown';
 
         dot.className = 'mon-dot mon-dot-' + s;
@@ -358,45 +516,68 @@
         var g = data.gemini || {};
         var c = data.costs || {};
 
-        // Row 1 — Cloud Run
+        // Row 1
         animateValue(document.getElementById('v-rps'), m.requests_per_second != null ? m.requests_per_second.toFixed(1) : '—');
-
         var errPct = m.error_rate_5xx != null ? m.error_rate_5xx : 0;
         animateValue(document.getElementById('v-err'), fmtPct(errPct));
         setCard('card-err', errPct >= 0.05 ? 'mon-card-crit' : errPct >= 0.01 ? 'mon-card-warn' : '');
-
         var p95 = m.latency_p95_ms || 0;
         animateValue(document.getElementById('v-p95'), fmtMs(p95));
         setCard('card-p95', p95 >= 5000 ? 'mon-card-crit' : p95 >= 2000 ? 'mon-card-warn' : '');
-
         animateValue(document.getElementById('v-inst'), m.active_instances != null ? String(m.active_instances) : '—');
 
-        // Row 2 — Systeme
+        // Row 2
         var cpuPct = (m.cpu_utilization || 0) * 100;
         animateValue(document.getElementById('v-cpu'), cpuPct.toFixed(1) + '%');
         setBar('bar-cpu', cpuPct, 60, 80);
         setCard('card-cpu', cpuPct >= 80 ? 'mon-card-crit' : cpuPct >= 60 ? 'mon-card-warn' : '');
-
         var ramPct = (m.memory_utilization || 0) * 100;
         animateValue(document.getElementById('v-ram'), ramPct.toFixed(1) + '%');
         setBar('bar-ram', ramPct, 60, 80);
         setCard('card-ram', ramPct >= 80 ? 'mon-card-crit' : ramPct >= 60 ? 'mon-card-warn' : '');
-
         animateValue(document.getElementById('v-p50'), fmtMs(m.latency_p50_ms));
         animateValue(document.getElementById('v-p99'), fmtMs(m.latency_p99_ms));
 
-        // Row 3 — Gemini
+        // Row 3
         animateValue(document.getElementById('v-gem-calls'), fmt(g.calls_today));
         animateValue(document.getElementById('v-gem-avg'), fmtMs(g.avg_response_time_ms));
         animateValue(document.getElementById('v-gem-tin'), fmt(g.tokens_in_today));
         animateValue(document.getElementById('v-gem-tout'), fmt(g.tokens_out_today));
 
-        // Row 4 — Couts
+        // Row 4
         animateValue(document.getElementById('v-cost-run'), fmtEur(c.cloud_run_today_eur));
         animateValue(document.getElementById('v-cost-sql'), fmtEur(c.cloud_sql_today_eur));
         animateValue(document.getElementById('v-cost-gem'), fmtEur(c.gemini_today_eur));
         animateValue(document.getElementById('v-cost-month'), fmtEurMonth(c.estimated_month_eur));
         setCard('card-cost-month', c.estimated_month_eur >= 90 ? 'mon-cost-warn' : 'mon-cost-ok');
+
+        // Row 5 — Business
+        var totalCost = c.total_today_eur || 0;
+        var sponsorRev = 0; // will be enriched later if available
+        var margin = sponsorRev - totalCost;
+        animateValue(document.getElementById('v-biz-margin'), fmtEur(margin));
+        animateValue(document.getElementById('v-biz-sponsors'), fmtEur(sponsorRev));
+        // Cost per visit estimate (rps * 86400 = daily visits approx)
+        var dailyVisits = (m.requests_per_second || 0) * 86400;
+        var cpv = dailyVisits > 0 ? totalCost / dailyVisits : 0;
+        animateValue(document.getElementById('v-biz-cpv'), cpv > 0 ? cpv.toFixed(4) + ' €' : '—');
+        var roi = totalCost > 0 ? ((sponsorRev / totalCost - 1) * 100).toFixed(0) + '%' : '—';
+        animateValue(document.getElementById('v-biz-roi'), roi);
+        setCard('card-biz-roi', margin < 0 ? 'mon-card-warn' : 'mon-cost-ok');
+
+        // Alerts
+        var alerts = data.active_alerts || [];
+        var badge = document.getElementById('mon-alert-badge');
+        var countEl = document.getElementById('mon-alert-count');
+        if (alerts.length > 0) {
+            countEl.textContent = alerts.length;
+            badge.style.display = '';
+            var hasCrit = alerts.some(function(a) { return a.level === 'critical'; });
+            badge.style.background = hasCrit ? 'rgba(255,82,82,.15)' : 'rgba(255,152,0,.15)';
+            badge.style.color = hasCrit ? '#ff5252' : '#ff9800';
+        } else {
+            badge.style.display = 'none';
+        }
     }
 
     function fetchMetrics() {
@@ -410,13 +591,209 @@
             });
     }
 
-    // Initial fetch + interval
-    fetchMetrics();
-    timer = setInterval(fetchMetrics, REFRESH_MS);
+    /* ── Chart.js graphs ────────────────────────────────────── */
+    var chartOpts = {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+            legend: { labels: { color: 'rgba(255,255,255,.6)', font: { size: 10 } } },
+            tooltip: { backgroundColor: 'rgba(20,20,30,.9)' }
+        },
+        scales: {
+            x: { ticks: { color: 'rgba(255,255,255,.4)', font: { size: 9 }, maxTicksLimit: 12 }, grid: { color: 'rgba(255,255,255,.04)' } },
+            y: { ticks: { color: 'rgba(255,255,255,.4)', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,.04)' } }
+        }
+    };
 
-    // Manual refresh
+    var charts = {};
+
+    function createCharts() {
+        var ctx1 = document.getElementById('chart-req-err');
+        charts.reqErr = new Chart(ctx1, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Req/s', data: [], borderColor: '#4f8cff', backgroundColor: 'rgba(79,140,255,.1)', fill: true, tension: .3, pointRadius: 0 },
+                    { label: 'Err 5xx %', data: [], borderColor: '#ff5252', backgroundColor: 'rgba(255,82,82,.1)', fill: true, tension: .3, pointRadius: 0, yAxisID: 'y1' }
+                ]
+            },
+            options: Object.assign({}, chartOpts, {
+                plugins: Object.assign({}, chartOpts.plugins, { title: { display: true, text: 'Requetes & Erreurs', color: 'rgba(255,255,255,.7)', font: { size: 11 } } }),
+                scales: Object.assign({}, chartOpts.scales, {
+                    y1: { position: 'right', ticks: { color: 'rgba(255,82,82,.5)', font: { size: 9 } }, grid: { drawOnChartArea: false } }
+                })
+            })
+        });
+
+        var ctx2 = document.getElementById('chart-latency');
+        charts.latency = new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'P50', data: [], borderColor: '#00c853', tension: .3, pointRadius: 0 },
+                    { label: 'P95', data: [], borderColor: '#ff9800', tension: .3, pointRadius: 0 },
+                    { label: 'P99', data: [], borderColor: '#ff5252', tension: .3, pointRadius: 0 }
+                ]
+            },
+            options: Object.assign({}, chartOpts, {
+                plugins: Object.assign({}, chartOpts.plugins, { title: { display: true, text: 'Latence (ms)', color: 'rgba(255,255,255,.7)', font: { size: 11 } } })
+            })
+        });
+
+        var ctx3 = document.getElementById('chart-gemini');
+        charts.gemini = new Chart(ctx3, {
+            type: 'line',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Appels', data: [], borderColor: '#ab47bc', backgroundColor: 'rgba(171,71,188,.1)', fill: true, tension: .3, pointRadius: 0 },
+                    { label: 'Avg ms', data: [], borderColor: '#4fc3f7', tension: .3, pointRadius: 0, yAxisID: 'y1' }
+                ]
+            },
+            options: Object.assign({}, chartOpts, {
+                plugins: Object.assign({}, chartOpts.plugins, { title: { display: true, text: 'Gemini IA', color: 'rgba(255,255,255,.7)', font: { size: 11 } } }),
+                scales: Object.assign({}, chartOpts.scales, {
+                    y1: { position: 'right', ticks: { color: 'rgba(79,195,247,.5)', font: { size: 9 } }, grid: { drawOnChartArea: false } }
+                })
+            })
+        });
+
+        var ctx4 = document.getElementById('chart-costs');
+        charts.costs = new Chart(ctx4, {
+            type: 'bar',
+            data: {
+                labels: [],
+                datasets: [
+                    { label: 'Cloud Run', data: [], backgroundColor: 'rgba(79,140,255,.6)', borderRadius: 2 },
+                    { label: 'Cloud SQL', data: [], backgroundColor: 'rgba(255,152,0,.6)', borderRadius: 2 },
+                    { label: 'Gemini', data: [], backgroundColor: 'rgba(171,71,188,.6)', borderRadius: 2 }
+                ]
+            },
+            options: Object.assign({}, chartOpts, {
+                plugins: Object.assign({}, chartOpts.plugins, { title: { display: true, text: 'Couts (EUR)', color: 'rgba(255,255,255,.7)', font: { size: 11 } } }),
+                scales: Object.assign({}, chartOpts.scales, {
+                    x: Object.assign({}, chartOpts.scales.x, { stacked: true }),
+                    y: Object.assign({}, chartOpts.scales.y, { stacked: true })
+                })
+            })
+        });
+    }
+
+    function updateCharts(data) {
+        var pts = data.points || [];
+        if (!pts.length) return;
+
+        var labels = pts.map(function(p) {
+            var t = p.ts_label || '';
+            // Show HH:MM for 24h, MM-DD HH for longer
+            if (currentPeriod === '24h') return t.slice(11, 16);
+            return t.slice(5, 13);
+        });
+
+        // Req & Err
+        charts.reqErr.data.labels = labels;
+        charts.reqErr.data.datasets[0].data = pts.map(function(p) { return +(p.requests_per_second || 0); });
+        charts.reqErr.data.datasets[1].data = pts.map(function(p) { return +((p.error_rate_5xx || 0) * 100); });
+        charts.reqErr.update('none');
+
+        // Latency
+        charts.latency.data.labels = labels;
+        charts.latency.data.datasets[0].data = pts.map(function(p) { return +(p.latency_p50_ms || 0); });
+        charts.latency.data.datasets[1].data = pts.map(function(p) { return +(p.latency_p95_ms || 0); });
+        charts.latency.data.datasets[2].data = pts.map(function(p) { return +(p.latency_p99_ms || 0); });
+        charts.latency.update('none');
+
+        // Gemini
+        charts.gemini.data.labels = labels;
+        charts.gemini.data.datasets[0].data = pts.map(function(p) { return +(p.gemini_calls || 0); });
+        charts.gemini.data.datasets[1].data = pts.map(function(p) { return +(p.gemini_avg_ms || 0); });
+        charts.gemini.update('none');
+
+        // Costs
+        charts.costs.data.labels = labels;
+        charts.costs.data.datasets[0].data = pts.map(function(p) { return +(p.cost_cloud_run_eur || 0); });
+        charts.costs.data.datasets[1].data = pts.map(function(p) { return +(p.cost_cloud_sql_eur || 0); });
+        charts.costs.data.datasets[2].data = pts.map(function(p) { return +(p.cost_gemini_eur || 0); });
+        charts.costs.update('none');
+    }
+
+    function fetchHistory() {
+        fetch('/admin/api/gcp-metrics/history?period=' + currentPeriod, { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(updateCharts)
+            .catch(function(e) { console.error('[MON] history fetch error', e); });
+    }
+
+    /* ── Gemini Breakdown ───────────────────────────────────── */
+    var TYPE_LABELS = {
+        chat_loto: 'Chat Loto',
+        chat_em: 'Chat EM',
+        enrichment_loto: 'Enrich Loto',
+        enrichment_em: 'Enrich EM',
+        meta_analyse: 'Meta Analyse'
+    };
+
+    function fetchBreakdown() {
+        fetch('/admin/api/gemini-breakdown', { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                // By type table
+                var tbody = document.getElementById('tbl-by-type-body');
+                var rows = (data.by_type || []).filter(function(r) { return r.calls > 0; });
+                if (!rows.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted)">Aucune donnee</td></tr>';
+                } else {
+                    tbody.innerHTML = rows.map(function(r) {
+                        return '<tr><td>' + (TYPE_LABELS[r.type] || r.type) + '</td><td>' + fmt(r.calls) +
+                            '</td><td>' + fmt(r.tokens_in) + '</td><td>' + fmt(r.tokens_out) +
+                            '</td><td>' + r.avg_ms + '</td><td>' + r.errors + '</td></tr>';
+                    }).join('');
+                }
+
+                // By lang table
+                var tbody2 = document.getElementById('tbl-by-lang-body');
+                var rows2 = (data.by_lang || []).filter(function(r) { return r.calls > 0; });
+                if (!rows2.length) {
+                    tbody2.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">Aucune donnee</td></tr>';
+                } else {
+                    tbody2.innerHTML = rows2.map(function(r) {
+                        return '<tr><td>' + r.lang.toUpperCase() + '</td><td>' + fmt(r.calls) +
+                            '</td><td>' + fmt(r.tokens_in) + '</td><td>' + fmt(r.tokens_out) + '</td></tr>';
+                    }).join('');
+                }
+            })
+            .catch(function(e) { console.error('[MON] breakdown fetch error', e); });
+    }
+
+    /* ── Period toggle ──────────────────────────────────────── */
+    document.getElementById('chart-period-toggle').addEventListener('click', function(e) {
+        var btn = e.target.closest('.mon-period-btn');
+        if (!btn) return;
+        currentPeriod = btn.dataset.period;
+        this.querySelectorAll('.mon-period-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        fetchHistory();
+    });
+
+    /* ── Init ───────────────────────────────────────────────── */
+    createCharts();
+    fetchMetrics();
+    fetchHistory();
+    fetchBreakdown();
+    timer = setInterval(function() {
+        fetchMetrics();
+        fetchBreakdown();
+    }, REFRESH_MS);
+    // Refresh history every 5 min
+    setInterval(fetchHistory, 300000);
+
     document.getElementById('btn-refresh').addEventListener('click', function() {
         fetchMetrics();
+        fetchHistory();
+        fetchBreakdown();
         this.textContent = 'Chargement...';
         var btn = this;
         setTimeout(function() { btn.textContent = 'Rafraichir maintenant'; }, 800);

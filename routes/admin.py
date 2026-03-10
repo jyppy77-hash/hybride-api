@@ -931,8 +931,14 @@ async def admin_config_page(request: Request):
         cfg = await db_cloudsql.async_fetchone("SELECT * FROM fia_config_entreprise WHERE id = 1") or {}
     except Exception as e:
         logger.error("[ADMIN] config read: %s", e)
+    from services.alerting import DEFAULT_THRESHOLDS, get_alert_thresholds
+    try:
+        alert_cfg = await get_alert_thresholds()
+    except Exception:
+        alert_cfg = dict(DEFAULT_THRESHOLDS)
     tpl = env.get_template("admin/config.html")
-    return HTMLResponse(tpl.render(active="config", cfg=cfg, success=False))
+    return HTMLResponse(tpl.render(active="config", cfg=cfg, success=False,
+                                   alert_cfg=alert_cfg, alert_success=False))
 
 
 @router.post("/admin/config", response_class=HTMLResponse, include_in_schema=False)
@@ -962,8 +968,64 @@ async def admin_config_save(request: Request):
         cfg = await db_cloudsql.async_fetchone("SELECT * FROM fia_config_entreprise WHERE id = 1") or {}
     except Exception:
         pass
+    from services.alerting import DEFAULT_THRESHOLDS, get_alert_thresholds
+    try:
+        alert_cfg = await get_alert_thresholds()
+    except Exception:
+        alert_cfg = dict(DEFAULT_THRESHOLDS)
     tpl = env.get_template("admin/config.html")
-    return HTMLResponse(tpl.render(active="config", cfg=cfg, success=True))
+    return HTMLResponse(tpl.render(active="config", cfg=cfg, success=True,
+                                   alert_cfg=alert_cfg, alert_success=False))
+
+
+@router.post("/admin/config/alerts", response_class=HTMLResponse, include_in_schema=False)
+async def admin_config_alerts_save(request: Request):
+    redir = _require_auth(request)
+    if redir:
+        return redir
+
+    form = await request.form()
+    _ALERT_KEYS = {
+        "alert_error_rate_warn": lambda v: str(float(v) / 100),  # % → ratio
+        "alert_error_rate_crit": lambda v: str(float(v) / 100),
+        "alert_latency_p95_warn": lambda v: str(int(float(v))),
+        "alert_latency_p95_crit": lambda v: str(int(float(v))),
+        "alert_cpu_warn": lambda v: str(float(v) / 100),  # % → ratio
+        "alert_cpu_crit": lambda v: str(float(v) / 100),
+        "alert_memory_warn": lambda v: str(float(v) / 100),
+        "alert_memory_crit": lambda v: str(float(v) / 100),
+        "alert_gemini_avg_warn": lambda v: str(int(float(v))),
+        "alert_gemini_avg_crit": lambda v: str(int(float(v))),
+        "alert_cost_month_warn": lambda v: str(int(float(v))),
+        "alert_cost_month_crit": lambda v: str(int(float(v))),
+    }
+    try:
+        for key, convert in _ALERT_KEYS.items():
+            val = form.get(key, "")
+            if val:
+                stored = convert(val)
+                await db_cloudsql.async_query(
+                    "INSERT INTO admin_config (config_key, config_value) VALUES (%s, %s) "
+                    "ON DUPLICATE KEY UPDATE config_value = %s",
+                    (key, stored, stored),
+                )
+    except Exception as e:
+        logger.error("[ADMIN] alert config save: %s", e)
+
+    cfg = {}
+    try:
+        cfg = await db_cloudsql.async_fetchone("SELECT * FROM fia_config_entreprise WHERE id = 1") or {}
+    except Exception:
+        pass
+    from services.alerting import get_alert_thresholds
+    try:
+        alert_cfg = await get_alert_thresholds()
+    except Exception:
+        from services.alerting import DEFAULT_THRESHOLDS
+        alert_cfg = dict(DEFAULT_THRESHOLDS)
+    tpl = env.get_template("admin/config.html")
+    return HTMLResponse(tpl.render(active="config", cfg=cfg, success=False,
+                                   alert_cfg=alert_cfg, alert_success=True))
 
 
 # ── Realtime feed ─────────────────────────────────────────────────────────────
@@ -1461,6 +1523,39 @@ async def admin_api_gcp_metrics(request: Request):
     except Exception as e:
         logger.error("[ADMIN] gcp-metrics: %s", e)
         return JSONResponse({"status": "unknown", "error": str(e)}, status_code=500)
+
+
+@router.get("/admin/api/gcp-metrics/history", include_in_schema=False)
+async def admin_api_gcp_metrics_history(request: Request):
+    """Historical metrics for Chart.js graphs."""
+    err = _require_auth_json(request)
+    if err:
+        return err
+    period = request.query_params.get("period", "24h")
+    if period not in ("24h", "7d", "30d"):
+        period = "24h"
+    try:
+        from services.gcp_monitoring import get_metrics_history
+        data = await get_metrics_history(period)
+        return JSONResponse({"period": period, "points": data})
+    except Exception as e:
+        logger.error("[ADMIN] gcp-metrics-history: %s", e)
+        return JSONResponse({"period": period, "points": []}, status_code=500)
+
+
+@router.get("/admin/api/gemini-breakdown", include_in_schema=False)
+async def admin_api_gemini_breakdown(request: Request):
+    """Gemini usage breakdown by type and language."""
+    err = _require_auth_json(request)
+    if err:
+        return err
+    try:
+        from services.gcp_monitoring import get_gemini_breakdown
+        data = await get_gemini_breakdown()
+        return JSONResponse(data)
+    except Exception as e:
+        logger.error("[ADMIN] gemini-breakdown: %s", e)
+        return JSONResponse({"by_type": [], "by_lang": []}, status_code=500)
 
 
 @router.get("/admin/monitoring", include_in_schema=False)

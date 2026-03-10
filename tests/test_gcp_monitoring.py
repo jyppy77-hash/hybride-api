@@ -278,7 +278,7 @@ class TestGetGcpMetrics:
             result = await get_gcp_metrics()
 
             # Top-level keys
-            assert set(result.keys()) == {"status", "timestamp", "metrics", "gemini", "costs"}
+            assert set(result.keys()) == {"status", "timestamp", "metrics", "gemini", "costs", "active_alerts"}
 
             # Metrics keys
             expected_metric_keys = {
