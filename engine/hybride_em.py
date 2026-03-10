@@ -324,24 +324,41 @@ async def generer_etoiles(conn) -> List[int]:
 # GENERATION DE GRILLE
 # ============================================================================
 
-async def generer_grille(conn, scores_hybrides: Dict[int, float], lang: str = "fr") -> Dict[str, Any]:
+async def generer_grille(
+    conn,
+    scores_hybrides: Dict[int, float],
+    lang: str = "fr",
+    forced_nums: List[int] | None = None,
+    forced_etoiles: List[int] | None = None,
+) -> Dict[str, Any]:
     """
     Genere une grille EM unique avec validation des contraintes.
     5 boules [1-50] + 2 etoiles [1-12].
+
+    Args:
+        forced_nums: Boules imposées par l'utilisateur
+        forced_etoiles: Étoiles imposées par l'utilisateur
     """
     MAX_TENTATIVES = 10
+
+    if forced_nums is None:
+        forced_nums = []
+    if forced_etoiles is None:
+        forced_etoiles = []
 
     probas = normaliser_en_probabilites(scores_hybrides)
 
     meilleure_grille = None
     meilleur_score_conformite = 0
 
+    nb_to_draw = NB_BOULES - len(forced_nums)
+
     for tentative in range(MAX_TENTATIVES):
-        numeros_disponibles = list(range(BOULE_MIN, BOULE_MAX + 1))
+        numeros_disponibles = [n for n in range(BOULE_MIN, BOULE_MAX + 1) if n not in forced_nums]
         probas_list = [probas[n] for n in numeros_disponibles]
 
-        numeros = []
-        for _ in range(NB_BOULES):
+        numeros = list(forced_nums)
+        for _ in range(nb_to_draw):
             num = random.choices(numeros_disponibles, weights=probas_list, k=1)[0]
             numeros.append(num)
             idx = numeros_disponibles.index(num)
@@ -361,8 +378,19 @@ async def generer_grille(conn, scores_hybrides: Dict[int, float], lang: str = "f
     numeros = meilleure_grille
     score_conformite = meilleur_score_conformite
 
-    # 2 etoiles parmi [1-12] sans remplacement
-    etoiles = await generer_etoiles(conn)
+    # Étoiles : imposées + complément pondéré
+    if len(forced_etoiles) >= NB_ETOILES:
+        etoiles = sorted(forced_etoiles[:NB_ETOILES])
+    elif forced_etoiles:
+        # Compléter avec des étoiles pondérées
+        all_etoiles = await generer_etoiles(conn)
+        etoiles = list(forced_etoiles)
+        for e in all_etoiles:
+            if e not in etoiles and len(etoiles) < NB_ETOILES:
+                etoiles.append(e)
+        etoiles = sorted(etoiles)
+    else:
+        etoiles = await generer_etoiles(conn)
 
     # Score moyen
     score_moyen = sum(scores_hybrides[n] for n in numeros) / NB_BOULES
@@ -373,32 +401,49 @@ async def generer_grille(conn, scores_hybrides: Dict[int, float], lang: str = "f
 
     badges = generer_badges(numeros, scores_hybrides, lang=lang)
 
-    return {
+    result = {
         'nums': numeros,
         'etoiles': etoiles,
         'score': score_final,
         'badges': badges
     }
+    if forced_nums:
+        result['forced_nums'] = forced_nums
+    if forced_etoiles:
+        result['forced_etoiles'] = forced_etoiles
+
+    return result
 
 
 # ============================================================================
 # API PRINCIPALE
 # ============================================================================
 
-async def generate_grids(n: int = 5, mode: str = "balanced", lang: str = "fr") -> Dict[str, Any]:
+async def generate_grids(
+    n: int = 5,
+    mode: str = "balanced",
+    lang: str = "fr",
+    forced_nums: List[int] | None = None,
+    forced_etoiles: List[int] | None = None,
+) -> Dict[str, Any]:
     """
     Point d'entree principal : genere N grilles EM optimisees.
 
     Args:
         n: Nombre de grilles (max 20)
         mode: conservative, balanced, recent
+        forced_nums: Boules imposées par l'utilisateur
+        forced_etoiles: Étoiles imposées par l'utilisateur
     """
     async with get_connection() as conn:
         scores_hybrides = await calculer_scores_hybrides(conn, mode=mode)
 
         grilles = []
         for i in range(n):
-            grille = await generer_grille(conn, scores_hybrides, lang=lang)
+            grille = await generer_grille(
+                conn, scores_hybrides, lang=lang,
+                forced_nums=forced_nums, forced_etoiles=forced_etoiles,
+            )
             grilles.append(grille)
 
         grilles = sorted(grilles, key=lambda g: g['score'], reverse=True)

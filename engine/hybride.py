@@ -408,7 +408,9 @@ def generer_badges(numeros: List[int], scores_hybrides: Dict[int, float]) -> Lis
 
 async def generer_grille(
     conn,
-    scores_hybrides: Dict[int, float]
+    scores_hybrides: Dict[int, float],
+    forced_nums: List[int] | None = None,
+    forced_chance: int | None = None,
 ) -> Dict[str, Any]:
     """
     Génère une grille unique avec validation des contraintes
@@ -418,11 +420,16 @@ async def generer_grille(
     Args:
         conn: Connexion MariaDB
         scores_hybrides: Scores hybrides pré-calculés
+        forced_nums: Numéros imposés par l'utilisateur (inclus obligatoirement)
+        forced_chance: Numéro chance imposé (1-10)
 
     Returns:
         Dict représentant la grille
     """
     MAX_TENTATIVES = 10
+
+    if forced_nums is None:
+        forced_nums = []
 
     # Convertir scores en probabilités
     probas = normaliser_en_probabilites(scores_hybrides)
@@ -431,14 +438,16 @@ async def generer_grille(
     meilleure_grille = None
     meilleur_score_conformite = 0
 
+    nb_to_draw = 5 - len(forced_nums)
+
     # Boucle de génération (non récursive)
     for tentative in range(MAX_TENTATIVES):
-        # Tirage pondéré de 5 numéros uniques
-        numeros_disponibles = list(range(1, 50))
+        # Tirage pondéré des numéros restants (exclure les imposés)
+        numeros_disponibles = [n for n in range(1, 50) if n not in forced_nums]
         probas_list = [probas[n] for n in numeros_disponibles]
 
-        numeros = []
-        for _ in range(5):
+        numeros = list(forced_nums)
+        for _ in range(nb_to_draw):
             # Tirage pondéré
             num = random.choices(numeros_disponibles, weights=probas_list, k=1)[0]
             numeros.append(num)
@@ -466,8 +475,8 @@ async def generer_grille(
     numeros = meilleure_grille
     score_conformite = meilleur_score_conformite
 
-    # Numéro chance (fréquence simple)
-    chance = await generer_numero_chance(conn)
+    # Numéro chance : imposé ou fréquence simple
+    chance = forced_chance if forced_chance is not None else await generer_numero_chance(conn)
 
     # Calcul du score moyen
     score_moyen = sum(scores_hybrides[n] for n in numeros) / 5
@@ -479,12 +488,18 @@ async def generer_grille(
     # Badges explicatifs
     badges = generer_badges(numeros, scores_hybrides)
 
-    return {
+    result = {
         'nums': numeros,
         'chance': chance,
         'score': score_final,  # Conservé pour compatibilité interne
         'badges': badges
     }
+    if forced_nums:
+        result['forced_nums'] = forced_nums
+    if forced_chance is not None:
+        result['forced_chance'] = forced_chance
+
+    return result
 
 
 async def generer_numero_chance(conn) -> int:
@@ -640,7 +655,13 @@ async def build_explanation(nums: List[int], chance_num: int) -> Dict[str, Any]:
 # API PRINCIPALE
 # ============================================================================
 
-async def generate_grids(n: int = 5, mode: str = "balanced", lang: str = "fr") -> Dict[str, Any]:
+async def generate_grids(
+    n: int = 5,
+    mode: str = "balanced",
+    lang: str = "fr",
+    forced_nums: List[int] | None = None,
+    forced_chance: int | None = None,
+) -> Dict[str, Any]:
     """
     Point d'entrée principal : génère N grilles optimisées
 
@@ -650,6 +671,8 @@ async def generate_grids(n: int = 5, mode: str = "balanced", lang: str = "fr") -
             - "conservative" : favorise l'historique long terme (70% 5ans / 30% 2ans)
             - "balanced" : équilibre long/court terme (60% 5ans / 40% 2ans) [défaut]
             - "recent" : favorise les tendances récentes (40% 5ans / 60% 2ans)
+        forced_nums: Numéros imposés par l'utilisateur (inclus obligatoirement)
+        forced_chance: Numéro chance imposé (1-10)
 
     Returns:
         Dict {
@@ -664,7 +687,10 @@ async def generate_grids(n: int = 5, mode: str = "balanced", lang: str = "fr") -
         # 2. Génération des grilles
         grilles = []
         for i in range(n):
-            grille = await generer_grille(conn, scores_hybrides)
+            grille = await generer_grille(
+                conn, scores_hybrides,
+                forced_nums=forced_nums, forced_chance=forced_chance,
+            )
             grilles.append(grille)
 
         # 3. Tri par score décroissant

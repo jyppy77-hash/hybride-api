@@ -23,7 +23,7 @@ from services.chat_detectors import (
     _get_menace_response, _detect_compliment, _count_compliment_streak,
     _get_compliment_response, _detect_out_of_range, _count_oor_streak,
     _get_oor_response, _detect_argent, _get_argent_response,
-    _detect_generation, _detect_generation_mode,
+    _detect_generation, _detect_generation_mode, _extract_forced_numbers,
     _detect_cooccurrence_high_n, _get_cooccurrence_high_n_response,
 )
 from services.chat_sql import (
@@ -149,14 +149,27 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
         try:
             from engine.hybride import generate_grids as _gen_loto
             _gen_mode = _detect_generation_mode(message)
-            _gen_result = await asyncio.wait_for(
-                _gen_loto(n=1, mode=_gen_mode), timeout=30.0
-            )
-            if _gen_result and _gen_result.get("grids"):
-                _grid = _gen_result["grids"][0]
-                _grid["mode"] = _gen_mode
-                _generation_context = _format_generation_context(_grid)
-                logger.info(f"[HYBRIDE CHAT] Phase G — grille Loto generee mode={_gen_mode}")
+            _forced = _extract_forced_numbers(message, game="loto")
+            if _forced.get("error"):
+                _generation_context = f"[ERREUR GÉNÉRATION] {_forced['error']}"
+                logger.info(f"[HYBRIDE CHAT] Phase G — erreur contrainte: {_forced['error']}")
+            else:
+                _gen_result = await asyncio.wait_for(
+                    _gen_loto(
+                        n=1, mode=_gen_mode,
+                        forced_nums=_forced["forced_nums"] or None,
+                        forced_chance=_forced["forced_chance"],
+                    ),
+                    timeout=30.0,
+                )
+                if _gen_result and _gen_result.get("grids"):
+                    _grid = _gen_result["grids"][0]
+                    _grid["mode"] = _gen_mode
+                    _generation_context = _format_generation_context(_grid)
+                    logger.info(
+                        f"[HYBRIDE CHAT] Phase G — grille Loto generee mode={_gen_mode} "
+                        f"forced={_forced['forced_nums']} chance={_forced['forced_chance']}"
+                    )
         except Exception as e:
             logger.warning(f"[HYBRIDE CHAT] Phase G erreur: {e}")
 

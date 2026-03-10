@@ -26,7 +26,7 @@ from services.chat_detectors import (
     _detect_insulte, _count_insult_streak,
     _detect_compliment, _count_compliment_streak,
     _is_short_continuation, _detect_tirage, _has_temporal_filter,
-    _detect_generation, _detect_generation_mode,
+    _detect_generation, _detect_generation_mode, _extract_forced_numbers,
     _detect_cooccurrence_high_n, _get_cooccurrence_high_n_response,
 )
 from services.chat_detectors_em import (
@@ -187,14 +187,27 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
         try:
             from engine.hybride_em import generate_grids as _gen_em
             _gen_mode = _detect_generation_mode(message)
-            _gen_result = await asyncio.wait_for(
-                _gen_em(n=1, mode=_gen_mode, lang=lang), timeout=30.0
-            )
-            if _gen_result and _gen_result.get("grids"):
-                _grid = _gen_result["grids"][0]
-                _grid["mode"] = _gen_mode
-                _generation_context = _format_generation_context_em(_grid)
-                logger.info(f"[EM CHAT] Phase G — grille EM generee mode={_gen_mode}")
+            _forced = _extract_forced_numbers(message, game="em")
+            if _forced.get("error"):
+                _generation_context = f"[ERREUR GÉNÉRATION] {_forced['error']}"
+                logger.info(f"[EM CHAT] Phase G — erreur contrainte: {_forced['error']}")
+            else:
+                _gen_result = await asyncio.wait_for(
+                    _gen_em(
+                        n=1, mode=_gen_mode, lang=lang,
+                        forced_nums=_forced["forced_nums"] or None,
+                        forced_etoiles=_forced["forced_etoiles"] or None,
+                    ),
+                    timeout=30.0,
+                )
+                if _gen_result and _gen_result.get("grids"):
+                    _grid = _gen_result["grids"][0]
+                    _grid["mode"] = _gen_mode
+                    _generation_context = _format_generation_context_em(_grid)
+                    logger.info(
+                        f"[EM CHAT] Phase G — grille EM generee mode={_gen_mode} "
+                        f"forced={_forced['forced_nums']} etoiles={_forced['forced_etoiles']}"
+                    )
         except Exception as e:
             logger.warning(f"[EM CHAT] Phase G erreur: {e}")
 

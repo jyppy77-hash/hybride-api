@@ -490,12 +490,17 @@ def _format_generation_context(grid_data: dict) -> str:
     lines = ["[GRILLE GÉNÉRÉE PAR HYBRIDE]"]
     lines.append(f"Numéros : {grid_data['nums']}")
     lines.append(f"Numéro Chance : {grid_data['chance']}")
+    if grid_data.get("forced_nums"):
+        lines.append(f"Numéros imposés par l'utilisateur : {grid_data['forced_nums']}")
+    if grid_data.get("forced_chance") is not None:
+        lines.append(f"Chance imposé par l'utilisateur : {grid_data['forced_chance']}")
     lines.append(f"Score de conformité : {grid_data['score']}/100")
     lines.append(f"Badges : {', '.join(grid_data.get('badges', []))}")
     lines.append(f"Mode : {grid_data.get('mode', 'balanced')}")
     lines.append(
         "IMPORTANT : Présente cette grille de manière engageante. "
         "Explique les critères (équilibre pair/impair, bas/haut, fréquences, retards). "
+        "Si des numéros ont été imposés, mentionne-le clairement. "
         "Rappelle que le Loto reste un jeu de pur hasard et qu'aucune grille ne garantit de gain."
     )
     return "\n".join(lines)

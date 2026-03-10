@@ -1248,6 +1248,149 @@ def _detect_generation_mode(message: str) -> str:
     return "balanced"
 
 
+# ── Extraction des numéros imposés (6 langues) ────────────────────────────
+
+# Patterns pour "numéro chance" / "lucky number" / etc. (before main number extraction)
+_CHANCE_PATTERN = re.compile(
+    r'(?:'
+    # FR
+    r'(?:num[eé]ro\s+)?chance\s*[=:]*\s*(\d{1,2})|'
+    r'(\d{1,2})\s+en\s+chance|'
+    # EN
+    r'lucky\s+(?:number\s+)?(\d{1,2})|'
+    r'(\d{1,2})\s+(?:as\s+)?lucky|'
+    # ES
+    r'(?:n[uú]mero\s+)?suerte\s*[=:]*\s*(\d{1,2})|'
+    r'(\d{1,2})\s+de\s+suerte|'
+    # PT
+    r'(?:n[uú]mero\s+)?sorte\s*[=:]*\s*(\d{1,2})|'
+    r'(\d{1,2})\s+de\s+sorte|'
+    # DE
+    r'gl[üu]cks(?:zahl)?\s*[=:]*\s*(\d{1,2})|'
+    r'(\d{1,2})\s+als\s+gl[üu]cks|'
+    # NL
+    r'geluk(?:snummer)?\s*[=:]*\s*(\d{1,2})|'
+    r'(\d{1,2})\s+als\s+geluk'
+    r')',
+    re.IGNORECASE
+)
+
+# Patterns for "étoile" / "star" / "estrella" / "Stern" / "ster"
+# Captures everything after the keyword to extract all numbers
+_STAR_PATTERN = re.compile(
+    r'(?:[eé]toiles?|stars?|estrellas?|estrelas?|stern[e]?|ster(?:ren)?)'
+    r'\s*[=:]*\s*'
+    r'([\d\s,et&\+andyeundnl]+)',
+    re.IGNORECASE
+)
+
+# "avec" / "with" / "con" / "com" / "mit" / "met" — triggers forced-number extraction
+_WITH_PATTERN = re.compile(
+    r'\b(?:avec|with|con\b|com\b|mit\b|met\b|incluant|including|contenant|contendo|'
+    r'f[eé]tiche|favoris?|lucky|preferidos?|lieblings|favoriet)',
+    re.IGNORECASE
+)
+
+
+def _extract_nums_from_text(text: str) -> list[int]:
+    """Extract all integers from a text fragment."""
+    return [int(x) for x in re.findall(r'\b(\d{1,2})\b', text)]
+
+
+def _extract_forced_numbers(message: str, game: str = "loto") -> dict:
+    """Extract forced numbers from a generation request (6 languages).
+
+    Args:
+        message: User message
+        game: "loto" or "em"
+
+    Returns:
+        dict with keys:
+            forced_nums: list[int] — main numbers to force
+            forced_chance: int|None — forced chance number (Loto only)
+            forced_etoiles: list[int] — forced stars (EM only)
+            error: str|None — error message if validation fails
+    """
+    result = {"forced_nums": [], "forced_chance": None, "forced_etoiles": [], "error": None}
+
+    # Must contain a "with" keyword to trigger forced-number extraction
+    if not _WITH_PATTERN.search(message):
+        return result
+
+    lower = message.lower()
+
+    # ── Step 1: Extract chance number (Loto) ──
+    if game == "loto":
+        m = _CHANCE_PATTERN.search(lower)
+        if m:
+            # First non-None group is the chance number
+            chance_str = next((g for g in m.groups() if g is not None), None)
+            if chance_str:
+                chance_val = int(chance_str)
+                if 1 <= chance_val <= 10:
+                    result["forced_chance"] = chance_val
+                else:
+                    result["error"] = f"Numéro chance hors plage (1-10) : {chance_val}"
+                    return result
+
+    # ── Step 2: Extract star numbers (EM) ──
+    if game == "em":
+        m = _STAR_PATTERN.search(lower)
+        if m:
+            star_str = next((g for g in m.groups() if g is not None), None)
+            if star_str:
+                star_nums = _extract_nums_from_text(star_str)
+                for s in star_nums:
+                    if s < 1 or s > 12:
+                        result["error"] = f"Étoile hors plage (1-12) : {s}"
+                        return result
+                if len(star_nums) > 2:
+                    result["error"] = f"Maximum 2 étoiles imposées, {len(star_nums)} demandées"
+                    return result
+                result["forced_etoiles"] = star_nums
+
+    # ── Step 3: Extract main numbers ──
+    # Remove chance/star segments to avoid double-counting
+    cleaned = lower
+    for pattern in (_CHANCE_PATTERN, _STAR_PATTERN):
+        cleaned = pattern.sub(' ', cleaned)
+
+    # Find the "with" keyword position and extract numbers after it
+    with_match = _WITH_PATTERN.search(cleaned)
+    if with_match:
+        after_with = cleaned[with_match.start():]
+        forced = _extract_nums_from_text(after_with)
+    else:
+        forced = []
+
+    # Validate range
+    if game == "loto":
+        max_num, max_count = 49, 5
+    else:
+        max_num, max_count = 50, 5
+
+    valid_forced = []
+    for n in forced:
+        if n < 1 or n > max_num:
+            result["error"] = f"Numéro hors plage (1-{max_num}) : {n}"
+            return result
+        if n not in valid_forced:
+            valid_forced.append(n)
+
+    if len(valid_forced) > max_count:
+        result["error"] = (
+            f"Maximum {max_count} numéros imposés, {len(valid_forced)} demandés"
+        )
+        return result
+
+    # For Loto: if a forced chance number was extracted, don't include it in main nums
+    if game == "loto" and result["forced_chance"] and result["forced_chance"] in valid_forced:
+        valid_forced.remove(result["forced_chance"])
+
+    result["forced_nums"] = valid_forced
+    return result
+
+
 # ═══════════════════════════════════════════════════════
 # Phase P — Détection paires / corrélations (6 langues)
 # ═══════════════════════════════════════════════════════
