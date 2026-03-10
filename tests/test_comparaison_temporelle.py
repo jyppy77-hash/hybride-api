@@ -157,6 +157,15 @@ class TestComparaisonTemporelleDetection:
         assert intent is not None
         assert intent["type"] == "comparaison"
 
+    def test_pt_compara_do_12_e_do_45(self):
+        msg = "Compara a frequência do 12 e do 45 nos últimos 12 meses"
+        assert _has_temporal_filter(msg) is True
+        intent = _detect_requete_complexe_em(msg)
+        assert intent is not None
+        assert intent["type"] == "comparaison"
+        assert intent["num1"] == 12
+        assert intent["num2"] == 45
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # Formatage contexte — progression temporelle
@@ -331,6 +340,100 @@ class TestComparaisonMultilangEM:
     def test_nl_compare(self):
         intent = _detect_requete_complexe_em("vergelijk 7 vs 23")
         assert intent is not None and intent["type"] == "comparaison"
+
+    # --- Articles / contractions spécifiques par langue ---
+
+    def test_fr_du_article(self):
+        intent = _detect_requete_complexe_em("compare la fréquence du 31 et du 24")
+        assert intent is not None and intent["type"] == "comparaison"
+        assert intent["num1"] == 31 and intent["num2"] == 24
+
+    def test_pt_do_article(self):
+        intent = _detect_requete_complexe_em("compara a frequência do 12 e do 45")
+        assert intent is not None and intent["type"] == "comparaison"
+        assert intent["num1"] == 12 and intent["num2"] == 45
+
+    def test_pt_da_article(self):
+        intent = _detect_requete_complexe_em("compara da 5 e da 18")
+        assert intent is not None and intent["type"] == "comparaison"
+        assert intent["num1"] == 5 and intent["num2"] == 18
+
+    def test_pt_dos_article(self):
+        intent = _detect_requete_complexe_em("compara dos 10 e dos 20")
+        assert intent is not None and intent["type"] == "comparaison"
+        assert intent["num1"] == 10 and intent["num2"] == 20
+
+    def test_pt_das_article(self):
+        intent = _detect_requete_complexe_em("compara das 3 e das 7")
+        assert intent is not None and intent["type"] == "comparaison"
+        assert intent["num1"] == 3 and intent["num2"] == 7
+
+    def test_pt_de_preposition(self):
+        intent = _detect_requete_complexe_em("compara de 15 e de 30")
+        assert intent is not None and intent["type"] == "comparaison"
+        assert intent["num1"] == 15 and intent["num2"] == 30
+
+    def test_pt_o_article(self):
+        intent = _detect_requete_complexe_em("compara o 31 e o 24")
+        assert intent is not None and intent["type"] == "comparaison"
+        assert intent["num1"] == 31 and intent["num2"] == 24
+
+    def test_es_el_article(self):
+        intent = _detect_requete_complexe_em("compara el 7 y el 23")
+        assert intent is not None and intent["type"] == "comparaison"
+        assert intent["num1"] == 7 and intent["num2"] == 23
+
+    def test_es_del_article(self):
+        intent = _detect_requete_complexe_em("compara la frecuencia del 12 y del 45")
+        assert intent is not None and intent["type"] == "comparaison"
+        assert intent["num1"] == 12 and intent["num2"] == 45
+
+    def test_de_von_preposition(self):
+        intent = _detect_requete_complexe_em("vergleiche die Häufigkeit von 31 und von 24")
+        assert intent is not None and intent["type"] == "comparaison"
+        assert intent["num1"] == 31 and intent["num2"] == 24
+
+    def test_nl_van_preposition(self):
+        intent = _detect_requete_complexe_em("vergelijk de frequentie van 12 en van 45")
+        assert intent is not None and intent["type"] == "comparaison"
+        assert intent["num1"] == 12 and intent["num2"] == 45
+
+    def test_en_compare_and(self):
+        intent = _detect_requete_complexe_em("compare 12 and 45")
+        assert intent is not None and intent["type"] == "comparaison"
+        assert intent["num1"] == 12 and intent["num2"] == 45
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Multilang comparison detection (Loto)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestComparaisonMultilangLoto:
+    """_detect_requete_complexe matche les comparaisons avec articles multilingues."""
+
+    def test_fr_du(self):
+        intent = _detect_requete_complexe("compare du 31 et du 24")
+        assert intent is not None and intent["type"] == "comparaison"
+
+    def test_pt_do(self):
+        intent = _detect_requete_complexe("compara do 12 e do 45")
+        assert intent is not None and intent["type"] == "comparaison"
+        assert intent["num1"] == 12 and intent["num2"] == 45
+
+    def test_es_del(self):
+        intent = _detect_requete_complexe("compara del 7 y del 23")
+        assert intent is not None and intent["type"] == "comparaison"
+        assert intent["num1"] == 7 and intent["num2"] == 23
+
+    def test_de_von(self):
+        intent = _detect_requete_complexe("compare von 31 und von 24")
+        assert intent is not None and intent["type"] == "comparaison"
+        assert intent["num1"] == 31 and intent["num2"] == 24
+
+    def test_nl_van(self):
+        intent = _detect_requete_complexe("compare van 12 en van 45")
+        assert intent is not None and intent["type"] == "comparaison"
+        assert intent["num1"] == 12 and intent["num2"] == 45
 
 
 # ═══════════════════════════════════════════════════════════════════════

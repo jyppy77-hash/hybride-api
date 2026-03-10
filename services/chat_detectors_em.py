@@ -179,7 +179,7 @@ def _detect_requete_complexe_em(message: str):
         r'entre\s+(?:le\s+)?(\d{1,2})\s+et\s+(?:le\s+)?(\d{1,2})\s.*(?:lequel|qui)',
         # Multilang flexible : "compare la fréquence du 31 et du 24", "compare 12 and 45",
         # "compara o 31 e o 24", "vergleiche 31 und 24", "vergelijk 31 en 23"
-        r'(?:compar|vergleich|vergelijk)\w*\b[^.?!]*?(?:du\s+|le\s+|el\s+|o\s+)?(\d{1,2})\s+(?:et|avec|vs\.?|and|und|en|e|y)\s+(?:du\s+|le\s+|el\s+|o\s+)?(\d{1,2})',
+        r'(?:compar|vergleich|vergelijk)\w*\b[^.?!]*?(?:du\s+|le\s+|el\s+|del\s+|o\s+|do\s+|da\s+|dos\s+|das\s+|de\s+|von\s+|van\s+)?(\d{1,2})\s+(?:et|avec|vs\.?|and|und|en|e|y)\s+(?:du\s+|le\s+|el\s+|del\s+|o\s+|do\s+|da\s+|dos\s+|das\s+|de\s+|von\s+|van\s+)?(\d{1,2})',
     ]
     for pat in comp_patterns:
         m = re.search(pat, lower)

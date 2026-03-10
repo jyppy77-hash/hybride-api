@@ -300,8 +300,8 @@ _TEMPORAL_PATTERNS = [
     r'\bem\s+' + _MOIS_PT,                         # em janeiro, em fevereiro...
     r'\bdesde\s+\d+\s+(?:meses|anos|semanas)\b',  # desde 3 meses
     r'\bdesde\s+(?:\d+\s+de\s+)?' + _MOIS_PT,   # desde 1 de janeiro / desde janeiro
-    r'\bos\s+[úu]ltimos\s+\d+\s+meses\b',       # os últimos 3 meses
-    r'\bos\s+[úu]ltimos\s+\d+\s+anos\b',       # os últimos 3 anos
+    r'\b[nd]?os\s+[úu]ltimos\s+\d+\s+meses\b',   # os/nos/dos últimos 3 meses
+    r'\b[nd]?os\s+[úu]ltimos\s+\d+\s+anos\b',  # os/nos/dos últimos 3 anos
     # ── DE ── (patterns lowercase — _has_temporal_filter lowercases input)
     r'\bim\s+(?:jahr\s+)?20\d{2}\b',              # im 2024 / im Jahr 2024
     r'\bseit\s+20\d{2}\b',                         # seit 2023
@@ -526,7 +526,7 @@ def _detect_requete_complexe(message: str):
         r'diff[eé]rence\s+entre\s+(?:le\s+)?(\d{1,2})\s+et\s+(?:le\s+)?(\d{1,2})',
         r'entre\s+(?:le\s+)?(\d{1,2})\s+et\s+(?:le\s+)?(\d{1,2})\s.*(?:lequel|qui)',
         # Flexible : "compare la fréquence du 31 et du 24", "compare X and Y"
-        r'compar\w*\b[^.?!]*?(?:du\s+|le\s+)?(\d{1,2})\s+(?:et|avec|vs\.?|and)\s+(?:du\s+|le\s+)?(\d{1,2})',
+        r'compar\w*\b[^.?!]*?(?:du\s+|le\s+|el\s+|del\s+|o\s+|do\s+|da\s+|dos\s+|das\s+|de\s+|von\s+|van\s+)?(\d{1,2})\s+(?:et|avec|vs\.?|and|und|en|e|y)\s+(?:du\s+|le\s+|el\s+|del\s+|o\s+|do\s+|da\s+|dos\s+|das\s+|de\s+|von\s+|van\s+)?(\d{1,2})',
     ]
     for pat in comp_patterns:
         m = re.search(pat, lower)
