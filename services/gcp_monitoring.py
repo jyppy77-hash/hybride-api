@@ -89,6 +89,7 @@ async def track_gemini_call(
     """Increment Gemini usage counters in Redis. Safe no-op if Redis unavailable."""
     _redis = _cache._redis
     if not _redis:
+        logger.info("[TRACK_GEMINI] Redis unavailable — skipping (dur=%.0fms, type=%s)", duration_ms, call_type)
         return
     try:
         pipe = _redis.pipeline(transaction=False)
@@ -134,8 +135,10 @@ async def track_gemini_call(
             ttl_keys += [f"{bl}:calls", f"{bl}:tokens_in", f"{bl}:tokens_out"]
         for k in ttl_keys:
             await _redis.expire(k, _GEMINI_TTL)
+        logger.info("[TRACK_GEMINI] OK calls+1 tin=%d tout=%d dur=%.0fms type=%s lang=%s",
+                     tokens_in, tokens_out, duration_ms, call_type, lang)
     except Exception as e:
-        logger.debug("Gemini tracking Redis error: %s", e)
+        logger.warning("[TRACK_GEMINI] Redis error: %s", e)
 
 
 async def _get_gemini_counters() -> dict:
@@ -152,7 +155,7 @@ async def _get_gemini_counters() -> dict:
         keys = list(_GEMINI_KEYS.keys())
         return {keys[i]: int(results[i] or 0) for i in range(len(keys))}
     except Exception as e:
-        logger.debug("Gemini counters Redis error: %s", e)
+        logger.warning("[GEMINI_COUNTERS] Redis read error: %s", e)
         return defaults
 
 
@@ -433,6 +436,7 @@ async def get_gcp_metrics() -> dict:
         "gemini": gemini_section,
         "costs": costs,
         "active_alerts": active_alerts,
+        "redis_connected": _cache._redis is not None,
     }
 
     # Cache result
@@ -624,6 +628,6 @@ async def get_gemini_breakdown() -> dict:
                 "tokens_out": tout,
             })
     except Exception as e:
-        logger.debug("Gemini breakdown Redis error: %s", e)
+        logger.warning("[GEMINI_BREAKDOWN] Redis error: %s", e)
 
     return result

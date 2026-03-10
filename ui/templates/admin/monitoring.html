@@ -258,7 +258,10 @@
         Service : <strong id="mon-status-label">chargement...</strong>
         <span id="mon-timestamp"></span>
     </div>
-    <div id="mon-alert-badge" style="display:none;margin-left:auto;font-size:.75rem;font-weight:700;padding:.25rem .7rem;border-radius:20px;background:rgba(255,82,82,.15);color:#ff5252;">
+    <div id="mon-redis-badge" style="margin-left:auto;font-size:.7rem;font-weight:600;padding:.2rem .6rem;border-radius:12px;background:rgba(136,136,136,.15);color:#888;">
+        Redis: ?
+    </div>
+    <div id="mon-alert-badge" style="display:none;font-size:.75rem;font-weight:700;padding:.25rem .7rem;border-radius:20px;background:rgba(255,82,82,.15);color:#ff5252;">
         <span id="mon-alert-count">0</span> alerte(s) active(s)
     </div>
 </div>
@@ -564,6 +567,18 @@
         var roi = totalCost > 0 ? ((sponsorRev / totalCost - 1) * 100).toFixed(0) + '%' : '—';
         animateValue(document.getElementById('v-biz-roi'), roi);
         setCard('card-biz-roi', margin < 0 ? 'mon-card-warn' : 'mon-cost-ok');
+
+        // Redis status
+        var redisBadge = document.getElementById('mon-redis-badge');
+        if (data.redis_connected) {
+            redisBadge.textContent = 'Redis: OK';
+            redisBadge.style.background = 'rgba(0,200,83,.15)';
+            redisBadge.style.color = '#00c853';
+        } else {
+            redisBadge.textContent = 'Redis: OFF';
+            redisBadge.style.background = 'rgba(255,82,82,.15)';
+            redisBadge.style.color = '#ff5252';
+        }
 
         // Alerts
         var alerts = data.active_alerts || [];
