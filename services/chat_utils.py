@@ -378,6 +378,29 @@ def _format_complex_context(intent: dict, data) -> str:
             )
         else:
             lines.append("Fréquences identiques")
+
+        if data.get("period"):
+            p = data["period"]
+            lines.append("")
+            lines.append(f"[PROGRESSION TEMPORELLE — depuis {p['date_from']}]")
+            lines.append(f"Tirages dans la période : {p['total_tirages_period']}")
+            _s1 = "+" if p["num1_progression_pct"] > 0 else ""
+            _s2 = "+" if p["num2_progression_pct"] > 0 else ""
+            lines.append(
+                f"Numéro {s1['numero']} sur la période : {p['num1_freq_period']} apparitions "
+                f"(attendu historique : {p['num1_expected']}, progression : {_s1}{p['num1_progression_pct']}%)"
+            )
+            lines.append(
+                f"Numéro {s2['numero']} sur la période : {p['num2_freq_period']} apparitions "
+                f"(attendu historique : {p['num2_expected']}, progression : {_s2}{p['num2_progression_pct']}%)"
+            )
+            if p["plus_progresse"]:
+                lines.append(
+                    f"Le numéro {p['plus_progresse']} a le plus progressé par rapport à sa moyenne historique."
+                )
+            else:
+                lines.append("Progressions identiques.")
+
         return "\n".join(lines)
 
     elif intent["type"] == "categorie":

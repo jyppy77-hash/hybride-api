@@ -11,13 +11,15 @@ from services.gemini import GEMINI_MODEL_URL, stream_gemini_chat
 from services.circuit_breaker import gemini_breaker, CircuitOpenError
 from services.stats_service import (
     get_numero_stats, analyze_grille_for_chat,
-    get_classement_numeros, get_comparaison_numeros, get_numeros_par_categorie,
+    get_classement_numeros, get_comparaison_numeros, get_comparaison_with_period,
+    get_numeros_par_categorie,
     prepare_grilles_pitch_context, get_pair_correlations, get_triplet_correlations,
 )
 
 from services.chat_detectors import (
     _detect_mode, _is_short_continuation, _detect_prochain_tirage,
-    _detect_tirage, _has_temporal_filter, _detect_numero, _detect_grille,
+    _detect_tirage, _has_temporal_filter, _extract_temporal_date,
+    _detect_numero, _detect_grille,
     _detect_requete_complexe, _detect_paires, _detect_triplets, _detect_insulte,
     _count_insult_streak, _get_insult_response, _get_insult_short,
     _get_menace_response, _detect_compliment, _count_compliment_streak,
@@ -276,6 +278,30 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
                     logger.info(f"[HYBRIDE CHAT] Requete complexe: {intent['type']}")
             except Exception as e:
                 logger.warning(f"[HYBRIDE CHAT] Erreur requete complexe: {e}")
+
+    # Phase 3-bis : comparaison avec filtre temporel
+    # Comme Phase P, les comparaisons sont des requêtes structurées —
+    # le filtre temporel ne doit pas les bloquer.
+    if not _continuation_mode and force_sql and not enrichment_context:
+        intent = _detect_requete_complexe(message)
+        if intent and intent["type"] == "comparaison":
+            try:
+                _date_from = _extract_temporal_date(message)
+                data = await asyncio.wait_for(
+                    get_comparaison_with_period(
+                        intent["num1"], intent["num2"], intent["num_type"], _date_from
+                    ),
+                    timeout=30.0,
+                )
+                if data:
+                    enrichment_context = _format_complex_context(intent, data)
+                    force_sql = False
+                    logger.info(
+                        f"[HYBRIDE CHAT] Phase 3-bis — comparaison temporelle "
+                        f"{intent['num1']} vs {intent['num2']} (date_from={_date_from})"
+                    )
+            except Exception as e:
+                logger.warning(f"[HYBRIDE CHAT] Erreur comparaison temporelle: {e}")
 
     # Phase P+ : co-occurrences N>3 — réponse honnête "pas implémenté"
     if not _continuation_mode and not enrichment_context:

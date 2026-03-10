@@ -593,6 +593,74 @@ class BaseStatsService:
             "favori_frequence": num1 if diff_freq > 0 else num2 if diff_freq < 0 else None,
         }
 
+    async def get_comparaison_with_period(self, num1, num2, type_num=None, date_from=None):
+        """Compare deux numeros avec progression temporelle optionnelle.
+
+        Si date_from est fourni, calcule en plus :
+        - frequence de chaque numero sur la periode
+        - frequence attendue (extrapolee depuis l'historique complet)
+        - pourcentage de progression
+        """
+        if type_num is None:
+            type_num = self.cfg.type_principal
+
+        stats1 = await self.get_numero_stats(num1, type_num)
+        stats2 = await self.get_numero_stats(num2, type_num)
+        if not stats1 or not stats2:
+            return None
+
+        diff_freq = stats1["frequence_totale"] - stats2["frequence_totale"]
+        result = {
+            "num1": stats1,
+            "num2": stats2,
+            "diff_frequence": diff_freq,
+            "favori_frequence": num1 if diff_freq > 0 else num2 if diff_freq < 0 else None,
+        }
+
+        if date_from:
+            async with self._get_connection() as conn:
+              try:
+                cursor = await conn.cursor()
+
+                freq_map = await self._get_all_frequencies(cursor, type_num, date_from=date_from)
+
+                await cursor.execute(
+                    f"SELECT COUNT(*) as total FROM {self.cfg.table} WHERE date_de_tirage >= %s",
+                    (date_from,)
+                )
+                total_period = (await cursor.fetchone())['total']
+
+                freq1_period = freq_map.get(num1, 0)
+                freq2_period = freq_map.get(num2, 0)
+
+                total_all = stats1["total_tirages"]
+                freq1_all = stats1["frequence_totale"]
+                freq2_all = stats2["frequence_totale"]
+
+                if total_all > 0 and total_period > 0:
+                    expected1 = freq1_all * total_period / total_all
+                    expected2 = freq2_all * total_period / total_all
+                    prog1 = round((freq1_period / expected1 - 1) * 100, 1) if expected1 > 0 else 0.0
+                    prog2 = round((freq2_period / expected2 - 1) * 100, 1) if expected2 > 0 else 0.0
+                else:
+                    expected1 = expected2 = prog1 = prog2 = 0.0
+
+                result["period"] = {
+                    "date_from": str(date_from),
+                    "total_tirages_period": total_period,
+                    "num1_freq_period": freq1_period,
+                    "num2_freq_period": freq2_period,
+                    "num1_expected": round(expected1, 1),
+                    "num2_expected": round(expected2, 1),
+                    "num1_progression_pct": prog1,
+                    "num2_progression_pct": prog2,
+                    "plus_progresse": num1 if prog1 > prog2 else num2 if prog2 > prog1 else None,
+                }
+              except Exception as e:
+                logger.error(f"Erreur comparaison period{self.cfg.log_label}: {e}")
+
+        return result
+
     async def get_numeros_par_categorie(self, categorie, type_num=None):
         """Retourne la liste des numeros d'une categorie (chaud/froid/neutre)."""
         if type_num is None:

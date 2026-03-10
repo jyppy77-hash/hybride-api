@@ -344,6 +344,48 @@ def _has_temporal_filter(message: str) -> bool:
     return any(re.search(pat, lower) for pat in _TEMPORAL_PATTERNS)
 
 
+# Patterns d'extraction temporelle (nombre + unite) — 6 langues
+_TEMPORAL_EXTRACT_MONTHS = [
+    r'(\d+)\s*(?:derniers?\s+mois|last\s+months?|[uú]ltimos?\s+mes(?:es)?|letzten?\s+monat(?:e|en)?|laatste\s+maand(?:en)?)',
+    r'(?:derniers?|last|[uú]ltimos?|letzten?|laatste)\s+(\d+)\s*(?:mois|months?|mes(?:es)?|monat(?:e|en)?|maand(?:en)?)',
+]
+_TEMPORAL_EXTRACT_YEARS = [
+    r'(\d+)\s*(?:derni[eè]res?\s+ann[eé]es?|last\s+years?|[uú]ltimos?\s+a[ñn]os?|[uú]ltimos?\s+anos?|letzten?\s+jahr(?:e|en)?|laatste\s+ja(?:a)?r(?:en)?)',
+    r'(?:derni[eè]res?|last|[uú]ltimos?|letzten?|laatste)\s+(\d+)\s*(?:ann[eé]es?|years?|a[ñn]os?|anos?|jahr(?:e|en)?|ja(?:a)?r(?:en)?)',
+]
+_TEMPORAL_EXTRACT_WEEKS = [
+    r'(\d+)\s*(?:derni[eè]res?\s+semaines?|last\s+weeks?|[uú]ltimas?\s+semanas?|letzten?\s+woch(?:e|en)?|laatste\s+we(?:e)?k(?:en)?)',
+    r'(?:derni[eè]res?|last|[uú]ltimas?|letzten?|laatste)\s+(\d+)\s*(?:semaines?|weeks?|semanas?|woch(?:e|en)?|we(?:e)?k(?:en)?)',
+]
+
+
+def _extract_temporal_date(message: str):
+    """Extrait une date de debut a partir d'une expression temporelle (6 langues).
+    Returns: date ou None."""
+    lower = message.lower()
+    today = date.today()
+
+    for pat in _TEMPORAL_EXTRACT_MONTHS:
+        m = re.search(pat, lower)
+        if m:
+            n = int(m.group(1))
+            return today - timedelta(days=n * 30)
+
+    for pat in _TEMPORAL_EXTRACT_YEARS:
+        m = re.search(pat, lower)
+        if m:
+            n = int(m.group(1))
+            return today - timedelta(days=n * 365)
+
+    for pat in _TEMPORAL_EXTRACT_WEEKS:
+        m = re.search(pat, lower)
+        if m:
+            n = int(m.group(1))
+            return today - timedelta(weeks=n)
+
+    return None
+
+
 # ────────────────────────────────────────────
 # Phase 1 : Detection numero simple
 # ────────────────────────────────────────────
@@ -483,6 +525,8 @@ def _detect_requete_complexe(message: str):
         r'(\d{1,2})\s+vs\.?\s+(\d{1,2})',
         r'diff[eé]rence\s+entre\s+(?:le\s+)?(\d{1,2})\s+et\s+(?:le\s+)?(\d{1,2})',
         r'entre\s+(?:le\s+)?(\d{1,2})\s+et\s+(?:le\s+)?(\d{1,2})\s.*(?:lequel|qui)',
+        # Flexible : "compare la fréquence du 31 et du 24", "compare X and Y"
+        r'compar\w*\b[^.?!]*?(?:du\s+|le\s+)?(\d{1,2})\s+(?:et|avec|vs\.?|and)\s+(?:du\s+|le\s+)?(\d{1,2})',
     ]
     for pat in comp_patterns:
         m = re.search(pat, lower)

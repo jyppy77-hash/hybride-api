@@ -112,6 +112,7 @@ _get_all_ecarts = _svc._get_all_ecarts
 get_numero_stats = _svc.get_numero_stats
 get_classement_numeros = _svc.get_classement_numeros
 get_comparaison_numeros = _svc.get_comparaison_numeros
+get_comparaison_with_period = _svc.get_comparaison_with_period
 get_numeros_par_categorie = _svc.get_numeros_par_categorie
 prepare_grilles_pitch_context = _svc.prepare_grilles_pitch_context
 get_pair_correlations = _svc.get_pair_correlations
