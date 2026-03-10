@@ -213,6 +213,50 @@ def _clean_response(text: str) -> str:
 
 
 # ────────────────────────────────────────────
+# StreamBuffer — nettoyage anti-fuite SSE
+# ────────────────────────────────────────────
+
+class StreamBuffer:
+    """Buffer SSE qui accumule les chunks et nettoie les tags fragmentés.
+
+    Les tags internes comme [COMPARAISON SUR PÉRIODE] peuvent arriver
+    découpés sur plusieurs chunks SSE. Ce buffer retient le texte quand
+    un '[' est détecté sans ']' correspondant, puis nettoie le tag complet
+    avant de flusher.
+    """
+
+    def __init__(self):
+        self.buffer = ""
+
+    def add_chunk(self, chunk: str) -> str:
+        """Ajoute un chunk. Retourne le texte safe à envoyer (peut être vide)."""
+        self.buffer += chunk
+
+        # Si le buffer contient un '[' non fermé, on attend le ']'
+        last_open = self.buffer.rfind("[")
+        if last_open != -1 and "]" not in self.buffer[last_open:]:
+            # Tag potentiellement en cours — envoyer tout AVANT le '['
+            safe = self.buffer[:last_open]
+            self.buffer = self.buffer[last_open:]
+            if safe:
+                return _clean_response(safe)
+            return ""
+
+        # Pas de '[' pendant ou tout est fermé — nettoyer et envoyer
+        cleaned = _clean_response(self.buffer)
+        self.buffer = ""
+        return cleaned
+
+    def flush(self) -> str:
+        """Flush le reste du buffer à la fin du stream."""
+        if not self.buffer:
+            return ""
+        cleaned = _clean_response(self.buffer)
+        self.buffer = ""
+        return cleaned
+
+
+# ────────────────────────────────────────────
 # Formatage dates
 # ────────────────────────────────────────────
 

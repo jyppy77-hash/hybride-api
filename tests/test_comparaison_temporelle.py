@@ -551,3 +551,125 @@ class TestPromptLanguageRule:
         """PT doit explicitement interdire le basculement en espagnol."""
         content = self._read_prompt("pt")
         assert "NUNCA" in content and "espanhol" in content
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# StreamBuffer — buffer SSE anti-fuite tags fragmentés
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestStreamBuffer:
+    """Le StreamBuffer accumule les chunks et nettoie les tags fragmentés."""
+
+    def _make_buf(self):
+        from services.chat_utils import StreamBuffer
+        return StreamBuffer()
+
+    def test_tag_complete_single_chunk(self):
+        """Tag complet dans un seul chunk → nettoyé."""
+        buf = self._make_buf()
+        result = buf.add_chunk("[COMPARAISON SUR PÉRIODE — 12 vs 45] Voici.")
+        assert "[COMPARAISON" not in result
+        assert "Voici." in result
+
+    def test_tag_fragmented_4_chunks(self):
+        """Tag fragmenté sur 4 chunks → accumulé puis nettoyé."""
+        buf = self._make_buf()
+        r1 = buf.add_chunk("Texte avant [COMP")
+        assert "Texte avant" in r1  # texte safe avant le '['
+        assert "[COMP" not in r1
+
+        r2 = buf.add_chunk("ARAISON SUR ")
+        assert r2 == ""  # encore en attente du ']'
+
+        r3 = buf.add_chunk("PÉRIODE — 12 vs 45")
+        assert r3 == ""  # toujours pas de ']'
+
+        r4 = buf.add_chunk("] Suite du texte.")
+        assert "[COMPARAISON" not in r4
+        assert "Suite du texte." in r4
+
+    def test_normal_text_passthrough(self):
+        """Texte normal sans tag → passé directement."""
+        buf = self._make_buf()
+        result = buf.add_chunk("Le numéro 45 est sorti 4 fois.")
+        assert result == "Le numéro 45 est sorti 4 fois."
+
+    def test_open_bracket_then_normal_text(self):
+        """'[' en fin de chunk suivi de texte normal avec ']' → géré."""
+        buf = self._make_buf()
+        r1 = buf.add_chunk("Début [")
+        assert "Début" in r1
+
+        r2 = buf.add_chunk("simple crochet] fin.")
+        # Le contenu entre crochets n'est pas un tag connu → préservé
+        assert "fin." in r2
+
+    def test_multiple_tags_in_buffer(self):
+        """Tags multiples dans un buffer → tous nettoyés."""
+        buf = self._make_buf()
+        text = (
+            "[FRÉQUENCE SUR LA PÉRIODE — chiffre] données "
+            "[RÉFÉRENCE — historique] résultat "
+            "[PROGRESSION pct] final"
+        )
+        result = buf.add_chunk(text)
+        assert "[FRÉQUENCE" not in result
+        assert "[RÉFÉRENCE" not in result
+        assert "[PROGRESSION" not in result
+        assert "données" in result
+        assert "final" in result
+
+    def test_flush_final(self):
+        """Flush final vide le buffer proprement."""
+        buf = self._make_buf()
+        r1 = buf.add_chunk("Texte [BREAK")
+        assert "Texte" in r1
+
+        r2 = buf.flush()
+        # Le tag incomplet est flushé et nettoyé si possible
+        assert isinstance(r2, str)
+
+    def test_flush_empty_buffer(self):
+        """Flush sur buffer vide retourne chaîne vide."""
+        buf = self._make_buf()
+        assert buf.flush() == ""
+
+    def test_real_comparison_context_de(self):
+        """Simule le cas réel DE : contexte comparaison fragmenté."""
+        buf = self._make_buf()
+        chunks = [
+            "[COMPARAISON SUR PÉRIODE",
+            " — Nummer 12 vs Nummer 45]",
+            "\n[FRÉQUENCE SUR LA PÉRIODE",
+            " — C'EST CE CHIFFRE]\n",
+            "Nummer 12: 1 Auftritt\n",
+            "[RÉFÉRENCE — historique]",
+            "\nAntwort auf Deutsch.",
+        ]
+        collected = ""
+        for c in chunks:
+            safe = buf.add_chunk(c)
+            collected += safe
+        collected += buf.flush()
+
+        assert "[COMPARAISON" not in collected
+        assert "[FRÉQUENCE" not in collected
+        assert "[RÉFÉRENCE" not in collected
+        assert "Nummer 12: 1 Auftritt" in collected
+        assert "Antwort auf Deutsch." in collected
+
+    def test_breakdown_tag_fragmented(self):
+        """Tag [BREAKDOWN] fragmenté → nettoyé."""
+        buf = self._make_buf()
+        r1 = buf.add_chunk("Voici [BREAK")
+        r2 = buf.add_chunk("DOWN — Critères] la grille.")
+        collected = r1 + r2 + buf.flush()
+        assert "[BREAKDOWN" not in collected
+        assert "la grille." in collected
+
+    def test_sponsor_line_passes(self):
+        """Les lignes sponsor ne contiennent pas de tags → passent directement."""
+        buf = self._make_buf()
+        sponsor = "\n\n📢 Découvrez notre partenaire : LotoBonus.fr"
+        result = buf.add_chunk(sponsor)
+        assert "LotoBonus.fr" in result

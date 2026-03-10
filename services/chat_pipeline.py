@@ -34,7 +34,7 @@ from services.chat_sql import (
 )
 from services.chat_utils import (
     FALLBACK_RESPONSE, _enrich_with_context, _clean_response, _strip_non_latin,
-    _strip_sponsor_from_text, _get_sponsor_if_due, _format_date_fr,
+    _strip_sponsor_from_text, _get_sponsor_if_due, _format_date_fr, StreamBuffer,
     _format_tirage_context, _format_stats_context, _format_grille_context,
     _format_complex_context, _format_pairs_context, _format_triplets_context,
     _build_session_context, _format_generation_context,
@@ -580,16 +580,25 @@ async def handle_chat_stream(message: str, history: list, page: str, http_client
             })
 
         has_chunks = False
+        _buf = StreamBuffer()
         async for chunk in stream_gemini_chat(
             http_client, ctx["gem_api_key"], ctx["system_prompt"],
             ctx["contents"], timeout=15.0,
         ):
-            chunk = _clean_response(chunk)
-            if not chunk:
+            safe = _buf.add_chunk(chunk)
+            if not safe:
                 continue
             has_chunks = True
             yield _sse_event({
-                "chunk": chunk, "source": "gemini", "mode": mode, "is_done": False,
+                "chunk": safe, "source": "gemini", "mode": mode, "is_done": False,
+            })
+
+        # Flush remaining buffer
+        _remaining = _buf.flush()
+        if _remaining:
+            has_chunks = True
+            yield _sse_event({
+                "chunk": _remaining, "source": "gemini", "mode": mode, "is_done": False,
             })
 
         if not has_chunks:
