@@ -17,7 +17,8 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from datetime import datetime, timezone
 
-from services.cache import _redis, _REDIS_PREFIX
+import services.cache as _cache
+from services.cache import _REDIS_PREFIX
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +86,7 @@ def _t(thresholds: dict, key: str) -> float:
 
 async def _is_cooled_down(key: str, cooldown: int) -> bool:
     """Return True if alert is still in cooldown (should NOT fire)."""
+    _redis = _cache._redis
     if not _redis:
         return False
     try:
@@ -96,6 +98,7 @@ async def _is_cooled_down(key: str, cooldown: int) -> bool:
 
 async def _set_cooldown(key: str, cooldown: int) -> None:
     """Set cooldown for an alert key."""
+    _redis = _cache._redis
     if not _redis:
         return
     try:

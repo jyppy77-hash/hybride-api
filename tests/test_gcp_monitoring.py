@@ -104,7 +104,7 @@ class TestGeminiCounters:
 
     @pytest.mark.asyncio
     async def test_no_redis_returns_defaults(self):
-        with patch("services.gcp_monitoring._redis", None):
+        with patch("services.cache._redis", None):
             counters = await _get_gemini_counters()
             assert counters == {"calls": 0, "errors": 0, "tokens_in": 0, "tokens_out": 0, "total_ms": 0}
 
@@ -117,7 +117,7 @@ class TestGeminiCounters:
         mock_redis = MagicMock()
         mock_redis.pipeline = MagicMock(return_value=mock_pipe)
 
-        with patch("services.gcp_monitoring._redis", mock_redis):
+        with patch("services.cache._redis", mock_redis):
             counters = await _get_gemini_counters()
             assert counters["calls"] == 10
             assert counters["errors"] == 1
@@ -130,7 +130,7 @@ class TestGeminiCounters:
         mock_redis = MagicMock()
         mock_redis.pipeline = MagicMock(side_effect=Exception("Connection lost"))
 
-        with patch("services.gcp_monitoring._redis", mock_redis):
+        with patch("services.cache._redis", mock_redis):
             counters = await _get_gemini_counters()
             assert counters["calls"] == 0
 
@@ -143,7 +143,7 @@ class TestTrackGeminiCall:
 
     @pytest.mark.asyncio
     async def test_no_redis_noop(self):
-        with patch("services.gcp_monitoring._redis", None):
+        with patch("services.cache._redis", None):
             await track_gemini_call(150.0, 100, 50)  # should not raise
 
     @pytest.mark.asyncio
@@ -157,7 +157,7 @@ class TestTrackGeminiCall:
         mock_redis.pipeline = MagicMock(return_value=mock_pipe)
         mock_redis.expire = AsyncMock()
 
-        with patch("services.gcp_monitoring._redis", mock_redis):
+        with patch("services.cache._redis", mock_redis):
             await track_gemini_call(250.0, 500, 100)
             mock_pipe.incr.assert_called_once()
             assert mock_pipe.incrby.call_count == 3  # tokens_in, tokens_out, total_ms
@@ -173,7 +173,7 @@ class TestTrackGeminiCall:
         mock_redis.pipeline = MagicMock(return_value=mock_pipe)
         mock_redis.expire = AsyncMock()
 
-        with patch("services.gcp_monitoring._redis", mock_redis):
+        with patch("services.cache._redis", mock_redis):
             await track_gemini_call(100.0, error=True)
             # incr called twice: calls + errors
             assert mock_pipe.incr.call_count == 2

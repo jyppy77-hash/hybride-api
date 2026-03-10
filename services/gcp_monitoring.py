@@ -13,7 +13,8 @@ import time
 from datetime import datetime, timezone
 
 import db_cloudsql
-from services.cache import cache_get, cache_set, _redis, _REDIS_PREFIX
+import services.cache as _cache
+from services.cache import cache_get, cache_set, _REDIS_PREFIX
 
 logger = logging.getLogger(__name__)
 
@@ -86,6 +87,7 @@ async def track_gemini_call(
     lang: str = "",
 ) -> None:
     """Increment Gemini usage counters in Redis. Safe no-op if Redis unavailable."""
+    _redis = _cache._redis
     if not _redis:
         return
     try:
@@ -139,6 +141,7 @@ async def track_gemini_call(
 async def _get_gemini_counters() -> dict:
     """Read Gemini counters from Redis. Returns zeros if unavailable."""
     defaults = {"calls": 0, "errors": 0, "tokens_in": 0, "tokens_out": 0, "total_ms": 0}
+    _redis = _cache._redis
     if not _redis:
         return defaults
     try:
@@ -451,6 +454,7 @@ _SNAPSHOT_COOLDOWN = 300  # 5 minutes
 
 async def _maybe_snapshot(payload: dict) -> None:
     """Store a snapshot every 5 min (Redis lock prevents duplicates)."""
+    _redis = _cache._redis
     if not _redis:
         return
     acquired = await _redis.set(_SNAPSHOT_LOCK_KEY, "1", ex=_SNAPSHOT_COOLDOWN, nx=True)
@@ -568,6 +572,7 @@ async def get_gemini_breakdown() -> dict:
     Returns {by_type: [...], by_lang: [...]}.
     """
     result = {"by_type": [], "by_lang": []}
+    _redis = _cache._redis
     if not _redis:
         return result
     try:

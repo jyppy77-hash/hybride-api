@@ -26,7 +26,7 @@ class TestTrackGeminiCallBreakdown:
         mock_redis.pipeline = MagicMock(return_value=mock_pipe)
         mock_redis.expire = AsyncMock()
 
-        with patch("services.gcp_monitoring._redis", mock_redis):
+        with patch("services.cache._redis", mock_redis):
             from services.gcp_monitoring import track_gemini_call
             await track_gemini_call(200.0, 100, 50, call_type="chat_loto", lang="fr")
 
@@ -47,7 +47,7 @@ class TestTrackGeminiCallBreakdown:
         mock_redis.pipeline = MagicMock(return_value=mock_pipe)
         mock_redis.expire = AsyncMock()
 
-        with patch("services.gcp_monitoring._redis", mock_redis):
+        with patch("services.cache._redis", mock_redis):
             from services.gcp_monitoring import track_gemini_call
             await track_gemini_call(100.0, 50, 25)
 
@@ -67,7 +67,7 @@ class TestTrackGeminiCallBreakdown:
         mock_redis.pipeline = MagicMock(return_value=mock_pipe)
         mock_redis.expire = AsyncMock()
 
-        with patch("services.gcp_monitoring._redis", mock_redis):
+        with patch("services.cache._redis", mock_redis):
             from services.gcp_monitoring import track_gemini_call
             await track_gemini_call(100.0, error=True, call_type="enrichment_em", lang="pt")
 
@@ -87,7 +87,7 @@ class TestTrackGeminiCallBreakdown:
         mock_redis.pipeline = MagicMock(return_value=mock_pipe)
         mock_redis.expire = AsyncMock()
 
-        with patch("services.gcp_monitoring._redis", mock_redis):
+        with patch("services.cache._redis", mock_redis):
             from services.gcp_monitoring import track_gemini_call
             await track_gemini_call(150.0, 100, 50, lang="de")
 
@@ -104,7 +104,7 @@ class TestGeminiBreakdown:
 
     @pytest.mark.asyncio
     async def test_no_redis_returns_empty(self):
-        with patch("services.gcp_monitoring._redis", None):
+        with patch("services.cache._redis", None):
             from services.gcp_monitoring import get_gemini_breakdown
             result = await get_gemini_breakdown()
             assert result == {"by_type": [], "by_lang": []}
@@ -133,7 +133,7 @@ class TestGeminiBreakdown:
         mock_redis = MagicMock()
         mock_redis.pipeline = mock_pipeline
 
-        with patch("services.gcp_monitoring._redis", mock_redis):
+        with patch("services.cache._redis", mock_redis):
             from services.gcp_monitoring import get_gemini_breakdown
             result = await get_gemini_breakdown()
 
@@ -153,7 +153,7 @@ class TestGeminiBreakdown:
         mock_redis = MagicMock()
         mock_redis.pipeline = MagicMock(side_effect=Exception("Redis down"))
 
-        with patch("services.gcp_monitoring._redis", mock_redis):
+        with patch("services.cache._redis", mock_redis):
             from services.gcp_monitoring import get_gemini_breakdown
             result = await get_gemini_breakdown()
             assert result["by_type"] == []
@@ -173,7 +173,7 @@ class TestSnapshot:
         mock_redis.set = AsyncMock(return_value=True)
 
         with (
-            patch("services.gcp_monitoring._redis", mock_redis),
+            patch("services.cache._redis", mock_redis),
             patch("services.gcp_monitoring.db_cloudsql") as mock_db,
         ):
             mock_db.async_query = AsyncMock()
@@ -195,7 +195,7 @@ class TestSnapshot:
         mock_redis.set = AsyncMock(return_value=False)
 
         with (
-            patch("services.gcp_monitoring._redis", mock_redis),
+            patch("services.cache._redis", mock_redis),
             patch("services.gcp_monitoring.db_cloudsql") as mock_db,
         ):
             mock_db.async_query = AsyncMock()
@@ -207,7 +207,7 @@ class TestSnapshot:
     async def test_snapshot_no_redis(self):
         """Snapshot is noop without Redis."""
         with (
-            patch("services.gcp_monitoring._redis", None),
+            patch("services.cache._redis", None),
             patch("services.gcp_monitoring.db_cloudsql") as mock_db,
         ):
             mock_db.async_query = AsyncMock()
@@ -222,7 +222,7 @@ class TestSnapshot:
         mock_redis.set = AsyncMock(return_value=True)
 
         with (
-            patch("services.gcp_monitoring._redis", mock_redis),
+            patch("services.cache._redis", mock_redis),
             patch("services.gcp_monitoring.db_cloudsql") as mock_db,
         ):
             mock_db.async_query = AsyncMock(side_effect=Exception("DB error"))
