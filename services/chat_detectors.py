@@ -248,6 +248,9 @@ _TEMPORAL_PATTERNS = [
     r'\bdepuis\s+' + _MOIS_FR + r'\s+20\d{2}',  # depuis janvier 2026
     r'\b[àa]\s+partir\s+d[eu]\b',               # à partir de / à partir du
     r'\bles\s+\d+\s+derniers?\s+mois\b',         # les 3 derniers mois
+    r'\bles\s+\d+\s+derni[eè]res?\s+ann[ée]es?\b', # les 3 dernières années
+    r'\bces\s+\d+\s+derni[eè]res?\s+ann[ée]es?\b', # ces 3 dernières années
+    r'\bsur\s+\d+\s+ans?\b',                       # sur 3 ans
     # ── EN ──
     r'\bin\s+20\d{2}\b',                           # in 2024
     r'\bsince\s+20\d{2}\b',                        # since 2023
@@ -266,6 +269,8 @@ _TEMPORAL_PATTERNS = [
     r'\bsince\s+' + _MOIS_EN,                    # since January 2026
     r'\bfrom\s+' + _MOIS_EN,                     # from March 2025
     r'\b(?:the\s+)?(?:last|past)\s+\d+\s+months?\b',  # the last 3 months / past 6 months
+    r'\b(?:the\s+)?(?:last|past)\s+\d+\s+years?\b',  # the last 3 years / past 5 years
+    r'\bover\s+(?:the\s+)?(?:last|past)\s+\d+\s+years?\b',  # over the last 3 years
     # ── ES ──
     r'\bdesde\s+20\d{2}\b',                        # desde 2023
     r'\bantes\s+de\s+20\d{2}\b',                   # antes de 2024
@@ -281,6 +286,7 @@ _TEMPORAL_PATTERNS = [
     r'\bdesde\s+' + _MOIS_ES,                    # desde enero 2026
     r'\ba\s+partir\s+de\b',                      # a partir de (ES/PT shared)
     r'\blos\s+[úu]ltimos\s+\d+\s+meses\b',      # los últimos 3 meses
+    r'\blos\s+[úu]ltimos\s+\d+\s+a[nñ]os\b',   # los últimos 3 años
     # ── PT ──
     r'\bem\s+20\d{2}\b',                           # em 2024
     r'\bdesde\s+20\d{2}\b',                        # desde 2023 (shared with ES)
@@ -295,6 +301,7 @@ _TEMPORAL_PATTERNS = [
     r'\bdesde\s+\d+\s+(?:meses|anos|semanas)\b',  # desde 3 meses
     r'\bdesde\s+(?:\d+\s+de\s+)?' + _MOIS_PT,   # desde 1 de janeiro / desde janeiro
     r'\bos\s+[úu]ltimos\s+\d+\s+meses\b',       # os últimos 3 meses
+    r'\bos\s+[úu]ltimos\s+\d+\s+anos\b',       # os últimos 3 anos
     # ── DE ── (patterns lowercase — _has_temporal_filter lowercases input)
     r'\bim\s+(?:jahr\s+)?20\d{2}\b',              # im 2024 / im Jahr 2024
     r'\bseit\s+20\d{2}\b',                         # seit 2023
@@ -311,6 +318,7 @@ _TEMPORAL_PATTERNS = [
     r'\bseit\s+' + _MOIS_DE,                     # seit Januar 2026
     r'\bab\s+' + _MOIS_DE,                       # ab März 2025
     r'\bdie\s+letzten\s+\d+\s+monate\b',         # die letzten 3 Monate
+    r'\bdie\s+letzten\s+\d+\s+jahre\b',         # die letzten 3 Jahre
     # ── NL ──
     r'\bin\s+20\d{2}\b',                           # in 2024 (shared with EN)
     r'\bsinds\s+20\d{2}\b',                        # sinds 2023
@@ -326,6 +334,7 @@ _TEMPORAL_PATTERNS = [
     r'\bsinds\s+(?:\d+\s+)?' + _MOIS_NL,        # sinds 1 januari / sinds januari
     r'\bvanaf\s+' + _MOIS_NL,                    # vanaf maart 2025
     r'\bde\s+laatste\s+\d+\s+maanden?\b',        # de laatste 3 maanden
+    r'\bde\s+laatste\s+\d+\s+jaar\b',           # de laatste 3 jaar
 ]
 
 
@@ -1364,8 +1373,10 @@ def _extract_forced_numbers(message: str, game: str = "loto") -> dict:
     for pattern in (_CHANCE_PATTERN, _STAR_PATTERN):
         cleaned = pattern.sub(' ', cleaned)
 
-    # Remove quantifier patterns ("les 2 dedans", "those 3 included")
-    # to avoid confusing counts with forced numbers
+    # Detect quantifier patterns ("les 2 dedans", "those 3 included")
+    # and resolve anaphoric references to numbers mentioned earlier
+    _quant_match = _QUANTIFIER_PATTERN.search(cleaned)
+    _quant_n = int(_quant_match.group(1)) if _quant_match else 0
     cleaned = _QUANTIFIER_PATTERN.sub(' ', cleaned)
 
     # Find the "with" keyword position and extract numbers after it
@@ -1375,6 +1386,26 @@ def _extract_forced_numbers(message: str, game: str = "loto") -> dict:
         forced = _extract_nums_from_text(after_with)
     else:
         forced = []
+
+    # ── Anaphora resolution ──
+    # If a quantifier was detected ("les 2 dedans") but no explicit numbers
+    # found after "avec", scan the FULL message for numbers mentioned earlier
+    # and use up to N of them (N = the quantifier count).
+    if _quant_n > 0 and not forced:
+        all_nums = _extract_nums_from_text(cleaned)
+        # Filter to valid game range to avoid picking up years, counts, etc.
+        if game == "loto":
+            candidates = [n for n in all_nums if 1 <= n <= 49]
+        else:
+            candidates = [n for n in all_nums if 1 <= n <= 50]
+        # Deduplicate preserving order
+        seen = set()
+        unique = []
+        for n in candidates:
+            if n not in seen:
+                seen.add(n)
+                unique.append(n)
+        forced = unique[:_quant_n]
 
     # Validate range
     if game == "loto":

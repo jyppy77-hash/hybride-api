@@ -85,14 +85,14 @@ class TestExtractForcedNumbersLoto:
         r = _extract_forced_numbers("Génère une grille avec le 2", game="loto")
         assert r["forced_nums"] == [2]
 
-    def test_production_phrase_quantifier(self):
-        """Multi-intent prod phrase: compare + 'les 2 dedans' = quantifier."""
+    def test_production_phrase_anaphora(self):
+        """Multi-intent prod phrase: 'les 2 dedans' resolves to [31, 45] via anaphora."""
         r = _extract_forced_numbers(
             "Compare les fréquences du 31 vs 45 sur les 3 dernières années. "
             "Et génère-moi une grille avec les 2 dedans.",
             game="loto",
         )
-        assert r["forced_nums"] == [], f"Should not capture: {r['forced_nums']}"
+        assert set(r["forced_nums"]) == {31, 45}, f"Anaphora should resolve: {r['forced_nums']}"
 
     # ── Validation errors ──
 
@@ -431,15 +431,15 @@ class TestMultiAction:
         r = _extract_forced_numbers(msg, game="loto")
         assert set(r["forced_nums"]) == {7, 23}
 
-    def test_quantifier_in_multi_action(self):
-        """'les 2 dedans' in multi-action = quantifier, not forced number 2."""
+    def test_quantifier_in_multi_action_anaphora(self):
+        """'les 2 dedans' in multi-action = anaphora → resolves to [31, 45]."""
         msg = (
             "Compare les fréquences du 31 vs 45 sur les 3 dernières années. "
             "Et génère-moi une grille avec les 2 dedans."
         )
         assert _detect_generation(msg)
         r = _extract_forced_numbers(msg, game="loto")
-        assert r["forced_nums"] == [], f"Quantifier captured: {r['forced_nums']}"
+        assert set(r["forced_nums"]) == {31, 45}, f"Anaphora should resolve: {r['forced_nums']}"
 
     def test_classement_and_generate(self):
         """Top N ranking + generation in same message."""
@@ -463,3 +463,133 @@ class TestMultiAction:
         assert intent is not None
         r = _extract_forced_numbers(msg, game="loto")
         assert set(r["forced_nums"]) == {31, 45}
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 7. Anaphora resolution — quantifier + context numbers
+# ═══════════════════════════════════════════════════════════════════
+
+class TestAnaphoraResolution:
+    """'les 2 dedans' should resolve to numbers mentioned earlier in message."""
+
+    def test_anaphora_fr_basic(self):
+        """FR: 'les 2 dedans' resolves to [31, 45] from compare context."""
+        r = _extract_forced_numbers(
+            "Compare le 31 vs 45. Génère une grille avec les 2 dedans",
+            game="loto",
+        )
+        assert set(r["forced_nums"]) == {31, 45}
+
+    def test_anaphora_en(self):
+        """EN: 'those 2 included' resolves to context numbers."""
+        r = _extract_forced_numbers(
+            "Compare 31 vs 45. Generate a grid with those 2 included",
+            game="loto",
+        )
+        assert set(r["forced_nums"]) == {31, 45}
+
+    def test_anaphora_es(self):
+        """ES: 'los 2 dentro' resolves to context numbers."""
+        r = _extract_forced_numbers(
+            "Compara el 31 vs 45. Genera una combinación con los 2 dentro",
+            game="loto",
+        )
+        assert set(r["forced_nums"]) == {31, 45}
+
+    def test_anaphora_pt(self):
+        """PT: 'os 2 incluídos' resolves to context numbers."""
+        r = _extract_forced_numbers(
+            "Compara o 31 vs 45. Gera uma combinação com os 2 incluídos",
+            game="loto",
+        )
+        assert set(r["forced_nums"]) == {31, 45}
+
+    def test_anaphora_de(self):
+        """DE: 'die 2 dabei' resolves to context numbers."""
+        r = _extract_forced_numbers(
+            "Vergleiche 31 vs 45. Generiere eine Kombination mit die 2 dabei",
+            game="loto",
+        )
+        assert set(r["forced_nums"]) == {31, 45}
+
+    def test_anaphora_nl(self):
+        """NL: 'de 2 erin' resolves to context numbers."""
+        r = _extract_forced_numbers(
+            "Vergelijk 31 vs 45. Genereer een combinatie met de 2 erin",
+            game="loto",
+        )
+        assert set(r["forced_nums"]) == {31, 45}
+
+    def test_anaphora_three_numbers(self):
+        """'les 3 dedans' resolves first 3 numbers from context."""
+        r = _extract_forced_numbers(
+            "Compare le 7, 23 et 42. Génère une grille avec les 3 dedans",
+            game="loto",
+        )
+        assert set(r["forced_nums"]) == {7, 23, 42}
+
+    def test_anaphora_no_context_numbers(self):
+        """Quantifier without any numbers in message → empty."""
+        r = _extract_forced_numbers(
+            "génère-moi une grille avec les 2 dedans",
+            game="loto",
+        )
+        assert r["forced_nums"] == []
+
+    def test_anaphora_em(self):
+        """Anaphora works for EuroMillions too (range 1-50)."""
+        r = _extract_forced_numbers(
+            "Compare 15 vs 42. Génère une grille avec les 2 dedans",
+            game="em",
+        )
+        assert set(r["forced_nums"]) == {15, 42}
+
+    def test_anaphora_production_full_phrase(self):
+        """Full production phrase with temporal filter + anaphora."""
+        r = _extract_forced_numbers(
+            "Compare les fréquences du 31 vs 45 sur les 3 dernières années. "
+            "Génère-moi une grille avec les 2 dedans.",
+            game="loto",
+        )
+        assert set(r["forced_nums"]) == {31, 45}
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 8. Temporal filter — "N dernières années" patterns
+# ═══════════════════════════════════════════════════════════════════
+
+class TestTemporalFilterYears:
+    """Verify _has_temporal_filter detects 'N dernières années' in 6 langs."""
+
+    @pytest.mark.parametrize("msg,expected", [
+        # FR
+        ("les 3 dernières années", True),
+        ("ces 5 dernières années", True),
+        ("sur 3 ans", True),
+        # EN
+        ("the last 3 years", True),
+        ("over the past 5 years", True),
+        # ES
+        ("los últimos 3 años", True),
+        # PT
+        ("os últimos 3 anos", True),
+        # DE
+        ("die letzten 3 Jahre", True),
+        # NL
+        ("de laatste 3 jaar", True),
+        # Negative
+        ("les 3 derniers mois", True),  # months already worked
+        ("fréquence du 31", False),
+    ])
+    def test_temporal_years_multilang(self, msg, expected):
+        from services.chat_detectors import _has_temporal_filter
+        assert _has_temporal_filter(msg) == expected, f"Failed for: {msg}"
+
+    def test_full_production_phrase_with_temporal(self):
+        """Production phrase with temporal + compare + generate."""
+        from services.chat_detectors import _has_temporal_filter
+        msg = (
+            "Compare les fréquences du 31 vs 45 sur les 3 dernières années. "
+            "Génère-moi une grille avec les 2 dedans."
+        )
+        assert _has_temporal_filter(msg)
