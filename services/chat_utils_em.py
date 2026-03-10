@@ -262,8 +262,9 @@ def _format_triplets_context_em(triplets_data: dict) -> str:
 
 def _format_generation_context_em(grid_data: dict) -> str:
     """Formate une grille EuroMillions generee en contexte pour Gemini."""
+    nums = grid_data['nums']
     lines = ["[GRILLE GÉNÉRÉE PAR HYBRIDE]"]
-    lines.append(f"Numéros : {grid_data['nums']}")
+    lines.append(f"Numéros : {nums}")
     if grid_data.get('etoiles'):
         lines.append(f"Étoiles : {grid_data['etoiles']}")
     if grid_data.get("forced_nums"):
@@ -273,9 +274,43 @@ def _format_generation_context_em(grid_data: dict) -> str:
     lines.append(f"Score de conformité : {grid_data['score']}/100")
     lines.append(f"Badges : {', '.join(grid_data.get('badges', []))}")
     lines.append(f"Mode : {grid_data.get('mode', 'balanced')}")
+
+    # Breakdown statistique par numéro (critères de sélection)
+    pairs = sum(1 for n in nums if n % 2 == 0)
+    impairs = 5 - pairs
+    bas = sum(1 for n in nums if n <= 25)
+    hauts = 5 - bas
+    somme = sum(nums)
+    dispersion = max(nums) - min(nums)
+    lines.append("")
+    lines.append("[BREAKDOWN — Critères de sélection]")
+    lines.append(f"Équilibre pair/impair : {pairs} pairs, {impairs} impairs")
+    lines.append(f"Équilibre bas/haut (1-25 / 26-50) : {bas} bas, {hauts} hauts")
+    lines.append(f"Somme des numéros : {somme} (cible optimale : 95-160)")
+    lines.append(f"Dispersion (max - min) : {dispersion}")
+    for n in nums:
+        tags = []
+        tags.append("pair" if n % 2 == 0 else "impair")
+        tags.append("bas" if n <= 25 else "haut")
+        if grid_data.get("forced_nums") and n in grid_data["forced_nums"]:
+            tags.append("imposé par l'utilisateur")
+        lines.append(f"  N°{n:02d} : {', '.join(tags)}")
+    if grid_data.get('etoiles'):
+        for e in grid_data['etoiles']:
+            tags = []
+            if grid_data.get("forced_etoiles") and e in grid_data["forced_etoiles"]:
+                tags.append("imposée par l'utilisateur")
+            lines.append(f"  ⭐{e:02d} : {', '.join(tags) if tags else 'sélectionnée par le moteur'}")
+    lines.append(
+        "Ces critères sont STATISTIQUES et basés sur l'historique. "
+        "L'EuroMillions reste un jeu de pur hasard, aucune grille ne garantit de gain."
+    )
+
+    lines.append("")
     lines.append(
         "IMPORTANT : Présente cette grille de manière engageante. "
         "Explique les critères (équilibre pair/impair, bas/haut, fréquences, retards). "
+        "Si l'utilisateur demande pourquoi ces numéros, utilise le [BREAKDOWN] ci-dessus. "
         "Si des numéros ou étoiles ont été imposés, mentionne-le clairement. "
         "Rappelle que l'EuroMillions reste un jeu de pur hasard et qu'aucune grille ne garantit de gain."
     )

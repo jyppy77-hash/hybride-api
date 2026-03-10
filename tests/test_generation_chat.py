@@ -1023,3 +1023,185 @@ class TestInvertedFrequencyPatternLoto:
         r = self._detect("quel numéro apparaît le plus fréquemment ?")
         assert r is not None
         assert r["tri"] == "frequence_desc"
+
+
+# ═══════════════════════════════════════════════════════════
+#  FIX 2 — Grille avec breakdown : contexte enrichi + Phase A intact
+# ═══════════════════════════════════════════════════════════
+
+class TestGenerationContextBreakdown:
+    """Le contexte de generation doit contenir un [BREAKDOWN] avec criteres par numero."""
+
+    def test_loto_breakdown_present(self):
+        ctx = _format_generation_context({
+            "nums": [3, 12, 25, 33, 47],
+            "chance": 7,
+            "score": 85,
+            "badges": ["Équilibré", "Pair/Impair OK"],
+            "mode": "balanced",
+        })
+        assert "[BREAKDOWN" in ctx
+        assert "pair/impair" in ctx.lower()
+        assert "bas/haut" in ctx.lower()
+
+    def test_loto_breakdown_pair_impair_count(self):
+        ctx = _format_generation_context({
+            "nums": [2, 4, 6, 8, 10],  # all even
+            "chance": 1,
+            "score": 50,
+            "badges": [],
+            "mode": "balanced",
+        })
+        assert "5 pairs, 0 impairs" in ctx
+
+    def test_loto_breakdown_bas_haut_count(self):
+        ctx = _format_generation_context({
+            "nums": [1, 5, 10, 20, 24],  # all bas (<=24)
+            "chance": 1,
+            "score": 50,
+            "badges": [],
+            "mode": "balanced",
+        })
+        assert "5 bas, 0 hauts" in ctx
+
+    def test_loto_breakdown_somme(self):
+        ctx = _format_generation_context({
+            "nums": [3, 12, 25, 33, 47],
+            "chance": 7,
+            "score": 85,
+            "badges": [],
+            "mode": "balanced",
+        })
+        assert "Somme des numéros : 120" in ctx
+
+    def test_loto_breakdown_dispersion(self):
+        ctx = _format_generation_context({
+            "nums": [3, 12, 25, 33, 47],
+            "chance": 7,
+            "score": 85,
+            "badges": [],
+            "mode": "balanced",
+        })
+        assert "Dispersion" in ctx
+        assert "44" in ctx  # 47 - 3
+
+    def test_loto_breakdown_per_number_tags(self):
+        ctx = _format_generation_context({
+            "nums": [3, 12, 25, 33, 47],
+            "chance": 7,
+            "score": 85,
+            "badges": [],
+            "mode": "balanced",
+        })
+        assert "N°03" in ctx
+        assert "N°47" in ctx
+
+    def test_loto_breakdown_forced_tag(self):
+        ctx = _format_generation_context({
+            "nums": [7, 12, 25, 33, 47],
+            "chance": 3,
+            "score": 85,
+            "badges": [],
+            "mode": "balanced",
+            "forced_nums": [7],
+        })
+        assert "imposé par l'utilisateur" in ctx
+
+    def test_loto_breakdown_statistiques_warning(self):
+        ctx = _format_generation_context({
+            "nums": [3, 12, 25, 33, 47],
+            "chance": 7,
+            "score": 85,
+            "badges": [],
+            "mode": "balanced",
+        })
+        assert "STATISTIQUES" in ctx
+
+    def test_em_breakdown_present(self):
+        ctx = _format_generation_context_em({
+            "nums": [5, 14, 28, 37, 49],
+            "etoiles": [3, 11],
+            "score": 78,
+            "badges": ["Numéros chauds"],
+            "mode": "recent",
+        })
+        assert "[BREAKDOWN" in ctx
+        assert "pair/impair" in ctx.lower()
+        assert "bas/haut" in ctx.lower()
+
+    def test_em_breakdown_etoiles(self):
+        ctx = _format_generation_context_em({
+            "nums": [5, 14, 28, 37, 49],
+            "etoiles": [3, 11],
+            "score": 78,
+            "badges": [],
+            "mode": "recent",
+        })
+        assert "⭐03" in ctx
+        assert "⭐11" in ctx
+
+    def test_em_breakdown_forced_etoiles(self):
+        ctx = _format_generation_context_em({
+            "nums": [5, 14, 28, 37, 49],
+            "etoiles": [3, 11],
+            "score": 78,
+            "badges": [],
+            "mode": "recent",
+            "forced_etoiles": [3],
+        })
+        assert "imposée par l'utilisateur" in ctx
+
+    def test_em_breakdown_bas_haut_seuil_25(self):
+        """EM uses 1-25/26-50 split (not 1-24/25-49 like Loto)."""
+        ctx = _format_generation_context_em({
+            "nums": [1, 10, 25, 40, 50],  # 3 bas (<=25), 2 hauts (>25)
+            "etoiles": [1, 2],
+            "score": 60,
+            "badges": [],
+            "mode": "balanced",
+        })
+        assert "3 bas, 2 hauts" in ctx
+
+
+class TestPhaseAStillBlocksArgent:
+    """Phase A doit TOUJOURS bloquer les vraies questions argent, meme apres le fix."""
+
+    def test_combien_gagner_loto(self):
+        assert _detect_argent("combien je vais gagner au Loto ?") is True
+
+    def test_est_ce_rentable_loto(self):
+        assert _detect_argent("est-ce rentable de jouer au Loto ?") is True
+
+    def test_joue_50_euros(self):
+        assert _detect_argent("joue 50€ par semaine") is True
+
+    def test_devenir_riche(self):
+        assert _detect_argent("comment devenir riche avec le Loto") is True
+
+    def test_strategie_gagner(self):
+        assert _detect_argent("stratégie pour gagner au Loto") is True
+
+    def test_how_much_can_i_win_em(self):
+        assert _detect_argent_em("how much can I win?", "en") is True
+
+    def test_get_rich_em(self):
+        assert _detect_argent_em("I want to get rich", "en") is True
+
+    def test_hacerse_rico_em(self):
+        assert _detect_argent_em("quiero hacerme rico", "es") is True
+
+    def test_ficar_rico_em(self):
+        assert _detect_argent_em("quero ficar rico", "pt") is True
+
+    def test_reich_werden_em(self):
+        assert _detect_argent_em("ich will reich werden", "de") is True
+
+    def test_rijk_worden_em(self):
+        assert _detect_argent_em("ik wil rijk worden", "nl") is True
+
+    # Generation requests must NOT be blocked
+    def test_genere_grille_explique_not_blocked(self):
+        assert _detect_argent("génère une grille et explique pourquoi ces numéros") is False
+
+    def test_generate_and_explain_not_blocked_em(self):
+        assert _detect_argent_em("generate a grid and explain why these numbers", "en") is False

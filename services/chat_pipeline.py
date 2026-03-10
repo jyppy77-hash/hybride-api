@@ -59,6 +59,16 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
         logger.error("[HYBRIDE CHAT] Prompt systeme introuvable")
         return {"response": FALLBACK_RESPONSE, "source": "fallback", "mode": mode}, None
 
+    # ── Anti-re-introduction : TOUJOURS injecté (le welcome JS a déjà fait la présentation) ──
+    system_prompt += (
+        "\n\n[RAPPEL CRITIQUE — ANTI-RE-PRÉSENTATION]\n"
+        "Le message de bienvenue affiché côté interface a DÉJÀ présenté HYBRIDE à l'utilisateur. "
+        "Tu t'es DÉJÀ présenté. NE TE RE-PRÉSENTE PAS. "
+        "Ne dis PAS 'Je suis HYBRIDE', 'je m'appelle HYBRIDE', etc. "
+        "Ne dis PAS 'Salut !' en début de réponse s'il ne t'a pas salué. "
+        "Va DIRECTEMENT à la réponse à sa question."
+    )
+
     gem_api_key = os.environ.get("GEM_API_KEY") or os.environ.get("GEMINI_API_KEY")
     if not gem_api_key:
         logger.warning("[HYBRIDE CHAT] GEM_API_KEY non configuree — fallback")

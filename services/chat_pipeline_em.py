@@ -111,18 +111,17 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
     while contents and contents[0]["role"] == "model":
         contents.pop(0)
 
-    # ── Anti-re-introduction : si l'historique contient déjà des réponses bot ──
-    _has_model_reply = any(c["role"] == "model" for c in contents)
-    if _has_model_reply:
-        system_prompt += (
-            "\n\n[RAPPEL CRITIQUE — ANTI-RE-PRÉSENTATION]\n"
-            "L'historique ci-dessous prouve que tu as DÉJÀ parlé à cet utilisateur. "
-            "Tu t'es DÉJÀ présenté. NE TE RE-PRÉSENTE PAS. "
-            "Ne dis PAS 'Je suis HYBRIDE', 'I'm HYBRIDE', 'Soy HYBRIDE', etc. "
-            "Ne dis PAS 'Salut !', 'Hello !', 'Hi !', 'Hola !' en début de réponse "
-            "s'il ne t'a pas salué. "
-            "Va DIRECTEMENT à la réponse à sa question."
-        )
+    # ── Anti-re-introduction : TOUJOURS injecté (le welcome JS a déjà fait la présentation) ──
+    system_prompt += (
+        "\n\n[RAPPEL CRITIQUE — ANTI-RE-PRÉSENTATION]\n"
+        "Le message de bienvenue affiché côté interface a DÉJÀ présenté HYBRIDE à l'utilisateur. "
+        "Tu t'es DÉJÀ présenté. NE TE RE-PRÉSENTE PAS. "
+        "Ne dis PAS 'Je suis HYBRIDE', 'I'm HYBRIDE', 'Soy HYBRIDE', 'Eu sou HYBRIDE', "
+        "'Ich bin HYBRIDE', 'Ik ben HYBRIDE', etc. "
+        "Ne dis PAS 'Salut !', 'Hello !', 'Hi !', 'Hola !', 'Olá !', 'Hallo !' en début de réponse "
+        "s'il ne t'a pas salué. "
+        "Va DIRECTEMENT à la réponse à sa question."
+    )
 
     # ── Phase I : Détection d'insultes / agressivité ──
     _insult_prefix = ""
