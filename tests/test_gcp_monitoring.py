@@ -104,6 +104,8 @@ class TestGeminiCounters:
 
     @pytest.mark.asyncio
     async def test_no_redis_returns_defaults(self):
+        from services.gcp_monitoring import _mem_counters
+        _mem_counters.clear()
         with patch("services.cache._redis", None):
             counters = await _get_gemini_counters()
             assert counters == {"calls": 0, "errors": 0, "tokens_in": 0, "tokens_out": 0, "total_ms": 0}

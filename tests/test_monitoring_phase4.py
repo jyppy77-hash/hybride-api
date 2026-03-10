@@ -103,11 +103,16 @@ class TestTrackGeminiCallBreakdown:
 class TestGeminiBreakdown:
 
     @pytest.mark.asyncio
-    async def test_no_redis_returns_empty(self):
+    async def test_no_redis_returns_fallback(self):
+        """Without Redis, returns in-memory fallback (zero-valued structure)."""
         with patch("services.cache._redis", None):
-            from services.gcp_monitoring import get_gemini_breakdown
+            from services.gcp_monitoring import get_gemini_breakdown, _mem_counters
+            _mem_counters.clear()
             result = await get_gemini_breakdown()
-            assert result == {"by_type": [], "by_lang": []}
+            assert len(result["by_type"]) == 5
+            assert len(result["by_lang"]) == 6
+            assert all(e["calls"] == 0 for e in result["by_type"])
+            assert all(e["calls"] == 0 for e in result["by_lang"])
 
     @pytest.mark.asyncio
     async def test_breakdown_structure(self):
@@ -390,3 +395,86 @@ class TestConstants:
     def test_snapshot_cooldown(self):
         from services.gcp_monitoring import _SNAPSHOT_COOLDOWN
         assert _SNAPSHOT_COOLDOWN == 300
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# In-memory fallback (no Redis)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestInMemoryFallback:
+
+    @pytest.mark.asyncio
+    async def test_track_without_redis_increments_mem(self):
+        """track_gemini_call increments in-memory counters when Redis is None."""
+        from services.gcp_monitoring import track_gemini_call, _mem_counters, _mem_reset_if_new_day
+        _mem_counters.clear()
+        _mem_reset_if_new_day()
+        with patch("services.cache._redis", None):
+            await track_gemini_call(200.0, 100, 50, call_type="chat_loto", lang="fr")
+            await track_gemini_call(300.0, 200, 80, call_type="chat_em", lang="en")
+        assert _mem_counters.get("hybride:gemini:calls_today") == 2
+        assert _mem_counters.get("hybride:gemini:tokens_in_today") == 300
+        assert _mem_counters.get("hybride:gemini:tokens_out_today") == 130
+        assert _mem_counters.get("hybride:gemini:total_ms_today") == 500
+
+    @pytest.mark.asyncio
+    async def test_get_counters_without_redis_reads_mem(self):
+        """_get_gemini_counters returns in-memory values when Redis is None."""
+        from services.gcp_monitoring import _get_gemini_counters, _mem_counters, _mem_reset_if_new_day
+        _mem_counters.clear()
+        _mem_reset_if_new_day()
+        _mem_counters["hybride:gemini:calls_today"] = 5
+        _mem_counters["hybride:gemini:tokens_in_today"] = 999
+        with patch("services.cache._redis", None):
+            counters = await _get_gemini_counters()
+        assert counters["calls"] == 5
+        assert counters["tokens_in"] == 999
+        assert counters["errors"] == 0
+
+    @pytest.mark.asyncio
+    async def test_track_error_without_redis(self):
+        """Error flag increments error counter in-memory."""
+        from services.gcp_monitoring import track_gemini_call, _mem_counters, _mem_reset_if_new_day
+        _mem_counters.clear()
+        _mem_reset_if_new_day()
+        with patch("services.cache._redis", None):
+            await track_gemini_call(100.0, error=True, call_type="enrichment_em")
+        assert _mem_counters.get("hybride:gemini:calls_today") == 1
+        assert _mem_counters.get("hybride:gemini:errors_today") == 1
+        assert _mem_counters.get("hybride:gemini:bt:enrichment_em:errors") == 1
+
+    def test_daily_reset(self):
+        """Counters reset when date changes."""
+        from services.gcp_monitoring import _mem_counters, _mem_reset_if_new_day
+        import services.gcp_monitoring as gm
+        _mem_counters.clear()
+        _mem_counters["hybride:gemini:calls_today"] = 42
+        # Force a stale date
+        gm._mem_counters_date = "2020-01-01"
+        _mem_reset_if_new_day()
+        assert _mem_counters.get("hybride:gemini:calls_today", 0) == 0
+
+    @pytest.mark.asyncio
+    async def test_breakdown_without_redis_after_tracking(self):
+        """get_gemini_breakdown returns in-memory breakdown data."""
+        from services.gcp_monitoring import track_gemini_call, get_gemini_breakdown, _mem_counters, _mem_reset_if_new_day
+        _mem_counters.clear()
+        _mem_reset_if_new_day()
+        with patch("services.cache._redis", None):
+            await track_gemini_call(200.0, 100, 50, call_type="chat_loto", lang="fr")
+            result = await get_gemini_breakdown()
+        chat_loto = next(e for e in result["by_type"] if e["type"] == "chat_loto")
+        assert chat_loto["calls"] == 1
+        assert chat_loto["tokens_in"] == 100
+        fr = next(e for e in result["by_lang"] if e["lang"] == "fr")
+        assert fr["calls"] == 1
+
+    @pytest.mark.asyncio
+    async def test_alerting_cooldown_without_redis(self):
+        """Alerting cooldown works in-memory when Redis is None."""
+        from services.alerting import _is_cooled_down, _set_cooldown, _mem_cooldowns
+        _mem_cooldowns.clear()
+        with patch("services.cache._redis", None):
+            assert not await _is_cooled_down("test_key", 900)
+            await _set_cooldown("test_key", 900)
+            assert await _is_cooled_down("test_key", 900)

@@ -42,6 +42,9 @@ DEFAULT_THRESHOLDS = {
 ALERT_COOLDOWN = 900     # 15 minutes between same alert
 EMAIL_COOLDOWN = 3600    # 1 hour between same email alert
 
+# In-memory cooldown fallback (when Redis unavailable)
+_mem_cooldowns: dict[str, float] = {}  # key → expiry timestamp
+
 # SMTP config from env
 _SMTP_HOST = os.getenv("SMTP_HOST", "")
 _SMTP_PORT = int(os.getenv("SMTP_PORT", "465"))
@@ -88,7 +91,9 @@ async def _is_cooled_down(key: str, cooldown: int) -> bool:
     """Return True if alert is still in cooldown (should NOT fire)."""
     _redis = _cache._redis
     if not _redis:
-        return False
+        # In-memory fallback
+        exp = _mem_cooldowns.get(key)
+        return exp is not None and time.time() < exp
     try:
         val = await _redis.get(f"{_REDIS_PREFIX}alert_cd:{key}")
         return val is not None
@@ -100,6 +105,7 @@ async def _set_cooldown(key: str, cooldown: int) -> None:
     """Set cooldown for an alert key."""
     _redis = _cache._redis
     if not _redis:
+        _mem_cooldowns[key] = time.time() + cooldown
         return
     try:
         await _redis.set(f"{_REDIS_PREFIX}alert_cd:{key}", "1", ex=cooldown)

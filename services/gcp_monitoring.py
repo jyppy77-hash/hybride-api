@@ -53,6 +53,30 @@ _GEMINI_KEYS = {
 
 _GEMINI_TTL = 86400  # 24h — auto-reset daily
 
+# ── In-memory fallback (when Redis unavailable) ──────────────────────────────
+
+_mem_counters: dict[str, int] = {}
+_mem_counters_date: str = ""  # YYYY-MM-DD, reset when day changes
+
+
+def _mem_reset_if_new_day() -> None:
+    """Reset in-memory counters at midnight (UTC)."""
+    global _mem_counters_date
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    if today != _mem_counters_date:
+        _mem_counters.clear()
+        _mem_counters_date = today
+
+
+def _mem_incr(key: str, amount: int = 1) -> None:
+    _mem_reset_if_new_day()
+    _mem_counters[key] = _mem_counters.get(key, 0) + amount
+
+
+def _mem_get(key: str) -> int:
+    _mem_reset_if_new_day()
+    return _mem_counters.get(key, 0)
+
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -86,10 +110,38 @@ async def track_gemini_call(
     call_type: str = "",
     lang: str = "",
 ) -> None:
-    """Increment Gemini usage counters in Redis. Safe no-op if Redis unavailable."""
+    """Increment Gemini usage counters in Redis (or in-memory fallback)."""
     _redis = _cache._redis
     if not _redis:
-        logger.info("[TRACK_GEMINI] Redis unavailable — skipping (dur=%.0fms, type=%s)", duration_ms, call_type)
+        # In-memory fallback
+        kp = _REDIS_PREFIX
+        _mem_incr(f"{kp}{_GEMINI_KEYS['calls']}")
+        if error:
+            _mem_incr(f"{kp}{_GEMINI_KEYS['errors']}")
+        if tokens_in > 0:
+            _mem_incr(f"{kp}{_GEMINI_KEYS['tokens_in']}", tokens_in)
+        if tokens_out > 0:
+            _mem_incr(f"{kp}{_GEMINI_KEYS['tokens_out']}", tokens_out)
+        _mem_incr(f"{kp}{_GEMINI_KEYS['total_ms']}", int(duration_ms))
+        if call_type:
+            bt = f"{kp}gemini:bt:{call_type}"
+            _mem_incr(f"{bt}:calls")
+            if tokens_in > 0:
+                _mem_incr(f"{bt}:tokens_in", tokens_in)
+            if tokens_out > 0:
+                _mem_incr(f"{bt}:tokens_out", tokens_out)
+            _mem_incr(f"{bt}:total_ms", int(duration_ms))
+            if error:
+                _mem_incr(f"{bt}:errors")
+        if lang:
+            bl = f"{kp}gemini:bl:{lang}"
+            _mem_incr(f"{bl}:calls")
+            if tokens_in > 0:
+                _mem_incr(f"{bl}:tokens_in", tokens_in)
+            if tokens_out > 0:
+                _mem_incr(f"{bl}:tokens_out", tokens_out)
+        logger.info("[TRACK_GEMINI] OK (mem) calls+1 tin=%d tout=%d dur=%.0fms type=%s lang=%s",
+                     tokens_in, tokens_out, duration_ms, call_type, lang)
         return
     try:
         pipe = _redis.pipeline(transaction=False)
@@ -142,11 +194,12 @@ async def track_gemini_call(
 
 
 async def _get_gemini_counters() -> dict:
-    """Read Gemini counters from Redis. Returns zeros if unavailable."""
+    """Read Gemini counters from Redis (or in-memory fallback)."""
     defaults = {"calls": 0, "errors": 0, "tokens_in": 0, "tokens_out": 0, "total_ms": 0}
     _redis = _cache._redis
     if not _redis:
-        return defaults
+        # In-memory fallback
+        return {k: _mem_get(f"{_REDIS_PREFIX}{v}") for k, v in _GEMINI_KEYS.items()}
     try:
         pipe = _redis.pipeline(transaction=False)
         for k in _GEMINI_KEYS.values():
@@ -578,6 +631,25 @@ async def get_gemini_breakdown() -> dict:
     result = {"by_type": [], "by_lang": []}
     _redis = _cache._redis
     if not _redis:
+        # In-memory fallback
+        kp = _REDIS_PREFIX
+        for ct in _CALL_TYPES:
+            bt = f"{kp}gemini:bt:{ct}"
+            calls = _mem_get(f"{bt}:calls")
+            tin = _mem_get(f"{bt}:tokens_in")
+            tout = _mem_get(f"{bt}:tokens_out")
+            total_ms = _mem_get(f"{bt}:total_ms")
+            errors = _mem_get(f"{bt}:errors")
+            result["by_type"].append({
+                "type": ct, "calls": calls, "tokens_in": tin, "tokens_out": tout,
+                "avg_ms": round(total_ms / calls) if calls else 0, "errors": errors,
+            })
+        for lang in _LANGS:
+            bl = f"{kp}gemini:bl:{lang}"
+            result["by_lang"].append({
+                "lang": lang, "calls": _mem_get(f"{bl}:calls"),
+                "tokens_in": _mem_get(f"{bl}:tokens_in"), "tokens_out": _mem_get(f"{bl}:tokens_out"),
+            })
         return result
     try:
         # By type
