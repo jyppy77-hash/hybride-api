@@ -399,3 +399,67 @@ class TestDetectAndExtractCombined:
         r = _extract_forced_numbers(msg, game="loto")
         assert r["forced_nums"] == []
         assert r["error"] is None
+
+
+# ═══════════════════════════════════════════════════════════════════
+# 6. Multi-action — generation + stats in same message
+# ═══════════════════════════════════════════════════════════════════
+
+class TestMultiAction:
+    """Verify multi-intent messages detect BOTH generation and stats."""
+
+    def test_compare_and_generate_both_detected(self):
+        """Both Phase G and Phase 3 should fire on a multi-action message."""
+        from services.chat_detectors import _detect_requete_complexe
+
+        msg = "Compare les fréquences du 31 vs 45. Et génère-moi une grille avec le 31 et 45"
+        assert _detect_generation(msg)
+        intent = _detect_requete_complexe(msg)
+        assert intent is not None
+        assert intent["type"] == "comparaison"
+        r = _extract_forced_numbers(msg, game="loto")
+        assert set(r["forced_nums"]) == {31, 45}
+
+    def test_stats_and_generate_both_detected(self):
+        """Stats query + generation in same message."""
+        from services.chat_detectors import _detect_numero
+
+        msg = "Donne-moi les stats du 7. Et génère une grille avec le 7 et 23"
+        assert _detect_generation(msg)
+        num, num_type = _detect_numero(msg)
+        assert num == 7
+        r = _extract_forced_numbers(msg, game="loto")
+        assert set(r["forced_nums"]) == {7, 23}
+
+    def test_quantifier_in_multi_action(self):
+        """'les 2 dedans' in multi-action = quantifier, not forced number 2."""
+        msg = (
+            "Compare les fréquences du 31 vs 45 sur les 3 dernières années. "
+            "Et génère-moi une grille avec les 2 dedans."
+        )
+        assert _detect_generation(msg)
+        r = _extract_forced_numbers(msg, game="loto")
+        assert r["forced_nums"] == [], f"Quantifier captured: {r['forced_nums']}"
+
+    def test_classement_and_generate(self):
+        """Top N ranking + generation in same message."""
+        from services.chat_detectors import _detect_requete_complexe
+
+        msg = "Top 5 les plus fréquents. Génère une grille avec le 12"
+        assert _detect_generation(msg)
+        intent = _detect_requete_complexe(msg)
+        assert intent is not None
+        assert intent["type"] == "classement"
+        r = _extract_forced_numbers(msg, game="loto")
+        assert r["forced_nums"] == [12]
+
+    def test_multi_action_en(self):
+        """EN multi-action: compare + generate."""
+        from services.chat_detectors import _detect_requete_complexe
+
+        msg = "Compare 31 vs 45. Generate a grid with 31 and 45"
+        assert _detect_generation(msg)
+        intent = _detect_requete_complexe(msg)
+        assert intent is not None
+        r = _extract_forced_numbers(msg, game="loto")
+        assert set(r["forced_nums"]) == {31, 45}

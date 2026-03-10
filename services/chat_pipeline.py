@@ -194,7 +194,9 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
                 f"→ enrichissement contextuel"
             )
 
-    enrichment_context = _generation_context
+    # _generation_context is kept separate — stats phases below must still
+    # run even when a grid was generated (multi-action: "compare X vs Y + generate")
+    enrichment_context = ""
 
     # Phase 0-bis : prochain tirage
     if not _continuation_mode and _detect_prochain_tirage(message):
@@ -408,9 +410,16 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
             f'question="{message[:80]}"'
         )
 
+    # ── Combine generation context + stats context (multi-action support) ──
+    if _generation_context and enrichment_context:
+        enrichment_context = f"{enrichment_context}\n\n{_generation_context}"
+        logger.info("[HYBRIDE CHAT] Multi-action: stats + generation combines")
+    elif _generation_context:
+        enrichment_context = _generation_context
+
     logger.info(
         f"[DEBUG] force_sql={force_sql} | continuation={_continuation_mode} | "
-        f"enrichment={bool(enrichment_context)} | "
+        f"enrichment={bool(enrichment_context)} | generation={bool(_generation_context)} | "
         f"question=\"{message[:60]}\" | history_len={len(history or [])}"
     )
 
