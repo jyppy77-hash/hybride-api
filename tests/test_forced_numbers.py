@@ -63,6 +63,37 @@ class TestExtractForcedNumbersLoto:
         assert r["forced_chance"] is None
         assert r["error"] is None
 
+    # ── Quantifier anti-false-positive ──
+
+    @pytest.mark.parametrize("msg", [
+        "génère-moi une grille avec les 2 dedans",
+        "generate a grid with those 2 included",
+        "genera una combinación con los 2 dentro",
+        "gera uma combinação com os 2 incluídos",
+        "generiere eine Kombination mit die 2 dabei",
+        "genereer een combinatie met de 2 erin",
+        "génère-moi une grille avec les 3 inclus",
+    ])
+    def test_quantifier_not_captured(self, msg):
+        """'les 2 dedans' = both of them, NOT forced number 2."""
+        r = _extract_forced_numbers(msg, game="loto")
+        assert r["forced_nums"] == [], f"Should not capture quantifier: {r['forced_nums']}"
+        assert r["error"] is None
+
+    def test_real_number_2_still_works(self):
+        """'avec le 2' = real forced number 2."""
+        r = _extract_forced_numbers("Génère une grille avec le 2", game="loto")
+        assert r["forced_nums"] == [2]
+
+    def test_production_phrase_quantifier(self):
+        """Multi-intent prod phrase: compare + 'les 2 dedans' = quantifier."""
+        r = _extract_forced_numbers(
+            "Compare les fréquences du 31 vs 45 sur les 3 dernières années. "
+            "Et génère-moi une grille avec les 2 dedans.",
+            game="loto",
+        )
+        assert r["forced_nums"] == [], f"Should not capture: {r['forced_nums']}"
+
     # ── Validation errors ──
 
     def test_number_out_of_range_loto(self):

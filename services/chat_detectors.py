@@ -1291,6 +1291,15 @@ _WITH_PATTERN = re.compile(
     re.IGNORECASE
 )
 
+# Quantifier patterns that look like forced numbers but are actually counts
+# e.g. "les 2 dedans" = "both of them inside", NOT "force number 2"
+_QUANTIFIER_PATTERN = re.compile(
+    r'\b(?:les|los|os|die|de|the|those|ces)\s+(\d{1,2})\s+'
+    r'(?:dedans|inclus|inside|included|dentro|incluidos?|incluídos?|'
+    r'drin|dabei|drinnen|erin|inbegrepen|mee)\b',
+    re.IGNORECASE
+)
+
 
 def _extract_nums_from_text(text: str) -> list[int]:
     """Extract all integers from a text fragment."""
@@ -1354,6 +1363,10 @@ def _extract_forced_numbers(message: str, game: str = "loto") -> dict:
     cleaned = lower
     for pattern in (_CHANCE_PATTERN, _STAR_PATTERN):
         cleaned = pattern.sub(' ', cleaned)
+
+    # Remove quantifier patterns ("les 2 dedans", "those 3 included")
+    # to avoid confusing counts with forced numbers
+    cleaned = _QUANTIFIER_PATTERN.sub(' ', cleaned)
 
     # Find the "with" keyword position and extract numbers after it
     with_match = _WITH_PATTERN.search(cleaned)
