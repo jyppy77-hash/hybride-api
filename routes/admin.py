@@ -1461,3 +1461,12 @@ async def admin_api_gcp_metrics(request: Request):
     except Exception as e:
         logger.error("[ADMIN] gcp-metrics: %s", e)
         return JSONResponse({"status": "unknown", "error": str(e)}, status_code=500)
+
+
+@router.get("/admin/monitoring", include_in_schema=False)
+async def admin_monitoring_page(request: Request):
+    redirect = _require_auth(request)
+    if redirect:
+        return redirect
+    tpl = env.get_template("admin/monitoring.html")
+    return HTMLResponse(tpl.render(active="monitoring"))

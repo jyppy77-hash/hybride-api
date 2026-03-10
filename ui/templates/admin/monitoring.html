@@ -1,0 +1,426 @@
+{% extends "admin/_base.html" %}
+{% block title %}Monitoring{% endblock %}
+
+{% block head %}
+<style>
+/* ── Status bar ─────────────────────────────────────────────── */
+.mon-status-bar {
+    display: flex;
+    align-items: center;
+    gap: .8rem;
+    padding: .8rem 1.2rem;
+    background: var(--bg-card);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius);
+    box-shadow: 0 8px 32px var(--shadow);
+    margin-bottom: 1.5rem;
+}
+.mon-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: #888;
+    animation: mon-pulse 2s ease-in-out infinite;
+}
+.mon-dot-healthy  { background: #00c853; }
+.mon-dot-degraded { background: #ff9800; }
+.mon-dot-down     { background: #ff5252; animation-duration: .8s; }
+.mon-dot-unknown  { background: #888; animation: none; }
+@keyframes mon-pulse {
+    0%,100% { opacity:1; box-shadow: 0 0 0 0 currentColor; }
+    50%     { opacity:.75; box-shadow: 0 0 0 7px transparent; }
+}
+.mon-dot-healthy  { color: rgba(0,200,83,.5); }
+.mon-dot-degraded { color: rgba(255,152,0,.5); }
+.mon-dot-down     { color: rgba(255,82,82,.5); }
+.mon-status-text {
+    font-size: .85rem; font-weight: 600;
+    color: var(--text);
+}
+.mon-status-text span { color: var(--text-muted); font-weight: 400; font-size: .75rem; margin-left: .6rem; }
+
+/* ── Section titles ─────────────────────────────────────────── */
+.mon-section {
+    font-size: .72rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin: 1.5rem 0 .6rem;
+}
+.mon-section:first-of-type { margin-top: .5rem; }
+
+/* ── KPI grid (4 cols) ──────────────────────────────────────── */
+.mon-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+@media (max-width: 900px)  { .mon-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 500px)  { .mon-grid { grid-template-columns: 1fr; } }
+
+/* ── Card ───────────────────────────────────────────────────── */
+.mon-card {
+    background: var(--bg-card);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius);
+    padding: 1.3rem 1rem 1.1rem;
+    text-align: center;
+    box-shadow: 0 8px 32px var(--shadow);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+}
+.mon-card:hover {
+    background: var(--bg-card-hover);
+    transform: scale(1.01);
+    box-shadow: 0 8px 32px var(--shadow-hover);
+}
+.mon-card-icon {
+    font-size: 1.3rem;
+    display: block;
+    margin-bottom: .3rem;
+}
+.mon-card-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-strong);
+    letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+    transition: color .3s;
+}
+.mon-card-label {
+    display: block;
+    font-size: .68rem;
+    color: var(--text-muted);
+    margin-top: .3rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    font-weight: 600;
+}
+
+/* ── Progress bar (CPU/RAM) ─────────────────────────────────── */
+.mon-bar-wrap {
+    height: 6px;
+    background: rgba(255,255,255,.06);
+    border-radius: 3px;
+    margin-top: .6rem;
+    overflow: hidden;
+}
+.mon-bar {
+    height: 100%;
+    border-radius: 3px;
+    background: #4f8cff;
+    transition: width .6s cubic-bezier(.4,0,.2,1), background .3s;
+    width: 0%;
+}
+.mon-bar-warn  { background: #ff9800; }
+.mon-bar-crit  { background: #ff5252; }
+
+/* ── Alert glow on card ─────────────────────────────────────── */
+.mon-card-warn { box-shadow: 0 0 16px rgba(255,152,0,.25); }
+.mon-card-crit { box-shadow: 0 0 16px rgba(255,82,82,.3); }
+.mon-card-warn .mon-card-value { color: #ff9800; }
+.mon-card-crit .mon-card-value { color: #ff5252; }
+
+/* ── Footer ─────────────────────────────────────────────────── */
+.mon-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 2rem;
+    padding: .7rem 1rem;
+    background: var(--bg-card);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    border-radius: var(--radius-sm);
+    font-size: .72rem;
+    color: var(--text-muted);
+}
+.mon-footer .btn-ghost {
+    font-size: .72rem;
+    padding: .35rem .8rem;
+}
+
+/* ── Cost green/orange ──────────────────────────────────────── */
+.mon-cost-ok   .mon-card-value { color: #00c853; }
+.mon-cost-warn .mon-card-value { color: #ff9800; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Status bar -->
+<div class="mon-status-bar" id="mon-status-bar">
+    <div class="mon-dot mon-dot-unknown" id="mon-dot"></div>
+    <div class="mon-status-text">
+        Service : <strong id="mon-status-label">chargement...</strong>
+        <span id="mon-timestamp"></span>
+    </div>
+</div>
+
+<!-- ROW 1 — Cloud Run -->
+<div class="mon-section">Cloud Run</div>
+<div class="mon-grid">
+    <div class="mon-card" id="card-rps">
+        <span class="mon-card-icon">📊</span>
+        <span class="mon-card-value" id="v-rps">—</span>
+        <span class="mon-card-label">Requetes/s</span>
+    </div>
+    <div class="mon-card" id="card-err">
+        <span class="mon-card-icon">⚠️</span>
+        <span class="mon-card-value" id="v-err">—</span>
+        <span class="mon-card-label">Taux erreur 5xx</span>
+    </div>
+    <div class="mon-card" id="card-p95">
+        <span class="mon-card-icon">⏱️</span>
+        <span class="mon-card-value" id="v-p95">—</span>
+        <span class="mon-card-label">Latence P95</span>
+    </div>
+    <div class="mon-card" id="card-inst">
+        <span class="mon-card-icon">🖥️</span>
+        <span class="mon-card-value" id="v-inst">—</span>
+        <span class="mon-card-label">Instances</span>
+    </div>
+</div>
+
+<!-- ROW 2 — Systeme -->
+<div class="mon-section">Systeme</div>
+<div class="mon-grid">
+    <div class="mon-card" id="card-cpu">
+        <span class="mon-card-icon">🔧</span>
+        <span class="mon-card-value" id="v-cpu">—</span>
+        <span class="mon-card-label">CPU</span>
+        <div class="mon-bar-wrap"><div class="mon-bar" id="bar-cpu"></div></div>
+    </div>
+    <div class="mon-card" id="card-ram">
+        <span class="mon-card-icon">💾</span>
+        <span class="mon-card-value" id="v-ram">—</span>
+        <span class="mon-card-label">RAM</span>
+        <div class="mon-bar-wrap"><div class="mon-bar" id="bar-ram"></div></div>
+    </div>
+    <div class="mon-card" id="card-p50">
+        <span class="mon-card-icon">⚡</span>
+        <span class="mon-card-value" id="v-p50">—</span>
+        <span class="mon-card-label">Latence P50</span>
+    </div>
+    <div class="mon-card" id="card-p99">
+        <span class="mon-card-icon">🐢</span>
+        <span class="mon-card-value" id="v-p99">—</span>
+        <span class="mon-card-label">Latence P99</span>
+    </div>
+</div>
+
+<!-- ROW 3 — Gemini IA -->
+<div class="mon-section">Gemini IA</div>
+<div class="mon-grid">
+    <div class="mon-card">
+        <span class="mon-card-icon">🤖</span>
+        <span class="mon-card-value" id="v-gem-calls">—</span>
+        <span class="mon-card-label">Appels Gemini</span>
+    </div>
+    <div class="mon-card">
+        <span class="mon-card-icon">⏳</span>
+        <span class="mon-card-value" id="v-gem-avg">—</span>
+        <span class="mon-card-label">Temps moyen</span>
+    </div>
+    <div class="mon-card">
+        <span class="mon-card-icon">📥</span>
+        <span class="mon-card-value" id="v-gem-tin">—</span>
+        <span class="mon-card-label">Tokens IN</span>
+    </div>
+    <div class="mon-card">
+        <span class="mon-card-icon">📤</span>
+        <span class="mon-card-value" id="v-gem-tout">—</span>
+        <span class="mon-card-label">Tokens OUT</span>
+    </div>
+</div>
+
+<!-- ROW 4 — Couts -->
+<div class="mon-section">Couts du jour</div>
+<div class="mon-grid">
+    <div class="mon-card">
+        <span class="mon-card-icon">☁️</span>
+        <span class="mon-card-value" id="v-cost-run">—</span>
+        <span class="mon-card-label">Cloud Run</span>
+    </div>
+    <div class="mon-card">
+        <span class="mon-card-icon">🗄️</span>
+        <span class="mon-card-value" id="v-cost-sql">—</span>
+        <span class="mon-card-label">Cloud SQL</span>
+    </div>
+    <div class="mon-card">
+        <span class="mon-card-icon">🧠</span>
+        <span class="mon-card-value" id="v-cost-gem">—</span>
+        <span class="mon-card-label">Gemini API</span>
+    </div>
+    <div class="mon-card" id="card-cost-month">
+        <span class="mon-card-icon">💰</span>
+        <span class="mon-card-value" id="v-cost-month">—</span>
+        <span class="mon-card-label">Total / mois estime</span>
+    </div>
+</div>
+
+<!-- Footer -->
+<div class="mon-footer">
+    <span>Donnees rafraichies toutes les 30s — Cache API 60s</span>
+    <button class="btn btn-ghost" id="btn-refresh">Rafraichir maintenant</button>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function(){
+    var REFRESH_MS = 30000;
+    var timer = null;
+
+    function fmt(n) {
+        if (n == null) return '—';
+        if (n >= 1000000) return (n/1000000).toFixed(1) + 'M';
+        if (n >= 10000)   return (n/1000).toFixed(1) + 'K';
+        if (n >= 1000)    return (n/1000).toFixed(1) + 'K';
+        return String(n);
+    }
+
+    function fmtMs(n) {
+        if (n == null) return '—';
+        if (n >= 1000) return (n/1000).toFixed(1) + 's';
+        return Math.round(n) + 'ms';
+    }
+
+    function fmtPct(n) {
+        if (n == null) return '—';
+        return (n * 100).toFixed(1) + '%';
+    }
+
+    function fmtEur(n) {
+        if (n == null) return '—';
+        if (n < 0.01) return '0.00 €';
+        return n.toFixed(2) + ' €';
+    }
+
+    function fmtEurMonth(n) {
+        if (n == null) return '—';
+        return n.toFixed(1) + ' €';
+    }
+
+    function setCard(id, cls) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.classList.remove('mon-card-warn', 'mon-card-crit', 'mon-cost-ok', 'mon-cost-warn');
+        if (cls) el.classList.add(cls);
+    }
+
+    function setBar(id, pct, warn, crit) {
+        var bar = document.getElementById(id);
+        if (!bar) return;
+        bar.style.width = Math.min(pct, 100) + '%';
+        bar.classList.remove('mon-bar-warn', 'mon-bar-crit');
+        if (pct >= crit) bar.classList.add('mon-bar-crit');
+        else if (pct >= warn) bar.classList.add('mon-bar-warn');
+    }
+
+    function animateValue(el, newText) {
+        if (!el) return;
+        if (el.textContent === newText) return;
+        el.style.opacity = '0.3';
+        setTimeout(function() {
+            el.textContent = newText;
+            el.style.opacity = '1';
+        }, 150);
+    }
+
+    function updateUI(data) {
+        // Status bar
+        var dot = document.getElementById('mon-dot');
+        var label = document.getElementById('mon-status-label');
+        var ts = document.getElementById('mon-timestamp');
+        var bar = document.getElementById('mon-status-bar');
+        var s = data.status || 'unknown';
+
+        dot.className = 'mon-dot mon-dot-' + s;
+        label.textContent = s;
+
+        if (data.timestamp) {
+            var d = new Date(data.timestamp);
+            ts.textContent = d.toLocaleTimeString('fr-FR');
+        }
+
+        var m = data.metrics || {};
+        var g = data.gemini || {};
+        var c = data.costs || {};
+
+        // Row 1 — Cloud Run
+        animateValue(document.getElementById('v-rps'), m.requests_per_second != null ? m.requests_per_second.toFixed(1) : '—');
+
+        var errPct = m.error_rate_5xx != null ? m.error_rate_5xx : 0;
+        animateValue(document.getElementById('v-err'), fmtPct(errPct));
+        setCard('card-err', errPct >= 0.05 ? 'mon-card-crit' : errPct >= 0.01 ? 'mon-card-warn' : '');
+
+        var p95 = m.latency_p95_ms || 0;
+        animateValue(document.getElementById('v-p95'), fmtMs(p95));
+        setCard('card-p95', p95 >= 5000 ? 'mon-card-crit' : p95 >= 2000 ? 'mon-card-warn' : '');
+
+        animateValue(document.getElementById('v-inst'), m.active_instances != null ? String(m.active_instances) : '—');
+
+        // Row 2 — Systeme
+        var cpuPct = (m.cpu_utilization || 0) * 100;
+        animateValue(document.getElementById('v-cpu'), cpuPct.toFixed(1) + '%');
+        setBar('bar-cpu', cpuPct, 60, 80);
+        setCard('card-cpu', cpuPct >= 80 ? 'mon-card-crit' : cpuPct >= 60 ? 'mon-card-warn' : '');
+
+        var ramPct = (m.memory_utilization || 0) * 100;
+        animateValue(document.getElementById('v-ram'), ramPct.toFixed(1) + '%');
+        setBar('bar-ram', ramPct, 60, 80);
+        setCard('card-ram', ramPct >= 80 ? 'mon-card-crit' : ramPct >= 60 ? 'mon-card-warn' : '');
+
+        animateValue(document.getElementById('v-p50'), fmtMs(m.latency_p50_ms));
+        animateValue(document.getElementById('v-p99'), fmtMs(m.latency_p99_ms));
+
+        // Row 3 — Gemini
+        animateValue(document.getElementById('v-gem-calls'), fmt(g.calls_today));
+        animateValue(document.getElementById('v-gem-avg'), fmtMs(g.avg_response_time_ms));
+        animateValue(document.getElementById('v-gem-tin'), fmt(g.tokens_in_today));
+        animateValue(document.getElementById('v-gem-tout'), fmt(g.tokens_out_today));
+
+        // Row 4 — Couts
+        animateValue(document.getElementById('v-cost-run'), fmtEur(c.cloud_run_today_eur));
+        animateValue(document.getElementById('v-cost-sql'), fmtEur(c.cloud_sql_today_eur));
+        animateValue(document.getElementById('v-cost-gem'), fmtEur(c.gemini_today_eur));
+        animateValue(document.getElementById('v-cost-month'), fmtEurMonth(c.estimated_month_eur));
+        setCard('card-cost-month', c.estimated_month_eur >= 90 ? 'mon-cost-warn' : 'mon-cost-ok');
+    }
+
+    function fetchMetrics() {
+        fetch('/admin/api/gcp-metrics', { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(updateUI)
+            .catch(function(e) {
+                console.error('[MON] fetch error', e);
+                document.getElementById('mon-status-label').textContent = 'erreur reseau';
+                document.getElementById('mon-dot').className = 'mon-dot mon-dot-down';
+            });
+    }
+
+    // Initial fetch + interval
+    fetchMetrics();
+    timer = setInterval(fetchMetrics, REFRESH_MS);
+
+    // Manual refresh
+    document.getElementById('btn-refresh').addEventListener('click', function() {
+        fetchMetrics();
+        this.textContent = 'Chargement...';
+        var btn = this;
+        setTimeout(function() { btn.textContent = 'Rafraichir maintenant'; }, 800);
+    });
+})();
+</script>
+{% endblock %}
