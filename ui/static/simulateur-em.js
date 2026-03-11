@@ -602,7 +602,23 @@ function displayHistoryCheck(historyCheck) {
 
     var matchCount = parseInt(historyCheck.best_match_count, 10);
     if (matchCount > 0 && historyCheck.best_match_date) {
-        text += '<br>' + LI.history_best.replace('{n}', matchCount).replace(/\{s\}/g, matchCount > 1 ? 's' : '') + ' (' + formatDateLocale(historyCheck.best_match_date) + ')';
+        var etoileCount = parseInt(historyCheck.best_match_etoiles, 10) || 0;
+        var etoileText = etoileCount > 0 ? (' + ' + etoileCount + ' \u2B50') : '';
+        text += '<br>' + LI.history_best.replace('{n}', matchCount).replace(/\{s\}/g, matchCount > 1 ? 's' : '') + etoileText + ' (' + formatDateLocale(historyCheck.best_match_date) + ')';
+
+        // Visual display of matching balls (blue) + stars (gold)
+        if (Array.isArray(historyCheck.best_match_numbers) && historyCheck.best_match_numbers.length > 0) {
+            var balls = historyCheck.best_match_numbers
+                .map(function(n) { return '<span style="display:inline-flex;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#4da3ff,#2563eb);color:white;font-size:12px;font-weight:600;align-items:center;justify-content:center;margin:2px;box-shadow:0 2px 4px rgba(37,99,235,0.3);">' + n + '</span>'; })
+                .join('');
+            if (Array.isArray(historyCheck.best_match_etoiles_list) && historyCheck.best_match_etoiles_list.length > 0) {
+                balls += '<span style="display:inline-flex;align-items:center;margin:0 4px;color:var(--theme-text-muted,#888);font-weight:500;">+</span>';
+                balls += historyCheck.best_match_etoiles_list
+                    .map(function(e) { return '<span style="display:inline-flex;width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#f59e0b,#d97706);color:white;font-size:12px;font-weight:600;align-items:center;justify-content:center;margin:2px;box-shadow:0 2px 4px rgba(245,158,11,0.3);">' + e + '</span>'; })
+                    .join('');
+            }
+            text += '<div style="margin-top:8px;">' + balls + '</div>';
+        }
     }
 
     if (text.trim()) {
