@@ -205,18 +205,19 @@ async def _fetch_cloud_run_metrics() -> dict:
 
         metrics = {}
 
-        # Request count (total + 5xx)
-        _fetch_request_count(client, project_name, base_filter, interval, metrics)
-        # Latencies
-        _fetch_latencies(client, project_name, base_filter, interval, metrics)
-        # Instance count
-        _fetch_instance_count(client, project_name, base_filter, interval, metrics)
-        # CPU utilization
-        _fetch_utilization(client, project_name, base_filter, interval, metrics,
-                          "run.googleapis.com/container/cpu/utilizations", "cpu_utilization")
-        # Memory utilization
-        _fetch_utilization(client, project_name, base_filter, interval, metrics,
-                          "run.googleapis.com/container/memory/utilizations", "memory_utilization")
+        # Run blocking gRPC calls in threads to avoid blocking the event loop
+        await asyncio.to_thread(
+            _fetch_request_count, client, project_name, base_filter, interval, metrics)
+        await asyncio.to_thread(
+            _fetch_latencies, client, project_name, base_filter, interval, metrics)
+        await asyncio.to_thread(
+            _fetch_instance_count, client, project_name, base_filter, interval, metrics)
+        await asyncio.to_thread(
+            _fetch_utilization, client, project_name, base_filter, interval, metrics,
+            "run.googleapis.com/container/cpu/utilizations", "cpu_utilization")
+        await asyncio.to_thread(
+            _fetch_utilization, client, project_name, base_filter, interval, metrics,
+            "run.googleapis.com/container/memory/utilizations", "memory_utilization")
 
         return metrics
 
@@ -393,7 +394,7 @@ async def get_gcp_metrics() -> dict:
     # Fetch Cloud Run metrics
     cloud_metrics = await _fetch_cloud_run_metrics()
 
-    # Read Gemini counters from Redis
+    # Read Gemini counters from DB
     gem_counters = await _get_gemini_counters()
 
     # Build metrics section (with defaults)
@@ -411,18 +412,17 @@ async def get_gcp_metrics() -> dict:
     # Gemini section
     calls = gem_counters["calls"]
     total_ms = gem_counters["total_ms"]
+    # Cost estimation
+    costs = _estimate_costs(m, gem_counters)
+
     gemini_section = {
         "avg_response_time_ms": round(total_ms / calls) if calls else 0,
-        "errors_last_hour": gem_counters["errors"],
+        "errors_today": gem_counters["errors"],
         "calls_today": calls,
         "tokens_in_today": gem_counters["tokens_in"],
         "tokens_out_today": gem_counters["tokens_out"],
-        "estimated_cost_today_eur": 0,
+        "estimated_cost_today_eur": costs["gemini_today_eur"],
     }
-
-    # Cost estimation
-    costs = _estimate_costs(m, gem_counters)
-    gemini_section["estimated_cost_today_eur"] = costs["gemini_today_eur"]
 
     # Status determination
     if not cloud_metrics:
@@ -462,17 +462,33 @@ async def get_gcp_metrics() -> dict:
 
 # ── Snapshot to metrics_history ──────────────────────────────────────────────
 
-_SNAPSHOT_LOCK_KEY = f"{_cache._REDIS_PREFIX}metrics_snapshot_lock"
 _SNAPSHOT_COOLDOWN = 300  # 5 minutes
 
 async def _maybe_snapshot(payload: dict) -> None:
-    """Store a snapshot every 5 min (Redis lock prevents duplicates)."""
-    _redis = _cache._redis
-    if not _redis:
+    """Store a snapshot every 5 min (MySQL lock, works without Redis)."""
+    try:
+        # Ensure lock row exists (idempotent)
+        await db_cloudsql.async_query(
+            "INSERT IGNORE INTO metrics_snapshot_lock (id, locked_until) "
+            "VALUES (1, '2000-01-01')"
+        )
+        # Check if lock is expired
+        row = await db_cloudsql.async_fetchone(
+            "SELECT locked_until <= NOW() AS can_lock "
+            "FROM metrics_snapshot_lock WHERE id = 1"
+        )
+        if not row or not row["can_lock"]:
+            return  # cooldown still active
+        # Claim the lock for next SNAPSHOT_COOLDOWN seconds
+        await db_cloudsql.async_query(
+            "UPDATE metrics_snapshot_lock SET locked_until = "
+            "DATE_ADD(NOW(), INTERVAL %s SECOND) WHERE id = 1",
+            (_SNAPSHOT_COOLDOWN,),
+        )
+    except Exception as e:
+        logger.debug("Snapshot lock error: %s", e)
         return
-    acquired = await _redis.set(_SNAPSHOT_LOCK_KEY, "1", ex=_SNAPSHOT_COOLDOWN, nx=True)
-    if not acquired:
-        return  # cooldown active
+
     m = payload.get("metrics", {})
     g = payload.get("gemini", {})
     c = payload.get("costs", {})
@@ -494,7 +510,7 @@ async def _maybe_snapshot(payload: dict) -> None:
                 m.get("cpu_utilization", 0),
                 m.get("memory_utilization", 0),
                 g.get("calls_today", 0),
-                g.get("errors_last_hour", 0),
+                g.get("errors_today", 0),
                 g.get("tokens_in_today", 0),
                 g.get("tokens_out_today", 0),
                 g.get("avg_response_time_ms", 0),

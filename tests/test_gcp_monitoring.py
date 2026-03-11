@@ -305,7 +305,7 @@ class TestGetGcpMetrics:
 
             # Gemini keys
             expected_gemini_keys = {
-                "avg_response_time_ms", "errors_last_hour", "calls_today",
+                "avg_response_time_ms", "errors_today", "calls_today",
                 "tokens_in_today", "tokens_out_today", "estimated_cost_today_eur",
             }
             assert set(result["gemini"].keys()) == expected_gemini_keys

@@ -279,16 +279,12 @@ class TestGeminiCleanup:
 class TestSnapshot:
 
     @pytest.mark.asyncio
-    async def test_snapshot_acquires_lock(self):
-        """Snapshot inserts when Redis lock is acquired."""
-        mock_redis = MagicMock()
-        mock_redis.set = AsyncMock(return_value=True)
-
-        with (
-            patch("services.cache._redis", mock_redis),
-            patch("services.gcp_monitoring.db_cloudsql") as mock_db,
-        ):
+    async def test_snapshot_acquires_lock_and_inserts(self):
+        """Snapshot inserts when MySQL lock is expired (can_lock=1)."""
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            # INSERT IGNORE (lock row), SELECT (can_lock=1), UPDATE (claim), INSERT (snapshot)
             mock_db.async_query = AsyncMock()
+            mock_db.async_fetchone = AsyncMock(return_value={"can_lock": 1})
             from services.gcp_monitoring import _maybe_snapshot
             payload = {
                 "metrics": {"requests_per_second": 1.5, "error_rate_5xx": 0.001},
@@ -296,48 +292,48 @@ class TestSnapshot:
                 "costs": {"cloud_run_today_eur": 2.0, "total_today_eur": 3.5},
             }
             await _maybe_snapshot(payload)
-            mock_db.async_query.assert_called_once()
-            sql = mock_db.async_query.call_args[0][0]
-            assert "INSERT INTO metrics_history" in sql
+            # Should have 3 async_query calls: INSERT IGNORE lock, UPDATE lock, INSERT history
+            assert mock_db.async_query.call_count == 3
+            last_sql = mock_db.async_query.call_args_list[-1][0][0]
+            assert "INSERT INTO metrics_history" in last_sql
 
     @pytest.mark.asyncio
     async def test_snapshot_skips_when_locked(self):
-        """Snapshot is skipped when cooldown lock is active."""
-        mock_redis = MagicMock()
-        mock_redis.set = AsyncMock(return_value=False)
-
-        with (
-            patch("services.cache._redis", mock_redis),
-            patch("services.gcp_monitoring.db_cloudsql") as mock_db,
-        ):
+        """Snapshot is skipped when MySQL lock cooldown is still active."""
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
+            mock_db.async_fetchone = AsyncMock(return_value={"can_lock": 0})
             from services.gcp_monitoring import _maybe_snapshot
             await _maybe_snapshot({"metrics": {}, "gemini": {}, "costs": {}})
-            mock_db.async_query.assert_not_called()
+            # Only INSERT IGNORE lock row, then SELECT shows can_lock=0 → stop
+            assert mock_db.async_query.call_count == 1  # only the INSERT IGNORE
 
     @pytest.mark.asyncio
-    async def test_snapshot_no_redis(self):
-        """Snapshot is noop without Redis."""
+    async def test_snapshot_works_without_redis(self):
+        """Snapshot now works even without Redis (MySQL lock)."""
         with (
             patch("services.cache._redis", None),
             patch("services.gcp_monitoring.db_cloudsql") as mock_db,
         ):
             mock_db.async_query = AsyncMock()
+            mock_db.async_fetchone = AsyncMock(return_value={"can_lock": 1})
             from services.gcp_monitoring import _maybe_snapshot
-            await _maybe_snapshot({"metrics": {}, "gemini": {}, "costs": {}})
-            mock_db.async_query.assert_not_called()
+            await _maybe_snapshot({
+                "metrics": {"requests_per_second": 1.0},
+                "gemini": {"calls_today": 5},
+                "costs": {"total_today_eur": 1.0},
+            })
+            # Should still insert into metrics_history
+            assert mock_db.async_query.call_count == 3
+            last_sql = mock_db.async_query.call_args_list[-1][0][0]
+            assert "INSERT INTO metrics_history" in last_sql
 
     @pytest.mark.asyncio
     async def test_snapshot_db_error_graceful(self):
         """DB error in snapshot doesn't raise."""
-        mock_redis = MagicMock()
-        mock_redis.set = AsyncMock(return_value=True)
-
-        with (
-            patch("services.cache._redis", mock_redis),
-            patch("services.gcp_monitoring.db_cloudsql") as mock_db,
-        ):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock(side_effect=Exception("DB error"))
+            mock_db.async_fetchone = AsyncMock(side_effect=Exception("DB error"))
             from services.gcp_monitoring import _maybe_snapshot
             # Should not raise
             await _maybe_snapshot({"metrics": {}, "gemini": {}, "costs": {}})

@@ -93,6 +93,49 @@ for _lu in _EM_URLS.values():
     _SEO_ROUTES.update(_lu.values())
 
 
+async def _ensure_monitoring_tables():
+    """Create monitoring tables if they don't exist (idempotent)."""
+    tables = [
+        (
+            "CREATE TABLE IF NOT EXISTS metrics_history ("
+            "id BIGINT AUTO_INCREMENT PRIMARY KEY, "
+            "ts DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, "
+            "requests_per_second FLOAT DEFAULT 0, error_rate_5xx FLOAT DEFAULT 0, "
+            "latency_p50_ms FLOAT DEFAULT 0, latency_p95_ms FLOAT DEFAULT 0, "
+            "latency_p99_ms FLOAT DEFAULT 0, active_instances INT DEFAULT 0, "
+            "cpu_utilization FLOAT DEFAULT 0, memory_utilization FLOAT DEFAULT 0, "
+            "gemini_calls INT DEFAULT 0, gemini_errors INT DEFAULT 0, "
+            "gemini_tokens_in INT DEFAULT 0, gemini_tokens_out INT DEFAULT 0, "
+            "gemini_avg_ms FLOAT DEFAULT 0, cost_cloud_run_eur FLOAT DEFAULT 0, "
+            "cost_cloud_sql_eur FLOAT DEFAULT 0, cost_gemini_eur FLOAT DEFAULT 0, "
+            "cost_total_eur FLOAT DEFAULT 0, INDEX idx_ts (ts)"
+            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+        ),
+        (
+            "CREATE TABLE IF NOT EXISTS gemini_tracking ("
+            "id BIGINT AUTO_INCREMENT PRIMARY KEY, "
+            "ts DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, "
+            "call_type VARCHAR(50) NOT NULL DEFAULT '', "
+            "lang VARCHAR(10) NOT NULL DEFAULT 'fr', "
+            "tokens_in INT NOT NULL DEFAULT 0, tokens_out INT NOT NULL DEFAULT 0, "
+            "duration_ms INT NOT NULL DEFAULT 0, is_error TINYINT NOT NULL DEFAULT 0, "
+            "INDEX idx_ts (ts), INDEX idx_type_lang (call_type, lang)"
+            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+        ),
+        (
+            "CREATE TABLE IF NOT EXISTS metrics_snapshot_lock ("
+            "id INT PRIMARY KEY, "
+            "locked_until DATETIME NOT NULL DEFAULT '2000-01-01 00:00:00'"
+            ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+        ),
+    ]
+    for sql in tables:
+        try:
+            await db_cloudsql.async_query(sql)
+        except Exception as e:
+            logger.warning("Auto-migrate monitoring table: %s", e)
+
+
 @asynccontextmanager
 async def lifespan(app):
     """Startup/shutdown : client HTTP partage + pool DB + cache."""
@@ -100,6 +143,7 @@ async def lifespan(app):
     app.state.httpx_client = httpx.AsyncClient(timeout=20.0)
     await db_cloudsql.init_pool()
     await init_cache()
+    await _ensure_monitoring_tables()
     yield
     await close_cache()
     await db_cloudsql.close_pool()

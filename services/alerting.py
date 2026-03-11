@@ -281,6 +281,6 @@ async def process_alerts(metrics: dict, gemini: dict, costs: dict) -> list[dict]
 
         # Email for critical alerts (non-blocking thread)
         if alert.level == "critical":
-            asyncio.ensure_future(_send_email_async(alert))
+            asyncio.create_task(_send_email_async(alert))
 
     return [asdict(a) for a in alerts]

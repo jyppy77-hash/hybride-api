@@ -368,9 +368,9 @@
     </div>
 </div>
 
-<!-- ROW 5 — Business -->
-<div class="mon-section">Business</div>
-<div class="mon-grid">
+<!-- ROW 5 — Business (en attente de donnees sponsors) -->
+<div class="mon-section">Business <span style="font-size:.6rem;font-weight:400;color:#888;margin-left:.5rem">— bientot disponible</span></div>
+<div class="mon-grid" style="opacity:.4;pointer-events:none">
     <div class="mon-card">
         <span class="mon-card-icon">💶</span>
         <span class="mon-card-value" id="v-biz-margin">—</span>
@@ -526,18 +526,18 @@
         setCard('card-err', errPct >= 0.05 ? 'mon-card-crit' : errPct >= 0.01 ? 'mon-card-warn' : '');
         var p95 = m.latency_p95_ms || 0;
         animateValue(document.getElementById('v-p95'), fmtMs(p95));
-        setCard('card-p95', p95 >= 5000 ? 'mon-card-crit' : p95 >= 2000 ? 'mon-card-warn' : '');
+        setCard('card-p95', p95 >= 5000 ? 'mon-card-crit' : p95 >= 3000 ? 'mon-card-warn' : '');
         animateValue(document.getElementById('v-inst'), m.active_instances != null ? String(m.active_instances) : '—');
 
         // Row 2
         var cpuPct = (m.cpu_utilization || 0) * 100;
         animateValue(document.getElementById('v-cpu'), cpuPct.toFixed(1) + '%');
-        setBar('bar-cpu', cpuPct, 60, 80);
-        setCard('card-cpu', cpuPct >= 80 ? 'mon-card-crit' : cpuPct >= 60 ? 'mon-card-warn' : '');
+        setBar('bar-cpu', cpuPct, 70, 90);
+        setCard('card-cpu', cpuPct >= 90 ? 'mon-card-crit' : cpuPct >= 70 ? 'mon-card-warn' : '');
         var ramPct = (m.memory_utilization || 0) * 100;
         animateValue(document.getElementById('v-ram'), ramPct.toFixed(1) + '%');
-        setBar('bar-ram', ramPct, 60, 80);
-        setCard('card-ram', ramPct >= 80 ? 'mon-card-crit' : ramPct >= 60 ? 'mon-card-warn' : '');
+        setBar('bar-ram', ramPct, 70, 90);
+        setCard('card-ram', ramPct >= 90 ? 'mon-card-crit' : ramPct >= 70 ? 'mon-card-warn' : '');
         animateValue(document.getElementById('v-p50'), fmtMs(m.latency_p50_ms));
         animateValue(document.getElementById('v-p99'), fmtMs(m.latency_p99_ms));
 
@@ -554,19 +554,11 @@
         animateValue(document.getElementById('v-cost-month'), fmtEurMonth(c.estimated_month_eur));
         setCard('card-cost-month', c.estimated_month_eur >= 90 ? 'mon-cost-warn' : 'mon-cost-ok');
 
-        // Row 5 — Business
-        var totalCost = c.total_today_eur || 0;
-        var sponsorRev = 0; // will be enriched later if available
-        var margin = sponsorRev - totalCost;
-        animateValue(document.getElementById('v-biz-margin'), fmtEur(margin));
-        animateValue(document.getElementById('v-biz-sponsors'), fmtEur(sponsorRev));
-        // Cost per visit estimate (rps * 86400 = daily visits approx)
-        var dailyVisits = (m.requests_per_second || 0) * 86400;
-        var cpv = dailyVisits > 0 ? totalCost / dailyVisits : 0;
-        animateValue(document.getElementById('v-biz-cpv'), cpv > 0 ? cpv.toFixed(4) + ' €' : '—');
-        var roi = totalCost > 0 ? ((sponsorRev / totalCost - 1) * 100).toFixed(0) + '%' : '—';
-        animateValue(document.getElementById('v-biz-roi'), roi);
-        setCard('card-biz-roi', margin < 0 ? 'mon-card-warn' : 'mon-cost-ok');
+        // Row 5 — Business (disabled until sponsor data available)
+        animateValue(document.getElementById('v-biz-margin'), '—');
+        animateValue(document.getElementById('v-biz-sponsors'), '—');
+        animateValue(document.getElementById('v-biz-cpv'), '—');
+        animateValue(document.getElementById('v-biz-roi'), '—');
 
         // Redis status
         var redisBadge = document.getElementById('mon-redis-badge');
