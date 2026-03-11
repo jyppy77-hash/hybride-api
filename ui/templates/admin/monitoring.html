@@ -149,9 +149,10 @@
     padding: .35rem .8rem;
 }
 
-/* ── Cost green/orange ──────────────────────────────────────── */
+/* ── Cost green/orange/red ──────────────────────────────────── */
 .mon-cost-ok   .mon-card-value { color: #00c853; }
 .mon-cost-warn .mon-card-value { color: #ff9800; }
+.mon-cost-crit .mon-card-value { color: #ff5252; }
 
 /* ── Charts ─────────────────────────────────────────────────── */
 .mon-chart-wrap {
@@ -479,7 +480,7 @@
     function setCard(id, cls) {
         var el = document.getElementById(id);
         if (!el) return;
-        el.classList.remove('mon-card-warn', 'mon-card-crit', 'mon-cost-ok', 'mon-cost-warn');
+        el.classList.remove('mon-card-warn', 'mon-card-crit', 'mon-cost-ok', 'mon-cost-warn', 'mon-cost-crit');
         if (cls) el.classList.add(cls);
     }
     function setBar(id, pct, warn, crit) {
@@ -552,7 +553,7 @@
         animateValue(document.getElementById('v-cost-sql'), fmtEur(c.cloud_sql_today_eur));
         animateValue(document.getElementById('v-cost-gem'), fmtEur(c.gemini_today_eur));
         animateValue(document.getElementById('v-cost-month'), fmtEurMonth(c.estimated_month_eur));
-        setCard('card-cost-month', c.estimated_month_eur >= 90 ? 'mon-cost-warn' : 'mon-cost-ok');
+        setCard('card-cost-month', c.estimated_month_eur >= 120 ? 'mon-cost-crit' : c.estimated_month_eur >= 90 ? 'mon-cost-warn' : 'mon-cost-ok');
 
         // Row 5 — Business (disabled until sponsor data available)
         animateValue(document.getElementById('v-biz-margin'), '—');

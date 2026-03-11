@@ -14,6 +14,7 @@ import logging
 import os
 import time
 from datetime import datetime, timezone
+from decimal import Decimal
 
 import db_cloudsql
 import services.cache as _cache
@@ -205,19 +206,21 @@ async def _fetch_cloud_run_metrics() -> dict:
 
         metrics = {}
 
-        # Run blocking gRPC calls in threads to avoid blocking the event loop
-        await asyncio.to_thread(
-            _fetch_request_count, client, project_name, base_filter, interval, metrics)
-        await asyncio.to_thread(
-            _fetch_latencies, client, project_name, base_filter, interval, metrics)
-        await asyncio.to_thread(
-            _fetch_instance_count, client, project_name, base_filter, interval, metrics)
-        await asyncio.to_thread(
-            _fetch_utilization, client, project_name, base_filter, interval, metrics,
-            "run.googleapis.com/container/cpu/utilizations", "cpu_utilization")
-        await asyncio.to_thread(
-            _fetch_utilization, client, project_name, base_filter, interval, metrics,
-            "run.googleapis.com/container/memory/utilizations", "memory_utilization")
+        # Run blocking gRPC calls in parallel threads
+        await asyncio.gather(
+            asyncio.to_thread(
+                _fetch_request_count, client, project_name, base_filter, interval, metrics),
+            asyncio.to_thread(
+                _fetch_latencies, client, project_name, base_filter, interval, metrics),
+            asyncio.to_thread(
+                _fetch_instance_count, client, project_name, base_filter, interval, metrics),
+            asyncio.to_thread(
+                _fetch_utilization, client, project_name, base_filter, interval, metrics,
+                "run.googleapis.com/container/cpu/utilizations", "cpu_utilization"),
+            asyncio.to_thread(
+                _fetch_utilization, client, project_name, base_filter, interval, metrics,
+                "run.googleapis.com/container/memory/utilizations", "memory_utilization"),
+        )
 
         return metrics
 
@@ -258,10 +261,6 @@ def _fetch_latencies(client, project_name, base_filter, interval, metrics):
     """Fetch P50/P95/P99 latencies."""
     try:
         from google.cloud.monitoring_v3 import Aggregation
-
-        agg = Aggregation()
-        agg.alignment_period = {"seconds": 300}
-        agg.per_series_aligner = Aggregation.Aligner.ALIGN_PERCENTILE_50
 
         for pct, aligner_name, key in [
             (50, "ALIGN_PERCENTILE_50", "latency_p50_ms"),
@@ -472,19 +471,17 @@ async def _maybe_snapshot(payload: dict) -> None:
             "INSERT IGNORE INTO metrics_snapshot_lock (id, locked_until) "
             "VALUES (1, '2000-01-01')"
         )
-        # Check if lock is expired
-        row = await db_cloudsql.async_fetchone(
-            "SELECT locked_until <= NOW() AS can_lock "
-            "FROM metrics_snapshot_lock WHERE id = 1"
-        )
-        if not row or not row["can_lock"]:
-            return  # cooldown still active
-        # Claim the lock for next SNAPSHOT_COOLDOWN seconds
-        await db_cloudsql.async_query(
-            "UPDATE metrics_snapshot_lock SET locked_until = "
-            "DATE_ADD(NOW(), INTERVAL %s SECOND) WHERE id = 1",
-            (_SNAPSHOT_COOLDOWN,),
-        )
+        # Atomic lock: UPDATE only if cooldown expired, check rowcount
+        async with db_cloudsql.get_connection() as conn:
+            cur = await conn.cursor()
+            await cur.execute(
+                "UPDATE metrics_snapshot_lock SET locked_until = "
+                "DATE_ADD(NOW(), INTERVAL %s SECOND) "
+                "WHERE id = 1 AND locked_until <= NOW()",
+                (_SNAPSHOT_COOLDOWN,),
+            )
+            if cur.rowcount == 0:
+                return  # cooldown still active (another instance claimed it)
     except Exception as e:
         logger.debug("Snapshot lock error: %s", e)
         return
@@ -580,7 +577,7 @@ async def get_metrics_history(period: str = "24h") -> list[dict]:
     try:
         rows = await db_cloudsql.async_fetchall(sql)
         return [
-            {k: (round(float(v), 4) if isinstance(v, (int, float)) and k != "ts_label" else
+            {k: (round(float(v), 4) if isinstance(v, (int, float, Decimal)) and k != "ts_label" else
                  (str(v) if v is not None else None))
              for k, v in row.items()}
             for row in rows
@@ -655,6 +652,28 @@ async def get_gemini_breakdown() -> dict:
 
 
 # ── Cleanup (retention 90 days) ──────────────────────────────────────────────
+
+async def cleanup_metrics_history(days: int = 90) -> int:
+    """Delete metrics_history rows older than *days*. Returns deleted count."""
+    try:
+        row = await db_cloudsql.async_fetchone(
+            "SELECT COUNT(*) AS cnt FROM metrics_history "
+            "WHERE ts < DATE_SUB(NOW(), INTERVAL %s DAY)",
+            (days,),
+        )
+        count = int(row["cnt"]) if row else 0
+        if count > 0:
+            await db_cloudsql.async_query(
+                "DELETE FROM metrics_history "
+                "WHERE ts < DATE_SUB(NOW(), INTERVAL %s DAY)",
+                (days,),
+            )
+            logger.info("[HISTORY_CLEANUP] Deleted %d rows older than %d days", count, days)
+        return count
+    except Exception as e:
+        logger.warning("[HISTORY_CLEANUP] Error: %s", e)
+        return 0
+
 
 async def cleanup_gemini_tracking(days: int = 90) -> int:
     """Delete gemini_tracking rows older than *days*. Returns deleted count."""

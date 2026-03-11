@@ -12,6 +12,8 @@ from services.gcp_monitoring import (
     _get_gemini_counters,
     get_gemini_breakdown,
     cleanup_gemini_tracking,
+    cleanup_metrics_history,
+    get_metrics_history,
     _LOCAL_CACHE,
     _CALL_TYPES,
     _LANGS,
@@ -276,15 +278,40 @@ class TestGeminiCleanup:
 # Snapshot
 # ═══════════════════════════════════════════════════════════════════════
 
+def _mock_cursor(rowcount=1):
+    """Create a mock async cursor with given rowcount for atomic UPDATE."""
+    cur = AsyncMock()
+    cur.rowcount = rowcount
+    return cur
+
+
+def _mock_conn(cursor):
+    """Create a mock async connection context manager."""
+    conn = AsyncMock()
+    conn.cursor = AsyncMock(return_value=cursor)
+    return conn
+
+
+class _FakeConnCtx:
+    """Fake async context manager for db_cloudsql.get_connection()."""
+    def __init__(self, conn):
+        self._conn = conn
+    async def __aenter__(self):
+        return self._conn
+    async def __aexit__(self, *args):
+        pass
+
+
 class TestSnapshot:
 
     @pytest.mark.asyncio
     async def test_snapshot_acquires_lock_and_inserts(self):
-        """Snapshot inserts when MySQL lock is expired (can_lock=1)."""
+        """Snapshot inserts when atomic UPDATE claims lock (rowcount=1)."""
+        cur = _mock_cursor(rowcount=1)
+        conn = _mock_conn(cur)
         with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
-            # INSERT IGNORE (lock row), SELECT (can_lock=1), UPDATE (claim), INSERT (snapshot)
             mock_db.async_query = AsyncMock()
-            mock_db.async_fetchone = AsyncMock(return_value={"can_lock": 1})
+            mock_db.get_connection = MagicMock(return_value=_FakeConnCtx(conn))
             from services.gcp_monitoring import _maybe_snapshot
             payload = {
                 "metrics": {"requests_per_second": 1.5, "error_rate_5xx": 0.001},
@@ -292,31 +319,40 @@ class TestSnapshot:
                 "costs": {"cloud_run_today_eur": 2.0, "total_today_eur": 3.5},
             }
             await _maybe_snapshot(payload)
-            # Should have 3 async_query calls: INSERT IGNORE lock, UPDATE lock, INSERT history
-            assert mock_db.async_query.call_count == 3
+            # INSERT IGNORE (lock row) + INSERT (history)
+            assert mock_db.async_query.call_count == 2
             last_sql = mock_db.async_query.call_args_list[-1][0][0]
             assert "INSERT INTO metrics_history" in last_sql
+            # Atomic UPDATE was called on cursor
+            cur.execute.assert_called_once()
+            update_sql = cur.execute.call_args[0][0]
+            assert "UPDATE metrics_snapshot_lock" in update_sql
+            assert "locked_until <= NOW()" in update_sql
 
     @pytest.mark.asyncio
     async def test_snapshot_skips_when_locked(self):
-        """Snapshot is skipped when MySQL lock cooldown is still active."""
+        """Snapshot is skipped when atomic UPDATE claims 0 rows (lock active)."""
+        cur = _mock_cursor(rowcount=0)
+        conn = _mock_conn(cur)
         with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
-            mock_db.async_fetchone = AsyncMock(return_value={"can_lock": 0})
+            mock_db.get_connection = MagicMock(return_value=_FakeConnCtx(conn))
             from services.gcp_monitoring import _maybe_snapshot
             await _maybe_snapshot({"metrics": {}, "gemini": {}, "costs": {}})
-            # Only INSERT IGNORE lock row, then SELECT shows can_lock=0 → stop
+            # Only INSERT IGNORE lock row, atomic UPDATE got 0 rows → stop
             assert mock_db.async_query.call_count == 1  # only the INSERT IGNORE
 
     @pytest.mark.asyncio
     async def test_snapshot_works_without_redis(self):
-        """Snapshot now works even without Redis (MySQL lock)."""
+        """Snapshot works even without Redis (MySQL atomic lock)."""
+        cur = _mock_cursor(rowcount=1)
+        conn = _mock_conn(cur)
         with (
             patch("services.cache._redis", None),
             patch("services.gcp_monitoring.db_cloudsql") as mock_db,
         ):
             mock_db.async_query = AsyncMock()
-            mock_db.async_fetchone = AsyncMock(return_value={"can_lock": 1})
+            mock_db.get_connection = MagicMock(return_value=_FakeConnCtx(conn))
             from services.gcp_monitoring import _maybe_snapshot
             await _maybe_snapshot({
                 "metrics": {"requests_per_second": 1.0},
@@ -324,7 +360,7 @@ class TestSnapshot:
                 "costs": {"total_today_eur": 1.0},
             })
             # Should still insert into metrics_history
-            assert mock_db.async_query.call_count == 3
+            assert mock_db.async_query.call_count == 2
             last_sql = mock_db.async_query.call_args_list[-1][0][0]
             assert "INSERT INTO metrics_history" in last_sql
 
@@ -333,7 +369,7 @@ class TestSnapshot:
         """DB error in snapshot doesn't raise."""
         with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock(side_effect=Exception("DB error"))
-            mock_db.async_fetchone = AsyncMock(side_effect=Exception("DB error"))
+            mock_db.get_connection = MagicMock(side_effect=Exception("DB error"))
             from services.gcp_monitoring import _maybe_snapshot
             # Should not raise
             await _maybe_snapshot({"metrics": {}, "gemini": {}, "costs": {}})
@@ -512,3 +548,136 @@ class TestAlertingCooldown:
             assert not await _is_cooled_down("test_key", 900)
             await _set_cooldown("test_key", 900)
             assert await _is_cooled_down("test_key", 900)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# R-3: Decimal values in metrics_history (SUM returns Decimal from MySQL)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestHistoryDecimalHandling:
+
+    def setup_method(self):
+        _LOCAL_CACHE.clear()
+
+    @pytest.mark.asyncio
+    async def test_decimal_values_converted_to_float(self):
+        """SUM() of INT columns returns Decimal — must be serialized as float, not string."""
+        from decimal import Decimal
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[
+                {
+                    "ts_label": "2026-03-10 14:00",
+                    "requests_per_second": 1.5,
+                    "error_rate_5xx": 0.001,
+                    "gemini_errors": Decimal("3"),
+                    "gemini_calls": 42,
+                    "gemini_tokens_in": Decimal("5000"),
+                    "gemini_tokens_out": Decimal("1200"),
+                    "latency_p50_ms": 45.0,
+                    "latency_p95_ms": 850.0,
+                    "latency_p99_ms": 2100.0,
+                    "active_instances": 2,
+                    "cpu_utilization": 0.35,
+                    "memory_utilization": 0.42,
+                    "gemini_avg_ms": 500.0,
+                    "cost_cloud_run_eur": 2.0,
+                    "cost_cloud_sql_eur": 0.85,
+                    "cost_gemini_eur": 0.01,
+                    "cost_total_eur": 2.86,
+                },
+            ])
+            result = await get_metrics_history("7d")
+            row = result[0]
+            # Decimal values must become floats, not strings
+            assert isinstance(row["gemini_errors"], float)
+            assert row["gemini_errors"] == 3.0
+            assert isinstance(row["gemini_tokens_in"], float)
+            assert row["gemini_tokens_in"] == 5000.0
+            assert isinstance(row["gemini_tokens_out"], float)
+            assert row["gemini_tokens_out"] == 1200.0
+            # ts_label stays as string
+            assert row["ts_label"] == "2026-03-10 14:00"
+            # Regular float stays as float
+            assert isinstance(row["requests_per_second"], float)
+
+    @pytest.mark.asyncio
+    async def test_mixed_types_all_numeric(self):
+        """int, float, and Decimal all end up as float in output."""
+        from decimal import Decimal
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[
+                {
+                    "ts_label": "2026-03-10 15:00",
+                    "requests_per_second": Decimal("2.3456"),
+                    "error_rate_5xx": 0.0,
+                    "gemini_errors": Decimal("0"),
+                    "gemini_calls": 10,
+                    "gemini_tokens_in": 1000,
+                    "gemini_tokens_out": 500,
+                    "latency_p50_ms": Decimal("42.1234"),
+                    "latency_p95_ms": 100.0,
+                    "latency_p99_ms": 200.0,
+                    "active_instances": 1,
+                    "cpu_utilization": Decimal("0.12345678"),
+                    "memory_utilization": 0.2,
+                    "gemini_avg_ms": 300.0,
+                    "cost_cloud_run_eur": 1.0,
+                    "cost_cloud_sql_eur": 0.85,
+                    "cost_gemini_eur": 0.0,
+                    "cost_total_eur": Decimal("1.85"),
+                },
+            ])
+            result = await get_metrics_history("30d")
+            row = result[0]
+            # Decimal rounded to 4 decimals
+            assert row["requests_per_second"] == 2.3456
+            assert row["latency_p50_ms"] == 42.1234
+            assert row["cpu_utilization"] == 0.1235  # rounded
+            assert row["cost_total_eur"] == 1.85
+            # All numeric values are float
+            for k, v in row.items():
+                if k != "ts_label":
+                    assert isinstance(v, float), f"{k} should be float, got {type(v)}"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# R-5: cleanup_metrics_history (retention 90 days)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestMetricsHistoryCleanup:
+
+    @pytest.mark.asyncio
+    async def test_cleanup_deletes_old_rows(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 200})
+            mock_db.async_query = AsyncMock()
+            count = await cleanup_metrics_history(90)
+            assert count == 200
+            mock_db.async_query.assert_called_once()
+            sql = mock_db.async_query.call_args[0][0]
+            assert "DELETE FROM metrics_history" in sql
+
+    @pytest.mark.asyncio
+    async def test_cleanup_nothing_to_delete(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0})
+            mock_db.async_query = AsyncMock()
+            count = await cleanup_metrics_history(90)
+            assert count == 0
+            mock_db.async_query.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_cleanup_db_error(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(side_effect=Exception("DB error"))
+            count = await cleanup_metrics_history(90)
+            assert count == 0
+
+    @pytest.mark.asyncio
+    async def test_cleanup_custom_days(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 5})
+            mock_db.async_query = AsyncMock()
+            await cleanup_metrics_history(30)
+            params = mock_db.async_fetchone.call_args[0][1]
+            assert params == (30,)
