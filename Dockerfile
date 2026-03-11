@@ -16,7 +16,14 @@ COPY . .
 # Compile gettext .mo translation files
 RUN pybabel compile -d translations
 
-# ── Stage 2: Runtime (lean, no tests/docs/scripts) ──────────────────────────
+# ── Stage 2: Test (blocks build if tests fail) ──────────────────────────────
+FROM builder AS test
+
+RUN pip install --no-cache-dir pytest pytest-asyncio pytest-cov
+ENV DB_PASSWORD=fake DB_USER=test DB_NAME=testdb
+RUN python -m pytest tests/ --tb=short -q
+
+# ── Stage 3: Runtime (lean, no tests/docs/scripts) ──────────────────────────
 FROM python:3.11-slim AS runtime
 
 ENV PORT=8080 \
@@ -34,6 +41,9 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy app code from builder (excluding tests/docs via .dockerignore)
 COPY --from=builder /app /app
+
+# Force test stage to execute — build fails if any test fails
+COPY --from=test /app/pytest.ini /tmp/.tests-passed
 
 # Remove test/dev files that slipped through
 RUN rm -rf tests/ scripts/ docs/ migrations/ data/ \

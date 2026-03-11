@@ -8,7 +8,7 @@ steps:
       - 'gcr.io/$PROJECT_ID/hybride-api:test'
       - '.'
 
-  # Run 1978 tests inside the builder image (blocks deploy on failure)
+  # Run 2089 tests inside the builder image (blocks deploy on failure)
   - name: 'gcr.io/$PROJECT_ID/hybride-api:test'
     entrypoint: 'sh'
     args:
