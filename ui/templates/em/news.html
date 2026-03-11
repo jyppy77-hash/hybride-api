@@ -55,7 +55,7 @@
       },
       "mainEntityOfPage": {{ canonical_url|tojson }},
       "datePublished": "2026-03-02",
-      "dateModified": "2026-03-09"
+      "dateModified": "2026-03-11"
     }
     </script>
     <!-- JSON-LD BreadcrumbList -->
@@ -79,6 +79,29 @@
         <section class="news-section">
 
             <article class="news-post featured">
+                <div class="news-meta">
+                    <span class="news-date">{{ _('11 mars 2026') }}</span>
+                    <span class="news-tag news-tag-update">Release 1.4.001</span>
+                </div>
+                <h2 class="news-title"><span>&#128640;</span> {{ _('Release 1.4.001 — La plateforme passe au niveau supérieur') }}</h2>
+                <div class="news-content">
+                    <p>{{ _('Le lancement public d\'EuroMillions approche — rendez-vous le <strong>15 mars à 15h00</strong> ! En attendant ce grand jour, l\'équipe finalise les derniers préparatifs et profite de ces derniers jours pour livrer une release technique solide. LotoIA n\'a jamais été aussi stable.')|safe }}</p>
+
+                    <h3>{{ _('Un tableau de bord de supervision en temps réel') }}</h3>
+                    <p>{{ _('LotoIA dispose désormais d\'un dashboard de monitoring complet. En un coup d\'œil : état des serveurs, latence des requêtes, consommation du moteur IA, estimation des coûts en direct. Données consultables sur 24h, 7 jours ou 30 jours. Alertes automatiques par email en cas d\'anomalie.')|safe }}</p>
+
+                    <h3>{{ _('Des déploiements 100%% sécurisés') }}</h3>
+                    <p>{{ _('Chaque mise en production est précédée de <strong>2089 tests automatiques</strong> dans le pipeline cloud. Si le moindre test échoue, le déploiement est bloqué. Zéro régression possible en production.')|safe }}</p>
+
+                    <h3>{{ _('Optimisations techniques') }}</h3>
+                    <p>{{ _('Parallélisation des appels cloud, verrouillage atomique base de données, nettoyage automatique historique 90 jours. Score audit interne : <strong>9.9/10</strong>.')|safe }}</p>
+
+                    <h3>{{ _('Rendez-vous le 15 mars à 15h00') }}</h3>
+                    <p>{{ _('Le module EuroMillions ouvre ses portes — <strong>6 langues, 9 pays européens, moteur HYBRIDE complet</strong>. Tout est prêt. On vous attend !')|safe }}</p>
+                </div>
+            </article>
+
+            <article class="news-post">
                 <div class="news-meta">
                     <span class="news-date">{{ _('14 février 2026') }}</span>
                     <span class="news-tag news-tag-launch">{{ _('NOUVEAU') }}</span>
@@ -104,9 +127,9 @@
             <article class="news-post">
                 <div class="news-meta">
                     <span class="news-date">{{ _('11 février 2026') }}</span>
-                    <span class="news-tag news-tag-update">{{ _('Version officielle v1.001') }}</span>
+                    <span class="news-tag news-tag-update">{{ _('Version officielle v1.4.1') }}</span>
                 </div>
-                <h2 class="news-title"><span>&#127919;</span> {{ _('Module EuroMillions v1.001 — Le moteur est officiellement en production') }}</h2>
+                <h2 class="news-title"><span>&#127919;</span> {{ _('Module EuroMillions v1.4.1 — Le moteur est officiellement en production') }}</h2>
                 <div class="news-content">
                     <p>{{ _('C\'est fait. <strong>Le module EuroMillions passe en version 1.001</strong> — la première version officielle d\'un moteur d\'exploration statistique dédié aux tirages européens. Pas un prototype. Un produit complet, en production, 100% gratuit et sans inscription.')|safe }}</p>
 
@@ -123,7 +146,7 @@
 
                     <p>{{ _('LotoIA EuroMillions est une plateforme <strong>transparente</strong> — la méthodologie et les données sont documentées. Aucun gain n\'est promis, aucune prédiction n\'est formulée. C\'est un outil d\'exploration statistique, construit avec rigueur, et accessible à tous.')|safe }}</p>
 
-                    <p><em>{{ _('v1.001 n\'est pas une fin. C\'est la ligne de départ officielle du module EuroMillions.') }}</em></p>
+                    <p><em>{{ _('v1.4.1 n\'est pas une fin. C\'est la ligne de départ officielle du module EuroMillions.') }}</em></p>
                 </div>
             </article>
 
@@ -259,7 +282,7 @@
                 <div class="action-card-icon">&#10024;</div>
                 <div class="action-card-text">
                     <h3>{{ _('Lancer l\'exploration statistique EuroMillions') }}</h3>
-                    <p>{{ _('Explorez l\'espace combinatoire avec le moteur HYBRIDE — LotoIA v1.001.') }}</p>
+                    <p>{{ _('Explorez l\'espace combinatoire avec le moteur HYBRIDE — LotoIA v1.4.1.') }}</p>
                 </div>
                 <a href="{{ urls.generateur }}" class="btn btn-primary">
                     {{ _('Accéder au moteur') }}

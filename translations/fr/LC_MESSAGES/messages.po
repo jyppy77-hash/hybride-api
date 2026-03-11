@@ -3955,3 +3955,53 @@ msgstr ""
 #~ msgid "euromillions, tirages, fréquences, statistiques, FDJ, étoiles, Europe"
 #~ msgstr ""
 
+# Release 1.4.001 news
+msgid "11 mars 2026"
+msgstr ""
+
+msgid "Release 1.4.001 — La plateforme passe au niveau supérieur"
+msgstr ""
+
+msgid ""
+"Le lancement public d'EuroMillions approche — rendez-vous le <strong>15 "
+"mars à 15h00</strong> ! En attendant ce grand jour, l'équipe finalise les "
+"derniers préparatifs et profite de ces derniers jours pour livrer une "
+"release technique solide. LotoIA n'a jamais été aussi stable."
+msgstr ""
+
+msgid "Un tableau de bord de supervision en temps réel"
+msgstr ""
+
+msgid ""
+"LotoIA dispose désormais d'un dashboard de monitoring complet. En un coup "
+"d'œil : état des serveurs, latence des requêtes, consommation du moteur "
+"IA, estimation des coûts en direct. Données consultables sur 24h, 7 jours "
+"ou 30 jours. Alertes automatiques par email en cas d'anomalie."
+msgstr ""
+
+msgid "Des déploiements 100%% sécurisés"
+msgstr ""
+
+msgid ""
+"Chaque mise en production est précédée de <strong>2089 tests "
+"automatiques</strong> dans le pipeline cloud. Si le moindre test échoue, "
+"le déploiement est bloqué. Zéro régression possible en production."
+msgstr ""
+
+msgid "Optimisations techniques"
+msgstr ""
+
+msgid ""
+"Parallélisation des appels cloud, verrouillage atomique base de données, "
+"nettoyage automatique historique 90 jours. Score audit interne : "
+"<strong>9.9/10</strong>."
+msgstr ""
+
+msgid "Rendez-vous le 15 mars à 15h00"
+msgstr ""
+
+msgid ""
+"Le module EuroMillions ouvre ses portes — <strong>6 langues, 9 pays "
+"européens, moteur HYBRIDE complet</strong>. Tout est prêt. On vous attend !"
+msgstr ""
+
