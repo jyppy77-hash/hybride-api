@@ -1164,6 +1164,50 @@ _ARGENT_L3 = [
 ]
 
 
+# Exclusion Phase A — questions pédagogiques sur les limites de la prédiction
+# (l'utilisateur pose une question sur la nature du hasard, pas sur l'argent)
+_PEDAGOGIE_LIMITES_FR = [
+    # "peut-on prédire le loto / les tirages / les résultats ?"
+    r'\b(?:peut|peux|pouvez|pourrait|pourrions)[\s-]+(?:on|tu|vous|t[\s-]?on)\s+pr[eé]dire',
+    r'\b(?:est[\s-]il|est[\s-]ce)\s+possible\s+de\s+pr[eé]dire',
+    r'\bpossible\s+(?:de\s+)?pr[eé]dire',
+    # "pourquoi on ne peut pas prédire / gagner à coup sûr"
+    r'\bpourquoi\s+(?:on\s+)?(?:ne\s+)?(?:peut|peux|pouvez)\s+(?:pas|plus)\s+pr[eé]dire',
+    r'\bpourquoi\s+(?:on\s+)?(?:ne\s+)?(?:peut|peux)\s+(?:pas|plus)\s+gagner\s+[àa]\s+(?:coup\s+s[uû]r|tous?\s+les?\s+coups?)',
+    r'\bpourquoi\s+(?:personne|aucun)',
+    # "le loto est-il prévisible / aléatoire / truqué"
+    r'\b(?:loto|tirage|loterie)\s+(?:est[\s-]il|est[\s-]ce|est[\s-]elle)\s+(?:pr[eé]visible|al[eé]atoire|truqu[eé]|vraiment)',
+    r'\b(?:loto|tirage|loterie)\s+.{0,15}(?:pr[eé]visible|al[eé]atoire|truqu[eé])',
+    r'\b(?:est[\s-]ce\s+que?\s+le\s+)?(?:loto|tirage)\s+(?:est\s+)?truqu[eé]',
+    r'\b(?:tirage|loto|loterie)\s+(?:est[\s-]il|est[\s-]ce)\s+(?:vraiment\s+)?al[eé]atoire',
+    # "impossible de prédire / gagner"
+    r'\bimpossible\s+(?:de\s+)?(?:pr[eé]dire|pr[eé]voir|gagner)',
+    # "les stats / l'IA / l'algorithme peut/peuvent prédire / garantir"
+    r'\b(?:stats?|statistiques?|algo(?:rithme)?|ia|intelligence\s+artificielle)\s+.{0,15}(?:pr[eé]dire|pr[eé]voir|garantir|pr[eé]diction)',
+    r"\b(?:ton|votre|l)\s*['\u2019]?\s*(?:algo|ia|outil|moteur)\s+.{0,15}(?:pr[eé]dire|gagner|garanti)",
+    # "est-ce que ça marche / ton IA peut gagner"
+    r'\best[\s-]ce\s+que?\s+[çc]a\s+(?:marche|fonctionne)\s+(?:vraiment|pour\s+(?:gagner|de\s+vrai))',
+    r'\b(?:ton|votre)\s+(?:ia|algo|outil)\s+(?:peut|va)\s+(?:me\s+faire\s+)?gagner',
+    # "existe-t-il une méthode / formule pour gagner"
+    r'\bexiste[\s-]t[\s-]il\s+(?:une?\s+)?(?:m[eé]thode|formule|syst[eè]me|astuce|truc)\s+(?:pour\s+)?gagner',
+    # Concepts mathématiques
+    r'\b(?:loi\s+des\s+grands?\s+nombres?|gambler.?s?\s*fallacy|biais\s+(?:du\s+joueur|cognitif))',
+    r'\bchaque\s+tirage\s+(?:est\s+)?ind[eé]pendant',
+    r'\b(?:num[eé]ros?|boules?)\s+(?:ont|a)[\s-](?:t[\s-])?(?:ils?|elles?)\s+(?:une?\s+)?m[eé]moire',
+    r'\b(?:hasard|al[eé]atoire)\s+(?:est\s+)?(?:vraiment\s+)?(?:impr[eé]visible|al[eé]atoire|pur)',
+]
+
+
+def _detect_pedagogie_limites(message: str) -> bool:
+    """Detecte les questions pedagogiques sur les limites de la prediction.
+    Ces questions ne doivent PAS declencher Phase A."""
+    lower = message.lower()
+    for pattern in _PEDAGOGIE_LIMITES_FR:
+        if re.search(pattern, lower):
+            return True
+    return False
+
+
 # Exclusion Phase A — questions sur le score de conformité
 # (l'utilisateur demande ce que signifie le score, pas une question d'argent)
 _SCORE_QUESTION_FR = [
@@ -1189,11 +1233,14 @@ def _detect_score_question(message: str) -> bool:
 
 def _detect_argent(message: str) -> bool:
     """Detecte si le message concerne l'argent, les gains ou les paris.
-    Exclut les demandes de generation de grilles (Phase G prioritaire)
-    et les questions sur le score de conformite."""
+    Exclut les demandes de generation de grilles (Phase G prioritaire),
+    les questions sur le score de conformite,
+    et les questions pedagogiques sur les limites de la prediction."""
     if _detect_generation(message):
         return False
     if _detect_score_question(message):
+        return False
+    if _detect_pedagogie_limites(message):
         return False
     lower = message.lower()
     for pattern in _ARGENT_PHRASES_FR:
@@ -1608,9 +1655,41 @@ _COOCCURRENCE_HIGH_N_PATTERN = re.compile(
 )
 
 
+# Pattern de classement/ranking — exclut les faux positifs co-occurrence
+_RANKING_EXCLUSION_PATTERN = re.compile(
+    r'(?:top|meilleur|premier|classement|ranking|'
+    r'plus\s+fr[eé]quent\w*|plus\s+sorti\w*|plus\s+souvent|'
+    r'moins\s+fr[eé]quent\w*|moins\s+sorti\w*|'
+    r'les?\s+plus\s+(?:sorti\w*|fr[eé]quent\w*)|les?\s+moins\s+(?:sorti\w*|fr[eé]quent\w*)|'
+    r'most\s+(?:drawn|common|frequent\w*|often)|least\s+(?:drawn|common|frequent\w*)|'
+    r'm[aá]s\s+(?:frecuent\w*|sorteado\w*|comun\w*)|menos\s+(?:frecuent\w*|sorteado\w*)|'
+    r'mais\s+(?:frequent\w*|sorteado\w*|comun\w*)|menos\s+(?:frequent\w*|sorteado\w*)|'
+    r'h[aä]ufigst\w*|seltenst\w*|meistgezogen|'
+    r'meest\s+(?:getrokken|voorkomend\w*)|minst\s+(?:getrokken|voorkomend\w*)|'
+    r'vaakst\s+(?:getrokken|voor))',
+    re.IGNORECASE
+)
+
+
+# Mots explicites de co-occurrence (ensemble/together/quadruplet...)
+_COOCCURRENCE_EXPLICIT_PATTERN = re.compile(
+    r'\b(?:ensemble|together|juntos|zusammen|samen|'
+    r'quadruplets?|quintuplets?|groupements?)\b',
+    re.IGNORECASE
+)
+
+
 def _detect_cooccurrence_high_n(message: str) -> bool:
-    """Detecte les demandes de co-occurrences N>3 (quadruplets, quintuplets, etc.)."""
-    return bool(_COOCCURRENCE_HIGH_N_PATTERN.search(message))
+    """Detecte les demandes de co-occurrences N>3 (quadruplets, quintuplets, etc.).
+    Exclut les demandes de classement/ranking (ex: 'top 5 numéros les plus fréquents')
+    qui doivent être traitées par Phase 3, SAUF si le message contient un mot
+    explicite de co-occurrence (ensemble/together/quadruplet...)."""
+    if not _COOCCURRENCE_HIGH_N_PATTERN.search(message):
+        return False
+    # Si ranking keywords SANS mots explicites de co-occurrence → Phase 3
+    if _RANKING_EXCLUSION_PATTERN.search(message) and not _COOCCURRENCE_EXPLICIT_PATTERN.search(message):
+        return False
+    return True
 
 
 # Réponses honnêtes "pas encore implémenté" — redirige vers paires/triplets

@@ -642,6 +642,104 @@ _ARGENT_BETTING_EM = {
 }
 
 
+# Exclusion Phase A — questions pédagogiques sur les limites de la prédiction (multilingue)
+_PEDAGOGIE_LIMITES_EM = {
+    "fr": [
+        r'\b(?:peut|peux|pouvez|pourrait|pourrions)[\s-]+(?:on|tu|vous|t[\s-]?on)\s+pr[eé]dire',
+        r'\b(?:est[\s-]il|est[\s-]ce)\s+possible\s+de\s+pr[eé]dire',
+        r'\bpossible\s+(?:de\s+)?pr[eé]dire',
+        r'\bpourquoi\s+(?:on\s+)?(?:ne\s+)?(?:peut|peux|pouvez)\s+(?:pas|plus)\s+pr[eé]dire',
+        r'\bpourquoi\s+(?:on\s+)?(?:ne\s+)?(?:peut|peux)\s+(?:pas|plus)\s+gagner\s+[àa]\s+(?:coup\s+s[uû]r|tous?\s+les?\s+coups?)',
+        r'\bpourquoi\s+(?:personne|aucun)',
+        r'\b(?:loto|tirage|loterie|euromillions?)\s+(?:est[\s-]il|est[\s-]ce|est[\s-]elle)\s+(?:pr[eé]visible|al[eé]atoire|truqu[eé])',
+        r'\b(?:loto|tirage|loterie|euromillions?)\s+.{0,10}(?:pr[eé]visible|al[eé]atoire|truqu[eé])',
+        r'\bimpossible\s+(?:de\s+)?(?:pr[eé]dire|pr[eé]voir|gagner)',
+        r'\b(?:stats?|statistiques?|algo(?:rithme)?|ia|intelligence\s+artificielle)\s+.{0,15}(?:pr[eé]dire|pr[eé]voir|garantir)',
+        r"\b(?:ton|votre|l)\s*['\u2019]?\s*(?:algo|ia|outil|moteur)\s+.{0,15}(?:pr[eé]dire|gagner|garanti)",
+        r'\best[\s-]ce\s+que?\s+[çc]a\s+(?:marche|fonctionne)\s+(?:vraiment|pour\s+(?:gagner|de\s+vrai))',
+        r'\b(?:ton|votre)\s+(?:ia|algo|outil)\s+(?:peut|va)\s+(?:me\s+faire\s+)?gagner',
+        r'\bexiste[\s-]t[\s-]il\s+(?:une?\s+)?(?:m[eé]thode|formule|syst[eè]me|astuce)\s+(?:pour\s+)?gagner',
+        r'\b(?:loi\s+des\s+grands?\s+nombres?|gambler.?s?\s*fallacy|biais\s+(?:du\s+joueur|cognitif))',
+        r'\bchaque\s+tirage\s+(?:est\s+)?ind[eé]pendant',
+        r'\b(?:num[eé]ros?|boules?)\s+(?:ont|a)[\s-](?:t[\s-])?(?:ils?|elles?)\s+(?:une?\s+)?m[eé]moire',
+        r'\b(?:hasard|al[eé]atoire)\s+(?:est\s+)?(?:vraiment\s+)?(?:impr[eé]visible|al[eé]atoire|pur)',
+    ],
+    "en": [
+        r'\bcan\s+(?:you|we|anyone|somebody)\s+predict\b',
+        r'\b(?:is\s+it|it\s+is)\s+possible\s+to\s+predict\b',
+        r'\bwhy\s+(?:can.?t|cannot|no\s+one\s+can)\s+(?:anyone\s+)?predict\b',
+        r'\b(?:lottery|draw|lotto|euromillions?)\s+(?:is\s+)?(?:predictable|random|rigged|fair)\b',
+        r'\bimpossible\s+to\s+predict\b',
+        r'\bcan\s+(?:statistics|ai|algorithms?|your\s+(?:ai|algorithm|tool))\s+predict\b',
+        r'\b(?:does|can)\s+(?:your|this)\s+(?:ai|algorithm|tool)\s+(?:really\s+)?(?:work|predict|guarantee)',
+        r'\bcan\s+(?:your|this)\s+(?:ai|algorithm)\s+(?:help\s+(?:me\s+)?)?win\b',
+        r'\b(?:is\s+there|does\s+there\s+exist)\s+a\s+(?:method|formula|system|way)\s+to\s+win\b',
+        r'\b(?:gambler.?s?\s*fallacy|law\s+of\s+large\s+numbers|hot\s+hand\s+fallacy)\b',
+        r'\beach\s+draw\s+is\s+independent\b',
+        r'\bdo\s+numbers?\s+have\s+(?:a\s+)?memory\b',
+        r'\b(?:randomness|chance)\s+(?:is\s+)?(?:truly|really|purely)\s+(?:random|unpredictable)\b',
+    ],
+    "es": [
+        r'\bse\s+puede\s+(?:predecir|prever)\b',
+        r'\b(?:es|resulta)\s+posible\s+(?:predecir|prever)\b',
+        r'\bpor\s+qu[eé]\s+(?:no\s+)?(?:se\s+)?puede\s+(?:predecir|prever|ganar)\b',
+        r'\b(?:loter[ií]a|sorteo|euromillions?)\s+(?:es\s+)?(?:predecible|aleatori[ao]|amañad[ao])\b',
+        r'\bimposible\s+(?:de\s+)?(?:predecir|prever|ganar)\b',
+        r'\b(?:estad[ií]sticas?|ia|algoritmo)\s+.{0,15}(?:predecir|prever|garantizar)\b',
+        r'\b(?:tu|su|el)\s+(?:ia|algoritmo)\s+.{0,15}(?:predecir|ganar)\b',
+        r'\bexiste\s+(?:una?\s+)?(?:m[eé]todo|f[oó]rmula|sistema)\s+(?:para\s+)?ganar\b',
+        r'\b(?:falacia\s+del\s+jugador|ley\s+de\s+(?:los\s+)?grandes\s+n[uú]meros)\b',
+        r'\bcada\s+sorteo\s+(?:es\s+)?independiente\b',
+    ],
+    "pt": [
+        r'\b(?:pode[\s-]se|[eé]\s+poss[ií]vel|consegue[\s-]se)\s+(?:prever|predizer)\b',
+        r'\bpor\s*que\s+(?:n[ãa]o\s+)?(?:se\s+)?(?:pode|consegue)\s+(?:prever|predizer|ganhar)\b',
+        r'\b(?:lotaria|loteria|sorteio|euromillions?)\s+(?:[eé]\s+)?(?:previs[ií]vel|aleat[oó]ri[ao]|viciada?)\b',
+        r'\bimposs[ií]vel\s+(?:de\s+)?(?:prever|predizer|ganhar)\b',
+        r'\b(?:estat[ií]sticas?|ia|algoritmo)\s+.{0,15}(?:prever|predizer|garantir)\b',
+        r'\b(?:o\s+teu|o\s+seu|o)\s+(?:ia|algoritmo)\s+.{0,15}(?:prever|ganhar)\b',
+        r'\bexiste\s+(?:uma?\s+)?(?:m[eé]todo|f[oó]rmula|sistema)\s+(?:para\s+)?ganhar\b',
+        r'\b(?:fal[aá]cia\s+do\s+jogador|lei\s+dos\s+grandes\s+n[uú]meros)\b',
+        r'\bcada\s+sorteio\s+(?:[eé]\s+)?independente\b',
+    ],
+    "de": [
+        r'\bkann\s+man\s+(?:die\s+)?(?:lotterie|ziehung|euromillions?)?\s*(?:vorhersagen|voraussagen)\b',
+        r'\b(?:ist\s+es|es\s+ist)\s+m[oö]glich\s+(?:vorherzusagen|voraussagen|zu\s+vorhersagen)\b',
+        r'\bwarum\s+(?:kann\s+)?(?:niemand|man\s+nicht)\s+(?:vorhersagen|voraussagen|gewinnen)\b',
+        r'\b(?:lotterie|ziehung|lotto|euromillions?)\s+(?:ist\s+)?(?:vorhersagbar|zuf[aä]llig|manipuliert)\b',
+        r'\bunm[oö]glich\s+(?:vorherzusagen|zu\s+gewinnen)\b',
+        r'\b(?:statistik|ki|algorithmus)\s+.{0,15}(?:vorhersagen|garantieren)\b',
+        r'\b(?:dein|ihr|der)\s+(?:ki|algorithmus)\s+.{0,15}(?:vorhersagen|gewinnen)\b',
+        r'\bgibt\s+es\s+eine?\s+(?:methode|formel|system)\s+(?:zum?\s+)?gewinnen\b',
+        r'\b(?:spielerfehlschluss|gesetz\s+der\s+gro[sß]en\s+zahlen)\b',
+        r'\bjede\s+ziehung\s+(?:ist\s+)?unabh[aä]ngig\b',
+    ],
+    "nl": [
+        r'\bkan\s+(?:je|men|iemand)\s+(?:de\s+)?(?:loterij|trekking|euromillions?)?\s*voorspellen\b',
+        r'\b(?:is\s+het|het\s+is)\s+mogelijk\s+(?:om\s+)?(?:te\s+)?voorspellen\b',
+        r'\bwaarom\s+(?:kan\s+)?(?:niemand|je\s+niet)\s+voorspellen\b',
+        r'\b(?:loterij|trekking|lotto|euromillions?)\s+(?:is\s+)?(?:voorspelbaar|willekeurig|gemanipuleerd)\b',
+        r'\bonmogelijk\s+(?:om\s+)?(?:te\s+)?(?:voorspellen|winnen)\b',
+        r'\b(?:statistiek|ai|algoritme)\s+.{0,15}(?:voorspellen|garanderen)\b',
+        r'\b(?:je|jouw|het)\s+(?:ai|algoritme)\s+.{0,15}(?:voorspellen|winnen)\b',
+        r'\bbestaat\s+er\s+een\s+(?:methode|formule|systeem)\s+(?:om\s+)?(?:te\s+)?winnen\b',
+        r'\b(?:gokkersdrogreden|wet\s+van\s+(?:de\s+)?grote\s+aantallen)\b',
+        r'\belke\s+trekking\s+(?:is\s+)?onafhankelijk\b',
+    ],
+}
+
+
+def _detect_pedagogie_limites_em(message: str, lang: str) -> bool:
+    """Detecte les questions pedagogiques sur les limites de la prediction (multilingue).
+    Ces questions ne doivent PAS declencher Phase A."""
+    lower = message.lower()
+    patterns = _PEDAGOGIE_LIMITES_EM.get(lang, _PEDAGOGIE_LIMITES_EM["fr"])
+    for pattern in patterns:
+        if re.search(pattern, lower):
+            return True
+    return False
+
+
 # Exclusion Phase A — questions sur le score de conformité (multilingue)
 _SCORE_QUESTION_EM = {
     "fr": [
@@ -706,11 +804,14 @@ def _detect_score_question_em(message: str, lang: str) -> bool:
 
 def _detect_argent_em(message: str, lang: str) -> bool:
     """Detecte si le message EM concerne l'argent/gains/paris (multilingue).
-    Exclut les demandes de generation de grilles (Phase G prioritaire)
-    et les questions sur le score de conformite."""
+    Exclut les demandes de generation de grilles (Phase G prioritaire),
+    les questions sur le score de conformite,
+    et les questions pedagogiques sur les limites de la prediction."""
     if _detect_generation(message):
         return False
     if _detect_score_question_em(message, lang):
+        return False
+    if _detect_pedagogie_limites_em(message, lang):
         return False
     lower = message.lower()
     phrases = _ARGENT_PHRASES_EM.get(lang, _ARGENT_PHRASES_EM["fr"])
