@@ -209,7 +209,9 @@ def _clean_response(text: str) -> str:
     # Nettoyer les espaces multiples et lignes vides résultants
     text = re.sub(r'\n{3,}', '\n\n', text)
     text = re.sub(r'  +', ' ', text)
-    return text.strip()
+    # strip(\n\r) only — préserver les espaces aux bords des chunks SSE
+    # pour éviter le collage de mots ("Jene peux pas") lors de la concaténation JS
+    return text.strip('\n\r')
 
 
 # ────────────────────────────────────────────

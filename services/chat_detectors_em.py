@@ -16,6 +16,53 @@ from services.chat_detectors import (
 )
 
 
+# ────────────────────────────────────────────
+# Synonymes des étoiles (EuroMillions) — 6 langues
+# "complémentaire", "bonus", "star", "estrella"… → même intent que "étoile"
+# ────────────────────────────────────────────
+
+# Regex alternation pour les patterns étoile (6 langues)
+_STAR_RE = r'(?:' + '|'.join(
+    s.replace('é', '[eé]') for s in (
+        "étoile", "complémentaire", "bonus", "spécial",
+        "star", "lucky\\s+star", "complementary",
+        "estrella", "complementari[oa]",
+        "estrela", "complementar",
+        "stern", "erg[aä]nzungszahl",
+        "ster",
+    )
+) + r')'
+
+# Word-boundary regex for _is_star_query (avoids "ster" matching "master")
+_STAR_QUERY_RE = re.compile(
+    r'\b(?:'
+    + '|'.join(
+        s.replace('é', '[eé]').replace('ä', '[aä]')
+        for s in (
+            "étoile", "étoiles",
+            "complémentaire", "complémentaires",
+            "bonus",
+            "spécial", "spéciale",
+            "star", "stars", "lucky star",
+            "complementary",
+            "estrella", "estrellas",
+            "complementario", "complementaria",
+            "estrela", "estrelas",
+            "complementar",
+            "stern", "sterne",
+            "ergänzungszahl",
+            "ster", "sterren",
+        )
+    )
+    + r')s?\b'
+)
+
+
+def _is_star_query(lower: str) -> bool:
+    """Retourne True si le message mentionne les étoiles EM (ou un synonyme, 6 langs)."""
+    return bool(_STAR_QUERY_RE.search(lower))
+
+
 def _detect_paires_em(message: str) -> bool:
     """Detecte les questions sur les paires EM (meme regex multilingue que Loto)."""
     return _detect_paires(message)
@@ -72,8 +119,8 @@ def _detect_numero_em(message: str):
     """
     lower = message.lower()
 
-    # Pattern etoile : "etoile X", "étoile X"
-    m = re.search(r'(?:num[eé]ro\s+)?[eé]toile\s+(\d{1,2})', lower)
+    # Pattern etoile : "etoile X", "étoile X", "star X", "complémentaire X"...
+    m = re.search(r'(?:num[eé]ro\s+)?' + _STAR_RE + r'\s+(\d{1,2})', lower)
     if m:
         num = int(m.group(1))
         if 1 <= num <= 12:
@@ -118,7 +165,7 @@ def _detect_grille_em(message: str):
     etoiles = None
 
     etoile_patterns_double = [
-        r'[eé]toiles?\s*[:\s]*(\d{1,2})\s+(?:et\s+)?(\d{1,2})',
+        _STAR_RE + r's?\s*[:\s]*(\d{1,2})\s+(?:et\s+|and\s+|y\s+|e\s+|und\s+|en\s+)?(\d{1,2})',
         r'\*\s*(\d{1,2})\s+(\d{1,2})',
         r'\+\s*(\d{1,2})\s+(\d{1,2})\s*$',
     ]
@@ -133,7 +180,7 @@ def _detect_grille_em(message: str):
 
     # Pattern single etoile (fallback)
     if etoiles is None:
-        m = re.search(r'[eé]toile\s+(\d{1,2})', text)
+        m = re.search(_STAR_RE + r'\s+(\d{1,2})', text)
         if m:
             e1 = int(m.group(1))
             if 1 <= e1 <= 12:
@@ -185,7 +232,7 @@ def _detect_requete_complexe_em(message: str):
         m = re.search(pat, lower)
         if m:
             n1, n2 = int(m.group(1)), int(m.group(2))
-            is_etoile = "etoile" in lower or "étoile" in lower
+            is_etoile = _is_star_query(lower)
             if is_etoile and 1 <= n1 <= 12 and 1 <= n2 <= 12:
                 return {"type": "comparaison", "num1": n1, "num2": n2, "num_type": "etoile"}
             if 1 <= n1 <= 50 and 1 <= n2 <= 50 and n1 != n2:
@@ -201,7 +248,7 @@ def _detect_requete_complexe_em(message: str):
        re.search(r'\bn[uú]meros?\s+quentes?\b', lower) or \
        re.search(r'\bhei[sß]e\s+zahlen\b', lower) or \
        re.search(r'\bhete\s+nummers\b', lower):
-        num_type = "etoile" if ("etoile" in lower or "étoile" in lower or "star" in lower or "estrella" in lower or "estrela" in lower or "stern" in lower or "ster" in lower) else "boule"
+        num_type = "etoile" if _is_star_query(lower) else "boule"
         return {"type": "categorie", "categorie": "chaud", "num_type": num_type}
 
     if re.search(r'(?:quels?|les?|num[eé]ros?)\s+.*froids?', lower) or \
@@ -212,15 +259,13 @@ def _detect_requete_complexe_em(message: str):
        re.search(r'\bn[uú]meros?\s+fr[ií]os?\b', lower) or \
        re.search(r'\bkalte\s+zahlen\b', lower) or \
        re.search(r'\bkoude\s+nummers\b', lower):
-        num_type = "etoile" if ("etoile" in lower or "étoile" in lower or "star" in lower or "estrella" in lower or "estrela" in lower or "stern" in lower or "ster" in lower) else "boule"
+        num_type = "etoile" if _is_star_query(lower) else "boule"
         return {"type": "categorie", "categorie": "froid", "num_type": num_type}
 
     # --- Classement ---
     limit = _extract_top_n(lower)
 
-    _star_kw = ("etoile" in lower or "étoile" in lower or "star" in lower
-                or "estrella" in lower or "estrela" in lower
-                or "stern" in lower or "ster" in lower)
+    _star_kw = _is_star_query(lower)
     num_type = "etoile" if _star_kw else "boule"
 
     # --- Requêtes directes étoiles + fréquence (6 langues) ---
@@ -294,7 +339,7 @@ def _detect_out_of_range_em(message: str):
     lower = message.lower()
 
     # Etoile hors range (> 12)
-    m = re.search(r'(?:num[eé]ro\s+)?[eé]toile\s+(\d+)', lower)
+    m = re.search(r'(?:num[eé]ro\s+)?' + _STAR_RE + r'\s+(\d+)', lower)
     if m:
         num = int(m.group(1))
         if num > 12:

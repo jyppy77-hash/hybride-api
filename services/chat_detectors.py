@@ -7,6 +7,29 @@ logger = logging.getLogger(__name__)
 
 
 # ────────────────────────────────────────────
+# Synonymes du Numéro Chance (Loto)
+# "complémentaire", "bonus", "spécial" → même intent que "chance"
+# ────────────────────────────────────────────
+
+_CHANCE_SYNONYMS = (
+    "chance",
+    "complementaire", "complémentaire",
+    "bonus",
+    "special", "spécial",
+)
+
+# Regex alternation pour les patterns
+_CHANCE_RE = r'(?:' + '|'.join(
+    s.replace('é', '[eé]') for s in ("chance", "complémentaire", "bonus", "spécial")
+) + r')'
+
+
+def _is_chance_query(lower: str) -> bool:
+    """Retourne True si le message mentionne le Numéro Chance (ou un synonyme)."""
+    return any(syn in lower for syn in _CHANCE_SYNONYMS)
+
+
+# ────────────────────────────────────────────
 # Phase 0 : Continuation contextuelle
 # Intercepte les réponses courtes (oui/non/ok...) et les enrichit
 # avec le contexte conversationnel pour éviter les dérives Gemini.
@@ -397,8 +420,8 @@ def _detect_numero(message: str):
     """
     lower = message.lower()
 
-    # Pattern chance : "numero chance X", "chance X"
-    m = re.search(r'(?:num[eé]ro\s+)?chance\s+(\d{1,2})', lower)
+    # Pattern chance : "numero chance X", "chance X", "complémentaire X", "bonus X"...
+    m = re.search(r'(?:num[eé]ro\s+)?' + _CHANCE_RE + r'\s+(\d{1,2})', lower)
     if m:
         num = int(m.group(1))
         if 1 <= num <= 10:
@@ -442,8 +465,8 @@ def _detect_grille(message: str):
     # Extraire le numero chance d'abord (et le retirer du texte)
     chance = None
     chance_patterns = [
-        r'chance\s*[:\s]*(\d{1,2})',
-        r'n[°o]?\s*chance\s*[:\s]*(\d{1,2})',
+        _CHANCE_RE + r'\s*[:\s]*(\d{1,2})',
+        r'n[°o]?\s*' + _CHANCE_RE + r'\s*[:\s]*(\d{1,2})',
         r'\+\s*(\d{1,2})\s*$',
     ]
     for pat in chance_patterns:
@@ -532,7 +555,7 @@ def _detect_requete_complexe(message: str):
         m = re.search(pat, lower)
         if m:
             n1, n2 = int(m.group(1)), int(m.group(2))
-            is_chance = "chance" in lower
+            is_chance = _is_chance_query(lower)
             if is_chance and 1 <= n1 <= 10 and 1 <= n2 <= 10:
                 return {"type": "comparaison", "num1": n1, "num2": n2, "num_type": "chance"}
             if 1 <= n1 <= 49 and 1 <= n2 <= 49 and n1 != n2:
@@ -542,19 +565,19 @@ def _detect_requete_complexe(message: str):
     if re.search(r'(?:quels?|les?|num[eé]ros?)\s+.*chauds?', lower) or \
        re.search(r'chauds?\s+(?:en ce moment|actuellement)', lower) or \
        re.search(r'(?:num[eé]ros?|lesquels)\s+(?:sont|en)\s+tendance', lower):
-        num_type = "chance" if "chance" in lower else "principal"
+        num_type = "chance" if _is_chance_query(lower) else "principal"
         return {"type": "categorie", "categorie": "chaud", "num_type": num_type}
 
     if re.search(r'(?:quels?|les?|num[eé]ros?)\s+.*froids?', lower) or \
        re.search(r'froids?\s+(?:en ce moment|actuellement)', lower) or \
        re.search(r'num[eé]ros?\s+(?:en\s+retard|qui\s+sort\w*\s+(?:pas|plus|jamais))', lower):
-        num_type = "chance" if "chance" in lower else "principal"
+        num_type = "chance" if _is_chance_query(lower) else "principal"
         return {"type": "categorie", "categorie": "froid", "num_type": num_type}
 
     # --- Classement : top/plus frequents/retards ---
     limit = _extract_top_n(lower)
 
-    num_type = "chance" if "chance" in lower else "principal"
+    num_type = "chance" if _is_chance_query(lower) else "principal"
 
     # Plus frequents / plus sortis
     if re.search(r'(?:plus|les?\s+plus)\s+(?:fr[eé]quent|sorti|courant|pr[eé]sent)', lower) or \
@@ -1787,7 +1810,7 @@ def _detect_out_of_range(message: str):
     lower = message.lower()
 
     # Chance hors range (> 10)
-    m = re.search(r'(?:num[eé]ro\s+)?chance\s+(\d+)', lower)
+    m = re.search(r'(?:num[eé]ro\s+)?' + _CHANCE_RE + r'\s+(\d+)', lower)
     if m:
         num = int(m.group(1))
         if num > 10:
