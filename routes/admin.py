@@ -111,7 +111,7 @@ async def admin_login_page(request: Request):
 
 
 @router.post("/admin/login", response_class=HTMLResponse, include_in_schema=False)
-@limiter.limit("5/minute")
+@limiter.limit("3/minute")
 async def admin_login(request: Request, password: str = Form(...)):
     if not _ADMIN_PASSWORD or not secrets.compare_digest(password, _ADMIN_PASSWORD):
         tpl = env.get_template("admin/login.html")
@@ -121,7 +121,7 @@ async def admin_login(request: Request, password: str = Form(...)):
     response.set_cookie(
         key=_COOKIE_NAME,
         value=_ADMIN_TOKEN,
-        max_age=86400 * 7,
+        max_age=86400,
         httponly=True,
         secure=True,
         samesite="strict",

@@ -458,12 +458,14 @@ _db_env = patch.dict(os.environ, {
 def _get_client():
     with _db_env, _static_patch, _static_call:
         import importlib
+        import rate_limit as rl_mod
+        importlib.reload(rl_mod)
         import routes.admin as admin_mod
         importlib.reload(admin_mod)
         import main as main_mod
         importlib.reload(main_mod)
-        from rate_limit import limiter
-        limiter.reset()
+        rl_mod.limiter.reset()
+        rl_mod._api_hits.clear()
         return TestClient(main_mod.app, raise_server_exceptions=False)
 
 

@@ -22,7 +22,7 @@ import sys
 from pythonjsonlogger import jsonlogger
 
 import db_cloudsql
-from rate_limit import limiter
+from rate_limit import limiter, APIGlobalRateLimitMiddleware
 from config.version import __version__, APP_VERSION, APP_NAME, VERSION_DATE
 from services.circuit_breaker import gemini_breaker
 from routes.pages import router as pages_router
@@ -186,6 +186,7 @@ async def custom_http_exception_handler(request: Request, exc: StarletteHTTPExce
 
 # Rate limiting middleware
 app.add_middleware(SlowAPIMiddleware)
+app.add_middleware(APIGlobalRateLimitMiddleware)   # P1-1: 60 req/min on /api/*
 
 # CORS
 _cors_origins = [
