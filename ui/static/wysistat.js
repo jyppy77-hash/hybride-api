@@ -9,6 +9,7 @@
 
     var _wsq = window._wsq = window._wsq || [];
     _wsq.push(['_setNom', 'lotoia']);
+    _wsq.push(['_setToken', 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhY2NvdW50TmFtZSI6ImxvdG9pYSIsIm5hbWUiOiJsb3RvaWEtcHJvZCJ9.IzXT4dwmGHqqHMx7ir8SKxbBPwb_JrkTBEV1DVh5NZ4']);
     _wsq.push(['_wysistat']);
 
     var ws = document.createElement('script');
