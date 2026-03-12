@@ -150,14 +150,14 @@ async def unified_meta_analyse_local(
             """, (*window_ids, *window_ids, *window_ids, *window_ids, *window_ids))
             freq_map = {row['num']: row['freq'] for row in await cursor.fetchall()}
 
-            # 2 derniers tirages pour penalisation
+            # 4 derniers tirages pour penalisation V2 (hard-exclude T-1 + degradation T-2/T-3/T-4)
             if is_loto:
                 await cursor.execute(f"""
                     SELECT boule_1, boule_2, boule_3, boule_4, boule_5,
                            numero_chance, date_de_tirage
                     FROM {cfg.table}
                     WHERE id IN ({ids_placeholder})
-                    ORDER BY date_de_tirage DESC LIMIT 2
+                    ORDER BY date_de_tirage DESC LIMIT 4
                 """, window_ids)
             else:
                 await cursor.execute(f"""
@@ -165,47 +165,36 @@ async def unified_meta_analyse_local(
                            etoile_1, etoile_2, date_de_tirage
                     FROM {cfg.table}
                     WHERE id IN ({ids_placeholder})
-                    ORDER BY date_de_tirage DESC LIMIT 2
+                    ORDER BY date_de_tirage DESC LIMIT 4
                 """, window_ids)
             recent_draws = await cursor.fetchall()
 
-            if len(recent_draws) >= 2:
-                last_draw_balls = {recent_draws[0][f'boule_{i}'] for i in range(1, 6)}
-                second_last_balls = {recent_draws[1][f'boule_{i}'] for i in range(1, 6)}
-                last_draw_date = str(recent_draws[0]['date_de_tirage'])
-                second_last_date = str(recent_draws[1]['date_de_tirage'])
-            elif len(recent_draws) == 1:
-                last_draw_balls = {recent_draws[0][f'boule_{i}'] for i in range(1, 6)}
-                second_last_balls = set()
-                last_draw_date = str(recent_draws[0]['date_de_tirage'])
-                second_last_date = None
-            else:
-                last_draw_balls = set()
-                second_last_balls = set()
-                last_draw_date = None
-                second_last_date = None
+            # Build recent_draws lists for V2 penalization
+            recent_balls: list[set[int]] = []
+            recent_secondary: list[set[int]] = []
+            draw_dates: list[str | None] = []
+            for rd in recent_draws:
+                recent_balls.append({rd[f'boule_{i}'] for i in range(1, 6)})
+                draw_dates.append(str(rd['date_de_tirage']))
+                if is_loto:
+                    recent_secondary.append({rd['numero_chance']})
+                else:
+                    recent_secondary.append({rd['etoile_1'], rd['etoile_2']})
+
+            last_draw_date = draw_dates[0] if draw_dates else None
+            second_last_date = draw_dates[1] if len(draw_dates) >= 2 else None
 
             top_numbers, penal_info_balls = compute_penalized_ranking(
                 raw_freq=freq_map,
-                last_draw_numbers=last_draw_balls,
-                second_last_draw_numbers=second_last_balls,
+                last_draw_numbers=set(),
+                second_last_draw_numbers=set(),
                 num_range=range(1, cfg.num_range[1] + 1),
                 top_n=5,
+                recent_draws=recent_balls,
             )
 
             # Secondary numbers (chance / etoiles)
             if is_loto:
-                # Loto: chance
-                if len(recent_draws) >= 2:
-                    last_draw_secondary = {recent_draws[0]['numero_chance']}
-                    second_last_secondary = {recent_draws[1]['numero_chance']}
-                elif len(recent_draws) == 1:
-                    last_draw_secondary = {recent_draws[0]['numero_chance']}
-                    second_last_secondary = set()
-                else:
-                    last_draw_secondary = set()
-                    second_last_secondary = set()
-
                 await cursor.execute(f"""
                     SELECT numero_chance AS num, COUNT(*) AS freq
                     FROM {cfg.table}
@@ -215,23 +204,13 @@ async def unified_meta_analyse_local(
                 secondary_freq = {row['num']: row['freq'] for row in await cursor.fetchall()}
                 secondary_top, penal_info_secondary = compute_penalized_ranking(
                     raw_freq=secondary_freq,
-                    last_draw_numbers=last_draw_secondary,
-                    second_last_draw_numbers=second_last_secondary,
+                    last_draw_numbers=set(),
+                    second_last_draw_numbers=set(),
                     num_range=range(1, 11),
                     top_n=3,
+                    recent_draws=recent_secondary,
                 )
             else:
-                # EM: etoiles
-                if len(recent_draws) >= 2:
-                    last_draw_secondary = {recent_draws[0]['etoile_1'], recent_draws[0]['etoile_2']}
-                    second_last_secondary = {recent_draws[1]['etoile_1'], recent_draws[1]['etoile_2']}
-                elif len(recent_draws) == 1:
-                    last_draw_secondary = {recent_draws[0]['etoile_1'], recent_draws[0]['etoile_2']}
-                    second_last_secondary = set()
-                else:
-                    last_draw_secondary = set()
-                    second_last_secondary = set()
-
                 await cursor.execute(f"""
                     SELECT num, COUNT(*) as freq FROM (
                         SELECT etoile_1 as num FROM {cfg.table} WHERE id IN ({ids_placeholder})
@@ -242,10 +221,11 @@ async def unified_meta_analyse_local(
                 secondary_freq = {row['num']: row['freq'] for row in await cursor.fetchall()}
                 secondary_top, penal_info_secondary = compute_penalized_ranking(
                     raw_freq=secondary_freq,
-                    last_draw_numbers=last_draw_secondary,
-                    second_last_draw_numbers=second_last_secondary,
+                    last_draw_numbers=set(),
+                    second_last_draw_numbers=set(),
                     num_range=range(1, 13),
                     top_n=3,
+                    recent_draws=recent_secondary,
                 )
 
             # Dates de la fenetre

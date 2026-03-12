@@ -71,6 +71,11 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
         "Va DIRECTEMENT à la réponse à sa question."
     )
 
+    # ── Contexte pédagogique : injecté quand la question porte sur les fréquences/tendances ──
+    from services.stats_analysis import should_inject_pedagogical_context, PEDAGOGICAL_CONTEXT
+    if should_inject_pedagogical_context(message):
+        system_prompt += PEDAGOGICAL_CONTEXT
+
     gem_api_key = os.environ.get("GEM_API_KEY") or os.environ.get("GEMINI_API_KEY")
     if not gem_api_key:
         logger.warning("[HYBRIDE CHAT] GEM_API_KEY non configuree — fallback")

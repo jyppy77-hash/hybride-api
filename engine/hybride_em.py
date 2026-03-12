@@ -473,7 +473,12 @@ async def generate_grids(
             'ponderation': ponderation,
             'nb_tirages_total': nb_tirages,
             'periode_base': f"{date_min} -> {date_max}",
-            'avertissement': "L'EuroMillions reste un jeu de pur hasard. Aucune garantie de gain."
+            'avertissement': "L'EuroMillions reste un jeu de pur hasard. Aucune garantie de gain.",
+            'anti_collision': {
+                'calendar_bias_range': '1-31',
+                'note': "Les numeros 1-31 (dates de naissance) sont sur-selectionnes par les joueurs. "
+                        "Privilegier les numeros 32-50 maximise l'esperance de gain en cas de jackpot partage.",
+            },
         }
 
         return {

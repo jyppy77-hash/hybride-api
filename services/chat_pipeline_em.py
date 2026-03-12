@@ -125,6 +125,11 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
         "Va DIRECTEMENT à la réponse à sa question."
     )
 
+    # ── Contexte pédagogique : injecté quand la question porte sur les fréquences/tendances ──
+    from services.stats_analysis import should_inject_pedagogical_context, PEDAGOGICAL_CONTEXT
+    if should_inject_pedagogical_context(message):
+        system_prompt += PEDAGOGICAL_CONTEXT
+
     # ── Phase I : Détection d'insultes / agressivité ──
     _insult_prefix = ""
     _insult_type = _detect_insulte(message)
