@@ -162,6 +162,24 @@ SELECT num, COUNT(*) as freq FROM (SELECT boule_1 as num FROM tirages_euromillio
 P: quantos sorteios nos últimos 3 meses?
 SELECT COUNT(*) as nb_tirages FROM tirages_euromillions WHERE date_de_tirage >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH) LIMIT 1
 
+P: distribuição pares ímpares nos últimos 200 sorteios
+SELECT SUM(CASE WHEN num%2=0 THEN 1 ELSE 0 END) AS pares, SUM(CASE WHEN num%2=1 THEN 1 ELSE 0 END) AS impares FROM ((SELECT boule_1 AS num FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 200) UNION ALL (SELECT boule_2 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 200) UNION ALL (SELECT boule_3 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 200) UNION ALL (SELECT boule_4 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 200) UNION ALL (SELECT boule_5 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 200)) t
+
+P: tendência pares ímpares 100 últimos sorteios
+SELECT SUM(CASE WHEN num%2=0 THEN 1 ELSE 0 END) AS pares, SUM(CASE WHEN num%2=1 THEN 1 ELSE 0 END) AS impares FROM ((SELECT boule_1 AS num FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 100) UNION ALL (SELECT boule_2 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 100) UNION ALL (SELECT boule_3 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 100) UNION ALL (SELECT boule_4 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 100) UNION ALL (SELECT boule_5 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 100)) t
+
+TENDÊNCIAS SAZONAIS — ESTAÇÕES:
+- Primavera: MONTH(date_de_tirage) IN (3,4,5)
+- Verão: MONTH(date_de_tirage) IN (6,7,8)
+- Outono: MONTH(date_de_tirage) IN (9,10,11)
+- Inverno: MONTH(date_de_tirage) IN (12,1,2)
+
+P: tendências sazonais quais números saem mais na primavera
+SELECT num, SUM(freq) AS total_freq FROM (SELECT boule_1 AS num, COUNT(*) AS freq FROM tirages_euromillions WHERE MONTH(date_de_tirage) IN (3,4,5) GROUP BY boule_1 UNION ALL SELECT boule_2, COUNT(*) FROM tirages_euromillions WHERE MONTH(date_de_tirage) IN (3,4,5) GROUP BY boule_2 UNION ALL SELECT boule_3, COUNT(*) FROM tirages_euromillions WHERE MONTH(date_de_tirage) IN (3,4,5) GROUP BY boule_3 UNION ALL SELECT boule_4, COUNT(*) FROM tirages_euromillions WHERE MONTH(date_de_tirage) IN (3,4,5) GROUP BY boule_4 UNION ALL SELECT boule_5, COUNT(*) FROM tirages_euromillions WHERE MONTH(date_de_tirage) IN (3,4,5) GROUP BY boule_5) t GROUP BY num ORDER BY total_freq DESC LIMIT 10
+
+P: números que mais saem no verão
+SELECT num, SUM(freq) AS total_freq FROM (SELECT boule_1 AS num, COUNT(*) AS freq FROM tirages_euromillions WHERE MONTH(date_de_tirage) IN (6,7,8) GROUP BY boule_1 UNION ALL SELECT boule_2, COUNT(*) FROM tirages_euromillions WHERE MONTH(date_de_tirage) IN (6,7,8) GROUP BY boule_2 UNION ALL SELECT boule_3, COUNT(*) FROM tirages_euromillions WHERE MONTH(date_de_tirage) IN (6,7,8) GROUP BY boule_3 UNION ALL SELECT boule_4, COUNT(*) FROM tirages_euromillions WHERE MONTH(date_de_tirage) IN (6,7,8) GROUP BY boule_4 UNION ALL SELECT boule_5, COUNT(*) FROM tirages_euromillions WHERE MONTH(date_de_tirage) IN (6,7,8) GROUP BY boule_5) t GROUP BY num ORDER BY total_freq DESC LIMIT 10
+
 CONTEXTO CONVERSACIONAL:
 Podes receber um histórico de conversa (mensagens anteriores).
 Usa-o para resolver referências implícitas.

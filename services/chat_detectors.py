@@ -1605,8 +1605,20 @@ _PAIRS_PATTERN = re.compile(
 )
 
 
+_EVEN_ODD_RE = re.compile(
+    r'pairs?\s*(?:et|ou|/|)\s*impairs?|impairs?\s*(?:et|ou|/|)\s*pairs?'  # FR: "pairs et impairs", "pair/impair", "pairs impairs"
+    r'|even\s+(?:and|or|/)\s+odd|odd\s+(?:and|or|/)\s+even'              # EN
+    r'|pares?\s*(?:[ey]\s+)?[ií]mpares?|[ií]mpares?\s*(?:[ey]\s+)?pares?'  # ES/PT
+    r'|gerade\s+(?:und|oder|/)\s+ungerade|ungerade\s+(?:und|oder|/)\s+gerade'  # DE
+    r'|even\s+(?:en|of|/)\s+oneven|oneven\s+(?:en|of|/)\s+even',        # NL
+    re.IGNORECASE,
+)
+
+
 def _detect_paires(message: str) -> bool:
     """Detecte si l'utilisateur demande les correlations de paires (6 langues)."""
+    if _EVEN_ODD_RE.search(message):
+        return False
     return bool(_PAIRS_PATTERN.search(message))
 
 

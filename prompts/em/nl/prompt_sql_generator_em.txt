@@ -162,6 +162,24 @@ SELECT num, COUNT(*) as freq FROM (SELECT boule_1 as num FROM tirages_euromillio
 V: Hoeveel trekkingen in de laatste 3 maanden?
 SELECT COUNT(*) as nb_tirages FROM tirages_euromillions WHERE date_de_tirage >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH) LIMIT 1
 
+V: verdeling even oneven bij de laatste 200 trekkingen
+SELECT SUM(CASE WHEN num%2=0 THEN 1 ELSE 0 END) AS even_count, SUM(CASE WHEN num%2=1 THEN 1 ELSE 0 END) AS oneven_count FROM ((SELECT boule_1 AS num FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 200) UNION ALL (SELECT boule_2 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 200) UNION ALL (SELECT boule_3 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 200) UNION ALL (SELECT boule_4 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 200) UNION ALL (SELECT boule_5 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 200)) t
+
+V: trend even oneven 100 laatste trekkingen
+SELECT SUM(CASE WHEN num%2=0 THEN 1 ELSE 0 END) AS even_count, SUM(CASE WHEN num%2=1 THEN 1 ELSE 0 END) AS oneven_count FROM ((SELECT boule_1 AS num FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 100) UNION ALL (SELECT boule_2 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 100) UNION ALL (SELECT boule_3 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 100) UNION ALL (SELECT boule_4 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 100) UNION ALL (SELECT boule_5 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 100)) t
+
+SEIZOENSGEBONDEN TRENDS — SEIZOENEN:
+- Lente: MONTH(date_de_tirage) IN (3,4,5)
+- Zomer: MONTH(date_de_tirage) IN (6,7,8)
+- Herfst: MONTH(date_de_tirage) IN (9,10,11)
+- Winter: MONTH(date_de_tirage) IN (12,1,2)
+
+V: seizoenstrends welke nummers komen het meest voor in de lente
+SELECT num, SUM(freq) AS total_freq FROM (SELECT boule_1 AS num, COUNT(*) AS freq FROM tirages_euromillions WHERE MONTH(date_de_tirage) IN (3,4,5) GROUP BY boule_1 UNION ALL SELECT boule_2, COUNT(*) FROM tirages_euromillions WHERE MONTH(date_de_tirage) IN (3,4,5) GROUP BY boule_2 UNION ALL SELECT boule_3, COUNT(*) FROM tirages_euromillions WHERE MONTH(date_de_tirage) IN (3,4,5) GROUP BY boule_3 UNION ALL SELECT boule_4, COUNT(*) FROM tirages_euromillions WHERE MONTH(date_de_tirage) IN (3,4,5) GROUP BY boule_4 UNION ALL SELECT boule_5, COUNT(*) FROM tirages_euromillions WHERE MONTH(date_de_tirage) IN (3,4,5) GROUP BY boule_5) t GROUP BY num ORDER BY total_freq DESC LIMIT 10
+
+V: nummers die het meest voorkomen in de zomer
+SELECT num, SUM(freq) AS total_freq FROM (SELECT boule_1 AS num, COUNT(*) AS freq FROM tirages_euromillions WHERE MONTH(date_de_tirage) IN (6,7,8) GROUP BY boule_1 UNION ALL SELECT boule_2, COUNT(*) FROM tirages_euromillions WHERE MONTH(date_de_tirage) IN (6,7,8) GROUP BY boule_2 UNION ALL SELECT boule_3, COUNT(*) FROM tirages_euromillions WHERE MONTH(date_de_tirage) IN (6,7,8) GROUP BY boule_3 UNION ALL SELECT boule_4, COUNT(*) FROM tirages_euromillions WHERE MONTH(date_de_tirage) IN (6,7,8) GROUP BY boule_4 UNION ALL SELECT boule_5, COUNT(*) FROM tirages_euromillions WHERE MONTH(date_de_tirage) IN (6,7,8) GROUP BY boule_5) t GROUP BY num ORDER BY total_freq DESC LIMIT 10
+
 GESPREKSCONTEXT:
 Je kunt een gespreksgeschiedenis ontvangen (eerdere berichten).
 Gebruik deze om impliciete verwijzingen op te lossen.

@@ -181,6 +181,24 @@ SELECT num, COUNT(*) as freq FROM (SELECT boule_1 as num FROM tirages WHERE date
 Q: combien de tirages les 3 derniers mois ?
 SELECT COUNT(*) as nb_tirages FROM tirages WHERE date_de_tirage >= DATE_SUB(CURDATE(), INTERVAL 3 MONTH) LIMIT 1
 
+Q: répartition pairs impairs sur les 200 derniers tirages
+SELECT SUM(CASE WHEN num%2=0 THEN 1 ELSE 0 END) AS pairs, SUM(CASE WHEN num%2=1 THEN 1 ELSE 0 END) AS impairs FROM ((SELECT boule_1 AS num FROM tirages ORDER BY date_de_tirage DESC LIMIT 200) UNION ALL (SELECT boule_2 FROM tirages ORDER BY date_de_tirage DESC LIMIT 200) UNION ALL (SELECT boule_3 FROM tirages ORDER BY date_de_tirage DESC LIMIT 200) UNION ALL (SELECT boule_4 FROM tirages ORDER BY date_de_tirage DESC LIMIT 200) UNION ALL (SELECT boule_5 FROM tirages ORDER BY date_de_tirage DESC LIMIT 200)) t
+
+Q: tendance pairs impairs 100 derniers tirages
+SELECT SUM(CASE WHEN num%2=0 THEN 1 ELSE 0 END) AS pairs, SUM(CASE WHEN num%2=1 THEN 1 ELSE 0 END) AS impairs FROM ((SELECT boule_1 AS num FROM tirages ORDER BY date_de_tirage DESC LIMIT 100) UNION ALL (SELECT boule_2 FROM tirages ORDER BY date_de_tirage DESC LIMIT 100) UNION ALL (SELECT boule_3 FROM tirages ORDER BY date_de_tirage DESC LIMIT 100) UNION ALL (SELECT boule_4 FROM tirages ORDER BY date_de_tirage DESC LIMIT 100) UNION ALL (SELECT boule_5 FROM tirages ORDER BY date_de_tirage DESC LIMIT 100)) t
+
+TENDANCES SAISONNIÈRES — SAISONS :
+- Printemps : MONTH(date_de_tirage) IN (3,4,5)
+- Été : MONTH(date_de_tirage) IN (6,7,8)
+- Automne : MONTH(date_de_tirage) IN (9,10,11)
+- Hiver : MONTH(date_de_tirage) IN (12,1,2)
+
+Q: tendances saisonnières quels numéros sortent le plus au printemps
+SELECT num, SUM(freq) AS total_freq FROM (SELECT boule_1 AS num, COUNT(*) AS freq FROM tirages WHERE MONTH(date_de_tirage) IN (3,4,5) GROUP BY boule_1 UNION ALL SELECT boule_2, COUNT(*) FROM tirages WHERE MONTH(date_de_tirage) IN (3,4,5) GROUP BY boule_2 UNION ALL SELECT boule_3, COUNT(*) FROM tirages WHERE MONTH(date_de_tirage) IN (3,4,5) GROUP BY boule_3 UNION ALL SELECT boule_4, COUNT(*) FROM tirages WHERE MONTH(date_de_tirage) IN (3,4,5) GROUP BY boule_4 UNION ALL SELECT boule_5, COUNT(*) FROM tirages WHERE MONTH(date_de_tirage) IN (3,4,5) GROUP BY boule_5) t GROUP BY num ORDER BY total_freq DESC LIMIT 10
+
+Q: numéros qui sortent le plus en été
+SELECT num, SUM(freq) AS total_freq FROM (SELECT boule_1 AS num, COUNT(*) AS freq FROM tirages WHERE MONTH(date_de_tirage) IN (6,7,8) GROUP BY boule_1 UNION ALL SELECT boule_2, COUNT(*) FROM tirages WHERE MONTH(date_de_tirage) IN (6,7,8) GROUP BY boule_2 UNION ALL SELECT boule_3, COUNT(*) FROM tirages WHERE MONTH(date_de_tirage) IN (6,7,8) GROUP BY boule_3 UNION ALL SELECT boule_4, COUNT(*) FROM tirages WHERE MONTH(date_de_tirage) IN (6,7,8) GROUP BY boule_4 UNION ALL SELECT boule_5, COUNT(*) FROM tirages WHERE MONTH(date_de_tirage) IN (6,7,8) GROUP BY boule_5) t GROUP BY num ORDER BY total_freq DESC LIMIT 10
+
 CONTEXTE CONVERSATIONNEL :
 Tu peux recevoir un historique de conversation (messages précédents).
 Utilise-le pour résoudre les références implicites.

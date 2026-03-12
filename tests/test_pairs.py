@@ -279,6 +279,38 @@ def test_detect_paires_natural_nl():
     assert _detect_paires("begeleidt de 15")
 
 
+def test_detect_paires_even_odd_exclusion_fr():
+    """Messages pairs/impairs (even/odd) ne doivent PAS declencher Phase P."""
+    assert not _detect_paires("numéros pairs et impairs")
+    assert not _detect_paires("analyse pairs impairs sur 200 tirages")
+    assert not _detect_paires("répartition pair/impair")
+    assert not _detect_paires("tendance des nombres pairs et impairs sur 100 tirages")
+
+
+def test_detect_paires_even_odd_exclusion_multilang():
+    """Even/odd exclusion fonctionne en 6 langues."""
+    assert not _detect_paires("even and odd numbers over 200 draws")
+    assert not _detect_paires("números pares e impares en los últimos 200 sorteos")
+    assert not _detect_paires("números pares e ímpares nos últimos 200 sorteios")
+    assert not _detect_paires("gerade und ungerade Zahlen der letzten 200 Ziehungen")
+    assert not _detect_paires("even en oneven nummers over de laatste 200 trekkingen")
+
+
+def test_detect_paires_legitimate_still_works():
+    """Phase P legitimate messages still trigger after even/odd guard."""
+    assert _detect_paires("quelles paires sortent ensemble")
+    assert _detect_paires("numéros qui sortent en paires")
+    assert _detect_paires("which pairs come together most often")
+    assert _detect_paires("welke Paare kommen zusammen vor")
+    assert _detect_paires("corrélation entre les numéros")
+
+
+def test_detect_paires_em_even_odd_exclusion():
+    """EM _detect_paires_em inherits the even/odd exclusion."""
+    assert not _detect_paires_em("numéros pairs et impairs sur 200 tirages")
+    assert _detect_paires_em("quelles paires de boules sortent ensemble ?")
+
+
 def test_detect_paires_negative():
     """Messages qui ne doivent PAS declencher la detection paires."""
     assert not _detect_paires("quel numéro sort le plus ?")
