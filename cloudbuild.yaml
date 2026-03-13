@@ -8,12 +8,12 @@ steps:
       - 'gcr.io/$PROJECT_ID/hybride-api:test'
       - '.'
 
-  # Run 2089 tests inside the builder image (blocks deploy on failure)
+  # Run 2222 tests inside the builder image (blocks deploy on failure)
   - name: 'gcr.io/$PROJECT_ID/hybride-api:test'
     entrypoint: 'sh'
     args:
       - '-c'
-      - 'pip install --no-cache-dir pytest pytest-asyncio pytest-cov && python -m pytest tests/ -v --tb=short -o addopts='
+      - 'pip install --no-cache-dir pytest pytest-asyncio pytest-cov PyPDF2 && python -m pytest tests/ -v --tb=short -o addopts='
     env:
       - 'DB_PASSWORD=fake'
       - 'DB_USER=test'
