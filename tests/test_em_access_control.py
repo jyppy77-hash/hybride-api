@@ -132,8 +132,8 @@ class TestIsEmRoute:
         "/es/euromillions/generador",
         "/pt/euromillions",
         "/pt/euromillions/gerador",
-        "/de/euromillionen",
-        "/de/euromillionen/generator",
+        "/de/euromillions",
+        "/de/euromillions/generator",
         "/nl/euromillions",
         "/nl/euromillions/generator",
         "/api/euromillions/tirages/count",
@@ -207,7 +207,7 @@ class TestGetRedirectUrl:
         assert get_redirect_url("/pt/euromillions") == "/pt"
 
     def test_de(self):
-        assert get_redirect_url("/de/euromillionen/statistiken") == "/de"
+        assert get_redirect_url("/de/euromillions/statistiken") == "/de"
 
     def test_nl(self):
         assert get_redirect_url("/nl/euromillions") == "/nl"

@@ -324,7 +324,7 @@ def render_template(
             "chatbot_js": (
                 "/ui/en/euromillions/static/hybride-chatbot-em-en.js?v=1.0"
                 if lang == "en" else
-                "/ui/static/hybride-chatbot-em.js?v=1.1"
+                "/ui/static/hybride-chatbot-em.js?v=1.2"
             ),
             "rating_js": "/ui/static/rating-popup.js?v=8",
 

@@ -130,7 +130,7 @@ convergentie-index, oneven/even, heet/neutraal/koud, suggesties.
 De simulator controleert ook automatisch of de exacte combinatie
 al eerder is voorgekomen in de FDJ-trekkingshistorie.
 
-Module "Statistieken" (pagina /nl/euromillions/statistics):
+Module "Statistieken" (pagina /nl/euromillions/statistieken):
 Volledige EuroMillions-trekkingshistorie, frequenties per nummer,
 tussenpozen, trends. Beschrijvende gegevens uit de FDJ-database.
 

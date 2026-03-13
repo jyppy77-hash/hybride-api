@@ -130,7 +130,7 @@ Konvergenzindex, Gerade/Ungerade, Heiß/Neutral/Kalt, Vorschläge.
 Der Simulator prüft auch automatisch, ob die exakte Kombination
 bereits in der FDJ-Ziehungshistorie vorgekommen ist.
 
-Modul "Statistiken" (Seite /de/euromillions/statistics):
+Modul "Statistiken" (Seite /de/euromillions/statistiken):
 Komplette EuroMillions-Ziehungshistorie, Häufigkeiten pro Zahl,
 Abstände, Trends. Deskriptive Daten aus der FDJ-Datenbank.
 

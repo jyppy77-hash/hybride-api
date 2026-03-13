@@ -317,7 +317,7 @@
                 }
 
                 function finalize() {
-                    if (!botText) botText = '\uD83E\uDD16 R\u00e9ponse indisponible.';
+                    if (!botText) botText = LI.chatbot_error_empty || '\uD83E\uDD16 R\u00e9ponse indisponible.';
                     if (!msgEl) {
                         removeTyping();
                         addMessage(botText, 'bot');
@@ -362,7 +362,7 @@
             .catch(function () {
                 clearTimeout(timeoutId);
                 removeTyping();
-                addMessage('\uD83E\uDD16 Connexion interrompue. R\u00e9essaie dans quelques secondes !', 'bot');
+                addMessage(LI.chatbot_error_connection || '\uD83E\uDD16 Connexion interrompue. R\u00e9essaie dans quelques secondes !', 'bot');
                 trackEvent('hybride_em_chat_error', { page: detectPage() });
             });
         }
@@ -388,7 +388,7 @@
 
             var question = document.createElement('div');
             question.className = 'rating-question';
-            question.textContent = 'Tu kiffes HYBRIDE EuroMillions ? Note ton exp\u00e9rience !';
+            question.textContent = LI.chatbot_rating_question || 'Tu kiffes HYBRIDE EuroMillions ? Note ton exp\u00e9rience !';
             widget.appendChild(question);
 
             var starsDiv = document.createElement('div');
@@ -412,9 +412,9 @@
             var labels = document.createElement('div');
             labels.className = 'rating-labels';
             var labelBof = document.createElement('span');
-            labelBof.textContent = 'Bof';
+            labelBof.textContent = LI.chatbot_rating_low || 'Bof';
             var labelTop = document.createElement('span');
-            labelTop.textContent = 'Top !';
+            labelTop.textContent = LI.chatbot_rating_high || 'Top !';
             labels.appendChild(labelBof);
             labels.appendChild(labelTop);
             widget.appendChild(labels);
@@ -476,19 +476,19 @@
                     sessionStorage.setItem(RATING_STORAGE_KEY, 'true');
                     var feedback = document.getElementById('hybride-rating-feedback-em');
                     var messages = {
-                        5: 'Merci ! Tu es un vrai !',
-                        4: 'Merci ! Content que \u00e7a te plaise !',
-                        3: 'Merci ! On va s\u2019am\u00e9liorer !',
-                        2: 'Merci pour ton retour !',
-                        1: 'Merci ! Dis-nous ce qu\u2019on peut am\u00e9liorer !'
+                        5: LI.chatbot_rating_5 || 'Merci ! Tu es un vrai !',
+                        4: LI.chatbot_rating_4 || 'Merci ! Content que \u00e7a te plaise !',
+                        3: LI.chatbot_rating_3 || 'Merci ! On va s\u2019am\u00e9liorer !',
+                        2: LI.chatbot_rating_2 || 'Merci pour ton retour !',
+                        1: LI.chatbot_rating_1 || 'Merci ! Dis-nous ce qu\u2019on peut am\u00e9liorer !'
                     };
                     if (feedback) {
-                        feedback.textContent = messages[rating] || 'Merci !';
+                        feedback.textContent = messages[rating] || LI.chatbot_rating_default || 'Merci !';
                         feedback.style.display = 'block';
                     }
                     setTimeout(function () {
                         var w = document.getElementById('hybride-rating-widget-em');
-                        if (w) w.innerHTML = '<div class="rating-thanks">Merci pour ton avis !</div>';
+                        if (w) w.innerHTML = '<div class="rating-thanks">' + (LI.chatbot_rating_done || 'Merci pour ton avis !') + '</div>';
                     }, 3000);
                 }
             })

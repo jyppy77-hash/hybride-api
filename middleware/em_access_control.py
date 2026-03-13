@@ -56,7 +56,7 @@ _EM_PROTECTED = [
     re.compile(r"^/en/euromillions(/.*)?$", _I),          # EN pages
     re.compile(r"^/es/euromillions(/.*)?$", _I),          # ES pages
     re.compile(r"^/pt/euromillions(/.*)?$", _I),           # PT pages
-    re.compile(r"^/de/euromillionen(/.*)?$", _I),         # DE pages
+    re.compile(r"^/de/euromillions(/.*)?$", _I),          # DE pages
     re.compile(r"^/nl/euromillions(/.*)?$", _I),          # NL pages
     re.compile(r"^/api/euromillions(/.*)?$", _I),         # All EM API endpoints
     re.compile(r"^/static/pdf/em_", _I),                  # EM PDF assets
