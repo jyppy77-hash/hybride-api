@@ -279,3 +279,117 @@ def test_named_placeholders_format():
     _ = gettext_func("fr")
     result = _("{count} tirages analysés").format(count=5)
     assert result == "5 tirages analysés"
+
+
+# ═══════════════════════════════════════════════
+# 20-24: Content pages — a-propos E-E-A-T translations
+# ═══════════════════════════════════════════════
+
+# Critical strings that MUST be translated (not fall back to FR)
+_APROPOS_STRINGS = {
+    "À propos du fondateur": {
+        "en": "About the founder",
+        "es": "Sobre el fundador",
+        "pt": "Sobre o fundador",
+        "de": "Über den Gründer",
+        "nl": "Over de oprichter",
+    },
+    "Qui sommes-nous ?": {
+        "en": "Who are we?",
+        "es": "¿Quiénes somos?",
+        "pt": "Quem somos?",
+        "de": "Wer sind wir?",
+        "nl": "Wie zijn wij?",
+    },
+    "Notre mission": {
+        "en": "Our mission",
+        "es": "Nuestra misión",
+        "pt": "A nossa missão",
+        "de": "Unsere Mission",
+        "nl": "Onze missie",
+    },
+    "Notre technologie": {
+        "en": "Our technology",
+        "es": "Nuestra tecnología",
+        "pt": "A nossa tecnologia",
+        "de": "Unsere Technologie",
+        "nl": "Onze technologie",
+    },
+}
+
+
+@pytest.mark.parametrize("msgid,expected", [
+    (msgid, lang_map)
+    for msgid, lang_map in _APROPOS_STRINGS.items()
+])
+def test_apropos_headings_translated(msgid, expected):
+    """A-propos headings are translated in all 5 languages (not FR fallback)."""
+    from config.i18n import gettext_func
+    for lang, expected_str in expected.items():
+        _ = gettext_func(lang)
+        result = _(msgid)
+        assert result == expected_str, f"{lang}: '{msgid}' → got '{result}', expected '{expected_str}'"
+
+
+def test_apropos_bio_not_french():
+    """Founder bio paragraph is translated (not FR) in all 5 languages."""
+    from config.i18n import gettext_func
+    fr_bio_start = "Jean-Philippe Godard</strong>, connu sous le pseudo"
+    for lang in ["en", "es", "pt", "de", "nl"]:
+        _ = gettext_func(lang)
+        result = _(
+            "<strong>Jean-Philippe Godard</strong>, connu sous le pseudo "
+            "<strong>JyppY</strong>, est un développeur full-stack et data "
+            "scientist avec plus de 40 ans d'expérience en informatique. "
+            "Passionné par la data science, les probabilités et "
+            "l'intelligence artificielle, il a conçu le moteur "
+            "algorithmique HYBRIDE qui constitue le cœur analytique de "
+            "LotoIA."
+        )
+        assert fr_bio_start not in result, (
+            f"{lang}: founder bio still in French"
+        )
+        assert "Jean-Philippe Godard" in result
+        assert "JyppY" in result
+        assert "HYBRIDE" in result
+
+
+def test_apropos_startups_not_french():
+    """Google for Startups paragraph is translated in all 5 languages."""
+    from config.i18n import gettext_func
+    fr_marker = "Ancien participant au programme"
+    for lang in ["en", "es", "pt", "de", "nl"]:
+        _ = gettext_func(lang)
+        result = _(
+            "Ancien participant au programme <strong>Google for "
+            "Startups</strong>, Jean-Philippe a fondé "
+            "<strong>EmovisIA</strong>, société spécialisée dans "
+            "l'intelligence artificielle appliquée à l'analyse de "
+            "données. LotoIA est née de cette expertise, avec "
+            "l'objectif de rendre l'analyse statistique des loteries "
+            "accessible, transparente et gratuite pour tous les joueurs."
+        )
+        assert fr_marker not in result, (
+            f"{lang}: startups paragraph still in French"
+        )
+        assert "Google for Startups" in result
+        assert "EmovisIA" in result
+
+
+def test_apropos_description_not_french():
+    """LotoIA description paragraph mentions Jean-Philippe Godard in all langs."""
+    from config.i18n import gettext_func
+    fr_marker = "plateforme française indépendante"
+    for lang in ["en", "es", "pt", "de", "nl"]:
+        _ = gettext_func(lang)
+        result = _(
+            "<strong>LotoIA</strong> est une plateforme française "
+            "indépendante dédiée à l'analyse statistique des tirages du "
+            "Loto et de l'EuroMillions. Créée par <strong>JyppY</strong> "
+            "(Jean-Philippe Godard), LotoIA est née d'une conviction "
+            "simple : les joueurs méritent des outils transparents, "
+            "honnêtes et gratuits."
+        )
+        assert fr_marker not in result, (
+            f"{lang}: description still in French"
+        )
