@@ -7,13 +7,14 @@
     <!-- ── Period toggle + Export ────────────────────────────────── -->
     <div class="rt-toolbar">
         <div class="rt-period-toggle" id="rt-period-toggle">
-            <button class="rt-period-btn active" data-period="today">Aujourd'hui</button>
+            <button class="rt-period-btn active" data-period="24h">24h</button>
+            <button class="rt-period-btn" data-period="today">Aujourd'hui</button>
             <button class="rt-period-btn" data-period="week">7 jours</button>
             <button class="rt-period-btn" data-period="month">30 jours</button>
         </div>
         <div class="rt-export-bar">
-            <a id="rt-export-csv" class="btn-secondary btn-sm" href="/admin/export/realtime/csv?period=today">📥 CSV</a>
-            <a id="rt-export-pdf" class="btn-secondary btn-sm" href="/admin/export/realtime/pdf?period=today">📄 PDF</a>
+            <a id="rt-export-csv" class="btn-secondary btn-sm" href="/admin/export/realtime/csv?period=24h">📥 CSV</a>
+            <a id="rt-export-pdf" class="btn-secondary btn-sm" href="/admin/export/realtime/pdf?period=24h">📄 PDF</a>
         </div>
     </div>
 
@@ -65,6 +66,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/admin.js?v=5"></script>
+<script src="/static/admin.js?v=6"></script>
 <script>LotoAdmin.initRealtime();</script>
 {% endblock %}

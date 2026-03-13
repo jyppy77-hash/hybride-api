@@ -1560,3 +1560,100 @@ class TestAdminExportRealtimePDF:
             resp = client.get("/admin/export/realtime/pdf?period=month")
         assert resp.status_code == 200
         assert "realtime_month.pdf" in resp.headers.get("content-disposition", "")
+
+
+# ═══════════════════════════════════════════════
+# Period 24h — sliding 24-hour window
+# ═══════════════════════════════════════════════
+
+class TestPeriod24h:
+    """24h sliding window on impressions, engagement, realtime."""
+
+    def test_impressions_24h(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
+            resp = client.get("/admin/api/impressions?period=24h")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "kpi" in data
+
+    def test_engagement_24h(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 0, "total_events": 0, "unique_sessions": 0})
+            resp = client.get("/admin/api/engagement?period=24h")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "kpi" in data
+
+    def test_realtime_24h(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[
+                _rt_mock_rows(),
+                [{"event_type": "chatbot-open", "cnt": 3}],
+                [{"event_type": "chatbot-open"}],
+            ])
+            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 3, "hour_count": 1, "type_count": 1})
+            resp = client.get("/admin/api/realtime?period=24h")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["kpi"]["total"] == 3
+
+    def test_impressions_default_is_24h(self):
+        """No period param → defaults to 24h."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
+            resp = client.get("/admin/api/impressions")
+        assert resp.status_code == 200
+
+    def test_engagement_default_is_24h(self):
+        """No period param → defaults to 24h."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 0, "total_events": 0, "unique_sessions": 0})
+            resp = client.get("/admin/api/engagement")
+        assert resp.status_code == 200
+
+    def test_realtime_default_is_24h(self):
+        """No period param → defaults to 24h."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[
+                _rt_mock_rows(),
+                [{"event_type": "chatbot-open", "cnt": 2}],
+                [{"event_type": "chatbot-open"}],
+            ])
+            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 2, "hour_count": 2, "type_count": 1})
+            resp = client.get("/admin/api/realtime")
+        assert resp.status_code == 200
+
+    def test_today_still_works(self):
+        """Regression: period=today still works on all 3 endpoints."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
+            r1 = client.get("/admin/api/impressions?period=today")
+        assert r1.status_code == 200
+
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 0, "total_events": 0, "unique_sessions": 0})
+            r2 = client.get("/admin/api/engagement?period=today")
+        assert r2.status_code == 200
+
+    def test_7d_still_works(self):
+        """Regression: period=7d still works."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
+            resp = client.get("/admin/api/impressions?period=7d")
+        assert resp.status_code == 200

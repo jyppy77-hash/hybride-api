@@ -12,7 +12,7 @@ import json
 import logging
 import os
 import secrets
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from fastapi import APIRouter, Request, Form, Query
@@ -70,6 +70,9 @@ def _require_auth_json(request: Request):
 
 def _period_to_dates(period: str, date_start: str = "", date_end: str = ""):
     today = date.today()
+    if period == "24h":
+        now = datetime.now()
+        return now - timedelta(hours=24), now + timedelta(minutes=5)
     if period == "today":
         return today, today + timedelta(days=1)
     if period == "7d":
@@ -95,8 +98,9 @@ def _period_to_dates(period: str, date_start: str = "", date_end: str = ""):
 
 
 def _period_label(period: str, ds, de):
-    labels = {"today": "Aujourd'hui", "7d": "7 derniers jours", "30d": "30 derniers jours",
-              "month": "Ce mois", "last_month": "Mois dernier", "all": "Toute la periode"}
+    labels = {"24h": "24 dernieres heures", "today": "Aujourd'hui", "7d": "7 derniers jours",
+              "30d": "30 derniers jours", "month": "Ce mois", "last_month": "Mois dernier",
+              "all": "Toute la periode"}
     return labels.get(period, f"{ds} — {de}")
 
 
@@ -268,7 +272,7 @@ def _build_impressions_where(period, date_start, date_end, event_type, lang, dev
 @router.get("/admin/api/impressions", include_in_schema=False)
 async def admin_api_impressions(
     request: Request,
-    period: str = Query("7d"),
+    period: str = Query("24h"),
     date_start: str = Query(""),
     date_end: str = Query(""),
     event_type: str = Query(""),
@@ -467,7 +471,7 @@ async def admin_api_votes(
 @router.get("/admin/api/impressions/csv", include_in_schema=False)
 async def admin_export_impressions_csv(
     request: Request,
-    period: str = Query("7d"),
+    period: str = Query("24h"),
     date_start: str = Query(""),
     date_end: str = Query(""),
     event_type: str = Query(""),
@@ -548,7 +552,7 @@ async def admin_export_votes_csv(
 @router.get("/admin/api/sponsor-report/pdf", include_in_schema=False)
 async def admin_export_sponsor_report_pdf(
     request: Request,
-    period: str = Query("7d"),
+    period: str = Query("24h"),
     date_start: str = Query(""),
     date_end: str = Query(""),
     event_type: str = Query(""),
@@ -1040,11 +1044,13 @@ async def admin_realtime_page(request: Request):
 
 
 _PERIOD_SQL = {
+    "24h": "created_at >= DATE_SUB(NOW(), INTERVAL 24 HOUR)",
     "today": "created_at >= CURDATE()",
     "week": "created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)",
     "month": "created_at >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)",
 }
-_PERIOD_LABELS = {"today": "Aujourd'hui", "week": "7 derniers jours", "month": "30 derniers jours"}
+_PERIOD_LABELS = {"24h": "24 dernieres heures", "today": "Aujourd'hui",
+                  "week": "7 derniers jours", "month": "30 derniers jours"}
 
 
 def _build_realtime_where(event_type: str, period: str):
@@ -1060,12 +1066,12 @@ def _build_realtime_where(event_type: str, period: str):
 
 
 @router.get("/admin/api/realtime", include_in_schema=False)
-async def admin_api_realtime(request: Request, event_type: str = "all", period: str = "today"):
+async def admin_api_realtime(request: Request, event_type: str = "all", period: str = "24h"):
     err = _require_auth_json(request)
     if err:
         return err
     if period not in _PERIOD_SQL:
-        period = "today"
+        period = "24h"
     try:
         where, params = _build_realtime_where(event_type, period)
 
@@ -1124,12 +1130,12 @@ async def admin_api_realtime(request: Request, event_type: str = "all", period: 
 # ── Realtime exports ──────────────────────────────────────────────────────────
 
 @router.get("/admin/export/realtime/csv", include_in_schema=False)
-async def admin_export_realtime_csv(request: Request, event_type: str = "all", period: str = "today"):
+async def admin_export_realtime_csv(request: Request, event_type: str = "all", period: str = "24h"):
     redirect = _require_auth(request)
     if redirect:
         return redirect
     if period not in _PERIOD_SQL:
-        period = "today"
+        period = "24h"
     try:
         where, params = _build_realtime_where(event_type, period)
         rows = await db_cloudsql.async_fetchall(
@@ -1157,12 +1163,12 @@ async def admin_export_realtime_csv(request: Request, event_type: str = "all", p
 
 
 @router.get("/admin/export/realtime/pdf", include_in_schema=False)
-async def admin_export_realtime_pdf(request: Request, event_type: str = "all", period: str = "today"):
+async def admin_export_realtime_pdf(request: Request, event_type: str = "all", period: str = "24h"):
     redirect = _require_auth(request)
     if redirect:
         return redirect
     if period not in _PERIOD_SQL:
-        period = "today"
+        period = "24h"
     try:
         where, params = _build_realtime_where(event_type, period)
 
@@ -1296,7 +1302,7 @@ def _build_engagement_where(period, date_start, date_end, event_type, module, la
 @router.get("/admin/api/engagement", include_in_schema=False)
 async def admin_api_engagement(
     request: Request,
-    period: str = Query("7d"),
+    period: str = Query("24h"),
     date_start: str = Query(""),
     date_end: str = Query(""),
     event_type: str = Query(""),

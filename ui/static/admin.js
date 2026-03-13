@@ -93,7 +93,7 @@ var LotoAdmin = (function() {
         qs('#f-period').addEventListener('change', toggleCustomDates);
         qs('#btn-filter').addEventListener('click', loadImpressions);
         qs('#btn-reset').addEventListener('click', function() {
-            qs('#f-period').value = '7d';
+            qs('#f-period').value = '24h';
             qs('#f-event').value = 'all';
             qs('#f-sponsor').value = 'all';
             qs('#f-tarif').value = 'all';
@@ -287,7 +287,7 @@ var LotoAdmin = (function() {
     var rtTimer = null;
     var rtPreviousIds = [];
     var rtActiveFilter = 'all';
-    var rtActivePeriod = 'today';
+    var rtActivePeriod = '24h';
 
     var RT_COLORS = {
         'sponsor': '#ff9800', 'rating': '#00c853', 'simulateur': '#4f8cff',
@@ -528,7 +528,7 @@ var LotoAdmin = (function() {
         qs('#f-period').addEventListener('change', toggleCustomDates);
         qs('#btn-filter').addEventListener('click', loadEngagement);
         qs('#btn-reset').addEventListener('click', function() {
-            qs('#f-period').value = '7d';
+            qs('#f-period').value = '24h';
             qs('#f-category').value = 'all';
             qs('#f-product-code').value = 'all';
             qs('#f-event').value = 'all';
