@@ -874,7 +874,7 @@ function openMetaResultPopup(data) {
     if (pdfBtn) {
         pdfBtn.addEventListener('click', () => {
             if (typeof umami !== 'undefined') umami.track('meta75-pdf-download', { module: 'loto', sponsor_id: 'LOTO_FR_A' });
-            if (window.LotoIA_track) LotoIA_track('meta75-pdf-download', {module: 'loto', sponsor_id: 'LOTO_FR_A'});
+            if (window.LotoIA_track) LotoIA_track('meta75-pdf-download', {module: 'loto', sponsor_id: 'LOTO_FR_A', product_code: 'LOTO_FR_A'});
             fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-pdf-downloaded', sponsor_id: 'LOTO_FR_A', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
             if (window.LotoIAAnalytics?.productEngine?.track) {
                 window.LotoIAAnalytics.productEngine.track('meta_pdf_export', { version: 75 });
@@ -1149,7 +1149,7 @@ async function showMetaAnalysePopup() {
 
     // Umami — meta75 lancee
     if (typeof umami !== 'undefined') umami.track('meta75-launched', { module: 'loto' });
-    if (window.LotoIA_track) LotoIA_track('meta75-launched', {module: 'loto'});
+    if (window.LotoIA_track) LotoIA_track('meta75-launched', {module: 'loto', product_code: 'LOTO_FR_A'});
     if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('meta75_launched', { event_category: 'engagement', module: 'loto', version: 75 });
 
     // EVENT 2 - Début tunnel sponsor

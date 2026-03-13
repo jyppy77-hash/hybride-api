@@ -25,6 +25,7 @@ router = APIRouter(prefix="/api", tags=["tracking"])
 _ALLOWED_DEVICES = frozenset(["mobile", "desktop", "tablet"])
 _MAX_EVENT_LEN = 80
 _MAX_PAGE_LEN = 200
+_MAX_PRODUCT_CODE_LEN = 20
 
 # Owner IP filtering (reuse same env vars as main.py UmamiOwnerFilter)
 _OWNER_IP = os.environ.get("OWNER_IP", "").strip()
@@ -100,6 +101,7 @@ async def track_event(request: Request):
     if device not in _ALLOWED_DEVICES:
         device = "desktop"
     country = _detect_country(request.headers.get("accept-language", ""))
+    product_code = str(data.get("product_code", ""))[:_MAX_PRODUCT_CODE_LEN] or None
     meta = data.get("meta")
     meta_json = json.dumps(meta) if isinstance(meta, dict) else None
 
@@ -107,11 +109,11 @@ async def track_event(request: Request):
         await db_cloudsql.async_query(
             """
             INSERT INTO event_log
-                (event_type, page, module, lang, device, country, session_hash, meta_json)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                (event_type, page, module, lang, device, country, session_hash, meta_json, product_code)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (event, page, module, lang, device,
-             country, session_hash, meta_json),
+             country, session_hash, meta_json, product_code),
         )
     except Exception as e:
         logger.error("[EVENT TRACK] insert failed: %s", e)

@@ -210,6 +210,20 @@
     }
 
     /**
+     * Deduit le code produit depuis le contexte de la page.
+     * Logique identique a tracker.js getProductCode().
+     * @param {Object} params - Params de l'event (peut contenir product_code explicite)
+     * @returns {string} Code produit (ex: LOTO_FR, EM_EN, LOTO_FR_A)
+     */
+    function getProductCode(params) {
+        if (params && params.product_code) return params.product_code;
+        const path = window.location.pathname;
+        const lang = (window.LotoIA_lang || document.documentElement.lang || 'fr').substring(0, 2).toUpperCase();
+        if (path.includes('/euromillions')) return 'EM_' + lang;
+        return 'LOTO_FR';
+    }
+
+    /**
      * Recupere les metadata de la page
      */
     function getPageMetadata() {
@@ -619,6 +633,7 @@
             session_id: getSessionId(),
             page: getCurrentPage(),
             engine: params.engine || CONFIG.defaultEngine,
+            product_code: getProductCode(params),
             timestamp: Date.now()
         };
 
@@ -1066,6 +1081,7 @@
             consent_analytics: state.isEnhanced,
             engine: state.productContext.engine,
             feature: state.productContext.feature,
+            product_code: getProductCode(),
             page_path: window.location.pathname,
             ts: Date.now()
         };

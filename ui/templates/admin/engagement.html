@@ -16,6 +16,51 @@
         </select>
         <input type="date" id="f-date-start" class="hidden">
         <input type="date" id="f-date-end" class="hidden">
+        <select id="f-category">
+            <option value="all">Toutes categories</option>
+            <option value="chatbot">Chatbot</option>
+            <option value="rating">Rating</option>
+            <option value="simulateur">Simulateur</option>
+            <option value="sponsor">Sponsor (Meta75)</option>
+        </select>
+        <select id="f-product-code">
+            <option value="all">Tous codes produit</option>
+            <optgroup label="Loto">
+                <option value="LOTO_FR">LOTO_FR (tous)</option>
+                <option value="LOTO_FR_A">LOTO_FR_A (Premium)</option>
+                <option value="LOTO_FR_B">LOTO_FR_B (Standard)</option>
+            </optgroup>
+            <optgroup label="EuroMillions FR">
+                <option value="EM_FR">EM_FR (tous)</option>
+                <option value="EM_FR_A">EM_FR_A (Premium)</option>
+                <option value="EM_FR_B">EM_FR_B (Standard)</option>
+            </optgroup>
+            <optgroup label="EuroMillions EN">
+                <option value="EM_EN">EM_EN (tous)</option>
+                <option value="EM_EN_A">EM_EN_A (Premium)</option>
+                <option value="EM_EN_B">EM_EN_B (Standard)</option>
+            </optgroup>
+            <optgroup label="EuroMillions ES">
+                <option value="EM_ES">EM_ES (tous)</option>
+                <option value="EM_ES_A">EM_ES_A (Premium)</option>
+                <option value="EM_ES_B">EM_ES_B (Standard)</option>
+            </optgroup>
+            <optgroup label="EuroMillions PT">
+                <option value="EM_PT">EM_PT (tous)</option>
+                <option value="EM_PT_A">EM_PT_A (Premium)</option>
+                <option value="EM_PT_B">EM_PT_B (Standard)</option>
+            </optgroup>
+            <optgroup label="EuroMillions DE">
+                <option value="EM_DE">EM_DE (tous)</option>
+                <option value="EM_DE_A">EM_DE_A (Premium)</option>
+                <option value="EM_DE_B">EM_DE_B (Standard)</option>
+            </optgroup>
+            <optgroup label="EuroMillions NL">
+                <option value="EM_NL">EM_NL (tous)</option>
+                <option value="EM_NL_A">EM_NL_A (Premium)</option>
+                <option value="EM_NL_B">EM_NL_B (Standard)</option>
+            </optgroup>
+        </select>
         <select id="f-event">
             <option value="all">Tous les events</option>
             <option value="chatbot-open">chatbot-open</option>
@@ -58,7 +103,7 @@
         <span>Chatbot: <b id="kpi-chatbot">-</b></span>
         <span>Rating: <b id="kpi-rating">-</b></span>
         <span>Simulateur: <b id="kpi-simulateur">-</b></span>
-        <span>Meta75: <b id="kpi-meta75">-</b></span>
+        <span>Sponsor: <b id="kpi-sponsor">-</b></span>
         <span>Sessions: <b id="kpi-sessions">-</b></span>
     </div>
 
@@ -91,6 +136,8 @@
                     <th data-sort="lang">Lang</th>
                     <th data-sort="device">Device</th>
                     <th data-sort="country">Country</th>
+                    <th data-sort="product_code">Code Produit</th>
+                    <th data-sort="sponsor_name">Sponsor</th>
                     <th data-sort="cnt">Count</th>
                 </tr>
             </thead>
@@ -105,6 +152,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/admin.js?v=3"></script>
+<script src="/static/admin.js?v=5"></script>
 <script>LotoAdmin.initEngagement();</script>
 {% endblock %}

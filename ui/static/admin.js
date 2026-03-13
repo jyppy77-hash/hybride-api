@@ -520,7 +520,7 @@ var LotoAdmin = (function() {
         chatbot: '#a855f7',
         rating: '#22c55e',
         simulateur: '#3b82f6',
-        meta75: '#d4a843'
+        sponsor: '#d4a843'
     };
 
     function initEngagement() {
@@ -529,6 +529,8 @@ var LotoAdmin = (function() {
         qs('#btn-filter').addEventListener('click', loadEngagement);
         qs('#btn-reset').addEventListener('click', function() {
             qs('#f-period').value = '7d';
+            qs('#f-category').value = 'all';
+            qs('#f-product-code').value = 'all';
             qs('#f-event').value = 'all';
             qs('#f-module').value = 'all';
             qs('#f-lang').value = 'all';
@@ -546,6 +548,10 @@ var LotoAdmin = (function() {
             url += '&date_start=' + (qs('#f-date-start').value || '');
             url += '&date_end=' + (qs('#f-date-end').value || '');
         }
+        var cat = qs('#f-category').value;
+        if (cat !== 'all') url += '&category=' + cat;
+        var pc = qs('#f-product-code').value;
+        if (pc !== 'all') url += '&product_code=' + pc;
         var ev = qs('#f-event').value;
         if (ev !== 'all') url += '&event_type=' + ev;
         var mod = qs('#f-module');
@@ -565,6 +571,7 @@ var LotoAdmin = (function() {
             renderEngChart(data.chart);
             renderEngTable(data.table, 0);
             enableSort('engagement-table', data.table, renderEngTable);
+            if (data.sponsor_map) updateProductCodeLabels(data.sponsor_map);
         });
     }
 
@@ -573,7 +580,7 @@ var LotoAdmin = (function() {
         qs('#kpi-chatbot').textContent = kpi.chatbot_events || 0;
         qs('#kpi-rating').textContent = kpi.rating_events || 0;
         qs('#kpi-simulateur').textContent = kpi.simulateur_events || 0;
-        qs('#kpi-meta75').textContent = kpi.meta75_events || 0;
+        qs('#kpi-sponsor').textContent = kpi.sponsor_events || 0;
         qs('#kpi-sessions').textContent = kpi.unique_sessions || 0;
     }
 
@@ -603,8 +610,8 @@ var LotoAdmin = (function() {
         if (!ctx) return;
 
         var labels = chartData.map(function(r) { return r.day; });
-        var cats = ['chatbot', 'rating', 'simulateur', 'meta75'];
-        var catLabels = { chatbot: 'Chatbot', rating: 'Rating', simulateur: 'Simulateur', meta75: 'Meta75' };
+        var cats = ['chatbot', 'rating', 'simulateur', 'sponsor'];
+        var catLabels = { chatbot: 'Chatbot', rating: 'Rating', simulateur: 'Simulateur', sponsor: 'Sponsor' };
         var datasets = cats.map(function(cat) {
             return {
                 label: catLabels[cat],
@@ -639,9 +646,27 @@ var LotoAdmin = (function() {
         var start = page * PAGE_SIZE;
         var slice = rows.slice(start, start + PAGE_SIZE);
         tbody.innerHTML = slice.map(function(r) {
-            return '<tr><td>' + escHtml(r.day) + '</td><td>' + escHtml(r.event_type) + '</td><td>' + escHtml(r.page) + '</td><td>' + escHtml(r.module) + '</td><td>' + escHtml(r.lang) + '</td><td>' + escHtml(r.device) + '</td><td>' + escHtml(r.country) + '</td><td>' + r.cnt + '</td></tr>';
+            return '<tr><td>' + escHtml(r.day) + '</td><td>' + escHtml(r.event_type) + '</td><td>' + escHtml(r.page) + '</td><td>' + escHtml(r.module) + '</td><td>' + escHtml(r.lang) + '</td><td>' + escHtml(r.device) + '</td><td>' + escHtml(r.country) + '</td><td>' + escHtml(r.product_code || '') + '</td><td>' + escHtml(r.sponsor_name || '') + '</td><td>' + r.cnt + '</td></tr>';
         }).join('');
         renderPagination(rows.length, page, renderEngTable, rows);
+    }
+
+    function updateProductCodeLabels(sponsorMap) {
+        var select = qs('#f-product-code');
+        if (!select) return;
+        var options = select.querySelectorAll('option');
+        for (var i = 0; i < options.length; i++) {
+            var code = options[i].value;
+            if (code === 'all') continue;
+            var name = sponsorMap[code];
+            // Only update slot options (with _A or _B suffix)
+            if (name && code.match(/_[AB]$/)) {
+                var tier = code.endsWith('_A') ? 'Premium' : 'Standard';
+                options[i].textContent = code + ' — ' + name;
+            } else if (code.match(/_[AB]$/) && !name) {
+                options[i].textContent = code + ' (Vacant)';
+            }
+        }
     }
 
     return { initImpressions: initImpressions, initVotes: initVotes, initRealtime: initRealtime, initEngagement: initEngagement };

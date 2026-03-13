@@ -26,6 +26,17 @@
         return window.location.pathname;
     }
 
+    function getProductCode(meta) {
+        // Explicit product_code from caller (sponsor/meta75 events)
+        if (meta && meta.product_code) return meta.product_code;
+        // Auto-deduce from module + lang
+        var mod = (meta && meta.module) || '';
+        var lang = getLang().toUpperCase();
+        if (mod === 'loto') return 'LOTO_FR';
+        if (mod.indexOf('euromillions') === 0) return 'EM_' + lang;
+        return '';
+    }
+
     function dedupKey(event, meta) {
         return event + '|' + JSON.stringify(meta || {});
     }
@@ -48,7 +59,8 @@
             event: event,
             page: getPage(),
             lang: getLang(),
-            device: getDevice()
+            device: getDevice(),
+            product_code: getProductCode(meta)
         };
         if (meta && typeof meta === 'object') {
             payload.module = meta.module || '';

@@ -158,3 +158,40 @@ class TestTrackEndpoint:
         call_args = mock_db.async_query.call_args[0]
         meta = json.loads(call_args[1][7])
         assert meta["key"] == "value"
+
+    def test_product_code_stored(self):
+        client = _get_client()
+        with patch("routes.api_track.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(return_value=None)
+            resp = client.post("/api/track", json={
+                "event": "meta75-launched",
+                "module": "loto",
+                "product_code": "LOTO_FR_A",
+            }, headers=_unique_headers())
+        assert resp.status_code == 204
+        call_args = mock_db.async_query.call_args[0]
+        assert "product_code" in call_args[0]
+        assert call_args[1][8] == "LOTO_FR_A"
+
+    def test_product_code_none_when_missing(self):
+        client = _get_client()
+        with patch("routes.api_track.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(return_value=None)
+            resp = client.post("/api/track", json={
+                "event": "chatbot-open",
+            }, headers=_unique_headers())
+        assert resp.status_code == 204
+        call_args = mock_db.async_query.call_args[0]
+        assert call_args[1][8] is None
+
+    def test_product_code_truncated(self):
+        client = _get_client()
+        with patch("routes.api_track.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(return_value=None)
+            resp = client.post("/api/track", json={
+                "event": "test",
+                "product_code": "X" * 50,
+            }, headers=_unique_headers())
+        assert resp.status_code == 204
+        call_args = mock_db.async_query.call_args[0]
+        assert len(call_args[1][8]) == 20

@@ -790,7 +790,7 @@ function openMetaResultPopupEM(data) {
     if (pdfBtn) {
         pdfBtn.addEventListener('click', function() {
             if (typeof umami !== 'undefined') umami.track('meta75-pdf-download', { module: 'euromillions', sponsor_id: SPONSOR_VIDEO_75_EM.id });
-            if (window.LotoIA_track) LotoIA_track('meta75-pdf-download', {module: 'euromillions', sponsor_id: SPONSOR_VIDEO_75_EM.id});
+            if (window.LotoIA_track) LotoIA_track('meta75-pdf-download', {module: 'euromillions', sponsor_id: SPONSOR_VIDEO_75_EM.id, product_code: SPONSOR_VIDEO_75_EM.id});
             fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-pdf-downloaded', sponsor_id: SPONSOR_VIDEO_75_EM.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
             if (window.LotoIAAnalytics?.productEngine?.track) {
                 window.LotoIAAnalytics.productEngine.track('meta_pdf_export_em', { version: 75 });
@@ -1029,7 +1029,7 @@ async function showMetaAnalysePopupEM() {
 
     // Umami — meta75 lancee EM
     if (typeof umami !== 'undefined') umami.track('meta75-launched', { module: 'euromillions' });
-    if (window.LotoIA_track) LotoIA_track('meta75-launched', {module: 'euromillions'});
+    if (window.LotoIA_track) LotoIA_track('meta75-launched', {module: 'euromillions', product_code: SPONSOR_VIDEO_75_EM.id});
     if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('meta75_launched', { event_category: 'engagement', module: 'euromillions', version: 75 });
 
     META_ANALYSE_START_TIME_EM = Date.now();

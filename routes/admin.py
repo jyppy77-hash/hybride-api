@@ -1214,6 +1214,31 @@ async def admin_export_realtime_pdf(request: Request, event_type: str = "all", p
 
 # ── Engagement API ────────────────────────────────────────────────────────────
 
+# ── Sponsor name resolver (from config/sponsors.json) ─────────────────────────
+
+_SPONSORS_JSON_PATH = os.path.join(os.path.dirname(__file__), "..", "config", "sponsors.json")
+_sponsor_name_cache: dict | None = None
+
+
+def _load_sponsor_names() -> dict:
+    """Build product_code → sponsor name map from sponsors.json. Cached."""
+    global _sponsor_name_cache
+    if _sponsor_name_cache is not None:
+        return _sponsor_name_cache
+    result = {}
+    try:
+        with open(_SPONSORS_JSON_PATH, encoding="utf-8") as f:
+            data = json.load(f)
+        for _slot_group in data.get("slots", {}).values():
+            for slot in _slot_group.values():
+                if isinstance(slot, dict) and "id" in slot:
+                    result[slot["id"]] = slot.get("name", "Vacant")
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        logger.warning("[ADMIN] sponsors.json load failed: %s", e)
+    _sponsor_name_cache = result
+    return result
+
+
 _ENGAGEMENT_EVENTS = frozenset([
     "chatbot-open", "chatbot-close", "chatbot-message",
     "rating-submitted", "rating-popup-shown", "rating-dismissed",
@@ -1225,16 +1250,31 @@ _EVENT_CATEGORIES = {
     "chatbot-open": "chatbot", "chatbot-close": "chatbot", "chatbot-message": "chatbot",
     "rating-submitted": "rating", "rating-popup-shown": "rating", "rating-dismissed": "rating",
     "simulateur-grille-generated": "simulateur", "simulateur-grille-audited": "simulateur",
-    "meta75-launched": "meta75", "meta75-pdf-download": "meta75",
+    "meta75-launched": "sponsor", "meta75-pdf-download": "sponsor",
 }
 
 _VALID_MODULES = {"loto", "euromillions"}
+_VALID_CATEGORIES = {"chatbot", "rating", "simulateur", "sponsor"}
 
 
-def _build_engagement_where(period, date_start, date_end, event_type, module, lang, device):
+_VALID_PRODUCT_CODES = frozenset([
+    "LOTO_FR", "LOTO_FR_A", "LOTO_FR_B",
+    "EM_FR", "EM_FR_A", "EM_FR_B", "EM_EN", "EM_EN_A", "EM_EN_B",
+    "EM_ES", "EM_ES_A", "EM_ES_B", "EM_PT", "EM_PT_A", "EM_PT_B",
+    "EM_DE", "EM_DE_A", "EM_DE_B", "EM_NL", "EM_NL_A", "EM_NL_B",
+])
+
+
+def _build_engagement_where(period, date_start, date_end, event_type, module, lang, device, category="", product_code=""):
     ds, de = _period_to_dates(period, date_start, date_end)
     where = ["created_at >= %s", "created_at < %s", "event_type NOT LIKE 'sponsor-%%'"]
     params = [ds.isoformat(), de.isoformat()]
+    if category and category in _VALID_CATEGORIES:
+        cat_events = [ev for ev, c in _EVENT_CATEGORIES.items() if c == category]
+        if cat_events:
+            placeholders = ",".join(["%s"] * len(cat_events))
+            where.append(f"event_type IN ({placeholders})")
+            params.extend(cat_events)
     if event_type and event_type in _ENGAGEMENT_EVENTS:
         where.append("event_type = %s")
         params.append(event_type)
@@ -1247,6 +1287,9 @@ def _build_engagement_where(period, date_start, date_end, event_type, module, la
     if device and device in _VALID_DEVICES:
         where.append("device = %s")
         params.append(device)
+    if product_code and product_code in _VALID_PRODUCT_CODES:
+        where.append("product_code = %s")
+        params.append(product_code)
     return " AND ".join(where), params, ds, de
 
 
@@ -1260,16 +1303,18 @@ async def admin_api_engagement(
     module: str = Query(""),
     lang: str = Query(""),
     device: str = Query(""),
+    category: str = Query(""),
+    product_code: str = Query(""),
 ):
     err = _require_auth_json(request)
     if err:
         return err
 
-    w, params, ds, de = _build_engagement_where(period, date_start, date_end, event_type, module, lang, device)
+    w, params, ds, de = _build_engagement_where(period, date_start, date_end, event_type, module, lang, device, category, product_code)
 
     # KPI
     kpi = {"total_events": 0, "chatbot_events": 0, "rating_events": 0,
-           "simulateur_events": 0, "meta75_events": 0, "unique_sessions": 0}
+           "simulateur_events": 0, "sponsor_events": 0, "unique_sessions": 0}
     try:
         rows = await db_cloudsql.async_fetchall(
             f"SELECT event_type, COUNT(*) AS cnt "
@@ -1287,8 +1332,8 @@ async def admin_api_engagement(
                 kpi["rating_events"] += cnt
             elif cat == "simulateur":
                 kpi["simulateur_events"] += cnt
-            elif cat == "meta75":
-                kpi["meta75_events"] += cnt
+            elif cat == "sponsor":
+                kpi["sponsor_events"] += cnt
         kpi["total_events"] = total
 
         sess_row = await db_cloudsql.async_fetchone(
@@ -1314,7 +1359,7 @@ async def admin_api_engagement(
                 cat_map[cat] = {"events": 0, "sessions": set()}
             cat_map[cat]["events"] += _dec(r["cnt"])
         # Sessions per category need a separate query (DISTINCT across event types)
-        for cat_name in ("chatbot", "rating", "simulateur", "meta75"):
+        for cat_name in ("chatbot", "rating", "simulateur", "sponsor"):
             cat_events = [ev for ev, c in _EVENT_CATEGORIES.items() if c == cat_name]
             if not cat_events:
                 continue
@@ -1345,7 +1390,7 @@ async def admin_api_engagement(
             d = str(r["day"])
             cat = _EVENT_CATEGORIES.get(r["event_type"], "other")
             if d not in day_map:
-                day_map[d] = {"day": d, "chatbot": 0, "rating": 0, "simulateur": 0, "meta75": 0}
+                day_map[d] = {"day": d, "chatbot": 0, "rating": 0, "simulateur": 0, "sponsor": 0}
             if cat in day_map[d]:
                 day_map[d][cat] += _dec(r["cnt"])
         chart_data = list(day_map.values())
@@ -1356,22 +1401,30 @@ async def admin_api_engagement(
     table_data = []
     try:
         rows = await db_cloudsql.async_fetchall(
-            f"SELECT DATE(created_at) AS day, event_type, page, module, lang, device, country, COUNT(*) AS cnt "
+            f"SELECT DATE(created_at) AS day, event_type, page, module, lang, device, country, "
+            f"COALESCE(product_code, '') AS product_code, COUNT(*) AS cnt "
             f"FROM event_log WHERE {w} "
-            f"GROUP BY day, event_type, page, module, lang, device, country "
+            f"GROUP BY day, event_type, page, module, lang, device, country, product_code "
             f"ORDER BY day DESC, cnt DESC LIMIT 500",
             tuple(params),
         )
+        sponsor_names = _load_sponsor_names()
         table_data = [
             {"day": str(r["day"]), "event_type": r["event_type"], "page": r["page"] or "",
              "module": r["module"] or "", "lang": r["lang"] or "", "device": r["device"] or "",
-             "country": r["country"] or "", "cnt": _dec(r["cnt"])}
+             "country": r["country"] or "", "product_code": r["product_code"] or "",
+             "sponsor_name": sponsor_names.get(r["product_code"] or "", ""),
+             "cnt": _dec(r["cnt"])}
             for r in rows
         ]
     except Exception as e:
         logger.error("[ADMIN API] engagement table failed: %s", e)
 
-    return JSONResponse({"kpi": kpi, "by_category": by_category, "chart": chart_data, "table": table_data})
+    # Sponsor name map for frontend labels
+    sponsor_map = _load_sponsor_names()
+
+    return JSONResponse({"kpi": kpi, "by_category": by_category, "chart": chart_data,
+                         "table": table_data, "sponsor_map": sponsor_map})
 
 
 # ══════════════════════════════════════════════════════════════════════════════
