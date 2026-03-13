@@ -381,6 +381,7 @@ var LotoAdmin = (function() {
 
         fetchJSON(url).then(function(data) {
             if (!data) return;
+            animateKPI('kpi-visitors', data.kpi.unique_visitors || 0);
             animateKPI('kpi-total', data.kpi.total || 0);
             animateKPI('kpi-hour', data.kpi.hour || 0);
             animateKPI('kpi-types', data.kpi.types || 0);

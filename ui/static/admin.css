@@ -426,6 +426,8 @@ body.light .admin-table td { border-bottom-color: rgba(0,0,0,0.04); }
 .rt-kpi-accent-gold .kpi-value, .rt-kpi-total .kpi-value { color: var(--accent); font-size: 2.5rem; }
 .rt-kpi-accent-muted .kpi-value, .rt-kpi-hour .kpi-value { color: var(--text-muted); font-size: 2.5rem; }
 .rt-kpi-accent-blue .kpi-value, .rt-kpi-types .kpi-value { color: var(--accent2); font-size: 2.5rem; }
+.rt-kpi-accent-amber .kpi-value, .rt-kpi-visitors .kpi-value { color: #F59E0B; font-size: 2.5rem; }
+.rt-kpi-visitors:hover { border-color: rgba(245,158,11,0.3); }
 .rt-kpi-total:hover { border-color: rgba(212,168,67,0.3); }
 .rt-kpi-hour:hover { border-color: rgba(139,139,158,0.3); }
 .rt-kpi-types:hover { border-color: rgba(79,140,255,0.3); }

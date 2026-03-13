@@ -1098,7 +1098,8 @@ async def admin_api_realtime(request: Request, event_type: str = "all", period: 
             f"SELECT "
             f"  COUNT(*) AS total_count, "
             f"  SUM(CASE WHEN created_at >= NOW() - INTERVAL 1 HOUR THEN 1 ELSE 0 END) AS hour_count, "
-            f"  COUNT(DISTINCT event_type) AS type_count "
+            f"  COUNT(DISTINCT event_type) AS type_count, "
+            f"  COUNT(DISTINCT session_hash) AS unique_visitors "
             f"FROM event_log {where}",
             tuple(params),
         )
@@ -1106,6 +1107,7 @@ async def admin_api_realtime(request: Request, event_type: str = "all", period: 
             "total": _dec(kpi_row["total_count"]) if kpi_row else 0,
             "hour": _dec(kpi_row["hour_count"]) if kpi_row else 0,
             "types": _dec(kpi_row["type_count"]) if kpi_row else 0,
+            "unique_visitors": _dec(kpi_row["unique_visitors"]) if kpi_row else 0,
         }
 
         # Counts by event type (for KPI cards)
@@ -1124,7 +1126,7 @@ async def admin_api_realtime(request: Request, event_type: str = "all", period: 
         return JSONResponse({"events": events, "kpi": kpi, "by_type": by_type, "event_types": event_types})
     except Exception as e:
         logger.error("[ADMIN] realtime: %s", e)
-        return JSONResponse({"events": [], "kpi": {"total": 0, "hour": 0, "types": 0}, "by_type": {}, "event_types": []})
+        return JSONResponse({"events": [], "kpi": {"total": 0, "hour": 0, "types": 0, "unique_visitors": 0}, "by_type": {}, "event_types": []})
 
 
 # ── Realtime exports ──────────────────────────────────────────────────────────

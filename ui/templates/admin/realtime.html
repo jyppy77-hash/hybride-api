@@ -20,6 +20,10 @@
 
     <!-- ── Summary KPI ──────────────────────────────────────────── -->
     <div class="kpi-grid" id="rt-kpi">
+        <div class="kpi-card rt-kpi-visitors">
+            <span class="kpi-value rt-kpi-accent-amber" id="kpi-visitors">-</span>
+            <span class="kpi-label">Visiteurs uniques</span>
+        </div>
         <div class="kpi-card rt-kpi-total">
             <span class="kpi-value rt-kpi-accent-gold" id="kpi-total">-</span>
             <span class="kpi-label" id="kpi-total-label">Events aujourd'hui</span>
@@ -66,6 +70,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="/static/admin.js?v=6"></script>
+<script src="/static/admin.js?v=7"></script>
 <script>LotoAdmin.initRealtime();</script>
 {% endblock %}

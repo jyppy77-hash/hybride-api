@@ -1204,7 +1204,7 @@ class TestRealtime:
                 [{"event_type": "chatbot-open"}, {"event_type": "rating-submitted"}],
             ])
             mock_db.async_fetchone = AsyncMock(return_value={
-                "total_count": 42, "hour_count": 5, "type_count": 3,
+                "total_count": 42, "hour_count": 5, "type_count": 3, "unique_visitors": 10,
             })
             resp = client.get("/admin/api/realtime")
         assert resp.status_code == 200
@@ -1429,7 +1429,7 @@ class TestAdminRealtimePeriod:
         client = _authed_client()
         with patch("routes.admin.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[_rt_mock_rows(), [{"event_type": "chatbot-open", "cnt": 1}], [{"event_type": "chatbot-open"}]])
-            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 2, "hour_count": 2, "type_count": 2})
+            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 2, "hour_count": 2, "type_count": 2, "unique_visitors": 2})
             resp = client.get("/admin/api/realtime")
         assert resp.status_code == 200
         data = resp.json()
@@ -1440,7 +1440,7 @@ class TestAdminRealtimePeriod:
         client = _authed_client()
         with patch("routes.admin.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[_rt_mock_rows(), [{"event_type": "chatbot-open", "cnt": 5}], [{"event_type": "chatbot-open"}]])
-            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 5, "hour_count": 2, "type_count": 1})
+            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 5, "hour_count": 2, "type_count": 1, "unique_visitors": 3})
             resp = client.get("/admin/api/realtime?period=week")
         assert resp.status_code == 200
         data = resp.json()
@@ -1450,7 +1450,7 @@ class TestAdminRealtimePeriod:
         client = _authed_client()
         with patch("routes.admin.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[_rt_mock_rows(), [{"event_type": "chatbot-open", "cnt": 20}], [{"event_type": "chatbot-open"}]])
-            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 20, "hour_count": 2, "type_count": 1})
+            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 20, "hour_count": 2, "type_count": 1, "unique_visitors": 8})
             resp = client.get("/admin/api/realtime?period=month")
         assert resp.status_code == 200
         data = resp.json()
@@ -1460,7 +1460,7 @@ class TestAdminRealtimePeriod:
         client = _authed_client()
         with patch("routes.admin.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[_rt_mock_rows(), [{"event_type": "chatbot-open", "cnt": 2}], [{"event_type": "chatbot-open"}]])
-            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 2, "hour_count": 2, "type_count": 1})
+            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 2, "hour_count": 2, "type_count": 1, "unique_visitors": 1})
             resp = client.get("/admin/api/realtime?period=invalid")
         assert resp.status_code == 200
 
@@ -1468,7 +1468,7 @@ class TestAdminRealtimePeriod:
         client = _authed_client()
         with patch("routes.admin.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[_rt_mock_rows(), [{"event_type": "chatbot-open", "cnt": 3}], [{"event_type": "chatbot-open"}]])
-            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 3, "hour_count": 1, "type_count": 1})
+            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 3, "hour_count": 1, "type_count": 1, "unique_visitors": 2})
             resp = client.get("/admin/api/realtime?event_type=chatbot-open&period=week")
         assert resp.status_code == 200
         data = resp.json()
@@ -1486,7 +1486,7 @@ class TestAdminRealtimeByType:
                 [{"event_type": "chatbot-open", "cnt": 1}, {"event_type": "rating-submitted", "cnt": 1}],
                 [{"event_type": "chatbot-open"}, {"event_type": "rating-submitted"}],
             ])
-            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 2, "hour_count": 2, "type_count": 2})
+            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 2, "hour_count": 2, "type_count": 2, "unique_visitors": 2})
             resp = client.get("/admin/api/realtime")
         data = resp.json()
         assert "chatbot-open" in data["by_type"]
@@ -1500,6 +1500,70 @@ class TestAdminRealtimeByType:
             resp = client.get("/admin/api/realtime")
         data = resp.json()
         assert data["by_type"] == {}
+
+
+class TestRealtimeUniqueVisitors:
+    """Unique visitors KPI on realtime endpoint."""
+
+    def test_unique_visitors_field_present(self):
+        """API response contains unique_visitors in kpi."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[
+                _rt_mock_rows(),
+                [{"event_type": "chatbot-open", "cnt": 2}],
+                [{"event_type": "chatbot-open"}],
+            ])
+            mock_db.async_fetchone = AsyncMock(return_value={
+                "total_count": 2, "hour_count": 1, "type_count": 1, "unique_visitors": 2,
+            })
+            resp = client.get("/admin/api/realtime")
+        data = resp.json()
+        assert "unique_visitors" in data["kpi"]
+        assert data["kpi"]["unique_visitors"] == 2
+
+    def test_unique_visitors_deduplication(self):
+        """Two events from same session_hash = 1 unique visitor."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[
+                _rt_mock_rows(),
+                [{"event_type": "chatbot-open", "cnt": 2}],
+                [{"event_type": "chatbot-open"}],
+            ])
+            mock_db.async_fetchone = AsyncMock(return_value={
+                "total_count": 5, "hour_count": 3, "type_count": 2, "unique_visitors": 1,
+            })
+            resp = client.get("/admin/api/realtime")
+        data = resp.json()
+        assert data["kpi"]["unique_visitors"] == 1
+        assert data["kpi"]["unique_visitors"] <= data["kpi"]["total"]
+
+    def test_unique_visitors_with_periods(self):
+        """unique_visitors works with all 4 period filters."""
+        client = _authed_client()
+        for period in ("24h", "today", "week", "month"):
+            with patch("routes.admin.db_cloudsql") as mock_db:
+                mock_db.async_fetchall = AsyncMock(side_effect=[
+                    _rt_mock_rows(),
+                    [{"event_type": "chatbot-open", "cnt": 3}],
+                    [{"event_type": "chatbot-open"}],
+                ])
+                mock_db.async_fetchone = AsyncMock(return_value={
+                    "total_count": 3, "hour_count": 1, "type_count": 1, "unique_visitors": 2,
+                })
+                resp = client.get(f"/admin/api/realtime?period={period}")
+            assert resp.status_code == 200
+            assert resp.json()["kpi"]["unique_visitors"] == 2
+
+    def test_unique_visitors_zero_on_error(self):
+        """Error fallback includes unique_visitors=0."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=Exception("DB down"))
+            resp = client.get("/admin/api/realtime")
+        data = resp.json()
+        assert data["kpi"]["unique_visitors"] == 0
 
 
 class TestAdminExportRealtimeCSV:
@@ -1539,7 +1603,7 @@ class TestAdminExportRealtimePDF:
                 [{"event_type": "chatbot-open", "cnt": 2}],
                 _rt_mock_rows(),
             ])
-            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 2, "hour_count": 1, "type_count": 1})
+            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 2, "hour_count": 1, "type_count": 1, "unique_visitors": 1})
             resp = client.get("/admin/export/realtime/pdf?period=today")
         assert resp.status_code == 200
         assert "application/pdf" in resp.headers["content-type"]
@@ -1556,7 +1620,7 @@ class TestAdminExportRealtimePDF:
                 [{"event_type": "chatbot-open", "cnt": 10}],
                 _rt_mock_rows(),
             ])
-            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 10, "hour_count": 2, "type_count": 1})
+            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 10, "hour_count": 2, "type_count": 1, "unique_visitors": 4})
             resp = client.get("/admin/export/realtime/pdf?period=month")
         assert resp.status_code == 200
         assert "realtime_month.pdf" in resp.headers.get("content-disposition", "")
@@ -1597,7 +1661,7 @@ class TestPeriod24h:
                 [{"event_type": "chatbot-open", "cnt": 3}],
                 [{"event_type": "chatbot-open"}],
             ])
-            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 3, "hour_count": 1, "type_count": 1})
+            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 3, "hour_count": 1, "type_count": 1, "unique_visitors": 2})
             resp = client.get("/admin/api/realtime?period=24h")
         assert resp.status_code == 200
         data = resp.json()
@@ -1630,7 +1694,7 @@ class TestPeriod24h:
                 [{"event_type": "chatbot-open", "cnt": 2}],
                 [{"event_type": "chatbot-open"}],
             ])
-            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 2, "hour_count": 2, "type_count": 1})
+            mock_db.async_fetchone = AsyncMock(return_value={"total_count": 2, "hour_count": 2, "type_count": 1, "unique_visitors": 2})
             resp = client.get("/admin/api/realtime")
         assert resp.status_code == 200
 
