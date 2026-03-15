@@ -1626,3 +1626,257 @@ async def admin_monitoring_page(request: Request):
         return redirect
     tpl = env.get_template("admin/monitoring.html")
     return HTMLResponse(tpl.render(active="monitoring"))
+
+
+# ── Activity monitor ─────────────────────────────────────────────────────────
+
+@router.get("/admin/activity", response_class=HTMLResponse, include_in_schema=False)
+async def admin_activity_page(request: Request):
+    redirect = _require_auth(request)
+    if redirect:
+        return redirect
+    tpl = env.get_template("admin/activity.html")
+    return HTMLResponse(tpl.render(active="activity"))
+
+
+@router.get("/admin/api/activity", include_in_schema=False)
+async def admin_api_activity(request: Request, minutes: int = 5):
+    err = _require_auth_json(request)
+    if err:
+        return err
+    if minutes < 1 or minutes > 60:
+        minutes = 5
+    try:
+        rows = await db_cloudsql.async_fetchall(
+            "SELECT session_hash, country, device, page, lang, event_type, "
+            "COUNT(*) AS hits, MAX(created_at) AS last_seen, MIN(created_at) AS first_seen "
+            "FROM event_log "
+            "WHERE created_at >= NOW() - INTERVAL %s MINUTE "
+            "GROUP BY session_hash "
+            "ORDER BY last_seen DESC LIMIT 100",
+            (minutes,),
+        )
+        sessions = []
+        for r in rows:
+            sessions.append({
+                "session_hash": r["session_hash"][:8] if r.get("session_hash") else "—",
+                "country": r.get("country", ""),
+                "device": r.get("device", ""),
+                "lang": r.get("lang", ""),
+                "last_page": r.get("page", ""),
+                "hits": _dec(r["hits"]),
+                "last_seen": r["last_seen"].strftime("%H:%M:%S") if r.get("last_seen") else "",
+                "first_seen": r["first_seen"].strftime("%H:%M:%S") if r.get("first_seen") else "",
+            })
+
+        # Pages detail per session (top 10 sessions only)
+        top_hashes = [r["session_hash"] for r in rows[:10] if r.get("session_hash")]
+        pages_map = {}
+        if top_hashes:
+            ph = ",".join(["%s"] * len(top_hashes))
+            page_rows = await db_cloudsql.async_fetchall(
+                f"SELECT session_hash, page FROM event_log "
+                f"WHERE created_at >= NOW() - INTERVAL %s MINUTE "
+                f"AND session_hash IN ({ph}) "
+                f"ORDER BY created_at ASC",
+                (minutes, *top_hashes),
+            )
+            for pr in page_rows:
+                h = pr["session_hash"][:8] if pr.get("session_hash") else ""
+                pages_map.setdefault(h, [])
+                p = pr.get("page", "")
+                if p and (not pages_map[h] or pages_map[h][-1] != p):
+                    pages_map[h].append(p)
+
+        for s in sessions:
+            s["pages"] = pages_map.get(s["session_hash"], [])
+
+        return JSONResponse({
+            "total": len(sessions),
+            "minutes": minutes,
+            "active_sessions": sessions,
+        })
+    except Exception as e:
+        logger.error("[ADMIN] activity: %s", e)
+        return JSONResponse({"total": 0, "minutes": minutes, "active_sessions": []})
+
+
+@router.get("/admin/api/activity/history", include_in_schema=False)
+async def admin_api_activity_history(request: Request, hours: int = 24):
+    err = _require_auth_json(request)
+    if err:
+        return err
+    if hours < 1 or hours > 72:
+        hours = 24
+    try:
+        rows = await db_cloudsql.async_fetchall(
+            "SELECT session_hash, country, device, lang, "
+            "GROUP_CONCAT(DISTINCT event_type) AS event_types, "
+            "COUNT(*) AS hits, "
+            "MAX(created_at) AS last_seen, MIN(created_at) AS first_seen, "
+            "SUBSTRING_INDEX(GROUP_CONCAT(page ORDER BY created_at DESC), ',', 1) AS last_page "
+            "FROM event_log "
+            "WHERE created_at >= NOW() - INTERVAL %s HOUR "
+            "GROUP BY session_hash "
+            "ORDER BY last_seen DESC LIMIT 200",
+            (hours,),
+        )
+        sessions = []
+        total_hits = 0
+        countries = set()
+        page_counts: dict = {}
+        all_hashes = []
+        for r in rows:
+            h = r["session_hash"][:8] if r.get("session_hash") else "—"
+            hits = _dec(r["hits"])
+            total_hits += hits
+            c = r.get("country", "")
+            if c:
+                countries.add(c)
+            lp = r.get("last_page", "")
+            if lp:
+                page_counts[lp] = page_counts.get(lp, 0) + hits
+            evt = r.get("event_types", "") or ""
+            sessions.append({
+                "session_hash": h,
+                "country": c,
+                "device": r.get("device", ""),
+                "lang": r.get("lang", ""),
+                "hits": hits,
+                "last_page": lp,
+                "event_types": [e.strip() for e in evt.split(",") if e.strip()],
+                "last_seen": r["last_seen"].strftime("%H:%M:%S") if r.get("last_seen") else "",
+                "first_seen": r["first_seen"].strftime("%H:%M:%S") if r.get("first_seen") else "",
+            })
+            if r.get("session_hash"):
+                all_hashes.append(r["session_hash"])
+
+        # Pages detail (top 30 sessions)
+        top_hashes = all_hashes[:30]
+        pages_map: dict = {}
+        if top_hashes:
+            ph = ",".join(["%s"] * len(top_hashes))
+            page_rows = await db_cloudsql.async_fetchall(
+                f"SELECT session_hash, page, created_at FROM event_log "
+                f"WHERE created_at >= NOW() - INTERVAL %s HOUR "
+                f"AND session_hash IN ({ph}) "
+                f"ORDER BY created_at ASC",
+                (hours, *top_hashes),
+            )
+            for pr in page_rows:
+                h8 = pr["session_hash"][:8] if pr.get("session_hash") else ""
+                pages_map.setdefault(h8, [])
+                p = pr.get("page", "")
+                ts_str = pr["created_at"].strftime("%H:%M:%S") if pr.get("created_at") else ""
+                if p:
+                    pages_map[h8].append({"page": p, "ts": ts_str})
+
+        for s in sessions:
+            s["pages"] = pages_map.get(s["session_hash"], [])
+
+        top_page = max(page_counts, key=page_counts.get) if page_counts else "—"
+
+        return JSONResponse({
+            "total_sessions": len(sessions),
+            "total_hits": total_hits,
+            "unique_countries": len(countries),
+            "top_page": top_page,
+            "hours": hours,
+            "sessions": sessions,
+        })
+    except Exception as e:
+        logger.error("[ADMIN] activity/history: %s", e)
+        return JSONResponse({
+            "total_sessions": 0, "total_hits": 0,
+            "unique_countries": 0, "top_page": "—",
+            "hours": hours, "sessions": [],
+        })
+
+
+# ── IP ban management ────────────────────────────────────────────────────────
+
+@router.post("/admin/api/ban", include_in_schema=False)
+async def admin_api_ban(request: Request):
+    err = _require_auth_json(request)
+    if err:
+        return err
+    try:
+        body = await request.json()
+        ip = (body.get("ip") or "").strip()
+        if not ip:
+            return JSONResponse({"error": "ip required"}, status_code=400)
+        reason = (body.get("reason") or "manual ban").strip()[:255]
+        duration = body.get("duration_hours")  # None = permanent
+        if duration is not None:
+            await db_cloudsql.async_query(
+                "INSERT INTO banned_ips (ip, reason, source, banned_by, expires_at) "
+                "VALUES (%s, %s, 'manual', 'admin', NOW() + INTERVAL %s HOUR) "
+                "ON DUPLICATE KEY UPDATE is_active=1, reason=%s, "
+                "expires_at=NOW() + INTERVAL %s HOUR, banned_at=NOW()",
+                (ip, reason, int(duration), reason, int(duration)),
+            )
+        else:
+            await db_cloudsql.async_query(
+                "INSERT INTO banned_ips (ip, reason, source, banned_by, expires_at) "
+                "VALUES (%s, %s, 'manual', 'admin', NULL) "
+                "ON DUPLICATE KEY UPDATE is_active=1, reason=%s, "
+                "expires_at=NULL, banned_at=NOW()",
+                (ip, reason, reason),
+            )
+        from middleware.ip_ban import invalidate_cache
+        invalidate_cache()
+        logger.info("[ADMIN] IP banned: %s reason=%s duration=%s", ip, reason, duration)
+        return JSONResponse({"ok": True, "ip": ip})
+    except Exception as e:
+        logger.error("[ADMIN] ban error: %s", e)
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@router.post("/admin/api/unban", include_in_schema=False)
+async def admin_api_unban(request: Request):
+    err = _require_auth_json(request)
+    if err:
+        return err
+    try:
+        body = await request.json()
+        ip = (body.get("ip") or "").strip()
+        if not ip:
+            return JSONResponse({"error": "ip required"}, status_code=400)
+        await db_cloudsql.async_query(
+            "UPDATE banned_ips SET is_active=0 WHERE ip=%s", (ip,)
+        )
+        from middleware.ip_ban import invalidate_cache
+        invalidate_cache()
+        logger.info("[ADMIN] IP unbanned: %s", ip)
+        return JSONResponse({"ok": True, "ip": ip})
+    except Exception as e:
+        logger.error("[ADMIN] unban error: %s", e)
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@router.get("/admin/api/banned", include_in_schema=False)
+async def admin_api_banned(request: Request):
+    err = _require_auth_json(request)
+    if err:
+        return err
+    try:
+        rows = await db_cloudsql.async_fetchall(
+            "SELECT ip, reason, source, banned_at, expires_at, banned_by "
+            "FROM banned_ips "
+            "WHERE is_active=1 AND (expires_at IS NULL OR expires_at > NOW()) "
+            "ORDER BY banned_at DESC"
+        )
+        banned = []
+        for r in rows:
+            banned.append({
+                "ip": r["ip"],
+                "reason": r.get("reason", ""),
+                "source": r.get("source", "manual"),
+                "banned_at": r["banned_at"].strftime("%Y-%m-%d %H:%M") if r.get("banned_at") else "",
+                "expires_at": r["expires_at"].strftime("%Y-%m-%d %H:%M") if r.get("expires_at") else "permanent",
+                "banned_by": r.get("banned_by", ""),
+            })
+        return JSONResponse({"total": len(banned), "banned": banned})
+    except Exception as e:
+        logger.error("[ADMIN] banned list: %s", e)
+        return JSONResponse({"total": 0, "banned": []})

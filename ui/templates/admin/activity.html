@@ -1,0 +1,419 @@
+{% extends "admin/_base.html" %}
+{% block title %}Activity Monitor{% endblock %}
+
+{% block content %}
+    <h2 id="act-title">Activity Monitor <span class="rt-dot rt-dot-live"></span></h2>
+
+    <!-- ── Live counter ──────────────────────────────────────────── -->
+    <div class="kpi-grid" id="act-kpi">
+        <div class="kpi-card rt-kpi-visitors">
+            <span class="kpi-value rt-kpi-accent-amber" id="act-total">-</span>
+            <span class="kpi-label">Visiteurs actifs (5 min)</span>
+        </div>
+        <div class="kpi-card rt-kpi-total">
+            <span class="kpi-value rt-kpi-accent-gold" id="act-pages">-</span>
+            <span class="kpi-label">Pages vues</span>
+        </div>
+    </div>
+
+    <!-- ── Auto-refresh toggle ───────────────────────────────────── -->
+    <div class="rt-filters-card">
+        <div class="rt-filters-top">
+            <select id="act-minutes" class="rt-select" style="max-width:180px;">
+                <option value="2">2 minutes</option>
+                <option value="5" selected>5 minutes</option>
+                <option value="10">10 minutes</option>
+                <option value="30">30 minutes</option>
+            </select>
+            <label class="rt-toggle-auto">
+                <span class="rt-toggle-label">Auto-refresh 10s</span>
+                <span class="rt-pill-toggle">
+                    <input type="checkbox" id="act-auto" checked>
+                    <span class="rt-pill-slider"></span>
+                </span>
+            </label>
+        </div>
+    </div>
+
+    <!-- ── Visitors table (live) ─────────────────────────────────── -->
+    <div class="rt-feed">
+        <table class="admin-table" id="act-table">
+            <thead>
+                <tr>
+                    <th>Session</th>
+                    <th>Pays</th>
+                    <th>Device</th>
+                    <th>Langue</th>
+                    <th>Derniere page</th>
+                    <th>Hits</th>
+                    <th>Parcours</th>
+                    <th>Derniere activite</th>
+                </tr>
+            </thead>
+            <tbody id="act-tbody"></tbody>
+        </table>
+        <p id="act-empty" style="text-align:center;color:var(--muted);padding:24px;display:none;">Aucun visiteur actif</p>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- ── History 24h ────────────────────────────────────────────── -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+
+    <h2 style="margin-top:48px;">Historique <span id="hist-period-label">24h</span></h2>
+
+    <!-- ── KPI 24h ───────────────────────────────────────────────── -->
+    <div class="kpi-grid" id="hist-kpi">
+        <div class="kpi-card">
+            <span class="kpi-value rt-kpi-accent-amber" id="hist-sessions">-</span>
+            <span class="kpi-label">Sessions uniques</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-value rt-kpi-accent-gold" id="hist-hits">-</span>
+            <span class="kpi-label">Total hits</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-value rt-kpi-accent-blue" id="hist-countries">-</span>
+            <span class="kpi-label">Pays uniques</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-value rt-kpi-accent-muted" id="hist-top-page" style="font-size:.9rem;">-</span>
+            <span class="kpi-label">Top page</span>
+        </div>
+    </div>
+
+    <!-- ── Filters 24h ───────────────────────────────────────────── -->
+    <div class="rt-filters-card">
+        <div class="rt-filters-top">
+            <div style="display:flex;gap:8px;align-items:center;flex:1;">
+                <input type="text" id="hist-search" class="rt-select" placeholder="Filtrer (session, pays, page...)" style="flex:1;max-width:320px;">
+                <select id="hist-hours" class="rt-select" style="max-width:120px;">
+                    <option value="1">1h</option>
+                    <option value="6">6h</option>
+                    <option value="24" selected>24h</option>
+                </select>
+            </div>
+            <div style="display:flex;gap:8px;">
+                <button class="btn-secondary btn-sm" id="hist-refresh-btn">Rafraichir</button>
+                <button class="btn-secondary btn-sm" id="hist-copy-btn">Copier sessions</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Table 24h ─────────────────────────────────────────────── -->
+    <div class="rt-feed">
+        <table class="admin-table" id="hist-table">
+            <thead>
+                <tr>
+                    <th style="width:36px;"></th>
+                    <th>Session</th>
+                    <th>Pays</th>
+                    <th>Device</th>
+                    <th>Langue</th>
+                    <th>Derniere page</th>
+                    <th>Events</th>
+                    <th>Hits</th>
+                    <th>Duree</th>
+                    <th>Derniere activite</th>
+                </tr>
+            </thead>
+            <tbody id="hist-tbody"></tbody>
+        </table>
+        <p id="hist-empty" style="text-align:center;color:var(--muted);padding:24px;display:none;">Aucune session</p>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════════════ -->
+    <!-- ── Banned IPs ─────────────────────────────────────────────── -->
+    <!-- ════════════════════════════════════════════════════════════ -->
+
+    <h2 style="margin-top:48px;">IPs Bannies</h2>
+
+    <div class="rt-filters-card">
+        <div class="rt-filters-top">
+            <div style="display:flex;gap:8px;align-items:center;flex:1;">
+                <input type="text" id="ban-ip-input" class="rt-select" placeholder="Adresse IP a bannir..." style="flex:1;max-width:260px;">
+                <input type="text" id="ban-reason-input" class="rt-select" placeholder="Raison (optionnel)" style="flex:1;max-width:260px;">
+            </div>
+            <button class="btn-secondary btn-sm" id="ban-submit-btn" style="background:rgba(239,68,68,.15);color:#ef4444;border-color:rgba(239,68,68,.3);">Bannir IP</button>
+        </div>
+    </div>
+
+    <div class="rt-feed">
+        <table class="admin-table" id="ban-table">
+            <thead>
+                <tr>
+                    <th>IP</th>
+                    <th>Raison</th>
+                    <th>Source</th>
+                    <th>Banni le</th>
+                    <th>Expire le</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="ban-tbody"></tbody>
+        </table>
+        <p id="ban-empty" style="text-align:center;color:var(--muted);padding:24px;display:none;">Aucune IP bannie</p>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.btn-expand{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border:1px solid var(--glass-border,rgba(255,255,255,.12));border-radius:6px;background:rgba(255,255,255,.06);color:var(--gold,#d4a843);cursor:pointer;font-weight:700;font-size:.9rem;transition:all .15s}
+.btn-expand:hover{background:rgba(212,168,67,.15)}
+.btn-expand.expanded{color:#ef4444;border-color:rgba(239,68,68,.3);background:rgba(239,68,68,.08)}
+.row-details td{padding:0 !important}
+.row-details-inner{max-height:300px;overflow-y:auto;padding:8px 16px 12px 48px;font-size:.82rem;line-height:1.8}
+.row-details-inner .ts-badge{display:inline-block;background:rgba(212,168,67,.15);color:#d4a843;padding:1px 6px;border-radius:4px;font-family:monospace;font-size:.78rem;margin-right:6px}
+.evt-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.72rem;font-weight:600;margin:1px 2px}
+.evt-badge-pv{background:rgba(59,130,246,.15);color:#60a5fa}
+.evt-badge-chat{background:rgba(16,185,129,.15);color:#34d399}
+.evt-badge-gen{background:rgba(168,85,247,.15);color:#c084fc}
+.evt-badge-other{background:rgba(255,255,255,.08);color:var(--muted,#94a3b8)}
+.lang-badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:.72rem;font-weight:700;background:rgba(212,168,67,.12);color:#d4a843;text-transform:uppercase}
+.btn-unban{cursor:pointer}
+</style>
+<script>
+(function() {
+    /* ── Helpers ─────────────────────────────────────────────────── */
+    function countryFlag(code) {
+        if (!code || code === 'XX' || code.length !== 2) return '\u{1F310}';
+        return String.fromCodePoint(...[...code.toUpperCase()].map(c => 0x1F1E6 + c.charCodeAt(0) - 65));
+    }
+    function deviceIcon(d) { return d === 'mobile' ? '\u{1F4F1}' : '\u{1F4BB}'; }
+    function evtBadge(e) {
+        if (e.includes('page-view')) return '<span class="evt-badge evt-badge-pv">page-view</span>';
+        if (e.includes('chatbot')) return '<span class="evt-badge evt-badge-chat">' + e + '</span>';
+        if (e.includes('generat')) return '<span class="evt-badge evt-badge-gen">' + e + '</span>';
+        return '<span class="evt-badge evt-badge-other">' + e + '</span>';
+    }
+    function formatDuration(first, last) {
+        if (!first || !last) return '—';
+        var p = function(t) { var s = t.split(':'); return (+s[0])*3600 + (+s[1])*60 + (+s[2]||0); };
+        var d = p(last) - p(first);
+        if (d < 0) d = 0;
+        if (d < 60) return d + 's';
+        var m = Math.floor(d / 60), s = d % 60;
+        return m + 'min ' + (s < 10 ? '0' : '') + s + 's';
+    }
+    function esc(s) { var d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    /* ── Live (Phase 1) ─────────────────────────────────────────── */
+    var $total = document.getElementById('act-total');
+    var $pages = document.getElementById('act-pages');
+    var $tbody = document.getElementById('act-tbody');
+    var $empty = document.getElementById('act-empty');
+    var $auto  = document.getElementById('act-auto');
+    var $mins  = document.getElementById('act-minutes');
+    var timer = null;
+
+    async function refreshActivity() {
+        try {
+            var mins = $mins.value || 5;
+            var res = await fetch('/admin/api/activity?minutes=' + mins);
+            if (!res.ok) return;
+            var data = await res.json();
+            $total.textContent = data.total;
+            var totalHits = 0;
+            data.active_sessions.forEach(function(s) { totalHits += s.hits; });
+            $pages.textContent = totalHits;
+            if (!data.active_sessions.length) { $tbody.innerHTML = ''; $empty.style.display = 'block'; return; }
+            $empty.style.display = 'none';
+            var html = '';
+            data.active_sessions.forEach(function(s) {
+                var pg = (s.pages || []).map(function(p) { return '<code>' + esc(p) + '</code>'; }).join(' \u2192 ');
+                html += '<tr>'
+                    + '<td style="font-family:monospace;font-size:.85rem;">' + esc(s.session_hash) + '</td>'
+                    + '<td>' + countryFlag(s.country) + ' ' + esc(s.country || '—') + '</td>'
+                    + '<td>' + deviceIcon(s.device) + '</td>'
+                    + '<td>' + esc((s.lang || '—').toUpperCase()) + '</td>'
+                    + '<td><code>' + esc(s.last_page || '—') + '</code></td>'
+                    + '<td style="text-align:center;font-weight:600;">' + s.hits + '</td>'
+                    + '<td style="font-size:.8rem;max-width:300px;overflow:hidden;text-overflow:ellipsis;">' + (pg || '—') + '</td>'
+                    + '<td>' + esc(s.last_seen || '—') + '</td>'
+                    + '</tr>';
+            });
+            $tbody.innerHTML = html;
+        } catch(e) { console.error('Activity refresh error:', e); }
+    }
+    function startTimer() { stopTimer(); timer = setInterval(refreshActivity, 10000); }
+    function stopTimer() { if (timer) { clearInterval(timer); timer = null; } }
+    $auto.addEventListener('change', function() { this.checked ? startTimer() : stopTimer(); });
+    $mins.addEventListener('change', refreshActivity);
+    refreshActivity();
+    startTimer();
+
+    /* ── History 24h (Phase 2) ──────────────────────────────────── */
+    var $hSessions  = document.getElementById('hist-sessions');
+    var $hHits      = document.getElementById('hist-hits');
+    var $hCountries = document.getElementById('hist-countries');
+    var $hTopPage   = document.getElementById('hist-top-page');
+    var $hTbody     = document.getElementById('hist-tbody');
+    var $hEmpty     = document.getElementById('hist-empty');
+    var $hSearch    = document.getElementById('hist-search');
+    var $hHours     = document.getElementById('hist-hours');
+    var $hLabel     = document.getElementById('hist-period-label');
+    var histData    = [];
+
+    async function refreshHistory() {
+        try {
+            var hours = $hHours.value || 24;
+            $hLabel.textContent = hours + 'h';
+            var res = await fetch('/admin/api/activity/history?hours=' + hours);
+            if (!res.ok) return;
+            var data = await res.json();
+            $hSessions.textContent = data.total_sessions;
+            $hHits.textContent = data.total_hits;
+            $hCountries.textContent = data.unique_countries;
+            $hTopPage.textContent = data.top_page;
+            histData = data.sessions || [];
+            renderHistory();
+        } catch(e) { console.error('History refresh error:', e); }
+    }
+
+    function renderHistory() {
+        var q = ($hSearch.value || '').toLowerCase();
+        var filtered = histData;
+        if (q) {
+            filtered = histData.filter(function(s) {
+                return (s.session_hash + ' ' + s.country + ' ' + s.last_page + ' ' + s.lang).toLowerCase().indexOf(q) >= 0;
+            });
+        }
+        if (!filtered.length) { $hTbody.innerHTML = ''; $hEmpty.style.display = 'block'; return; }
+        $hEmpty.style.display = 'none';
+        var html = '';
+        filtered.forEach(function(s, i) {
+            var hasPages = s.pages && s.pages.length > 0;
+            var expandBtn = s.hits > 1 && hasPages
+                ? '<button class="btn-expand" data-row-id="' + i + '">+</button>'
+                : '';
+            var evts = (s.event_types || []).map(evtBadge).join('');
+            html += '<tr>'
+                + '<td>' + expandBtn + '</td>'
+                + '<td style="font-family:monospace;font-size:.85rem;">' + esc(s.session_hash) + '</td>'
+                + '<td>' + countryFlag(s.country) + ' ' + esc(s.country || '—') + '</td>'
+                + '<td>' + deviceIcon(s.device) + '</td>'
+                + '<td><span class="lang-badge">' + esc(s.lang || '—') + '</span></td>'
+                + '<td><code>' + esc(s.last_page || '—') + '</code></td>'
+                + '<td>' + evts + '</td>'
+                + '<td style="text-align:center;font-weight:600;">' + s.hits + '</td>'
+                + '<td>' + formatDuration(s.first_seen, s.last_seen) + '</td>'
+                + '<td>' + esc(s.last_seen || '—') + '</td>'
+                + '</tr>';
+            if (s.hits > 1 && hasPages) {
+                var pagesHtml = s.pages.map(function(p) {
+                    return '<span class="ts-badge">' + esc(p.ts) + '</span> <code>' + esc(p.page) + '</code>';
+                }).join('<br>');
+                html += '<tr class="row-details" data-row-id="' + i + '" style="display:none;">'
+                    + '<td colspan="10"><div class="row-details-inner">' + pagesHtml + '</div></td>'
+                    + '</tr>';
+            }
+        });
+        $hTbody.innerHTML = html;
+    }
+
+    /* Expand/collapse */
+    document.body.addEventListener('click', function(e) {
+        if (e.target.classList.contains('btn-expand')) {
+            var rid = e.target.getAttribute('data-row-id');
+            var dr = document.querySelector('.row-details[data-row-id="' + rid + '"]');
+            if (dr) {
+                if (dr.style.display === 'none') {
+                    dr.style.display = '';
+                    e.target.textContent = '\u2212';
+                    e.target.classList.add('expanded');
+                } else {
+                    dr.style.display = 'none';
+                    e.target.textContent = '+';
+                    e.target.classList.remove('expanded');
+                }
+            }
+        }
+    });
+
+    /* Filters */
+    var searchTimer = null;
+    $hSearch.addEventListener('input', function() {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(renderHistory, 200);
+    });
+    $hHours.addEventListener('change', refreshHistory);
+    document.getElementById('hist-refresh-btn').addEventListener('click', refreshHistory);
+    document.getElementById('hist-copy-btn').addEventListener('click', function() {
+        var q = ($hSearch.value || '').toLowerCase();
+        var filtered = histData;
+        if (q) filtered = histData.filter(function(s) {
+            return (s.session_hash + ' ' + s.country + ' ' + s.last_page + ' ' + s.lang).toLowerCase().indexOf(q) >= 0;
+        });
+        var text = filtered.map(function(s) { return s.session_hash; }).join('\n');
+        navigator.clipboard.writeText(text).then(function() {
+            var btn = document.getElementById('hist-copy-btn');
+            btn.textContent = 'Copie !'; setTimeout(function() { btn.textContent = 'Copier sessions'; }, 1500);
+        });
+    });
+
+    refreshHistory();
+
+    /* ── Banned IPs (Phase 3) ───────────────────────────────────── */
+    var $banTbody = document.getElementById('ban-tbody');
+    var $banEmpty = document.getElementById('ban-empty');
+    var $banIp    = document.getElementById('ban-ip-input');
+    var $banReason = document.getElementById('ban-reason-input');
+
+    async function refreshBanned() {
+        try {
+            var res = await fetch('/admin/api/banned');
+            if (!res.ok) return;
+            var data = await res.json();
+            if (!data.banned || !data.banned.length) {
+                $banTbody.innerHTML = '';
+                $banEmpty.style.display = 'block';
+                return;
+            }
+            $banEmpty.style.display = 'none';
+            var html = '';
+            data.banned.forEach(function(b) {
+                var srcClass = b.source === 'auto_spam' ? 'evt-badge-chat' : b.source === 'auto_flood' ? 'evt-badge-pv' : 'evt-badge-other';
+                var srcLabel = b.source === 'auto_spam' ? 'spam' : b.source === 'auto_flood' ? 'flood' : 'manual';
+                html += '<tr>'
+                    + '<td style="font-family:monospace;">' + esc(b.ip) + '</td>'
+                    + '<td>' + esc(b.reason || '—') + '</td>'
+                    + '<td><span class="evt-badge ' + srcClass + '">' + srcLabel + '</span></td>'
+                    + '<td>' + esc(b.banned_at) + '</td>'
+                    + '<td>' + esc(b.expires_at || 'permanent') + '</td>'
+                    + '<td style="white-space:nowrap;">'
+                    + '<a href="https://www.abuseipdb.com/check/' + encodeURIComponent(b.ip) + '" target="_blank" rel="noopener" class="btn-secondary btn-sm" style="font-size:.7rem;padding:2px 6px;margin-right:4px;">AbuseIPDB</a>'
+                    + '<a href="https://ipinfo.io/' + encodeURIComponent(b.ip) + '" target="_blank" rel="noopener" class="btn-secondary btn-sm" style="font-size:.7rem;padding:2px 6px;margin-right:4px;">WHOIS</a>'
+                    + '<button class="btn-secondary btn-sm btn-unban" data-ip="' + esc(b.ip) + '" style="font-size:.7rem;padding:2px 6px;background:rgba(16,185,129,.15);color:#10b981;border-color:rgba(16,185,129,.3);">Unban</button>'
+                    + '</td></tr>';
+            });
+            $banTbody.innerHTML = html;
+        } catch(e) { console.error('Banned refresh error:', e); }
+    }
+
+    document.getElementById('ban-submit-btn').addEventListener('click', async function() {
+        var ip = $banIp.value.trim();
+        if (!ip) return;
+        if (!confirm('Bannir IP ' + ip + ' ?')) return;
+        var reason = $banReason.value.trim() || 'manual ban';
+        var res = await fetch('/admin/api/ban', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ip: ip, reason: reason})
+        });
+        if (res.ok) { $banIp.value = ''; $banReason.value = ''; refreshBanned(); }
+    });
+
+    document.body.addEventListener('click', async function(e) {
+        if (e.target.classList.contains('btn-unban')) {
+            var ip = e.target.getAttribute('data-ip');
+            if (!confirm('Debannir IP ' + ip + ' ?')) return;
+            var res = await fetch('/admin/api/unban', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ip: ip})
+            });
+            if (res.ok) refreshBanned();
+        }
+    });
+
+    refreshBanned();
+})();
+</script>
+{% endblock %}

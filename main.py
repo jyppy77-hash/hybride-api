@@ -579,6 +579,10 @@ app.add_middleware(GZipMiddleware, minimum_size=500)
 from middleware.em_access_control import em_access_middleware
 app.middleware("http")(em_access_middleware)
 
+# ── IP Ban middleware (blocks banned IPs → 403, cache 60s) ──
+from middleware.ip_ban import ip_ban_middleware
+app.middleware("http")(ip_ban_middleware)
+
 
 # =========================
 # Block sensitive static paths

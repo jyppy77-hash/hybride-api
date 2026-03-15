@@ -6,6 +6,7 @@ Exports (CSV/PDF), Sponsors CRUD, Factures CRUD, Config.
 
 import json
 import os
+import time
 from unittest.mock import patch, AsyncMock
 
 import pytest
@@ -1721,3 +1722,408 @@ class TestPeriod24h:
             mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
             resp = client.get("/admin/api/impressions?period=7d")
         assert resp.status_code == 200
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Activity Monitor
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class TestAdminActivity:
+    """Tests for /admin/activity page + API."""
+
+    def test_activity_page_requires_auth(self):
+        client = _get_client()
+        resp = client.get("/admin/activity", follow_redirects=False)
+        assert resp.status_code == 302
+        assert "/admin/login" in resp.headers["location"]
+
+    def test_activity_page_renders(self):
+        client = _authed_client()
+        resp = client.get("/admin/activity")
+        assert resp.status_code == 200
+        assert "Activity Monitor" in resp.text
+
+    def test_api_activity_requires_auth(self):
+        client = _get_client()
+        resp = client.get("/admin/api/activity")
+        assert resp.status_code == 401
+
+    def test_api_activity_returns_json(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            resp = client.get("/admin/api/activity")
+        data = resp.json()
+        assert resp.status_code == 200
+        assert "total" in data
+        assert "active_sessions" in data
+        assert data["total"] == 0
+
+    def test_api_activity_with_minutes_param(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            resp = client.get("/admin/api/activity?minutes=1")
+        data = resp.json()
+        assert resp.status_code == 200
+        assert data["minutes"] == 1
+
+    def test_api_activity_with_sessions(self):
+        client = _authed_client()
+        mock_rows = [
+            {
+                "session_hash": "a1b2c3d4e5f6a7b8",
+                "country": "FR",
+                "device": "desktop",
+                "page": "/euromillions",
+                "lang": "fr",
+                "event_type": "page-view",
+                "hits": 5,
+                "last_seen": datetime(2026, 3, 15, 15, 42, 0),
+                "first_seen": datetime(2026, 3, 15, 15, 38, 0),
+            },
+        ]
+        mock_pages = [
+            {"session_hash": "a1b2c3d4e5f6a7b8", "page": "/euromillions"},
+            {"session_hash": "a1b2c3d4e5f6a7b8", "page": "/euromillions/statistiques"},
+        ]
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[mock_rows, mock_pages])
+            resp = client.get("/admin/api/activity?minutes=5")
+        data = resp.json()
+        assert data["total"] == 1
+        s = data["active_sessions"][0]
+        assert s["session_hash"] == "a1b2c3d4"
+        assert s["country"] == "FR"
+        assert s["hits"] == 5
+        assert len(s["pages"]) == 2
+
+    # ── History API ──
+
+    def test_api_history_requires_auth(self):
+        client = _get_client()
+        resp = client.get("/admin/api/activity/history")
+        assert resp.status_code == 401
+
+    def test_api_history_returns_json(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            resp = client.get("/admin/api/activity/history")
+        data = resp.json()
+        assert resp.status_code == 200
+        assert "total_sessions" in data
+        assert "total_hits" in data
+        assert "unique_countries" in data
+        assert "top_page" in data
+        assert "sessions" in data
+        assert data["hours"] == 24
+
+    def test_api_history_with_hours_param(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            resp = client.get("/admin/api/activity/history?hours=6")
+        data = resp.json()
+        assert data["hours"] == 6
+
+    def test_api_history_with_sessions(self):
+        client = _authed_client()
+        mock_rows = [
+            {
+                "session_hash": "abcdef1234567890",
+                "country": "US",
+                "device": "mobile",
+                "lang": "en",
+                "event_types": "page-view,chatbot-open",
+                "hits": 8,
+                "last_seen": datetime(2026, 3, 15, 16, 0, 0),
+                "first_seen": datetime(2026, 3, 15, 15, 55, 0),
+                "last_page": "/en/euromillions",
+            },
+        ]
+        mock_pages = [
+            {"session_hash": "abcdef1234567890", "page": "/en/euromillions", "created_at": datetime(2026, 3, 15, 15, 55, 0)},
+            {"session_hash": "abcdef1234567890", "page": "/en/euromillions/statistics", "created_at": datetime(2026, 3, 15, 15, 57, 0)},
+        ]
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=[mock_rows, mock_pages])
+            resp = client.get("/admin/api/activity/history?hours=24")
+        data = resp.json()
+        assert data["total_sessions"] == 1
+        assert data["total_hits"] == 8
+        assert data["unique_countries"] == 1
+        s = data["sessions"][0]
+        assert s["session_hash"] == "abcdef12"
+        assert s["country"] == "US"
+        assert "page-view" in s["event_types"]
+        assert "chatbot-open" in s["event_types"]
+        assert len(s["pages"]) == 2
+        assert s["pages"][0]["page"] == "/en/euromillions"
+        assert s["pages"][0]["ts"] == "15:55:00"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# IP Ban management
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class TestAdminBan:
+    """Tests for ban/unban/banned API endpoints."""
+
+    def test_ban_requires_auth(self):
+        client = _get_client()
+        resp = client.post("/admin/api/ban", json={"ip": "1.2.3.4"})
+        assert resp.status_code == 401
+
+    def test_ban_ip(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock()
+            resp = client.post("/admin/api/ban", json={"ip": "1.2.3.4", "reason": "test"})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["ok"] is True
+        assert data["ip"] == "1.2.3.4"
+
+    def test_ban_requires_ip(self):
+        client = _authed_client()
+        resp = client.post("/admin/api/ban", json={"reason": "no ip"})
+        assert resp.status_code == 400
+
+    def test_unban_requires_auth(self):
+        client = _get_client()
+        resp = client.post("/admin/api/unban", json={"ip": "1.2.3.4"})
+        assert resp.status_code == 401
+
+    def test_unban_ip(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock()
+            resp = client.post("/admin/api/unban", json={"ip": "1.2.3.4"})
+        assert resp.status_code == 200
+        assert resp.json()["ok"] is True
+
+    def test_banned_list_requires_auth(self):
+        client = _get_client()
+        resp = client.get("/admin/api/banned")
+        assert resp.status_code == 401
+
+    def test_banned_list_empty(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            resp = client.get("/admin/api/banned")
+        data = resp.json()
+        assert resp.status_code == 200
+        assert data["total"] == 0
+        assert data["banned"] == []
+
+    def test_banned_list_with_entries(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[
+                {"ip": "1.2.3.4", "reason": "flood", "source": "manual",
+                 "banned_at": datetime(2026, 3, 15, 16, 0, 0),
+                 "expires_at": None, "banned_by": "admin"},
+            ])
+            resp = client.get("/admin/api/banned")
+        data = resp.json()
+        assert data["total"] == 1
+        assert data["banned"][0]["ip"] == "1.2.3.4"
+        assert data["banned"][0]["reason"] == "flood"
+        assert data["banned"][0]["expires_at"] == "permanent"
+
+    def test_ban_permanent(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock()
+            resp = client.post("/admin/api/ban", json={
+                "ip": "5.6.7.8", "reason": "test", "duration_hours": None,
+            })
+        assert resp.status_code == 200
+        sql = mock_db.async_query.call_args[0][0]
+        assert "expires_at=NULL" in sql
+
+    def test_ban_temporary(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock()
+            resp = client.post("/admin/api/ban", json={
+                "ip": "5.6.7.8", "reason": "temp", "duration_hours": 2,
+            })
+        assert resp.status_code == 200
+        sql = mock_db.async_query.call_args[0][0]
+        assert "INTERVAL" in sql
+        params = mock_db.async_query.call_args[0][1]
+        assert 2 in params
+
+
+class TestIpBanMiddleware:
+    """Tests for the IP ban middleware."""
+
+    def test_banned_ip_gets_403(self):
+        client = _get_client()
+        with patch("middleware.ip_ban._banned_set", {"198.51.100.1"}), \
+             patch("middleware.ip_ban._cache_ts", float("inf")):
+            resp = client.get("/health", headers={"x-forwarded-for": "198.51.100.1"})
+        assert resp.status_code == 403
+
+    def test_clean_ip_passes(self):
+        client = _get_client()
+        with patch("middleware.ip_ban._banned_set", {"198.51.100.1"}), \
+             patch("middleware.ip_ban._cache_ts", float("inf")):
+            resp = client.get("/health", headers={"x-forwarded-for": "203.0.113.50"})
+        assert resp.status_code == 200
+
+
+class TestAutoBan:
+    """Tests for auto-ban thresholds."""
+
+    def test_spam_threshold_triggers_ban(self):
+        """10 req/1s triggers auto_spam ban."""
+        import middleware.ip_ban as mod
+        mod._request_log.clear()
+        now = time.monotonic()
+        # Simulate 10 requests in <1s
+        mod._request_log["10.0.0.1"] = [now - 0.1 * i for i in range(10)]
+        result = mod._check_auto_ban("10.0.0.1")
+        assert result == "auto_spam"
+        mod._request_log.clear()
+
+    def test_flood_threshold_triggers_ban(self):
+        """200 req/5min triggers auto_flood ban."""
+        import middleware.ip_ban as mod
+        mod._request_log.clear()
+        now = time.monotonic()
+        # Simulate 200 requests spread over 5 min
+        mod._request_log["10.0.0.2"] = [now - i for i in range(200)]
+        result = mod._check_auto_ban("10.0.0.2")
+        assert result == "auto_flood"
+        mod._request_log.clear()
+
+    def test_below_threshold_no_ban(self):
+        """5 req/1s should not trigger ban."""
+        import middleware.ip_ban as mod
+        mod._request_log.clear()
+        now = time.monotonic()
+        mod._request_log["10.0.0.3"] = [now - 0.1 * i for i in range(5)]
+        result = mod._check_auto_ban("10.0.0.3")
+        assert result is None
+        mod._request_log.clear()
+
+    def test_owner_excluded_from_auto_ban(self):
+        """Owner IPs are never auto-banned."""
+        import middleware.ip_ban as mod
+        assert mod._is_owner_or_loopback("127.0.0.1") is True
+        assert mod._is_owner_or_loopback("::1") is True
+        assert mod._is_owner_or_loopback("203.0.113.50") is False
+
+
+class TestIpReputation:
+    """Tests for AbuseIPDB reputation service."""
+
+    def test_no_api_key_returns_unknown(self):
+        import asyncio
+        from services.ip_reputation import check_ip_reputation
+        with patch("services.ip_reputation._API_KEY", ""):
+            result = asyncio.get_event_loop().run_until_complete(
+                check_ip_reputation("1.2.3.4")
+            )
+        assert result["label"] == "Inconnu"
+        assert result["score"] == 0
+
+    def test_high_score_returns_critique(self):
+        from services import ip_reputation as mod
+        import asyncio
+        mod._CACHE["1.2.3.4"] = ({"score": 90, "label": "Critique", "color": "#ef4444"}, time.monotonic())
+        with patch.object(mod, "_API_KEY", "test-key"):
+            result = asyncio.get_event_loop().run_until_complete(
+                mod.check_ip_reputation("1.2.3.4")
+            )
+        assert result["label"] == "Critique"
+        assert result["score"] == 90
+        mod._CACHE.pop("1.2.3.4", None)
+
+    def test_low_score_returns_clean(self):
+        from services import ip_reputation as mod
+        import asyncio
+        mod._CACHE["5.6.7.8"] = ({"score": 5, "label": "Clean", "color": "#10b981"}, time.monotonic())
+        with patch.object(mod, "_API_KEY", "test-key"):
+            result = asyncio.get_event_loop().run_until_complete(
+                mod.check_ip_reputation("5.6.7.8")
+            )
+        assert result["label"] == "Clean"
+        assert result["score"] == 5
+        mod._CACHE.pop("5.6.7.8", None)
+
+    def test_suspect_score_threshold(self):
+        from services import ip_reputation as mod
+        import asyncio
+        mod._CACHE["9.9.9.9"] = ({"score": 50, "label": "Suspect", "color": "#f59e0b"}, time.monotonic())
+        with patch.object(mod, "_API_KEY", "test-key"):
+            result = asyncio.get_event_loop().run_until_complete(
+                mod.check_ip_reputation("9.9.9.9")
+            )
+        assert result["label"] == "Suspect"
+        mod._CACHE.pop("9.9.9.9", None)
+
+    def test_empty_ip_returns_unknown(self):
+        from services import ip_reputation as mod
+        import asyncio
+        with patch.object(mod, "_API_KEY", "test-key"):
+            result = asyncio.get_event_loop().run_until_complete(
+                mod.check_ip_reputation("")
+            )
+        assert result["label"] == "Inconnu"
+
+    def test_cache_hit_no_http_call(self):
+        """Cached result is returned without HTTP call."""
+        from services import ip_reputation as mod
+        import asyncio
+        mod._CACHE["7.7.7.7"] = ({"score": 10, "label": "Clean", "color": "#10b981"}, time.monotonic())
+        with patch.object(mod, "_API_KEY", "test-key"), \
+             patch("services.ip_reputation.httpx") as mock_httpx:
+            result = asyncio.get_event_loop().run_until_complete(
+                mod.check_ip_reputation("7.7.7.7")
+            )
+        assert result["label"] == "Clean"
+        mock_httpx.AsyncClient.assert_not_called()
+        mod._CACHE.pop("7.7.7.7", None)
+
+
+class TestIpBanEdgeCases:
+    """Edge case tests for IP ban middleware."""
+
+    def test_counter_cleanup_after_window(self):
+        """Old entries are pruned from request log."""
+        import middleware.ip_ban as mod
+        mod._request_log.clear()
+        now = time.monotonic()
+        # Add entries older than 5min window
+        mod._request_log["10.0.0.5"] = [now - 400, now - 350, now - 310]
+        mod._record_request("10.0.0.5")
+        # Old entries should be pruned, only 1 recent
+        assert len(mod._request_log["10.0.0.5"]) == 1
+        mod._request_log.clear()
+
+    def test_empty_ip_skips_middleware(self):
+        """Empty client IP should not trigger any ban logic."""
+        import middleware.ip_ban as mod
+        mod._request_log.clear()
+        mod._record_request("")
+        result = mod._check_auto_ban("")
+        assert result is None
+        mod._request_log.clear()
+
+    def test_ipv6_owner_excluded(self):
+        """IPv6 loopback is excluded from auto-ban."""
+        import middleware.ip_ban as mod
+        assert mod._is_owner_or_loopback("::1") is True
+
+    def test_activity_nav_link_in_base(self):
+        """Activity link exists in admin nav."""
+        client = _authed_client()
+        resp = client.get("/admin/activity")
+        assert resp.status_code == 200
+        assert 'href="/admin/activity"' in resp.text
+        assert "Activity" in resp.text
