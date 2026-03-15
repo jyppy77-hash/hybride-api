@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 
-EM_PUBLIC_ACCESS = os.getenv("EM_PUBLIC_ACCESS", "false").lower() in (
+EM_PUBLIC_ACCESS = os.getenv("EM_PUBLIC_ACCESS", "true").lower() in (
     "true", "1", "yes",
 )
 
