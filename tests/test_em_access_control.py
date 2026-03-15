@@ -328,8 +328,9 @@ class TestEmAccessMiddleware:
 
     @pytest.fixture(autouse=True)
     def _setup_press(self, monkeypatch):
-        """Configure press token for all middleware tests."""
+        """Configure press token + disable public access for all middleware tests."""
         import middleware.em_access_control as mod
+        monkeypatch.setattr(mod, "EM_PUBLIC_ACCESS", False)
         monkeypatch.setattr(mod, "PRESS_PREVIEW_TOKEN", self.VALID_TOKEN)
         monkeypatch.setattr(mod, "PRESS_PREVIEW_EXPIRY", "2099-12-31T00:00:00Z")
 
@@ -427,6 +428,29 @@ class TestEmAccessMiddleware:
         resp = await mod.em_access_middleware(req, call_next)
         assert resp.status_code == 200
         call_next.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_public_access_api_passes(self, call_next, monkeypatch):
+        """When EM_PUBLIC_ACCESS=True, even API routes pass without token."""
+        import middleware.em_access_control as mod
+        monkeypatch.setattr(mod, "EM_PUBLIC_ACCESS", True)
+        req = self._make_request("/api/euromillions/stats", forwarded="198.51.100.1")
+        resp = await mod.em_access_middleware(req, call_next)
+        assert resp.status_code == 200
+        call_next.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_public_access_all_langs_pass(self, call_next, monkeypatch):
+        """When EM_PUBLIC_ACCESS=True, all 6 lang routes pass."""
+        import middleware.em_access_control as mod
+        monkeypatch.setattr(mod, "EM_PUBLIC_ACCESS", True)
+        for path in ["/euromillions", "/en/euromillions", "/es/euromillions",
+                      "/pt/euromillions", "/de/euromillions", "/nl/euromillions"]:
+            call_next.reset_mock()
+            req = self._make_request(path, forwarded="2001:db8::99")
+            resp = await mod.em_access_middleware(req, call_next)
+            assert resp.status_code == 200, f"{path} should pass with public access"
+            call_next.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_health_not_blocked(self, call_next):
