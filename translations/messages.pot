@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-03-13 13:09+0100\n"
+"POT-Creation-Date: 2026-03-15 16:33+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -33,6 +33,33 @@ msgstr ""
 #: tests/test_i18n.py:276 tests/test_i18n.py:280
 #, python-brace-format
 msgid "{count} tirages analysés"
+msgstr ""
+
+#: tests/test_i18n.py:341 ui/templates/em/a-propos.html:106
+msgid ""
+"<strong>Jean-Philippe Godard</strong>, connu sous le pseudo "
+"<strong>JyppY</strong>, est un développeur full-stack et data scientist "
+"avec plus de 40 ans d'expérience en informatique. Passionné par la data "
+"science, les probabilités et l'intelligence artificielle, il a conçu le "
+"moteur algorithmique HYBRIDE qui constitue le cœur analytique de LotoIA."
+msgstr ""
+
+#: tests/test_i18n.py:364 ui/templates/em/a-propos.html:107
+msgid ""
+"Ancien participant au programme <strong>Google for Startups</strong>, "
+"Jean-Philippe a fondé <strong>EmovisIA</strong>, société spécialisée dans"
+" l'intelligence artificielle appliquée à l'analyse de données. LotoIA est"
+" née de cette expertise, avec l'objectif de rendre l'analyse statistique "
+"des loteries accessible, transparente et gratuite pour tous les joueurs."
+msgstr ""
+
+#: tests/test_i18n.py:386 ui/templates/em/a-propos.html:102
+msgid ""
+"<strong>LotoIA</strong> est une plateforme française indépendante dédiée "
+"à l'analyse statistique des tirages du Loto et de l'EuroMillions. Créée "
+"par <strong>JyppY</strong> (Jean-Philippe Godard), LotoIA est née d'une "
+"conviction simple : les joueurs méritent des outils transparents, "
+"honnêtes et gratuits."
 msgstr ""
 
 #: ui/templates/em/_base.html:56 ui/templates/em/a-propos.html:86
@@ -117,34 +144,34 @@ msgstr ""
 msgid "Avertissements"
 msgstr ""
 
-#: ui/templates/em/_footer.html:41
+#: ui/templates/em/_footer.html:42
 msgid "Voir aussi"
 msgstr ""
 
-#: ui/templates/em/_footer.html:42
+#: ui/templates/em/_footer.html:43
 msgid "Analyse Loto France"
 msgstr ""
 
-#: ui/templates/em/_footer.html:44
+#: ui/templates/em/_footer.html:45
 msgid "Statistiques Loto"
 msgstr ""
 
-#: ui/templates/em/_footer.html:46
+#: ui/templates/em/_footer.html:47
 msgid "Générateur Loto"
 msgstr ""
 
-#: ui/templates/em/_footer.html:49
+#: ui/templates/em/_footer.html:50
 msgid ""
 "Jouer comporte des risques : endettement, isolement, dépendance. Appelez "
 "le 09 74 75 13 13 (appel non surtaxé)."
 msgstr ""
 
-#: ui/templates/em/_footer.html:50 ui/templates/em/euromillions-ia.html:246
+#: ui/templates/em/_footer.html:51 ui/templates/em/euromillions-ia.html:246
 #: ui/templates/em/hybride.html:436
 msgid "Interdiction de jeu aux mineurs."
 msgstr ""
 
-#: ui/templates/em/_footer.html:52
+#: ui/templates/em/_footer.html:53
 msgid "Développé par"
 msgstr ""
 
@@ -211,15 +238,6 @@ msgstr ""
 msgid "Qui sommes-nous ?"
 msgstr ""
 
-#: ui/templates/em/a-propos.html:102
-msgid ""
-"<strong>LotoIA</strong> est une plateforme française indépendante dédiée "
-"à l'analyse statistique des tirages du Loto et de l'EuroMillions. Créée "
-"par <strong>JyppY</strong> (Jean-Philippe Godard), LotoIA est née d'une "
-"conviction simple : les joueurs méritent des outils transparents, "
-"honnêtes et gratuits."
-msgstr ""
-
 #: ui/templates/em/a-propos.html:103
 msgid ""
 "Nous ne sommes <strong>pas affiliés à la Française des Jeux</strong> ni à"
@@ -230,24 +248,6 @@ msgstr ""
 
 #: ui/templates/em/a-propos.html:105
 msgid "À propos du fondateur"
-msgstr ""
-
-#: ui/templates/em/a-propos.html:106
-msgid ""
-"<strong>Jean-Philippe Godard</strong>, connu sous le pseudo "
-"<strong>JyppY</strong>, est un développeur full-stack et data scientist "
-"avec plus de 40 ans d'expérience en informatique. Passionné par la data "
-"science, les probabilités et l'intelligence artificielle, il a conçu le "
-"moteur algorithmique HYBRIDE qui constitue le cœur analytique de LotoIA."
-msgstr ""
-
-#: ui/templates/em/a-propos.html:107
-msgid ""
-"Ancien participant au programme <strong>Google for Startups</strong>, "
-"Jean-Philippe a fondé <strong>EmovisIA</strong>, société spécialisée dans"
-" l'intelligence artificielle appliquée à l'analyse de données. LotoIA est"
-" née de cette expertise, avec l'objectif de rendre l'analyse statistique "
-"des loteries accessible, transparente et gratuite pour tous les joueurs."
 msgstr ""
 
 #: ui/templates/em/a-propos.html:112
@@ -3052,14 +3052,64 @@ msgid ""
 msgstr ""
 
 #: ui/templates/em/news.html:83
-msgid "11 mars 2026"
+msgid "15 mars 2026"
+msgstr ""
+
+#: ui/templates/em/news.html:84
+msgid "LANCEMENT"
 msgstr ""
 
 #: ui/templates/em/news.html:86
-msgid "Release 1.4.001 — La plateforme passe au niveau supérieur"
+msgid "LotoIA lance le premier chatbot EuroMillions intelligent et gratuit"
 msgstr ""
 
 #: ui/templates/em/news.html:88
+msgid ""
+"Nous sommes fiers de vous présenter le tout nouveau module EuroMillions "
+"de LotoIA ! Après des mois de développement, notre plateforme d'analyse "
+"statistique s'ouvre aujourd'hui à l'EuroMillions, le plus grand jeu de "
+"loterie en Europe."
+msgstr ""
+
+#: ui/templates/em/news.html:90
+msgid ""
+"Au cœur de cette nouveauté : <strong>HYBRIDE</strong>, le premier chatbot"
+" au monde dédié à l'EuroMillions, connecté en temps réel à une base de "
+"données de plus de 730 tirages depuis 2004. Posez-lui vos questions en "
+"français, anglais, espagnol, portugais, allemand ou néerlandais — il "
+"analyse les données et vous répond instantanément. Pas de réponses "
+"génériques : chaque réponse est calculée à partir des vrais résultats "
+"officiels."
+msgstr ""
+
+#: ui/templates/em/news.html:92
+msgid ""
+"Explorez les statistiques détaillées, générez des grilles optimisées avec"
+" notre moteur HYBRIDE, consultez l'historique complet des tirages, et "
+"bien sûr, discutez avec notre chatbot intelligent. Le tout "
+"<strong>gratuitement, sans inscription</strong>, disponible en 6 langues "
+"pour 9 pays européens."
+msgstr ""
+
+#: ui/templates/em/news.html:94
+msgid ""
+"Ce n'est que le début ! Nous travaillons déjà sur de nouvelles "
+"fonctionnalités pour enrichir votre expérience. Restez connectés."
+msgstr ""
+
+#: ui/templates/em/news.html:96
+msgid "Découvrir EuroMillions IA"
+msgstr ""
+
+#: ui/templates/em/news.html:102
+msgid "11 mars 2026"
+msgstr ""
+
+#: ui/templates/em/news.html:105
+msgid "Release 1.4.001 — La plateforme passe au niveau supérieur"
+msgstr ""
+
+#: ui/templates/em/news.html:107
 msgid ""
 "Le lancement public d'EuroMillions approche — rendez-vous le <strong>15 "
 "mars à 15h00</strong> ! En attendant ce grand jour, l'équipe finalise les"
@@ -3067,11 +3117,11 @@ msgid ""
 "release technique solide. LotoIA n'a jamais été aussi stable."
 msgstr ""
 
-#: ui/templates/em/news.html:90
+#: ui/templates/em/news.html:109
 msgid "Un tableau de bord de supervision en temps réel"
 msgstr ""
 
-#: ui/templates/em/news.html:91
+#: ui/templates/em/news.html:110
 msgid ""
 "LotoIA dispose désormais d'un dashboard de monitoring complet. En un coup"
 " d'œil : état des serveurs, latence des requêtes, consommation du moteur "
@@ -3079,116 +3129,116 @@ msgid ""
 " ou 30 jours. Alertes automatiques par email en cas d'anomalie."
 msgstr ""
 
-#: ui/templates/em/news.html:93
+#: ui/templates/em/news.html:112
 #, python-format
 msgid "Des déploiements 100%% sécurisés"
 msgstr ""
 
-#: ui/templates/em/news.html:94
+#: ui/templates/em/news.html:113
 msgid ""
 "Chaque mise en production est précédée de <strong>2089 tests "
 "automatiques</strong> dans le pipeline cloud. Si le moindre test échoue, "
 "le déploiement est bloqué. Zéro régression possible en production."
 msgstr ""
 
-#: ui/templates/em/news.html:96
+#: ui/templates/em/news.html:115
 msgid "Optimisations techniques"
 msgstr ""
 
-#: ui/templates/em/news.html:97
+#: ui/templates/em/news.html:116
 msgid ""
 "Parallélisation des appels cloud, verrouillage atomique base de données, "
 "nettoyage automatique historique 90 jours. Score audit interne : "
 "<strong>9.9/10</strong>."
 msgstr ""
 
-#: ui/templates/em/news.html:99
+#: ui/templates/em/news.html:118
 msgid "Rendez-vous le 15 mars à 15h00"
 msgstr ""
 
-#: ui/templates/em/news.html:100
+#: ui/templates/em/news.html:119
 msgid ""
 "Le module EuroMillions ouvre ses portes — <strong>6 langues, 9 pays "
 "européens, moteur HYBRIDE complet</strong>. Tout est prêt. On vous attend"
 " !"
 msgstr ""
 
-#: ui/templates/em/news.html:106
+#: ui/templates/em/news.html:125
 msgid "14 février 2026"
 msgstr ""
 
-#: ui/templates/em/news.html:107
+#: ui/templates/em/news.html:126
 msgid "NOUVEAU"
 msgstr ""
 
-#: ui/templates/em/news.html:109
+#: ui/templates/em/news.html:128
 msgid "EuroMillions arrive sur LotoIA — 15 mars 2026"
 msgstr ""
 
-#: ui/templates/em/news.html:111
+#: ui/templates/em/news.html:130
 msgid ""
 "<strong>LotoIA s'agrandit !</strong> Le module EuroMillions débarque le "
 "<strong>15 mars à 15h00</strong>. Une nouvelle dimension d'analyse "
 "statistique, construite avec la même rigueur que le module Loto France."
 msgstr ""
 
-#: ui/templates/em/news.html:114
+#: ui/templates/em/news.html:133
 msgid ""
 "<strong>729 tirages officiels analysés</strong> (2019-2026) — importés "
 "depuis les données officielles FDJ."
 msgstr ""
 
-#: ui/templates/em/news.html:115
+#: ui/templates/em/news.html:134
 msgid ""
 "<strong>Moteur HYBRIDE adapté</strong> : 5 boules (1-50) + 2 étoiles "
 "(1-12), double pondération historique et tendancielle, contraintes "
 "d'équilibre et de dispersion."
 msgstr ""
 
-#: ui/templates/em/news.html:116
+#: ui/templates/em/news.html:135
 msgid ""
 "<strong>Chatbot IA dédié</strong> : un assistant HYBRIDE spécifique "
 "EuroMillions qui interroge directement la base de données, analyse vos "
 "grilles et conserve le fil de la conversation."
 msgstr ""
 
-#: ui/templates/em/news.html:117
+#: ui/templates/em/news.html:136
 msgid ""
 "<strong>Statistiques complètes</strong> : fréquences, écarts, "
 "classements, carte de chaleur — boules et étoiles séparées."
 msgstr ""
 
-#: ui/templates/em/news.html:118
+#: ui/templates/em/news.html:137
 msgid ""
 "<strong>Simulateur de grilles</strong> : audit interactif de vos "
 "combinaisons EuroMillions avec score de conformité et badges."
 msgstr ""
 
-#: ui/templates/em/news.html:121
+#: ui/templates/em/news.html:140
 msgid ""
 "Les <strong>sponsors pionniers du Loto</strong> auront un <strong>accès "
 "prioritaire</strong> au module EuroMillions. Intéressé ? Contactez-nous :"
 msgstr ""
 
-#: ui/templates/em/news.html:123
+#: ui/templates/em/news.html:142
 msgid ""
 "L'EuroMillions est un jeu de hasard. LotoIA est un outil d'exploration "
 "statistique — aucune prédiction, aucune promesse de gain."
 msgstr ""
 
-#: ui/templates/em/news.html:129
+#: ui/templates/em/news.html:148
 msgid "11 février 2026"
 msgstr ""
 
-#: ui/templates/em/news.html:130
+#: ui/templates/em/news.html:149
 msgid "Version officielle v1.4.1"
 msgstr ""
 
-#: ui/templates/em/news.html:132
+#: ui/templates/em/news.html:151
 msgid "Module EuroMillions v1.4.1 — Le moteur est officiellement en production"
 msgstr ""
 
-#: ui/templates/em/news.html:134
+#: ui/templates/em/news.html:153
 #, python-format
 msgid ""
 "C'est fait. <strong>Le module EuroMillions passe en version "
@@ -3197,50 +3247,50 @@ msgid ""
 "complet, en production, 100% gratuit et sans inscription."
 msgstr ""
 
-#: ui/templates/em/news.html:136
+#: ui/templates/em/news.html:155
 msgid "Ce qui a été construit pour cette version :"
 msgstr ""
 
-#: ui/templates/em/news.html:139
+#: ui/templates/em/news.html:158
 msgid ""
 "<strong>Moteur HYBRIDE adapté 5+2</strong> : architecture spécifique pour"
 " 5 boules (1-50) et 2 étoiles (1-12), avec double pondération historique "
 "et tendancielle."
 msgstr ""
 
-#: ui/templates/em/news.html:140
+#: ui/templates/em/news.html:159
 msgid ""
 "<strong>729 tirages historiques</strong> en base de données sécurisée, "
 "alimentant l'ensemble des analyses du moteur EuroMillions."
 msgstr ""
 
-#: ui/templates/em/news.html:141
+#: ui/templates/em/news.html:160
 msgid ""
 "<strong>Chatbot HYBRIDE dédié</strong> déployé en production : il "
 "interroge directement la base de données EuroMillions, conserve le fil de"
 " la conversation et empêche toute prédiction ou hallucination."
 msgstr ""
 
-#: ui/templates/em/news.html:142
+#: ui/templates/em/news.html:161
 msgid ""
 "<strong>Intelligence artificielle Google</strong> intégrée au chatbot et "
 "aux analyses, avec système de protection automatique et basculement en "
 "cas d'indisponibilité."
 msgstr ""
 
-#: ui/templates/em/news.html:143
+#: ui/templates/em/news.html:162
 msgid ""
 "<strong>Simulateur EuroMillions</strong> : audit interactif de vos "
 "grilles 5+2 avec score de conformité, badges et suggestions."
 msgstr ""
 
-#: ui/templates/em/news.html:144
+#: ui/templates/em/news.html:163
 msgid ""
 "<strong>Google for Startups</strong> : programme validé, crédits cloud "
 "actifs."
 msgstr ""
 
-#: ui/templates/em/news.html:147
+#: ui/templates/em/news.html:166
 msgid ""
 "LotoIA EuroMillions est une plateforme <strong>transparente</strong> — la"
 " méthodologie et les données sont documentées. Aucun gain n'est promis, "
@@ -3248,25 +3298,25 @@ msgid ""
 "statistique, construit avec rigueur, et accessible à tous."
 msgstr ""
 
-#: ui/templates/em/news.html:149
+#: ui/templates/em/news.html:168
 msgid ""
 "v1.4.1 n'est pas une fin. C'est la ligne de départ officielle du module "
 "EuroMillions."
 msgstr ""
 
-#: ui/templates/em/news.html:155
+#: ui/templates/em/news.html:174
 msgid "10 février 2026"
 msgstr ""
 
-#: ui/templates/em/news.html:156 ui/templates/em/news.html:178
+#: ui/templates/em/news.html:175 ui/templates/em/news.html:197
 msgid "Nouveauté"
 msgstr ""
 
-#: ui/templates/em/news.html:158
+#: ui/templates/em/news.html:177
 msgid "Chatbot HYBRIDE EuroMillions — L'assistant IA est en production"
 msgstr ""
 
-#: ui/templates/em/news.html:160
+#: ui/templates/em/news.html:179
 msgid ""
 "Le <strong>chatbot HYBRIDE EuroMillions</strong> est déployé et "
 "opérationnel sur l'ensemble des pages du module. Ce n'est pas un gadget "
@@ -3275,60 +3325,60 @@ msgid ""
 "européens."
 msgstr ""
 
-#: ui/templates/em/news.html:163
+#: ui/templates/em/news.html:182
 msgid ""
 "<strong>Accès direct aux données EuroMillions</strong> : le chatbot "
 "interroge directement notre base de 729 tirages officiels pour vous "
 "donner des réponses précises et vérifiables."
 msgstr ""
 
-#: ui/templates/em/news.html:164
+#: ui/templates/em/news.html:183
 msgid ""
 "<strong>Analyse boules + étoiles</strong> : le chatbot distingue les 5 "
 "boules (1-50) et les 2 étoiles (1-12) dans toutes ses analyses."
 msgstr ""
 
-#: ui/templates/em/news.html:165
+#: ui/templates/em/news.html:184
 msgid ""
 "<strong>22 formulations temporelles</strong> reconnues : le moteur "
 "comprend automatiquement « derniers tirages », « cette semaine », « "
 "depuis janvier », etc."
 msgstr ""
 
-#: ui/templates/em/news.html:166
+#: ui/templates/em/news.html:185
 msgid ""
 "<strong>Mémoire de conversation</strong> : le chatbot retient vos "
 "échanges d'une page à l'autre, avec bouton de réinitialisation."
 msgstr ""
 
-#: ui/templates/em/news.html:167
+#: ui/templates/em/news.html:186
 msgid ""
 "<strong>Système partenaires intégré</strong> : messages sponsors "
 "contextuels et non intrusifs, avec suivi d'audience dédié."
 msgstr ""
 
-#: ui/templates/em/news.html:168
+#: ui/templates/em/news.html:187
 msgid ""
 "<strong>Anti-hallucination</strong> : chaque réponse est encadrée par un "
 "cadrage strict de l'IA, interdisant toute prédiction ou conseil de jeu."
 msgstr ""
 
-#: ui/templates/em/news.html:171
+#: ui/templates/em/news.html:190
 msgid ""
 "Le chatbot HYBRIDE EuroMillions est un outil pédagogique : il explique, "
 "contextualise et interroge les données. Il ne prédit rien et ne constitue"
 " pas une aide à la décision de jeu."
 msgstr ""
 
-#: ui/templates/em/news.html:177
+#: ui/templates/em/news.html:196
 msgid "6 février 2026"
 msgstr ""
 
-#: ui/templates/em/news.html:180
+#: ui/templates/em/news.html:199
 msgid "Module META DONNÉE EuroMillions — Analyse experte HYBRIDE"
 msgstr ""
 
-#: ui/templates/em/news.html:182
+#: ui/templates/em/news.html:201
 msgid ""
 "À partir du <strong>6 février 2026</strong>, le module EuroMillions "
 "introduit une analyse avancée nommée <strong>« META DONNÉE »</strong>, "
@@ -3336,44 +3386,44 @@ msgid ""
 "HYBRIDE, notre moteur d'analyse assisté par IA."
 msgstr ""
 
-#: ui/templates/em/news.html:184
+#: ui/templates/em/news.html:203
 msgid "Ce module permet d'obtenir :"
 msgstr ""
 
-#: ui/templates/em/news.html:186
+#: ui/templates/em/news.html:205
 msgid ""
 "<strong>Graphique d'analyse complet</strong> : basé sur les grilles "
 "générées par le moteur HYBRIDE EuroMillions, mettant en évidence "
 "fréquences, cycles et zones de chaleur — boules et étoiles séparées."
 msgstr ""
 
-#: ui/templates/em/news.html:187
+#: ui/templates/em/news.html:206
 msgid ""
 "<strong>Analyse textuelle experte</strong> : rédigée par l'IA HYBRIDE — "
 "numéros et étoiles les plus fréquents, tendances statistiques et "
 "interprétation pédagogique, avec export PDF en un clic."
 msgstr ""
 
-#: ui/templates/em/news.html:190
+#: ui/templates/em/news.html:209
 msgid ""
 "Le module META DONNÉE propose une synthèse visuelle et explicative qui va"
 " au-delà des statistiques classiques, en toute transparence sur la "
 "méthodologie."
 msgstr ""
 
-#: ui/templates/em/news.html:196
+#: ui/templates/em/news.html:215
 msgid "30 janvier 2026"
 msgstr ""
 
-#: ui/templates/em/news.html:197
+#: ui/templates/em/news.html:216
 msgid "Juridique"
 msgstr ""
 
-#: ui/templates/em/news.html:199
+#: ui/templates/em/news.html:218
 msgid "Compliance : Cadrage réglementaire et transparence produit"
 msgstr ""
 
-#: ui/templates/em/news.html:201
+#: ui/templates/em/news.html:220
 msgid ""
 "Depuis le <strong>30 janvier 2026</strong>, LotoIA renforce sa structure "
 "dédiée à la <strong>conformité juridique</strong>, afin de garantir une "
@@ -3381,35 +3431,35 @@ msgid ""
 "probabiliste</strong> et toute activité d'incitation au jeu."
 msgstr ""
 
-#: ui/templates/em/news.html:203
+#: ui/templates/em/news.html:222
 msgid "Travaux de mise en conformité :"
 msgstr ""
 
-#: ui/templates/em/news.html:205
+#: ui/templates/em/news.html:224
 msgid ""
 "<strong>Positionnement SaaS</strong> : Outil d'exploration statistique "
 "pur, sans promesse de gain."
 msgstr ""
 
-#: ui/templates/em/news.html:206
+#: ui/templates/em/news.html:225
 msgid ""
 "<strong>Refonte des disclaimers</strong> : Clarification des risques liés"
 " aux jeux de hasard."
 msgstr ""
 
-#: ui/templates/em/news.html:207
+#: ui/templates/em/news.html:226
 msgid ""
 "<strong>Périmètre fonctionnel</strong> : Suppression de tout wording "
 "ambigu lié à la performance ou à la prédiction."
 msgstr ""
 
-#: ui/templates/em/news.html:208
+#: ui/templates/em/news.html:227
 msgid ""
 "<strong>Transparence algorithmique</strong> : Documentation claire sur "
 "l'usage de la randomisation contrôlée."
 msgstr ""
 
-#: ui/templates/em/news.html:211
+#: ui/templates/em/news.html:230
 #, python-format
 msgid ""
 "Objectif : Garantir un service <strong>transparent</strong> et "
@@ -3417,178 +3467,178 @@ msgid ""
 "100% gratuit et sans inscription."
 msgstr ""
 
-#: ui/templates/em/news.html:217
+#: ui/templates/em/news.html:236
 msgid "18 janvier 2026"
 msgstr ""
 
-#: ui/templates/em/news.html:218 ui/templates/em/news.html:239
+#: ui/templates/em/news.html:237 ui/templates/em/news.html:258
 msgid "Technique"
 msgstr ""
 
-#: ui/templates/em/news.html:220
+#: ui/templates/em/news.html:239
 msgid "Infrastructure Cloud — Hébergement Google, base de données & IA"
 msgstr ""
 
-#: ui/templates/em/news.html:222
+#: ui/templates/em/news.html:241
 msgid ""
 "Le <strong>18 janvier 2026</strong>, le module EuroMillions a finalisé le"
 " déploiement de son infrastructure sur <strong>Google Cloud</strong>, "
 "conçue pour la fiabilité et la performance."
 msgstr ""
 
-#: ui/templates/em/news.html:224
+#: ui/templates/em/news.html:243
 msgid "L'architecture déployée repose sur des composants éprouvés :"
 msgstr ""
 
-#: ui/templates/em/news.html:227
+#: ui/templates/em/news.html:246
 msgid ""
 "<strong>Hébergement Google Cloud</strong> : mise à l'échelle automatique "
 "selon l'affluence et protections de sécurité avancées."
 msgstr ""
 
-#: ui/templates/em/news.html:228
+#: ui/templates/em/news.html:247
 msgid ""
 "<strong>Base de données dédiée</strong> : table "
 "<code>tirages_euromillions</code> en Cloud SQL, indépendante de la base "
 "Loto, avec 729 tirages historiques."
 msgstr ""
 
-#: ui/templates/em/news.html:229
+#: ui/templates/em/news.html:248
 msgid ""
 "<strong>Intelligence artificielle Google</strong> : intégrée au chatbot "
 "et aux analyses META DONNÉE, avec système de protection automatique et "
 "basculement en cas d'indisponibilité."
 msgstr ""
 
-#: ui/templates/em/news.html:230
+#: ui/templates/em/news.html:249
 msgid ""
 "<strong>API complète</strong> : ensemble d'endpoints sous "
 "<code>/api/euromillions/*</code> pour les statistiques, la génération et "
 "l'analyse."
 msgstr ""
 
-#: ui/templates/em/news.html:231
+#: ui/templates/em/news.html:250
 msgid ""
 "<strong>Protection contre les abus</strong> : limitation automatique pour"
 " garantir la stabilité du service sans pénaliser l'usage normal."
 msgstr ""
 
-#: ui/templates/em/news.html:238
+#: ui/templates/em/news.html:257
 msgid "10 janvier 2026"
 msgstr ""
 
-#: ui/templates/em/news.html:241
+#: ui/templates/em/news.html:260
 msgid "Moteur HYBRIDE EuroMillions — Architecture & Principes d'exploration"
 msgstr ""
 
-#: ui/templates/em/news.html:243
+#: ui/templates/em/news.html:262
 msgid ""
 "Le moteur HYBRIDE EuroMillions est le cœur algorithmique du module "
 "européen. Il explore les statistiques des tirages en combinant deux "
 "approches complémentaires, adaptées au format 5+2 :"
 msgstr ""
 
-#: ui/templates/em/news.html:245
+#: ui/templates/em/news.html:264
 msgid ""
 "<strong>Analyse historique (60%)</strong> : étude de la répartition des "
 "numéros et étoiles sur l'ensemble des tirages passés."
 msgstr ""
 
-#: ui/templates/em/news.html:246
+#: ui/templates/em/news.html:265
 msgid ""
 "<strong>Analyse des tendances récentes (40%)</strong> : focus sur les 24 "
 "derniers mois pour capter les dynamiques en cours."
 msgstr ""
 
-#: ui/templates/em/news.html:247
+#: ui/templates/em/news.html:266
 msgid ""
 "<strong>Analyse séparée</strong> : les 5 boules (1-50) et les 2 étoiles "
 "(1-12) sont traités comme deux espaces combinatoires distincts."
 msgstr ""
 
-#: ui/templates/em/news.html:248
+#: ui/templates/em/news.html:267
 msgid ""
 "<strong>Filtres d'équilibre</strong> : vérification de la dispersion, de "
 "la parité et de la répartition des numéros dans chaque grille."
 msgstr ""
 
-#: ui/templates/em/news.html:250
+#: ui/templates/em/news.html:269
 msgid ""
 "LotoIA EuroMillions est un outil d'analyse et d'exploration, pas de "
 "prédiction. La distribution des résultats reste soumise aux lois du "
 "hasard pur."
 msgstr ""
 
-#: ui/templates/em/news.html:256
+#: ui/templates/em/news.html:275
 msgid "5 janvier 2026"
 msgstr ""
 
-#: ui/templates/em/news.html:257
+#: ui/templates/em/news.html:276
 msgid "Roadmap"
 msgstr ""
 
-#: ui/templates/em/news.html:259
+#: ui/templates/em/news.html:278
 msgid "Feuille de route technique — Module EuroMillions"
 msgstr ""
 
-#: ui/templates/em/news.html:261
+#: ui/templates/em/news.html:280
 msgid "État d'avancement et prochaines étapes du module EuroMillions :"
 msgstr ""
 
-#: ui/templates/em/news.html:263
+#: ui/templates/em/news.html:282
 msgid ""
 "<strong>✅ Moteur HYBRIDE 5+2</strong> : déployé — exploration statistique"
 " adaptée au format EuroMillions (5 boules + 2 étoiles)."
 msgstr ""
 
-#: ui/templates/em/news.html:264
+#: ui/templates/em/news.html:283
 msgid ""
 "<strong>✅ Chatbot HYBRIDE EuroMillions</strong> : assistant IA "
 "conversationnel dédié, interrogation directe de la base de données "
 "européenne."
 msgstr ""
 
-#: ui/templates/em/news.html:265
+#: ui/templates/em/news.html:284
 msgid ""
 "<strong>✅ Simulateur EuroMillions</strong> : audit interactif des grilles"
 " 5+2 avec score de conformité et badges."
 msgstr ""
 
-#: ui/templates/em/news.html:266
+#: ui/templates/em/news.html:285
 msgid ""
 "<strong>✅ Dashboard META DONNÉE</strong> : module d'analyse experte avec "
 "graphiques, analyse textuelle et export PDF."
 msgstr ""
 
-#: ui/templates/em/news.html:267
+#: ui/templates/em/news.html:286
 msgid ""
 "<strong>API Publique</strong> : accès aux données statistiques brutes "
 "EuroMillions pour les développeurs — à venir."
 msgstr ""
 
-#: ui/templates/em/news.html:269
+#: ui/templates/em/news.html:288
 msgid ""
 "Le module EuroMillions évolue pour devenir la référence en analyse "
 "statistique gratuite des tirages européens."
 msgstr ""
 
-#: ui/templates/em/news.html:274
+#: ui/templates/em/news.html:293
 msgid "Vous avez consulté l'historique complet des mises à jour EuroMillions."
 msgstr ""
 
-#: ui/templates/em/news.html:275
+#: ui/templates/em/news.html:294
 msgid "Revenez régulièrement pour suivre les évolutions du module."
 msgstr ""
 
-#: ui/templates/em/news.html:284
+#: ui/templates/em/news.html:303
 msgid "Lancer l'exploration statistique EuroMillions"
 msgstr ""
 
-#: ui/templates/em/news.html:285
+#: ui/templates/em/news.html:304
 msgid "Explorez l'espace combinatoire avec le moteur HYBRIDE — LotoIA v1.4.1."
 msgstr ""
 
-#: ui/templates/em/news.html:288
+#: ui/templates/em/news.html:307
 msgid "Accéder au moteur"
 msgstr ""
 
