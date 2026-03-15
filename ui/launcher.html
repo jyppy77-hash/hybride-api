@@ -585,15 +585,13 @@
                 <span class="engine-status status-active">Actif</span>
             </a>
 
-            <!-- EuroMillions - Countdown dynamique / ACTIF en local -->
-            <div id="em-card" class="engine-card disabled" onclick="showComingSoon('EuroMillions')">
-                <span class="lock-icon">🔒</span>
+            <!-- EuroMillions - ACTIF -->
+            <a href="/euromillions" class="engine-card active" style="border-color: rgba(59, 130, 246, 0.5); background: rgba(59, 130, 246, 0.1);">
                 <span class="engine-icon">⭐</span>
                 <h2 class="engine-name">EuroMillions</h2>
                 <div class="em-flags">🇫🇷 🇬🇧 🇪🇸 🇵🇹 🇩🇪 🇧🇪 🇳🇱 🇦🇹 🇱🇺</div>
-                <span id="em-status" class="engine-status status-coming">En construction</span>
-                <p id="em-countdown" class="countdown-text"></p>
-            </div>
+                <span class="engine-status status-active">Actif</span>
+            </a>
 
             <!-- Super Loto - En construction -->
             <div class="engine-card disabled" onclick="showComingSoon('Super Loto')">
@@ -608,7 +606,7 @@
     <!-- Overlay -->
     <div id="overlay" class="overlay" onclick="hideComingSoon()"></div>
 
-    <!-- Message "Bientot disponible" -->
+    <!-- Message "Bientot disponible" (Super Loto only) -->
     <div id="coming-soon" class="coming-soon-message">
         <h3 id="coming-soon-title">Moteur en construction</h3>
         <p id="coming-soon-text">Ce moteur sera disponible prochainement.</p>
@@ -650,15 +648,7 @@
     <script>
         function showComingSoon(engineName) {
             document.getElementById('coming-soon-title').textContent = engineName + ' \u2014 En construction';
-            var textEl = document.getElementById('coming-soon-text');
-            if (engineName === 'EuroMillions') {
-                textEl.innerHTML =
-                    '<strong style="color: #FFD700;">Le module EuroMillions arrive le 15 mars 2026 à 15h00 !</strong><br><br>' +
-                    '729 tirages analysés \u2022 Chatbot IA \u2022 Statistiques complètes<br><br>' +
-                    '<span style="font-size: 0.85rem; color: rgba(255,255,255,0.6);">Sponsors pionniers : <a href="mailto:partenariats@lotoia.fr" style="color: #FFD700; text-decoration: none;">partenariats@lotoia.fr</a></span>';
-            } else {
-                textEl.textContent = 'Ce moteur sera disponible prochainement.';
-            }
+            document.getElementById('coming-soon-text').textContent = 'Ce moteur sera disponible prochainement.';
             document.getElementById('overlay').classList.add('show');
             document.getElementById('coming-soon').classList.add('show');
         }
@@ -668,108 +658,6 @@
             document.getElementById('coming-soon').classList.remove('show');
         }
 
-        // LOCAL ONLY : activer EuroMillions sur localhost
-        (function () {
-            var h = window.location.hostname;
-            if (h === 'localhost' || h === '127.0.0.1') {
-                var card = document.getElementById('em-card');
-                var lock = card.querySelector('.lock-icon');
-                var status = document.getElementById('em-status');
-                var teaser = document.getElementById('em-countdown');
-                // Transformer en lien actif
-                var link = document.createElement('a');
-                link.href = '/euromillions';
-                link.className = 'engine-card active';
-                link.style.borderColor = 'rgba(59, 130, 246, 0.5)';
-                link.style.background = 'rgba(59, 130, 246, 0.1)';
-                link.innerHTML =
-                    '<span class="engine-icon">\u2B50</span>' +
-                    '<h2 class="engine-name">EuroMillions</h2>' +
-                    '<span class="engine-status status-active" style="background:rgba(59,130,246,0.2);color:#3b82f6;border-color:rgba(59,130,246,0.4);">Actif (local)</span>';
-                card.parentNode.replaceChild(link, card);
-            }
-        })();
-
-        // Countdown dynamique EuroMillions — 15 mars 2026 15h00 CET (UTC+1)
-        (function () {
-            var el = document.getElementById('em-countdown');
-            if (!el) return;
-
-            var TARGET = new Date('2026-03-15T14:00:00Z').getTime(); // 15h00 CET = 14h00 UTC
-
-            // i18n labels (fallback FR)
-            var i = window.LotoIA_i18n || {};
-            var lbl = {
-                prefix: i.countdown_prefix || 'Lancement EuroMillions dans',
-                j: i.countdown_days || 'j',
-                h: i.countdown_hours || 'h',
-                min: i.countdown_min || 'min',
-                s: i.countdown_sec || 's',
-                live: i.countdown_live || 'EuroMillions est LIVE !'
-            };
-
-            var launched = false;
-
-            function activateCard() {
-                var card = document.getElementById('em-card');
-                if (!card) return;
-                var link = document.createElement('a');
-                link.href = '/euromillions';
-                link.className = 'engine-card active';
-                link.style.borderColor = 'rgba(59, 130, 246, 0.5)';
-                link.style.background = 'rgba(59, 130, 246, 0.1)';
-                link.innerHTML =
-                    '<span class="engine-icon">\u2B50</span>' +
-                    '<h2 class="engine-name">EuroMillions</h2>' +
-                    '<div class="em-flags">\uD83C\uDDEB\uD83C\uDDF7 \uD83C\uDDEC\uD83C\uDDE7 \uD83C\uDDEA\uD83C\uDDF8 \uD83C\uDDF5\uD83C\uDDF9 \uD83C\uDDE9\uD83C\uDDEA \uD83C\uDDE7\uD83C\uDDEA \uD83C\uDDF3\uD83C\uDDF1 \uD83C\uDDE6\uD83C\uDDF9 \uD83C\uDDF1\uD83C\uDDFA</div>' +
-                    '<span class="engine-status status-active">Actif</span>';
-                card.parentNode.replaceChild(link, card);
-            }
-
-            function goLive() {
-                if (launched) return;
-                launched = true;
-                el.textContent = lbl.live;
-                el.className = 'countdown-live';
-                // After 5s pulse, activate the card fully
-                setTimeout(function () {
-                    activateCard();
-                }, 5000);
-            }
-
-            function tick() {
-                var diff = TARGET - Date.now();
-
-                // Already past launch
-                if (diff <= 0) {
-                    // More than 24h past → hide countdown, just activate
-                    if (diff < -86400000) {
-                        el.style.display = 'none';
-                        activateCard();
-                        return;
-                    }
-                    goLive();
-                    return;
-                }
-
-                var d = Math.floor(diff / 86400000);
-                var h = Math.floor((diff % 86400000) / 3600000);
-                var m = Math.floor((diff % 3600000) / 60000);
-                var s = Math.floor((diff % 60000) / 1000);
-
-                el.textContent = lbl.prefix + ' ' +
-                    d + ' ' + lbl.j + ' ' +
-                    h + ' ' + lbl.h + ' ' +
-                    String(m).padStart(2, '0') + ' ' + lbl.min + ' ' +
-                    String(s).padStart(2, '0') + ' ' + lbl.s;
-
-                // Auto-correcting setTimeout: align to next second boundary
-                var ms = diff % 1000;
-                setTimeout(tick, ms > 50 ? ms : 1000);
-            }
-
-            tick();
-        })();
 
         // Fermer avec Escape
         document.addEventListener('keydown', function(e) {
