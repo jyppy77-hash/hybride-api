@@ -190,6 +190,31 @@ async def admin_dashboard(request: Request):
     except Exception as e:
         logger.error("[ADMIN] ratings query failed: %s", e)
 
+    active_visitors = 0
+    hits_24h = 0
+    banned_count = 0
+    try:
+        act_row = await db_cloudsql.async_fetchone(
+            "SELECT COUNT(DISTINCT session_hash) AS active "
+            "FROM event_log WHERE created_at >= NOW() - INTERVAL 5 MINUTE"
+        )
+        if act_row:
+            active_visitors = _dec(act_row["active"])
+        h24_row = await db_cloudsql.async_fetchone(
+            "SELECT COUNT(*) AS hits FROM event_log "
+            "WHERE created_at >= NOW() - INTERVAL 24 HOUR"
+        )
+        if h24_row:
+            hits_24h = _dec(h24_row["hits"])
+        ban_row = await db_cloudsql.async_fetchone(
+            "SELECT COUNT(*) AS cnt FROM banned_ips "
+            "WHERE is_active=1 AND (expires_at IS NULL OR expires_at > NOW())"
+        )
+        if ban_row:
+            banned_count = _dec(ban_row["cnt"])
+    except Exception as e:
+        logger.error("[ADMIN] activity KPI query failed: %s", e)
+
     tpl = env.get_template("admin/dashboard.html")
     return HTMLResponse(tpl.render(
         active="dashboard",
@@ -201,6 +226,9 @@ async def admin_dashboard(request: Request):
         pdf_downloaded=pdf_downloaded,
         avg_rating=avg_rating,
         review_count=review_count,
+        active_visitors=active_visitors,
+        hits_24h=hits_24h,
+        banned_count=banned_count,
     ))
 
 
