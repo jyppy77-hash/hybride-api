@@ -21,6 +21,10 @@ from fastapi.responses import JSONResponse
 
 logger = logging.getLogger(__name__)
 
+# ── Kill switch ──────────────────────────────────────────────────────────────
+
+IP_BAN_ENABLED = os.getenv("IP_BAN_ENABLED", "true").lower() == "true"
+
 # ── Configuration ────────────────────────────────────────────────────────────
 
 _SPAM_LIMIT = 10        # requests
@@ -168,6 +172,9 @@ async def _auto_ban_ip(ip: str, source: str) -> None:
 
 async def ip_ban_middleware(request: Request, call_next):
     """Block banned IPs + auto-ban on flood thresholds."""
+    if not IP_BAN_ENABLED:
+        return await call_next(request)
+
     client_ip = _extract_client_ip(request)
     if not client_ip:
         return await call_next(request)
