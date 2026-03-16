@@ -6,9 +6,9 @@ Interface : await cache_get(key), await cache_set(key, value, ttl), await cache_
 Lifecycle : init_cache() au startup, close_cache() au shutdown.
 """
 
+import json
 import logging
 import os
-import pickle
 import time
 from typing import Any
 
@@ -67,7 +67,7 @@ async def cache_get(key: str) -> Any | None:
         try:
             data = await _redis.get(f"{_REDIS_PREFIX}{key}")
             if data is not None:
-                return pickle.loads(data)
+                return json.loads(data)
             return None
         except Exception as e:
             logger.warning(f"Redis GET error ({e}) — fallback in-memory")
@@ -88,7 +88,7 @@ async def cache_set(key: str, value: Any, ttl: int = DEFAULT_TTL) -> None:
     # Redis
     if _redis:
         try:
-            await _redis.set(f"{_REDIS_PREFIX}{key}", pickle.dumps(value), ex=ttl)
+            await _redis.set(f"{_REDIS_PREFIX}{key}", json.dumps(value), ex=ttl)
             return
         except Exception as e:
             logger.warning(f"Redis SET error ({e}) — fallback in-memory")

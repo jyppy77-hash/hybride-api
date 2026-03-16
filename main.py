@@ -144,6 +144,9 @@ async def lifespan(app):
     await db_cloudsql.init_pool()
     await init_cache()
     await _ensure_monitoring_tables()
+    # Non-blocking retention cleanup (90 days)
+    from services.gcp_monitoring import cleanup_event_log
+    asyncio.create_task(cleanup_event_log(days=90))
     yield
     await close_cache()
     await db_cloudsql.close_pool()

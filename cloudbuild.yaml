@@ -56,7 +56,7 @@ steps:
       - --concurrency=40
       - --max-instances=5
       - --min-instances=1
-      - --timeout=60
+      - --timeout=120
       - --cpu-boost
       - '--update-env-vars=OWNER_IP=86.212.92.243,OWNER_IPV6=2a01:cb05:8700:5900:'
 

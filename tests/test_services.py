@@ -57,6 +57,28 @@ class TestCache:
         await cache_clear()
         assert await cache_get("inexistant") is None
 
+    @pytest.mark.asyncio
+    async def test_cache_json_round_trip(self):
+        """Verify round-trip JSON integrity for a typical stats dict."""
+        await cache_clear()
+        stats = {
+            "requests_per_second": 1.23,
+            "active_instances": 2,
+            "labels": ["a", "b"],
+            "nested": {"ok": True, "val": None},
+        }
+        await cache_set("json_rt", stats)
+        result = await cache_get("json_rt")
+        assert result == stats
+
+    @pytest.mark.asyncio
+    async def test_cache_non_serializable_raises(self):
+        """Non-JSON-serializable objects raise TypeError."""
+        await cache_clear()
+        import json
+        with pytest.raises(TypeError):
+            json.dumps(object())
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # services/stats_service.py — helpers BDD caches

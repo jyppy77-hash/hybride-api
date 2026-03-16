@@ -691,6 +691,7 @@ async def admin_sponsor_create(request: Request):
         )
         row = await db_cloudsql.async_fetchone("SELECT LAST_INSERT_ID() AS id")
         sponsor_id = row["id"]
+        logger.info("[ADMIN_AUDIT] action=sponsor_create sponsor_id=%s name=%s", sponsor_id, nom)
 
         # Save pricing grid
         events = form.getlist("tarif_event[]")
@@ -746,6 +747,7 @@ async def admin_sponsor_update(request: Request, sponsor_id: int):
              form.get("contact_tel", ""), form.get("adresse", ""),
              form.get("siret", ""), form.get("notes", ""), int(form.get("actif", 1)), sponsor_id),
         )
+        logger.info("[ADMIN_AUDIT] action=sponsor_update sponsor_id=%s name=%s", sponsor_id, nom)
 
         # Replace pricing grid
         await db_cloudsql.async_query("DELETE FROM fia_grille_tarifaire WHERE sponsor_id = %s", (sponsor_id,))
@@ -880,6 +882,7 @@ async def admin_facture_create(request: Request):
              float(montant_ht), float(montant_tva), float(montant_ttc),
              "brouillon", json.dumps(lignes), form.get("notes", "")),
         )
+        logger.info("[ADMIN_AUDIT] action=facture_create numero=%s sponsor_id=%s montant_ttc=%s", numero, sponsor_id, float(montant_ttc))
     except Exception as e:
         logger.error("[ADMIN] facture create: %s", e)
         tpl = env.get_template("admin/facture_form.html")
@@ -914,6 +917,7 @@ async def admin_facture_update_status(request: Request, facture_id: int):
         try:
             await db_cloudsql.async_query(
                 "UPDATE fia_factures SET statut = %s WHERE id = %s", (new_statut, facture_id))
+            logger.info("[ADMIN_AUDIT] action=facture_status_update facture_id=%s new_statut=%s", facture_id, new_statut)
         except Exception as e:
             logger.error("[ADMIN] facture status update: %s", e)
     return RedirectResponse(url=f"/admin/factures/{facture_id}", status_code=302)
@@ -1041,6 +1045,7 @@ async def admin_config_alerts_save(request: Request):
                     "ON DUPLICATE KEY UPDATE config_value = %s",
                     (key, stored, stored),
                 )
+        logger.info("[ADMIN_AUDIT] action=alert_config_save keys_updated=%d", len(_ALERT_KEYS))
     except Exception as e:
         logger.error("[ADMIN] alert config save: %s", e)
 
@@ -1854,7 +1859,7 @@ async def admin_api_ban(request: Request):
             )
         from middleware.ip_ban import invalidate_cache
         invalidate_cache()
-        logger.info("[ADMIN] IP banned: %s reason=%s duration=%s", ip, reason, duration)
+        logger.info("[ADMIN_AUDIT] action=ban_ip target=%s reason=%s duration_hours=%s", ip, reason, duration)
         return JSONResponse({"ok": True, "ip": ip})
     except Exception as e:
         logger.error("[ADMIN] ban error: %s", e)
@@ -1876,7 +1881,7 @@ async def admin_api_unban(request: Request):
         )
         from middleware.ip_ban import invalidate_cache
         invalidate_cache()
-        logger.info("[ADMIN] IP unbanned: %s", ip)
+        logger.info("[ADMIN_AUDIT] action=unban_ip target=%s", ip)
         return JSONResponse({"ok": True, "ip": ip})
     except Exception as e:
         logger.error("[ADMIN] unban error: %s", e)
