@@ -284,3 +284,33 @@ class TestAdminIpRestriction:
             # TestClient uses "testclient" as client.host which is whitelisted,
             # but X-Forwarded-For overrides it — so the last IP is "1.2.3.4"
             assert resp.status_code == 403
+
+    def test_admin_from_owner_ipv6_allowed(self):
+        """Request to /admin from OWNER_IPV6 prefix is allowed (privacy extensions)."""
+        with patch.dict(os.environ, {
+            "DB_PASSWORD": "fake", "DB_USER": "test", "DB_NAME": "testdb",
+            "ADMIN_TOKEN": "test_token_v6",
+            "ADMIN_PASSWORD": "test_pass",
+            "OWNER_IP": "86.212.92.243",
+            "OWNER_IPV6": "2a01:cb05:8700:5900:",
+        }), _static_patch, _static_call:
+            import importlib
+            import rate_limit as rl_mod
+            importlib.reload(rl_mod)
+            import routes.admin as admin_mod
+            importlib.reload(admin_mod)
+            import main as main_mod
+            importlib.reload(main_mod)
+            rl_mod.limiter.reset()
+            rl_mod._api_hits.clear()
+            from starlette.testclient import TestClient
+            client = TestClient(main_mod.app, raise_server_exceptions=False)
+            client.cookies.set("lotoia_admin_token", "test_token_v6")
+            # Simulate IPv6 request from owner with privacy extension suffix
+            resp = client.get(
+                "/admin",
+                headers={"X-Forwarded-For": "2a01:cb05:8700:5900:455:255e:95b8:850c"},
+                follow_redirects=False,
+            )
+            # Should be allowed (302 to dashboard or 200) — NOT 403
+            assert resp.status_code != 403

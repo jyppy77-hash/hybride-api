@@ -52,11 +52,13 @@ def _check_admin_ip(request: Request) -> JSONResponse | None:
         real_ip = forwarded.split(",")[-1].strip()
     else:
         real_ip = request.client.host if request.client else ""
+    # IPv4 exact match (OWNER_IP + loopback + testclient)
     if real_ip in _OWNER_IPS:
         return None
-    if _OWNER_V6_PREFIX and real_ip.startswith(_OWNER_V6_PREFIX.rsplit(":", 4)[0]):
+    # IPv6 prefix match (OWNER_IPV6 /64 — privacy extensions change suffix)
+    if _OWNER_V6_PREFIX and real_ip.startswith(_OWNER_V6_PREFIX.rstrip(":")):
         return None
-    logger.warning("[ADMIN_AUDIT] action=admin_ip_blocked ip=%s path=%s", real_ip, request.url.path)
+    logger.warning("[ADMIN_AUDIT] action=admin_ip_blocked ip=%s path=%s v6_prefix=%s", real_ip, request.url.path, _OWNER_V6_PREFIX)
     return JSONResponse({"error": "Forbidden"}, status_code=403)
 
 _VALID_EVENTS = {"sponsor-popup-shown", "sponsor-click", "sponsor-video-played", "sponsor-inline-shown", "sponsor-result-shown", "sponsor-pdf-downloaded"}

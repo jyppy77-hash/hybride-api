@@ -63,7 +63,7 @@ def _is_owner_or_loopback(ip_str: str) -> bool:
     except ValueError:
         return False
     for prefix in _OWNER_PREFIXES:
-        if ip_str.startswith(prefix.rsplit(":", 4)[0]):
+        if ip_str.startswith(prefix.rstrip(":")):
             return True
     return False
 
