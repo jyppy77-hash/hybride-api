@@ -46,9 +46,7 @@ def _check_admin_ip(request: Request) -> JSONResponse | None:
     if not real_ip or real_ip == "testclient":
         return None  # TestClient / empty → allow (dev)
     if _is_owner_or_loopback(real_ip):
-        logger.info("[ADMIN_IP_DEBUG] real_ip=%s match=True", real_ip)
         return None
-    logger.warning("[ADMIN_IP_DEBUG] real_ip=%s match=False", real_ip)
     logger.warning("[ADMIN_AUDIT] action=admin_ip_blocked ip=%s path=%s", real_ip, request.url.path)
     return JSONResponse({"error": "Forbidden"}, status_code=403)
 
