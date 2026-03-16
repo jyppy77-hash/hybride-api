@@ -21,6 +21,13 @@ from fastapi.responses import JSONResponse
 
 logger = logging.getLogger(__name__)
 
+# ── Paths excluded from auto-ban counter ─────────────────────────────────────
+
+_COUNTER_SKIP_PREFIXES = (
+    "/ui/static/", "/static/", "/favicon", "/robots.txt",
+    "/sitemap.xml", "/site.webmanifest", "/admin/",
+)
+
 # ── Kill switch ──────────────────────────────────────────────────────────────
 
 IP_BAN_ENABLED = os.getenv("IP_BAN_ENABLED", "true").lower() == "true"
@@ -184,8 +191,9 @@ async def ip_ban_middleware(request: Request, call_next):
         logger.warning("[IP_BAN] blocked %s on %s", client_ip, request.url.path)
         return JSONResponse(status_code=403, content={"detail": "Forbidden"})
 
-    # 2. Record + check auto-ban (skip owner/loopback)
-    if not _is_owner_or_loopback(client_ip):
+    # 2. Record + check auto-ban (skip owner/loopback + static/admin paths)
+    path = request.url.path
+    if not _is_owner_or_loopback(client_ip) and not any(path.startswith(p) for p in _COUNTER_SKIP_PREFIXES):
         _record_request(client_ip)
         source = _check_auto_ban(client_ip)
         if source:

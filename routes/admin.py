@@ -1676,7 +1676,8 @@ async def admin_api_activity(request: Request, minutes: int = 5):
         minutes = 5
     try:
         rows = await db_cloudsql.async_fetchall(
-            "SELECT session_hash, country, device, page, lang, event_type, "
+            "SELECT session_hash, MAX(country) AS country, MAX(device) AS device, "
+            "MAX(page) AS page, MAX(lang) AS lang, MAX(event_type) AS event_type, "
             "COUNT(*) AS hits, MAX(created_at) AS last_seen, MIN(created_at) AS first_seen "
             "FROM event_log "
             "WHERE created_at >= NOW() - INTERVAL %s MINUTE "
@@ -1738,7 +1739,7 @@ async def admin_api_activity_history(request: Request, hours: int = 24):
         hours = 24
     try:
         rows = await db_cloudsql.async_fetchall(
-            "SELECT session_hash, country, device, lang, "
+            "SELECT session_hash, MAX(country) AS country, MAX(device) AS device, MAX(lang) AS lang, "
             "GROUP_CONCAT(DISTINCT event_type) AS event_types, "
             "COUNT(*) AS hits, "
             "MAX(created_at) AS last_seen, MIN(created_at) AS first_seen, "
