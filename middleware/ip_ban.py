@@ -90,11 +90,17 @@ def _extract_client_ip(request: Request) -> str:
 
 
 async def _refresh_cache() -> None:
-    """Reload banned IPs from MySQL if cache expired."""
+    """Reload banned IPs from MySQL if cache expired.
+
+    Fail-safe: on error, sets _cache_ts so we don't retry every request
+    (avoids blocking workers when DB is not yet ready at Cloud Run startup).
+    """
     global _banned_set, _cache_ts
     now = time.monotonic()
     if now - _cache_ts < _CACHE_TTL:
         return
+    # Set timestamp BEFORE the query — prevents retry storm on failure
+    _cache_ts = now
     try:
         import db_cloudsql
         rows = await db_cloudsql.async_fetchall(
@@ -102,9 +108,8 @@ async def _refresh_cache() -> None:
             "WHERE is_active = 1 AND (expires_at IS NULL OR expires_at > NOW())"
         )
         _banned_set = {r["ip"] for r in rows}
-        _cache_ts = now
     except Exception as e:
-        logger.warning("[IP_BAN] cache refresh failed: %s", e)
+        logger.warning("[IP_BAN] cache refresh failed (will retry in %ds): %s", _CACHE_TTL, e)
 
 
 def invalidate_cache() -> None:
