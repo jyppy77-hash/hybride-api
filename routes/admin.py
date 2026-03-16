@@ -37,28 +37,19 @@ _ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "").strip()
 _COOKIE_NAME = "lotoia_admin_token"
 
 # ── Admin IP restriction (L2 fix) ────────────────────────────────────────────
-
-_OWNER_IPS: set[str] = {"127.0.0.1", "::1", "testclient"}  # loopback + TestClient
-_OWNER_V6_PREFIX = os.environ.get("OWNER_IPV6", "").strip()
-_owner_v4 = os.environ.get("OWNER_IP", "").strip()
-if _owner_v4:
-    _OWNER_IPS.update(ip.strip() for ip in _owner_v4.split("|") if ip.strip())
-
+# Reuses the SAME owner detection as ip_ban.py (single source of truth).
 
 def _check_admin_ip(request: Request) -> JSONResponse | None:
     """Restrict admin access to OWNER_IP only. Returns 403 response or None."""
-    forwarded = request.headers.get("x-forwarded-for", "")
-    if forwarded:
-        real_ip = forwarded.split(",")[-1].strip()
-    else:
-        real_ip = request.client.host if request.client else ""
-    # IPv4 exact match (OWNER_IP + loopback + testclient)
-    if real_ip in _OWNER_IPS:
+    from middleware.ip_ban import _is_owner_or_loopback, _extract_client_ip
+    real_ip = _extract_client_ip(request)
+    if not real_ip or real_ip == "testclient":
+        return None  # TestClient / empty → allow (dev)
+    if _is_owner_or_loopback(real_ip):
+        logger.info("[ADMIN_IP_DEBUG] real_ip=%s match=True", real_ip)
         return None
-    # IPv6 prefix match (OWNER_IPV6 /64 — privacy extensions change suffix)
-    if _OWNER_V6_PREFIX and real_ip.startswith(_OWNER_V6_PREFIX.rstrip(":")):
-        return None
-    logger.warning("[ADMIN_AUDIT] action=admin_ip_blocked ip=%s path=%s v6_prefix=%s", real_ip, request.url.path, _OWNER_V6_PREFIX)
+    logger.warning("[ADMIN_IP_DEBUG] real_ip=%s match=False", real_ip)
+    logger.warning("[ADMIN_AUDIT] action=admin_ip_blocked ip=%s path=%s", real_ip, request.url.path)
     return JSONResponse({"error": "Forbidden"}, status_code=403)
 
 _VALID_EVENTS = {"sponsor-popup-shown", "sponsor-click", "sponsor-video-played", "sponsor-inline-shown", "sponsor-result-shown", "sponsor-pdf-downloaded"}
