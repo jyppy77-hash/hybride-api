@@ -254,17 +254,23 @@ _static_call = patch("fastapi.staticfiles.StaticFiles.__call__", return_value=No
 
 class TestAdminIpRestriction:
 
-    def test_admin_from_non_owner_ip_blocked(self):
-        """Request to /admin from non-OWNER_IP returns 403."""
-        with patch.dict(os.environ, {
+    def _build_client(self, env_extra=None):
+        """Build a TestClient with reloaded modules (ip_ban included)."""
+        import importlib
+        env = {
             "DB_PASSWORD": "fake", "DB_USER": "test", "DB_NAME": "testdb",
             "ADMIN_TOKEN": "test_token_xyz",
             "ADMIN_PASSWORD": "test_pass",
             "OWNER_IP": "86.212.92.243",
-        }), _static_patch, _static_call:
-            import importlib
+            "OWNER_IPV6": "2a01:cb05:8700:5900:",
+        }
+        if env_extra:
+            env.update(env_extra)
+        with patch.dict(os.environ, env), _static_patch, _static_call:
             import rate_limit as rl_mod
             importlib.reload(rl_mod)
+            import middleware.ip_ban as ban_mod
+            importlib.reload(ban_mod)  # reload to pick up OWNER_IPV6 env var
             import routes.admin as admin_mod
             importlib.reload(admin_mod)
             import main as main_mod
@@ -273,44 +279,26 @@ class TestAdminIpRestriction:
             rl_mod._api_hits.clear()
             from starlette.testclient import TestClient
             client = TestClient(main_mod.app, raise_server_exceptions=False)
-            # Simulate request from a different IP
-            client.cookies.set("lotoia_admin_token", "test_token_xyz")
-            resp = client.get(
-                "/admin",
-                headers={"X-Forwarded-For": "1.2.3.4"},
-                follow_redirects=False,
-            )
-            # Should get 403 (IP not in OWNER_IPS) or 200 if testclient passes
-            # TestClient uses "testclient" as client.host which is whitelisted,
-            # but X-Forwarded-For overrides it — so the last IP is "1.2.3.4"
-            assert resp.status_code == 403
+            client.cookies.set("lotoia_admin_token", env["ADMIN_TOKEN"])
+            return client
+
+    def test_admin_from_non_owner_ip_blocked(self):
+        """Request to /admin from non-OWNER_IP returns 403."""
+        client = self._build_client()
+        resp = client.get(
+            "/admin",
+            headers={"X-Forwarded-For": "1.2.3.4"},
+            follow_redirects=False,
+        )
+        assert resp.status_code == 403
 
     def test_admin_from_owner_ipv6_allowed(self):
         """Request to /admin from OWNER_IPV6 prefix is allowed (privacy extensions)."""
-        with patch.dict(os.environ, {
-            "DB_PASSWORD": "fake", "DB_USER": "test", "DB_NAME": "testdb",
-            "ADMIN_TOKEN": "test_token_v6",
-            "ADMIN_PASSWORD": "test_pass",
-            "OWNER_IP": "86.212.92.243",
-            "OWNER_IPV6": "2a01:cb05:8700:5900:",
-        }), _static_patch, _static_call:
-            import importlib
-            import rate_limit as rl_mod
-            importlib.reload(rl_mod)
-            import routes.admin as admin_mod
-            importlib.reload(admin_mod)
-            import main as main_mod
-            importlib.reload(main_mod)
-            rl_mod.limiter.reset()
-            rl_mod._api_hits.clear()
-            from starlette.testclient import TestClient
-            client = TestClient(main_mod.app, raise_server_exceptions=False)
-            client.cookies.set("lotoia_admin_token", "test_token_v6")
-            # Simulate IPv6 request from owner with privacy extension suffix
-            resp = client.get(
-                "/admin",
-                headers={"X-Forwarded-For": "2a01:cb05:8700:5900:455:255e:95b8:850c"},
-                follow_redirects=False,
-            )
-            # Should be allowed (302 to dashboard or 200) — NOT 403
-            assert resp.status_code != 403
+        client = self._build_client()
+        resp = client.get(
+            "/admin",
+            headers={"X-Forwarded-For": "2a01:cb05:8700:5900:455:255e:95b8:850c"},
+            follow_redirects=False,
+        )
+        # Should be allowed (302 to dashboard or 200) — NOT 403
+        assert resp.status_code != 403
