@@ -36,6 +36,29 @@ _ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "").strip()
 _ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "").strip()
 _COOKIE_NAME = "lotoia_admin_token"
 
+# ── Admin IP restriction (L2 fix) ────────────────────────────────────────────
+
+_OWNER_IPS: set[str] = {"127.0.0.1", "::1", "testclient"}  # loopback + TestClient
+_OWNER_V6_PREFIX = os.environ.get("OWNER_IPV6", "").strip()
+_owner_v4 = os.environ.get("OWNER_IP", "").strip()
+if _owner_v4:
+    _OWNER_IPS.update(ip.strip() for ip in _owner_v4.split("|") if ip.strip())
+
+
+def _check_admin_ip(request: Request) -> JSONResponse | None:
+    """Restrict admin access to OWNER_IP only. Returns 403 response or None."""
+    forwarded = request.headers.get("x-forwarded-for", "")
+    if forwarded:
+        real_ip = forwarded.split(",")[-1].strip()
+    else:
+        real_ip = request.client.host if request.client else ""
+    if real_ip in _OWNER_IPS:
+        return None
+    if _OWNER_V6_PREFIX and real_ip.startswith(_OWNER_V6_PREFIX.rsplit(":", 4)[0]):
+        return None
+    logger.warning("[ADMIN_AUDIT] action=admin_ip_blocked ip=%s path=%s", real_ip, request.url.path)
+    return JSONResponse({"error": "Forbidden"}, status_code=403)
+
 _VALID_EVENTS = {"sponsor-popup-shown", "sponsor-click", "sponsor-video-played", "sponsor-inline-shown", "sponsor-result-shown", "sponsor-pdf-downloaded"}
 _VALID_LANGS = {"fr", "en", "es", "pt", "de", "nl"}
 _VALID_DEVICES = {"mobile", "desktop", "tablet"}
@@ -55,12 +78,18 @@ def _is_authenticated(request: Request) -> bool:
 
 
 def _require_auth(request: Request):
+    ip_block = _check_admin_ip(request)
+    if ip_block:
+        return ip_block
     if not _is_authenticated(request):
         return RedirectResponse(url="/admin/login", status_code=302)
     return None
 
 
 def _require_auth_json(request: Request):
+    ip_block = _check_admin_ip(request)
+    if ip_block:
+        return ip_block
     if not _is_authenticated(request):
         return JSONResponse({"error": "unauthorized"}, status_code=401)
     return None
@@ -1914,3 +1943,18 @@ async def admin_api_banned(request: Request):
     except Exception as e:
         logger.error("[ADMIN] banned list: %s", e)
         return JSONResponse({"total": 0, "banned": []})
+
+
+@router.post("/admin/api/refresh-bot-ips", include_in_schema=False)
+async def admin_api_refresh_bot_ips(request: Request):
+    err = _require_auth_json(request)
+    if err:
+        return err
+    try:
+        from config.bot_ips import refresh_from_remote
+        stats = await refresh_from_remote(request.app.state.httpx_client)
+        logger.info("[ADMIN_AUDIT] action=refresh_bot_ips stats=%s", stats)
+        return JSONResponse(stats)
+    except Exception as e:
+        logger.error("[ADMIN] refresh-bot-ips error: %s", e)
+        return JSONResponse({"error": str(e)}, status_code=500)

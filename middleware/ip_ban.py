@@ -183,7 +183,7 @@ async def _auto_ban_ip(ip: str, source: str) -> None:
 # ── Middleware ───────────────────────────────────────────────────────────────
 
 async def ip_ban_middleware(request: Request, call_next):
-    """Block banned IPs + auto-ban on flood thresholds."""
+    """Block banned IPs + auto-ban on flood thresholds + bot whitelist/blacklist."""
     if not IP_BAN_ENABLED:
         return await call_next(request)
 
@@ -191,14 +191,34 @@ async def ip_ban_middleware(request: Request, call_next):
     if not client_ip:
         return await call_next(request)
 
-    # 1. Check if already banned
+    # 0. Owner/loopback always passes (fast path)
+    if _is_owner_or_loopback(client_ip):
+        return await call_next(request)
+
+    # 1. Whitelist check — skip ALL rate limiting for known good bots (GCP, Google, Meta, etc.)
+    from config.bot_ips import is_whitelisted_bot, is_blacklisted, is_suspicious_path
+    if is_whitelisted_bot(client_ip):
+        return await call_next(request)
+
+    # 2. Blacklist check — instant block for known bad IPs (AI scrapers, Tor, etc.)
+    if is_blacklisted(client_ip):
+        logger.warning("[BOT_IPS] blacklisted IP blocked: %s on %s", client_ip, request.url.path)
+        return JSONResponse(status_code=403, content={"detail": "Forbidden"})
+
+    # 3. Suspicious path check — instant ban for vulnerability scanners
+    path = request.url.path
+    if is_suspicious_path(path):
+        logger.warning("[BOT_IPS] suspicious path scan: %s -> %s", client_ip, path)
+        await _auto_ban_ip(client_ip, f"suspicious_path:{path[:80]}")
+        return JSONResponse(status_code=403, content={"detail": "Forbidden"})
+
+    # 4. Check if already banned (MySQL cache)
     if await is_banned(client_ip):
         logger.warning("[IP_BAN] blocked %s on %s", client_ip, request.url.path)
         return JSONResponse(status_code=403, content={"detail": "Forbidden"})
 
-    # 2. Record + check auto-ban (skip owner/loopback + static/admin paths)
-    path = request.url.path
-    if not _is_owner_or_loopback(client_ip) and not any(path.startswith(p) for p in _COUNTER_SKIP_PREFIXES):
+    # 5. Record + check auto-ban (skip static/admin paths)
+    if not any(path.startswith(p) for p in _COUNTER_SKIP_PREFIXES):
         _record_request(client_ip)
         source = _check_auto_ban(client_ip)
         if source:

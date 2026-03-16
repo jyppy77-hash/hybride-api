@@ -147,6 +147,15 @@ async def lifespan(app):
     # Non-blocking retention cleanup (90 days)
     from services.gcp_monitoring import cleanup_event_log
     asyncio.create_task(cleanup_event_log(days=90))
+    # Non-blocking bot IP refresh (fallback to static on failure)
+    async def _refresh_bot_ips():
+        try:
+            from config.bot_ips import refresh_from_remote
+            stats = await refresh_from_remote(app.state.httpx_client)
+            logger.info("[BOT_IPS] Startup refresh: %s", stats)
+        except Exception as e:
+            logger.warning("[BOT_IPS] Startup refresh failed, using static fallback: %s", e)
+    asyncio.create_task(_refresh_bot_ips())
     yield
     await close_cache()
     await db_cloudsql.close_pool()
