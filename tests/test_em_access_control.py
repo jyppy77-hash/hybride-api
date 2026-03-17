@@ -35,15 +35,14 @@ class TestGetClientIp:
         req = self._make_request(forwarded="203.0.113.50")
         assert get_client_ip(req) == "203.0.113.50"
 
-    def test_xff_multiple_ips_takes_last(self):
-        """Last IP is the one added by Google's trusted GFE (anti-spoofing)."""
+    def test_xff_multiple_ips_takes_first(self):
+        """First IP is the real client on Cloud Run (no CDN)."""
         req = self._make_request(forwarded="203.0.113.50, 10.0.0.1, 10.0.0.2")
-        assert get_client_ip(req) == "10.0.0.2"
+        assert get_client_ip(req) == "203.0.113.50"
 
-    def test_xff_spoofed_owner_ip_takes_real(self):
-        """Attacker forges owner IP in XFF; GFE appends real IP last."""
-        spoofed = f"{OWNER_IPV6}, 198.51.100.99"
-        req = self._make_request(forwarded=spoofed)
+    def test_xff_first_ip_is_client(self):
+        """First IP in XFF is the client IP on Cloud Run."""
+        req = self._make_request(forwarded="198.51.100.99, 10.0.0.1")
         assert get_client_ip(req) == "198.51.100.99"
 
     def test_xff_ipv6(self):
@@ -52,7 +51,7 @@ class TestGetClientIp:
 
     def test_xff_strips_whitespace(self):
         req = self._make_request(forwarded="  203.0.113.50 , 10.0.0.1")
-        assert get_client_ip(req) == "10.0.0.1"
+        assert get_client_ip(req) == "203.0.113.50"
 
     def test_fallback_to_client_host(self):
         req = self._make_request(forwarded=None, host="192.168.1.1")

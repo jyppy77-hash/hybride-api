@@ -78,15 +78,12 @@ _CACHE_TTL = 60  # seconds
 def _extract_client_ip(request: Request) -> str:
     """Extract real client IP from Cloud Run X-Forwarded-For header.
 
-    Takes the LAST IP (appended by GFE proxy, cannot be forged).
+    Takes the FIRST IP (real client on Cloud Run without CDN).
+    Returns empty string for TestClient (skip ban checks in tests).
     """
-    forwarded = request.headers.get("x-forwarded-for", "")
-    if forwarded:
-        ips = [ip.strip() for ip in forwarded.split(",")]
-        return ips[-1]
-    client_host = request.client.host if request.client else ""
-    # TestClient uses "testclient" — treat as empty (no ban check)
-    return "" if client_host == "testclient" else client_host
+    from utils import get_client_ip
+    ip = get_client_ip(request)
+    return "" if ip == "testclient" else ip
 
 
 async def _refresh_cache() -> None:

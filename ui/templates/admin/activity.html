@@ -41,7 +41,7 @@
             <thead>
                 <tr>
                     <th class="col-session">Session</th>
-                    <th class="col-country">Pays</th>
+                    <th class="col-country">Locale</th>
                     <th class="col-device">Device</th>
                     <th class="col-lang">Langue</th>
                     <th class="col-page">Derniere page</th>
@@ -73,7 +73,7 @@
         </div>
         <div class="kpi-card">
             <span class="kpi-value rt-kpi-accent-blue" id="hist-countries">-</span>
-            <span class="kpi-label">Pays uniques</span>
+            <span class="kpi-label">Locales uniques</span>
         </div>
         <div class="kpi-card">
             <span class="kpi-value rt-kpi-accent-muted" id="hist-top-page" style="font-size:.9rem;">-</span>
@@ -106,7 +106,7 @@
                 <tr>
                     <th class="col-expand"></th>
                     <th class="col-session">Session</th>
-                    <th class="col-country">Pays</th>
+                    <th class="col-country">Locale</th>
                     <th class="col-device">Device</th>
                     <th class="col-lang">Langue</th>
                     <th class="col-page">Derniere page</th>
@@ -217,10 +217,29 @@
         if (e.includes('generat')) return '<span class="evt-badge evt-badge-gen">' + e + '</span>';
         return '<span class="evt-badge evt-badge-other">' + e + '</span>';
     }
+    function parseUTC(s) {
+        if (!s) return null;
+        try {
+            var iso = s.replace(' ', 'T');
+            if (iso.indexOf('Z') === -1 && iso.indexOf('+') === -1) iso += 'Z';
+            var d = new Date(iso);
+            return isNaN(d.getTime()) ? null : d;
+        } catch(e) { return null; }
+    }
+    function fmtTime(s) {
+        var d = parseUTC(s);
+        if (!d) return s || '';
+        return d.toLocaleTimeString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    function fmtDate(s) {
+        var d = parseUTC(s);
+        if (!d) return s || '';
+        return d.toLocaleString('fr-FR', { timeZone: 'Europe/Paris', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
     function formatDuration(first, last) {
-        if (!first || !last) return '—';
-        var p = function(t) { var s = t.split(':'); return (+s[0])*3600 + (+s[1])*60 + (+s[2]||0); };
-        var d = p(last) - p(first);
+        var a = parseUTC(first), b = parseUTC(last);
+        if (!a || !b) return '\u2014';
+        var d = Math.floor((b - a) / 1000);
         if (d < 0) d = 0;
         if (d < 60) return d + 's';
         var m = Math.floor(d / 60), s = d % 60;
@@ -254,13 +273,13 @@
                 var pg = (s.pages || []).map(function(p) { return '<code>' + esc(p) + '</code>'; }).join(' \u2192 ');
                 html += '<tr>'
                     + '<td class="col-session" data-label="Session" style="font-family:monospace;font-size:.85rem;">' + esc(s.session_hash) + '</td>'
-                    + '<td class="col-country" data-label="Pays">' + countryFlag(s.country) + ' ' + esc(s.country || '—') + '</td>'
+                    + '<td class="col-country" data-label="Locale">' + countryFlag(s.country) + ' ' + esc(s.country || '—') + '</td>'
                     + '<td class="col-device" data-label="Device">' + deviceIcon(s.device) + '</td>'
                     + '<td class="col-lang" data-label="Langue">' + esc((s.lang || '—').toUpperCase()) + '</td>'
                     + '<td class="col-page" data-label="Page"><code>' + esc(s.last_page || '—') + '</code></td>'
                     + '<td class="col-hits" data-label="Hits" style="font-weight:600;">' + s.hits + '</td>'
                     + '<td class="col-parcours" data-label="Parcours" style="font-size:.8rem;">' + (pg || '—') + '</td>'
-                    + '<td class="col-lastseen" data-label="Activite">' + esc(s.last_seen || '—') + '</td>'
+                    + '<td class="col-lastseen" data-label="Activite">' + fmtTime(s.last_seen) + '</td>'
                     + '</tr>';
             });
             $tbody.innerHTML = html;
@@ -321,14 +340,14 @@
             html += '<tr>'
                 + '<td class="col-expand" data-label="">' + expandBtn + '</td>'
                 + '<td class="col-session" data-label="Session" style="font-family:monospace;font-size:.85rem;">' + esc(s.session_hash) + '</td>'
-                + '<td class="col-country" data-label="Pays">' + countryFlag(s.country) + ' ' + esc(s.country || '—') + '</td>'
+                + '<td class="col-country" data-label="Locale">' + countryFlag(s.country) + ' ' + esc(s.country || '—') + '</td>'
                 + '<td class="col-device" data-label="Device">' + deviceIcon(s.device) + '</td>'
                 + '<td class="col-lang" data-label="Langue"><span class="lang-badge">' + esc(s.lang || '—') + '</span></td>'
                 + '<td class="col-page" data-label="Page"><code>' + esc(s.last_page || '—') + '</code></td>'
                 + '<td class="col-events" data-label="Events">' + evts + '</td>'
                 + '<td class="col-hits" data-label="Hits" style="font-weight:600;">' + s.hits + '</td>'
                 + '<td class="col-duration" data-label="Duree">' + formatDuration(s.first_seen, s.last_seen) + '</td>'
-                + '<td class="col-lastseen" data-label="Activite">' + esc(s.last_seen || '—') + '</td>'
+                + '<td class="col-lastseen" data-label="Activite">' + fmtTime(s.last_seen) + '</td>'
                 + '</tr>';
             if (s.hits > 1 && hasPages) {
                 var pagesHtml = s.pages.map(function(p) {
@@ -409,8 +428,8 @@
                     + '<td style="font-family:monospace;">' + esc(b.ip) + '</td>'
                     + '<td>' + esc(b.reason || '—') + '</td>'
                     + '<td><span class="evt-badge ' + srcClass + '">' + srcLabel + '</span></td>'
-                    + '<td>' + esc(b.banned_at) + '</td>'
-                    + '<td>' + esc(b.expires_at || 'permanent') + '</td>'
+                    + '<td>' + fmtDate(b.banned_at) + '</td>'
+                    + '<td>' + (b.expires_at === 'permanent' ? 'permanent' : fmtDate(b.expires_at)) + '</td>'
                     + '<td style="white-space:nowrap;">'
                     + '<a href="https://www.abuseipdb.com/check/' + encodeURIComponent(b.ip) + '" target="_blank" rel="noopener" class="btn-secondary btn-sm" style="font-size:.7rem;padding:2px 6px;margin-right:4px;">AbuseIPDB</a>'
                     + '<a href="https://ipinfo.io/' + encodeURIComponent(b.ip) + '" target="_blank" rel="noopener" class="btn-secondary btn-sm" style="font-size:.7rem;padding:2px 6px;margin-right:4px;">WHOIS</a>'

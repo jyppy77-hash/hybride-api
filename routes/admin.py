@@ -1143,7 +1143,7 @@ async def admin_api_realtime(request: Request, event_type: str = "all", period: 
                 "lang": r.get("lang", ""),
                 "device": r.get("device", ""),
                 "country": r.get("country", ""),
-                "created_at": r["created_at"].strftime("%H:%M:%S") if r.get("created_at") else "",
+                "created_at": r["created_at"].strftime("%Y-%m-%d %H:%M:%S") if r.get("created_at") else "",
             })
 
         # KPI
@@ -1719,8 +1719,8 @@ async def admin_api_activity(request: Request, minutes: int = 5):
                 "lang": r.get("lang", ""),
                 "last_page": r.get("page", ""),
                 "hits": _dec(r["hits"]),
-                "last_seen": r["last_seen"].strftime("%H:%M:%S") if r.get("last_seen") else "",
-                "first_seen": r["first_seen"].strftime("%H:%M:%S") if r.get("first_seen") else "",
+                "last_seen": r["last_seen"].strftime("%Y-%m-%d %H:%M:%S") if r.get("last_seen") else "",
+                "first_seen": r["first_seen"].strftime("%Y-%m-%d %H:%M:%S") if r.get("first_seen") else "",
             })
 
         # Pages detail per session (top 10 sessions only)
@@ -1799,8 +1799,8 @@ async def admin_api_activity_history(request: Request, hours: int = 24):
                 "hits": hits,
                 "last_page": lp,
                 "event_types": [e.strip() for e in evt.split(",") if e.strip()],
-                "last_seen": r["last_seen"].strftime("%H:%M:%S") if r.get("last_seen") else "",
-                "first_seen": r["first_seen"].strftime("%H:%M:%S") if r.get("first_seen") else "",
+                "last_seen": r["last_seen"].strftime("%Y-%m-%d %H:%M:%S") if r.get("last_seen") else "",
+                "first_seen": r["first_seen"].strftime("%Y-%m-%d %H:%M:%S") if r.get("first_seen") else "",
             })
             if r.get("session_hash"):
                 all_hashes.append(r["session_hash"])

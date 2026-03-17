@@ -249,9 +249,9 @@ async def correlation_id_middleware(request: Request, call_next):
 _CSP = (
     "default-src 'self'; "
     "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://cloud.umami.is https://www.wysistat.com https://cdnjs.cloudflare.com; "
-    "style-src 'self' 'unsafe-inline'; "
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
     "img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com https://*.google.com; "
-    "font-src 'self'; "
+    "font-src 'self' https://fonts.gstatic.com; "
     "connect-src 'self' https://www.googletagmanager.com https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://cloud.umami.is https://api-gateway.umami.dev https://www.wysistat.com; "
     "frame-ancestors 'none'; "
     "object-src 'none'; "
@@ -501,6 +501,7 @@ def _is_owner_ip(ip: str) -> bool:
     return any(ip.startswith(p) for p in _OWNER_PREFIXES)
 
 _OWNER_INJECT = b'<script>window.__OWNER__=true;</script>\n</head>'
+_OWNER_BODY_ATTR = (b' data-owner="1"', b"<body")
 
 
 class UmamiOwnerFilterMiddleware:
@@ -515,12 +516,8 @@ class UmamiOwnerFilterMiddleware:
             return
 
         # Extract client IP from x-forwarded-for (Cloud Run proxy)
-        headers_raw = dict(scope.get("headers", []))
-        forwarded = headers_raw.get(b"x-forwarded-for", b"").decode()
-        client_ip = forwarded.split(",")[0].strip() if forwarded else ""
-        if not client_ip:
-            client_addr = scope.get("client")
-            client_ip = client_addr[0] if client_addr else ""
+        from utils import get_client_ip_from_scope
+        client_ip = get_client_ip_from_scope(scope)
 
         path = scope.get("path", "")
         is_owner = _is_owner_ip(client_ip)
@@ -561,6 +558,8 @@ class UmamiOwnerFilterMiddleware:
                         chunk for tag, chunk in body_chunks if tag == "body"
                     )
                     full_body = full_body.replace(b"</head>", _OWNER_INJECT, 1)
+                    # Also inject data-owner="1" on <body> tag for defense-in-depth
+                    full_body = full_body.replace(b"<body", b"<body" + _OWNER_BODY_ATTR[0], 1)
 
                     start_msg = body_chunks[0][1]
                     new_headers = [

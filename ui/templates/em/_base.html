@@ -41,7 +41,7 @@
     <script src="/ui/static/theme.js?v=1"></script>
     <script src="/ui/static/analytics.js?v=3" defer></script>
     <script src="/ui/static/tracker.js?v=4" defer></script>
-    <script>function umamiBeforeSend(t,p){return window.__OWNER__?false:p;}</script>
+    <script>function umamiBeforeSend(t,p){return(window.__OWNER__||document.body&&document.body.dataset.owner==='1')?false:p;}</script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc" data-before-send="umamiBeforeSend"></script>
     <script src="/ui/static/wysistat.js" defer></script>
 

@@ -37,12 +37,23 @@ var LotoAdmin = (function() {
     function fmtDate(s) {
         if (!s) return '';
         try {
-            // DB returns "YYYY-MM-DD HH:MM:SS" (UTC) — append Z to parse as UTC
             var iso = s.replace(' ', 'T');
             if (iso.indexOf('Z') === -1 && iso.indexOf('+') === -1) iso += 'Z';
             var d = new Date(iso);
             if (isNaN(d.getTime())) return escHtml(s);
             return d.toLocaleString('fr-FR', { timeZone: 'Europe/Paris', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        } catch (e) { return escHtml(s); }
+    }
+
+    /** Format UTC datetime string to Europe/Paris time only (HH:MM:SS). */
+    function fmtTime(s) {
+        if (!s) return '';
+        try {
+            var iso = s.replace(' ', 'T');
+            if (iso.indexOf('Z') === -1 && iso.indexOf('+') === -1) iso += 'Z';
+            var d = new Date(iso);
+            if (isNaN(d.getTime())) return escHtml(s);
+            return d.toLocaleTimeString('fr-FR', { timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit', second: '2-digit' });
         } catch (e) { return escHtml(s); }
     }
 
@@ -474,14 +485,14 @@ var LotoAdmin = (function() {
                 + '<div class="rt-event-body">'
                 + '<div class="rt-event-top">'
                 + '<span class="rt-badge rt-badge-' + escHtml(e.event_type).replace(/[^a-z0-9-]/g, '') + '">' + escHtml(e.event_type) + '</span>'
-                + '<span class="rt-event-time">' + fmtDate(e.created_at) + '</span>'
+                + '<span class="rt-event-time">' + fmtTime(e.created_at) + '</span>'
                 + '<span class="rt-event-device">' + deviceIcon + ' ' + escHtml(e.device || '') + '</span>'
                 + '<span class="rt-event-flag">' + flag + '</span>'
                 + '</div>'
                 + '<div class="rt-event-bottom">'
                 + '<span class="rt-event-page">' + escHtml(e.page || '') + '</span>'
                 + (e.module ? '<span class="rt-event-module">' + escHtml(e.module) + '</span>' : '')
-                + '<span class="rt-event-country">' + escHtml(e.country || '') + '</span>'
+                + '<span class="rt-event-country" title="Browser locale">' + escHtml(e.country || '') + '</span>'
                 + '</div>'
                 + '</div>'
                 + '</div>';
@@ -506,15 +517,17 @@ var LotoAdmin = (function() {
         // Parse event times, count per minute bucket (0=now, 59=60min ago)
         var counts = new Array(60);
         for (var i = 0; i < 60; i++) counts[i] = 0;
+        var now = new Date();
         events.forEach(function(e) {
             if (!e.created_at) return;
-            var parts = e.created_at.split(':');
-            if (parts.length < 3) return;
-            var now = new Date();
-            var evDate = new Date();
-            evDate.setHours(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]), 0);
-            var diffMin = Math.floor((now - evDate) / 60000);
-            if (diffMin >= 0 && diffMin < 60) counts[diffMin]++;
+            try {
+                var iso = e.created_at.replace(' ', 'T');
+                if (iso.indexOf('Z') === -1 && iso.indexOf('+') === -1) iso += 'Z';
+                var evDate = new Date(iso);
+                if (isNaN(evDate.getTime())) return;
+                var diffMin = Math.floor((now - evDate) / 60000);
+                if (diffMin >= 0 && diffMin < 60) counts[diffMin]++;
+            } catch (ex) {}
         });
         // Render blocks (rightmost = now)
         for (var j = 0; j < 60; j++) {

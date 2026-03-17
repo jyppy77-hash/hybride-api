@@ -46,8 +46,8 @@
     window.LotoIA_track = function(event, meta) {
         if (!event) return;
 
-        // Owner filter — skip if owner flag is set
-        if (window.__OWNER__) return;
+        // Owner filter — skip if owner flag is set (defense-in-depth: script + body attr)
+        if (window.__OWNER__ || (document.body && document.body.dataset.owner === '1')) return;
 
         // Dedup
         var key = dedupKey(event, meta);

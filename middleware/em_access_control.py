@@ -58,15 +58,11 @@ _EM_PROTECTED = [
 def get_client_ip(request: Request) -> str:
     """Extract real client IP from Cloud Run X-Forwarded-For header.
 
-    Takes the LAST IP in X-Forwarded-For: it is the one appended by
-    Google's trusted GFE proxy and cannot be forged by the client.
-    (ips[0] is attacker-controlled via a spoofed header.)
+    Takes the FIRST IP (real client on Cloud Run without CDN).
+    Delegates to shared utils.get_client_ip().
     """
-    forwarded = request.headers.get("x-forwarded-for", "")
-    if forwarded:
-        ips = [ip.strip() for ip in forwarded.split(",")]
-        return ips[-1]
-    return request.client.host if request.client else "unknown"
+    from utils import get_client_ip as _shared
+    return _shared(request)
 
 
 def is_owner_ip(client_ip_str: str) -> bool:

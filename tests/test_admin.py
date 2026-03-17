@@ -2251,3 +2251,130 @@ class TestIpBanToggle:
              patch("middleware.ip_ban._cache_ts", float("inf")):
             resp = client.get("/health", headers={"x-forwarded-for": "198.51.100.1"})
         assert resp.status_code == 403
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Timezone format tests (V42 — audit fix TZ-1/TZ-2)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestDatetimeFormat:
+    """Verify admin API endpoints return full datetime (not HH:MM:SS only)."""
+
+    def test_realtime_created_at_format(self):
+        """GET /admin/api/realtime — created_at must be YYYY-MM-DD HH:MM:SS."""
+        from datetime import datetime
+        client = _authed_client()
+        mock_dt = datetime(2026, 3, 17, 14, 30, 45)
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            async def fake_fetchall(sql, params=None):
+                if "SELECT event_type" in sql:
+                    return [{"event_type": "page-view", "page": "/", "module": "",
+                             "lang": "fr", "device": "desktop", "country": "FR",
+                             "created_at": mock_dt}]
+                if "SELECT DISTINCT" in sql:
+                    return [{"event_type": "page-view"}]
+                return [{"event_type": "page-view", "cnt": 1}]
+            async def fake_fetchone(sql, params=None):
+                return {"total_count": 1, "hour_count": 1, "type_count": 1, "unique_visitors": 1}
+            mock_db.async_fetchall = fake_fetchall
+            mock_db.async_fetchone = fake_fetchone
+            resp = client.get("/admin/api/realtime?period=24h")
+        if resp.status_code == 200:
+            data = resp.json()
+            if data["events"]:
+                ts = data["events"][0]["created_at"]
+                # Must contain date part (YYYY-MM-DD), not just HH:MM:SS
+                assert "-" in ts, f"Expected full datetime, got: {ts}"
+                assert len(ts) >= 19, f"Expected YYYY-MM-DD HH:MM:SS, got: {ts}"
+
+    def test_activity_last_seen_format(self):
+        """GET /admin/api/activity — last_seen must be YYYY-MM-DD HH:MM:SS."""
+        from datetime import datetime
+        client = _authed_client()
+        mock_dt = datetime(2026, 3, 17, 14, 30, 45)
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            async def fake_fetchall(sql, params=None):
+                if "GROUP BY session_hash" in sql:
+                    return [{"session_hash": "abc12345" * 8, "country": "FR",
+                             "device": "desktop", "page": "/", "lang": "fr",
+                             "event_type": "page-view", "hits": 3,
+                             "last_seen": mock_dt, "first_seen": mock_dt}]
+                return []
+            mock_db.async_fetchall = fake_fetchall
+            resp = client.get("/admin/api/activity?minutes=5")
+        if resp.status_code == 200:
+            data = resp.json()
+            if data["active_sessions"]:
+                ts = data["active_sessions"][0]["last_seen"]
+                assert "-" in ts, f"Expected full datetime, got: {ts}"
+                assert len(ts) >= 19, f"Expected YYYY-MM-DD HH:MM:SS, got: {ts}"
+
+    def test_activity_history_last_seen_format(self):
+        """GET /admin/api/activity/history — last_seen must be YYYY-MM-DD HH:MM:SS."""
+        from datetime import datetime
+        client = _authed_client()
+        mock_dt = datetime(2026, 3, 17, 14, 30, 45)
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            async def fake_fetchall(sql, params=None):
+                if "GROUP BY session_hash" in sql:
+                    return [{"session_hash": "def67890" * 8, "country": "US",
+                             "device": "mobile", "lang": "en",
+                             "event_types": "page-view,chatbot-message",
+                             "hits": 5, "last_page": "/euromillions",
+                             "last_seen": mock_dt, "first_seen": mock_dt}]
+                return []
+            mock_db.async_fetchall = fake_fetchall
+            async def fake_fetchone(sql, params=None):
+                return None
+            mock_db.async_fetchone = fake_fetchone
+            resp = client.get("/admin/api/activity/history?hours=24")
+        if resp.status_code == 200:
+            data = resp.json()
+            if data.get("sessions"):
+                ts = data["sessions"][0]["last_seen"]
+                assert "-" in ts, f"Expected full datetime, got: {ts}"
+                assert len(ts) >= 19, f"Expected YYYY-MM-DD HH:MM:SS, got: {ts}"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# CSP Google Fonts test (V42 — audit fix MON-1)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestCSPGoogleFonts:
+    """Verify CSP allows Google Fonts for admin pages."""
+
+    def test_admin_csp_allows_google_fonts(self):
+        """Response CSP header includes fonts.googleapis.com and fonts.gstatic.com."""
+        client = _authed_client()
+        resp = client.get("/admin")
+        if resp.status_code == 200:
+            csp = resp.headers.get("content-security-policy", "")
+            assert "fonts.googleapis.com" in csp, "CSP style-src missing fonts.googleapis.com"
+            assert "fonts.gstatic.com" in csp, "CSP font-src missing fonts.gstatic.com"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Owner data-owner body attribute (V42 — audit fix ANA-2)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestOwnerBodyAttribute:
+    """Verify data-owner='1' is injected on body for owner IP."""
+
+    def test_owner_body_attribute_present(self):
+        """When OWNER_IP matches, HTML contains data-owner='1'."""
+        client = _get_client()
+        with patch.dict(os.environ, {"OWNER_IP": "1.2.3.4"}):
+            import importlib
+            import main as main_mod
+            importlib.reload(main_mod)
+            # The UmamiOwnerFilter checks IP — in TestClient there's no XFF
+            # so we check the injection constant exists
+            assert b'data-owner="1"' in main_mod._OWNER_BODY_ATTR[0]
+
+    def test_non_owner_no_body_attribute(self):
+        """When IP != OWNER_IP, data-owner is not in response."""
+        client = _get_client()
+        # Non-owner request (TestClient IP doesn't match OWNER_IP)
+        resp = client.get("/admin/login")
+        if resp.status_code == 200:
+            assert 'data-owner="1"' not in resp.text

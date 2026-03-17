@@ -45,13 +45,18 @@ def _is_owner_ip(ip: str) -> bool:
 
 
 def _get_client_ip(request: Request) -> str:
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    return request.client.host if request.client else "unknown"
+    from utils import get_client_ip
+    return get_client_ip(request)
 
 
 def _detect_country(accept_lang: str) -> str:
+    """Extract browser locale from Accept-Language header (NOT GeoIP).
+
+    Returns a 2-letter country code derived from the browser's language
+    preference (e.g. "fr-FR" → "FR", "en-US" → "US"). This reflects
+    the user's language settings, not their actual geolocation.
+    Stored in event_log.country column for backward compatibility.
+    """
     if not accept_lang:
         return ""
     m = re.search(r"([a-z]{2})-([A-Z]{2})", accept_lang)

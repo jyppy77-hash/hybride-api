@@ -8,13 +8,12 @@ from starlette.responses import JSONResponse as StarletteJSONResponse
 from slowapi import Limiter
 from fastapi import Request
 
+from utils import get_client_ip
+
 
 def _get_real_ip(request: Request) -> str:
     """Extrait l'IP client reelle derriere le proxy Cloud Run."""
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        return forwarded.split(",")[-1].strip()
-    return request.client.host if request.client else "unknown"
+    return get_client_ip(request)
 
 
 limiter = Limiter(key_func=_get_real_ip)
