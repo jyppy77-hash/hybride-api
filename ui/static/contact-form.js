@@ -14,9 +14,19 @@
     };
 
     var modalEl = null;
+    var _submitBtn = null;
+    var _textarea = null;
+    var _counter = null;
+    var _minLabel = null;
+    var _feedback = null;
 
     function openModal(pageSource) {
         if (modalEl) {
+            // Reset state on re-open
+            if (_feedback) { _feedback.textContent = ''; _feedback.className = 'contact-feedback'; }
+            if (_submitBtn) { _submitBtn.disabled = true; _submitBtn.textContent = LI.contact_submit || 'Envoyer'; }
+            if (_counter) { _counter.textContent = (LI.contact_counter || '{n} / 2000').replace('{n}', '0'); }
+            if (_minLabel) { _minLabel.style.display = ''; }
             modalEl.style.display = 'flex';
             return;
         }
@@ -106,15 +116,18 @@
         textarea.maxLength = 2000;
         textarea.rows = 5;
         textarea.required = true;
+        _textarea = textarea;
 
         var msgFooter = document.createElement('div');
         msgFooter.className = 'contact-field-footer';
         var minLabel = document.createElement('span');
         minLabel.className = 'contact-min-label';
         minLabel.textContent = LI.contact_message_min || 'Minimum 10 caractères';
+        _minLabel = minLabel;
         var counter = document.createElement('span');
         counter.className = 'contact-counter';
         counter.textContent = (LI.contact_counter || '{n} / 2000').replace('{n}', '0');
+        _counter = counter;
 
         textarea.addEventListener('input', function () {
             var n = textarea.value.length;
@@ -136,11 +149,13 @@
         submitBtn.className = 'contact-submit-btn';
         submitBtn.textContent = LI.contact_submit || 'Envoyer';
         submitBtn.disabled = true;
+        _submitBtn = submitBtn;
 
         // Feedback
         var feedback = document.createElement('div');
         feedback.className = 'contact-feedback';
         feedback.id = 'contact-feedback';
+        _feedback = feedback;
 
         submitBtn.addEventListener('click', function () {
             var msg = textarea.value.trim();
@@ -148,6 +163,8 @@
 
             submitBtn.disabled = true;
             submitBtn.textContent = '...';
+            feedback.textContent = '';
+            feedback.className = 'contact-feedback';
 
             var payload = {
                 nom: document.getElementById('contact-nom').value.trim() || null,
@@ -155,9 +172,12 @@
                 sujet: sujet.value,
                 message: msg,
                 page_source: pageSource,
-                lang: window.LotoIA_lang || 'fr',
-                _honey: honey.value
+                lang: window.LotoIA_lang || 'fr'
             };
+
+            // Only include honeypot if non-empty (bots fill it)
+            var honeyVal = honey.value;
+            if (honeyVal) { payload._honey = honeyVal; }
 
             fetch('/api/contact', {
                 method: 'POST',
@@ -170,19 +190,27 @@
                     feedback.className = 'contact-feedback contact-feedback-ok';
                     form.reset();
                     counter.textContent = (LI.contact_counter || '{n} / 2000').replace('{n}', '0');
+                    minLabel.style.display = '';
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = LI.contact_submit || 'Envoyer';
                     setTimeout(closeModal, 2500);
+                } else if (res.status === 429) {
+                    feedback.textContent = 'Trop de messages envoyés. Réessayez dans 1 minute.';
+                    feedback.className = 'contact-feedback contact-feedback-err';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = LI.contact_submit || 'Envoyer';
                 } else {
                     feedback.textContent = LI.contact_error || 'Erreur, veuillez réessayer';
                     feedback.className = 'contact-feedback contact-feedback-err';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = LI.contact_submit || 'Envoyer';
                 }
             })
             .catch(function () {
                 feedback.textContent = LI.contact_error || 'Erreur, veuillez réessayer';
                 feedback.className = 'contact-feedback contact-feedback-err';
-            })
-            .finally(function () {
-                submitBtn.textContent = LI.contact_submit || 'Envoyer';
                 submitBtn.disabled = false;
+                submitBtn.textContent = LI.contact_submit || 'Envoyer';
             });
         });
 

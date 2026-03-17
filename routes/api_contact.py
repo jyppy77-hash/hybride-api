@@ -16,6 +16,7 @@ from typing import Optional
 
 import db_cloudsql
 from rate_limit import limiter
+from utils import get_client_ip
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["contact"])
@@ -55,17 +56,23 @@ class ContactSubmit(BaseModel):
 @limiter.limit("3/minute")
 async def submit_contact(request: Request):
     """Submit a contact message (honeypot-protected, rate-limited)."""
-    body = await request.json()
+    try:
+        body = await request.json()
+    except Exception:
+        logger.warning("[CONTACT] Invalid JSON body")
+        raise HTTPException(status_code=400, detail="Invalid JSON")
 
     # Honeypot check — silent accept but don't store
     honey = body.get("_honey", "")
     if honey:
+        logger.info("[CONTACT] Honeypot triggered — silent reject")
         return {"status": "ok"}
 
     # Validate via pydantic
     try:
         data = ContactSubmit(**body)
     except ValidationError as e:
+        logger.warning("[CONTACT] Validation failed: %s", str(e)[:200])
         raise HTTPException(status_code=422, detail=str(e))
 
     # Sanitize fields
@@ -76,8 +83,8 @@ async def submit_contact(request: Request):
     page_source = html.escape(data.page_source.strip())[:100] if data.page_source and data.page_source.strip() else None
     lang = (data.lang or "fr")[:5]
 
-    # IP hash for RGPD
-    client_ip = request.client.host if request.client else "unknown"
+    # IP hash for RGPD (use shared get_client_ip)
+    client_ip = get_client_ip(request)
     ip_hash = hashlib.sha256(client_ip.encode()).hexdigest()[:16]
 
     # Session hash
@@ -89,7 +96,7 @@ async def submit_contact(request: Request):
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """
         await db_cloudsql.async_query(sql, (nom, email, sujet, message, page_source, lang, ip_hash, session_hash))
-        logger.info("[CONTACT] sujet=%s lang=%s page=%s", sujet, lang, page_source)
+        logger.info("[CONTACT] OK sujet=%s lang=%s page=%s nom=%s", sujet, lang, page_source, nom or "anonymous")
     except Exception as e:
         logger.error("[CONTACT ERROR] DB insert failed: %s", e)
         raise HTTPException(status_code=500, detail="Erreur lors de l'enregistrement")
