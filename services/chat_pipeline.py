@@ -27,6 +27,7 @@ from services.chat_detectors import (
     _get_oor_response, _detect_argent, _get_argent_response,
     _detect_generation, _detect_generation_mode, _extract_forced_numbers,
     _detect_cooccurrence_high_n, _get_cooccurrence_high_n_response,
+    _detect_site_rating, get_site_rating_response,
 )
 from services.chat_sql import (
     _get_prochain_tirage, _get_tirage_data, _generate_sql, _validate_sql,
@@ -159,6 +160,11 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
                 logger.info(
                     f"[HYBRIDE CHAT] Compliment + question (type={_compliment_type}), passage au flow normal"
                 )
+
+    # ── Phase R : Détection intention de noter le site ──
+    if _detect_site_rating(message):
+        logger.info("[HYBRIDE CHAT] Site rating intent detected")
+        return {"response": get_site_rating_response("fr"), "source": "hybride_rating_invite", "mode": mode}, None
 
     # ── Phase G : Détection génération de grille ──
     _generation_context = ""

@@ -1898,3 +1898,56 @@ def _get_oor_response(numero: int, context: str, streak: int) -> str:
         s=s,
         streak=streak + 1,
     )
+
+
+# ────────────────────────────────────────────────────────────────────
+# Phase R : Détection intention de noter le site (6 langues)
+# ────────────────────────────────────────────────────────────────────
+
+_SITE_RATING_RE = re.compile(
+    r"(?:"
+    # FR — "noter le site", "voter pour le site", "donner une note au site"
+    r"(?:noter|voter\s+(?:pour\s+)?|[eé]valuer|mettre\s+une\s+note|donner\s+(?:une\s+)?note|donner\s+(?:mon\s+)?avis)"
+    r"\s*(?:(?:le|ce|au|pour\s+le|pour\s+ce)\s+)?(?:site|lotoia|plateforme)"
+    r"|"
+    # EN — "rate the site", "rate lotoia", "give a rating"
+    r"(?:rate|vote\s+(?:for\s+)?|review|give\s+(?:a\s+)?rating|leave\s+(?:a\s+)?review)"
+    r"\s*(?:(?:the|this|for\s+the|for\s+this)\s+)?(?:site|website|lotoia|platform)"
+    r"|"
+    # ES — "votar por el sitio", "calificar el sitio"
+    r"(?:votar\s+(?:por\s+)?|calificar|evaluar|dar\s+(?:una\s+)?nota)"
+    r"\s*(?:(?:el|este|al)\s+)?(?:sitio|lotoia|plataforma)"
+    r"|"
+    # PT — "avaliar o site", "votar pelo site"
+    r"(?:votar\s+(?:pel[oa]\s+)?|avaliar|dar\s+(?:uma\s+)?nota)"
+    r"\s*(?:(?:o|este|ao)\s+)?(?:site|lotoia|plataforma)"
+    r"|"
+    # DE — "die Seite bewerten", "Seite bewerten", "bewerten die Seite"
+    r"(?:(?:die|diese)\s+)?(?:seite|webseite|lotoia|plattform)\s+bewerten"
+    r"|(?:bewerten|abstimmen|eine?\s+bewertung\s+geben)\s*(?:(?:die|diese|der|f[uü]r\s+die)\s+)?(?:seite|webseite|lotoia|plattform)"
+    r"|"
+    # NL — "de site beoordelen", "site beoordelen", "beoordelen de site"
+    r"(?:(?:de|deze)\s+)?(?:site|website|lotoia|platform)\s+beoordelen"
+    r"|(?:beoordelen|stemmen|een?\s+beoordeling\s+geven)\s*(?:(?:de|deze|het|voor\s+de)\s+)?(?:site|website|lotoia|platform)"
+    r")",
+    re.IGNORECASE,
+)
+
+_SITE_RATING_RESPONSES = {
+    "fr": "Merci pour ton intérêt ! Tu peux noter LotoIA en cliquant sur les étoiles qui apparaissent en bas de page après 1 min 30 de navigation. Ton avis nous aide à nous améliorer !",
+    "en": "Thanks for your interest! You can rate LotoIA by clicking the stars that appear at the bottom of the page after 1 min 30 of browsing. Your feedback helps us improve!",
+    "es": "¡Gracias por tu interés! Puedes calificar LotoIA haciendo clic en las estrellas que aparecen en la parte inferior de la página después de 1 min 30 de navegación. ¡Tu opinión nos ayuda a mejorar!",
+    "pt": "Obrigado pelo teu interesse! Podes avaliar o LotoIA clicando nas estrelas que aparecem no fundo da página após 1 min 30 de navegação. A tua opinião ajuda-nos a melhorar!",
+    "de": "Danke für dein Interesse! Du kannst LotoIA bewerten, indem du auf die Sterne am unteren Rand der Seite klickst, die nach 1 Min. 30 erscheinen. Dein Feedback hilft uns, uns zu verbessern!",
+    "nl": "Bedankt voor je interesse! Je kunt LotoIA beoordelen door op de sterren onderaan de pagina te klikken, die na 1 min 30 verschijnen. Je feedback helpt ons te verbeteren!",
+}
+
+
+def _detect_site_rating(message: str) -> bool:
+    """Detect if user wants to rate/vote for the site (not a grid)."""
+    return bool(_SITE_RATING_RE.search(message))
+
+
+def get_site_rating_response(lang: str = "fr") -> str:
+    """Return the site rating invitation response for the given language."""
+    return _SITE_RATING_RESPONSES.get(lang, _SITE_RATING_RESPONSES["fr"])

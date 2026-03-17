@@ -29,6 +29,7 @@ from services.chat_detectors import (
     _is_short_continuation, _detect_tirage, _has_temporal_filter, _extract_temporal_date,
     _detect_generation, _detect_generation_mode, _extract_forced_numbers,
     _detect_cooccurrence_high_n, _get_cooccurrence_high_n_response,
+    _detect_site_rating, get_site_rating_response,
 )
 from services.chat_detectors_em import (
     _detect_mode_em, _detect_prochain_tirage_em,
@@ -186,6 +187,11 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                 logger.info(
                     f"[EM CHAT] Compliment + question (type={_compliment_type}), passage au flow normal"
                 )
+
+    # ── Phase R : Détection intention de noter le site ──
+    if _detect_site_rating(message):
+        logger.info("[EM CHAT] Site rating intent detected (lang=%s)", lang)
+        return {"response": get_site_rating_response(lang), "source": "hybride_rating_invite", "mode": mode}, None
 
     # ── Phase G : Détection génération de grille ──
     _generation_context = ""

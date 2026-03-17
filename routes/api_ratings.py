@@ -15,6 +15,7 @@ from fastapi import APIRouter, Request, HTTPException
 import db_cloudsql
 from rate_limit import limiter
 from schemas import RatingSubmit, RatingResponse, RatingAggregate
+from utils import get_client_ip
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["ratings"])
@@ -26,7 +27,7 @@ async def submit_rating(data: RatingSubmit, request: Request):
     """Soumet une note utilisateur (1 vote par session+source, upsert)."""
     try:
         # Hash IP pour anti-spam RGPD-friendly
-        client_ip = request.client.host if request.client else "unknown"
+        client_ip = get_client_ip(request)
         ip_hash = hashlib.sha256(client_ip.encode()).hexdigest()[:16]
 
         # User-Agent pour analytics
