@@ -51,7 +51,7 @@
             z-index: 0;
         }
 
-        /* Orbes lumineux animés */
+        /* Orbes lumineux animes */
         body::after {
             content: '';
             position: fixed;
@@ -79,7 +79,7 @@
             z-index: 10;
             text-align: center;
             padding: 20px;
-            max-width: 900px;
+            max-width: 700px;
             width: 100%;
         }
 
@@ -98,12 +98,48 @@
             font-weight: 600;
         }
 
-        /* Grille de moteurs */
+        /* Badge IA Grounded */
+        .grounded-badge {
+            margin-bottom: 40px;
+        }
+
+        .grounded-label {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #4ade80;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .grounded-sub {
+            font-size: 0.82rem;
+            color: rgba(255, 255, 255, 0.45);
+            letter-spacing: 1px;
+        }
+
+        /* Drapeaux pays (SVG inline) */
+        .engine-flags {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 6px;
+            margin-bottom: 14px;
+        }
+
+        .engine-flags svg {
+            width: 24px;
+            height: 16px;
+            border-radius: 2px;
+            display: block;
+        }
+
+        /* Grille de moteurs — 2 cartes */
         .engines-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: 1fr 1fr;
             gap: 24px;
-            max-width: 850px;
+            max-width: 620px;
             margin: 0 auto;
         }
 
@@ -138,25 +174,15 @@
             opacity: 1;
         }
 
-        .engine-card.active {
+        .engine-card {
             border-color: rgba(16, 185, 129, 0.5);
             background: rgba(16, 185, 129, 0.1);
         }
 
-        .engine-card.active:hover {
+        .engine-card:hover {
             border-color: rgba(16, 185, 129, 0.8);
             transform: translateY(-8px);
             box-shadow: 0 20px 40px rgba(16, 185, 129, 0.2);
-        }
-
-        .engine-card.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .engine-card.disabled:hover {
-            transform: none;
-            box-shadow: none;
         }
 
         /* Icone du moteur */
@@ -170,8 +196,15 @@
         .engine-name {
             font-size: 1.5rem;
             font-weight: 700;
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             color: white;
+        }
+
+        /* Sous-titre */
+        .engine-sub {
+            font-size: 0.85rem;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 14px;
         }
 
         /* Badge de statut */
@@ -183,94 +216,9 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 1px;
-        }
-
-        .status-active {
             background: rgba(16, 185, 129, 0.2);
             color: #10b981;
             border: 1px solid rgba(16, 185, 129, 0.4);
-        }
-
-        .status-coming {
-            background: rgba(255, 255, 255, 0.1);
-            color: rgba(255, 255, 255, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        /* Icone de verrouillage */
-        .lock-icon {
-            position: absolute;
-            top: 15px;
-            right: 15px;
-            font-size: 1.2rem;
-            opacity: 0.4;
-        }
-
-        /* Message "Bientot disponible" */
-        .coming-soon-message {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.9);
-            border: 2px solid rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
-            padding: 40px 50px;
-            text-align: center;
-            z-index: 100;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .coming-soon-message.show {
-            display: block;
-        }
-
-        .coming-soon-message h3 {
-            font-size: 1.5rem;
-            margin-bottom: 12px;
-            color: white;
-        }
-
-        .coming-soon-message p {
-            color: rgba(255, 255, 255, 0.7);
-            margin-bottom: 20px;
-        }
-
-        .coming-soon-message button {
-            background: rgba(255, 255, 255, 0.1);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: white;
-            padding: 12px 30px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-        }
-
-        .coming-soon-message button:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        /* Overlay pour message */
-        .overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.7);
-            z-index: 99;
-        }
-
-        .overlay.show {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); }
-            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
         }
 
         /* Footer discret */
@@ -285,11 +233,25 @@
             z-index: 10;
         }
 
+        .launcher-footer a {
+            color: rgba(255, 255, 255, 0.5);
+            text-decoration: none;
+            margin: 0 8px;
+        }
+
+        .launcher-footer a:hover {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .footer-sep {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             body {
                 align-items: flex-start;
-                padding-top: 25px;
+                padding-top: 40px;
                 overflow-y: auto;
             }
 
@@ -319,11 +281,20 @@
             .engine-name {
                 font-size: 1.25rem;
             }
+
+            .engine-flags svg {
+                width: 20px;
+                height: 14px;
+            }
+
+            .grounded-label {
+                font-size: 0.85rem;
+            }
         }
 
         @media (max-width: 480px) {
             body {
-                padding-top: 20px;
+                padding-top: 25px;
             }
 
             .launcher-container {
@@ -350,81 +321,67 @@
         }
     </style>
     <link rel="stylesheet" href="/ui/static/legal.css">
-    <script>function umamiBeforeSend(t,p){return window.__OWNER__?false:p;}</script>
+    <script>function umamiBeforeSend(t,p){return(window.__OWNER__||document.body&&document.body.dataset.owner==='1')?false:p;}</script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc" data-before-send="umamiBeforeSend"></script>
     <script src="/ui/static/analytics.js?v=3" defer></script>
+    <script src="/ui/static/tracker.js?v=4" defer></script>
+    <script src="/ui/static/wysistat.js" defer></script>
 </head>
 <body>
     <div class="launcher-container">
-        <h1 class="launcher-title"><strong>LotoIA</strong> — Sélection du moteur</h1>
+        <h1 class="launcher-title"><strong>LotoIA</strong> — Analyse statistique</h1>
+
+        <div class="grounded-badge">
+            <div class="grounded-label">Technologie IA Grounded</div>
+            <div class="grounded-sub">IA connect&eacute;e en temps r&eacute;el aux tirages officiels</div>
+        </div>
 
         <div class="engines-grid">
-            <!-- Loto France - ACTIF -->
-            <a href="/loto" class="engine-card active">
-                <span class="engine-icon">🎯</span>
-                <h2 class="engine-name">Loto France</h2>
-                <span class="engine-status status-active">Actif</span>
+            <!-- EuroMillions - ACTIF (position 1 = produit phare) -->
+            <a href="/euromillions" class="engine-card">
+                <span class="engine-icon">&#11088;</span>
+                <h2 class="engine-name">EuroMillions</h2>
+                <div class="engine-flags">
+                    <!-- FR --><svg viewBox="0 0 24 16"><rect width="8" height="16" fill="#002395"/><rect x="8" width="8" height="16" fill="#fff"/><rect x="16" width="8" height="16" fill="#ED2939"/></svg>
+                    <!-- GB --><svg viewBox="0 0 24 16"><rect width="24" height="16" fill="#012169"/><path d="M0 0L24 16M24 0L0 16" stroke="#fff" stroke-width="2.8"/><path d="M0 0L24 16M24 0L0 16" stroke="#C8102E" stroke-width="1.6"/><path d="M12 0v16M0 8h24" stroke="#fff" stroke-width="4.8"/><path d="M12 0v16M0 8h24" stroke="#C8102E" stroke-width="2.8"/></svg>
+                    <!-- ES --><svg viewBox="0 0 24 16"><rect width="24" height="4" fill="#AA151B"/><rect y="4" width="24" height="8" fill="#F1BF00"/><rect y="12" width="24" height="4" fill="#AA151B"/></svg>
+                    <!-- PT --><svg viewBox="0 0 24 16"><rect width="9" height="16" fill="#006600"/><rect x="9" width="15" height="16" fill="#FF0000"/><circle cx="9" cy="8" r="3.2" fill="#FF0000" stroke="#F1BF00" stroke-width="0.8"/></svg>
+                    <!-- DE --><svg viewBox="0 0 24 16"><rect width="24" height="5.33" fill="#000"/><rect y="5.33" width="24" height="5.34" fill="#DD0000"/><rect y="10.67" width="24" height="5.33" fill="#FFCC00"/></svg>
+                    <!-- BE --><svg viewBox="0 0 24 16"><rect width="8" height="16" fill="#000"/><rect x="8" width="8" height="16" fill="#FAE042"/><rect x="16" width="8" height="16" fill="#ED2939"/></svg>
+                    <!-- NL --><svg viewBox="0 0 24 16"><rect width="24" height="5.33" fill="#AE1C28"/><rect y="5.33" width="24" height="5.34" fill="#fff"/><rect y="10.67" width="24" height="5.33" fill="#21468B"/></svg>
+                    <!-- AT --><svg viewBox="0 0 24 16"><rect width="24" height="5.33" fill="#ED2939"/><rect y="5.33" width="24" height="5.34" fill="#fff"/><rect y="10.67" width="24" height="5.33" fill="#ED2939"/></svg>
+                    <!-- LU --><svg viewBox="0 0 24 16"><rect width="24" height="5.33" fill="#ED2939"/><rect y="5.33" width="24" height="5.34" fill="#fff"/><rect y="10.67" width="24" height="5.33" fill="#00A1DE"/></svg>
+                </div>
+                <span class="engine-status">Actif</span>
             </a>
 
-            <!-- EuroMillions - En construction -->
-            <div class="engine-card disabled" onclick="showComingSoon('EuroMillions')">
-                <span class="lock-icon">🔒</span>
-                <span class="engine-icon">⭐</span>
-                <h2 class="engine-name">EuroMillions</h2>
-                <span class="engine-status status-coming">En construction</span>
-            </div>
-
-            <!-- Super Loto - En construction -->
-            <div class="engine-card disabled" onclick="showComingSoon('Super Loto')">
-                <span class="lock-icon">🔒</span>
-                <span class="engine-icon">💎</span>
-                <h2 class="engine-name">Super Loto</h2>
-                <span class="engine-status status-coming">En construction</span>
-            </div>
+            <!-- Loto France - ACTIF -->
+            <a href="/loto" class="engine-card">
+                <span class="engine-icon">&#127919;</span>
+                <h2 class="engine-name">Loto France</h2>
+                <div class="engine-flags"><svg viewBox="0 0 24 16"><rect width="8" height="16" fill="#002395"/><rect x="8" width="8" height="16" fill="#fff"/><rect x="16" width="8" height="16" fill="#ED2939"/></svg></div>
+                <p class="engine-sub">Tirages lundi, mercredi, samedi</p>
+                <span class="engine-status">Actif</span>
+            </a>
         </div>
-    </div>
-
-    <!-- Overlay -->
-    <div id="overlay" class="overlay" onclick="hideComingSoon()"></div>
-
-    <!-- Message "Bientot disponible" -->
-    <div id="coming-soon" class="coming-soon-message">
-        <h3 id="coming-soon-title">Moteur en construction</h3>
-        <p>Ce moteur sera disponible prochainement.</p>
-        <button onclick="hideComingSoon()">Compris</button>
     </div>
 
     <!-- Footer -->
     <div class="launcher-footer">
         <div style="margin-bottom: 8px;">
-            <a href="/ui/mentions-legales.html" style="color: rgba(255,255,255,0.5); text-decoration: none; margin: 0 8px;">Mentions légales</a>
-            <span style="color: rgba(255,255,255,0.3);">•</span>
-            <a href="/ui/politique-confidentialite.html" style="color: rgba(255,255,255,0.5); text-decoration: none; margin: 0 8px;">Confidentialité</a>
-            <span style="color: rgba(255,255,255,0.3);">•</span>
-            <a href="/ui/politique-cookies.html" style="color: rgba(255,255,255,0.5); text-decoration: none; margin: 0 8px;">Cookies</a>
+            <a href="/ui/mentions-legales.html">Mentions l&eacute;gales</a>
+            <span class="footer-sep">&bull;</span>
+            <a href="/ui/politique-confidentialite.html">Confidentialit&eacute;</a>
+            <span class="footer-sep">&bull;</span>
+            <a href="/ui/politique-cookies.html">Cookies</a>
+            <span class="footer-sep">&bull;</span>
+            <a href="#" onclick="event.preventDefault();if(window.LotoIAContact)LotoIAContact.openModal(window.location.pathname);">Nous contacter</a>
         </div>
-        LotoIA.fr — Plateforme de moteurs de loterie
+        LotoIA.fr &mdash; Analyse statistique Loto &amp; EuroMillions
     </div>
 
     <script src="/ui/static/cookie-consent.js"></script>
-    <script>
-        function showComingSoon(engineName) {
-            document.getElementById('coming-soon-title').textContent = engineName + ' — En construction';
-            document.getElementById('overlay').classList.add('show');
-            document.getElementById('coming-soon').classList.add('show');
-        }
-
-        function hideComingSoon() {
-            document.getElementById('overlay').classList.remove('show');
-            document.getElementById('coming-soon').classList.remove('show');
-        }
-
-        // Fermer avec Escape
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                hideComingSoon();
-            }
-        });
-    </script>
+    <link rel="stylesheet" href="/ui/static/contact-form.css?v=2">
+    <script src="/ui/static/contact-form.js?v=1" defer></script>
 </body>
 </html>
