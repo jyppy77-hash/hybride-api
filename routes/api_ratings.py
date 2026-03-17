@@ -69,7 +69,8 @@ async def submit_rating(data: RatingSubmit, request: Request):
         return RatingResponse(success=True, message="Merci pour votre note !")
 
     except Exception as e:
-        logger.error(f"[RATING ERROR] {e}")
+        logger.error("[RATING ERROR] source=%s rating=%s session=%s error=%s",
+                     data.source, data.rating, data.session_id[:8], e)
         raise HTTPException(status_code=500, detail="Erreur lors de l'enregistrement")
 
 
