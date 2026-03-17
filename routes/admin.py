@@ -673,7 +673,10 @@ async def admin_sponsors_list(request: Request):
         return redir
     sponsors = []
     try:
-        sponsors = await db_cloudsql.async_fetchall("SELECT * FROM fia_sponsors ORDER BY nom")
+        sponsors = await db_cloudsql.async_fetchall(
+            "SELECT id, nom, contact_nom, contact_email, contact_tel, adresse, siret, notes, actif "
+            "FROM fia_sponsors ORDER BY nom"
+        )
     except Exception as e:
         logger.error("[ADMIN] sponsors list: %s", e)
     tpl = env.get_template("admin/sponsors.html")
@@ -1821,7 +1824,7 @@ async def admin_api_activity_history(request: Request, hours: int = 24):
                 h8 = pr["session_hash"][:8] if pr.get("session_hash") else ""
                 pages_map.setdefault(h8, [])
                 p = pr.get("page", "")
-                ts_str = pr["created_at"].strftime("%H:%M:%S") if pr.get("created_at") else ""
+                ts_str = pr["created_at"].strftime("%Y-%m-%d %H:%M:%S") if pr.get("created_at") else ""
                 if p:
                     pages_map[h8].append({"page": p, "ts": ts_str})
 
@@ -2026,7 +2029,7 @@ async def admin_api_messages(
         table_data = [
             {
                 "id": r["id"],
-                "created_at": str(r["created_at"]),
+                "created_at": r["created_at"].strftime("%Y-%m-%d %H:%M:%S") if r.get("created_at") else "",
                 "nom": r["nom"] or "",
                 "email": r["email"] or "",
                 "sujet": r["sujet"],

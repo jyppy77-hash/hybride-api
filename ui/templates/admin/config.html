@@ -8,7 +8,7 @@
     <div class="alert-success">Configuration enregistree.</div>
     {% endif %}
 
-    <form method="POST" class="admin-form">
+    <form method="POST" class="admin-form" onsubmit="return confirm('Enregistrer les modifications ?')">
         <div class="form-row">
             <div class="form-group">
                 <label>Raison sociale</label>
@@ -76,7 +76,7 @@
     {% if alert_success %}
     <div class="alert-success">Seuils d'alertes enregistres.</div>
     {% endif %}
-    <form method="POST" action="/admin/config/alerts" class="admin-form">
+    <form method="POST" action="/admin/config/alerts" class="admin-form" onsubmit="return confirm('Enregistrer les seuils ?')">
         <div class="form-row">
             <div class="form-group">
                 <label>Taux erreur 5xx — warning (%)</label>

@@ -351,7 +351,7 @@
                 + '</tr>';
             if (s.hits > 1 && hasPages) {
                 var pagesHtml = s.pages.map(function(p) {
-                    return '<span class="ts-badge">' + esc(p.ts) + '</span> <code>' + esc(p.page) + '</code>';
+                    return '<span class="ts-badge">' + fmtTime(p.ts) + '</span> <code>' + esc(p.page) + '</code>';
                 }).join('<br>');
                 html += '<tr class="row-details" data-row-id="' + i + '" style="display:none;">'
                     + '<td colspan="10"><div class="row-details-inner">' + pagesHtml + '</div></td>'

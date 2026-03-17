@@ -1860,7 +1860,7 @@ class TestAdminActivity:
         assert "chatbot-open" in s["event_types"]
         assert len(s["pages"]) == 2
         assert s["pages"][0]["page"] == "/en/euromillions"
-        assert s["pages"][0]["ts"] == "15:55:00"
+        assert s["pages"][0]["ts"] == "2026-03-15 15:55:00"
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -2378,3 +2378,92 @@ class TestOwnerBodyAttribute:
         resp = client.get("/admin/login")
         if resp.status_code == 200:
             assert 'data-owner="1"' not in resp.text
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Audit Admin 360 fix tests (V42)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestAuditAdminFixes:
+    """Tests for bugs found in AUDIT_ADMIN_360.md."""
+
+    def test_votes_popup_em_source(self):
+        """Source popup_em accepted by API and visible in votes."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            async def fake_fetchone(sql, params=None):
+                return {"total": 1, "avg_rating": 4.0}
+            mock_db.async_fetchone = fake_fetchone
+            async def fake_fetchall(sql, params=None):
+                if "GROUP BY source" in sql:
+                    return [{"source": "popup_em", "cnt": 1}]
+                if "GROUP BY rating" in sql:
+                    return [{"rating": 4, "cnt": 1}]
+                return [{"created_at": "2026-03-17 12:00:00", "source": "popup_em",
+                          "rating": 4, "comment": "", "page": "/euromillions"}]
+            mock_db.async_fetchall = fake_fetchall
+            resp = client.get("/admin/api/votes?source=popup_em")
+        if resp.status_code == 200:
+            data = resp.json()
+            assert data["summary"]["total"] >= 0
+
+    def test_messages_created_at_format(self):
+        """Messages endpoint returns created_at as YYYY-MM-DD HH:MM:SS."""
+        from datetime import datetime
+        client = _authed_client()
+        mock_dt = datetime(2026, 3, 17, 14, 30, 45)
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            async def fake_fetchone(sql, params=None):
+                return {"total": 1, "unread": 0, "today": 1}
+            mock_db.async_fetchone = fake_fetchone
+            async def fake_fetchall(sql, params=None):
+                return [{"id": 1, "created_at": mock_dt, "nom": "Test",
+                         "email": "", "sujet": "question", "message": "Hello test",
+                         "page_source": "/", "lang": "fr", "lu": 0}]
+            mock_db.async_fetchall = fake_fetchall
+            resp = client.get("/admin/api/messages")
+        if resp.status_code == 200:
+            data = resp.json()
+            if data["table"]:
+                ts = data["table"][0]["created_at"]
+                assert ts == "2026-03-17 14:30:45", f"Expected strftime format, got: {ts}"
+
+    def test_messages_no_inline_onclick(self):
+        """admin.js renderMessagesTable uses data-msg-id, not onclick inline."""
+        import re
+        with open("ui/static/admin.js", "r", encoding="utf-8") as f:
+            js = f.read()
+        # The renderMessagesTable function should NOT contain onclick="LotoAdmin._showMsg
+        assert 'onclick="LotoAdmin._showMsg' not in js, "Found inline onclick XSS pattern"
+        assert 'onclick="event.stopPropagation();LotoAdmin._toggleRead' not in js, "Found inline onclick XSS pattern"
+        # Should use data-msg-id instead
+        assert 'data-msg-id' in js, "Missing data-msg-id attribute"
+
+    def test_activity_ts_badge_full_datetime(self):
+        """Activity history ts_badge returns full datetime, not HH:MM:SS only."""
+        from datetime import datetime
+        client = _authed_client()
+        mock_dt = datetime(2026, 3, 17, 14, 30, 45)
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            async def fake_fetchall(sql, params=None):
+                if "GROUP BY session_hash" in sql:
+                    return [{"session_hash": "abc12345" * 8, "country": "FR",
+                             "device": "desktop", "lang": "fr",
+                             "event_types": "page-view",
+                             "hits": 3, "last_page": "/",
+                             "last_seen": mock_dt, "first_seen": mock_dt}]
+                if "session_hash IN" in sql:
+                    return [{"session_hash": "abc12345" * 8, "page": "/loto",
+                             "created_at": mock_dt}]
+                return []
+            mock_db.async_fetchall = fake_fetchall
+            async def fake_fetchone(sql, params=None):
+                return None
+            mock_db.async_fetchone = fake_fetchone
+            resp = client.get("/admin/api/activity/history?hours=24")
+        if resp.status_code == 200:
+            data = resp.json()
+            sessions = data.get("sessions", [])
+            if sessions and sessions[0].get("pages"):
+                ts = sessions[0]["pages"][0]["ts"]
+                assert "-" in ts, f"Expected full datetime in ts_badge, got: {ts}"

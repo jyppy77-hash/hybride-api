@@ -748,7 +748,7 @@ var LotoAdmin = (function() {
                 ({bug:'#ef4444',suggestion:'#3b82f6',question:'#f59e0b',autre:'#6b7280'}[r.sujet] || '#6b7280') +
                 ';color:#fff;">' + escHtml(r.sujet) + '</span>';
             var luIcon = r.lu ? '\u2705' : '\u2709\uFE0F';
-            return '<tr style="' + bold + 'cursor:pointer;" onclick="LotoAdmin._showMsg(' + r.id + ')">' +
+            return '<tr style="' + bold + 'cursor:pointer;" data-msg-id="' + parseInt(r.id, 10) + '">' +
                 '<td>' + fmtDate(r.created_at) + '</td>' +
                 '<td>' + escHtml(r.nom) + '</td>' +
                 '<td>' + escHtml(r.email) + '</td>' +
@@ -757,9 +757,23 @@ var LotoAdmin = (function() {
                 '<td>' + escHtml(r.page_source) + '</td>' +
                 '<td>' + escHtml(r.lang) + '</td>' +
                 '<td>' + luIcon + '</td>' +
-                '<td><button class="btn-secondary" style="padding:2px 8px;font-size:0.75rem;" onclick="event.stopPropagation();LotoAdmin._toggleRead(' + r.id + ',' + (r.lu ? '0' : '1') + ')">' + (r.lu ? 'Non-lu' : 'Lu') + '</button></td>' +
+                '<td><button class="btn-secondary btn-msg-toggle" style="padding:2px 8px;font-size:0.75rem;" data-msg-id="' + parseInt(r.id, 10) + '" data-new-lu="' + (r.lu ? '0' : '1') + '">' + (r.lu ? 'Non-lu' : 'Lu') + '</button></td>' +
                 '</tr>';
         }).join('');
+        // Event delegation — row click → show detail
+        tbody.querySelectorAll('tr[data-msg-id]').forEach(function(tr) {
+            tr.addEventListener('click', function(e) {
+                if (e.target.classList.contains('btn-msg-toggle')) return;
+                showMsgDetail(parseInt(tr.getAttribute('data-msg-id'), 10));
+            });
+        });
+        // Event delegation — toggle read/unread button
+        tbody.querySelectorAll('.btn-msg-toggle').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                toggleRead(parseInt(btn.getAttribute('data-msg-id'), 10), parseInt(btn.getAttribute('data-new-lu'), 10));
+            });
+        });
         renderPagination(rows.length, page, renderMessagesTable, rows);
     }
 
@@ -795,8 +809,6 @@ var LotoAdmin = (function() {
         initVotes: initVotes,
         initRealtime: initRealtime,
         initEngagement: initEngagement,
-        initMessages: initMessages,
-        _showMsg: showMsgDetail,
-        _toggleRead: toggleRead
+        initMessages: initMessages
     };
 })();
