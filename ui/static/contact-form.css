@@ -128,11 +128,23 @@
 }
 
 .contact-min-label {
-    color: var(--theme-text-secondary, #94a3b8);
+    color: #ef4444;
+    font-weight: 600;
+    transition: color 0.3s, opacity 0.3s;
+}
+
+.contact-min-label.ok {
+    color: #4ade80;
 }
 
 .contact-counter {
     color: var(--theme-text-secondary, #94a3b8);
+    transition: color 0.3s;
+}
+
+.contact-counter.warn {
+    color: #ef4444;
+    font-weight: 600;
 }
 
 /* ── Submit button ── */

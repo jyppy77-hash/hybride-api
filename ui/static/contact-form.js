@@ -25,8 +25,8 @@
             // Reset state on re-open
             if (_feedback) { _feedback.textContent = ''; _feedback.className = 'contact-feedback'; }
             if (_submitBtn) { _submitBtn.disabled = true; _submitBtn.textContent = LI.contact_submit || 'Envoyer'; }
-            if (_counter) { _counter.textContent = (LI.contact_counter || '{n} / 2000').replace('{n}', '0'); }
-            if (_minLabel) { _minLabel.style.display = ''; }
+            if (_counter) { _counter.textContent = (LI.contact_counter || '{n} / 2000').replace('{n}', '0'); _counter.className = 'contact-counter warn'; }
+            if (_minLabel) { _minLabel.textContent = LI.contact_message_min || 'Minimum 10 caractères'; _minLabel.className = 'contact-min-label'; }
             modalEl.style.display = 'flex';
             return;
         }
@@ -125,7 +125,7 @@
         minLabel.textContent = LI.contact_message_min || 'Minimum 10 caractères';
         _minLabel = minLabel;
         var counter = document.createElement('span');
-        counter.className = 'contact-counter';
+        counter.className = 'contact-counter warn';
         counter.textContent = (LI.contact_counter || '{n} / 2000').replace('{n}', '0');
         _counter = counter;
 
@@ -133,8 +133,15 @@
             var n = textarea.value.length;
             counter.textContent = (LI.contact_counter || '{n} / 2000').replace('{n}', String(n));
             submitBtn.disabled = n < 10;
-            if (n >= 10) { minLabel.style.display = 'none'; }
-            else { minLabel.style.display = ''; }
+            if (n >= 10) {
+                minLabel.textContent = '\u2713';
+                minLabel.className = 'contact-min-label ok';
+                counter.className = 'contact-counter';
+            } else {
+                minLabel.textContent = LI.contact_message_min || 'Minimum 10 caractères';
+                minLabel.className = 'contact-min-label';
+                counter.className = 'contact-counter warn';
+            }
         });
 
         msgFooter.appendChild(minLabel);
@@ -190,7 +197,9 @@
                     feedback.className = 'contact-feedback contact-feedback-ok';
                     form.reset();
                     counter.textContent = (LI.contact_counter || '{n} / 2000').replace('{n}', '0');
-                    minLabel.style.display = '';
+                    counter.className = 'contact-counter warn';
+                    minLabel.textContent = LI.contact_message_min || 'Minimum 10 caractères';
+                    minLabel.className = 'contact-min-label';
                     submitBtn.disabled = true;
                     submitBtn.textContent = LI.contact_submit || 'Envoyer';
                     setTimeout(closeModal, 2500);
