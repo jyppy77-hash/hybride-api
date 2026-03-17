@@ -346,6 +346,9 @@
                     if (messageCount === 5) {
                         setTimeout(function () { showRatingWidget(); }, 1500);
                     }
+                    if (messageCount === 3) {
+                        setTimeout(function () { showContactLink(); }, 2000);
+                    }
                 }
 
                 return processStream();
@@ -354,8 +357,26 @@
                 clearTimeout(timeoutId);
                 removeTyping();
                 addMessage('\uD83E\uDD16 Connexion interrompue. R\u00e9essaie dans quelques secondes !', 'bot');
+                showContactLink();
                 trackEvent('chat_error', { page: detectPage() });
             });
+        }
+
+        function showContactLink() {
+            if (messageCount < 3 && !document.querySelector('.hybride-contact-link')) return;
+            var link = document.createElement('div');
+            link.className = 'hybride-msg hybride-msg-bot hybride-contact-link';
+            var a = document.createElement('a');
+            a.href = '#';
+            a.textContent = (window.LotoIA_i18n || {}).contact_chatbot_link || 'Un souci ? Contactez-nous \u2192';
+            a.style.cssText = 'color:#94a3b8;font-size:0.82rem;text-decoration:underline;cursor:pointer;';
+            a.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (window.LotoIAContact) LotoIAContact.openModal('chatbot');
+            });
+            link.appendChild(a);
+            messagesArea.appendChild(link);
+            scrollToBottom();
         }
 
         /* ══════════════════════════════════

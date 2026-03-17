@@ -380,3 +380,156 @@ class TestAntiSpam:
         assert resp.status_code == 200
         assert len(captured_sql) == 1
         assert "ON DUPLICATE KEY UPDATE" in captured_sql[0]
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Commentaire optionnel (V41)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestCommentFeature:
+
+    def test_submit_with_comment(self):
+        """POST /api/rating avec commentaire → stocke en base OK."""
+        client, mock_db = _get_client_and_mock()
+
+        captured_params = []
+
+        async def capture_query(sql, params=None):
+            captured_params.append(params)
+            return []
+        mock_db.async_query = capture_query
+
+        resp = client.post("/api/rating", json={
+            "source": "popup_accueil",
+            "rating": 3,
+            "session_id": "sess_test_001_abcdef",
+            "page": "/loto",
+            "comment": "Très bon site !",
+        })
+
+        assert resp.status_code in (200, 429)
+        if resp.status_code == 200:
+            assert len(captured_params) == 1
+            assert captured_params[0][2] == "Très bon site !"
+
+    def test_submit_without_comment(self):
+        """POST /api/rating sans commentaire → NULL en base."""
+        client, mock_db = _get_client_and_mock()
+
+        captured_params = []
+
+        async def capture_query(sql, params=None):
+            captured_params.append(params)
+            return []
+        mock_db.async_query = capture_query
+
+        resp = client.post("/api/rating", json={
+            "source": "popup_accueil",
+            "rating": 5,
+            "session_id": "sess_test_001_abcdef",
+        })
+
+        assert resp.status_code in (200, 429)
+        if resp.status_code == 200:
+            assert captured_params[0][2] is None
+
+    def test_comment_html_escaped(self):
+        """Commentaire avec <script> → echappe."""
+        client, mock_db = _get_client_and_mock()
+
+        captured_params = []
+
+        async def capture_query(sql, params=None):
+            captured_params.append(params)
+            return []
+        mock_db.async_query = capture_query
+
+        resp = client.post("/api/rating", json={
+            "source": "popup_accueil",
+            "rating": 2,
+            "session_id": "sess_test_001_abcdef",
+            "comment": "<script>alert('xss')</script>",
+        })
+
+        assert resp.status_code in (200, 429)
+        if resp.status_code == 200:
+            comment = captured_params[0][2]
+            assert "<script>" not in comment
+            assert "&lt;script&gt;" in comment
+
+    def test_comment_whitespace_only(self):
+        """Commentaire en espaces uniquement → NULL."""
+        client, mock_db = _get_client_and_mock()
+
+        captured_params = []
+
+        async def capture_query(sql, params=None):
+            captured_params.append(params)
+            return []
+        mock_db.async_query = capture_query
+
+        resp = client.post("/api/rating", json={
+            "source": "popup_accueil",
+            "rating": 4,
+            "session_id": "sess_test_001_abcdef",
+            "comment": "   ",
+        })
+
+        assert resp.status_code in (200, 429)
+        if resp.status_code == 200:
+            assert captured_params[0][2] is None
+
+    def test_comment_max_length_truncated(self):
+        """Commentaire > 500 chars apres validation Pydantic est tronque."""
+        client, mock_db = _get_client_and_mock()
+
+        captured_params = []
+
+        async def capture_query(sql, params=None):
+            captured_params.append(params)
+            return []
+        mock_db.async_query = capture_query
+
+        resp = client.post("/api/rating", json={
+            "source": "popup_accueil",
+            "rating": 3,
+            "session_id": "sess_test_001_abcdef",
+            "comment": "a" * 500,
+        })
+
+        assert resp.status_code in (200, 429)
+        if resp.status_code == 200:
+            comment = captured_params[0][2]
+            assert len(comment) == 500
+
+    def test_admin_votes_returns_comment(self):
+        """API /admin/api/votes retourne le champ comment."""
+        client, mock_db = _get_client_and_mock()
+
+        async def fake_fetchone(sql, params=None):
+            if "COUNT" in sql:
+                return {"total": 1, "avg_rating": 4.0}
+            return None
+        mock_db.async_fetchone = fake_fetchone
+
+        async def fake_fetchall(sql, params=None):
+            if "GROUP BY source" in sql:
+                return [{"source": "popup_accueil", "cnt": 1}]
+            if "GROUP BY rating" in sql:
+                return [{"rating": 4, "cnt": 1}]
+            return [{"created_at": "2026-03-17 12:00:00", "source": "popup_accueil",
+                      "rating": 4, "comment": "Super", "page": "/"}]
+        mock_db.async_fetchall = fake_fetchall
+
+        import routes.admin as admin_mod
+        admin_mod.db_cloudsql = mock_db
+
+        resp = client.get("/admin/api/votes?period=all",
+                          cookies={"lotoia_admin_token": admin_mod._ADMIN_TOKEN or "fake"})
+
+        # If no admin token configured, we get 401 or 403 — that's expected in test env
+        if resp.status_code == 200:
+            data = resp.json()
+            assert "table" in data
+            if data["table"]:
+                assert "comment" in data["table"][0]

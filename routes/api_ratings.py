@@ -7,6 +7,7 @@ GET  /api/ratings/aggregate/{source} → note moyenne par source
 """
 
 import hashlib
+import html
 import logging
 
 from fastapi import APIRouter, Request, HTTPException
@@ -31,6 +32,13 @@ async def submit_rating(data: RatingSubmit, request: Request):
         # User-Agent pour analytics
         user_agent = (request.headers.get("user-agent") or "")[:500]
 
+        # Sanitize comment: strip, escape HTML, truncate, null if empty
+        comment = data.comment
+        if comment is not None:
+            comment = html.escape(comment.strip())[:500]
+            if not comment:
+                comment = None
+
         # UPSERT : INSERT + ON DUPLICATE KEY UPDATE (MySQL)
         sql = """
             INSERT INTO ratings (source, rating, comment, session_id, page, user_agent, ip_hash)
@@ -43,7 +51,7 @@ async def submit_rating(data: RatingSubmit, request: Request):
         params = (
             data.source,
             data.rating,
-            data.comment,
+            comment,
             data.session_id,
             data.page,
             user_agent,

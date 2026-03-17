@@ -178,6 +178,80 @@
                     <li>{{ _('Email : <strong>contact@lotoia.fr</strong>')|safe }}</li>
                     <li>{{ _('Partenariats : <strong>partenariats@lotoia.fr</strong>')|safe }}</li>
                 </ul>
+                <div id="contact-inline-container" class="contact-inline-form" style="margin-top: 24px;"></div>
+                <script>
+                (function() {
+                    var LI = window.LotoIA_i18n || {};
+                    var c = document.getElementById('contact-inline-container');
+                    if (!c) return;
+                    var form = document.createElement('form');
+                    form.className = 'contact-form';
+                    form.addEventListener('submit', function(e) { e.preventDefault(); });
+
+                    // Honeypot
+                    var honey = document.createElement('input');
+                    honey.type = 'text'; honey.name = '_honey'; honey.id = 'inline-honey';
+                    honey.style.cssText = 'display:none !important'; honey.tabIndex = -1; honey.autocomplete = 'off';
+                    form.appendChild(honey);
+
+                    function mkField(type, id, ph) {
+                        var w = document.createElement('div'); w.className = 'contact-field';
+                        var inp = document.createElement('input'); inp.type = type; inp.id = id;
+                        inp.className = 'contact-input'; inp.placeholder = ph;
+                        w.appendChild(inp); return w;
+                    }
+                    form.appendChild(mkField('text', 'inline-nom', LI.contact_nom || 'Votre nom (optionnel)'));
+                    form.appendChild(mkField('email', 'inline-email', LI.contact_email || 'Votre email (optionnel)'));
+
+                    var sw = document.createElement('div'); sw.className = 'contact-field';
+                    var sel = document.createElement('select'); sel.id = 'inline-sujet'; sel.className = 'contact-select';
+                    [['question', LI.contact_sujet_question || 'Question'], ['suggestion', LI.contact_sujet_suggestion || 'Suggestion'],
+                     ['bug', LI.contact_sujet_bug || 'Signaler un bug'], ['autre', LI.contact_sujet_autre || 'Autre']].forEach(function(s) {
+                        var o = document.createElement('option'); o.value = s[0]; o.textContent = s[1]; sel.appendChild(o);
+                    });
+                    sw.appendChild(sel); form.appendChild(sw);
+
+                    var mw = document.createElement('div'); mw.className = 'contact-field';
+                    var ta = document.createElement('textarea'); ta.id = 'inline-message'; ta.className = 'contact-textarea';
+                    ta.placeholder = LI.contact_message || 'Votre message'; ta.maxLength = 2000; ta.rows = 5;
+                    var mf = document.createElement('div'); mf.className = 'contact-field-footer';
+                    var ml = document.createElement('span'); ml.className = 'contact-min-label';
+                    ml.textContent = LI.contact_message_min || 'Minimum 10 caractères';
+                    var ct = document.createElement('span'); ct.className = 'contact-counter';
+                    ct.textContent = (LI.contact_counter || '{n} / 2000').replace('{n}', '0');
+                    ta.addEventListener('input', function() {
+                        var n = ta.value.length;
+                        ct.textContent = (LI.contact_counter || '{n} / 2000').replace('{n}', String(n));
+                        btn.disabled = n < 10;
+                        ml.style.display = n >= 10 ? 'none' : '';
+                    });
+                    mf.appendChild(ml); mf.appendChild(ct); mw.appendChild(ta); mw.appendChild(mf); form.appendChild(mw);
+
+                    var btn = document.createElement('button'); btn.type = 'button';
+                    btn.className = 'contact-submit-btn'; btn.textContent = LI.contact_submit || 'Envoyer'; btn.disabled = true;
+                    var fb = document.createElement('div'); fb.className = 'contact-feedback'; fb.id = 'inline-feedback';
+
+                    btn.addEventListener('click', function() {
+                        var msg = ta.value.trim(); if (msg.length < 10) return;
+                        btn.disabled = true; btn.textContent = '...';
+                        fetch('/api/contact', {
+                            method: 'POST', headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({
+                                nom: document.getElementById('inline-nom').value.trim() || null,
+                                email: document.getElementById('inline-email').value.trim() || null,
+                                sujet: sel.value, message: msg, page_source: 'a-propos',
+                                lang: window.LotoIA_lang || 'fr', _honey: honey.value
+                            })
+                        }).then(function(r) {
+                            if (r.ok) { fb.textContent = LI.contact_success || 'Message envoyé, merci !'; fb.className = 'contact-feedback contact-feedback-ok'; form.reset(); ct.textContent = (LI.contact_counter || '{n} / 2000').replace('{n}', '0'); }
+                            else { fb.textContent = LI.contact_error || 'Erreur, veuillez réessayer'; fb.className = 'contact-feedback contact-feedback-err'; }
+                        }).catch(function() { fb.textContent = LI.contact_error || 'Erreur, veuillez réessayer'; fb.className = 'contact-feedback contact-feedback-err'; })
+                        .finally(function() { btn.textContent = LI.contact_submit || 'Envoyer'; btn.disabled = false; });
+                    });
+
+                    form.appendChild(btn); form.appendChild(fb); c.appendChild(form);
+                })();
+                </script>
             </section>
 
         </article>

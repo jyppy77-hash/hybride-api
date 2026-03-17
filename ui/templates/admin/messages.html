@@ -1,0 +1,85 @@
+{% extends "admin/_base.html" %}
+{% block title %}Messages{% endblock %}
+
+{% block content %}
+    <h2>Messages de Contact</h2>
+
+    <div class="filters-bar" id="filters">
+        <select id="f-period">
+            <option value="all" selected>Toute la periode</option>
+            <option value="today">Aujourd'hui</option>
+            <option value="7d">7 derniers jours</option>
+            <option value="30d">30 derniers jours</option>
+        </select>
+        <select id="f-sujet">
+            <option value="all">Tous sujets</option>
+            <option value="bug">Bug</option>
+            <option value="suggestion">Suggestion</option>
+            <option value="question">Question</option>
+            <option value="autre">Autre</option>
+        </select>
+        <select id="f-lu">
+            <option value="all">Tous statuts</option>
+            <option value="0">Non-lus</option>
+            <option value="1">Lus</option>
+        </select>
+        <button id="btn-filter" class="btn-primary">Filtrer</button>
+        <button id="btn-reset" class="btn-secondary">Reset</button>
+    </div>
+
+    <div class="kpi-grid" id="messages-kpi">
+        <div class="kpi-card">
+            <span class="kpi-value" id="kpi-total">-</span>
+            <span class="kpi-label">Total messages</span>
+        </div>
+        <div class="kpi-card" style="border-color: #ef4444;">
+            <span class="kpi-value" id="kpi-unread" style="color: #ef4444;">-</span>
+            <span class="kpi-label">Non-lus</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-value" id="kpi-today">-</span>
+            <span class="kpi-label">Aujourd'hui</span>
+        </div>
+    </div>
+
+    <h2>Detail des messages</h2>
+    <div class="table-wrap">
+        <table class="admin-table" id="messages-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Nom</th>
+                    <th>Email</th>
+                    <th>Sujet</th>
+                    <th>Message</th>
+                    <th>Page</th>
+                    <th>Lang</th>
+                    <th>Lu</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="messages-tbody"></tbody>
+        </table>
+        <div class="pagination" id="pagination"></div>
+    </div>
+
+    <!-- Expanded message overlay -->
+    <div id="msg-detail-overlay" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);display:none;align-items:center;justify-content:center;">
+        <div id="msg-detail-card" style="background:var(--admin-bg-card,#1e293b);border-radius:12px;padding:24px;max-width:600px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+                <h3 style="margin:0;" id="msg-detail-title">Message</h3>
+                <button onclick="document.getElementById('msg-detail-overlay').style.display='none'" style="background:none;border:none;color:#94a3b8;font-size:18px;cursor:pointer;">&times;</button>
+            </div>
+            <div id="msg-detail-meta" style="font-size:0.85rem;color:#94a3b8;margin-bottom:12px;"></div>
+            <div id="msg-detail-body" style="white-space:pre-wrap;line-height:1.6;"></div>
+            <div style="margin-top:16px;text-align:right;">
+                <button id="msg-detail-toggle" class="btn-primary" style="padding:8px 16px;"></button>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/admin.js?v=8"></script>
+<script>LotoAdmin.initMessages();</script>
+{% endblock %}

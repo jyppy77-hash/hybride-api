@@ -36,6 +36,8 @@
         <span class="footer-sep">&bull;</span>
         <a href="{{ urls.disclaimer }}">{{ _('Avertissements') }}</a>
         {% endif %}
+        <span class="footer-sep">&bull;</span>
+        <a href="#" onclick="event.preventDefault();if(window.LotoIAContact)LotoIAContact.openModal(window.location.pathname);">{{ _('Nous contacter') }}</a>
     </div>
     {# Cross-links Loto FR intentionnels — module Loto = FR uniquement, pas de traduction #}
     <div class="footer-nav footer-crosslink">

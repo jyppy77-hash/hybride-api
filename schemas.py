@@ -101,7 +101,7 @@ class PitchGrillesRequest(BaseModel):
 # =========================
 
 class RatingSubmit(BaseModel):
-    source: str = Field(..., pattern=r"^(chatbot_loto|chatbot_em|popup_accueil)$")
+    source: str = Field(..., pattern=r"^(chatbot_loto|chatbot_em|popup_accueil|popup_em)$")
     rating: int = Field(..., ge=1, le=5)
     comment: Optional[str] = Field(None, max_length=500)
     session_id: str = Field(..., min_length=10, max_length=64)

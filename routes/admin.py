@@ -53,7 +53,7 @@ def _check_admin_ip(request: Request) -> JSONResponse | None:
 _VALID_EVENTS = {"sponsor-popup-shown", "sponsor-click", "sponsor-video-played", "sponsor-inline-shown", "sponsor-result-shown", "sponsor-pdf-downloaded"}
 _VALID_LANGS = {"fr", "en", "es", "pt", "de", "nl"}
 _VALID_DEVICES = {"mobile", "desktop", "tablet"}
-_VALID_SOURCES = {"chatbot_loto", "chatbot_em", "popup_accueil"}
+_VALID_SOURCES = {"chatbot_loto", "chatbot_em", "popup_accueil", "popup_em"}
 _VALID_STATUTS = {"brouillon", "envoyee", "payee"}
 
 
@@ -1949,3 +1949,138 @@ async def admin_api_refresh_bot_ips(request: Request):
     except Exception as e:
         logger.error("[ADMIN] refresh-bot-ips error: %s", e)
         return JSONResponse({"error": str(e)}, status_code=500)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CONTACT MESSAGES (V41)
+# ══════════════════════════════════════════════════════════════════════════════
+
+@router.get("/admin/messages", response_class=HTMLResponse, include_in_schema=False)
+async def admin_messages_page(request: Request):
+    redir = _require_auth(request)
+    if redir:
+        return redir
+    tpl = env.get_template("admin/messages.html")
+    return HTMLResponse(tpl.render(active="messages"))
+
+
+@router.get("/admin/api/messages", include_in_schema=False)
+async def admin_api_messages(
+    request: Request,
+    period: str = Query("all"),
+    sujet: str = Query(""),
+    lu: str = Query(""),
+):
+    err = _require_auth_json(request)
+    if err:
+        return err
+
+    where = ["1=1"]
+    params: list = []
+
+    # Period filter
+    ds, de = None, None
+    if period != "all":
+        ds, de = _period_to_dates(period)
+    if ds and de:
+        where.append("created_at BETWEEN %s AND %s")
+        params.extend([ds, de])
+
+    # Sujet filter
+    if sujet and sujet != "all":
+        where.append("sujet = %s")
+        params.append(sujet)
+
+    # Lu filter
+    if lu == "1":
+        where.append("lu = 1")
+    elif lu == "0":
+        where.append("lu = 0")
+
+    w = " AND ".join(where)
+
+    # KPI summary
+    summary = {"total": 0, "unread": 0, "today": 0}
+    try:
+        row = await db_cloudsql.async_fetchone(
+            f"SELECT COUNT(*) AS total, SUM(CASE WHEN lu = 0 THEN 1 ELSE 0 END) AS unread, "
+            f"SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) AS today "
+            f"FROM contact_messages WHERE {w}",
+            tuple(params),
+        )
+        if row:
+            summary["total"] = _dec(row["total"]) or 0
+            summary["unread"] = _dec(row["unread"]) or 0
+            summary["today"] = _dec(row["today"]) or 0
+    except Exception as e:
+        logger.error("[ADMIN API] messages summary failed: %s", e)
+
+    # Table data
+    table_data = []
+    try:
+        rows = await db_cloudsql.async_fetchall(
+            f"SELECT id, created_at, nom, email, sujet, message, page_source, lang, lu "
+            f"FROM contact_messages WHERE {w} ORDER BY created_at DESC LIMIT 500",
+            tuple(params),
+        )
+        table_data = [
+            {
+                "id": r["id"],
+                "created_at": str(r["created_at"]),
+                "nom": r["nom"] or "",
+                "email": r["email"] or "",
+                "sujet": r["sujet"],
+                "message": r["message"],
+                "page_source": r["page_source"] or "",
+                "lang": r["lang"] or "fr",
+                "lu": r["lu"],
+            }
+            for r in rows
+        ]
+    except Exception as e:
+        logger.error("[ADMIN API] messages table failed: %s", e)
+
+    return JSONResponse({"summary": summary, "table": table_data})
+
+
+@router.post("/admin/api/messages/{msg_id}/read", include_in_schema=False)
+async def admin_api_message_mark_read(msg_id: int, request: Request):
+    err = _require_auth_json(request)
+    if err:
+        return err
+    try:
+        await db_cloudsql.async_query("UPDATE contact_messages SET lu = 1 WHERE id = %s", (msg_id,))
+        logger.info("[ADMIN_AUDIT] action=mark_message_read id=%s", msg_id)
+        return JSONResponse({"status": "ok"})
+    except Exception as e:
+        logger.error("[ADMIN] mark read error: %s", e)
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@router.post("/admin/api/messages/{msg_id}/unread", include_in_schema=False)
+async def admin_api_message_mark_unread(msg_id: int, request: Request):
+    err = _require_auth_json(request)
+    if err:
+        return err
+    try:
+        await db_cloudsql.async_query("UPDATE contact_messages SET lu = 0 WHERE id = %s", (msg_id,))
+        logger.info("[ADMIN_AUDIT] action=mark_message_unread id=%s", msg_id)
+        return JSONResponse({"status": "ok"})
+    except Exception as e:
+        logger.error("[ADMIN] mark unread error: %s", e)
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
+@router.get("/admin/api/messages/count-unread", include_in_schema=False)
+async def admin_api_messages_count_unread(request: Request):
+    err = _require_auth_json(request)
+    if err:
+        return err
+    try:
+        row = await db_cloudsql.async_fetchone(
+            "SELECT COUNT(*) AS cnt FROM contact_messages WHERE lu = 0"
+        )
+        return JSONResponse({"unread": _dec(row["cnt"]) if row else 0})
+    except Exception as e:
+        logger.error("[ADMIN] count unread error: %s", e)
+        return JSONResponse({"unread": 0})

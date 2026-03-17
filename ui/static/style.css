@@ -120,6 +120,8 @@ body.theme-night {
     --bg-tertiary: #162032;
     --bg-primary: #1e293b;
 }
+/* Native <option> fix — dark dropdown on night theme */
+body.theme-night select option { background-color: #1a1a2e; color: #e0e0e0; }
 
 /* ═══════════════════════════════════════════════════════════════════════
    THÈME JOUR (7h → 20h) - Clarté, data, confiance, usage pro

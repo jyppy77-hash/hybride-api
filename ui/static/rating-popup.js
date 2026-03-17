@@ -3,6 +3,7 @@
    Declencheur : 1m30 de SESSION cumulee (pas par page)
    Guard : ne s'affiche pas si deja vote (chatbot OU popup)
    Design : petit bandeau discret en bas, pas d'overlay bloquant
+   V2 : textarea commentaire optionnel apres selection etoile
    ══════════════════════════════════════════════════════════════ */
 
 (function () {
@@ -49,6 +50,8 @@
         else { document.addEventListener('DOMContentLoaded', fn); }
     }
 
+    var selectedRating = 0;
+
     function showBanner() {
         // Double-check (le vote a pu arriver entre-temps via chatbot)
         if (hasAlreadyRated()) return;
@@ -78,20 +81,20 @@
             star.textContent = '\u2605';
             (function (val) {
                 star.addEventListener('mouseover', function () {
+                    if (selectedRating) return;
                     var all = document.querySelectorAll('#banner-rating-stars .banner-star');
                     for (var j = 0; j < all.length; j++) {
                         if (j < val) { all[j].classList.add('active'); }
                         else { all[j].classList.remove('active'); }
                     }
                 });
-                star.addEventListener('click', function () { submitBannerRating(val); });
+                star.addEventListener('click', function () { selectRating(val); });
             })(i);
             starsDiv.appendChild(star);
         }
 
         starsDiv.addEventListener('mouseleave', function () {
-            var selected = document.querySelector('#banner-rating-stars .banner-star.selected');
-            if (selected) return;
+            if (selectedRating) return;
             var all = document.querySelectorAll('#banner-rating-stars .banner-star');
             for (var j = 0; j < all.length; j++) { all[j].classList.remove('active'); }
         });
@@ -129,8 +132,10 @@
         if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('rating_popup_shown', { event_category: 'engagement', module: ratingModule });
     }
 
-    function submitBannerRating(rating) {
-        // Highlight
+    function selectRating(rating) {
+        selectedRating = rating;
+
+        // Highlight selected stars
         var all = document.querySelectorAll('#banner-rating-stars .banner-star');
         for (var j = 0; j < all.length; j++) {
             if (j < rating) {
@@ -142,6 +147,56 @@
             }
         }
 
+        // Show comment section if not already shown
+        if (document.getElementById('rating-comment-section')) return;
+
+        var banner = document.getElementById('rating-banner');
+        if (!banner) return;
+
+        var section = document.createElement('div');
+        section.id = 'rating-comment-section';
+        section.className = 'rating-comment-section';
+
+        var textarea = document.createElement('textarea');
+        textarea.id = 'rating-comment-input';
+        textarea.className = 'rating-comment-input';
+        textarea.maxLength = 500;
+        textarea.rows = 2;
+        textarea.placeholder = rating >= 4
+            ? (LI.rating_comment_positive || 'Un commentaire ? (optionnel)')
+            : (LI.rating_comment_negative || "Qu'est-ce qu'on pourrait am\u00e9liorer ? (optionnel)");
+
+        var counterRow = document.createElement('div');
+        counterRow.className = 'rating-comment-footer';
+
+        var counter = document.createElement('span');
+        counter.className = 'rating-comment-counter';
+        counter.textContent = (LI.rating_comment_counter || '{n} / 500').replace('{n}', '0');
+
+        var submitBtn = document.createElement('button');
+        submitBtn.className = 'rating-comment-submit';
+        submitBtn.textContent = LI.rating_submit || 'Envoyer';
+
+        textarea.addEventListener('input', function () {
+            var n = textarea.value.length;
+            counter.textContent = (LI.rating_comment_counter || '{n} / 500').replace('{n}', String(n));
+        });
+
+        submitBtn.addEventListener('click', function () {
+            submitBannerRating(selectedRating, textarea.value.trim());
+        });
+
+        counterRow.appendChild(counter);
+        counterRow.appendChild(submitBtn);
+        section.appendChild(textarea);
+        section.appendChild(counterRow);
+
+        // Insert before the close button
+        var closeBtn = banner.querySelector('.rating-banner-close');
+        banner.insertBefore(section, closeBtn);
+    }
+
+    function submitBannerRating(rating, comment) {
         var sessionId = sessionStorage.getItem('hybride_session_id')
             || ('sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
         sessionStorage.setItem('hybride_session_id', sessionId);
@@ -150,18 +205,26 @@
                   || document.body.classList.contains('em-page');
         var ratingSource = isEM ? 'popup_em' : 'popup_accueil';
         var ratingModule = isEM ? 'euromillions' : 'loto';
-        if (typeof umami !== 'undefined') umami.track('rating-submitted', { rating: rating, module: ratingModule });
-        if (window.LotoIA_track) LotoIA_track('rating-submitted', {rating: rating, module: ratingModule});
+        var hasComment = !!(comment && comment.length > 0);
+
+        if (typeof umami !== 'undefined') umami.track('rating-submitted', { rating: rating, module: ratingModule, has_comment: hasComment });
+        if (window.LotoIA_track) LotoIA_track('rating-submitted', {rating: rating, module: ratingModule, has_comment: hasComment});
+        if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('rating_submitted', { event_category: 'rating', rating: rating, module: ratingModule, has_comment: hasComment });
+
+        var payload = {
+            source: ratingSource,
+            rating: rating,
+            session_id: sessionId,
+            page: window.location.pathname
+        };
+        if (hasComment) {
+            payload.comment = comment.substring(0, 500);
+        }
 
         fetch('/api/rating', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                source: ratingSource,
-                rating: rating,
-                session_id: sessionId,
-                page: window.location.pathname
-            })
+            body: JSON.stringify(payload)
         })
         .then(function (res) { return res.json(); })
         .then(function (data) {
@@ -169,6 +232,9 @@
                 sessionStorage.setItem('lotoia_rated_' + ratingSource, 'true');
                 var feedback = document.getElementById('banner-rating-feedback');
                 if (feedback) feedback.textContent = LI.rating_thanks || 'Merci !';
+                // Hide comment section
+                var commentSection = document.getElementById('rating-comment-section');
+                if (commentSection) commentSection.style.display = 'none';
                 var banner = document.getElementById('rating-banner');
                 setTimeout(function () {
                     if (banner) {

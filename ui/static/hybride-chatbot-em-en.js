@@ -268,13 +268,34 @@
                 if (messageCount === 5) {
                     setTimeout(function () { showRatingWidget(); }, 1500);
                 }
+                if (messageCount === 3) {
+                    setTimeout(function () { showContactLink(); }, 2000);
+                }
             })
             .catch(function () {
                 clearTimeout(timeoutId);
                 removeTyping();
                 addMessage('\uD83E\uDD16 Connection interrupted. Try again in a few seconds!', 'bot');
+                showContactLink();
                 trackEvent('hybride_em_en_chat_error', { page: detectPage() });
             });
+        }
+
+        function showContactLink() {
+            if (messageCount < 3 && !document.querySelector('.hybride-contact-link')) return;
+            var link = document.createElement('div');
+            link.className = 'hybride-msg hybride-msg-bot hybride-contact-link';
+            var a = document.createElement('a');
+            a.href = '#';
+            a.textContent = (window.LotoIA_i18n || {}).contact_chatbot_link || 'Having trouble? Contact us \u2192';
+            a.style.cssText = 'color:#94a3b8;font-size:0.82rem;text-decoration:underline;cursor:pointer;';
+            a.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (window.LotoIAContact) LotoIAContact.openModal('chatbot');
+            });
+            link.appendChild(a);
+            messagesArea.appendChild(link);
+            scrollToBottom();
         }
 
         /* ══════════════════════════════════

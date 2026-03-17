@@ -33,6 +33,19 @@ var LotoAdmin = (function() {
         return s;
     }
 
+    /** Format UTC datetime string to Europe/Paris local display. */
+    function fmtDate(s) {
+        if (!s) return '';
+        try {
+            // DB returns "YYYY-MM-DD HH:MM:SS" (UTC) — append Z to parse as UTC
+            var iso = s.replace(' ', 'T');
+            if (iso.indexOf('Z') === -1 && iso.indexOf('+') === -1) iso += 'Z';
+            var d = new Date(iso);
+            if (isNaN(d.getTime())) return escHtml(s);
+            return d.toLocaleString('fr-FR', { timeZone: 'Europe/Paris', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        } catch (e) { return escHtml(s); }
+    }
+
     // ── Period helpers ──
 
     function toggleCustomDates() {
@@ -275,7 +288,7 @@ var LotoAdmin = (function() {
         var start = page * PAGE_SIZE;
         var slice = rows.slice(start, start + PAGE_SIZE);
         tbody.innerHTML = slice.map(function(r) {
-            return '<tr><td>' + escHtml(r.created_at) + '</td><td>' + escHtml(r.source) + '</td><td>' + stars(r.rating) + '</td><td>' + escHtml(r.comment || '') + '</td><td>' + escHtml(r.page) + '</td></tr>';
+            return '<tr><td>' + fmtDate(r.created_at) + '</td><td>' + escHtml(r.source) + '</td><td>' + stars(r.rating) + '</td><td>' + escHtml(r.comment || '') + '</td><td>' + escHtml(r.page) + '</td></tr>';
         }).join('');
         renderPagination(rows.length, page, renderVotesTable, rows);
     }
@@ -461,7 +474,7 @@ var LotoAdmin = (function() {
                 + '<div class="rt-event-body">'
                 + '<div class="rt-event-top">'
                 + '<span class="rt-badge rt-badge-' + escHtml(e.event_type).replace(/[^a-z0-9-]/g, '') + '">' + escHtml(e.event_type) + '</span>'
-                + '<span class="rt-event-time">' + escHtml(e.created_at) + '</span>'
+                + '<span class="rt-event-time">' + fmtDate(e.created_at) + '</span>'
                 + '<span class="rt-event-device">' + deviceIcon + ' ' + escHtml(e.device || '') + '</span>'
                 + '<span class="rt-event-flag">' + flag + '</span>'
                 + '</div>'
@@ -670,5 +683,107 @@ var LotoAdmin = (function() {
         }
     }
 
-    return { initImpressions: initImpressions, initVotes: initVotes, initRealtime: initRealtime, initEngagement: initEngagement };
+    // ══════════════════════════════════════
+    // MESSAGES PAGE
+    // ══════════════════════════════════════
+
+    var messagesData = [];
+
+    function initMessages() {
+        qs('#btn-filter').addEventListener('click', loadMessages);
+        qs('#btn-reset').addEventListener('click', function() {
+            qs('#f-period').value = 'all';
+            qs('#f-sujet').value = 'all';
+            qs('#f-lu').value = 'all';
+            loadMessages();
+        });
+        loadMessages();
+    }
+
+    function buildMessagesURL() {
+        var url = '/admin/api/messages?period=' + qs('#f-period').value;
+        var suj = qs('#f-sujet').value;
+        if (suj !== 'all') url += '&sujet=' + suj;
+        var lu = qs('#f-lu').value;
+        if (lu !== 'all') url += '&lu=' + lu;
+        return url;
+    }
+
+    function loadMessages() {
+        fetchJSON(buildMessagesURL()).then(function(data) {
+            if (!data) return;
+            messagesData = data.table || [];
+            renderMessagesKPI(data.summary);
+            renderMessagesTable(messagesData, 0);
+        });
+    }
+
+    function renderMessagesKPI(s) {
+        qs('#kpi-total').textContent = s.total || 0;
+        qs('#kpi-unread').textContent = s.unread || 0;
+        qs('#kpi-today').textContent = s.today || 0;
+    }
+
+    function renderMessagesTable(rows, page) {
+        var tbody = qs('#messages-tbody');
+        var start = page * PAGE_SIZE;
+        var slice = rows.slice(start, start + PAGE_SIZE);
+        tbody.innerHTML = slice.map(function(r) {
+            var bold = r.lu ? '' : 'font-weight:700;';
+            var preview = r.message.length > 100 ? r.message.substring(0, 100) + '...' : r.message;
+            var sujetBadge = '<span style="padding:2px 8px;border-radius:10px;font-size:0.75rem;background:' +
+                ({bug:'#ef4444',suggestion:'#3b82f6',question:'#f59e0b',autre:'#6b7280'}[r.sujet] || '#6b7280') +
+                ';color:#fff;">' + escHtml(r.sujet) + '</span>';
+            var luIcon = r.lu ? '\u2705' : '\u2709\uFE0F';
+            return '<tr style="' + bold + 'cursor:pointer;" onclick="LotoAdmin._showMsg(' + r.id + ')">' +
+                '<td>' + fmtDate(r.created_at) + '</td>' +
+                '<td>' + escHtml(r.nom) + '</td>' +
+                '<td>' + escHtml(r.email) + '</td>' +
+                '<td>' + sujetBadge + '</td>' +
+                '<td>' + escHtml(preview) + '</td>' +
+                '<td>' + escHtml(r.page_source) + '</td>' +
+                '<td>' + escHtml(r.lang) + '</td>' +
+                '<td>' + luIcon + '</td>' +
+                '<td><button class="btn-secondary" style="padding:2px 8px;font-size:0.75rem;" onclick="event.stopPropagation();LotoAdmin._toggleRead(' + r.id + ',' + (r.lu ? '0' : '1') + ')">' + (r.lu ? 'Non-lu' : 'Lu') + '</button></td>' +
+                '</tr>';
+        }).join('');
+        renderPagination(rows.length, page, renderMessagesTable, rows);
+    }
+
+    function showMsgDetail(id) {
+        var msg = null;
+        for (var i = 0; i < messagesData.length; i++) {
+            if (messagesData[i].id === id) { msg = messagesData[i]; break; }
+        }
+        if (!msg) return;
+        var overlay = document.getElementById('msg-detail-overlay');
+        document.getElementById('msg-detail-title').textContent = msg.sujet.toUpperCase() + (msg.nom ? ' — ' + msg.nom : '');
+        document.getElementById('msg-detail-meta').innerHTML =
+            fmtDate(msg.created_at) + ' &bull; ' + escHtml(msg.lang) + ' &bull; ' + escHtml(msg.page_source || 'N/A') +
+            (msg.email ? ' &bull; <a href="mailto:' + escHtml(msg.email) + '" style="color:#3b82f6;">' + escHtml(msg.email) + '</a>' : '');
+        document.getElementById('msg-detail-body').textContent = msg.message;
+        var btn = document.getElementById('msg-detail-toggle');
+        btn.textContent = msg.lu ? 'Marquer non-lu' : 'Marquer comme lu';
+        btn.onclick = function() { toggleRead(id, msg.lu ? 0 : 1); overlay.style.display = 'none'; };
+        overlay.style.display = 'flex';
+
+        // Auto mark as read
+        if (!msg.lu) toggleRead(id, 1);
+    }
+
+    function toggleRead(id, newLu) {
+        var action = newLu ? 'read' : 'unread';
+        fetch('/admin/api/messages/' + id + '/' + action, { method: 'POST', credentials: 'same-origin' })
+            .then(function() { loadMessages(); });
+    }
+
+    return {
+        initImpressions: initImpressions,
+        initVotes: initVotes,
+        initRealtime: initRealtime,
+        initEngagement: initEngagement,
+        initMessages: initMessages,
+        _showMsg: showMsgDetail,
+        _toggleRead: toggleRead
+    };
 })();
