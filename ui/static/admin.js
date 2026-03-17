@@ -492,7 +492,7 @@ var LotoAdmin = (function() {
                 + '<div class="rt-event-bottom">'
                 + '<span class="rt-event-page">' + escHtml(e.page || '') + '</span>'
                 + (e.module ? '<span class="rt-event-module">' + escHtml(e.module) + '</span>' : '')
-                + '<span class="rt-event-country" title="Browser locale">' + escHtml(e.country || '') + '</span>'
+                + '<span class="rt-event-country">' + escHtml(e.country || '') + '</span>'
                 + '</div>'
                 + '</div>'
                 + '</div>';

@@ -50,18 +50,16 @@ def _get_client_ip(request: Request) -> str:
     return get_client_ip(request)
 
 
-def _detect_country(accept_lang: str) -> str | None:
-    """Extract approximate country from Accept-Language header."""
-    if not accept_lang:
-        return None
-    # Match patterns like "fr-FR", "en-US", "de-DE"
-    m = re.search(r"([a-z]{2})-([A-Z]{2})", accept_lang)
-    if m:
-        return m.group(2)
-    # Fallback: first 2-char lang code → uppercase as rough country
-    m = re.search(r"([a-z]{2})", accept_lang)
-    if m:
-        return m.group(1).upper()
+def _detect_country(request: Request) -> str | None:
+    """Detect visitor country (CF-IPCountry GeoIP → Accept-Language fallback)."""
+    cf = request.headers.get("cf-ipcountry", "").strip().upper()
+    if cf and cf not in ("XX", "T1", ""):
+        return cf
+    accept_lang = request.headers.get("accept-language", "")
+    if accept_lang:
+        m = re.search(r"([a-z]{2})-([A-Z]{2})", accept_lang)
+        if m:
+            return m.group(2)
     return None
 
 
@@ -96,7 +94,7 @@ async def track_sponsor_event(data: SponsorEvent, request: Request):
     device = data.device if data.device in _ALLOWED_DEVICES else "desktop"
 
     # Detect country from Accept-Language
-    country = _detect_country(request.headers.get("accept-language", ""))
+    country = _detect_country(request)
 
     try:
         await db_cloudsql.async_query(

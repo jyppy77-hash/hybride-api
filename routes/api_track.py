@@ -49,23 +49,22 @@ def _get_client_ip(request: Request) -> str:
     return get_client_ip(request)
 
 
-def _detect_country(accept_lang: str) -> str:
-    """Extract browser locale from Accept-Language header (NOT GeoIP).
+def _detect_country(request: Request) -> str:
+    """Detect visitor country.
 
-    Returns a 2-letter country code derived from the browser's language
-    preference (e.g. "fr-FR" → "FR", "en-US" → "US"). This reflects
-    the user's language settings, not their actual geolocation.
-    Stored in event_log.country column for backward compatibility.
+    Priority 1: CF-IPCountry header (real GeoIP via Cloudflare, free).
+    Priority 2: Accept-Language fallback (browser locale, not reliable geo).
+    CF special codes: XX (unknown), T1 (Tor) → treated as unknown.
     """
-    if not accept_lang:
-        return ""
-    m = re.search(r"([a-z]{2})-([A-Z]{2})", accept_lang)
-    if m:
-        return m.group(2)
-    m = re.search(r"([a-z]{2})", accept_lang)
-    if m:
-        return m.group(1).upper()
-    return ""
+    cf = request.headers.get("cf-ipcountry", "").strip().upper()
+    if cf and cf not in ("XX", "T1", ""):
+        return cf
+    accept_lang = request.headers.get("accept-language", "")
+    if accept_lang:
+        m = re.search(r"([a-z]{2})-([A-Z]{2})", accept_lang)
+        if m:
+            return m.group(2)
+    return "??"
 
 
 @router.post("/track", status_code=204, response_class=Response)
@@ -105,7 +104,7 @@ async def track_event(request: Request):
     device = str(data.get("device", "desktop"))
     if device not in _ALLOWED_DEVICES:
         device = "desktop"
-    country = _detect_country(request.headers.get("accept-language", ""))
+    country = _detect_country(request)
     product_code = str(data.get("product_code", ""))[:_MAX_PRODUCT_CODE_LEN] or None
     meta = data.get("meta")
     meta_json = json.dumps(meta) if isinstance(meta, dict) else None

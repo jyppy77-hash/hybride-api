@@ -161,24 +161,35 @@ class TestSponsorTrack:
 
 
 class TestDetectCountry:
-    """Test _detect_country helper."""
+    """Test _detect_country helper (CF-IPCountry + Accept-Language fallback)."""
+
+    def _make_request(self, cf_country=None, accept_lang=None):
+        from unittest.mock import MagicMock
+        req = MagicMock()
+        headers = {}
+        if cf_country is not None:
+            headers["cf-ipcountry"] = cf_country
+        if accept_lang is not None:
+            headers["accept-language"] = accept_lang
+        req.headers = headers
+        return req
 
     def test_fr_FR(self):
         from routes.api_sponsor_track import _detect_country
-        assert _detect_country("fr-FR,fr;q=0.9") == "FR"
+        assert _detect_country(self._make_request(accept_lang="fr-FR,fr;q=0.9")) == "FR"
 
     def test_en_US(self):
         from routes.api_sponsor_track import _detect_country
-        assert _detect_country("en-US,en;q=0.8") == "US"
+        assert _detect_country(self._make_request(accept_lang="en-US,en;q=0.8")) == "US"
 
-    def test_bare_lang(self):
+    def test_cf_header_priority(self):
         from routes.api_sponsor_track import _detect_country
-        assert _detect_country("de") == "DE"
+        assert _detect_country(self._make_request(cf_country="DE", accept_lang="fr-FR")) == "DE"
 
     def test_empty(self):
         from routes.api_sponsor_track import _detect_country
-        assert _detect_country("") is None
+        assert _detect_country(self._make_request()) is None
 
-    def test_none(self):
+    def test_cf_xx_fallback(self):
         from routes.api_sponsor_track import _detect_country
-        assert _detect_country(None) is None
+        assert _detect_country(self._make_request(cf_country="XX", accept_lang="es-ES")) == "ES"

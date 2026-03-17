@@ -195,3 +195,84 @@ class TestTrackEndpoint:
         assert resp.status_code == 204
         call_args = mock_db.async_query.call_args[0]
         assert len(call_args[1][8]) == 20
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# CF-IPCountry GeoIP detection (V42)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestDetectCountryCF:
+    """_detect_country() with CF-IPCountry header (Cloudflare GeoIP)."""
+
+    def test_cf_header_fr(self):
+        """CF-IPCountry: FR → returns 'FR'."""
+        client = _get_client()
+        h = _unique_headers()
+        h["CF-IPCountry"] = "FR"
+        with patch("routes.api_track.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(return_value=None)
+            resp = client.post("/api/track", json={"event": "test"}, headers=h)
+        assert resp.status_code == 204
+        call_args = mock_db.async_query.call_args[0]
+        assert call_args[1][5] == "FR"
+
+    def test_cf_header_us(self):
+        """CF-IPCountry: US → returns 'US'."""
+        client = _get_client()
+        h = _unique_headers()
+        h["CF-IPCountry"] = "US"
+        with patch("routes.api_track.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(return_value=None)
+            resp = client.post("/api/track", json={"event": "test"}, headers=h)
+        assert resp.status_code == 204
+        call_args = mock_db.async_query.call_args[0]
+        assert call_args[1][5] == "US"
+
+    def test_cf_xx_fallback_accept_language(self):
+        """CF-IPCountry: XX (unknown) → fallback to Accept-Language."""
+        client = _get_client()
+        h = _unique_headers()
+        h["CF-IPCountry"] = "XX"
+        h["Accept-Language"] = "de-DE,de;q=0.9"
+        with patch("routes.api_track.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(return_value=None)
+            resp = client.post("/api/track", json={"event": "test"}, headers=h)
+        assert resp.status_code == 204
+        call_args = mock_db.async_query.call_args[0]
+        assert call_args[1][5] == "DE"
+
+    def test_cf_t1_fallback_accept_language(self):
+        """CF-IPCountry: T1 (Tor) → fallback to Accept-Language."""
+        client = _get_client()
+        h = _unique_headers()
+        h["CF-IPCountry"] = "T1"
+        h["Accept-Language"] = "en-GB,en;q=0.9"
+        with patch("routes.api_track.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(return_value=None)
+            resp = client.post("/api/track", json={"event": "test"}, headers=h)
+        assert resp.status_code == 204
+        call_args = mock_db.async_query.call_args[0]
+        assert call_args[1][5] == "GB"
+
+    def test_no_cf_fallback_accept_language(self):
+        """No CF-IPCountry → fallback to Accept-Language."""
+        client = _get_client()
+        h = _unique_headers()
+        h["Accept-Language"] = "es-ES,es;q=0.9"
+        with patch("routes.api_track.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(return_value=None)
+            resp = client.post("/api/track", json={"event": "test"}, headers=h)
+        assert resp.status_code == 204
+        call_args = mock_db.async_query.call_args[0]
+        assert call_args[1][5] == "ES"
+
+    def test_nothing_returns_unknown(self):
+        """No CF-IPCountry, no Accept-Language → returns '??'."""
+        client = _get_client()
+        h = _unique_headers()
+        with patch("routes.api_track.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(return_value=None)
+            resp = client.post("/api/track", json={"event": "test"}, headers=h)
+        assert resp.status_code == 204
+        call_args = mock_db.async_query.call_args[0]
+        assert call_args[1][5] == "??"

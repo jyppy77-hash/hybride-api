@@ -41,7 +41,7 @@
             <thead>
                 <tr>
                     <th class="col-session">Session</th>
-                    <th class="col-country">Locale</th>
+                    <th class="col-country">Pays</th>
                     <th class="col-device">Device</th>
                     <th class="col-lang">Langue</th>
                     <th class="col-page">Derniere page</th>
@@ -73,7 +73,7 @@
         </div>
         <div class="kpi-card">
             <span class="kpi-value rt-kpi-accent-blue" id="hist-countries">-</span>
-            <span class="kpi-label">Locales uniques</span>
+            <span class="kpi-label">Pays uniques</span>
         </div>
         <div class="kpi-card">
             <span class="kpi-value rt-kpi-accent-muted" id="hist-top-page" style="font-size:.9rem;">-</span>
@@ -106,7 +106,7 @@
                 <tr>
                     <th class="col-expand"></th>
                     <th class="col-session">Session</th>
-                    <th class="col-country">Locale</th>
+                    <th class="col-country">Pays</th>
                     <th class="col-device">Device</th>
                     <th class="col-lang">Langue</th>
                     <th class="col-page">Derniere page</th>
@@ -273,7 +273,7 @@
                 var pg = (s.pages || []).map(function(p) { return '<code>' + esc(p) + '</code>'; }).join(' \u2192 ');
                 html += '<tr>'
                     + '<td class="col-session" data-label="Session" style="font-family:monospace;font-size:.85rem;">' + esc(s.session_hash) + '</td>'
-                    + '<td class="col-country" data-label="Locale">' + countryFlag(s.country) + ' ' + esc(s.country || '—') + '</td>'
+                    + '<td class="col-country" data-label="Pays">' + countryFlag(s.country) + ' ' + esc(s.country || '—') + '</td>'
                     + '<td class="col-device" data-label="Device">' + deviceIcon(s.device) + '</td>'
                     + '<td class="col-lang" data-label="Langue">' + esc((s.lang || '—').toUpperCase()) + '</td>'
                     + '<td class="col-page" data-label="Page"><code>' + esc(s.last_page || '—') + '</code></td>'
@@ -340,7 +340,7 @@
             html += '<tr>'
                 + '<td class="col-expand" data-label="">' + expandBtn + '</td>'
                 + '<td class="col-session" data-label="Session" style="font-family:monospace;font-size:.85rem;">' + esc(s.session_hash) + '</td>'
-                + '<td class="col-country" data-label="Locale">' + countryFlag(s.country) + ' ' + esc(s.country || '—') + '</td>'
+                + '<td class="col-country" data-label="Pays">' + countryFlag(s.country) + ' ' + esc(s.country || '—') + '</td>'
                 + '<td class="col-device" data-label="Device">' + deviceIcon(s.device) + '</td>'
                 + '<td class="col-lang" data-label="Langue"><span class="lang-badge">' + esc(s.lang || '—') + '</span></td>'
                 + '<td class="col-page" data-label="Page"><code>' + esc(s.last_page || '—') + '</code></td>'
