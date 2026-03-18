@@ -43,6 +43,9 @@ ui/launcher.html
 ui/robots.txt
 ui/sitemap.xml
 
+# Migrations SQL (historique local)
+migrations/
+
 # Documentation interne
 docs/
 AUDIT_GA4_REPORT.md
