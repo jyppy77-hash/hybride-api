@@ -1,78 +1,32 @@
-import re
+"""
+Chat utilities — Loto thin wrapper.
+Shared utilities in base_chat_utils.py.
+Loto-specific: tirage/stats/grille/generation formatting, session context, sponsor system.
+"""
+
 import json
 import logging
 from pathlib import Path
-from datetime import date, datetime
+from datetime import date
 
 from services.chat_detectors import _detect_numero, _detect_tirage
+
+# Re-export shared functions (consumers import from here)
+from services.base_chat_utils import (  # noqa: F401
+    FALLBACK_RESPONSE,
+    _strip_non_latin, _enrich_with_context,
+    _clean_response, StreamBuffer,
+    _MOIS_FR, _format_date_fr, _format_periode_fr,
+    _format_pairs_context_base, _format_triplets_context_base,
+    _format_complex_context_base,
+)
 
 logger = logging.getLogger(__name__)
 
 
-FALLBACK_RESPONSE = (
-    "\U0001f916 Je suis momentanément indisponible. "
-    "Réessaie dans quelques secondes ou consulte la FAQ !"
-)
-
-# Regex CJK + autres blocs non-latin indésirables (chinois, japonais, coréen, arabe, etc.)
-_RE_NON_LATIN = re.compile(
-    r'[\u4e00-\u9fff'          # CJK Unified Ideographs (chinois)
-    r'\u3400-\u4dbf'           # CJK Extension A
-    r'\u3000-\u303f'           # CJK Symbols
-    r'\u3040-\u309f'           # Hiragana
-    r'\u30a0-\u30ff'           # Katakana
-    r'\uac00-\ud7af'           # Hangul (coréen)
-    r'\u0600-\u06ff'           # Arabe
-    r'\u0900-\u097f'           # Devanagari
-    r'\U00020000-\U0002a6df'   # CJK Extension B
-    r']+'
-)
-
-
-def _strip_non_latin(text: str) -> str:
-    """Supprime les caractères CJK/arabe/devanagari indésirables des réponses Gemini."""
-    return _RE_NON_LATIN.sub('', text)
-
-
-# ────────────────────────────────────────────
-# Phase 0 : Enrichissement contextuel
-# ────────────────────────────────────────────
-
-def _enrich_with_context(message: str, history: list) -> str:
-    """Enrichit une reponse courte avec le contexte de la derniere interaction.
-
-    Parcourt l'historique a l'envers pour trouver le dernier echange
-    (derniere question user + derniere reponse assistant) et construit
-    un message enrichi pour Gemini.
-    """
-    if not history or len(history) < 2:
-        return message
-
-    last_assistant = None
-    last_user_question = None
-
-    for msg in reversed(history):
-        if msg.role == "assistant" and not last_assistant:
-            last_assistant = msg.content
-        elif msg.role == "user" and not last_user_question:
-            last_user_question = msg.content
-        if last_assistant and last_user_question:
-            break
-
-    if not last_assistant or not last_user_question:
-        return message
-
-    enriched = (
-        f"[CONTEXTE CONTINUATION] L'utilisateur avait demandé : \"{last_user_question}\". "
-        f"Tu avais répondu : \"{last_assistant[:300]}\". "
-        f"L'utilisateur répond maintenant : \"{message}\". "
-        f"Continue sur le même sujet en répondant à ta propre proposition."
-    )
-    return enriched
-
-
 # ────────────────────────────────────────────
 # Systeme sponsor — insertion post-Gemini
+# (kept here for patch compatibility with tests)
 # ────────────────────────────────────────────
 
 _SPONSORS_PATH = Path(__file__).resolve().parent.parent / "config" / "sponsors.json"
@@ -94,29 +48,20 @@ def _load_sponsors_config() -> dict:
 
 
 def _get_sponsor_if_due(history: list, lang: str = "fr", module: str = "loto") -> str | None:
-    """Retourne le texte sponsor si c'est le moment, None sinon.
-
-    Alterne slot_a (Premium) / slot_b (Standard) : A/B/A/B...
-    Le message contient un marqueur [SPONSOR:<id>] pour le tracking frontend.
-    module = 'loto' ou 'em'. Si 'em', utilise em_{lang} comme cle de slot.
-    """
+    """Retourne le texte sponsor si c'est le moment, None sinon."""
     config = _load_sponsors_config()
     if not config.get("enabled"):
         return None
 
     frequency = config.get("frequency", 3)
-
-    # Compter les reponses assistant dans l'historique
     bot_count = sum(1 for msg in history if msg.role == "assistant")
-    # +1 car la reponse actuelle sera la suivante
     bot_count += 1
 
     if bot_count % frequency != 0:
         return None
 
-    cycle = bot_count // frequency  # 1, 2, 3, 4...
+    cycle = bot_count // frequency
 
-    # Determine slot key based on module
     if module == "em":
         slot_key_root = f"em_{lang}"
     else:
@@ -126,7 +71,6 @@ def _get_sponsor_if_due(history: list, lang: str = "fr", module: str = "loto") -
     if not slots:
         return None
 
-    # Alternate: odd cycle -> slot A (Premium first), even -> slot B
     slot_key = "slot_a" if cycle % 2 == 1 else "slot_b"
     slot = slots.get(slot_key)
 
@@ -172,124 +116,8 @@ def _strip_sponsor_from_text(text: str) -> str:
     return '\n'.join(cleaned).strip()
 
 
-def _clean_response(text: str) -> str:
-    """Supprime les tags internes qui ne doivent pas être vus par l'utilisateur."""
-    internal_tags = [
-        r'\[RÉSULTAT SQL\]',
-        r'\[RESULTAT SQL\]',
-        r'\[RÉSULTAT TIRAGE[^\]]*\]',
-        r'\[RESULTAT TIRAGE[^\]]*\]',
-        r'\[ANALYSE DE GRILLE[^\]]*\]',
-        r'\[CLASSEMENT[^\]]*\]',
-        r'\[COMPARAISON[^\]]*\]',
-        r'\[NUMÉROS? (?:CHAUDS?|FROIDS?)[^\]]*\]',
-        r'\[NUMEROS? (?:CHAUDS?|FROIDS?)[^\]]*\]',
-        r'\[DONNÉES TEMPS RÉEL[^\]]*\]',
-        r'\[DONNEES TEMPS REEL[^\]]*\]',
-        r'\[PROCHAIN TIRAGE[^\]]*\]',
-        r'\[CORR[EÉ]LATIONS? DE PAIRES[^\]]*\]',
-        r'\[CORRELATIONS? DE PAIRES[^\]]*\]',
-        r'\[GRILLE G[EÉ]N[EÉ]R[EÉ]E PAR HYBRIDE[^\]]*\]',
-        r'\[GRILLE GENEREE PAR HYBRIDE[^\]]*\]',
-        r'\[Page:\s*[^\]]*\]',
-        r'\[Question utilisateur[^\]]*\]',
-        r'\[CONTEXTE CONTINUATION[^\]]*\]',
-        r'\[FR[EÉ]QUENCE SUR LA P[EÉ]RIODE[^\]]*\]',
-        r'\[FREQUENCE SUR LA PERIODE[^\]]*\]',
-        r'\[PROGRESSION[^\]]*\]',
-        r'\[R[EÉ]F[EÉ]RENCE[^\]]*\]',
-        r'\[REFERENCE[^\]]*\]',
-        r'\[BREAKDOWN[^\]]*\]',
-        r'\[MESSAGE A ADAPTER[^\]]*\]',
-    ]
-    for tag in internal_tags:
-        text = re.sub(tag, '', text)
-    # Supprimer les caractères CJK/non-latin injectés par Gemini
-    text = _strip_non_latin(text)
-    # Nettoyer les espaces multiples et lignes vides résultants
-    text = re.sub(r'\n{3,}', '\n\n', text)
-    text = re.sub(r'  +', ' ', text)
-    # strip(\n\r) only — préserver les espaces aux bords des chunks SSE
-    # pour éviter le collage de mots ("Jene peux pas") lors de la concaténation JS
-    return text.strip('\n\r')
-
-
 # ────────────────────────────────────────────
-# StreamBuffer — nettoyage anti-fuite SSE
-# ────────────────────────────────────────────
-
-class StreamBuffer:
-    """Buffer SSE qui accumule les chunks et nettoie les tags fragmentés.
-
-    Les tags internes comme [COMPARAISON SUR PÉRIODE] peuvent arriver
-    découpés sur plusieurs chunks SSE. Ce buffer retient le texte quand
-    un '[' est détecté sans ']' correspondant, puis nettoie le tag complet
-    avant de flusher.
-    """
-
-    def __init__(self):
-        self.buffer = ""
-
-    def add_chunk(self, chunk: str) -> str:
-        """Ajoute un chunk. Retourne le texte safe à envoyer (peut être vide)."""
-        self.buffer += chunk
-
-        # Si le buffer contient un '[' non fermé, on attend le ']'
-        last_open = self.buffer.rfind("[")
-        if last_open != -1 and "]" not in self.buffer[last_open:]:
-            # Tag potentiellement en cours — envoyer tout AVANT le '['
-            safe = self.buffer[:last_open]
-            self.buffer = self.buffer[last_open:]
-            if safe:
-                return _clean_response(safe)
-            return ""
-
-        # Pas de '[' pendant ou tout est fermé — nettoyer et envoyer
-        cleaned = _clean_response(self.buffer)
-        self.buffer = ""
-        return cleaned
-
-    def flush(self) -> str:
-        """Flush le reste du buffer à la fin du stream."""
-        if not self.buffer:
-            return ""
-        cleaned = _clean_response(self.buffer)
-        self.buffer = ""
-        return cleaned
-
-
-# ────────────────────────────────────────────
-# Formatage dates
-# ────────────────────────────────────────────
-
-_MOIS_FR = [
-    "", "janvier", "février", "mars", "avril", "mai", "juin",
-    "juillet", "août", "septembre", "octobre", "novembre", "décembre",
-]
-
-
-def _format_date_fr(date_str: str) -> str:
-    """Convertit une date ISO (2026-02-09) en format francais (9 février 2026)."""
-    try:
-        d = datetime.strptime(str(date_str), "%Y-%m-%d")
-        return f"{d.day} {_MOIS_FR[d.month]} {d.year}"
-    except (ValueError, TypeError):
-        return str(date_str) if date_str else "inconnue"
-
-
-def _format_periode_fr(periode: str) -> str:
-    """Convertit '2019-11-04 au 2026-02-07' en '4 novembre 2019 au 7 février 2026'."""
-    try:
-        parts = periode.split(" au ")
-        if len(parts) == 2:
-            return f"{_format_date_fr(parts[0])} au {_format_date_fr(parts[1])}"
-    except Exception:
-        pass
-    return periode
-
-
-# ────────────────────────────────────────────
-# Formatage contexte pour Gemini
+# Formatage contexte pour Gemini — Loto
 # ────────────────────────────────────────────
 
 def _format_tirage_context(tirage: dict) -> str:
@@ -305,9 +133,7 @@ def _format_tirage_context(tirage: dict) -> str:
 
 
 def _format_stats_context(stats: dict) -> str:
-    """
-    Formate les stats d'un numero en bloc de contexte pour Gemini.
-    """
+    """Formate les stats d'un numero en bloc de contexte pour Gemini."""
     type_label = "principal" if stats["type"] == "principal" else "chance"
     cat = stats["categorie"].upper()
     classement_sur = stats.get("classement_sur", 49)
@@ -327,20 +153,16 @@ def _format_stats_context(stats: dict) -> str:
 
 
 def _format_grille_context(result: dict) -> str:
-    """
-    Formate l'analyse de grille en bloc de contexte pour Gemini.
-    """
+    """Formate l'analyse de grille en bloc de contexte pour Gemini."""
     nums = result["numeros"]
     chance = result["chance"]
     a = result["analyse"]
     h = result["historique"]
 
-    # En-tete
     nums_str = " ".join(str(n) for n in nums)
     chance_str = f" (chance: {chance})" if chance else ""
     lines = [f"[ANALYSE DE GRILLE - {nums_str}{chance_str}]"]
 
-    # Metriques
     ok = lambda b: "\u2713" if b else "\u2717"
     lines.append(f"Somme : {a['somme']} (idéal : 100-140) {ok(a['somme_ok'])}")
     lines.append(f"Pairs : {a['pairs']} / Impairs : {a['impairs']} {ok(a['equilibre_pair_impair'])}")
@@ -348,7 +170,6 @@ def _format_grille_context(result: dict) -> str:
     lines.append(f"Dispersion : {a['dispersion']} (idéal : >= 15) {ok(a['dispersion_ok'])}")
     lines.append(f"Consécutifs : {a['consecutifs']} {ok(a['consecutifs'] <= 2)}")
 
-    # Chaud/froid
     if a['numeros_chauds']:
         lines.append(f"Numéros chauds : {', '.join(str(n) for n in a['numeros_chauds'])}")
     if a['numeros_froids']:
@@ -359,7 +180,6 @@ def _format_grille_context(result: dict) -> str:
     lines.append(f"Conformité : {a['conformite_pct']}%")
     lines.append(f"Badges : {', '.join(a['badges'])}")
 
-    # Historique
     if h['deja_sortie']:
         lines.append(f"Historique : combinaison déjà sortie le {', '.join(h['exact_dates'])}")
     else:
@@ -378,122 +198,14 @@ def _format_grille_context(result: dict) -> str:
 
 
 def _format_complex_context(intent: dict, data) -> str:
-    """
-    Formate le resultat d'une requete complexe en contexte pour Gemini.
-    """
-    if intent["type"] == "classement":
-        tri_labels = {
-            "frequence_desc": "les plus fréquents",
-            "frequence_asc": "les moins fréquents",
-            "ecart_desc": "les plus en retard",
-            "ecart_asc": "sortis le plus récemment",
-        }
-        label = tri_labels.get(intent["tri"], intent["tri"])
-        limit = intent["limit"]
-        type_label = "chance" if intent["num_type"] == "chance" else "principaux"
-
-        lines = [f"[CLASSEMENT - Top {limit} numéros {type_label} {label}]"]
-        for i, item in enumerate(data["items"], 1):
-            cat = item["categorie"].upper()
-            lines.append(
-                f"{i}. Numéro {item['numero']} : "
-                f"{item['frequence']} apparitions "
-                f"(écart actuel : {item['ecart_actuel']}) — {cat}"
-            )
-        lines.append(
-            f"Total tirages analysés : {data['total_tirages']} | "
-            f"Période : {data['periode']}"
-        )
-        return "\n".join(lines)
-
-    elif intent["type"] == "comparaison":
-        s1 = data["num1"]
-        s2 = data["num2"]
-        diff = data["diff_frequence"]
-        sign = "+" if diff > 0 else ""
-
-        if data.get("period"):
-            # ── Comparaison avec période : fréquence PÉRIODE en principal ──
-            p = data["period"]
-            _s1 = "+" if p["num1_progression_pct"] > 0 else ""
-            _s2 = "+" if p["num2_progression_pct"] > 0 else ""
-
-            lines = [f"[COMPARAISON SUR PÉRIODE - Numéro {s1['numero']} vs Numéro {s2['numero']}]"]
-            lines.append(f"Période analysée : depuis {p['date_from']} ({p['total_tirages_period']} tirages)")
-            lines.append("")
-            lines.append(f"[FRÉQUENCE SUR LA PÉRIODE — C'EST CE CHIFFRE QUE TU DOIS CITER]")
-            lines.append(f"Numéro {s1['numero']} sur la période : {p['num1_freq_period']} apparitions")
-            lines.append(f"Numéro {s2['numero']} sur la période : {p['num2_freq_period']} apparitions")
-            lines.append("")
-            lines.append(f"[PROGRESSION PAR RAPPORT À LA MOYENNE HISTORIQUE]")
-            lines.append(
-                f"Numéro {s1['numero']} : attendu {p['num1_expected']} → observé {p['num1_freq_period']} "
-                f"→ progression {_s1}{p['num1_progression_pct']}%"
-            )
-            lines.append(
-                f"Numéro {s2['numero']} : attendu {p['num2_expected']} → observé {p['num2_freq_period']} "
-                f"→ progression {_s2}{p['num2_progression_pct']}%"
-            )
-            if p["plus_progresse"]:
-                lines.append(
-                    f"Le numéro {p['plus_progresse']} a le plus progressé par rapport à sa moyenne historique."
-                )
-            else:
-                lines.append("Progressions identiques.")
-            lines.append("")
-            lines.append(f"[RÉFÉRENCE — fréquence totale historique (ne PAS citer en premier)]")
-            lines.append(
-                f"Numéro {s1['numero']} historique total : {s1['frequence_totale']} apparitions "
-                f"({s1['pourcentage_apparition']}) | Catégorie : {s1['categorie'].upper()}"
-            )
-            lines.append(
-                f"Numéro {s2['numero']} historique total : {s2['frequence_totale']} apparitions "
-                f"({s2['pourcentage_apparition']}) | Catégorie : {s2['categorie'].upper()}"
-            )
-            lines.append("")
-            lines.append(
-                "IMPORTANT : L'utilisateur a demandé une comparaison SUR UNE PÉRIODE. "
-                "Cite en PREMIER la fréquence sur la période demandée (section [FRÉQUENCE SUR LA PÉRIODE]). "
-                "La fréquence totale historique est une RÉFÉRENCE secondaire, ne la cite PAS comme chiffre principal."
-            )
-        else:
-            # ── Comparaison sans période : fréquence totale ──
-            lines = [f"[COMPARAISON - Numéro {s1['numero']} vs Numéro {s2['numero']}]"]
-            lines.append(
-                f"Numéro {s1['numero']} : {s1['frequence_totale']} apparitions "
-                f"({s1['pourcentage_apparition']}) | Écart : {s1['ecart_actuel']} | "
-                f"Catégorie : {s1['categorie'].upper()}"
-            )
-            lines.append(
-                f"Numéro {s2['numero']} : {s2['frequence_totale']} apparitions "
-                f"({s2['pourcentage_apparition']}) | Écart : {s2['ecart_actuel']} | "
-                f"Catégorie : {s2['categorie'].upper()}"
-            )
-            if diff != 0:
-                favori = data["favori_frequence"]
-                lines.append(
-                    f"Différence de fréquence : {sign}{diff} apparitions "
-                    f"en faveur du {favori}"
-                )
-            else:
-                lines.append("Fréquences identiques")
-
-        return "\n".join(lines)
-
-    elif intent["type"] == "categorie":
-        cat = data["categorie"].upper()
-        nums_list = [str(item["numero"]) for item in data["numeros"]]
-
-        lines = [f"[NUMÉROS {cat}S - {data['count']} numéros sur {data['periode_analyse']}]"]
-        lines.append(f"Numéros : {', '.join(nums_list)}")
-        lines.append(f"Basé sur les tirages des {data['periode_analyse']}")
-        return "\n".join(lines)
-
-    return ""
+    """Formate le resultat d'une requete complexe en contexte pour Gemini."""
+    def _type_label(intent):
+        return "chance" if intent["num_type"] == "chance" else "principaux"
+    return _format_complex_context_base(intent, data, _type_label)
 
 
 # ────────────────────────────────────────────
-# Session context
+# Session context — Loto
 # ────────────────────────────────────────────
 
 def _build_session_context(history, current_message: str) -> str:
@@ -519,7 +231,6 @@ def _build_session_context(history, current_message: str) -> str:
             elif isinstance(tirage, date):
                 tirages_vus.add(_format_date_fr(str(tirage)))
 
-    # Ne pas injecter si la session est trop courte (< 2 sujets)
     if len(numeros_vus) + len(tirages_vus) < 2:
         return ""
 
@@ -538,51 +249,21 @@ def _build_session_context(history, current_message: str) -> str:
 
 
 # ────────────────────────────────────────────
-# Formatage paires / corrélations
+# Pairs / Triplets — Loto wrappers
 # ────────────────────────────────────────────
 
 def _format_pairs_context(pairs_data: dict) -> str:
     """Formate les correlations de paires en contexte pour Gemini."""
-    lines = ["[CORRÉLATIONS DE PAIRES — Numéros principaux]"]
-    lines.append(f"Total tirages analysés : {pairs_data['total_draws']}")
-    if pairs_data.get("window"):
-        lines.append(f"Fenêtre : {pairs_data['window']}")
-    for i, p in enumerate(pairs_data["pairs"], 1):
-        lines.append(
-            f"{i}. {p['num_a']} + {p['num_b']} "
-            f"\u2192 {p['count']} fois ({p['percentage']}%)"
-        )
-    lines.append(
-        "IMPORTANT : Le hasard reste souverain. "
-        "Ces corrélations sont purement statistiques."
-    )
-    return "\n".join(lines)
+    return _format_pairs_context_base(pairs_data, "Numéros principaux")
 
-
-# ────────────────────────────────────────────
-# Formatage triplets / corrélations de 3
-# ────────────────────────────────────────────
 
 def _format_triplets_context(triplets_data: dict) -> str:
     """Formate les correlations de triplets en contexte pour Gemini."""
-    lines = ["[CORRÉLATIONS DE TRIPLETS — Numéros principaux]"]
-    lines.append(f"Total tirages analysés : {triplets_data['total_draws']}")
-    if triplets_data.get("window"):
-        lines.append(f"Fenêtre : {triplets_data['window']}")
-    for i, t in enumerate(triplets_data["triplets"], 1):
-        lines.append(
-            f"{i}. {t['num_a']} + {t['num_b']} + {t['num_c']} "
-            f"\u2192 {t['count']} fois ({t['percentage']}%)"
-        )
-    lines.append(
-        "IMPORTANT : Le hasard reste souverain. "
-        "Ces corrélations sont purement statistiques."
-    )
-    return "\n".join(lines)
+    return _format_triplets_context_base(triplets_data, "Numéros principaux")
 
 
 # ────────────────────────────────────────────
-# Formatage génération de grille (Phase G)
+# Formatage generation de grille (Phase G) — Loto
 # ────────────────────────────────────────────
 
 def _format_generation_context(grid_data: dict) -> str:
@@ -599,7 +280,7 @@ def _format_generation_context(grid_data: dict) -> str:
     lines.append(f"Badges : {', '.join(grid_data.get('badges', []))}")
     lines.append(f"Mode : {grid_data.get('mode', 'balanced')}")
 
-    # Breakdown statistique par numéro (critères de sélection)
+    # Breakdown statistique par numero (criteres de selection)
     pairs = sum(1 for n in nums if n % 2 == 0)
     impairs = 5 - pairs
     bas = sum(1 for n in nums if n <= 24)

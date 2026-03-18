@@ -1,4 +1,9 @@
-import os
+"""
+Text-to-SQL — Loto thin wrapper.
+Shared validation in base_chat_sql.py.
+Loto-specific: prochain tirage, tirage data, SQL generation (prompt Loto, table tirages).
+"""
+
 import re
 import logging
 from datetime import date, timedelta
@@ -7,8 +12,14 @@ from services.prompt_loader import load_prompt
 from services.gemini import GEMINI_MODEL_URL
 from services.circuit_breaker import gemini_breaker
 from services.chat_detectors import _JOURS_TIRAGE, _JOURS_FR
-from services.chat_utils import _format_date_fr
+from services.base_chat_utils import _format_date_fr
 import db_cloudsql
+
+# Re-export shared functions (consumers import from here)
+from services.base_chat_sql import (  # noqa: F401
+    _validate_sql, _ensure_limit,
+    _MAX_SQL_PER_SESSION, _SQL_FORBIDDEN,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -108,16 +119,6 @@ async def _get_tirage_data(target) -> dict | None:
 # Text-to-SQL : Gemini genere le SQL, Python l'execute
 # ────────────────────────────────────────────
 
-_MAX_SQL_PER_SESSION = 10
-
-_SQL_FORBIDDEN = [
-    "INSERT", "UPDATE", "DELETE", "DROP", "ALTER", "CREATE", "TRUNCATE",
-    "REPLACE INTO", "GRANT", "REVOKE", "EXEC ", "EXECUTE", "CALL ",
-    "SLEEP", "BENCHMARK", "LOAD_FILE", "INTO OUTFILE", "INTO DUMPFILE",
-    "INFORMATION_SCHEMA", "MYSQL.", "PERFORMANCE_SCHEMA", "SYS.",
-]
-
-
 async def _generate_sql(question: str, client, api_key: str, history: list = None) -> str | None:
     """Appelle Gemini pour convertir une question en SQL (avec contexte conversationnel)."""
     sql_prompt = load_prompt("SQL_GENERATOR")
@@ -184,36 +185,9 @@ async def _generate_sql(question: str, client, api_key: str, history: list = Non
         return None
 
 
-def _validate_sql(sql: str) -> bool:
-    """Valide la securite du SQL genere (SELECT only, pas de mots interdits)."""
-    if not sql:
-        return False
-    if len(sql) > 1000:
-        return False
-    upper = sql.strip().upper()
-    if not upper.startswith("SELECT"):
-        return False
-    if ";" in sql:
-        return False
-    if "--" in sql or "/*" in sql:
-        return False
-    for kw in _SQL_FORBIDDEN:
-        if kw in upper:
-            return False
-    # UNION ALL is legitimate (frequency counting via unpivot).
-    # Bare UNION (without ALL) is blocked as potential injection vector.
-    if "UNION" in upper and "UNION ALL" not in upper:
-        return False
-    return True
-
-
-def _ensure_limit(sql: str, max_limit: int = 50) -> str:
-    """Ajoute LIMIT si absent, plafonne a max_limit si present."""
-    upper = sql.strip().upper()
-    if "LIMIT" not in upper:
-        return sql.rstrip() + f" LIMIT {max_limit}"
-    return sql
-
+# ────────────────────────────────────────────
+# Execution + formatting (kept here for patch compatibility)
+# ────────────────────────────────────────────
 
 async def _execute_safe_sql(sql: str) -> list | None:
     """Execute le SQL valide avec connexion DB."""

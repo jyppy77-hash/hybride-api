@@ -7,7 +7,7 @@ Reutilise les detecteurs generiques de chat_detectors.py.
 import re
 import random
 
-from services.chat_detectors import (
+from services.base_chat_detectors import (
     _detect_insulte, _count_insult_streak,
     _detect_compliment, _count_compliment_streak,
     _extract_top_n,

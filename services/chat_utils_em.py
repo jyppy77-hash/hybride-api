@@ -1,20 +1,30 @@
 """
-Service metier — formatage et utilitaires EuroMillions.
-Formatage de contexte EM-specifique pour Gemini.
-Reutilise les fonctions generiques de chat_utils.py.
+Chat utilities — EuroMillions thin wrapper.
+Shared utilities in base_chat_utils.py.
+EM-specific: tirage/stats/grille/generation formatting, session context, star pairs.
 """
 
 from datetime import date
 
-from services.chat_utils import _format_date_fr, _format_periode_fr  # noqa: F401
 from services.chat_detectors_em import _detect_numero_em
 from services.chat_detectors import _detect_tirage
+
+# Re-export shared functions (consumers import from here)
+from services.base_chat_utils import (  # noqa: F401
+    _format_date_fr, _format_periode_fr,
+    _format_pairs_context_base, _format_triplets_context_base,
+    _format_complex_context_base,
+)
 
 FALLBACK_RESPONSE_EM = (
     "\U0001f916 Je suis momentanément indisponible. "
     "Réessaie dans quelques secondes ou consulte la FAQ !"
 )
 
+
+# ────────────────────────────────────────────
+# Formatage contexte pour Gemini — EM
+# ────────────────────────────────────────────
 
 def _format_tirage_context_em(tirage: dict) -> str:
     """Formate les resultats d'un tirage EM en bloc de contexte pour Gemini."""
@@ -96,116 +106,14 @@ def _format_grille_context_em(result: dict) -> str:
 
 def _format_complex_context_em(intent: dict, data) -> str:
     """Formate le resultat d'une requete complexe EM en contexte pour Gemini."""
-    if intent["type"] == "classement":
-        tri_labels = {
-            "frequence_desc": "les plus fréquents",
-            "frequence_asc": "les moins fréquents",
-            "ecart_desc": "les plus en retard",
-            "ecart_asc": "sortis le plus récemment",
-        }
-        label = tri_labels.get(intent["tri"], intent["tri"])
-        limit = intent["limit"]
-        type_label = "étoiles" if intent["num_type"] == "etoile" else "boules"
+    def _type_label(intent):
+        return "étoiles" if intent["num_type"] == "etoile" else "boules"
+    return _format_complex_context_base(intent, data, _type_label)
 
-        lines = [f"[CLASSEMENT - Top {limit} numéros {type_label} {label}]"]
-        for i, item in enumerate(data["items"], 1):
-            cat = item["categorie"].upper()
-            lines.append(
-                f"{i}. Numéro {item['numero']} : "
-                f"{item['frequence']} apparitions "
-                f"(écart actuel : {item['ecart_actuel']}) — {cat}"
-            )
-        lines.append(
-            f"Total tirages analysés : {data['total_tirages']} | "
-            f"Période : {data['periode']}"
-        )
-        return "\n".join(lines)
 
-    elif intent["type"] == "comparaison":
-        s1 = data["num1"]
-        s2 = data["num2"]
-        diff = data["diff_frequence"]
-        sign = "+" if diff > 0 else ""
-
-        if data.get("period"):
-            # ── Comparaison avec période : fréquence PÉRIODE en principal ──
-            p = data["period"]
-            _s1 = "+" if p["num1_progression_pct"] > 0 else ""
-            _s2 = "+" if p["num2_progression_pct"] > 0 else ""
-
-            lines = [f"[COMPARAISON SUR PÉRIODE - Numéro {s1['numero']} vs Numéro {s2['numero']}]"]
-            lines.append(f"Période analysée : depuis {p['date_from']} ({p['total_tirages_period']} tirages)")
-            lines.append("")
-            lines.append(f"[FRÉQUENCE SUR LA PÉRIODE — C'EST CE CHIFFRE QUE TU DOIS CITER]")
-            lines.append(f"Numéro {s1['numero']} sur la période : {p['num1_freq_period']} apparitions")
-            lines.append(f"Numéro {s2['numero']} sur la période : {p['num2_freq_period']} apparitions")
-            lines.append("")
-            lines.append(f"[PROGRESSION PAR RAPPORT À LA MOYENNE HISTORIQUE]")
-            lines.append(
-                f"Numéro {s1['numero']} : attendu {p['num1_expected']} → observé {p['num1_freq_period']} "
-                f"→ progression {_s1}{p['num1_progression_pct']}%"
-            )
-            lines.append(
-                f"Numéro {s2['numero']} : attendu {p['num2_expected']} → observé {p['num2_freq_period']} "
-                f"→ progression {_s2}{p['num2_progression_pct']}%"
-            )
-            if p["plus_progresse"]:
-                lines.append(
-                    f"Le numéro {p['plus_progresse']} a le plus progressé par rapport à sa moyenne historique."
-                )
-            else:
-                lines.append("Progressions identiques.")
-            lines.append("")
-            lines.append(f"[RÉFÉRENCE — fréquence totale historique (ne PAS citer en premier)]")
-            lines.append(
-                f"Numéro {s1['numero']} historique total : {s1['frequence_totale']} apparitions "
-                f"({s1['pourcentage_apparition']}) | Catégorie : {s1['categorie'].upper()}"
-            )
-            lines.append(
-                f"Numéro {s2['numero']} historique total : {s2['frequence_totale']} apparitions "
-                f"({s2['pourcentage_apparition']}) | Catégorie : {s2['categorie'].upper()}"
-            )
-            lines.append("")
-            lines.append(
-                "IMPORTANT : L'utilisateur a demandé une comparaison SUR UNE PÉRIODE. "
-                "Cite en PREMIER la fréquence sur la période demandée (section [FRÉQUENCE SUR LA PÉRIODE]). "
-                "La fréquence totale historique est une RÉFÉRENCE secondaire, ne la cite PAS comme chiffre principal."
-            )
-        else:
-            # ── Comparaison sans période : fréquence totale ──
-            lines = [f"[COMPARAISON - Numéro {s1['numero']} vs Numéro {s2['numero']}]"]
-            lines.append(
-                f"Numéro {s1['numero']} : {s1['frequence_totale']} apparitions "
-                f"({s1['pourcentage_apparition']}) | Écart : {s1['ecart_actuel']} | "
-                f"Catégorie : {s1['categorie'].upper()}"
-            )
-            lines.append(
-                f"Numéro {s2['numero']} : {s2['frequence_totale']} apparitions "
-                f"({s2['pourcentage_apparition']}) | Écart : {s2['ecart_actuel']} | "
-                f"Catégorie : {s2['categorie'].upper()}"
-            )
-            if diff != 0:
-                favori = data["favori_frequence"]
-                lines.append(
-                    f"Différence de fréquence : {sign}{diff} apparitions "
-                    f"en faveur du {favori}"
-                )
-            else:
-                lines.append("Fréquences identiques")
-
-        return "\n".join(lines)
-
-    elif intent["type"] == "categorie":
-        cat = data["categorie"].upper()
-        nums_list = [str(item["numero"]) for item in data["numeros"]]
-
-        lines = [f"[NUMÉROS {cat}S - {data['count']} numéros sur {data['periode_analyse']}]"]
-        lines.append(f"Numéros : {', '.join(nums_list)}")
-        lines.append(f"Basé sur les tirages des {data['periode_analyse']}")
-        return "\n".join(lines)
-
-    return ""
-
+# ────────────────────────────────────────────
+# Session context — EM
+# ────────────────────────────────────────────
 
 def _build_session_context_em(history, current_message: str) -> str:
     """
@@ -248,25 +156,12 @@ def _build_session_context_em(history, current_message: str) -> str:
 
 
 # ────────────────────────────────────────────
-# Formatage paires / corrélations EM
+# Pairs / Triplets / Star pairs — EM wrappers
 # ────────────────────────────────────────────
 
 def _format_pairs_context_em(pairs_data: dict) -> str:
     """Formate les correlations de paires EM en contexte pour Gemini."""
-    lines = ["[CORRÉLATIONS DE PAIRES — Boules EuroMillions]"]
-    lines.append(f"Total tirages analysés : {pairs_data['total_draws']}")
-    if pairs_data.get("window"):
-        lines.append(f"Fenêtre : {pairs_data['window']}")
-    for i, p in enumerate(pairs_data["pairs"], 1):
-        lines.append(
-            f"{i}. {p['num_a']} + {p['num_b']} "
-            f"\u2192 {p['count']} fois ({p['percentage']}%)"
-        )
-    lines.append(
-        "IMPORTANT : Le hasard reste souverain. "
-        "Ces corrélations sont purement statistiques."
-    )
-    return "\n".join(lines)
+    return _format_pairs_context_base(pairs_data, "Boules EuroMillions")
 
 
 def _format_star_pairs_context_em(star_data: dict) -> str:
@@ -281,30 +176,13 @@ def _format_star_pairs_context_em(star_data: dict) -> str:
     return "\n".join(lines)
 
 
-# ────────────────────────────────────────────
-# Formatage triplets EM / corrélations de 3
-# ────────────────────────────────────────────
-
 def _format_triplets_context_em(triplets_data: dict) -> str:
     """Formate les correlations de triplets EM en contexte pour Gemini."""
-    lines = ["[CORRÉLATIONS DE TRIPLETS — Boules EuroMillions]"]
-    lines.append(f"Total tirages analysés : {triplets_data['total_draws']}")
-    if triplets_data.get("window"):
-        lines.append(f"Fenêtre : {triplets_data['window']}")
-    for i, t in enumerate(triplets_data["triplets"], 1):
-        lines.append(
-            f"{i}. {t['num_a']} + {t['num_b']} + {t['num_c']} "
-            f"\u2192 {t['count']} fois ({t['percentage']}%)"
-        )
-    lines.append(
-        "IMPORTANT : Le hasard reste souverain. "
-        "Ces corrélations sont purement statistiques."
-    )
-    return "\n".join(lines)
+    return _format_triplets_context_base(triplets_data, "Boules EuroMillions")
 
 
 # ────────────────────────────────────────────
-# Formatage génération de grille EM (Phase G)
+# Formatage generation de grille EM (Phase G)
 # ────────────────────────────────────────────
 
 def _format_generation_context_em(grid_data: dict) -> str:
@@ -338,7 +216,7 @@ def _format_generation_context_em(grid_data: dict) -> str:
             lines.append(f"- Numéro {num} exclu")
         lines.append("Tous les numéros générés respectent ces contraintes.")
 
-    # Breakdown statistique par numéro (critères de sélection)
+    # Breakdown statistique par numero
     pairs = sum(1 for n in nums if n % 2 == 0)
     impairs = 5 - pairs
     bas = sum(1 for n in nums if n <= 25)
@@ -363,7 +241,7 @@ def _format_generation_context_em(grid_data: dict) -> str:
             tags = []
             if grid_data.get("forced_etoiles") and e in grid_data["forced_etoiles"]:
                 tags.append("imposée par l'utilisateur")
-            lines.append(f"  ⭐{e:02d} : {', '.join(tags) if tags else 'sélectionnée par le moteur'}")
+            lines.append(f"  \u2b50{e:02d} : {', '.join(tags) if tags else 'sélectionnée par le moteur'}")
     lines.append(
         "Ces critères sont STATISTIQUES et basés sur l'historique. "
         "L'EuroMillions reste un jeu de pur hasard, aucune grille ne garantit de gain."

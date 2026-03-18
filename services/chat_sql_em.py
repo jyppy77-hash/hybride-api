@@ -1,7 +1,7 @@
 """
-Service metier — fonctions SQL EuroMillions.
-Requetes DB EM-specifiques + generation SQL via Gemini.
-Reutilise les fonctions generiques de chat_sql.py.
+Text-to-SQL — EuroMillions thin wrapper.
+Shared validation/execution/formatting in base_chat_sql.py.
+EM-specific: prochain tirage EM, tirage data EM, SQL generation (prompt EM, table tirages_euromillions).
 """
 
 import logging
@@ -11,15 +11,15 @@ import db_cloudsql
 from services.prompt_loader import load_prompt_em
 from services.gemini import GEMINI_MODEL_URL
 from services.circuit_breaker import gemini_breaker
-from services.chat_utils import _format_date_fr
 
-logger = logging.getLogger(__name__)
-
-# Re-export constantes partagees (pour imports dans chat_pipeline_em)
-from services.chat_sql import (  # noqa: F401
-    _validate_sql, _ensure_limit, _execute_safe_sql, _format_sql_result,
+# Re-export shared functions (consumers import from here)
+from services.base_chat_sql import (  # noqa: F401
+    _validate_sql, _ensure_limit,
     _MAX_SQL_PER_SESSION, _SQL_FORBIDDEN,
 )
+from services.chat_sql import _execute_safe_sql, _format_sql_result  # noqa: F401
+
+logger = logging.getLogger(__name__)
 
 # Jours de tirage EuroMillions : mardi (1), vendredi (4)
 _JOURS_TIRAGE_EM = [1, 4]
