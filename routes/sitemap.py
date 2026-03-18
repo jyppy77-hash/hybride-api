@@ -108,9 +108,80 @@ async def sitemap():
 
     xml = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<?xml-stylesheet type="text/xsl" href="/sitemap.xsl"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"\n'
         '        xmlns:xhtml="http://www.w3.org/1999/xhtml">\n'
         + "\n".join(blocks)
         + "\n</urlset>\n"
     )
-    return Response(content=xml, media_type="application/xml")
+    return Response(
+        content=xml,
+        media_type="application/xml; charset=utf-8",
+    )
+
+
+# ── XSL stylesheet for browser rendering ─────────────────────────────────
+
+_SITEMAP_XSL = """\
+<?xml version="1.0" encoding="UTF-8"?>
+<xsl:stylesheet version="2.0"
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:sitemap="http://www.sitemaps.org/schemas/sitemap/0.9"
+    xmlns:xhtml="http://www.w3.org/1999/xhtml">
+<xsl:output method="html" encoding="UTF-8" indent="yes"/>
+<xsl:template match="/">
+<html lang="fr">
+<head>
+<title>Plan du site XML — LotoIA</title>
+<meta name="robots" content="noindex, follow"/>
+<style>
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;margin:0;padding:20px 40px;background:#0f172a;color:#e2e8f0}
+h1{font-size:1.4rem;color:#10b981;margin-bottom:4px}
+p.info{color:#94a3b8;font-size:.85rem;margin-bottom:20px}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{background:#1e293b;color:#94a3b8;text-align:left;padding:8px 12px;font-weight:600;text-transform:uppercase;font-size:.72rem;letter-spacing:.5px}
+td{padding:6px 12px;border-bottom:1px solid #1e293b}
+tr:hover td{background:rgba(16,185,129,.06)}
+a{color:#38bdf8;text-decoration:none}
+a:hover{text-decoration:underline}
+.lang{display:inline-block;background:#1e293b;color:#10b981;padding:2px 6px;border-radius:4px;font-size:.7rem;margin:1px}
+.prio{color:#f59e0b;font-weight:600}
+</style>
+</head>
+<body>
+<h1>&#127760; Plan du site XML — LotoIA</h1>
+<p class="info">
+  <xsl:value-of select="count(sitemap:urlset/sitemap:url)"/> URLs —
+  Mis à jour le <xsl:value-of select="sitemap:urlset/sitemap:url[1]/sitemap:lastmod"/>
+</p>
+<table>
+<tr><th>#</th><th>URL</th><th>Priorité</th><th>Fréquence</th><th>Langues</th></tr>
+<xsl:for-each select="sitemap:urlset/sitemap:url">
+<xsl:sort select="sitemap:priority" order="descending" data-type="number"/>
+<tr>
+  <td><xsl:value-of select="position()"/></td>
+  <td><a href="{sitemap:loc}"><xsl:value-of select="sitemap:loc"/></a></td>
+  <td class="prio"><xsl:value-of select="sitemap:priority"/></td>
+  <td><xsl:value-of select="sitemap:changefreq"/></td>
+  <td>
+    <xsl:for-each select="xhtml:link[@rel='alternate']">
+      <span class="lang"><xsl:value-of select="@hreflang"/></span>
+    </xsl:for-each>
+  </td>
+</tr>
+</xsl:for-each>
+</table>
+</body>
+</html>
+</xsl:template>
+</xsl:stylesheet>
+"""
+
+
+@router.get("/sitemap.xsl", include_in_schema=False)
+async def sitemap_xsl():
+    """XSL stylesheet for human-readable sitemap rendering in browsers."""
+    return Response(
+        content=_SITEMAP_XSL,
+        media_type="application/xslt+xml; charset=utf-8",
+    )

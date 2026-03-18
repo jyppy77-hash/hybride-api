@@ -23,6 +23,17 @@ Allow: /moteur
 
 # === PAGES SEO PUBLIQUES — EUROMILLIONS (6 langues) ===
 Allow: /euromillions
+Allow: /euromillions/generateur
+Allow: /euromillions/simulateur
+Allow: /euromillions/statistiques
+Allow: /euromillions/historique
+Allow: /euromillions/faq
+Allow: /euromillions/news
+Allow: /euromillions/hybride
+Allow: /euromillions/intelligence-artificielle
+Allow: /euromillions/moteur
+Allow: /euromillions/methodologie
+Allow: /euromillions/a-propos
 Allow: /en/euromillions
 Allow: /es/euromillions
 Allow: /pt/euromillions

@@ -349,9 +349,16 @@ async def add_cache_headers(request: Request, call_next):
             timeval=stamp, localtime=False, usegmt=True,
         )
 
-    # Vary: Accept-Language sur les routes EM multilingues
+    # Vary: Accept-Language + Content-Language sur les routes EM multilingues
     if path.startswith(_EM_LANG_PREFIXES) or path.startswith("/euromillions"):
         response.headers["Vary"] = "Accept-Language"
+        # Content-Language: detect lang from path prefix
+        _cl_lang = "fr"
+        for _lp in ("en", "es", "pt", "de", "nl"):
+            if path.startswith(f"/{_lp}/"):
+                _cl_lang = _lp
+                break
+        response.headers["Content-Language"] = _cl_lang
 
     return response
 
