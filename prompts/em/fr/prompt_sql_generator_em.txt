@@ -254,3 +254,9 @@ FORMAT DE SORTIE :
 Retourne UNIQUEMENT la requête SQL, sans explication, sans backticks,
 sans commentaire, sans point-virgule.
 Si la question ne concerne PAS les tirages de l'EuroMillions, retourne : NO_SQL
+
+RÈGLE ABSOLUE — PAS DE TEXTE EN LANGAGE NATUREL :
+Ta sortie doit commencer par SELECT ou être exactement NO_SQL.
+Ne reformule JAMAIS la question en français. Ne retourne JAMAIS de phrase.
+Ne recopie JAMAIS l'historique de conversation dans ta sortie.
+Si tu ne sais pas générer le SQL, retourne NO_SQL.

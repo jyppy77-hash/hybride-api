@@ -435,3 +435,63 @@ class TestHasTemporalFilter:
 
     def test_es_desde_solamente(self):
         assert _has_temporal_filter("top 5 desde enero 2026 solamente") is True
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V43 — Fuzzy continuation detection (typos, multi-word)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestFuzzyContinuation:
+    """Catch typos and multi-word short continuations."""
+
+    def test_vas_ymontre_les(self):
+        """'vas ymontre les' — the exact typo from production."""
+        assert _is_short_continuation("vas ymontre les") is True
+
+    def test_vas_y_montre_les(self):
+        """'vas y montre les' — correct spacing variant."""
+        assert _is_short_continuation("vas y montre les") is True
+
+    def test_oui_montre(self):
+        """'oui montre' — two continuation words."""
+        assert _is_short_continuation("oui montre") is True
+
+    def test_montre_les(self):
+        """'montre les' — verb + article."""
+        assert _is_short_continuation("montre les") is True
+
+    def test_go_ahead(self):
+        """'go ahead' — English continuation."""
+        assert _is_short_continuation("go ahead") is True
+
+    def test_show_me(self):
+        """'show me' — English continuation."""
+        assert _is_short_continuation("show me") is True
+
+    def test_si_dale(self):
+        """'sí dale' — Spanish continuation."""
+        assert _is_short_continuation("sí dale") is True
+
+    def test_ja_zeig(self):
+        """'ja zeig' — German continuation."""
+        assert _is_short_continuation("ja zeig") is True
+
+    def test_sim_mostra(self):
+        """'sim mostra' — Portuguese continuation."""
+        assert _is_short_continuation("sim mostra") is True
+
+    def test_long_message_not_continuation(self):
+        """Long message should NOT be continuation even if starts with keyword."""
+        assert _is_short_continuation("oui je veux voir les statistiques complètes de tous les numéros") is False
+
+    def test_exact_patterns_still_work(self):
+        """Original exact patterns must still work."""
+        assert _is_short_continuation("oui") is True
+        assert _is_short_continuation("vas-y") is True
+        assert _is_short_continuation("montre-moi") is True
+        assert _is_short_continuation("je veux voir") is True
+        assert _is_short_continuation("non") is True
+
+    def test_six_words_not_continuation(self):
+        """6+ words should NOT be fuzzy continuation."""
+        assert _is_short_continuation("montre moi les stats du numéro") is False

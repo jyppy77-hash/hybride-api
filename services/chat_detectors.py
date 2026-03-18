@@ -36,22 +36,45 @@ def _is_chance_query(lower: str) -> bool:
 # ────────────────────────────────────────────
 
 CONTINUATION_PATTERNS = re.compile(
-    r'^(oui|ouais|yes|yeah|yep|ok|d\'accord|vas-y|go|montre|'
-    r'montre-moi|carrément|bien sûr|absolument|pourquoi pas|'
+    r'^(oui|ouais|yes|yeah|yep|ok|d\'accord|vas-y|vas\s*y|go|montre|'
+    r'montre-moi|montre[\s-]?moi[\s-]?(?:les|ça|ca|tout)?|'
+    r'montre[\s-]?les|vas[\s-]?y[\s-]?montre[\s-]?(?:les|moi)?|'
+    r'carrément|bien sûr|absolument|pourquoi pas|'
     r'je veux bien|volontiers|allez|non|nan|nope|pas vraiment|'
     r'bof|si|stp|please|détaille|détailles|detail|continue|'
     r'envoie|balance|dis-moi|affirmatif|négatif|'
-    r'je veux savoir|je veux voir|on y va)[\s!.?]*$',
+    r'je veux savoir|je veux voir|on y va|'
+    r'show me|show them|go ahead|tell me|do it|'
+    r'ja|nein|doch|natürlich|zeig|zeig mir|'
+    r'sim|não|mostra|claro|'
+    r'sí|no|muestra|dale|venga|'
+    r'ja|nee|laat zien|toon)[\s!.?]*$',
     re.IGNORECASE
 )
 
+# Fuzzy continuation: catches typos like "vas ymontre les", "oui montre", etc.
+_CONTINUATION_WORDS = {
+    "oui", "ouais", "yes", "yeah", "yep", "ok", "go", "montre", "vas",
+    "allez", "continue", "détaille", "detail", "envoie", "balance",
+    "show", "tell", "ja", "sim", "sí", "si", "dale", "venga",
+    "claro", "doch", "zeig", "mostra", "laat", "toon", "nee",
+    "non", "nan", "nope", "nein", "não", "no",
+}
+
 
 def _is_short_continuation(message: str) -> bool:
-    """Detecte si le message est une reponse courte de continuation."""
+    """Detecte si le message est une reponse courte de continuation.
+    Uses exact regex first, then fuzzy word-level check for typos."""
     stripped = message.strip()
     if len(stripped) > 80:
         return False
-    return bool(CONTINUATION_PATTERNS.match(stripped))
+    if CONTINUATION_PATTERNS.match(stripped):
+        return True
+    # Fuzzy: if short (≤5 words) and first word is a continuation word
+    words = stripped.lower().split()
+    if 1 <= len(words) <= 5 and words[0] in _CONTINUATION_WORDS:
+        return True
+    return False
 
 
 # ────────────────────────────────────────────

@@ -672,3 +672,60 @@ class TestGetCountryContextEm:
         for lang in ("fr", "en", "es", "pt", "de", "nl"):
             ctx = _get_country_context_em(lang)
             assert "Luxembourg" in ctx or "Luxemburg" in ctx or "Luxemburgo" in ctx
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V43 — "du moment" / "numerostars" → chaud detection
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestDuMomentDetection:
+    """'du moment' and similar expressions should trigger hot/chaud detection."""
+
+    def test_numerostars_du_moment(self):
+        """'les numerostars du moment' → categorie chaud."""
+        result = _detect_requete_complexe_em("les numerostars du moment")
+        assert result is not None
+        assert result["type"] == "categorie"
+        assert result["categorie"] == "chaud"
+
+    def test_numeros_du_moment(self):
+        """'les numéros du moment' → categorie chaud."""
+        result = _detect_requete_complexe_em("les numéros du moment")
+        assert result is not None
+        assert result["type"] == "categorie"
+        assert result["categorie"] == "chaud"
+
+    def test_numeros_en_ce_moment(self):
+        """'quels numeros en ce moment' → categorie chaud."""
+        result = _detect_requete_complexe_em("quels numeros en ce moment")
+        assert result is not None
+        assert result["type"] == "categorie"
+        assert result["categorie"] == "chaud"
+
+    def test_numeros_del_momento_es(self):
+        """'los números del momento' → categorie chaud."""
+        result = _detect_requete_complexe_em("los números del momento")
+        assert result is not None
+        assert result["type"] == "categorie"
+        assert result["categorie"] == "chaud"
+
+    def test_numeros_do_momento_pt(self):
+        """'os números do momento' → categorie chaud."""
+        result = _detect_requete_complexe_em("os números do momento")
+        assert result is not None
+        assert result["type"] == "categorie"
+        assert result["categorie"] == "chaud"
+
+    def test_nummers_van_moment_nl(self):
+        """'nummers van het moment' → categorie chaud."""
+        result = _detect_requete_complexe_em("nummers van het moment")
+        assert result is not None
+        assert result["type"] == "categorie"
+        assert result["categorie"] == "chaud"
+
+    def test_numbers_right_now_en(self):
+        """'numbers right now' → categorie chaud."""
+        result = _detect_requete_complexe_em("numbers right now")
+        assert result is not None
+        assert result["type"] == "categorie"
+        assert result["categorie"] == "chaud"

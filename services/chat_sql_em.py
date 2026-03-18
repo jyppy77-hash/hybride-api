@@ -168,7 +168,14 @@ async def _generate_sql_em(question: str, client, api_key: str, history: list = 
                     text = text[3:].strip()
                     if text.startswith("\n"):
                         text = text[1:]
-                return text.strip()
+                text = text.strip()
+                # Guard: reject if Gemini returned natural language instead of SQL
+                if text and text.upper() != "NO_SQL" and not text.upper().startswith("SELECT"):
+                    logger.warning(
+                        f"[EM TEXT-TO-SQL] Non-SQL output rejected: \"{text[:100]}\""
+                    )
+                    return "NO_SQL"
+                return text
         return None
     except Exception as e:
         logger.warning(f"[EM TEXT-TO-SQL] Erreur generation SQL: {e}")

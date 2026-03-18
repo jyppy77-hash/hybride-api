@@ -240,14 +240,21 @@ def _detect_requete_complexe_em(message: str):
 
     # --- Categorie chaud/froid ---
     if re.search(r'(?:quels?|les?|num[eé]ros?)\s+.*chauds?', lower) or \
-       re.search(r'chauds?\s+(?:en ce moment|actuellement)', lower) or \
+       re.search(r'chauds?\s+(?:en ce moment|actuellement|du moment)', lower) or \
        re.search(r'(?:num[eé]ros?|lesquels)\s+(?:sont|en)\s+tendance', lower) or \
+       re.search(r'(?:num[eé]ros?|num[eé]ro\s*stars?)\s+du\s+moment', lower) or \
+       re.search(r'\bdu\s+moment\b.*(?:num[eé]ro|boule|[eé]toile|star)', lower) or \
+       re.search(r'(?:num[eé]ros?|num[eé]ro\s*stars?|boules?|[eé]toiles?)\s+(?:en\s+ce\s+moment|actuellement)', lower) or \
        re.search(r'\b(?:hot|hottest)\s+numbers?\b', lower) or \
-       re.search(r'\bnumbers?\s+(?:on\s+a\s+)?(?:hot\s+streak|trending)\b', lower) or \
+       re.search(r'\bnumbers?\s+(?:on\s+a\s+)?(?:hot\s+streak|trending|right\s+now)\b', lower) or \
        re.search(r'\bn[uú]meros?\s+calientes?\b', lower) or \
+       re.search(r'\bn[uú]meros?\s+(?:del\s+momento|de\s+moda)\b', lower) or \
        re.search(r'\bn[uú]meros?\s+quentes?\b', lower) or \
+       re.search(r'\bn[uú]meros?\s+do\s+momento\b', lower) or \
        re.search(r'\bhei[sß]e\s+zahlen\b', lower) or \
-       re.search(r'\bhete\s+nummers\b', lower):
+       re.search(r'\baktuell\w*\s+zahlen\b', lower) or \
+       re.search(r'\bhete\s+nummers\b', lower) or \
+       re.search(r'\bnummers\s+van\s+(?:het\s+)?moment\b', lower):
         num_type = "etoile" if _is_star_query(lower) else "boule"
         return {"type": "categorie", "categorie": "chaud", "num_type": num_type}
 
