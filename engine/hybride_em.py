@@ -324,12 +324,28 @@ async def generer_etoiles(conn) -> List[int]:
 # GENERATION DE GRILLE
 # ============================================================================
 
+def _apply_exclusions(candidates: List[int], exclusions: dict | None) -> List[int]:
+    """Filter candidates by user exclusion constraints."""
+    if not exclusions:
+        return candidates
+    filtered = candidates
+    for low, high in exclusions.get("exclude_ranges", []):
+        filtered = [n for n in filtered if n < low or n > high]
+    for mult in exclusions.get("exclude_multiples", []):
+        if mult > 0:
+            filtered = [n for n in filtered if n % mult != 0]
+    for num in exclusions.get("exclude_nums", []):
+        filtered = [n for n in filtered if n != num]
+    return filtered
+
+
 async def generer_grille(
     conn,
     scores_hybrides: Dict[int, float],
     lang: str = "fr",
     forced_nums: List[int] | None = None,
     forced_etoiles: List[int] | None = None,
+    exclusions: dict | None = None,
 ) -> Dict[str, Any]:
     """
     Genere une grille EM unique avec validation des contraintes.
@@ -338,6 +354,7 @@ async def generer_grille(
     Args:
         forced_nums: Boules imposées par l'utilisateur
         forced_etoiles: Étoiles imposées par l'utilisateur
+        exclusions: Contraintes d'exclusion (ranges, multiples, nums)
     """
     MAX_TENTATIVES = 10
 
@@ -355,6 +372,11 @@ async def generer_grille(
 
     for tentative in range(MAX_TENTATIVES):
         numeros_disponibles = [n for n in range(BOULE_MIN, BOULE_MAX + 1) if n not in forced_nums]
+        # Apply user exclusions
+        numeros_disponibles = _apply_exclusions(numeros_disponibles, exclusions)
+        # Guard: if too few candidates after exclusions, fallback to unfiltered
+        if len(numeros_disponibles) < nb_to_draw:
+            numeros_disponibles = [n for n in range(BOULE_MIN, BOULE_MAX + 1) if n not in forced_nums]
         probas_list = [probas[n] for n in numeros_disponibles]
 
         numeros = list(forced_nums)
@@ -425,6 +447,7 @@ async def generate_grids(
     lang: str = "fr",
     forced_nums: List[int] | None = None,
     forced_etoiles: List[int] | None = None,
+    exclusions: dict | None = None,
 ) -> Dict[str, Any]:
     """
     Point d'entree principal : genere N grilles EM optimisees.
@@ -434,6 +457,7 @@ async def generate_grids(
         mode: conservative, balanced, recent
         forced_nums: Boules imposées par l'utilisateur
         forced_etoiles: Étoiles imposées par l'utilisateur
+        exclusions: Contraintes d'exclusion (ranges, multiples, nums)
     """
     async with get_connection() as conn:
         scores_hybrides = await calculer_scores_hybrides(conn, mode=mode)
@@ -443,6 +467,7 @@ async def generate_grids(
             grille = await generer_grille(
                 conn, scores_hybrides, lang=lang,
                 forced_nums=forced_nums, forced_etoiles=forced_etoiles,
+                exclusions=exclusions,
             )
             grilles.append(grille)
 

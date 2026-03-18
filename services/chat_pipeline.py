@@ -25,7 +25,8 @@ from services.chat_detectors import (
     _get_menace_response, _detect_compliment, _count_compliment_streak,
     _get_compliment_response, _detect_out_of_range, _count_oor_streak,
     _get_oor_response, _detect_argent, _get_argent_response,
-    _detect_generation, _detect_generation_mode, _extract_forced_numbers,
+    _detect_generation, _detect_generation_mode, _extract_forced_numbers, _extract_grid_count,
+    _extract_exclusions,
     _detect_cooccurrence_high_n, _get_cooccurrence_high_n_response,
     _detect_site_rating, get_site_rating_response,
 )
@@ -172,25 +173,35 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
         try:
             from engine.hybride import generate_grids as _gen_loto
             _gen_mode = _detect_generation_mode(message)
+            _grid_count = _extract_grid_count(message)
             _forced = _extract_forced_numbers(message, game="loto")
+            _exclusions = _extract_exclusions(message)
             if _forced.get("error"):
                 _generation_context = f"[ERREUR GÉNÉRATION] {_forced['error']}"
                 logger.info(f"[HYBRIDE CHAT] Phase G — erreur contrainte: {_forced['error']}")
             else:
                 _gen_result = await asyncio.wait_for(
                     _gen_loto(
-                        n=1, mode=_gen_mode,
+                        n=_grid_count, mode=_gen_mode,
                         forced_nums=_forced["forced_nums"] or None,
                         forced_chance=_forced["forced_chance"],
+                        exclusions=_exclusions if any(_exclusions.values()) else None,
                     ),
                     timeout=30.0,
                 )
                 if _gen_result and _gen_result.get("grids"):
-                    _grid = _gen_result["grids"][0]
-                    _grid["mode"] = _gen_mode
-                    _generation_context = _format_generation_context(_grid)
+                    _grids = _gen_result["grids"][:_grid_count]
+                    if len(_grids) == 1:
+                        _grids[0]["mode"] = _gen_mode
+                        _generation_context = _format_generation_context(_grids[0])
+                    else:
+                        _parts = []
+                        for idx, _grid in enumerate(_grids, 1):
+                            _grid["mode"] = _gen_mode
+                            _parts.append(f"--- Grille {idx}/{len(_grids)} ---\n" + _format_generation_context(_grid))
+                        _generation_context = "\n\n".join(_parts)
                     logger.info(
-                        f"[HYBRIDE CHAT] Phase G — grille Loto generee mode={_gen_mode} "
+                        f"[HYBRIDE CHAT] Phase G — {len(_grids)} grille(s) Loto generee(s) mode={_gen_mode} "
                         f"forced={_forced['forced_nums']} chance={_forced['forced_chance']}"
                     )
         except Exception as e:
@@ -271,7 +282,9 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
             logger.warning(f"[HYBRIDE CHAT] Erreur analyse grille: {e}")
 
     # Phase 3 : requete complexe
-    if not _continuation_mode and not force_sql and not enrichment_context:
+    # V43-bis: Phase 3 runs even when force_sql=True — classement/categorie are
+    # structured queries that handle time natively. Only TEXT2SQL needs force_sql.
+    if not _continuation_mode and not enrichment_context:
         intent = _detect_requete_complexe(message)
         if intent:
             try:
@@ -286,6 +299,8 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
 
                 if data:
                     enrichment_context = _format_complex_context(intent, data)
+                    if force_sql:
+                        force_sql = False  # Phase 3 handled it — cancel SQL bypass
                     logger.info(f"[HYBRIDE CHAT] Requete complexe: {intent['type']}")
             except Exception as e:
                 logger.warning(f"[HYBRIDE CHAT] Erreur requete complexe: {e}")

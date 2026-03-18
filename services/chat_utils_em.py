@@ -322,6 +322,22 @@ def _format_generation_context_em(grid_data: dict) -> str:
     lines.append(f"Badges : {', '.join(grid_data.get('badges', []))}")
     lines.append(f"Mode : {grid_data.get('mode', 'balanced')}")
 
+    # V43-bis: User exclusion constraints
+    excl = grid_data.get("exclusions")
+    if excl and any(excl.values()):
+        lines.append("")
+        lines.append("[CONTRAINTES UTILISATEUR]")
+        for low, high in excl.get("exclude_ranges", []):
+            if low == 1 and high == 31:
+                lines.append(f"- Plage exclue : {low}-{high} (dates de naissance)")
+            else:
+                lines.append(f"- Plage exclue : {low}-{high}")
+        for mult in excl.get("exclude_multiples", []):
+            lines.append(f"- Multiples de {mult} exclus")
+        for num in excl.get("exclude_nums", []):
+            lines.append(f"- Numéro {num} exclu")
+        lines.append("Tous les numéros générés respectent ces contraintes.")
+
     # Breakdown statistique par numéro (critères de sélection)
     pairs = sum(1 for n in nums if n % 2 == 0)
     impairs = 5 - pairs

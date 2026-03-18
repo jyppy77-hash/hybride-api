@@ -406,11 +406,27 @@ def generer_badges(numeros: List[int], scores_hybrides: Dict[int, float]) -> Lis
 # GÉNÉRATION DE GRILLE
 # ============================================================================
 
+def _apply_exclusions(candidates: List[int], exclusions: dict | None) -> List[int]:
+    """Filter candidates by user exclusion constraints."""
+    if not exclusions:
+        return candidates
+    filtered = candidates
+    for low, high in exclusions.get("exclude_ranges", []):
+        filtered = [n for n in filtered if n < low or n > high]
+    for mult in exclusions.get("exclude_multiples", []):
+        if mult > 0:
+            filtered = [n for n in filtered if n % mult != 0]
+    for num in exclusions.get("exclude_nums", []):
+        filtered = [n for n in filtered if n != num]
+    return filtered
+
+
 async def generer_grille(
     conn,
     scores_hybrides: Dict[int, float],
     forced_nums: List[int] | None = None,
     forced_chance: int | None = None,
+    exclusions: dict | None = None,
 ) -> Dict[str, Any]:
     """
     Génère une grille unique avec validation des contraintes
@@ -422,6 +438,7 @@ async def generer_grille(
         scores_hybrides: Scores hybrides pré-calculés
         forced_nums: Numéros imposés par l'utilisateur (inclus obligatoirement)
         forced_chance: Numéro chance imposé (1-10)
+        exclusions: Contraintes d'exclusion (ranges, multiples, nums)
 
     Returns:
         Dict représentant la grille
@@ -442,8 +459,12 @@ async def generer_grille(
 
     # Boucle de génération (non récursive)
     for tentative in range(MAX_TENTATIVES):
-        # Tirage pondéré des numéros restants (exclure les imposés)
+        # Tirage pondéré des numéros restants (exclure les imposés + exclusions utilisateur)
         numeros_disponibles = [n for n in range(1, 50) if n not in forced_nums]
+        numeros_disponibles = _apply_exclusions(numeros_disponibles, exclusions)
+        # Guard: if too few candidates after exclusions, fallback to unfiltered
+        if len(numeros_disponibles) < nb_to_draw:
+            numeros_disponibles = [n for n in range(1, 50) if n not in forced_nums]
         probas_list = [probas[n] for n in numeros_disponibles]
 
         numeros = list(forced_nums)
@@ -661,6 +682,7 @@ async def generate_grids(
     lang: str = "fr",
     forced_nums: List[int] | None = None,
     forced_chance: int | None = None,
+    exclusions: dict | None = None,
 ) -> Dict[str, Any]:
     """
     Point d'entrée principal : génère N grilles optimisées
@@ -690,6 +712,7 @@ async def generate_grids(
             grille = await generer_grille(
                 conn, scores_hybrides,
                 forced_nums=forced_nums, forced_chance=forced_chance,
+                exclusions=exclusions,
             )
             grilles.append(grille)
 

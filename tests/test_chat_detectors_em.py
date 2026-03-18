@@ -13,6 +13,7 @@ from services.chat_detectors_em import (
     _get_insult_response_em, _get_insult_short_em, _get_menace_response_em,
     _get_compliment_response_em,
     _detect_country_em, _get_country_context_em,
+    _wants_both_boules_and_stars,
     _INSULT_L1_EM, _INSULT_L2_EM, _INSULT_L3_EM, _INSULT_L4_EM,
     _INSULT_SHORT_EM, _MENACE_RESPONSES_EM,
     _COMPLIMENT_L1_EM, _COMPLIMENT_L2_EM, _COMPLIMENT_L3_EM,
@@ -729,3 +730,43 @@ class TestDuMomentDetection:
         assert result is not None
         assert result["type"] == "categorie"
         assert result["categorie"] == "chaud"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V43-bis — _wants_both_boules_and_stars detection
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestWantsBothBoulesAndStars:
+    """Detect when user asks for both numbers AND stars."""
+
+    def test_numeros_et_etoiles_fr(self):
+        """FR: 'top 5 des numéros et étoiles' → True."""
+        assert _wants_both_boules_and_stars("top 5 des numéros et étoiles les plus fréquents") is True
+
+    def test_numbers_and_stars_en(self):
+        """EN: 'top numbers and stars' → True."""
+        assert _wants_both_boules_and_stars("top 5 numbers and stars most drawn") is True
+
+    def test_numeros_y_estrellas_es(self):
+        """ES: 'números y estrellas' → True."""
+        assert _wants_both_boules_and_stars("los 5 números y estrellas más frecuentes") is True
+
+    def test_zahlen_und_sterne_de(self):
+        """DE: 'Zahlen und Sterne' → True."""
+        assert _wants_both_boules_and_stars("top 5 Zahlen und Sterne") is True
+
+    def test_only_numeros_fr(self):
+        """FR: 'top 5 numéros' without stars → False."""
+        assert _wants_both_boules_and_stars("top 5 des numéros les plus fréquents") is False
+
+    def test_only_etoiles_fr(self):
+        """FR: 'top 5 étoiles' without numbers → False."""
+        assert _wants_both_boules_and_stars("top 5 étoiles les plus fréquentes") is False
+
+    def test_numeros_e_estrelas_pt(self):
+        """PT: 'números e estrelas' → True."""
+        assert _wants_both_boules_and_stars("top 5 números e estrelas mais frequentes") is True
+
+    def test_nummers_en_sterren_nl(self):
+        """NL: 'nummers en sterren' → True."""
+        assert _wants_both_boules_and_stars("top 5 nummers en sterren") is True

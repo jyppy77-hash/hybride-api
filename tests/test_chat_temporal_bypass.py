@@ -60,13 +60,14 @@ class TestComplexAlsoMatches:
 # Pipeline: force_sql=True → Phase SQL fail → NO fallback to Phase 3
 # ═══════════════════════════════════════════════════════════════════════
 
-class TestPipelineNoFallbackOnTemporalSQLFail:
-    """When temporal filter is detected (force_sql=True) and Phase SQL fails,
-    the pipeline must NOT fall back to get_classement_numeros (all-time stats)."""
+class TestPipelinePhase3HandlesTemporalClassement:
+    """V43-bis: When temporal filter is detected AND Phase 3 detects a classement,
+    Phase 3 handles it natively (structured query) and cancels force_sql.
+    Phase SQL is NOT needed for classement/categorie queries."""
 
     @pytest.mark.asyncio
-    async def test_loto_no_fallback_phase3(self):
-        """Loto pipeline: force_sql=True + SQL returns NO_SQL → Phase 3 NOT called."""
+    async def test_loto_phase3_handles_temporal_classement(self):
+        """Loto pipeline: force_sql=True + Phase 3 detects classement → Phase 3 called, force_sql cancelled."""
         from services.chat_pipeline import _prepare_chat_context
 
         mock_client = MagicMock()
@@ -85,7 +86,7 @@ class TestPipelineNoFallbackOnTemporalSQLFail:
              patch("services.chat_pipeline._detect_argent", return_value=False), \
              patch("services.chat_pipeline._detect_generation", return_value=False), \
              patch("services.chat_pipeline._generate_sql", new_callable=AsyncMock, return_value="NO_SQL"), \
-             patch("services.chat_pipeline.get_classement_numeros") as mock_classement, \
+             patch("services.chat_pipeline.get_classement_numeros", new_callable=AsyncMock) as mock_classement, \
              patch("services.chat_pipeline._build_session_context", return_value=""):
 
             _, ctx = await _prepare_chat_context(
@@ -93,12 +94,12 @@ class TestPipelineNoFallbackOnTemporalSQLFail:
                 [], "accueil", mock_client,
             )
 
-            # get_classement_numeros must NOT have been called
-            mock_classement.assert_not_called()
+            # Phase 3 SHOULD handle this (classement detected) even with temporal filter
+            mock_classement.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_em_no_fallback_phase3(self):
-        """EM pipeline: force_sql=True + SQL returns NO_SQL → Phase 3 NOT called."""
+    async def test_em_phase3_handles_temporal_classement(self):
+        """EM pipeline: force_sql=True + Phase 3 detects classement → Phase 3 called, force_sql cancelled."""
         from services.chat_pipeline_em import _prepare_chat_context_em
 
         mock_client = MagicMock()
@@ -117,13 +118,13 @@ class TestPipelineNoFallbackOnTemporalSQLFail:
              patch("services.chat_pipeline_em._detect_argent_em", return_value=False), \
              patch("services.chat_pipeline_em._detect_generation", return_value=False), \
              patch("services.chat_pipeline_em._generate_sql_em", new_callable=AsyncMock, return_value="NO_SQL"), \
-             patch("services.chat_pipeline_em.get_classement_numeros") as mock_classement, \
+             patch("services.chat_pipeline_em.get_classement_numeros", new_callable=AsyncMock) as mock_classement, \
              patch("services.chat_pipeline_em._build_session_context_em", return_value=""):
 
             _, ctx = await _prepare_chat_context_em(
                 "top 5 since January 2026",
-                [], "accueil-em", "en", mock_client,
+                [], "accueil-em", mock_client, "en",
             )
 
-            # get_classement_numeros must NOT have been called
-            mock_classement.assert_not_called()
+            # Phase 3 SHOULD handle this (classement detected) even with temporal filter
+            mock_classement.assert_called_once()

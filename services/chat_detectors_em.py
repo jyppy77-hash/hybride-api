@@ -63,6 +63,25 @@ def _is_star_query(lower: str) -> bool:
     return bool(_STAR_QUERY_RE.search(lower))
 
 
+# Patterns for "numéros" / "numbers" / "boules" — indicates explicit main number mention
+_BOULE_QUERY_RE = re.compile(
+    r'\b(?:'
+    r'num[eé]ros?|boules?|'           # FR
+    r'numbers?|balls?|'               # EN
+    r'n[uú]meros?|bolas?|'           # ES/PT
+    r'zahlen|kugeln?|'               # DE
+    r'nummers|ballen?'               # NL
+    r')\b',
+    re.IGNORECASE
+)
+
+
+def _wants_both_boules_and_stars(message: str) -> bool:
+    """Detecte si le message demande à la fois les numéros ET les étoiles."""
+    lower = message.lower()
+    return bool(_BOULE_QUERY_RE.search(lower)) and _is_star_query(lower)
+
+
 def _detect_paires_em(message: str) -> bool:
     """Detecte les questions sur les paires EM (meme regex multilingue que Loto)."""
     return _detect_paires(message)

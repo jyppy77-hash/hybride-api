@@ -9,6 +9,7 @@ from services.chat_detectors import (
     _detect_grille, _detect_mode, _detect_requete_complexe,
     _detect_prochain_tirage, _is_short_continuation,
     _extract_top_n, _has_temporal_filter,
+    _extract_grid_count, _extract_exclusions,
 )
 
 
@@ -495,3 +496,212 @@ class TestFuzzyContinuation:
     def test_six_words_not_continuation(self):
         """6+ words should NOT be fuzzy continuation."""
         assert _is_short_continuation("montre moi les stats du numéro") is False
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V43-bis — Multi-grid count extraction
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestExtractGridCount:
+    """Extract number of grids requested from message."""
+
+    def test_default_no_number(self):
+        """No number mentioned → default 1."""
+        assert _extract_grid_count("génère une grille") == 1
+
+    def test_fr_3_grilles(self):
+        """'3 grilles' → 3."""
+        assert _extract_grid_count("donne-moi 3 grilles EuroMillions") == 3
+
+    def test_fr_5_combinaisons(self):
+        """'5 combinaisons' → 5."""
+        assert _extract_grid_count("génère 5 combinaisons") == 5
+
+    def test_en_3_grids(self):
+        """'3 grids' → 3."""
+        assert _extract_grid_count("generate 3 grids for me") == 3
+
+    def test_en_2_combinations(self):
+        """'2 combinations' → 2."""
+        assert _extract_grid_count("give me 2 combinations") == 2
+
+    def test_es_3_combinaciones(self):
+        """'3 combinaciones' → 3."""
+        assert _extract_grid_count("genera 3 combinaciones") == 3
+
+    def test_pt_4_grelhas(self):
+        """'4 grelhas' → 4."""
+        assert _extract_grid_count("gera 4 grelhas") == 4
+
+    def test_de_3_kombinationen(self):
+        """'3 Kombinationen' → 3."""
+        assert _extract_grid_count("generiere 3 Kombinationen") == 3
+
+    def test_nl_2_combinaties(self):
+        """'2 combinaties' → 2."""
+        assert _extract_grid_count("genereer 2 combinaties") == 2
+
+    def test_cap_at_5(self):
+        """Requested > 5 → capped at 5."""
+        assert _extract_grid_count("génère 10 grilles") == 5
+
+    def test_zero_becomes_1(self):
+        """0 grilles → 1 (minimum)."""
+        assert _extract_grid_count("génère 0 grilles") == 1
+
+    def test_single_grille(self):
+        """'1 grille' → 1."""
+        assert _extract_grid_count("génère 1 grille") == 1
+
+    def test_en_3_euromillions_grids(self):
+        """'3 EuroMillions grids' — word between number and keyword."""
+        assert _extract_grid_count("Give me 3 EuroMillions grids") == 3
+
+    def test_de_3_euromillions_kombinationen(self):
+        """'3 EuroMillions Kombinationen' — word between."""
+        assert _extract_grid_count("Gib mir 3 EuroMillions Kombinationen") == 3
+
+    def test_nl_3_euromillions_combinaties(self):
+        """'3 EuroMillions combinaties' — word between."""
+        assert _extract_grid_count("Geef me 3 EuroMillions combinaties") == 3
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V43-bis — PT generation detection (grelha)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestGenerationMultilang:
+    """Generation detection must work in all 6 languages."""
+
+    def test_fr_generation(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("Donne-moi 3 grilles EuroMillions") is True
+
+    def test_en_generation(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("Give me 3 EuroMillions grids") is True
+
+    def test_pt_generation_grelhas(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("Dá-me 3 grelhas EuroMillions") is True
+
+    def test_pt_generation_long(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("Dá-me 3 grelhas EuroMillions baseadas nos números mais frequentes dos últimos 12 meses") is True
+
+    def test_es_generation(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("Dame 3 combinaciones EuroMillions") is True
+
+    def test_de_generation(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("Gib mir 3 EuroMillions Kombinationen") is True
+
+    def test_nl_generation(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("Geef me 3 EuroMillions combinaties") is True
+
+    def test_pt_cria_grelha(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("Cria uma grelha otimizada") is True
+
+    def test_pt_faz_me_grelha(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("Faz-me uma grelha EuroMillions") is True
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V43-bis — Exclusion extraction
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestExtractExclusions:
+    """Extract exclusion constraints from generation requests."""
+
+    def test_no_exclusions(self):
+        """No exclusion keywords → empty."""
+        result = _extract_exclusions("génère une grille EuroMillions")
+        assert result["exclude_ranges"] == []
+        assert result["exclude_multiples"] == []
+        assert result["exclude_nums"] == []
+
+    def test_birthdays_fr(self):
+        """'pas de dates de naissance' → range (1, 31)."""
+        result = _extract_exclusions("pas de dates de naissance")
+        assert (1, 31) in result["exclude_ranges"]
+
+    def test_birthdays_en(self):
+        """'no birthdays' → range (1, 31)."""
+        result = _extract_exclusions("no birthdays please")
+        assert (1, 31) in result["exclude_ranges"]
+
+    def test_birthdays_es(self):
+        """'sin fechas de nacimiento' → range (1, 31)."""
+        result = _extract_exclusions("sin fechas de nacimiento")
+        assert (1, 31) in result["exclude_ranges"]
+
+    def test_birthdays_pt(self):
+        """'sem datas de nascimento' → range (1, 31)."""
+        result = _extract_exclusions("sem datas de nascimento")
+        assert (1, 31) in result["exclude_ranges"]
+
+    def test_birthdays_de(self):
+        """'keine Geburtstage' → range (1, 31)."""
+        result = _extract_exclusions("keine Geburtstage bitte")
+        assert (1, 31) in result["exclude_ranges"]
+
+    def test_birthdays_nl(self):
+        """'geen verjaardagen' → range (1, 31)."""
+        result = _extract_exclusions("geen verjaardagen alsjeblieft")
+        assert (1, 31) in result["exclude_ranges"]
+
+    def test_multiples_of_5_fr(self):
+        """'pas de multiples de 5' → exclude_multiples [5]."""
+        result = _extract_exclusions("pas de multiples de 5")
+        assert 5 in result["exclude_multiples"]
+
+    def test_multiples_of_5_and_10_fr(self):
+        """'pas de multiples de 5 ou 10' → [5, 10]."""
+        result = _extract_exclusions("pas de multiples de 5 ou 10")
+        assert 5 in result["exclude_multiples"]
+        assert 10 in result["exclude_multiples"]
+
+    def test_multiples_en(self):
+        """'no multiples of 5' → [5]."""
+        result = _extract_exclusions("no multiples of 5")
+        assert 5 in result["exclude_multiples"]
+
+    def test_multiples_de(self):
+        """'keine Vielfachen von 5' → [5]."""
+        result = _extract_exclusions("keine Vielfachen von 5")
+        assert 5 in result["exclude_multiples"]
+
+    def test_exclude_range_fr(self):
+        """'rien entre 1 et 31' → range (1, 31)."""
+        result = _extract_exclusions("rien entre 1 et 31")
+        assert (1, 31) in result["exclude_ranges"]
+
+    def test_exclude_range_en(self):
+        """'nothing between 1 and 31' → range (1, 31)."""
+        result = _extract_exclusions("nothing between 1 and 31")
+        assert (1, 31) in result["exclude_ranges"]
+
+    def test_combined_fr(self):
+        """Combined: birthdays + multiples of 5."""
+        msg = "pas de dates de naissance, pas de multiples de 5 ou 10"
+        result = _extract_exclusions(msg)
+        assert (1, 31) in result["exclude_ranges"]
+        assert 5 in result["exclude_multiples"]
+        assert 10 in result["exclude_multiples"]
+
+    def test_exclude_specific_num_fr(self):
+        """'sans le 13' → exclude_nums [13]."""
+        result = _extract_exclusions("sans le 13")
+        assert 13 in result["exclude_nums"]
+
+    def test_full_anticlassique_fr(self):
+        """Full anti-classic request."""
+        msg = "grille anti-classique : pas de dates de naissance, pas de multiples de 5 ou 10"
+        result = _extract_exclusions(msg)
+        assert (1, 31) in result["exclude_ranges"]
+        assert 5 in result["exclude_multiples"]
+        assert 10 in result["exclude_multiples"]

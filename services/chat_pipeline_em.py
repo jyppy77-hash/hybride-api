@@ -27,7 +27,8 @@ from services.chat_detectors import (
     _detect_insulte, _count_insult_streak,
     _detect_compliment, _count_compliment_streak,
     _is_short_continuation, _detect_tirage, _has_temporal_filter, _extract_temporal_date,
-    _detect_generation, _detect_generation_mode, _extract_forced_numbers,
+    _detect_generation, _detect_generation_mode, _extract_forced_numbers, _extract_grid_count,
+    _extract_exclusions,
     _detect_cooccurrence_high_n, _get_cooccurrence_high_n_response,
     _detect_site_rating, get_site_rating_response,
 )
@@ -38,6 +39,7 @@ from services.chat_detectors_em import (
     _detect_out_of_range_em, _count_oor_streak_em,
     _detect_argent_em, _get_argent_response_em,
     _detect_country_em, _get_country_context_em,
+    _wants_both_boules_and_stars,
 )
 from services.chat_responses_em_multilang import (
     get_insult_response, get_insult_short, get_menace_response,
@@ -199,26 +201,42 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
         try:
             from engine.hybride_em import generate_grids as _gen_em
             _gen_mode = _detect_generation_mode(message)
+            _grid_count = _extract_grid_count(message)
             _forced = _extract_forced_numbers(message, game="em")
+            _exclusions = _extract_exclusions(message)
             if _forced.get("error"):
                 _generation_context = f"[ERREUR GÉNÉRATION] {_forced['error']}"
                 logger.info(f"[EM CHAT] Phase G — erreur contrainte: {_forced['error']}")
             else:
                 _gen_result = await asyncio.wait_for(
                     _gen_em(
-                        n=1, mode=_gen_mode, lang=lang,
+                        n=_grid_count, mode=_gen_mode, lang=lang,
                         forced_nums=_forced["forced_nums"] or None,
                         forced_etoiles=_forced["forced_etoiles"] or None,
+                        exclusions=_exclusions if any(_exclusions.values()) else None,
                     ),
                     timeout=30.0,
                 )
                 if _gen_result and _gen_result.get("grids"):
-                    _grid = _gen_result["grids"][0]
-                    _grid["mode"] = _gen_mode
-                    _generation_context = _format_generation_context_em(_grid)
+                    _grids = _gen_result["grids"][:_grid_count]
+                    _active_excl = _exclusions if any(_exclusions.values()) else None
+                    if len(_grids) == 1:
+                        _grids[0]["mode"] = _gen_mode
+                        if _active_excl:
+                            _grids[0]["exclusions"] = _active_excl
+                        _generation_context = _format_generation_context_em(_grids[0])
+                    else:
+                        _parts = []
+                        for idx, _grid in enumerate(_grids, 1):
+                            _grid["mode"] = _gen_mode
+                            if _active_excl:
+                                _grid["exclusions"] = _active_excl
+                            _parts.append(f"--- Grille {idx}/{len(_grids)} ---\n" + _format_generation_context_em(_grid))
+                        _generation_context = "\n\n".join(_parts)
                     logger.info(
-                        f"[EM CHAT] Phase G — grille EM generee mode={_gen_mode} "
-                        f"forced={_forced['forced_nums']} etoiles={_forced['forced_etoiles']}"
+                        f"[EM CHAT] Phase G — {len(_grids)} grille(s) EM generee(s) mode={_gen_mode} "
+                        f"forced={_forced['forced_nums']} etoiles={_forced['forced_etoiles']} "
+                        f"exclusions={bool(_active_excl)}"
                     )
         except Exception as e:
             logger.warning(f"[EM CHAT] Phase G erreur: {e}")
@@ -306,12 +324,31 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
             logger.warning(f"[EM CHAT] Erreur analyse grille: {e}")
 
     # Phase 3 : requete complexe
-    if not _continuation_mode and not force_sql and not enrichment_context:
+    # V43-bis: Phase 3 runs even when force_sql=True — classement/categorie are
+    # structured queries that handle time natively. Only TEXT2SQL needs force_sql.
+    if not _continuation_mode and not enrichment_context:
         intent = _detect_requete_complexe_em(message)
         if intent:
             try:
                 if intent["type"] == "classement":
                     data = await asyncio.wait_for(get_classement_numeros(intent["num_type"], intent["tri"], intent["limit"]), timeout=30.0)
+                    # V43: if user asks for both boules AND étoiles, fetch étoiles too
+                    if data and intent["num_type"] == "boule" and _wants_both_boules_and_stars(message):
+                        try:
+                            star_data = await asyncio.wait_for(get_classement_numeros("etoile", intent["tri"], intent["limit"]), timeout=30.0)
+                            if star_data:
+                                star_intent = {**intent, "num_type": "etoile"}
+                                enrichment_context = (
+                                    _format_complex_context_em(intent, data)
+                                    + "\n\n"
+                                    + _format_complex_context_em(star_intent, star_data)
+                                )
+                                if force_sql:
+                                    force_sql = False
+                                logger.info(f"[EM CHAT] Requete complexe: classement boules + étoiles")
+                                data = None  # skip default formatting below
+                        except Exception:
+                            pass  # fallback to boules only
                 elif intent["type"] == "comparaison":
                     data = await asyncio.wait_for(get_comparaison_numeros(intent["num1"], intent["num2"], intent["num_type"]), timeout=30.0)
                 elif intent["type"] == "categorie":
@@ -321,6 +358,8 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
 
                 if data:
                     enrichment_context = _format_complex_context_em(intent, data)
+                    if force_sql:
+                        force_sql = False  # Phase 3 handled it — cancel SQL bypass
                     logger.info(f"[EM CHAT] Requete complexe: {intent['type']}")
             except Exception as e:
                 logger.warning(f"[EM CHAT] Erreur requete complexe: {e}")

@@ -1342,10 +1342,10 @@ _GENERATION_PATTERN = re.compile(
     r'hazme\s+.{0,20}combinaci[oó]n|'
     # PT
     r'\bgera\b|\bgerar\b|\bgere\b|'
-    r'd[aá][\s-]me\s+.{0,20}(?:combina[cç][aã]o|n[uú]meros)|'
-    r'cria\s+.{0,20}combina[cç][aã]o|'
-    r'combina[cç][aã]o\s+.{0,15}optim|'
-    r'faz[\s-]me\s+.{0,20}combina[cç][aã]o|'
+    r'd[aá][\s-]me\s+.{0,20}(?:grelhas?|combina[cç][aã]o|n[uú]meros)|'
+    r'cria\s+.{0,20}(?:grelhas?|combina[cç][aã]o)|'
+    r'(?:grelhas?|combina[cç][aã]o)\s+.{0,15}optim|'
+    r'faz[\s-]me\s+.{0,20}(?:grelhas?|combina[cç][aã]o)|'
     # DE
     r'generier|erstell\w*\s+.{0,20}(?:kombination|zahlen|gitter)|'
     r'gib\s+mir\s+.{0,20}(?:kombination|zahlen)|'
@@ -1363,9 +1363,9 @@ _GENERATION_PATTERN = re.compile(
 
 # Mots-clés de contexte grille pour disambiguër
 _GENERATION_CONTEXT = re.compile(
-    r'grille|combinaison|grid|combination|combinaci[oó]n|combina[cç][aã]o|'
+    r'grille|combinaison|grid|combination|combinaci[oó]n|combina[cç][aã]o|grelha|'
     r'kombination|combinatie|num[eé]ros|numbers|n[uú]meros|zahlen|nummers|'
-    r'gitter',
+    r'gitter|rooster',
     re.IGNORECASE
 )
 
@@ -1418,6 +1418,147 @@ def _detect_generation_mode(message: str) -> str:
     if _MODE_PATTERN_RECENT.search(message):
         return "recent"
     return "balanced"
+
+
+# ── Extraction du nombre de grilles demandées (6 langues) ─────────────────
+
+_GRID_COUNT_PATTERN = re.compile(
+    r'(?:'
+    # FR: "3 grilles", "donne-moi 3 grilles", "3 EuroMillions grilles"
+    r'(\d+)\s+(?:\w+\s+){0,3}(?:grilles?|combinaisons?)|'
+    # EN: "3 grids", "3 EuroMillions grids", "3 combinations"
+    r'(\d+)\s+(?:\w+\s+){0,3}(?:grids?|combinations?)|'
+    # ES: "3 cuadrículas", "3 combinaciones"
+    r'(\d+)\s+(?:\w+\s+){0,3}(?:cuadr[ií]culas?|combinacion[eé]s?)|'
+    # PT: "3 grelhas", "3 combinações"
+    r'(\d+)\s+(?:\w+\s+){0,3}(?:grelhas?|combina[çc][õo][eé]?s?)|'
+    # DE: "3 Kombinationen", "3 Gitter"
+    r'(\d+)\s+(?:\w+\s+){0,3}(?:kombinationen?|gitter|raster)|'
+    # NL: "3 combinaties", "3 roosters"
+    r'(\d+)\s+(?:\w+\s+){0,3}(?:combinaties?|roosters?)'
+    r')',
+    re.IGNORECASE
+)
+
+
+def _extract_grid_count(message: str) -> int:
+    """Extract requested number of grids from message. Default=1, cap=5."""
+    m = _GRID_COUNT_PATTERN.search(message)
+    if m:
+        for g in m.groups():
+            if g:
+                count = int(g)
+                return max(1, min(count, 5))
+    return 1
+
+
+# ── Extraction des contraintes d'exclusion (6 langues) ────────────────────
+
+# "dates de naissance" / "birthdays" → exclude 1-31
+_BIRTHDAY_PATTERN = re.compile(
+    r'(?:'
+    r'dates?\s+de\s+naissance|'          # FR
+    r'birthdays?|birth\s+dates?|'        # EN
+    r'fechas?\s+de\s+nacimiento|'        # ES
+    r'datas?\s+de\s+nascimento|'         # PT
+    r'geburtstag|geburtsdaten?|'         # DE
+    r'verjaardag|geboortedatum'          # NL
+    r')',
+    re.IGNORECASE
+)
+
+# "rien entre X et Y" / "nothing between X and Y" / "nada entre X y Y" etc.
+_EXCLUDE_RANGE_PATTERN = re.compile(
+    r'(?:'
+    r'(?:rien|pas|sans|nothing|no|not|nada|sin|sem|nichts|keine?|geen|niets)\b'
+    r'[^.]{0,30}?'
+    r'(?:entre|between|zwischen|tussen)\s+'
+    r'(\d{1,2})\s+(?:et|and|und|en|[ey])\s+(\d{1,2})'
+    r')',
+    re.IGNORECASE
+)
+
+# "pas de multiples de 5" / "no multiples of 5" etc.
+_EXCLUDE_MULTIPLES_PATTERN = re.compile(
+    r'(?:'
+    r'(?:pas\s+de|sans|no|without|sin|sem|keine?|ohne|geen|zonder)\s+'
+    r'(?:multiples?\s+(?:de|of|von|van)|vielfache[n]?\s+von|veelvouden?\s+van)\s+'
+    r'(\d{1,2})'
+    r'(?:\s+(?:ou|or|o|e|und|of|en|ni)\s+(?:de\s+)?(\d{1,2}))?'
+    r')',
+    re.IGNORECASE
+)
+
+# "sans le 13" / "without 13" / "pas de 7" etc.
+_EXCLUDE_NUMS_PATTERN = re.compile(
+    r'(?:'
+    r'pas\s+(?:de|le|la)\s+|sans\s+(?:le\s+|la\s+)?|'
+    r'without\s+|no\s+|not\s+|'
+    r'sin\s+(?:el\s+)?|sem\s+(?:o\s+)?|'
+    r'ohne\s+(?:die\s+)?|kein\s+|'
+    r'zonder\s+(?:de\s+)?|geen\s+'
+    r')(\d{1,2})\b',
+    re.IGNORECASE
+)
+
+# "pas de numéros entre 1 et 31" / "no numbers between 1 and 31"
+_EXCLUDE_NUMS_RANGE_PATTERN = re.compile(
+    r'(?:'
+    r'(?:pas\s+de|sans|no|without|sin|sem|keine?|ohne|geen|zonder)\s+'
+    r'(?:num[eé]ros?|numbers?|n[uú]meros?|zahlen|nummers?|boules?|balls?)\s+'
+    r'(?:entre|between|zwischen|tussen)\s+'
+    r'(\d{1,2})\s+(?:et|and|und|en|[ey])\s+(\d{1,2})'
+    r')',
+    re.IGNORECASE
+)
+
+
+def _extract_exclusions(message: str) -> dict:
+    """Extract exclusion constraints from generation request (6 languages).
+
+    Returns dict with:
+        exclude_ranges: list of (low, high) tuples
+        exclude_multiples: list of ints
+        exclude_nums: list of ints
+    """
+    result = {"exclude_ranges": [], "exclude_multiples": [], "exclude_nums": []}
+
+    # Birthday shortcut → exclude 1-31
+    if _BIRTHDAY_PATTERN.search(message):
+        result["exclude_ranges"].append((1, 31))
+
+    # Explicit range exclusion: "rien entre X et Y"
+    for m in _EXCLUDE_RANGE_PATTERN.finditer(message):
+        low, high = int(m.group(1)), int(m.group(2))
+        if low > high:
+            low, high = high, low
+        result["exclude_ranges"].append((low, high))
+
+    # Explicit number-range exclusion: "pas de numéros entre X et Y"
+    for m in _EXCLUDE_NUMS_RANGE_PATTERN.finditer(message):
+        low, high = int(m.group(1)), int(m.group(2))
+        if low > high:
+            low, high = high, low
+        result["exclude_ranges"].append((low, high))
+
+    # Multiples exclusion: "pas de multiples de 5 ou 10"
+    for m in _EXCLUDE_MULTIPLES_PATTERN.finditer(message):
+        result["exclude_multiples"].append(int(m.group(1)))
+        if m.group(2):
+            result["exclude_multiples"].append(int(m.group(2)))
+
+    # Specific number exclusion: "sans le 13"
+    for m in _EXCLUDE_NUMS_PATTERN.finditer(message):
+        num = int(m.group(1))
+        if 1 <= num <= 50:
+            result["exclude_nums"].append(num)
+
+    # Deduplicate
+    result["exclude_ranges"] = list(set(result["exclude_ranges"]))
+    result["exclude_multiples"] = list(set(result["exclude_multiples"]))
+    result["exclude_nums"] = list(set(result["exclude_nums"]))
+
+    return result
 
 
 # ── Extraction des numéros imposés (6 langues) ────────────────────────────
