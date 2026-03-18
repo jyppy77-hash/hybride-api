@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <title>LotoIA Admin — {% block title %}Dashboard{% endblock %}</title>
-    <link rel="stylesheet" href="/static/admin.css?v=6">
+    <link rel="stylesheet" href="/static/admin.css?v=7">
     <script>
     (function(){var c=document.cookie.match(/admin_theme=(\w+)/);if(c&&c[1]==='light')document.documentElement.style.background='#f5f5f5';})();
     </script>
@@ -23,6 +23,7 @@
             <a href="/admin/engagement" class="topnav-link{% if active == 'engagement' %} active{% endif %}">Engagement</a>
             <a href="/admin/votes" class="topnav-link{% if active == 'votes' %} active{% endif %}">Votes</a>
             <a href="/admin/messages" class="topnav-link{% if active == 'messages' %} active{% endif %}" id="nav-messages">Messages <span class="msg-badge" id="msg-badge" style="display:none;background:#ef4444;color:#fff;font-size:0.7rem;padding:1px 6px;border-radius:10px;margin-left:4px;"></span></a>
+            <a href="/admin/chatbot-monitor" class="topnav-link{% if active == 'chatbot' %} active{% endif %}">Chatbot <span class="rt-dot"></span></a>
             <a href="/admin/realtime" class="topnav-link{% if active == 'realtime' %} active{% endif %}">Realtime <span class="rt-dot"></span></a>
             <a href="/admin/sponsors" class="topnav-link{% if active == 'sponsors' %} active{% endif %}">Sponsors</a>
             <a href="/admin/factures" class="topnav-link{% if active == 'factures' %} active{% endif %}">Factures</a>

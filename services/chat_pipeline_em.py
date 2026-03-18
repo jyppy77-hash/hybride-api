@@ -63,6 +63,7 @@ from services.chat_utils_em import (
     _build_session_context_em,
     _format_generation_context_em,
 )
+from services.chat_logger import log_chat_exchange
 
 logger = logging.getLogger(__name__)
 
@@ -77,8 +78,16 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
     Retourne (early_return_or_None, ctx_dict_or_None).
     """
 
+    _t0 = time.monotonic()
     _fallback = get_fallback(lang)
     mode = _detect_mode_em(message, page)
+
+    # ── Chat Monitor: phase tracking (V44) ──
+    _phase = "Gemini"
+    _sql_query = None
+    _sql_status = "N/A"
+    _grid_count = 0
+    _has_exclusions = False
 
     system_prompt = load_prompt_em("prompt_hybride_em", lang=lang)
     if not system_prompt:
@@ -155,6 +164,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                 f"[EM CHAT] Insulte + question (type={_insult_type}, streak={_insult_streak})"
             )
         else:
+            _phase = "I"
             if _insult_type == "menace":
                 _insult_resp = get_menace_response(lang)
             else:
@@ -162,7 +172,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
             logger.info(
                 f"[EM CHAT] Insulte detectee (type={_insult_type}, streak={_insult_streak})"
             )
-            return {"response": _insult_resp, "source": "hybride_insult", "mode": mode}, None
+            return {"response": _insult_resp, "source": "hybride_insult", "mode": mode, "_chat_meta": {"phase": _phase, "t0": _t0, "lang": lang}}, None
 
     # ── Phase C : Détection de compliments ──
     if not _insult_prefix:
@@ -179,12 +189,13 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                 ))
             )
             if not _has_question_c:
+                _phase = "C"
                 _comp_streak = _count_compliment_streak(history)
                 _comp_resp = get_compliment_response(lang, _compliment_type, _comp_streak, history)
                 logger.info(
                     f"[EM CHAT] Compliment detecte (type={_compliment_type}, streak={_comp_streak})"
                 )
-                return {"response": _comp_resp, "source": "hybride_compliment", "mode": mode}, None
+                return {"response": _comp_resp, "source": "hybride_compliment", "mode": mode, "_chat_meta": {"phase": _phase, "t0": _t0, "lang": lang}}, None
             else:
                 logger.info(
                     f"[EM CHAT] Compliment + question (type={_compliment_type}), passage au flow normal"
@@ -192,18 +203,21 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
 
     # ── Phase R : Détection intention de noter le site ──
     if _detect_site_rating(message):
+        _phase = "R"
         logger.info("[EM CHAT] Site rating intent detected (lang=%s)", lang)
-        return {"response": get_site_rating_response(lang), "source": "hybride_rating_invite", "mode": mode}, None
+        return {"response": get_site_rating_response(lang), "source": "hybride_rating_invite", "mode": mode, "_chat_meta": {"phase": _phase, "t0": _t0, "lang": lang}}, None
 
     # ── Phase G : Détection génération de grille ──
     _generation_context = ""
     if _detect_generation(message):
+        _phase = "G"
         try:
             from engine.hybride_em import generate_grids as _gen_em
             _gen_mode = _detect_generation_mode(message)
             _grid_count = _extract_grid_count(message)
             _forced = _extract_forced_numbers(message, game="em")
             _exclusions = _extract_exclusions(message)
+            _has_exclusions = bool(_exclusions and any(_exclusions.values()))
             if _forced.get("error"):
                 _generation_context = f"[ERREUR GÉNÉRATION] {_forced['error']}"
                 logger.info(f"[EM CHAT] Phase G — erreur contrainte: {_forced['error']}")
@@ -243,17 +257,19 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
 
     # ── Phase A : Détection argent / gains / paris ──
     if _detect_argent_em(message, lang):
+        _phase = "A"
         _argent_resp = _get_argent_response_em(message, lang)
         if _insult_prefix:
             _argent_resp = _insult_prefix + "\n\n" + _argent_resp
         logger.info(f"[EM CHAT] Argent detecte — court-circuit Phase A (lang={lang})")
-        return {"response": _argent_resp, "source": "hybride_argent", "mode": mode}, None
+        return {"response": _argent_resp, "source": "hybride_argent", "mode": mode, "_chat_meta": {"phase": _phase, "t0": _t0, "lang": lang}}, None
 
     # ── Phase GEO : Détection pays participants EM ──
     # Injecte le contexte "tirages communs" comme préfixe — ne bloque PAS le pipeline,
     # les phases suivantes ajoutent les stats demandées.
     _country_context = ""
     if _detect_country_em(message):
+        _phase = "GEO"
         _country_context = _get_country_context_em(lang)
         logger.info(f"[EM CHAT] Phase GEO — pays detecte, contexte injecte (lang={lang})")
 
@@ -265,6 +281,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
         _enriched_message = _enrich_with_context(message, history)
         if _enriched_message != message:
             _continuation_mode = True
+            _phase = "0"
             logger.info(
                 f"[EM CONTINUATION] Reponse courte detectee: \"{message}\" "
                 f"→ enrichissement contextuel"
@@ -276,6 +293,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
 
     # Phase 0-bis : prochain tirage
     if not _continuation_mode and _detect_prochain_tirage_em(message):
+        _phase = "0-bis"
         try:
             tirage_ctx = await asyncio.wait_for(_get_prochain_tirage_em(), timeout=30.0)
             if tirage_ctx:
@@ -288,6 +306,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
     if not _continuation_mode and not enrichment_context:
         tirage_target = _detect_tirage(message)
         if tirage_target is not None:
+            _phase = "T"
             try:
                 tirage_data = await asyncio.wait_for(
                     _get_tirage_data_em(tirage_target), timeout=30.0
@@ -315,6 +334,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
     # Phase 2 : detection de grille (5 numeros + etoiles)
     grille_nums, grille_etoiles = (None, None) if _continuation_mode else _detect_grille_em(message)
     if not force_sql and grille_nums is not None:
+        _phase = "2"
         try:
             grille_result = await asyncio.wait_for(analyze_grille_for_chat(grille_nums, grille_etoiles, lang=lang), timeout=30.0)
             if grille_result:
@@ -329,6 +349,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
     if not _continuation_mode and not enrichment_context:
         intent = _detect_requete_complexe_em(message)
         if intent:
+            _phase = "3"
             try:
                 if intent["type"] == "classement":
                     data = await asyncio.wait_for(get_classement_numeros(intent["num_type"], intent["tri"], intent["limit"]), timeout=30.0)
@@ -370,6 +391,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
     if not _continuation_mode and force_sql and not enrichment_context:
         intent = _detect_requete_complexe_em(message)
         if intent and intent["type"] == "comparaison":
+            _phase = "3-bis"
             try:
                 _date_from = _extract_temporal_date(message)
                 data = await asyncio.wait_for(
@@ -391,17 +413,19 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
     # Phase P+ : co-occurrences N>3 — réponse honnête "pas implémenté"
     if not _continuation_mode and not enrichment_context:
         if _detect_cooccurrence_high_n(message):
+            _phase = "P+"
             _high_n_resp = _get_cooccurrence_high_n_response(message, lang=lang)
             if _insult_prefix:
                 _high_n_resp = _insult_prefix + "\n\n" + _high_n_resp
             logger.info(f"[EM CHAT] Co-occurrence N>3 — redirection paires/triplets (lang={lang})")
-            return {"response": _high_n_resp, "source": "hybride_cooccurrence", "mode": mode}, None
+            return {"response": _high_n_resp, "source": "hybride_cooccurrence", "mode": mode, "_chat_meta": {"phase": _phase, "t0": _t0, "lang": lang}}, None
 
     # Phase P : triplets de numéros (testé avant paires)
     # Note: pas de guard force_sql — triplets sont des requêtes structurées,
     # pas du text-to-SQL. Le filtre temporel ne doit pas les bloquer.
     if not _continuation_mode and not enrichment_context:
         if _detect_triplets_em(message):
+            _phase = "P"
             try:
                 triplets_data = await asyncio.wait_for(
                     get_triplet_correlations(top_n=5), timeout=30.0
@@ -415,6 +439,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
     # Phase P : paires de numéros
     if not _continuation_mode and not enrichment_context:
         if _detect_paires_em(message):
+            _phase = "P"
             try:
                 pairs_data = await asyncio.wait_for(
                     get_pair_correlations(top_n=5), timeout=30.0
@@ -434,6 +459,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
     if not _continuation_mode and not force_sql and not enrichment_context:
         _oor_num, _oor_type = _detect_out_of_range_em(message)
         if _oor_num is not None:
+            _phase = "OOR"
             _oor_streak = _count_oor_streak_em(history)
             _oor_resp = get_oor_response(lang, _oor_num, _oor_type, _oor_streak)
             if _insult_prefix:
@@ -442,12 +468,13 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                 f"[EM CHAT] Numero hors range: {_oor_num} "
                 f"(type={_oor_type}, streak={_oor_streak})"
             )
-            return {"response": _oor_resp, "source": "hybride_oor", "mode": mode}, None
+            return {"response": _oor_resp, "source": "hybride_oor", "mode": mode, "_chat_meta": {"phase": _phase, "t0": _t0, "lang": lang}}, None
 
     # Phase 1 : detection de numero simple
     if not _continuation_mode and not force_sql and not enrichment_context:
         numero, type_num = _detect_numero_em(message)
         if numero is not None:
+            _phase = "1"
             try:
                 stats = await asyncio.wait_for(get_numero_stats(numero, type_num), timeout=30.0)
                 if stats:
@@ -458,6 +485,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
 
     # Phase SQL : Text-to-SQL fallback
     if not _continuation_mode and not enrichment_context:
+        _phase = "SQL"
         _sql_count = sum(1 for m in (history or []) if m.role == "user")
         if _sql_count >= _MAX_SQL_PER_SESSION:
             logger.info(f"[EM TEXT2SQL] Rate-limit session ({_sql_count} echanges)")
@@ -469,12 +497,14 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                     timeout=10.0,
                 )
                 if sql and sql.strip().upper() != "NO_SQL" and _validate_sql(sql):
+                    _sql_query = sql
                     sql = _ensure_limit(sql)
                     rows = await asyncio.wait_for(
                         _execute_safe_sql(sql), timeout=5.0
                     )
                     t_total = int((time.monotonic() - t0) * 1000)
                     if rows is not None and len(rows) > 0:
+                        _sql_status = "OK"
                         enrichment_context = _format_sql_result(rows)
                         logger.info(
                             f'[EM TEXT2SQL] question="{message[:80]}" | '
@@ -482,6 +512,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                             f'rows={len(rows)} | time={t_total}ms'
                         )
                     elif rows is not None:
+                        _sql_status = "EMPTY"
                         enrichment_context = "[RÉSULTAT SQL]\nAucun résultat trouvé pour cette requête."
                         logger.info(
                             f'[EM TEXT2SQL] question="{message[:80]}" | '
@@ -489,6 +520,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                             f'rows=0 | time={t_total}ms'
                         )
                     else:
+                        _sql_status = "ERROR"
                         enrichment_context = "[RÉSULTAT SQL]\nAucun résultat trouvé pour cette requête."
                         logger.warning(
                             f'[EM TEXT2SQL] question="{message[:80]}" | '
@@ -496,30 +528,36 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                             f'time={t_total}ms'
                         )
                 elif sql and sql.strip().upper() == "NO_SQL":
+                    _sql_status = "NO_SQL"
                     logger.info(
                         f'[EM TEXT2SQL] question="{message[:80]}" | '
                         f'sql=NO_SQL | status=NO_SQL | '
                         f'time={int((time.monotonic() - t0) * 1000)}ms'
                     )
                 elif sql:
+                    _sql_query = sql
+                    _sql_status = "REJECTED"
                     logger.warning(
                         f'[EM TEXT2SQL] question="{message[:80]}" | '
                         f'sql="{sql[:120]}" | status=REJECTED | '
                         f'time={int((time.monotonic() - t0) * 1000)}ms'
                     )
                 else:
+                    _sql_status = "ERROR"
                     logger.warning(
                         f'[EM TEXT2SQL] question="{message[:80]}" | '
                         f'status=GEN_ERROR | '
                         f'time={int((time.monotonic() - t0) * 1000)}ms'
                     )
             except asyncio.TimeoutError:
+                _sql_status = "ERROR"
                 logger.warning(
                     f'[EM TEXT2SQL] question="{message[:80]}" | '
                     f'status=TIMEOUT | '
                     f'time={int((time.monotonic() - t0) * 1000)}ms'
                 )
             except Exception as e:
+                _sql_status = "ERROR"
                 logger.warning(
                     f'[EM TEXT2SQL] question="{message[:80]}" | '
                     f'status=ERROR | error="{e}" | '
@@ -579,7 +617,30 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
         "history": history,
         "lang": lang,
         "fallback": _fallback,
+        "_chat_meta": {
+            "phase": _phase, "t0": _t0, "lang": lang,
+            "sql_query": _sql_query, "sql_status": _sql_status,
+            "grid_count": _grid_count, "has_exclusions": _has_exclusions,
+        },
     }
+
+
+def _log_from_meta_em(meta, message, response_preview="",
+                      is_error=False, error_detail=None):
+    """Helper: call log_chat_exchange from _chat_meta dict (EM module)."""
+    if not meta:
+        return
+    log_chat_exchange(
+        module="em", lang=meta.get("lang", "fr"), question=message,
+        response_preview=response_preview,
+        phase_detected=meta.get("phase", "unknown"),
+        sql_generated=meta.get("sql_query"),
+        sql_status=meta.get("sql_status", "N/A"),
+        duration_ms=int((time.monotonic() - meta["t0"]) * 1000),
+        grid_count=meta.get("grid_count", 0),
+        has_exclusions=meta.get("has_exclusions", False),
+        is_error=is_error, error_detail=error_detail,
+    )
 
 
 async def handle_chat_em(message: str, history: list, page: str, http_client, lang: str = "fr") -> dict:
@@ -589,6 +650,7 @@ async def handle_chat_em(message: str, history: list, page: str, http_client, la
     """
     early, ctx = await _prepare_chat_context_em(message, history, page, http_client, lang)
     if early:
+        _log_from_meta_em(early.get("_chat_meta"), message, early.get("response", ""))
         return early
 
     mode = ctx["mode"]
@@ -632,21 +694,26 @@ async def handle_chat_em(message: str, history: list, page: str, http_client, la
                         logger.info(
                             f"[EM CHAT] OK (page={page}, mode={mode})"
                         )
+                        _log_from_meta_em(ctx.get("_chat_meta"), message, text)
                         return {"response": text, "source": "gemini", "mode": mode}
 
         logger.warning(
             f"[EM CHAT] Reponse Gemini invalide: {response.status_code}"
         )
+        _log_from_meta_em(ctx.get("_chat_meta"), message, is_error=True, error_detail=f"HTTP {response.status_code}")
         return {"response": _fallback, "source": "fallback", "mode": mode}
 
     except CircuitOpenError:
         logger.warning("[EM CHAT] Circuit breaker ouvert — fallback")
+        _log_from_meta_em(ctx.get("_chat_meta"), message, is_error=True, error_detail="CircuitOpen")
         return {"response": _fallback, "source": "fallback_circuit", "mode": mode}
     except httpx.TimeoutException:
         logger.warning("[EM CHAT] Timeout Gemini (15s) — fallback")
+        _log_from_meta_em(ctx.get("_chat_meta"), message, is_error=True, error_detail="Timeout")
         return {"response": _fallback, "source": "fallback", "mode": mode}
     except Exception as e:
         logger.error(f"[EM CHAT] Erreur Gemini: {e}")
+        _log_from_meta_em(ctx.get("_chat_meta"), message, is_error=True, error_detail=str(e)[:255])
         return {"response": _fallback, "source": "fallback", "mode": mode}
 
 
@@ -662,6 +729,7 @@ async def handle_chat_stream_em(message: str, history: list, page: str, http_cli
     """
     early, ctx = await _prepare_chat_context_em(message, history, page, http_client, lang)
     if early:
+        _log_from_meta_em(early.get("_chat_meta"), message, early.get("response", ""))
         yield _sse_event_em({
             "chunk": early["response"],
             "source": early["source"],
@@ -672,6 +740,7 @@ async def handle_chat_stream_em(message: str, history: list, page: str, http_cli
 
     mode = ctx["mode"]
     _fallback = ctx["fallback"]
+    _stream_chunks = []
 
     try:
         if ctx["insult_prefix"]:
@@ -691,6 +760,7 @@ async def handle_chat_stream_em(message: str, history: list, page: str, http_cli
             if not safe:
                 continue
             has_chunks = True
+            _stream_chunks.append(safe)
             yield _sse_event_em({
                 "chunk": safe, "source": "gemini", "mode": mode, "is_done": False,
             })
@@ -699,11 +769,13 @@ async def handle_chat_stream_em(message: str, history: list, page: str, http_cli
         _remaining = _buf.flush()
         if _remaining:
             has_chunks = True
+            _stream_chunks.append(_remaining)
             yield _sse_event_em({
                 "chunk": _remaining, "source": "gemini", "mode": mode, "is_done": False,
             })
 
         if not has_chunks:
+            _log_from_meta_em(ctx.get("_chat_meta"), message, _fallback, is_error=True, error_detail="NoChunks")
             yield _sse_event_em({
                 "chunk": _fallback,
                 "source": "fallback", "mode": mode, "is_done": True,
@@ -720,22 +792,26 @@ async def handle_chat_stream_em(message: str, history: list, page: str, http_cli
         yield _sse_event_em({
             "chunk": "", "source": "gemini", "mode": mode, "is_done": True,
         })
+        _log_from_meta_em(ctx.get("_chat_meta"), message, "".join(_stream_chunks))
         logger.info(f"[EM CHAT] Stream OK (page={page}, mode={mode})")
 
     except CircuitOpenError:
         logger.warning("[EM CHAT] Circuit breaker ouvert — fallback")
+        _log_from_meta_em(ctx.get("_chat_meta"), message, is_error=True, error_detail="CircuitOpen")
         yield _sse_event_em({
             "chunk": _fallback,
             "source": "fallback_circuit", "mode": mode, "is_done": True,
         })
     except httpx.TimeoutException:
         logger.warning("[EM CHAT] Timeout Gemini (15s) — fallback")
+        _log_from_meta_em(ctx.get("_chat_meta"), message, is_error=True, error_detail="Timeout")
         yield _sse_event_em({
             "chunk": _fallback,
             "source": "fallback", "mode": mode, "is_done": True,
         })
     except Exception as e:
         logger.error(f"[EM CHAT] Erreur streaming: {e}")
+        _log_from_meta_em(ctx.get("_chat_meta"), message, is_error=True, error_detail=str(e)[:255])
         yield _sse_event_em({
             "chunk": _fallback,
             "source": "fallback", "mode": mode, "is_done": True,

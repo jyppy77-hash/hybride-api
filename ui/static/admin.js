@@ -804,11 +804,186 @@ var LotoAdmin = (function() {
             .then(function() { loadMessages(); });
     }
 
+    // ══════════════════════════════════════
+    // CHATBOT MONITOR PAGE (V44)
+    // ══════════════════════════════════════
+
+    var cmTimer = null;
+    var cmData = [];
+
+    var CM_PHASE_COLORS = {
+        'I': '#ef4444', 'C': '#10b981', 'R': '#f59e0b', 'G': '#3b82f6',
+        'A': '#ef4444', 'GEO': '#06b6d4', '0': '#8b8b9e', '0-bis': '#8b8b9e',
+        'T': '#6366f1', '2': '#a855f7', '3': '#d4a843', '3-bis': '#d4a843',
+        'P+': '#ec4899', 'P': '#ec4899', 'OOR': '#ef4444', '1': '#4f8cff',
+        'SQL': '#f59e0b', 'Gemini': '#10b981', 'unknown': '#8b8b9e'
+    };
+
+    var CM_STATUS_COLORS = {
+        'OK': '#10b981', 'EMPTY': '#f59e0b', 'NO_SQL': '#8b8b9e',
+        'REJECTED': '#ef4444', 'ERROR': '#ef4444', 'N/A': '#8b8b9e'
+    };
+
+    function initChatbotMonitor() {
+        qs('#cm-btn-filter').addEventListener('click', loadChatbotLog);
+        qs('#cm-btn-reset').addEventListener('click', function() {
+            qs('#cm-period').value = '24h';
+            qs('#cm-module').value = 'all';
+            qs('#cm-phase').value = 'all';
+            qs('#cm-status').value = 'all';
+            qs('#cm-lang').value = 'all';
+            qs('#cm-errors-only').checked = false;
+            loadChatbotLog();
+        });
+        qs('#cm-auto').addEventListener('change', function() {
+            if (this.checked) { cmStartAuto(); } else { cmStopAuto(); }
+        });
+        loadChatbotLog();
+        cmStartAuto();
+        cmUpdateExportLink();
+    }
+
+    function cmStartAuto() {
+        cmStopAuto();
+        cmTimer = setInterval(loadChatbotLog, 10000);
+    }
+
+    function cmStopAuto() {
+        if (cmTimer) { clearInterval(cmTimer); cmTimer = null; }
+    }
+
+    function cmBuildParams() {
+        var p = 'period=' + qs('#cm-period').value;
+        p += '&module=' + qs('#cm-module').value;
+        p += '&phase=' + qs('#cm-phase').value;
+        p += '&status=' + qs('#cm-status').value;
+        p += '&lang=' + qs('#cm-lang').value;
+        if (qs('#cm-errors-only').checked) p += '&errors_only=true';
+        return p;
+    }
+
+    function cmUpdateExportLink() {
+        var el = qs('#cm-export-csv');
+        if (el) el.href = '/admin/export/chatbot-log/csv?' + cmBuildParams();
+    }
+
+    function loadChatbotLog() {
+        cmUpdateExportLink();
+        fetchJSON('/admin/api/chatbot-log?' + cmBuildParams()).then(function(data) {
+            if (!data) return;
+            cmData = data.exchanges || [];
+            renderCmKPI(data.kpi);
+            renderCmTable(cmData, 0);
+        });
+    }
+
+    function renderCmKPI(kpi) {
+        qs('#cm-kpi-total').textContent = kpi.total || 0;
+        qs('#cm-kpi-rejected').textContent = (kpi.rejected_pct || 0) + '%';
+        qs('#cm-kpi-errors').textContent = (kpi.error_pct || 0) + '%';
+        qs('#cm-kpi-duration').textContent = kpi.avg_duration || 0;
+        qs('#cm-kpi-sessions').textContent = kpi.unique_sessions || 0;
+        qs('#cm-kpi-sql').textContent = kpi.sql_count || 0;
+    }
+
+    function cmPhaseBadge(phase) {
+        var color = CM_PHASE_COLORS[phase] || '#8b8b9e';
+        return '<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:.72rem;font-weight:700;background:' + color + '22;color:' + color + ';">' + escHtml(phase) + '</span>';
+    }
+
+    function cmStatusBadge(status) {
+        var color = CM_STATUS_COLORS[status] || '#8b8b9e';
+        return '<span style="display:inline-block;padding:2px 6px;border-radius:10px;font-size:.7rem;font-weight:700;background:' + color + '22;color:' + color + ';">' + escHtml(status) + '</span>';
+    }
+
+    function cmRowClass(r) {
+        if (r.is_error || r.sql_status === 'REJECTED' || r.sql_status === 'ERROR') return 'background:rgba(239,68,68,0.08);';
+        if (r.sql_status === 'EMPTY' || r.sql_status === 'NO_SQL' || r.duration_ms > 3000) return 'background:rgba(245,158,11,0.08);';
+        return '';
+    }
+
+    function renderCmTable(rows, page) {
+        var tbody = qs('#cm-tbody');
+        var start = page * PAGE_SIZE;
+        var slice = rows.slice(start, start + PAGE_SIZE);
+        if (!slice.length) {
+            tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:1.5rem;">Aucun echange</td></tr>';
+            renderPagination(0, 0, renderCmTable, rows);
+            return;
+        }
+        tbody.innerHTML = slice.map(function(r) {
+            var moduleBadge = r.module === 'loto'
+                ? '<span style="padding:2px 6px;border-radius:10px;font-size:.7rem;font-weight:700;background:rgba(79,140,255,0.15);color:#4f8cff;">LOTO</span>'
+                : '<span style="padding:2px 6px;border-radius:10px;font-size:.7rem;font-weight:700;background:rgba(212,168,67,0.15);color:#d4a843;">EM</span>';
+            var question = r.question.length > 80 ? r.question.substring(0, 80) + '...' : r.question;
+            var sqlPreview = r.sql_generated ? (r.sql_generated.length > 60 ? r.sql_generated.substring(0, 60) + '...' : r.sql_generated) : '';
+            var sqlCell = r.phase === 'SQL' ? (escHtml(sqlPreview) + ' ' + cmStatusBadge(r.sql_status)) : '<span style="color:var(--text-muted);">-</span>';
+            var responsePreview = r.response_preview ? (r.response_preview.length > 100 ? r.response_preview.substring(0, 100) + '...' : r.response_preview) : '';
+            var durStyle = r.duration_ms > 3000 ? 'color:#ef4444;font-weight:700;' : '';
+            var statusIcon = r.is_error ? '\u274C' : (r.sql_status === 'REJECTED' ? '\u26A0\uFE0F' : '\u2705');
+            return '<tr style="cursor:pointer;' + cmRowClass(r) + '" data-cm-id="' + r.id + '">'
+                + '<td>' + fmtDate(r.created_at) + '</td>'
+                + '<td>' + moduleBadge + '</td>'
+                + '<td>' + escHtml(r.lang) + '</td>'
+                + '<td>' + cmPhaseBadge(r.phase) + '</td>'
+                + '<td>' + escHtml(question) + '</td>'
+                + '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">' + sqlCell + '</td>'
+                + '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;">' + escHtml(responsePreview) + '</td>'
+                + '<td style="' + durStyle + '">' + r.duration_ms + 'ms</td>'
+                + '<td>' + statusIcon + '</td>'
+                + '</tr>';
+        }).join('');
+        // Row click → detail
+        tbody.querySelectorAll('tr[data-cm-id]').forEach(function(tr) {
+            tr.addEventListener('click', function() {
+                showCmDetail(parseInt(tr.getAttribute('data-cm-id'), 10));
+            });
+        });
+        renderPagination(rows.length, page, renderCmTable, rows);
+    }
+
+    function showCmDetail(id) {
+        var r = null;
+        for (var i = 0; i < cmData.length; i++) {
+            if (cmData[i].id === id) { r = cmData[i]; break; }
+        }
+        if (!r) return;
+        var overlay = document.getElementById('cm-detail-overlay');
+        document.getElementById('cm-detail-title').textContent =
+            r.module.toUpperCase() + ' | Phase ' + r.phase + ' | ' + r.lang.toUpperCase();
+        var html = '<div style="margin-bottom:12px;">'
+            + '<b style="color:var(--accent);">Date:</b> ' + fmtDate(r.created_at)
+            + ' &bull; <b style="color:var(--accent);">Duree:</b> ' + r.duration_ms + 'ms'
+            + ' &bull; <b style="color:var(--accent);">Session:</b> ' + escHtml(r.session_hash)
+            + '</div>';
+        html += '<div style="margin-bottom:12px;"><b style="color:var(--accent);">Question:</b><div style="white-space:pre-wrap;background:var(--bg-card-alt);padding:8px;border-radius:6px;margin-top:4px;">' + escHtml(r.question) + '</div></div>';
+        if (r.sql_generated) {
+            html += '<div style="margin-bottom:12px;"><b style="color:var(--accent);">SQL:</b> ' + cmStatusBadge(r.sql_status) + '<div style="white-space:pre-wrap;background:var(--bg-card-alt);padding:8px;border-radius:6px;margin-top:4px;font-family:monospace;font-size:.8rem;">' + escHtml(r.sql_generated) + '</div></div>';
+        }
+        if (r.response_preview) {
+            html += '<div style="margin-bottom:12px;"><b style="color:var(--accent);">Reponse (preview):</b><div style="white-space:pre-wrap;background:var(--bg-card-alt);padding:8px;border-radius:6px;margin-top:4px;">' + escHtml(r.response_preview) + '</div></div>';
+        }
+        if (r.is_error && r.error_detail) {
+            html += '<div style="margin-bottom:12px;padding:8px;background:rgba(239,68,68,0.1);border-radius:6px;border:1px solid rgba(239,68,68,0.2);"><b style="color:#ef4444;">Erreur:</b> ' + escHtml(r.error_detail) + '</div>';
+        }
+        var meta = [];
+        if (r.tokens_in) meta.push('Gemini tokens in: ' + r.tokens_in);
+        if (r.tokens_out) meta.push('Gemini tokens out: ' + r.tokens_out);
+        if (r.grid_count) meta.push('Grilles: ' + r.grid_count);
+        if (r.has_exclusions) meta.push('Exclusions: oui');
+        if (meta.length) {
+            html += '<div style="font-size:.8rem;color:var(--text-muted);">' + meta.join(' &bull; ') + '</div>';
+        }
+        document.getElementById('cm-detail-body').innerHTML = html;
+        overlay.style.display = 'flex';
+    }
+
     return {
         initImpressions: initImpressions,
         initVotes: initVotes,
         initRealtime: initRealtime,
         initEngagement: initEngagement,
-        initMessages: initMessages
+        initMessages: initMessages,
+        initChatbotMonitor: initChatbotMonitor
     };
 })();

@@ -2087,3 +2087,199 @@ async def admin_api_messages_count_unread(request: Request):
     except Exception as e:
         logger.error("[ADMIN] count unread error: %s", e)
         return JSONResponse({"unread": 0})
+
+
+# ── Chatbot Monitor (V44) ────────────────────────────────────────────────────
+
+_CM_PERIOD_SQL = {
+    "1h": "created_at >= NOW() - INTERVAL 1 HOUR",
+    "6h": "created_at >= NOW() - INTERVAL 6 HOUR",
+    "24h": "created_at >= NOW() - INTERVAL 24 HOUR",
+    "7d": "created_at >= NOW() - INTERVAL 7 DAY",
+    "30d": "created_at >= NOW() - INTERVAL 30 DAY",
+}
+
+
+@router.get("/admin/chatbot-monitor", response_class=HTMLResponse, include_in_schema=False)
+async def admin_chatbot_monitor_page(request: Request):
+    redir = _require_auth(request)
+    if redir:
+        return redir
+    tpl = env.get_template("admin/chatbot-monitor.html")
+    return HTMLResponse(tpl.render(active="chatbot"))
+
+
+@router.get("/admin/api/chatbot-log", include_in_schema=False)
+async def admin_api_chatbot_log(
+    request: Request,
+    period: str = Query("24h"),
+    module: str = Query("all"),
+    phase: str = Query("all"),
+    status: str = Query("all"),
+    lang: str = Query("all"),
+    errors_only: bool = Query(False),
+    limit: int = Query(200),
+):
+    err = _require_auth_json(request)
+    if err:
+        return err
+
+    where = []
+    params: list = []
+
+    # Period
+    period_clause = _CM_PERIOD_SQL.get(period, _CM_PERIOD_SQL["24h"])
+    where.append(period_clause)
+
+    # Module filter
+    if module in ("loto", "em"):
+        where.append("module = %s")
+        params.append(module)
+
+    # Phase filter
+    if phase != "all":
+        where.append("phase_detected = %s")
+        params.append(phase)
+
+    # SQL status filter
+    if status != "all":
+        where.append("sql_status = %s")
+        params.append(status)
+
+    # Lang filter
+    if lang != "all" and lang in _VALID_LANGS:
+        where.append("lang = %s")
+        params.append(lang)
+
+    # Errors only
+    if errors_only:
+        where.append("(is_error = 1 OR sql_status IN ('REJECTED', 'ERROR'))")
+
+    w = " AND ".join(where) if where else "1=1"
+
+    # KPI
+    kpi = {"total": 0, "rejected_pct": 0, "error_pct": 0, "avg_duration": 0, "unique_sessions": 0, "sql_count": 0}
+    try:
+        row = await db_cloudsql.async_fetchone(
+            f"SELECT COUNT(*) AS total, "
+            f"SUM(CASE WHEN sql_status = 'REJECTED' THEN 1 ELSE 0 END) AS rejected, "
+            f"SUM(CASE WHEN sql_status NOT IN ('N/A') THEN 1 ELSE 0 END) AS sql_total, "
+            f"SUM(CASE WHEN is_error = 1 THEN 1 ELSE 0 END) AS errors, "
+            f"AVG(duration_ms) AS avg_dur, "
+            f"COUNT(DISTINCT session_hash) AS sessions, "
+            f"SUM(CASE WHEN phase_detected = 'SQL' THEN 1 ELSE 0 END) AS sql_count "
+            f"FROM chat_log WHERE {w}",
+            tuple(params),
+        )
+        if row:
+            total = _dec(row["total"]) or 0
+            sql_total = _dec(row["sql_total"]) or 0
+            kpi["total"] = total
+            kpi["rejected_pct"] = round((_dec(row["rejected"]) or 0) / sql_total * 100, 1) if sql_total > 0 else 0
+            kpi["error_pct"] = round((_dec(row["errors"]) or 0) / total * 100, 1) if total > 0 else 0
+            kpi["avg_duration"] = int(_dec(row["avg_dur"]) or 0)
+            kpi["unique_sessions"] = _dec(row["sessions"]) or 0
+            kpi["sql_count"] = _dec(row["sql_count"]) or 0
+    except Exception as e:
+        logger.error("[ADMIN API] chatbot-log KPI failed: %s", e)
+
+    # Table data
+    exchanges = []
+    limit = min(limit, 500)
+    try:
+        rows = await db_cloudsql.async_fetchall(
+            f"SELECT id, created_at, module, lang, question, response_preview, "
+            f"phase_detected, sql_generated, sql_status, duration_ms, "
+            f"grid_count, has_exclusions, is_error, error_detail, "
+            f"gemini_tokens_in, gemini_tokens_out, session_hash "
+            f"FROM chat_log WHERE {w} ORDER BY created_at DESC LIMIT %s",
+            tuple(params) + (limit,),
+        )
+        for r in rows:
+            exchanges.append({
+                "id": r["id"],
+                "created_at": r["created_at"].strftime("%Y-%m-%d %H:%M:%S") if r.get("created_at") else "",
+                "module": r["module"],
+                "lang": r["lang"],
+                "question": r["question"] or "",
+                "response_preview": r["response_preview"] or "",
+                "phase": r["phase_detected"] or "unknown",
+                "sql_generated": r["sql_generated"] or "",
+                "sql_status": r["sql_status"] or "N/A",
+                "duration_ms": _dec(r["duration_ms"]) or 0,
+                "grid_count": _dec(r["grid_count"]) or 0,
+                "has_exclusions": bool(r["has_exclusions"]),
+                "is_error": bool(r["is_error"]),
+                "error_detail": r["error_detail"] or "",
+                "tokens_in": _dec(r["gemini_tokens_in"]) or 0,
+                "tokens_out": _dec(r["gemini_tokens_out"]) or 0,
+                "session_hash": (r["session_hash"] or "")[:12],
+            })
+    except Exception as e:
+        logger.error("[ADMIN API] chatbot-log table failed: %s", e)
+
+    return JSONResponse({"kpi": kpi, "exchanges": exchanges})
+
+
+@router.get("/admin/export/chatbot-log/csv", include_in_schema=False)
+async def admin_export_chatbot_log_csv(
+    request: Request,
+    period: str = Query("24h"),
+    module: str = Query("all"),
+    phase: str = Query("all"),
+    status: str = Query("all"),
+    lang: str = Query("all"),
+    errors_only: bool = Query(False),
+):
+    redir = _require_auth(request)
+    if redir:
+        return redir
+
+    where = []
+    params: list = []
+    period_clause = _CM_PERIOD_SQL.get(period, _CM_PERIOD_SQL["24h"])
+    where.append(period_clause)
+    if module in ("loto", "em"):
+        where.append("module = %s")
+        params.append(module)
+    if phase != "all":
+        where.append("phase_detected = %s")
+        params.append(phase)
+    if status != "all":
+        where.append("sql_status = %s")
+        params.append(status)
+    if lang != "all" and lang in _VALID_LANGS:
+        where.append("lang = %s")
+        params.append(lang)
+    if errors_only:
+        where.append("(is_error = 1 OR sql_status IN ('REJECTED', 'ERROR'))")
+    w = " AND ".join(where) if where else "1=1"
+
+    try:
+        rows = await db_cloudsql.async_fetchall(
+            f"SELECT created_at, module, lang, question, phase_detected, sql_generated, "
+            f"sql_status, duration_ms, is_error, error_detail, grid_count, has_exclusions "
+            f"FROM chat_log WHERE {w} ORDER BY created_at DESC LIMIT 5000",
+            tuple(params),
+        )
+        buf = io.StringIO()
+        writer = csv.writer(buf)
+        writer.writerow(["created_at", "module", "lang", "question", "phase", "sql", "sql_status",
+                         "duration_ms", "is_error", "error_detail", "grid_count", "has_exclusions"])
+        for r in rows:
+            writer.writerow([
+                r["created_at"].strftime("%Y-%m-%d %H:%M:%S") if r.get("created_at") else "",
+                r["module"], r["lang"], r["question"][:200],
+                r["phase_detected"], (r["sql_generated"] or "")[:200],
+                r["sql_status"], r["duration_ms"],
+                int(r["is_error"]), r["error_detail"] or "",
+                r["grid_count"], int(r["has_exclusions"]),
+            ])
+        return StreamingResponse(
+            iter([buf.getvalue()]),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=chatbot_log_{period}.csv"},
+        )
+    except Exception as e:
+        logger.error("[ADMIN] chatbot-log CSV: %s", e)
+        return JSONResponse({"error": str(e)}, status_code=500)
