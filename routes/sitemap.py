@@ -3,11 +3,10 @@ Dynamic XML sitemap for LotoIA.
 Includes FR Loto pages (static) + EuroMillions pages for all ENABLED_LANGS.
 Replaces the old static ui/sitemap.xml.
 """
-from datetime import date
-
 from fastapi import APIRouter, Response
 
 from config.templates import EM_URLS, BASE_URL
+from config.version import LAST_DEPLOY_DATE
 from config import killswitch
 
 router = APIRouter()
@@ -85,12 +84,12 @@ def _hreflang_alternates(page_key: str) -> list[tuple[str, str]]:
 @router.get("/sitemap.xml", include_in_schema=False)
 async def sitemap():
     """Dynamic XML sitemap — Loto FR + EuroMillions multilang."""
-    today = date.today().isoformat()
+    last_modified = LAST_DEPLOY_DATE
     blocks = []
 
     # Loto pages (always FR)
     for path, priority, freq in _LOTO_PAGES:
-        blocks.append(_url_block(f"{BASE_URL}{path}", today, freq, priority))
+        blocks.append(_url_block(f"{BASE_URL}{path}", last_modified, freq, priority))
 
     # EuroMillions pages for each enabled language
     seen = set()
@@ -102,7 +101,7 @@ async def sitemap():
                 seen.add(page_url)
                 alternates = _hreflang_alternates(page_key)
                 blocks.append(_url_block(
-                    f"{BASE_URL}{page_url}", today, freq, priority,
+                    f"{BASE_URL}{page_url}", last_modified, freq, priority,
                     alternates=alternates,
                 ))
 

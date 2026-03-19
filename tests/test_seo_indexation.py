@@ -111,22 +111,20 @@ class TestSitemapContainsEMUrls:
         for url in _ALL_9_EM_URLS:
             assert url in locs, f"Missing in sitemap: {url}"
 
-    def test_sitemap_lastmod_is_recent(self):
-        """Sitemap <lastmod> should be today (dynamic)."""
+    def test_sitemap_lastmod_is_fixed_deploy_date(self):
+        """Sitemap <lastmod> should be LAST_DEPLOY_DATE (not dynamic today)."""
         cursor = _make_cursor()
         with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
             client = _get_client()
             resp = client.get("/sitemap.xml")
 
+        from config.version import LAST_DEPLOY_DATE
         root = ElementTree.fromstring(resp.text)
         lastmods = {el.text for el in root.findall(".//sm:url/sm:lastmod", _NS)}
 
-        today = date.today().isoformat()
-        week_ago = (date.today() - timedelta(days=7)).isoformat()
-
         for lm in lastmods:
-            assert lm >= week_ago, f"lastmod too old: {lm}"
-            assert lm <= today, f"lastmod in the future: {lm}"
+            assert lm == LAST_DEPLOY_DATE, \
+                f"lastmod should be {LAST_DEPLOY_DATE}, got {lm}"
 
 
 # ═══════════════════════════════════════════════
@@ -295,18 +293,18 @@ class TestRobotsTxtAllowsEM:
 
         assert "Sitemap: https://lotoia.fr/sitemap.xml" in content
 
-    def test_robots_txt_allows_em_tools(self):
-        """robots.txt explicitly allows EM tool pages."""
+    def test_robots_txt_allows_em_hubs_all_langs(self):
+        """robots.txt explicitly allows EM hub pages for all 6 languages."""
         robots_path = os.path.join(
             os.path.dirname(os.path.dirname(__file__)), "ui", "robots.txt"
         )
         with open(robots_path, "r", encoding="utf-8") as f:
             content = f.read()
 
-        for tool in ("/euromillions/generateur", "/euromillions/simulateur",
-                     "/euromillions/statistiques"):
-            assert f"Allow: {tool}" in content, \
-                f"Missing explicit Allow: {tool} in robots.txt"
+        for hub in ("/euromillions", "/en/euromillions", "/es/euromillions",
+                    "/pt/euromillions", "/de/euromillions", "/nl/euromillions"):
+            assert f"Allow: {hub}" in content, \
+                f"Missing explicit Allow: {hub} in robots.txt"
 
 
 # ═══════════════════════════════════════════════
@@ -551,3 +549,235 @@ class TestSitemapXMLFormat:
         urls = root.findall(".//sm:url", _NS)
         # 14 Loto pages + 12 EM page types × 6 langs = 86
         assert len(urls) >= 80, f"Expected >= 80 URLs, got {len(urls)}"
+
+
+# ═══════════════════════════════════════════════
+# 12. og:image dimensions on all EM pages
+# ═══════════════════════════════════════════════
+
+class TestOgImageDimensions:
+    """Every public EM page must have og:image:width and og:image:height."""
+
+    @pytest.mark.parametrize("path", [
+        "/euromillions",
+        "/euromillions/generateur",
+        "/euromillions/simulateur",
+        "/euromillions/statistiques",
+        "/euromillions/historique",
+        "/euromillions/faq",
+        "/euromillions/news",
+        "/euromillions/a-propos",
+        "/euromillions/moteur",
+        "/euromillions/methodologie",
+        "/euromillions/intelligence-artificielle",
+        "/euromillions/hybride",
+    ])
+    def test_og_image_width_and_height(self, path):
+        """EM page has og:image:width=1200 and og:image:height=630."""
+        cursor = _make_cursor()
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)), \
+             patch("db_cloudsql.async_fetchone", AsyncMock(return_value=None)):
+            client = _get_client()
+            resp = client.get(path)
+
+        assert resp.status_code == 200
+        assert 'og:image:width" content="1200"' in resp.text, \
+            f"Missing og:image:width on {path}"
+        assert 'og:image:height" content="630"' in resp.text, \
+            f"Missing og:image:height on {path}"
+
+
+# ═══════════════════════════════════════════════
+# 13. robots.txt Disallow /admin/
+# ═══════════════════════════════════════════════
+
+class TestRobotsTxtDisallowAdmin:
+    """robots.txt must block /admin/ for defense-in-depth."""
+
+    def test_robots_txt_disallows_admin(self):
+        """robots.txt has Disallow: /admin/ in User-agent: * section."""
+        robots_path = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)), "ui", "robots.txt"
+        )
+        with open(robots_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        assert "Disallow: /admin/" in content
+
+
+# ═══════════════════════════════════════════════
+# 14. Web App Manifest linked in templates
+# ═══════════════════════════════════════════════
+
+class TestWebAppManifest:
+    """Pages must have <link rel="manifest"> reference."""
+
+    def test_em_page_has_manifest_link(self):
+        """EM pages have rel=manifest pointing to site.webmanifest."""
+        cursor = _make_cursor()
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)), \
+             patch("db_cloudsql.async_fetchone", AsyncMock(return_value=None)):
+            client = _get_client()
+            resp = client.get("/euromillions")
+
+        assert resp.status_code == 200
+        assert 'rel="manifest"' in resp.text
+        assert "site.webmanifest" in resp.text
+
+
+# ═══════════════════════════════════════════════
+# 15. Content-Language: fr on Loto pages
+# ═══════════════════════════════════════════════
+
+class TestContentLanguageLoto:
+    """Loto FR pages must have Content-Language: fr header."""
+
+    @pytest.mark.parametrize("path", [
+        "/accueil",
+        "/loto",
+        "/loto/statistiques",
+        "/faq",
+    ])
+    def test_content_language_fr_on_loto(self, path):
+        """Loto FR page has Content-Language: fr header."""
+        cursor = _make_cursor()
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            resp = client.get(path)
+
+        assert resp.status_code == 200
+        assert "Content-Language" in resp.headers, \
+            f"Missing Content-Language header on {path}"
+        assert resp.headers["Content-Language"] == "fr", \
+            f"Expected Content-Language=fr on {path}, got {resp.headers.get('Content-Language')}"
+
+
+# ═══════════════════════════════════════════════
+# 16. Content-Language on launcher (/)
+# ═══════════════════════════════════════════════
+
+class TestContentLanguageLauncher:
+    """Launcher page must have Content-Language: fr."""
+
+    def test_content_language_fr_on_launcher(self):
+        """GET / returns Content-Language: fr."""
+        cursor = _make_cursor()
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            resp = client.get("/")
+
+        assert resp.status_code == 200
+        assert resp.headers.get("Content-Language") == "fr"
+
+
+# ═══════════════════════════════════════════════
+# 17. Loto footer harmonization
+# ═══════════════════════════════════════════════
+
+class TestLotoFooterHarmonized:
+    """All Loto pages must have the same complete footer links."""
+
+    _REQUIRED_FOOTER_LINKS = [
+        "/a-propos",
+        "/hybride",
+        "/loto/intelligence-artificielle",
+        "/loto/numeros-les-plus-sortis",
+        "/mentions-legales",
+        "/disclaimer",
+    ]
+
+    @pytest.mark.parametrize("path", [
+        "/loto",
+        "/accueil",
+        "/faq",
+        "/hybride",
+    ])
+    def test_footer_contains_all_required_links(self, path):
+        """Loto page footer must contain all required navigation links."""
+        cursor = _make_cursor()
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            resp = client.get(path)
+
+        assert resp.status_code == 200
+        for link in self._REQUIRED_FOOTER_LINKS:
+            assert f'href="{link}"' in resp.text, \
+                f"Missing footer link {link} on {path}"
+
+    @pytest.mark.parametrize("path", [
+        "/loto",
+        "/accueil",
+        "/faq",
+    ])
+    def test_footer_has_contact_link(self, path):
+        """Loto page footer must have 'Nous contacter' link."""
+        cursor = _make_cursor()
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            resp = client.get(path)
+
+        assert resp.status_code == 200
+        assert "Nous contacter" in resp.text, \
+            f"Missing 'Nous contacter' in footer on {path}"
+
+
+# ═══════════════════════════════════════════════
+# 18. No meta keywords on EM pages
+# ═══════════════════════════════════════════════
+
+class TestNoMetaKeywords:
+    """EM pages should not have deprecated meta keywords."""
+
+    @pytest.mark.parametrize("path", [
+        "/euromillions",
+        "/euromillions/generateur",
+        "/euromillions/simulateur",
+        "/euromillions/statistiques",
+    ])
+    def test_no_meta_keywords(self, path):
+        """EM page must not have <meta name='keywords'>."""
+        cursor = _make_cursor()
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            resp = client.get(path)
+
+        assert resp.status_code == 200
+        assert 'name="keywords"' not in resp.text, \
+            f"Deprecated meta keywords still present on {path}"
+
+
+# ═══════════════════════════════════════════════
+# 19. seo.py JSON-LD escaping
+# ═══════════════════════════════════════════════
+
+class TestSeoJsonLdEscaping:
+    """seo.py JSON-LD must handle special characters."""
+
+    def test_faq_with_quotes_produces_valid_json(self):
+        """generate_jsonld_faq with double quotes in Q/A produces valid JSON."""
+        import json as json_mod
+        from seo import generate_jsonld_faq
+        questions = [
+            ('Le numéro "7" est-il spécial ?', 'Non, le "7" n\'a aucun avantage.'),
+        ]
+        html = generate_jsonld_faq(questions)
+        # Extract JSON from script tag
+        start = html.index("{")
+        end = html.rindex("}") + 1
+        json_str = html[start:end]
+        parsed = json_mod.loads(json_str)
+        assert parsed["@type"] == "FAQPage"
+        assert '"7"' in parsed["mainEntity"][0]["name"]
+
+    def test_breadcrumb_with_quotes_produces_valid_json(self):
+        """generate_jsonld_breadcrumb with special chars produces valid JSON."""
+        import json as json_mod
+        from seo import generate_jsonld_breadcrumb
+        items = [("Accueil", "/"), ("FAQ : \"Tout savoir\"", "/faq")]
+        html = generate_jsonld_breadcrumb(items)
+        start = html.index("{")
+        end = html.rindex("}") + 1
+        json_str = html[start:end]
+        parsed = json_mod.loads(json_str)
+        assert parsed["@type"] == "BreadcrumbList"
+        assert len(parsed["itemListElement"]) == 2

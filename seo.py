@@ -6,6 +6,8 @@ Helpers SEO : génération de structured data JSON-LD.
 Le sitemap.xml et robots.txt sont servis comme fichiers statiques.
 """
 
+import json
+
 SITE_URL = "https://lotoia.fr"
 
 
@@ -90,10 +92,10 @@ def generate_jsonld_faq(questions: list[tuple[str, str]]) -> str:
         faq_items.append(f'''
         {{
             "@type": "Question",
-            "name": "{q}",
+            "name": {json.dumps(q)},
             "acceptedAnswer": {{
                 "@type": "Answer",
-                "text": "{a}"
+                "text": {json.dumps(a)}
             }}
         }}''')
 
@@ -124,8 +126,8 @@ def generate_jsonld_breadcrumb(items: list[tuple[str, str]]) -> str:
         {{
             "@type": "ListItem",
             "position": {i},
-            "name": "{name}",
-            "item": "{SITE_URL}{url}"
+            "name": {json.dumps(name)},
+            "item": {json.dumps(SITE_URL + url)}
         }}''')
 
     items_json = ",".join(breadcrumb_items)

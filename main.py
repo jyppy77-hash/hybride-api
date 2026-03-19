@@ -362,6 +362,11 @@ async def add_cache_headers(request: Request, call_next):
                 break
         response.headers["Content-Language"] = _cl_lang
 
+    # Content-Language: fr fallback on all HTML pages without one (Loto FR)
+    content_type = response.headers.get("content-type", "")
+    if "text/html" in content_type and "Content-Language" not in response.headers:
+        response.headers["Content-Language"] = "fr"
+
     return response
 
 

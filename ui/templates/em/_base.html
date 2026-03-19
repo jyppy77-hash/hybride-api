@@ -12,9 +12,11 @@
     <link rel="alternate" hreflang="{{ tag.lang }}" href="{{ tag.url }}">
     {% endfor %}
 
-    {# ── Favicons ── #}    <link rel="icon" href="/favicon.ico" sizes="48x48">
+    {# ── Favicons + Manifest ── #}
+    <link rel="icon" href="/favicon.ico" sizes="48x48">
     <link rel="icon" href="/ui/static/favicon.svg" sizes="any" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/favicon.ico">
+    <link rel="manifest" href="/ui/site.webmanifest">
 
     {# ── Critical CSS inline (above-the-fold: reset, nav, layout, theme vars) ── #}
     <style>
