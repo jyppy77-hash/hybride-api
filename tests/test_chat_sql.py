@@ -269,3 +269,42 @@ class TestPromptTemporalExamples:
         prompt = load_prompt_em("prompt_sql_generator_em", lang="nl")
         assert "sinds 1 januari 2026" in prompt
         assert "date_de_tirage >= '2026-01-01'" in prompt
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V46 — SQL prompt hardening present in all 6 languages
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestSqlPromptHardeningAllLangs:
+    """V46: Every SQL generator prompt must contain the 'ABSOLUTE RULE'
+    block that enforces SELECT-or-NO_SQL output format."""
+
+    def test_fr_has_regle_absolue(self):
+        prompt = load_prompt_em("prompt_sql_generator_em", lang="fr")
+        assert "RÈGLE ABSOLUE" in prompt
+        assert "NO_SQL" in prompt
+
+    def test_en_has_absolute_rule(self):
+        prompt = load_prompt_em("prompt_sql_generator_em", lang="en")
+        assert "ABSOLUTE RULE" in prompt
+        assert "NO_SQL" in prompt
+
+    def test_es_has_regla_absoluta(self):
+        prompt = load_prompt_em("prompt_sql_generator_em", lang="es")
+        assert "REGLA ABSOLUTA" in prompt
+        assert "NO_SQL" in prompt
+
+    def test_pt_has_regra_absoluta(self):
+        prompt = load_prompt_em("prompt_sql_generator_em", lang="pt")
+        assert "REGRA ABSOLUTA" in prompt
+        assert "NO_SQL" in prompt
+
+    def test_de_has_absolute_regel(self):
+        prompt = load_prompt_em("prompt_sql_generator_em", lang="de")
+        assert "ABSOLUTE REGEL" in prompt
+        assert "NO_SQL" in prompt
+
+    def test_nl_has_absolute_regel(self):
+        prompt = load_prompt_em("prompt_sql_generator_em", lang="nl")
+        assert "ABSOLUTE REGEL" in prompt
+        assert "NO_SQL" in prompt

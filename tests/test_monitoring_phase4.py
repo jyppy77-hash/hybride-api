@@ -13,6 +13,7 @@ from services.gcp_monitoring import (
     get_gemini_breakdown,
     cleanup_gemini_tracking,
     cleanup_event_log,
+    cleanup_chat_log,
     cleanup_metrics_history,
     get_metrics_history,
     _LOCAL_CACHE,
@@ -721,3 +722,37 @@ class TestEventLogCleanup:
             assert count == 1000
             params = mock_db.async_fetchone.call_args[0][1]
             assert params == (0,)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V46: cleanup_chat_log (retention 90 days)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestChatLogCleanup:
+
+    @pytest.mark.asyncio
+    async def test_cleanup_deletes_old_rows(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 200})
+            mock_db.async_query = AsyncMock()
+            count = await cleanup_chat_log(90)
+            assert count == 200
+            mock_db.async_query.assert_called_once()
+            sql = mock_db.async_query.call_args[0][0]
+            assert "DELETE FROM chat_log" in sql
+
+    @pytest.mark.asyncio
+    async def test_cleanup_preserves_recent_rows(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0})
+            mock_db.async_query = AsyncMock()
+            count = await cleanup_chat_log(90)
+            assert count == 0
+            mock_db.async_query.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_cleanup_handles_db_error(self):
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(side_effect=Exception("DB down"))
+            count = await cleanup_chat_log(90)
+            assert count == 0

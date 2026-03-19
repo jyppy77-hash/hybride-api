@@ -344,9 +344,9 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
             logger.warning(f"[EM CHAT] Erreur analyse grille: {e}")
 
     # Phase 3 : requete complexe
-    # V43-bis: Phase 3 runs even when force_sql=True — classement/categorie are
-    # structured queries that handle time natively. Only TEXT2SQL needs force_sql.
-    if not _continuation_mode and not enrichment_context:
+    # V46: restored force_sql guard — get_classement_numeros() has no date_from
+    # param, so temporal queries (e.g. "top 10 en 2025") must go through Phase SQL.
+    if not _continuation_mode and not force_sql and not enrichment_context:
         intent = _detect_requete_complexe_em(message)
         if intent:
             _phase = "3"

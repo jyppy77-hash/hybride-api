@@ -218,3 +218,9 @@ UITVOERFORMAAT:
 Geef ALLEEN de SQL-query terug, geen uitleg, geen backticks,
 geen commentaar, geen puntkomma.
 Als de vraag NIET over EuroMillions-trekkingen gaat, geef terug: NO_SQL
+
+ABSOLUTE REGEL — GEEN NATUURLIJKE TAAL:
+Je output MOET beginnen met SELECT of exact NO_SQL zijn.
+Herformuleer de vraag NOOIT in natuurlijke taal. Geef NOOIT een zin terug.
+Kopieer NOOIT de gespreksgeschiedenis in je output.
+Als je geen SQL kunt genereren, geef dan NO_SQL terug.

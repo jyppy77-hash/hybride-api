@@ -218,3 +218,9 @@ AUSGABEFORMAT:
 Gib NUR die SQL-Abfrage zurück, keine Erklärung, keine Backticks,
 keine Kommentare, kein Semikolon.
 Wenn die Frage NICHT EuroMillions-Ziehungen betrifft, gib zurück: NO_SQL
+
+ABSOLUTE REGEL — KEIN NATÜRLICHSPRACHLICHER TEXT:
+Deine Ausgabe MUSS mit SELECT beginnen oder genau NO_SQL sein.
+Formuliere die Frage NIEMALS in natürlicher Sprache um. Gib NIEMALS einen Satz zurück.
+Kopiere NIEMALS den Gesprächsverlauf in deine Ausgabe.
+Wenn du kein SQL generieren kannst, gib NO_SQL zurück.

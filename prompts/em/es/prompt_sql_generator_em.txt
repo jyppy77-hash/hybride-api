@@ -218,3 +218,9 @@ FORMATO DE SALIDA:
 Devuelve SOLO la consulta SQL, sin explicación, sin backticks,
 sin comentarios, sin punto y coma.
 Si la pregunta NO trata sobre sorteos de EuroMillions, devuelve: NO_SQL
+
+REGLA ABSOLUTA — SIN TEXTO EN LENGUAJE NATURAL:
+Tu salida DEBE comenzar con SELECT o ser exactamente NO_SQL.
+NUNCA reformules la pregunta en lenguaje natural. NUNCA devuelvas una frase.
+NUNCA copies el historial de conversación en tu salida.
+Si no puedes generar el SQL, devuelve NO_SQL.

@@ -54,9 +54,11 @@ def _is_short_continuation(message: str) -> bool:
     if CONTINUATION_PATTERNS.match(stripped):
         return True
     # Fuzzy: if short (≤5 words) and first word is a continuation word
+    # V46: guard — messages containing digits are likely queries, not continuations
     words = stripped.lower().split()
     if 1 <= len(words) <= 5 and words[0] in _CONTINUATION_WORDS:
-        return True
+        if not any(c.isdigit() for c in stripped):
+            return True
     return False
 
 

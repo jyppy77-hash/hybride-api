@@ -498,6 +498,57 @@ class TestFuzzyContinuation:
         assert _is_short_continuation("montre moi les stats du numéro") is False
 
 
+class TestFuzzyContinuationDigitGuard:
+    """V46: messages containing digits should NOT be treated as continuation,
+    even if short and starting with a continuation word."""
+
+    def test_oui_le_7_stp(self):
+        """'oui le 7 stp' — number query, not continuation."""
+        assert _is_short_continuation("oui le 7 stp") is False
+
+    def test_ouais_le_42(self):
+        """'ouais le 42' — number query."""
+        assert _is_short_continuation("ouais le 42") is False
+
+    def test_go_3_grilles(self):
+        """'go 3 grilles' — grid count, not continuation."""
+        assert _is_short_continuation("go 3 grilles") is False
+
+    def test_non_le_13_please(self):
+        """'non le 13 please' — number query."""
+        assert _is_short_continuation("non le 13 please") is False
+
+    def test_si_5_numeros(self):
+        """'si 5 números' — Spanish number query."""
+        assert _is_short_continuation("si 5 números") is False
+
+    def test_ja_zeig_7(self):
+        """'ja zeig 7' — German with number."""
+        assert _is_short_continuation("ja zeig 7") is False
+
+    def test_show_me_10(self):
+        """'show me 10' — English with number."""
+        assert _is_short_continuation("show me 10") is False
+
+    def test_pure_continuation_still_works(self):
+        """Continuations WITHOUT digits must still work."""
+        assert _is_short_continuation("oui montre moi") is True
+        assert _is_short_continuation("go ahead") is True
+        assert _is_short_continuation("ja zeig mal") is True
+        assert _is_short_continuation("sim mostra") is True
+
+    def test_exact_patterns_with_digits_still_work(self):
+        """Exact regex patterns containing digits should still match
+        (the digit guard only applies to the fuzzy path)."""
+        # Exact patterns are matched BEFORE the fuzzy check
+        assert _is_short_continuation("oui") is True
+        assert _is_short_continuation("non") is True
+
+    def test_continue_sans_nombre(self):
+        """'continue please' — no digit, should be continuation."""
+        assert _is_short_continuation("continue please") is True
+
+
 # ═══════════════════════════════════════════════════════════════════════
 # V43-bis — Multi-grid count extraction
 # ═══════════════════════════════════════════════════════════════════════

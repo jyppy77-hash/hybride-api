@@ -146,8 +146,10 @@ async def lifespan(app):
     await init_cache()
     await _ensure_monitoring_tables()
     # Non-blocking retention cleanup (90 days)
-    from services.gcp_monitoring import cleanup_event_log
+    from services.gcp_monitoring import cleanup_event_log, cleanup_chat_log, cleanup_gemini_tracking
     asyncio.create_task(cleanup_event_log(days=90))
+    asyncio.create_task(cleanup_chat_log(days=90))
+    asyncio.create_task(cleanup_gemini_tracking(days=90))
     # Non-blocking bot IP refresh (fallback to static on failure)
     async def _refresh_bot_ips():
         try:

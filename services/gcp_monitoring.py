@@ -697,6 +697,28 @@ async def cleanup_event_log(days: int = 90) -> int:
         return 0
 
 
+async def cleanup_chat_log(days: int = 90) -> int:
+    """Delete chat_log rows older than *days*. Returns deleted count."""
+    try:
+        row = await db_cloudsql.async_fetchone(
+            "SELECT COUNT(*) AS cnt FROM chat_log "
+            "WHERE created_at < DATE_SUB(NOW(), INTERVAL %s DAY)",
+            (days,),
+        )
+        count = int(row["cnt"]) if row else 0
+        if count > 0:
+            await db_cloudsql.async_query(
+                "DELETE FROM chat_log "
+                "WHERE created_at < DATE_SUB(NOW(), INTERVAL %s DAY)",
+                (days,),
+            )
+            logger.info("[CHAT_LOG_CLEANUP] Deleted %d rows older than %d days", count, days)
+        return count
+    except Exception as e:
+        logger.warning("[CHAT_LOG_CLEANUP] Error: %s", e)
+        return 0
+
+
 async def cleanup_gemini_tracking(days: int = 90) -> int:
     """Delete gemini_tracking rows older than *days*. Returns deleted count."""
     try:
