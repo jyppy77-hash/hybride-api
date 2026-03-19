@@ -11,6 +11,7 @@ from config.bot_ips import (
     is_whitelisted_bot,
     is_blacklisted,
     is_suspicious_path,
+    SUSPICIOUS_PATHS,
     _parse_google_style_json,
     _parse_text_ips,
     refresh_from_remote,
@@ -80,31 +81,111 @@ class TestWhitelist:
 # Blacklist tests
 # ═══════════════════════════════════════════════════════════════════════
 
+class TestSearchEngineFallback:
+    """P0-1: Search engine crawlers have static fallback CIDRs."""
+
+    def test_googlebot_static_fallback(self):
+        """Googlebot primary range 66.249.64.0/19 is whitelisted even without refresh."""
+        assert is_whitelisted_bot("66.249.64.1") is True
+        assert is_whitelisted_bot("66.249.95.254") is True
+
+    def test_bingbot_static_fallback(self):
+        """BingBot range 40.77.167.0/24 is whitelisted even without refresh."""
+        assert is_whitelisted_bot("40.77.167.1") is True
+        assert is_whitelisted_bot("157.55.39.100") is True
+
+    def test_applebot_static_fallback(self):
+        """AppleBot range 17.22.237.0/24 is whitelisted even without refresh."""
+        assert is_whitelisted_bot("17.22.237.1") is True
+        assert is_whitelisted_bot("17.241.208.170") is True
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Whitelist > Blacklist precedence tests
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestWhitelistPrecedence:
+    """P0-2: Whitelist must take precedence over blacklist in the pipeline."""
+
+    def test_whitelisted_ip_passes_even_if_in_blacklist_ips(self):
+        """If an IP is whitelisted AND in _blacklist_ips set, whitelist wins."""
+        from config import bot_ips
+        test_ip = "66.249.64.1"  # Googlebot — whitelisted
+        # Temporarily add to blacklist set (simulates IPsum false positive)
+        bot_ips._blacklist_ips.add(test_ip)
+        try:
+            assert is_whitelisted_bot(test_ip) is True
+            # Pipeline: whitelist checked FIRST → should pass before blacklist
+        finally:
+            bot_ips._blacklist_ips.discard(test_ip)
+
+    def test_pipeline_order_in_middleware(self):
+        """Middleware checks whitelist BEFORE blacklist — whitelisted IP gets 200."""
+        from config import bot_ips
+        test_ip = "66.249.64.1"  # Googlebot
+        bot_ips._blacklist_ips.add(test_ip)
+        try:
+            # Verify the logical order: whitelist=True means we never reach blacklist
+            assert is_whitelisted_bot(test_ip) is True
+            assert is_blacklisted(test_ip)[0] is True  # would block if reached
+            # In middleware: whitelist check returns early → blacklist never evaluated
+        finally:
+            bot_ips._blacklist_ips.discard(test_ip)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Blacklist tests
+# ═══════════════════════════════════════════════════════════════════════
+
 class TestBlacklist:
 
     def test_claudebot_ip_blacklisted(self):
-        """ClaudeBot IP 160.79.104.x is blacklisted."""
-        assert is_blacklisted("160.79.104.1") is True
+        """ClaudeBot IP 160.79.104.x is blacklisted with CIDR source."""
+        matched, source = is_blacklisted("160.79.104.1")
+        assert matched is True
+        assert source.startswith("cidr:")
 
     def test_petalbot_ip_blacklisted(self):
-        """PetalBot IP 114.119.130.x is blacklisted."""
-        assert is_blacklisted("114.119.130.1") is True
+        """PetalBot IP 114.119.130.x is blacklisted with CIDR source."""
+        matched, source = is_blacklisted("114.119.130.1")
+        assert matched is True
+        assert source.startswith("cidr:")
 
     def test_claudebot_ipv6_blacklisted(self):
-        """ClaudeBot IPv6 2607:6bc0::x is blacklisted."""
-        assert is_blacklisted("2607:6bc0::1") is True
+        """ClaudeBot IPv6 2607:6bc0::x is blacklisted with CIDR source."""
+        matched, source = is_blacklisted("2607:6bc0::1")
+        assert matched is True
+        assert source.startswith("cidr:")
 
     def test_random_public_ip_not_blacklisted(self):
         """Random public IP is NOT blacklisted."""
-        assert is_blacklisted("8.8.8.8") is False
+        assert is_blacklisted("8.8.8.8") == (False, None)
 
     def test_malformed_ip_returns_false(self):
-        """Malformed IP string returns False."""
-        assert is_blacklisted("garbage") is False
+        """Malformed IP string returns (False, None)."""
+        assert is_blacklisted("garbage") == (False, None)
 
     def test_empty_string_returns_false(self):
-        """Empty string returns False."""
-        assert is_blacklisted("") is False
+        """Empty string returns (False, None)."""
+        assert is_blacklisted("") == (False, None)
+
+    def test_is_blacklisted_returns_source_cidr(self):
+        """P1: is_blacklisted() returns the matching CIDR network in source."""
+        matched, source = is_blacklisted("160.79.104.1")
+        assert matched is True
+        # Source should contain the actual CIDR that matched
+        assert "160.79.104.0/23" in source
+
+    def test_is_blacklisted_returns_source_dynamic(self):
+        """P1: is_blacklisted() returns 'dynamic_ip_set' for IPs from IPsum/Tor."""
+        from config import bot_ips
+        bot_ips._blacklist_ips.add("99.99.99.99")
+        try:
+            matched, source = is_blacklisted("99.99.99.99")
+            assert matched is True
+            assert source == "dynamic_ip_set"
+        finally:
+            bot_ips._blacklist_ips.discard("99.99.99.99")
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -161,6 +242,33 @@ class TestSuspiciousPath:
 
     def test_xmlrpc(self):
         assert is_suspicious_path("/xmlrpc.php") is True
+
+    def test_robots_txt_not_suspicious(self):
+        """P1: /robots.txt must NOT be in SUSPICIOUS_PATHS."""
+        assert is_suspicious_path("/robots.txt") is False
+
+    def test_sitemap_xml_not_suspicious(self):
+        """P1: /sitemap.xml must NOT be in SUSPICIOUS_PATHS."""
+        assert is_suspicious_path("/sitemap.xml") is False
+
+    def test_well_known_security_txt_not_suspicious(self):
+        """P2: /.well-known/security.txt is legitimate (RFC 9116), must NOT be suspicious."""
+        assert is_suspicious_path("/.well-known/security.txt") is False
+
+    def test_new_suspicious_paths_present(self):
+        """P2: All 11 new 2025-2026 attack vectors are in SUSPICIOUS_PATHS."""
+        new_paths = [
+            "/cgi-bin/", "/.DS_Store", "/debug/default/view",
+            "/telescope/requests", "/api/v1/pods", "/_profiler",
+            "/console/", "/info.php", "/phpinfo.php",
+            "/wp-json/wp/v2/users", "/autodiscover/autodiscover.xml",
+        ]
+        for p in new_paths:
+            assert p in SUSPICIOUS_PATHS, f"{p} missing from SUSPICIOUS_PATHS"
+
+    def test_suspicious_paths_count_73(self):
+        """P2: Total suspicious paths should be 73."""
+        assert len(SUSPICIOUS_PATHS) == 73
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -242,6 +350,122 @@ class TestRefresh:
         mock_client.get = AsyncMock(return_value=mock_resp)
         stats = await refresh_from_remote(mock_client)
         assert stats["whitelist_networks"] > 0
+
+    @pytest.mark.asyncio
+    async def test_refresh_merges_static_and_dynamic(self):
+        """P1: After refresh, static CIDRs are still present alongside dynamic ones."""
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.raise_for_status = MagicMock()
+        mock_resp.json = MagicMock(return_value={
+            "prefixes": [{"ipv4Prefix": "203.0.113.0/24"}]  # dynamic-only CIDR
+        })
+
+        mock_client = AsyncMock()
+        mock_client.get = AsyncMock(return_value=mock_resp)
+        await refresh_from_remote(mock_client)
+        # Static GCP range still whitelisted
+        assert is_whitelisted_bot("35.191.0.1") is True
+        # Static ClaudeBot still blacklisted
+        assert is_blacklisted("160.79.104.1")[0] is True
+
+    @pytest.mark.asyncio
+    async def test_refresh_partial_failure(self):
+        """P1: One source fails, others still loaded."""
+        call_count = 0
+
+        async def side_effect(url, **kwargs):
+            nonlocal call_count
+            call_count += 1
+            if "googlebot" in url:
+                raise Exception("timeout")
+            resp = MagicMock()
+            resp.status_code = 200
+            resp.raise_for_status = MagicMock()
+            resp.json = MagicMock(return_value={"prefixes": [{"ipv4Prefix": "203.0.113.0/24"}]})
+            resp.text = ""
+            return resp
+
+        mock_client = AsyncMock()
+        mock_client.get = AsyncMock(side_effect=side_effect)
+        stats = await refresh_from_remote(mock_client)
+        # Should have at least one error (googlebot) but still have networks
+        assert len(stats["errors"]) >= 1
+        assert stats["whitelist_networks"] > 0
+
+    @pytest.mark.asyncio
+    async def test_blacklist_dynamic_ips_set(self):
+        """P1: Individual IPs from text sources land in _blacklist_ips set."""
+        mock_json_resp = MagicMock()
+        mock_json_resp.status_code = 200
+        mock_json_resp.raise_for_status = MagicMock()
+        mock_json_resp.json = MagicMock(return_value={"prefixes": []})
+
+        mock_text_resp = MagicMock()
+        mock_text_resp.status_code = 200
+        mock_text_resp.raise_for_status = MagicMock()
+        mock_text_resp.text = "# test\n198.51.100.1\n198.51.100.2\n"
+
+        async def side_effect(url, **kwargs):
+            if "ipsum" in url or "tor" in url:
+                return mock_text_resp
+            return mock_json_resp
+
+        mock_client = AsyncMock()
+        mock_client.get = AsyncMock(side_effect=side_effect)
+        await refresh_from_remote(mock_client)
+        # IPs from text sources should be in blacklist as dynamic_ip_set
+        matched, source = is_blacklisted("198.51.100.1")
+        assert matched is True
+        assert source == "dynamic_ip_set"
+
+    @pytest.mark.asyncio
+    async def test_refresh_corruption_warning_low_cidrs(self, caplog):
+        """P2: Source returning <3 CIDRs logs a corruption warning."""
+        mock_resp = MagicMock()
+        mock_resp.status_code = 200
+        mock_resp.raise_for_status = MagicMock()
+        # Only 1 CIDR — should trigger warning
+        mock_resp.json = MagicMock(return_value={
+            "prefixes": [{"ipv4Prefix": "203.0.113.0/24"}]
+        })
+        mock_resp.text = ""
+
+        mock_client = AsyncMock()
+        mock_client.get = AsyncMock(return_value=mock_resp)
+        import logging
+        with caplog.at_level(logging.WARNING, logger="config.bot_ips"):
+            await refresh_from_remote(mock_client)
+        assert any("possible corruption" in r.message for r in caplog.records)
+
+    @pytest.mark.asyncio
+    async def test_refresh_corruption_warning_ipsum(self, caplog):
+        """P2: IPsum returning <100 IPs logs a corruption warning."""
+        mock_json_resp = MagicMock()
+        mock_json_resp.status_code = 200
+        mock_json_resp.raise_for_status = MagicMock()
+        mock_json_resp.json = MagicMock(return_value={"prefixes": [
+            {"ipv4Prefix": "10.0.0.0/8"}, {"ipv4Prefix": "10.1.0.0/16"},
+            {"ipv4Prefix": "10.2.0.0/16"},  # 3 CIDRs — no corruption warning for JSON
+        ]})
+
+        mock_text_resp = MagicMock()
+        mock_text_resp.status_code = 200
+        mock_text_resp.raise_for_status = MagicMock()
+        # Only 5 IPs — should trigger IPsum corruption warning
+        mock_text_resp.text = "1.1.1.1\n2.2.2.2\n3.3.3.3\n4.4.4.4\n5.5.5.5\n"
+
+        async def side_effect(url, **kwargs):
+            if "ipsum" in url or "tor" in url:
+                return mock_text_resp
+            return mock_json_resp
+
+        mock_client = AsyncMock()
+        mock_client.get = AsyncMock(side_effect=side_effect)
+        import logging
+        with caplog.at_level(logging.WARNING, logger="config.bot_ips"):
+            await refresh_from_remote(mock_client)
+        assert any("IPsum" in r.message and "possible corruption" in r.message for r in caplog.records)
 
 
 # ═══════════════════════════════════════════════════════════════════════

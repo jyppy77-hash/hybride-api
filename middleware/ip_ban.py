@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 
 # ── Paths excluded from auto-ban counter ─────────────────────────────────────
 
+# NOTE AUDIT 2026-03-19: /robots.txt exclu du flood counter.
+# Risque accepté: path statique léger, nécessaire pour crawlers.
 _COUNTER_SKIP_PREFIXES = (
     "/ui/static/", "/static/", "/favicon", "/robots.txt",
     "/sitemap.xml", "/site.webmanifest", "/admin/",
@@ -198,8 +200,9 @@ async def ip_ban_middleware(request: Request, call_next):
         return await call_next(request)
 
     # 2. Blacklist check — instant block for known bad IPs (AI scrapers, Tor, etc.)
-    if is_blacklisted(client_ip):
-        logger.warning("[BOT_IPS] blacklisted IP blocked: %s on %s", client_ip, request.url.path)
+    is_bl, bl_source = is_blacklisted(client_ip)
+    if is_bl:
+        logger.warning("[BOT_IPS] blacklisted IP blocked: %s on %s (source=%s)", client_ip, request.url.path, bl_source)
         return JSONResponse(status_code=403, content={"detail": "Forbidden"})
 
     # 3. Suspicious path check — instant ban for vulnerability scanners

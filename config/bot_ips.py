@@ -59,6 +59,33 @@ _STATIC_WHITELIST_CIDRS = [
     # Telegram Bot API
     "149.154.160.0/20",
     "91.108.4.0/22",
+    # --- Search Engine Crawlers (fallback si refresh_from_remote() échoue) ---
+    # Googlebot (core ranges)
+    "66.249.64.0/19",
+    "66.249.96.0/19",
+    "64.233.160.0/19",
+    "72.14.192.0/18",
+    "209.85.128.0/17",
+    "216.239.32.0/19",
+    # BingBot (core ranges)
+    "40.77.167.0/24",
+    "40.77.168.0/21",
+    "157.55.39.0/24",
+    "207.46.13.0/24",
+    "52.167.144.0/24",
+    # AppleBot (ranges from applebot.json)
+    "17.241.208.160/27",
+    "17.241.193.160/27",
+    "17.241.200.160/27",
+    "17.22.237.0/24",
+    "17.22.245.0/24",
+    "17.22.253.0/24",
+    "17.241.75.0/24",
+    "17.241.219.0/24",
+    "17.241.227.0/24",
+    "17.246.15.0/24",
+    "17.246.19.0/24",
+    "17.246.23.0/24",
 ]
 
 # ── Static BLACKLIST CIDR ranges (hardcoded fallback) ────────────────────────
@@ -102,6 +129,17 @@ SUSPICIOUS_PATHS = frozenset([
     # PHP specific (we're not PHP!)
     "/admin.php", "/login.php", "/shell.php", "/cmd.php",
     "/eval-stdin.php", "/vendor/phpunit",
+    # Vecteurs d'attaque 2025-2026
+    "/cgi-bin/",
+    "/.DS_Store",
+    "/debug/default/view",
+    "/telescope/requests",
+    "/api/v1/pods",
+    "/_profiler",
+    "/console/",
+    "/info.php", "/phpinfo.php",
+    "/wp-json/wp/v2/users",
+    "/autodiscover/autodiscover.xml",
 ])
 
 # ── Dynamic source URLs ──────────────────────────────────────────────────────
@@ -184,15 +222,24 @@ def is_whitelisted_bot(ip: str) -> bool:
     return any(addr in net for net in _whitelist_networks)
 
 
-def is_blacklisted(ip: str) -> bool:
-    """Check if IP is in blacklist (CIDR networks + individual IPs set)."""
+def is_blacklisted(ip: str) -> tuple[bool, str | None]:
+    """Check if IP is in blacklist (CIDR networks + individual IPs set).
+
+    Returns (matched, source) where source describes the match origin:
+    - "dynamic_ip_set" for individual IPs from IPsum/Tor text sources
+    - "cidr:<network>" for CIDR network match (static or dynamic JSON)
+    - None if not matched
+    """
     if ip in _blacklist_ips:
-        return True
+        return True, "dynamic_ip_set"
     try:
         addr = ipaddress.ip_address(ip)
     except ValueError:
-        return False
-    return any(addr in net for net in _blacklist_networks)
+        return False, None
+    for net in _blacklist_networks:
+        if addr in net:
+            return True, f"cidr:{net}"
+    return False, None
 
 
 def is_suspicious_path(path: str) -> bool:
@@ -252,6 +299,8 @@ async def refresh_from_remote(httpx_client) -> dict:
             resp.raise_for_status()
             data = resp.json()
             cidrs = _parse_google_style_json(data)
+            if len(cidrs) < 3:
+                logger.warning("[BOT_IPS] Whitelist %s returned only %d CIDRs (expected 3+), possible corruption", name, len(cidrs))
             dynamic_wl_cidrs.extend(cidrs)
             logger.info("[BOT_IPS] Whitelist %s: %d CIDRs", name, len(cidrs))
         except Exception as e:
@@ -265,6 +314,8 @@ async def refresh_from_remote(httpx_client) -> dict:
             resp.raise_for_status()
             data = resp.json()
             cidrs = _parse_google_style_json(data)
+            if len(cidrs) < 3:
+                logger.warning("[BOT_IPS] Blacklist %s returned only %d CIDRs (expected 3+), possible corruption", name, len(cidrs))
             dynamic_bl_cidrs.extend(cidrs)
             logger.info("[BOT_IPS] Blacklist %s: %d CIDRs", name, len(cidrs))
         except Exception as e:
@@ -277,6 +328,8 @@ async def refresh_from_remote(httpx_client) -> dict:
             resp = await httpx_client.get(url, timeout=10.0)
             resp.raise_for_status()
             entries = _parse_text_ips(resp.text)
+            if name == "ipsum_l3" and len(entries) < 100:
+                logger.warning("[BOT_IPS] IPsum returned only %d IPs (expected 100+), possible corruption", len(entries))
             # Distinguish IPs from CIDRs
             for entry in entries:
                 if "/" in entry:

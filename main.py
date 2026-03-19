@@ -150,15 +150,19 @@ async def lifespan(app):
     asyncio.create_task(cleanup_event_log(days=90))
     asyncio.create_task(cleanup_chat_log(days=90))
     asyncio.create_task(cleanup_gemini_tracking(days=90))
-    # Non-blocking bot IP refresh (fallback to static on failure)
-    async def _refresh_bot_ips():
-        try:
-            from config.bot_ips import refresh_from_remote
-            stats = await refresh_from_remote(app.state.httpx_client)
-            logger.info("[BOT_IPS] Startup refresh: %s", stats)
-        except Exception as e:
-            logger.warning("[BOT_IPS] Startup refresh failed, using static fallback: %s", e)
-    asyncio.create_task(_refresh_bot_ips())
+    # Non-blocking bot IP refresh — immediate + every 6h
+    # NOTE AUDIT 2026-03-19: periodic refresh keeps IPsum/Tor/crawler lists fresh
+    # on long-lived Cloud Run instances (instances can live hours).
+    async def _periodic_bot_refresh():
+        from config.bot_ips import refresh_from_remote
+        while True:
+            try:
+                stats = await refresh_from_remote(app.state.httpx_client)
+                logger.info("[BOT_IPS] Refresh completed: %s", stats)
+            except Exception as e:
+                logger.warning("[BOT_IPS] Refresh failed, using current lists: %s", e)
+            await asyncio.sleep(6 * 3600)  # 6h
+    asyncio.create_task(_periodic_bot_refresh())
     yield
     await close_cache()
     await db_cloudsql.close_pool()
