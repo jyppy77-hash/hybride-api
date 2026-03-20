@@ -13,6 +13,7 @@ from services.base_chat_detectors import (
     _extract_top_n,
     _detect_paires, _detect_triplets,
     _detect_generation, _detect_generation_mode,
+    _is_affirmation_simple, _detect_game_keyword_alone,  # V51
 )
 
 
@@ -156,6 +157,7 @@ def _detect_numero_em(message: str):
         r'\bboule\s+(\d{1,2})(?:\s|$|[?.!,])',
         r'\ble\s+(\d{1,2})\b',
         r'\bdu\s+(\d{1,2})\b',
+        r'^\s*(\d{1,2})\s*$',  # Bare integer "27" (V51 FIX 2)
     ]
 
     for pattern in patterns:
@@ -185,6 +187,8 @@ def _detect_grille_em(message: str):
 
     etoile_patterns_double = [
         _STAR_RE + r's?\s*[:\s]*(\d{1,2})\s+(?:et\s+|and\s+|y\s+|e\s+|und\s+|en\s+)?(\d{1,2})',
+        _STAR_RE + r's?\s*[:\s]*(\d{1,2})[-–]\s*(\d{1,2})',  # "étoiles 11-12" (V51 FIX 3)
+        r'[☆★⭐]\s*(\d{1,2})[-–\s]+(\d{1,2})\s*[☆★⭐]?',  # Unicode stars "☆11-12☆" (V51 FIX 3)
         r'\*\s*(\d{1,2})\s+(\d{1,2})',
         r'\+\s*(\d{1,2})\s+(\d{1,2})\s*$',
     ]

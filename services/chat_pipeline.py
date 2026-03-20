@@ -29,6 +29,7 @@ from services.chat_detectors import (
     _extract_exclusions,
     _detect_cooccurrence_high_n, _get_cooccurrence_high_n_response,
     _detect_site_rating, get_site_rating_response,
+    _is_affirmation_simple, _detect_game_keyword_alone,  # V51
 )
 from services.chat_sql import (
     _get_prochain_tirage, _get_tirage_data, _generate_sql, _validate_sql,
@@ -245,6 +246,48 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
                 f"[CONTINUATION] Reponse courte detectee: \"{message}\" "
                 f"→ enrichissement contextuel"
             )
+
+    # ── Phase AFFIRMATION : affirmation simple Oui/Ok/Non (V51) ──
+    if not _continuation_mode and _is_affirmation_simple(message):
+        if history and len(history) >= 2:
+            _enriched_message = _enrich_with_context(message, history)
+            if _enriched_message != message:
+                _continuation_mode = True
+                _phase = "AFFIRMATION"
+                logger.info(
+                    f"[AFFIRMATION] Affirmation simple avec contexte: \"{message}\" "
+                    f"→ enrichissement contextuel"
+                )
+        if not _continuation_mode:
+            _phase = "AFFIRMATION_SANS_CONTEXTE"
+            _resp = (
+                "Je suis pret a vous aider ! Que souhaitez-vous analyser ?\n\n"
+                "- Statistiques d'un numero (ex: le 7)\n"
+                "- Derniers tirages (ex: dernier tirage)\n"
+                "- Generer une grille optimisee (ex: genere une grille)\n"
+                "- Tendances chaud/froid (ex: numeros chauds)"
+            )
+            if _insult_prefix:
+                _resp = _insult_prefix + "\n\n" + _resp
+            logger.info(f"[AFFIRMATION_SANS_CONTEXTE] \"{message}\" — pas d'historique suffisant")
+            return {"response": _resp, "source": "hybride_affirmation",
+                    "mode": mode, "_chat_meta": {"phase": _phase, "t0": _t0}}, None
+
+    # ── Phase GAME_KEYWORD : mot-clé jeu seul "Loto" (V51) ──
+    if not _continuation_mode and _detect_game_keyword_alone(message):
+        _phase = "GAME_KEYWORD"
+        _resp = (
+            "Bienvenue sur HYBRIDE ! Voici ce que je peux faire :\n\n"
+            "- Statistiques d'un numero (ex: le 7)\n"
+            "- Derniers tirages (ex: dernier tirage)\n"
+            "- Generer une grille optimisee (ex: genere une grille)\n"
+            "- Tendances chaud/froid (ex: numeros chauds)"
+        )
+        if _insult_prefix:
+            _resp = _insult_prefix + "\n\n" + _resp
+        logger.info(f"[GAME_KEYWORD] Mot-cle jeu seul: \"{message}\"")
+        return {"response": _resp, "source": "hybride_game_keyword",
+                "mode": mode, "_chat_meta": {"phase": _phase, "t0": _t0}}, None
 
     # _generation_context is kept separate — stats phases below must still
     # run even when a grid was generated (multi-action: "compare X vs Y + generate")

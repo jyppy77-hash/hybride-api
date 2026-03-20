@@ -31,6 +31,7 @@ from services.chat_detectors import (
     _extract_exclusions,
     _detect_cooccurrence_high_n, _get_cooccurrence_high_n_response,
     _detect_site_rating, get_site_rating_response,
+    _is_affirmation_simple, _detect_game_keyword_alone,  # V51
 )
 from services.chat_detectors_em import (
     _detect_mode_em, _detect_prochain_tirage_em,
@@ -66,6 +67,99 @@ from services.chat_utils_em import (
 from services.chat_logger import log_chat_exchange
 
 logger = logging.getLogger(__name__)
+
+
+# ── Messages i18n pour affirmation sans contexte (V51 FIX 1) ──
+_AFFIRMATION_INVITATION_EM = {
+    "fr": (
+        "Je suis pret a vous aider ! Que souhaitez-vous analyser ?\n\n"
+        "- Statistiques d'un numero (ex: le 7)\n"
+        "- Derniers tirages (ex: dernier tirage)\n"
+        "- Generer une grille optimisee (ex: genere une grille)\n"
+        "- Tendances chaud/froid (ex: numeros chauds)"
+    ),
+    "en": (
+        "I'm ready to help! What would you like to analyse?\n\n"
+        "- Number statistics (e.g. number 7)\n"
+        "- Latest draws (e.g. last draw)\n"
+        "- Generate an optimised grid (e.g. generate a grid)\n"
+        "- Hot/cold trends (e.g. hot numbers)"
+    ),
+    "es": (
+        "Estoy listo para ayudarte. Que deseas analizar?\n\n"
+        "- Estadisticas de un numero (ej: el 7)\n"
+        "- Ultimos sorteos (ej: ultimo sorteo)\n"
+        "- Generar una combinacion optimizada (ej: genera una combinacion)\n"
+        "- Tendencias caliente/frio (ej: numeros calientes)"
+    ),
+    "pt": (
+        "Estou pronto para te ajudar! O que queres analisar?\n\n"
+        "- Estatisticas de um numero (ex: o 7)\n"
+        "- Ultimos sorteios (ex: ultimo sorteio)\n"
+        "- Gerar uma grelha optimizada (ex: gera uma grelha)\n"
+        "- Tendencias quente/frio (ex: numeros quentes)"
+    ),
+    "de": (
+        "Ich bin bereit zu helfen! Was moechtest du analysieren?\n\n"
+        "- Statistiken einer Zahl (z.B. die 7)\n"
+        "- Letzte Ziehungen (z.B. letzte Ziehung)\n"
+        "- Optimierte Kombination generieren (z.B. generiere eine Kombination)\n"
+        "- Heiss/kalt Trends (z.B. heisse Zahlen)"
+    ),
+    "nl": (
+        "Ik ben klaar om te helpen! Wat wil je analyseren?\n\n"
+        "- Statistieken van een nummer (bv. nummer 7)\n"
+        "- Laatste trekkingen (bv. laatste trekking)\n"
+        "- Geoptimaliseerde combinatie genereren (bv. genereer een combinatie)\n"
+        "- Warm/koud trends (bv. warme nummers)"
+    ),
+}
+
+# ── Messages i18n pour mot-clé jeu seul (V51 FIX 5) ──
+_GAME_KEYWORD_INVITATION_EM = {
+    "fr": (
+        "Bienvenue sur HYBRIDE EuroMillions ! Voici ce que je peux faire :\n\n"
+        "- Statistiques d'un numero (ex: le 7)\n"
+        "- Derniers tirages (ex: dernier tirage)\n"
+        "- Generer une grille optimisee (ex: genere une grille)\n"
+        "- Tendances chaud/froid (ex: numeros chauds)"
+    ),
+    "en": (
+        "Welcome to HYBRIDE EuroMillions! Here's what I can do:\n\n"
+        "- Number statistics (e.g. number 7)\n"
+        "- Latest draws (e.g. last draw)\n"
+        "- Generate an optimised grid (e.g. generate a grid)\n"
+        "- Hot/cold trends (e.g. hot numbers)"
+    ),
+    "es": (
+        "Bienvenido a HYBRIDE EuroMillions! Esto es lo que puedo hacer:\n\n"
+        "- Estadisticas de un numero (ej: el 7)\n"
+        "- Ultimos sorteos (ej: ultimo sorteo)\n"
+        "- Generar una combinacion optimizada (ej: genera una combinacion)\n"
+        "- Tendencias caliente/frio (ej: numeros calientes)"
+    ),
+    "pt": (
+        "Bem-vindo ao HYBRIDE EuroMillions! Eis o que posso fazer:\n\n"
+        "- Estatisticas de um numero (ex: o 7)\n"
+        "- Ultimos sorteios (ex: ultimo sorteio)\n"
+        "- Gerar uma grelha optimizada (ex: gera uma grelha)\n"
+        "- Tendencias quente/frio (ex: numeros quentes)"
+    ),
+    "de": (
+        "Willkommen bei HYBRIDE EuroMillions! Das kann ich fuer dich tun:\n\n"
+        "- Statistiken einer Zahl (z.B. die 7)\n"
+        "- Letzte Ziehungen (z.B. letzte Ziehung)\n"
+        "- Optimierte Kombination generieren (z.B. generiere eine Kombination)\n"
+        "- Heiss/kalt Trends (z.B. heisse Zahlen)"
+    ),
+    "nl": (
+        "Welkom bij HYBRIDE EuroMillions! Dit kan ik voor je doen:\n\n"
+        "- Statistieken van een nummer (bv. nummer 7)\n"
+        "- Laatste trekkingen (bv. laatste trekking)\n"
+        "- Geoptimaliseerde combinatie genereren (bv. genereer een combinatie)\n"
+        "- Warm/koud trends (bv. warme nummers)"
+    ),
+}
 
 
 # =========================
@@ -286,6 +380,36 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                 f"[EM CONTINUATION] Reponse courte detectee: \"{message}\" "
                 f"→ enrichissement contextuel"
             )
+
+    # ── Phase AFFIRMATION : affirmation simple Oui/Ok/Non (V51) ──
+    if not _continuation_mode and _is_affirmation_simple(message):
+        if history and len(history) >= 2:
+            _enriched_message = _enrich_with_context(message, history)
+            if _enriched_message != message:
+                _continuation_mode = True
+                _phase = "AFFIRMATION"
+                logger.info(
+                    f"[EM AFFIRMATION] Affirmation simple avec contexte: \"{message}\" "
+                    f"→ enrichissement contextuel (lang={lang})"
+                )
+        if not _continuation_mode:
+            _phase = "AFFIRMATION_SANS_CONTEXTE"
+            _resp = _AFFIRMATION_INVITATION_EM.get(lang, _AFFIRMATION_INVITATION_EM["fr"])
+            if _insult_prefix:
+                _resp = _insult_prefix + "\n\n" + _resp
+            logger.info(f"[EM AFFIRMATION_SANS_CONTEXTE] \"{message}\" (lang={lang})")
+            return {"response": _resp, "source": "hybride_affirmation",
+                    "mode": mode, "_chat_meta": {"phase": _phase, "t0": _t0, "lang": lang}}, None
+
+    # ── Phase GAME_KEYWORD : mot-clé jeu seul "Euromillions" (V51) ──
+    if not _continuation_mode and _detect_game_keyword_alone(message):
+        _phase = "GAME_KEYWORD"
+        _resp = _GAME_KEYWORD_INVITATION_EM.get(lang, _GAME_KEYWORD_INVITATION_EM["fr"])
+        if _insult_prefix:
+            _resp = _insult_prefix + "\n\n" + _resp
+        logger.info(f"[EM GAME_KEYWORD] Mot-cle jeu seul: \"{message}\" (lang={lang})")
+        return {"response": _resp, "source": "hybride_game_keyword",
+                "mode": mode, "_chat_meta": {"phase": _phase, "t0": _t0, "lang": lang}}, None
 
     # _generation_context is kept separate — stats phases below must still
     # run even when a grid was generated (multi-action: "compare X vs Y + generate")

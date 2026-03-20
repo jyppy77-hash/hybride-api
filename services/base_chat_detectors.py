@@ -63,6 +63,73 @@ def _is_short_continuation(message: str) -> bool:
 
 
 # ────────────────────────────────────────────
+# Phase AFFIRMATION : réponses conversationnelles courtes (V51)
+# Capte "Oui", "Ok", "Non", "Avec plaisir", "Oui je veux bien", etc.
+# NE capte PAS les messages avec des chiffres (digit guard V46).
+# ────────────────────────────────────────────
+
+_AFFIRMATION_PATTERNS = re.compile(
+    r'^('
+    # FR
+    r'oui|ouais|ouep|yep|ok|okay|d\'accord|bien s[uû]r|bien sur|'
+    r'[çc]a marche|c\'est bon|entendu|parfait|super|'
+    r'avec plaisir|volontiers|carr[eé]ment|'
+    r'non|nan|pas vraiment|bof|'
+    # EN
+    r'yes|yeah|sure|no|nope|alright|sounds good|perfect|thanks|great|'
+    # ES
+    r's[ií]|vale|claro|por supuesto|perfecto|gracias|de acuerdo|'
+    # PT
+    r'sim|n[aã]o|perfeito|obrigado|obrigada|certo|com certeza|'
+    # DE
+    r'ja|nein|klar|nat[uü]rlich|perfekt|danke|einverstanden|'
+    # NL
+    r'nee|prima|natuurlijk|bedankt|akkoord|zeker'
+    r')[\s!.?…]*$',
+    re.IGNORECASE
+)
+
+# Strip emojis for clean word counting
+_EMOJI_RE = re.compile(
+    r'[\U00002600-\U000027BF\U0001F300-\U0001FAFF\U0000FE00-\U0000FE0F'
+    r'\U0001F900-\U0001F9FF\U0000200D\U00002702-\U000027B0]+',
+    re.UNICODE,
+)
+
+
+def _is_affirmation_simple(message: str) -> bool:
+    """Detecte une affirmation/negation conversationnelle courte (6 langues).
+    Exclut les messages contenant des chiffres (digit guard V46).
+    Plus large que _is_short_continuation : capte les mots isolés
+    sans exiger de contexte de continuation (vas-y, montre, etc.)."""
+    stripped = message.strip()
+    if len(stripped) > 80:
+        return False
+    # Strip emojis for word count and digit check
+    text_only = _EMOJI_RE.sub('', stripped).strip()
+    if not text_only:
+        return False
+    if any(c.isdigit() for c in text_only):
+        return False
+    words = text_only.split()
+    if len(words) > 5:
+        return False
+    return bool(_AFFIRMATION_PATTERNS.match(text_only))
+
+
+# Mot-clé jeu seul (V51 FIX 5)
+_GAME_KEYWORD_ALONE = re.compile(
+    r'^\s*(loto|euromillions?|euro\s*millions?)\s*[!?.]*\s*$',
+    re.IGNORECASE,
+)
+
+
+def _detect_game_keyword_alone(message: str) -> bool:
+    """Detecte si le message est uniquement un nom de jeu."""
+    return bool(_GAME_KEYWORD_ALONE.match(message.strip()))
+
+
+# ────────────────────────────────────────────
 # Phase T : Detection tirage (date / dernier)
 # ────────────────────────────────────────────
 
@@ -729,9 +796,17 @@ def _detect_compliment(message: str):
         if phrase in lower:
             return "love"
 
-    # Remerciement simple (court)
+    # Remerciement simple (court ou phrase de remerciement)
     _merci_starts = ("merci", "thanks", "thank you", "gracias", "obrigado", "obrigada", "danke", "bedankt", "dank je")
-    if any(lower.startswith(m) for m in _merci_starts) and len(lower) < 40:
+    _merci_phrases = (
+        "je vous remercie", "je te remercie", "je remercie",
+        "i appreciate", "thank you very much", "thanks so much",
+        "muchas gracias", "muito obrigado", "muito obrigada",
+        "vielen dank", "heel erg bedankt", "hartelijk dank",
+    )
+    if any(lower.startswith(m) for m in _merci_starts) and len(lower) < 80:
+        return "merci"
+    if any(p in lower for p in _merci_phrases) and len(lower) < 80:
         return "merci"
 
     # Phrases complimentaires
@@ -777,6 +852,8 @@ _GENERATION_PATTERN = re.compile(
     r'grille\s+.{0,15}optim|combinaison\s+.{0,15}optim|'
     r'choisis[\s-]moi\s+.{0,15}num[eé]ros|'
     r'tire[\s-]moi\s+.{0,15}num[eé]ros|'
+    # FR conseil/recommandation → génération (V51)
+    r'(?:que?\s+(?:me|nous)\s+)?(?:conseill|recommand)\w*.{1,30}(?:grille|num[eé]ros|euromillions?|loto)|'
     # EN
     r'\bgenerate\b|'
     r'give\s+me\s+.{0,20}(?:grid|combination|numbers)|'
@@ -784,30 +861,40 @@ _GENERATION_PATTERN = re.compile(
     r'make\s+me\s+.{0,20}(?:grid|combination)|'
     r'optimized\s+grid|'
     r'pick\s+.{0,15}numbers\s+for\s+me|'
+    # EN conseil (V51)
+    r'what\s+(?:do\s+you\s+)?(?:recommend|suggest)|'
     # ES
     r'\bgenera\b|generar\b|'
     r'dame\s+.{0,20}(?:combinaci[oó]n|n[uú]meros)|'
     r'crea\s+.{0,20}combinaci[oó]n|'
     r'combinaci[oó]n\s+.{0,15}optim|'
     r'hazme\s+.{0,20}combinaci[oó]n|'
+    # ES conseil (V51)
+    r'(?:qu[eé]\s+(?:me\s+)?)?(?:recomiend|sugier)\w*.{1,30}(?:combinaci[oó]n|n[uú]meros|euromillions?|loto)|'
     # PT
     r'\bgera\b|\bgerar\b|\bgere\b|'
     r'd[aá][\s-]me\s+.{0,20}(?:grelhas?|combina[cç][aã]o|n[uú]meros)|'
     r'cria\s+.{0,20}(?:grelhas?|combina[cç][aã]o)|'
     r'(?:grelhas?|combina[cç][aã]o)\s+.{0,15}optim|'
     r'faz[\s-]me\s+.{0,20}(?:grelhas?|combina[cç][aã]o)|'
+    # PT conseil (V51)
+    r'(?:o\s+que\s+)?(?:recomend|suger)\w*.{1,30}(?:grelhas?|n[uú]meros|euromillions?|loto)|'
     # DE
     r'generier|erstell\w*\s+.{0,20}(?:kombination|zahlen|gitter)|'
     r'gib\s+mir\s+.{0,20}(?:kombination|zahlen)|'
     r'erzeug\w*\s+.{0,20}kombination|'
     r'kombination\s+.{0,15}optim|'
     r'w[aä]hl\w*\s+.{0,15}zahlen|'
+    # DE conseil (V51)
+    r'was\s+(?:empfiehlst|empfehlen|schl[aä]gst).{1,30}(?:kombination|zahlen|euromillions?|loto)|'
     # NL
     r'genereer|'
     r'maak\s+.{0,20}(?:combinatie|nummers)|'
     r'geef\s+me\s+.{0,20}(?:combinatie|nummers)|'
     r'combinatie\s+.{0,15}optim|'
-    r'kies\s+.{0,15}nummers',
+    r'kies\s+.{0,15}nummers|'
+    # NL conseil (V51)
+    r'wat\s+(?:raad|beveel)\s+je\s+aan.{1,30}(?:combinatie|nummers|euromillions?|loto)',
     re.IGNORECASE
 )
 

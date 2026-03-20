@@ -13,8 +13,9 @@ logger = logging.getLogger(__name__)
 
 # Re-export ALL shared functions and constants (consumers import from here)
 from services.base_chat_detectors import (  # noqa: F401
-    # Phase 0 — continuation
+    # Phase 0 — continuation + affirmation (V51)
     CONTINUATION_PATTERNS, _CONTINUATION_WORDS, _is_short_continuation,
+    _is_affirmation_simple, _detect_game_keyword_alone,
     # Phase T — tirage detection
     _JOURS_SEMAINE, _TIRAGE_KW, _MOIS_TO_NUM, _MOIS_NOM_RE,
     _STAT_NEUTRALIZE_RE, _detect_tirage,
@@ -141,6 +142,7 @@ def _detect_numero(message: str):
         r'\bboule\s+(\d{1,2})(?:\s|$|[?.!,])',
         r'\ble\s+(\d{1,2})\b',
         r'\bdu\s+(\d{1,2})\b',
+        r'^\s*(\d{1,2})\s*$',  # Bare integer "27" (V51 FIX 2)
     ]
 
     for pattern in patterns:
