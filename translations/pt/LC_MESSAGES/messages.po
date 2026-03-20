@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LotoIA 1.0\n"
 "Report-Msgid-Bugs-To: contact@lotoia.fr\n"
-"POT-Creation-Date: 2026-03-15 16:33+0100\n"
+"POT-Creation-Date: 2026-03-20 16:26+0100\n"
 "PO-Revision-Date: 2026-02-28 00:00+0100\n"
 "Last-Translator: LotoIA <contact@lotoia.fr>\n"
 "Language: pt\n"
@@ -25,8 +25,8 @@ msgstr "Números quentes"
 msgid "Équilibre"
 msgstr "Equilíbrio"
 
-#: tests/test_i18n.py:216 ui/templates/em/methodologie.html:85
-#: ui/templates/em/statistiques.html:547 ui/templates/em/statistiques.html:623
+#: tests/test_i18n.py:216 ui/templates/em/methodologie.html:88
+#: ui/templates/em/statistiques.html:546 ui/templates/em/statistiques.html:622
 msgid "Fréquence"
 msgstr "Frequência"
 
@@ -77,28 +77,28 @@ msgstr ""
 "convicção simples: os jogadores merecem ferramentas transparentes, "
 "honestas e gratuitas."
 
-#: ui/templates/em/_base.html:56 ui/templates/em/a-propos.html:86
-#: ui/templates/em/euromillions-ia.html:52 ui/templates/em/faq.html:79
-#: ui/templates/em/generateur.html:56 ui/templates/em/historique.html:41
-#: ui/templates/em/hybride.html:60 ui/templates/em/methodologie.html:55
+#: ui/templates/em/_base.html:58 ui/templates/em/a-propos.html:86
+#: ui/templates/em/euromillions-ia.html:53 ui/templates/em/faq.html:79
+#: ui/templates/em/generateur.html:55 ui/templates/em/historique.html:45
+#: ui/templates/em/hybride.html:60 ui/templates/em/methodologie.html:58
 #: ui/templates/em/moteur.html:87 ui/templates/em/news.html:67
-#: ui/templates/em/simulateur.html:43 ui/templates/em/statistiques.html:73
+#: ui/templates/em/simulateur.html:42 ui/templates/em/statistiques.html:72
 msgid "Accueil EuroMillions"
 msgstr "Início EuroMillions"
 
-#: ui/templates/em/_base.html:60
+#: ui/templates/em/_base.html:62
 msgid "Changer de thème"
 msgstr "Mudar de tema"
 
-#: ui/templates/em/_base.html:67
+#: ui/templates/em/_base.html:69
 msgid "Choisir la langue"
 msgstr "Escolher o idioma"
 
-#: ui/templates/em/_base.html:93
+#: ui/templates/em/_base.html:95
 msgid "Retour en haut"
 msgstr "Voltar ao topo"
 
-#: ui/templates/em/_footer.html:4 ui/templates/em/accueil.html:705
+#: ui/templates/em/_footer.html:4 ui/templates/em/accueil.html:704
 msgid "Modules"
 msgstr "Módulos"
 
@@ -106,31 +106,31 @@ msgstr "Módulos"
 msgid "Accueil"
 msgstr "Início"
 
-#: ui/templates/em/_footer.html:8 ui/templates/em/accueil.html:816
+#: ui/templates/em/_footer.html:8 ui/templates/em/accueil.html:815
 msgid "Analyse"
 msgstr "Análise"
 
-#: ui/templates/em/_footer.html:10 ui/templates/em/accueil.html:825
+#: ui/templates/em/_footer.html:10 ui/templates/em/accueil.html:824
 msgid "Exploration"
 msgstr "Exploração"
 
 #: ui/templates/em/_footer.html:12 ui/templates/em/_hero.html:17
-#: ui/templates/em/accueil.html:723 ui/templates/em/accueil.html:834
-#: ui/templates/em/hybride.html:408 ui/templates/em/statistiques.html:74
+#: ui/templates/em/accueil.html:722 ui/templates/em/accueil.html:833
+#: ui/templates/em/hybride.html:408 ui/templates/em/statistiques.html:73
 msgid "Statistiques"
 msgstr "Estatísticas"
 
 #: ui/templates/em/_footer.html:14 ui/templates/em/_hero.html:21
-#: ui/templates/em/accueil.html:726 ui/templates/em/news.html:68
+#: ui/templates/em/accueil.html:725 ui/templates/em/news.html:68
 msgid "Actualités"
 msgstr "Novidades"
 
-#: ui/templates/em/_footer.html:19 ui/templates/em/accueil.html:774
+#: ui/templates/em/_footer.html:19 ui/templates/em/accueil.html:773
 #: ui/templates/em/moteur.html:88
 msgid "Moteur HYBRIDE"
 msgstr "Motor HYBRIDE"
 
-#: ui/templates/em/_footer.html:21 ui/templates/em/methodologie.html:56
+#: ui/templates/em/_footer.html:21 ui/templates/em/methodologie.html:59
 #: ui/templates/em/moteur.html:108
 msgid "Méthodologie"
 msgstr "Metodologia"
@@ -159,23 +159,27 @@ msgstr "Privacidade"
 msgid "Avertissements"
 msgstr "Avisos"
 
-#: ui/templates/em/_footer.html:42
+#: ui/templates/em/_footer.html:40 ui/templates/em/a-propos.html:175
+msgid "Nous contacter"
+msgstr "Contactar-nos"
+
+#: ui/templates/em/_footer.html:44
 msgid "Voir aussi"
 msgstr "Ver também"
 
-#: ui/templates/em/_footer.html:43
+#: ui/templates/em/_footer.html:45
 msgid "Analyse Loto France"
 msgstr "Análise Loto França"
 
-#: ui/templates/em/_footer.html:45
+#: ui/templates/em/_footer.html:47
 msgid "Statistiques Loto"
 msgstr "Estatísticas Loto"
 
-#: ui/templates/em/_footer.html:47
+#: ui/templates/em/_footer.html:49
 msgid "Générateur Loto"
 msgstr "Simulador Loto"
 
-#: ui/templates/em/_footer.html:50
+#: ui/templates/em/_footer.html:52
 msgid ""
 "Jouer comporte des risques : endettement, isolement, dépendance. Appelez "
 "le 09 74 75 13 13 (appel non surtaxé)."
@@ -183,26 +187,26 @@ msgstr ""
 "Jogar comporta riscos: endividamento, isolamento, dependência. Ligue para"
 " a Linha Vida SOS Jogo: 808 200 204 (chamada local)."
 
-#: ui/templates/em/_footer.html:51 ui/templates/em/euromillions-ia.html:246
+#: ui/templates/em/_footer.html:53 ui/templates/em/euromillions-ia.html:247
 #: ui/templates/em/hybride.html:436
 msgid "Interdiction de jeu aux mineurs."
 msgstr "Jogo proibido a menores de idade."
 
-#: ui/templates/em/_footer.html:53
+#: ui/templates/em/_footer.html:55
 msgid "Développé par"
 msgstr "Desenvolvido por"
 
-#: ui/templates/em/_hero.html:9 ui/templates/em/accueil.html:717
-#: ui/templates/em/accueil.html:820
+#: ui/templates/em/_hero.html:9 ui/templates/em/accueil.html:716
+#: ui/templates/em/accueil.html:819
 msgid "Auditer une grille"
 msgstr "Auditar uma grelha"
 
-#: ui/templates/em/_hero.html:13 ui/templates/em/accueil.html:720
-#: ui/templates/em/accueil.html:829 ui/templates/em/hybride.html:406
+#: ui/templates/em/_hero.html:13 ui/templates/em/accueil.html:719
+#: ui/templates/em/accueil.html:828 ui/templates/em/hybride.html:406
 msgid "Explorer des grilles"
 msgstr "Explorar grelhas"
 
-#: ui/templates/em/_hero.html:24 ui/templates/em/accueil.html:729
+#: ui/templates/em/_hero.html:24 ui/templates/em/accueil.html:728
 msgid "glisser pour voir plus"
 msgstr "deslizar para ver mais"
 
@@ -460,7 +464,7 @@ msgstr "Jogo proibido a menores de idade."
 msgid "Nous n'incitons jamais à jouer plus ou à augmenter ses mises"
 msgstr "Nunca incentivamos a jogar mais ou a aumentar as apostas"
 
-#: ui/templates/em/a-propos.html:159 ui/templates/em/euromillions-ia.html:245
+#: ui/templates/em/a-propos.html:159 ui/templates/em/euromillions-ia.html:246
 #: ui/templates/em/hybride.html:435
 #, python-format
 msgid ""
@@ -506,10 +510,6 @@ msgstr ""
 "LotoIA <strong>não é pago</strong> — todas as funcionalidades são "
 "gratuitas, sem registo"
 
-#: ui/templates/em/a-propos.html:175
-msgid "Nous contacter"
-msgstr "Contactar-nos"
-
 #: ui/templates/em/a-propos.html:176
 msgid "Pour toute question, suggestion ou partenariat :"
 msgstr "Para qualquer questão, sugestão ou parceria:"
@@ -522,42 +522,34 @@ msgstr "Email: <strong>contact@lotoia.fr</strong>"
 msgid "Partenariats : <strong>partenariats@lotoia.fr</strong>"
 msgstr "Parcerias: <strong>partenariats@lotoia.fr</strong>"
 
-#: ui/templates/em/a-propos.html:190
+#: ui/templates/em/a-propos.html:264
 msgid "Explorer les statistiques EuroMillions"
 msgstr "Explorar as estatísticas EuroMillions"
 
-#: ui/templates/em/a-propos.html:191
+#: ui/templates/em/a-propos.html:265
 msgid "Découvrez les fréquences, tendances et analyses des numéros et étoiles."
 msgstr "Descubra as frequências, tendências e análises dos números e estrelas."
 
-#: ui/templates/em/a-propos.html:194 ui/templates/em/accueil.html:838
+#: ui/templates/em/a-propos.html:268 ui/templates/em/accueil.html:837
 msgid "Voir les statistiques"
 msgstr "Ver as estatísticas"
 
-#: ui/templates/em/accueil.html:4 ui/templates/em/accueil.html:13
-#: ui/templates/em/accueil.html:24
+#: ui/templates/em/accueil.html:4 ui/templates/em/accueil.html:12
+#: ui/templates/em/accueil.html:23
 msgid "Analyse EuroMillions IA — Moteur HYBRIDE | LotoIA"
 msgstr "Análise EuroMillions IA — Motor HYBRIDE | LotoIA"
 
 #: ui/templates/em/accueil.html:5
 msgid ""
-"LotoIA EuroMillions est une plateforme d'analyse statistique de "
-"l'EuroMillions. Analysez vos grilles, explorez des combinaisons et "
-"comprenez les tendances historiques avec le moteur HYBRIDE."
+"LotoIA EuroMillions : plateforme gratuite d'analyse statistique de "
+"l'EuroMillions par IA. Analysez vos grilles, explorez des combinaisons et"
+" comprenez les tendances historiques avec le moteur HYBRIDE."
 msgstr ""
-"LotoIA EuroMillions é uma plataforma de análise estatística do "
-"EuroMillions. Analise as suas grelhas, explore combinações e compreenda "
-"as tendências históricas com o motor HYBRIDE."
+"LotoIA EuroMillions: plataforma gratuita de análise estatística do "
+"EuroMillions com IA. Analise as suas grelhas, explore combinações e "
+"compreenda as tendências históricas com o motor HYBRIDE."
 
-#: ui/templates/em/accueil.html:6
-msgid ""
-"lotoia euromillions, analyse euromillions, moteur HYBRIDE, statistiques "
-"euromillions, simulateur grille euromillions, HYBRIDE"
-msgstr ""
-"lotoia euromillions, análise euromillions, motor HYBRIDE, estatísticas "
-"euromillions, simulador grelha euromillions, HYBRIDE"
-
-#: ui/templates/em/accueil.html:14 ui/templates/em/accueil.html:25
+#: ui/templates/em/accueil.html:13 ui/templates/em/accueil.html:24
 msgid ""
 "Analysez vos grilles, explorez des combinaisons et comprenez les "
 "tendances historiques de l'EuroMillions avec le moteur HYBRIDE."
@@ -565,11 +557,11 @@ msgstr ""
 "Analise as suas grelhas, explore combinações e compreenda as tendências "
 "históricas do EuroMillions com o motor HYBRIDE."
 
-#: ui/templates/em/accueil.html:33
+#: ui/templates/em/accueil.html:32
 msgid "LotoIA EuroMillions - Accueil"
 msgstr "LotoIA EuroMillions - Início"
 
-#: ui/templates/em/accueil.html:35
+#: ui/templates/em/accueil.html:34
 msgid ""
 "Plateforme d'analyse statistique de l'EuroMillions basée sur le moteur "
 "HYBRIDE. Analyse de grilles, exploration de combinaisons et statistiques "
@@ -579,7 +571,7 @@ msgstr ""
 "HYBRIDE. Análise de grelhas, exploração de combinações e estatísticas "
 "históricas."
 
-#: ui/templates/em/accueil.html:68
+#: ui/templates/em/accueil.html:67
 msgid ""
 "Plateforme française d'analyse statistique du Loto et de l'EuroMillions "
 "par intelligence artificielle"
@@ -587,32 +579,32 @@ msgstr ""
 "Plataforma francesa de análise estatística do Loto e do EuroMillions por "
 "inteligência artificial"
 
-#: ui/templates/em/accueil.html:713 ui/templates/em/euromillions-ia.html:139
-#: ui/templates/em/generateur.html:38 ui/templates/em/methodologie.html:44
+#: ui/templates/em/accueil.html:712 ui/templates/em/euromillions-ia.html:140
+#: ui/templates/em/generateur.html:37 ui/templates/em/methodologie.html:47
 msgid "Analyse statistique"
 msgstr "Análise estatística"
 
-#: ui/templates/em/accueil.html:713
+#: ui/templates/em/accueil.html:712
 msgid "de l'EuroMillions"
 msgstr "do EuroMillions"
 
-#: ui/templates/em/accueil.html:714
+#: ui/templates/em/accueil.html:713
 msgid "Explorer les tirages européens. Comprendre les probabilités."
 msgstr "Explorar os sorteios europeus. Compreender as probabilidades."
 
-#: ui/templates/em/accueil.html:741
+#: ui/templates/em/accueil.html:740
 msgid "Qu'est-ce que LotoIA EuroMillions ?"
 msgstr "O que é o LotoIA EuroMillions?"
 
-#: ui/templates/em/accueil.html:742
+#: ui/templates/em/accueil.html:741
 msgid "Une plateforme d'analyse algorithmique des tirages de l'EuroMillions"
 msgstr "Uma plataforma de análise algorítmica dos sorteios do EuroMillions"
 
-#: ui/templates/em/accueil.html:743
+#: ui/templates/em/accueil.html:742
 msgid "Analyse statistique, pas prédiction"
 msgstr "Análise estatística, não previsão"
 
-#: ui/templates/em/accueil.html:745
+#: ui/templates/em/accueil.html:744
 msgid ""
 "LotoIA EuroMillions est une plateforme d'analyse statistique qui exploite"
 " les données historiques des tirages européens afin de fournir des outils"
@@ -624,7 +616,7 @@ msgstr ""
 "exploração e compreensão. Não prevê resultados nem promete quaisquer "
 "ganhos."
 
-#: ui/templates/em/accueil.html:748
+#: ui/templates/em/accueil.html:747
 msgid ""
 "Le moteur <span class=\"pedagogy-highlight\">HYBRIDE</span> est relié à "
 "une intelligence d'analyse embarquée permettant d'expliquer les "
@@ -638,7 +630,7 @@ msgstr ""
 "tornar as estatísticas mais compreensíveis sem nunca transformar a "
 "análise em especulação."
 
-#: ui/templates/em/accueil.html:751
+#: ui/templates/em/accueil.html:750
 msgid ""
 "Chaque grille est évaluée selon des critères objectifs : équilibre "
 "pair/impair, répartition des numéros chauds et froids, écarts "
@@ -652,19 +644,19 @@ msgstr ""
 "observação dos sorteios passados. Intervalo de jogo: 5 números de 1 a 50,"
 " 2 estrelas de 1 a 12."
 
-#: ui/templates/em/accueil.html:755
+#: ui/templates/em/accueil.html:754
 msgid "Hybride – assistant pédagogique LotoIA"
 msgstr "Hybride – assistente pedagógico LotoIA"
 
-#: ui/templates/em/accueil.html:768
+#: ui/templates/em/accueil.html:767
 msgid "Comment fonctionne le moteur ?"
 msgstr "Como funciona o motor?"
 
-#: ui/templates/em/accueil.html:769
+#: ui/templates/em/accueil.html:768
 msgid "Le moteur HYBRIDE en un coup d'oeil"
 msgstr "O motor HYBRIDE numa vista de olhos"
 
-#: ui/templates/em/accueil.html:776
+#: ui/templates/em/accueil.html:775
 msgid ""
 "HYBRIDE analyse les données historiques des tirages européens de "
 "l'EuroMillions (5 numéros de 1 à 50 + 2 étoiles de 1 à 12). Il combine "
@@ -676,23 +668,23 @@ msgstr ""
 "longo prazo (60%) e de curto prazo (40%) para produzir indicadores "
 "estatísticos fiáveis."
 
-#: ui/templates/em/accueil.html:779
+#: ui/templates/em/accueil.html:778
 msgid "Analyse des fréquences d'apparition de chaque numéro"
 msgstr "Análise das frequências de aparição de cada número"
 
-#: ui/templates/em/accueil.html:780
+#: ui/templates/em/accueil.html:779
 msgid "Évaluation de grilles via une analyse de convergence statistique"
 msgstr "Avaliação de grelhas através de uma análise de convergência estatística"
 
-#: ui/templates/em/accueil.html:781
+#: ui/templates/em/accueil.html:780
 msgid "Exploration de combinaisons selon des modèles statistiques"
 msgstr "Exploração de combinações segundo modelos estatísticos"
 
-#: ui/templates/em/accueil.html:782
+#: ui/templates/em/accueil.html:781
 msgid "Identification des numéros et étoiles chauds, froids et neutres"
 msgstr "Identificação dos números e estrelas quentes, frios e neutros"
 
-#: ui/templates/em/accueil.html:785
+#: ui/templates/em/accueil.html:784
 msgid ""
 "HYBRIDE est un outil d'analyse statistique descriptive. Il ne prédit pas "
 "les résultats et ne garantit aucun gain."
@@ -700,23 +692,23 @@ msgstr ""
 "HYBRIDE é uma ferramenta de análise estatística descritiva. Não prevê "
 "resultados nem garante quaisquer ganhos."
 
-#: ui/templates/em/accueil.html:789
+#: ui/templates/em/accueil.html:788
 msgid "Découvrir la méthodologie complète"
 msgstr "Descobrir a metodologia completa"
 
-#: ui/templates/em/accueil.html:795
+#: ui/templates/em/accueil.html:794
 msgid "Moteur HYBRIDE - Analyse statistique de l'EuroMillions"
 msgstr "Motor HYBRIDE - Análise estatística do EuroMillions"
 
-#: ui/templates/em/accueil.html:810
+#: ui/templates/em/accueil.html:809
 msgid "Trois outils, trois approches"
 msgstr "Três ferramentas, três abordagens"
 
-#: ui/templates/em/accueil.html:811
+#: ui/templates/em/accueil.html:810
 msgid "Chaque outil répond à un usage différent de l'analyse statistique"
 msgstr "Cada ferramenta responde a uma utilização diferente da análise estatística"
 
-#: ui/templates/em/accueil.html:818
+#: ui/templates/em/accueil.html:817
 msgid ""
 "Composez votre grille EuroMillions (5 numéros + 2 étoiles) et obtenez un "
 "audit complet."
@@ -724,7 +716,7 @@ msgstr ""
 "Componha a sua grelha EuroMillions (5 números + 2 estrelas) e obtenha uma"
 " auditoria completa."
 
-#: ui/templates/em/accueil.html:827
+#: ui/templates/em/accueil.html:826
 msgid ""
 "Le moteur HYBRIDE génère des combinaisons EuroMillions statistiquement "
 "équilibrées."
@@ -732,17 +724,17 @@ msgstr ""
 "O motor HYBRIDE gera combinações EuroMillions estatisticamente "
 "equilibradas."
 
-#: ui/templates/em/accueil.html:836
+#: ui/templates/em/accueil.html:835
 msgid ""
 "Consultez les fréquences de chaque numéro et étoile, les tendances "
 "récentes."
 msgstr "Consulte as frequências de cada número e estrela, as tendências recentes."
 
-#: ui/templates/em/accueil.html:846
+#: ui/templates/em/accueil.html:845
 msgid "* Analyses basées exclusivement sur les tirages officiels EuroMillions."
 msgstr "* Análises baseadas exclusivamente nos sorteios oficiais do EuroMillions."
 
-#: ui/templates/em/accueil.html:851
+#: ui/templates/em/accueil.html:850
 msgid ""
 "<strong>LotoIA est un outil d'analyse statistique.</strong><br>Il ne "
 "s'agit pas d'un site de jeu et il ne permet pas de prédire les résultats."
@@ -750,7 +742,7 @@ msgstr ""
 "<strong>LotoIA é uma ferramenta de análise estatística.</strong><br>Não "
 "se trata de um site de jogo e não permite prever os resultados."
 
-#: ui/templates/em/accueil.html:854
+#: ui/templates/em/accueil.html:853
 msgid ""
 "Les données fournies sont à titre informatif et pédagogique. Jouer "
 "comporte des risques : endettement, isolement, dépendance. Appelez le 09 "
@@ -806,16 +798,16 @@ msgstr ""
 "Análise completa do papel da inteligência artificial na análise dos "
 "sorteios EuroMillions"
 
-#: ui/templates/em/euromillions-ia.html:53
+#: ui/templates/em/euromillions-ia.html:54
 msgid "EuroMillions et IA"
 msgstr "EuroMillions e IA"
 
-#: ui/templates/em/euromillions-ia.html:65
-#: ui/templates/em/euromillions-ia.html:221
+#: ui/templates/em/euromillions-ia.html:66
+#: ui/templates/em/euromillions-ia.html:222
 msgid "L'intelligence artificielle peut-elle prédire les résultats EuroMillions ?"
 msgstr "A inteligência artificial pode prever os resultados EuroMillions?"
 
-#: ui/templates/em/euromillions-ia.html:68
+#: ui/templates/em/euromillions-ia.html:69
 msgid ""
 "Non. L'EuroMillions est un jeu de hasard pur où chaque tirage est "
 "indépendant. Aucune IA, aucun algorithme ne peut prédire les résultats. "
@@ -827,12 +819,12 @@ msgstr ""
 "IA pode, em contrapartida, analisar as frequências históricas e detetar "
 "vieses cognitivos nos jogadores."
 
-#: ui/templates/em/euromillions-ia.html:73
-#: ui/templates/em/euromillions-ia.html:224
+#: ui/templates/em/euromillions-ia.html:74
+#: ui/templates/em/euromillions-ia.html:225
 msgid "Comment LotoIA utilise l'IA pour l'EuroMillions ?"
 msgstr "Como utiliza o LotoIA a IA para o EuroMillions?"
 
-#: ui/templates/em/euromillions-ia.html:76
+#: ui/templates/em/euromillions-ia.html:77
 #, python-format
 msgid ""
 "Le moteur HYBRIDE combine 5 algorithmes : analyse fréquentielle, calcul "
@@ -846,12 +838,12 @@ msgstr ""
 "multicritério e seleção ótima. Analisa %(total)s+ sorteios oficiais "
 "EuroMillions para propor grelhas estatisticamente equilibradas."
 
-#: ui/templates/em/euromillions-ia.html:81
-#: ui/templates/em/euromillions-ia.html:227
+#: ui/templates/em/euromillions-ia.html:82
+#: ui/templates/em/euromillions-ia.html:228
 msgid "Quelle est la différence entre LotoIA et ChatGPT pour l'EuroMillions ?"
 msgstr "Qual é a diferença entre LotoIA e ChatGPT para o EuroMillions?"
 
-#: ui/templates/em/euromillions-ia.html:84
+#: ui/templates/em/euromillions-ia.html:85
 #, python-format
 msgid ""
 "ChatGPT est un modèle de langage génératif qui n'a pas accès aux données "
@@ -864,12 +856,12 @@ msgstr ""
 "utiliza uma IA Grounded conectada aos %(total)s+ sorteios oficiais "
 "EuroMillions, sem alucinação."
 
-#: ui/templates/em/euromillions-ia.html:89
-#: ui/templates/em/euromillions-ia.html:230
+#: ui/templates/em/euromillions-ia.html:90
+#: ui/templates/em/euromillions-ia.html:231
 msgid "Les « systèmes gagnants » EuroMillions fonctionnent-ils ?"
 msgstr "Os «sistemas vencedores» EuroMillions funcionam?"
 
-#: ui/templates/em/euromillions-ia.html:92
+#: ui/templates/em/euromillions-ia.html:93
 msgid ""
 "Non. Tout système prétendant garantir des gains à l'EuroMillions est une "
 "arnaque. La probabilité de gagner le jackpot est de 1 sur 139 838 160, "
@@ -879,12 +871,12 @@ msgstr ""
 "fraude. A probabilidade de ganhar o jackpot é de 1 em 139 838 160, "
 "idêntica para cada combinação, em cada sorteio."
 
-#: ui/templates/em/euromillions-ia.html:97
-#: ui/templates/em/euromillions-ia.html:233
+#: ui/templates/em/euromillions-ia.html:98
+#: ui/templates/em/euromillions-ia.html:234
 msgid "Pourquoi LotoIA est gratuit ?"
 msgstr "Porque é que o LotoIA é gratuito?"
 
-#: ui/templates/em/euromillions-ia.html:100
+#: ui/templates/em/euromillions-ia.html:101
 msgid ""
 "LotoIA est un projet indépendant dont la mission est de rendre les "
 "statistiques accessibles. Toutes les fonctionnalités sont gratuites, sans"
@@ -895,13 +887,13 @@ msgstr ""
 "acessíveis. Todas as funcionalidades são gratuitas, sem registo nem "
 "pagamento: exploração de grelhas, análise, estatísticas e chatbot IA."
 
-#: ui/templates/em/euromillions-ia.html:105
-#: ui/templates/em/euromillions-ia.html:236
+#: ui/templates/em/euromillions-ia.html:106
+#: ui/templates/em/euromillions-ia.html:237
 msgid "L'IA de LotoIA va-t-elle s'améliorer ?"
 msgstr "A IA do LotoIA vai melhorar?"
 
-#: ui/templates/em/euromillions-ia.html:108
-#: ui/templates/em/euromillions-ia.html:237
+#: ui/templates/em/euromillions-ia.html:109
+#: ui/templates/em/euromillions-ia.html:238
 msgid ""
 "Oui. Le moteur HYBRIDE est régulièrement mis à jour : nouveaux tirages "
 "intégrés automatiquement, algorithmes affinés et nouvelles "
@@ -913,7 +905,7 @@ msgstr ""
 " O objetivo é fornecer a análise estatística mais completa e transparente"
 " possível."
 
-#: ui/templates/em/euromillions-ia.html:124
+#: ui/templates/em/euromillions-ia.html:125
 msgid ""
 "L'EuroMillions fascine des millions de joueurs à travers l'Europe chaque "
 "semaine. Avec l'essor de l'intelligence artificielle, une question "
@@ -927,7 +919,7 @@ msgstr ""
 "EuroMillions?</strong> A resposta curta é não. Mas a resposta completa é "
 "bem mais interessante."
 
-#: ui/templates/em/euromillions-ia.html:125
+#: ui/templates/em/euromillions-ia.html:126
 #, python-format
 msgid ""
 "Cet article fait le point sur ce que l'intelligence artificielle peut — "
@@ -940,11 +932,11 @@ msgstr ""
 "se na ciência, na matemática e na experiência concreta do <a "
 "href=\"%(moteur_url)s\">motor HYBRIDE</a> desenvolvido pelo LotoIA."
 
-#: ui/templates/em/euromillions-ia.html:130
+#: ui/templates/em/euromillions-ia.html:131
 msgid "L'IA peut-elle prédire l'EuroMillions ?"
 msgstr "A IA pode prever o EuroMillions?"
 
-#: ui/templates/em/euromillions-ia.html:132
+#: ui/templates/em/euromillions-ia.html:133
 msgid ""
 "<strong>Non, et voici pourquoi.</strong> L'EuroMillions est un jeu de "
 "hasard pur. Chaque tirage est un événement statistiquement indépendant : "
@@ -957,7 +949,7 @@ msgstr ""
 "não têm memória. O facto de um número ter saído três vezes seguidas não "
 "altera absolutamente nada a sua probabilidade de sair no próximo sorteio."
 
-#: ui/templates/em/euromillions-ia.html:134
+#: ui/templates/em/euromillions-ia.html:135
 msgid ""
 "La probabilité de trouver les 5 bons numéros parmi 50 et les 2 bonnes "
 "étoiles parmi 12 est exactement de <strong>1 sur 139 838 160</strong>. "
@@ -971,15 +963,15 @@ msgstr ""
 "para 7-14-23-38-47 + estrelas 5-11. Nenhum algoritmo, por mais "
 "sofisticado que seja, pode melhorar estas probabilidades fundamentais."
 
-#: ui/templates/em/euromillions-ia.html:137
+#: ui/templates/em/euromillions-ia.html:138
 msgid "La différence fondamentale"
 msgstr "A diferença fundamental"
 
-#: ui/templates/em/euromillions-ia.html:138
+#: ui/templates/em/euromillions-ia.html:139
 msgid "Prédiction"
 msgstr "Previsão"
 
-#: ui/templates/em/euromillions-ia.html:138
+#: ui/templates/em/euromillions-ia.html:139
 msgid ""
 "prétendre deviner les numéros du prochain tirage — <em>mathématiquement "
 "impossible</em>."
@@ -987,7 +979,7 @@ msgstr ""
 "pretender adivinhar os números do próximo sorteio — <em>matematicamente "
 "impossível</em>."
 
-#: ui/templates/em/euromillions-ia.html:139
+#: ui/templates/em/euromillions-ia.html:140
 msgid ""
 "étudier les tirages passés pour comprendre les fréquences, détecter les "
 "biais cognitifs des joueurs et proposer des combinaisons équilibrées — "
@@ -997,7 +989,7 @@ msgstr ""
 "vieses cognitivos dos jogadores e propor combinações equilibradas — <em>é"
 " isto que o LotoIA faz</em>."
 
-#: ui/templates/em/euromillions-ia.html:142
+#: ui/templates/em/euromillions-ia.html:143
 msgid ""
 "Le machine learning et le deep learning excellent quand il existe des "
 "<strong>patterns exploitables</strong> dans les données : reconnaissance "
@@ -1012,11 +1004,11 @@ msgstr ""
 "construção, é concebido para ser <strong>perfeitamente "
 "aleatório</strong>. Não há padrão a explorar, não há sinal no ruído."
 
-#: ui/templates/em/euromillions-ia.html:147
+#: ui/templates/em/euromillions-ia.html:148
 msgid "Ce que l'IA peut réellement faire pour les joueurs"
 msgstr "O que a IA pode realmente fazer pelos jogadores"
 
-#: ui/templates/em/euromillions-ia.html:149
+#: ui/templates/em/euromillions-ia.html:150
 msgid ""
 "Si l'IA ne peut pas prédire l'EuroMillions, elle peut en revanche "
 "apporter une vraie valeur aux joueurs dans plusieurs domaines :"
@@ -1024,11 +1016,11 @@ msgstr ""
 "Se a IA não pode prever o EuroMillions, pode em contrapartida trazer um "
 "verdadeiro valor aos jogadores em vários domínios:"
 
-#: ui/templates/em/euromillions-ia.html:151
+#: ui/templates/em/euromillions-ia.html:152
 msgid "Analyse des fréquences historiques"
 msgstr "Análise das frequências históricas"
 
-#: ui/templates/em/euromillions-ia.html:152
+#: ui/templates/em/euromillions-ia.html:153
 #, python-format
 msgid ""
 "En analysant les <strong>%(total)s+ tirages officiels "
@@ -1046,11 +1038,11 @@ msgstr ""
 "preveem o futuro, mas descrevem precisamente o passado. Consulte as "
 "nossas <a href=\"%(stats_url)s\">estatísticas detalhadas</a>."
 
-#: ui/templates/em/euromillions-ia.html:154
+#: ui/templates/em/euromillions-ia.html:155
 msgid "Détection des biais cognitifs"
 msgstr "Deteção de vieses cognitivos"
 
-#: ui/templates/em/euromillions-ia.html:155
+#: ui/templates/em/euromillions-ia.html:156
 msgid ""
 "Les joueurs ont des biais inconscients : ils jouent trop les dates de "
 "naissance (numéros 1-31), évitent les extrêmes (1 et 50), et choisissent "
@@ -1066,11 +1058,11 @@ msgstr ""
 "de partilhar um eventual ganho com outros jogadores que tenham os mesmos "
 "números."
 
-#: ui/templates/em/euromillions-ia.html:157
+#: ui/templates/em/euromillions-ia.html:158
 msgid "Optimisation pour éviter le partage de gains"
 msgstr "Otimização para evitar a partilha de ganhos"
 
-#: ui/templates/em/euromillions-ia.html:158
+#: ui/templates/em/euromillions-ia.html:159
 msgid ""
 "Toutes les combinaisons ont la même probabilité de sortir, mais toutes "
 "n'ont pas la même probabilité d'être <strong>jouées par "
@@ -1084,11 +1076,11 @@ msgstr ""
 "Uma combinação estatisticamente «original» garante-lhe, em caso de ganho,"
 " um jackpot menos partilhado."
 
-#: ui/templates/em/euromillions-ia.html:160
+#: ui/templates/em/euromillions-ia.html:161
 msgid "Analyse de conformité d'une grille"
 msgstr "Análise de conformidade de uma grelha"
 
-#: ui/templates/em/euromillions-ia.html:161
+#: ui/templates/em/euromillions-ia.html:162
 #, python-format
 msgid ""
 "Notre <a href=\"%(sim_url)s\">simulateur d'analyse de grille</a> évalue "
@@ -1103,11 +1095,11 @@ msgstr ""
 " de sequências. As estrelas (1-12) são avaliadas separadamente. Não é "
 "previsão, é auditoria estatística."
 
-#: ui/templates/em/euromillions-ia.html:166
+#: ui/templates/em/euromillions-ia.html:167
 msgid "Comment fonctionne le moteur HYBRIDE de LotoIA"
 msgstr "Como funciona o motor HYBRIDE do LotoIA"
 
-#: ui/templates/em/euromillions-ia.html:168
+#: ui/templates/em/euromillions-ia.html:169
 #, python-format
 msgid ""
 "Le <a href=\"%(moteur_url)s\">moteur HYBRIDE</a> est le cœur "
@@ -1118,11 +1110,11 @@ msgstr ""
 " LotoIA. A sua abordagem resume-se numa frase: <strong>«Analisar, não "
 "prever»</strong>."
 
-#: ui/templates/em/euromillions-ia.html:170
+#: ui/templates/em/euromillions-ia.html:171
 msgid "Les 5 algorithmes du moteur"
 msgstr "Os 5 algoritmos do motor"
 
-#: ui/templates/em/euromillions-ia.html:172
+#: ui/templates/em/euromillions-ia.html:173
 msgid ""
 "<strong>Analyse fréquentielle</strong> — Calcul des fréquences "
 "d'apparition de chaque numéro (1-50) et de chaque étoile (1-12) sur "
@@ -1132,7 +1124,7 @@ msgstr ""
 "aparição de cada número (1-50) e de cada estrela (1-12) sobre o histórico"
 " completo dos sorteios."
 
-#: ui/templates/em/euromillions-ia.html:173
+#: ui/templates/em/euromillions-ia.html:174
 msgid ""
 "<strong>Calcul des retards</strong> — Nombre de tirages depuis la "
 "dernière apparition de chaque numéro et de chaque étoile."
@@ -1140,7 +1132,7 @@ msgstr ""
 "<strong>Cálculo dos atrasos</strong> — Número de sorteios desde a última "
 "aparição de cada número e de cada estrela."
 
-#: ui/templates/em/euromillions-ia.html:174
+#: ui/templates/em/euromillions-ia.html:175
 #, python-format
 msgid ""
 "<strong>Pondération temporelle</strong> — Application de coefficients "
@@ -1151,7 +1143,7 @@ msgstr ""
 "privilegiam os 2 últimos anos (<a href=\"%(methodo_url)s\">metodologia «5"
 " anos + 2»</a>)."
 
-#: ui/templates/em/euromillions-ia.html:175
+#: ui/templates/em/euromillions-ia.html:176
 msgid ""
 "<strong>Scoring multicritère</strong> — Évaluation de chaque grille selon"
 " l'équilibre pair/impair, la répartition bas/haut, la dispersion, la "
@@ -1162,7 +1154,7 @@ msgstr ""
 " o equilíbrio par/ímpar, a distribuição baixo/alto, a dispersão, a soma "
 "total e a deteção de padrões. As estrelas são avaliadas separadamente."
 
-#: ui/templates/em/euromillions-ia.html:176
+#: ui/templates/em/euromillions-ia.html:177
 msgid ""
 "<strong>Sélection optimale</strong> — Classement des grilles par niveau "
 "de convergence statistique décroissant."
@@ -1170,11 +1162,11 @@ msgstr ""
 "<strong>Seleção ótima</strong> — Classificação das grelhas por nível de "
 "convergência estatística decrescente."
 
-#: ui/templates/em/euromillions-ia.html:179
+#: ui/templates/em/euromillions-ia.html:180
 msgid "La méthodologie « 5 ans + 2 »"
 msgstr "A metodologia «5 anos + 2»"
 
-#: ui/templates/em/euromillions-ia.html:180
+#: ui/templates/em/euromillions-ia.html:181
 msgid ""
 "Le moteur combine deux horizons temporels : <strong>5 ans</strong> "
 "d'historique pour la stabilité statistique, avec une <strong>pondération "
@@ -1186,11 +1178,11 @@ msgstr ""
 "reforçada nos 2 últimos anos</strong> para captar as tendências recentes."
 " Esta abordagem equilibra profundidade e reatividade."
 
-#: ui/templates/em/euromillions-ia.html:182
+#: ui/templates/em/euromillions-ia.html:183
 msgid "L'assistant IA conversationnel"
 msgstr "O assistente IA conversacional"
 
-#: ui/templates/em/euromillions-ia.html:183
+#: ui/templates/em/euromillions-ia.html:184
 msgid ""
 "LotoIA intègre un chatbot alimenté par <strong>Gemini</strong> (Google "
 "DeepMind) en mode « Grounded » : l'IA est connectée en temps réel à la "
@@ -1204,15 +1196,15 @@ msgstr ""
 "alucinação. Pode colocar-lhe questões sobre as estatísticas, as "
 "frequências ou pedir uma análise personalizada."
 
-#: ui/templates/em/euromillions-ia.html:188
+#: ui/templates/em/euromillions-ia.html:189
 msgid "L'état de la recherche — Études et exemples concrets"
 msgstr "O estado da investigação — Estudos e exemplos concretos"
 
-#: ui/templates/em/euromillions-ia.html:190
+#: ui/templates/em/euromillions-ia.html:191
 msgid "L'expérience des étudiants de Lecce"
 msgstr "A experiência dos estudantes de Lecce"
 
-#: ui/templates/em/euromillions-ia.html:191
+#: ui/templates/em/euromillions-ia.html:192
 msgid ""
 "En 2023, des étudiants en mathématiques de l'Université du Salento "
 "(Lecce, Italie) ont fait les gros titres en remportant environ 43 000 "
@@ -1230,11 +1222,11 @@ msgstr ""
 "para o EuroMillions, cujo mecanismo de sorteio é diferente e "
 "perfeitamente aleatório."
 
-#: ui/templates/em/euromillions-ia.html:193
+#: ui/templates/em/euromillions-ia.html:194
 msgid "Les limites mathématiques"
 msgstr "Os limites matemáticos"
 
-#: ui/templates/em/euromillions-ia.html:194
+#: ui/templates/em/euromillions-ia.html:195
 msgid ""
 "Le théorème central limite et la loi des grands nombres garantissent que,"
 " sur un nombre suffisant de tirages, chaque numéro convergera vers la "
@@ -1248,11 +1240,11 @@ msgstr ""
 "não um sinal explorável. É a razão fundamental pela qual nenhum método "
 "pode vencer o acaso a longo prazo."
 
-#: ui/templates/em/euromillions-ia.html:196
+#: ui/templates/em/euromillions-ia.html:197
 msgid "Les « systèmes gagnants » sont des arnaques"
 msgstr "Os «sistemas vencedores» são fraudes"
 
-#: ui/templates/em/euromillions-ia.html:197
+#: ui/templates/em/euromillions-ia.html:198
 msgid ""
 "Internet regorge de sites vendant des « systèmes infaillibles » ou des « "
 "logiciels de prédiction ». <strong>Tous sont des arnaques</strong>. Si un"
@@ -1264,11 +1256,11 @@ msgstr ""
 "sistema permitisse realmente ganhar no EuroMillions, o seu inventor seria"
 " bilionário e não o venderia por 29,99 euros."
 
-#: ui/templates/em/euromillions-ia.html:199
+#: ui/templates/em/euromillions-ia.html:200
 msgid "La position des opérateurs"
 msgstr "A posição dos operadores"
 
-#: ui/templates/em/euromillions-ia.html:200
+#: ui/templates/em/euromillions-ia.html:201
 msgid ""
 "Les opérateurs européens de loterie sont catégoriques : chaque tirage est"
 " indépendant, les machines sont certifiées et auditées, et aucune méthode"
@@ -1282,15 +1274,15 @@ msgstr ""
 "supervisionados por oficiais de justiça. LotoIA partilha esta posição: "
 "analisamos, não prevemos."
 
-#: ui/templates/em/euromillions-ia.html:205
+#: ui/templates/em/euromillions-ia.html:206
 msgid "LotoIA vs les autres approches"
 msgstr "LotoIA vs outras abordagens"
 
-#: ui/templates/em/euromillions-ia.html:207
+#: ui/templates/em/euromillions-ia.html:208
 msgid "Vs les simulateurs aléatoires classiques"
 msgstr "Vs os simuladores aleatórios clássicos"
 
-#: ui/templates/em/euromillions-ia.html:208
+#: ui/templates/em/euromillions-ia.html:209
 msgid ""
 "Un simulateur aléatoire simple produit des numéros sans aucune analyse. "
 "C'est honnête, mais c'est aussi aveugle. LotoIA génère des grilles qui "
@@ -1308,11 +1300,11 @@ msgstr ""
 "hipóteses de ser sorteada como qualquer outra, mas menos hipóteses de ser"
 " partilhada em caso de correspondência."
 
-#: ui/templates/em/euromillions-ia.html:210
+#: ui/templates/em/euromillions-ia.html:211
 msgid "Vs ChatGPT et les IA génératives"
 msgstr "Vs ChatGPT e as IA generativas"
 
-#: ui/templates/em/euromillions-ia.html:211
+#: ui/templates/em/euromillions-ia.html:212
 #, python-format
 msgid ""
 "ChatGPT, Claude ou Gemini (en mode libre) sont des modèles de langage. "
@@ -1331,11 +1323,11 @@ msgstr ""
 "partir dos %(total)s+ sorteios oficiais armazenados na nossa base de "
 "dados Cloud SQL."
 
-#: ui/templates/em/euromillions-ia.html:213
+#: ui/templates/em/euromillions-ia.html:214
 msgid "L'avantage d'une plateforme spécialisée"
 msgstr "A vantagem de uma plataforma especializada"
 
-#: ui/templates/em/euromillions-ia.html:214
+#: ui/templates/em/euromillions-ia.html:215
 #, python-format
 msgid ""
 "LotoIA est un outil dédié, construit pour l'analyse des tirages "
@@ -1354,11 +1346,11 @@ msgstr ""
 "documentada</a> e transparente. É esta especialização que faz a "
 "diferença."
 
-#: ui/templates/em/euromillions-ia.html:219 ui/templates/em/generateur.html:290
+#: ui/templates/em/euromillions-ia.html:220 ui/templates/em/generateur.html:289
 msgid "Questions fréquentes"
 msgstr "Perguntas frequentes"
 
-#: ui/templates/em/euromillions-ia.html:222
+#: ui/templates/em/euromillions-ia.html:223
 msgid ""
 "Non. L'EuroMillions est un jeu de hasard pur où chaque tirage est "
 "indépendant. Aucune IA ne peut prédire les résultats. En revanche, l'IA "
@@ -1370,7 +1362,7 @@ msgstr ""
 "IA pode analisar as frequências históricas e ajudar a compor grelhas "
 "estatisticamente equilibradas."
 
-#: ui/templates/em/euromillions-ia.html:225
+#: ui/templates/em/euromillions-ia.html:226
 #, python-format
 msgid ""
 "Le moteur HYBRIDE combine 5 algorithmes (analyse fréquentielle, retards, "
@@ -1383,7 +1375,7 @@ msgstr ""
 " %(total)s+ sorteios oficiais EuroMillions. Descubra os detalhes na "
 "página <a href=\"%(moteur_url)s\">Motor HYBRIDE</a>."
 
-#: ui/templates/em/euromillions-ia.html:228
+#: ui/templates/em/euromillions-ia.html:229
 msgid ""
 "ChatGPT invente des numéros sans accès aux données réelles. LotoIA "
 "utilise une IA « Grounded » connectée aux tirages officiels EuroMillions "
@@ -1393,7 +1385,7 @@ msgstr ""
 " «Grounded» conectada aos sorteios oficiais EuroMillions: zero "
 "alucinação, apenas análises factuais."
 
-#: ui/templates/em/euromillions-ia.html:231
+#: ui/templates/em/euromillions-ia.html:232
 msgid ""
 "Non. Tout système prétendant garantir des gains à l'EuroMillions est une "
 "arnaque. La probabilité de gagner le jackpot est de 1 sur 139 838 160, "
@@ -1403,7 +1395,7 @@ msgstr ""
 "fraude. A probabilidade de ganhar o jackpot é de 1 em 139 838 160, "
 "idêntica para cada combinação."
 
-#: ui/templates/em/euromillions-ia.html:234
+#: ui/templates/em/euromillions-ia.html:235
 #, python-format
 msgid ""
 "LotoIA est un projet indépendant dont la mission est de rendre les "
@@ -1418,11 +1410,11 @@ msgstr ""
 "href=\"%(sim_url)s\">análise de grelha</a>, <a "
 "href=\"%(stats_url)s\">estatísticas</a> e chatbot IA."
 
-#: ui/templates/em/euromillions-ia.html:243 ui/templates/em/hybride.html:433
+#: ui/templates/em/euromillions-ia.html:244 ui/templates/em/hybride.html:433
 msgid "Jeu responsable"
 msgstr "Jogo responsável"
 
-#: ui/templates/em/euromillions-ia.html:244 ui/templates/em/hybride.html:434
+#: ui/templates/em/euromillions-ia.html:245 ui/templates/em/hybride.html:434
 msgid ""
 "L'EuroMillions est un jeu de hasard. Jouer comporte des risques : "
 "endettement, isolement, dépendance. Ne jouez jamais plus que ce que vous "
@@ -1431,20 +1423,20 @@ msgstr ""
 "O EuroMillions é um jogo de acaso. Jogar comporta riscos: endividamento, "
 "isolamento, dependência. Nunca jogue mais do que aquilo que pode perder."
 
-#: ui/templates/em/euromillions-ia.html:257 ui/templates/em/hybride.html:447
-#: ui/templates/em/methodologie.html:171 ui/templates/em/moteur.html:218
+#: ui/templates/em/euromillions-ia.html:258 ui/templates/em/hybride.html:447
+#: ui/templates/em/methodologie.html:174 ui/templates/em/moteur.html:218
 msgid "Explorer des grilles EuroMillions"
 msgstr "Explorar grelhas EuroMillions"
 
-#: ui/templates/em/euromillions-ia.html:258 ui/templates/em/hybride.html:448
+#: ui/templates/em/euromillions-ia.html:259 ui/templates/em/hybride.html:448
 #: ui/templates/em/moteur.html:219
 msgid ""
 "Utilisez le moteur HYBRIDE pour générer des grilles statistiquement "
 "optimisées."
 msgstr "Utilize o motor HYBRIDE para gerar grelhas estatisticamente otimizadas."
 
-#: ui/templates/em/euromillions-ia.html:261 ui/templates/em/hybride.html:451
-#: ui/templates/em/methodologie.html:175 ui/templates/em/moteur.html:222
+#: ui/templates/em/euromillions-ia.html:262 ui/templates/em/hybride.html:451
+#: ui/templates/em/methodologie.html:178 ui/templates/em/moteur.html:222
 msgid "Lancer l'exploration"
 msgstr "Iniciar a exploração"
 
@@ -1836,12 +1828,12 @@ msgstr ""
 "Utilize o nosso motor HYBRIDE para criar grelhas estatisticamente "
 "otimizadas."
 
-#: ui/templates/em/faq.html:414 ui/templates/em/generateur.html:122
+#: ui/templates/em/faq.html:414 ui/templates/em/generateur.html:121
 msgid "Simuler mes grilles"
 msgstr "Simular as minhas grelhas"
 
-#: ui/templates/em/generateur.html:4 ui/templates/em/generateur.html:12
-#: ui/templates/em/generateur.html:22
+#: ui/templates/em/generateur.html:4 ui/templates/em/generateur.html:11
+#: ui/templates/em/generateur.html:21
 msgid "Générateur de Grilles EuroMillions IA | LotoIA"
 msgstr "Gerador de Grelhas EuroMillions IA | LotoIA"
 
@@ -1854,17 +1846,7 @@ msgstr ""
 "Gere grelhas EuroMillions otimizadas com o motor HYBRIDE. Análise de "
 "sorteios históricos para combinações estatisticamente equilibradas."
 
-#: ui/templates/em/generateur.html:6
-msgid ""
-"simulateur euromillions, grille euromillions IA, moteur HYBRIDE, HYBRIDE,"
-" analyse statistique euromillions, numéros euromillions, étoiles "
-"euromillions"
-msgstr ""
-"simulador euromillions, grelha euromillions IA, motor HYBRIDE, HYBRIDE, "
-"análise estatística euromillions, números euromillions, estrelas "
-"euromillions"
-
-#: ui/templates/em/generateur.html:13 ui/templates/em/generateur.html:23
+#: ui/templates/em/generateur.html:12 ui/templates/em/generateur.html:22
 msgid ""
 "Générez des grilles EuroMillions optimisées avec le moteur HYBRIDE. "
 "Analyse de tirages historiques depuis 2019."
@@ -1872,216 +1854,216 @@ msgstr ""
 "Gere grelhas EuroMillions otimizadas com o motor HYBRIDE. Análise de "
 "sorteios históricos desde 2019."
 
-#: ui/templates/em/generateur.html:30
+#: ui/templates/em/generateur.html:29
 msgid "LotoIA - Simulateur de Grilles EuroMillions"
 msgstr "LotoIA - Simulador de Grelhas EuroMillions"
 
-#: ui/templates/em/generateur.html:32
+#: ui/templates/em/generateur.html:31
 msgid ""
 "Simulateur de grilles EuroMillions optimisées par analyse statistique et "
 "IA"
 msgstr "Simulador de grelhas EuroMillions otimizadas por análise estatística e IA"
 
-#: ui/templates/em/generateur.html:37
+#: ui/templates/em/generateur.html:36
 msgid "Simulation Monte-Carlo de grilles EuroMillions"
 msgstr "Simulação Monte-Carlo de grelhas EuroMillions"
 
-#: ui/templates/em/generateur.html:39
+#: ui/templates/em/generateur.html:38
 msgid "Numéros chauds/froids"
 msgstr "Números quentes/frios"
 
-#: ui/templates/em/generateur.html:40 ui/templates/em/generateur.html:184
+#: ui/templates/em/generateur.html:39 ui/templates/em/generateur.html:183
 msgid "Indice de convergence"
 msgstr "Índice de convergência"
 
-#: ui/templates/em/generateur.html:41
+#: ui/templates/em/generateur.html:40
 msgid "5 numéros + 2 étoiles"
 msgstr "5 números + 2 estrelas"
 
-#: ui/templates/em/generateur.html:57
+#: ui/templates/em/generateur.html:56
 msgid "Générateur"
 msgstr "Gerador"
 
-#: ui/templates/em/generateur.html:95
+#: ui/templates/em/generateur.html:94
 msgid "MOTEUR HYBRIDE"
 msgstr "MOTOR HYBRIDE"
 
-#: ui/templates/em/generateur.html:97
+#: ui/templates/em/generateur.html:96
 msgid "Configurez votre exploration sur"
 msgstr "Configure a sua exploração sobre"
 
-#: ui/templates/em/generateur.html:97
+#: ui/templates/em/generateur.html:96
 msgid "tirages officiels EuroMillions"
 msgstr "sorteios oficiais do EuroMillions"
 
-#: ui/templates/em/generateur.html:97
+#: ui/templates/em/generateur.html:96
 msgid "depuis 2019"
 msgstr "desde 2019"
 
-#: ui/templates/em/generateur.html:98
+#: ui/templates/em/generateur.html:97
 msgid "Mascotte HYBRIDE - Moteur d'analyse statistique EuroMillions"
 msgstr "Mascote HYBRIDE - Motor de análise estatística EuroMillions"
 
-#: ui/templates/em/generateur.html:104
+#: ui/templates/em/generateur.html:103
 msgid "Date du prochain tirage"
 msgstr "Data do próximo sorteio"
 
-#: ui/templates/em/generateur.html:108
+#: ui/templates/em/generateur.html:107
 msgid "Nombre de grilles à générer"
 msgstr "Número de grelhas a gerar"
 
-#: ui/templates/em/generateur.html:116
+#: ui/templates/em/generateur.html:115
 msgid "Recommandé : 3 grilles pour comparer différentes combinaisons"
 msgstr "Recomendado: 3 grelhas para comparar diferentes combinações"
 
-#: ui/templates/em/generateur.html:129
+#: ui/templates/em/generateur.html:128
 msgid "Fenêtre d'analyse"
 msgstr "Janela de análise"
 
-#: ui/templates/em/generateur.html:133
+#: ui/templates/em/generateur.html:132
 msgid "Tirages"
 msgstr "Sorteios"
 
-#: ui/templates/em/generateur.html:134
+#: ui/templates/em/generateur.html:133
 msgid "Années"
 msgstr "Anos"
 
-#: ui/templates/em/generateur.html:149 ui/templates/em/generateur.html:164
+#: ui/templates/em/generateur.html:148 ui/templates/em/generateur.html:163
 msgid "GLOBAL"
 msgstr "GLOBAL"
 
-#: ui/templates/em/generateur.html:158
+#: ui/templates/em/generateur.html:157
 msgid "1A"
 msgstr "1A"
 
-#: ui/templates/em/generateur.html:159
+#: ui/templates/em/generateur.html:158
 msgid "2A"
 msgstr "2A"
 
-#: ui/templates/em/generateur.html:160
+#: ui/templates/em/generateur.html:159
 msgid "3A"
 msgstr "3A"
 
-#: ui/templates/em/generateur.html:161
+#: ui/templates/em/generateur.html:160
 msgid "4A"
 msgstr "4A"
 
-#: ui/templates/em/generateur.html:162
+#: ui/templates/em/generateur.html:161
 msgid "5A"
 msgstr "5A"
 
-#: ui/templates/em/generateur.html:163
+#: ui/templates/em/generateur.html:162
 msgid "6A"
 msgstr "6A"
 
-#: ui/templates/em/generateur.html:169 ui/templates/em/generateur.html:358
+#: ui/templates/em/generateur.html:168 ui/templates/em/generateur.html:357
 msgid "Analyse sur l'intégralité de la base"
 msgstr "Análise sobre a totalidade da base"
 
-#: ui/templates/em/generateur.html:170
+#: ui/templates/em/generateur.html:169
 msgid "Fev 2019"
 msgstr "Fev 2019"
 
-#: ui/templates/em/generateur.html:170
+#: ui/templates/em/generateur.html:169
 msgid "Aujourd'hui"
 msgstr "Hoje"
 
-#: ui/templates/em/generateur.html:174
+#: ui/templates/em/generateur.html:173
 msgid "Ce réglage s'applique uniquement à l'analyse META DONNÉE."
 msgstr "Esta configuração aplica-se unicamente à análise META DATA."
 
-#: ui/templates/em/generateur.html:180
+#: ui/templates/em/generateur.html:179
 msgid "Analyser avec META (75 grilles)"
 msgstr "Analisar com META (75 grelhas)"
 
-#: ui/templates/em/generateur.html:184
+#: ui/templates/em/generateur.html:183
 msgid "Analyse instantanée"
 msgstr "Análise instantânea"
 
-#: ui/templates/em/generateur.html:184
+#: ui/templates/em/generateur.html:183
 #, python-format
 msgid "100% gratuit"
 msgstr "100% gratuito"
 
-#: ui/templates/em/generateur.html:185
+#: ui/templates/em/generateur.html:184
 msgid "Rapport PDF détaillé généré par intelligence artificielle"
 msgstr "Relatório PDF detalhado gerado por inteligência artificial"
 
-#: ui/templates/em/generateur.html:190
+#: ui/templates/em/generateur.html:189
 msgid "Prochain tirage dans"
 msgstr "Próximo sorteio em"
 
-#: ui/templates/em/generateur.html:190
+#: ui/templates/em/generateur.html:189
 msgid "jours"
 msgstr "dias"
 
-#: ui/templates/em/generateur.html:192
+#: ui/templates/em/generateur.html:191
 msgid "Mascotte HYBRIDE"
 msgstr "Mascote HYBRIDE"
 
-#: ui/templates/em/generateur.html:199
+#: ui/templates/em/generateur.html:198
 msgid "Voir statistiques"
 msgstr "Ver estatísticas"
 
-#: ui/templates/em/generateur.html:209
+#: ui/templates/em/generateur.html:208
 msgid "Résultats"
 msgstr "Resultados"
 
-#: ui/templates/em/generateur.html:210
+#: ui/templates/em/generateur.html:209
 msgid "Copier"
 msgstr "Copiar"
 
-#: ui/templates/em/generateur.html:226
+#: ui/templates/em/generateur.html:225
 msgid "Une erreur est survenue"
 msgstr "Ocorreu um erro"
 
-#: ui/templates/em/generateur.html:234
+#: ui/templates/em/generateur.html:233
 msgid "Gestion des données"
 msgstr "Gestão de dados"
 
-#: ui/templates/em/generateur.html:239 ui/templates/em/methodologie.html:83
-#: ui/templates/em/methodologie.html:158 ui/templates/em/moteur.html:110
+#: ui/templates/em/generateur.html:238 ui/templates/em/methodologie.html:86
+#: ui/templates/em/methodologie.html:161 ui/templates/em/moteur.html:110
 msgid "Base de données"
 msgstr "Base de dados"
 
-#: ui/templates/em/generateur.html:241
+#: ui/templates/em/generateur.html:240
 msgid "Initialise la base de données EuroMillions si elle n'existe pas encore."
 msgstr "Inicializa a base de dados EuroMillions se ainda não existir."
 
-#: ui/templates/em/generateur.html:248
+#: ui/templates/em/generateur.html:247
 msgid "Vérification en cours..."
 msgstr "Verificação em curso..."
 
-#: ui/templates/em/generateur.html:257
+#: ui/templates/em/generateur.html:256
 msgid "Installer la base de données"
 msgstr "Instalar a base de dados"
 
-#: ui/templates/em/generateur.html:261
+#: ui/templates/em/generateur.html:260
 msgid "Réinitialiser la base"
 msgstr "Reiniciar a base"
 
-#: ui/templates/em/generateur.html:272 ui/templates/em/hybride.html:353
-#: ui/templates/em/methodologie.html:86
+#: ui/templates/em/generateur.html:271 ui/templates/em/hybride.html:353
+#: ui/templates/em/methodologie.html:89
 msgid "Mise à jour"
 msgstr "Atualização"
 
-#: ui/templates/em/generateur.html:274
+#: ui/templates/em/generateur.html:273
 msgid "Synchronise les données avec les tirages officiels les plus récents."
 msgstr "Sincroniza os dados com os sorteios oficiais mais recentes."
 
-#: ui/templates/em/generateur.html:277
+#: ui/templates/em/generateur.html:276
 msgid "Mettre à jour les données"
 msgstr "Atualizar os dados"
 
-#: ui/templates/em/generateur.html:291
+#: ui/templates/em/generateur.html:290
 msgid "Les réponses aux questions essentielles"
 msgstr "As respostas às perguntas essenciais"
 
-#: ui/templates/em/generateur.html:298
+#: ui/templates/em/generateur.html:297
 msgid "Comment fonctionne le simulateur EuroMillions ?"
 msgstr "Como funciona o simulador EuroMillions?"
 
-#: ui/templates/em/generateur.html:302
+#: ui/templates/em/generateur.html:301
 msgid ""
 "Notre simulateur utilise le <strong>moteur HYBRIDE</strong> qui analyse "
 "les tirages historiques EuroMillions depuis 2019."
@@ -2089,7 +2071,7 @@ msgstr ""
 "O nosso simulador utiliza o <strong>motor HYBRIDE</strong> que analisa os"
 " sorteios históricos do EuroMillions desde 2019."
 
-#: ui/templates/em/generateur.html:303
+#: ui/templates/em/generateur.html:302
 msgid ""
 "Il combine analyse long terme (60%) et tendances récentes (40%) pour "
 "générer des grilles de 5 numéros + 2 étoiles statistiquement équilibrées "
@@ -2099,11 +2081,11 @@ msgstr ""
 "gerar grelhas de 5 números + 2 estrelas estatisticamente equilibradas com"
 " um índice de convergência."
 
-#: ui/templates/em/generateur.html:310
+#: ui/templates/em/generateur.html:309
 msgid "L'EuroMillions est-il prévisible ?"
 msgstr "O EuroMillions é previsível?"
 
-#: ui/templates/em/generateur.html:314
+#: ui/templates/em/generateur.html:313
 msgid ""
 "<strong>NON, l'EuroMillions est un jeu de pur hasard.</strong> Aucun "
 "algorithme ne peut prédire les résultats."
@@ -2111,7 +2093,7 @@ msgstr ""
 "<strong>NÃO, o EuroMillions é um jogo de puro acaso.</strong> Nenhum "
 "algoritmo pode prever os resultados."
 
-#: ui/templates/em/generateur.html:315
+#: ui/templates/em/generateur.html:314
 msgid ""
 "Notre outil propose des grilles <strong>statistiquement guidées</strong>,"
 " mais cela <strong>ne garantit AUCUN gain</strong>. Probabilité du "
@@ -2121,32 +2103,32 @@ msgstr ""
 "orientadas</strong>, mas isso <strong>não garante NENHUM ganho</strong>. "
 "Probabilidade do jackpot: 1 em 139 838 160."
 
-#: ui/templates/em/generateur.html:322
+#: ui/templates/em/generateur.html:321
 msgid "L'outil est-il gratuit ?"
 msgstr "A ferramenta é gratuita?"
 
-#: ui/templates/em/generateur.html:326
+#: ui/templates/em/generateur.html:325
 #, python-format
 msgid ""
 "Oui, LotoIA est <strong>100% gratuit</strong>, sans inscription ni "
 "paiement requis."
 msgstr "Sim, LotoIA é <strong>100% gratuito</strong>, sem registo nem pagamento."
 
-#: ui/templates/em/generateur.html:327
+#: ui/templates/em/generateur.html:326
 msgid "Toutes les fonctionnalités sont accessibles librement."
 msgstr "Todas as funcionalidades são de acesso livre."
 
-#: ui/templates/em/generateur.html:335
+#: ui/templates/em/generateur.html:334
 msgid "Voir toutes les questions"
 msgstr "Ver todas as perguntas"
 
-#: ui/templates/em/generateur.html:343 ui/templates/em/simulateur.html:161
-#: ui/templates/em/statistiques.html:601
+#: ui/templates/em/generateur.html:342 ui/templates/em/simulateur.html:160
+#: ui/templates/em/statistiques.html:600
 msgid "Découvrez le chatbot HYBRIDE"
 msgstr "Descubra o chatbot HYBRIDE"
 
-#: ui/templates/em/generateur.html:344 ui/templates/em/simulateur.html:162
-#: ui/templates/em/statistiques.html:602
+#: ui/templates/em/generateur.html:343 ui/templates/em/simulateur.html:161
+#: ui/templates/em/statistiques.html:601
 msgid ""
 "Notre chatbot intelligent analyse les tirages EuroMillions en temps réel "
 "grâce à l'IA Grounded. Posez vos questions sur les statistiques."
@@ -2154,36 +2136,36 @@ msgstr ""
 "O nosso chatbot inteligente analisa os sorteios do EuroMillions em tempo "
 "real graças à IA Grounded. Faça as suas perguntas sobre as estatísticas."
 
-#: ui/templates/em/generateur.html:345 ui/templates/em/simulateur.html:163
-#: ui/templates/em/statistiques.html:603
+#: ui/templates/em/generateur.html:344 ui/templates/em/simulateur.html:162
+#: ui/templates/em/statistiques.html:602
 msgid "Essayer le chatbot HYBRIDE"
 msgstr "Experimentar o chatbot HYBRIDE"
 
-#: ui/templates/em/generateur.html:359 ui/templates/em/statistiques.html:634
+#: ui/templates/em/generateur.html:358 ui/templates/em/statistiques.html:633
 msgid "tirages"
 msgstr "sorteios"
 
-#: ui/templates/em/generateur.html:360
+#: ui/templates/em/generateur.html:359
 msgid "Analyse sur"
 msgstr "Análise sobre"
 
-#: ui/templates/em/generateur.html:361
+#: ui/templates/em/generateur.html:360
 msgid "Du"
 msgstr "De"
 
-#: ui/templates/em/generateur.html:362
+#: ui/templates/em/generateur.html:361
 msgid "au"
 msgstr "a"
 
-#: ui/templates/em/generateur.html:363
+#: ui/templates/em/generateur.html:362
 msgid "an"
 msgstr "ano"
 
-#: ui/templates/em/generateur.html:364 ui/templates/em/methodologie.html:74
+#: ui/templates/em/generateur.html:363 ui/templates/em/methodologie.html:77
 msgid "ans"
 msgstr "anos"
 
-#: ui/templates/em/generateur.html:365
+#: ui/templates/em/generateur.html:364
 msgid "Module sponsor-popup75-em.js non chargé"
 msgstr "Módulo sponsor-popup75-em.js não carregado"
 
@@ -2199,19 +2181,19 @@ msgstr ""
 "Pesquise um sorteio EuroMillions por data. Consulte os números e estrelas"
 " de cada sorteio histórico."
 
-#: ui/templates/em/historique.html:10 ui/templates/em/historique.html:15
+#: ui/templates/em/historique.html:10 ui/templates/em/historique.html:19
 msgid "Historique EuroMillions | LotoIA"
 msgstr "Histórico EuroMillions | LotoIA"
 
-#: ui/templates/em/historique.html:11 ui/templates/em/historique.html:16
+#: ui/templates/em/historique.html:11 ui/templates/em/historique.html:20
 msgid "Recherchez un tirage EuroMillions par date."
 msgstr "Pesquise um sorteio EuroMillions por data."
 
-#: ui/templates/em/historique.html:23
+#: ui/templates/em/historique.html:27
 msgid "Historique des tirages EuroMillions"
 msgstr "Histórico dos sorteios EuroMillions"
 
-#: ui/templates/em/historique.html:24
+#: ui/templates/em/historique.html:28
 msgid ""
 "Recherchez un tirage EuroMillions par date. Consultez les numéros "
 "gagnants (5 boules + 2 étoiles) de chaque tirage officiel depuis 2019."
@@ -2219,35 +2201,35 @@ msgstr ""
 "Pesquise um sorteio EuroMillions por data. Consulte os números sorteados "
 "(5 bolas + 2 estrelas) de cada sorteio oficial desde 2019."
 
-#: ui/templates/em/historique.html:42 ui/templates/em/methodologie.html:84
+#: ui/templates/em/historique.html:46 ui/templates/em/methodologie.html:87
 msgid "Historique"
 msgstr "Histórico"
 
-#: ui/templates/em/historique.html:143
+#: ui/templates/em/historique.html:147
 msgid "Rechercher un tirage"
 msgstr "Pesquisar um sorteio"
 
-#: ui/templates/em/historique.html:146 ui/templates/em/statistiques.html:504
+#: ui/templates/em/historique.html:150 ui/templates/em/statistiques.html:503
 msgid "Rechercher"
 msgstr "Pesquisar"
 
-#: ui/templates/em/historique.html:158 ui/templates/em/statistiques.html:632
+#: ui/templates/em/historique.html:162 ui/templates/em/statistiques.html:631
 msgid "Recherche en cours..."
 msgstr "Pesquisa em curso..."
 
-#: ui/templates/em/historique.html:159
+#: ui/templates/em/historique.html:163
 msgid "Tirage du"
 msgstr "Sorteio do"
 
-#: ui/templates/em/historique.html:160 ui/templates/em/statistiques.html:618
+#: ui/templates/em/historique.html:164 ui/templates/em/statistiques.html:617
 msgid "Aucun tirage trouvé pour cette date."
 msgstr "Nenhum sorteio encontrado para esta data."
 
-#: ui/templates/em/historique.html:161 ui/templates/em/statistiques.html:635
+#: ui/templates/em/historique.html:165 ui/templates/em/statistiques.html:634
 msgid "Erreur interne du serveur"
 msgstr "Erro interno do servidor"
 
-#: ui/templates/em/historique.html:162
+#: ui/templates/em/historique.html:166
 msgid "Erreur de connexion au serveur."
 msgstr "Erro de ligação ao servidor."
 
@@ -3036,15 +3018,15 @@ msgstr ""
 "Documentação técnica da metodologia de análise estatística aplicada aos "
 "sorteios EuroMillions"
 
-#: ui/templates/em/methodologie.html:45
+#: ui/templates/em/methodologie.html:48
 msgid "Méthodes statistiques appliquées aux données de loterie EuroMillions"
 msgstr "Métodos estatísticos aplicados aos dados de lotaria EuroMillions"
 
-#: ui/templates/em/methodologie.html:70
+#: ui/templates/em/methodologie.html:73
 msgid "Principe fondamental"
 msgstr "Princípio fundamental"
 
-#: ui/templates/em/methodologie.html:71
+#: ui/templates/em/methodologie.html:74
 msgid ""
 "La méthodologie <strong>« 5 ans + 2 »</strong> est le cœur du moteur "
 "HYBRIDE appliqué à l'EuroMillions. Elle combine deux horizons temporels "
@@ -3054,53 +3036,53 @@ msgstr ""
 "aplicado ao EuroMillions. Combina dois horizontes temporais para "
 "equilibrar estabilidade estatística e reatividade às tendências."
 
-#: ui/templates/em/methodologie.html:74
+#: ui/templates/em/methodologie.html:77
 msgid "Analyse de fréquence sur l'ensemble de l'historique disponible (2019-2026)"
 msgstr "Análise de frequência sobre o conjunto do histórico disponível (2019-2026)"
 
-#: ui/templates/em/methodologie.html:75
+#: ui/templates/em/methodologie.html:78
 msgid ""
 "Pondération renforcée sur les 2 dernières années pour capter les "
 "tendances récentes"
 msgstr "Ponderação reforçada nos 2 últimos anos para captar as tendências recentes"
 
-#: ui/templates/em/methodologie.html:81
+#: ui/templates/em/methodologie.html:84
 msgid "Sources de données"
 msgstr "Fontes de dados"
 
-#: ui/templates/em/methodologie.html:83
+#: ui/templates/em/methodologie.html:86
 msgid "hébergée sur Google Cloud"
 msgstr "alojada no Google Cloud"
 
-#: ui/templates/em/methodologie.html:84
+#: ui/templates/em/methodologie.html:87
 msgid "729+ tirages officiels EuroMillions depuis février 2004"
 msgstr "729+ sorteios oficiais EuroMillions desde fevereiro de 2004"
 
-#: ui/templates/em/methodologie.html:85
+#: ui/templates/em/methodologie.html:88
 msgid "Tirages les mardis et vendredis"
 msgstr "Sorteios às terças e sextas-feiras"
 
-#: ui/templates/em/methodologie.html:86
+#: ui/templates/em/methodologie.html:89
 msgid "Synchronisation après chaque tirage officiel"
 msgstr "Sincronização após cada sorteio oficial"
 
-#: ui/templates/em/methodologie.html:87
+#: ui/templates/em/methodologie.html:90
 msgid "Intégrité"
 msgstr "Integridade"
 
-#: ui/templates/em/methodologie.html:87
+#: ui/templates/em/methodologie.html:90
 msgid "Vérification systématique des données sources"
 msgstr "Verificação sistemática dos dados fonte"
 
-#: ui/templates/em/methodologie.html:93
+#: ui/templates/em/methodologie.html:96
 msgid "Métriques calculées"
 msgstr "Métricas calculadas"
 
-#: ui/templates/em/methodologie.html:95
+#: ui/templates/em/methodologie.html:98
 msgid "Fréquences"
 msgstr "Frequências"
 
-#: ui/templates/em/methodologie.html:96
+#: ui/templates/em/methodologie.html:99
 msgid ""
 "Pour chaque numéro (1-50) et chaque étoile (1-12), calcul du nombre "
 "d'apparitions sur la période analysée."
@@ -3108,11 +3090,11 @@ msgstr ""
 "Para cada número (1-50) e cada estrela (1-12), cálculo do número de "
 "aparições no período analisado."
 
-#: ui/templates/em/methodologie.html:98
+#: ui/templates/em/methodologie.html:101
 msgid "Retards"
 msgstr "Atrasos"
 
-#: ui/templates/em/methodologie.html:99
+#: ui/templates/em/methodologie.html:102
 msgid ""
 "Nombre de tirages depuis la dernière apparition de chaque numéro et de "
 "chaque étoile."
@@ -3120,51 +3102,51 @@ msgstr ""
 "Número de sorteios desde a última aparição de cada número e de cada "
 "estrela."
 
-#: ui/templates/em/methodologie.html:101
+#: ui/templates/em/methodologie.html:104
 msgid "Analyse de conformité"
 msgstr "Análise de conformidade"
 
-#: ui/templates/em/methodologie.html:102
+#: ui/templates/em/methodologie.html:105
 msgid "Évaluation multicritère basée sur :"
 msgstr "Avaliação multicritério baseada em:"
 
-#: ui/templates/em/methodologie.html:104
+#: ui/templates/em/methodologie.html:107
 msgid "Équilibre pair/impair (ratio optimal : 2-3 pairs)"
 msgstr "Equilíbrio par/ímpar (rácio ótimo: 2-3 pares)"
 
-#: ui/templates/em/methodologie.html:105
+#: ui/templates/em/methodologie.html:108
 msgid "Répartition bas/haut (numéros 1-25 vs 26-50)"
 msgstr "Distribuição baixo/alto (números 1-25 vs 26-50)"
 
-#: ui/templates/em/methodologie.html:106
+#: ui/templates/em/methodologie.html:109
 msgid "Dispersion (écart entre min et max)"
 msgstr "Dispersão (desvio entre mín e máx)"
 
-#: ui/templates/em/methodologie.html:107
+#: ui/templates/em/methodologie.html:110
 msgid "Somme totale (plage optimale : ~125)"
 msgstr "Soma total (intervalo ótimo: ~125)"
 
-#: ui/templates/em/methodologie.html:108
+#: ui/templates/em/methodologie.html:111
 msgid "Détection de suites consécutives"
 msgstr "Deteção de sequências consecutivas"
 
-#: ui/templates/em/methodologie.html:109 ui/templates/em/moteur.html:156
+#: ui/templates/em/methodologie.html:112 ui/templates/em/moteur.html:156
 msgid "Étoiles évaluées séparément (1-12)"
 msgstr "Estrelas avaliadas separadamente (1-12)"
 
-#: ui/templates/em/methodologie.html:115
+#: ui/templates/em/methodologie.html:118
 msgid "Pondération temporelle"
 msgstr "Ponderação temporal"
 
-#: ui/templates/em/methodologie.html:116
+#: ui/templates/em/methodologie.html:119
 msgid "Le moteur HYBRIDE applique un système de pondération en deux couches :"
 msgstr "O motor HYBRIDE aplica um sistema de ponderação em duas camadas:"
 
-#: ui/templates/em/methodologie.html:118
+#: ui/templates/em/methodologie.html:121
 msgid "Couche 1 — Base long terme"
 msgstr "Camada 1 — Base longo prazo"
 
-#: ui/templates/em/methodologie.html:119
+#: ui/templates/em/methodologie.html:122
 msgid ""
 "L'historique complet des tirages EuroMillions est analysé pour établir "
 "les fréquences de référence. Cette base assure la stabilité statistique "
@@ -3174,11 +3156,11 @@ msgstr ""
 "estabelecer as frequências de referência. Esta base assegura a "
 "estabilidade estatística e identifica as tendências profundas."
 
-#: ui/templates/em/methodologie.html:121
+#: ui/templates/em/methodologie.html:124
 msgid "Couche 2 — Boost récent"
 msgstr "Camada 2 — Boost recente"
 
-#: ui/templates/em/methodologie.html:122
+#: ui/templates/em/methodologie.html:125
 msgid ""
 "Les tirages des 2 dernières années reçoivent un coefficient de "
 "pondération plus élevé. Cela permet de capter les éventuelles inflexions "
@@ -3188,7 +3170,7 @@ msgstr ""
 "elevado. Isto permite captar as eventuais inflexões de tendência sem "
 "perder a perspetiva histórica."
 
-#: ui/templates/em/methodologie.html:125
+#: ui/templates/em/methodologie.html:128
 msgid ""
 "Ce double horizon est la raison du nom <strong>« 5 ans + 2 »</strong> : 5"
 " ans de profondeur historique, avec un poids renforcé sur les 2 dernières"
@@ -3197,29 +3179,29 @@ msgstr ""
 "Este duplo horizonte é a razão do nome <strong>«5 anos + 2»</strong>: 5 "
 "anos de profundidade histórica, com um peso reforçado nos 2 últimos anos."
 
-#: ui/templates/em/methodologie.html:131
+#: ui/templates/em/methodologie.html:134
 msgid "Processus de génération"
 msgstr "Processo de geração"
 
-#: ui/templates/em/methodologie.html:132
+#: ui/templates/em/methodologie.html:135
 msgid ""
 "Le moteur HYBRIDE suit un pipeline en 5 étapes pour chaque grille générée"
 " :"
 msgstr "O motor HYBRIDE segue um pipeline de 5 etapas para cada grelha gerada:"
 
-#: ui/templates/em/methodologie.html:134
+#: ui/templates/em/methodologie.html:137
 msgid "Collecte"
 msgstr "Recolha"
 
-#: ui/templates/em/methodologie.html:134
+#: ui/templates/em/methodologie.html:137
 msgid "Extraction des tirages officiels depuis la base de données"
 msgstr "Extração dos sorteios oficiais a partir da base de dados"
 
-#: ui/templates/em/methodologie.html:135
+#: ui/templates/em/methodologie.html:138
 msgid "Calcul"
 msgstr "Cálculo"
 
-#: ui/templates/em/methodologie.html:135
+#: ui/templates/em/methodologie.html:138
 msgid ""
 "Fréquences, retards et pondérations temporelles pour les numéros (1-50) "
 "et les étoiles (1-12)"
@@ -3227,39 +3209,39 @@ msgstr ""
 "Frequências, atrasos e ponderações temporais para os números (1-50) e as "
 "estrelas (1-12)"
 
-#: ui/templates/em/methodologie.html:136
+#: ui/templates/em/methodologie.html:139
 msgid "Génération"
 msgstr "Geração"
 
-#: ui/templates/em/methodologie.html:136
+#: ui/templates/em/methodologie.html:139
 msgid "Sélection probabiliste de combinaisons candidates (5 numéros + 2 étoiles)"
 msgstr "Seleção probabilística de combinações candidatas (5 números + 2 estrelas)"
 
-#: ui/templates/em/methodologie.html:137
+#: ui/templates/em/methodologie.html:140
 msgid "Scoring"
 msgstr "Scoring"
 
-#: ui/templates/em/methodologie.html:137
+#: ui/templates/em/methodologie.html:140
 msgid "Évaluation multicritère de chaque combinaison candidate"
 msgstr "Avaliação multicritério de cada combinação candidata"
 
-#: ui/templates/em/methodologie.html:138
+#: ui/templates/em/methodologie.html:141
 msgid "Sélection"
 msgstr "Seleção"
 
-#: ui/templates/em/methodologie.html:138
+#: ui/templates/em/methodologie.html:141
 msgid "Classement par score de conformité et retour des meilleures grilles"
 msgstr "Classificação por pontuação de conformidade e retorno das melhores grelhas"
 
-#: ui/templates/em/methodologie.html:144
+#: ui/templates/em/methodologie.html:147
 msgid "Limites scientifiques"
 msgstr "Limites científicos"
 
-#: ui/templates/em/methodologie.html:146
+#: ui/templates/em/methodologie.html:149
 msgid "Avertissement"
 msgstr "Aviso"
 
-#: ui/templates/em/methodologie.html:146
+#: ui/templates/em/methodologie.html:149
 msgid ""
 "L'EuroMillions est un jeu de hasard. Chaque tirage est statistiquement "
 "indépendant. Aucune méthode ne peut prédire les résultats futurs."
@@ -3267,7 +3249,7 @@ msgstr ""
 "O EuroMillions é um jogo de acaso. Cada sorteio é estatisticamente "
 "independente. Nenhum método pode prever os resultados futuros."
 
-#: ui/templates/em/methodologie.html:147
+#: ui/templates/em/methodologie.html:150
 msgid ""
 "La méthodologie « 5 ans + 2 » propose des grilles <em>statistiquement "
 "guidées</em>, pas des prédictions."
@@ -3275,27 +3257,27 @@ msgstr ""
 "A metodologia «5 anos + 2» propõe grelhas <em>estatisticamente "
 "orientadas</em>, não previsões."
 
-#: ui/templates/em/methodologie.html:148
+#: ui/templates/em/methodologie.html:151
 msgid "Probabilité de gain au rang 1 : 1 sur 139 838 160"
 msgstr "Probabilidade de ganho no escalão 1: 1 em 139 838 160"
 
-#: ui/templates/em/methodologie.html:154
+#: ui/templates/em/methodologie.html:157
 msgid "Stack technique"
 msgstr "Stack técnico"
 
-#: ui/templates/em/methodologie.html:159
+#: ui/templates/em/methodologie.html:162
 msgid "Moteur"
 msgstr "Motor"
 
-#: ui/templates/em/methodologie.html:160 ui/templates/em/moteur.html:131
+#: ui/templates/em/methodologie.html:163 ui/templates/em/moteur.html:131
 msgid "Région"
 msgstr "Região"
 
-#: ui/templates/em/methodologie.html:160 ui/templates/em/moteur.html:131
+#: ui/templates/em/methodologie.html:163 ui/templates/em/moteur.html:131
 msgid "Google Cloud — Union européenne"
 msgstr "Google Cloud — União Europeia"
 
-#: ui/templates/em/methodologie.html:172
+#: ui/templates/em/methodologie.html:175
 msgid ""
 "Utilisez la méthodologie « 5 ans + 2 » pour générer des grilles "
 "statistiquement guidées."
@@ -3648,25 +3630,25 @@ msgid ""
 "loterie en Europe."
 msgstr ""
 "Temos o orgulho de apresentar o novo módulo EuroMillions do LotoIA! Após "
-"meses de desenvolvimento, a nossa plataforma de análise estatística "
-"abre-se hoje ao EuroMillions, o maior jogo de lotaria da Europa."
+"meses de desenvolvimento, a nossa plataforma de análise estatística abre-"
+"se hoje ao EuroMillions, o maior jogo de lotaria da Europa."
 
 #: ui/templates/em/news.html:90
 msgid ""
 "Au cœur de cette nouveauté : <strong>HYBRIDE</strong>, le premier chatbot"
-" EuroMillions ancré sur données réelles, connecté en temps réel à une base de "
-"données de plus de 730 tirages depuis 2019. Posez-lui vos questions en "
-"français, anglais, espagnol, portugais, allemand ou néerlandais — il "
-"analyse les données et vous répond instantanément. Pas de réponses "
-"génériques : chaque réponse est calculée à partir des vrais résultats "
-"officiels."
+" EuroMillions ancré sur données réelles, connecté en temps réel à une "
+"base de données de plus de 730 tirages depuis 2019. Posez-lui vos "
+"questions en français, anglais, espagnol, portugais, allemand ou "
+"néerlandais — il analyse les données et vous répond instantanément. Pas "
+"de réponses génériques : chaque réponse est calculée à partir des vrais "
+"résultats officiels."
 msgstr ""
 "No centro desta novidade: <strong>HYBRIDE</strong>, o primeiro chatbot "
-"EuroMillions baseado em dados reais, ligado em tempo real a uma base de dados "
-"com mais de 730 sorteios desde 2019. Coloque as suas questões em francês, "
-"inglês, espanhol, português, alemão ou neerlandês — analisa os dados e "
-"responde-lhe instantaneamente. Sem respostas genéricas: cada resposta é "
-"calculada a partir dos resultados oficiais reais."
+"EuroMillions baseado em dados reais, ligado em tempo real a uma base de "
+"dados com mais de 730 sorteios desde 2019. Coloque as suas questões em "
+"francês, inglês, espanhol, português, alemão ou neerlandês — analisa os "
+"dados e responde-lhe instantaneamente. Sem respostas genéricas: cada "
+"resposta é calculada a partir dos resultados oficiais reais."
 
 #: ui/templates/em/news.html:92
 msgid ""
@@ -3676,10 +3658,10 @@ msgid ""
 "<strong>gratuitement, sans inscription</strong>, disponible en 6 langues "
 "pour 9 pays européens."
 msgstr ""
-"Explore estatísticas detalhadas, gere grelhas otimizadas com o nosso motor "
-"HYBRIDE, consulte o historial completo dos sorteios e, claro, converse com "
-"o nosso chatbot inteligente. Tudo <strong>gratuitamente, sem "
-"registo</strong>, disponível em 6 línguas para 9 países europeus."
+"Explore estatísticas detalhadas, gere grelhas otimizadas com o nosso "
+"motor HYBRIDE, consulte o historial completo dos sorteios e, claro, "
+"converse com o nosso chatbot inteligente. Tudo <strong>gratuitamente, sem"
+" registo</strong>, disponível em 6 línguas para 9 países europeus."
 
 #: ui/templates/em/news.html:94
 msgid ""
@@ -3699,7 +3681,8 @@ msgid "11 mars 2026"
 msgstr "11 de março de 2026"
 
 #: ui/templates/em/news.html:105
-msgid "Release 1.4.001 — La plateforme passe au niveau supérieur"
+#, fuzzy
+msgid "Release 1.5.0 — La plateforme passe au niveau supérieur"
 msgstr "Release 1.4.001 — A plataforma sobe de nível"
 
 #: ui/templates/em/news.html:107
@@ -4388,8 +4371,8 @@ msgstr "Explore o espaço combinatório com o motor HYBRIDE — LotoIA v1.5.0."
 msgid "Accéder au moteur"
 msgstr "Aceder ao motor"
 
-#: ui/templates/em/simulateur.html:4 ui/templates/em/simulateur.html:12
-#: ui/templates/em/simulateur.html:22
+#: ui/templates/em/simulateur.html:4 ui/templates/em/simulateur.html:11
+#: ui/templates/em/simulateur.html:21
 msgid "Analyse de Grille EuroMillions — Audit IA | LotoIA"
 msgstr "Análise de Grelha EuroMillions — Auditoria IA | LotoIA"
 
@@ -4403,16 +4386,7 @@ msgstr ""
 " análise estatística. Equilíbrio, números quentes e frios, índice de "
 "convergência."
 
-#: ui/templates/em/simulateur.html:6
-msgid ""
-"simulateur euromillions, analyser grille euromillions, moteur HYBRIDE, "
-"analyse statistique, numéros chauds froids, HYBRIDE, étoiles euromillions"
-msgstr ""
-"simulador euromillions, analisar grelha euromillions, motor HYBRIDE, "
-"análise estatística, números quentes frios, HYBRIDE, estrelas "
-"euromillions"
-
-#: ui/templates/em/simulateur.html:13
+#: ui/templates/em/simulateur.html:12
 msgid ""
 "Composez votre grille EuroMillions et obtenez une analyse statistique. "
 "Score et équilibre."
@@ -4420,83 +4394,83 @@ msgstr ""
 "Componha a sua grelha EuroMillions e obtenha uma análise estatística. "
 "Pontuação e equilíbrio."
 
-#: ui/templates/em/simulateur.html:23
+#: ui/templates/em/simulateur.html:22
 msgid "Composez votre grille EuroMillions et obtenez une analyse statistique."
 msgstr "Componha a sua grelha EuroMillions e obtenha uma análise estatística."
 
-#: ui/templates/em/simulateur.html:30
+#: ui/templates/em/simulateur.html:29
 msgid "LotoIA - Analyse statistique EuroMillions"
 msgstr "LotoIA - Análise estatística EuroMillions"
 
-#: ui/templates/em/simulateur.html:32
+#: ui/templates/em/simulateur.html:31
 msgid "Outil d analyse statistique descriptive pour grilles EuroMillions"
 msgstr "Ferramenta de análise estatística descritiva para grelhas EuroMillions"
 
-#: ui/templates/em/simulateur.html:44
+#: ui/templates/em/simulateur.html:43
 msgid "Analyse de grille"
 msgstr "Análise de grelha"
 
-#: ui/templates/em/simulateur.html:65
+#: ui/templates/em/simulateur.html:64
 msgid "Chaud (fréquent)"
 msgstr "Quente (frequente)"
 
-#: ui/templates/em/simulateur.html:69
+#: ui/templates/em/simulateur.html:68
 msgid "Neutre"
 msgstr "Neutro"
 
-#: ui/templates/em/simulateur.html:73
+#: ui/templates/em/simulateur.html:72
 msgid "Froid (rare)"
 msgstr "Frio (raro)"
 
-#: ui/templates/em/simulateur.html:76
+#: ui/templates/em/simulateur.html:75
 msgid "Bandeau moteur HYBRIDE"
 msgstr "Faixa motor HYBRIDE"
 
-#: ui/templates/em/simulateur.html:78
+#: ui/templates/em/simulateur.html:77
 msgid "Chargement des statistiques..."
 msgstr "A carregar estatísticas..."
 
-#: ui/templates/em/simulateur.html:86
+#: ui/templates/em/simulateur.html:85
 msgid "Numéros"
 msgstr "Números"
 
-#: ui/templates/em/simulateur.html:94
+#: ui/templates/em/simulateur.html:93
 msgid "Étoiles"
 msgstr "Estrelas"
 
-#: ui/templates/em/simulateur.html:102
+#: ui/templates/em/simulateur.html:101
 msgid "Réinitialiser"
 msgstr "Reiniciar"
 
-#: ui/templates/em/simulateur.html:105
+#: ui/templates/em/simulateur.html:104
 msgid "Remplir aléatoirement"
 msgstr "Preencher aleatoriamente"
 
-#: ui/templates/em/simulateur.html:110
+#: ui/templates/em/simulateur.html:109
 msgid "Assistant Hybride analyse de grille"
 msgstr "Assistente Hybride análise de grelha"
 
-#: ui/templates/em/simulateur.html:118
+#: ui/templates/em/simulateur.html:117
 msgid "Analyse de votre grille"
 msgstr "Análise da sua grelha"
 
-#: ui/templates/em/simulateur.html:123
+#: ui/templates/em/simulateur.html:122
 msgid "Indice de convergence statistique"
 msgstr "Índice de convergência estatística"
 
-#: ui/templates/em/simulateur.html:134
+#: ui/templates/em/simulateur.html:133
 msgid "Détails"
 msgstr "Detalhes"
 
-#: ui/templates/em/simulateur.html:140
+#: ui/templates/em/simulateur.html:139
 msgid "Suggestions"
 msgstr "Sugestões"
 
-#: ui/templates/em/simulateur.html:146
+#: ui/templates/em/simulateur.html:145
 msgid "Votre grille"
 msgstr "A sua grelha"
 
-#: ui/templates/em/simulateur.html:156 ui/templates/em/statistiques.html:620
+#: ui/templates/em/simulateur.html:155 ui/templates/em/statistiques.html:619
 msgid "Analyse en cours..."
 msgstr "Análise em curso..."
 
@@ -4512,29 +4486,19 @@ msgstr ""
 "Estatísticas completas do EuroMillions: frequências dos números e "
 "estrelas, tendências, números quentes e frios, histórico dos sorteios."
 
-#: ui/templates/em/statistiques.html:6
-msgid ""
-"statistiques euromillions, fréquences numéros euromillions, étoiles "
-"euromillions, moteur HYBRIDE, numéros chauds froids, HYBRIDE, tendances "
-"euromillions"
-msgstr ""
-"estatísticas euromillions, frequências números euromillions, estrelas "
-"euromillions, motor HYBRIDE, números quentes frios, HYBRIDE, tendências "
-"euromillions"
-
-#: ui/templates/em/statistiques.html:13 ui/templates/em/statistiques.html:24
+#: ui/templates/em/statistiques.html:12 ui/templates/em/statistiques.html:23
 msgid "Statistiques EuroMillions | LotoIA"
 msgstr "Estatísticas EuroMillions | LotoIA"
 
-#: ui/templates/em/statistiques.html:14 ui/templates/em/statistiques.html:25
+#: ui/templates/em/statistiques.html:13 ui/templates/em/statistiques.html:24
 msgid "Fréquences, tendances et numéros chauds/froids de l'EuroMillions."
 msgstr "Frequências, tendências e números quentes/frios do EuroMillions."
 
-#: ui/templates/em/statistiques.html:33
+#: ui/templates/em/statistiques.html:32
 msgid "Historique des tirages et statistiques EuroMillions"
 msgstr "Histórico dos sorteios e estatísticas EuroMillions"
 
-#: ui/templates/em/statistiques.html:34
+#: ui/templates/em/statistiques.html:33
 msgid ""
 "Jeu de données statistiques complet des tirages EuroMillions. Numéros "
 "gagnants (5 boules + 2 étoiles), fréquences de sortie, écarts entre "
@@ -4546,48 +4510,48 @@ msgstr ""
 "aparições, análise de probabilidades e tendências. Dados provenientes dos"
 " resultados oficiais, analisados pelo algoritmo HYBRIDE."
 
-#: ui/templates/em/statistiques.html:51
+#: ui/templates/em/statistiques.html:50
 msgid "Algorithme statistique HYBRIDE"
 msgstr "Algoritmo estatístico HYBRIDE"
 
-#: ui/templates/em/statistiques.html:53
+#: ui/templates/em/statistiques.html:52
 msgid "Numéros gagnants"
 msgstr "Números vencedores"
 
-#: ui/templates/em/statistiques.html:53
+#: ui/templates/em/statistiques.html:52
 msgid "5 boules (1-50) + 2 étoiles (1-12) par tirage"
 msgstr "5 bolas (1-50) + 2 estrelas (1-12) por sorteio"
 
-#: ui/templates/em/statistiques.html:54
+#: ui/templates/em/statistiques.html:53
 msgid "Fréquence de sortie"
 msgstr "Frequência de aparição"
 
-#: ui/templates/em/statistiques.html:54
+#: ui/templates/em/statistiques.html:53
 msgid "Nombre d'apparitions de chaque numéro et étoile sur la période"
 msgstr "Número de aparições de cada número e estrela no período"
 
-#: ui/templates/em/statistiques.html:55 ui/templates/em/statistiques.html:548
-#: ui/templates/em/statistiques.html:626
+#: ui/templates/em/statistiques.html:54 ui/templates/em/statistiques.html:547
+#: ui/templates/em/statistiques.html:625
 msgid "Écart actuel"
 msgstr "Desvio atual"
 
-#: ui/templates/em/statistiques.html:55
+#: ui/templates/em/statistiques.html:54
 msgid "Nombre de tirages depuis la dernière apparition"
 msgstr "Número de sorteios desde a última aparição"
 
-#: ui/templates/em/statistiques.html:56
+#: ui/templates/em/statistiques.html:55
 msgid "Date de tirage"
 msgstr "Data do sorteio"
 
-#: ui/templates/em/statistiques.html:56
+#: ui/templates/em/statistiques.html:55
 msgid "Date de chaque tirage (mardi, vendredi)"
 msgstr "Data de cada sorteio (terça-feira, sexta-feira)"
 
-#: ui/templates/em/statistiques.html:62
+#: ui/templates/em/statistiques.html:61
 msgid "Rapport META DATA EuroMillions — PDF"
 msgstr "Relatório META DATA EuroMillions — PDF"
 
-#: ui/templates/em/statistiques.html:64
+#: ui/templates/em/statistiques.html:63
 msgid ""
 "statistiques euromillions, data science, analyse de probabilités, "
 "historique des tirages, fréquences, étoiles, Europe"
@@ -4595,27 +4559,27 @@ msgstr ""
 "estatísticas euromillions, data science, análise de probabilidades, "
 "histórico dos sorteios, frequências, estrelas, Europa"
 
-#: ui/templates/em/statistiques.html:493
+#: ui/templates/em/statistiques.html:492
 msgid "Historique des tirages"
 msgstr "Histórico dos sorteios"
 
-#: ui/templates/em/statistiques.html:494
+#: ui/templates/em/statistiques.html:493
 msgid "Analyse par numéro"
 msgstr "Análise por número"
 
-#: ui/templates/em/statistiques.html:495
+#: ui/templates/em/statistiques.html:494
 msgid "Top / Flop"
 msgstr "Top / Flop"
 
-#: ui/templates/em/statistiques.html:501
+#: ui/templates/em/statistiques.html:500
 msgid "Rechercher un tirage par date"
 msgstr "Pesquisar um sorteio por data"
 
-#: ui/templates/em/statistiques.html:511
+#: ui/templates/em/statistiques.html:510
 msgid "À propos de l'historique :"
 msgstr "Sobre o histórico:"
 
-#: ui/templates/em/statistiques.html:512
+#: ui/templates/em/statistiques.html:511
 msgid ""
 "Cette base contient les tirages officiels de l'EuroMillions. Utilisez le "
 "sélecteur de date pour consulter un tirage spécifique."
@@ -4623,67 +4587,67 @@ msgstr ""
 "Esta base contém os sorteios oficiais do EuroMillions. Utilize o seletor "
 "de data para consultar um sorteio específico."
 
-#: ui/templates/em/statistiques.html:513
+#: ui/templates/em/statistiques.html:512
 msgid "Les numéros vont de 1 à 50, les étoiles de 1 à 12."
 msgstr "Os números vão de 1 a 50, as estrelas de 1 a 12."
 
-#: ui/templates/em/statistiques.html:521
+#: ui/templates/em/statistiques.html:520
 msgid "Analyse d'un numéro (1-50)"
 msgstr "Análise de um número (1-50)"
 
-#: ui/templates/em/statistiques.html:523
+#: ui/templates/em/statistiques.html:522
 msgid "Numéro :"
 msgstr "Número:"
 
-#: ui/templates/em/statistiques.html:525 ui/templates/em/statistiques.html:538
+#: ui/templates/em/statistiques.html:524 ui/templates/em/statistiques.html:537
 msgid "-- Choisir --"
 msgstr "-- Escolher --"
 
-#: ui/templates/em/statistiques.html:527 ui/templates/em/statistiques.html:540
+#: ui/templates/em/statistiques.html:526 ui/templates/em/statistiques.html:539
 msgid "Analyser"
 msgstr "Analisar"
 
-#: ui/templates/em/statistiques.html:534
+#: ui/templates/em/statistiques.html:533
 msgid "Analyse d'une étoile (1-12)"
 msgstr "Análise de uma estrela (1-12)"
 
-#: ui/templates/em/statistiques.html:536
+#: ui/templates/em/statistiques.html:535
 msgid "Étoile :"
 msgstr "Estrela:"
 
-#: ui/templates/em/statistiques.html:546
+#: ui/templates/em/statistiques.html:545
 msgid "Vocabulaire :"
 msgstr "Vocabulário:"
 
-#: ui/templates/em/statistiques.html:547
+#: ui/templates/em/statistiques.html:546
 msgid "nombre de fois où le numéro/étoile est apparu dans l'historique."
 msgstr "número de vezes que o número/estrela apareceu no histórico."
 
-#: ui/templates/em/statistiques.html:548
+#: ui/templates/em/statistiques.html:547
 msgid "nombre de tirages depuis la dernière apparition."
 msgstr "número de sorteios desde a última aparição."
 
-#: ui/templates/em/statistiques.html:549 ui/templates/em/statistiques.html:627
+#: ui/templates/em/statistiques.html:548 ui/templates/em/statistiques.html:626
 msgid "Écart moyen"
 msgstr "Desvio médio"
 
-#: ui/templates/em/statistiques.html:549
+#: ui/templates/em/statistiques.html:548
 msgid "intervalle moyen entre deux apparitions."
 msgstr "intervalo médio entre duas aparições."
 
-#: ui/templates/em/statistiques.html:550
+#: ui/templates/em/statistiques.html:549
 msgid "Catégorie"
 msgstr "Categoria"
 
-#: ui/templates/em/statistiques.html:550
+#: ui/templates/em/statistiques.html:549
 msgid "classification du numéro (chaud, tiède, froid)."
 msgstr "classificação do número (quente, morno, frio)."
 
-#: ui/templates/em/statistiques.html:551
+#: ui/templates/em/statistiques.html:550
 msgid "Ces données sont purement descriptives et n'impliquent aucune prédiction."
 msgstr "Estes dados são puramente descritivos e não implicam qualquer previsão."
 
-#: ui/templates/em/statistiques.html:558
+#: ui/templates/em/statistiques.html:557
 msgid ""
 "Fréquence d'apparition de chaque numéro et étoile sur l'ensemble de "
 "l'historique."
@@ -4691,35 +4655,35 @@ msgstr ""
 "Frequência de aparição de cada número e estrela sobre o conjunto do "
 "histórico."
 
-#: ui/templates/em/statistiques.html:563
+#: ui/templates/em/statistiques.html:562
 msgid "Numéros (1-50)"
 msgstr "Números (1-50)"
 
-#: ui/templates/em/statistiques.html:566
+#: ui/templates/em/statistiques.html:565
 msgid "Numéros les plus sortis"
 msgstr "Números mais sorteados"
 
-#: ui/templates/em/statistiques.html:571
+#: ui/templates/em/statistiques.html:570
 msgid "Numéros les moins sortis"
 msgstr "Números menos sorteados"
 
-#: ui/templates/em/statistiques.html:578
+#: ui/templates/em/statistiques.html:577
 msgid "Étoiles (1-12)"
 msgstr "Estrelas (1-12)"
 
-#: ui/templates/em/statistiques.html:581
+#: ui/templates/em/statistiques.html:580
 msgid "Étoiles les plus sorties"
 msgstr "Estrelas mais sorteadas"
 
-#: ui/templates/em/statistiques.html:586
+#: ui/templates/em/statistiques.html:585
 msgid "Étoiles les moins sorties"
 msgstr "Estrelas menos sorteadas"
 
-#: ui/templates/em/statistiques.html:592
+#: ui/templates/em/statistiques.html:591
 msgid "À propos de ces données :"
 msgstr "Sobre estes dados:"
 
-#: ui/templates/em/statistiques.html:593
+#: ui/templates/em/statistiques.html:592
 msgid ""
 "Ces fréquences représentent le nombre de sorties de chaque numéro et "
 "étoile sur l'ensemble de l'historique."
@@ -4727,7 +4691,7 @@ msgstr ""
 "Estas frequências representam o número de aparições de cada número e "
 "estrela sobre o conjunto do histórico."
 
-#: ui/templates/em/statistiques.html:594
+#: ui/templates/em/statistiques.html:593
 msgid ""
 "Elles sont purement descriptives et n'impliquent aucune prédiction sur "
 "les tirages futurs."
@@ -4735,79 +4699,79 @@ msgstr ""
 "São puramente descritivas e não implicam qualquer previsão sobre os "
 "sorteios futuros."
 
-#: ui/templates/em/statistiques.html:616
+#: ui/templates/em/statistiques.html:615
 msgid "Tirage du "
 msgstr "Sorteio do "
 
-#: ui/templates/em/statistiques.html:617
+#: ui/templates/em/statistiques.html:616
 msgid "Numéros gagnants :"
 msgstr "Números vencedores:"
 
-#: ui/templates/em/statistiques.html:619
+#: ui/templates/em/statistiques.html:618
 msgid "Erreur de connexion."
 msgstr "Erro de ligação."
 
-#: ui/templates/em/statistiques.html:621
+#: ui/templates/em/statistiques.html:620
 msgid "Numéro "
 msgstr "Número "
 
-#: ui/templates/em/statistiques.html:622
+#: ui/templates/em/statistiques.html:621
 msgid "Étoile "
 msgstr "Estrela "
 
-#: ui/templates/em/statistiques.html:624
+#: ui/templates/em/statistiques.html:623
 msgid "Pourcentage"
 msgstr "Percentagem"
 
-#: ui/templates/em/statistiques.html:625
+#: ui/templates/em/statistiques.html:624
 msgid "Dernière sortie"
 msgstr "Última aparição"
 
-#: ui/templates/em/statistiques.html:628
+#: ui/templates/em/statistiques.html:627
 msgid "Classement"
 msgstr "Classificação"
 
-#: ui/templates/em/statistiques.html:629
+#: ui/templates/em/statistiques.html:628
 msgid "Catégorie : "
 msgstr "Categoria: "
 
-#: ui/templates/em/statistiques.html:630
+#: ui/templates/em/statistiques.html:629
 msgid "Veuillez sélectionner un numéro."
 msgstr "Por favor, selecione um número."
 
-#: ui/templates/em/statistiques.html:631
+#: ui/templates/em/statistiques.html:630
 msgid "Veuillez sélectionner une étoile."
 msgstr "Por favor, selecione uma estrela."
 
-#: ui/templates/em/statistiques.html:633
+#: ui/templates/em/statistiques.html:632
 msgid "fois"
 msgstr "vezes"
 
-#: ui/templates/em/statistiques.html:636
+#: ui/templates/em/statistiques.html:635
 msgid "Erreur :"
 msgstr "Erro:"
 
-#: ui/templates/em/statistiques.html:637
+#: ui/templates/em/statistiques.html:636
 msgid "Erreur réseau :"
 msgstr "Erro de rede:"
 
-#: ui/templates/em/statistiques.html:638
+#: ui/templates/em/statistiques.html:637
 msgid "Impossible d'analyser le numéro"
 msgstr "Não é possível analisar o número"
 
-#: ui/templates/em/statistiques.html:639
+#: ui/templates/em/statistiques.html:638
 msgid "Impossible d'analyser l'étoile"
 msgstr "Não é possível analisar a estrela"
 
-#: ui/templates/em/statistiques.html:640
+#: ui/templates/em/statistiques.html:639
 msgid "Impossible de charger les données"
 msgstr "Não é possível carregar os dados"
 
-#: ui/templates/em/statistiques.html:641
+#: ui/templates/em/statistiques.html:640
 msgid "Aucune donnée disponible."
 msgstr "Nenhum dado disponível."
 
-#: ui/templates/em/statistiques.html:642
+#: ui/templates/em/statistiques.html:641
 msgid "sorties"
 msgstr "aparições"
 
@@ -4941,4 +4905,46 @@ msgstr "aparições"
 
 #~ msgid "Simulateur de Grille EuroMillions | LotoIA"
 #~ msgstr "Simulador de Grelha EuroMillions | LotoIA"
+
+#~ msgid ""
+#~ "lotoia euromillions, analyse euromillions, "
+#~ "moteur HYBRIDE, statistiques euromillions, "
+#~ "simulateur grille euromillions, HYBRIDE"
+#~ msgstr ""
+#~ "lotoia euromillions, análise euromillions, "
+#~ "motor HYBRIDE, estatísticas euromillions, "
+#~ "simulador grelha euromillions, HYBRIDE"
+
+#~ msgid ""
+#~ "simulateur euromillions, grille euromillions "
+#~ "IA, moteur HYBRIDE, HYBRIDE, analyse "
+#~ "statistique euromillions, numéros euromillions, "
+#~ "étoiles euromillions"
+#~ msgstr ""
+#~ "simulador euromillions, grelha euromillions "
+#~ "IA, motor HYBRIDE, HYBRIDE, análise "
+#~ "estatística euromillions, números euromillions, "
+#~ "estrelas euromillions"
+
+#~ msgid ""
+#~ "simulateur euromillions, analyser grille "
+#~ "euromillions, moteur HYBRIDE, analyse "
+#~ "statistique, numéros chauds froids, HYBRIDE,"
+#~ " étoiles euromillions"
+#~ msgstr ""
+#~ "simulador euromillions, analisar grelha "
+#~ "euromillions, motor HYBRIDE, análise "
+#~ "estatística, números quentes frios, HYBRIDE,"
+#~ " estrelas euromillions"
+
+#~ msgid ""
+#~ "statistiques euromillions, fréquences numéros "
+#~ "euromillions, étoiles euromillions, moteur "
+#~ "HYBRIDE, numéros chauds froids, HYBRIDE, "
+#~ "tendances euromillions"
+#~ msgstr ""
+#~ "estatísticas euromillions, frequências números "
+#~ "euromillions, estrelas euromillions, motor "
+#~ "HYBRIDE, números quentes frios, HYBRIDE, "
+#~ "tendências euromillions"
 

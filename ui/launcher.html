@@ -6,7 +6,9 @@
     <link rel="icon" href="/favicon.ico" sizes="48x48">
     <link rel="apple-touch-icon" href="/favicon.ico">
     <link rel="manifest" href="/ui/site.webmanifest">
-    <title>LotoIA - Plateforme de Moteurs de Loterie</title>
+    <title>LotoIA — Analyse Loto et EuroMillions par IA | Gratuit</title>
+    <meta name="description" content="LotoIA : plateforme gratuite d'analyse statistique du Loto et de l'EuroMillions par intelligence artificielle. Moteur HYBRIDE, chatbot IA, statistiques en temps réel.">
+    <link rel="canonical" href="https://lotoia.fr/">
     <style>
         /* =================================================================
            LAUNCHER - SELECTEUR DE MOTEURS
@@ -329,6 +331,36 @@
     <script src="/ui/static/analytics.js?v=3" defer></script>
     <script src="/ui/static/tracker.js?v=4" defer></script>
     <script src="/ui/static/wysistat.js" defer></script>
+    <!-- JSON-LD SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "LotoIA",
+      "alternateName": "LotoIA.fr",
+      "url": "https://lotoia.fr/",
+      "description": "Plateforme gratuite d'analyse statistique du Loto et de l'EuroMillions par intelligence artificielle",
+      "potentialAction": {
+        "@type": "SearchAction",
+        "target": "https://lotoia.fr/hybride?q={search_term_string}",
+        "query-input": "required name=search_term_string"
+      }
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "LotoIA",
+      "url": "https://lotoia.fr",
+      "logo": "https://lotoia.fr/ui/static/logo-lotoia.png",
+      "founder": {
+        "@type": "Person",
+        "name": "Jean-Philippe Godard"
+      },
+      "description": "Plateforme d'analyse statistique du Loto et de l'EuroMillions par intelligence artificielle"
+    }
+    </script>
 </head>
 <body>
     <div class="launcher-container">
@@ -340,7 +372,16 @@
         </div>
 
         <div class="engines-grid">
-            <!-- EuroMillions - ACTIF (position 1 = produit phare) -->
+            <!-- Loto France - ACTIF (position 1 = produit historique) -->
+            <a href="/accueil" class="engine-card">
+                <span class="engine-icon">&#127919;</span>
+                <h2 class="engine-name">Loto France</h2>
+                <div class="engine-flags"><svg viewBox="0 0 24 16"><rect width="8" height="16" fill="#002395"/><rect x="8" width="8" height="16" fill="#fff"/><rect x="16" width="8" height="16" fill="#ED2939"/></svg></div>
+                <p class="engine-sub">Tirages lundi, mercredi, samedi</p>
+                <span class="engine-status">Actif</span>
+            </a>
+
+            <!-- EuroMillions - ACTIF -->
             <a href="/euromillions" class="engine-card">
                 <span class="engine-icon">&#11088;</span>
                 <h2 class="engine-name">EuroMillions</h2>
@@ -357,15 +398,13 @@
                 </div>
                 <span class="engine-status">Actif</span>
             </a>
+        </div>
 
-            <!-- Loto France - ACTIF -->
-            <a href="/accueil" class="engine-card">
-                <span class="engine-icon">&#127919;</span>
-                <h2 class="engine-name">Loto France</h2>
-                <div class="engine-flags"><svg viewBox="0 0 24 16"><rect width="8" height="16" fill="#002395"/><rect x="8" width="8" height="16" fill="#fff"/><rect x="16" width="8" height="16" fill="#ED2939"/></svg></div>
-                <p class="engine-sub">Tirages lundi, mercredi, samedi</p>
-                <span class="engine-status">Actif</span>
-            </a>
+        <!-- SEO content block -->
+        <div class="launcher-seo" style="max-width:620px;margin:40px auto 0;text-align:left;color:rgba(255,255,255,0.55);font-size:0.82rem;line-height:1.8;">
+            <p><strong>LotoIA</strong> est une plateforme <strong>gratuite</strong> d'<strong>analyse statistique du Loto</strong> et de l'<strong>EuroMillions</strong> par <strong>intelligence artificielle</strong>. Notre moteur HYBRIDE analyse les tirages officiels FDJ et EuroMillions pour g&eacute;n&eacute;rer des grilles statistiquement &eacute;quilibr&eacute;es, bas&eacute;es sur les fr&eacute;quences, retards et tendances r&eacute;centes.</p>
+            <p>Explorez les <strong>statistiques Loto France</strong> et les <strong>statistiques EuroMillions</strong>, consultez les <strong>num&eacute;ros les plus sortis</strong>, et utilisez notre <strong>chatbot IA</strong> pour poser vos questions en temps r&eacute;el. L'<strong>IA Loto</strong> et l'<strong>IA EuroMillions</strong> de LotoIA sont enti&egrave;rement gratuites, sans inscription, et connect&eacute;es aux donn&eacute;es officielles des tirages.</p>
+            <p>LotoIA ne pr&eacute;dit pas les r&eacute;sultats du Loto ni de l'EuroMillions. La plateforme fournit une <strong>analyse statistique</strong> factuelle pour aider les joueurs &agrave; comprendre les donn&eacute;es historiques. Jouer comporte des risques : jouez avec mod&eacute;ration.</p>
         </div>
     </div>
 
