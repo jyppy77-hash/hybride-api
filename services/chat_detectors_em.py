@@ -575,32 +575,82 @@ _ARGENT_PHRASES_EM = {
         r'\bcombien\s+(?:on|je|tu|peut[\s-]on)\s+gagn',
         r'\bcombien\s+[çc]a\s+rapporte',
         r'\bstrat[eé]gie\s+pour\s+gagner',
+        # V50 — adversarial
+        r'\broi\b',
+        r'\bvivre\s+(?:du|de\s+la)\s+(?:loto|loterie|euromillions)',
+        r'\brevenus?\s+passifs?',
+        r'\bmaximiser\s+(?:mes|les|ses)\s+gains',
+        r'\boptimiser\s+(?:mes|les|ses)\s+chances?\s+de\s+gagner',
+        r'\brentabiliser\s+(?:mes|les|ses)\s+(?:mises?|grilles?)',
+        r'\brendement\s+(?:de|des|sur)\s+(?:mes|les|ses)\s+(?:mises?|grilles?|jeux?)',
+        r'\bstrat[eé]gie\s+(?:pour\s+)?rentabiliser',
+        r'\b(?:investissement|investir)\s+(?:au|dans\s+l|sur\s+l)\S*\s+(?:loto|loterie|euromillions|jeu)',
     ],
     "en": [
         r'\bget\s+rich',
         r'\bhow\s+much\s+can\s+(?:i|you|we)\s+win',
         r'\bhow\s+much\s+does\s+it\s+pay',
         r'\bstrategy\s+to\s+win',
+        # V50 — adversarial
+        r'\broi\b',
+        r'\b(?:live|living)\s+off\s+(?:the\s+)?(?:lottery|lotto|euromillions)',
+        r'\bpassive\s+income',
+        r'\bmaximize?\s+(?:my|your|the)?\s*winnings?',
+        r'\bfinancial\s+(?:strategy|optimization)\s+(?:for|with)\s+(?:lottery|lotto)',
+        r'\bmake\s+money\s+(?:from|with|playing)\s+(?:lottery|lotto)',
+        r'\bbest\s+strategy\s+to\s+win',
+        r'\b(?:investment|invest)\s+in\s+(?:lottery|lotto|tickets?|gambling)',
     ],
     "es": [
         r'\bhacerse\s+rico',
         r'\bcu[aá]nto\s+se\s+gana',
         r'\bestrategia\s+para\s+ganar',
+        # V50 — adversarial
+        r'\broi\b',
+        r'\bvivir\s+de\s+la\s+(?:loter[ií]a|euromillions)',
+        r'\bretorno\s+de\s+inversi[oó]n',
+        r'\bestrategia\s+financiera',
+        r'\bmaximizar\s+(?:mis|las|sus)\s+ganancias',
+        r'\brentabilizar\s+(?:mis|las|sus)\s+(?:apuestas?|boletos?)',
+        r'\bingresos?\s+pasivos?',
     ],
     "pt": [
         r'\bficar\s+rico',
         r'\bquanto\s+se\s+ganha',
         r'\bestrat[eé]gia\s+para\s+ganhar',
+        # V50 — adversarial
+        r'\broi\b',
+        r'\bviver\s+d[ao]\s+(?:lotaria|loteria|euromillions)',
+        r'\bretorno\s+de\s+investimento',
+        r'\bestrat[eé]gia\s+financeira',
+        r'\bmaximizar\s+(?:os\s+)?ganhos',
+        r'\brentabilizar\s+(?:as\s+)?(?:apostas?|grelhas?)',
+        r'\brendimentos?\s+passivos?',
     ],
     "de": [
         r'\breich\s+werden',
         r'\bwie\s+viel\s+kann\s+man\s+gewinnen',
         r'\bgewinnstrategie',
+        # V50 — adversarial
+        r'\broi\b',
+        r'\bvom\s+(?:lotto|spiel|lotteri?e|euromillions)\s+leben',
+        r'\bkapitalrendite\b',
+        r'\bfinanzielle\s+strategie',
+        r'\bgewinne?\s+maximieren',
+        r'\brendite\s+(?:meiner?|der)\s+(?:spielscheine?|eins[aä]tze?)',
+        r'\bpassives?\s+einkommen',
     ],
     "nl": [
         r'\brijk\s+worden',
         r'\bhoeveel\s+kun\s+je\s+winnen',
         r'\bstrategie\s+om\s+te\s+winnen',
+        # V50 — adversarial
+        r'\broi\b',
+        r'\bleven\s+van\s+(?:de\s+)?(?:loterij|lotto|euromillions)',
+        r'\brendement\s+op\s+investering',
+        r'\bfinanciële\s+strategie',
+        r'\bwinsten?\s+maximaliseren',
+        r'\bpassief\s+inkomen',
     ],
 }
 
@@ -673,32 +723,52 @@ _ARGENT_STRONG_EM = {
         r'\btoucher\s+le\s+gros\s+lot',
         r'\bcombien\s+(?:on|je|tu|peut[\s-]on)\s+gagn',
         r'\bcombien\s+[çc]a\s+rapporte',
+        # V50 — L2 strong
+        r'\bvivre\s+(?:du|de\s+la)\s+(?:loto|loterie|euromillions)',
+        r'\brevenus?\s+passifs?',
+        r'\bstrat[eé]gie\s+(?:pour\s+)?rentabiliser',
     ],
     "en": [
         r'\bget\s+rich',
         r'\bstrategy\s+to\s+win',
         r'\bhow\s+much\s+can\s+(?:i|you|we)\s+win',
         r'\bhow\s+much\s+does\s+it\s+pay',
+        # V50 — L2 strong
+        r'\b(?:live|living)\s+off\s+(?:the\s+)?(?:lottery|lotto|euromillions)',
+        r'\bpassive\s+income',
+        r'\bmake\s+money\s+(?:from|with|playing)\s+(?:lottery|lotto)',
     ],
     "es": [
         r'\bhacerse\s+rico',
         r'\bestrategia\s+para\s+ganar',
         r'\bcu[aá]nto\s+se\s+gana',
+        # V50 — L2 strong
+        r'\bvivir\s+de\s+la\s+(?:loter[ií]a|euromillions)',
+        r'\bingresos?\s+pasivos?',
     ],
     "pt": [
         r'\bficar\s+rico',
         r'\bestrat[eé]gia\s+para\s+ganhar',
         r'\bquanto\s+se\s+ganha',
+        # V50 — L2 strong
+        r'\bviver\s+d[ao]\s+(?:lotaria|loteria|euromillions)',
+        r'\brendimentos?\s+passivos?',
     ],
     "de": [
         r'\breich\s+werden',
         r'\bgewinnstrategie',
         r'\bwie\s+viel\s+kann\s+man\s+gewinnen',
+        # V50 — L2 strong
+        r'\bvom\s+(?:lotto|spiel|lotteri?e|euromillions)\s+leben',
+        r'\bpassives?\s+einkommen',
     ],
     "nl": [
         r'\brijk\s+worden',
         r'\bstrategie\s+om\s+te\s+winnen',
         r'\bhoeveel\s+kun\s+je\s+winnen',
+        # V50 — L2 strong
+        r'\bleven\s+van\s+(?:de\s+)?(?:loterij|lotto|euromillions)',
+        r'\bpassief\s+inkomen',
     ],
 }
 

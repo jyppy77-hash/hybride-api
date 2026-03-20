@@ -435,6 +435,18 @@ _ARGENT_PHRASES_FR = [
     r'\bmise\s+de\s+\d+',
     r'\bbudget\s+de\s+\d+',
     r'\b\d+\s*[€$]\s+par\s+(?:mois|semaine|an|jour)',
+    # V50 — adversarial patterns
+    r'\broi\b',
+    r'\bvivre\s+du\s+(?:loto|jeu|loterie)',
+    r'\brevenus?\s+passifs?',
+    r'\bmaximiser\s+(?:mes|les|ses)\s+gains',
+    r'\boptimiser\s+(?:mes|les|ses)\s+chances?\s+de\s+gagner',
+    r'\brentabiliser\s+(?:mes|les|ses)\s+(?:mises?|grilles?)',
+    r'\brendement\s+(?:de|des|sur)\s+(?:mes|les|ses)\s+(?:mises?|grilles?|jeux?)',
+    r'\bcapital\s+(?:de\s+)?(?:jeu|mise)',
+    r'\bplacement\s+(?:au\s+)?(?:loto|jeu|loterie)',
+    r'\b(?:investissement|investir)\s+(?:au|dans\s+le|sur\s+le)\s+(?:loto|jeu|loterie)',
+    r'\bstrat[eé]gie\s+(?:pour\s+)?rentabiliser',
 ]
 
 _ARGENT_MOTS_FR = {
@@ -460,6 +472,10 @@ _ARGENT_STRONG_FR = [
     r'\btoucher\s+le\s+gros\s+lot',
     r'\bcombien\s+(?:on|je|tu|peut[\s-]on)\s+gagn',
     r'\bcombien\s+[çc]a\s+rapporte',
+    # V50 — L2 strong adversarial
+    r'\bvivre\s+du\s+(?:loto|jeu|loterie)',
+    r'\brevenus?\s+passifs?',
+    r'\bstrat[eé]gie\s+(?:pour\s+)?rentabiliser',
 ]
 
 _ARGENT_BETTING_FR = {"parier", "miser", "pari"}

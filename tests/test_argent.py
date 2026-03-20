@@ -371,3 +371,181 @@ class TestArgentNonRegression:
     def test_compliment_not_argent(self):
         """Message compliment ne doit PAS declencher phase argent"""
         assert _detect_argent("t'es génial") is False
+
+
+# ═══════════════════════════════════════════════════════
+# V50 — Adversarial Phase A patterns (6 langues)
+# ═══════════════════════════════════════════════════════
+
+class TestAdversarialPhaseA_FR:
+    """Nouveaux patterns adversariaux FR — Loto + EM."""
+
+    def test_roi_loto(self):
+        assert _detect_argent("quel est le ROI de mes grilles") is True
+
+    def test_vivre_du_loto(self):
+        assert _detect_argent("peut-on vivre du loto") is True
+
+    def test_revenus_passifs(self):
+        assert _detect_argent("des revenus passifs avec le loto") is True
+
+    def test_maximiser_gains(self):
+        assert _detect_argent("comment maximiser mes gains") is True
+
+    def test_optimiser_chances_gagner(self):
+        assert _detect_argent("optimiser mes chances de gagner") is True
+
+    def test_rentabiliser_mises(self):
+        assert _detect_argent("comment rentabiliser mes mises") is True
+
+    def test_strategie_rentabiliser(self):
+        assert _detect_argent("quelle stratégie pour rentabiliser") is True
+
+    def test_investir_au_loto(self):
+        assert _detect_argent("investir au loto c'est rentable") is True
+
+    def test_vivre_du_loto_L2(self):
+        """vivre du loto doit declencher L2 (ferme)."""
+        resp = _get_argent_response("peut-on vivre du loto")
+        assert resp in _ARGENT_L2
+
+    def test_revenus_passifs_L2(self):
+        """revenus passifs doit declencher L2 (ferme)."""
+        resp = _get_argent_response("des revenus passifs avec le jeu")
+        assert resp in _ARGENT_L2
+
+    def test_roi_L1(self):
+        """ROI seul doit declencher L1 (pedagogique)."""
+        resp = _get_argent_response("c'est quoi le ROI ici")
+        assert resp in _ARGENT_L1
+
+
+class TestAdversarialPhaseA_EN:
+    """Adversarial patterns EN — EM."""
+
+    def test_roi_en(self):
+        assert _detect_argent_em("what is the ROI on lottery tickets", "en") is True
+
+    def test_live_off_lottery(self):
+        assert _detect_argent_em("can you live off the lottery", "en") is True
+
+    def test_passive_income(self):
+        assert _detect_argent_em("passive income from lottery", "en") is True
+
+    def test_maximize_winnings(self):
+        assert _detect_argent_em("how to maximize winnings", "en") is True
+
+    def test_financial_strategy(self):
+        assert _detect_argent_em("financial strategy for lottery", "en") is True
+
+    def test_make_money_from(self):
+        assert _detect_argent_em("make money from playing lotto", "en") is True
+
+    def test_best_strategy_to_win(self):
+        assert _detect_argent_em("best strategy to win the lottery", "en") is True
+
+    def test_live_off_lottery_L2(self):
+        """live off lottery → L2."""
+        resp = _get_argent_response_em("I want to live off the lottery", "en")
+        assert resp in _ARGENT_L2_EM_EN
+
+
+class TestAdversarialPhaseA_ES:
+    """Adversarial patterns ES — EM."""
+
+    def test_vivir_de_loteria(self):
+        assert _detect_argent_em("quiero vivir de la lotería", "es") is True
+
+    def test_retorno_inversion(self):
+        assert _detect_argent_em("retorno de inversión del juego", "es") is True
+
+    def test_estrategia_financiera(self):
+        assert _detect_argent_em("estrategia financiera para la lotería", "es") is True
+
+    def test_maximizar_ganancias(self):
+        assert _detect_argent_em("cómo maximizar mis ganancias", "es") is True
+
+
+class TestAdversarialPhaseA_PT:
+    """Adversarial patterns PT — EM."""
+
+    def test_viver_da_lotaria(self):
+        assert _detect_argent_em("quero viver da lotaria", "pt") is True
+
+    def test_retorno_investimento(self):
+        assert _detect_argent_em("retorno de investimento no jogo", "pt") is True
+
+    def test_maximizar_ganhos(self):
+        assert _detect_argent_em("como maximizar os ganhos", "pt") is True
+
+
+class TestAdversarialPhaseA_DE:
+    """Adversarial patterns DE — EM."""
+
+    def test_vom_lotto_leben(self):
+        assert _detect_argent_em("kann man vom Lotto leben", "de") is True
+
+    def test_rendite_spielscheine(self):
+        assert _detect_argent_em("Rendite meiner Spielscheine", "de") is True
+
+    def test_gewinne_maximieren(self):
+        assert _detect_argent_em("wie kann man Gewinne maximieren", "de") is True
+
+    def test_passives_einkommen(self):
+        assert _detect_argent_em("passives Einkommen durch Lotto", "de") is True
+
+
+class TestAdversarialPhaseA_NL:
+    """Adversarial patterns NL — EM."""
+
+    def test_leven_van_loterij(self):
+        assert _detect_argent_em("kan je leven van de loterij", "nl") is True
+
+    def test_rendement_op_investering(self):
+        assert _detect_argent_em("rendement op investering in lotto", "nl") is True
+
+    def test_winsten_maximaliseren(self):
+        assert _detect_argent_em("hoe winsten maximaliseren", "nl") is True
+
+    def test_passief_inkomen(self):
+        assert _detect_argent_em("passief inkomen via loterij", "nl") is True
+
+
+# ═══════════════════════════════════════════════════════
+# V50 — Non-regression (messages normaux PAS Phase A)
+# ═══════════════════════════════════════════════════════
+
+class TestAdversarialNonRegression:
+    """Messages statistiques normaux ne doivent PAS declencher Phase A."""
+
+    def test_numero_frequent(self):
+        assert _detect_argent("quel est le numéro le plus fréquent") is False
+
+    def test_top_10(self):
+        assert _detect_argent("top 10 les plus sortis") is False
+
+    def test_investissement_temps_calcul(self):
+        """investissement en contexte technique → PAS Phase A."""
+        assert _detect_argent_em("l'investissement en temps de calcul est important", "fr") is False
+
+    def test_statistical_returns_en(self):
+        """returns en contexte statistique → PAS Phase A."""
+        assert _detect_argent_em("the statistical analysis shows interesting returns", "en") is False
+
+    def test_compare_numeros(self):
+        assert _detect_argent("compare le 7 et le 23") is False
+
+    def test_genere_grille(self):
+        assert _detect_argent("génère-moi une grille") is False
+
+    def test_frequence_etoiles(self):
+        assert _detect_argent_em("quelle est la fréquence des étoiles", "fr") is False
+
+    def test_historical_data_en(self):
+        assert _detect_argent_em("show me historical data for number 5", "en") is False
+
+    def test_numeros_chauds_de(self):
+        assert _detect_argent_em("welche Zahlen sind heiß", "de") is False
+
+    def test_tendance_nl(self):
+        assert _detect_argent_em("wat is de trend voor nummer 7", "nl") is False

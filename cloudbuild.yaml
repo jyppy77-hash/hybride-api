@@ -1,3 +1,7 @@
+substitutions:
+  _OWNER_IP: '86.212.92.243'
+  _OWNER_IPV6: '2a01:cb05:8700:5900:'
+
 steps:
   # Build Docker image (builder stage — includes tests/)
   - name: 'gcr.io/cloud-builders/docker'
@@ -17,7 +21,7 @@ steps:
     env:
       - 'HOME=/tmp'
 
-  # Run 2648 tests inside the builder image (blocks deploy on failure)
+  # Run 2652 tests inside the builder image (blocks deploy on failure)
   - name: 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:builder'
     entrypoint: 'sh'
     args:
@@ -67,7 +71,7 @@ steps:
       - --min-instances=1
       - --timeout=120
       - --cpu-boost
-      - '--update-env-vars=OWNER_IP=86.212.92.243,OWNER_IPV6=2a01:cb05:8700:5900:'
+      - '--update-env-vars=OWNER_IP=${_OWNER_IP},OWNER_IPV6=${_OWNER_IPV6}'
 
 images:
   - europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:$COMMIT_SHA

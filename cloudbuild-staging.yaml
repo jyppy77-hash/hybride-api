@@ -1,0 +1,94 @@
+# =============================================================
+# LotoIA — STAGING deployment
+# =============================================================
+# Déploie sur hybride-api-staging (Cloud Run, europe-west1)
+# Base : lotofrance_staging (même instance Cloud SQL)
+# Min-instances : 0 (scale to zero, ~0€ au repos)
+#
+# Usage :
+#   gcloud builds submit --config=cloudbuild-staging.yaml .
+#
+# Prérequis :
+#   - Artifact Registry repo "hybride-api" dans europe-west1
+#   - Base "lotofrance_staging" sur lotostat-eu
+# =============================================================
+
+substitutions:
+  _OWNER_IP: '86.212.92.243'
+  _OWNER_IPV6: '2a01:cb05:8700:5900:'
+  _DB_NAME: 'lotofrance_staging'
+
+steps:
+  # Build Docker image (builder stage — includes tests/)
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--target=builder'
+      - '-t'
+      - 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:builder'
+      - '.'
+
+  # Lint (ruff)
+  - name: 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:builder'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - 'pip install --no-cache-dir ruff && ruff check .'
+    env:
+      - 'HOME=/tmp'
+
+  # Run tests inside the builder image (blocks deploy on failure)
+  - name: 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:builder'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - 'pip install --no-cache-dir pytest pytest-asyncio pytest-cov PyPDF2 && python -m pytest tests/ -v --tb=short --cov=services --cov=routes --cov=config --cov=engine --cov=middleware --cov-report=term-missing -o addopts='
+    env:
+      - 'DB_PASSWORD=fake'
+      - 'DB_USER=test'
+      - 'DB_NAME=testdb'
+      - 'HOME=/tmp'
+
+  # Build final runtime image (lean, no tests)
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '--target=runtime'
+      - '--cache-from'
+      - 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:staging-latest'
+      - '-t'
+      - 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:staging-$COMMIT_SHA'
+      - '-t'
+      - 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:staging-latest'
+      - '.'
+
+  # Push image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:staging-$COMMIT_SHA']
+
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:staging-latest']
+
+  # Deploy to Cloud Run STAGING (europe-west1)
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - run
+      - deploy
+      - hybride-api-staging
+      - --image=europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:staging-$COMMIT_SHA
+      - --region=europe-west1
+      - --platform=managed
+      - --allow-unauthenticated
+      - --port=8080
+      - --memory=512Mi
+      - --cpu=1
+      - --concurrency=20
+      - --max-instances=3
+      - --min-instances=0
+      - --timeout=120
+      - --cpu-boost
+      - '--update-env-vars=OWNER_IP=${_OWNER_IP},OWNER_IPV6=${_OWNER_IPV6},DB_NAME=${_DB_NAME}'
+
+images:
+  - europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:staging-$COMMIT_SHA
+  - europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:staging-latest
