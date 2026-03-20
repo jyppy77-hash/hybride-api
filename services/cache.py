@@ -33,6 +33,9 @@ async def init_cache():
         logger.info("REDIS_URL non defini — cache in-memory (fallback)")
         return
 
+    if not redis_url.startswith("rediss://") and os.getenv("K_SERVICE"):
+        logger.warning("[CACHE] Redis URL does not use TLS (rediss://). Data transits unencrypted.")
+
     try:
         import redis.asyncio as aioredis
         _redis = aioredis.from_url(

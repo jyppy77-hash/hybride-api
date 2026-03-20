@@ -781,3 +781,50 @@ class TestSeoJsonLdEscaping:
         parsed = json_mod.loads(json_str)
         assert parsed["@type"] == "BreadcrumbList"
         assert len(parsed["itemListElement"]) == 2
+
+
+# ═══════════════════════════════════════════════
+# 17. APP_VERSION consistency
+# ═══════════════════════════════════════════════
+
+class TestAppVersion:
+    """APP_VERSION must match current release."""
+
+    def test_app_version_is_current(self):
+        """APP_VERSION == 1.5.004 (V49 release)."""
+        from config.version import APP_VERSION
+        assert APP_VERSION == "1.5.004"
+
+    def test_last_deploy_date_is_recent(self):
+        """LAST_DEPLOY_DATE is within the last 7 days."""
+        from config.version import LAST_DEPLOY_DATE
+        deploy_date = date.fromisoformat(LAST_DEPLOY_DATE)
+        assert date.today() - deploy_date < timedelta(days=7)
+
+
+# ═══════════════════════════════════════════════
+# 18. robots.txt Allow /ui/static/ before Disallow /ui/
+# ═══════════════════════════════════════════════
+
+class TestRobotsTxtStaticAllow:
+    """Allow: /ui/static/ must appear before Disallow: /ui/ for CSS/JS rendering."""
+
+    def test_allow_ui_static_before_disallow_ui(self):
+        """Allow: /ui/static/ appears before Disallow: /ui/ in robots.txt."""
+        robots_path = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)), "ui", "robots.txt"
+        )
+        with open(robots_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        allow_pos = content.index("Allow: /ui/static/")
+        disallow_pos = content.index("Disallow: /ui/")
+        assert allow_pos < disallow_pos, "Allow: /ui/static/ must come before Disallow: /ui/"
+
+    def test_static_css_allowed_by_robots(self):
+        """A CSS file under /ui/static/ should be allowed."""
+        robots_path = os.path.join(
+            os.path.dirname(os.path.dirname(__file__)), "ui", "robots.txt"
+        )
+        with open(robots_path, "r", encoding="utf-8") as f:
+            content = f.read()
+        assert "Allow: /ui/static/" in content

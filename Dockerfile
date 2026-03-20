@@ -1,5 +1,5 @@
 # ── Stage 1: Builder (deps + compile translations) ────────────────────────────
-FROM python:3.11-slim AS builder
+FROM python:3.13-slim AS builder
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
@@ -24,7 +24,7 @@ ENV DB_PASSWORD=fake DB_USER=test DB_NAME=testdb
 RUN python -m pytest tests/ --tb=short -q
 
 # ── Stage 3: Runtime (lean, no tests/docs/scripts) ──────────────────────────
-FROM python:3.11-slim AS runtime
+FROM python:3.13-slim AS runtime
 
 ENV PORT=8080 \
     PYTHONUNBUFFERED=1 \
@@ -36,7 +36,7 @@ ENV PORT=8080 \
 WORKDIR /app
 
 # Copy installed packages from builder
-COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy app code from builder (excluding tests/docs via .dockerignore)

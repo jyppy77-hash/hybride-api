@@ -5,15 +5,24 @@ steps:
       - 'build'
       - '--target=builder'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/hybride-api:test'
+      - 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:builder'
       - '.'
 
-  # Run 2310 tests inside the builder image (blocks deploy on failure)
-  - name: 'gcr.io/$PROJECT_ID/hybride-api:test'
+  # Lint (ruff)
+  - name: 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:builder'
     entrypoint: 'sh'
     args:
       - '-c'
-      - 'pip install --no-cache-dir pytest pytest-asyncio pytest-cov PyPDF2 && python -m pytest tests/ -v --tb=short -o addopts='
+      - 'pip install --no-cache-dir ruff && ruff check .'
+    env:
+      - 'HOME=/tmp'
+
+  # Run 2648 tests inside the builder image (blocks deploy on failure)
+  - name: 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:builder'
+    entrypoint: 'sh'
+    args:
+      - '-c'
+      - 'pip install --no-cache-dir pytest pytest-asyncio pytest-cov PyPDF2 && python -m pytest tests/ -v --tb=short --cov=services --cov=routes --cov=config --cov=engine --cov=middleware --cov-report=term-missing -o addopts='
     env:
       - 'DB_PASSWORD=fake'
       - 'DB_USER=test'
@@ -26,19 +35,19 @@ steps:
       - 'build'
       - '--target=runtime'
       - '--cache-from'
-      - 'gcr.io/$PROJECT_ID/hybride-api:latest'
+      - 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:latest'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/hybride-api:$COMMIT_SHA'
+      - 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:$COMMIT_SHA'
       - '-t'
-      - 'gcr.io/$PROJECT_ID/hybride-api:latest'
+      - 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:latest'
       - '.'
 
-  # Push image to Container Registry
+  # Push image to Artifact Registry
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/hybride-api:$COMMIT_SHA']
+    args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:$COMMIT_SHA']
 
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/hybride-api:latest']
+    args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:latest']
 
   # Deploy to Cloud Run (europe-west1)
   - name: 'gcr.io/cloud-builders/gcloud'
@@ -46,7 +55,7 @@ steps:
       - run
       - deploy
       - hybride-api-eu
-      - --image=gcr.io/$PROJECT_ID/hybride-api:$COMMIT_SHA
+      - --image=europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:$COMMIT_SHA
       - --region=europe-west1
       - --platform=managed
       - --allow-unauthenticated
@@ -61,5 +70,5 @@ steps:
       - '--update-env-vars=OWNER_IP=86.212.92.243,OWNER_IPV6=2a01:cb05:8700:5900:'
 
 images:
-  - gcr.io/$PROJECT_ID/hybride-api:$COMMIT_SHA
-  - gcr.io/$PROJECT_ID/hybride-api:latest
+  - europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:$COMMIT_SHA
+  - europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:latest
