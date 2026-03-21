@@ -252,6 +252,32 @@
             color: rgba(255, 255, 255, 0.3);
         }
 
+        /* Accordéon SEO */
+        .seo-accordion {
+            max-width: 620px;
+            margin: 30px auto 80px;
+        }
+
+        .seo-accordion summary {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            cursor: pointer;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .seo-accordion-content {
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 0.82rem;
+            line-height: 1.8;
+            padding: 10px 20px;
+            text-align: left;
+        }
+
+        .seo-accordion-content p {
+            margin-bottom: 10px;
+        }
+
         /* Responsive */
         @media (max-width: 768px) {
             body {
@@ -400,12 +426,15 @@
             </a>
         </div>
 
-        <!-- SEO content block -->
-        <div class="launcher-seo" style="max-width:620px;margin:40px auto 0;text-align:left;color:rgba(255,255,255,0.55);font-size:0.82rem;line-height:1.8;">
-            <p><strong>LotoIA</strong> est une plateforme <strong>gratuite</strong> d'<strong>analyse statistique du Loto</strong> et de l'<strong>EuroMillions</strong> par <strong>intelligence artificielle</strong>. Notre moteur HYBRIDE analyse les tirages officiels FDJ et EuroMillions pour g&eacute;n&eacute;rer des grilles statistiquement &eacute;quilibr&eacute;es, bas&eacute;es sur les fr&eacute;quences, retards et tendances r&eacute;centes.</p>
-            <p>Explorez les <strong>statistiques Loto France</strong> et les <strong>statistiques EuroMillions</strong>, consultez les <strong>num&eacute;ros les plus sortis</strong>, et utilisez notre <strong>chatbot IA</strong> pour poser vos questions en temps r&eacute;el. L'<strong>IA Loto</strong> et l'<strong>IA EuroMillions</strong> de LotoIA sont enti&egrave;rement gratuites, sans inscription, et connect&eacute;es aux donn&eacute;es officielles des tirages.</p>
-            <p>LotoIA ne pr&eacute;dit pas les r&eacute;sultats du Loto ni de l'EuroMillions. La plateforme fournit une <strong>analyse statistique</strong> factuelle pour aider les joueurs &agrave; comprendre les donn&eacute;es historiques. Jouer comporte des risques : jouez avec mod&eacute;ration.</p>
-        </div>
+        <!-- SEO content block (accordéon) -->
+        <details class="seo-accordion">
+            <summary>En savoir plus sur LotoIA</summary>
+            <div class="seo-accordion-content">
+                <p><strong>LotoIA</strong> est une plateforme <strong>gratuite</strong> d'<strong>analyse statistique du Loto</strong> et de l'<strong>EuroMillions</strong> par <strong>intelligence artificielle</strong>. Notre moteur HYBRIDE analyse les tirages officiels FDJ et EuroMillions pour g&eacute;n&eacute;rer des grilles statistiquement &eacute;quilibr&eacute;es, bas&eacute;es sur les fr&eacute;quences, retards et tendances r&eacute;centes.</p>
+                <p>Explorez les <strong>statistiques Loto France</strong> et les <strong>statistiques EuroMillions</strong>, consultez les <strong>num&eacute;ros les plus sortis</strong>, et utilisez notre <strong>chatbot IA</strong> pour poser vos questions en temps r&eacute;el. L'<strong>IA Loto</strong> et l'<strong>IA EuroMillions</strong> de LotoIA sont enti&egrave;rement gratuites, sans inscription, et connect&eacute;es aux donn&eacute;es officielles des tirages.</p>
+                <p>LotoIA ne pr&eacute;dit pas les r&eacute;sultats du Loto ni de l'EuroMillions. La plateforme fournit une <strong>analyse statistique</strong> factuelle pour aider les joueurs &agrave; comprendre les donn&eacute;es historiques. Jouer comporte des risques : jouez avec mod&eacute;ration.</p>
+            </div>
+        </details>
     </div>
 
     <!-- Footer -->
@@ -425,5 +454,8 @@
     <script src="/ui/static/cookie-consent.js"></script>
     <link rel="stylesheet" href="/ui/static/contact-form.css?v=3">
     <script src="/ui/static/contact-form.js?v=3" defer></script>
+    <script>
+    (function(){var a=document.querySelector('.seo-accordion'),f=document.querySelector('.launcher-footer');if(a&&f){a.addEventListener('toggle',function(){f.style.display=a.open?'none':'';});}})();
+    </script>
 </body>
 </html>
