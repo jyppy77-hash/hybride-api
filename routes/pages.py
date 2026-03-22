@@ -12,7 +12,6 @@ router = APIRouter()
 # =========================
 
 SEO_PAGES = {
-    "/": "launcher.html",
     "/accueil": "accueil.html",
     "/loto": "loto.html",
     "/loto/analyse": "simulateur.html",
@@ -77,12 +76,6 @@ def bing_auth():
 # =========================
 # Routes SEO-friendly (Pages HTML)
 # =========================
-
-# Page d'accueil (launcher / choix des moteurs)
-@router.get("/")
-async def page_launcher():
-    return serve_page("launcher.html")
-
 
 # =========================
 # Routes Loto France (SaaS)

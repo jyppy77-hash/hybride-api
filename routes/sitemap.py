@@ -14,7 +14,6 @@ router = APIRouter()
 # ── Static Loto pages (FR only) ─────────────────────────────────────────
 
 _LOTO_PAGES = [
-    ("/",                                1.0,  "daily"),
     ("/accueil",                         0.9,  "daily"),
     ("/loto",                            0.95, "daily"),
     ("/loto/analyse",                    0.85, "daily"),
@@ -88,9 +87,21 @@ def _hreflang_alternates(page_key: str) -> list[tuple[str, str]]:
 
 @router.get("/sitemap.xml", include_in_schema=False)
 async def sitemap():
-    """Dynamic XML sitemap — Loto FR + EuroMillions multilang."""
+    """Dynamic XML sitemap — Launcher multilang + Loto FR + EuroMillions multilang."""
     last_modified = LAST_DEPLOY_DATE
     blocks = []
+
+    # Launcher pages (6 languages) — site entry points, highest priority
+    _launcher_priorities = {"fr": 1.0, "en": 0.9}
+    _launcher_alternates = [
+        (lc, f"{BASE_URL}/{lc}") for lc in killswitch.ENABLED_LANGS
+    ] + [("x-default", f"{BASE_URL}/en")]
+    for lc in killswitch.ENABLED_LANGS:
+        prio = _launcher_priorities.get(lc, 0.8)
+        blocks.append(_url_block(
+            f"{BASE_URL}/{lc}", last_modified, "weekly", prio,
+            alternates=_launcher_alternates,
+        ))
 
     # Loto pages (always FR)
     for path, priority, freq in _LOTO_PAGES:

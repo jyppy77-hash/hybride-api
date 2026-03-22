@@ -1,14 +1,21 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="icon" href="/favicon.ico" sizes="48x48">
     <link rel="apple-touch-icon" href="/favicon.ico">
     <link rel="manifest" href="/ui/site.webmanifest">
-    <title>LotoIA — Analyse Loto et EuroMillions par IA | Gratuit</title>
-    <meta name="description" content="LotoIA : plateforme gratuite d'analyse statistique du Loto et de l'EuroMillions par intelligence artificielle. Moteur HYBRIDE, chatbot IA, statistiques en temps réel.">
-    <link rel="canonical" href="https://lotoia.fr/">
+    <title>{{ _("LotoIA — Analyse Loto et EuroMillions par IA | Gratuit") }}</title>
+    <meta name="description" content="{{ _("LotoIA : plateforme gratuite d'analyse statistique du Loto et de l'EuroMillions par intelligence artificielle. Moteur HYBRIDE, chatbot IA, statistiques en temps réel.") }}">
+    <link rel="canonical" href="{{ canonical_url }}">
+    {% for alt in hreflang_tags %}
+    <link rel="alternate" hreflang="{{ alt.lang }}" href="{{ alt.url }}">
+    {% endfor %}
+    <meta property="og:url" content="{{ canonical_url }}">
+    <meta property="og:locale" content="{{ og_locale }}">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LotoIA">
     <style>
         /* =================================================================
            LAUNCHER - SELECTEUR DE MOTEURS
@@ -76,6 +83,37 @@
         @keyframes auraBreath {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.7; }
+        }
+
+        /* Language selector (flags) */
+        .lang-selector {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .lang-selector .flag-link {
+            display: inline-block;
+            opacity: 0.5;
+            transition: opacity 0.2s;
+            text-decoration: none;
+        }
+
+        .lang-selector .flag-link:hover {
+            opacity: 1;
+        }
+
+        .lang-selector .flag-link.active {
+            opacity: 1;
+        }
+
+        .lang-selector svg {
+            width: 28px;
+            height: 19px;
+            border-radius: 3px;
+            display: block;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
 
         /* Container principal */
@@ -321,6 +359,16 @@
             .grounded-label {
                 font-size: 0.85rem;
             }
+
+            .lang-selector svg {
+                width: 24px;
+                height: 16px;
+            }
+
+            .lang-selector {
+                gap: 10px;
+                margin-bottom: 20px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -357,18 +405,18 @@
     <script src="/ui/static/analytics.js?v=3" defer></script>
     <script src="/ui/static/tracker.js?v=4" defer></script>
     <script src="/ui/static/wysistat.js" defer></script>
-    <!-- JSON-LD SEO -->
+    {# JSON-LD SEO — translated strings use |tojson (safe JSON encoding) #}
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
       "name": "LotoIA",
       "alternateName": "LotoIA.fr",
-      "url": "https://lotoia.fr/",
-      "description": "Plateforme gratuite d'analyse statistique du Loto et de l'EuroMillions par intelligence artificielle",
+      "url": "{{ base_url }}/",
+      "description": {{ _("Plateforme gratuite d'analyse statistique du Loto et de l'EuroMillions par intelligence artificielle")|tojson }},
       "potentialAction": {
         "@type": "SearchAction",
-        "target": "https://lotoia.fr/hybride?q={search_term_string}",
+        "target": "{{ base_url }}/hybride?q={search_term_string}",
         "query-input": "required name=search_term_string"
       }
     }
@@ -378,77 +426,89 @@
       "@context": "https://schema.org",
       "@type": "Organization",
       "name": "LotoIA",
-      "url": "https://lotoia.fr",
-      "logo": "https://lotoia.fr/ui/static/logo-lotoia.png",
+      "url": "{{ base_url }}",
+      "logo": "{{ base_url }}/ui/static/logo-lotoia.png",
       "founder": {
         "@type": "Person",
         "name": "Jean-Philippe Godard"
       },
-      "description": "Plateforme d'analyse statistique du Loto et de l'EuroMillions par intelligence artificielle"
+      "description": {{ _("Plateforme d'analyse statistique du Loto et de l'EuroMillions par intelligence artificielle")|tojson }}
     }
     </script>
 </head>
 <body>
     <div class="launcher-container">
-        <h1 class="launcher-title"><strong>LotoIA</strong> — Analyse statistique</h1>
+        {# Language selector (6 flags) #}
+        <div class="lang-selector">
+            {% for flag in flags %}
+            <a href="{{ flag.url }}" class="flag-link{% if flag.active %} active{% endif %}" title="{{ flag.lang|upper }}">{{ flag.svg }}</a>
+            {% endfor %}
+        </div>
+
+        <h1 class="launcher-title"><strong>LotoIA</strong> &mdash; {{ _("Analyse statistique") }}</h1>
 
         <div class="grounded-badge">
-            <div class="grounded-label">Technologie IA Grounded</div>
-            <div class="grounded-sub">IA connect&eacute;e en temps r&eacute;el aux tirages officiels</div>
+            <div class="grounded-label">{{ _("Technologie IA Grounded") }}</div>
+            <div class="grounded-sub">{{ _("IA connectée en temps réel aux tirages officiels") }}</div>
         </div>
 
         <div class="engines-grid">
-            <!-- Loto France - ACTIF (position 1 = produit historique) -->
-            <a href="/accueil" class="engine-card">
+            {% if is_french %}
+            {# France: Loto en premier (produit historique) #}
+            <a href="{{ loto_url }}" class="engine-card">
                 <span class="engine-icon">&#127919;</span>
                 <h2 class="engine-name">Loto France</h2>
-                <div class="engine-flags"><svg viewBox="0 0 24 16"><rect width="8" height="16" fill="#002395"/><rect x="8" width="8" height="16" fill="#fff"/><rect x="16" width="8" height="16" fill="#ED2939"/></svg></div>
-                <p class="engine-sub">Tirages lundi, mercredi, samedi</p>
-                <span class="engine-status">Actif</span>
+                <div class="engine-flags">{{ loto_flag }}</div>
+                <p class="engine-sub">{{ _("Tirages lundi, mercredi, samedi") }}</p>
+                <span class="engine-status">{{ _("Actif") }}</span>
             </a>
-
-            <!-- EuroMillions - ACTIF -->
-            <a href="/euromillions" class="engine-card">
+            <a href="{{ em_url }}" class="engine-card">
                 <span class="engine-icon">&#11088;</span>
                 <h2 class="engine-name">EuroMillions</h2>
-                <div class="engine-flags">
-                    <!-- FR --><svg viewBox="0 0 24 16"><rect width="8" height="16" fill="#002395"/><rect x="8" width="8" height="16" fill="#fff"/><rect x="16" width="8" height="16" fill="#ED2939"/></svg>
-                    <!-- GB --><svg viewBox="0 0 24 16"><rect width="24" height="16" fill="#012169"/><path d="M0 0L24 16M24 0L0 16" stroke="#fff" stroke-width="2.8"/><path d="M0 0L24 16M24 0L0 16" stroke="#C8102E" stroke-width="1.6"/><path d="M12 0v16M0 8h24" stroke="#fff" stroke-width="4.8"/><path d="M12 0v16M0 8h24" stroke="#C8102E" stroke-width="2.8"/></svg>
-                    <!-- ES --><svg viewBox="0 0 24 16"><rect width="24" height="4" fill="#AA151B"/><rect y="4" width="24" height="8" fill="#F1BF00"/><rect y="12" width="24" height="4" fill="#AA151B"/></svg>
-                    <!-- PT --><svg viewBox="0 0 24 16"><rect width="9" height="16" fill="#006600"/><rect x="9" width="15" height="16" fill="#FF0000"/><circle cx="9" cy="8" r="3.2" fill="#FF0000" stroke="#F1BF00" stroke-width="0.8"/></svg>
-                    <!-- DE --><svg viewBox="0 0 24 16"><rect width="24" height="5.33" fill="#000"/><rect y="5.33" width="24" height="5.34" fill="#DD0000"/><rect y="10.67" width="24" height="5.33" fill="#FFCC00"/></svg>
-                    <!-- BE --><svg viewBox="0 0 24 16"><rect width="8" height="16" fill="#000"/><rect x="8" width="8" height="16" fill="#FAE042"/><rect x="16" width="8" height="16" fill="#ED2939"/></svg>
-                    <!-- NL --><svg viewBox="0 0 24 16"><rect width="24" height="5.33" fill="#AE1C28"/><rect y="5.33" width="24" height="5.34" fill="#fff"/><rect y="10.67" width="24" height="5.33" fill="#21468B"/></svg>
-                    <!-- AT --><svg viewBox="0 0 24 16"><rect width="24" height="5.33" fill="#ED2939"/><rect y="5.33" width="24" height="5.34" fill="#fff"/><rect y="10.67" width="24" height="5.33" fill="#ED2939"/></svg>
-                    <!-- LU --><svg viewBox="0 0 24 16"><rect width="24" height="5.33" fill="#ED2939"/><rect y="5.33" width="24" height="5.34" fill="#fff"/><rect y="10.67" width="24" height="5.33" fill="#00A1DE"/></svg>
-                </div>
-                <span class="engine-status">Actif</span>
+                <div class="engine-flags">{% for svg in em_country_flags %}{{ svg }}{% endfor %}</div>
+                <span class="engine-status">{{ _("Actif") }}</span>
             </a>
+            {% else %}
+            {# International: EuroMillions en premier #}
+            <a href="{{ em_url }}" class="engine-card">
+                <span class="engine-icon">&#11088;</span>
+                <h2 class="engine-name">EuroMillions</h2>
+                <div class="engine-flags">{% for svg in em_country_flags %}{{ svg }}{% endfor %}</div>
+                <span class="engine-status">{{ _("Actif") }}</span>
+            </a>
+            <a href="{{ loto_url }}" class="engine-card">
+                <span class="engine-icon">&#127919;</span>
+                <h2 class="engine-name">Loto France</h2>
+                <div class="engine-flags">{{ loto_flag }}</div>
+                <p class="engine-sub">{{ _("Tirages lundi, mercredi, samedi") }}</p>
+                <span class="engine-status">{{ _("Actif") }}</span>
+            </a>
+            {% endif %}
         </div>
 
-        <!-- SEO content block (accordéon) -->
+        {# SEO content block (accordéon) #}
         <details class="seo-accordion">
-            <summary>En savoir plus sur LotoIA</summary>
+            <summary>{{ _("En savoir plus sur LotoIA") }}</summary>
             <div class="seo-accordion-content">
-                <p><strong>LotoIA</strong> est une plateforme <strong>gratuite</strong> d'<strong>analyse statistique du Loto</strong> et de l'<strong>EuroMillions</strong> par <strong>intelligence artificielle</strong>. Notre moteur HYBRIDE analyse les tirages officiels FDJ et EuroMillions pour g&eacute;n&eacute;rer des grilles statistiquement &eacute;quilibr&eacute;es, bas&eacute;es sur les fr&eacute;quences, retards et tendances r&eacute;centes.</p>
-                <p>Explorez les <strong>statistiques Loto France</strong> et les <strong>statistiques EuroMillions</strong>, consultez les <strong>num&eacute;ros les plus sortis</strong>, et utilisez notre <strong>chatbot IA</strong> pour poser vos questions en temps r&eacute;el. L'<strong>IA Loto</strong> et l'<strong>IA EuroMillions</strong> de LotoIA sont enti&egrave;rement gratuites, sans inscription, et connect&eacute;es aux donn&eacute;es officielles des tirages.</p>
-                <p>LotoIA ne pr&eacute;dit pas les r&eacute;sultats du Loto ni de l'EuroMillions. La plateforme fournit une <strong>analyse statistique</strong> factuelle pour aider les joueurs &agrave; comprendre les donn&eacute;es historiques. Jouer comporte des risques : jouez avec mod&eacute;ration.</p>
+                <p>{{ _("<strong>LotoIA</strong> est une plateforme <strong>gratuite</strong> d'<strong>analyse statistique du Loto</strong> et de l'<strong>EuroMillions</strong> par <strong>intelligence artificielle</strong>. Notre moteur HYBRIDE analyse les tirages officiels FDJ et EuroMillions pour g&eacute;n&eacute;rer des grilles statistiquement &eacute;quilibr&eacute;es, bas&eacute;es sur les fr&eacute;quences, retards et tendances r&eacute;centes.")|safe }}</p>
+                <p>{{ _("Explorez les <strong>statistiques Loto France</strong> et les <strong>statistiques EuroMillions</strong>, consultez les <strong>num&eacute;ros les plus sortis</strong>, et utilisez notre <strong>chatbot IA</strong> pour poser vos questions en temps r&eacute;el. L'<strong>IA Loto</strong> et l'<strong>IA EuroMillions</strong> de LotoIA sont enti&egrave;rement gratuites, sans inscription, et connect&eacute;es aux donn&eacute;es officielles des tirages.")|safe }}</p>
+                <p>{{ _("LotoIA ne pr&eacute;dit pas les r&eacute;sultats du Loto ni de l'EuroMillions. La plateforme fournit une <strong>analyse statistique</strong> factuelle pour aider les joueurs &agrave; comprendre les donn&eacute;es historiques. Jouer comporte des risques : jouez avec mod&eacute;ration.")|safe }}</p>
             </div>
         </details>
     </div>
 
-    <!-- Footer -->
+    {# Footer #}
     <div class="launcher-footer">
         <div style="margin-bottom: 8px;">
-            <a href="/ui/mentions-legales.html">Mentions l&eacute;gales</a>
+            <a href="{{ legal_urls.mentions }}">{{ _("Mentions légales") }}</a>
             <span class="footer-sep">&bull;</span>
-            <a href="/ui/politique-confidentialite.html">Confidentialit&eacute;</a>
+            <a href="{{ legal_urls.confidentialite }}">{{ _("Confidentialité") }}</a>
             <span class="footer-sep">&bull;</span>
-            <a href="/ui/politique-cookies.html">Cookies</a>
+            <a href="{{ legal_urls.cookies }}">{{ _("Cookies") }}</a>
             <span class="footer-sep">&bull;</span>
-            <a href="#" onclick="event.preventDefault();if(window.LotoIAContact)LotoIAContact.openModal(window.location.pathname);">Nous contacter</a>
+            <a href="#" onclick="event.preventDefault();if(window.LotoIAContact)LotoIAContact.openModal(window.location.pathname);">{{ _("Nous contacter") }}</a>
         </div>
-        LotoIA.fr &mdash; Analyse statistique Loto &amp; EuroMillions
+        LotoIA.fr &mdash; {{ _("Analyse statistique Loto & EuroMillions") }}
     </div>
 
     <script src="/ui/static/cookie-consent.js"></script>

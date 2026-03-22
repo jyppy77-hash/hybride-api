@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-03-20 16:26+0100\n"
+"POT-Creation-Date: 2026-03-22 11:47+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -60,6 +60,109 @@ msgid ""
 "par <strong>JyppY</strong> (Jean-Philippe Godard), LotoIA est née d'une "
 "conviction simple : les joueurs méritent des outils transparents, "
 "honnêtes et gratuits."
+msgstr ""
+
+#: ui/templates/launcher.html:9
+msgid "LotoIA — Analyse Loto et EuroMillions par IA | Gratuit"
+msgstr ""
+
+#: ui/templates/launcher.html:10
+msgid ""
+"LotoIA : plateforme gratuite d'analyse statistique du Loto et de "
+"l'EuroMillions par intelligence artificielle. Moteur HYBRIDE, chatbot IA,"
+" statistiques en temps réel."
+msgstr ""
+
+#: ui/templates/launcher.html:408
+msgid ""
+"Plateforme gratuite d'analyse statistique du Loto et de l'EuroMillions "
+"par intelligence artificielle"
+msgstr ""
+
+#: ui/templates/launcher.html:427
+msgid ""
+"Plateforme d'analyse statistique du Loto et de l'EuroMillions par "
+"intelligence artificielle"
+msgstr ""
+
+#: ui/templates/em/accueil.html:712 ui/templates/em/euromillions-ia.html:140
+#: ui/templates/em/generateur.html:37 ui/templates/em/methodologie.html:47
+#: ui/templates/launcher.html:440
+msgid "Analyse statistique"
+msgstr ""
+
+#: ui/templates/launcher.html:443
+msgid "Technologie IA Grounded"
+msgstr ""
+
+#: ui/templates/launcher.html:444
+msgid "IA connectée en temps réel aux tirages officiels"
+msgstr ""
+
+#: ui/templates/launcher.html:454 ui/templates/launcher.html:475
+msgid "Tirages lundi, mercredi, samedi"
+msgstr ""
+
+#: ui/templates/launcher.html:455 ui/templates/launcher.html:461
+#: ui/templates/launcher.html:469 ui/templates/launcher.html:476
+msgid "Actif"
+msgstr ""
+
+#: ui/templates/launcher.html:483
+msgid "En savoir plus sur LotoIA"
+msgstr ""
+
+#: ui/templates/launcher.html:485
+msgid ""
+"<strong>LotoIA</strong> est une plateforme <strong>gratuite</strong> "
+"d'<strong>analyse statistique du Loto</strong> et de "
+"l'<strong>EuroMillions</strong> par <strong>intelligence "
+"artificielle</strong>. Notre moteur HYBRIDE analyse les tirages officiels"
+" FDJ et EuroMillions pour g&eacute;n&eacute;rer des grilles "
+"statistiquement &eacute;quilibr&eacute;es, bas&eacute;es sur les "
+"fr&eacute;quences, retards et tendances r&eacute;centes."
+msgstr ""
+
+#: ui/templates/launcher.html:486
+msgid ""
+"Explorez les <strong>statistiques Loto France</strong> et les "
+"<strong>statistiques EuroMillions</strong>, consultez les "
+"<strong>num&eacute;ros les plus sortis</strong>, et utilisez notre "
+"<strong>chatbot IA</strong> pour poser vos questions en temps "
+"r&eacute;el. L'<strong>IA Loto</strong> et l'<strong>IA "
+"EuroMillions</strong> de LotoIA sont enti&egrave;rement gratuites, sans "
+"inscription, et connect&eacute;es aux donn&eacute;es officielles des "
+"tirages."
+msgstr ""
+
+#: ui/templates/launcher.html:487
+msgid ""
+"LotoIA ne pr&eacute;dit pas les r&eacute;sultats du Loto ni de "
+"l'EuroMillions. La plateforme fournit une <strong>analyse "
+"statistique</strong> factuelle pour aider les joueurs &agrave; comprendre"
+" les donn&eacute;es historiques. Jouer comporte des risques : jouez avec "
+"mod&eacute;ration."
+msgstr ""
+
+#: ui/templates/em/_footer.html:30 ui/templates/launcher.html:495
+msgid "Mentions légales"
+msgstr ""
+
+#: ui/templates/em/_footer.html:32 ui/templates/launcher.html:497
+msgid "Confidentialité"
+msgstr ""
+
+#: ui/templates/launcher.html:499
+msgid "Cookies"
+msgstr ""
+
+#: ui/templates/em/_footer.html:40 ui/templates/em/a-propos.html:175
+#: ui/templates/launcher.html:501
+msgid "Nous contacter"
+msgstr ""
+
+#: ui/templates/launcher.html:503
+msgid "Analyse statistique Loto & EuroMillions"
 msgstr ""
 
 #: ui/templates/em/_base.html:58 ui/templates/em/a-propos.html:86
@@ -132,20 +235,8 @@ msgstr ""
 msgid "À propos"
 msgstr ""
 
-#: ui/templates/em/_footer.html:30
-msgid "Mentions légales"
-msgstr ""
-
-#: ui/templates/em/_footer.html:32
-msgid "Confidentialité"
-msgstr ""
-
 #: ui/templates/em/_footer.html:37
 msgid "Avertissements"
-msgstr ""
-
-#: ui/templates/em/_footer.html:40 ui/templates/em/a-propos.html:175
-msgid "Nous contacter"
 msgstr ""
 
 #: ui/templates/em/_footer.html:44
@@ -487,11 +578,6 @@ msgstr ""
 msgid ""
 "Plateforme française d'analyse statistique du Loto et de l'EuroMillions "
 "par intelligence artificielle"
-msgstr ""
-
-#: ui/templates/em/accueil.html:712 ui/templates/em/euromillions-ia.html:140
-#: ui/templates/em/generateur.html:37 ui/templates/em/methodologie.html:47
-msgid "Analyse statistique"
 msgstr ""
 
 #: ui/templates/em/accueil.html:712

@@ -21,6 +21,14 @@ Allow: /historique
 Allow: /methodologie
 Allow: /moteur
 
+# === LAUNCHER MULTILINGUE (6 langues) ===
+Allow: /fr
+Allow: /en
+Allow: /es
+Allow: /pt
+Allow: /de
+Allow: /nl
+
 # === PAGES SEO PUBLIQUES — EUROMILLIONS (6 langues) ===
 # All EM pages are implicitly allowed by "Allow: /" above.
 # Explicit hubs listed for crawler clarity:

@@ -47,6 +47,7 @@ from routes.api_sponsor_track import router as sponsor_track_router    # Phase 1
 from routes.api_track import router as track_router                    # Phase RT-1 — Universal event tracking
 from routes.api_contact import router as contact_router                # V41 — Contact form
 from routes.admin import router as admin_router                        # Phase 1/4 — Admin back-office
+from routes.launcher import router as launcher_router                  # V53 — Multilingual launcher
 
 # ── JSON structured logging ──
 _log_handler = logging.StreamHandler(sys.stdout)
@@ -89,6 +90,7 @@ _SEO_ROUTES = {
     "/loto/statistiques", "/faq", "/news",
     "/historique", "/methodologie", "/moteur", "/disclaimer",
     "/mentions-legales", "/politique-confidentialite", "/politique-cookies",
+    "/fr", "/en", "/es", "/pt", "/de", "/nl",  # V53 launcher multilang
 }
 for _lu in _EM_URLS.values():
     _SEO_ROUTES.update(_lu.values())
@@ -652,6 +654,7 @@ app.mount("/ui", StaticFiles(directory="ui"), name="ui")
 # Routes (incluses via APIRouter)
 # =========================
 
+app.include_router(launcher_router)  # V53 — before pages_router (GET / redirect)
 app.include_router(pages_router)
 app.include_router(data_router)
 app.include_router(analyse_router)
@@ -754,7 +757,7 @@ async def redirect_exploration():
 # Anciennes URLs /ui/*.html → routes propres
 @app.get("/ui/launcher.html", include_in_schema=False)
 async def redirect_ui_launcher():
-    return RedirectResponse(url="/accueil", status_code=301)
+    return RedirectResponse(url="/", status_code=301)
 
 
 @app.get("/ui/loto.html", include_in_schema=False)

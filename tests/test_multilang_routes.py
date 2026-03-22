@@ -463,10 +463,11 @@ def test_sitemap_loto_no_hreflang():
     client = _get_client()
     resp = client.get("/sitemap.xml")
     body = resp.text
-    # The Loto /accueil block should not contain xhtml:link
-    # Check that hreflang tags only appear in EM section
-    loto_section = body.split(f"{BASE_URL}/euromillions")[0]
-    assert "xhtml:link" not in loto_section
+    # Extract the /accueil URL block — it must NOT have xhtml:link
+    # (V53: launcher blocks before Loto DO have hreflang, so isolate Loto only)
+    accueil_start = body.index(f"{BASE_URL}/accueil</loc>")
+    accueil_block = body[accueil_start:body.index("</url>", accueil_start)]
+    assert "xhtml:link" not in accueil_block
 
 
 def test_sitemap_url_count():

@@ -657,14 +657,23 @@ class TestContentLanguageLoto:
 # ═══════════════════════════════════════════════
 
 class TestContentLanguageLauncher:
-    """Launcher page must have Content-Language: fr."""
+    """V53: GET / is now a 302 redirect. GET /fr has Content-Language: fr."""
 
-    def test_content_language_fr_on_launcher(self):
-        """GET / returns Content-Language: fr."""
+    def test_launcher_redirect_302(self):
+        """GET / returns 302 redirect (V53 multilang launcher)."""
         cursor = _make_cursor()
         with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
             client = _get_client()
-            resp = client.get("/")
+            resp = client.get("/", follow_redirects=False)
+
+        assert resp.status_code == 302
+
+    def test_content_language_fr_on_launcher_fr(self):
+        """GET /fr returns Content-Language: fr."""
+        cursor = _make_cursor()
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            resp = client.get("/fr")
 
         assert resp.status_code == 200
         assert resp.headers.get("Content-Language") == "fr"
@@ -791,9 +800,9 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.5.004 (V49 release)."""
+        """APP_VERSION == 1.5.005 (V53 release)."""
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.5.004"
+        assert APP_VERSION == "1.5.005"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""
