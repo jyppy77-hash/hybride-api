@@ -155,3 +155,54 @@ class TestLauncherLinks:
     def test_em_link_es(self, client):
         resp = client.get("/es")
         assert 'href="/es/euromillions"' in resp.text
+
+
+# =========================================================================
+# Accept-Language fallback (no CF-IPCountry)
+# =========================================================================
+
+class TestAcceptLanguageFallback:
+    """When CF-IPCountry is absent, Accept-Language determines the redirect."""
+
+    @pytest.mark.parametrize("accept_lang,expected", [
+        ("fr-FR,fr;q=0.9,en;q=0.8", "fr"),
+        ("de-DE,de;q=0.9,en;q=0.8", "de"),
+        ("es-AR,es;q=0.9,en;q=0.8", "es"),
+        ("pt-BR,pt;q=0.9", "pt"),
+        ("nl-NL,nl;q=0.9", "nl"),
+        ("zh-CN,zh;q=0.9,en;q=0.8", "en"),  # zh unsupported, fallback to en
+        ("ja", "en"),                          # ja unsupported, no en → fallback
+        ("", "en"),                            # empty → fallback
+    ])
+    def test_accept_language_redirect(self, client, accept_lang, expected):
+        resp = client.get("/", headers={"accept-language": accept_lang}, follow_redirects=False)
+        assert resp.status_code == 302
+        assert resp.headers["location"] == f"/{expected}"
+
+    def test_no_headers_at_all(self, client):
+        """No CF-IPCountry, no Accept-Language → fallback /en."""
+        resp = client.get("/", follow_redirects=False)
+        assert resp.status_code == 302
+        assert resp.headers["location"] == "/en"
+
+
+# =========================================================================
+# CF-IPCountry takes priority over Accept-Language
+# =========================================================================
+
+class TestCFPriorityOverAcceptLang:
+    """CF-IPCountry wins when both headers are present."""
+
+    def test_cf_de_beats_accept_fr(self, client):
+        resp = client.get("/", headers={
+            "cf-ipcountry": "DE",
+            "accept-language": "fr-FR,fr;q=0.9",
+        }, follow_redirects=False)
+        assert resp.headers["location"] == "/de"
+
+    def test_cf_es_beats_accept_en(self, client):
+        resp = client.get("/", headers={
+            "cf-ipcountry": "ES",
+            "accept-language": "en-US,en;q=0.9",
+        }, follow_redirects=False)
+        assert resp.headers["location"] == "/es"

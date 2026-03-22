@@ -187,11 +187,24 @@ def _render_launcher(lang: str, request: Request) -> HTMLResponse:
 
 @router.get("/", include_in_schema=False)
 async def launcher_redirect(request: Request):
-    """302 redirect to /{lang} based on CF-IPCountry header."""
+    """302 redirect to /{lang} based on CF-IPCountry, then Accept-Language fallback."""
+    # 1. CF-IPCountry (Cloudflare GeoIP — most reliable when available)
     country = request.headers.get("cf-ipcountry", "").upper()
-    lang = COUNTRY_TO_LANG.get(country, DEFAULT_LANG)
-    if lang not in killswitch.ENABLED_LANGS:
+    lang = COUNTRY_TO_LANG.get(country)
+
+    # 2. Fallback: Accept-Language header (browser preference)
+    if not lang:
+        accept = request.headers.get("accept-language", "")
+        for part in accept.split(","):
+            short = part.split(";")[0].strip().lower()[:2]
+            if short in killswitch.ENABLED_LANGS:
+                lang = short
+                break
+
+    # 3. Fallback final
+    if not lang or lang not in killswitch.ENABLED_LANGS:
         lang = DEFAULT_LANG
+
     return RedirectResponse(url=f"/{lang}", status_code=302)
 
 
