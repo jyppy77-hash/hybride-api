@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LotoIA 1.0\n"
 "Report-Msgid-Bugs-To: contact@lotoia.fr\n"
-"POT-Creation-Date: 2026-03-22 11:47+0100\n"
+"POT-Creation-Date: 2026-03-22 14:13+0100\n"
 "PO-Revision-Date: 2026-02-27 00:00+0100\n"
 "Last-Translator: LotoIA <contact@lotoia.fr>\n"
 "Language: en\n"
@@ -82,20 +82,19 @@ msgstr "LotoIA — Lottery and EuroMillions AI Analysis | Free"
 
 #: ui/templates/launcher.html:10
 msgid ""
-"LotoIA : plateforme gratuite d'analyse statistique du Loto et de "
-"l'EuroMillions par intelligence artificielle. Moteur HYBRIDE, chatbot IA,"
-" statistiques en temps réel."
+"LotoIA : analyse statistique gratuite du Loto et de l'EuroMillions par "
+"intelligence artificielle. Chatbot IA, statistiques en temps réel."
 msgstr ""
 "LotoIA: free AI-powered statistical analysis of Lottery and EuroMillions."
 " HYBRIDE engine, AI chatbot, real-time statistics."
 
-#: ui/templates/launcher.html:408
+#: ui/templates/launcher.html:416
 msgid ""
 "Plateforme gratuite d'analyse statistique du Loto et de l'EuroMillions "
 "par intelligence artificielle"
 msgstr "Free AI-powered statistical analysis platform for Lottery and EuroMillions"
 
-#: ui/templates/launcher.html:427
+#: ui/templates/launcher.html:435
 msgid ""
 "Plateforme d'analyse statistique du Loto et de l'EuroMillions par "
 "intelligence artificielle"
@@ -103,32 +102,32 @@ msgstr "AI-powered statistical analysis platform for Lottery and EuroMillions"
 
 #: ui/templates/em/accueil.html:712 ui/templates/em/euromillions-ia.html:140
 #: ui/templates/em/generateur.html:37 ui/templates/em/methodologie.html:47
-#: ui/templates/launcher.html:440
+#: ui/templates/launcher.html:448
 msgid "Analyse statistique"
 msgstr "Statistical analysis"
 
-#: ui/templates/launcher.html:443
+#: ui/templates/launcher.html:451
 msgid "Technologie IA Grounded"
 msgstr "Grounded AI Technology"
 
-#: ui/templates/launcher.html:444
+#: ui/templates/launcher.html:452
 msgid "IA connectée en temps réel aux tirages officiels"
 msgstr "AI connected in real time to official draws"
 
-#: ui/templates/launcher.html:454 ui/templates/launcher.html:475
+#: ui/templates/launcher.html:462 ui/templates/launcher.html:483
 msgid "Tirages lundi, mercredi, samedi"
 msgstr "Draws Monday, Wednesday, Saturday"
 
-#: ui/templates/launcher.html:455 ui/templates/launcher.html:461
-#: ui/templates/launcher.html:469 ui/templates/launcher.html:476
+#: ui/templates/launcher.html:463 ui/templates/launcher.html:469
+#: ui/templates/launcher.html:477 ui/templates/launcher.html:484
 msgid "Actif"
 msgstr "Active"
 
-#: ui/templates/launcher.html:483
+#: ui/templates/launcher.html:491
 msgid "En savoir plus sur LotoIA"
 msgstr "Learn more about LotoIA"
 
-#: ui/templates/launcher.html:485
+#: ui/templates/launcher.html:493
 msgid ""
 "<strong>LotoIA</strong> est une plateforme <strong>gratuite</strong> "
 "d'<strong>analyse statistique du Loto</strong> et de "
@@ -144,7 +143,7 @@ msgstr ""
 "and EuroMillions draws to generate statistically balanced grids based on "
 "frequencies, delays and recent trends."
 
-#: ui/templates/launcher.html:486
+#: ui/templates/launcher.html:494
 msgid ""
 "Explorez les <strong>statistiques Loto France</strong> et les "
 "<strong>statistiques EuroMillions</strong>, consultez les "
@@ -162,7 +161,7 @@ msgstr ""
 " LotoIA are completely free, require no registration, and are connected "
 "to official draw data."
 
-#: ui/templates/launcher.html:487
+#: ui/templates/launcher.html:495
 msgid ""
 "LotoIA ne pr&eacute;dit pas les r&eacute;sultats du Loto ni de "
 "l'EuroMillions. La plateforme fournit une <strong>analyse "
@@ -175,24 +174,24 @@ msgstr ""
 "understand historical data. Gambling involves risk: please play "
 "responsibly."
 
-#: ui/templates/em/_footer.html:30 ui/templates/launcher.html:495
+#: ui/templates/em/_footer.html:30 ui/templates/launcher.html:503
 msgid "Mentions légales"
 msgstr "Legal notices"
 
-#: ui/templates/em/_footer.html:32 ui/templates/launcher.html:497
+#: ui/templates/em/_footer.html:32 ui/templates/launcher.html:505
 msgid "Confidentialité"
 msgstr "Privacy"
 
-#: ui/templates/launcher.html:499
+#: ui/templates/launcher.html:507
 msgid "Cookies"
 msgstr "Cookies"
 
 #: ui/templates/em/_footer.html:40 ui/templates/em/a-propos.html:175
-#: ui/templates/launcher.html:501
+#: ui/templates/launcher.html:509
 msgid "Nous contacter"
 msgstr "Contact us"
 
-#: ui/templates/launcher.html:503
+#: ui/templates/launcher.html:511
 msgid "Analyse statistique Loto & EuroMillions"
 msgstr "Lottery & EuroMillions Statistical Analysis"
 
@@ -4854,12 +4853,6 @@ msgstr "appearances"
 #~ "engine, hot cold numbers, HYBRIDE, "
 #~ "euromillions trends"
 
-#: config/i18n.py:76
-msgid "1 tirage"
-msgid_plural "{count} tirages"
-msgstr[0] "1 draw"
-msgstr[1] "{count} draws"
-
 #~ msgid "LotoIA &mdash; Analyse Loto et EuroMillions par IA | Gratuit"
 #~ msgstr ""
 
@@ -4882,4 +4875,22 @@ msgstr[1] "{count} draws"
 
 #~ msgid "Analyse statistique Loto &amp; EuroMillions"
 #~ msgstr ""
+
+#~ msgid ""
+#~ "LotoIA : plateforme gratuite d'analyse "
+#~ "statistique du Loto et de l'EuroMillions"
+#~ " par intelligence artificielle. Moteur "
+#~ "HYBRIDE, chatbot IA, statistiques en "
+#~ "temps réel."
+#~ msgstr ""
+#~ "LotoIA: free AI-powered statistical "
+#~ "analysis of Lottery and EuroMillions. "
+#~ "HYBRIDE engine, AI chatbot, real-time"
+#~ " statistics."
+
+#: config/i18n.py:76
+msgid "1 tirage"
+msgid_plural "{count} tirages"
+msgstr[0] "1 draw"
+msgstr[1] "{count} draws"
 
