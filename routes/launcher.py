@@ -205,7 +205,10 @@ async def launcher_redirect(request: Request):
     if not lang or lang not in killswitch.ENABLED_LANGS:
         lang = DEFAULT_LANG
 
-    return RedirectResponse(url=f"/{lang}", status_code=302)
+    return RedirectResponse(
+        url=f"/{lang}", status_code=302,
+        headers={"Vary": "Accept-Language"},
+    )
 
 
 # ── GET /{lang} → launcher page ────────────────────────────────────────
