@@ -10,31 +10,51 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from engine.hybride_em import (
-    generate_grids,
-    valider_contraintes,
-    normaliser_en_probabilites,
-    generer_badges,
-    generer_etoiles,
-    _minmax_normalize,
-    _apply_generation_penalties,
-    _apply_star_penalties,
-    _apply_anti_collision,
-    _apply_star_anti_collision,
-    _calculer_score_final,
-    _GENERATION_PENALTY_COEFFS,
-    TEMPERATURE_BY_MODE,
-    ANTI_COLLISION_HIGH_BOOST,
-    SUPERSTITIOUS_NUMBERS,
-    EM_HIGH_THRESHOLD,
-    SUPERSTITIOUS_STARS,
-    STAR_ANTI_COLLISION_MALUS,
-    MAX_TENTATIVES,
-    MIN_CONFORMITE,
-    BOULE_MIN, BOULE_MAX,
-    ETOILE_MIN, ETOILE_MAX,
-    NB_BOULES, NB_ETOILES,
-)
+from config.engine import EM_CONFIG
+from engine.hybride_em import generate_grids, valider_contraintes, generer_badges, generer_etoiles
+from engine.hybride_base import HybrideEngine
+
+# Direct references — migrated from backward-compat re-exports (V57 audit fix F02).
+_minmax_normalize = HybrideEngine._minmax_normalize
+normaliser_en_probabilites = HybrideEngine.normaliser_en_probabilites
+
+# Singleton engine for wrapper tests
+_em_engine = HybrideEngine(EM_CONFIG)
+
+
+def _apply_generation_penalties(scores, recent_draws):
+    return _em_engine.apply_boule_penalties(scores, recent_draws)
+
+
+def _apply_star_penalties(scores, recent_draws):
+    return _em_engine.apply_secondary_penalties(scores, recent_draws)
+
+
+def _apply_anti_collision(scores):
+    return _em_engine.apply_anti_collision(scores)
+
+
+def _apply_star_anti_collision(scores):
+    return _em_engine.apply_secondary_anti_collision(scores)
+
+
+def _calculer_score_final(score_conformite):
+    return HybrideEngine._calculer_score_final(score_conformite, EM_CONFIG.star_to_legacy_score)
+
+
+_GENERATION_PENALTY_COEFFS = list(EM_CONFIG.penalty_coefficients)
+TEMPERATURE_BY_MODE = dict(EM_CONFIG.temperature_by_mode)
+ANTI_COLLISION_HIGH_BOOST = EM_CONFIG.anti_collision_high_boost
+SUPERSTITIOUS_NUMBERS = EM_CONFIG.superstitious_numbers
+EM_HIGH_THRESHOLD = EM_CONFIG.anti_collision_threshold
+SUPERSTITIOUS_STARS = EM_CONFIG.superstitious_secondary
+STAR_ANTI_COLLISION_MALUS = EM_CONFIG.secondary_anti_collision_malus
+MAX_TENTATIVES = EM_CONFIG.max_tentatives
+MIN_CONFORMITE = EM_CONFIG.min_conformite
+BOULE_MIN, BOULE_MAX = EM_CONFIG.num_min, EM_CONFIG.num_max
+ETOILE_MIN, ETOILE_MAX = EM_CONFIG.secondary_min, EM_CONFIG.secondary_max
+NB_BOULES = EM_CONFIG.num_count
+NB_ETOILES = EM_CONFIG.secondary_count
 
 
 # ═══════════════════════════════════════════════════════════════════════

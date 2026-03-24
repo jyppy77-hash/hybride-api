@@ -751,9 +751,9 @@ class HybrideEngine:
             date_min = result['min_date'] if result else None
             date_max = result['max_date'] if result else None
 
-            # Real 3-window weights: principale/recente/globale.
-            _display_weights = {"conservative": "50/30/20", "balanced": "40/35/25", "recent": "25/35/40"}
-            ponderation = _display_weights.get(mode, "40/35/25")
+            # Real 3-window weights: principale/recente/globale — generated from config.
+            weights = self.cfg.modes.get(mode, self.cfg.modes['balanced'])
+            ponderation = '/'.join(str(int(w * 100)) for w in weights)
 
             metadata = {
                 'mode': self.cfg.mode_label,

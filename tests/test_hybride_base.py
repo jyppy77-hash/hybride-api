@@ -805,3 +805,124 @@ class TestGetEngineReturnsInstance:
         engine = get_engine(cfg)
         assert isinstance(engine, HybrideEngine)
         assert engine.cfg.game == "em"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V57 — F05: _display_weights generated from config
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestDisplayWeightsDynamic:
+
+    @pytest.mark.asyncio
+    @patch("engine.hybride.get_connection")
+    async def test_display_weights_from_config(self, mock_get_conn):
+        """Les poids affiches sont generes depuis cfg.modes (pas hardcodes)."""
+        from engine.hybride import generate_grids
+        cursor = AsyncSmartMockCursor()
+        mock_get_conn.side_effect = lambda: make_async_conn(cursor)
+        random.seed(42)
+
+        for mode, expected in [
+            ("conservative", "50/30/20"),
+            ("balanced", "40/35/25"),
+            ("recent", "25/35/40"),
+        ]:
+            result = await generate_grids(n=1, mode=mode)
+            assert result["metadata"]["ponderation"] == expected, (
+                f"mode={mode}: expected {expected}, got {result['metadata']['ponderation']}"
+            )
+
+    def test_display_weights_format(self):
+        """Le format est 'XX/YY/ZZ' (entiers, separes par /)."""
+        for cfg in (LOTO_CONFIG, EM_CONFIG):
+            for mode, weights in cfg.modes.items():
+                label = '/'.join(str(int(w * 100)) for w in weights)
+                parts = label.split('/')
+                assert len(parts) == 3
+                assert all(p.isdigit() for p in parts)
+                assert sum(int(p) for p in parts) == 100
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V57 — F01: Chatbot Loto lang parameter
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestChatbotLotoLangParam:
+
+    def test_prepare_chat_context_accepts_lang(self):
+        """_prepare_chat_context accepte un parametre lang."""
+        import inspect
+        from services.chat_pipeline import _prepare_chat_context
+        sig = inspect.signature(_prepare_chat_context)
+        assert "lang" in sig.parameters
+        assert sig.parameters["lang"].default == "fr"
+
+    def test_handle_chat_accepts_lang(self):
+        """handle_chat accepte un parametre lang."""
+        import inspect
+        from services.chat_pipeline import handle_chat
+        sig = inspect.signature(handle_chat)
+        assert "lang" in sig.parameters
+        assert sig.parameters["lang"].default == "fr"
+
+    def test_handle_chat_stream_accepts_lang(self):
+        """handle_chat_stream accepte un parametre lang."""
+        import inspect
+        from services.chat_pipeline import handle_chat_stream
+        sig = inspect.signature(handle_chat_stream)
+        assert "lang" in sig.parameters
+        assert sig.parameters["lang"].default == "fr"
+
+    def test_schema_has_lang_field(self):
+        """HybrideChatRequest a un champ lang avec default 'fr'."""
+        from schemas import HybrideChatRequest
+        req = HybrideChatRequest(message="test")
+        assert req.lang == "fr"
+
+    def test_schema_accepts_valid_lang(self):
+        """HybrideChatRequest accepte les 6 langues valides."""
+        from schemas import HybrideChatRequest
+        for lang in ("fr", "en", "es", "pt", "de", "nl"):
+            req = HybrideChatRequest(message="test", lang=lang)
+            assert req.lang == lang
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V57 — F02: Re-exports cleaned up
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestReExportsCleanedUp:
+
+    def test_hybride_py_no_orphan_constants(self):
+        """hybride.py ne re-exporte plus de constantes config."""
+        import inspect
+        import engine.hybride as mod
+        source = inspect.getsource(mod)
+        # These constants should NOT be in hybride.py anymore
+        for name in ("_GENERATION_PENALTY_COEFFS", "TEMPERATURE_BY_MODE",
+                      "ANTI_COLLISION_HIGH_BOOST", "LOTO_HIGH_THRESHOLD"):
+            assert f"\n{name} =" not in source, f"{name} still re-exported in hybride.py"
+
+    def test_hybride_em_no_orphan_constants(self):
+        """hybride_em.py ne re-exporte plus de constantes config."""
+        import inspect
+        import engine.hybride_em as mod
+        source = inspect.getsource(mod)
+        for name in ("_GENERATION_PENALTY_COEFFS", "TEMPERATURE_BY_MODE",
+                      "ANTI_COLLISION_HIGH_BOOST", "EM_HIGH_THRESHOLD",
+                      "TABLE", "BOULE_MIN", "BOULE_MAX"):
+            assert f"\n{name} =" not in source, f"{name} still re-exported in hybride_em.py"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V57 — F04: score_type in custom-grid response
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestCustomGridScoreType:
+
+    def test_score_type_field_in_source(self):
+        """api_analyse_unified.py retourne score_type dans la reponse custom-grid."""
+        import inspect
+        import routes.api_analyse_unified as mod
+        source = inspect.getsource(mod)
+        assert '"score_type"' in source or "'score_type'" in source

@@ -75,6 +75,7 @@ class HybrideChatRequest(BaseModel):
     message: str = Field(..., max_length=2000)
     page: Literal["accueil", "loto", "simulateur", "statistiques"] = "accueil"
     history: list[ChatMessage] = Field(default=[], max_length=20)
+    lang: str = Field(default="fr", pattern=r"^(fr|en|pt|es|de|nl)$")
 
 class HybrideChatResponse(BaseModel):
     response: str

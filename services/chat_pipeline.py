@@ -51,7 +51,7 @@ logger = logging.getLogger(__name__)
 # HYBRIDE Chatbot — Pipeline 12 phases
 # =========================
 
-async def _prepare_chat_context(message: str, history: list, page: str, http_client):
+async def _prepare_chat_context(message: str, history: list, page: str, http_client, lang: str = "fr"):
     """
     Phases I-SQL : prepare le contexte pour l'appel Gemini.
     Retourne (early_return_or_None, ctx_dict_or_None).
@@ -180,7 +180,7 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
     if _detect_site_rating(message):
         _phase = "R"
         logger.info("[HYBRIDE CHAT] Site rating intent detected")
-        return {"response": get_site_rating_response("fr"), "source": "hybride_rating_invite", "mode": mode, "_chat_meta": {"phase": _phase, "t0": _t0}}, None
+        return {"response": get_site_rating_response(lang), "source": "hybride_rating_invite", "mode": mode, "_chat_meta": {"phase": _phase, "t0": _t0}}, None
 
     # ── Phase G : Détection génération de grille ──
     _generation_context = ""
@@ -199,7 +199,7 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
             else:
                 _gen_result = await asyncio.wait_for(
                     _gen_loto(
-                        n=_grid_count, mode=_gen_mode, lang="fr",
+                        n=_grid_count, mode=_gen_mode, lang=lang,
                         forced_nums=_forced["forced_nums"] or None,
                         forced_chance=_forced["forced_chance"],
                         exclusions=_exclusions if any(_exclusions.values()) else None,
@@ -400,7 +400,7 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
     if not _continuation_mode and not enrichment_context:
         if _detect_cooccurrence_high_n(message):
             _phase = "P+"
-            _high_n_resp = _get_cooccurrence_high_n_response(message, lang="fr")
+            _high_n_resp = _get_cooccurrence_high_n_response(message, lang=lang)
             if _insult_prefix:
                 _high_n_resp = _insult_prefix + "\n\n" + _high_n_resp
             logger.info("[HYBRIDE CHAT] Co-occurrence N>3 — redirection paires/triplets")
@@ -615,14 +615,14 @@ def _log_from_meta(meta, module, lang, message, response_preview="",
     )
 
 
-async def handle_chat(message: str, history: list, page: str, http_client) -> dict:
+async def handle_chat(message: str, history: list, page: str, http_client, lang: str = "fr") -> dict:
     """
     Pipeline 12 phases du chatbot HYBRIDE.
     Retourne dict(response=str, source=str, mode=str).
     """
-    early, ctx = await _prepare_chat_context(message, history, page, http_client)
+    early, ctx = await _prepare_chat_context(message, history, page, http_client, lang=lang)
     if early:
-        _log_from_meta(early.get("_chat_meta"), "loto", "fr", message, early.get("response", ""))
+        _log_from_meta(early.get("_chat_meta"), "loto", lang, message, early.get("response", ""))
         return early
 
     mode = ctx["mode"]
@@ -665,26 +665,26 @@ async def handle_chat(message: str, history: list, page: str, http_client) -> di
                         logger.info(
                             f"[HYBRIDE CHAT] OK (page={page}, mode={mode})"
                         )
-                        _log_from_meta(ctx.get("_chat_meta"), "loto", "fr", message, text)
+                        _log_from_meta(ctx.get("_chat_meta"), "loto", lang, message, text)
                         return {"response": text, "source": "gemini", "mode": mode}
 
         logger.warning(
             f"[HYBRIDE CHAT] Reponse Gemini invalide: {response.status_code}"
         )
-        _log_from_meta(ctx.get("_chat_meta"), "loto", "fr", message, is_error=True, error_detail=f"HTTP {response.status_code}")
+        _log_from_meta(ctx.get("_chat_meta"), "loto", lang, message, is_error=True, error_detail=f"HTTP {response.status_code}")
         return {"response": FALLBACK_RESPONSE, "source": "fallback", "mode": mode}
 
     except CircuitOpenError:
         logger.warning("[HYBRIDE CHAT] Circuit breaker ouvert — fallback")
-        _log_from_meta(ctx.get("_chat_meta"), "loto", "fr", message, is_error=True, error_detail="CircuitOpen")
+        _log_from_meta(ctx.get("_chat_meta"), "loto", lang, message, is_error=True, error_detail="CircuitOpen")
         return {"response": FALLBACK_RESPONSE, "source": "fallback_circuit", "mode": mode}
     except httpx.TimeoutException:
         logger.warning("[HYBRIDE CHAT] Timeout Gemini (15s) — fallback")
-        _log_from_meta(ctx.get("_chat_meta"), "loto", "fr", message, is_error=True, error_detail="Timeout")
+        _log_from_meta(ctx.get("_chat_meta"), "loto", lang, message, is_error=True, error_detail="Timeout")
         return {"response": FALLBACK_RESPONSE, "source": "fallback", "mode": mode}
     except Exception as e:
         logger.error(f"[HYBRIDE CHAT] Erreur Gemini: {e}")
-        _log_from_meta(ctx.get("_chat_meta"), "loto", "fr", message, is_error=True, error_detail=str(e)[:255])
+        _log_from_meta(ctx.get("_chat_meta"), "loto", lang, message, is_error=True, error_detail=str(e)[:255])
         return {"response": FALLBACK_RESPONSE, "source": "fallback", "mode": mode}
 
 
@@ -693,14 +693,14 @@ def _sse_event(data):
     return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
 
 
-async def handle_chat_stream(message: str, history: list, page: str, http_client):
+async def handle_chat_stream(message: str, history: list, page: str, http_client, lang: str = "fr"):
     """
     Async generator — SSE streaming du chatbot HYBRIDE.
     Yields SSE event strings: data: {...}\n\n
     """
-    early, ctx = await _prepare_chat_context(message, history, page, http_client)
+    early, ctx = await _prepare_chat_context(message, history, page, http_client, lang=lang)
     if early:
-        _log_from_meta(early.get("_chat_meta"), "loto", "fr", message, early.get("response", ""))
+        _log_from_meta(early.get("_chat_meta"), "loto", lang, message, early.get("response", ""))
         yield _sse_event({
             "chunk": early["response"],
             "source": early["source"],
@@ -724,7 +724,7 @@ async def handle_chat_stream(message: str, history: list, page: str, http_client
         async for chunk in stream_gemini_chat(
             http_client, ctx["gem_api_key"], ctx["system_prompt"],
             ctx["contents"], timeout=15.0,
-            call_type="chat_loto", lang="fr",
+            call_type="chat_loto", lang=lang,
         ):
             safe = _buf.add_chunk(chunk)
             if not safe:
@@ -745,7 +745,7 @@ async def handle_chat_stream(message: str, history: list, page: str, http_client
             })
 
         if not has_chunks:
-            _log_from_meta(ctx.get("_chat_meta"), "loto", "fr", message, FALLBACK_RESPONSE, is_error=True, error_detail="NoChunks")
+            _log_from_meta(ctx.get("_chat_meta"), "loto", lang, message, FALLBACK_RESPONSE, is_error=True, error_detail="NoChunks")
             yield _sse_event({
                 "chunk": FALLBACK_RESPONSE,
                 "source": "fallback", "mode": mode, "is_done": True,
@@ -762,26 +762,26 @@ async def handle_chat_stream(message: str, history: list, page: str, http_client
         yield _sse_event({
             "chunk": "", "source": "gemini", "mode": mode, "is_done": True,
         })
-        _log_from_meta(ctx.get("_chat_meta"), "loto", "fr", message, "".join(_stream_chunks))
+        _log_from_meta(ctx.get("_chat_meta"), "loto", lang, message, "".join(_stream_chunks))
         logger.info(f"[HYBRIDE CHAT] Stream OK (page={page}, mode={mode})")
 
     except CircuitOpenError:
         logger.warning("[HYBRIDE CHAT] Circuit breaker ouvert — fallback")
-        _log_from_meta(ctx.get("_chat_meta"), "loto", "fr", message, is_error=True, error_detail="CircuitOpen")
+        _log_from_meta(ctx.get("_chat_meta"), "loto", lang, message, is_error=True, error_detail="CircuitOpen")
         yield _sse_event({
             "chunk": FALLBACK_RESPONSE,
             "source": "fallback_circuit", "mode": mode, "is_done": True,
         })
     except httpx.TimeoutException:
         logger.warning("[HYBRIDE CHAT] Timeout Gemini (15s) — fallback")
-        _log_from_meta(ctx.get("_chat_meta"), "loto", "fr", message, is_error=True, error_detail="Timeout")
+        _log_from_meta(ctx.get("_chat_meta"), "loto", lang, message, is_error=True, error_detail="Timeout")
         yield _sse_event({
             "chunk": FALLBACK_RESPONSE,
             "source": "fallback", "mode": mode, "is_done": True,
         })
     except Exception as e:
         logger.error(f"[HYBRIDE CHAT] Erreur streaming: {e}")
-        _log_from_meta(ctx.get("_chat_meta"), "loto", "fr", message, is_error=True, error_detail=str(e)[:255])
+        _log_from_meta(ctx.get("_chat_meta"), "loto", lang, message, is_error=True, error_detail=str(e)[:255])
         yield _sse_event({
             "chunk": FALLBACK_RESPONSE,
             "source": "fallback", "mode": mode, "is_done": True,

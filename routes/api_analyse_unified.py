@@ -544,7 +544,11 @@ async def unified_analyze_custom_grid(
         score = int(0.6 * score_conformite + 0.4 * score_freq)
         score = max(0, min(100, score))
 
-        # Badges
+        # Badges — intentionally separate from engine _generer_badges().
+        # Engine badges evaluate hybride *quality scores* (scoring algorithm),
+        # custom-grid badges evaluate *frequency distribution* (empirical counts).
+        # Final badge is "custom"/"custom_em" (not "hybride_loto"/"hybride_em")
+        # to clearly signal different methodology to the user.
         b = _badges(lang)
         badges = []
         if freq_moyenne > freq_max_theorique * 1.1:
@@ -669,6 +673,7 @@ async def unified_analyze_custom_grid(
             "success": True,
             "nums": nums,
             "score": score,
+            "score_type": "conformite_100",
             "comparaison": comparaison,
             "badges": badges,
             "details": {

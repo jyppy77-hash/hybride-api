@@ -72,6 +72,7 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
             payload.history,
             payload.page,
             request.app.state.httpx_client,
+            lang=payload.lang,
         ),
         media_type="text/event-stream",
         headers=_SSE_HEADERS,

@@ -8,26 +8,42 @@ from unittest.mock import patch
 
 import pytest
 
-from engine.hybride import (
-    generate,
-    generate_grids,
-    valider_contraintes,
-    normaliser_en_probabilites,
-    generer_badges,
-    _minmax_normalize,
-    _apply_generation_penalties,
-    _apply_chance_penalties,
-    _apply_anti_collision,
-    _calculer_score_final,
-    _GENERATION_PENALTY_COEFFS,
-    TEMPERATURE_BY_MODE,
-    ANTI_COLLISION_HIGH_BOOST,
-    ANTI_COLLISION_SUPERSTITIOUS_MALUS,
-    SUPERSTITIOUS_NUMBERS,
-    LOTO_HIGH_THRESHOLD,
-    MAX_TENTATIVES,
-    MIN_CONFORMITE,
-)
+from config.engine import LOTO_CONFIG
+from engine.hybride import generate, generate_grids, valider_contraintes, generer_badges
+from engine.hybride_base import HybrideEngine
+
+# Direct references — migrated from backward-compat re-exports (V57 audit fix F02).
+_minmax_normalize = HybrideEngine._minmax_normalize
+normaliser_en_probabilites = HybrideEngine.normaliser_en_probabilites
+
+# Singleton engine for wrapper tests
+_engine = HybrideEngine(LOTO_CONFIG)
+
+
+def _apply_generation_penalties(scores, recent_draws):
+    return _engine.apply_boule_penalties(scores, recent_draws)
+
+
+def _apply_chance_penalties(freq_chance, recent_draws):
+    return _engine.apply_secondary_penalties(freq_chance, recent_draws)
+
+
+def _apply_anti_collision(scores, game="loto"):
+    return _engine.apply_anti_collision(scores)
+
+
+def _calculer_score_final(score_conformite):
+    return HybrideEngine._calculer_score_final(score_conformite, LOTO_CONFIG.star_to_legacy_score)
+
+
+_GENERATION_PENALTY_COEFFS = list(LOTO_CONFIG.penalty_coefficients)
+TEMPERATURE_BY_MODE = dict(LOTO_CONFIG.temperature_by_mode)
+ANTI_COLLISION_HIGH_BOOST = LOTO_CONFIG.anti_collision_high_boost
+ANTI_COLLISION_SUPERSTITIOUS_MALUS = LOTO_CONFIG.anti_collision_superstitious_malus
+SUPERSTITIOUS_NUMBERS = LOTO_CONFIG.superstitious_numbers
+LOTO_HIGH_THRESHOLD = LOTO_CONFIG.anti_collision_threshold
+MAX_TENTATIVES = LOTO_CONFIG.max_tentatives
+MIN_CONFORMITE = LOTO_CONFIG.min_conformite
 from tests.conftest import AsyncSmartMockCursor, make_async_conn, FAKE_TIRAGES
 
 
