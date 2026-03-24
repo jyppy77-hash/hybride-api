@@ -27,7 +27,6 @@ from engine.hybride import (
     LOTO_HIGH_THRESHOLD,
     MAX_TENTATIVES,
     MIN_CONFORMITE,
-    CONFIG,
 )
 from tests.conftest import AsyncSmartMockCursor, make_async_conn, FAKE_TIRAGES
 

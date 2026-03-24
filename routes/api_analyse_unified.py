@@ -11,9 +11,7 @@ import logging
 import db_cloudsql
 from rate_limit import limiter
 from config.games import ValidGame, get_config, get_engine
-from config.engine import LOTO_CONFIG, EM_CONFIG
 from config.i18n import _badges, _analysis_strings
-from engine.hybride_base import HybrideEngine
 from services.penalization import compute_penalized_ranking
 
 logger = logging.getLogger(__name__)
@@ -531,12 +529,15 @@ async def unified_analyze_custom_grid(
             else:
                 current_run = 1
 
-        # Score de conformite — delegue au moteur (source unique, V55 audit fix F06).
-        engine_cfg = LOTO_CONFIG if is_loto else EM_CONFIG
-        _engine = HybrideEngine(engine_cfg)
+        # Score de conformite — delegue au singleton moteur (V56 audit fix F06).
+        _engine = get_engine(cfg)
         engine_conformite = _engine.valider_contraintes(nums)  # 0.0-1.0 multiplicatif
         score_conformite = int(engine_conformite * 100)
 
+        # Score custom-grid: 0-100 lineaire (60% conformite + 40% frequence).
+        # NOTE: Cette echelle est differente du score moteur generate_grids()
+        # qui utilise un star-mapping discretise (50/60/75/85/95).
+        # Les deux scores ne sont PAS comparables entre eux.
         freq_moyenne = sum(frequencies) / 5
         freq_max_theorique = total_tirages * 5 / cfg.num_range[1]
         score_freq = min(100, (freq_moyenne / freq_max_theorique) * 100) if freq_max_theorique else 0

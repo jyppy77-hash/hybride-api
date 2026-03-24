@@ -572,6 +572,10 @@ class HybrideEngine:
             p_list = [probas[n] for n in disponibles]
 
             numeros = list(forced_nums)
+            # Weighted sampling without replacement: pop chosen number and its
+            # weight after each draw. random.choices() uses relative weights,
+            # so the remaining (un-normalized) weights are correct — no need
+            # to re-normalize to sum=1.0 after each pop.
             for _ in range(nb_to_draw):
                 num = random.choices(disponibles, weights=p_list, k=1)[0]
                 numeros.append(num)
@@ -640,8 +644,55 @@ class HybrideEngine:
         nb_pairs = sum(1 for n in numeros if n % 2 == 0)
         if nb_pairs == 2 or nb_pairs == 3:
             badges.append(b["even_odd"])
-        badges.append(b["hybride_loto"])
+        badges.append(b[self.cfg.badge_key])
         return badges
+
+    # ── Window health check ──────────────────────────────────────────
+
+    async def _check_degraded_windows(
+        self, conn, nb_tirages: int, date_min, date_max,
+    ) -> list[dict]:
+        """Check if time windows have sufficient data (<50% of expected draws).
+
+        Returns a list of degraded window descriptors (empty if all healthy).
+        Uses the actual draws-per-year rate from DB to estimate expected counts.
+        """
+        if not date_min or not date_max or nb_tirages == 0:
+            return []
+
+        from datetime import date as _date
+        d_min = date_min if isinstance(date_min, _date) else _date.fromisoformat(str(date_min))
+        d_max = date_max if isinstance(date_max, _date) else _date.fromisoformat(str(date_max))
+        span_days = (d_max - d_min).days
+        if span_days <= 0:
+            return []
+
+        draws_per_year = nb_tirages / (span_days / 365.25)
+        ref = await self.get_reference_date(conn)
+        degraded: list[dict] = []
+        cursor = await conn.cursor()
+
+        for name, years in [
+            ("principale", self.cfg.fenetre_principale_annees),
+            ("recente", self.cfg.fenetre_recente_annees),
+        ]:
+            date_limit = ref - timedelta(days=years * 365.25)
+            await cursor.execute(
+                f"SELECT COUNT(*) as count FROM {self.cfg.table_name} "
+                f"WHERE date_de_tirage >= %s",
+                (date_limit.strftime("%Y-%m-%d"),),
+            )
+            actual = (await cursor.fetchone())["count"]
+            expected = int(years * draws_per_year)
+            if expected > 0 and actual < expected * 0.5:
+                degraded.append({
+                    "window": name,
+                    "expected": expected,
+                    "actual": actual,
+                    "impact": f"Less than 50% of expected draws for {years}y window",
+                })
+
+        return degraded
 
     # ── Main API ──────────────────────────────────────────────────────
 
@@ -723,6 +774,9 @@ class HybrideEngine:
                     'note': self._ANTI_COLLISION_NOTES.get(lang, self._ANTI_COLLISION_NOTES['fr']),
                 },
                 'temperature': self.cfg.temperature_by_mode.get(mode, 1.3),
+                'degraded_windows': await self._check_degraded_windows(
+                    conn, nb_tirages, date_min, date_max,
+                ),
             }
 
             return {'grids': grilles, 'metadata': metadata}

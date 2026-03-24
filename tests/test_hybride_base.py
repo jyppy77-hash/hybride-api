@@ -669,3 +669,139 @@ class TestDiversitySeedDocumented:
         random.seed(42)
         draws2 = [random.choices(range(1, 50), k=5) for _ in range(10)]
         assert draws == draws2  # Same seed → same output
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V56 — F04: degraded_windows flag in metadata
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestDegradedWindows:
+
+    @pytest.mark.asyncio
+    @patch("engine.hybride.get_connection")
+    async def test_metadata_has_degraded_windows_key(self, mock_get_conn):
+        """generate_grids metadata always contains degraded_windows."""
+        from engine.hybride import generate_grids
+        cursor = AsyncSmartMockCursor()
+        mock_get_conn.side_effect = lambda: make_async_conn(cursor)
+        random.seed(42)
+
+        result = await generate_grids(n=1, mode="balanced")
+        assert "degraded_windows" in result["metadata"]
+        assert isinstance(result["metadata"]["degraded_windows"], list)
+
+    @pytest.mark.asyncio
+    @patch("engine.hybride.get_connection")
+    async def test_mock_flags_principale_as_degraded(self, mock_get_conn):
+        """Mock has ~600 days of data, 5-year principale window is correctly degraded."""
+        from engine.hybride import generate_grids
+        cursor = AsyncSmartMockCursor()
+        mock_get_conn.side_effect = lambda: make_async_conn(cursor)
+        random.seed(42)
+
+        result = await generate_grids(n=1, mode="balanced")
+        degraded = result["metadata"]["degraded_windows"]
+        # Mock has 200 tirages / 600 days — principale (5y) is degraded,
+        # recente (2y) is not (200 draws ≥ 50% of expected for 2 years).
+        windows = {d["window"] for d in degraded}
+        assert "principale" in windows
+        assert "recente" not in windows
+
+    @pytest.mark.asyncio
+    async def test_degraded_window_flagged_when_few_draws(self):
+        """Window with <50% of expected draws produces a flag."""
+        from unittest.mock import AsyncMock
+        from datetime import date
+
+        engine = HybrideEngine(LOTO_CONFIG)
+
+        # Simulate a DB with 1000 tirages over 10 years (~100/year) but
+        # only 30 in last 5y (principale) and 10 in last 2y (recente).
+        # Expected principale: 5 * 100 = 500, actual=30 → 30 < 250 → flagged
+        # Expected recente:    2 * 100 = 200, actual=10 → 10 < 100 → flagged
+        cursor = AsyncMock()
+        results_queue = [
+            {"max_date": date(2026, 3, 1)},  # get_reference_date
+            {"count": 30},   # principale window count
+            {"count": 10},   # recente window count
+        ]
+        call_idx = {"i": 0}
+
+        async def mock_fetchone():
+            r = results_queue[call_idx["i"]]
+            call_idx["i"] += 1
+            return r
+
+        cursor.execute = AsyncMock()
+        cursor.fetchone = mock_fetchone
+        conn = AsyncMock()
+        conn.cursor = AsyncMock(return_value=cursor)
+
+        degraded = await engine._check_degraded_windows(
+            conn, nb_tirages=1000,
+            date_min=date(2016, 1, 1), date_max=date(2026, 3, 1),
+        )
+        assert len(degraded) >= 1
+        windows = {d["window"] for d in degraded}
+        assert "principale" in windows
+        assert "recente" in windows
+        # Each entry has expected > actual
+        for d in degraded:
+            assert d["actual"] < d["expected"]
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V56 — F03: badge_key config-driven (no _EMEngine override)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestBadgeKeyConfig:
+
+    def test_loto_badge_key(self):
+        """LOTO_CONFIG has badge_key='hybride_loto'."""
+        assert LOTO_CONFIG.badge_key == "hybride_loto"
+
+    def test_em_badge_key(self):
+        """EM_CONFIG has badge_key='hybride_em'."""
+        assert EM_CONFIG.badge_key == "hybride_em"
+
+    def test_loto_badge_uses_config_key(self):
+        """Loto engine generates badge from config.badge_key."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        scores = {n: 1.0 for n in range(1, 50)}
+        badges = engine._generer_badges([5, 15, 25, 35, 45], scores, lang="fr")
+        assert "Hybride V1" in badges
+
+    def test_em_badge_uses_config_key(self):
+        """EM engine generates badge from config.badge_key (no subclass needed)."""
+        engine = HybrideEngine(EM_CONFIG)
+        scores = {n: 1.0 for n in range(1, 51)}
+        badges = engine._generer_badges([5, 15, 25, 35, 45], scores, lang="fr")
+        assert any("EM" in b for b in badges)
+
+    def test_em_no_subclass_needed(self):
+        """EM engine is a plain HybrideEngine (no _EMEngine subclass)."""
+        from engine.hybride_em import _engine
+        assert type(_engine) is HybrideEngine
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V56 — F01: get_engine returns instance
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestGetEngineReturnsInstance:
+
+    def test_get_engine_returns_hybride_engine_loto(self):
+        """get_engine for loto returns a HybrideEngine instance."""
+        from config.games import get_config, get_engine, ValidGame
+        cfg = get_config(ValidGame.loto)
+        engine = get_engine(cfg)
+        assert isinstance(engine, HybrideEngine)
+        assert engine.cfg.game == "loto"
+
+    def test_get_engine_returns_hybride_engine_em(self):
+        """get_engine for EM returns a HybrideEngine instance."""
+        from config.games import get_config, get_engine, ValidGame
+        cfg = get_config(ValidGame.euromillions)
+        engine = get_engine(cfg)
+        assert isinstance(engine, HybrideEngine)
+        assert engine.cfg.game == "em"

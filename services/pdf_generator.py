@@ -1,3 +1,12 @@
+"""
+PDF Generator — Loto META ANALYSE.
+
+Pure renderer: receives pre-calculated data from the API (frequencies,
+penalization info, analysis text). No engine computation happens here —
+all statistical analysis is done upstream by the HYBRIDE engine and
+services/penalization.py before the payload reaches this module.
+"""
+
 import os
 import io
 import json

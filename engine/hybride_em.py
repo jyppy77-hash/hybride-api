@@ -1,62 +1,23 @@
 """
 Engine d'analyse EuroMillions - Version HYBRIDE_OPTIMAL V1 EM
 Thin wrapper over HybrideEngine (E06 audit fix).
+
+Badge EM ("Hybride V1 EM") is config-driven via EM_CONFIG.badge_key.
+No subclass override needed — base class _generer_badges reads badge_key.
 """
 
 from config.engine import EM_CONFIG
-from config.i18n import _badges as _i18n_badges
 from .db import get_connection
 from .hybride_base import HybrideEngine
 
-# ── EM engine with custom badges ─────────────────────────────────────
-
-
-class _EMEngine(HybrideEngine):
-    """EuroMillions engine with i18n badge support."""
-
-    def _generer_badges(self, numeros, scores_hybrides, lang="fr"):
-        b = _i18n_badges(lang)
-        badges = []
-
-        score_moyen = sum(scores_hybrides[n] for n in numeros) / self.cfg.num_count
-        score_global = sum(scores_hybrides.values()) / len(scores_hybrides)
-
-        if score_moyen > score_global * 1.1:
-            badges.append(b["hot"])
-        elif score_moyen < score_global * 0.9:
-            badges.append(b["overdue"])
-        else:
-            badges.append(b["balanced"])
-
-        dispersion = max(numeros) - min(numeros)
-        if dispersion > 35:
-            badges.append(b["wide_spectrum"])
-
-        nb_pairs = sum(1 for n in numeros if n % 2 == 0)
-        if nb_pairs == 2 or nb_pairs == 3:
-            badges.append(b["even_odd"])
-
-        badges.append(b["hybride_em"])
-        return badges
-
-
-# Singleton engine
-_engine = _EMEngine(EM_CONFIG)
+# Singleton engine (config-driven badges via EM_CONFIG.badge_key="hybride_em")
+_engine = HybrideEngine(EM_CONFIG)
 
 # === BACKWARD COMPATIBILITY RE-EXPORTS ===
 # These re-exports allow existing modules to import from engine.hybride_em
 # instead of engine.hybride_base or config.engine. Migration plan:
 # - New code should import from engine.hybride_base or config.engine directly.
 # - Existing callers: tests/test_hybride_em.py, services/chat_pipeline_em.py.
-
-CONFIG = {
-    'fenetre_principale_annees': EM_CONFIG.fenetre_principale_annees,
-    'fenetre_recente_annees': EM_CONFIG.fenetre_recente_annees,
-    'poids_principal': EM_CONFIG.modes['balanced'][0],
-    'poids_recent': EM_CONFIG.modes['balanced'][1],
-    'coef_frequence': EM_CONFIG.poids_frequence,
-    'coef_retard': EM_CONFIG.poids_retard,
-}
 
 TABLE = EM_CONFIG.table_name
 BOULE_MIN, BOULE_MAX = EM_CONFIG.num_min, EM_CONFIG.num_max

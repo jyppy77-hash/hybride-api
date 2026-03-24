@@ -1,7 +1,10 @@
 """
-PDF Generator — EuroMillions META ANALYSE
+PDF Generator — EuroMillions META ANALYSE.
 Genere un rapport PDF A4 avec DEUX graphiques (boules + etoiles).
 Equivalent EM de services/pdf_generator.py (ZERO modification au fichier Loto).
+
+Pure renderer: receives pre-calculated data from the API. No engine
+computation happens here — all statistical analysis is done upstream.
 """
 
 import os

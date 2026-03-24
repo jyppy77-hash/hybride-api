@@ -65,6 +65,9 @@ class EngineConfig:
     # Star rating
     star_to_legacy_score: dict
 
+    # Badge key for i18n (used by _generer_badges)
+    badge_key: str
+
 
 _STAR_SCORES = {5: 95, 4: 85, 3: 75, 2: 60, 1: 50}
 
@@ -121,6 +124,7 @@ LOTO_CONFIG = EngineConfig(
     penalty_coefficients=PENALTY_COEFFICIENTS,
     avertissement="Le Loto reste un jeu de pur hasard. Aucune garantie de gain.",
     star_to_legacy_score=_STAR_SCORES,
+    badge_key="hybride_loto",
 )
 
 EM_CONFIG = EngineConfig(
@@ -159,4 +163,5 @@ EM_CONFIG = EngineConfig(
     penalty_coefficients=PENALTY_COEFFICIENTS,
     avertissement="L'EuroMillions reste un jeu de pur hasard. Aucune garantie de gain.",
     star_to_legacy_score=_STAR_SCORES,
+    badge_key="hybride_em",
 )

@@ -83,7 +83,9 @@ def get_stats_service(cfg: RouteGameConfig):
 
 
 def get_engine(cfg: RouteGameConfig):
-    return _load(cfg.engine_module)
+    """Return the singleton HybrideEngine instance for the given game."""
+    mod = _load(cfg.engine_module)
+    return mod._engine
 
 
 def get_engine_stats(cfg: RouteGameConfig):
