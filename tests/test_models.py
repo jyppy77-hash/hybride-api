@@ -33,6 +33,33 @@ class TestGenerateRequest:
         with pytest.raises(ValidationError):
             GenerateRequest(n="abc")
 
+    # V55-ter — F02: validation bounds
+    def test_n_too_large(self):
+        """n > 20 → ValidationError."""
+        with pytest.raises(ValidationError):
+            GenerateRequest(n=100)
+
+    def test_n_zero(self):
+        """n = 0 → ValidationError."""
+        with pytest.raises(ValidationError):
+            GenerateRequest(n=0)
+
+    def test_n_negative(self):
+        """n < 0 → ValidationError."""
+        with pytest.raises(ValidationError):
+            GenerateRequest(n=-1)
+
+    def test_invalid_mode(self):
+        """mode='xyz' → ValidationError."""
+        with pytest.raises(ValidationError):
+            GenerateRequest(mode="xyz")
+
+    def test_all_valid_modes(self):
+        """All 3 valid modes accepted."""
+        for m in ("conservative", "balanced", "recent"):
+            req = GenerateRequest(mode=m)
+            assert req.mode == m
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # CONFIG (poids du modele hybride)

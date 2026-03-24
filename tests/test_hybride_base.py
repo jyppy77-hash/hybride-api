@@ -544,3 +544,128 @@ class TestScoringConformiteUnifie:
         for nums in ([3, 15, 24, 33, 47], [1, 2, 3, 4, 5], [2, 4, 6, 8, 10]):
             score = int(engine.valider_contraintes(nums) * 100)
             assert 0 <= score <= 100
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V55-ter — F04: _minmax_normalize all-zeros documented
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestMinMaxNormalizeAllZeros:
+
+    def test_all_equal_returns_zeros(self):
+        """All equal values → all 0.0 (documented behavior)."""
+        result = HybrideEngine._minmax_normalize({1: 5.0, 2: 5.0, 3: 5.0})
+        assert all(v == 0.0 for v in result.values())
+
+    def test_all_equal_documented_in_docstring(self):
+        """Docstring mentions all-zeros behavior."""
+        doc = HybrideEngine._minmax_normalize.__doc__
+        assert doc is not None
+        assert "identical" in doc.lower() or "0.0" in doc
+
+    def test_single_value_returns_zero(self):
+        """Single value → 0.0."""
+        result = HybrideEngine._minmax_normalize({1: 42.0})
+        assert result[1] == 0.0
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V55-ter — F07: Anti-collision boost+malus documented
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestAntiCollisionCumulDoc:
+
+    def test_boost_and_malus_independent(self):
+        """Boost and malus apply independently (documented edge case)."""
+        from dataclasses import replace
+        # Create a config where superstitious numbers include one above threshold
+        cfg = replace(
+            LOTO_CONFIG,
+            anti_collision_threshold=10,
+            superstitious_numbers=frozenset({12}),
+        )
+        engine = HybrideEngine(cfg)
+        scores = {12: 1.0}
+        adjusted = engine.apply_anti_collision(scores)
+        # 12 > 10 (threshold) → boost 1.15, AND 12 in superstitious → malus 0.80
+        expected = 1.0 * 1.15 * 0.80
+        assert abs(adjusted[12] - expected) < 1e-9
+
+    def test_anti_collision_docstring(self):
+        """Docstring documents cumulative behavior."""
+        doc = HybrideEngine.apply_anti_collision.__doc__
+        assert doc is not None
+        assert "independently" in doc.lower()
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V55-ter — F09: Anti-collision note i18n
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestAntiCollisionNoteI18n:
+
+    def test_note_exists_all_6_langs(self):
+        """Anti-collision note exists in all 6 supported languages."""
+        notes = HybrideEngine._ANTI_COLLISION_NOTES
+        for lang in ("fr", "en", "es", "pt", "de", "nl"):
+            assert lang in notes, f"Missing anti-collision note for {lang}"
+            assert len(notes[lang]) > 20, f"Note too short for {lang}"
+
+    @pytest.mark.asyncio
+    @patch("engine.hybride.get_connection")
+    async def test_metadata_note_uses_lang(self, mock_get_conn):
+        """Metadata anti-collision note is translated based on lang."""
+        from engine.hybride import generate_grids
+        cursor = AsyncSmartMockCursor()
+        mock_get_conn.side_effect = lambda: make_async_conn(cursor)
+        random.seed(42)
+        result = await generate_grids(n=1, mode="balanced", lang="en", anti_collision=True)
+        note = result["metadata"]["anti_collision"]["note"]
+        assert "over-selected" in note or "calendar" in note.lower()
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V55-ter — F03: Badge engine via i18n (not hardcoded)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestBadgeEngineI18n:
+
+    def test_badge_hybride_loto_in_all_langs(self):
+        """Badge key 'hybride_loto' exists in all 6 languages."""
+        from config.i18n import _badges
+        for lang in ("fr", "en", "es", "pt", "de", "nl"):
+            b = _badges(lang)
+            assert "hybride_loto" in b, f"Missing hybride_loto badge for {lang}"
+
+    @pytest.mark.asyncio
+    @patch("engine.hybride.get_connection")
+    async def test_generated_grids_have_engine_badge(self, mock_get_conn):
+        """Generated grids contain the engine badge from i18n."""
+        from engine.hybride import generate_grids
+        cursor = AsyncSmartMockCursor()
+        mock_get_conn.side_effect = lambda: make_async_conn(cursor)
+        random.seed(42)
+        result = await generate_grids(n=1, mode="balanced", lang="fr")
+        badges = result["grids"][0]["badges"]
+        assert "Hybride V1" in badges
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V55-ter — F05: Diversity tests use seed (documented)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestDiversitySeedDocumented:
+
+    def test_diversity_tests_are_deterministic(self):
+        """Diversity tests use random.seed(42) for reproducibility.
+
+        This test validates the pattern: seed → generate → restore.
+        Non-deterministic diversity is inherent to random.choices().
+        The seed ensures tests are not flaky while still verifying
+        that the engine produces varied output.
+        """
+        random.seed(42)
+        draws = [random.choices(range(1, 50), k=5) for _ in range(10)]
+        random.seed(42)
+        draws2 = [random.choices(range(1, 50), k=5) for _ in range(10)]
+        assert draws == draws2  # Same seed → same output

@@ -44,6 +44,13 @@ class HybrideEngine:
 
     @staticmethod
     def _minmax_normalize(values: dict[int, float]) -> dict[int, float]:
+        """Min-max normalize values to [0, 1].
+
+        If all values are identical (max == min), returns 0.0 for all keys.
+        This is intentional: a uniform frequency distribution means no number
+        stands out, so all receive the minimum score. The temperature in
+        normaliser_en_probabilites() compensates by flattening toward uniform.
+        """
         v_min = min(values.values())
         v_max = max(values.values())
         if v_max == v_min:
@@ -130,6 +137,10 @@ class HybrideEngine:
         tirages = await cursor.fetchall()
         nb_tirages = len(tirages)
         if nb_tirages == 0:
+            logger.warning(
+                "calculer_frequences: 0 tirages for %s (date_limite=%s) — uniform fallback",
+                self.cfg.table_name, date_limite,
+            )
             count = self.cfg.num_max - self.cfg.num_min + 1
             return {n: 1.0 / count for n in freq}
 
@@ -167,6 +178,10 @@ class HybrideEngine:
 
         tirages = await cursor.fetchall()
         if not tirages:
+            logger.warning(
+                "calculer_retards: 0 tirages for %s (date_limite=%s) — zero retard fallback",
+                self.cfg.table_name, date_limite,
+            )
             return retard
 
         for idx, tirage in enumerate(tirages):
@@ -273,6 +288,10 @@ class HybrideEngine:
         nb = result['count'] if result else 0
 
         if nb == 0:
+            logger.warning(
+                "calculer_frequences_secondary: 0 tirages for %s (date_limite=%s) — uniform fallback",
+                self.cfg.table_name, date_limite,
+            )
             count = self.cfg.secondary_max - self.cfg.secondary_min + 1
             return {n: 1.0 / count for n in freq}
 
@@ -300,6 +319,10 @@ class HybrideEngine:
 
         tirages = await cursor.fetchall()
         if not tirages:
+            logger.warning(
+                "calculer_retards_secondary: 0 tirages for %s (date_limite=%s) — zero retard fallback",
+                self.cfg.table_name, date_limite,
+            )
             return retard
 
         for idx, tirage in enumerate(tirages):
@@ -403,6 +426,13 @@ class HybrideEngine:
     # ── Anti-collision ────────────────────────────────────────────────
 
     def apply_anti_collision(self, scores: dict[int, float]) -> dict[int, float]:
+        """Adjust scores to reduce jackpot sharing risk.
+
+        Boost and malus are applied independently. A number could theoretically
+        receive both (if > threshold AND superstitious). With current configs
+        this cannot happen (all superstitious numbers are <= 13, thresholds
+        are 24/31). If configs evolve, the net effect is a reduced boost.
+        """
         adjusted = dict(scores)
         for n in adjusted:
             if n > self.cfg.anti_collision_threshold:
@@ -610,10 +640,25 @@ class HybrideEngine:
         nb_pairs = sum(1 for n in numeros if n % 2 == 0)
         if nb_pairs == 2 or nb_pairs == 3:
             badges.append(b["even_odd"])
-        badges.append("Hybride V1")  # brand name — not translated
+        badges.append(b["hybride_loto"])
         return badges
 
     # ── Main API ──────────────────────────────────────────────────────
+
+    _ANTI_COLLISION_NOTES: dict[str, str] = {
+        "fr": "Les numéros 1-31 sont sur-sélectionnés (biais calendaire). "
+              "Privilégier les numéros au-dessus du seuil maximise l'espérance en cas de jackpot partagé.",
+        "en": "Numbers 1-31 are over-selected (calendar bias). "
+              "Favoring numbers above the threshold maximizes expected value in case of shared jackpot.",
+        "es": "Los números 1-31 están sobre-seleccionados (sesgo de calendario). "
+              "Favorecer los números por encima del umbral maximiza el valor esperado en caso de bote compartido.",
+        "pt": "Os números 1-31 são sobre-selecionados (viés de calendário). "
+              "Favorecer números acima do limiar maximiza o valor esperado em caso de jackpot partilhado.",
+        "de": "Die Zahlen 1-31 werden überproportional gewählt (Kalender-Bias). "
+              "Zahlen über der Schwelle bevorzugen maximiert den Erwartungswert bei geteiltem Jackpot.",
+        "nl": "De nummers 1-31 worden oververtegenwoordigd gekozen (kalender-bias). "
+              "Nummers boven de drempel bevoordelen maximaliseert de verwachte waarde bij gedeeld jackpot.",
+    }
 
     async def generate_grids(
         self, n: int = 5, mode: str = "balanced", lang: str = "fr",
@@ -675,9 +720,7 @@ class HybrideEngine:
                     'high_boost': self.cfg.anti_collision_high_boost,
                     'superstitious_malus': self.cfg.anti_collision_superstitious_malus,
                     'superstitious_numbers': sorted(self.cfg.superstitious_numbers),
-                    'note': f"Les numeros 1-31 sont sur-selectionnes. "
-                            f"Privilegier les numeros >{self.cfg.anti_collision_threshold} "
-                            f"maximise l'esperance de gain en cas de jackpot partage.",
+                    'note': self._ANTI_COLLISION_NOTES.get(lang, self._ANTI_COLLISION_NOTES['fr']),
                 },
                 'temperature': self.cfg.temperature_by_mode.get(mode, 1.3),
             }

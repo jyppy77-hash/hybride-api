@@ -356,3 +356,24 @@ def test_integration_em_boules_et_etoiles():
     assert 11 not in top_e_nums
     assert set(info_e["excluded_numbers"]) == {11, 12}
     assert len(top_e) == 3
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V55-ter — F06: superstitious set aligned with config
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestCollisionRiskSuperstitious:
+
+    def test_superstitious_matches_config(self):
+        """get_collision_risk_numbers() superstition set matches config._SUPERSTITIOUS."""
+        from config.engine import _SUPERSTITIOUS
+        from services.penalization import get_collision_risk_numbers
+        result = get_collision_risk_numbers("euromillions")
+        assert set(result["superstition"]) == set(_SUPERSTITIOUS)
+
+    def test_superstitious_matches_loto(self):
+        """Loto collision risk uses the same superstitious set."""
+        from config.engine import _SUPERSTITIOUS
+        from services.penalization import get_collision_risk_numbers
+        result = get_collision_risk_numbers("loto")
+        assert set(result["superstition"]) == set(_SUPERSTITIOUS)

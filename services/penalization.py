@@ -6,7 +6,7 @@ Les frequences brutes affichees ne sont jamais modifiees.
 V2 — Hard-exclude T-1 + fenetre 4 tirages (F01+F02 audit 360°).
 """
 
-from config.engine import PENALTY_COEFFICIENTS
+from config.engine import PENALTY_COEFFICIENTS, _SUPERSTITIOUS
 
 # Legacy constants — kept for backward-compat imports in tests
 COEFF_LAST_DRAW = 0.7
@@ -129,7 +129,7 @@ def get_collision_risk_numbers(game: str = "euromillions") -> dict:
     """
     max_num = 50 if game == "euromillions" else 49
     calendar_bias = set(range(1, min(32, max_num + 1)))
-    superstition = {7, 13, 3, 9, 11}
+    superstition = set(_SUPERSTITIOUS)
     high_ev_range = set(range(32, max_num + 1))
 
     return {

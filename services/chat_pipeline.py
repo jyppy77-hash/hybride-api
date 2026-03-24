@@ -199,7 +199,7 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
             else:
                 _gen_result = await asyncio.wait_for(
                     _gen_loto(
-                        n=_grid_count, mode=_gen_mode,
+                        n=_grid_count, mode=_gen_mode, lang="fr",
                         forced_nums=_forced["forced_nums"] or None,
                         forced_chance=_forced["forced_chance"],
                         exclusions=_exclusions if any(_exclusions.values()) else None,

@@ -109,7 +109,7 @@ def generer_badges(numeros, scores_hybrides, lang="fr"):
 
 
 async def generer_etoiles(conn, mode="balanced", recent_draws=None, anti_collision=False):
-    """Generate 2 stars via hybrid scoring. Backward compat."""
+    """DEPRECATED: Use generate_grids() which calls generer_secondary() internally."""
     return await _engine.generer_secondary(
         conn, mode=mode, recent_draws=recent_draws, anti_collision=anti_collision,
     )
