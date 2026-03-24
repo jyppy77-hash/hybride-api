@@ -43,7 +43,11 @@ class _EMEngine(HybrideEngine):
 # Singleton engine
 _engine = _EMEngine(EM_CONFIG)
 
-# ── Backward-compat re-exports ────────────────────────────────────────
+# === BACKWARD COMPATIBILITY RE-EXPORTS ===
+# These re-exports allow existing modules to import from engine.hybride_em
+# instead of engine.hybride_base or config.engine. Migration plan:
+# - New code should import from engine.hybride_base or config.engine directly.
+# - Existing callers: tests/test_hybride_em.py, services/chat_pipeline_em.py.
 
 CONFIG = {
     'fenetre_principale_annees': EM_CONFIG.fenetre_principale_annees,

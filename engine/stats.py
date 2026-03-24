@@ -1,22 +1,25 @@
 """
-Module d'analyse statistique descriptive pour le Loto
-Analyse UNIQUEMENT l'historique réel - Aucune prédiction
+Module d'analyse statistique descriptive pour le Loto et l'EuroMillions.
+Analyse UNIQUEMENT l'historique réel - Aucune prédiction.
+
+Config-driven via EngineConfig (V55 audit fix F09).
 """
 
 import logging
-from typing import Dict, List, Optional
+from config.engine import EngineConfig, LOTO_CONFIG
 from .db import get_connection
 from services.cache import cache_get, cache_set
 
 logger = logging.getLogger(__name__)
 
 
-async def analyze_number(number: int) -> Dict:
+async def analyze_number(number: int, cfg: EngineConfig = LOTO_CONFIG) -> dict:
     """
-    Analyse l'historique complet d'un numéro principal (1-49)
+    Analyse l'historique complet d'un numéro principal.
 
     Args:
-        number: Numéro à analyser (1-49)
+        number: Numéro à analyser (cfg.num_min..cfg.num_max)
+        cfg: Configuration du jeu (default: LOTO_CONFIG pour rétrocompatibilité)
 
     Returns:
         Dictionnaire contenant :
@@ -28,16 +31,18 @@ async def analyze_number(number: int) -> Dict:
         - appearance_dates: liste des dates d'apparition
         - total_draws: nombre total de tirages dans la base
     """
-    if not 1 <= number <= 49:
-        raise ValueError("Le numéro doit être entre 1 et 49")
+    if not cfg.num_min <= number <= cfg.num_max:
+        raise ValueError(f"Le numéro doit être entre {cfg.num_min} et {cfg.num_max}")
+
+    table = cfg.table_name
 
     async with get_connection() as conn:
         cursor = await conn.cursor()
 
         # Récupérer tous les tirages où le numéro apparaît (dans boule_1 à boule_5)
-        query = """
+        query = f"""
             SELECT date_de_tirage
-            FROM tirages
+            FROM {table}
             WHERE boule_1 = %s OR boule_2 = %s OR boule_3 = %s OR boule_4 = %s OR boule_5 = %s
             ORDER BY date_de_tirage ASC
         """
@@ -56,14 +61,14 @@ async def analyze_number(number: int) -> Dict:
         if last_appearance:
             # Compter les tirages depuis la dernière apparition du numéro
             await cursor.execute(
-                "SELECT COUNT(*) as count FROM tirages WHERE date_de_tirage > %s",
+                f"SELECT COUNT(*) as count FROM {table} WHERE date_de_tirage > %s",
                 (last_appearance,)
             )
             result = await cursor.fetchone()
             current_gap = result['count'] if result else 0
 
         # Nombre total de tirages dans la base
-        await cursor.execute("SELECT COUNT(*) as count FROM tirages")
+        await cursor.execute(f"SELECT COUNT(*) as count FROM {table}")
         result = await cursor.fetchone()
         total_draws = result['count'] if result else 0
 
@@ -78,10 +83,13 @@ async def analyze_number(number: int) -> Dict:
     }
 
 
-async def get_global_stats() -> Dict:
+async def get_global_stats(cfg: EngineConfig = LOTO_CONFIG) -> dict:
     """
-    Récupère les statistiques globales de la base de données
+    Récupère les statistiques globales de la base de données.
     Résultat mis en cache 1 h.
+
+    Args:
+        cfg: Configuration du jeu (default: LOTO_CONFIG pour rétrocompatibilité)
 
     Returns:
         Dictionnaire contenant :
@@ -90,9 +98,12 @@ async def get_global_stats() -> Dict:
         - last_draw_date: date du dernier tirage
         - period_covered: période couverte (texte)
     """
-    cached = await cache_get("global_stats")
+    cache_key = f"global_stats_{cfg.game}"
+    cached = await cache_get(cache_key)
     if cached is not None:
         return cached
+
+    table = cfg.table_name
 
     async with get_connection() as conn:
         cursor = await conn.cursor()
@@ -100,12 +111,14 @@ async def get_global_stats() -> Dict:
         logger.debug("[STATS] get_global_stats - Debut")
 
         # Stats globales
-        await cursor.execute("SELECT COUNT(*) as count FROM tirages")
+        await cursor.execute(f"SELECT COUNT(*) as count FROM {table}")
         result = await cursor.fetchone()
         logger.debug(f"[STATS] COUNT result: {result}")
         total_draws = result['count'] if result else 0
 
-        await cursor.execute("SELECT MIN(date_de_tirage) as min_date, MAX(date_de_tirage) as max_date FROM tirages")
+        await cursor.execute(
+            f"SELECT MIN(date_de_tirage) as min_date, MAX(date_de_tirage) as max_date FROM {table}"
+        )
         result = await cursor.fetchone()
         logger.debug(f"[STATS] MIN/MAX result: {result}")
         first_draw_date = result['min_date'] if result else None
@@ -122,14 +135,16 @@ async def get_global_stats() -> Dict:
         "last_draw_date": last_draw_date,
         "period_covered": period_covered
     }
-    await cache_set("global_stats", data)
+    await cache_set(cache_key, data)
     return data
 
 
-async def get_top_flop_numbers() -> Dict:
+async def get_top_flop_numbers(cfg: EngineConfig = LOTO_CONFIG) -> dict:
     """
-    Calcule les fréquences de sortie pour tous les numéros (1-49)
-    et retourne les tops et flops
+    Calcule les fréquences de sortie pour tous les numéros et retourne les tops et flops.
+
+    Args:
+        cfg: Configuration du jeu (default: LOTO_CONFIG pour rétrocompatibilité)
 
     Returns:
         Dictionnaire contenant :
@@ -139,28 +154,31 @@ async def get_top_flop_numbers() -> Dict:
 
         Chaque élément contient : {"number": int, "count": int}
     """
+    table = cfg.table_name
+    num_range = range(cfg.num_min, cfg.num_max + 1)
+
     async with get_connection() as conn:
         cursor = await conn.cursor()
 
         # Nombre total de tirages
-        await cursor.execute("SELECT COUNT(*) as count FROM tirages")
+        await cursor.execute(f"SELECT COUNT(*) as count FROM {table}")
         result = await cursor.fetchone()
         total_draws = result['count'] if result else 0
 
-        # Frequences (1 requete UNION ALL au lieu de 49)
-        await cursor.execute("""
+        # Frequences (1 requete UNION ALL au lieu de N)
+        await cursor.execute(f"""
             SELECT num, COUNT(*) as freq FROM (
-                SELECT boule_1 as num FROM tirages
-                UNION ALL SELECT boule_2 FROM tirages
-                UNION ALL SELECT boule_3 FROM tirages
-                UNION ALL SELECT boule_4 FROM tirages
-                UNION ALL SELECT boule_5 FROM tirages
+                SELECT boule_1 as num FROM {table}
+                UNION ALL SELECT boule_2 FROM {table}
+                UNION ALL SELECT boule_3 FROM {table}
+                UNION ALL SELECT boule_4 FROM {table}
+                UNION ALL SELECT boule_5 FROM {table}
             ) t
             GROUP BY num
             ORDER BY num
         """)
         freq_map = {row['num']: row['freq'] for row in await cursor.fetchall()}
-        number_counts = [{"number": num, "count": freq_map.get(num, 0)} for num in range(1, 50)]
+        number_counts = [{"number": num, "count": freq_map.get(num, 0)} for num in num_range]
 
     # Trier pour TOP : count DESC, puis number ASC
     top_sorted = sorted(number_counts, key=lambda x: (-x["count"], x["number"]))

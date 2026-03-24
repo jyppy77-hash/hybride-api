@@ -76,7 +76,11 @@ _MODES_3W = {
 
 _TEMPERATURES = {"conservative": 1.0, "balanced": 1.3, "recent": 1.5}
 
-_PENALTY_COEFFS = (0.0, 0.65, 0.80, 0.90)
+# Single source of truth for penalty coefficients.
+# T-1 = hard exclude (0.0), T-2 = x0.65, T-3 = x0.80, T-4 = x0.90.
+# Imported by services/penalization.py and used in EngineConfig.
+PENALTY_COEFFICIENTS = (0.0, 0.65, 0.80, 0.90)
+PENALTY_WINDOW = 4
 
 _SUPERSTITIOUS = frozenset({3, 7, 9, 11, 13})
 
@@ -114,7 +118,7 @@ LOTO_CONFIG = EngineConfig(
     superstitious_secondary=frozenset(),
     secondary_anti_collision_malus=1.0,
     penalty_window=4,
-    penalty_coefficients=_PENALTY_COEFFS,
+    penalty_coefficients=PENALTY_COEFFICIENTS,
     avertissement="Le Loto reste un jeu de pur hasard. Aucune garantie de gain.",
     star_to_legacy_score=_STAR_SCORES,
 )
@@ -152,7 +156,7 @@ EM_CONFIG = EngineConfig(
     superstitious_secondary=frozenset({3, 7, 9, 11}),
     secondary_anti_collision_malus=0.85,
     penalty_window=4,
-    penalty_coefficients=_PENALTY_COEFFS,
+    penalty_coefficients=PENALTY_COEFFICIENTS,
     avertissement="L'EuroMillions reste un jeu de pur hasard. Aucune garantie de gain.",
     star_to_legacy_score=_STAR_SCORES,
 )

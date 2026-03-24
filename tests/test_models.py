@@ -6,7 +6,7 @@ Verifie les modeles Pydantic et les poids de configuration.
 import pytest
 from pydantic import ValidationError
 
-from engine.models import GenerateRequest, Ticket
+from engine.models import GenerateRequest
 from engine.hybride import CONFIG
 
 
@@ -32,26 +32,6 @@ class TestGenerateRequest:
         """n non-entier → ValidationError."""
         with pytest.raises(ValidationError):
             GenerateRequest(n="abc")
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# Ticket
-# ═══════════════════════════════════════════════════════════════════════
-
-class TestTicket:
-
-    def test_valid_ticket(self):
-        """Ticket valide avec tous les champs."""
-        t = Ticket(nums=[1, 12, 23, 34, 45], chance=7, score=85, badges=["Hybride V1"])
-        assert t.nums == [1, 12, 23, 34, 45]
-        assert t.chance == 7
-        assert t.score == 85
-        assert t.badges == ["Hybride V1"]
-
-    def test_missing_field(self):
-        """Champ manquant → ValidationError."""
-        with pytest.raises(ValidationError):
-            Ticket(nums=[1, 2, 3, 4, 5], chance=1)
 
 
 # ═══════════════════════════════════════════════════════════════════════

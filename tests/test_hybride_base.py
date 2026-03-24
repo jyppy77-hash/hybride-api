@@ -409,3 +409,138 @@ async def test_etoiles_diversite_10_grilles(mock_get_conn):
     result = await generate_grids(n=10, mode="balanced", lang="fr")
     star_sets = [tuple(g["etoiles"]) for g in result["grids"]]
     assert len(set(star_sets)) >= 2, "All 10 star pairs are identical"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V55 — get_reference_date (F04 audit fix)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestGetReferenceDate:
+
+    @pytest.mark.asyncio
+    @patch("engine.hybride.get_connection")
+    async def test_reference_date_from_db(self, mock_get_conn):
+        """Retourne la date du dernier tirage de la BDD."""
+        cursor = AsyncSmartMockCursor()
+        mock_get_conn.side_effect = lambda: make_async_conn(cursor)
+        engine = HybrideEngine(LOTO_CONFIG)
+        async with make_async_conn(cursor) as conn:
+            ref = await engine.get_reference_date(conn)
+        assert ref is not None
+        assert ref.year >= 2020
+
+    @pytest.mark.asyncio
+    async def test_reference_date_empty_db_fallback(self):
+        """BDD vide → fallback datetime.now(UTC)."""
+        from datetime import datetime, timezone
+        from unittest.mock import AsyncMock
+        cursor = AsyncMock()
+        cursor.execute = AsyncMock()
+        cursor.fetchone = AsyncMock(return_value={"max_date": None})
+        conn = AsyncMock()
+        conn.cursor = AsyncMock(return_value=cursor)
+        engine = HybrideEngine(LOTO_CONFIG)
+        ref = await engine.get_reference_date(conn)
+        assert ref.tzinfo is not None
+        assert ref.year >= 2026
+
+    @pytest.mark.asyncio
+    @patch("engine.hybride.get_connection")
+    async def test_reference_date_returns_aware_datetime(self, mock_get_conn):
+        """La date retournee est toujours timezone-aware (UTC)."""
+        cursor = AsyncSmartMockCursor()
+        mock_get_conn.side_effect = lambda: make_async_conn(cursor)
+        engine = HybrideEngine(LOTO_CONFIG)
+        async with make_async_conn(cursor) as conn:
+            ref = await engine.get_reference_date(conn)
+        assert ref.tzinfo is not None, "Reference date must be timezone-aware"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V55 — Penalty coefficients unified (F05 audit fix)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestPenaltyCoefficientsUnified:
+
+    def test_engine_config_coefficients_match_penalization(self):
+        """Les coefficients dans EngineConfig sont identiques a ceux de penalization.py."""
+        from services.penalization import PENALIZATION_COEFFS
+        assert list(LOTO_CONFIG.penalty_coefficients) == PENALIZATION_COEFFS
+        assert list(EM_CONFIG.penalty_coefficients) == PENALIZATION_COEFFS
+
+    def test_single_source_of_truth(self):
+        """penalization.py importe depuis config/engine.py (pas de constantes locales)."""
+        import inspect
+        import services.penalization as penal_mod
+        source = inspect.getsource(penal_mod)
+        assert "from config.engine import PENALTY_COEFFICIENTS" in source
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V55 — Ponderation display (F11 audit fix)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestPonderationDisplay:
+
+    @pytest.mark.asyncio
+    @patch("engine.hybride.get_connection")
+    async def test_ponderation_shows_3_window_weights(self, mock_get_conn):
+        """Les metadata affichent les vrais poids 3 fenetres."""
+        from engine.hybride import generate_grids
+        cursor = AsyncSmartMockCursor()
+        mock_get_conn.side_effect = lambda: make_async_conn(cursor)
+        random.seed(42)
+
+        result = await generate_grids(n=1, mode="balanced")
+        # Format: principale/recente/globale
+        assert result["metadata"]["ponderation"] == "40/35/25"
+
+    @pytest.mark.asyncio
+    @patch("engine.hybride.get_connection")
+    async def test_ponderation_conservative(self, mock_get_conn):
+        """Mode conservative affiche 50/30/20."""
+        from engine.hybride import generate_grids
+        cursor = AsyncSmartMockCursor()
+        mock_get_conn.side_effect = lambda: make_async_conn(cursor)
+        random.seed(42)
+
+        result = await generate_grids(n=1, mode="conservative")
+        assert result["metadata"]["ponderation"] == "50/30/20"
+
+    @pytest.mark.asyncio
+    @patch("engine.hybride.get_connection")
+    async def test_ponderation_recent(self, mock_get_conn):
+        """Mode recent affiche 25/35/40."""
+        from engine.hybride import generate_grids
+        cursor = AsyncSmartMockCursor()
+        mock_get_conn.side_effect = lambda: make_async_conn(cursor)
+        random.seed(42)
+
+        result = await generate_grids(n=1, mode="recent")
+        assert result["metadata"]["ponderation"] == "25/35/40"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V55 — Scoring conformite unifie (F06 audit fix)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestScoringConformiteUnifie:
+
+    def test_engine_perfect_grid_loto(self):
+        """Grille parfaite Loto → score_conformite = 100."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        score = engine.valider_contraintes([3, 15, 24, 33, 47])
+        assert int(score * 100) == 100
+
+    def test_engine_bad_grid_loto(self):
+        """Grille mauvaise → score_conformite < 50."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        score = engine.valider_contraintes([2, 4, 6, 8, 10])
+        assert int(score * 100) < 50
+
+    def test_engine_score_0_100_range(self):
+        """Le score mappe est dans [0, 100]."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        for nums in ([3, 15, 24, 33, 47], [1, 2, 3, 4, 5], [2, 4, 6, 8, 10]):
+            score = int(engine.valider_contraintes(nums) * 100)
+            assert 0 <= score <= 100

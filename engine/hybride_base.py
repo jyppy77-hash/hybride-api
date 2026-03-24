@@ -27,6 +27,14 @@ class HybrideEngine:
         n'a aucune valeur predictive (confirme par analyse Gemini Deep Search,
         correction de Bonferroni). Le lag sert uniquement a eviter que le
         moteur propose toujours les memes numeros.
+
+    Note securite SQL :
+        Les requetes utilisent des f-strings pour le nom de table
+        ({self.cfg.table_name}). C'est sur car table_name provient d'un
+        EngineConfig frozen dont les valeurs sont des constantes internes
+        ("tirages", "tirages_euromillions"). Aucune entree utilisateur ne
+        peut atteindre table_name. Les parametres dynamiques (dates, etc.)
+        utilisent des placeholders %s (parameterized queries).
     """
 
     def __init__(self, cfg: EngineConfig):
@@ -96,7 +104,7 @@ class HybrideEngine:
             max_date = row['max_date'] if row else None
             if not max_date:
                 return datetime.now(timezone.utc)
-            return datetime.strptime(str(max_date), "%Y-%m-%d")
+            return datetime.strptime(str(max_date), "%Y-%m-%d").replace(tzinfo=timezone.utc)
         except Exception:
             return datetime.now(timezone.utc)
 
@@ -189,6 +197,10 @@ class HybrideEngine:
         }
 
     async def calculer_scores_hybrides(self, conn, mode: str = "balanced") -> dict[int, float]:
+        # Les scores par fenetre sont dans [0, 1] grace a la normalisation min-max
+        # dans calculer_scores_fenetre(). La combinaison ponderee (sum poids * score)
+        # produit un resultat dans [0, 1] car sum(poids) = 1.0. Pas besoin de
+        # re-normaliser — normaliser_en_probabilites() le fera en fin de pipeline.
         now = await self.get_reference_date(conn)
         date_princ = now - timedelta(days=self.cfg.fenetre_principale_annees * 365.25)
         date_rec = now - timedelta(days=self.cfg.fenetre_recente_annees * 365.25)
@@ -643,10 +655,9 @@ class HybrideEngine:
             date_min = result['min_date'] if result else None
             date_max = result['max_date'] if result else None
 
-            # Ponderation display string (legacy 2-window format for API/frontend compat).
-            # Real 3-window weights are in cfg.modes: conservative=50/30/20, balanced=40/35/25, recent=25/35/40.
-            _legacy_pond = {"conservative": "70/30", "balanced": "60/40", "recent": "40/60"}
-            ponderation = _legacy_pond.get(mode, "60/40")
+            # Real 3-window weights: principale/recente/globale.
+            _display_weights = {"conservative": "50/30/20", "balanced": "40/35/25", "recent": "25/35/40"}
+            ponderation = _display_weights.get(mode, "40/35/25")
 
             metadata = {
                 'mode': self.cfg.mode_label,

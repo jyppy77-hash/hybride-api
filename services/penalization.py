@@ -6,26 +6,25 @@ Les frequences brutes affichees ne sont jamais modifiees.
 V2 — Hard-exclude T-1 + fenetre 4 tirages (F01+F02 audit 360°).
 """
 
-from typing import Dict, List, Optional, Set, Tuple
+from config.engine import PENALTY_COEFFICIENTS
 
 # Legacy constants — kept for backward-compat imports in tests
 COEFF_LAST_DRAW = 0.7
 COEFF_SECOND_LAST = 0.85
 
-# V2 coefficients by draw position (index 0 = T-1, 1 = T-2, …)
-# 0.0 means hard-exclude from top N
-PENALIZATION_COEFFS = [0.0, 0.65, 0.80, 0.90]
+# V2 coefficients — imported from config/engine.py (single source of truth).
+PENALIZATION_COEFFS = list(PENALTY_COEFFICIENTS)
 
 
 def compute_penalized_ranking(
-    raw_freq: Dict[int, int],
-    last_draw_numbers: Set[int],
-    second_last_draw_numbers: Set[int],
+    raw_freq: dict[int, int],
+    last_draw_numbers: set[int],
+    second_last_draw_numbers: set[int],
     num_range: range,
     top_n: int,
     *,
-    recent_draws: Optional[List[Set[int]]] = None,
-) -> Tuple[List[dict], dict]:
+    recent_draws: list[set[int]] | None = None,
+) -> tuple[list[dict], dict]:
     """
     Applique une penalisation post-tirage sur les frequences pour le classement.
 
@@ -46,16 +45,16 @@ def compute_penalized_ranking(
     use_v2 = recent_draws is not None and len(recent_draws) > 0
 
     # Build number -> best (lowest index) draw position
-    draw_position: Dict[int, int] = {}
+    draw_position: dict[int, int] = {}
     if use_v2:
         for pos, draw_set in enumerate(recent_draws):
             for n in draw_set:
                 if n not in draw_position:
                     draw_position[n] = pos
 
-    penalized_map: Dict[int, float] = {}
-    penalized_numbers: Dict[int, float] = {}
-    excluded_set: Set[int] = set()
+    penalized_map: dict[int, float] = {}
+    penalized_numbers: dict[int, float] = {}
+    excluded_set: set[int] = set()
 
     for n in num_range:
         raw = raw_freq.get(n, 0)

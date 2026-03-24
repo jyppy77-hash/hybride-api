@@ -15,7 +15,12 @@ logger = logging.getLogger(__name__)
 # Singleton engine instance
 _engine = HybrideEngine(LOTO_CONFIG)
 
-# ── Backward-compat re-exports (used by tests and other modules) ──────
+# === BACKWARD COMPATIBILITY RE-EXPORTS ===
+# These re-exports allow existing modules to import from engine.hybride
+# instead of engine.hybride_base or config.engine. Migration plan:
+# - New code should import from engine.hybride_base or config.engine directly.
+# - Existing callers: tests/test_hybride.py, tests/test_models.py,
+#   services/chat_pipeline.py, routes/api_analyse_unified.py (via config/games.py).
 
 # Legacy CONFIG dict for backward compat (tests/test_models.py imports this)
 CONFIG = {
@@ -83,10 +88,12 @@ async def generate_grids(
     )
 
 
-# ── Loto-only functions ───────────────────────────────────────────────
+# ── DEPRECATED Loto-only functions ────────────────────────────────────
+# Kept for backward compatibility with admin/CLI tools.
+# New code should use HybrideEngine.generate_grids() directly.
 
 async def build_explanation(nums, chance_num):
-    """Explications pedagogiques pour une grille Loto."""
+    """DEPRECATED: Loto-only, non i18n. Explications pedagogiques pour une grille Loto."""
     from .stats import analyze_number
 
     explain = {
@@ -169,7 +176,7 @@ async def build_explanation(nums, chance_num):
 
 
 async def run_analysis(target_date):
-    """Compatibilite ancienne interface CLI."""
+    """DEPRECATED: Loto-only legacy CLI wrapper. Use generate_grids() directly."""
     try:
         parsed_date = datetime.strptime(target_date, "%d/%m/%Y")
         formatted_date = parsed_date.strftime("%d/%m/%Y")
@@ -220,7 +227,7 @@ async def run_analysis(target_date):
 
 
 async def generate(prompt):
-    """Wrapper API pour FastAPI / Cloud Run."""
+    """DEPRECATED: Legacy wrapper. Use generate_grids() directly."""
     try:
         result = await generate_grids(n=3, mode="balanced")
         return {

@@ -11,7 +11,9 @@ import logging
 import db_cloudsql
 from rate_limit import limiter
 from config.games import ValidGame, get_config, get_engine
+from config.engine import LOTO_CONFIG, EM_CONFIG
 from config.i18n import _badges, _analysis_strings
+from engine.hybride_base import HybrideEngine
 from services.penalization import compute_penalized_ranking
 
 logger = logging.getLogger(__name__)
@@ -529,35 +531,11 @@ async def unified_analyze_custom_grid(
             else:
                 current_run = 1
 
-        # Score de conformite
-        score_conformite = 100
-        if nb_pairs == 0 or nb_pairs == 5:
-            score_conformite -= 25
-        elif nb_pairs == 1 or nb_pairs == 4:
-            score_conformite -= 10
-        if nb_bas == 0 or nb_bas == 5:
-            score_conformite -= 25
-        elif nb_bas == 1 or nb_bas == 4:
-            score_conformite -= 8
-
-        # Somme thresholds differ per game
-        if is_loto:
-            if somme < 50: score_conformite -= 35
-            elif somme < 70: score_conformite -= 20
-            elif somme > 200: score_conformite -= 35
-            elif somme > 150: score_conformite -= 20
-        else:
-            if somme < 55: score_conformite -= 35
-            elif somme < 75: score_conformite -= 20
-            elif somme > 210: score_conformite -= 35
-            elif somme > 175: score_conformite -= 20
-
-        if dispersion < 10: score_conformite -= 35
-        elif dispersion < 15: score_conformite -= 20
-        if max_run >= 5: score_conformite -= 30
-        elif max_run >= 4: score_conformite -= 20
-        elif max_run >= 3: score_conformite -= 10
-        score_conformite = max(0, score_conformite)
+        # Score de conformite — delegue au moteur (source unique, V55 audit fix F06).
+        engine_cfg = LOTO_CONFIG if is_loto else EM_CONFIG
+        _engine = HybrideEngine(engine_cfg)
+        engine_conformite = _engine.valider_contraintes(nums)  # 0.0-1.0 multiplicatif
+        score_conformite = int(engine_conformite * 100)
 
         freq_moyenne = sum(frequencies) / 5
         freq_max_theorique = total_tirages * 5 / cfg.num_range[1]

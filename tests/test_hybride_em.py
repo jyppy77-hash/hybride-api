@@ -532,7 +532,7 @@ async def test_em_metadata_correct(mock_get_conn):
     meta = result["metadata"]
     assert meta["mode"] == "HYBRIDE_OPTIMAL_V1_EM"
     assert meta["mode_generation"] == "balanced"
-    assert meta["ponderation"] == "60/40"
+    assert meta["ponderation"] == "40/35/25"
     assert meta["nb_tirages_total"] > 0
 
 

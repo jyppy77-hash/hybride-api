@@ -191,40 +191,40 @@ async def test_generate_grids_sorted_by_score(mock_get_conn):
 @pytest.mark.asyncio
 @patch("engine.hybride.get_connection")
 async def test_generate_mode_conservative(mock_get_conn):
-    """Mode conservative → metadata.ponderation = '70/30'."""
+    """Mode conservative → metadata.ponderation = '50/30/20'."""
     cursor = AsyncSmartMockCursor()
     mock_get_conn.side_effect = lambda: make_async_conn(cursor)
     random.seed(42)
 
     result = await generate_grids(n=1, mode="conservative")
     assert result["metadata"]["mode_generation"] == "conservative"
-    assert result["metadata"]["ponderation"] == "70/30"
+    assert result["metadata"]["ponderation"] == "50/30/20"
 
 
 @pytest.mark.asyncio
 @patch("engine.hybride.get_connection")
 async def test_generate_mode_balanced(mock_get_conn):
-    """Mode balanced → metadata.ponderation = '60/40'."""
+    """Mode balanced → metadata.ponderation = '40/35/25'."""
     cursor = AsyncSmartMockCursor()
     mock_get_conn.side_effect = lambda: make_async_conn(cursor)
     random.seed(42)
 
     result = await generate_grids(n=1, mode="balanced")
     assert result["metadata"]["mode_generation"] == "balanced"
-    assert result["metadata"]["ponderation"] == "60/40"
+    assert result["metadata"]["ponderation"] == "40/35/25"
 
 
 @pytest.mark.asyncio
 @patch("engine.hybride.get_connection")
 async def test_generate_mode_recent(mock_get_conn):
-    """Mode recent → metadata.ponderation = '40/60'."""
+    """Mode recent → metadata.ponderation = '25/35/40'."""
     cursor = AsyncSmartMockCursor()
     mock_get_conn.side_effect = lambda: make_async_conn(cursor)
     random.seed(42)
 
     result = await generate_grids(n=1, mode="recent")
     assert result["metadata"]["mode_generation"] == "recent"
-    assert result["metadata"]["ponderation"] == "40/60"
+    assert result["metadata"]["ponderation"] == "25/35/40"
 
 
 @pytest.mark.asyncio
