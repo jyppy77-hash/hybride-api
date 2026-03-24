@@ -322,6 +322,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                         forced_nums=_forced["forced_nums"] or None,
                         forced_etoiles=_forced["forced_etoiles"] or None,
                         exclusions=_exclusions if any(_exclusions.values()) else None,
+                        anti_collision=True,
                     ),
                     timeout=30.0,
                 )

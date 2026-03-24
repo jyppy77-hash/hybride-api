@@ -30,6 +30,7 @@ async def unified_generate(
     n: int = Query(default=3, ge=1, le=10, description="Nombre de grilles"),
     mode: str = Query(default="balanced", description="Mode: conservative, balanced, recent"),
     lang: str = Query(default="fr", pattern=r"^(fr|en|pt|es|de|nl)$"),
+    anti_collision: bool = Query(default=False, description="Anti-collision: boost high numbers"),
 ):
     cfg = get_config(game)
     try:
@@ -38,7 +39,7 @@ async def unified_generate(
             mode = "balanced"
 
         engine = get_engine(cfg)
-        result = await engine.generate_grids(n=n, mode=mode, lang=lang)
+        result = await engine.generate_grids(n=n, mode=mode, lang=lang, anti_collision=anti_collision)
 
         return {
             "success": True,

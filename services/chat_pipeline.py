@@ -203,6 +203,7 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
                         forced_nums=_forced["forced_nums"] or None,
                         forced_chance=_forced["forced_chance"],
                         exclusions=_exclusions if any(_exclusions.values()) else None,
+                        anti_collision=True,
                     ),
                     timeout=30.0,
                 )

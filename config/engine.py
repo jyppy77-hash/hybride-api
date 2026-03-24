@@ -1,0 +1,158 @@
+"""Configuration moteur HYBRIDE — Loto et EuroMillions."""
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class EngineConfig:
+    """Configuration d'un moteur HYBRIDE pour un jeu donne."""
+
+    # Game identity
+    game: str
+    table_name: str
+    mode_label: str  # "HYBRIDE_OPTIMAL_V1" | "HYBRIDE_OPTIMAL_V1_EM"
+
+    # Boule range
+    num_min: int
+    num_max: int
+    num_count: int  # 5
+
+    # Secondary (chance or etoiles)
+    secondary_name: str
+    secondary_min: int
+    secondary_max: int
+    secondary_count: int
+    secondary_columns: tuple
+
+    # Time windows
+    fenetre_principale_annees: float
+    fenetre_recente_annees: float
+    fenetre_globale: bool
+
+    # Scoring weights
+    poids_frequence: float
+    poids_retard: float
+
+    # Mode weights: (principale, recente, globale)
+    modes: dict
+
+    # Temperature per mode
+    temperature_by_mode: dict
+
+    # Constraint validation
+    somme_min: int
+    somme_max: int
+    seuil_bas_haut: int
+    dispersion_min: int
+    max_consecutifs: int
+    min_conformite: float
+    max_tentatives: int
+
+    # Anti-collision
+    anti_collision_threshold: int
+    anti_collision_high_boost: float
+    anti_collision_superstitious_malus: float
+    superstitious_numbers: frozenset
+    superstitious_secondary: frozenset
+    secondary_anti_collision_malus: float
+
+    # Penalization
+    penalty_window: int
+    penalty_coefficients: tuple
+
+    # Avertissement
+    avertissement: str
+
+    # Star rating
+    star_to_legacy_score: dict
+
+
+_STAR_SCORES = {5: 95, 4: 85, 3: 75, 2: 60, 1: 50}
+
+_MODES_3W = {
+    "conservative": (0.50, 0.30, 0.20),
+    "balanced": (0.40, 0.35, 0.25),
+    "recent": (0.25, 0.35, 0.40),
+}
+
+_TEMPERATURES = {"conservative": 1.0, "balanced": 1.3, "recent": 1.5}
+
+_PENALTY_COEFFS = (0.0, 0.65, 0.80, 0.90)
+
+_SUPERSTITIOUS = frozenset({3, 7, 9, 11, 13})
+
+
+LOTO_CONFIG = EngineConfig(
+    game="loto",
+    table_name="tirages",
+    mode_label="HYBRIDE_OPTIMAL_V1",
+    num_min=1,
+    num_max=49,
+    num_count=5,
+    secondary_name="chance",
+    secondary_min=1,
+    secondary_max=10,
+    secondary_count=1,
+    secondary_columns=("numero_chance",),
+    fenetre_principale_annees=5.0,
+    fenetre_recente_annees=2.0,
+    fenetre_globale=True,
+    poids_frequence=0.7,
+    poids_retard=0.3,
+    modes=_MODES_3W,
+    temperature_by_mode=_TEMPERATURES,
+    somme_min=70,
+    somme_max=150,
+    seuil_bas_haut=24,
+    dispersion_min=15,
+    max_consecutifs=2,
+    min_conformite=0.7,
+    max_tentatives=20,
+    anti_collision_threshold=24,
+    anti_collision_high_boost=1.15,
+    anti_collision_superstitious_malus=0.80,
+    superstitious_numbers=_SUPERSTITIOUS,
+    superstitious_secondary=frozenset(),
+    secondary_anti_collision_malus=1.0,
+    penalty_window=4,
+    penalty_coefficients=_PENALTY_COEFFS,
+    avertissement="Le Loto reste un jeu de pur hasard. Aucune garantie de gain.",
+    star_to_legacy_score=_STAR_SCORES,
+)
+
+EM_CONFIG = EngineConfig(
+    game="em",
+    table_name="tirages_euromillions",
+    mode_label="HYBRIDE_OPTIMAL_V1_EM",
+    num_min=1,
+    num_max=50,
+    num_count=5,
+    secondary_name="etoiles",
+    secondary_min=1,
+    secondary_max=12,
+    secondary_count=2,
+    secondary_columns=("etoile_1", "etoile_2"),
+    fenetre_principale_annees=5.0,
+    fenetre_recente_annees=2.0,
+    fenetre_globale=True,
+    poids_frequence=0.7,
+    poids_retard=0.3,
+    modes=_MODES_3W,
+    temperature_by_mode=_TEMPERATURES,
+    somme_min=75,
+    somme_max=175,
+    seuil_bas_haut=25,
+    dispersion_min=15,
+    max_consecutifs=2,
+    min_conformite=0.7,
+    max_tentatives=20,
+    anti_collision_threshold=31,
+    anti_collision_high_boost=1.15,
+    anti_collision_superstitious_malus=0.80,
+    superstitious_numbers=_SUPERSTITIOUS,
+    superstitious_secondary=frozenset({3, 7, 9, 11}),
+    secondary_anti_collision_malus=0.85,
+    penalty_window=4,
+    penalty_coefficients=_PENALTY_COEFFS,
+    avertissement="L'EuroMillions reste un jeu de pur hasard. Aucune garantie de gain.",
+    star_to_legacy_score=_STAR_SCORES,
+)
