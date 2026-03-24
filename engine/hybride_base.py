@@ -7,15 +7,27 @@ All game-specific differences are handled by EngineConfig.
 
 import logging
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from config.engine import EngineConfig
+from config.i18n import _badges as _i18n_badges
 
 logger = logging.getLogger(__name__)
 
 
 class HybrideEngine:
-    """Config-driven grid generation engine for Loto and EuroMillions."""
+    """Moteur de generation de grilles HYBRIDE — config-driven.
+
+    Scoring hybride = poids_frequence x frequence + poids_retard x retard.
+
+    Note epistemologique :
+        Le composant "retard" (lag) dans la formule de scoring
+        est un mecanisme de DIVERSIFICATION UX, pas un indicateur predictif.
+        Chaque tirage est un evenement stochastique independant — le retard
+        n'a aucune valeur predictive (confirme par analyse Gemini Deep Search,
+        correction de Bonferroni). Le lag sert uniquement a eviter que le
+        moteur propose toujours les memes numeros.
+    """
 
     def __init__(self, cfg: EngineConfig):
         self.cfg = cfg
@@ -83,10 +95,10 @@ class HybrideEngine:
             row = await cursor.fetchone()
             max_date = row['max_date'] if row else None
             if not max_date:
-                return datetime.now()
+                return datetime.now(timezone.utc)
             return datetime.strptime(str(max_date), "%Y-%m-%d")
         except Exception:
-            return datetime.now()
+            return datetime.now(timezone.utc)
 
     # ── Boule scoring ─────────────────────────────────────────────────
 
@@ -122,6 +134,12 @@ class HybrideEngine:
         return freq
 
     async def calculer_retards(self, conn, date_limite: datetime | None) -> dict[int, float]:
+        """Calcule le retard (lag) de chaque numero = nombre de tirages depuis sa derniere apparition.
+
+        ATTENTION : Le retard n'a AUCUNE valeur predictive. Un numero "en retard" n'est pas "du".
+        Ce calcul sert uniquement a diversifier les grilles generees (mecanisme UX).
+        Cf. rapport Gemini Deep Search — loi des grands nombres par DILUTION, pas COMPENSATION.
+        """
         cursor = await conn.cursor()
         retard = {n: 0 for n in range(self.cfg.num_min, self.cfg.num_max + 1)}
         derniere = {n: None for n in retard}
@@ -163,6 +181,8 @@ class HybrideEngine:
         retard = await self.calculer_retards(conn, date_limite)
         freq = self._minmax_normalize(freq)
         retard = self._minmax_normalize(retard)
+        # Le retard (poids 0.3) est un facteur de DIVERSIFICATION UX, pas un signal predictif.
+        # Sans lui, le moteur convergerait vers les memes 5-7 numeros a chaque tirage.
         return {
             n: self.cfg.poids_frequence * freq[n] + self.cfg.poids_retard * retard[n]
             for n in range(self.cfg.num_min, self.cfg.num_max + 1)
@@ -561,23 +581,24 @@ class HybrideEngine:
         return result
 
     def _generer_badges(self, numeros: list[int], scores_hybrides: dict[int, float], lang: str = "fr") -> list[str]:
-        """Override in subclass for game-specific badges."""
+        """Generate descriptive badges for a grid. Uses i18n labels."""
+        b = _i18n_badges(lang)
         badges = []
         score_moyen = sum(scores_hybrides[n] for n in numeros) / self.cfg.num_count
         score_global = sum(scores_hybrides.values()) / len(scores_hybrides)
         if score_moyen > score_global * 1.1:
-            badges.append("Numéros chauds")
+            badges.append(b["hot"])
         elif score_moyen < score_global * 0.9:
-            badges.append("Mix de retards")
+            badges.append(b["overdue"])
         else:
-            badges.append("Équilibré")
+            badges.append(b["balanced"])
         dispersion = max(numeros) - min(numeros)
         if dispersion > 35:
-            badges.append("Large spectre")
+            badges.append(b["wide_spectrum"])
         nb_pairs = sum(1 for n in numeros if n % 2 == 0)
         if nb_pairs == 2 or nb_pairs == 3:
-            badges.append("Pair/Impair OK")
-        badges.append("Hybride V1")
+            badges.append(b["even_odd"])
+        badges.append("Hybride V1")  # brand name — not translated
         return badges
 
     # ── Main API ──────────────────────────────────────────────────────
@@ -622,7 +643,8 @@ class HybrideEngine:
             date_min = result['min_date'] if result else None
             date_max = result['max_date'] if result else None
 
-            # Backward-compat ponderation string (legacy 2-window format for tests/API)
+            # Ponderation display string (legacy 2-window format for API/frontend compat).
+            # Real 3-window weights are in cfg.modes: conservative=50/30/20, balanced=40/35/25, recent=25/35/40.
             _legacy_pond = {"conservative": "70/30", "balanced": "60/40", "recent": "40/60"}
             ponderation = _legacy_pond.get(mode, "60/40")
 

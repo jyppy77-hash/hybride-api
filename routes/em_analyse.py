@@ -79,6 +79,22 @@ async def em_meta_analyse_texte(request: Request, payload: EMMetaAnalyseTextePay
     )
 
 
+async def _fetch_last_draw_date_em() -> str | None:
+    """Fetch last EM draw date from DB for PDF timestamp (F07)."""
+    try:
+        from engine.db import get_connection
+        async with get_connection() as conn:
+            cursor = await conn.cursor()
+            await cursor.execute(
+                "SELECT date_de_tirage FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 1"
+            )
+            row = await cursor.fetchone()
+        return str(row["date_de_tirage"]) if row else None
+    except Exception as e:
+        logger.warning(f"[META-PDF-EM] last_draw_date fetch failed: {e}")
+        return None
+
+
 @router.post("/meta-pdf")
 @limiter.limit("10/minute")
 async def em_meta_pdf(request: Request, payload: EMMetaPdfPayload):
@@ -88,6 +104,10 @@ async def em_meta_pdf(request: Request, payload: EMMetaPdfPayload):
     try:
         logger.info(f"[META-PDF-EM ROUTE] graph_data_boules: {type(payload.graph_data_boules).__name__}, "
                      f"graph_data_etoiles: {type(payload.graph_data_etoiles).__name__}")
+
+        # Fetch last draw date from DB (F07 timestamp)
+        last_draw_date = await _fetch_last_draw_date_em()
+
         buf = await asyncio.to_thread(
             generate_em_meta_pdf,
             analysis=payload.analysis,
@@ -100,6 +120,7 @@ async def em_meta_pdf(request: Request, payload: EMMetaPdfPayload):
             lang=payload.lang,
             all_freq_boules=payload.all_freq_boules,
             all_freq_secondary=payload.all_freq_secondary,
+            last_draw_date=last_draw_date,
         )
         lang = payload.lang or "fr"
         fname = f"rapport-meta-euromillions-{lang}.pdf"

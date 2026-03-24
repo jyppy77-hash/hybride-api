@@ -34,6 +34,8 @@ PDF_LABELS = {
         "heatmap_title_secondary": "Fr\u00e9quences compl\u00e8tes - Num\u00e9ros Chance (1-10)",
         "heatmap_legend_cold": "Froid (rare)",
         "heatmap_legend_hot": "Chaud (fr\u00e9quent)",
+        "penalty_last_draw": "Dernier tirage int\u00e9gr\u00e9",
+        "penalty_generated": "Rapport g\u00e9n\u00e9r\u00e9 le",
     },
     "en": {
         "title": "META DATA Report - 75 Grids",
@@ -59,6 +61,8 @@ PDF_LABELS = {
         "heatmap_title_secondary": "Complete frequencies - Lucky Numbers (1-10)",
         "heatmap_legend_cold": "Cold (rare)",
         "heatmap_legend_hot": "Hot (frequent)",
+        "penalty_last_draw": "Last draw included",
+        "penalty_generated": "Report generated on",
     },
     "es": {
         "title": "Informe META DATA - 75 Combinaciones",
@@ -84,6 +88,8 @@ PDF_LABELS = {
         "heatmap_title_secondary": "Frecuencias completas - N\u00fameros de la Suerte (1-10)",
         "heatmap_legend_cold": "Fr\u00edo (raro)",
         "heatmap_legend_hot": "Caliente (frecuente)",
+        "penalty_last_draw": "\u00daltimo sorteo incluido",
+        "penalty_generated": "Informe generado el",
     },
     "pt": {
         "title": "Relat\u00f3rio META DATA - 75 Combina\u00e7\u00f5es",
@@ -109,6 +115,8 @@ PDF_LABELS = {
         "heatmap_title_secondary": "Frequ\u00eancias completas - N\u00fameros da Sorte (1-10)",
         "heatmap_legend_cold": "Frio (raro)",
         "heatmap_legend_hot": "Quente (frequente)",
+        "penalty_last_draw": "\u00daltimo sorteio inclu\u00eddo",
+        "penalty_generated": "Relat\u00f3rio gerado em",
     },
     "de": {
         "title": "META-DATEN Bericht - 75 Kombinationen",
@@ -134,6 +142,8 @@ PDF_LABELS = {
         "heatmap_title_secondary": "Vollst\u00e4ndige H\u00e4ufigkeiten - Gl\u00fcckszahlen (1-10)",
         "heatmap_legend_cold": "Kalt (selten)",
         "heatmap_legend_hot": "Heiss (h\u00e4ufig)",
+        "penalty_last_draw": "Letzte Ziehung einbezogen",
+        "penalty_generated": "Bericht erstellt am",
     },
     "nl": {
         "title": "META DATA Rapport - 75 Combinaties",
@@ -159,6 +169,8 @@ PDF_LABELS = {
         "heatmap_title_secondary": "Volledige frequenties - Geluksnummers (1-10)",
         "heatmap_legend_cold": "Koud (zeldzaam)",
         "heatmap_legend_hot": "Heet (frequent)",
+        "penalty_last_draw": "Laatste trekking opgenomen",
+        "penalty_generated": "Rapport gegenereerd op",
     },
 }
 
@@ -280,7 +292,8 @@ def generate_meta_pdf(analysis: str = "", window: str = "75 tirages",
                       graph_data: dict = None, chance_data: dict = None,
                       sponsor: str = None, lang: str = "fr",
                       all_freq_boules: dict = None,
-                      all_freq_secondary: dict = None) -> io.BytesIO:
+                      all_freq_secondary: dict = None,
+                      last_draw_date: str = None) -> io.BytesIO:
     """
     Genere le PDF officiel META75 via ReportLab.
     Retourne un BytesIO contenant le PDF.
@@ -433,7 +446,16 @@ def generate_meta_pdf(analysis: str = "", window: str = "75 tirages",
         c.drawString(15 * mm, y, f"{L['window_label']} : {window_text}")
         y -= 6 * mm
         c.drawString(15 * mm, y, f"{L['engine_label']} : {engine_text}")
-        y -= 10 * mm
+        y -= 6 * mm
+
+        # Horodatage (F07)
+        if last_draw_date:
+            c.drawString(15 * mm, y, f"{L['penalty_last_draw']} : {last_draw_date}")
+            y -= 6 * mm
+        from datetime import datetime as _dt, timezone as _tz
+        _now_str = _dt.now(_tz.utc).strftime('%d/%m/%Y %H:%M UTC')
+        c.drawString(15 * mm, y, f"{L['penalty_generated']} {_now_str}")
+        y -= 8 * mm
 
         # Bloc sponsor si present
         sponsor_text = _utf8_clean(sponsor)

@@ -270,3 +270,142 @@ async def test_three_window_grids_valid(mock_get_conn):
         assert len(grid["nums"]) == 5
         assert all(1 <= n <= 49 for n in grid["nums"])
         assert 1 <= grid["chance"] <= 10
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# N01 — Docstrings epistemologiques
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestDocstringsEpistemo:
+
+    def test_hybride_engine_docstring_mentions_diversification(self):
+        """La docstring de HybrideEngine mentionne 'diversification'."""
+        assert 'diversification' in HybrideEngine.__doc__.lower()
+
+    def test_hybride_engine_docstring_mentions_no_predictive(self):
+        """La docstring de HybrideEngine mentionne 'predictif'."""
+        assert 'predictif' in HybrideEngine.__doc__.lower() or 'predictive' in HybrideEngine.__doc__.lower()
+
+    def test_calculer_retards_docstring_mentions_no_predictive(self):
+        """La docstring de calculer_retards mentionne 'aucune valeur predictive'."""
+        doc = HybrideEngine.calculer_retards.__doc__
+        assert doc is not None
+        assert 'predictive' in doc.lower() or 'predictif' in doc.lower()
+
+    def test_calculer_retards_docstring_mentions_ux(self):
+        """La docstring de calculer_retards mentionne 'UX' ou 'diversifier'."""
+        doc = HybrideEngine.calculer_retards.__doc__
+        assert doc is not None
+        assert 'ux' in doc.lower() or 'diversifier' in doc.lower()
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# N02 — Badges i18n
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestBadgesI18n:
+
+    def test_badges_fr(self):
+        """Les badges Loto contiennent les labels FR (depuis config/i18n)."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        scores = {n: 1.0 for n in range(1, 50)}
+        scores[5] = 2.0  # make score_moyen > score_global
+        badges = engine._generer_badges([1, 5, 15, 25, 49], scores, lang="fr")
+        assert "Hybride V1" in badges
+
+    def test_badges_en(self):
+        """Les badges Loto sont en anglais quand lang='en'."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        scores = {n: 1.0 for n in range(1, 50)}
+        badges = engine._generer_badges([5, 15, 25, 35, 45], scores, lang="en")
+        assert "Hybride V1" in badges
+        # Should use English labels from _i18n_badges
+        assert any("Balanced" in b or "Wide" in b or "Even" in b or "Hot" in b or "Overdue" in b for b in badges)
+
+    def test_badges_all_6_langs(self):
+        """Les badges sont disponibles dans les 6 langues sans erreur."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        scores = {n: 1.0 for n in range(1, 50)}
+        for lang in ("fr", "en", "es", "pt", "de", "nl"):
+            badges = engine._generer_badges([5, 15, 25, 35, 45], scores, lang=lang)
+            assert len(badges) >= 2
+            assert "Hybride V1" in badges
+
+    def test_badges_em_i18n(self):
+        """Les badges EM utilisent l'override _EMEngine."""
+        from engine.hybride_em import generer_badges
+        scores = {n: 1.0 for n in range(1, 51)}
+        for lang in ("fr", "en", "es", "pt", "de", "nl"):
+            badges = generer_badges([5, 15, 25, 35, 45], scores, lang=lang)
+            assert len(badges) >= 2
+            assert any("EM" in b for b in badges)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# N05 — Diversite multi-grilles
+# ═══════════════════════════════════════════════════════════════════════
+
+@pytest.mark.asyncio
+@patch("engine.hybride.get_connection")
+async def test_10_grilles_consecutives_pas_identiques(mock_get_conn):
+    """10 grilles consecutives en mode balanced ne sont pas toutes identiques."""
+    from engine.hybride import generate_grids
+    cursor = AsyncSmartMockCursor()
+    mock_get_conn.side_effect = lambda: make_async_conn(cursor)
+    random.seed(42)
+
+    result = await generate_grids(n=10, mode="balanced")
+    grids_sets = [tuple(g["nums"]) for g in result["grids"]]
+    assert len(set(grids_sets)) >= 2, "All 10 grids are identical"
+
+
+@pytest.mark.asyncio
+@patch("engine.hybride.get_connection")
+async def test_diversite_numeros_sur_20_grilles(mock_get_conn):
+    """20 grilles en mode balanced couvrent au moins 15 numeros distincts."""
+    from engine.hybride import generate_grids
+    cursor = AsyncSmartMockCursor()
+    mock_get_conn.side_effect = lambda: make_async_conn(cursor)
+    random.seed(42)
+
+    result = await generate_grids(n=20, mode="balanced")
+    all_nums = set()
+    for g in result["grids"]:
+        all_nums.update(g["nums"])
+    assert len(all_nums) >= 15, f"Only {len(all_nums)} distinct numbers in 20 grids"
+
+
+@pytest.mark.asyncio
+@patch("engine.hybride.get_connection")
+async def test_temperature_augmente_diversite_grilles(mock_get_conn):
+    """T=1.5 (recent) produit plus de numeros distincts que T=1.0 (conservative)."""
+    from engine.hybride import generate_grids
+    cursor = AsyncSmartMockCursor()
+    mock_get_conn.side_effect = lambda: make_async_conn(cursor)
+
+    distinct_conservative = set()
+    distinct_recent = set()
+    for seed in range(20):
+        random.seed(seed)
+        r = await generate_grids(n=1, mode="conservative")
+        distinct_conservative.update(r["grids"][0]["nums"])
+        random.seed(seed)
+        r = await generate_grids(n=1, mode="recent")
+        distinct_recent.update(r["grids"][0]["nums"])
+
+    assert len(distinct_recent) >= len(distinct_conservative)
+
+
+@pytest.mark.asyncio
+@patch("engine.hybride_em.get_connection")
+async def test_etoiles_diversite_10_grilles(mock_get_conn):
+    """Les etoiles EM ne sont pas identiques sur 10 grilles consecutives."""
+    from engine.hybride_em import generate_grids
+    from tests.test_hybride_em import EMAsyncSmartMockCursor, make_em_conn
+    cursor = EMAsyncSmartMockCursor()
+    mock_get_conn.side_effect = lambda: make_em_conn(cursor)
+    random.seed(42)
+
+    result = await generate_grids(n=10, mode="balanced", lang="fr")
+    star_sets = [tuple(g["etoiles"]) for g in result["grids"]]
+    assert len(set(star_sets)) >= 2, "All 10 star pairs are identical"

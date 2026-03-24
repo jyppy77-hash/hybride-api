@@ -46,6 +46,8 @@ PDF_LABELS = {
         "heatmap_title_stars": "Fr\u00e9quences compl\u00e8tes - \u00c9toiles (1-12)",
         "heatmap_legend_cold": "Froid (rare)",
         "heatmap_legend_hot": "Chaud (fr\u00e9quent)",
+        "penalty_last_draw": "Dernier tirage int\u00e9gr\u00e9",
+        "penalty_generated": "Rapport g\u00e9n\u00e9r\u00e9 le",
     },
     "en": {
         "title": "META DATA EM Report - 75 Grids",
@@ -77,6 +79,8 @@ PDF_LABELS = {
         "heatmap_title_stars": "Complete frequencies - Stars (1-12)",
         "heatmap_legend_cold": "Cold (rare)",
         "heatmap_legend_hot": "Hot (frequent)",
+        "penalty_last_draw": "Last draw included",
+        "penalty_generated": "Report generated on",
     },
     "es": {
         "title": "Informe META DATA EM - 75 Combinaciones",
@@ -108,6 +112,8 @@ PDF_LABELS = {
         "heatmap_title_stars": "Frecuencias completas - Estrellas (1-12)",
         "heatmap_legend_cold": "Frío (raro)",
         "heatmap_legend_hot": "Caliente (frecuente)",
+        "penalty_last_draw": "Último sorteo incluido",
+        "penalty_generated": "Informe generado el",
     },
     "pt": {
         "title": "Relatório META DATA EM - 75 Combinações",
@@ -139,6 +145,8 @@ PDF_LABELS = {
         "heatmap_title_stars": "Frequências completas - Estrelas (1-12)",
         "heatmap_legend_cold": "Frio (raro)",
         "heatmap_legend_hot": "Quente (frequente)",
+        "penalty_last_draw": "Último sorteio incluído",
+        "penalty_generated": "Relatório gerado em",
     },
     "de": {
         "title": "META-DATEN EM Bericht - 75 Kombinationen",
@@ -170,6 +178,8 @@ PDF_LABELS = {
         "heatmap_title_stars": "Vollständige Häufigkeiten - Sterne (1-12)",
         "heatmap_legend_cold": "Kalt (selten)",
         "heatmap_legend_hot": "Heiss (häufig)",
+        "penalty_last_draw": "Letzte Ziehung einbezogen",
+        "penalty_generated": "Bericht erstellt am",
     },
     "nl": {
         "title": "META DATA EM Rapport - 75 Combinaties",
@@ -201,6 +211,8 @@ PDF_LABELS = {
         "heatmap_title_stars": "Volledige frequenties - Sterren (1-12)",
         "heatmap_legend_cold": "Koud (zeldzaam)",
         "heatmap_legend_hot": "Heet (frequent)",
+        "penalty_last_draw": "Laatste trekking opgenomen",
+        "penalty_generated": "Rapport gegenereerd op",
     },
 }
 
@@ -353,7 +365,8 @@ def generate_em_meta_pdf(analysis: str = "", window: str = "75 tirages",
                          sponsor: str = None,
                          lang: str = "fr",
                          all_freq_boules: dict = None,
-                         all_freq_secondary: dict = None) -> io.BytesIO:
+                         all_freq_secondary: dict = None,
+                         last_draw_date: str = None) -> io.BytesIO:
     """
     Genere le PDF officiel META75 EuroMillions via ReportLab.
     Affiche DEUX graphiques : boules et etoiles.
@@ -480,7 +493,16 @@ def generate_em_meta_pdf(analysis: str = "", window: str = "75 tirages",
         c.drawString(15 * mm, y, f"{L['engine_label']} : {engine_text}")
         y -= 6 * mm
         c.drawString(15 * mm, y, L["game_label"])
-        y -= 10 * mm
+        y -= 6 * mm
+
+        # Horodatage (F07)
+        if last_draw_date:
+            c.drawString(15 * mm, y, f"{L['penalty_last_draw']} : {last_draw_date}")
+            y -= 6 * mm
+        from datetime import datetime as _dt, timezone as _tz
+        _now_str = _dt.now(_tz.utc).strftime('%d/%m/%Y %H:%M UTC')
+        c.drawString(15 * mm, y, f"{L['penalty_generated']} {_now_str}")
+        y -= 8 * mm
 
         # Bloc sponsor si present
         sponsor_text = _utf8_clean(sponsor)

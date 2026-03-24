@@ -29,6 +29,7 @@ EXPECTED_KEYS = {
     "disclaimer1", "disclaimer2", "version", "ai_note", "dev_note",
     "heatmap_title_balls", "heatmap_title_stars",
     "heatmap_legend_cold", "heatmap_legend_hot",
+    "penalty_last_draw", "penalty_generated",
 }
 
 REQUIRED_LANGS = ["fr", "en", "es", "pt", "de", "nl"]
@@ -41,8 +42,8 @@ class TestPDFLabels:
         for lang in REQUIRED_LANGS:
             assert lang in PDF_LABELS, f"Missing language: {lang}"
 
-    def test_all_26_keys_per_language(self):
-        """Each language has exactly the 26 expected keys (+ 2 heatmap legend = 28)."""
+    def test_all_expected_keys_per_language(self):
+        """Each language has exactly the expected keys."""
         for lang in REQUIRED_LANGS:
             labels = PDF_LABELS[lang]
             missing = EXPECTED_KEYS - set(labels.keys())
@@ -202,3 +203,31 @@ class TestGenerateEmMetaPdf:
         data = buf.read()
         assert data[:5] == b"%PDF-"
         assert len(data) > 500
+
+    # ── F07 — Timestamp tests ──
+
+    def test_pdf_timestamp_always_present(self):
+        """PDF always includes generation timestamp."""
+        buf = generate_em_meta_pdf(analysis="Timestamp test", lang="fr")
+        data = buf.read()
+        assert data[:5] == b"%PDF-"
+        assert len(data) > 500
+
+    def test_pdf_last_draw_date_shown(self):
+        """PDF with last_draw_date renders it in the info section."""
+        buf = generate_em_meta_pdf(
+            analysis="Draw date test",
+            lang="fr",
+            last_draw_date="24/03/2026",
+        )
+        data = buf.read()
+        assert data[:5] == b"%PDF-"
+        assert len(data) > 500
+
+    def test_timestamp_labels_present_in_all_langs(self):
+        """All 6 languages have the 2 timestamp label keys."""
+        ts_keys = {"penalty_last_draw", "penalty_generated"}
+        for lang in REQUIRED_LANGS:
+            labels = PDF_LABELS[lang]
+            missing = ts_keys - set(labels.keys())
+            assert not missing, f"Lang {lang} missing timestamp keys: {missing}"

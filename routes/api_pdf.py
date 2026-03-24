@@ -13,6 +13,22 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
+async def _fetch_last_draw_date_loto() -> str | None:
+    """Fetch last draw date from DB for PDF timestamp (F07)."""
+    try:
+        from engine.db import get_connection
+        async with get_connection() as conn:
+            cursor = await conn.cursor()
+            await cursor.execute(
+                "SELECT date_de_tirage FROM tirages ORDER BY date_de_tirage DESC LIMIT 1"
+            )
+            row = await cursor.fetchone()
+        return str(row["date_de_tirage"]) if row else None
+    except Exception as e:
+        logger.warning(f"[META-PDF] last_draw_date fetch failed: {e}")
+        return None
+
+
 # =========================
 # META PDF (logique dans services/pdf_generator.py)
 # =========================
@@ -30,6 +46,9 @@ async def api_meta_pdf(request: Request, payload: MetaPdfPayload):
         else:
             logger.info(f"[META-PDF ROUTE] graph_data ABSENT ou invalide — raw: {type(payload.graph_data)}")
 
+        # Fetch last draw date from DB (F07 timestamp)
+        last_draw_date = await _fetch_last_draw_date_loto()
+
         buf = await asyncio.to_thread(
             generate_meta_pdf,
             analysis=payload.analysis,
@@ -42,6 +61,7 @@ async def api_meta_pdf(request: Request, payload: MetaPdfPayload):
             lang=payload.lang,
             all_freq_boules=payload.all_freq_boules,
             all_freq_secondary=payload.all_freq_secondary,
+            last_draw_date=last_draw_date,
         )
         lang = payload.lang or "fr"
         fname = f"rapport-meta-lotoia-{lang}.pdf"

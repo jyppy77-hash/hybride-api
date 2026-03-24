@@ -343,6 +343,35 @@ class TestFullLotoPdf:
             )
             assert _count_pdf_pages(buf) == 2, f"Expected 2 pages for lang={lang}"
 
+    # ── F07 — Timestamp tests (Loto) ──
+
+    def test_loto_pdf_with_last_draw_date(self):
+        """Loto PDF with last_draw_date renders without error."""
+        from services.pdf_generator import generate_meta_pdf
+        buf = generate_meta_pdf(
+            analysis="Timestamp test",
+            lang="fr",
+            last_draw_date="20/03/2026",
+        )
+        data = buf.read()
+        assert data[:5] == b"%PDF-"
+        assert len(data) > 500
+
+    def test_loto_pdf_without_last_draw_date(self):
+        """Loto PDF without last_draw_date (None) — retro-compat."""
+        from services.pdf_generator import generate_meta_pdf
+        buf = generate_meta_pdf(analysis="No date test", lang="en")
+        data = buf.read()
+        assert data[:5] == b"%PDF-"
+
+    def test_loto_timestamp_labels_present(self):
+        """Loto PDF_LABELS have timestamp keys in all 6 langs."""
+        from services.pdf_generator import PDF_LABELS
+        ts_keys = {"penalty_last_draw", "penalty_generated"}
+        for lang in ("fr", "en", "es", "pt", "de", "nl"):
+            missing = ts_keys - set(PDF_LABELS[lang].keys())
+            assert not missing, f"Lang {lang} missing timestamp keys: {missing}"
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # PDF_LABELS coverage
