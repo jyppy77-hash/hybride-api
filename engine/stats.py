@@ -3,6 +3,10 @@ Module d'analyse statistique descriptive pour le Loto et l'EuroMillions.
 Analyse UNIQUEMENT l'historique réel - Aucune prédiction.
 
 Config-driven via EngineConfig (V55 audit fix F09).
+
+SQL SECURITY NOTE (F08 audit 24/03/2026): table names come from EngineConfig
+frozen dataclass (compile-time constants), never from user input. f-string
+interpolation for table names is safe in this context.
 """
 
 import logging
@@ -125,6 +129,9 @@ async def get_global_stats(cfg: EngineConfig = LOTO_CONFIG) -> dict:
         last_draw_date = result['max_date'] if result else None
 
     # Formater la période
+    # NOTE (F09 audit 24/03/2026): Period formatted with French "à" (preposition).
+    # This is cache-side/internal metadata, not user-facing. Frontend handles
+    # display formatting per locale. If i18n needed, use config/i18n.py pattern.
     period_covered = f"{first_draw_date} à {last_draw_date}" if first_draw_date and last_draw_date else "N/A"
 
     logger.debug(f"[STATS] get_global_stats - Fin: total_draws={total_draws}, period={period_covered}")

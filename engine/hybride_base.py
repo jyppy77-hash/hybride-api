@@ -216,6 +216,19 @@ class HybrideEngine:
         # dans calculer_scores_fenetre(). La combinaison ponderee (sum poids * score)
         # produit un resultat dans [0, 1] car sum(poids) = 1.0. Pas besoin de
         # re-normaliser — normaliser_en_probabilites() le fera en fin de pipeline.
+        #
+        # DESIGN NOTE (F01 audit 24/03/2026): Identical scoring formula for main
+        # numbers and secondary numbers (stars/chance). The reduced space of EM stars
+        # (12 vs 50) does NOT require separate weights because:
+        # 1. Scoring serves UX diversification, not statistical prediction
+        # 2. Temperature-based sampling already compensates for space differences
+        # 3. Min-max normalization homogenizes scales regardless of space size
+        #
+        # DESIGN NOTE (F02 audit 24/03/2026): Intentional overlap between windows.
+        # The global window includes draws from the principal and recent windows.
+        # This is by design: global acts as a stabilizer, smoothing noise from
+        # shorter windows. Weights sum to 1.0 per mode, which compensates for
+        # the overlap. See also inline comment at window combination below.
         now = await self.get_reference_date(conn)
         date_princ = now - timedelta(days=self.cfg.fenetre_principale_annees * 365.25)
         date_rec = now - timedelta(days=self.cfg.fenetre_recente_annees * 365.25)

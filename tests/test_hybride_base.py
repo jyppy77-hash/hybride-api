@@ -994,3 +994,47 @@ class TestValiderContraintesGuard:
         engine = HybrideEngine(EM_CONFIG)
         with pytest.raises(ValueError, match="Expected 5"):
             engine.valider_contraintes([3, 15, 26, 33])
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V59 — F10: degraded_windows with truly insufficient data
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestDegradedWindowsInsufficientData:
+    """F10 audit 24/03/2026 — edge case données insuffisantes via SmartMockCursor."""
+
+    @pytest.mark.asyncio
+    @patch("engine.hybride.get_connection")
+    async def test_degraded_windows_flag_with_insufficient_data(self, mock_get_conn):
+        """5 tirages << 50% attendu → both windows degraded."""
+        from tests.conftest import _make_fake_tirages
+
+        from engine.hybride import generate_grids
+        cursor = AsyncSmartMockCursor(tirages=_make_fake_tirages(n=5))
+        mock_get_conn.side_effect = lambda: make_async_conn(cursor)
+        random.seed(42)
+
+        result = await generate_grids(n=1, mode="balanced")
+        degraded = result["metadata"]["degraded_windows"]
+        assert isinstance(degraded, list)
+        assert len(degraded) >= 1
+        windows = {d["window"] for d in degraded}
+        # 5 tirages / 15 days → both 5-year and 2-year windows are degraded
+        assert "principale" in windows
+        # Grids are still generated (degraded mode, not crash)
+        assert len(result["grids"]) == 1
+
+    @pytest.mark.asyncio
+    @patch("engine.hybride.get_connection")
+    async def test_degraded_windows_absent_with_sufficient_data(self, mock_get_conn):
+        """200 tirages (standard mock) → degraded_windows empty or absent."""
+        from engine.hybride import generate_grids
+        cursor = AsyncSmartMockCursor()  # default: 200 tirages
+        mock_get_conn.side_effect = lambda: make_async_conn(cursor)
+        random.seed(42)
+
+        result = await generate_grids(n=1, mode="balanced")
+        degraded = result["metadata"]["degraded_windows"]
+        # recente (2y) should NOT be degraded with 200 tirages / 600 days
+        recente_flagged = any(d["window"] == "recente" for d in degraded)
+        assert not recente_flagged
