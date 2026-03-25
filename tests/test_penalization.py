@@ -377,3 +377,27 @@ class TestCollisionRiskSuperstitious:
         from services.penalization import get_collision_risk_numbers
         result = get_collision_risk_numbers("loto")
         assert set(result["superstition"]) == set(_SUPERSTITIOUS)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V58 — F03: V1 legacy constants are distinct from V2
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestV1V2ConstantsDistinct:
+
+    def test_v1_constants_different_from_v2(self):
+        """V1 legacy constants (COEFF_LAST_DRAW/COEFF_SECOND_LAST) are NOT
+        the same as V2 PENALTY_COEFFICIENTS — they must not be confused."""
+        assert COEFF_LAST_DRAW != PENALIZATION_COEFFS[0], (
+            "V1 COEFF_LAST_DRAW should differ from V2 T-1 coefficient"
+        )
+        assert COEFF_SECOND_LAST != PENALIZATION_COEFFS[1], (
+            "V1 COEFF_SECOND_LAST should differ from V2 T-2 coefficient"
+        )
+
+    def test_v1_path_deprecated_in_source(self):
+        """V1 legacy path is marked DEPRECATED in source."""
+        import inspect
+        import services.penalization as mod
+        source = inspect.getsource(mod)
+        assert "DEPRECATED V58" in source

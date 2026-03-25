@@ -8,7 +8,9 @@ V2 — Hard-exclude T-1 + fenetre 4 tirages (F01+F02 audit 360°).
 
 from config.engine import PENALTY_COEFFICIENTS, _SUPERSTITIOUS
 
-# Legacy constants — kept for backward-compat imports in tests
+# DEPRECATED V58 — V1 legacy constants, different from V2 PENALTY_COEFFICIENTS.
+# Used only by V1 legacy path in compute_penalized_ranking() when recent_draws=None.
+# Will be removed when meta-analyse-local fully migrates to V2 (recent_draws mode).
 COEFF_LAST_DRAW = 0.7
 COEFF_SECOND_LAST = 0.85
 
@@ -75,7 +77,8 @@ def compute_penalized_ranking(
                 if coeff < 1.0:
                     penalized_numbers[n] = coeff
         else:
-            # Legacy V1 path
+            # DEPRECATED V58 — Legacy V1 path (uses COEFF_LAST_DRAW/COEFF_SECOND_LAST).
+            # Active only when recent_draws=None. Will be removed with V1 migration.
             coeff = 1.0
             if n in last_draw_numbers:
                 coeff = COEFF_LAST_DRAW

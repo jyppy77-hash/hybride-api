@@ -453,6 +453,8 @@ class HybrideEngine:
     # ── Validation ────────────────────────────────────────────────────
 
     def valider_contraintes(self, numeros: list[int]) -> float:
+        if len(numeros) != self.cfg.num_count:
+            raise ValueError(f"Expected {self.cfg.num_count} numbers, got {len(numeros)}")
         score = 1.0
         nb_pairs = sum(1 for n in numeros if n % 2 == 0)
         if nb_pairs < 1 or nb_pairs > 4:

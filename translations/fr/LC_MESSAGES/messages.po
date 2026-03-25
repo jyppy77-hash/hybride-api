@@ -4018,6 +4018,83 @@ msgstr ""
 msgid "sorties"
 msgstr ""
 
+#: ui/templates/em/news.html (V58 news article)
+msgid "25 mars 2026"
+msgstr ""
+
+msgid "LotoIA — Quoi de neuf depuis le lancement EuroMillions ?"
+msgstr ""
+
+msgid ""
+"Depuis le lancement de l'EuroMillions le 15 mars, notre équipe a travaillé "
+"sans relâche pour améliorer votre expérience. Voici un résumé des nouveautés."
+msgstr ""
+
+msgid "Un moteur d'analyse plus intelligent"
+msgstr ""
+
+msgid ""
+"Notre moteur HYBRIDE a été entièrement repensé. Il analyse désormais vos "
+"numéros sur 3 périodes (récente, moyenne et longue) pour des suggestions "
+"plus pertinentes. Le système de notation a été affiné : chaque grille "
+"reçoit un score de qualité sur 5 étoiles basé sur l'équilibre "
+"pairs/impairs, la dispersion et la somme des numéros."
+msgstr ""
+
+msgid "Un chatbot plus malin"
+msgstr ""
+
+msgid ""
+"HYBRIDE comprend mieux vos demandes : vous pouvez exclure des numéros, "
+"demander plusieurs grilles d'un coup, forcer vos numéros fétiches, et poser "
+"des questions temporelles. Il détecte aussi mieux les fautes de frappe et "
+"les messages courts."
+msgstr ""
+
+msgid "6 langues, 9 pays"
+msgstr ""
+
+msgid ""
+"LotoIA est disponible en français, anglais, espagnol, portugais, allemand "
+"et néerlandais. Le site détecte automatiquement votre pays pour vous "
+"afficher la bonne langue. Chaque version inclut les numéros d'aide au jeu "
+"responsable de votre pays."
+msgstr ""
+
+msgid "Sécurité renforcée"
+msgstr ""
+
+msgid ""
+"Nous avons réalisé plusieurs audits de sécurité complets. La protection "
+"contre les robots a été améliorée, les données sont mieux protégées, et la "
+"détection des messages sensibles liés à l'addiction au jeu a été renforcée "
+"en 6 langues."
+msgstr ""
+
+msgid "Des analyses plus claires"
+msgstr ""
+
+msgid ""
+"Les rapports PDF ont été simplifiés pour ne garder que l'essentiel. Le "
+"système anti-collision vous aide à éviter les combinaisons trop populaires "
+"(et donc un éventuel partage du jackpot). Chaque analyse affiche clairement "
+"sa période de données et son volume."
+msgstr ""
+
+msgid "Plus rapide, plus fiable"
+msgstr ""
+
+msgid ""
+"L'infrastructure a été modernisée avec un déploiement automatisé et des "
+"tests rigoureux. Plus de 3 000 tests automatiques vérifient le bon "
+"fonctionnement de la plateforme à chaque mise à jour."
+msgstr ""
+
+msgid ""
+"Merci de votre confiance. LotoIA s'améliore chaque jour grâce à vos "
+"retours !"
+msgstr ""
+
 #~ msgid "Numéros chauds"
 #~ msgstr ""
 

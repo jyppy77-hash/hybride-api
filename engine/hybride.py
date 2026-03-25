@@ -47,10 +47,11 @@ async def generate_grids(
     )
 
 
-# ── DEPRECATED — kept for /ask backward compat (routes/api_analyse.py) ─
+# ── DEPRECATED V58 — consumed by routes/api_analyse.py:/ask only ──
 
 async def generate(prompt):
-    """DEPRECATED: Legacy wrapper. Use generate_grids() directly."""
+    """DEPRECATED: Legacy wrapper consumed by /ask route (routes/api_analyse.py).
+    Use generate_grids() directly for new code. Will be removed when /ask is retired."""
     try:
         result = await generate_grids(n=3, mode="balanced")
         return {

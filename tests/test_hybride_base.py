@@ -926,3 +926,71 @@ class TestCustomGridScoreType:
         import routes.api_analyse_unified as mod
         source = inspect.getsource(mod)
         assert '"score_type"' in source or "'score_type'" in source
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V58 — F01: em_analyse.py:em_generate() propagates anti_collision
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestEmAnalyseAntiCollision:
+
+    def test_em_generate_has_anti_collision_param(self):
+        """em_generate() exposes anti_collision query parameter."""
+        import inspect
+        from routes.em_analyse import em_generate
+        sig = inspect.signature(em_generate)
+        assert "anti_collision" in sig.parameters, (
+            "em_generate() must expose anti_collision parameter"
+        )
+
+    def test_em_generate_anti_collision_default_false(self):
+        """anti_collision defaults to False in em_generate()."""
+        import inspect
+        from routes.em_analyse import em_generate
+        param = inspect.signature(em_generate).parameters["anti_collision"]
+        assert param.default.default is False
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V58 — F02: generate() DEPRECATED documents consumer
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestGenerateDeprecatedDocumented:
+
+    def test_generate_docstring_mentions_ask_route(self):
+        """generate() DEPRECATED docstring references /ask route."""
+        from engine.hybride import generate
+        assert "/ask" in generate.__doc__
+        assert "api_analyse" in generate.__doc__
+
+    def test_ask_route_imports_generate(self):
+        """routes/api_analyse.py imports generate from engine.hybride."""
+        import inspect
+        import routes.api_analyse as mod
+        source = inspect.getsource(mod)
+        assert "from engine.hybride import generate" in source
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V58 — F05: valider_contraintes() guard on len(numeros)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestValiderContraintesGuard:
+
+    def test_too_few_numbers_raises(self):
+        """valider_contraintes with 4 numbers raises ValueError."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        with pytest.raises(ValueError, match="Expected 5"):
+            engine.valider_contraintes([3, 15, 24, 33])
+
+    def test_too_many_numbers_raises(self):
+        """valider_contraintes with 6 numbers raises ValueError."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        with pytest.raises(ValueError, match="Expected 5"):
+            engine.valider_contraintes([3, 15, 24, 33, 47, 49])
+
+    def test_em_wrong_count_raises(self):
+        """valider_contraintes with 4 numbers for EM raises ValueError."""
+        engine = HybrideEngine(EM_CONFIG)
+        with pytest.raises(ValueError, match="Expected 5"):
+            engine.valider_contraintes([3, 15, 26, 33])

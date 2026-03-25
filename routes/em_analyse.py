@@ -36,8 +36,9 @@ async def em_generate(
     n: int = Query(default=3, ge=1, le=10),
     mode: str = Query(default="balanced"),
     lang: str = Query(default="fr", pattern=r"^(fr|en|pt|es|de|nl)$"),
+    anti_collision: bool = Query(default=False, description="Anti-collision: boost high numbers"),
 ):
-    return await unified_generate(request=request, game=_EM, n=n, mode=mode, lang=lang)
+    return await unified_generate(request=request, game=_EM, n=n, mode=mode, lang=lang, anti_collision=anti_collision)
 
 
 @router.get("/meta-analyse-local")
