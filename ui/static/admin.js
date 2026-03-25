@@ -757,13 +757,13 @@ var LotoAdmin = (function() {
                 '<td>' + escHtml(r.page_source) + '</td>' +
                 '<td>' + escHtml(r.lang) + '</td>' +
                 '<td>' + luIcon + '</td>' +
-                '<td><button class="btn-secondary btn-msg-toggle" style="padding:2px 8px;font-size:0.75rem;" data-msg-id="' + parseInt(r.id, 10) + '" data-new-lu="' + (r.lu ? '0' : '1') + '">' + (r.lu ? 'Non-lu' : 'Lu') + '</button></td>' +
+                '<td><button class="btn-secondary btn-msg-toggle" style="padding:2px 8px;font-size:0.75rem;" data-msg-id="' + parseInt(r.id, 10) + '" data-new-lu="' + (r.lu ? '0' : '1') + '">' + (r.lu ? 'Non-lu' : 'Lu') + '</button> <button class="btn-secondary btn-msg-delete" style="padding:2px 8px;font-size:0.75rem;background:#ef4444;border-color:#ef4444;color:#fff;" data-msg-id="' + parseInt(r.id, 10) + '" title="Supprimer">\uD83D\uDDD1\uFE0F</button></td>' +
                 '</tr>';
         }).join('');
         // Event delegation — row click → show detail
         tbody.querySelectorAll('tr[data-msg-id]').forEach(function(tr) {
             tr.addEventListener('click', function(e) {
-                if (e.target.classList.contains('btn-msg-toggle')) return;
+                if (e.target.classList.contains('btn-msg-toggle') || e.target.classList.contains('btn-msg-delete')) return;
                 showMsgDetail(parseInt(tr.getAttribute('data-msg-id'), 10));
             });
         });
@@ -772,6 +772,13 @@ var LotoAdmin = (function() {
             btn.addEventListener('click', function(e) {
                 e.stopPropagation();
                 toggleRead(parseInt(btn.getAttribute('data-msg-id'), 10), parseInt(btn.getAttribute('data-new-lu'), 10));
+            });
+        });
+        // Event delegation — delete button
+        tbody.querySelectorAll('.btn-msg-delete').forEach(function(btn) {
+            btn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                deleteMessage(parseInt(btn.getAttribute('data-msg-id'), 10));
             });
         });
         renderPagination(rows.length, page, renderMessagesTable, rows);
@@ -802,6 +809,15 @@ var LotoAdmin = (function() {
         var action = newLu ? 'read' : 'unread';
         fetch('/admin/api/messages/' + id + '/' + action, { method: 'POST', credentials: 'same-origin' })
             .then(function() { loadMessages(); });
+    }
+
+    function deleteMessage(id) {
+        if (!confirm('Supprimer ce message ?')) return;
+        fetch('/admin/api/messages/' + id, { method: 'DELETE', credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                if (d && d.status === 'ok') loadMessages();
+            });
     }
 
     // ══════════════════════════════════════

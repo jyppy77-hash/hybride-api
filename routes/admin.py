@@ -281,6 +281,14 @@ async def admin_votes_page(request: Request):
     redir = _require_auth(request)
     if redir:
         return redir
+    # Update last_seen for votes badge
+    try:
+        await db_cloudsql.async_query(
+            "INSERT INTO admin_last_seen (section, last_seen) VALUES ('votes', NOW()) "
+            "ON DUPLICATE KEY UPDATE last_seen = NOW()"
+        )
+    except Exception as e:
+        logger.error("[ADMIN] votes last_seen update error: %s", e)
     tpl = env.get_template("admin/votes.html")
     return HTMLResponse(tpl.render(active="votes"))
 
@@ -510,6 +518,22 @@ async def admin_api_votes(
         logger.error("[ADMIN API] votes table failed: %s", e)
 
     return JSONResponse({"summary": summary, "distribution": distribution, "table": table_data})
+
+
+@router.get("/admin/api/votes/count-new", include_in_schema=False)
+async def admin_api_votes_count_new(request: Request):
+    err = _require_auth_json(request)
+    if err:
+        return err
+    try:
+        row = await db_cloudsql.async_fetchone(
+            "SELECT COUNT(*) AS cnt FROM ratings WHERE created_at > "
+            "COALESCE((SELECT last_seen FROM admin_last_seen WHERE section = 'votes'), '2099-01-01')"
+        )
+        return JSONResponse({"new_votes": _dec(row["cnt"]) if row else 0})
+    except Exception as e:
+        logger.error("[ADMIN] count new votes error: %s", e)
+        return JSONResponse({"new_votes": 0})
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -2000,6 +2024,7 @@ async def admin_api_messages(
     elif lu == "0":
         where.append("lu = 0")
 
+    where.append("deleted = 0")
     w = " AND ".join(where)
 
     # KPI summary
@@ -2074,6 +2099,25 @@ async def admin_api_message_mark_unread(msg_id: int, request: Request):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
+@router.delete("/admin/api/messages/{msg_id}", include_in_schema=False)
+async def admin_api_message_delete(msg_id: int, request: Request):
+    err = _require_auth_json(request)
+    if err:
+        return err
+    try:
+        row = await db_cloudsql.async_fetchone(
+            "SELECT id FROM contact_messages WHERE id = %s AND deleted = 0", (msg_id,)
+        )
+        if not row:
+            return JSONResponse({"error": "not found"}, status_code=404)
+        await db_cloudsql.async_query("UPDATE contact_messages SET deleted = 1 WHERE id = %s", (msg_id,))
+        logger.info("[ADMIN_AUDIT] action=delete_message id=%s", msg_id)
+        return JSONResponse({"status": "ok"})
+    except Exception as e:
+        logger.error("[ADMIN] delete message error: %s", e)
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
 @router.get("/admin/api/messages/count-unread", include_in_schema=False)
 async def admin_api_messages_count_unread(request: Request):
     err = _require_auth_json(request)
@@ -2081,7 +2125,7 @@ async def admin_api_messages_count_unread(request: Request):
         return err
     try:
         row = await db_cloudsql.async_fetchone(
-            "SELECT COUNT(*) AS cnt FROM contact_messages WHERE lu = 0"
+            "SELECT COUNT(*) AS cnt FROM contact_messages WHERE lu = 0 AND deleted = 0"
         )
         return JSONResponse({"unread": _dec(row["cnt"]) if row else 0})
     except Exception as e:

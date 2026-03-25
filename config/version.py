@@ -3,7 +3,7 @@ Configuration centralisée des versions LotoIA.
 Tous les fichiers du projet DOIVENT importer depuis ce module.
 """
 
-APP_VERSION = "1.5.009"
+APP_VERSION = "1.5.010"
 APP_NAME = "LotoIA"
 VERSION_DATE = "2026-03-25"
 
