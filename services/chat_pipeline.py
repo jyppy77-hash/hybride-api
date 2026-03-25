@@ -43,8 +43,33 @@ from services.chat_utils import (
     _build_session_context, _format_generation_context,
 )
 from services.chat_logger import log_chat_exchange
+import db_cloudsql
 
 logger = logging.getLogger(__name__)
+
+# F02: cached draw count for {DRAW_COUNT} placeholder injection
+_draw_count_cache: dict[str, tuple[float, int]] = {}  # game -> (timestamp, count)
+_DRAW_COUNT_TTL = 3600  # 1h
+
+
+async def _get_draw_count(game: str = "loto") -> int:
+    """Return draw count from DB with 1h cache. Returns 0 on error."""
+    now = time.monotonic()
+    cached = _draw_count_cache.get(game)
+    if cached and (now - cached[0]) < _DRAW_COUNT_TTL:
+        return cached[1]
+    table = "tirages" if game == "loto" else "tirages_euromillions"
+    try:
+        async with db_cloudsql.get_connection() as conn:
+            cursor = await conn.cursor()
+            await cursor.execute(f"SELECT COUNT(*) as cnt FROM {table}")
+            row = await cursor.fetchone()
+            count = row["cnt"] if row else 0
+            _draw_count_cache[game] = (now, count)
+            return count
+    except Exception as e:
+        logger.warning("[DRAW_COUNT] Error fetching count for %s: %s", game, e)
+        return cached[1] if cached else 0
 
 
 # =========================
@@ -74,6 +99,11 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
     if not system_prompt:
         logger.error("[HYBRIDE CHAT] Prompt systeme introuvable")
         return {"response": FALLBACK_RESPONSE, "source": "fallback", "mode": mode}, None
+
+    # F02: inject dynamic draw count
+    draw_count = await _get_draw_count("loto")
+    if draw_count and "{DRAW_COUNT}" in system_prompt:
+        system_prompt = system_prompt.replace("{DRAW_COUNT}", str(draw_count))
 
     # ── Anti-re-introduction : TOUJOURS injecté (le welcome JS a déjà fait la présentation) ──
     system_prompt += (

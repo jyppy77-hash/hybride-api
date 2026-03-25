@@ -244,7 +244,7 @@ class TestDataSourceInPrompts:
         with open("prompts/chatbot/prompt_hybride.txt", encoding="utf-8") as f:
             content = f.read()
         assert "depuis 2019" in content
-        assert "990 tirages" in content
+        assert "{DRAW_COUNT} tirages" in content  # F02: dynamic placeholder
 
     def test_loto_prompt_data_source_section(self):
         with open("prompts/chatbot/prompt_hybride.txt", encoding="utf-8") as f:
@@ -255,7 +255,7 @@ class TestDataSourceInPrompts:
         with open("prompts/em/fr/prompt_hybride_em.txt", encoding="utf-8") as f:
             content = f.read()
         assert "depuis 2004" in content
-        assert "733 tirages" in content
+        assert "{DRAW_COUNT} tirages" in content  # F02: dynamic placeholder
 
     def test_em_fr_prompt_data_source_section(self):
         with open("prompts/em/fr/prompt_hybride_em.txt", encoding="utf-8") as f:
@@ -266,35 +266,35 @@ class TestDataSourceInPrompts:
         with open("prompts/em/en/prompt_hybride_em.txt", encoding="utf-8") as f:
             content = f.read()
         assert "since 2004" in content
-        assert "733 draws" in content
+        assert "{DRAW_COUNT} draws" in content  # F02: dynamic placeholder
         assert "[DATA SOURCE" in content
 
     def test_em_es_prompt_since_2004(self):
         with open("prompts/em/es/prompt_hybride_em.txt", encoding="utf-8") as f:
             content = f.read()
         assert "desde 2004" in content
-        assert "733 sorteos" in content
+        assert "{DRAW_COUNT} sorteos" in content  # F02: dynamic placeholder
         assert "[FUENTE DE DATOS" in content
 
     def test_em_pt_prompt_since_2004(self):
         with open("prompts/em/pt/prompt_hybride_em.txt", encoding="utf-8") as f:
             content = f.read()
         assert "desde 2004" in content
-        assert "733 sorteios" in content
+        assert "{DRAW_COUNT} sorteios" in content  # F02: dynamic placeholder
         assert "[FONTE DE DADOS" in content
 
     def test_em_de_prompt_since_2004(self):
         with open("prompts/em/de/prompt_hybride_em.txt", encoding="utf-8") as f:
             content = f.read()
         assert "seit 2004" in content
-        assert "733" in content
+        assert "{DRAW_COUNT}" in content  # F02: dynamic placeholder
         assert "[DATENQUELLE" in content
 
     def test_em_nl_prompt_since_2004(self):
         with open("prompts/em/nl/prompt_hybride_em.txt", encoding="utf-8") as f:
             content = f.read()
         assert "sinds 2004" in content
-        assert "733" in content
+        assert "{DRAW_COUNT}" in content  # F02: dynamic placeholder
         assert "[GEGEVENSBRON" in content
 
 

@@ -41,6 +41,7 @@ async def unified_hybride_chat(request: Request, game: ValidGame):
                 payload.history,
                 payload.page,
                 request.app.state.httpx_client,
+                lang=payload.lang,  # F01: propagation lang comme EM
             ),
             media_type="text/event-stream",
             headers=_SSE_HEADERS,

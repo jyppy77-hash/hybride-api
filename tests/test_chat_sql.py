@@ -217,6 +217,101 @@ class TestExecuteSafeSql:
 
         assert await _execute_safe_sql("SELECT 1") is None
 
+    # F03: defense-in-depth — _execute_safe_sql rejects invalid SQL
+    @pytest.mark.asyncio
+    async def test_rejects_drop_table(self):
+        """F03: _execute_safe_sql must reject DROP TABLE without hitting DB."""
+        result = await _execute_safe_sql("DROP TABLE tirages")
+        assert result is None
+
+    @pytest.mark.asyncio
+    async def test_rejects_insert(self):
+        """F03: _execute_safe_sql must reject INSERT without hitting DB."""
+        result = await _execute_safe_sql("INSERT INTO tirages VALUES (1,2,3,4,5,1)")
+        assert result is None
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# F04: _generate_sql guard — non-SQL output rejected (Loto)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestGenerateSqlNonSqlGuard:
+    """F04: _generate_sql must return NO_SQL when Gemini returns natural language."""
+
+    @pytest.mark.asyncio
+    @patch("services.chat_sql.gemini_breaker")
+    async def test_rejects_natural_language(self, mock_breaker):
+        """Gemini returning natural language gets rejected to NO_SQL."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "Je ne peux pas générer de SQL pour cette question."}]}}]
+        }
+        mock_breaker.call = AsyncMock(return_value=mock_response)
+
+        from services.chat_sql import _generate_sql
+        result = await _generate_sql("test question", MagicMock(), "fake-key")
+        assert result == "NO_SQL"
+
+    @pytest.mark.asyncio
+    @patch("services.chat_sql.gemini_breaker")
+    async def test_allows_valid_select(self, mock_breaker):
+        """Gemini returning valid SELECT passes through."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "SELECT COUNT(*) FROM tirages"}]}}]
+        }
+        mock_breaker.call = AsyncMock(return_value=mock_response)
+
+        from services.chat_sql import _generate_sql
+        result = await _generate_sql("combien de tirages", MagicMock(), "fake-key")
+        assert result == "SELECT COUNT(*) FROM tirages"
+
+    @pytest.mark.asyncio
+    @patch("services.chat_sql.gemini_breaker")
+    async def test_allows_no_sql(self, mock_breaker):
+        """Gemini returning NO_SQL passes through."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "NO_SQL"}]}}]
+        }
+        mock_breaker.call = AsyncMock(return_value=mock_response)
+
+        from services.chat_sql import _generate_sql
+        result = await _generate_sql("bonjour", MagicMock(), "fake-key")
+        assert result == "NO_SQL"
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# F02: {DRAW_COUNT} placeholder present in chatbot prompts
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestDrawCountPlaceholder:
+    """F02: Chatbot prompts must use {DRAW_COUNT} placeholder (not hardcoded)."""
+
+    def test_loto_prompt_has_placeholder(self):
+        prompt = load_prompt("CHATBOT")
+        assert "{DRAW_COUNT}" in prompt
+        # Ensure old hardcoded values are gone
+        assert "981+" not in prompt.replace("{DRAW_COUNT}+", "")
+
+    def test_em_fr_prompt_has_placeholder(self):
+        prompt = load_prompt_em("prompt_hybride_em", lang="fr")
+        assert "{DRAW_COUNT}" in prompt
+        assert "733" not in prompt
+
+    def test_em_en_prompt_has_placeholder(self):
+        prompt = load_prompt_em("prompt_hybride_em", lang="en")
+        assert "{DRAW_COUNT}" in prompt
+        assert "733" not in prompt
+
+    def test_em_es_prompt_has_placeholder(self):
+        prompt = load_prompt_em("prompt_hybride_em", lang="es")
+        assert "{DRAW_COUNT}" in prompt
+        assert "733" not in prompt
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # Prompt temporal few-shot examples — regression tests

@@ -373,3 +373,27 @@ def test_valid_game_enum():
     """ValidGame enum has exactly loto and euromillions."""
     from config.games import ValidGame
     assert set(ValidGame) == {ValidGame.loto, ValidGame.euromillions}
+
+
+# ═══════════════════════════════════════════════
+# F01 — Loto unified chat route propagates lang
+# ═══════════════════════════════════════════════
+
+def test_loto_hybride_chat_propagates_lang():
+    """F01: Verify route source passes lang=payload.lang for Loto chat."""
+    import inspect
+    with _db_module_patch, _static_patch, _static_call:
+        import importlib
+        import routes.api_chat_unified as mod
+        importlib.reload(mod)
+        source = inspect.getsource(mod.unified_hybride_chat)
+        # Both Loto and EM branches must pass lang=payload.lang
+        occurrences = source.count("lang=payload.lang")
+        assert occurrences >= 2, f"Expected lang=payload.lang in both Loto and EM branches, found {occurrences}"
+
+
+def test_loto_chat_request_schema_has_lang():
+    """F01: HybrideChatRequest schema accepts lang field."""
+    from schemas import HybrideChatRequest
+    payload = HybrideChatRequest(message="bonjour", lang="es")
+    assert payload.lang == "es"

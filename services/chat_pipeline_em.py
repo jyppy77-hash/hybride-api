@@ -65,6 +65,7 @@ from services.chat_utils_em import (
     _format_generation_context_em,
 )
 from services.chat_logger import log_chat_exchange
+from services.chat_pipeline import _get_draw_count  # F02: shared draw count helper
 
 logger = logging.getLogger(__name__)
 
@@ -187,6 +188,11 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
     if not system_prompt:
         logger.error(f"[EM CHAT] Prompt systeme introuvable (prompt_hybride_em/{lang})")
         return {"response": _fallback, "source": "fallback", "mode": mode}, None
+
+    # F02: inject dynamic draw count
+    draw_count = await _get_draw_count("euromillions")
+    if draw_count and "{DRAW_COUNT}" in system_prompt:
+        system_prompt = system_prompt.replace("{DRAW_COUNT}", str(draw_count))
 
     gem_api_key = os.environ.get("GEM_API_KEY") or os.environ.get("GEMINI_API_KEY")
     if not gem_api_key:

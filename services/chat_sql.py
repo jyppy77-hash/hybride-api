@@ -178,7 +178,12 @@ async def _generate_sql(question: str, client, api_key: str, history: list = Non
                     text = text[3:].strip()
                     if text.startswith("\n"):
                         text = text[1:]
-                return text.strip()
+                text = text.strip()
+                # F04: guard non-SQL — reject if Gemini returned natural language instead of SQL
+                if text and text.upper() != "NO_SQL" and not text.upper().startswith("SELECT"):
+                    logger.warning("[TEXT-TO-SQL] Non-SQL output rejected: %s", text[:100])
+                    return "NO_SQL"
+                return text
         return None
     except Exception as e:
         logger.warning(f"[TEXT-TO-SQL] Erreur generation SQL: {e}")
@@ -190,7 +195,11 @@ async def _generate_sql(question: str, client, api_key: str, history: list = Non
 # ────────────────────────────────────────────
 
 async def _execute_safe_sql(sql: str) -> list | None:
-    """Execute le SQL valide avec connexion DB."""
+    """Execute le SQL valide avec connexion DB. Defense-in-depth: re-validates."""
+    # F03: defense-in-depth — validate even if caller should have validated
+    if not _validate_sql(sql):
+        logger.warning("[TEXT2SQL] _execute_safe_sql rejected unvalidated SQL: %s", sql[:100])
+        return None
     try:
         async with db_cloudsql.get_connection() as conn:
             cursor = await conn.cursor()
