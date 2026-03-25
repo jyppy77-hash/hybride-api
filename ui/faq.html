@@ -135,6 +135,86 @@
             "@type": "Answer",
             "text": "Une grille équilibrée respecte plusieurs critères : 2-3 numéros pairs et 2-3 impairs, 2-3 numéros bas (1-24) et 2-3 hauts (25-49), une somme entre 100 et 140, et peu de numéros consécutifs. Le simulateur LotoIA évalue automatiquement ces critères."
           }
+        },
+        {
+          "@type": "Question",
+          "name": "Comment fonctionne le moteur HYBRIDE en détail ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Le moteur HYBRIDE analyse chaque numéro selon sa fréquence d'apparition (70% du score) et son retard (30%). L'analyse se fait sur 3 périodes simultanées : 5 ans, 2 ans et l'historique complet depuis 1976. Les résultats sont combinés selon le mode choisi. Le retard est un outil de diversification, pas un indicateur prédictif."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Que signifient les modes Conservateur, Équilibré et Récent ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Chaque mode donne un poids différent aux 3 périodes d'analyse. Conservateur : 50% long terme, 30% récente, 20% globale. Équilibré : 40/35/25. Récent : 25/35/40. Le mode récent produit des combinaisons plus variées, le conservateur reste fidèle aux tendances de fond."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Comment le score de qualité des grilles est-il calculé ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Chaque grille reçoit un score sur 5 étoiles basé sur 5 critères : équilibre pair/impair, bas/haut, somme entre 70 et 150, dispersion minimum de 15, et maximum 2 consécutifs. Le moteur effectue jusqu'à 20 tentatives pour optimiser chaque grille."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Qu'est-ce que le système anti-collision ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Le système anti-collision réduit le risque de partager un jackpot. Les numéros au-dessus de 24 reçoivent un bonus, les numéros superstitieux (3, 7, 9, 11, 13) un malus. Il est activé automatiquement dans le chatbot et optionnel dans l'API."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Combien de tirages sont analysés ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "LotoIA analyse l'intégralité des tirages du Loto France depuis 1976, soit plus de 990 tirages. Les données proviennent des résultats officiels FDJ, mises à jour après chaque tirage (lundi, mercredi, samedi)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Que peut faire le chatbot HYBRIDE ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Le chatbot peut générer des grilles, analyser vos numéros, forcer vos numéros fétiches, exclure des numéros, poser des questions statistiques et comparer des périodes. Il comprend 6 langues et utilise le même moteur HYBRIDE que l'analyseur automatique."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "LotoIA peut-il prédire les résultats du Loto ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Non, et aucun outil au monde ne le peut. Le Loto est un jeu de hasard pur. LotoIA est un outil d'analyse statistique qui génère des grilles équilibrées, mais cela n'augmente pas vos chances de gagner. Nous sommes transparents sur ces limites."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Comment mes données sont-elles protégées ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "LotoIA respecte le RGPD : IP anonymisée par hachage SHA-256, conversations chatbot conservées 90 jours maximum, zéro cookie de tracking publicitaire, analyse Umami cookieless. Vos données ne sont ni vendues ni partagées."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Pourquoi certains numéros sont-ils marqués chaud, froid ou convergent ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Chaud : numéro sorti plus souvent que la moyenne récente. Froid : sorti moins souvent avec un retard important. Convergent : fréquence proche de la moyenne théorique. Ces badges sont calculés automatiquement après chaque tirage."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "LotoIA est-il un site de jeu ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Non. LotoIA est une plateforme d'analyse statistique indépendante. Nous ne vendons pas de tickets et ne sommes affiliés à aucun opérateur. Pour jouer, rendez-vous sur fdj.fr. En cas de difficultés, contactez Joueurs Info Service au 09 74 75 13 13."
+          }
         }
       ]
     }
@@ -153,8 +233,8 @@
     <style>
     *{margin:0;padding:0;box-sizing:border-box}:root{--app-max-width:1140px;--app-padding-x:24px;--app-padding-y:40px;--primary:#1a73e8;--radius-sm:8px;--radius-md:12px;--radius-lg:16px;--theme-bg-main:linear-gradient(180deg,#0a0f1a 0%,#0f172a 50%,#1e1b4b 100%);--theme-bg-nav:linear-gradient(180deg,#0f172a 0%,#1e1b4b 100%);--theme-bg-header:linear-gradient(180deg,#0f172a 0%,#1e1b4b 100%);--theme-bg-card:#ffffff;--theme-text-primary:#1f2937;--theme-text-secondary:#6b7280;--theme-text-on-dark:rgba(255,255,255,.95);--theme-border:#e5e7eb;--theme-border-light:rgba(255,255,255,.1);--theme-shadow:0 2px 8px rgba(0,0,0,.1)}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;line-height:1.6;color:var(--theme-text-primary);min-height:100vh;font-size:16px;background:var(--theme-bg-main)}body.theme-night{--theme-bg-main:linear-gradient(180deg,#0a0f1a 0%,#0f172a 50%,#1e1b4b 100%);--theme-bg-nav:linear-gradient(180deg,#0f172a 0%,#1e1b4b 100%);--theme-bg-card:#1e293b;--theme-text-primary:#e2e8f0;--theme-text-secondary:#94a3b8;--theme-border:rgba(255,255,255,.1)}body.theme-day{--theme-bg-main:linear-gradient(180deg,#f0f4f8 0%,#e2e8f0 50%,#cbd5e1 100%);--theme-bg-nav:linear-gradient(180deg,#1e293b 0%,#334155 100%);--theme-bg-card:#ffffff;--theme-text-primary:#0f172a;--theme-text-secondary:#475569;--theme-border:#e2e8f0}.engine-nav-subpage{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:var(--theme-bg-nav);position:relative;z-index:100}.engine-nav-subpage .engine-nav-right{display:flex;align-items:center;gap:12px}.container,.stats-container,.loto-container{max-width:var(--app-max-width);width:100%;margin:0 auto;padding:var(--app-padding-y) var(--app-padding-x);box-sizing:border-box}.engine-nav-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:rgba(255,255,255,.08);color:var(--theme-text-on-dark);border-radius:var(--radius-sm);text-decoration:none;font-size:.88rem;font-weight:500}.engine-badge{display:inline-block;padding:4px 12px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);color:#10b981;border-radius:20px;font-size:.75rem;font-weight:600}.page-header{background:var(--theme-bg-header);color:var(--theme-text-on-dark);padding:30px 20px 60px;text-align:center;position:relative;overflow:hidden}.theme-switch{display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;background:var(--theme-border-light);border:1px solid var(--theme-border-light);border-radius:50%;color:var(--theme-text-on-dark);cursor:pointer;font-size:1.2rem}
     </style>
-    <link rel="stylesheet" href="/ui/static/style.css?v=11" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="/ui/static/style.css?v=11"></noscript>
+    <link rel="stylesheet" href="/ui/static/style.css?v=12" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/ui/static/style.css?v=12"></noscript>
     <link rel="stylesheet" href="/ui/static/legal.css">
     <!-- Theme script (en premier pour éviter le flash) -->
     <script src="/ui/static/theme.js"></script>
@@ -204,6 +284,7 @@
                 <li><a href="#ia-probabilites">IA et Probabilités</a></li>
                 <li><a href="#utilisation">Utilisation</a></li>
                 <li><a href="#jeu-responsable">Jeu Responsable</a></li>
+                <li><a href="#moteur-hybride">Moteur HYBRIDE</a></li>
             </ul>
         </nav>
 
@@ -665,6 +746,171 @@
                             <p>En France, les jeux d'argent et de hasard sont <strong>strictement interdits aux moins de 18 ans</strong>.</p>
                             <p>Cette règle s'applique au Loto, PMU, casinos, paris sportifs, etc.</p>
                             <p>Les parents sont responsables de l'utilisation d'Internet par leurs enfants.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ═══════════════════════════════════════════════════════════
+                     Categorie : Moteur HYBRIDE
+                     ═══════════════════════════════════════════════════════════ -->
+                <div class="faq-category" id="moteur-hybride">
+                    <h3 class="faq-category-title">Moteur HYBRIDE</h3>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Comment fonctionne le moteur HYBRIDE en détail ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Le moteur HYBRIDE analyse chaque numéro selon deux critères : sa <strong>fréquence d'apparition</strong> (combien de fois il est sorti) et son <strong>retard</strong> (depuis combien de tirages il n'est plus sorti). Ces deux mesures sont combinées : la fréquence compte pour 70% du score et le retard pour 30%.</p>
+                            <p>L'analyse se fait sur <strong>3 périodes simultanées</strong> :</p>
+                            <ul>
+                                <li><strong>Période longue</strong> : les 5 dernières années (~520 tirages)</li>
+                                <li><strong>Période récente</strong> : les 2 dernières années (~210 tirages)</li>
+                                <li><strong>Période globale</strong> : tout l'historique depuis 1976 (990+ tirages)</li>
+                            </ul>
+                            <p>Les résultats de ces 3 périodes sont ensuite combinés selon le mode choisi (conservateur, équilibré ou récent), ce qui permet d'obtenir des suggestions adaptées à votre préférence.</p>
+                            <p><strong>Important</strong> : le retard d'un numéro est utilisé comme outil de <strong>diversification</strong>, pas comme indicateur prédictif. Chaque tirage est un événement aléatoire indépendant — aucun numéro n'est "dû" pour sortir.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Que signifient les modes Conservateur, Équilibré et Récent ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Chaque mode donne un poids différent aux 3 périodes d'analyse :</p>
+                            <ul>
+                                <li><strong>Conservateur</strong> : privilégie l'historique long terme (50% période 5 ans, 30% récente, 20% globale). Idéal si vous préférez des numéros qui ont fait leurs preuves sur la durée.</li>
+                                <li><strong>Équilibré</strong> : répartition harmonieuse (40% / 35% / 25%). C'est le mode recommandé par défaut.</li>
+                                <li><strong>Récent</strong> : met l'accent sur les tendances actuelles (25% / 35% / 40%). Pour ceux qui veulent suivre les dynamiques récentes.</li>
+                            </ul>
+                            <p>De plus, chaque mode ajuste le niveau de diversité des grilles : le mode récent produit des combinaisons plus variées, tandis que le mode conservateur reste plus fidèle aux tendances de fond.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Comment le score de qualité des grilles est-il calculé ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Chaque grille générée reçoit un <strong>score de qualité sur 5 étoiles</strong> basé sur 5 critères d'équilibre :</p>
+                            <ul>
+                                <li><strong>Équilibre pair/impair</strong> : idéalement entre 1 et 4 numéros pairs</li>
+                                <li><strong>Équilibre bas/haut</strong> : entre 1 et 4 numéros en dessous de 25</li>
+                                <li><strong>Somme des numéros</strong> : idéalement entre 70 et 150</li>
+                                <li><strong>Dispersion</strong> : les numéros doivent être suffisamment espacés (écart minimum de 15)</li>
+                                <li><strong>Consécutifs</strong> : maximum 2 numéros qui se suivent</li>
+                            </ul>
+                            <p>Une grille qui respecte tous ces critères obtient 5 étoiles. Le moteur effectue jusqu'à 20 tentatives pour trouver la meilleure combinaison possible.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Qu'est-ce que le système anti-collision ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Le système anti-collision vise à <strong>réduire le risque de partager un éventuel jackpot</strong> avec d'autres gagnants. Comment ? En évitant les numéros que le grand public joue le plus souvent.</p>
+                            <p>Concrètement :</p>
+                            <ul>
+                                <li>Les numéros <strong>au-dessus de 24</strong> reçoivent un léger bonus (les joueurs ont tendance à choisir des petits numéros : dates d'anniversaire, etc.)</li>
+                                <li>Les numéros <strong>superstitieux</strong> (3, 7, 9, 11, 13) reçoivent un léger malus (ces numéros sont surjoués par le public)</li>
+                            </ul>
+                            <p>Ce système est <strong>activé automatiquement</strong> dans le chatbot HYBRIDE. Il est optionnel dans l'API d'analyse.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Combien de tirages sont analysés ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>LotoIA analyse <strong>l'intégralité des tirages du Loto France</strong> depuis 1976, soit plus de <strong><span class="db-total">990</span>+ tirages</strong> disponibles dans notre base de données.</p>
+                            <p>Les données proviennent exclusivement des <strong>résultats officiels de la Française des Jeux (FDJ)</strong>. La base est mise à jour après chaque tirage (lundi, mercredi et samedi).</p>
+                            <p>Cette profondeur historique est un avantage majeur : plus de données signifie des statistiques plus fiables et des tendances plus significatives.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Que peut faire le chatbot HYBRIDE ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Le chatbot HYBRIDE est un assistant d'analyse statistique capable de :</p>
+                            <ul>
+                                <li><strong>Générer des grilles</strong> selon le mode de votre choix (conservateur, équilibré, récent)</li>
+                                <li><strong>Analyser vos numéros</strong> : entrez votre grille et obtenez un score de qualité</li>
+                                <li><strong>Forcer vos numéros fétiches</strong> : demandez une grille incluant vos numéros préférés</li>
+                                <li><strong>Exclure des numéros</strong> : "pas de dates d'anniversaire", "sans le 13", etc.</li>
+                                <li><strong>Demander plusieurs grilles</strong> : "génère-moi 5 grilles équilibrées"</li>
+                                <li><strong>Poser des questions statistiques</strong> : "quel est le numéro le plus sorti ?", "top 10 sur les 2 dernières années"</li>
+                                <li><strong>Comparer des périodes</strong> : "le 7 sort-il plus souvent qu'avant ?"</li>
+                            </ul>
+                            <p>Le chatbot utilise le même moteur HYBRIDE que l'analyseur automatique. Il comprend le français, l'anglais, l'espagnol, le portugais, l'allemand et le néerlandais.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>LotoIA peut-il prédire les résultats du Loto ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p><strong>Non, et aucun outil au monde ne le peut.</strong> Le Loto est un jeu de hasard pur : chaque tirage est un événement aléatoire totalement indépendant des tirages précédents.</p>
+                            <p>LotoIA est un outil d'<strong>analyse statistique</strong>, pas de prédiction. Notre moteur identifie des tendances historiques et génère des grilles <strong>statistiquement équilibrées</strong>, mais cela n'augmente en aucun cas vos chances de gagner.</p>
+                            <p>C'est d'ailleurs ce qui nous différencie : nous sommes <strong>transparents</strong> sur les limites de l'analyse statistique appliquée aux jeux de hasard. Les docstrings de notre code source précisent explicitement que le retard n'a aucune valeur prédictive.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Comment mes données sont-elles protégées ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>LotoIA respecte le <strong>Règlement Général sur la Protection des Données (RGPD)</strong> :</p>
+                            <ul>
+                                <li>Votre adresse IP est <strong>anonymisée</strong> (hachage SHA-256) — nous ne stockons jamais votre IP en clair</li>
+                                <li>Les conversations avec le chatbot sont conservées <strong>90 jours maximum</strong> puis automatiquement supprimées</li>
+                                <li>Nous n'utilisons <strong>aucun cookie de tracking publicitaire</strong></li>
+                                <li>Notre outil d'analyse Umami est <strong>cookieless</strong> (sans cookie)</li>
+                                <li>Vous pouvez demander la suppression de vos données à tout moment</li>
+                            </ul>
+                            <p>LotoIA ne vend ni ne partage vos données avec des tiers.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Pourquoi certains numéros sont-ils marqués "chaud", "froid" ou "convergent" ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Ces badges indiquent le comportement statistique d'un numéro :</p>
+                            <ul>
+                                <li><strong>Chaud</strong> : numéro sorti significativement plus souvent que la moyenne sur la période récente</li>
+                                <li><strong>Froid</strong> : numéro sorti significativement moins souvent que la moyenne, avec un retard important</li>
+                                <li><strong>Convergent</strong> : numéro dont la fréquence est proche de la moyenne théorique — ni particulièrement chaud, ni froid</li>
+                            </ul>
+                            <p>Ces badges sont calculés automatiquement et mis à jour après chaque tirage. Ils sont un outil de visualisation, pas une recommandation de jeu.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>LotoIA est-il un site de jeu ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p><strong>Non.</strong> LotoIA est une plateforme d'<strong>analyse statistique indépendante</strong>. Nous ne vendons pas de tickets, ne collectons pas de mises et ne sommes affiliés à aucun opérateur de jeux.</p>
+                            <p>Pour jouer au Loto, rendez-vous sur le site officiel de la <strong>Française des Jeux (fdj.fr)</strong>.</p>
+                            <p>Si vous ou un proche rencontrez des difficultés liées au jeu, contactez <strong>Joueurs Info Service</strong> au <strong>09 74 75 13 13</strong> (appel non surtaxé).</p>
                         </div>
                     </div>
                 </div>

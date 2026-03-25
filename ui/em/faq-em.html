@@ -73,11 +73,91 @@
             "@type": "Answer",
             "text": "Les données proviennent des tirages officiels de l'EuroMillions. La base contient plusieurs années d'historique, mise à jour après chaque tirage officiel (mardi et vendredi)."
           }
+        },
+        {
+          "@type": "Question",
+          "name": "Comment fonctionne le moteur HYBRIDE pour l'EuroMillions ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Le moteur HYBRIDE analyse chaque numéro (1-50) et chaque étoile (1-12) selon leur fréquence (70%) et retard (30%). L'analyse se fait sur 3 périodes : 5 ans, 2 ans et l'historique complet depuis 2004. Numéros et étoiles sont analysés séparément puis combinés."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Que signifient les modes Conservateur, Équilibré et Récent ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Chaque mode donne un poids différent aux 3 périodes. Conservateur : 50/30/20. Équilibré : 40/35/25. Récent : 25/35/40. Le mode récent produit des combinaisons plus variées."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Comment le score de qualité des grilles est-il calculé ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Chaque grille reçoit un score sur 5 étoiles basé sur 5 critères : équilibre pair/impair, bas/haut, somme entre 75 et 175, dispersion minimum de 15, et maximum 2 consécutifs. Le moteur effectue jusqu'à 20 tentatives pour optimiser."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Qu'est-ce que le système anti-collision ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Le système anti-collision réduit le risque de partager un jackpot. Les numéros au-dessus de 31 reçoivent un bonus, les superstitieux (3,7,9,11,13) un malus. Les étoiles superstitieuses (3,7,9,11) reçoivent aussi un malus."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Combien de tirages EuroMillions sont analysés ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "LotoIA analyse l'intégralité des tirages EuroMillions depuis février 2004, soit plus de 730 tirages. Les données proviennent des résultats officiels des 9 pays participants, mises à jour après chaque tirage."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Que peut faire le chatbot HYBRIDE ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Le chatbot peut générer des grilles complètes (5 numéros + 2 étoiles), analyser vos numéros, forcer vos numéros fétiches, exclure des numéros et poser des questions statistiques. Il comprend 6 langues."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "LotoIA peut-il prédire les résultats de l'EuroMillions ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Non. L'EuroMillions est un jeu de hasard où chaque tirage est indépendant. LotoIA génère des grilles statistiquement équilibrées mais cela n'augmente pas vos chances de gagner."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Comment mes données sont-elles protégées ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "LotoIA respecte le RGPD : IP anonymisée par SHA-256, conversations chatbot conservées 90 jours maximum, zéro cookie de tracking, analyse Umami cookieless. Vos données ne sont ni vendues ni partagées."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Dans quels pays peut-on utiliser LotoIA EuroMillions ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "LotoIA EuroMillions est accessible partout mais les tirages concernent 9 pays : France, Espagne, Royaume-Uni, Portugal, Belgique, Luxembourg, Irlande, Autriche et Suisse. Le site est disponible en 6 langues."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "LotoIA est-il un site de jeu ?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Non. LotoIA est une plateforme d'analyse statistique indépendante. Nous ne vendons pas de tickets et ne sommes affiliés à aucun opérateur. En cas de difficultés, contactez Joueurs Info Service au 09 74 75 13 13."
+          }
         }
       ]
     }
     </script>
-    <link rel="stylesheet" href="/ui/static/style.css?v=1">
+    <link rel="stylesheet" href="/ui/static/style.css?v=12">
     <link rel="stylesheet" href="/ui/static/style-em.css?v=1">
     <link rel="stylesheet" href="/ui/static/legal.css?v=1">
     <!-- Theme script (en premier pour eviter le flash) -->
@@ -98,14 +178,14 @@
             font-weight: 700;
             margin-bottom: 16px;
             padding-bottom: 8px;
-            border-bottom: 2px solid var(--border);
-            color: var(--text-primary);
+            border-bottom: 2px solid var(--border, var(--theme-border));
+            color: var(--theme-text-primary);
         }
 
         /* FAQ Nav */
         .faq-nav {
-            background: var(--card-bg);
-            border: 1px solid var(--border);
+            background: var(--theme-bg-card);
+            border: 1px solid var(--border, var(--theme-border));
             border-radius: 12px;
             padding: 20px 24px;
             margin-bottom: 32px;
@@ -114,7 +194,7 @@
             font-size: 1rem;
             font-weight: 600;
             margin-bottom: 12px;
-            color: var(--text-muted);
+            color: var(--theme-text-secondary);
         }
         .faq-nav ul {
             list-style: none;
@@ -129,7 +209,7 @@
             padding: 6px 14px;
             border-radius: 8px;
             background: var(--bg-secondary, rgba(99,102,241,0.08));
-            color: var(--text-primary);
+            color: var(--theme-text-primary);
             text-decoration: none;
             font-size: 0.9rem;
             transition: background 0.2s, color 0.2s;
@@ -141,11 +221,11 @@
 
         /* FAQ Item accordion */
         .faq-item {
-            border: 1px solid var(--border);
+            border: 1px solid var(--border, var(--theme-border));
             border-radius: 10px;
             margin-bottom: 10px;
             overflow: hidden;
-            background: var(--card-bg);
+            background: var(--theme-bg-card);
             transition: border-color 0.2s;
         }
         .faq-item:hover { border-color: var(--accent, #6366f1); }
@@ -156,12 +236,12 @@
             justify-content: space-between;
             align-items: center;
             padding: 16px 20px;
-            background: none;
+            background: var(--theme-bg-card);
             border: none;
             cursor: pointer;
             font-size: 1rem;
             font-weight: 600;
-            color: var(--text-primary);
+            color: var(--theme-text-primary);
             text-align: left;
             gap: 12px;
             font-family: inherit;
@@ -187,7 +267,7 @@
         .faq-answer ol {
             margin-bottom: 12px;
             line-height: 1.7;
-            color: var(--text-secondary);
+            color: var(--theme-text-secondary);
         }
         .faq-answer ul, .faq-answer ol { padding-left: 20px; }
         .faq-answer li { margin-bottom: 6px; }
@@ -195,7 +275,7 @@
         /* Active state */
         .faq-item.active .faq-icon { transform: rotate(45deg); }
         .faq-item.active .faq-answer {
-            max-height: 600px;
+            max-height: 1200px;
             padding: 0 20px 20px;
         }
 
@@ -218,6 +298,39 @@
         @media (max-width: 600px) {
             .faq-nav ul { flex-direction: column; }
             .action-card-content { flex-direction: column; text-align: center; }
+        }
+
+        /* Dark mode contrast boost — FAQ */
+        body.theme-night .faq-question {
+            color: #f1f5f9;
+            background: var(--theme-bg-card);
+        }
+        body.theme-night .faq-item {
+            background: var(--theme-bg-card);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        body.theme-night .faq-answer {
+            background: rgba(255, 255, 255, 0.03);
+        }
+        body.theme-night .faq-answer p,
+        body.theme-night .faq-answer ul,
+        body.theme-night .faq-answer ol,
+        body.theme-night .faq-answer li {
+            color: #cbd5e1;
+        }
+        body.theme-night .faq-answer strong {
+            color: #f1f5f9;
+        }
+        body.theme-night .faq-category-title {
+            color: #f1f5f9;
+            border-bottom-color: rgba(255, 255, 255, 0.15);
+        }
+        body.theme-night .faq-nav {
+            background: var(--theme-bg-card);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        body.theme-night .faq-icon {
+            color: #94a3b8;
         }
     </style>
 </head>
@@ -275,6 +388,7 @@
                 <li><a href="#numeros-etoiles">Numéros et Étoiles</a></li>
                 <li><a href="#donnees">Données</a></li>
                 <li><a href="#jeu-responsable">Jeu Responsable</a></li>
+                <li><a href="#moteur-hybride">Moteur HYBRIDE</a></li>
             </ul>
         </nav>
 
@@ -439,6 +553,168 @@
                             <p>En France, les jeux d'argent et de hasard sont <strong>strictement interdits aux moins de 18 ans</strong>.</p>
                             <p>Cette règle s'applique à l'EuroMillions, au Loto, PMU, casinos, paris sportifs, etc.</p>
                             <p>Les parents sont responsables de l'utilisation d'Internet par leurs enfants.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===================================================================
+                     Catégorie : Moteur HYBRIDE
+                     =================================================================== -->
+                <div class="faq-category" id="moteur-hybride">
+                    <h3 class="faq-category-title">Moteur HYBRIDE</h3>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Comment fonctionne le moteur HYBRIDE pour l'EuroMillions ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Le moteur HYBRIDE analyse chaque numéro (1-50) et chaque étoile (1-12) selon deux critères : la <strong>fréquence d'apparition</strong> et le <strong>retard</strong>. La fréquence compte pour 70% du score et le retard pour 30%.</p>
+                            <p>L'analyse se fait sur <strong>3 périodes simultanées</strong> :</p>
+                            <ul>
+                                <li><strong>Période longue</strong> : les 5 dernières années (~520 tirages)</li>
+                                <li><strong>Période récente</strong> : les 2 dernières années (~210 tirages)</li>
+                                <li><strong>Période globale</strong> : tout l'historique depuis 2004 (730+ tirages)</li>
+                            </ul>
+                            <p>Les numéros et les étoiles sont analysés <strong>séparément</strong> avec le même pipeline statistique, puis combinés pour former une grille complète (5 numéros + 2 étoiles).</p>
+                            <p><strong>Important</strong> : le retard est utilisé comme outil de <strong>diversification</strong>, pas comme indicateur prédictif. Chaque tirage est indépendant.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Que signifient les modes Conservateur, Équilibré et Récent ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Chaque mode donne un poids différent aux 3 périodes d'analyse :</p>
+                            <ul>
+                                <li><strong>Conservateur</strong> : privilégie l'historique long terme (50% / 30% / 20%). Pour des numéros éprouvés sur la durée.</li>
+                                <li><strong>Équilibré</strong> : répartition harmonieuse (40% / 35% / 25%). Le mode recommandé.</li>
+                                <li><strong>Récent</strong> : accent sur les tendances actuelles (25% / 35% / 40%). Pour suivre les dynamiques récentes.</li>
+                            </ul>
+                            <p>Le mode influence aussi la <strong>diversité</strong> des grilles générées : le mode récent produit des combinaisons plus variées.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Comment le score de qualité des grilles est-il calculé ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Chaque grille reçoit un <strong>score sur 5 étoiles</strong> basé sur 5 critères :</p>
+                            <ul>
+                                <li><strong>Équilibre pair/impair</strong> : idéalement entre 1 et 4 numéros pairs</li>
+                                <li><strong>Équilibre bas/haut</strong> : entre 1 et 4 numéros en dessous de 25</li>
+                                <li><strong>Somme des numéros</strong> : idéalement entre 75 et 175</li>
+                                <li><strong>Dispersion</strong> : écart minimum de 15 entre le plus petit et le plus grand numéro</li>
+                                <li><strong>Consécutifs</strong> : maximum 2 numéros qui se suivent</li>
+                            </ul>
+                            <p>Le moteur effectue jusqu'à 20 tentatives pour optimiser chaque grille. Les étoiles sont sélectionnées séparément avec le même système de scoring.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Qu'est-ce que le système anti-collision ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Le système anti-collision réduit le risque de <strong>partager un éventuel jackpot</strong> en évitant les combinaisons trop populaires.</p>
+                            <p>Pour les numéros (1-50) :</p>
+                            <ul>
+                                <li>Les numéros <strong>au-dessus de 31</strong> reçoivent un bonus (les joueurs jouent souvent des dates : jours 1-31)</li>
+                                <li>Les numéros <strong>superstitieux</strong> (3, 7, 9, 11, 13) reçoivent un malus</li>
+                            </ul>
+                            <p>Pour les étoiles (1-12) :</p>
+                            <ul>
+                                <li>Les étoiles <strong>superstitieuses</strong> (3, 7, 9, 11) reçoivent un léger malus</li>
+                            </ul>
+                            <p>Ce système est <strong>activé automatiquement</strong> dans le chatbot. Il est optionnel dans l'API.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Combien de tirages sont analysés ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>LotoIA EuroMillions analyse <strong>l'intégralité des tirages</strong> depuis le premier tirage européen du <strong>13 février 2004</strong>, soit plus de <strong><span class="em-db-total">730</span>+ tirages</strong>.</p>
+                            <p>Les données proviennent des <strong>résultats officiels</strong> des 9 pays participants. La base est mise à jour après chaque tirage (mardi et vendredi soir, ~21h).</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Que peut faire le chatbot HYBRIDE ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>Le chatbot HYBRIDE pour l'EuroMillions peut :</p>
+                            <ul>
+                                <li><strong>Générer des grilles complètes</strong> (5 numéros + 2 étoiles) selon le mode choisi</li>
+                                <li><strong>Analyser vos numéros</strong> : entrez votre grille et obtenez un score de qualité</li>
+                                <li><strong>Forcer vos numéros et/ou étoiles</strong> : "une grille avec le 7, le 23 et l'étoile 5"</li>
+                                <li><strong>Exclure des numéros</strong> : "sans dates d'anniversaire", "pas le 13"</li>
+                                <li><strong>Demander plusieurs grilles</strong> : "génère 5 grilles équilibrées"</li>
+                                <li><strong>Poser des questions statistiques</strong> : "quelle étoile sort le plus ?", "top 10 numéros sur 2 ans"</li>
+                                <li><strong>Comparer des périodes</strong> : "le 42 sort-il plus qu'avant ?"</li>
+                            </ul>
+                            <p>Le chatbot comprend 6 langues : français, anglais, espagnol, portugais, allemand et néerlandais.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>LotoIA peut-il prédire les résultats de l'EuroMillions ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p><strong>Non.</strong> L'EuroMillions est un jeu de hasard : chaque tirage est indépendant. LotoIA est un outil d'<strong>analyse statistique</strong>, pas de prédiction.</p>
+                            <p>Notre moteur génère des grilles <strong>statistiquement équilibrées</strong> basées sur l'historique, mais cela n'augmente pas vos chances de gagner. Nous sommes <strong>transparents</strong> sur cette réalité.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Comment mes données sont-elles protégées ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>LotoIA respecte le <strong>RGPD</strong> :</p>
+                            <ul>
+                                <li>Adresse IP <strong>anonymisée</strong> (hachage SHA-256)</li>
+                                <li>Conversations chatbot conservées <strong>90 jours maximum</strong></li>
+                                <li><strong>Zéro cookie</strong> de tracking publicitaire</li>
+                                <li>Analyse Umami <strong>cookieless</strong></li>
+                                <li>Droit de suppression sur demande</li>
+                            </ul>
+                            <p>Vos données ne sont ni vendues ni partagées.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>Dans quels pays peut-on utiliser LotoIA EuroMillions ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>LotoIA EuroMillions est accessible partout dans le monde, mais les tirages EuroMillions concernent <strong>9 pays européens</strong> : France, Espagne, Royaume-Uni, Portugal, Belgique, Luxembourg, Irlande, Autriche et Suisse.</p>
+                            <p>Le site est disponible en <strong>6 langues</strong> (français, anglais, espagnol, portugais, allemand, néerlandais) et détecte automatiquement votre pays pour afficher la bonne version. Chaque langue inclut les <strong>numéros d'aide au jeu responsable</strong> de votre pays.</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>LotoIA est-il un site de jeu ?</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p><strong>Non.</strong> LotoIA est une plateforme d'<strong>analyse statistique indépendante</strong>. Nous ne vendons pas de tickets et ne sommes affiliés à aucun opérateur.</p>
+                            <p>Pour jouer à l'EuroMillions, rendez-vous sur le site officiel de l'opérateur de votre pays.</p>
+                            <p>Si vous ou un proche rencontrez des difficultés liées au jeu, des lignes d'aide existent dans chaque pays participant. En France : <strong>Joueurs Info Service — 09 74 75 13 13</strong>.</p>
                         </div>
                     </div>
                 </div>

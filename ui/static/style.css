@@ -2455,6 +2455,39 @@ details summary:hover {
     }
 }
 
+/* Dark mode FAQ contrast boost */
+body.theme-night .faq-question {
+    color: #f1f5f9;
+    background: var(--theme-bg-card);
+}
+body.theme-night .faq-item {
+    background: var(--theme-bg-card);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+body.theme-night .faq-item.active .faq-question {
+    background: var(--bg-light);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+body.theme-night .faq-answer {
+    background: rgba(255, 255, 255, 0.03);
+}
+body.theme-night .faq-answer p,
+body.theme-night .faq-answer ul,
+body.theme-night .faq-answer ol,
+body.theme-night .faq-answer li {
+    color: #cbd5e1;
+}
+body.theme-night .faq-answer strong {
+    color: #f1f5f9;
+}
+body.theme-night .faq-answer em {
+    color: #94a3b8;
+}
+body.theme-night .faq-category-title {
+    color: #f1f5f9;
+    border-bottom-color: rgba(255, 255, 255, 0.15);
+}
+
 /* =================================================================
    PREMIUM CARDS
    ================================================================= */
