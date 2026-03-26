@@ -549,3 +549,121 @@ class TestAdversarialNonRegression:
 
     def test_tendance_nl(self):
         assert _detect_argent_em("wat is de trend voor nummer 7", "nl") is False
+
+
+# ═══════════════════════════════════════════════════════
+# V65 — EuroMillions/EuroDreams game-name guard
+# "euro(s)" NE DOIT PAS déclencher Phase A quand c'est
+# un nom de jeu (EuroMillions, Euro Dreams, etc.)
+# ═══════════════════════════════════════════════════════
+
+class TestEuroGameNameGuard_FR:
+    """Faux positifs réels du chatbot_log_7d.csv — Loto FR."""
+
+    def test_euros_dreams(self):
+        """'euros dreams' = nom de jeu, PAS argent."""
+        assert _detect_argent("Numéro pour le tirage euros dreams") is False
+
+    def test_euros_million(self):
+        """'euros million' = nom de jeu, PAS argent."""
+        assert _detect_argent("Donner moi 5 numéro euros million") is False
+
+    def test_leuro_million(self):
+        """'leuro million' = agglutination SMS, PAS argent."""
+        assert _detect_argent("meilleurs statistique de leuro million de ce jour") is False
+
+    def test_euromillions(self):
+        """'euromillions' collé = nom de jeu, PAS argent."""
+        assert _detect_argent("euromillions numéros") is False
+
+    def test_euro_million_vendredi(self):
+        """'euro million de vendredi' = nom de jeu, PAS argent."""
+        assert _detect_argent("euro million de vendredi") is False
+
+    def test_euro_dreams_tirage(self):
+        """'euro dreams' = nom de jeu, PAS argent."""
+        assert _detect_argent("prochain tirage euro dreams") is False
+
+    # --- Vrais positifs (DOIVENT rester Phase A) ---
+
+    def test_gagner_des_euros_reste_argent(self):
+        """'gagner des euros' = vrai contexte argent."""
+        assert _detect_argent("je veux gagner des euros") is True
+
+    def test_combien_euros_gagner_reste_argent(self):
+        """'combien d'euros peut-on gagner' = vrai contexte argent."""
+        assert _detect_argent("combien d'euros peut-on gagner") is True
+
+    def test_miser_euros_reste_argent(self):
+        """'miser 10 euros' = vrai contexte argent."""
+        assert _detect_argent("miser 10 euros") is True
+
+
+class TestEuroGameNameGuard_EM:
+    """Faux positifs game-name guard — EM multilingue."""
+
+    # --- FR ---
+    def test_em_fr_euros_million(self):
+        assert _detect_argent_em("donne moi 5 numéro euros million", "fr") is False
+
+    def test_em_fr_euromillions(self):
+        assert _detect_argent_em("euromillions numéros chauds", "fr") is False
+
+    def test_em_fr_euro_dreams(self):
+        assert _detect_argent_em("tirage euro dreams de ce soir", "fr") is False
+
+    def test_em_fr_gagner_euros_reste_argent(self):
+        assert _detect_argent_em("je veux gagner des euros", "fr") is True
+
+    # --- EN ---
+    def test_em_en_euromillions(self):
+        assert _detect_argent_em("euromillions hot numbers", "en") is False
+
+    def test_em_en_euro_millions(self):
+        assert _detect_argent_em("euro millions friday draw", "en") is False
+
+    def test_em_en_euro_dreams(self):
+        assert _detect_argent_em("euro dreams next draw", "en") is False
+
+    def test_em_en_win_euros_reste_argent(self):
+        assert _detect_argent_em("how to win euros", "en") is True
+
+    # --- ES ---
+    def test_em_es_euromillones(self):
+        assert _detect_argent_em("euromillones números calientes", "es") is False
+
+    def test_em_es_euro_millones(self):
+        assert _detect_argent_em("euro millones del viernes", "es") is False
+
+    def test_em_es_ganar_euros_reste_argent(self):
+        assert _detect_argent_em("quiero ganar euros", "es") is True
+
+    # --- PT ---
+    def test_em_pt_euromilhoes(self):
+        assert _detect_argent_em("euromilhões números quentes", "pt") is False
+
+    def test_em_pt_euro_milhoes(self):
+        assert _detect_argent_em("euro milhões de sexta", "pt") is False
+
+    def test_em_pt_ganhar_euros_reste_argent(self):
+        assert _detect_argent_em("quero ganhar euros", "pt") is True
+
+    # --- DE ---
+    def test_em_de_euromillions(self):
+        assert _detect_argent_em("EuroMillions Zahlen", "de") is False
+
+    def test_em_de_euro_millions(self):
+        assert _detect_argent_em("Euro Millions Freitag", "de") is False
+
+    def test_em_de_geld_euros_reste_argent(self):
+        assert _detect_argent_em("wie viel geld", "de") is True
+
+    # --- NL ---
+    def test_em_nl_euromillions(self):
+        assert _detect_argent_em("EuroMillions nummers", "nl") is False
+
+    def test_em_nl_euro_millions(self):
+        assert _detect_argent_em("Euro Millions trekking vrijdag", "nl") is False
+
+    def test_em_nl_geld_reste_argent(self):
+        assert _detect_argent_em("hoeveel geld", "nl") is True

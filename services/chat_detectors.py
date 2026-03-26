@@ -45,6 +45,9 @@ from services.base_chat_detectors import (  # noqa: F401
     _detect_cooccurrence_high_n, _get_cooccurrence_high_n_response,
     # Site rating
     _detect_site_rating, get_site_rating_response,
+    # V65 — Salutation + data signal
+    _detect_salutation, _get_salutation_response,
+    _has_data_signal,
 )
 
 
@@ -451,6 +454,14 @@ _ARGENT_PHRASES_FR = [
     r'\bstrat[eé]gie\s+(?:pour\s+)?rentabiliser',
 ]
 
+# V65 — EuroMillions/EuroDreams game-name guard (avoid false positives on "euro(s)")
+# Matches: euromillion(s), euro million(s), euros million(s), eurodream(s),
+# euro dream(s), euros dream(s), l'euro million, leuro million, etc.
+_EURO_GAME_RE = re.compile(
+    r"(?:l['\u2019]?)?euros?\s*(?:mill|milh|dream)", re.IGNORECASE,
+)
+_EURO_GAME_SKIP = {"euro", "euros", "eur", "million", "millions"}
+
 _ARGENT_MOTS_FR = {
     "argent", "euros", "eur",
     "cagnotte", "jackpot",
@@ -564,7 +575,10 @@ def _detect_argent(message: str) -> bool:
     for pattern in _ARGENT_PHRASES_FR:
         if re.search(pattern, lower):
             return True
+    is_euro_game = bool(_EURO_GAME_RE.search(lower))
     for mot in _ARGENT_MOTS_FR:
+        if is_euro_game and mot in _EURO_GAME_SKIP:
+            continue
         if re.search(r'\b' + re.escape(mot) + r'\b', lower):
             return True
     return False

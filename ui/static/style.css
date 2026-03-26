@@ -5026,6 +5026,28 @@ body.theme-day .chatbot-text strong {
     color: #ec4899;
 }
 
+/* Dark mode: boost news-tag contrast for WCAG AA (≥4.5:1) */
+body.theme-night .news-tag-launch {
+    background: rgba(16, 185, 129, 0.25);
+    color: #34d399;
+}
+body.theme-night .news-tag-tech {
+    background: rgba(99, 102, 241, 0.25);
+    color: #a5b4fc;
+}
+body.theme-night .news-tag-roadmap {
+    background: rgba(245, 158, 11, 0.25);
+    color: #fbbf24;
+}
+body.theme-night .news-tag-update {
+    background: rgba(26, 115, 232, 0.25);
+    color: #93bbfc;
+}
+body.theme-night .news-tag-partner {
+    background: rgba(236, 72, 153, 0.25);
+    color: #f9a8d4;
+}
+
 .news-title {
     font-size: 18px;
     font-weight: 600;

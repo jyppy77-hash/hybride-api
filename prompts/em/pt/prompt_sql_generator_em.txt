@@ -221,6 +221,7 @@ Se a pergunta NÃO for sobre sorteios do EuroMillions, devolve: NO_SQL
 
 REGRA ABSOLUTA — SEM TEXTO EM LINGUAGEM NATURAL:
 A tua saída DEVE começar com SELECT ou ser exatamente NO_SQL.
+NUNCA geres texto conversacional, saudações, grelhas, comentários ou explicações.
 NUNCA reformules a pergunta em linguagem natural. NUNCA devolvas uma frase.
 NUNCA copies o histórico de conversa na tua saída.
 Se não conseguires gerar o SQL, devolve NO_SQL.

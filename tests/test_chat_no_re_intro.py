@@ -146,8 +146,9 @@ class TestAntiReIntroEM:
         with patch("services.chat_pipeline_em.load_prompt_em", return_value="Tu es HYBRIDE."), \
              patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              _em_patches():
+            # V65: use stats question (not "hello") to bypass Phase SALUTATION
             early, ctx = await _prepare_chat_context_em(
-                "hello", [], "accueil-em", MagicMock(), lang=lang
+                "what is the most frequent number", [], "accueil-em", MagicMock(), lang=lang
             )
         assert early is None
         assert ctx is not None

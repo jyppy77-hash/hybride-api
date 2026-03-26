@@ -658,6 +658,19 @@ _ARGENT_PHRASES_EM = {
     ],
 }
 
+# V65 — EuroMillions/EuroDreams game-name guard (avoid false positives on "euro(s)")
+_EURO_GAME_RE_EM = re.compile(
+    r"(?:l['\u2019]?)?euros?\s*(?:mill|milh|dream)", re.IGNORECASE,
+)
+_EURO_GAME_SKIP_EM = {
+    "fr": {"euro", "euros", "eur", "million", "millions", "milliard", "milliards"},
+    "en": {"euro", "euros", "eur", "million", "millions", "billion", "billions"},
+    "es": {"euro", "euros", "eur", "millón", "millon", "millones"},
+    "pt": {"euro", "euros", "eur", "milhão", "milhao", "milhões", "milhoes"},
+    "de": {"euro", "euros", "eur", "million", "millionen", "milliarde", "milliarden"},
+    "nl": {"euro", "euros", "eur", "miljoen", "miljoenen"},
+}
+
 _ARGENT_MOTS_EM = {
     "fr": {
         "argent", "euros", "eur",
@@ -964,7 +977,11 @@ def _detect_argent_em(message: str, lang: str) -> bool:
         if re.search(pattern, lower):
             return True
     mots = _ARGENT_MOTS_EM.get(lang, _ARGENT_MOTS_EM["fr"])
+    is_euro_game = bool(_EURO_GAME_RE_EM.search(lower))
+    skip = _EURO_GAME_SKIP_EM.get(lang, _EURO_GAME_SKIP_EM["fr"]) if is_euro_game else set()
     for mot in mots:
+        if mot in skip:
+            continue
         if re.search(r'\b' + re.escape(mot) + r'\b', lower):
             return True
     return False

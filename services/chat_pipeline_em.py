@@ -32,6 +32,8 @@ from services.chat_detectors import (
     _detect_cooccurrence_high_n, _get_cooccurrence_high_n_response,
     _detect_site_rating, get_site_rating_response,
     _is_affirmation_simple, _detect_game_keyword_alone,  # V51
+    _detect_salutation, _get_salutation_response,  # V65
+    _has_data_signal,  # V65
 )
 from services.chat_detectors_em import (
     _detect_mode_em, _detect_prochain_tirage_em,
@@ -306,6 +308,14 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
         _phase = "R"
         logger.info("[EM CHAT] Site rating intent detected (lang=%s)", lang)
         return {"response": get_site_rating_response(lang), "source": "hybride_rating_invite", "mode": mode, "_chat_meta": {"phase": _phase, "t0": _t0, "lang": lang}}, None
+
+    # ── Phase SALUTATION : Salutation initiale sans historique (V65) ──
+    if not history or len(history) <= 1:
+        if _detect_salutation(message):
+            _phase = "SALUTATION"
+            _sal_resp = _get_salutation_response("em", lang)
+            logger.info(f"[EM CHAT] Salutation detectee — court-circuit Phase SALUTATION (lang={lang})")
+            return {"response": _sal_resp, "source": "hybride_salutation", "mode": mode, "_chat_meta": {"phase": _phase, "t0": _t0, "lang": lang}}, None
 
     # ── Phase G : Détection génération de grille ──
     _generation_context = ""
@@ -615,7 +625,11 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                 logger.warning(f"[EM CHAT] Erreur stats BDD (numero={numero}): {e}")
 
     # Phase SQL : Text-to-SQL fallback
-    if not _continuation_mode and not enrichment_context:
+    # V65: skip SQL for pure conversational messages (no digit, no data keyword)
+    _skip_sql = not force_sql and not _has_data_signal(message)
+    if _skip_sql:
+        logger.info(f'[EM CHAT] Skip Phase SQL — no data signal | question="{message[:60]}"')
+    if not _continuation_mode and not enrichment_context and not _skip_sql:
         _phase = "SQL"
         _sql_count = sum(1 for m in (history or []) if m.role == "user")
         if _sql_count >= _MAX_SQL_PER_SESSION:

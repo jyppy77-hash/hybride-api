@@ -101,6 +101,7 @@ class TestHandleChatEM:
              patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline_em._detect_insulte", return_value=None), \
              patch("services.chat_pipeline_em._detect_compliment", return_value=None), \
+             patch("services.chat_pipeline_em._detect_salutation", return_value=False), \
              patch("services.chat_pipeline_em._is_short_continuation", return_value=False), \
              patch("services.chat_pipeline_em._detect_prochain_tirage_em", return_value=False), \
              patch("services.chat_pipeline_em._detect_tirage", return_value=None), \
@@ -129,6 +130,7 @@ class TestHandleChatEM:
              patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline_em._detect_insulte", return_value=None), \
              patch("services.chat_pipeline_em._detect_compliment", return_value=None), \
+             patch("services.chat_pipeline_em._detect_salutation", return_value=False), \
              patch("services.chat_pipeline_em._is_short_continuation", return_value=False), \
              patch("services.chat_pipeline_em._detect_prochain_tirage_em", return_value=False), \
              patch("services.chat_pipeline_em._detect_tirage", return_value=None), \

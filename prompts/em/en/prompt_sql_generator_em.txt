@@ -221,6 +221,7 @@ If the question is NOT about EuroMillions draws, return: NO_SQL
 
 ABSOLUTE RULE — NO NATURAL LANGUAGE OUTPUT:
 Your output must start with SELECT or be exactly NO_SQL.
+NEVER generate conversational text, greetings, grids, comments, or explanations.
 NEVER rephrase the question in natural language. NEVER return a sentence.
 NEVER copy conversation history into your output.
 If you cannot generate the SQL, return NO_SQL.

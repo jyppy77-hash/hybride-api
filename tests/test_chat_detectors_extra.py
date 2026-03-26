@@ -10,6 +10,8 @@ from services.chat_detectors import (
     _detect_prochain_tirage, _is_short_continuation,
     _extract_top_n, _has_temporal_filter,
     _extract_grid_count, _extract_exclusions,
+    _detect_salutation, _get_salutation_response,
+    _has_data_signal,
 )
 
 
@@ -662,6 +664,221 @@ class TestGenerationMultilang:
 
 
 # ═══════════════════════════════════════════════════════════════════════
+# V65 — Extended generation detection (chatbot_log_7d.csv false negatives)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestGenerationV65_RealMessages:
+    """17 real messages that MUST trigger Phase G (from chatbot log analysis)."""
+
+    def test_01_donne_unicode_hyphen(self):
+        """Donne‑moi with NON-BREAKING HYPHEN U+2011."""
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("Donne\u2011moi 3 grilles EuroMillions \u00e9quilibr\u00e9es.") is True
+
+    def test_02_une_grille_typo(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("Une grille qleatoire") is True
+
+    def test_03_n_numeros_et_etoiles(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("Les 6 num\u00e9ro et deux etoile") is True
+
+    def test_04_propose_des_grilles(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("propose des grilles statistiquement guid\u00e9es") is True
+
+    def test_05_une_grille_loto(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("Une grille loto") is True
+
+    def test_06_typo_quels_jouer_grilles(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("quzls numeros jouer pour 2 grilles") is True
+
+    def test_07_genere_seul(self):
+        """Participe pass\u00e9 seul = g\u00e9n\u00e9ration."""
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("G\u00e9n\u00e9r\u00e9") is True
+
+    def test_08_lequel_jouer(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("Lequel jouer") is True
+
+    def test_09_n_numeros_pour(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("5 num\u00e9ros pour ce soir") is True
+
+    def test_10_voudrais_numeros(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("Je voudrais 5 numeros pertinents pour mon jeu de ce soir") is True
+
+    def test_11_genere_la_grille(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("genere la grille") is True
+
+    def test_12_donne_la_grille(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("donne la grille") is True
+
+    def test_13_bare_1_grille(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("1 grille") is True
+
+    def test_14_salut_genere_grille(self):
+        """Salutation + g\u00e9n\u00e9ration — la salutation ne bloque pas."""
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("salut genere moi une grille") is True
+
+    def test_15_donne_moi_numeros_euromillion(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("Donne moi les num\u00e9ros de l'euromillion de ce soir") is True
+
+    def test_16_generer_grille_aleatoire(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("generer une grille tres algoritmer et aleatoire") is True
+
+    def test_17_conseillez_euromillions(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("Quesque vous me conseillez pour le euromillions pour demain merci") is True
+
+    def test_18_pas_generation(self):
+        """Message narratif NE DOIT PAS d\u00e9clencher Phase G."""
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("Se dommage car sa ete mes num\u00e9ros sortis mais je pas eux la possibilit\u00e9 de r\u00e9cup\u00e9rer") is False
+
+
+class TestGenerationV65_NonRegression:
+    """Messages qui NE DOIVENT PAS d\u00e9clencher Phase G (faux positifs potentiels)."""
+
+    def test_frequence_numero(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("quel est le num\u00e9ro le plus fr\u00e9quent") is False
+
+    def test_analyse_grille(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("analyse ma grille 3 12 25 38 47") is False
+
+    def test_donnees_statistiques(self):
+        """'donn\u00e9es' (accent) NE DOIT PAS matcher le pattern 'donne'."""
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("les donn\u00e9es statistiques de la grille") is False
+
+    def test_compare_numeros(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("compare le 7 et le 23") is False
+
+    def test_top_10(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("top 10 les plus sortis") is False
+
+    def test_cooccurrence_preserved(self):
+        """Co-occurrence exclusion still works."""
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("g\u00e9n\u00e8re les paires ensemble") is False
+
+    def test_bonjour(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("bonjour") is False
+
+
+class TestGenerationV65_Multilang:
+    """V65 patterns multilingues (EN/ES/PT/DE/NL)."""
+
+    # EN
+    def test_en_want_numbers(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("I want 5 numbers for tonight") is True
+
+    def test_en_would_like_grid(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("I would like a grid") is True
+
+    def test_en_suggest_numbers(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("suggest some numbers for me") is True
+
+    def test_en_bare_grid(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("1 grid") is True
+
+    def test_en_which_numbers_play(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("which numbers to play") is True
+
+    def test_en_no_detect_stats(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("show me the most frequent numbers") is False
+
+    # ES
+    def test_es_quiero_numeros(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("quiero 5 n\u00fameros para hoy") is True
+
+    def test_es_bare_combinacion(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("1 combinaci\u00f3n") is True
+
+    def test_es_que_numeros_jugar(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("qu\u00e9 n\u00fameros jugar") is True
+
+    def test_es_no_detect_stats(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("cu\u00e1l es el n\u00famero m\u00e1s frecuente") is False
+
+    # PT
+    def test_pt_quero_numeros(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("quero 5 n\u00fameros para hoje") is True
+
+    def test_pt_bare_grelha(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("1 grelha") is True
+
+    def test_pt_quais_numeros_jogar(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("quais n\u00fameros jogar") is True
+
+    def test_pt_no_detect_stats(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("qual \u00e9 o n\u00famero mais frequente") is False
+
+    # DE
+    def test_de_moechte_zahlen(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("ich m\u00f6chte 5 Zahlen") is True
+
+    def test_de_bare_kombination(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("1 Kombination") is True
+
+    def test_de_welche_zahlen_spielen(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("welche Zahlen spielen") is True
+
+    def test_de_no_detect_stats(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("welche Zahl ist am h\u00e4ufigsten") is False
+
+    # NL
+    def test_nl_wil_nummers(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("ik wil 5 nummers") is True
+
+    def test_nl_bare_combinatie(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("1 combinatie") is True
+
+    def test_nl_welke_nummers_spelen(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("welke nummers spelen") is True
+
+    def test_nl_no_detect_stats(self):
+        from services.chat_detectors import _detect_generation
+        assert _detect_generation("welk nummer komt het vaakst voor") is False
+
+
+# ═══════════════════════════════════════════════════════════════════════
 # V43-bis — Exclusion extraction
 # ═══════════════════════════════════════════════════════════════════════
 
@@ -756,3 +973,326 @@ class TestExtractExclusions:
         assert (1, 31) in result["exclude_ranges"]
         assert 5 in result["exclude_multiples"]
         assert 10 in result["exclude_multiples"]
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V65 — Phase SALUTATION detection
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestSalutationDetection_RealMessages:
+    """Messages r\u00e9els du chatbot_log_7d.csv qui doivent d\u00e9clencher Phase SALUTATION."""
+
+    def test_yo(self):
+        assert _detect_salutation("yo") is True
+
+    def test_yop(self):
+        assert _detect_salutation("yop") is True
+
+    def test_hello(self):
+        assert _detect_salutation("hello") is True
+
+    def test_salut_tu_vas_bien(self):
+        assert _detect_salutation("salut tu vas bien ?") is True
+
+    def test_salut(self):
+        assert _detect_salutation("salut") is True
+
+
+class TestSalutationDetection_FR:
+    """Salutations FR vari\u00e9es."""
+
+    def test_bonjour(self):
+        assert _detect_salutation("bonjour") is True
+
+    def test_bonsoir(self):
+        assert _detect_salutation("bonsoir") is True
+
+    def test_coucou(self):
+        assert _detect_salutation("coucou") is True
+
+    def test_slt(self):
+        assert _detect_salutation("slt") is True
+
+    def test_wesh(self):
+        assert _detect_salutation("wesh") is True
+
+    def test_bjr(self):
+        assert _detect_salutation("bjr") is True
+
+    def test_hey(self):
+        assert _detect_salutation("hey") is True
+
+    def test_salut_exclamation(self):
+        assert _detect_salutation("salut !") is True
+
+    def test_bonjour_ca_va(self):
+        assert _detect_salutation("bonjour ca va") is True
+
+    def test_yo_repeated(self):
+        assert _detect_salutation("yooo") is True
+
+
+class TestSalutationDetection_Multilang:
+    """Salutations 6 langues."""
+
+    # EN
+    def test_en_hi(self):
+        assert _detect_salutation("hi") is True
+
+    def test_en_hello(self):
+        assert _detect_salutation("hello") is True
+
+    def test_en_howdy(self):
+        assert _detect_salutation("howdy") is True
+
+    def test_en_whats_up(self):
+        assert _detect_salutation("what's up") is True
+
+    # ES
+    def test_es_hola(self):
+        assert _detect_salutation("hola") is True
+
+    def test_es_buenas(self):
+        assert _detect_salutation("buenas") is True
+
+    def test_es_que_tal(self):
+        assert _detect_salutation("qu\u00e9 tal") is True
+
+    # PT
+    def test_pt_ola(self):
+        assert _detect_salutation("ol\u00e1") is True
+
+    def test_pt_oi(self):
+        assert _detect_salutation("oi") is True
+
+    def test_pt_bom_dia(self):
+        assert _detect_salutation("bom dia") is True
+
+    # DE
+    def test_de_hallo(self):
+        assert _detect_salutation("hallo") is True
+
+    def test_de_guten_tag(self):
+        assert _detect_salutation("guten tag") is True
+
+    def test_de_moin(self):
+        assert _detect_salutation("moin") is True
+
+    def test_de_servus(self):
+        assert _detect_salutation("servus") is True
+
+    # NL
+    def test_nl_hoi(self):
+        assert _detect_salutation("hoi") is True
+
+    def test_nl_goedendag(self):
+        assert _detect_salutation("goedendag") is True
+
+    def test_nl_goedemorgen(self):
+        assert _detect_salutation("goedemorgen") is True
+
+
+class TestSalutationDetection_NonRegression:
+    """Messages qui NE DOIVENT PAS d\u00e9clencher Phase SALUTATION."""
+
+    def test_salut_genere_grille(self):
+        """Trop long — doit rester Phase G."""
+        assert _detect_salutation("salut genere moi une grille") is False
+
+    def test_salut_connard(self):
+        """Salutation + insulte — d\u00e9tecteur ne bloque pas (Phase I en amont)."""
+        # _detect_salutation elle-m\u00eame matche "salut connard" (2 mots < 8),
+        # mais dans le pipeline Phase I est AVANT, donc "salut connard" → Phase I.
+        # Ici on v\u00e9rifie juste que le message est court et matche le pattern.
+        # Le test pipeline ci-dessous v\u00e9rifie la priorit\u00e9 I > SALUTATION.
+        pass  # pipeline priority tested in TestSalutationPipeline
+
+    def test_long_message_not_salutation(self):
+        """Message long avec salut dedans."""
+        assert _detect_salutation("salut est-ce que tu peux me donner les statistiques du numero 7") is False
+
+    def test_stats_question(self):
+        assert _detect_salutation("quel est le num\u00e9ro le plus fr\u00e9quent") is False
+
+    def test_bonjour_grille(self):
+        """'bonjour donne moi une grille' = trop long."""
+        assert _detect_salutation("bonjour donne moi une grille euromillions") is False
+
+    def test_empty(self):
+        assert _detect_salutation("") is False
+
+    def test_number(self):
+        assert _detect_salutation("42") is False
+
+
+class TestSalutationResponse:
+    """Responses d'accueil correctes par module et langue."""
+
+    def test_loto_fr(self):
+        resp = _get_salutation_response("loto", "fr")
+        assert "Loto" in resp
+        assert "HYBRIDE" in resp
+
+    def test_loto_en(self):
+        resp = _get_salutation_response("loto", "en")
+        assert "Loto" in resp
+
+    def test_em_fr(self):
+        resp = _get_salutation_response("em", "fr")
+        assert "EuroMillions" in resp
+
+    def test_em_en(self):
+        resp = _get_salutation_response("em", "en")
+        assert "EuroMillions" in resp
+
+    def test_em_es(self):
+        resp = _get_salutation_response("em", "es")
+        assert "EuroMillions" in resp
+
+    def test_em_pt(self):
+        resp = _get_salutation_response("em", "pt")
+        assert "EuroMillions" in resp
+
+    def test_em_de(self):
+        resp = _get_salutation_response("em", "de")
+        assert "EuroMillions" in resp
+
+    def test_em_nl(self):
+        resp = _get_salutation_response("em", "nl")
+        assert "EuroMillions" in resp
+
+    def test_fallback_unknown_lang(self):
+        """Langue inconnue → fallback FR."""
+        resp = _get_salutation_response("loto", "xx")
+        assert "Loto" in resp
+        assert "HYBRIDE" in resp
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V65 — Data signal heuristic (skip Phase SQL for conversational messages)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestDataSignal_NoSignal:
+    """Messages conversationnels sans signal data → False (skip SQL)."""
+
+    def test_moteur_hybride(self):
+        assert _has_data_signal("comment le moteur HYBRIDE fonctionne avec les donn\u00e9es du Loto") is False
+
+    def test_score_football(self):
+        assert _has_data_signal("Score exact de France contre Br\u00e9sil") is False
+
+    def test_performances_decevantes(self):
+        assert _has_data_signal("Non non tes performances d\u00e9cevante je vais ailleurs") is False
+
+    def test_ia_generique(self):
+        assert _has_data_signal("Ttes les ia le font cela...alors rien de plus chez toi") is False
+
+    def test_tu_te_debines(self):
+        assert _has_data_signal("Tu te debines") is False
+
+    def test_ah_ok(self):
+        assert _has_data_signal("Ah ok") is False
+
+    def test_borabora(self):
+        assert _has_data_signal("ici Borabora faanui aide moi") is False
+
+    def test_empty(self):
+        assert _has_data_signal("") is False
+
+    def test_bonjour_ca_va(self):
+        assert _has_data_signal("bonjour comment tu vas") is False
+
+    def test_cest_quoi_ce_site(self):
+        assert _has_data_signal("c'est quoi ce site") is False
+
+
+class TestDataSignal_HasSignal:
+    """Messages avec signal data → True (Phase SQL doit s'ex\u00e9cuter)."""
+
+    # Chiffres
+    def test_bare_number(self):
+        assert _has_data_signal("27") is True
+
+    def test_number_in_text(self):
+        assert _has_data_signal("le 7 est sorti combien de fois") is True
+
+    def test_year(self):
+        assert _has_data_signal("statistiques 2025") is True
+
+    # FR keywords
+    def test_fr_combien(self):
+        assert _has_data_signal("combien de fois le 7") is True
+
+    def test_fr_dernier_tirage(self):
+        assert _has_data_signal("dernier tirage") is True
+
+    def test_fr_frequents(self):
+        assert _has_data_signal("les plus fr\u00e9quents") is True
+
+    def test_fr_top(self):
+        assert _has_data_signal("top 5 num\u00e9ros") is True
+
+    def test_fr_ecart(self):
+        assert _has_data_signal("quel est l'\u00e9cart du 12") is True
+
+    def test_fr_historique(self):
+        assert _has_data_signal("historique du num\u00e9ro 7") is True
+
+    def test_fr_depuis(self):
+        assert _has_data_signal("depuis janvier") is True
+
+    def test_fr_paire_impaire(self):
+        assert _has_data_signal("r\u00e9partition pairs impairs") is True
+
+    def test_fr_etoile(self):
+        assert _has_data_signal("quelle \u00e9toile sort le plus") is True
+
+    def test_fr_jackpot(self):
+        assert _has_data_signal("le plus gros jackpot") is True
+
+    # EN keywords
+    def test_en_how_many(self):
+        assert _has_data_signal("how many times has 22 come out") is True
+
+    def test_en_frequency(self):
+        assert _has_data_signal("frequency of number 7") is True
+
+    def test_en_most_drawn(self):
+        assert _has_data_signal("most drawn number") is True
+
+    def test_en_last_draw(self):
+        assert _has_data_signal("last draw results") is True
+
+    # ES keywords
+    def test_es_frecuencia(self):
+        assert _has_data_signal("frecuencia del 7") is True
+
+    def test_es_sorteo(self):
+        assert _has_data_signal("\u00faltimo sorteo") is True
+
+    # PT keywords
+    def test_pt_sorteio(self):
+        assert _has_data_signal("resultado do sorteio") is True
+
+    def test_pt_frequencia(self):
+        assert _has_data_signal("frequ\u00eancia do n\u00famero 7") is True
+
+    # DE keywords
+    def test_de_ziehung(self):
+        assert _has_data_signal("letzte Ziehung") is True
+
+    def test_de_haeufigkeit(self):
+        assert _has_data_signal("H\u00e4ufigkeit der Zahl 7") is True
+
+    def test_de_wie_oft(self):
+        assert _has_data_signal("wie oft kam die 7") is True
+
+    # NL keywords
+    def test_nl_trekking(self):
+        assert _has_data_signal("laatste trekking") is True
+
+    def test_nl_hoe_vaak(self):
+        assert _has_data_signal("hoe vaak kwam 7 voor") is True
+
+    def test_nl_frequentie(self):
+        assert _has_data_signal("frequentie van nummer 7") is True

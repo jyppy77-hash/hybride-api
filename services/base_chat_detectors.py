@@ -839,6 +839,115 @@ def _count_compliment_streak(history) -> int:
 
 
 # ═══════════════════════════════════════════════════════
+# Data signal heuristic — skip Phase SQL for pure conversational messages (V65)
+# ═══════════════════════════════════════════════════════
+
+_DATA_KEYWORDS = re.compile(
+    # FR
+    r'\b(?:fr[eé]quen|statistiqu|tirage|sortie?|retard|[eé]cart|classement|'
+    r'top\s*\d|combien|moyenne|pourcentage|pairs?|impairs?|chaud|froid|'
+    r'derni[eè]re?|premi[eè]re?|souvent|rarement|jamais|toujours|'
+    r'fois|depuis|entre|pendant|ann[eé]e|mois|semaine|historique|archiv|'
+    r'num[eé]ro|boule|chance|[eé]toile|jackpot|gagnant|rang|'
+    # EN
+    r'frequen|statistic|draw|lag|gap|ranking|how\s+many|average|percentage|'
+    r'even|odd|hot|cold|last|first|most|least|often|rarely|never|always|'
+    r'times|since|between|during|year|month|week|histor|number|star|ball|winner|'
+    # ES
+    r'frecuencia|estad[ií]stic|sorteo|retraso|brecha|clasificaci[oó]n|cu[aá]nto|'
+    r'promedio|porcentaje|caliente|fr[ií]o|[uú]ltimo|primero|siempre|nunca|veces|'
+    r'a[nñ]o|mes|semana|n[uú]mero|estrella|bola|ganador|'
+    # PT
+    r'frequ[eê]ncia|estat[ií]stic|sorteio|atraso|lacuna|classifica[cç][aã]o|quantas?|'
+    r'percentagem|quente|frio|[uú]ltimo|primeiro|sempre|nunca|vezes|'
+    r'grelha|n[uú]mero|estrela|bola|vencedor|'
+    # DE
+    r'h[aä]ufigkeit|statistik|ziehung|r[uü]ckstand|l[uü]cke|rangliste|wie\s+oft|'
+    r'durchschnitt|prozent|hei[sß]|kalt|letzte|erste|immer|nie|mal|'
+    r'seit|zwischen|jahr|monat|woche|nummer|zahl|stern|kugel|gewinner|'
+    # NL
+    r'frequentie|statistiek|trekking|achterstand|kloof|ranglijst|hoe\s+vaak|'
+    r'gemiddelde|percentage|heet|koud|laatste|eerste|altijd|nooit|keer|'
+    r'sinds|tussen|jaar|maand|week|nummer|ster|bal|winnaar)',
+    re.IGNORECASE
+)
+
+_HAS_DIGIT = re.compile(r'\d')
+
+
+def _has_data_signal(message: str) -> bool:
+    """Heuristique rapide : le message contient-il un signal data (chiffre ou mot-cle statistique) ?
+    Retourne False pour les messages purement conversationnels — permet de skip Phase SQL."""
+    if _HAS_DIGIT.search(message):
+        return True
+    return bool(_DATA_KEYWORDS.search(message))
+
+
+# ═══════════════════════════════════════════════════════
+# Phase SALUTATION — Détection des salutations initiales (V65)
+# Court-circuite le pipeline pour éviter un appel Gemini/SQL inutile.
+# Condition : message court (< 8 mots) et historique vide ou ≤ 1 message.
+# ═══════════════════════════════════════════════════════
+
+_SALUTATION_PATTERN = re.compile(
+    r'^\s*(?:'
+    # FR
+    r'salut|bonjour|bonsoir|coucou|yo+|yop|hey|slt|wesh|bjr|'
+    r'bsr|cc|kikou|'
+    # EN
+    r'hello|hi|hey|howdy|what.?s\s+up|sup|hiya|'
+    # ES
+    r'hola|buenas|qu[eé]\s+tal|buenos?\s+d[ií]as?|buenas?\s+(?:tardes?|noches?)|'
+    # PT
+    r'ol[aá]|oi|bom\s+dia|boa\s+tarde|boa\s+noite|'
+    # DE
+    r'hallo|guten\s+(?:tag|morgen|abend)|moin|servus|'
+    # NL
+    r'hallo|hoi|goedendag|goedemorgen|goedenavond|goedemiddag'
+    r')(?:\s+[\w\u00e0-\u00ff]{0,15}){0,3}[?!.\s]*$',
+    re.IGNORECASE
+)
+
+_SALUTATION_MAX_WORDS = 8
+
+
+def _detect_salutation(message: str) -> bool:
+    """Detecte si le message est une salutation simple (< 8 mots, 6 langues).
+    NE DOIT PAS matcher les messages longs comme 'salut genere moi une grille'."""
+    words = message.split()
+    if len(words) > _SALUTATION_MAX_WORDS:
+        return False
+    return bool(_SALUTATION_PATTERN.match(message.strip()))
+
+
+# Réponses d'accueil directes — court-circuit (pas de Gemini)
+_SALUTATION_RESPONSES = {
+    "loto": {
+        "fr": "Salut ! 👋 Je suis HYBRIDE, ton assistant IA spécialiste du Loto. Pose-moi une question sur les statistiques des tirages ou demande-moi de générer une grille !",
+        "en": "Hey there! 👋 I'm HYBRIDE, your AI assistant for Loto analysis. Ask me about draw statistics or request a grid!",
+        "es": "¡Hola! 👋 Soy HYBRIDE, tu asistente IA especialista en Loto. ¡Pregúntame sobre estadísticas de sorteos o pídeme una combinación!",
+        "pt": "Olá! 👋 Sou o HYBRIDE, o teu assistente IA especialista em Loto. Pergunta-me sobre estatísticas dos sorteios ou pede-me uma grelha!",
+        "de": "Hallo! 👋 Ich bin HYBRIDE, dein KI-Assistent für Loto-Analysen. Frag mich nach Ziehungsstatistiken oder lass dir eine Kombination generieren!",
+        "nl": "Hallo! 👋 Ik ben HYBRIDE, je AI-assistent voor Loto-analyses. Vraag me naar trekkingsstatistieken of laat me een combinatie genereren!",
+    },
+    "em": {
+        "fr": "Salut ! 👋 Je suis HYBRIDE, ton assistant IA spécialiste de l'EuroMillions. Pose-moi une question sur les statistiques des tirages ou demande-moi de générer une grille !",
+        "en": "Hey there! 👋 I'm HYBRIDE, your AI assistant for EuroMillions analysis. Ask me about draw statistics or request a grid!",
+        "es": "¡Hola! 👋 Soy HYBRIDE, tu asistente IA especialista en EuroMillions. ¡Pregúntame sobre estadísticas de sorteos o pídeme una combinación!",
+        "pt": "Olá! 👋 Sou o HYBRIDE, o teu assistente IA especialista em EuroMillions. Pergunta-me sobre estatísticas dos sorteios ou pede-me uma grelha!",
+        "de": "Hallo! 👋 Ich bin HYBRIDE, dein KI-Assistent für EuroMillions-Analysen. Frag mich nach Ziehungsstatistiken oder lass dir eine Kombination generieren!",
+        "nl": "Hallo! 👋 Ik ben HYBRIDE, je AI-assistent voor EuroMillions-analyses. Vraag me naar trekkingsstatistieken of laat me een combinatie genereren!",
+    },
+}
+
+
+def _get_salutation_response(module: str, lang: str) -> str:
+    """Retourne la reponse d'accueil pour le module et la langue donnes."""
+    pool = _SALUTATION_RESPONSES.get(module, _SALUTATION_RESPONSES["loto"])
+    return pool.get(lang, pool["fr"])
+
+
+# ═══════════════════════════════════════════════════════
 # Phase G — Détection génération de grilles (6 langues)
 # ═══════════════════════════════════════════════════════
 
@@ -854,6 +963,25 @@ _GENERATION_PATTERN = re.compile(
     r'tire[\s-]moi\s+.{0,15}num[eé]ros|'
     # FR conseil/recommandation → génération (V51)
     r'(?:que?\s+(?:me|nous)\s+)?(?:conseill|recommand)\w*.{1,30}(?:grille|num[eé]ros|euromillions?|loto)|'
+    # V65 — FR donne/propose/suggère (sans -moi) + grille/numéros
+    r'\bdonne\w*\s+(?:la|les|une?|des|\d+)\s+.{0,15}(?:grille|combinaison|num[eé]ros)|'
+    r'\bpropose\w*\s+(?:la|les|une?|des|\d+)\s+.{0,15}(?:grille|combinaison|num[eé]ros)|'
+    r'\bsugg[eè]re\w*\s+(?:la|les|une?|des|\d+)\s+.{0,15}(?:grille|combinaison|num[eé]ros)|'
+    # V65 — FR vouloir/aimerais + grille/numéros
+    r'\b(?:veu[xt]|voudr\w+|aimerais?)\s+.{0,30}(?:grille|num[eé]ros|combinaison)|'
+    # V65 — FR bare "(une/N) grille(s)" at start of message
+    r'^\s*(?:une?|\d+)\s+grilles?\b|'
+    # V65 — FR "N numéros pour" (implicit demand)
+    r'\b\d+\s+num[eé]ros?\s+pour\b|'
+    # V65 — FR "généré" alone (participe passé, mot seul)
+    r'^\s*g[eé]n[eé]r[eé]\w*[\s!.?]*$|'
+    # V65 — FR quels/lequel/quoi + jouer/choisir
+    r'\b(?:quels?|lequel|lesquels?|quoi)\s+(?:num[eé]ros?\s+)?(?:[àa]\s+)?(?:jouer|choisir|prendre)\b|'
+    # V65 — FR jouer + grille / numéros à jouer
+    r'\bjouer\b.{0,20}\bgrilles?\b|'
+    r'\bnum[eé]ros?\s+(?:[àa]\s+)?jouer\b|'
+    # V65 — FR "N numéro(s) et N étoile(s)" (implicit EM demand)
+    r'\b\d+\s+num[eé]ros?\s+et\s+(?:\d+|une?|deux|trois)\s+[eé]toiles?\b|'
     # EN
     r'\bgenerate\b|'
     r'give\s+me\s+.{0,20}(?:grid|combination|numbers)|'
@@ -863,6 +991,16 @@ _GENERATION_PATTERN = re.compile(
     r'pick\s+.{0,15}numbers\s+for\s+me|'
     # EN conseil (V51)
     r'what\s+(?:do\s+you\s+)?(?:recommend|suggest)|'
+    # V65 — EN want/would like + grid/numbers
+    r'\b(?:want|(?:would|i.?d)\s+like)\s+.{0,30}(?:grid|numbers?|combination)|'
+    # V65 — EN suggest/propose (without me)
+    r'\b(?:suggest|propose)\w*\s+.{0,25}(?:grid|numbers?|combination)|'
+    # V65 — EN bare "a/N grid(s)" at start
+    r'^\s*(?:an?|\d+)\s+grids?\b|'
+    # V65 — EN N numbers for
+    r'\b\d+\s+numbers?\s+for\b|'
+    # V65 — EN which/what numbers to play
+    r'\b(?:which|what)\s+numbers?\s+.{0,15}(?:play|pick|choose)|'
     # ES
     r'\bgenera\b|generar\b|'
     r'dame\s+.{0,20}(?:combinaci[oó]n|n[uú]meros)|'
@@ -871,6 +1009,14 @@ _GENERATION_PATTERN = re.compile(
     r'hazme\s+.{0,20}combinaci[oó]n|'
     # ES conseil (V51)
     r'(?:qu[eé]\s+(?:me\s+)?)?(?:recomiend|sugier)\w*.{1,30}(?:combinaci[oó]n|n[uú]meros|euromillions?|loto)|'
+    # V65 — ES querer + combinación/números
+    r'\bquier\w+\s+.{0,30}(?:combinaci[oó]n|n[uú]meros|grilla)|'
+    # V65 — ES proponer/sugerir (without me)
+    r'\b(?:prop[oó]n|sugier)\w*\s+.{0,25}(?:combinaci[oó]n|n[uú]meros)|'
+    # V65 — ES bare combinación at start
+    r'^\s*(?:una?|\d+)\s+(?:combinaci[oó]ne?s?|grillas?)\b|'
+    # V65 — ES qué números jugar
+    r'\bqu[eé]\s+n[uú]meros?\s+.{0,15}jugar|'
     # PT
     r'\bgera\b|\bgerar\b|\bgere\b|'
     r'd[aá][\s-]me\s+.{0,20}(?:grelhas?|combina[cç][aã]o|n[uú]meros)|'
@@ -879,6 +1025,14 @@ _GENERATION_PATTERN = re.compile(
     r'faz[\s-]me\s+.{0,20}(?:grelhas?|combina[cç][aã]o)|'
     # PT conseil (V51)
     r'(?:o\s+que\s+)?(?:recomend|suger)\w*.{1,30}(?:grelhas?|n[uú]meros|euromillions?|loto)|'
+    # V65 — PT querer + grelha/números
+    r'\bquer\w+\s+.{0,30}(?:grelha|n[uú]meros|combina[cç][aã]o)|'
+    # V65 — PT propor/sugerir (without me)
+    r'\b(?:prop[oõ]e?|suger)\w*\s+.{0,25}(?:grelha|n[uú]meros|combina[cç][aã]o)|'
+    # V65 — PT bare grelha at start
+    r'^\s*(?:uma?|\d+)\s+grelhas?\b|'
+    # V65 — PT quais números jogar
+    r'\bquais?\s+n[uú]meros?\s+.{0,15}jogar|'
     # DE
     r'generier|erstell\w*\s+.{0,20}(?:kombination|zahlen|gitter)|'
     r'gib\s+mir\s+.{0,20}(?:kombination|zahlen)|'
@@ -887,6 +1041,12 @@ _GENERATION_PATTERN = re.compile(
     r'w[aä]hl\w*\s+.{0,15}zahlen|'
     # DE conseil (V51)
     r'was\s+(?:empfiehlst|empfehlen|schl[aä]gst).{1,30}(?:kombination|zahlen|euromillions?|loto)|'
+    # V65 — DE möchte/hätte + Kombination/Zahlen
+    r'\b(?:m[oö]chte|h[aä]tte\s+gerne?)\s+.{0,30}(?:kombination|zahlen|tippfeld)|'
+    # V65 — DE bare Kombination at start
+    r'^\s*(?:eine?|\d+)\s+kombination\w*\b|'
+    # V65 — DE welche Zahlen spielen
+    r'\bwelche\s+zahlen\s+.{0,15}spielen|'
     # NL
     r'genereer|'
     r'maak\s+.{0,20}(?:combinatie|nummers)|'
@@ -894,7 +1054,13 @@ _GENERATION_PATTERN = re.compile(
     r'combinatie\s+.{0,15}optim|'
     r'kies\s+.{0,15}nummers|'
     # NL conseil (V51)
-    r'wat\s+(?:raad|beveel)\s+je\s+aan.{1,30}(?:combinatie|nummers|euromillions?|loto)',
+    r'wat\s+(?:raad|beveel)\s+je\s+aan.{1,30}(?:combinatie|nummers|euromillions?|loto)|'
+    # V65 — NL wil/zou graag + combinatie/nummers
+    r'\b(?:wil|zou\s+graag)\s+.{0,30}(?:combinatie|nummers)|'
+    # V65 — NL bare combinatie at start
+    r'^\s*(?:een|\d+)\s+combinaties?\b|'
+    # V65 — NL welke nummers spelen
+    r'\bwelke\s+nummers?\s+.{0,15}spelen',
     re.IGNORECASE
 )
 
@@ -927,6 +1093,8 @@ _COOCCURRENCE_EXCLUSION = re.compile(
 def _detect_generation(message: str) -> bool:
     """Detecte si le message est une demande de generation de grille (6 langues)."""
     lower = message.lower()
+    # V65 — normalize Unicode dashes (NON-BREAKING HYPHEN, EN DASH, EM DASH)
+    lower = lower.replace('\u2011', '-').replace('\u2013', '-').replace('\u2014', '-').replace('\u2010', '-')
     if not _GENERATION_PATTERN.search(lower):
         return False
     # Pour les verbes courts (genera, gera, gere), exiger un contexte grille
