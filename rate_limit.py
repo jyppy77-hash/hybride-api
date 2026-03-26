@@ -1,7 +1,8 @@
 """Rate limiter partage — utilise par main.py et les routes."""
 
+import logging
 import time
-from collections import defaultdict
+from collections import defaultdict, deque
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse as StarletteJSONResponse
@@ -9,6 +10,8 @@ from slowapi import Limiter
 from fastapi import Request
 
 from utils import get_client_ip
+
+logger = logging.getLogger(__name__)
 
 
 def _get_real_ip(request: Request) -> str:
@@ -27,7 +30,8 @@ limiter = Limiter(key_func=_get_real_ip)
 # ---------------------------------------------------------------------------
 _API_GLOBAL_LIMIT = 60          # requests per window
 _API_WINDOW_SECONDS = 60        # 1-minute sliding window
-_api_hits: dict[str, list[float]] = defaultdict(list)
+_API_MAX_TRACKED_IPS = 10_000   # S04: memory bound — clear dict above this
+_api_hits: dict[str, deque[float]] = defaultdict(deque)
 
 
 class APIGlobalRateLimitMiddleware(BaseHTTPMiddleware):
@@ -40,12 +44,18 @@ class APIGlobalRateLimitMiddleware(BaseHTTPMiddleware):
 
         ip = _get_real_ip(request)
         now = time.monotonic()
+
+        # S04: prevent unbounded memory growth under distributed DDoS
+        if len(_api_hits) > _API_MAX_TRACKED_IPS:
+            _api_hits.clear()
+            logger.warning("[RATE_LIMIT] _api_hits cleared — exceeded %d entries", _API_MAX_TRACKED_IPS)
+
         bucket = _api_hits[ip]
 
-        # Prune expired timestamps
+        # Prune expired timestamps — S10: deque.popleft() is O(1)
         cutoff = now - _API_WINDOW_SECONDS
         while bucket and bucket[0] < cutoff:
-            bucket.pop(0)
+            bucket.popleft()
 
         if len(bucket) >= _API_GLOBAL_LIMIT:
             return StarletteJSONResponse(

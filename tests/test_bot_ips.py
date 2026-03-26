@@ -270,6 +270,17 @@ class TestSuspiciousPath:
         """P2: Total suspicious paths should be 73."""
         assert len(SUSPICIOUS_PATHS) == 73
 
+    def test_suspicious_path_percent_encoded(self):
+        """S06: percent-encoded paths must be detected after decoding."""
+        assert is_suspicious_path("/%2eenv") is True          # /.env
+        assert is_suspicious_path("/%2Egit/config") is True    # /.git/config
+        assert is_suspicious_path("/wp%2dadmin") is True       # /wp-admin
+
+    def test_suspicious_path_mixed_case_encoded(self):
+        """S06: mixed case + percent-encoding is detected."""
+        assert is_suspicious_path("/%2EENV") is True           # /.ENV → /.env
+        assert is_suspicious_path("/WP-ADMIN") is True         # case-insensitive
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # Parser tests
@@ -474,6 +485,32 @@ class TestRefresh:
 
 _static_patch = patch("fastapi.staticfiles.StaticFiles.__init__", return_value=None)
 _static_call = patch("fastapi.staticfiles.StaticFiles.__call__", return_value=None)
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# S05: IPv6 owner /64 CIDR matching in ip_ban.py
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestOwnerIpv6Cidr:
+    """S05 — _is_owner_or_loopback uses ip_network /64, not startswith."""
+
+    def test_ipv6_in_owner_64_matches(self):
+        """IPv6 within the /64 of OWNER_IPV6 is recognized as owner."""
+        with patch.dict(os.environ, {"OWNER_IPV6": "2a01:cb05:8700:5900::1"}):
+            import importlib
+            import middleware.ip_ban as ban_mod
+            importlib.reload(ban_mod)
+            # Same /64, different interface ID (privacy extension)
+            assert ban_mod._is_owner_or_loopback("2a01:cb05:8700:5900:abcd:ef01:2345:6789") is True
+
+    def test_ipv6_outside_owner_64_rejected(self):
+        """IPv6 outside the /64 of OWNER_IPV6 is NOT owner."""
+        with patch.dict(os.environ, {"OWNER_IPV6": "2a01:cb05:8700:5900::1"}):
+            import importlib
+            import middleware.ip_ban as ban_mod
+            importlib.reload(ban_mod)
+            # Different /64 subnet
+            assert ban_mod._is_owner_or_loopback("2a01:cb05:8700:5901::1") is False
 
 
 class TestAdminIpRestriction:

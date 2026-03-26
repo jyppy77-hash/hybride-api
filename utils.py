@@ -18,8 +18,8 @@ def get_client_ip(request: Request) -> str:
     forwarded = request.headers.get("x-forwarded-for", "")
     if forwarded:
         return forwarded.split(",")[0].strip()
-    client_host = request.client.host if request.client else "unknown"
-    return client_host or "unknown"
+    client_host = request.client.host if request.client else ""
+    return client_host or ""
 
 
 def get_client_ip_from_scope(scope: dict) -> str:

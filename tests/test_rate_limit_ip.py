@@ -61,9 +61,9 @@ class TestGetRealIp:
         req = _make_request(forwarded="", client_host="10.10.10.10")
         assert _get_real_ip(req) == "10.10.10.10"
 
-    def test_no_client_returns_unknown(self):
-        """No X-Forwarded-For and no client → returns 'unknown'."""
+    def test_no_client_returns_empty(self):
+        """No X-Forwarded-For and no client → returns '' (S07)."""
         req = MagicMock()
         req.headers = {}
         req.client = None
-        assert _get_real_ip(req) == "unknown"
+        assert _get_real_ip(req) == ""

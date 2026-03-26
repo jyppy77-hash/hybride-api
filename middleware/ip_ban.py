@@ -14,7 +14,7 @@ import logging
 import os
 import time
 from collections import defaultdict
-from ipaddress import ip_address
+from ipaddress import ip_address, ip_network
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
@@ -49,9 +49,18 @@ _OWNER_IPV6 = os.environ.get("OWNER_IPV6", "").strip()
 _OWNER_EXACT: set[str] = {"127.0.0.1", "::1"}
 if _OWNER_IP:
     _OWNER_EXACT.add(_OWNER_IP)
-_OWNER_PREFIXES: list[str] = []
+
+# S05: strict CIDR /64 matching for IPv6 owner (aligned with em_access_control.py)
+_owner_net_v6 = None
 if _OWNER_IPV6:
-    _OWNER_PREFIXES.append(_OWNER_IPV6)
+    # Normalize: strip trailing colon(s) and ensure :: suffix for valid IPv6
+    _v6_clean = _OWNER_IPV6.rstrip(":")
+    if "::" not in _v6_clean:
+        _v6_clean += "::"
+    try:
+        _owner_net_v6 = ip_network(f"{_v6_clean}/64", strict=False)
+    except ValueError:
+        logger.warning("[IP_BAN] Invalid OWNER_IPV6 %r — IPv6 owner matching disabled", _OWNER_IPV6)
 
 
 def _is_owner_or_loopback(ip_str: str) -> bool:
@@ -62,11 +71,10 @@ def _is_owner_or_loopback(ip_str: str) -> bool:
         addr = ip_address(ip_str)
         if addr.is_loopback:
             return True
+        if _owner_net_v6 and addr in _owner_net_v6:
+            return True
     except ValueError:
         return False
-    for prefix in _OWNER_PREFIXES:
-        if ip_str.startswith(prefix.rstrip(":")):
-            return True
     return False
 
 

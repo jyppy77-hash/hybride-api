@@ -251,3 +251,41 @@ class TestNoXSSProtectionHeader:
         resp = client.get("/health")
         assert resp.status_code == 200
         assert "X-XSS-Protection" not in resp.headers
+
+
+# ── S09 : Permissions-Policy élargi ──────────────────────────────
+
+
+class TestPermissionsPolicyExtended:
+    """S09 — Permissions-Policy must block payment, usb, bluetooth, serial."""
+
+    def test_permissions_policy_contains_payment(self):
+        """Permissions-Policy header includes payment=() (S09 audit fix)."""
+        client = _get_client()
+        resp = client.get("/health")
+        pp = resp.headers.get("Permissions-Policy", "")
+        assert "payment=()" in pp
+        assert "usb=()" in pp
+        assert "bluetooth=()" in pp
+        assert "serial=()" in pp
+
+
+# ── S04 : _api_hits memory bound ─────────────────────────────────
+
+
+class TestApiHitsMemoryBound:
+    """S04 — _api_hits dict is cleared when exceeding 10K entries."""
+
+    def test_api_hits_cleared_above_10k(self):
+        """Injecting >10K IPs then making a request clears the dict."""
+        import rate_limit as rl_mod
+        rl_mod._api_hits.clear()
+        # Inject 10_001 fake IPs
+        for i in range(10_001):
+            rl_mod._api_hits[f"10.{i // 65536}.{(i // 256) % 256}.{i % 256}"].append(0.0)
+        assert len(rl_mod._api_hits) > 10_000
+        # One more request should trigger the clear
+        client = _get_client()
+        client.get("/api/version")
+        # Dict was cleared then re-populated with only the new request's IP
+        assert len(rl_mod._api_hits) <= 2

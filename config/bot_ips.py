@@ -11,6 +11,7 @@ Static hardcoded ranges serve as fallback. Dynamic refresh adds to them.
 import ipaddress
 import logging
 from typing import Any
+from urllib.parse import unquote
 
 logger = logging.getLogger(__name__)
 
@@ -243,8 +244,12 @@ def is_blacklisted(ip: str) -> tuple[bool, str | None]:
 
 
 def is_suspicious_path(path: str) -> bool:
-    """Check if URL path matches a suspicious pattern (startswith matching)."""
-    path_lower = path.lower().split("?")[0]  # strip query string, case-insensitive
+    """Check if URL path matches a suspicious pattern (startswith matching).
+
+    S06: decodes percent-encoding before matching to prevent bypass via
+    /%2eenv instead of /.env.
+    """
+    path_lower = unquote(path).lower().split("?")[0]
     return any(path_lower.startswith(p) for p in SUSPICIOUS_PATHS)
 
 
@@ -342,11 +347,16 @@ async def refresh_from_remote(httpx_client) -> dict:
             logger.warning("[BOT_IPS] Blacklist %s fetch failed: %s", name, e)
 
     # ── Merge static + dynamic, collapse ──
+    # S08: atomic swap — build new lists/set locally, then assign in one shot
+    # (Python reference assignment is GIL-atomic, no race with concurrent reads)
     all_wl = _parse_cidr_list(_STATIC_WHITELIST_CIDRS) + _parse_cidr_list(dynamic_wl_cidrs)
     all_bl = _parse_cidr_list(_STATIC_BLACKLIST_CIDRS) + _parse_cidr_list(dynamic_bl_cidrs)
 
-    _whitelist_networks = _collapse(all_wl)
-    _blacklist_networks = _collapse(all_bl)
+    new_wl = _collapse(all_wl)
+    new_bl = _collapse(all_bl)
+
+    _whitelist_networks = new_wl
+    _blacklist_networks = new_bl
     _blacklist_ips = dynamic_bl_ips
 
     stats = {

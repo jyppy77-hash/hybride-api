@@ -59,6 +59,13 @@ class TestGetClientIp:
         req = self._make_request(forwarded_for="2001:db8::1, 10.0.0.1")
         assert get_client_ip(req) == "2001:db8::1"
 
+    def test_no_header_no_client_returns_empty(self):
+        """S07: No X-Forwarded-For + no client → returns '' (not 'unknown')."""
+        req = MagicMock()
+        req.headers = {}
+        req.client = None
+        assert get_client_ip(req) == ""
+
 
 class TestGetClientIpFromScope:
 

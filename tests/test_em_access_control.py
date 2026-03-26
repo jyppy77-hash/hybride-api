@@ -74,7 +74,7 @@ class TestGetClientIp:
         req = MagicMock()
         req.headers = {}
         req.client = None
-        assert get_client_ip(req) == "unknown"
+        assert get_client_ip(req) == ""
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
