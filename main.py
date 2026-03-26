@@ -145,6 +145,7 @@ async def lifespan(app):
     from services.cache import init_cache, close_cache
     app.state.httpx_client = httpx.AsyncClient(timeout=20.0)
     await db_cloudsql.init_pool()
+    await db_cloudsql.init_pool_readonly()
     await init_cache()
     await _ensure_monitoring_tables()
     # Non-blocking retention cleanup (90 days)
@@ -167,6 +168,7 @@ async def lifespan(app):
     asyncio.create_task(_periodic_bot_refresh())
     yield
     await close_cache()
+    await db_cloudsql.close_pool_readonly()
     await db_cloudsql.close_pool()
     await app.state.httpx_client.aclose()
 
@@ -281,8 +283,40 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
-    response.headers["X-XSS-Protection"] = "1; mode=block"
     return response
+
+
+# =========================
+# CSRF Origin validation (S01)
+# =========================
+_ALLOWED_ORIGINS = {"https://lotoia.fr", "https://www.lotoia.fr"}
+if not os.getenv("K_SERVICE"):
+    _ALLOWED_ORIGINS.add("http://localhost:8000")
+    _ALLOWED_ORIGINS.add("http://localhost:8080")
+    _ALLOWED_ORIGINS.add("http://127.0.0.1:8000")
+    _ALLOWED_ORIGINS.add("http://127.0.0.1:8080")
+
+
+@app.middleware("http")
+async def csrf_origin_check(request: Request, call_next):
+    """Validate Origin/Referer on POST requests (CSRF protection).
+
+    Policy: reject when Origin (or Referer fallback) is present but not in whitelist.
+    If both absent → allow (non-browser API client, not a CSRF vector).
+    Matches Django/Rails standard: browsers always send Origin on cross-origin POST.
+    """
+    if request.method == "POST":
+        origin = request.headers.get("origin") or ""
+        if not origin:
+            referer = request.headers.get("referer") or ""
+            if referer:
+                from urllib.parse import urlparse
+                parsed = urlparse(referer)
+                origin = f"{parsed.scheme}://{parsed.netloc}"
+        # Only reject if an origin was found but doesn't match whitelist
+        if origin and origin not in _ALLOWED_ORIGINS:
+            return JSONResponse(status_code=403, content={"detail": "Origin not allowed"})
+    return await call_next(request)
 
 
 # =========================

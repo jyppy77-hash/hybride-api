@@ -28,11 +28,15 @@ EM_PUBLIC_ACCESS = os.getenv("EM_PUBLIC_ACCESS", "true").lower() in (
     "true", "1", "yes",
 )
 
-OWNER_IPV6 = "2a01:cb05:8700:5900:180b:4c1b:2226:7349"
+OWNER_IPV6 = os.environ.get("OWNER_IPV6", "")
 
 # /64 network match: covers IPv6 privacy extensions (OS rotates the suffix).
 # The /64 prefix is assigned per household by the ISP — safe to match on.
-_OWNER_NET_V6 = ip_network(OWNER_IPV6 + "/64", strict=False)
+try:
+    _OWNER_NET_V6 = ip_network(OWNER_IPV6 + "/64", strict=False) if OWNER_IPV6 else None
+except ValueError:
+    logger.warning("Invalid OWNER_IPV6=%r — IPv6 owner detection disabled", OWNER_IPV6)
+    _OWNER_NET_V6 = None
 
 # Optional IPv4 from env (already set on Cloud Run for Umami owner filter).
 _OWNER_IPV4 = os.getenv("OWNER_IP", "").strip()
@@ -74,7 +78,7 @@ def is_owner_ip(client_ip_str: str) -> bool:
     if client.is_loopback:
         return True
     if client.version == 6:
-        return client in _OWNER_NET_V6
+        return _OWNER_NET_V6 is not None and client in _OWNER_NET_V6
     if _OWNER_IPV4:
         try:
             return client == ip_address(_OWNER_IPV4)

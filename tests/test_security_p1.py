@@ -156,3 +156,98 @@ class TestAdminCookieMaxAge:
         src = open(mod.__file__, encoding="utf-8").read()
         assert "max_age=86400," in src
         assert "max_age=86400 * 7" not in src
+
+
+# ── S13 : X-XSS-Protection obsolete retiré ────────────────────────
+
+
+# ── S01 : CSRF Origin validation ───────────────────────────────────
+
+
+class TestCSRFOriginValidation:
+    """S01 — POST requests with invalid Origin header must be rejected 403."""
+
+    def test_post_with_valid_origin(self):
+        """POST with Origin: https://lotoia.fr passes CSRF check."""
+        client = _get_client()
+        resp = client.post(
+            "/api/contact",
+            json={"name": "test", "email": "a@b.com", "message": "hello"},
+            headers={"Origin": "https://lotoia.fr"},
+        )
+        # Should NOT be 403 (may be 200/422/other, but not CSRF-blocked)
+        assert resp.status_code != 403
+
+    def test_post_with_invalid_origin(self):
+        """POST with Origin: https://evil.com is rejected 403."""
+        client = _get_client()
+        resp = client.post(
+            "/api/contact",
+            json={"name": "test", "email": "a@b.com", "message": "hello"},
+            headers={"Origin": "https://evil.com"},
+        )
+        assert resp.status_code == 403
+        assert resp.json()["detail"] == "Origin not allowed"
+
+    def test_post_without_origin_allows_non_browser(self):
+        """POST without Origin or Referer is allowed (non-browser API client)."""
+        client = _get_client()
+        resp = client.post(
+            "/api/contact",
+            json={"name": "test", "email": "a@b.com", "message": "hello"},
+        )
+        # Non-browser client (no Origin) → passes CSRF, hits actual route
+        assert resp.status_code != 403
+
+    def test_post_with_valid_referer_fallback(self):
+        """POST without Origin but with valid Referer passes CSRF check."""
+        client = _get_client()
+        resp = client.post(
+            "/api/contact",
+            json={"name": "test", "email": "a@b.com", "message": "hello"},
+            headers={"Referer": "https://lotoia.fr/hybride"},
+        )
+        assert resp.status_code != 403
+
+    def test_post_with_invalid_referer(self):
+        """POST with invalid Referer (no Origin) is rejected 403."""
+        client = _get_client()
+        resp = client.post(
+            "/api/contact",
+            json={"name": "test", "email": "a@b.com", "message": "hello"},
+            headers={"Referer": "https://evil.com/page"},
+        )
+        assert resp.status_code == 403
+
+    def test_get_not_affected(self):
+        """GET requests are exempt from CSRF check."""
+        client = _get_client()
+        resp = client.get("/health", headers={"Origin": "https://evil.com"})
+        assert resp.status_code == 200
+
+    @pytest.mark.parametrize("origin", [
+        "http://localhost:8000",
+        "http://localhost:8080",
+        "http://127.0.0.1:8000",
+        "http://127.0.0.1:8080",
+    ])
+    def test_post_localhost_dev(self, origin):
+        """POST with localhost/127.0.0.1 Origin is allowed when K_SERVICE not set (dev)."""
+        client = _get_client()
+        resp = client.post(
+            "/api/contact",
+            json={"name": "test", "email": "a@b.com", "message": "hello"},
+            headers={"Origin": origin},
+        )
+        assert resp.status_code != 403
+
+
+class TestNoXSSProtectionHeader:
+    """S13 — X-XSS-Protection must NOT be present (obsolete, CSP covers XSS)."""
+
+    def test_xss_protection_header_absent(self):
+        """GET /health must NOT return X-XSS-Protection header."""
+        client = _get_client()
+        resp = client.get("/health")
+        assert resp.status_code == 200
+        assert "X-XSS-Protection" not in resp.headers

@@ -14,8 +14,11 @@
 # =============================================================
 
 substitutions:
-  _OWNER_IP: '86.212.92.243'
-  _OWNER_IPV6: '2a01:cb05:8700:5900:'
+  # SÉCURITÉ : _OWNER_IP et _OWNER_IPV6 ne doivent PAS contenir de vraies valeurs ici.
+  # Les définir dans : Console GCP > Cloud Build > Triggers > [trigger] > Substitution variables
+  # Ou via : gcloud builds submit --substitutions=_OWNER_IP=x.x.x.x,_OWNER_IPV6=prefix:
+  _OWNER_IP: ''
+  _OWNER_IPV6: ''
   _DB_NAME: 'lotofrance_staging'
 
 steps:

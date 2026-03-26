@@ -202,7 +202,7 @@ class TestExecuteSafeSql:
     @patch("services.chat_sql.db_cloudsql")
     async def test_returns_rows(self, mock_db):
         cursor = AsyncMock()
-        mock_db.get_connection = lambda: _async_conn(cursor)
+        mock_db.get_connection_readonly = lambda: _async_conn(cursor)
         cursor.fetchall = AsyncMock(return_value=[{"num": 7, "freq": 120}])
 
         result = await _execute_safe_sql("SELECT num, freq FROM tirages")
@@ -212,7 +212,7 @@ class TestExecuteSafeSql:
     @patch("services.chat_sql.db_cloudsql")
     async def test_returns_none_on_error(self, mock_db):
         cursor = AsyncMock()
-        mock_db.get_connection = lambda: _async_conn(cursor)
+        mock_db.get_connection_readonly = lambda: _async_conn(cursor)
         cursor.execute = AsyncMock(side_effect=Exception("DB error"))
 
         assert await _execute_safe_sql("SELECT 1") is None
@@ -229,6 +229,51 @@ class TestExecuteSafeSql:
         """F03: _execute_safe_sql must reject INSERT without hitting DB."""
         result = await _execute_safe_sql("INSERT INTO tirages VALUES (1,2,3,4,5,1)")
         assert result is None
+
+    @pytest.mark.asyncio
+    @patch("services.chat_sql.db_cloudsql")
+    async def test_uses_readonly_pool(self, mock_db):
+        """S04: _execute_safe_sql must use get_connection_readonly (not get_connection)."""
+        cursor = AsyncMock()
+        mock_db.get_connection_readonly = lambda: _async_conn(cursor)
+        mock_db.get_connection = MagicMock(side_effect=AssertionError("Must not use main pool"))
+        cursor.fetchall = AsyncMock(return_value=[{"n": 1}])
+
+        result = await _execute_safe_sql("SELECT 1 FROM tirages")
+        assert result == [{"n": 1}]
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# S04: get_connection_readonly fallback when no env var
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestReadonlyPoolFallback:
+    """S04 — get_connection_readonly falls back to main pool when DB_USER_READONLY not set."""
+
+    @pytest.mark.asyncio
+    async def test_readonly_fallback_uses_main_pool(self):
+        """Without DB_USER_READONLY, get_connection_readonly() uses main pool."""
+        import db_cloudsql
+        # Save original state
+        orig_pool = db_cloudsql._pool
+        orig_pool_ro = db_cloudsql._pool_readonly
+
+        try:
+            # Simulate: main pool exists, readonly pool not initialized (no env var)
+            mock_conn = AsyncMock()
+            mock_pool = MagicMock()
+            mock_pool.acquire = MagicMock(return_value=AsyncMock(
+                __aenter__=AsyncMock(return_value=mock_conn),
+                __aexit__=AsyncMock(return_value=False),
+            ))
+            db_cloudsql._pool = mock_pool
+            db_cloudsql._pool_readonly = None  # Not initialized (no env var)
+
+            async with db_cloudsql.get_connection_readonly() as conn:
+                assert conn is mock_conn  # Falls back to main pool
+        finally:
+            db_cloudsql._pool = orig_pool
+            db_cloudsql._pool_readonly = orig_pool_ro
 
 
 # ═══════════════════════════════════════════════════════════════════════

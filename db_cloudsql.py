@@ -47,13 +47,17 @@ CLOUD_SQL_CONNECTION_NAME = os.getenv(
 )
 
 # Credentials (Cloud Run / .env)
-DB_USER = os.getenv("DB_USER", "jyppy")
+DB_USER = os.environ["DB_USER"]
 DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 DB_NAME = os.getenv("DB_NAME", "lotofrance")
 
 # Local config (Cloud SQL Proxy)
 DB_HOST = os.getenv("DB_HOST", "127.0.0.1")
 DB_PORT = int(os.getenv("DB_PORT", "3306"))
+
+# Read-only credentials for chatbot Text-to-SQL isolation (S04)
+DB_USER_READONLY = os.environ.get("DB_USER_READONLY", "")
+DB_PASSWORD_READONLY = os.environ.get("DB_PASSWORD_READONLY", "")
 
 # ============================================================================
 # DETECTION ENVIRONNEMENT
@@ -133,6 +137,59 @@ async def get_connection():
     if _pool is None:
         raise RuntimeError("Pool not initialized — call init_pool() first")
     async with _pool.acquire() as conn:
+        yield conn
+
+
+# ============================================================================
+# ASYNC READ-ONLY POOL — chatbot Text-to-SQL isolation (S04)
+# ============================================================================
+
+_pool_readonly: aiomysql.Pool | None = None
+
+
+async def init_pool_readonly():
+    """Initialize read-only pool for chatbot SQL. Fallback to main pool if not configured."""
+    global _pool_readonly
+    if _pool_readonly is not None:
+        return
+    if not DB_USER_READONLY or not DB_PASSWORD_READONLY:
+        logger.warning("[DB] DB_USER_READONLY not set — chatbot SQL uses main pool (no isolation)")
+        return
+
+    kwargs = dict(
+        minsize=2, maxsize=5,
+        user=DB_USER_READONLY, password=DB_PASSWORD_READONLY, db=DB_NAME,
+        charset="utf8mb4", cursorclass=aiomysql.DictCursor,
+        autocommit=True, connect_timeout=5,
+        pool_recycle=3600,
+    )
+
+    if is_production():
+        kwargs["unix_socket"] = f"/cloudsql/{CLOUD_SQL_CONNECTION_NAME}"
+    else:
+        kwargs.update(host=DB_HOST, port=DB_PORT)
+
+    _pool_readonly = await aiomysql.create_pool(**kwargs)
+    logger.info(f"Pool aiomysql readonly initialisé ({get_environment()}) — min=2, max=5")
+
+
+async def close_pool_readonly():
+    """Close read-only pool."""
+    global _pool_readonly
+    if _pool_readonly:
+        _pool_readonly.close()
+        await _pool_readonly.wait_closed()
+        _pool_readonly = None
+        logger.info("Pool aiomysql readonly fermé")
+
+
+@asynccontextmanager
+async def get_connection_readonly():
+    """Read-only connection for chatbot SQL. Falls back to main pool if not configured."""
+    pool = _pool_readonly if _pool_readonly is not None else _pool
+    if pool is None:
+        raise RuntimeError("Pool not initialized — call init_pool() first")
+    async with pool.acquire() as conn:
         yield conn
 
 

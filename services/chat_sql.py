@@ -201,7 +201,7 @@ async def _execute_safe_sql(sql: str) -> list | None:
         logger.warning("[TEXT2SQL] _execute_safe_sql rejected unvalidated SQL: %s", sql[:100])
         return None
     try:
-        async with db_cloudsql.get_connection() as conn:
+        async with db_cloudsql.get_connection_readonly() as conn:
             cursor = await conn.cursor()
             await cursor.execute(sql)
             rows = await cursor.fetchall()

@@ -3,9 +3,22 @@ Tests for middleware/em_access_control.py — EM access control.
 Unit tests for all utility functions + integration tests for the middleware.
 """
 
+import importlib
+import os
+
+# Set OWNER_IPV6 env var before module import (module reads at import time).
+# Force-set because .env may contain a truncated value loaded by dotenv.
+_TEST_OWNER_IPV6 = "2a01:cb05:8700:5900:180b:4c1b:2226:7349"
+os.environ["OWNER_IPV6"] = _TEST_OWNER_IPV6
+
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from starlette.datastructures import URL, QueryParams
+
+# Reload to pick up the env var we just set (module may have been imported
+# earlier with a different/truncated value from .env).
+import middleware.em_access_control as _eac_mod
+importlib.reload(_eac_mod)
 
 from middleware.em_access_control import (
     get_client_ip,
@@ -405,3 +418,29 @@ class TestEmAccessMiddleware:
         resp = await em_access_middleware(req, call_next)
         assert resp.status_code == 200
         call_next.assert_called_once()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# S03 — OWNER_IPV6 reads from env var (not hardcoded)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class TestOwnerIpv6EnvVar:
+    """S03 — OWNER_IPV6 must come from os.environ, not a hardcoded value."""
+
+    def test_owner_ipv6_from_env_var(self):
+        """Reload module with a custom OWNER_IPV6 env var and verify it's used."""
+        fake_ipv6 = "2001:db8:aaaa:bbbb:cccc:dddd:eeee:ffff"
+        import middleware.em_access_control as mod
+        try:
+            with pytest.MonkeyPatch.context() as mp:
+                mp.setenv("OWNER_IPV6", fake_ipv6)
+                importlib.reload(mod)
+                assert mod.OWNER_IPV6 == fake_ipv6
+                # /64 sibling must be recognized as owner
+                assert mod.is_owner_ip("2001:db8:aaaa:bbbb:1111:2222:3333:4444") is True
+                # Different /64 must NOT be owner
+                assert mod.is_owner_ip("2001:db8:aaaa:cccc::1") is False
+        finally:
+            # Restore module to original env-based state
+            os.environ.setdefault("OWNER_IPV6", _TEST_OWNER_IPV6)
+            importlib.reload(mod)
