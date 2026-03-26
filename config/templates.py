@@ -220,7 +220,12 @@ def hreflang_tags(page_key: str) -> list[dict]:
         url = EM_URLS.get(lc, {}).get(page_key)
         if url:
             tags.append({"lang": lc, "url": f"{BASE_URL}{url}"})
-    # x-default → FR
+    # STRATÉGIE x-default (documentée — ne pas modifier sans analyse SEO) :
+    # - Pages EM : x-default → FR (marché principal, contenu de référence)
+    # - Launcher : x-default → EN (entrée internationale, cf. routes/launcher.py)
+    # - Pages Loto : x-default → FR (FR-only, auto-référentiel dans les HTML)
+    # Cohérent avec la recommandation Google : x-default = version "catch-all"
+    # pour les users dont la langue n'est pas dans la liste hreflang.
     fr_url = EM_URLS["fr"].get(page_key)
     if fr_url:
         tags.append({"lang": "x-default", "url": f"{BASE_URL}{fr_url}"})

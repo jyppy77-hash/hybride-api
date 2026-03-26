@@ -158,6 +158,8 @@ def _render_launcher(lang: str, request: Request) -> HTMLResponse:
             {"lang": lc, "url": f"{BASE_URL}/{lc}"}
             for lc in killswitch.ENABLED_LANGS
         ]
+        # x-default → EN pour le launcher (entrée internationale, public non-FR)
+        # Voir config/templates.py pour la stratégie globale x-default
         hreflang_tags.append({"lang": "x-default", "url": f"{BASE_URL}/{DEFAULT_LANG}"})
 
         ctx = {

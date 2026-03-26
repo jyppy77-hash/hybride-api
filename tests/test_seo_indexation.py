@@ -837,3 +837,41 @@ class TestRobotsTxtStaticAllow:
         with open(robots_path, "r", encoding="utf-8") as f:
             content = f.read()
         assert "Allow: /ui/static/" in content
+
+
+# ═══════════════════════════════════════════════
+# Hreflang completeness in static HTML pages (S01 + S07)
+# ═══════════════════════════════════════════════
+
+class TestStaticHreflangCompleteness:
+    """Verify hreflang tags are complete in static HTML files."""
+
+    def test_em_static_fr_has_7_hreflang(self):
+        """EM static FR page (/euromillions) must have 7 hreflang (6 langs + x-default)."""
+        cursor = _make_cursor()
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            resp = client.get("/euromillions")
+        html = resp.text
+        for lang in ("fr", "en", "es", "pt", "de", "nl", "x-default"):
+            assert f'hreflang="{lang}"' in html, f"Missing hreflang={lang} on /euromillions"
+
+    def test_em_static_en_has_7_hreflang(self):
+        """EM static EN page (/en/euromillions) must have 7 hreflang (6 langs + x-default)."""
+        cursor = _make_cursor()
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            resp = client.get("/en/euromillions")
+        html = resp.text
+        for lang in ("fr", "en", "es", "pt", "de", "nl", "x-default"):
+            assert f'hreflang="{lang}"' in html, f"Missing hreflang={lang} on /en/euromillions"
+
+    def test_loto_page_has_hreflang_fr_xdefault(self):
+        """Loto FR page (/accueil) must have 2 hreflang (fr + x-default)."""
+        cursor = _make_cursor()
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            resp = client.get("/accueil")
+        html = resp.text
+        assert 'hreflang="fr"' in html, "Missing hreflang=fr on /accueil"
+        assert 'hreflang="x-default"' in html, "Missing hreflang=x-default on /accueil"

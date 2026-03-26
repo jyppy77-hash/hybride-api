@@ -1,7 +1,7 @@
 """
 Tests Phase B SEO — Schema Organization + legal.css conditionnel.
 Verifies:
-  - Organization schema: founder Person, foundingDate 2025, disambiguatingDescription
+  - Organization schema: founder Person, foundingDate 2025-01-01 (ISO 8601), disambiguatingDescription
   - seo.py and a-propos.html alignment
   - legal.css loaded on legal pages, absent on non-legal EM pages
 """
@@ -74,10 +74,10 @@ class TestSeoOrganizationSchema:
         assert "JyppY" in html  # alternateName
 
     def test_founding_date_2025(self):
-        """foundingDate must be 2025."""
+        """foundingDate must be 2025-01-01 (ISO 8601)."""
         from seo import generate_jsonld_organization
         html = generate_jsonld_organization()
-        assert '"foundingDate": "2025"' in html
+        assert '"foundingDate": "2025-01-01"' in html
 
     def test_disambiguating_description(self):
         """disambiguatingDescription must be present."""
@@ -378,3 +378,71 @@ class TestPhaseD_AggregateRatingEM:
         assert "AggregateRating" in resp.text
         assert '"ratingValue": "4.7"' in resp.text
         assert '"ratingCount": "12"' in resp.text
+
+
+# ═══════════════════════════════════════════════
+# S10 — contactPoint in Organization schema
+# ═══════════════════════════════════════════════
+
+class TestOrganizationContactPoint:
+    """Organization schema must include contactPoint with email."""
+
+    def test_seo_py_has_contact_point(self):
+        """seo.py Organization includes contactPoint with email."""
+        from seo import generate_jsonld_organization
+        html = generate_jsonld_organization()
+        assert "contactPoint" in html
+        assert "contact@lotoia.fr" in html
+        assert "customer support" in html
+
+    def test_seo_py_has_area_served(self):
+        """seo.py Organization includes areaServed."""
+        from seo import generate_jsonld_organization
+        html = generate_jsonld_organization()
+        assert '"areaServed": "FR"' in html
+
+
+# ═══════════════════════════════════════════════
+# S11 — Person standalone schema on /a-propos
+# ═══════════════════════════════════════════════
+
+class TestPersonStandaloneSchema:
+    """Standalone Person schema on /a-propos for Knowledge Graph."""
+
+    def test_a_propos_has_person_schema(self):
+        """GET /a-propos contains Person JSON-LD with founder name."""
+        cursor = AsyncMock()
+        cursor.fetchone = AsyncMock(return_value=None)
+        cursor.fetchall = AsyncMock(return_value=[])
+        cursor.close = AsyncMock()
+
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            resp = client.get("/a-propos")
+
+        assert resp.status_code == 200
+        assert '"@type": "Person"' in resp.text
+        assert "Jean-Philippe Godard" in resp.text
+
+
+# ═══════════════════════════════════════════════
+# S18 — Dataset schema on /historique
+# ═══════════════════════════════════════════════
+
+class TestHistoriqueDatasetSchema:
+    """Dataset schema on historique pages."""
+
+    def test_historique_has_dataset_schema(self):
+        """GET /historique contains Dataset JSON-LD."""
+        cursor = AsyncMock()
+        cursor.fetchone = AsyncMock(return_value=None)
+        cursor.fetchall = AsyncMock(return_value=[])
+        cursor.close = AsyncMock()
+
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            resp = client.get("/historique")
+
+        assert resp.status_code == 200
+        assert '"@type": "Dataset"' in resp.text
+        assert "2019/.." in resp.text

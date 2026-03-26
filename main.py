@@ -5,7 +5,7 @@ import uuid
 import asyncio
 import contextvars
 from contextlib import asynccontextmanager
-from datetime import date
+from datetime import date, datetime
 from email.utils import formatdate
 
 from fastapi import FastAPI, Request
@@ -23,7 +23,7 @@ from pythonjsonlogger import jsonlogger
 
 import db_cloudsql
 from rate_limit import limiter, APIGlobalRateLimitMiddleware
-from config.version import __version__, APP_VERSION, APP_NAME, VERSION_DATE
+from config.version import __version__, APP_VERSION, APP_NAME, VERSION_DATE, LAST_DEPLOY_DATE
 from services.circuit_breaker import gemini_breaker
 from routes.pages import router as pages_router
 from routes.api_data import router as data_router
@@ -283,6 +283,9 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), serial=()"
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    # X-Robots-Tag: prevent indexing of API/admin endpoints (defense-in-depth)
+    if request.url.path.startswith(("/api/", "/admin/")):
+        response.headers["X-Robots-Tag"] = "noindex, nofollow"
     return response
 
 
@@ -383,10 +386,11 @@ async def add_cache_headers(request: Request, call_next):
     if (path.endswith(".html") or path in _SEO_ROUTES) and response.status_code < 300:
         response.headers["Cache-Control"] = "public, max-age=3600"  # 1 heure
 
-    # Last-Modified sur les pages HTML uniquement (evite epoch 0 / 1970)
+    # Last-Modified sur les pages HTML uniquement — date fixe = LAST_DEPLOY_DATE
     content_type = response.headers.get("content-type", "")
     if "text/html" in content_type:
-        stamp = time.mktime(date.today().timetuple())
+        deploy_dt = datetime.strptime(LAST_DEPLOY_DATE, "%Y-%m-%d")
+        stamp = time.mktime(deploy_dt.timetuple())
         response.headers["Last-Modified"] = formatdate(
             timeval=stamp, localtime=False, usegmt=True,
         )

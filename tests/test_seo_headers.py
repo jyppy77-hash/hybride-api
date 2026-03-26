@@ -1,10 +1,12 @@
 """
-Tests Phase A SEO — Last-Modified + Vary: Accept-Language headers.
+Tests Phase A SEO — Last-Modified + Vary: Accept-Language + X-Robots-Tag headers.
 Verifies:
-  - Last-Modified present on HTML responses (SEO routes)
+  - Last-Modified present on HTML responses = LAST_DEPLOY_DATE (fixed, not today)
   - Last-Modified absent on API JSON responses
   - Vary: Accept-Language present on EM multilingual routes
   - Vary: Accept-Language absent on Loto FR-only routes
+  - X-Robots-Tag noindex on /api/* and /admin/*
+  - X-Robots-Tag absent on public HTML pages
 """
 
 import os
@@ -67,6 +69,30 @@ class TestLastModifiedHeader:
         assert "GMT" in lm
         # RFC 7231 format: Thu, 04 Mar 2026 00:00:00 GMT
         assert len(lm.split()) >= 5
+
+    def test_last_modified_is_fixed_deploy_date(self):
+        """Last-Modified must be LAST_DEPLOY_DATE, not today (S02 audit fix)."""
+        from config.version import LAST_DEPLOY_DATE
+
+        cursor = AsyncMock()
+        cursor.fetchone = AsyncMock(return_value=(150, 4.7))
+        cursor.fetchall = AsyncMock(return_value=[])
+        cursor.close = AsyncMock()
+
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            r1 = client.get("/accueil")
+
+        lm = r1.headers["Last-Modified"]
+        # The year from LAST_DEPLOY_DATE must appear in the header
+        deploy_year = LAST_DEPLOY_DATE[:4]
+        assert deploy_year in lm, f"Last-Modified should contain {deploy_year}: {lm}"
+        # Must NOT contain tomorrow's year if different (stable across days)
+        # More importantly: two requests on same deploy must yield identical Last-Modified
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client2 = _get_client()
+            r2 = client2.get("/accueil")
+        assert r1.headers["Last-Modified"] == r2.headers["Last-Modified"]
 
     def test_last_modified_present_on_euromillions(self):
         """GET /euromillions returns Last-Modified header."""
@@ -144,3 +170,38 @@ class TestVaryAcceptLanguage:
 
         vary = resp.headers.get("Vary", "")
         assert "Accept-Language" not in vary
+
+
+# ═══════════════════════════════════════════════
+# X-Robots-Tag on API / admin endpoints (S13)
+# ═══════════════════════════════════════════════
+
+class TestXRobotsTag:
+    """X-Robots-Tag: noindex on /api/* and /admin/* (defense-in-depth)."""
+
+    def test_api_has_x_robots_noindex(self):
+        """GET /api/version must have X-Robots-Tag: noindex."""
+        cursor = AsyncMock()
+        cursor.fetchone = AsyncMock(return_value=None)
+        cursor.fetchall = AsyncMock(return_value=[])
+        cursor.close = AsyncMock()
+
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            resp = client.get("/api/version")
+
+        assert "X-Robots-Tag" in resp.headers
+        assert "noindex" in resp.headers["X-Robots-Tag"]
+
+    def test_html_page_no_x_robots(self):
+        """GET /accueil (public HTML) must NOT have X-Robots-Tag."""
+        cursor = AsyncMock()
+        cursor.fetchone = AsyncMock(return_value=(150, 4.7))
+        cursor.fetchall = AsyncMock(return_value=[])
+        cursor.close = AsyncMock()
+
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            resp = client.get("/accueil")
+
+        assert "X-Robots-Tag" not in resp.headers

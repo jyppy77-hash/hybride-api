@@ -73,7 +73,10 @@ def _url_block(loc: str, lastmod: str, freq: str, priority: float,
 
 
 def _hreflang_alternates(page_key: str) -> list[tuple[str, str]]:
-    """Build [(hreflang, absolute_url), ...] for all enabled langs + x-default."""
+    """Build [(hreflang, absolute_url), ...] for all enabled langs + x-default.
+
+    x-default → FR for EM pages (marché principal). See config/templates.py for strategy doc.
+    """
     alternates = []
     for lc in killswitch.ENABLED_LANGS:
         url = EM_URLS.get(lc, {}).get(page_key)
@@ -95,6 +98,8 @@ async def sitemap():
     _launcher_priorities = {"fr": 1.0, "en": 0.9}
     _launcher_alternates = [
         (lc, f"{BASE_URL}/{lc}") for lc in killswitch.ENABLED_LANGS
+    # x-default → EN pour le launcher (entrée internationale, public non-FR)
+    # Voir aussi config/templates.py pour la stratégie EM (x-default → FR)
     ] + [("x-default", f"{BASE_URL}/en")]
     for lc in killswitch.ENABLED_LANGS:
         prio = _launcher_priorities.get(lc, 0.8)

@@ -1,9 +1,13 @@
 """
-SEO Module pour LotoIA
-======================
+SEO Module pour LotoIA — Source de vérité structured data.
+==========================================================
 
-Helpers SEO : génération de structured data JSON-LD.
-Le sitemap.xml et robots.txt sont servis comme fichiers statiques.
+Générateurs JSON-LD : Organization, SoftwareApplication, FAQPage, BreadcrumbList.
+
+NOTE : Ces fonctions ne sont actuellement pas appelées par les routes/templates.
+Les JSON-LD sont inline dans chaque template HTML pour performance et contrôle granulaire.
+Ce module sert de **source de vérité** pour les données Organization, founder, et structured data.
+Les fonctions peuvent être intégrées dans le pipeline de rendu dans une future refactorisation.
 """
 
 import json
@@ -29,7 +33,7 @@ def generate_jsonld_organization() -> str:
         "url": "https://lotoia.fr",
         "logo": "https://lotoia.fr/ui/static/logo-lotoia.png",
         "description": "Plateforme d'analyse statistique du Loto et de l'EuroMillions par intelligence artificielle",
-        "foundingDate": "2025",
+        "foundingDate": "2025-01-01",
         "founder": {
             "@type": "Person",
             "name": "Jean-Philippe Godard",
@@ -45,6 +49,13 @@ def generate_jsonld_organization() -> str:
         },
         "disambiguatingDescription": "Plateforme française d'analyse statistique du Loto et de l'EuroMillions par intelligence artificielle. Sans aucun lien avec les produits de literie ou les accessoires.",
         "sameAs": ["https://emovisia.fr"],
+        "contactPoint": {
+            "@type": "ContactPoint",
+            "email": "contact@lotoia.fr",
+            "contactType": "customer support",
+            "availableLanguage": ["French", "English"]
+        },
+        "areaServed": "FR",
         "address": {
             "@type": "PostalAddress",
             "streetAddress": "3 rue Alexandre Riou",

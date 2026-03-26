@@ -77,6 +77,20 @@
       "dateModified": "2026-03-09"
     }
     </script>
+    <!-- JSON-LD Person (E-E-A-T — standalone entity for Knowledge Graph) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Person",
+      "name": "Jean-Philippe Godard",
+      "alternateName": "JyppY",
+      "jobTitle": "Fondateur & Lead Developer",
+      "worksFor": {"@type": "Organization", "name": "LotoIA", "url": {{ base_url|tojson }}},
+      "knowsAbout": ["Data Science", "Intelligence Artificielle", "Statistiques", "Probabilités"],
+      "sameAs": ["https://www.linkedin.com/in/jpgodard/"],
+      "url": "{{ base_url }}/a-propos"
+    }
+    </script>
     <!-- JSON-LD BreadcrumbList -->
     <script type="application/ld+json">
     {
