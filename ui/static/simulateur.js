@@ -368,8 +368,6 @@ function displayResults(data) {
         window.LotoIAAnalytics.product.simulateGrid({ score: data.score });
     }
 
-    // Umami — audit de grille
-    if (typeof umami !== 'undefined') umami.track('simulateur-grille-audited', { module: 'loto' });
     if (window.LotoIA_track) LotoIA_track('simulateur-grille-audited', {module: 'loto'});
 
     // Bannière sponsor E5 sous les résultats
@@ -783,8 +781,6 @@ async function autoGenerate() {
         if (data.success && data.grids && data.grids.length > 0) {
             const grid = data.grids[0];
 
-            // Umami — grille generee
-            if (typeof umami !== 'undefined') umami.track('simulateur-grille-generated', { module: 'loto' });
             if (window.LotoIA_track) LotoIA_track('simulateur-grille-generated', {module: 'loto'});
 
             // Reset first
@@ -898,6 +894,7 @@ function injectSponsorBanner() {
             device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop'
         })
     }).catch(function() {});
+    if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-result-shown', { sponsor_id: sponsorA.id, product_code: sponsorA.id });
 }
 
 /**

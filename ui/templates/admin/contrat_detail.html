@@ -1,0 +1,73 @@
+{% extends "admin/_base.html" %}
+{% block title %}Contrat {{ contrat.numero }}{% endblock %}
+
+{% block content %}
+    <h2>Contrat {{ contrat.numero }}</h2>
+
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <span class="kpi-value">{{ contrat.sponsor_nom }}</span>
+            <span class="kpi-label">Sponsor</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-value">{{ contrat.type_contrat }}</span>
+            <span class="kpi-label">Type</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-value">{{ "%.2f"|format(contrat.montant_mensuel_ht) }} EUR</span>
+            <span class="kpi-label">Mensuel HT</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-value"><span class="badge-status badge-{{ contrat.statut }}">{{ contrat.statut }}</span></span>
+            <span class="kpi-label">Statut</span>
+        </div>
+    </div>
+
+    <div class="kpi-bar">
+        <span>Periode : <b>{{ contrat.date_debut }}</b> au <b>{{ contrat.date_fin }}</b></span>
+    </div>
+
+    {% if contrat.product_codes %}
+    <div class="kpi-bar">
+        <span><b>Product codes :</b> {{ contrat.product_codes }}</span>
+    </div>
+    {% endif %}
+
+    {% if contrat.conditions_particulieres %}
+    <div class="kpi-bar">
+        <span><b>Conditions particulieres :</b><br>{{ contrat.conditions_particulieres }}</span>
+    </div>
+    {% endif %}
+
+    <div class="action-bar">
+        <a href="/admin/contrats/{{ contrat.id }}/pdf" class="btn btn-nav">Telecharger PDF</a>
+        <a href="/admin/contrats/{{ contrat.id }}/edit" class="btn btn-action">Modifier</a>
+
+        {% if contrat.statut == 'brouillon' %}
+        <form method="POST" action="/admin/contrats/{{ contrat.id }}/status">
+            <input type="hidden" name="statut" value="envoye">
+            <button type="submit" class="btn btn-action">Marquer envoye</button>
+        </form>
+        {% endif %}
+        {% if contrat.statut == 'envoye' %}
+        <form method="POST" action="/admin/contrats/{{ contrat.id }}/status">
+            <input type="hidden" name="statut" value="signe">
+            <button type="submit" class="btn btn-action">Marquer signe</button>
+        </form>
+        {% endif %}
+        {% if contrat.statut == 'signe' %}
+        <form method="POST" action="/admin/contrats/{{ contrat.id }}/status">
+            <input type="hidden" name="statut" value="actif">
+            <button type="submit" class="btn btn-action">Activer</button>
+        </form>
+        {% endif %}
+        {% if contrat.statut == 'actif' %}
+        <form method="POST" action="/admin/contrats/{{ contrat.id }}/status">
+            <input type="hidden" name="statut" value="resilie">
+            <button type="submit" class="btn btn-ghost" onclick="return confirm('Resilier ce contrat ?')">Resilier</button>
+        </form>
+        {% endif %}
+
+        <a href="/admin/contrats" class="btn btn-ghost">Retour</a>
+    </div>
+{% endblock %}

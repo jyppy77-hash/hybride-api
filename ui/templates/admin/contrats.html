@@ -1,0 +1,46 @@
+{% extends "admin/_base.html" %}
+{% block title %}Contrats{% endblock %}
+
+{% block content %}
+    <h2>Contrats</h2>
+
+    <div class="form-actions">
+        <a href="/admin/contrats/new" class="btn btn-nav">+ Nouveau contrat</a>
+    </div>
+
+    <div class="table-wrap">
+        <table class="admin-table" id="contrats-table">
+            <thead>
+                <tr>
+                    <th>Numero</th>
+                    <th>Sponsor</th>
+                    <th>Type</th>
+                    <th>Debut</th>
+                    <th>Fin</th>
+                    <th>Mensuel HT</th>
+                    <th>Statut</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in contrats %}
+                <tr>
+                    <td>{{ c.numero }}</td>
+                    <td>{{ c.sponsor_nom or c.sponsor_id }}</td>
+                    <td>{{ c.type_contrat }}</td>
+                    <td>{{ c.date_debut }}</td>
+                    <td>{{ c.date_fin }}</td>
+                    <td>{{ "%.2f"|format(c.montant_mensuel_ht) }} EUR</td>
+                    <td><span class="badge-status badge-{{ c.statut }}">{{ c.statut }}</span></td>
+                    <td>
+                        <a href="/admin/contrats/{{ c.id }}" class="table-link">Detail</a>
+                        <a href="/admin/contrats/{{ c.id }}/edit" class="table-link-secondary">Modifier</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="8" class="empty-state">Aucun contrat</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

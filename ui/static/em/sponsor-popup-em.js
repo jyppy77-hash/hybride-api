@@ -264,9 +264,8 @@ function generatePopupHTMLSimulateurEM(config) {
  * @param {string} sponsorId - ID du sponsor
  */
 function trackSponsorClickSimulateurEM(sponsorId) {
-    // Umami — sponsor click EM
-    if (typeof umami !== 'undefined') umami.track('sponsor-click', { sponsor: sponsorId, module: 'euromillions' });
     fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-click', sponsor_id: sponsorId, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+    if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-click', { sponsor_id: sponsorId, product_code: sponsorId });
     if (window.LotoIAAnalytics && window.LotoIAAnalytics.business) {
         window.LotoIAAnalytics.business.sponsorClick({
             sponsor: sponsorId,
@@ -275,18 +274,6 @@ function trackSponsorClickSimulateurEM(sponsorId) {
         });
     }
 
-    if (typeof fetch !== 'undefined' && window.LotoIAAnalytics?.utils?.hasConsent()) {
-        fetch('/api/track-ad-click', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                ad_id: sponsorId || 'unknown',
-                partner_id: sponsorId || 'unknown',
-                timestamp: Math.floor(Date.now() / 1000),
-                session_id: sessionStorage.getItem('lotoia_session') || 'anonymous'
-            })
-        }).catch(function() {});
-    }
     console.log('[Sponsor Simulateur EM] Click tracked: ' + sponsorId);
 }
 
@@ -305,17 +292,6 @@ function trackImpressionSimulateurEM(sponsorIds) {
         });
     }
 
-    if (typeof fetch !== 'undefined' && window.LotoIAAnalytics?.utils?.hasConsent()) {
-        fetch('/api/track-ad-impression', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                ad_id: Array.isArray(sponsorIds) ? sponsorIds.join(',') : 'unknown',
-                timestamp: Math.floor(Date.now() / 1000),
-                session_id: sessionStorage.getItem('lotoia_session') || 'anonymous'
-            })
-        }).catch(function() {});
-    }
     console.log('[Sponsor Simulateur EM] Impressions tracked: ' + sponsorIds.join(', '));
 }
 
@@ -377,10 +353,9 @@ function showSponsorPopupSimulateurEM(config) {
         document.body.classList.add('sponsor-popup-active');
         startFloatingStars();
 
-        // Umami — sponsor popup shown EM
-        if (typeof umami !== 'undefined') umami.track('sponsor-popup-shown', { module: 'euromillions' });
         SPONSORS_CONFIG_EM.forEach(function(s) {
             fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-popup-shown', sponsor_id: s.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+            if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-popup-shown', { sponsor_id: s.id, product_code: s.id });
         });
 
         // Bouton Annuler

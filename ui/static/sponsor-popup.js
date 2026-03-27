@@ -7,28 +7,30 @@
  */
 
 // ============================================
-// CONFIGURATION DES SPONSORS
+// CONFIGURATION DES SPONSORS (i18n via LotoIA_i18n — S09)
 // ============================================
+
+var LI = window.LotoIA_i18n || {};
 
 const SPONSORS_CONFIG = [
     {
         id: 'LOTO_FR_A',
-        name: 'Espace Premium',
+        name: LI.sponsor1_name || 'Espace Premium',
         url: 'mailto:partenariats@lotoia.fr',
-        icon: '⭐',
-        description: 'Emplacement sponsor premium',
+        icon: '\u2B50',
+        description: LI.sponsor1_desc || 'Emplacement sponsor premium',
         displayUrl: 'partenariats@lotoia.fr',
-        badge: 'Propulsé par',
+        badge: LI.sponsor1_badge || 'Propuls\u00e9 par',
         badgeType: 'primary'
     },
     {
         id: 'LOTO_FR_B',
-        name: 'Votre marque ici',
+        name: LI.sponsor2_name || 'Votre marque ici',
         url: 'mailto:partenariats@lotoia.fr',
-        icon: '📣',
-        description: 'Audience forte • trafic qualifié',
+        icon: '\uD83D\uDCE3',
+        description: LI.sponsor2_desc || 'Audience forte \u2022 trafic qualifi\u00e9',
         displayUrl: 'partenariats@lotoia.fr',
-        badge: 'Avec le soutien de',
+        badge: LI.sponsor2_badge || 'Avec le soutien de',
         badgeType: 'partner'
     }
 ];
@@ -199,8 +201,6 @@ function generatePopupHTML(config) {
  * @param {string} sponsorId - ID du sponsor
  */
 function trackSponsorClick(sponsorId) {
-    // Umami — sponsor click
-    if (typeof umami !== 'undefined') umami.track('sponsor-click', { sponsor: sponsorId, module: 'loto' });
     fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-click', sponsor_id: sponsorId, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
     // GA4 Analytics - Track sponsor click
     if (window.LotoIAAnalytics && window.LotoIAAnalytics.business) {
@@ -211,19 +211,7 @@ function trackSponsorClick(sponsorId) {
         });
     }
 
-    // Tracking API call interne (avec vérification consentement RGPD)
-    if (typeof fetch !== 'undefined' && window.LotoIAAnalytics?.utils?.hasConsent()) {
-        fetch('/api/track-ad-click', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                ad_id: sponsorId || 'unknown',
-                partner_id: sponsorId || 'unknown',
-                timestamp: Math.floor(Date.now() / 1000),
-                session_id: sessionStorage.getItem('lotoia_session') || 'anonymous'
-            })
-        }).catch(() => {});
-    }
+    if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-click', { sponsor_id: sponsorId, product_code: sponsorId });
     console.log(`[Sponsor] Click tracked: ${sponsorId}`);
 }
 
@@ -243,18 +231,6 @@ function trackImpression(sponsorIds) {
         });
     }
 
-    // Tracking API call interne (avec vérification consentement RGPD)
-    if (typeof fetch !== 'undefined' && window.LotoIAAnalytics?.utils?.hasConsent()) {
-        fetch('/api/track-ad-impression', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                ad_id: Array.isArray(sponsorIds) ? sponsorIds.join(',') : 'unknown',
-                timestamp: Math.floor(Date.now() / 1000),
-                session_id: sessionStorage.getItem('lotoia_session') || 'anonymous'
-            })
-        }).catch(() => {});
-    }
     console.log(`[Sponsor] Impressions tracked: ${sponsorIds.join(', ')}`);
 }
 
@@ -316,10 +292,9 @@ function showSponsorPopup(config) {
         document.body.style.overflow = 'hidden';
         document.body.classList.add('sponsor-popup-active');
 
-        // Umami — sponsor popup shown
-        if (typeof umami !== 'undefined') umami.track('sponsor-popup-shown', { module: 'loto' });
         SPONSORS_CONFIG.forEach(function(s) {
             fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-popup-shown', sponsor_id: s.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+            if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-popup-shown', { sponsor_id: s.id, product_code: s.id });
         });
 
         // Bouton Annuler (style via CSS)
@@ -327,7 +302,7 @@ function showSponsorPopup(config) {
         const cancelBtn = document.createElement('button');
         cancelBtn.type = 'button';
         cancelBtn.className = 'sponsor-cancel-btn';
-        cancelBtn.textContent = 'Annuler';
+        cancelBtn.textContent = LI.sponsor_cancel || 'Annuler';
 
         // Conteneur d'actions (positionnement bas/droite via CSS)
         const actions = document.createElement('div');

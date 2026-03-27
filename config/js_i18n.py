@@ -169,7 +169,13 @@ _LABELS: dict[str, dict[str, str]] = {
         "wrapper_gen_title": "Simulation de {n} grille{s} optimis\u00e9e{s} EM",
         "wrapper_sim_title": "Analyse de votre grille EM en cours",
 
-        # ── chatbot widget ──
+        # ── chatbot widget (Loto) ──
+        "chatbot_loto_welcome": "Bienvenue ! Je suis HYBRIDE, l\u2019assistant IA de LotoIA. Pose-moi tes questions sur le Loto, les statistiques ou le moteur HYBRIDE \uD83D\uDE80",
+        "chatbot_loto_placeholder": "Posez votre question...",
+        "chatbot_loto_bubble_label": "Ouvrir le chatbot HYBRIDE",
+        "chatbot_loto_rating_question": "Tu kiffes HYBRIDE ? Note ton exp\u00e9rience !",
+
+        # ── chatbot widget (EM) ──
         "chatbot_welcome": "Bienvenue ! Je suis HYBRIDE, l\u2019assistant IA de LotoIA \u2014 module EuroMillions. Pose-moi tes questions sur l\u2019EuroMillions, les statistiques ou le moteur HYBRIDE \uD83C\uDF1F",
         "chatbot_placeholder": "Pose ta question EuroMillions...",
         "chatbot_bubble_label": "Ouvrir le chatbot HYBRIDE EuroMillions",
@@ -379,7 +385,13 @@ _LABELS: dict[str, dict[str, str]] = {
         "wrapper_gen_title": "Simulating {n} optimised EM grid{s}",
         "wrapper_sim_title": "Analysing your EM grid",
 
-        # ── chatbot widget ──
+        # ── chatbot widget (Loto) ──
+        "chatbot_loto_welcome": "Welcome! I\u2019m HYBRIDE, the LotoIA AI assistant. Ask me anything about Loto, statistics or the HYBRIDE engine \uD83D\uDE80",
+        "chatbot_loto_placeholder": "Ask your question...",
+        "chatbot_loto_bubble_label": "Open HYBRIDE chatbot",
+        "chatbot_loto_rating_question": "Enjoying HYBRIDE? Rate your experience!",
+
+        # ── chatbot widget (EM) ──
         "chatbot_welcome": "Welcome! I\u2019m HYBRIDE, the LotoIA AI assistant \u2014 EuroMillions module. Ask me anything about EuroMillions, statistics or the HYBRIDE engine \uD83C\uDF1F",
         "chatbot_placeholder": "Ask your EuroMillions question...",
         "chatbot_bubble_label": "Open HYBRIDE EuroMillions chatbot",
@@ -589,7 +601,13 @@ _LABELS: dict[str, dict[str, str]] = {
         "wrapper_gen_title": "Simulación de {n} combinaciones optimizada{s} EM",
         "wrapper_sim_title": "Analizando su combinación EM",
 
-        # ── chatbot widget ──
+        # ── chatbot widget (Loto) ──
+        "chatbot_loto_welcome": "\u00a1Bienvenido! Soy HYBRIDE, el asistente IA de LotoIA. Hazme tus preguntas sobre el Loto, las estad\u00edsticas o el motor HYBRIDE \uD83D\uDE80",
+        "chatbot_loto_placeholder": "Haz tu pregunta...",
+        "chatbot_loto_bubble_label": "Abrir el chatbot HYBRIDE",
+        "chatbot_loto_rating_question": "\u00bfTe gusta HYBRIDE? \u00a1Puntúa tu experiencia!",
+
+        # ── chatbot widget (EM) ──
         "chatbot_welcome": "\u00a1Bienvenido! Soy HYBRIDE, el asistente IA de LotoIA \u2014 m\u00f3dulo EuroMillions. Hazme tus preguntas sobre EuroMillions, las estad\u00edsticas o el motor HYBRIDE \uD83C\uDF1F",
         "chatbot_placeholder": "Haz tu pregunta EuroMillions...",
         "chatbot_bubble_label": "Abrir el chatbot HYBRIDE EuroMillions",
@@ -799,7 +817,13 @@ _LABELS: dict[str, dict[str, str]] = {
         "wrapper_gen_title": "Simulação de {n} combinações otimizada{s} EM",
         "wrapper_sim_title": "A analisar a sua combinação EM",
 
-        # ── chatbot widget ──
+        # ── chatbot widget (Loto) ──
+        "chatbot_loto_welcome": "Bem-vindo! Sou o HYBRIDE, o assistente IA da LotoIA. Coloca as tuas quest\u00f5es sobre o Loto, as estat\u00edsticas ou o motor HYBRIDE \uD83D\uDE80",
+        "chatbot_loto_placeholder": "Faz a tua pergunta...",
+        "chatbot_loto_bubble_label": "Abrir o chatbot HYBRIDE",
+        "chatbot_loto_rating_question": "Gostas do HYBRIDE? Avalia a tua experi\u00eancia!",
+
+        # ── chatbot widget (EM) ──
         "chatbot_welcome": "Bem-vindo! Sou o HYBRIDE, o assistente IA da LotoIA \u2014 m\u00f3dulo EuroMillions. Coloca as tuas quest\u00f5es sobre o EuroMillions, as estat\u00edsticas ou o motor HYBRIDE \uD83C\uDF1F",
         "chatbot_placeholder": "Faz a tua pergunta sobre EuroMillions...",
         "chatbot_bubble_label": "Abrir o chatbot HYBRIDE EuroMillions",
@@ -1009,7 +1033,13 @@ _LABELS: dict[str, dict[str, str]] = {
         "wrapper_gen_title": "Simulation von {n} optimierten EM-Kombination{s}",
         "wrapper_sim_title": "Ihre EM-Kombination wird analysiert",
 
-        # ── chatbot widget ──
+        # ── chatbot widget (Loto) ──
+        "chatbot_loto_welcome": "Willkommen! Ich bin HYBRIDE, der KI-Assistent von LotoIA. Stell mir deine Fragen zum Loto, den Statistiken oder der HYBRIDE-Engine \uD83D\uDE80",
+        "chatbot_loto_placeholder": "Stelle deine Frage...",
+        "chatbot_loto_bubble_label": "HYBRIDE Chatbot \u00f6ffnen",
+        "chatbot_loto_rating_question": "Gef\u00e4llt dir HYBRIDE? Bewerte deine Erfahrung!",
+
+        # ── chatbot widget (EM) ──
         "chatbot_welcome": "Willkommen! Ich bin HYBRIDE, der KI-Assistent von LotoIA \u2014 Modul EuroMillions. Stell mir deine Fragen zu EuroMillions, den Statistiken oder der HYBRIDE-Engine \uD83C\uDF1F",
         "chatbot_placeholder": "Stelle deine EuroMillions-Frage...",
         "chatbot_bubble_label": "HYBRIDE EuroMillions Chatbot öffnen",
@@ -1219,7 +1249,13 @@ _LABELS: dict[str, dict[str, str]] = {
         "wrapper_gen_title": "Simulatie van {n} geoptimaliseerde EM-combinatie{s}",
         "wrapper_sim_title": "Uw EM-combinatie wordt geanalyseerd",
 
-        # ── chatbot widget ──
+        # ── chatbot widget (Loto) ──
+        "chatbot_loto_welcome": "Welkom! Ik ben HYBRIDE, de AI-assistent van LotoIA. Stel je vragen over de Loto, de statistieken of de HYBRIDE-engine \uD83D\uDE80",
+        "chatbot_loto_placeholder": "Stel je vraag...",
+        "chatbot_loto_bubble_label": "Open de HYBRIDE chatbot",
+        "chatbot_loto_rating_question": "Vind je HYBRIDE leuk? Beoordeel je ervaring!",
+
+        # ── chatbot widget (EM) ──
         "chatbot_welcome": "Welkom! Ik ben HYBRIDE, de AI-assistent van LotoIA \u2014 module EuroMillions. Stel je vragen over EuroMillions, de statistieken of de HYBRIDE-engine \uD83C\uDF1F",
         "chatbot_placeholder": "Stel je EuroMillions-vraag...",
         "chatbot_bubble_label": "Open de HYBRIDE EuroMillions chatbot",

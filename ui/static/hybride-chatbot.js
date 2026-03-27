@@ -15,6 +15,9 @@
 
     onReady(function () {
 
+        /* ── i18n labels (S02 — i18n-aware) ── */
+        var LI = window.LotoIA_i18n || {};
+
         /* ── Point d'ancrage + guard anti-double-init ── */
         var root = document.getElementById('hybride-chatbot-root');
         if (!root) return;
@@ -28,7 +31,7 @@
         // Bulle flottante
         var bubble = document.createElement('button');
         bubble.className = 'hybride-bubble';
-        bubble.setAttribute('aria-label', 'Ouvrir le chatbot HYBRIDE');
+        bubble.setAttribute('aria-label', LI.chatbot_loto_bubble_label || 'Ouvrir le chatbot HYBRIDE');
         bubble.innerHTML = '<span>🤖</span>';
 
         // Fenetre
@@ -38,14 +41,14 @@
             '<div class="hybride-header">' +
                 '<span class="hybride-header-title">\uD83E\uDD16 HYBRIDE — Assistant IA</span>' +
                 '<div class="hybride-header-actions">' +
-                    '<button class="hybride-header-clear" aria-label="Nouvelle conversation" title="Nouvelle conversation">\uD83D\uDDD1\uFE0F</button>' +
-                    '<button class="hybride-header-close" aria-label="Fermer">\u2715</button>' +
+                    '<button class="hybride-header-clear" aria-label="' + (LI.chatbot_clear_title || 'Nouvelle conversation') + '" title="' + (LI.chatbot_clear_title || 'Nouvelle conversation') + '">\uD83D\uDDD1\uFE0F</button>' +
+                    '<button class="hybride-header-close" aria-label="' + (LI.chatbot_close_label || 'Fermer') + '">\u2715</button>' +
                 '</div>' +
             '</div>' +
             '<div class="hybride-messages"></div>' +
             '<div class="hybride-input-area">' +
-                '<input class="hybride-input" type="text" placeholder="Posez votre question..." autocomplete="off">' +
-                '<button class="hybride-send" aria-label="Envoyer">\u27A4</button>' +
+                '<input class="hybride-input" type="text" placeholder="' + (LI.chatbot_loto_placeholder || 'Posez votre question...') + '" autocomplete="off">' +
+                '<button class="hybride-send" aria-label="' + (LI.chatbot_send_label || 'Envoyer') + '">\u27A4</button>' +
             '</div>';
 
         // Injecter dans le root
@@ -147,13 +150,11 @@
                     page: detectPage(),
                     has_history: chatHistory.length > 1
                 });
-                if (typeof umami !== 'undefined') umami.track('chatbot-open', { module: 'loto' });
                 if (window.LotoIA_track) LotoIA_track('chatbot-open', {module: 'loto'});
             } else {
                 win.classList.remove('visible');
                 bubble.classList.remove('open');
                 root.classList.remove('hybride-fullscreen');
-                if (typeof umami !== 'undefined') umami.track('chatbot-close', { module: 'loto' });
                 if (window.LotoIA_track) LotoIA_track('chatbot-close', {module: 'loto'});
                 trackEvent('hybride_chat_session', {
                     page: detectPage(),
@@ -170,7 +171,6 @@
             win.classList.remove('visible');
             bubble.classList.remove('open');
             root.classList.remove('hybride-fullscreen');
-            if (typeof umami !== 'undefined') umami.track('chatbot-close', { module: 'loto' });
             if (window.LotoIA_track) LotoIA_track('chatbot-close', {module: 'loto'});
             trackEvent('hybride_chat_session', {
                 page: detectPage(),
@@ -193,7 +193,7 @@
         }
 
         var chatHistory = [];
-        var WELCOME_TEXT = 'Bienvenue ! Je suis HYBRIDE, l\u2019assistant IA de LotoIA. Pose-moi tes questions sur le Loto, les statistiques ou le moteur HYBRIDE \uD83D\uDE80';
+        var WELCOME_TEXT = LI.chatbot_loto_welcome || 'Bienvenue ! Je suis HYBRIDE, l\u2019assistant IA de LotoIA. Pose-moi tes questions sur le Loto, les statistiques ou le moteur HYBRIDE \uD83D\uDE80';
         var STORAGE_KEY = 'hybride-history';
 
         /* ── GA4 session tracking state ── */
@@ -243,7 +243,6 @@
                 message_length: text.length,
                 message_count: messageCount
             });
-            if (typeof umami !== 'undefined') umami.track('chatbot-message', { module: 'loto' });
             if (window.LotoIA_track) LotoIA_track('chatbot-message', {module: 'loto'});
 
             var controller = new AbortController();
@@ -308,7 +307,7 @@
                 }
 
                 function finalize() {
-                    if (!botText) botText = '\uD83E\uDD16 R\u00e9ponse indisponible.';
+                    if (!botText) botText = LI.chatbot_error_empty || '\uD83E\uDD16 R\u00e9ponse indisponible.';
                     if (!msgEl) {
                         removeTyping();
                         addMessage(botText, 'bot');
@@ -341,6 +340,7 @@
                                 device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop'
                             })
                         }).catch(function() {});
+                        if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-inline-shown', { sponsor_id: sponsorId, product_code: sponsorId });
                     }
 
                     if (messageCount === 5) {
@@ -356,7 +356,7 @@
             .catch(function () {
                 clearTimeout(timeoutId);
                 removeTyping();
-                addMessage('\uD83E\uDD16 Connexion interrompue. R\u00e9essaie dans quelques secondes !', 'bot');
+                addMessage(LI.chatbot_error_connection || '\uD83E\uDD16 Connexion interrompue. R\u00e9essaie dans quelques secondes !', 'bot');
                 showContactLink();
                 trackEvent('chat_error', { page: detectPage() });
             });
@@ -400,7 +400,7 @@
 
             var question = document.createElement('div');
             question.className = 'rating-question';
-            question.textContent = 'Tu kiffes HYBRIDE ? Note ton exp\u00e9rience !';
+            question.textContent = LI.chatbot_loto_rating_question || 'Tu kiffes HYBRIDE ? Note ton exp\u00e9rience !';
             widget.appendChild(question);
 
             var starsDiv = document.createElement('div');
@@ -424,9 +424,9 @@
             var labels = document.createElement('div');
             labels.className = 'rating-labels';
             var labelBof = document.createElement('span');
-            labelBof.textContent = 'Bof';
+            labelBof.textContent = LI.chatbot_rating_low || 'Bof';
             var labelTop = document.createElement('span');
-            labelTop.textContent = 'Top !';
+            labelTop.textContent = LI.chatbot_rating_high || 'Top !';
             labels.appendChild(labelBof);
             labels.appendChild(labelTop);
             widget.appendChild(labels);
@@ -488,19 +488,19 @@
                     sessionStorage.setItem(RATING_STORAGE_KEY, 'true');
                     var feedback = document.getElementById('hybride-rating-feedback');
                     var messages = {
-                        5: 'Merci ! Tu es un vrai !',
-                        4: 'Merci ! Content que \u00e7a te plaise !',
-                        3: 'Merci ! On va s\u2019am\u00e9liorer !',
-                        2: 'Merci pour ton retour !',
-                        1: 'Merci ! Dis-nous ce qu\u2019on peut am\u00e9liorer !'
+                        5: LI.chatbot_rating_5 || 'Merci ! Tu es un vrai !',
+                        4: LI.chatbot_rating_4 || 'Merci ! Content que \u00e7a te plaise !',
+                        3: LI.chatbot_rating_3 || 'Merci ! On va s\u2019am\u00e9liorer !',
+                        2: LI.chatbot_rating_2 || 'Merci pour ton retour !',
+                        1: LI.chatbot_rating_1 || 'Merci ! Dis-nous ce qu\u2019on peut am\u00e9liorer !'
                     };
                     if (feedback) {
-                        feedback.textContent = messages[rating] || 'Merci !';
+                        feedback.textContent = messages[rating] || (LI.chatbot_rating_default || 'Merci !');
                         feedback.style.display = 'block';
                     }
                     setTimeout(function () {
                         var w = document.getElementById('hybride-rating-widget');
-                        if (w) w.innerHTML = '<div class="rating-thanks">Merci pour ton avis !</div>';
+                        if (w) w.innerHTML = '<div class="rating-thanks">' + (LI.chatbot_rating_done || 'Merci pour ton avis !') + '</div>';
                     }, 3000);
                 }
             })
@@ -511,7 +511,6 @@
                 rating: rating,
                 message_count: messageCount
             });
-            if (typeof umami !== 'undefined') umami.track('rating-submitted', { rating: rating, module: 'loto' });
             if (window.LotoIA_track) LotoIA_track('rating-submitted', {rating: rating, module: 'loto'});
         }
 

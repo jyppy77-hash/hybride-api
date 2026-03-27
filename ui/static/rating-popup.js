@@ -114,7 +114,6 @@
         closeBtn.textContent = '\u2715';
         closeBtn.addEventListener('click', function () {
             var ratingModule = window.location.pathname.indexOf('/euromillions/') !== -1 ? 'euromillions' : 'loto';
-            if (typeof umami !== 'undefined') umami.track('rating-dismissed', { module: ratingModule });
             if (window.LotoIA_track) LotoIA_track('rating-dismissed', {module: ratingModule});
             if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('rating_dismissed', { event_category: 'engagement', module: ratingModule });
             sessionStorage.setItem('lotoia_dismissed_rating', 'true');
@@ -125,9 +124,7 @@
 
         document.body.appendChild(banner);
 
-        // Umami tracking
         var ratingModule = window.location.pathname.indexOf('/euromillions/') !== -1 ? 'euromillions' : 'loto';
-        if (typeof umami !== 'undefined') umami.track('rating-popup-shown', { module: ratingModule });
         if (window.LotoIA_track) LotoIA_track('rating-popup-shown', {module: ratingModule});
         if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('rating_popup_shown', { event_category: 'engagement', module: ratingModule });
     }
@@ -207,7 +204,6 @@
         var ratingModule = isEM ? 'euromillions' : 'loto';
         var hasComment = !!(comment && comment.length > 0);
 
-        if (typeof umami !== 'undefined') umami.track('rating-submitted', { rating: rating, module: ratingModule, has_comment: hasComment });
         if (window.LotoIA_track) LotoIA_track('rating-submitted', {rating: rating, module: ratingModule, has_comment: hasComment});
         if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('rating_submitted', { event_category: 'rating', rating: rating, module: ratingModule, has_comment: hasComment });
 

@@ -337,8 +337,6 @@ function displayResults(data) {
     displaySelectedGrid(data.nums || Array.from(state.selectedNumbers), etoiles[0], etoiles[1]);
     displayHistoryCheck(data.history_check);
 
-    // Umami — audit de grille EM
-    if (typeof umami !== 'undefined') umami.track('simulateur-grille-audited', { module: 'euromillions' });
     if (window.LotoIA_track) LotoIA_track('simulateur-grille-audited', {module: 'euromillions'});
 
     // Pitch HYBRIDE async (non-blocking) — transmet score conformite + severite
@@ -391,6 +389,7 @@ function injectSponsorBannerEM() {
             device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop'
         })
     }).catch(function() {});
+    if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-result-shown', { sponsor_id: sponsorId, product_code: sponsorId });
 }
 
 /**
@@ -736,8 +735,6 @@ async function autoGenerate() {
         if (data.success && data.grids && data.grids.length > 0) {
             var grid = data.grids[0];
 
-            // Umami — grille generee EM
-            if (typeof umami !== 'undefined') umami.track('simulateur-grille-generated', { module: 'euromillions' });
             if (window.LotoIA_track) LotoIA_track('simulateur-grille-generated', {module: 'euromillions'});
 
             resetSelection();

@@ -911,24 +911,30 @@ async def admin_facture_create(request: Request):
         montant_tva = (montant_ht * taux_tva / Decimal("100")).quantize(Decimal("0.01"))
         montant_ttc = montant_ht + montant_tva
 
-        # Invoice number
-        cnt_row = await db_cloudsql.async_fetchone(
-            "SELECT COUNT(*) AS cnt FROM fia_factures WHERE numero LIKE %s",
-            (f"FIA-{date.today().strftime('%Y%m')}-%",))
-        numero = _next_invoice_number(cnt_row["cnt"] if cnt_row else 0)
-
+        # Invoice number — retry on duplicate (S15 unique constraint)
         date_echeance_str = form.get("date_echeance", "")
         date_ech = date.fromisoformat(date_echeance_str) if date_echeance_str else (date.today() + timedelta(days=30))
 
-        await db_cloudsql.async_query(
-            "INSERT INTO fia_factures (numero, sponsor_id, date_emission, date_echeance, "
-            "periode_debut, periode_fin, montant_ht, montant_tva, montant_ttc, statut, lignes, notes) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-            (numero, sponsor_id, date.today().isoformat(), date_ech.isoformat(),
-             pd.isoformat(), pf.isoformat(),
-             float(montant_ht), float(montant_tva), float(montant_ttc),
-             "brouillon", json.dumps(lignes), form.get("notes", "")),
-        )
+        for _attempt in range(3):
+            cnt_row = await db_cloudsql.async_fetchone(
+                "SELECT COUNT(*) AS cnt FROM fia_factures WHERE numero LIKE %s",
+                (f"FIA-{date.today().strftime('%Y%m')}-%",))
+            numero = _next_invoice_number(cnt_row["cnt"] if cnt_row else 0)
+            try:
+                await db_cloudsql.async_query(
+                    "INSERT INTO fia_factures (numero, sponsor_id, date_emission, date_echeance, "
+                    "periode_debut, periode_fin, montant_ht, montant_tva, montant_ttc, statut, lignes, notes) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                    (numero, sponsor_id, date.today().isoformat(), date_ech.isoformat(),
+                     pd.isoformat(), pf.isoformat(),
+                     float(montant_ht), float(montant_tva), float(montant_ttc),
+                     "brouillon", json.dumps(lignes), form.get("notes", "")),
+                )
+                break
+            except Exception as dup_err:
+                if "Duplicate" in str(dup_err) and _attempt < 2:
+                    continue
+                raise
         logger.info("[ADMIN_AUDIT] action=facture_create numero=%s sponsor_id=%s montant_ttc=%s", numero, sponsor_id, float(montant_ttc))
     except Exception as e:
         logger.error("[ADMIN] facture create: %s", e)
@@ -997,6 +1003,192 @@ async def admin_facture_pdf(request: Request, facture_id: int):
         pdf_buf,
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename={facture['numero']}.pdf"},
+    )
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CONTRATS CRUD (S06)
+# ══════════════════════════════════════════════════════════════════════════════
+
+_VALID_CONTRAT_STATUTS = ("brouillon", "envoye", "signe", "actif", "expire", "resilie")
+
+
+def _next_contrat_number(existing_count: int) -> str:
+    today = date.today()
+    return f"CTR-{today.strftime('%Y%m')}-{existing_count + 1:04d}"
+
+
+@router.get("/admin/contrats", response_class=HTMLResponse, include_in_schema=False)
+async def admin_contrats_list(request: Request):
+    redir = _require_auth(request)
+    if redir:
+        return redir
+    contrats = []
+    try:
+        contrats = await db_cloudsql.async_fetchall(
+            "SELECT c.*, s.nom AS sponsor_nom FROM fia_contrats c "
+            "LEFT JOIN fia_sponsors s ON c.sponsor_id = s.id "
+            "ORDER BY c.created_at DESC"
+        )
+    except Exception as e:
+        logger.error("[ADMIN] contrats list: %s", e)
+    tpl = env.get_template("admin/contrats.html")
+    return HTMLResponse(tpl.render(active="contrats", contrats=contrats))
+
+
+@router.get("/admin/contrats/new", response_class=HTMLResponse, include_in_schema=False)
+async def admin_contrat_new_form(request: Request):
+    redir = _require_auth(request)
+    if redir:
+        return redir
+    sponsors = await db_cloudsql.async_fetchall("SELECT id, nom FROM fia_sponsors WHERE actif = 1 ORDER BY nom") or []
+    tpl = env.get_template("admin/contrat_form.html")
+    return HTMLResponse(tpl.render(active="contrats", contrat=None, sponsors=sponsors, error=None))
+
+
+@router.post("/admin/contrats/new", response_class=HTMLResponse, include_in_schema=False)
+async def admin_contrat_create(request: Request):
+    redir = _require_auth(request)
+    if redir:
+        return redir
+
+    form = await request.form()
+    sponsor_id = form.get("sponsor_id")
+    if not sponsor_id:
+        sponsors = await db_cloudsql.async_fetchall("SELECT id, nom FROM fia_sponsors WHERE actif = 1 ORDER BY nom") or []
+        tpl = env.get_template("admin/contrat_form.html")
+        return HTMLResponse(tpl.render(active="contrats", contrat=None, sponsors=sponsors, error="Le sponsor est obligatoire."), status_code=400)
+
+    try:
+        # Generate numero with retry on duplicate
+        for _attempt in range(3):
+            cnt_row = await db_cloudsql.async_fetchone(
+                "SELECT COUNT(*) AS cnt FROM fia_contrats WHERE numero LIKE %s",
+                (f"CTR-{date.today().strftime('%Y%m')}-%",))
+            numero = _next_contrat_number(cnt_row["cnt"] if cnt_row else 0)
+            try:
+                await db_cloudsql.async_query(
+                    "INSERT INTO fia_contrats (sponsor_id, numero, type_contrat, product_codes, "
+                    "date_debut, date_fin, montant_mensuel_ht, conditions_particulieres) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+                    (int(sponsor_id), numero, form.get("type_contrat", "standard"),
+                     form.get("product_codes", "") or None,
+                     form.get("date_debut"), form.get("date_fin"),
+                     float(form.get("montant_mensuel_ht", 0)),
+                     form.get("conditions_particulieres", "") or None),
+                )
+                break
+            except Exception as dup_err:
+                if "Duplicate" in str(dup_err) and _attempt < 2:
+                    continue
+                raise
+        logger.info("[ADMIN_AUDIT] action=contrat_create numero=%s sponsor_id=%s", numero, sponsor_id)
+    except Exception as e:
+        logger.error("[ADMIN] contrat create: %s", e)
+        sponsors = await db_cloudsql.async_fetchall("SELECT id, nom FROM fia_sponsors WHERE actif = 1 ORDER BY nom") or []
+        tpl = env.get_template("admin/contrat_form.html")
+        return HTMLResponse(tpl.render(active="contrats", contrat=None, sponsors=sponsors, error=str(e)), status_code=500)
+
+    return RedirectResponse(url="/admin/contrats", status_code=302)
+
+
+@router.get("/admin/contrats/{contrat_id}", response_class=HTMLResponse, include_in_schema=False)
+async def admin_contrat_detail(request: Request, contrat_id: int):
+    redir = _require_auth(request)
+    if redir:
+        return redir
+    contrat = await db_cloudsql.async_fetchone(
+        "SELECT c.*, s.nom AS sponsor_nom FROM fia_contrats c "
+        "LEFT JOIN fia_sponsors s ON c.sponsor_id = s.id WHERE c.id = %s", (contrat_id,))
+    if not contrat:
+        return RedirectResponse(url="/admin/contrats", status_code=302)
+    tpl = env.get_template("admin/contrat_detail.html")
+    return HTMLResponse(tpl.render(active="contrats", contrat=contrat))
+
+
+@router.get("/admin/contrats/{contrat_id}/edit", response_class=HTMLResponse, include_in_schema=False)
+async def admin_contrat_edit_form(request: Request, contrat_id: int):
+    redir = _require_auth(request)
+    if redir:
+        return redir
+    contrat = await db_cloudsql.async_fetchone("SELECT * FROM fia_contrats WHERE id = %s", (contrat_id,))
+    if not contrat:
+        return RedirectResponse(url="/admin/contrats", status_code=302)
+    sponsors = await db_cloudsql.async_fetchall("SELECT id, nom FROM fia_sponsors WHERE actif = 1 ORDER BY nom") or []
+    tpl = env.get_template("admin/contrat_form.html")
+    return HTMLResponse(tpl.render(active="contrats", contrat=contrat, sponsors=sponsors, error=None))
+
+
+@router.post("/admin/contrats/{contrat_id}/edit", response_class=HTMLResponse, include_in_schema=False)
+async def admin_contrat_update(request: Request, contrat_id: int):
+    redir = _require_auth(request)
+    if redir:
+        return redir
+
+    form = await request.form()
+    sponsor_id = form.get("sponsor_id")
+    if not sponsor_id:
+        contrat = await db_cloudsql.async_fetchone("SELECT * FROM fia_contrats WHERE id = %s", (contrat_id,))
+        sponsors = await db_cloudsql.async_fetchall("SELECT id, nom FROM fia_sponsors WHERE actif = 1 ORDER BY nom") or []
+        tpl = env.get_template("admin/contrat_form.html")
+        return HTMLResponse(tpl.render(active="contrats", contrat=contrat, sponsors=sponsors, error="Le sponsor est obligatoire."), status_code=400)
+
+    try:
+        await db_cloudsql.async_query(
+            "UPDATE fia_contrats SET sponsor_id=%s, type_contrat=%s, product_codes=%s, "
+            "date_debut=%s, date_fin=%s, montant_mensuel_ht=%s, conditions_particulieres=%s WHERE id=%s",
+            (int(sponsor_id), form.get("type_contrat", "standard"),
+             form.get("product_codes", "") or None,
+             form.get("date_debut"), form.get("date_fin"),
+             float(form.get("montant_mensuel_ht", 0)),
+             form.get("conditions_particulieres", "") or None,
+             contrat_id),
+        )
+        logger.info("[ADMIN_AUDIT] action=contrat_update contrat_id=%s", contrat_id)
+    except Exception as e:
+        logger.error("[ADMIN] contrat update: %s", e)
+
+    return RedirectResponse(url=f"/admin/contrats/{contrat_id}", status_code=302)
+
+
+@router.post("/admin/contrats/{contrat_id}/status", include_in_schema=False)
+async def admin_contrat_update_status(request: Request, contrat_id: int):
+    redir = _require_auth(request)
+    if redir:
+        return redir
+    form = await request.form()
+    new_statut = form.get("statut", "")
+    if new_statut in _VALID_CONTRAT_STATUTS:
+        try:
+            await db_cloudsql.async_query(
+                "UPDATE fia_contrats SET statut = %s WHERE id = %s", (new_statut, contrat_id))
+            logger.info("[ADMIN_AUDIT] action=contrat_status_update contrat_id=%s new_statut=%s", contrat_id, new_statut)
+        except Exception as e:
+            logger.error("[ADMIN] contrat status update: %s", e)
+    return RedirectResponse(url=f"/admin/contrats/{contrat_id}", status_code=302)
+
+
+@router.get("/admin/contrats/{contrat_id}/pdf", include_in_schema=False)
+async def admin_contrat_pdf(request: Request, contrat_id: int):
+    redir = _require_auth(request)
+    if redir:
+        return redir
+
+    contrat = await db_cloudsql.async_fetchone(
+        "SELECT c.*, s.nom AS sponsor_nom, s.adresse AS sponsor_adresse, s.siret AS sponsor_siret "
+        "FROM fia_contrats c LEFT JOIN fia_sponsors s ON c.sponsor_id = s.id WHERE c.id = %s", (contrat_id,))
+    if not contrat:
+        return RedirectResponse(url="/admin/contrats", status_code=302)
+
+    config = await db_cloudsql.async_fetchone("SELECT * FROM fia_config_entreprise WHERE id = 1") or {}
+
+    from services.admin_pdf import generate_contrat_pdf
+    pdf_buf = generate_contrat_pdf(contrat, config)
+
+    return StreamingResponse(
+        pdf_buf,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={contrat['numero']}.pdf"},
     )
 
 

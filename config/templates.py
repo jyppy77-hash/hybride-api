@@ -325,12 +325,14 @@ def render_template(
             "og_locale": _OG_LOCALE.get(lang, "fr_FR"),
             "date_locale": _DATE_LOCALE.get(lang, "fr-FR"),
 
-            # JS paths (FR vs EN variants)
-            "chatbot_js": (
-                "/ui/en/euromillions/static/hybride-chatbot-em-en.js?v=1.0"
-                if lang == "en" else
-                "/ui/static/hybride-chatbot-em.js?v=1.2"
-            ),
+            # JS paths — chatbot per language (S01: full E4 coverage)
+            "chatbot_js": {
+                "en": "/ui/en/euromillions/static/hybride-chatbot-em-en.js?v=1.1",
+                "es": "/ui/static/hybride-chatbot-em-es.js?v=1.0",
+                "pt": "/ui/static/hybride-chatbot-em-pt.js?v=1.0",
+                "de": "/ui/static/hybride-chatbot-em-de.js?v=1.0",
+                "nl": "/ui/static/hybride-chatbot-em-nl.js?v=1.0",
+            }.get(lang, "/ui/static/hybride-chatbot-em.js?v=1.2"),
             "rating_js": "/ui/static/rating-popup.js?v=8",
 
             # Gambling help

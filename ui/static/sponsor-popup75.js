@@ -212,9 +212,8 @@ function generatePopupHTML75(config) {
  * @param {string} sponsorId - ID du sponsor
  */
 function trackSponsorClick(sponsorId) {
-    // Umami — sponsor click
-    if (typeof umami !== 'undefined') umami.track('sponsor-click', { sponsor: sponsorId, module: 'loto' });
     fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-click', sponsor_id: sponsorId, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+    if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-click', { sponsor_id: sponsorId, product_code: sponsorId });
     // GA4 Analytics - Track sponsor click
     if (window.LotoIAAnalytics && window.LotoIAAnalytics.business) {
         window.LotoIAAnalytics.business.sponsorClick({
@@ -224,19 +223,6 @@ function trackSponsorClick(sponsorId) {
         });
     }
 
-    // Tracking API call interne (avec vérification consentement RGPD)
-    if (typeof fetch !== 'undefined' && window.LotoIAAnalytics?.utils?.hasConsent()) {
-        fetch('/api/track-ad-click', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                ad_id: sponsorId || 'unknown',
-                partner_id: sponsorId || 'unknown',
-                timestamp: Math.floor(Date.now() / 1000),
-                session_id: sessionStorage.getItem('lotoia_session') || 'anonymous'
-            })
-        }).catch(() => {});
-    }
     console.log(`[Sponsor] Click tracked: ${sponsorId}`);
 }
 
@@ -256,18 +242,6 @@ function trackImpression(sponsorIds) {
         });
     }
 
-    // Tracking API call interne (avec vérification consentement RGPD)
-    if (typeof fetch !== 'undefined' && window.LotoIAAnalytics?.utils?.hasConsent()) {
-        fetch('/api/track-ad-impression', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                ad_id: Array.isArray(sponsorIds) ? sponsorIds.join(',') : 'unknown',
-                timestamp: Math.floor(Date.now() / 1000),
-                session_id: sessionStorage.getItem('lotoia_session') || 'anonymous'
-            })
-        }).catch(() => {});
-    }
     console.log(`[Sponsor] Impressions tracked: ${sponsorIds.join(', ')}`);
 }
 
@@ -330,17 +304,15 @@ function showSponsorPopup75(config) {
         document.body.style.overflow = 'hidden';
         document.body.classList.add('sponsor-popup-active');
 
-        // Umami — sponsor popup shown
-        if (typeof umami !== 'undefined') umami.track('sponsor-popup-shown', { module: 'loto' });
         fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-popup-shown', sponsor_id: SPONSOR_VIDEO_75.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+        if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-popup-shown', { sponsor_id: SPONSOR_VIDEO_75.id, product_code: SPONSOR_VIDEO_75.id });
 
-        // Umami — sponsor video played (autoplay)
         var sponsorVideo = overlay.querySelector('.sponsor-video');
         if (sponsorVideo) {
             sponsorVideo.addEventListener('play', function() {
-                if (typeof umami !== 'undefined') umami.track('sponsor-video-played', { sponsor: SPONSOR_VIDEO_75.id, module: 'loto' });
                 if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('sponsor_video_played', { event_category: 'sponsor', sponsor: SPONSOR_VIDEO_75.id, module: 'loto' });
                 fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-video-played', sponsor_id: SPONSOR_VIDEO_75.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+                if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-video-played', { sponsor_id: SPONSOR_VIDEO_75.id, product_code: SPONSOR_VIDEO_75.id });
             }, { once: true });
         }
 
@@ -873,9 +845,9 @@ function openMetaResultPopup(data) {
     // EVENT 4 - Export PDF — labor illusion + fetch parallèle
     if (pdfBtn) {
         pdfBtn.addEventListener('click', () => {
-            if (typeof umami !== 'undefined') umami.track('meta75-pdf-download', { module: 'loto', sponsor_id: 'LOTO_FR_A' });
             if (window.LotoIA_track) LotoIA_track('meta75-pdf-download', {module: 'loto', sponsor_id: 'LOTO_FR_A', product_code: 'LOTO_FR_A'});
             fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-pdf-downloaded', sponsor_id: 'LOTO_FR_A', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+            if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-pdf-downloaded', { sponsor_id: 'LOTO_FR_A', product_code: 'LOTO_FR_A' });
             if (window.LotoIAAnalytics?.productEngine?.track) {
                 window.LotoIAAnalytics.productEngine.track('meta_pdf_export', { version: 75 });
             }
@@ -1147,8 +1119,6 @@ var META_ANALYSE_START_TIME = null;
 async function showMetaAnalysePopup() {
     console.log('[META ANALYSE] Ouverture fenêtre META ANALYSE 75 grilles');
 
-    // Umami — meta75 lancee
-    if (typeof umami !== 'undefined') umami.track('meta75-launched', { module: 'loto' });
     if (window.LotoIA_track) LotoIA_track('meta75-launched', {module: 'loto', product_code: 'LOTO_FR_A'});
     if (window.LotoIAAnalytics) window.LotoIAAnalytics.track('meta75_launched', { event_category: 'engagement', module: 'loto', version: 75 });
 

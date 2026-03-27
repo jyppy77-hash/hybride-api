@@ -1,10 +1,10 @@
-/* ══════════════════════════════════════════════════════════════
-   HYBRIDE Chatbot Widget — EuroMillions EN (vanilla, IIFE, ES5+)
+/* ==============================================================
+   HYBRIDE Chatbot Widget — EuroMillions NL (vanilla, IIFE, ES5+)
    Auto-init on #hybride-chatbot-root.
    No dependency. No global pollution.
-   Endpoint : /api/euromillions/hybride-chat (lang=en)
-   Storage  : hybride-history-em-en
-   ══════════════════════════════════════════════════════════════ */
+   Endpoint : /api/euromillions/hybride-chat (lang=nl)
+   Storage  : hybride-history-em-nl
+   ============================================================== */
 
 (function () {
     'use strict';
@@ -21,10 +21,12 @@
         if (root.getAttribute('data-hybride-init') === '1') return;
         root.setAttribute('data-hybride-init', '1');
 
+        var LI = window.LotoIA_i18n || {};
+
         // Floating bubble
         var bubble = document.createElement('button');
         bubble.className = 'hybride-bubble';
-        bubble.setAttribute('aria-label', 'Open HYBRIDE EuroMillions chatbot');
+        bubble.setAttribute('aria-label', LI.chatbot_bubble_label || 'Open HYBRIDE EuroMillions chatbot');
         bubble.innerHTML = '<span>\uD83E\uDD16</span>';
 
         // Window
@@ -34,13 +36,13 @@
             '<div class="hybride-header">' +
                 '<span class="hybride-header-title">\uD83E\uDD16 HYBRIDE \u2014 EuroMillions</span>' +
                 '<div class="hybride-header-actions">' +
-                    '<button class="hybride-header-clear" aria-label="New conversation" title="New conversation">\uD83D\uDDD1\uFE0F</button>' +
+                    '<button class="hybride-header-clear" aria-label="' + (LI.chatbot_clear_title || 'Nieuw gesprek') + '" title="' + (LI.chatbot_clear_title || 'Nieuw gesprek') + '">\uD83D\uDDD1\uFE0F</button>' +
                     '<button class="hybride-header-close" aria-label="Close">\u2715</button>' +
                 '</div>' +
             '</div>' +
             '<div class="hybride-messages"></div>' +
             '<div class="hybride-input-area">' +
-                '<input class="hybride-input" type="text" placeholder="Ask your EuroMillions question..." autocomplete="off">' +
+                '<input class="hybride-input" type="text" placeholder="' + (LI.chatbot_placeholder || 'Stel je EuroMillions-vraag...') + '" autocomplete="off">' +
                 '<button class="hybride-send" aria-label="Send">\u27A4</button>' +
             '</div>';
 
@@ -85,7 +87,7 @@
         function showTyping() {
             var el = document.createElement('div');
             el.className = 'hybride-typing';
-            el.id = 'hybride-typing-indicator-em-en';
+            el.id = 'hybride-typing-indicator-em-nl';
             el.innerHTML =
                 '<span class="hybride-typing-dot"></span>' +
                 '<span class="hybride-typing-dot"></span>' +
@@ -95,7 +97,7 @@
         }
 
         function removeTyping() {
-            var el = document.getElementById('hybride-typing-indicator-em-en');
+            var el = document.getElementById('hybride-typing-indicator-em-nl');
             if (el && el.parentNode) el.parentNode.removeChild(el);
         }
 
@@ -109,17 +111,17 @@
                 input.focus();
                 chatOpenTime = Date.now();
                 sponsorViews = 0;
-                trackEvent('hybride_em_en_chat_open', {
+                trackEvent('hybride_em_nl_chat_open', {
                     page: detectPage(),
                     has_history: chatHistory.length > 1
                 });
-                if (window.LotoIA_track) LotoIA_track('chatbot-open', {module: 'euromillions-en'});
+                if (window.LotoIA_track) LotoIA_track('chatbot-open', {module: 'euromillions-nl'});
             } else {
                 win.classList.remove('visible');
                 bubble.classList.remove('open');
                 root.classList.remove('hybride-fullscreen');
-                if (window.LotoIA_track) LotoIA_track('chatbot-close', {module: 'euromillions-en'});
-                trackEvent('hybride_em_en_chat_session', {
+                if (window.LotoIA_track) LotoIA_track('chatbot-close', {module: 'euromillions-nl'});
+                trackEvent('hybride_em_nl_chat_session', {
                     page: detectPage(),
                     message_count: messageCount,
                     session_duration_seconds: chatOpenTime ? Math.round((Date.now() - chatOpenTime) / 1000) : 0,
@@ -134,8 +136,8 @@
             win.classList.remove('visible');
             bubble.classList.remove('open');
             root.classList.remove('hybride-fullscreen');
-            if (window.LotoIA_track) LotoIA_track('chatbot-close', {module: 'euromillions-en'});
-            trackEvent('hybride_em_en_chat_session', {
+            if (window.LotoIA_track) LotoIA_track('chatbot-close', {module: 'euromillions-nl'});
+            trackEvent('hybride_em_nl_chat_session', {
                 page: detectPage(),
                 message_count: messageCount,
                 session_duration_seconds: chatOpenTime ? Math.round((Date.now() - chatOpenTime) / 1000) : 0,
@@ -143,24 +145,24 @@
             });
         }
 
-        /* ══════════════════════════════════
-           Page detection (EN URLs)
-           ══════════════════════════════════ */
+        /* ==================================
+           Page detection (NL URLs)
+           ================================== */
 
         function detectPage() {
             var path = window.location.pathname;
-            if (path.indexOf('/en/euromillions/generator') !== -1) return 'generator-em-en';
-            if (path.indexOf('/en/euromillions/simulator') !== -1) return 'simulator-em-en';
-            if (path.indexOf('/en/euromillions/statistics') !== -1) return 'statistics-em-en';
-            if (path.indexOf('/en/euromillions/history') !== -1) return 'history-em-en';
-            if (path.indexOf('/en/euromillions/faq') !== -1) return 'faq-em-en';
-            if (path.indexOf('/en/euromillions/news') !== -1) return 'news-em-en';
-            return 'home-em-en';
+            if (path.indexOf('/nl/euromillions/generator') !== -1) return 'generator-em-nl';
+            if (path.indexOf('/nl/euromillions/simulator') !== -1) return 'simulator-em-nl';
+            if (path.indexOf('/nl/euromillions/statistieken') !== -1) return 'statistics-em-nl';
+            if (path.indexOf('/nl/euromillions/geschiedenis') !== -1) return 'history-em-nl';
+            if (path.indexOf('/nl/euromillions/faq') !== -1) return 'faq-em-nl';
+            if (path.indexOf('/nl/euromillions/nieuws') !== -1) return 'news-em-nl';
+            return 'home-em-nl';
         }
 
         var chatHistory = [];
-        var WELCOME_TEXT = 'Welcome! I\u2019m HYBRIDE, the LotoIA AI assistant \u2014 EuroMillions module. Ask me anything about EuroMillions, statistics or the HYBRIDE engine \uD83C\uDF1F';
-        var STORAGE_KEY = 'hybride-history-em-en';
+        var WELCOME_TEXT = LI.chatbot_welcome || 'Welkom! Ik ben HYBRIDE, de AI-assistent van LotoIA \u2014 EuroMillions-module.';
+        var STORAGE_KEY = 'hybride-history-em-nl';
 
         var chatOpenTime = 0;
         var sponsorViews = 0;
@@ -181,9 +183,9 @@
             } catch (e) { /* analytics must never break chat */ }
         }
 
-        /* ══════════════════════════════════
-           Send message (API EuroMillions, lang=en)
-           ══════════════════════════════════ */
+        /* ==================================
+           Send message (API EuroMillions, lang=nl)
+           ================================== */
 
         function extractSponsorId(text) {
             var m = text.match(/\[SPONSOR:([^\]]+)\]/);
@@ -191,26 +193,6 @@
         }
         function hasSponsor(text) {
             return extractSponsorId(text) !== null;
-        }
-
-        function createBotBubble() {
-            var msg = document.createElement('div');
-            msg.className = 'hybride-msg hybride-msg-bot';
-            var textSpan = document.createElement('span');
-            var timeSpan = document.createElement('span');
-            timeSpan.className = 'hybride-msg-time';
-            timeSpan.textContent = getTime();
-            msg.appendChild(textSpan);
-            msg.appendChild(timeSpan);
-            messagesArea.appendChild(msg);
-            scrollToBottom();
-            return msg;
-        }
-
-        function updateBubbleText(msgEl, text) {
-            var span = msgEl.querySelector('span:first-child');
-            span.textContent = text;
-            scrollToBottom();
         }
 
         function send() {
@@ -222,15 +204,15 @@
             messageCount++;
 
             showTyping();
-            trackEvent('hybride_em_en_chat_message', {
+            trackEvent('hybride_em_nl_chat_message', {
                 page: detectPage(),
                 message_length: text.length,
                 message_count: messageCount
             });
-            if (window.LotoIA_track) LotoIA_track('chatbot-message', {module: 'euromillions-en'});
+            if (window.LotoIA_track) LotoIA_track('chatbot-message', {module: 'euromillions-nl'});
 
             var controller = new AbortController();
-            var timeoutId = setTimeout(function () { controller.abort(); }, 30000);
+            var timeoutId = setTimeout(function () { controller.abort(); }, 20000);
 
             fetch('/api/euromillions/hybride-chat', {
                 method: 'POST',
@@ -239,114 +221,87 @@
                     message: text,
                     page: detectPage(),
                     history: chatHistory,
-                    lang: 'en'
+                    lang: 'nl'
                 }),
                 signal: controller.signal
             })
             .then(function (res) {
                 clearTimeout(timeoutId);
                 if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(function (data) {
+                removeTyping();
+                var botText = data.response || (LI.chatbot_error_empty || '\uD83E\uDD16 Antwoord niet beschikbaar.');
+                var sponsorId = extractSponsorId(botText);
+                if (sponsorId) {
+                    botText = botText.replace(/\[SPONSOR:[^\]]+\]/, '');
+                }
+                addMessage(botText, 'bot');
+                chatHistory.push({ role: 'user', content: text });
+                chatHistory.push({ role: 'assistant', content: botText });
+                if (chatHistory.length > 20) chatHistory = [chatHistory[0]].concat(chatHistory.slice(-19));
+                saveHistory();
 
-                var reader = res.body.getReader();
-                var decoder = new TextDecoder();
-                var botText = '';
-                var msgEl = null;
-                var buffer = '';
-
-                function processStream() {
-                    return reader.read().then(function (result) {
-                        if (result.done) {
-                            finalize();
-                            return;
-                        }
-
-                        buffer += decoder.decode(result.value, { stream: true });
-                        var parts = buffer.split('\n\n');
-                        buffer = parts.pop();
-
-                        for (var i = 0; i < parts.length; i++) {
-                            var lines = parts[i].split('\n');
-                            for (var j = 0; j < lines.length; j++) {
-                                var line = lines[j].trim();
-                                if (line.indexOf('data: ') === 0) {
-                                    try {
-                                        var evt = JSON.parse(line.substring(6));
-                                        if (evt.chunk) {
-                                            botText += evt.chunk;
-                                            if (!msgEl) {
-                                                removeTyping();
-                                                msgEl = createBotBubble();
-                                            }
-                                            updateBubbleText(msgEl, botText);
-                                        }
-                                        if (evt.is_done) {
-                                            finalize();
-                                            return;
-                                        }
-                                    } catch (e) { /* ignore parse errors */ }
-                                }
-                            }
-                        }
-                        return processStream();
+                if (sponsorId) {
+                    sponsorViews++;
+                    trackEvent('hybride_em_nl_chat_sponsor_view', {
+                        page: detectPage(),
+                        sponsor_id: sponsorId,
+                        message_position: messageCount
                     });
-                }
-
-                function finalize() {
-                    if (!botText) botText = '\uD83E\uDD16 Response unavailable.';
-                    if (!msgEl) {
-                        removeTyping();
-                        addMessage(botText, 'bot');
-                    }
-                    var sponsorId = extractSponsorId(botText);
-                    if (sponsorId) {
-                        botText = botText.replace(/\[SPONSOR:[^\]]+\]/, '');
-                        if (msgEl) updateBubbleText(msgEl, botText);
-                    }
-                    chatHistory.push({ role: 'user', content: text });
-                    chatHistory.push({ role: 'assistant', content: botText });
-                    if (chatHistory.length > 20) chatHistory = [chatHistory[0]].concat(chatHistory.slice(-19));
-                    saveHistory();
-
-                    if (sponsorId) {
-                        sponsorViews++;
-                        trackEvent('hybride_em_en_chat_sponsor_view', {
-                            page: detectPage(),
+                    fetch('/api/sponsor/track', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            event_type: 'sponsor-inline-shown',
                             sponsor_id: sponsorId,
-                            message_position: messageCount
-                        });
-                        fetch('/api/sponsor/track', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({
-                                event_type: 'sponsor-inline-shown',
-                                sponsor_id: sponsorId,
-                                page: window.location.pathname,
-                                lang: 'en',
-                                device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop'
-                            })
-                        }).catch(function() {});
-                    }
-
-                    if (messageCount === 5) {
-                        setTimeout(function () { showRatingWidget(); }, 1500);
-                    }
+                            page: window.location.pathname,
+                            lang: 'nl',
+                            device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop'
+                        })
+                    }).catch(function() {});
+                    if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-inline-shown', { sponsor_id: sponsorId, product_code: sponsorId });
                 }
 
-                return processStream();
+                if (messageCount === 5) {
+                    setTimeout(function () { showRatingWidget(); }, 1500);
+                }
+                if (messageCount === 3) {
+                    setTimeout(function () { showContactLink(); }, 2000);
+                }
             })
             .catch(function () {
                 clearTimeout(timeoutId);
                 removeTyping();
-                addMessage('\uD83E\uDD16 Connection interrupted. Try again in a few seconds!', 'bot');
-                trackEvent('hybride_em_en_chat_error', { page: detectPage() });
+                addMessage(LI.chatbot_error_connection || '\uD83E\uDD16 Verbinding verbroken. Probeer het over een paar seconden opnieuw!', 'bot');
+                showContactLink();
+                trackEvent('hybride_em_nl_chat_error', { page: detectPage() });
             });
         }
 
-        /* ══════════════════════════════════
-           Rating widget
-           ══════════════════════════════════ */
+        function showContactLink() {
+            if (messageCount < 3 && !document.querySelector('.hybride-contact-link')) return;
+            var link = document.createElement('div');
+            link.className = 'hybride-msg hybride-msg-bot hybride-contact-link';
+            var a = document.createElement('a');
+            a.href = '#';
+            a.textContent = LI.contact_chatbot_link || 'Een probleem? Neem contact op \u2192';
+            a.style.cssText = 'color:#94a3b8;font-size:0.82rem;text-decoration:underline;cursor:pointer;';
+            a.addEventListener('click', function(e) {
+                e.preventDefault();
+                if (window.LotoIAContact) LotoIAContact.openModal('chatbot');
+            });
+            link.appendChild(a);
+            messagesArea.appendChild(link);
+            scrollToBottom();
+        }
 
-        var RATING_SOURCE = 'chatbot_em_en';
+        /* ==================================
+           Rating widget
+           ================================== */
+
+        var RATING_SOURCE = 'chatbot_em_nl';
         var RATING_STORAGE_KEY = 'lotoia_rated_' + RATING_SOURCE;
         var ratingShown = false;
 
@@ -359,16 +314,16 @@
 
             var widget = document.createElement('div');
             widget.className = 'hybride-msg hybride-msg-bot hybride-rating-widget';
-            widget.id = 'hybride-rating-widget-em-en';
+            widget.id = 'hybride-rating-widget-em-nl';
 
             var question = document.createElement('div');
             question.className = 'rating-question';
-            question.textContent = 'Enjoying HYBRIDE EuroMillions? Rate your experience!';
+            question.textContent = LI.chatbot_rating_question || 'Bevalt HYBRIDE EuroMillions je? Beoordeel je ervaring!';
             widget.appendChild(question);
 
             var starsDiv = document.createElement('div');
             starsDiv.className = 'rating-stars';
-            starsDiv.id = 'hybride-rating-stars-em-en';
+            starsDiv.id = 'hybride-rating-stars-em-nl';
 
             for (var i = 1; i <= 5; i++) {
                 var star = document.createElement('span');
@@ -376,9 +331,9 @@
                 star.setAttribute('data-value', String(i));
                 star.textContent = '\u2605';
                 (function (val) {
-                    star.addEventListener('mouseover', function () { highlightStarsEmEn(val); });
-                    star.addEventListener('mouseout', function () { resetStarsEmEn(); });
-                    star.addEventListener('click', function () { submitChatRatingEmEn(val); });
+                    star.addEventListener('mouseover', function () { highlightStarsEmNl(val); });
+                    star.addEventListener('mouseout', function () { resetStarsEmNl(); });
+                    star.addEventListener('click', function () { submitChatRatingEmNl(val); });
                 })(i);
                 starsDiv.appendChild(star);
             }
@@ -387,16 +342,16 @@
             var labels = document.createElement('div');
             labels.className = 'rating-labels';
             var labelBof = document.createElement('span');
-            labelBof.textContent = 'Meh';
+            labelBof.textContent = LI.chatbot_rating_low || 'Matig';
             var labelTop = document.createElement('span');
-            labelTop.textContent = 'Great!';
+            labelTop.textContent = LI.chatbot_rating_high || 'Super!';
             labels.appendChild(labelBof);
             labels.appendChild(labelTop);
             widget.appendChild(labels);
 
             var feedback = document.createElement('div');
             feedback.className = 'rating-feedback';
-            feedback.id = 'hybride-rating-feedback-em-en';
+            feedback.id = 'hybride-rating-feedback-em-nl';
             feedback.style.display = 'none';
             widget.appendChild(feedback);
 
@@ -404,23 +359,23 @@
             scrollToBottom();
         }
 
-        function highlightStarsEmEn(n) {
-            var stars = document.querySelectorAll('#hybride-rating-stars-em-en .rating-star');
+        function highlightStarsEmNl(n) {
+            var stars = document.querySelectorAll('#hybride-rating-stars-em-nl .rating-star');
             for (var i = 0; i < stars.length; i++) {
                 if (i < n) { stars[i].classList.add('active'); }
                 else { stars[i].classList.remove('active'); }
             }
         }
 
-        function resetStarsEmEn() {
-            var selected = document.querySelector('#hybride-rating-stars-em-en .rating-star.selected');
+        function resetStarsEmNl() {
+            var selected = document.querySelector('#hybride-rating-stars-em-nl .rating-star.selected');
             if (selected) return;
-            var stars = document.querySelectorAll('#hybride-rating-stars-em-en .rating-star');
+            var stars = document.querySelectorAll('#hybride-rating-stars-em-nl .rating-star');
             for (var i = 0; i < stars.length; i++) { stars[i].classList.remove('active'); }
         }
 
-        function submitChatRatingEmEn(rating) {
-            var stars = document.querySelectorAll('#hybride-rating-stars-em-en .rating-star');
+        function submitChatRatingEmNl(rating) {
+            var stars = document.querySelectorAll('#hybride-rating-stars-em-nl .rating-star');
             for (var i = 0; i < stars.length; i++) {
                 if (i < rating) {
                     stars[i].classList.add('selected');
@@ -449,37 +404,37 @@
             .then(function (data) {
                 if (data.success) {
                     sessionStorage.setItem(RATING_STORAGE_KEY, 'true');
-                    var feedback = document.getElementById('hybride-rating-feedback-em-en');
+                    var feedback = document.getElementById('hybride-rating-feedback-em-nl');
                     var messages = {
-                        5: 'Thanks! You\'re a legend!',
-                        4: 'Thanks! Glad you like it!',
-                        3: 'Thanks! We\'ll keep improving!',
-                        2: 'Thanks for your feedback!',
-                        1: 'Thanks! Tell us what we can improve!'
+                        5: LI.chatbot_rating_5 || 'Bedankt! Je bent geweldig!',
+                        4: LI.chatbot_rating_4 || 'Bedankt! Fijn dat het je bevalt!',
+                        3: LI.chatbot_rating_3 || 'Bedankt! We blijven verbeteren!',
+                        2: LI.chatbot_rating_2 || 'Bedankt voor je feedback!',
+                        1: LI.chatbot_rating_1 || 'Bedankt! Vertel ons wat we kunnen verbeteren!'
                     };
                     if (feedback) {
-                        feedback.textContent = messages[rating] || 'Thanks!';
+                        feedback.textContent = messages[rating] || (LI.chatbot_rating_default || 'Bedankt!');
                         feedback.style.display = 'block';
                     }
                     setTimeout(function () {
-                        var w = document.getElementById('hybride-rating-widget-em-en');
-                        if (w) w.innerHTML = '<div class="rating-thanks">Thanks for your feedback!</div>';
+                        var w = document.getElementById('hybride-rating-widget-em-nl');
+                        if (w) w.innerHTML = '<div class="rating-thanks">' + (LI.chatbot_rating_done || 'Bedankt voor je feedback!') + '</div>';
                     }, 3000);
                 }
             })
             .catch(function (err) { /* silent */ });
 
-            trackEvent('hybride_em_en_chat_rating', {
+            trackEvent('hybride_em_nl_chat_rating', {
                 page: detectPage(),
                 rating: rating,
                 message_count: messageCount
             });
-            if (window.LotoIA_track) LotoIA_track('rating-submitted', {rating: rating, module: 'euromillions-en'});
+            if (window.LotoIA_track) LotoIA_track('rating-submitted', {rating: rating, module: 'euromillions-nl'});
         }
 
-        /* ══════════════════════════════════
+        /* ==================================
            History restore / welcome
-           ══════════════════════════════════ */
+           ================================== */
 
         var savedHistory = sessionStorage.getItem(STORAGE_KEY);
         if (savedHistory) {
@@ -501,12 +456,12 @@
             saveHistory();
         }
 
-        /* ══════════════════════════════════
+        /* ==================================
            Events
-           ══════════════════════════════════ */
+           ================================== */
 
         function clearConversation() {
-            trackEvent('hybride_em_en_chat_clear', {
+            trackEvent('hybride_em_nl_chat_clear', {
                 page: detectPage(),
                 message_count: messageCount
             });

@@ -82,12 +82,11 @@
         trackScroll: true,
         scrollThresholds: [25, 50, 75, 90, 100],
 
-        // Futurs providers (Matomo, Plausible, Umami)
+        // Futurs providers (Matomo, Plausible)
         providers: {
             ga4: { enabled: true, id: 'G-YYJ5LD1ZT3' },
             matomo: { enabled: false, url: null, siteId: null },
-            plausible: { enabled: false, domain: null },
-            umami: { enabled: false, websiteId: null }
+            plausible: { enabled: false, domain: null }
         }
     };
 
@@ -256,8 +255,8 @@
         // Anti-double boot
         if (state.gtagBooted) return;
 
-        // Owner IP filter — same mechanism as Umami (window.__OWNER__)
-        // Injected by UmamiOwnerFilterMiddleware in main.py
+        // Owner IP filter (window.__OWNER__)
+        // Injected by OwnerFilterMiddleware in main.py
         if (window.__OWNER__) {
             state.gtagBooted = true;
             state.gtagLoadFailed = true;

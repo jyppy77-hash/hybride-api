@@ -358,3 +358,170 @@ def generate_realtime_report_pdf(kpi: dict, by_type: dict, table_data: list, per
     doc.build(elements, onFirstPage=footer, onLaterPages=footer)
     buf.seek(0)
     return buf
+
+
+# ═══════════════════════════════════════════════════════════════
+# Contrat PDF (S06)
+# ═══════════════════════════════════════════════════════════════
+
+def generate_contrat_pdf(contrat: dict, config: dict) -> io.BytesIO:
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=20*mm, rightMargin=20*mm, topMargin=20*mm, bottomMargin=25*mm)
+    elements = []
+
+    numero = contrat.get("numero", "")
+
+    # Header
+    header = Table([
+        [
+            Paragraph("<font color='#d4a843'>⚡</font> <b>Factur<font color='#d4a843'>IA</font></b>", _LOGO),
+            Paragraph(f"<b>CONTRAT DE SPONSORING</b><br/><font size=10 color='#8891a4'>{numero}</font>", _TITLE_R),
+        ]
+    ], colWidths=[90*mm, 80*mm])
+    header.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'TOP')]))
+    elements.append(header)
+    elements.append(Spacer(1, 8*mm))
+
+    # Emitter / Client side by side
+    rs = config.get("raison_sociale", "")
+    addr = config.get("adresse", "")
+    cp = config.get("code_postal", "")
+    ville = config.get("ville", "")
+    siret = config.get("siret", "")
+    emitter_parts = [f"<b>{rs}</b>"]
+    if addr:
+        emitter_parts.append(addr.replace('\n', '<br/>'))
+    if cp or ville:
+        emitter_parts.append(f"{cp} {ville}".strip())
+    if siret:
+        emitter_parts.append(f"SIRET : {siret}")
+    email = config.get("email", "")
+    if email:
+        emitter_parts.append(email)
+
+    client_parts = [f"<b>{contrat.get('sponsor_nom', '')}</b>"]
+    sponsor_addr = contrat.get("sponsor_adresse", "")
+    if sponsor_addr:
+        client_parts.append(sponsor_addr.replace('\n', '<br/>'))
+    sponsor_siret = contrat.get("sponsor_siret", "")
+    if sponsor_siret:
+        client_parts.append(f"SIRET : {sponsor_siret}")
+
+    addr_table = Table([
+        [Paragraph("<br/>".join(emitter_parts), _NORMAL), Paragraph("<br/>".join(client_parts), _NORMAL)]
+    ], colWidths=[85*mm, 85*mm])
+    addr_table.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('BACKGROUND', (0, 0), (-1, -1), GRIS_CLAIR),
+        ('TOPPADDING', (0, 0), (-1, -1), 3*mm),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3*mm),
+        ('LEFTPADDING', (0, 0), (-1, -1), 3*mm),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 3*mm),
+    ]))
+    elements.append(addr_table)
+    elements.append(Spacer(1, 8*mm))
+
+    # Contract details
+    dd = _format_date_fr(contrat.get("date_debut", ""))
+    df = _format_date_fr(contrat.get("date_fin", ""))
+    type_c = contrat.get("type_contrat", "standard")
+    montant = _format_euros(contrat.get("montant_mensuel_ht", 0))
+
+    elements.append(Paragraph("OBJET DU CONTRAT", _SECTION))
+    elements.append(Spacer(1, 3*mm))
+
+    details_rows = [
+        ["Type :", type_c.replace("_", " ").title()],
+        ["Duree :", f"Du {dd} au {df}"],
+        ["Tarif mensuel HT :", montant],
+    ]
+    product_codes = contrat.get("product_codes", "")
+    if product_codes:
+        details_rows.append(["Product codes :", str(product_codes)])
+
+    dt = Table(details_rows, colWidths=[45*mm, 125*mm])
+    dt.setStyle(TableStyle([
+        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, -1), 10),
+        ('TEXTCOLOR', (0, 0), (0, -1), GRIS),
+        ('TEXTCOLOR', (1, 0), (1, -1), NOIR),
+        ('TOPPADDING', (0, 0), (-1, -1), 2*mm),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 2*mm),
+    ]))
+    elements.append(dt)
+    elements.append(Spacer(1, 8*mm))
+
+    # Emplacements
+    elements.append(Paragraph("EMPLACEMENTS SPONSORS", _SECTION))
+    elements.append(Spacer(1, 3*mm))
+    emplacements = [
+        ["E1", "Popup interstitiel", "Affichage avant generation de grille"],
+        ["E2", "Video META 75", "Spot video dans l'analyse META 75 grilles"],
+        ["E3", "Mention PDF", "Logo et mention dans les PDFs d'analyse"],
+        ["E4", "Chatbot inline", "Insertion dans le chatbot (3 messages sur 6)"],
+        ["E5", "Banner resultats", "Banniere apres les resultats du simulateur"],
+        ["E6", "PDF download", "Tracking au telechargement PDF"],
+    ]
+    if type_c == "standard":
+        emplacements = [e for e in emplacements if e[0] in ("E1", "E4", "E5")]
+    emp_rows = [["#", "Emplacement", "Description"]] + emplacements
+    et = Table(emp_rows, colWidths=[15*mm, 50*mm, 105*mm])
+    et.setStyle(_detail_table_style(len(emp_rows)))
+    elements.append(et)
+    elements.append(Spacer(1, 8*mm))
+
+    # Conditions
+    elements.append(Paragraph("CONDITIONS", _SECTION))
+    elements.append(Spacer(1, 3*mm))
+    conditions = [
+        "Paiement : reglement a 30 jours a compter de la date de facturation.",
+        "Resiliation : possible avec un preavis de 30 jours.",
+        "Donnees : conformite RGPD — seuls des hash SHA-256 anonymes sont stockes. Aucune donnee personnelle.",
+        "Reporting : acces au dashboard d'impressions, export CSV et PDF inclus.",
+    ]
+    for c in conditions:
+        elements.append(Paragraph(f"• {c}", _NORMAL))
+        elements.append(Spacer(1, 1*mm))
+
+    cond_part = contrat.get("conditions_particulieres", "")
+    if cond_part:
+        elements.append(Spacer(1, 4*mm))
+        elements.append(Paragraph("CONDITIONS PARTICULIERES", _SECTION))
+        elements.append(Spacer(1, 3*mm))
+        elements.append(Paragraph(str(cond_part), _NORMAL))
+
+    elements.append(Spacer(1, 12*mm))
+
+    # Signature blocks
+    sig_table = Table([
+        [Paragraph(f"<b>L'editeur</b><br/>{rs}", _NORMAL),
+         Paragraph(f"<b>Le sponsor</b><br/>{contrat.get('sponsor_nom', '')}", _NORMAL)],
+        ["Date et signature :", "Date et signature :"],
+        ["", ""],
+        ["", ""],
+    ], colWidths=[85*mm, 85*mm])
+    sig_table.setStyle(TableStyle([
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('TOPPADDING', (0, 0), (-1, -1), 3*mm),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3*mm),
+        ('LINEBELOW', (0, 0), (0, 0), 0.5, GRIS),
+        ('LINEBELOW', (1, 0), (1, 0), 0.5, GRIS),
+        ('FONTNAME', (0, 1), (-1, 1), 'Helvetica'),
+        ('TEXTCOLOR', (0, 1), (-1, 1), GRIS),
+        ('FONTSIZE', (0, 1), (-1, 1), 8),
+    ]))
+    elements.append(sig_table)
+
+    footer_text = f"{rs} — SIRET : {siret}" if siret else rs
+
+    def add_footer(canvas_obj, doc_obj):
+        canvas_obj.saveState()
+        canvas_obj.setFont('Helvetica', 7)
+        canvas_obj.setFillColor(GRIS)
+        canvas_obj.drawCentredString(A4[0] / 2, 12*mm, footer_text)
+        canvas_obj.restoreState()
+
+    doc.build(elements, onFirstPage=add_footer, onLaterPages=add_footer)
+    buf.seek(0)
+    return buf

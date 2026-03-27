@@ -7,10 +7,12 @@ Filters out owner IP to avoid polluting billing data.
 """
 
 import hashlib
+import json
 import logging
 import os
 import re
 from datetime import date
+from pathlib import Path
 
 from fastapi import APIRouter, Request
 from fastapi.responses import Response
@@ -28,7 +30,22 @@ router = APIRouter(prefix="/api", tags=["sponsor-tracking"])
 _ALLOWED_EVENTS = frozenset(["sponsor-popup-shown", "sponsor-click", "sponsor-video-played", "sponsor-inline-shown", "sponsor-result-shown", "sponsor-pdf-downloaded"])
 _ALLOWED_DEVICES = frozenset(["mobile", "desktop", "tablet"])
 
-# Owner IP filtering (reuse same env vars as main.py UmamiOwnerFilter)
+# Valid sponsor IDs loaded from sponsors.json (S10 — integrity check)
+_VALID_SPONSOR_IDS: frozenset[str] = frozenset()
+try:
+    _sponsors_path = Path(__file__).resolve().parent.parent / "config" / "sponsors.json"
+    with open(_sponsors_path, encoding="utf-8") as _f:
+        _cfg = json.load(_f)
+    _VALID_SPONSOR_IDS = frozenset(
+        slot["id"]
+        for group in _cfg.get("slots", {}).values()
+        for slot in group.values()
+        if isinstance(slot, dict) and "id" in slot
+    )
+except Exception:
+    logger.warning("[SPONSOR TRACK] Failed to load valid sponsor IDs from sponsors.json")
+
+# Owner IP filtering (reuse same env vars as main.py)
 _OWNER_IP = os.environ.get("OWNER_IP", "").strip()
 _OWNER_IPV6 = os.environ.get("OWNER_IPV6", "").strip()
 _OWNER_EXACT = {"127.0.0.1", "::1"}
@@ -77,6 +94,10 @@ async def track_sponsor_event(data: SponsorEvent, request: Request):
     """Record a sponsor event (popup-shown, click, video-played)."""
     # Validate event_type
     if data.event_type not in _ALLOWED_EVENTS:
+        return Response(status_code=204)
+
+    # Validate sponsor_id — reject unknown IDs (S10 integrity)
+    if data.sponsor_id and _VALID_SPONSOR_IDS and data.sponsor_id not in _VALID_SPONSOR_IDS:
         return Response(status_code=204)
 
     # Filter owner IP — silent 204, no recording

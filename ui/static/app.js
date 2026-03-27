@@ -965,64 +965,19 @@ function displayStatsResult(data) {
 // ================================================================
 
 /**
- * Tracking generation grille individuelle
+ * Tracking generation grille individuelle (orphan route removed)
  */
-function trackGridGeneration(grid, gridNumber, targetDate) {
-    if (!(window.LotoIAAnalytics && window.LotoIAAnalytics.utils && window.LotoIAAnalytics.utils.hasConsent())) return;
-    fetch('/api/track-grid', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            grid_id: generateUUID(),
-            grid_number: gridNumber || 0,
-            grid_data: {
-                nums: grid.nums || [],
-                chance: grid.chance || 0,
-                score: grid.score || 0
-            },
-            target_date: targetDate || 'unknown',
-            timestamp: Math.floor(Date.now() / 1000),
-            session_id: getSessionId() || 'anonymous'
-        })
-    }).catch(err => console.error('Tracking error:', err));
-}
+function trackGridGeneration(grid, gridNumber, targetDate) {}
 
 /**
- * Tracking impression pub
+ * Tracking impression pub (orphan route removed)
  */
-function trackAdImpression(adId) {
-    if (!(window.LotoIAAnalytics && window.LotoIAAnalytics.utils && window.LotoIAAnalytics.utils.hasConsent())) return;
-    fetch('/api/track-ad-impression', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            ad_id: adId || 'unknown',
-            timestamp: Math.floor(Date.now() / 1000),
-            session_id: getSessionId() || 'anonymous'
-        })
-    }).catch(err => console.error('Ad tracking error:', err));
-}
+function trackAdImpression(adId) {}
 
 /**
- * Tracking clic pub (pour CPA)
+ * Tracking clic pub (orphan route removed)
  */
-function trackAdClick(adId, partnerId) {
-    if (!(window.LotoIAAnalytics && window.LotoIAAnalytics.utils && window.LotoIAAnalytics.utils.hasConsent())) return;
-    fetch('/api/track-ad-click', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            ad_id: adId || 'unknown',
-            partner_id: partnerId || 'unknown',
-            timestamp: Math.floor(Date.now() / 1000),
-            session_id: getSessionId() || 'anonymous'
-        })
-    }).then(() => {
-        // Rediriger vers partenaire avec UTM
-        // Pour l'instant, juste un placeholder
-        console.log('Ad click tracked:', adId);
-    }).catch(err => console.error('Click tracking error:', err));
-}
+function trackAdClick(adId, partnerId) {}
 
 /**
  * Cree une card partenaire elegante

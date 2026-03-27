@@ -10,34 +10,6 @@ class AskPayload(BaseModel):
     prompt: str = Field(..., max_length=2000)
 
 
-# =========================
-# Schemas Tracking
-# =========================
-
-class GridData(BaseModel):
-    nums: Optional[list[int]] = []
-    chance: Optional[int] = 0
-    score: Optional[int] = None
-
-class TrackGridPayload(BaseModel):
-    grid_id: Optional[str] = "unknown"
-    grid_number: Optional[int] = 0
-    grid_data: Optional[GridData] = None
-    target_date: Optional[str] = "unknown"
-    timestamp: Optional[int] = None
-    session_id: Optional[str] = "anonymous"
-
-class TrackAdImpressionPayload(BaseModel):
-    ad_id: Optional[str] = "unknown"
-    timestamp: Optional[int] = None
-    session_id: Optional[str] = "anonymous"
-
-class TrackAdClickPayload(BaseModel):
-    ad_id: Optional[str] = "unknown"
-    partner_id: Optional[str] = "unknown"
-    timestamp: Optional[int] = None
-    session_id: Optional[str] = "anonymous"
-
 
 # =========================
 # Schema META ANALYSE Texte

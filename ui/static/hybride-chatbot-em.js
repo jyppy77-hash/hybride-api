@@ -152,13 +152,11 @@
                     page: detectPage(),
                     has_history: chatHistory.length > 1
                 });
-                if (typeof umami !== 'undefined') umami.track('chatbot-open', { module: 'euromillions' });
                 if (window.LotoIA_track) LotoIA_track('chatbot-open', {module: 'euromillions'});
             } else {
                 win.classList.remove('visible');
                 bubble.classList.remove('open');
                 root.classList.remove('hybride-fullscreen');
-                if (typeof umami !== 'undefined') umami.track('chatbot-close', { module: 'euromillions' });
                 if (window.LotoIA_track) LotoIA_track('chatbot-close', {module: 'euromillions'});
                 trackEvent('hybride_em_chat_session', {
                     page: detectPage(),
@@ -175,7 +173,6 @@
             win.classList.remove('visible');
             bubble.classList.remove('open');
             root.classList.remove('hybride-fullscreen');
-            if (typeof umami !== 'undefined') umami.track('chatbot-close', { module: 'euromillions' });
             if (window.LotoIA_track) LotoIA_track('chatbot-close', {module: 'euromillions'});
             trackEvent('hybride_em_chat_session', {
                 page: detectPage(),
@@ -251,7 +248,6 @@
                 message_length: text.length,
                 message_count: messageCount
             });
-            if (typeof umami !== 'undefined') umami.track('chatbot-message', { module: 'euromillions' });
             if (window.LotoIA_track) LotoIA_track('chatbot-message', {module: 'euromillions'});
 
             var controller = new AbortController();
@@ -350,6 +346,7 @@
                                 device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop'
                             })
                         }).catch(function() {});
+                        if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-inline-shown', { sponsor_id: sponsorId, product_code: sponsorId });
                     }
 
                     if (messageCount === 5) {
@@ -520,7 +517,6 @@
                 rating: rating,
                 message_count: messageCount
             });
-            if (typeof umami !== 'undefined') umami.track('rating-submitted', { rating: rating, module: 'euromillions' });
             if (window.LotoIA_track) LotoIA_track('rating-submitted', {rating: rating, module: 'euromillions'});
         }
 

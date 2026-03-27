@@ -8,10 +8,6 @@
         "id": "LOTO_FR_A",
         "tier": "premium",
         "name": "Espace Premium",
-        "tarif_mensuel": 449,
-        "cpc": 0.30,
-        "cpm": 15,
-        "impressions_incluses": 10000,
         "tagline": {
           "fr": "Cet espace premium est réservé à un partenaire officiel",
           "en": "This premium space is reserved for an official partner",
@@ -27,10 +23,6 @@
         "id": "LOTO_FR_B",
         "tier": "standard",
         "name": "Espace Standard",
-        "tarif_mensuel": 199,
-        "cpc": 0.30,
-        "cpm": 15,
-        "impressions_incluses": 10000,
         "tagline": {
           "fr": "Cet espace est réservé à nos partenaires",
           "en": "This space is reserved for our partners",
@@ -48,10 +40,6 @@
         "id": "EM_FR_A",
         "tier": "premium",
         "name": "Espace Premium EM",
-        "tarif_mensuel": 449,
-        "cpc": 0.45,
-        "cpm": 15,
-        "impressions_incluses": 10000,
         "tagline": {
           "fr": "Cet espace premium EuroMillions est réservé à un partenaire officiel"
         },
@@ -62,10 +50,6 @@
         "id": "EM_FR_B",
         "tier": "standard",
         "name": "Espace Standard EM",
-        "tarif_mensuel": 199,
-        "cpc": 0.45,
-        "cpm": 15,
-        "impressions_incluses": 10000,
         "tagline": {
           "fr": "Cet espace EuroMillions est réservé à nos partenaires"
         },
@@ -78,10 +62,6 @@
         "id": "EM_EN_A",
         "tier": "premium",
         "name": "Premium EuroMillions Space",
-        "tarif_mensuel": 549,
-        "cpc": 0.45,
-        "cpm": 15,
-        "impressions_incluses": 10000,
         "tagline": {
           "en": "This premium EuroMillions space is reserved for an official partner"
         },
@@ -92,10 +72,6 @@
         "id": "EM_EN_B",
         "tier": "standard",
         "name": "Standard EuroMillions Space",
-        "tarif_mensuel": 249,
-        "cpc": 0.45,
-        "cpm": 15,
-        "impressions_incluses": 10000,
         "tagline": {
           "en": "This EuroMillions space is reserved for our partners"
         },
@@ -108,10 +84,6 @@
         "id": "EM_ES_A",
         "tier": "premium",
         "name": "Espacio Premium EuroMillions",
-        "tarif_mensuel": 449,
-        "cpc": 0.45,
-        "cpm": 15,
-        "impressions_incluses": 10000,
         "tagline": {
           "es": "Este espacio premium EuroMillions está reservado para un socio oficial"
         },
@@ -122,10 +94,6 @@
         "id": "EM_ES_B",
         "tier": "standard",
         "name": "Espacio Estándar EuroMillions",
-        "tarif_mensuel": 199,
-        "cpc": 0.45,
-        "cpm": 15,
-        "impressions_incluses": 10000,
         "tagline": {
           "es": "Este espacio EuroMillions está reservado para nuestros socios"
         },
@@ -138,10 +106,6 @@
         "id": "EM_PT_A",
         "tier": "premium",
         "name": "Espaço Premium EuroMillions",
-        "tarif_mensuel": 449,
-        "cpc": 0.45,
-        "cpm": 15,
-        "impressions_incluses": 10000,
         "tagline": {
           "pt": "Este espaço premium EuroMillions é reservado para um parceiro oficial"
         },
@@ -152,10 +116,6 @@
         "id": "EM_PT_B",
         "tier": "standard",
         "name": "Espaço Standard EuroMillions",
-        "tarif_mensuel": 199,
-        "cpc": 0.45,
-        "cpm": 15,
-        "impressions_incluses": 10000,
         "tagline": {
           "pt": "Este espaço EuroMillions é reservado para os nossos parceiros"
         },
@@ -168,10 +128,6 @@
         "id": "EM_DE_A",
         "tier": "premium",
         "name": "Premium EuroMillions-Platz",
-        "tarif_mensuel": 549,
-        "cpc": 0.45,
-        "cpm": 15,
-        "impressions_incluses": 10000,
         "tagline": {
           "de": "Dieser Premium EuroMillions-Platz ist einem offiziellen Partner vorbehalten"
         },
@@ -182,10 +138,6 @@
         "id": "EM_DE_B",
         "tier": "standard",
         "name": "Standard EuroMillions-Platz",
-        "tarif_mensuel": 249,
-        "cpc": 0.45,
-        "cpm": 15,
-        "impressions_incluses": 10000,
         "tagline": {
           "de": "Dieser EuroMillions-Platz ist für unsere Partner reserviert"
         },
@@ -198,10 +150,6 @@
         "id": "EM_NL_A",
         "tier": "premium",
         "name": "Premium EuroMillions-ruimte",
-        "tarif_mensuel": 449,
-        "cpc": 0.45,
-        "cpm": 15,
-        "impressions_incluses": 10000,
         "tagline": {
           "nl": "Deze premium EuroMillions-ruimte is gereserveerd voor een officiële partner"
         },
@@ -212,10 +160,6 @@
         "id": "EM_NL_B",
         "tier": "standard",
         "name": "Standaard EuroMillions-ruimte",
-        "tarif_mensuel": 199,
-        "cpc": 0.45,
-        "cpm": 15,
-        "impressions_incluses": 10000,
         "tagline": {
           "nl": "Deze EuroMillions-ruimte is gereserveerd voor onze partners"
         },

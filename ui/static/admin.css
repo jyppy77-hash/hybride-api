@@ -762,4 +762,11 @@ body.light .badge-standard { background: rgba(79,140,255,0.1); color: #1e40af; }
     .rt-heatmap { height: 12px; }
     .rt-toolbar { flex-direction: column; align-items: stretch; }
     .rt-type-cards { grid-template-columns: repeat(2, 1fr); }
+    /* S13 — table horizontal scroll + chart + modal responsive */
+    .admin-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .chart-container canvas, #impressions-chart, #engagement-chart { max-height: 220px; }
+    .modal-card { max-width: 95vw; padding: 1rem; }
+    #cm-table td:nth-child(5), #cm-table td:nth-child(7) { max-width: 120px; }
+    .kpi-box h2 { font-size: 1.1rem; }
+    .btn { font-size: .78rem; padding: .4rem .7rem; }
 }
