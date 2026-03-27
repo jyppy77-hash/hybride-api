@@ -437,11 +437,19 @@ async def get_gcp_metrics() -> dict:
     except Exception as e:
         logger.debug("Alert check error: %s", e)
 
+    # I16 V66: include circuit breaker state for admin dashboard
+    try:
+        from services.circuit_breaker import gemini_breaker
+        circuit_state = gemini_breaker.state
+    except Exception:
+        circuit_state = "unknown"
+
     payload = {
         "status": status,
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "metrics": m,
         "gemini": gemini_section,
+        "gemini_circuit": circuit_state,
         "costs": costs,
         "active_alerts": active_alerts,
         "redis_connected": _cache._redis is not None,
@@ -651,91 +659,56 @@ async def get_gemini_breakdown() -> dict:
     return result
 
 
-# ── Cleanup (retention 90 days) ──────────────────────────────────────────────
+# ── Cleanup (retention 90 days) — I11 V66: batched DELETE ─────────────────────
+
+_CLEANUP_BATCH_SIZE = 10_000
+_CLEANUP_MAX_ITERATIONS = 100
+
+
+async def _batched_cleanup(table: str, ts_column: str, days: int, batch_size: int = _CLEANUP_BATCH_SIZE) -> int:
+    """I11 V66: Delete old rows in batches to avoid long table locks.
+
+    Loops DELETE ... LIMIT batch_size until no more rows match.
+    Safety cap: max 100 iterations to prevent infinite loop.
+    Returns total rows deleted.
+    """
+    total = 0
+    batches = 0
+    sql = f"DELETE FROM {table} WHERE {ts_column} < DATE_SUB(NOW(), INTERVAL %s DAY) LIMIT {batch_size}"
+    try:
+        for _ in range(_CLEANUP_MAX_ITERATIONS):
+            async with db_cloudsql.get_connection() as conn:
+                cur = await conn.cursor()
+                await cur.execute(sql, (days,))
+                deleted = cur.rowcount
+            if deleted == 0:
+                break
+            total += deleted
+            batches += 1
+            await asyncio.sleep(0.1)
+    except Exception as e:
+        logger.warning("[CLEANUP] %s error after %d rows in %d batches: %s", table, total, batches, e)
+        return total
+    if total > 0:
+        logger.info("[CLEANUP] %s: %d rows deleted in %d batches (older than %d days)", table, total, batches, days)
+    return total
+
 
 async def cleanup_metrics_history(days: int = 90) -> int:
-    """Delete metrics_history rows older than *days*. Returns deleted count."""
-    try:
-        row = await db_cloudsql.async_fetchone(
-            "SELECT COUNT(*) AS cnt FROM metrics_history "
-            "WHERE ts < DATE_SUB(NOW(), INTERVAL %s DAY)",
-            (days,),
-        )
-        count = int(row["cnt"]) if row else 0
-        if count > 0:
-            await db_cloudsql.async_query(
-                "DELETE FROM metrics_history "
-                "WHERE ts < DATE_SUB(NOW(), INTERVAL %s DAY)",
-                (days,),
-            )
-            logger.info("[HISTORY_CLEANUP] Deleted %d rows older than %d days", count, days)
-        return count
-    except Exception as e:
-        logger.warning("[HISTORY_CLEANUP] Error: %s", e)
-        return 0
+    """Delete metrics_history rows older than *days* in batches."""
+    return await _batched_cleanup("metrics_history", "ts", days)
 
 
 async def cleanup_event_log(days: int = 90) -> int:
-    """Delete event_log rows older than *days*. Returns deleted count."""
-    try:
-        row = await db_cloudsql.async_fetchone(
-            "SELECT COUNT(*) AS cnt FROM event_log "
-            "WHERE created_at < DATE_SUB(NOW(), INTERVAL %s DAY)",
-            (days,),
-        )
-        count = int(row["cnt"]) if row else 0
-        if count > 0:
-            await db_cloudsql.async_query(
-                "DELETE FROM event_log "
-                "WHERE created_at < DATE_SUB(NOW(), INTERVAL %s DAY)",
-                (days,),
-            )
-            logger.info("[EVENT_LOG_CLEANUP] Deleted %d rows older than %d days", count, days)
-        return count
-    except Exception as e:
-        logger.warning("[EVENT_LOG_CLEANUP] Error: %s", e)
-        return 0
+    """Delete event_log rows older than *days* in batches."""
+    return await _batched_cleanup("event_log", "created_at", days)
 
 
 async def cleanup_chat_log(days: int = 90) -> int:
-    """Delete chat_log rows older than *days*. Returns deleted count."""
-    try:
-        row = await db_cloudsql.async_fetchone(
-            "SELECT COUNT(*) AS cnt FROM chat_log "
-            "WHERE created_at < DATE_SUB(NOW(), INTERVAL %s DAY)",
-            (days,),
-        )
-        count = int(row["cnt"]) if row else 0
-        if count > 0:
-            await db_cloudsql.async_query(
-                "DELETE FROM chat_log "
-                "WHERE created_at < DATE_SUB(NOW(), INTERVAL %s DAY)",
-                (days,),
-            )
-            logger.info("[CHAT_LOG_CLEANUP] Deleted %d rows older than %d days", count, days)
-        return count
-    except Exception as e:
-        logger.warning("[CHAT_LOG_CLEANUP] Error: %s", e)
-        return 0
+    """Delete chat_log rows older than *days* in batches."""
+    return await _batched_cleanup("chat_log", "created_at", days)
 
 
 async def cleanup_gemini_tracking(days: int = 90) -> int:
-    """Delete gemini_tracking rows older than *days*. Returns deleted count."""
-    try:
-        row = await db_cloudsql.async_fetchone(
-            "SELECT COUNT(*) AS cnt FROM gemini_tracking "
-            "WHERE ts < DATE_SUB(NOW(), INTERVAL %s DAY)",
-            (days,),
-        )
-        count = int(row["cnt"]) if row else 0
-        if count > 0:
-            await db_cloudsql.async_query(
-                "DELETE FROM gemini_tracking "
-                "WHERE ts < DATE_SUB(NOW(), INTERVAL %s DAY)",
-                (days,),
-            )
-            logger.info("[GEMINI_CLEANUP] Deleted %d rows older than %d days", count, days)
-        return count
-    except Exception as e:
-        logger.warning("[GEMINI_CLEANUP] Error: %s", e)
-        return 0
+    """Delete gemini_tracking rows older than *days* in batches."""
+    return await _batched_cleanup("gemini_tracking", "ts", days)

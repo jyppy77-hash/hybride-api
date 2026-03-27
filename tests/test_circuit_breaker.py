@@ -160,3 +160,44 @@ async def test_429_counts_as_failure(breaker):
         await breaker.call(client, "https://example.com")
 
     assert breaker.state == GeminiCircuitBreaker.OPEN
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# I16 V66: force_close() — admin reset
+# ═══════════════════════════════════════════════════════════════════════
+
+@pytest.mark.asyncio
+async def test_force_close_from_open(breaker):
+    """force_close() from OPEN → CLOSED, failure_count reset."""
+    client = AsyncMock(spec=httpx.AsyncClient)
+    client.post.return_value = _make_response(500)
+    for _ in range(3):
+        await breaker.call(client, "https://example.com")
+    assert breaker.state == GeminiCircuitBreaker.OPEN
+
+    breaker.force_close()
+    assert breaker.state == GeminiCircuitBreaker.CLOSED
+    assert breaker._failure_count == 0
+
+
+@pytest.mark.asyncio
+async def test_force_close_from_half_open(breaker):
+    """force_close() from HALF_OPEN → CLOSED."""
+    client = AsyncMock(spec=httpx.AsyncClient)
+    client.post.return_value = _make_response(500)
+    for _ in range(3):
+        await breaker.call(client, "https://example.com")
+    time.sleep(0.15)
+    assert breaker.state == GeminiCircuitBreaker.HALF_OPEN
+
+    breaker.force_close()
+    assert breaker.state == GeminiCircuitBreaker.CLOSED
+
+
+def test_force_close_idempotent_from_closed():
+    """force_close() from CLOSED → stays CLOSED, no error."""
+    b = GeminiCircuitBreaker()
+    assert b.state == GeminiCircuitBreaker.CLOSED
+    b.force_close()
+    assert b.state == GeminiCircuitBreaker.CLOSED
+    assert b._failure_count == 0

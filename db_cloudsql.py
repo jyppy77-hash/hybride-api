@@ -10,6 +10,7 @@ Supporte automatiquement :
 Configuration via variables d'environnement (.env ou Cloud Run)
 """
 
+import asyncio
 import os
 import logging
 from pathlib import Path
@@ -90,6 +91,29 @@ logger.info(
 
 _pool: aiomysql.Pool | None = None
 
+# I01 V66: Lock to prevent concurrent pool recreation storms
+_pool_lock = asyncio.Lock()
+_pool_readonly_lock = asyncio.Lock()
+
+# I01 V66: Shared pool kwargs builders (DRY for init + recreate)
+_POOL_RECYCLE = 1800  # 30 min (was 3600 — faster stale connection eviction)
+
+
+def _build_pool_kwargs(user: str, password: str, minsize: int, maxsize: int) -> dict:
+    """Build common aiomysql pool kwargs."""
+    kwargs = dict(
+        minsize=minsize, maxsize=maxsize,
+        user=user, password=password, db=DB_NAME,
+        charset="utf8mb4", cursorclass=aiomysql.DictCursor,
+        autocommit=True, connect_timeout=5,
+        pool_recycle=_POOL_RECYCLE,
+    )
+    if is_production():
+        kwargs["unix_socket"] = f"/cloudsql/{CLOUD_SQL_CONNECTION_NAME}"
+    else:
+        kwargs.update(host=DB_HOST, port=DB_PORT)
+    return kwargs
+
 
 async def init_pool():
     """Initialise le pool de connexions async aiomysql."""
@@ -101,21 +125,8 @@ async def init_pool():
         logger.error("DB_PASSWORD non défini")
         raise ValueError("DB_PASSWORD requis (Secret Manager / .env)")
 
-    kwargs = dict(
-        minsize=5, maxsize=10,
-        user=DB_USER, password=DB_PASSWORD, db=DB_NAME,
-        charset="utf8mb4", cursorclass=aiomysql.DictCursor,
-        autocommit=True, connect_timeout=5,
-        pool_recycle=3600,
-    )
-
-    if is_production():
-        kwargs["unix_socket"] = f"/cloudsql/{CLOUD_SQL_CONNECTION_NAME}"
-    else:
-        kwargs.update(host=DB_HOST, port=DB_PORT)
-
-    _pool = await aiomysql.create_pool(**kwargs)
-    logger.info(f"Pool aiomysql initialisé ({get_environment()}) — min=5, max=10")
+    _pool = await aiomysql.create_pool(**_build_pool_kwargs(DB_USER, DB_PASSWORD, 5, 10))
+    logger.info(f"Pool aiomysql initialisé ({get_environment()}) — min=5, max=10, recycle={_POOL_RECYCLE}s")
 
 
 async def close_pool():
@@ -128,16 +139,55 @@ async def close_pool():
         logger.info("Pool aiomysql fermé")
 
 
+async def _recreate_pool():
+    """I01 V66: Recreate main pool after connection failure (called under lock)."""
+    global _pool
+    async with _pool_lock:
+        # Double-check: another coroutine may have recreated while we waited for the lock
+        if _pool is not None:
+            try:
+                async with _pool.acquire() as conn:
+                    cur = await conn.cursor()
+                    await cur.execute("SELECT 1")
+                    return  # Pool is actually healthy — skip recreation
+            except Exception:
+                pass  # Pool is dead — proceed with recreation
+        # Close dead pool
+        if _pool is not None:
+            try:
+                _pool.close()
+                await _pool.wait_closed()
+            except Exception:
+                pass
+            _pool = None
+        # Create fresh pool
+        _pool = await aiomysql.create_pool(**_build_pool_kwargs(DB_USER, DB_PASSWORD, 5, 10))
+        logger.warning("[DB] Pool reconnection triggered — new pool created")
+
+
 @asynccontextmanager
 async def get_connection():
     """
     Async context manager qui retourne une connexion depuis le pool.
+    I01 V66: If acquire() fails, recreate pool once and retry.
     Usage: async with get_connection() as conn:
     """
     if _pool is None:
         raise RuntimeError("Pool not initialized — call init_pool() first")
-    async with _pool.acquire() as conn:
-        yield conn
+    try:
+        async with _pool.acquire() as conn:
+            yield conn
+    except Exception as first_err:
+        # Retry once after pool recreation
+        try:
+            await _recreate_pool()
+        except Exception as recreate_err:
+            logger.error("[DB] Pool recreation failed: %s", recreate_err)
+            raise first_err from recreate_err
+        if _pool is None:
+            raise first_err
+        async with _pool.acquire() as conn:
+            yield conn
 
 
 # ============================================================================
@@ -156,21 +206,10 @@ async def init_pool_readonly():
         logger.warning("[DB] DB_USER_READONLY not set — chatbot SQL uses main pool (no isolation)")
         return
 
-    kwargs = dict(
-        minsize=2, maxsize=5,
-        user=DB_USER_READONLY, password=DB_PASSWORD_READONLY, db=DB_NAME,
-        charset="utf8mb4", cursorclass=aiomysql.DictCursor,
-        autocommit=True, connect_timeout=5,
-        pool_recycle=3600,
+    _pool_readonly = await aiomysql.create_pool(
+        **_build_pool_kwargs(DB_USER_READONLY, DB_PASSWORD_READONLY, 2, 5)
     )
-
-    if is_production():
-        kwargs["unix_socket"] = f"/cloudsql/{CLOUD_SQL_CONNECTION_NAME}"
-    else:
-        kwargs.update(host=DB_HOST, port=DB_PORT)
-
-    _pool_readonly = await aiomysql.create_pool(**kwargs)
-    logger.info(f"Pool aiomysql readonly initialisé ({get_environment()}) — min=2, max=5")
+    logger.info(f"Pool aiomysql readonly initialisé ({get_environment()}) — min=2, max=5, recycle={_POOL_RECYCLE}s")
 
 
 async def close_pool_readonly():
@@ -183,14 +222,62 @@ async def close_pool_readonly():
         logger.info("Pool aiomysql readonly fermé")
 
 
+async def _recreate_pool_readonly():
+    """I01 V66: Recreate readonly pool after connection failure (called under lock)."""
+    global _pool_readonly
+    async with _pool_readonly_lock:
+        if _pool_readonly is not None:
+            try:
+                async with _pool_readonly.acquire() as conn:
+                    cur = await conn.cursor()
+                    await cur.execute("SELECT 1")
+                    return
+            except Exception:
+                pass
+        if _pool_readonly is not None:
+            try:
+                _pool_readonly.close()
+                await _pool_readonly.wait_closed()
+            except Exception:
+                pass
+            _pool_readonly = None
+        if not DB_USER_READONLY or not DB_PASSWORD_READONLY:
+            return  # Cannot recreate — will fallback to main pool
+        _pool_readonly = await aiomysql.create_pool(
+            **_build_pool_kwargs(DB_USER_READONLY, DB_PASSWORD_READONLY, 2, 5)
+        )
+        logger.warning("[DB] Readonly pool reconnection triggered — new pool created")
+
+
 @asynccontextmanager
 async def get_connection_readonly():
-    """Read-only connection for chatbot SQL. Falls back to main pool if not configured."""
+    """Read-only connection for chatbot SQL. Falls back to main pool if not configured.
+    I01 V66: If acquire() fails on readonly pool, recreate once and retry.
+    Falls back to main pool via get_connection() if readonly pool cannot be recreated.
+    """
     pool = _pool_readonly if _pool_readonly is not None else _pool
     if pool is None:
         raise RuntimeError("Pool not initialized — call init_pool() first")
-    async with pool.acquire() as conn:
-        yield conn
+    try:
+        async with pool.acquire() as conn:
+            yield conn
+    except Exception as first_err:
+        # If using readonly pool, try to recreate it
+        if pool is _pool_readonly:
+            try:
+                await _recreate_pool_readonly()
+            except Exception as recreate_err:
+                logger.error("[DB] Readonly pool recreation failed: %s", recreate_err)
+                raise first_err from recreate_err
+            fallback_pool = _pool_readonly if _pool_readonly is not None else _pool
+            if fallback_pool is None:
+                raise first_err
+            async with fallback_pool.acquire() as conn:
+                yield conn
+        else:
+            # Using main pool — delegate to get_connection retry logic
+            async with get_connection() as conn:
+                yield conn
 
 
 # ============================================================================

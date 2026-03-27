@@ -320,7 +320,11 @@
 </div>
 
 <!-- ROW 3 — Gemini IA -->
-<div class="mon-section">Gemini IA</div>
+<div class="mon-section" style="display:flex;align-items:center;gap:.8rem">
+    Gemini IA
+    <span id="mon-circuit-badge" style="display:none;font-size:.65rem;padding:2px 8px;border-radius:4px;font-weight:600;background:rgba(255,82,82,.15);color:#ff5252;text-transform:none;letter-spacing:0"></span>
+    <button id="btn-circuit-reset" style="display:none;font-size:.6rem;padding:2px 8px;border-radius:4px;border:1px solid #ff5252;background:transparent;color:#ff5252;cursor:pointer;text-transform:none;letter-spacing:0" onclick="resetCircuitBreaker()">Reset Circuit</button>
+</div>
 <div class="mon-grid">
     <div class="mon-card">
         <span class="mon-card-icon">🤖</span>
@@ -548,6 +552,19 @@
         animateValue(document.getElementById('v-gem-tin'), fmt(g.tokens_in_today));
         animateValue(document.getElementById('v-gem-tout'), fmt(g.tokens_out_today));
 
+        // I16 V66: Circuit breaker status badge + reset button
+        var cbBadge = document.getElementById('mon-circuit-badge');
+        var cbBtn = document.getElementById('btn-circuit-reset');
+        if (data.status === 'down' || (data.gemini_circuit && data.gemini_circuit !== 'closed')) {
+            var cbState = data.gemini_circuit || 'open';
+            cbBadge.textContent = 'Circuit: ' + cbState;
+            cbBadge.style.display = '';
+            cbBtn.style.display = '';
+        } else {
+            cbBadge.style.display = 'none';
+            cbBtn.style.display = 'none';
+        }
+
         // Row 4
         animateValue(document.getElementById('v-cost-run'), fmtEur(c.cloud_run_today_eur));
         animateValue(document.getElementById('v-cost-sql'), fmtEur(c.cloud_sql_today_eur));
@@ -597,6 +614,19 @@
                 document.getElementById('mon-status-label').textContent = 'erreur reseau';
                 document.getElementById('mon-dot').className = 'mon-dot mon-dot-down';
             });
+    }
+
+    /* ── I16 V66: Circuit breaker reset ─────────────────────── */
+    function resetCircuitBreaker() {
+        if (!confirm('Reset le circuit breaker Gemini ?')) return;
+        fetch('/admin/api/circuit-breaker/reset', { method: 'POST', credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(function(d) {
+                document.getElementById('mon-circuit-badge').style.display = 'none';
+                document.getElementById('btn-circuit-reset').style.display = 'none';
+                fetchMetrics();
+            })
+            .catch(function(e) { console.error('[MON] circuit reset error', e); });
     }
 
     /* ── Chart.js graphs ────────────────────────────────────── */

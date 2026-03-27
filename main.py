@@ -139,6 +139,14 @@ async def _ensure_monitoring_tables():
             logger.warning("Auto-migrate monitoring table: %s", e)
 
 
+async def _supervised_task(coro, name: str):
+    """I02 V66: Wrapper that logs exceptions from background tasks instead of silently dying."""
+    try:
+        await coro
+    except Exception:
+        logger.exception("[TASK] %s failed", name)
+
+
 @asynccontextmanager
 async def lifespan(app):
     """Startup/shutdown : client HTTP partage + pool DB + cache."""
@@ -148,11 +156,11 @@ async def lifespan(app):
     await db_cloudsql.init_pool_readonly()
     await init_cache()
     await _ensure_monitoring_tables()
-    # Non-blocking retention cleanup (90 days)
+    # Non-blocking retention cleanup (90 days) — I02 V66: supervised
     from services.gcp_monitoring import cleanup_event_log, cleanup_chat_log, cleanup_gemini_tracking
-    asyncio.create_task(cleanup_event_log(days=90))
-    asyncio.create_task(cleanup_chat_log(days=90))
-    asyncio.create_task(cleanup_gemini_tracking(days=90))
+    asyncio.create_task(_supervised_task(cleanup_event_log(days=90), "cleanup_event_log"))
+    asyncio.create_task(_supervised_task(cleanup_chat_log(days=90), "cleanup_chat_log"))
+    asyncio.create_task(_supervised_task(cleanup_gemini_tracking(days=90), "cleanup_gemini_tracking"))
     # Non-blocking bot IP refresh — immediate + every 6h
     # NOTE AUDIT 2026-03-19: periodic refresh keeps IPsum/Tor/crawler lists fresh
     # on long-lived Cloud Run instances (instances can live hours).
@@ -652,6 +660,71 @@ app.middleware("http")(em_access_middleware)
 # ── IP Ban middleware (blocks banned IPs → 403, cache 60s) ──
 from middleware.ip_ban import ip_ban_middleware
 app.middleware("http")(ip_ban_middleware)
+
+
+# ── I09 V66: Access log middleware (ASGI — outermost, measures total latency) ──
+# Added LAST so it executes FIRST in Starlette's reversed middleware stack.
+
+_ACCESS_LOG_SKIP = frozenset({"/health", "/favicon.ico"})
+_ACCESS_LOG_SKIP_PREFIXES = ("/static/", "/ui/static/")
+
+
+class AccessLogMiddleware:
+    """I09 V66: Log method, path, status, duration_ms, client_ip, request_id for every request.
+
+    Pure ASGI — no body buffering, SSE-safe.
+    Skips static assets and /health to keep logs clean.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        path = scope.get("path", "")
+        if path in _ACCESS_LOG_SKIP or path.startswith(_ACCESS_LOG_SKIP_PREFIXES):
+            await self.app(scope, receive, send)
+            return
+
+        method = scope.get("method", "?")
+        start = time.perf_counter()
+        status_code = 0
+
+        async def send_wrapper(message):
+            nonlocal status_code
+            if message["type"] == "http.response.start":
+                status_code = message.get("status", 0)
+            await send(message)
+
+        try:
+            await self.app(scope, receive, send_wrapper)
+        finally:
+            duration_ms = round((time.perf_counter() - start) * 1000, 1)
+            from utils import get_client_ip_from_scope
+            client_ip = get_client_ip_from_scope(scope)
+            request_id = _request_id_ctx.get("")
+
+            if status_code >= 500:
+                logger.error(
+                    "access_log", extra={"method": method, "path": path,
+                    "status_code": status_code, "duration_ms": duration_ms,
+                    "client_ip": client_ip, "request_id": request_id})
+            elif duration_ms > 3000:
+                logger.warning(
+                    "access_log", extra={"method": method, "path": path,
+                    "status_code": status_code, "duration_ms": duration_ms,
+                    "client_ip": client_ip, "request_id": request_id})
+            else:
+                logger.info(
+                    "access_log", extra={"method": method, "path": path,
+                    "status_code": status_code, "duration_ms": duration_ms,
+                    "client_ip": client_ip, "request_id": request_id})
+
+
+app.add_middleware(AccessLogMiddleware)
 
 
 # =========================

@@ -79,6 +79,14 @@ class GeminiCircuitBreaker:
             self._set_state(self.OPEN)
             self._opened_at = time.monotonic()
 
+    def force_close(self) -> None:
+        """I16 V66: Force circuit to CLOSED state (admin reset)."""
+        prev = self._state
+        self._state = self.CLOSED
+        self._failure_count = 0
+        self._opened_at = 0.0
+        logger.warning("[CIRCUIT] Force closed by admin (was %s, failures=%d)", prev, 0)
+
 
 # Instance partagee — un circuit pour toute l'API Gemini
 gemini_breaker = GeminiCircuitBreaker()

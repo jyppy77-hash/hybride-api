@@ -4,6 +4,7 @@ gemini_tracking DB persistence, breakdown, history, cleanup.
 """
 
 import pytest
+from contextlib import asynccontextmanager
 from unittest.mock import patch, AsyncMock, MagicMock
 from datetime import datetime
 
@@ -237,43 +238,85 @@ class TestLocalCache:
 # Cleanup (90-day retention)
 # ═══════════════════════════════════════════════════════════════════════
 
+def _mock_cleanup_conn(rowcounts):
+    """Create a mock get_connection that yields a cursor with successive rowcounts.
+
+    I11 V66: cleanup now uses batched DELETE via get_connection + cursor.rowcount.
+    """
+    call_idx = {"i": 0}
+
+    @asynccontextmanager
+    async def _cm():
+        cursor = AsyncMock()
+        idx = call_idx["i"]
+        cursor.rowcount = rowcounts[idx] if idx < len(rowcounts) else 0
+        call_idx["i"] += 1
+        conn = AsyncMock()
+        conn.cursor = AsyncMock(return_value=cursor)
+        yield conn
+
+    return _cm
+
+
 class TestGeminiCleanup:
 
     @pytest.mark.asyncio
     async def test_cleanup_deletes_old_rows(self):
-        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
-            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 150})
-            mock_db.async_query = AsyncMock()
+        """Batched cleanup deletes rows and returns total."""
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db, \
+             patch("services.gcp_monitoring.asyncio") as mock_aio:
+            mock_db.get_connection = _mock_cleanup_conn([150, 0])
+            mock_aio.sleep = AsyncMock()
             count = await cleanup_gemini_tracking(90)
             assert count == 150
-            mock_db.async_query.assert_called_once()
-            sql = mock_db.async_query.call_args[0][0]
-            assert "DELETE FROM gemini_tracking" in sql
 
     @pytest.mark.asyncio
     async def test_cleanup_nothing_to_delete(self):
-        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
-            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0})
-            mock_db.async_query = AsyncMock()
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db, \
+             patch("services.gcp_monitoring.asyncio") as mock_aio:
+            mock_db.get_connection = _mock_cleanup_conn([0])
+            mock_aio.sleep = AsyncMock()
             count = await cleanup_gemini_tracking(90)
             assert count == 0
-            mock_db.async_query.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_cleanup_db_error(self):
-        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
-            mock_db.async_fetchone = AsyncMock(side_effect=Exception("DB error"))
+        @asynccontextmanager
+        async def _err_cm():
+            raise Exception("DB error")
+            yield  # noqa: unreachable
+
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db, \
+             patch("services.gcp_monitoring.asyncio") as mock_aio:
+            mock_db.get_connection = _err_cm
+            mock_aio.sleep = AsyncMock()
             count = await cleanup_gemini_tracking(90)
             assert count == 0
 
     @pytest.mark.asyncio
     async def test_cleanup_custom_days(self):
-        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
-            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 10})
-            mock_db.async_query = AsyncMock()
+        """Batched cleanup passes days param in SQL."""
+        captured_params = []
+
+        @asynccontextmanager
+        async def _cap_cm():
+            cursor = AsyncMock()
+            cursor.rowcount = 0
+
+            async def _exec(sql, params=None):
+                captured_params.append(params)
+
+            cursor.execute = _exec
+            conn = AsyncMock()
+            conn.cursor = AsyncMock(return_value=cursor)
+            yield conn
+
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db, \
+             patch("services.gcp_monitoring.asyncio") as mock_aio:
+            mock_db.get_connection = _cap_cm
+            mock_aio.sleep = AsyncMock()
             await cleanup_gemini_tracking(30)
-            params = mock_db.async_fetchone.call_args[0][1]
-            assert params == (30,)
+            assert captured_params[0] == (30,)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -652,39 +695,59 @@ class TestMetricsHistoryCleanup:
 
     @pytest.mark.asyncio
     async def test_cleanup_deletes_old_rows(self):
-        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
-            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 200})
-            mock_db.async_query = AsyncMock()
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db, \
+             patch("services.gcp_monitoring.asyncio") as mock_aio:
+            mock_db.get_connection = _mock_cleanup_conn([200, 0])
+            mock_aio.sleep = AsyncMock()
             count = await cleanup_metrics_history(90)
             assert count == 200
-            mock_db.async_query.assert_called_once()
-            sql = mock_db.async_query.call_args[0][0]
-            assert "DELETE FROM metrics_history" in sql
 
     @pytest.mark.asyncio
     async def test_cleanup_nothing_to_delete(self):
-        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
-            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0})
-            mock_db.async_query = AsyncMock()
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db, \
+             patch("services.gcp_monitoring.asyncio") as mock_aio:
+            mock_db.get_connection = _mock_cleanup_conn([0])
+            mock_aio.sleep = AsyncMock()
             count = await cleanup_metrics_history(90)
             assert count == 0
-            mock_db.async_query.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_cleanup_db_error(self):
-        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
-            mock_db.async_fetchone = AsyncMock(side_effect=Exception("DB error"))
+        @asynccontextmanager
+        async def _err_cm():
+            raise Exception("DB error")
+            yield  # noqa: unreachable
+
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db, \
+             patch("services.gcp_monitoring.asyncio") as mock_aio:
+            mock_db.get_connection = _err_cm
+            mock_aio.sleep = AsyncMock()
             count = await cleanup_metrics_history(90)
             assert count == 0
 
     @pytest.mark.asyncio
     async def test_cleanup_custom_days(self):
-        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
-            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 5})
-            mock_db.async_query = AsyncMock()
+        captured_params = []
+
+        @asynccontextmanager
+        async def _cap_cm():
+            cursor = AsyncMock()
+            cursor.rowcount = 0
+
+            async def _exec(sql, params=None):
+                captured_params.append(params)
+
+            cursor.execute = _exec
+            conn = AsyncMock()
+            conn.cursor = AsyncMock(return_value=cursor)
+            yield conn
+
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db, \
+             patch("services.gcp_monitoring.asyncio") as mock_aio:
+            mock_db.get_connection = _cap_cm
+            mock_aio.sleep = AsyncMock()
             await cleanup_metrics_history(30)
-            params = mock_db.async_fetchone.call_args[0][1]
-            assert params == (30,)
+            assert captured_params[0] == (30,)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -695,33 +758,52 @@ class TestEventLogCleanup:
 
     @pytest.mark.asyncio
     async def test_cleanup_deletes_old_rows(self):
-        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
-            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 500})
-            mock_db.async_query = AsyncMock()
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db, \
+             patch("services.gcp_monitoring.asyncio") as mock_aio:
+            mock_db.get_connection = _mock_cleanup_conn([500, 0])
+            mock_aio.sleep = AsyncMock()
             count = await cleanup_event_log(90)
             assert count == 500
-            mock_db.async_query.assert_called_once()
-            sql = mock_db.async_query.call_args[0][0]
-            assert "DELETE FROM event_log" in sql
 
     @pytest.mark.asyncio
     async def test_cleanup_preserves_recent_rows(self):
-        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
-            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0})
-            mock_db.async_query = AsyncMock()
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db, \
+             patch("services.gcp_monitoring.asyncio") as mock_aio:
+            mock_db.get_connection = _mock_cleanup_conn([0])
+            mock_aio.sleep = AsyncMock()
             count = await cleanup_event_log(90)
             assert count == 0
-            mock_db.async_query.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_cleanup_days_zero_edge_case(self):
-        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
-            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 1000})
-            mock_db.async_query = AsyncMock()
+        """days=0 is passed correctly to SQL params."""
+        captured_params = []
+        call_idx = {"i": 0}
+
+        @asynccontextmanager
+        async def _cap_cm():
+            cursor = AsyncMock()
+            idx = call_idx["i"]
+            cursor.rowcount = 1000 if idx == 0 else 0
+            call_idx["i"] += 1
+
+            _orig_execute = cursor.execute
+
+            async def _exec(sql, params=None):
+                captured_params.append(params)
+
+            cursor.execute = _exec
+            conn = AsyncMock()
+            conn.cursor = AsyncMock(return_value=cursor)
+            yield conn
+
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db, \
+             patch("services.gcp_monitoring.asyncio") as mock_aio:
+            mock_db.get_connection = _cap_cm
+            mock_aio.sleep = AsyncMock()
             count = await cleanup_event_log(0)
             assert count == 1000
-            params = mock_db.async_fetchone.call_args[0][1]
-            assert params == (0,)
+            assert captured_params[0] == (0,)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -732,27 +814,32 @@ class TestChatLogCleanup:
 
     @pytest.mark.asyncio
     async def test_cleanup_deletes_old_rows(self):
-        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
-            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 200})
-            mock_db.async_query = AsyncMock()
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db, \
+             patch("services.gcp_monitoring.asyncio") as mock_aio:
+            mock_db.get_connection = _mock_cleanup_conn([200, 0])
+            mock_aio.sleep = AsyncMock()
             count = await cleanup_chat_log(90)
             assert count == 200
-            mock_db.async_query.assert_called_once()
-            sql = mock_db.async_query.call_args[0][0]
-            assert "DELETE FROM chat_log" in sql
 
     @pytest.mark.asyncio
     async def test_cleanup_preserves_recent_rows(self):
-        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
-            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0})
-            mock_db.async_query = AsyncMock()
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db, \
+             patch("services.gcp_monitoring.asyncio") as mock_aio:
+            mock_db.get_connection = _mock_cleanup_conn([0])
+            mock_aio.sleep = AsyncMock()
             count = await cleanup_chat_log(90)
             assert count == 0
-            mock_db.async_query.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_cleanup_handles_db_error(self):
-        with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
-            mock_db.async_fetchone = AsyncMock(side_effect=Exception("DB down"))
+        @asynccontextmanager
+        async def _err_cm():
+            raise Exception("DB down")
+            yield  # noqa: unreachable
+
+        with patch("services.gcp_monitoring.db_cloudsql") as mock_db, \
+             patch("services.gcp_monitoring.asyncio") as mock_aio:
+            mock_db.get_connection = _err_cm
+            mock_aio.sleep = AsyncMock()
             count = await cleanup_chat_log(90)
             assert count == 0

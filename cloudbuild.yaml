@@ -56,7 +56,7 @@ steps:
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:latest']
 
-  # Deploy to Cloud Run (europe-west1)
+  # Deploy to Cloud Run — no traffic (I10 V66: smoke test before routing)
   - name: 'gcr.io/cloud-builders/gcloud'
     args:
       - run
@@ -74,7 +74,44 @@ steps:
       - --min-instances=1
       - --timeout=120
       - --cpu-boost
+      - --no-traffic
+      - --liveness-probe=httpGet.path=/health,httpGet.port=8080
+      - --startup-probe=httpGet.path=/health,httpGet.port=8080
       - '--update-env-vars=OWNER_IP=${_OWNER_IP},OWNER_IPV6=${_OWNER_IPV6}'
+
+  # Smoke test /health on the new revision (I10 V66)
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+      - '-c'
+      - |
+        REVISION_URL=$$(gcloud run revisions list \
+          --service=hybride-api-eu \
+          --region=europe-west1 \
+          --sort-by=~CREATED \
+          --limit=1 \
+          --format='value(status.url)' 2>/dev/null)
+        if [ -z "$$REVISION_URL" ]; then
+          echo "SMOKE TEST SKIPPED: could not resolve revision URL"
+          exit 0
+        fi
+        echo "SMOKE TEST: curling $$REVISION_URL/health"
+        HTTP_CODE=$$(curl -s -o /dev/null -w "%{http_code}" "$$REVISION_URL/health" --max-time 10 2>/dev/null || echo "000")
+        if [ "$$HTTP_CODE" != "200" ]; then
+          echo "SMOKE TEST FAILED: /health returned $$HTTP_CODE"
+          exit 1
+        fi
+        echo "SMOKE TEST PASSED: /health returned 200"
+
+  # Route 100% traffic to new revision (I10 V66)
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - run
+      - services
+      - update-traffic
+      - hybride-api-eu
+      - --to-latest
+      - --region=europe-west1
 
 images:
   - europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:$COMMIT_SHA

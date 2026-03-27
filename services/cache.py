@@ -16,7 +16,8 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_TTL = 3600  # 1 heure
 
-# ── In-memory fallback ──────────────────────────────────────────────
+# ── In-memory fallback (I04 V66: bounded to prevent OOM) ──────────
+_MEM_CACHE_MAXSIZE = 10_000
 _mem_cache: dict[str, tuple[float, Any]] = {}
 
 # ── Redis client ────────────────────────────────────────────────────
@@ -86,6 +87,24 @@ async def cache_get(key: str) -> Any | None:
     return value
 
 
+def _evict_mem_cache() -> None:
+    """I04 V66: Evict entries when in-memory cache reaches maxsize.
+
+    Strategy: 1) purge expired entries first, 2) if still full, remove oldest 20% (FIFO).
+    """
+    now = time.monotonic()
+    expired = [k for k, (expires_at, _) in _mem_cache.items() if expires_at < now]
+    for k in expired:
+        del _mem_cache[k]
+    if len(_mem_cache) < _MEM_CACHE_MAXSIZE:
+        return
+    # Still full — FIFO eviction: remove 20% oldest by expiry timestamp
+    to_remove = sorted(_mem_cache, key=lambda k: _mem_cache[k][0])[:len(_mem_cache) // 5 or 1]
+    for k in to_remove:
+        del _mem_cache[k]
+    logger.warning("[CACHE] In-memory eviction triggered: %d entries removed", len(expired) + len(to_remove))
+
+
 async def cache_set(key: str, value: Any, ttl: int = DEFAULT_TTL) -> None:
     """Stocke une valeur avec un TTL en secondes."""
     # Redis
@@ -95,6 +114,10 @@ async def cache_set(key: str, value: Any, ttl: int = DEFAULT_TTL) -> None:
             return
         except Exception as e:
             logger.warning(f"Redis SET error ({e}) — fallback in-memory")
+
+    # I04 V66: Evict before writing if at capacity
+    if len(_mem_cache) >= _MEM_CACHE_MAXSIZE:
+        _evict_mem_cache()
 
     # Fallback in-memory
     _mem_cache[key] = (time.monotonic() + ttl, value)
