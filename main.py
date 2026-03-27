@@ -147,6 +147,21 @@ async def _supervised_task(coro, name: str):
         logger.exception("[TASK] %s failed", name)
 
 
+async def _supervised_loop(coro_fn, name: str, restart_delay: float = 60.0):
+    """I03 V67: Wrapper for long-running loop tasks (e.g. periodic refresh).
+
+    If the coroutine crashes, logs the exception and restarts after restart_delay seconds.
+    Prevents silent death of infinite-loop background tasks.
+    """
+    while True:
+        try:
+            await coro_fn()
+            return  # Normal exit (if the coroutine ever returns)
+        except Exception:
+            logger.exception("[TASK] %s crashed — restarting in %.0fs", name, restart_delay)
+            await asyncio.sleep(restart_delay)
+
+
 @asynccontextmanager
 async def lifespan(app):
     """Startup/shutdown : client HTTP partage + pool DB + cache."""
@@ -173,7 +188,7 @@ async def lifespan(app):
             except Exception as e:
                 logger.warning("[BOT_IPS] Refresh failed, using current lists: %s", e)
             await asyncio.sleep(6 * 3600)  # 6h
-    asyncio.create_task(_periodic_bot_refresh())
+    asyncio.create_task(_supervised_loop(_periodic_bot_refresh, "periodic_bot_refresh"))
     yield
     await close_cache()
     await db_cloudsql.close_pool_readonly()
@@ -814,7 +829,7 @@ async def api_version():
 
 @app.get("/health")
 async def health():
-    """Endpoint healthcheck Cloud Run — BDD + Gemini + uptime."""
+    """Endpoint healthcheck Cloud Run — BDD + Gemini + Redis + uptime."""
     db_status = "ok"
     try:
         async with db_cloudsql.get_connection() as conn:
@@ -826,6 +841,17 @@ async def health():
     gemini_state = gemini_breaker.state
     gemini_status = "ok" if gemini_state == "closed" else "circuit_open"
 
+    # I01 V67: Redis health check (cache is non-critical — doesn't affect overall status)
+    redis_status = "ok"
+    try:
+        from services.cache import cache_set, cache_get
+        await cache_set("health_ping", "1", ttl=60)
+        val = await cache_get("health_ping")
+        if val is None:
+            redis_status = "unavailable"
+    except Exception:
+        redis_status = "unavailable"
+
     overall = "ok"
     if db_status != "ok":
         overall = "degraded"
@@ -836,6 +862,7 @@ async def health():
         "version": __version__,
         "database": db_status,
         "gemini": gemini_status,
+        "redis": redis_status,
         "uptime_seconds": round(time.monotonic() - _STARTED_AT),
     }
 

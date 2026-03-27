@@ -35,7 +35,9 @@ async def init_cache():
         return
 
     if not redis_url.startswith("rediss://") and os.getenv("K_SERVICE"):
-        logger.warning("[CACHE] Redis URL does not use TLS (rediss://). Data transits unencrypted.")
+        # GCP VPC internal traffic is encrypted at the network layer by default,
+        # but TLS on the Redis link (rediss://) is recommended as defense-in-depth.
+        logger.error("[CACHE] Redis URL does not use TLS (rediss://). Data transits unencrypted on the Redis link.")
 
     try:
         import redis.asyncio as aioredis

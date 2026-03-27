@@ -461,3 +461,137 @@ class TestCircuitBreakerResetEndpoint:
             client = TestClient(main_mod.app, raise_server_exceptions=False)
             resp = client.post("/admin/api/circuit-breaker/reset")
         assert resp.status_code == 401
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# I. Health check Redis (I01 V67)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestHealthRedis:
+
+    @patch("main.db_cloudsql")
+    def test_health_redis_ok(self, mock_db):
+        """Redis up → 'redis': 'ok' in response, status still 'ok'."""
+        cursor = AsyncMock()
+        mock_db.get_connection = _async_cm_conn(cursor)
+
+        client, main_mod = _get_client()
+        main_mod.db_cloudsql = mock_db
+
+        with patch("services.cache.cache_set", new_callable=AsyncMock) as mock_set, \
+             patch("services.cache.cache_get", new_callable=AsyncMock, return_value="1"):
+            resp = client.get("/health")
+
+        data = resp.json()
+        assert data["redis"] == "ok"
+        assert data["status"] == "ok"
+
+    @patch("main.db_cloudsql")
+    def test_health_redis_down_status_remains_ok(self, mock_db):
+        """Redis down → 'redis': 'unavailable', overall status stays 'ok' (cache is non-critical)."""
+        cursor = AsyncMock()
+        mock_db.get_connection = _async_cm_conn(cursor)
+
+        client, main_mod = _get_client()
+        main_mod.db_cloudsql = mock_db
+
+        with patch("services.cache.cache_set", new_callable=AsyncMock, side_effect=Exception("Redis connect timeout")), \
+             patch("services.cache.cache_get", new_callable=AsyncMock):
+            resp = client.get("/health")
+
+        data = resp.json()
+        assert data["redis"] == "unavailable"
+        assert data["status"] == "ok"  # Redis is non-critical
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# J. Supervised loop (I03 V67)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestSupervisedLoop:
+
+    @pytest.mark.asyncio
+    async def test_supervised_loop_restarts_on_crash(self):
+        """If coroutine crashes, _supervised_loop logs and restarts after delay."""
+        from main import _supervised_loop
+
+        call_count = 0
+
+        async def _crashing_loop():
+            nonlocal call_count
+            call_count += 1
+            if call_count <= 2:
+                raise RuntimeError("boom")
+            # 3rd call: return normally to end the loop
+
+        with patch("main.logger") as mock_logger, \
+             patch("main.asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+            await _supervised_loop(_crashing_loop, "test_loop", restart_delay=5.0)
+
+        assert call_count == 3
+        # 2 crashes → 2 exception logs + 2 sleeps
+        assert mock_logger.exception.call_count == 2
+        assert mock_sleep.await_count == 2
+        mock_sleep.assert_awaited_with(5.0)
+
+    @pytest.mark.asyncio
+    async def test_supervised_loop_no_log_on_success(self):
+        """If coroutine runs and returns, no error logged."""
+        from main import _supervised_loop
+
+        async def _ok_loop():
+            return  # exits immediately
+
+        with patch("main.logger") as mock_logger, \
+             patch("main.asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+            await _supervised_loop(_ok_loop, "ok_loop")
+
+        mock_logger.exception.assert_not_called()
+        mock_sleep.assert_not_awaited()
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# K. Redis TLS enforcement log level (I02 V67)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestRedisTlsEnforcement:
+
+    @pytest.mark.asyncio
+    async def test_non_tls_url_in_prod_logs_error(self):
+        """redis:// URL in prod (K_SERVICE set) → logger.error (not warning)."""
+        import services.cache as cache_mod
+
+        with patch.dict(os.environ, {"REDIS_URL": "redis://10.0.0.1:6379", "K_SERVICE": "hybride-api-eu"}), \
+             patch.object(cache_mod, "_redis", None), \
+             patch("services.cache.logger") as mock_logger:
+            # Prevent actual Redis connection
+            mock_redis_cls = MagicMock()
+            mock_redis_instance = AsyncMock()
+            mock_redis_instance.ping = AsyncMock(side_effect=Exception("no real redis"))
+            mock_redis_cls.from_url.return_value = mock_redis_instance
+            with patch.dict("sys.modules", {"redis.asyncio": mock_redis_cls}):
+                with patch("services.cache.os.getenv", side_effect=lambda k, d="": {"REDIS_URL": "redis://10.0.0.1:6379", "K_SERVICE": "hybride-api-eu"}.get(k, d)):
+                    await cache_mod.init_cache()
+
+            # Should have called logger.error for TLS warning
+            error_calls = [c for c in mock_logger.error.call_args_list if "TLS" in str(c)]
+            assert len(error_calls) >= 1
+
+    @pytest.mark.asyncio
+    async def test_tls_url_in_prod_no_error(self):
+        """rediss:// URL in prod → no TLS error log."""
+        import services.cache as cache_mod
+
+        with patch.dict(os.environ, {"REDIS_URL": "rediss://10.0.0.1:6380", "K_SERVICE": "hybride-api-eu"}), \
+             patch.object(cache_mod, "_redis", None), \
+             patch("services.cache.logger") as mock_logger:
+            mock_redis_cls = MagicMock()
+            mock_redis_instance = AsyncMock()
+            mock_redis_instance.ping = AsyncMock(side_effect=Exception("no real redis"))
+            mock_redis_cls.from_url.return_value = mock_redis_instance
+            with patch.dict("sys.modules", {"redis.asyncio": mock_redis_cls}):
+                with patch("services.cache.os.getenv", side_effect=lambda k, d="": {"REDIS_URL": "rediss://10.0.0.1:6380", "K_SERVICE": "hybride-api-eu"}.get(k, d)):
+                    await cache_mod.init_cache()
+
+            error_calls = [c for c in mock_logger.error.call_args_list if "TLS" in str(c)]
+            assert len(error_calls) == 0
