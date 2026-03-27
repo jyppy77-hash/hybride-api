@@ -241,24 +241,7 @@ class TestContratsPDF:
         assert resp.status_code == 302
 
 
-class TestContratsMigration:
-    """Verify contrats migration file exists."""
-
-    def test_migration_file_exists(self):
-        path = Path(__file__).resolve().parent.parent / "migrations" / "018_create_contrats_table.sql"
-        assert path.exists()
-
-    def test_migration_has_required_columns(self):
-        path = Path(__file__).resolve().parent.parent / "migrations" / "018_create_contrats_table.sql"
-        content = path.read_text(encoding="utf-8")
-        assert "fia_contrats" in content
-        assert "sponsor_id" in content
-        assert "numero" in content
-        assert "type_contrat" in content
-        assert "product_codes" in content
-        assert "montant_mensuel_ht" in content
-        assert "statut" in content
-        assert "UNIQUE" in content
+# TestContratsMigration removed — migration files are gitignored (local-only).
 
 
 class TestContratsNavbar:

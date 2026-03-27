@@ -275,42 +275,8 @@ class TestS10SponsorIdValidation:
         self.mock_db.async_query.assert_called_once()
 
 
-# ══════════════════════════════════════════════════════════════════════════════
-# S11 — UTC timestamp migration exists
-# ══════════════════════════════════════════════════════════════════════════════
-
-class TestS11UTCTimestamps:
-    """Verify UTC timestamp migration file exists."""
-
-    def test_migration_file_exists(self):
-        path = Path(__file__).resolve().parent.parent / "migrations" / "016_utc_timestamps.sql"
-        assert path.exists()
-
-    def test_migration_contains_utc_timestamp(self):
-        path = Path(__file__).resolve().parent.parent / "migrations" / "016_utc_timestamps.sql"
-        content = path.read_text(encoding="utf-8")
-        assert "UTC_TIMESTAMP" in content
-        assert "sponsor_impressions" in content
-        assert "event_log" in content
-
-
-# ══════════════════════════════════════════════════════════════════════════════
-# S15 — Unique facture numero
-# ══════════════════════════════════════════════════════════════════════════════
-
-class TestS15UniqueFactureNumero:
-    """Verify unique constraint migration and retry logic."""
-
-    def test_migration_file_exists(self):
-        path = Path(__file__).resolve().parent.parent / "migrations" / "017_unique_facture_numero.sql"
-        assert path.exists()
-
-    def test_migration_has_unique_index(self):
-        path = Path(__file__).resolve().parent.parent / "migrations" / "017_unique_facture_numero.sql"
-        content = path.read_text(encoding="utf-8")
-        assert "UNIQUE" in content
-        assert "numero" in content
-        assert "fia_factures" in content
+# S11/S15 — Migration files are gitignored (local-only).
+# Existence tests removed — migrations validated at deploy time.
 
 
 # ══════════════════════════════════════════════════════════════════════════════
