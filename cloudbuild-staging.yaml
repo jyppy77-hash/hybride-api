@@ -36,7 +36,7 @@ steps:
     entrypoint: 'sh'
     args:
       - '-c'
-      - 'pip install --no-cache-dir ruff && ruff check .'
+      - 'pip install --no-cache-dir ruff==0.15.7 && ruff check .'
     env:
       - 'HOME=/tmp'
 
@@ -45,7 +45,7 @@ steps:
     entrypoint: 'sh'
     args:
       - '-c'
-      - 'pip install --no-cache-dir pytest pytest-asyncio pytest-cov PyPDF2 && python -m pytest tests/ -v --tb=short --cov=services --cov=routes --cov=config --cov=engine --cov=middleware --cov-report=term-missing -o addopts='
+      - 'pip install --no-cache-dir pytest==9.0.2 pytest-asyncio==1.3.0 pytest-cov==7.0.0 PyPDF2==3.0.1 && python -m pytest tests/ -v --tb=short --cov=services --cov=routes --cov=config --cov=engine --cov=middleware --cov-report=term-missing --cov-fail-under=70 -o addopts='
     env:
       - 'DB_PASSWORD=fake'
       - 'DB_USER=test'

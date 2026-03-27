@@ -50,6 +50,7 @@ COST_CONFIG = {
 
 _LOCAL_CACHE: dict[str, tuple[float, object]] = {}
 _LOCAL_CACHE_TTL = 60  # seconds
+_LOCAL_CACHE_MAXSIZE = 100  # I06 V67: safety cap to prevent unbounded growth
 
 
 def _local_cache_get(key: str):
@@ -61,7 +62,10 @@ def _local_cache_get(key: str):
 
 
 def _local_cache_set(key: str, value):
-    """Store value with current timestamp."""
+    """Store value with current timestamp. Safety cap at _LOCAL_CACHE_MAXSIZE."""
+    if len(_LOCAL_CACHE) >= _LOCAL_CACHE_MAXSIZE:
+        _LOCAL_CACHE.clear()
+        logger.warning("[GCP_MON] Local cache cleared — reached %d entries", _LOCAL_CACHE_MAXSIZE)
     _LOCAL_CACHE[key] = (time.monotonic(), value)
 
 

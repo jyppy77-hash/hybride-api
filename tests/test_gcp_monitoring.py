@@ -15,6 +15,8 @@ from services.gcp_monitoring import (
     track_gemini_call,
     COST_CONFIG,
     _LOCAL_CACHE,
+    _LOCAL_CACHE_MAXSIZE,
+    _local_cache_set,
 )
 
 
@@ -359,3 +361,41 @@ class TestCloudMonitoringFallback:
         with patch("services.gcp_monitoring._get_project_id", return_value=None):
             result = await _fetch_cloud_run_metrics()
             assert result == {}
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# I06 V67: _LOCAL_CACHE maxsize safety cap
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestLocalCacheMaxsize:
+
+    def setup_method(self):
+        _LOCAL_CACHE.clear()
+
+    def teardown_method(self):
+        _LOCAL_CACHE.clear()
+
+    def test_local_cache_clears_at_maxsize(self):
+        """When _LOCAL_CACHE reaches maxsize, _local_cache_set clears it and logs warning."""
+        # Fill cache to maxsize
+        for i in range(_LOCAL_CACHE_MAXSIZE):
+            _LOCAL_CACHE[f"key_{i}"] = (0, f"val_{i}")
+        assert len(_LOCAL_CACHE) == _LOCAL_CACHE_MAXSIZE
+
+        # Next set should clear + add new entry
+        with patch("services.gcp_monitoring.logger") as mock_logger:
+            _local_cache_set("new_key", "new_val")
+            mock_logger.warning.assert_called_once()
+            assert "[GCP_MON]" in mock_logger.warning.call_args[0][0]
+
+        # Should contain only the new entry
+        assert len(_LOCAL_CACHE) == 1
+        assert "new_key" in _LOCAL_CACHE
+
+    def test_local_cache_no_clear_below_maxsize(self):
+        """Under maxsize, _local_cache_set does NOT clear."""
+        _local_cache_set("a", 1)
+        _local_cache_set("b", 2)
+        assert len(_LOCAL_CACHE) == 2
+        assert "a" in _LOCAL_CACHE
+        assert "b" in _LOCAL_CACHE

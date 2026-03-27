@@ -19,8 +19,8 @@ RUN pybabel compile -d translations
 # ── Stage 2: Test (blocks build if tests fail) ──────────────────────────────
 FROM builder AS test
 
-RUN pip install --no-cache-dir pytest pytest-asyncio pytest-cov PyPDF2
 ENV DB_PASSWORD=fake DB_USER=test DB_NAME=testdb
+RUN pip install --no-cache-dir pytest==9.0.2 pytest-asyncio==1.3.0 pytest-cov==7.0.0 PyPDF2==3.0.1
 RUN python -m pytest tests/ --tb=short -q
 
 # ── Stage 3: Runtime (lean, no tests/docs/scripts) ──────────────────────────
