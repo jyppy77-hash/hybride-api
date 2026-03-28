@@ -749,9 +749,9 @@ class TestFactures:
             mock_db.async_fetchall = AsyncMock(side_effect=[
                 [{"id": 1, "nom": "S1"}],  # sponsors list
                 [{"id": 1, "event_type": "sponsor-popup-shown", "prix_unitaire": 0.01, "description": "Impression"}],  # grille
+                [{"event_type": "sponsor-popup-shown", "cnt": 100}],  # GROUP BY count (A07)
             ])
             mock_db.async_fetchone = AsyncMock(side_effect=[
-                {"cnt": 100},  # count events
                 {"taux_tva": 20},  # config
                 {"cnt": 0},  # invoice count
             ])

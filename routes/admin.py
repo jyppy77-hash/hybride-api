@@ -202,7 +202,8 @@ async def admin_dashboard(request: Request):
     review_count = 0
     try:
         row = await db_cloudsql.async_fetchone(
-            "SELECT COUNT(*) AS review_count, COALESCE(ROUND(AVG(rating), 1), 0) AS avg_rating FROM ratings"
+            "SELECT COUNT(*) AS review_count, COALESCE(ROUND(AVG(rating), 1), 0) AS avg_rating "
+            "FROM ratings WHERE created_at >= NOW() - INTERVAL 90 DAY"
         )
         if row:
             review_count = row["review_count"] or 0
@@ -888,16 +889,24 @@ async def admin_facture_create(request: Request):
         grille = await db_cloudsql.async_fetchall(
             "SELECT * FROM fia_grille_tarifaire WHERE sponsor_id = %s", (sponsor_id,))
 
-        # Count events in period from sponsor_impressions
+        # Count events in period from sponsor_impressions (single GROUP BY — A07)
+        event_types = [g["event_type"] for g in grille]
+        counts_by_type = {}
+        if event_types:
+            placeholders = ",".join(["%s"] * len(event_types))
+            count_rows = await db_cloudsql.async_fetchall(
+                f"SELECT event_type, COUNT(*) AS cnt FROM sponsor_impressions "
+                f"WHERE event_type IN ({placeholders}) "
+                f"AND DATE(created_at) >= %s AND DATE(created_at) <= %s "
+                f"GROUP BY event_type",
+                (*event_types, pd.isoformat(), pf.isoformat()),
+            )
+            counts_by_type = {r["event_type"]: r["cnt"] for r in count_rows}
+
         lignes = []
         montant_ht = Decimal("0")
         for g in grille:
-            row = await db_cloudsql.async_fetchone(
-                "SELECT COUNT(*) AS cnt FROM sponsor_impressions "
-                "WHERE event_type = %s AND DATE(created_at) >= %s AND DATE(created_at) <= %s",
-                (g["event_type"], pd.isoformat(), pf.isoformat()),
-            )
-            qty = row["cnt"] if row else 0
+            qty = counts_by_type.get(g["event_type"], 0)
             prix = Decimal(str(g["prix_unitaire"]))
             total_ligne = prix * qty
             montant_ht += total_ligne
@@ -1227,14 +1236,19 @@ async def admin_config_save(request: Request):
         await db_cloudsql.async_query(
             "UPDATE fia_config_entreprise SET raison_sociale=%s, siret=%s, adresse=%s, "
             "code_postal=%s, ville=%s, pays=%s, email=%s, telephone=%s, "
-            "tva_intra=%s, taux_tva=%s, iban=%s, bic=%s WHERE id=1",
+            "tva_intra=%s, taux_tva=%s, iban=%s, bic=%s, "
+            "forme_juridique=%s, rcs=%s, capital_social=%s WHERE id=1",
             (form.get("raison_sociale", ""), form.get("siret", ""),
              form.get("adresse", ""), form.get("code_postal", ""),
              form.get("ville", ""), form.get("pays", "France"),
              form.get("email", ""), form.get("telephone", ""),
              form.get("tva_intra", ""), float(form.get("taux_tva", 20)),
-             form.get("iban", ""), form.get("bic", "")),
+             form.get("iban", ""), form.get("bic", ""),
+             form.get("forme_juridique", "EI"), form.get("rcs", ""),
+             form.get("capital_social", "")),
         )
+        from middleware.ip_ban import _extract_client_ip
+        logger.info("[ADMIN_AUDIT] action=config_update ip=%s", _extract_client_ip(request))
     except Exception as e:
         logger.error("[ADMIN] config save: %s", e)
 
@@ -1389,9 +1403,10 @@ async def admin_api_realtime(request: Request, event_type: str = "all", period: 
         )
         by_type = {r["event_type"]: _dec(r["cnt"]) for r in bt_rows}
 
-        # Distinct event types for filter dropdown
+        # Distinct event types for filter dropdown (bounded to 30 days)
         type_rows = await db_cloudsql.async_fetchall(
-            "SELECT DISTINCT event_type FROM event_log ORDER BY event_type"
+            "SELECT DISTINCT event_type FROM event_log "
+            "WHERE created_at >= NOW() - INTERVAL 30 DAY ORDER BY event_type"
         )
         event_types = [r["event_type"] for r in type_rows]
 
@@ -1679,6 +1694,7 @@ async def admin_api_engagement(
 
     # Table data
     table_data = []
+    sponsor_names = _load_sponsor_names()
     try:
         rows = await db_cloudsql.async_fetchall(
             f"SELECT DATE(created_at) AS day, event_type, page, module, lang, device, country, "
@@ -1688,7 +1704,6 @@ async def admin_api_engagement(
             f"ORDER BY day DESC, cnt DESC LIMIT 500",
             tuple(params),
         )
-        sponsor_names = _load_sponsor_names()
         table_data = [
             {"day": str(r["day"]), "event_type": r["event_type"], "page": r["page"] or "",
              "module": r["module"] or "", "lang": r["lang"] or "", "device": r["device"] or "",
@@ -1700,11 +1715,8 @@ async def admin_api_engagement(
     except Exception as e:
         logger.error("[ADMIN API] engagement table failed: %s", e)
 
-    # Sponsor name map for frontend labels
-    sponsor_map = _load_sponsor_names()
-
     return JSONResponse({"kpi": kpi, "by_category": by_category, "chart": chart_data,
-                         "table": table_data, "sponsor_map": sponsor_map})
+                         "table": table_data, "sponsor_map": sponsor_names})
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1793,6 +1805,8 @@ async def admin_api_tarifs_mode(request: Request):
             "ON DUPLICATE KEY UPDATE config_value = %s",
             (mode, mode),
         )
+        from middleware.ip_ban import _extract_client_ip
+        logger.info("[ADMIN_AUDIT] action=tarif_mode_change mode=%s ip=%s", mode, _extract_client_ip(request))
         return JSONResponse({"ok": True, "mode": mode})
     except Exception as e:
         logger.error("[ADMIN] tarifs mode switch: %s", e)
@@ -1820,6 +1834,8 @@ async def admin_api_tarifs_update(request: Request, code: str):
             "reduction_6m=%s, reduction_12m=%s, active=%s WHERE code=%s",
             (tarif, engagement, red6, red12, active, code),
         )
+        from middleware.ip_ban import _extract_client_ip
+        logger.info("[ADMIN_AUDIT] action=tarif_update code=%s ip=%s", code, _extract_client_ip(request))
         return JSONResponse({"ok": True, "code": code})
     except Exception as e:
         logger.error("[ADMIN] tarif update %s: %s", code, e)
@@ -1907,7 +1923,7 @@ async def admin_circuit_breaker_reset(request: Request):
     err = _require_auth_json(request)
     if err:
         return err
-    from middleware.ip_ban import _is_owner_or_loopback, _extract_client_ip
+    from middleware.ip_ban import _extract_client_ip
     real_ip = _extract_client_ip(request)
     from services.circuit_breaker import gemini_breaker
     prev_state = gemini_breaker.state

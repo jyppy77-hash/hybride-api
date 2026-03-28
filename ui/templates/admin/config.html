@@ -49,8 +49,28 @@
         </div>
         <div class="form-row">
             <div class="form-group">
+                <label>Forme juridique</label>
+                <select name="forme_juridique">
+                    <option value="EI" {% if (cfg.forme_juridique or 'EI') == 'EI' %}selected{% endif %}>EI (Entrepreneur Individuel)</option>
+                    <option value="SASU" {% if cfg.forme_juridique == 'SASU' %}selected{% endif %}>SASU</option>
+                    <option value="SAS" {% if cfg.forme_juridique == 'SAS' %}selected{% endif %}>SAS</option>
+                    <option value="SARL" {% if cfg.forme_juridique == 'SARL' %}selected{% endif %}>SARL</option>
+                    <option value="EURL" {% if cfg.forme_juridique == 'EURL' %}selected{% endif %}>EURL</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>RCS (vide si EI)</label>
+                <input type="text" name="rcs" value="{{ cfg.rcs or '' }}" placeholder="Paris 123 456 789">
+            </div>
+            <div class="form-group">
+                <label>Capital social (vide si EI)</label>
+                <input type="text" name="capital_social" value="{{ cfg.capital_social or '' }}" placeholder="1 000">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
                 <label>N TVA intracommunautaire</label>
-                <input type="text" name="tva_intra" value="{{ cfg.tva_intra or '' }}">
+                <input type="text" name="tva_intra" value="{{ cfg.tva_intra or '' }}" placeholder="FRXX XXXXXXXXX">
             </div>
             <div class="form-group">
                 <label>Taux TVA (%)</label>

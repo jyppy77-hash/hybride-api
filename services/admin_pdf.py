@@ -164,13 +164,33 @@ def generate_invoice_pdf(facture: dict, config: dict, lignes: list) -> io.BytesI
     cp = config.get("code_postal", "")
     ville = config.get("ville", "")
     siret = config.get("siret", "")
+    forme = config.get("forme_juridique", "") or "EI"
+    rcs = config.get("rcs", "") or ""
+    capital = config.get("capital_social", "") or ""
+    tva_intra = config.get("tva_intra", "") or ""
+
     emitter_parts = [f"<b>{rs}</b>"]
+    # A09: Forme juridique
+    if forme.upper() in ("EI", ""):
+        emitter_parts.append("Entrepreneur Individuel")
+    else:
+        legal_line = forme
+        if capital:
+            legal_line += f" au capital de {capital} EUR"
+        if rcs:
+            legal_line += f" — RCS {rcs}"
+        emitter_parts.append(legal_line)
     if addr:
         emitter_parts.append(addr.replace('\n', '<br/>'))
     if cp or ville:
         emitter_parts.append(f"{cp} {ville}".strip())
     if siret:
         emitter_parts.append(f"SIRET : {siret}")
+    # A02: TVA intracommunautaire or exoneration
+    if tva_intra:
+        emitter_parts.append(f"TVA intra. : {tva_intra}")
+    else:
+        emitter_parts.append("TVA non applicable, art. 293 B du CGI")
     email = config.get("email", "")
     if email:
         emitter_parts.append(email)
@@ -194,23 +214,27 @@ def generate_invoice_pdf(facture: dict, config: dict, lignes: list) -> io.BytesI
     elements.append(addr_table)
     elements.append(Spacer(1, 6*mm))
 
-    # Dates
+    # Dates — A01: date d'echeance now rendered
     de = _format_date_fr(facture.get('date_emission', ''))
-    dec = _format_date_fr(facture.get('date_echeance', ''))
+    dec_raw = facture.get('date_echeance', '')
+    dec = _format_date_fr(dec_raw) if dec_raw else "A reception"
     pd = _format_date_fr(facture.get('periode_debut', ''))
     pf = _format_date_fr(facture.get('periode_fin', ''))
     info = Table(
-        [["Date d'emission :", de, "Periode :", f"{pd} au {pf}"]],
+        [
+            ["Date d'emission :", de, "Periode :", f"{pd} au {pf}"],
+            ["Echeance :", dec, "", ""],
+        ],
         colWidths=[35*mm, 50*mm, 25*mm, 60*mm],
     )
     info.setStyle(TableStyle([
         ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTNAME', (2, 0), (2, -1), 'Helvetica-Bold'),
+        ('FONTNAME', (2, 0), (2, 0), 'Helvetica-Bold'),
         ('FONTSIZE', (0, 0), (-1, -1), 9),
         ('TEXTCOLOR', (0, 0), (0, -1), GRIS),
-        ('TEXTCOLOR', (2, 0), (2, -1), GRIS),
+        ('TEXTCOLOR', (2, 0), (2, 0), GRIS),
         ('TEXTCOLOR', (1, 0), (1, -1), NOIR),
-        ('TEXTCOLOR', (3, 0), (3, -1), NOIR),
+        ('TEXTCOLOR', (3, 0), (3, 0), NOIR),
     ]))
     elements.append(info)
     elements.append(Spacer(1, 8*mm))
@@ -273,6 +297,17 @@ def generate_invoice_pdf(facture: dict, config: dict, lignes: list) -> io.BytesI
     if iban:
         elements.append(Spacer(1, 3*mm))
         elements.append(Paragraph(f"Coordonnees bancaires : IBAN {iban} | BIC {bic}", _PETIT))
+
+    # A03: Mentions legales — penalites de retard + indemnite recouvrement
+    elements.append(Spacer(1, 5*mm))
+    elements.append(HRFlowable(width="100%", thickness=0.5, color=GRIS, spaceBefore=1*mm, spaceAfter=2*mm))
+    elements.append(Paragraph(
+        "Mentions legales : En cas de retard de paiement, une penalite de 3 fois le taux "
+        "d'interet legal sera appliquee (Art. L441-10 du Code de Commerce). Une indemnite "
+        "forfaitaire de 40 EUR pour frais de recouvrement sera egalement due "
+        "(Art. D441-5 du Code de Commerce).",
+        _PETIT,
+    ))
 
     # Footer
     footer_text = f"{rs} — SIRET : {siret}" if siret else rs
