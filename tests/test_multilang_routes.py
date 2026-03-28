@@ -523,10 +523,10 @@ def test_cookie_consent_on_all_analytics_pages():
     assert missing == [], f"Pages with analytics.js but missing cookie-consent.js: {missing}"
 
 
-def test_wysistat_on_all_analytics_pages():
-    """Every HTML page that loads analytics.js must also load wysistat.js.
-    Ensures Wysistat ACPM tracking covers all pages."""
+def test_umami_on_all_analytics_pages():
+    """Every HTML page that loads analytics.js must also load Umami Cloud.
+    Ensures Umami RGPD-friendly tracking covers all pages."""
     has_analytics = _scan_html_for_script(r"analytics\.js")
-    has_wysistat = _scan_html_for_script(r"wysistat")
-    missing = sorted(has_analytics - has_wysistat)
-    assert missing == [], f"Pages with analytics.js but missing wysistat: {missing}"
+    has_umami = _scan_html_for_script(r"cloud\.umami\.is")
+    missing = sorted(has_analytics - has_umami)
+    assert missing == [], f"Pages with analytics.js but missing Umami: {missing}"

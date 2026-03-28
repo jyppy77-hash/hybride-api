@@ -36,35 +36,40 @@ def _unique_headers():
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# S03 — Umami cleanup verification
+# S03 — Umami Cloud presence verification (reinstated V70, V68 removal reverted)
 # ══════════════════════════════════════════════════════════════════════════════
 
-class TestS03UmamiRemoval:
-    """Verify all umami references are removed from JS and HTML files."""
+class TestS03UmamiPresence:
+    """Verify Umami Cloud script is present on all public HTML pages."""
 
     ROOT = Path(__file__).resolve().parent.parent / "ui"
+    UMAMI_MARKER = "cloud.umami.is/script.js"
 
-    def test_no_umami_in_js_files(self):
-        """No JS file under ui/static/ should contain 'umami'."""
-        static_dir = self.ROOT / "static"
-        for js_file in static_dir.rglob("*.js"):
-            content = js_file.read_text(encoding="utf-8", errors="ignore")
-            assert "umami" not in content.lower(), f"umami found in {js_file}"
-
-    def test_no_umami_in_html_files(self):
-        """No HTML file under ui/ should contain 'umami'."""
+    def test_umami_on_public_html_pages(self):
+        """Every public HTML page must include the Umami Cloud script."""
         for html_file in self.ROOT.rglob("*.html"):
-            # Skip admin templates (never had umami)
             if "admin" in str(html_file):
                 continue
             content = html_file.read_text(encoding="utf-8", errors="ignore")
-            assert "umami" not in content.lower(), f"umami found in {html_file}"
+            # Only check pages that have analytics.js (real pages, not partials)
+            if "analytics.js" not in content:
+                continue
+            assert self.UMAMI_MARKER in content, f"Umami missing in {html_file}"
 
-    def test_analytics_js_no_umami_config(self):
-        """analytics.js should not have umami provider config."""
-        analytics = self.ROOT / "static" / "analytics.js"
-        content = analytics.read_text(encoding="utf-8")
-        assert "umami" not in content, "umami config still present in analytics.js"
+    def test_no_umami_in_admin(self):
+        """Admin templates must NOT include Umami (internal pages)."""
+        admin_dir = self.ROOT / "templates" / "admin"
+        if admin_dir.exists():
+            for html_file in admin_dir.rglob("*.html"):
+                content = html_file.read_text(encoding="utf-8", errors="ignore")
+                assert self.UMAMI_MARKER not in content, f"Umami found in admin {html_file}"
+
+    def test_no_wysistat_anywhere(self):
+        """Wysistat must be fully removed (replaced by Umami in V70)."""
+        for ext in ("*.html", "*.js"):
+            for f in self.ROOT.rglob(ext):
+                content = f.read_text(encoding="utf-8", errors="ignore")
+                assert "wysistat" not in content.lower(), f"wysistat found in {f}"
 
 
 # ══════════════════════════════════════════════════════════════════════════════

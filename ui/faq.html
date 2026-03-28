@@ -200,7 +200,7 @@
           "name": "Comment mes données sont-elles protégées ?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "LotoIA respecte le RGPD : IP anonymisée par hachage SHA-256, conversations chatbot conservées 90 jours maximum, zéro cookie de tracking publicitaire, analyse cookieless certifiée ACPM. Vos données ne sont ni vendues ni partagées."
+            "text": "LotoIA respecte le RGPD : IP anonymisée par hachage SHA-256, conversations chatbot conservées 90 jours maximum, zéro cookie de tracking publicitaire, analyse cookieless Umami Cloud (RGPD-friendly). Vos données ne sont ni vendues ni partagées."
           }
         },
         {
@@ -878,7 +878,7 @@
                                 <li>Votre adresse IP est <strong>anonymisée</strong> (hachage SHA-256) — nous ne stockons jamais votre IP en clair</li>
                                 <li>Les conversations avec le chatbot sont conservées <strong>90 jours maximum</strong> puis automatiquement supprimées</li>
                                 <li>Nous n'utilisons <strong>aucun cookie de tracking publicitaire</strong></li>
-                                <li>Notre outil d'analyse Wysistat (ACPM) est <strong>cookieless</strong> (sans cookie)</li>
+                                <li>Notre outil d'analyse Umami Cloud est <strong>cookieless</strong> (sans cookie, RGPD-friendly)</li>
                                 <li>Vous pouvez demander la suppression de vos données à tout moment</li>
                             </ul>
                             <p>LotoIA ne vend ni ne partage vos données avec des tiers.</p>
@@ -1008,6 +1008,6 @@
     <!-- Bandeau Notation -->
     <link rel="stylesheet" href="/ui/static/rating-popup.css?v=2">
     <script src="/ui/static/rating-popup.js?v=2" defer></script>
-    <script src="/ui/static/wysistat.js" defer></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc"></script>
 </body>
 </html>
