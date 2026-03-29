@@ -239,6 +239,9 @@ _cors_origins = [
     "https://lotoia.fr",
     "https://www.lotoia.fr",
 ]
+_extra_origins = os.getenv("ALLOWED_ORIGINS", "")
+if _extra_origins:
+    _cors_origins.extend(o.strip() for o in _extra_origins.split(",") if o.strip())
 if not os.getenv("K_SERVICE"):  # localhost uniquement en dev local
     _cors_origins.append("http://localhost:8080")
 
@@ -316,6 +319,8 @@ async def add_security_headers(request: Request, call_next):
 # CSRF Origin validation (S01)
 # =========================
 _ALLOWED_ORIGINS = {"https://lotoia.fr", "https://www.lotoia.fr"}
+if _extra_origins:
+    _ALLOWED_ORIGINS.update(o.strip() for o in _extra_origins.split(",") if o.strip())
 if not os.getenv("K_SERVICE"):
     _ALLOWED_ORIGINS.add("http://localhost:8000")
     _ALLOWED_ORIGINS.add("http://localhost:8080")

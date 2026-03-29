@@ -14,24 +14,194 @@ Extracted blocks:
 - stream_and_respond: handle_chat_stream SSE streaming loop + fallback
 - handle_pitch_common: pitch validation + Gemini call + JSON parsing
 - parse_pitch_json: backtick cleaning + JSON parse + sanitize
+
+Shared constants (V72):
+- _QUESTION_KEYWORDS_INSULT: Phase I keyword detection (6 langs)
+- _QUESTION_KEYWORDS_COMPLIMENT: Phase C keyword detection (6 langs)
+- ANTI_REINTRO_BLOCK: anti-re-introduction system prompt block
+- _TIRAGE_NOT_FOUND_LOTO / _TIRAGE_NOT_FOUND_EM: tirage introuvable i18n messages
 """
 
 import os
+import re
 import json
 import asyncio
 import logging
 import time
+import importlib
 import httpx
 
 from services.circuit_breaker import gemini_breaker, CircuitOpenError, GeminiCircuitBreaker
 from services.gemini import GEMINI_MODEL_URL, stream_gemini_chat
 from services.chat_utils import (
     _clean_response, _strip_non_latin, _get_sponsor_if_due,
-    _strip_sponsor_from_text, StreamBuffer,
+    _strip_sponsor_from_text, _enrich_with_context, _format_date_fr, StreamBuffer,
 )
+from services.chat_detectors import (
+    _detect_insulte, _count_insult_streak,
+    _detect_compliment, _count_compliment_streak,
+    _detect_site_rating, get_site_rating_response,
+    _is_short_continuation, _detect_tirage, _has_temporal_filter, _extract_temporal_date,
+    _detect_generation, _detect_generation_mode, _extract_forced_numbers, _extract_grid_count,
+    _extract_exclusions,
+    _detect_cooccurrence_high_n, _get_cooccurrence_high_n_response,
+    _is_affirmation_simple, _detect_game_keyword_alone,
+    _detect_salutation, _get_salutation_response,
+    _has_data_signal,
+    _detect_grid_evaluation,
+)
+from services.stats_analysis import should_inject_pedagogical_context, PEDAGOGICAL_CONTEXT
 from services.chat_logger import log_chat_exchange
 
 logger = logging.getLogger(__name__)
+
+
+# ═══════════════════════════════════════════════════════
+# Shared constants — V72 F01/F03/F04/F07
+# ═══════════════════════════════════════════════════════
+
+# F03: _has_question keywords — shared across Phase I (Loto+EM)
+# Used to detect if an insult/compliment message also contains a real question.
+_QUESTION_KEYWORDS_INSULT = (
+    # FR
+    "numéro", "numero", "tirage", "grille", "fréquence", "frequence",
+    "classement", "statistique", "stat", "analyse", "prochain",
+    "étoile", "etoile",
+    # EN
+    "number", "draw", "grid", "frequency", "ranking", "statistic",
+    "analysis", "next", "star",
+    # ES (F01: was missing in EM)
+    "número", "sorteo", "resultado", "cuadrícula", "combinación", "estrella",
+    # PT
+    "sorteio", "grelha",
+    # DE
+    "ziehung", "zahlen", "ergebnis", "kombination", "stern",
+    # NL
+    "trekking", "nummers", "resultaat", "combinatie", "ster",
+)
+
+# F03: _has_question_c keywords — shared across Phase C (Loto+EM)
+_QUESTION_KEYWORDS_COMPLIMENT = (
+    # FR
+    "numéro", "numero", "tirage", "grille", "fréquence", "frequence",
+    "combien", "c'est quoi", "quel", "quelle", "comment", "pourquoi",
+    "classement", "statistique", "stat", "analyse",
+    "étoile", "etoile",
+    # EN
+    "number", "draw", "grid", "frequency", "ranking", "how",
+    "what", "which", "why", "star",
+    # ES
+    "número", "sorteo", "estrella", "cuánto", "cuál",
+    # PT
+    "sorteio", "estrela", "quanto", "qual",
+    # DE
+    "ziehung", "zahlen", "stern", "wie", "welche",
+    # NL
+    "trekking", "nummers", "ster", "hoeveel", "welke",
+)
+
+# F04: Anti-re-introduction block — injected into system prompt (both pipelines)
+ANTI_REINTRO_BLOCK = (
+    "\n\n[RAPPEL CRITIQUE — ANTI-RE-PRÉSENTATION]\n"
+    "Le message de bienvenue affiché côté interface a DÉJÀ présenté HYBRIDE à l'utilisateur. "
+    "Tu t'es DÉJÀ présenté. NE TE RE-PRÉSENTE PAS. "
+    "Ne dis PAS 'Je suis HYBRIDE', 'I'm HYBRIDE', 'Soy HYBRIDE', 'Eu sou HYBRIDE', "
+    "'Ich bin HYBRIDE', 'Ik ben HYBRIDE', etc. "
+    "Ne dis PAS 'Salut !', 'Hello !', 'Hi !', 'Hola !', 'Olá !', 'Hallo !' en début de réponse "
+    "s'il ne t'a pas salué. "
+    "Va DIRECTEMENT à la réponse à sa question."
+)
+
+# F07: Tirage not found messages — i18n 6 langs
+_TIRAGE_NOT_FOUND_LOTO = {
+    "fr": (
+        "[RÉSULTAT TIRAGE — INTROUVABLE]\n"
+        "Aucun tirage trouvé en base de données pour la date du {date}.\n"
+        "IMPORTANT : Ne PAS inventer de numéros. Indique simplement que "
+        "ce tirage n'est pas disponible dans la base.\n"
+        "Les tirages du Loto ont lieu les lundi, mercredi et samedi."
+    ),
+    "en": (
+        "[DRAW RESULT — NOT FOUND]\n"
+        "No draw found in the database for the date {date}.\n"
+        "IMPORTANT: Do NOT invent numbers. Simply state that "
+        "this draw is not available in the database.\n"
+        "Loto draws take place on Monday, Wednesday and Saturday."
+    ),
+    "es": (
+        "[RESULTADO SORTEO — NO ENCONTRADO]\n"
+        "No se ha encontrado ningún sorteo en la base de datos para la fecha {date}.\n"
+        "IMPORTANTE: NO inventes números. Indica simplemente que "
+        "este sorteo no está disponible en la base de datos.\n"
+        "Los sorteos del Loto tienen lugar los lunes, miércoles y sábados."
+    ),
+    "pt": (
+        "[RESULTADO SORTEIO — NÃO ENCONTRADO]\n"
+        "Nenhum sorteio encontrado na base de dados para a data {date}.\n"
+        "IMPORTANTE: NÃO inventes números. Indica simplesmente que "
+        "este sorteio não está disponível na base de dados.\n"
+        "Os sorteios do Loto realizam-se às segundas, quartas e sábados."
+    ),
+    "de": (
+        "[ZIEHUNGSERGEBNIS — NICHT GEFUNDEN]\n"
+        "Keine Ziehung in der Datenbank für das Datum {date} gefunden.\n"
+        "WICHTIG: Erfinde KEINE Zahlen. Gib einfach an, dass "
+        "diese Ziehung nicht in der Datenbank verfügbar ist.\n"
+        "Die Loto-Ziehungen finden montags, mittwochs und samstags statt."
+    ),
+    "nl": (
+        "[TREKKINGSRESULTAAT — NIET GEVONDEN]\n"
+        "Geen trekking gevonden in de database voor de datum {date}.\n"
+        "BELANGRIJK: Verzin GEEN nummers. Geef gewoon aan dat "
+        "deze trekking niet beschikbaar is in de database.\n"
+        "De Loto-trekkingen vinden plaats op maandag, woensdag en zaterdag."
+    ),
+}
+
+_TIRAGE_NOT_FOUND_EM = {
+    "fr": (
+        "[RÉSULTAT TIRAGE — INTROUVABLE]\n"
+        "Aucun tirage trouvé en base de données pour la date du {date}.\n"
+        "IMPORTANT : Ne PAS inventer de numéros. Indique simplement que "
+        "ce tirage n'est pas disponible dans la base.\n"
+        "Les tirages EuroMillions ont lieu les mardi et vendredi."
+    ),
+    "en": (
+        "[DRAW RESULT — NOT FOUND]\n"
+        "No draw found in the database for the date {date}.\n"
+        "IMPORTANT: Do NOT invent numbers. Simply state that "
+        "this draw is not available in the database.\n"
+        "EuroMillions draws take place on Tuesday and Friday."
+    ),
+    "es": (
+        "[RESULTADO SORTEO — NO ENCONTRADO]\n"
+        "No se ha encontrado ningún sorteo en la base de datos para la fecha {date}.\n"
+        "IMPORTANTE: NO inventes números. Indica simplemente que "
+        "este sorteo no está disponible en la base de datos.\n"
+        "Los sorteos de EuroMillions tienen lugar los martes y viernes."
+    ),
+    "pt": (
+        "[RESULTADO SORTEIO — NÃO ENCONTRADO]\n"
+        "Nenhum sorteio encontrado na base de dados para a data {date}.\n"
+        "IMPORTANTE: NÃO inventes números. Indica simplesmente que "
+        "este sorteio não está disponível na base de dados.\n"
+        "Os sorteios do EuroMillions realizam-se às terças e sextas."
+    ),
+    "de": (
+        "[ZIEHUNGSERGEBNIS — NICHT GEFUNDEN]\n"
+        "Keine Ziehung in der Datenbank für das Datum {date} gefunden.\n"
+        "WICHTIG: Erfinde KEINE Zahlen. Gib einfach an, dass "
+        "diese Ziehung nicht in der Datenbank verfügbar ist.\n"
+        "Die EuroMillions-Ziehungen finden dienstags und freitags statt."
+    ),
+    "nl": (
+        "[TREKKINGSRESULTAAT — NIET GEVONDEN]\n"
+        "Geen trekking gevonden in de database voor de datum {date}.\n"
+        "BELANGRIJK: Verzin GEEN nummers. Geef gewoon aan dat "
+        "deze trekking niet beschikbaar is in de database.\n"
+        "De EuroMillions-trekkingen vinden plaats op dinsdag en vrijdag."
+    ),
+}
 
 
 # ═══════════════════════════════════════════════════════
@@ -478,3 +648,561 @@ async def handle_pitch_common(grilles_data, http_client, lang,
     except Exception as e:
         logger.error(f"{log_prefix} Erreur: {e}")
         return {"success": False, "data": None, "error": "Erreur interne du serveur", "status_code": 500}
+
+
+# ═══════════════════════════════════════════════════════
+# Parametric pipeline orchestration — V72 F02
+# ═══════════════════════════════════════════════════════
+
+async def _prepare_chat_context_base(
+    message: str, history: list, page: str, http_client, lang: str, cfg: dict,
+):
+    """
+    Orchestration paramétrique des 19+ phases chatbot.
+
+    cfg dict keys (all required unless noted):
+      Identity: game, log_prefix, debug_prefix
+      Prompt: load_system_prompt(lang) -> str|None, draw_count_game
+      Fallback: get_fallback(lang) -> str
+      Mode: detect_mode(message, page) -> str
+      Phase I: get_insult_short(lang), get_menace_response(lang),
+               get_insult_response(lang, streak, history)
+      Phase C: get_compliment_response(lang, type, streak, history)
+      Phase SALUTATION: salutation_game ("loto"|"em")
+      Phase G: gen_engine_module (str), forced_secondary_key,
+               gen_secondary_param, store_exclusions, format_generation_context(grid)
+      Phase A: detect_argent(msg, lang), get_argent_response(msg, lang)
+      Phase GEO (optional): detect_country(msg), get_country_context(lang)
+      Phase AFFIRMATION: affirmation_invitation (dict), game_keyword_invitation (dict)
+      Phase EVAL: eval_game, secondary_field, format_grille_context(data),
+                  analyze_grille_for_chat(nums, secondary, **kw), analyze_passes_lang
+      Phase 0-bis: detect_prochain_tirage(msg), get_prochain_tirage() async
+      Phase T: get_tirage_data(target) async, format_tirage_context(data),
+               tirage_not_found (dict)
+      Phase 2: detect_grille(msg), (reuses analyze_grille_for_chat + format_grille_context)
+      Phase 3: detect_requete_complexe(msg), format_complex_context(intent, data),
+               get_classement(type, tri, limit) async, get_comparaison(n1, n2, type) async,
+               get_categorie(cat, type) async, get_comparaison_with_period(n1,n2,type,date) async,
+               wants_both_fn(msg) (optional, EM only)
+      Phase P: detect_triplets(msg), format_triplets_context(data),
+               get_triplet_correlations(top_n) async,
+               detect_paires(msg), format_pairs_context(data),
+               get_pair_correlations(top_n) async,
+               get_star_pair_correlations(top_n) async (optional),
+               format_star_pairs_context(data) (optional)
+      Phase OOR: detect_oor(msg), count_oor_streak(history),
+                 get_oor_response(lang, num, type, streak)
+      Phase 1: detect_numero(msg), get_numero_stats(num, type) async,
+               format_stats_context(stats)
+      Phase SQL: generate_sql, sql_log_prefix, sql_gen_kwargs(lang) (optional),
+                 validate_sql, ensure_limit, execute_safe_sql, format_sql_result,
+                 max_sql_per_session
+      Final: build_session_context(history, message)
+    """
+    _t0 = time.monotonic()
+    _lp = cfg["log_prefix"]
+    _fallback = cfg["get_fallback"](lang)
+    mode = cfg["detect_mode"](message, page)
+
+    # ── Chat Monitor: phase tracking ──
+    _phase = "Gemini"
+    _sql_query = None
+    _sql_status = "N/A"
+    _grid_count = 0
+    _has_exclusions = False
+
+    system_prompt = cfg["load_system_prompt"](lang)
+    if not system_prompt:
+        logger.error(f"{_lp} Prompt systeme introuvable")
+        return {"response": _fallback, "source": "fallback", "mode": mode}, None
+
+    # F02: inject dynamic draw count
+    from services.chat_pipeline import _get_draw_count
+    draw_count = await _get_draw_count(cfg["draw_count_game"])
+    if draw_count and "{DRAW_COUNT}" in system_prompt:
+        system_prompt = system_prompt.replace("{DRAW_COUNT}", str(draw_count))
+
+    # ── Anti-re-introduction ──
+    system_prompt += ANTI_REINTRO_BLOCK
+
+    # ── Contexte pédagogique ──
+    if should_inject_pedagogical_context(message):
+        system_prompt += PEDAGOGICAL_CONTEXT
+
+    gem_api_key = os.environ.get("GEM_API_KEY") or os.environ.get("GEMINI_API_KEY")
+    if not gem_api_key:
+        logger.warning(f"{_lp} GEM_API_KEY non configuree — fallback")
+        return {"response": _fallback, "source": "fallback", "mode": mode}, None
+
+    contents, history = build_gemini_contents(history, message, cfg["detect_insulte"])
+
+    def _meta(**extra):
+        return {"phase": _phase, "t0": _t0, "lang": lang, **extra}
+
+    def _early(response, source, **extra_meta):
+        return {"response": response, "source": source, "mode": mode,
+                "_chat_meta": _meta(**extra_meta)}, None
+
+    # ── Phase I : Détection d'insultes / agressivité ──
+    _insult_prefix = ""
+    _insult_type = cfg["detect_insulte"](message)
+    if _insult_type:
+        _insult_streak = cfg["count_insult_streak"](history)
+        _has_question = (
+            '?' in message
+            or bool(re.search(r'\b\d{1,2}\b', message))
+            or any(kw in message.lower() for kw in _QUESTION_KEYWORDS_INSULT)
+        )
+        if _has_question:
+            _insult_prefix = cfg["get_insult_short"](lang)
+            logger.info(f"{_lp} Insulte + question (type={_insult_type}, streak={_insult_streak})")
+        else:
+            _phase = "I"
+            if _insult_type == "menace":
+                _insult_resp = cfg["get_menace_response"](lang)
+            else:
+                _insult_resp = cfg["get_insult_response"](lang, _insult_streak, history)
+            logger.info(f"{_lp} Insulte detectee (type={_insult_type}, streak={_insult_streak})")
+            return _early(_insult_resp, "hybride_insult")
+
+    # ── Phase C : Détection de compliments ──
+    if not _insult_prefix:
+        _compliment_type = cfg["detect_compliment"](message)
+        if _compliment_type:
+            _has_question_c = (
+                '?' in message
+                or bool(re.search(r'\b\d{1,2}\b', message))
+                or any(kw in message.lower() for kw in _QUESTION_KEYWORDS_COMPLIMENT)
+            )
+            if not _has_question_c:
+                _phase = "C"
+                _comp_streak = cfg["count_compliment_streak"](history)
+                _comp_resp = cfg["get_compliment_response"](lang, _compliment_type, _comp_streak, history)
+                logger.info(f"{_lp} Compliment detecte (type={_compliment_type}, streak={_comp_streak})")
+                return _early(_comp_resp, "hybride_compliment")
+            else:
+                logger.info(f"{_lp} Compliment + question (type={_compliment_type}), passage au flow normal")
+
+    # ── Phase R : Détection intention de noter le site ──
+    if cfg["detect_site_rating"](message):
+        _phase = "R"
+        logger.info(f"{_lp} Site rating intent detected (lang={lang})")
+        return _early(cfg["get_site_rating_response"](lang), "hybride_rating_invite")
+
+    # ── Phase SALUTATION : Salutation initiale sans historique ──
+    if not history or len(history) <= 1:
+        if cfg["detect_salutation"](message):
+            _phase = "SALUTATION"
+            _sal_resp = cfg["get_salutation_response"](cfg["salutation_game"], lang)
+            logger.info(f"{_lp} Salutation detectee — court-circuit Phase SALUTATION (lang={lang})")
+            return _early(_sal_resp, "hybride_salutation")
+
+    # ── Phase G : Détection génération de grille ──
+    _generation_context = ""
+    if cfg["detect_generation"](message):
+        _phase = "G"
+        try:
+            _gen_mod = importlib.import_module(cfg["gen_engine_module"])
+            _gen_fn = _gen_mod.generate_grids
+            _gen_mode = cfg["detect_generation_mode"](message)
+            _grid_count = cfg["extract_grid_count"](message)
+            _forced = cfg["extract_forced_numbers"](message, game=cfg["game"])
+            _exclusions = cfg["extract_exclusions"](message)
+            _has_exclusions = bool(_exclusions and any(_exclusions.values()))
+            if _forced.get("error"):
+                _generation_context = f"[ERREUR GÉNÉRATION] {_forced['error']}"
+                logger.info(f"{_lp} Phase G — erreur contrainte: {_forced['error']}")
+            else:
+                _gen_kwargs = {
+                    "n": _grid_count, "mode": _gen_mode, "lang": lang,
+                    "forced_nums": _forced["forced_nums"] or None,
+                    cfg["gen_secondary_param"]: _forced[cfg["forced_secondary_key"]] or None,
+                    "anti_collision": True,
+                }
+                if any((_exclusions or {}).values()):
+                    _gen_kwargs["exclusions"] = _exclusions
+                _gen_result = await asyncio.wait_for(_gen_fn(**_gen_kwargs), timeout=30.0)
+                if _gen_result and _gen_result.get("grids"):
+                    _grids = _gen_result["grids"][:_grid_count]
+                    _active_excl = _exclusions if any((_exclusions or {}).values()) else None
+                    if len(_grids) == 1:
+                        _grids[0]["mode"] = _gen_mode
+                        if cfg.get("store_exclusions") and _active_excl:
+                            _grids[0]["exclusions"] = _active_excl
+                        _generation_context = cfg["format_generation_context"](_grids[0])
+                    else:
+                        _parts = []
+                        for idx, _grid in enumerate(_grids, 1):
+                            _grid["mode"] = _gen_mode
+                            if cfg.get("store_exclusions") and _active_excl:
+                                _grid["exclusions"] = _active_excl
+                            _parts.append(f"--- Grille {idx}/{len(_grids)} ---\n" + cfg["format_generation_context"](_grid))
+                        _generation_context = "\n\n".join(_parts)
+                    _sec_val = _forced[cfg["forced_secondary_key"]]
+                    logger.info(
+                        f"{_lp} Phase G — {len(_grids)} grille(s) generee(s) mode={_gen_mode} "
+                        f"forced={_forced['forced_nums']} {cfg['forced_secondary_key']}={_sec_val}"
+                    )
+        except Exception as e:
+            logger.warning(f"{_lp} Phase G erreur: {e}")
+
+    # ── Phase A : Détection argent / gains / paris ──
+    if cfg["detect_argent"](message, lang):
+        _phase = "A"
+        _argent_resp = cfg["get_argent_response"](message, lang)
+        if _insult_prefix:
+            _argent_resp = _insult_prefix + "\n\n" + _argent_resp
+        logger.info(f"{_lp} Argent detecte — court-circuit Phase A (lang={lang})")
+        return _early(_argent_resp, "hybride_argent")
+
+    # ── Phase GEO : Détection pays (EM only) ──
+    _country_context = ""
+    _detect_country_fn = cfg.get("detect_country")
+    if _detect_country_fn and _detect_country_fn(message):
+        _phase = "GEO"
+        _country_context = cfg["get_country_context"](lang)
+        logger.info(f"{_lp} Phase GEO — pays detecte, contexte injecte (lang={lang})")
+
+    # ── Phase 0 : Continuation contextuelle ──
+    _continuation_mode = False
+    _enriched_message = None
+
+    if cfg["is_short_continuation"](message) and history:
+        _enriched_message = cfg["enrich_with_context"](message, history)
+        if _enriched_message != message:
+            _continuation_mode = True
+            _phase = "0"
+            logger.info(
+                f"{_lp} Reponse courte detectee: \"{message}\" → enrichissement contextuel"
+            )
+
+    # ── Phase AFFIRMATION : affirmation simple ──
+    if not _continuation_mode and cfg["is_affirmation_simple"](message):
+        if history and len(history) >= 2:
+            _enriched_message = cfg["enrich_with_context"](message, history)
+            if _enriched_message != message:
+                _continuation_mode = True
+                _phase = "AFFIRMATION"
+                logger.info(
+                    f"{_lp} Affirmation simple avec contexte: \"{message}\" "
+                    f"→ enrichissement contextuel (lang={lang})"
+                )
+        if not _continuation_mode:
+            _phase = "AFFIRMATION_SANS_CONTEXTE"
+            _resp = cfg["affirmation_invitation"].get(lang, cfg["affirmation_invitation"]["fr"])
+            if _insult_prefix:
+                _resp = _insult_prefix + "\n\n" + _resp
+            logger.info(f"{_lp} AFFIRMATION_SANS_CONTEXTE \"{message}\" (lang={lang})")
+            return _early(_resp, "hybride_affirmation")
+
+    # ── Phase GAME_KEYWORD : mot-clé jeu seul ──
+    if not _continuation_mode and cfg["detect_game_keyword_alone"](message):
+        _phase = "GAME_KEYWORD"
+        _resp = cfg["game_keyword_invitation"].get(lang, cfg["game_keyword_invitation"]["fr"])
+        if _insult_prefix:
+            _resp = _insult_prefix + "\n\n" + _resp
+        logger.info(f"{_lp} GAME_KEYWORD Mot-cle jeu seul: \"{message}\" (lang={lang})")
+        return _early(_resp, "hybride_game_keyword")
+
+    enrichment_context = ""
+
+    # ── Phase EVAL : Évaluation grille soumise ──
+    if not _generation_context:
+        _eval_result = cfg["detect_grid_evaluation"](message, game=cfg["eval_game"])
+        if _eval_result:
+            _phase = "EVAL"
+            try:
+                _eval_nums = _eval_result["numeros"]
+                _eval_secondary = _eval_result.get(cfg["secondary_field"])
+                _analyze_kw = {}
+                if cfg.get("analyze_passes_lang"):
+                    _analyze_kw["lang"] = lang
+                grille_analysis = await asyncio.wait_for(
+                    cfg["analyze_grille_for_chat"](_eval_nums, _eval_secondary, **_analyze_kw),
+                    timeout=30.0,
+                )
+                if grille_analysis:
+                    enrichment_context = cfg["format_grille_context"](grille_analysis)
+                    enrichment_context = enrichment_context.replace(
+                        "[ANALYSE DE GRILLE",
+                        "[ÉVALUATION GRILLE UTILISATEUR",
+                    )
+                    logger.info(
+                        f"{_lp} Phase EVAL — grille utilisateur evaluee: "
+                        f"{_eval_nums} {cfg['secondary_field']}={_eval_secondary}"
+                    )
+            except Exception as e:
+                logger.warning(f"{_lp} Phase EVAL erreur: {e}")
+
+    # Phase 0-bis : prochain tirage
+    if not _continuation_mode and cfg["detect_prochain_tirage"](message):
+        _phase = "0-bis"
+        try:
+            tirage_ctx = await asyncio.wait_for(cfg["get_prochain_tirage"](), timeout=30.0)
+            if tirage_ctx:
+                enrichment_context = tirage_ctx
+                logger.info(f"{_lp} Prochain tirage injecte")
+        except Exception as e:
+            logger.warning(f"{_lp} Erreur prochain tirage: {e}")
+
+    # Phase T — Tirage spécifique / requête temporelle complexe
+    if not _continuation_mode and not enrichment_context:
+        tirage_target = cfg["detect_tirage"](message)
+        if tirage_target is not None:
+            _phase = "T"
+            try:
+                tirage_data = await asyncio.wait_for(
+                    cfg["get_tirage_data"](tirage_target), timeout=30.0
+                )
+                if tirage_data:
+                    enrichment_context = cfg["format_tirage_context"](tirage_data)
+                    logger.info(f"{_lp} Tirage injecte: {tirage_data['date']}")
+                elif tirage_target != "latest":
+                    date_fr = _format_date_fr(str(tirage_target))
+                    _tpl = cfg["tirage_not_found"].get(lang, cfg["tirage_not_found"]["fr"])
+                    enrichment_context = _tpl.format(date=date_fr)
+                    logger.info(f"{_lp} Tirage introuvable pour: {tirage_target}")
+            except Exception as e:
+                logger.warning(f"{_lp} Erreur tirage: {e}")
+
+    force_sql = not _continuation_mode and not enrichment_context and cfg["has_temporal_filter"](message)
+    if force_sql:
+        logger.info(f"{_lp} Filtre temporel detecte, force Phase SQL")
+
+    # Phase 2 : detection de grille
+    grille_nums, grille_secondary = (None, None) if _continuation_mode else cfg["detect_grille"](message)
+    if not force_sql and not enrichment_context and grille_nums is not None:
+        _phase = "2"
+        try:
+            _analyze_kw = {}
+            if cfg.get("analyze_passes_lang"):
+                _analyze_kw["lang"] = lang
+            grille_result = await asyncio.wait_for(
+                cfg["analyze_grille_for_chat"](grille_nums, grille_secondary, **_analyze_kw),
+                timeout=30.0,
+            )
+            if grille_result:
+                enrichment_context = cfg["format_grille_context"](grille_result)
+                logger.info(f"{_lp} Grille analysee: {grille_nums} {cfg['secondary_field']}={grille_secondary}")
+        except Exception as e:
+            logger.warning(f"{_lp} Erreur analyse grille: {e}")
+
+    # Phase 3 : requete complexe
+    if not _continuation_mode and not force_sql and not enrichment_context:
+        intent = cfg["detect_requete_complexe"](message)
+        if intent:
+            _phase = "3"
+            try:
+                data = None
+                if intent["type"] == "classement":
+                    data = await asyncio.wait_for(
+                        cfg["get_classement"](intent["num_type"], intent["tri"], intent["limit"]),
+                        timeout=30.0,
+                    )
+                    # EM: if user asks for both boules AND étoiles
+                    _wants_both = cfg.get("wants_both_fn")
+                    if data and _wants_both and intent["num_type"] == "boule" and _wants_both(message):
+                        try:
+                            star_data = await asyncio.wait_for(
+                                cfg["get_classement"]("etoile", intent["tri"], intent["limit"]),
+                                timeout=30.0,
+                            )
+                            if star_data:
+                                star_intent = {**intent, "num_type": "etoile"}
+                                enrichment_context = (
+                                    cfg["format_complex_context"](intent, data)
+                                    + "\n\n"
+                                    + cfg["format_complex_context"](star_intent, star_data)
+                                )
+                                logger.info(f"{_lp} Requete complexe: classement boules + étoiles")
+                                data = None
+                        except Exception:
+                            pass
+                elif intent["type"] == "comparaison":
+                    data = await asyncio.wait_for(
+                        cfg["get_comparaison"](intent["num1"], intent["num2"], intent["num_type"]),
+                        timeout=30.0,
+                    )
+                elif intent["type"] == "categorie":
+                    data = await asyncio.wait_for(
+                        cfg["get_categorie"](intent["categorie"], intent["num_type"]),
+                        timeout=30.0,
+                    )
+
+                if data:
+                    enrichment_context = cfg["format_complex_context"](intent, data)
+                    logger.info(f"{_lp} Requete complexe: {intent['type']}")
+            except Exception as e:
+                logger.warning(f"{_lp} Erreur requete complexe: {e}")
+
+    # Phase 3-bis : comparaison avec filtre temporel
+    if not _continuation_mode and force_sql and not enrichment_context:
+        intent = cfg["detect_requete_complexe"](message)
+        if intent and intent["type"] == "comparaison":
+            _phase = "3-bis"
+            try:
+                _date_from = cfg["extract_temporal_date"](message)
+                data = await asyncio.wait_for(
+                    cfg["get_comparaison_with_period"](
+                        intent["num1"], intent["num2"], intent["num_type"], _date_from
+                    ),
+                    timeout=30.0,
+                )
+                if data:
+                    enrichment_context = cfg["format_complex_context"](intent, data)
+                    force_sql = False
+                    logger.info(
+                        f"{_lp} Phase 3-bis — comparaison temporelle "
+                        f"{intent['num1']} vs {intent['num2']} (date_from={_date_from})"
+                    )
+            except Exception as e:
+                logger.warning(f"{_lp} Erreur comparaison temporelle: {e}")
+
+    # Phase P+ : co-occurrences N>3
+    if not _continuation_mode and not enrichment_context:
+        if cfg["detect_cooccurrence_high_n"](message):
+            _phase = "P+"
+            _high_n_resp = cfg["get_cooccurrence_high_n_response"](message, lang=lang)
+            if _insult_prefix:
+                _high_n_resp = _insult_prefix + "\n\n" + _high_n_resp
+            logger.info(f"{_lp} Co-occurrence N>3 — redirection paires/triplets (lang={lang})")
+            return _early(_high_n_resp, "hybride_cooccurrence")
+
+    # Phase P : triplets
+    if not _continuation_mode and not enrichment_context:
+        if cfg["detect_triplets"](message):
+            _phase = "P"
+            try:
+                triplets_data = await asyncio.wait_for(
+                    cfg["get_triplet_correlations"](top_n=5), timeout=30.0
+                )
+                if triplets_data:
+                    enrichment_context = cfg["format_triplets_context"](triplets_data)
+                    logger.info(f"{_lp} Triplets injectes")
+            except Exception as e:
+                logger.warning(f"{_lp} Erreur triplets: {e}")
+
+    # Phase P : paires
+    if not _continuation_mode and not enrichment_context:
+        if cfg["detect_paires"](message):
+            _phase = "P"
+            try:
+                pairs_data = await asyncio.wait_for(
+                    cfg["get_pair_correlations"](top_n=5), timeout=30.0
+                )
+                if pairs_data:
+                    enrichment_context = cfg["format_pairs_context"](pairs_data)
+                    # EM: star pairs
+                    _get_star_pairs = cfg.get("get_star_pair_correlations")
+                    if _get_star_pairs:
+                        star_data = await asyncio.wait_for(_get_star_pairs(top_n=5), timeout=30.0)
+                        if star_data:
+                            enrichment_context += "\n\n" + cfg["format_star_pairs_context"](star_data)
+                    logger.info(f"{_lp} Paires injectees")
+            except Exception as e:
+                logger.warning(f"{_lp} Erreur paires: {e}")
+
+    # ── Phase OOR : Détection numéro hors range ──
+    if not _continuation_mode and not force_sql and not enrichment_context:
+        _oor_num, _oor_type = cfg["detect_oor"](message)
+        if _oor_num is not None:
+            _phase = "OOR"
+            _oor_streak = cfg["count_oor_streak"](history)
+            _oor_resp = cfg["get_oor_response"](lang, _oor_num, _oor_type, _oor_streak)
+            if _insult_prefix:
+                _oor_resp = _insult_prefix + "\n\n" + _oor_resp
+            logger.info(
+                f"{_lp} Numero hors range: {_oor_num} "
+                f"(type={_oor_type}, streak={_oor_streak})"
+            )
+            return _early(_oor_resp, "hybride_oor")
+
+    # Phase 1 : detection de numero simple
+    if not _continuation_mode and not force_sql and not enrichment_context:
+        numero, type_num = cfg["detect_numero"](message)
+        if numero is not None:
+            _phase = "1"
+            try:
+                stats = await asyncio.wait_for(
+                    cfg["get_numero_stats"](numero, type_num), timeout=30.0
+                )
+                if stats:
+                    enrichment_context = cfg["format_stats_context"](stats)
+                    logger.info(f"{_lp} Stats BDD injectees: numero={numero}, type={type_num}")
+            except Exception as e:
+                logger.warning(f"{_lp} Erreur stats BDD (numero={numero}): {e}")
+
+    # Phase SQL : Text-to-SQL fallback
+    _sql_gen_kwargs_fn = cfg.get("sql_gen_kwargs")
+    _sql_kw = {}
+    if _sql_gen_kwargs_fn:
+        _sql_kw["sql_gen_kwargs"] = _sql_gen_kwargs_fn(lang)
+    enrichment_context, _sql_query, _sql_status = await run_text_to_sql(
+        message, http_client, gem_api_key, history,
+        generate_sql_fn=cfg["generate_sql"], validate_sql_fn=cfg["validate_sql"],
+        ensure_limit_fn=cfg["ensure_limit"], execute_sql_fn=cfg["execute_safe_sql"],
+        format_result_fn=cfg["format_sql_result"], max_per_session=cfg["max_sql_per_session"],
+        log_prefix=cfg["sql_log_prefix"], force_sql=force_sql,
+        has_data_signal_fn=cfg["has_data_signal"],
+        continuation_mode=_continuation_mode, enrichment_context=enrichment_context,
+        **_sql_kw,
+    )
+    if _sql_query or _sql_status != "N/A":
+        _phase = "SQL"
+
+    if force_sql and not enrichment_context:
+        logger.warning(
+            f"{_lp} Phase SQL echouee avec filtre temporel, "
+            f"PAS de fallback Phase 3 (evite stats all-time incorrectes) | "
+            f'question="{message[:80]}"'
+        )
+
+    # ── Combine generation context + stats context ──
+    if _generation_context and enrichment_context:
+        enrichment_context = f"{enrichment_context}\n\n{_generation_context}"
+        logger.info(f"{_lp} Multi-action: stats + generation combines")
+    elif _generation_context:
+        enrichment_context = _generation_context
+
+    logger.info(
+        f"{cfg['debug_prefix']} force_sql={force_sql} | continuation={_continuation_mode} | "
+        f"enrichment={bool(enrichment_context)} | generation={bool(_generation_context)} | "
+        f"question=\"{message[:60]}\" | history_len={len(history or [])}"
+    )
+
+    _session_ctx = cfg["build_session_context"](history, message)
+
+    # Prepend country context (Phase GEO) if detected
+    if _country_context:
+        if enrichment_context:
+            enrichment_context = _country_context + "\n\n" + enrichment_context
+        else:
+            enrichment_context = _country_context
+
+    if _continuation_mode and _enriched_message:
+        user_text = f"[Page: {page}]\n\n{_enriched_message}"
+    elif enrichment_context:
+        user_text = f"[Page: {page}]\n\n{enrichment_context}\n\n[Question utilisateur] {message}"
+    else:
+        user_text = f"[Page: {page}] {message}"
+
+    if _session_ctx:
+        user_text = f"{_session_ctx}\n\n{user_text}"
+
+    contents.append({"role": "user", "parts": [{"text": user_text}]})
+
+    return None, {
+        "system_prompt": system_prompt,
+        "gem_api_key": gem_api_key,
+        "contents": contents,
+        "mode": mode,
+        "insult_prefix": _insult_prefix,
+        "history": history,
+        "lang": lang,
+        "fallback": _fallback,
+        "_chat_meta": {
+            "phase": _phase, "t0": _t0, "lang": lang,
+            "sql_query": _sql_query, "sql_status": _sql_status,
+            "grid_count": _grid_count, "has_exclusions": _has_exclusions,
+        },
+    }

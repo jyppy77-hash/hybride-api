@@ -32,6 +32,8 @@ async def enrich_analysis(analysis_local: str, window: str = "GLOBAL", *, http_c
     if prompt_template:
         prompt = prompt_template + "\n" + analysis_local
     else:
+        # Safety fallback: used only if prompt file is missing from disk.
+        # In production, prompt files always exist. This is defense-in-depth.
         prompt = f"""[LANGUE ET ORTHOGRAPHE — RÈGLE ABSOLUE]
 Tu réponds TOUJOURS en français correct avec TOUS les accents : é, è, ê, ë, à, â, ç, ù, û, ô, î, ï.
 Exemples obligatoires : "numéro" (jamais "numero"), "fréquence" (jamais "frequence"), "régularité" (jamais "regularite"), "dernière" (jamais "derniere"), "élevé" (jamais "eleve"), "intéressant" (jamais "interessant"), "présente" (jamais "presente"), "conformité" (jamais "conformite"), "éloigne" (jamais "eloigne"), "équilibre" (jamais "equilibre"), "mérite" (jamais "merite"), "peut-être" (jamais "peut-etre"), "sélection" (jamais "selection"), "mélange" (jamais "melange"), "répartition" (jamais "repartition").
