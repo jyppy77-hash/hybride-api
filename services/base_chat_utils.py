@@ -241,6 +241,138 @@ def _format_triplets_context_base(triplets_data: dict, header: str) -> str:
     return "\n".join(lines)
 
 
+def _format_stats_context_base(stats: dict, type_map: dict, default_classement: int) -> str:
+    """Formate les stats d'un numero en bloc de contexte pour Gemini.
+
+    type_map: mapping stats['type'] → display label (e.g. {"principal": "principal", "chance": "chance"}).
+    default_classement: classement_sur default (49 for Loto, 50 for EM).
+    """
+    type_label = type_map.get(stats["type"], stats["type"])
+    cat = stats["categorie"].upper()
+    classement_sur = stats.get("classement_sur", default_classement)
+    derniere_sortie_fr = _format_date_fr(stats['derniere_sortie'])
+
+    return (
+        f"[DONNÉES TEMPS RÉEL - Numéro {type_label} {stats['numero']}]\n"
+        f"Fréquence totale : {stats['frequence_totale']} apparitions "
+        f"sur {stats['total_tirages']} tirages ({stats['pourcentage_apparition']})\n"
+        f"Dernière sortie : {derniere_sortie_fr}\n"
+        f"Écart actuel : {stats['ecart_actuel']} tirages\n"
+        f"Écart moyen : {stats['ecart_moyen']} tirages\n"
+        f"Classement fréquence : {stats['classement']}e sur {classement_sur}\n"
+        f"Catégorie : {cat}\n"
+        f"Période analysée : {_format_periode_fr(stats['periode'])}"
+    )
+
+
+def _format_grille_context_base(result: dict, secondary_key: str, secondary_label: str,
+                                sum_range: str, low_threshold: int, high_label: str,
+                                match_key: str = "chance_match", match_label: str = " + chance") -> str:
+    """Formate l'analyse de grille en bloc de contexte pour Gemini.
+
+    secondary_key: key in result for secondary number(s) ("chance" or "etoiles").
+    secondary_label: display label ("chance" or "étoiles").
+    sum_range: ideal sum range string (e.g. "100-140" or "75-175").
+    low_threshold: boundary for bas/haut split (24 for Loto, 25 for EM).
+    high_label: label for high numbers (e.g. "25-49" or "26-50").
+    match_key: key in meilleure_correspondance for secondary match.
+    match_label: label for match suffix.
+    """
+    nums = result["numeros"]
+    secondary = result.get(secondary_key)
+    a = result["analyse"]
+    h = result["historique"]
+
+    nums_str = " ".join(str(n) for n in nums)
+    if secondary:
+        if isinstance(secondary, list):
+            sec_str = f" ({secondary_label}: {' '.join(str(e) for e in secondary)})"
+        else:
+            sec_str = f" ({secondary_label}: {secondary})"
+    else:
+        sec_str = ""
+    lines = [f"[ANALYSE DE GRILLE - {nums_str}{sec_str}]"]
+
+    ok = lambda b: "\u2713" if b else "\u2717"
+    lines.append(f"Somme : {a['somme']} (idéal : {sum_range}) {ok(a['somme_ok'])}")
+    lines.append(f"Pairs : {a['pairs']} / Impairs : {a['impairs']} {ok(a['equilibre_pair_impair'])}")
+    lines.append(f"Bas (1-{low_threshold}) : {a['bas']} / Hauts ({high_label}) : {a['hauts']} {ok(a['equilibre_bas_haut'])}")
+    lines.append(f"Dispersion : {a['dispersion']} (idéal : >= 15) {ok(a['dispersion_ok'])}")
+    lines.append(f"Consécutifs : {a['consecutifs']} {ok(a['consecutifs'] <= 2)}")
+
+    if a['numeros_chauds']:
+        lines.append(f"Numéros chauds : {', '.join(str(n) for n in a['numeros_chauds'])}")
+    if a['numeros_froids']:
+        lines.append(f"Numéros froids : {', '.join(str(n) for n in a['numeros_froids'])}")
+    if a['numeros_neutres']:
+        lines.append(f"Numéros neutres : {', '.join(str(n) for n in a['numeros_neutres'])}")
+
+    lines.append(f"Conformité : {a['conformite_pct']}%")
+    lines.append(f"Badges : {', '.join(a['badges'])}")
+
+    if h['deja_sortie']:
+        lines.append(f"Historique : combinaison déjà sortie le {', '.join(h['exact_dates'])}")
+    else:
+        mc = h['meilleure_correspondance']
+        if mc['nb_numeros_communs'] > 0:
+            communs = ', '.join(str(n) for n in mc['numeros_communs'])
+            sec_txt = match_label if mc.get(match_key) else ""
+            lines.append(
+                f"Historique : jamais sortie. Meilleure correspondance : "
+                f"{mc['nb_numeros_communs']} numéros communs{sec_txt} le {mc['date']} ({communs})"
+            )
+        else:
+            lines.append("Historique : combinaison jamais sortie")
+
+    return "\n".join(lines)
+
+
+def _build_session_context_base(history, current_message: str,
+                                detect_numero_fn, detect_tirage_fn,
+                                type_label_fn) -> str:
+    """Scanne l'historique + message courant pour extraire les numeros et tirages.
+
+    detect_numero_fn: (msg) -> (num, type) or (None, None)
+    detect_tirage_fn: (msg) -> target or None
+    type_label_fn: (num_type) -> display label
+    Returns a [SESSION] block or empty string.
+    """
+    from datetime import date as _date
+    numeros_vus = set()
+    tirages_vus = set()
+
+    messages_user = [msg.content for msg in (history or []) if msg.role == "user"]
+    messages_user.append(current_message)
+
+    for msg in messages_user:
+        num, num_type = detect_numero_fn(msg)
+        if num is not None:
+            numeros_vus.add((num, num_type))
+
+        tirage = detect_tirage_fn(msg)
+        if tirage is not None:
+            if tirage == "latest":
+                tirages_vus.add("dernier")
+            elif isinstance(tirage, _date):
+                tirages_vus.add(_format_date_fr(str(tirage)))
+
+    if len(numeros_vus) + len(tirages_vus) < 2:
+        return ""
+
+    parts = []
+    if numeros_vus:
+        nums_str = ", ".join(
+            f"{n} ({type_label_fn(t)})"
+            for n, t in sorted(numeros_vus)
+        )
+        parts.append(f"Numéros consultés : {nums_str}")
+    if tirages_vus:
+        tir_str = ", ".join(sorted(tirages_vus))
+        parts.append(f"Tirages consultés : {tir_str}")
+
+    return "[SESSION]\n" + "\n".join(parts)
+
+
 def _format_complex_context_base(intent: dict, data, type_label_fn) -> str:
     """Formate le resultat d'une requete complexe en contexte pour Gemini.
 

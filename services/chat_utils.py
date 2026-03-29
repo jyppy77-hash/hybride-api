@@ -19,6 +19,8 @@ from services.base_chat_utils import (  # noqa: F401
     _MOIS_FR, _format_date_fr, _format_periode_fr,
     _format_pairs_context_base, _format_triplets_context_base,
     _format_complex_context_base,
+    _format_stats_context_base, _format_grille_context_base,
+    _build_session_context_base,
 )
 
 logger = logging.getLogger(__name__)
@@ -133,68 +135,17 @@ def _format_tirage_context(tirage: dict) -> str:
 
 
 def _format_stats_context(stats: dict) -> str:
-    """Formate les stats d'un numero en bloc de contexte pour Gemini."""
-    type_label = "principal" if stats["type"] == "principal" else "chance"
-    cat = stats["categorie"].upper()
-    classement_sur = stats.get("classement_sur", 49)
-    derniere_sortie_fr = _format_date_fr(stats['derniere_sortie'])
-
-    return (
-        f"[DONNÉES TEMPS RÉEL - Numéro {type_label} {stats['numero']}]\n"
-        f"Fréquence totale : {stats['frequence_totale']} apparitions "
-        f"sur {stats['total_tirages']} tirages ({stats['pourcentage_apparition']})\n"
-        f"Dernière sortie : {derniere_sortie_fr}\n"
-        f"Écart actuel : {stats['ecart_actuel']} tirages\n"
-        f"Écart moyen : {stats['ecart_moyen']} tirages\n"
-        f"Classement fréquence : {stats['classement']}e sur {classement_sur}\n"
-        f"Catégorie : {cat}\n"
-        f"Période analysée : {_format_periode_fr(stats['periode'])}"
-    )
+    """Formate les stats d'un numero Loto en bloc de contexte pour Gemini."""
+    return _format_stats_context_base(stats, {"principal": "principal", "chance": "chance"}, 49)
 
 
 def _format_grille_context(result: dict) -> str:
-    """Formate l'analyse de grille en bloc de contexte pour Gemini."""
-    nums = result["numeros"]
-    chance = result["chance"]
-    a = result["analyse"]
-    h = result["historique"]
-
-    nums_str = " ".join(str(n) for n in nums)
-    chance_str = f" (chance: {chance})" if chance else ""
-    lines = [f"[ANALYSE DE GRILLE - {nums_str}{chance_str}]"]
-
-    ok = lambda b: "\u2713" if b else "\u2717"
-    lines.append(f"Somme : {a['somme']} (idéal : 100-140) {ok(a['somme_ok'])}")
-    lines.append(f"Pairs : {a['pairs']} / Impairs : {a['impairs']} {ok(a['equilibre_pair_impair'])}")
-    lines.append(f"Bas (1-24) : {a['bas']} / Hauts (25-49) : {a['hauts']} {ok(a['equilibre_bas_haut'])}")
-    lines.append(f"Dispersion : {a['dispersion']} (idéal : >= 15) {ok(a['dispersion_ok'])}")
-    lines.append(f"Consécutifs : {a['consecutifs']} {ok(a['consecutifs'] <= 2)}")
-
-    if a['numeros_chauds']:
-        lines.append(f"Numéros chauds : {', '.join(str(n) for n in a['numeros_chauds'])}")
-    if a['numeros_froids']:
-        lines.append(f"Numéros froids : {', '.join(str(n) for n in a['numeros_froids'])}")
-    if a['numeros_neutres']:
-        lines.append(f"Numéros neutres : {', '.join(str(n) for n in a['numeros_neutres'])}")
-
-    lines.append(f"Conformité : {a['conformite_pct']}%")
-    lines.append(f"Badges : {', '.join(a['badges'])}")
-
-    if h['deja_sortie']:
-        lines.append(f"Historique : combinaison déjà sortie le {', '.join(h['exact_dates'])}")
-    else:
-        mc = h['meilleure_correspondance']
-        if mc['nb_numeros_communs'] > 0:
-            communs = ', '.join(str(n) for n in mc['numeros_communs'])
-            chance_txt = " + chance" if mc.get('chance_match') else ""
-            lines.append(
-                f"Historique : jamais sortie. Meilleure correspondance : "
-                f"{mc['nb_numeros_communs']} numéros communs{chance_txt} le {mc['date']} ({communs})"
-            )
-        else:
-            lines.append("Historique : combinaison jamais sortie")
-
-    return "\n".join(lines)
+    """Formate l'analyse de grille Loto en bloc de contexte pour Gemini."""
+    return _format_grille_context_base(
+        result, secondary_key="chance", secondary_label="chance",
+        sum_range="100-140", low_threshold=24, high_label="25-49",
+        match_key="chance_match", match_label=" + chance",
+    )
 
 
 def _format_complex_context(intent: dict, data) -> str:
@@ -209,43 +160,12 @@ def _format_complex_context(intent: dict, data) -> str:
 # ────────────────────────────────────────────
 
 def _build_session_context(history, current_message: str) -> str:
-    """
-    Scanne l'historique + message courant pour extraire les numeros
-    et tirages consultes. Retourne un bloc [SESSION] ou chaine vide.
-    """
-    numeros_vus = set()
-    tirages_vus = set()
-
-    messages_user = [msg.content for msg in (history or []) if msg.role == "user"]
-    messages_user.append(current_message)
-
-    for msg in messages_user:
-        num, num_type = _detect_numero(msg)
-        if num is not None:
-            numeros_vus.add((num, num_type))
-
-        tirage = _detect_tirage(msg)
-        if tirage is not None:
-            if tirage == "latest":
-                tirages_vus.add("dernier")
-            elif isinstance(tirage, date):
-                tirages_vus.add(_format_date_fr(str(tirage)))
-
-    if len(numeros_vus) + len(tirages_vus) < 2:
-        return ""
-
-    parts = []
-    if numeros_vus:
-        nums_str = ", ".join(
-            f"{n} ({'chance' if t == 'chance' else 'principal'})"
-            for n, t in sorted(numeros_vus)
-        )
-        parts.append(f"Numéros consultés : {nums_str}")
-    if tirages_vus:
-        tir_str = ", ".join(sorted(tirages_vus))
-        parts.append(f"Tirages consultés : {tir_str}")
-
-    return "[SESSION]\n" + "\n".join(parts)
+    """Scanne l'historique Loto pour extraire numeros/tirages. Retourne [SESSION] ou vide."""
+    return _build_session_context_base(
+        history, current_message,
+        detect_numero_fn=_detect_numero, detect_tirage_fn=_detect_tirage,
+        type_label_fn=lambda t: 'chance' if t == 'chance' else 'principal',
+    )
 
 
 # ────────────────────────────────────────────

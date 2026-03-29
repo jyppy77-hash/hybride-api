@@ -7,6 +7,7 @@ import httpx
 
 from services.prompt_loader import load_prompt
 from services.circuit_breaker import gemini_breaker, CircuitOpenError
+from services.gemini_shared import enrich_analysis_base, ENRICHMENT_INSTRUCTIONS
 
 logger = logging.getLogger(__name__)
 
@@ -17,75 +18,17 @@ GEMINI_STREAM_URL = (
 )
 
 
-# V70 F04: i18n system instructions for enrichment (mirrors em_gemini.py pattern)
-_ENRICHMENT_INSTRUCTIONS = {
-    "fr": (
-        "OBLIGATION ABSOLUE : Tu écris TOUJOURS en français correct "
-        "avec TOUS les accents (é, è, ê, ë, à, â, ç, ù, û, ô, î, ï). "
-        "Exemples : \"numéro\" (jamais \"numero\"), \"fréquence\" (jamais \"frequence\"), "
-        "\"régularité\" (jamais \"regularite\"), \"dernière\" (jamais \"derniere\"), "
-        "\"élevé\" (jamais \"eleve\"), \"intéressant\" (jamais \"interessant\"), "
-        "\"présente\" (jamais \"presente\"), \"conformité\" (jamais \"conformite\"), "
-        "\"équilibre\" (jamais \"equilibre\"), \"mérite\" (jamais \"merite\"), "
-        "\"sélection\" (jamais \"selection\"), \"mélange\" (jamais \"melange\"), "
-        "\"répartition\" (jamais \"repartition\"). "
-        "Un texte sans accents est considéré comme un BUG CRITIQUE."
-    ),
-    "en": (
-        "MANDATORY: You ALWAYS write in correct English. "
-        "Keep a professional, educational tone suitable for a PDF report. "
-        "Never promise winnings. Stay neutral and factual."
-    ),
-    "es": (
-        "OBLIGATORIO: Escribes SIEMPRE en español correcto. "
-        "Mantén un tono profesional y pedagógico adecuado para un informe PDF. "
-        "Nunca prometas ganancias. Mantente neutro y factual."
-    ),
-    "pt": (
-        "OBRIGATÓRIO: Escreves SEMPRE em português correto de Portugal "
-        "com TODOS os acentos (á, à, â, ã, é, ê, í, ó, ô, õ, ú, ç). "
-        "Mantém um tom profissional e pedagógico adequado a um relatório PDF. "
-        "Nunca prometas ganhos. Mantém-te neutro e factual."
-    ),
-    "de": (
-        "PFLICHT: Du schreibst IMMER in korrektem Deutsch "
-        "mit allen Umlauten (ä, ö, ü, ß). "
-        "Halte einen professionellen, pädagogischen Ton, der für einen PDF-Bericht geeignet ist. "
-        "Verspreche niemals Gewinne. Bleibe neutral und sachlich."
-    ),
-    "nl": (
-        "VERPLICHT: Je schrijft ALTIJD in correct Nederlands. "
-        "Houd een professionele, educatieve toon aan die geschikt is voor een PDF-rapport. "
-        "Beloof nooit winsten. Blijf neutraal en feitelijk."
-    ),
-}
+# V70 F04: i18n system instructions — now shared in gemini_shared.py
+_ENRICHMENT_INSTRUCTIONS = ENRICHMENT_INSTRUCTIONS  # backward compat alias
 
 
 async def enrich_analysis(analysis_local: str, window: str = "GLOBAL", *, http_client: httpx.AsyncClient, lang: str = "fr") -> dict:
-    """
-    Enrichit le texte d'analyse local via Gemini.
-    Utilise un prompt dynamique adapte a la fenetre d'analyse.
-    Timeout 20 secondes, fallback vers texte local si erreur.
-
-    Returns:
-        dict avec 'analysis_enriched' et 'source'
-    """
+    """Enrichit le texte d'analyse Loto via Gemini (delegates to shared base)."""
     window_key = window or "GLOBAL"
-
     logger.info(f"[META TEXTE] Fenetre={window_key}")
 
-    gem_api_key = os.environ.get("GEM_API_KEY") or os.environ.get("GEMINI_API_KEY")
-
-    logger.debug(f"[META TEXTE] GEM_API_KEY presente: {bool(gem_api_key)}")
-    logger.debug(f"[META TEXTE] Vars dispo: GEM_API_KEY={bool(os.environ.get('GEM_API_KEY'))}, GEMINI_API_KEY={bool(os.environ.get('GEMINI_API_KEY'))}")
-
-    if not gem_api_key:
-        logger.warning("[META TEXTE] GEM_API_KEY non configuree - fallback local")
-        return {"analysis_enriched": analysis_local, "source": "hybride_local"}
-
-    # Charger le prompt dynamique contextuel
+    # Build prompt (game-specific: Loto prompt loader)
     prompt_template = load_prompt(window_key)
-
     if prompt_template:
         prompt = prompt_template + "\n" + analysis_local
     else:
@@ -106,88 +49,11 @@ Règles strictes :
 Texte a reformuler :
 {analysis_local}"""
 
-    logger.debug(f"[META TEXTE] Prompt construit ({len(prompt)} chars), appel Gemini...")
-
-    try:
-        logger.debug("[META TEXTE] POST vers Gemini en cours...")
-        _t0 = time.monotonic()
-        response = await gemini_breaker.call(
-            http_client,
-            GEMINI_MODEL_URL,
-            headers={
-                "Content-Type": "application/json",
-                "x-goog-api-key": gem_api_key
-            },
-            json={
-                "systemInstruction": {
-                    "parts": [{
-                        "text": _ENRICHMENT_INSTRUCTIONS.get(lang, _ENRICHMENT_INSTRUCTIONS["fr"])
-                    }]
-                },
-                "contents": [{
-                    "parts": [{"text": prompt}]
-                }],
-                "generationConfig": {
-                    "temperature": 0.7,
-                    "maxOutputTokens": 250
-                }
-            }
-        )
-
-        logger.debug(f"[META TEXTE] Gemini HTTP status: {response.status_code}")
-
-        _dur_ms = (time.monotonic() - _t0) * 1000
-        if response.status_code == 200:
-            data = response.json()
-            # Track Gemini usage (tokens from usage_metadata)
-            _usage = data.get("usageMetadata", {})
-            _tin = _usage.get("promptTokenCount", 0)
-            _tout = _usage.get("candidatesTokenCount", 0)
-            try:
-                from services.gcp_monitoring import track_gemini_call
-                import asyncio
-                asyncio.ensure_future(track_gemini_call(
-                    _dur_ms, _tin, _tout, call_type="enrichment_loto", lang=lang))
-            except Exception:
-                pass
-            candidates = data.get("candidates", [])
-            logger.debug(f"[META TEXTE] candidates count: {len(candidates)}")
-            if candidates:
-                content = candidates[0].get("content", {})
-                parts = content.get("parts", [])
-                if parts:
-                    enriched_text = parts[0].get("text", "").strip()
-                    logger.debug(f"[META TEXTE] enriched_text length: {len(enriched_text)}")
-                    if enriched_text:
-                        logger.info(f"[META TEXTE] Gemini OK (window={window_key})")
-                        return {"analysis_enriched": enriched_text, "source": "gemini_enriched"}
-                    else:
-                        logger.warning("[META TEXTE] enriched_text vide apres strip")
-                else:
-                    logger.warning("[META TEXTE] parts vide dans la reponse Gemini")
-            else:
-                logger.warning("[META TEXTE] candidates vide dans la reponse Gemini")
-        else:
-            logger.warning(f"[META TEXTE] Reponse Gemini HTTP {response.status_code}: {response.text[:500]}")
-            try:
-                from services.gcp_monitoring import track_gemini_call
-                import asyncio
-                asyncio.ensure_future(track_gemini_call(
-                    _dur_ms, error=True, call_type="enrichment_loto", lang=lang))
-            except Exception:
-                pass
-
-        return {"analysis_enriched": analysis_local, "source": "hybride_local"}
-
-    except CircuitOpenError:
-        logger.warning("[META TEXTE] Circuit breaker ouvert — fallback local")
-        return {"analysis_enriched": analysis_local, "source": "fallback_circuit"}
-    except httpx.TimeoutException:
-        logger.warning("[META TEXTE] Timeout Gemini (20s) - fallback local")
-        return {"analysis_enriched": analysis_local, "source": "hybride_local"}
-    except Exception as e:
-        logger.error(f"[META TEXTE] Erreur Gemini: {e}", exc_info=True)
-        return {"analysis_enriched": analysis_local, "source": "fallback"}
+    return await enrich_analysis_base(
+        analysis_local, prompt, http_client=http_client, lang=lang,
+        call_type="enrichment_loto", log_prefix="[META TEXTE]",
+        breaker=gemini_breaker,
+    )
 
 
 async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, timeout=15.0,

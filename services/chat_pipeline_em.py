@@ -70,6 +70,15 @@ from services.chat_utils_em import (
 )
 from services.chat_logger import log_chat_exchange
 from services.chat_pipeline import _get_draw_count  # F02: shared draw count helper
+from services.chat_pipeline_shared import (
+    sse_event as _sse_event_shared,
+    log_from_meta as _log_from_meta_shared,
+    build_gemini_contents,
+    run_text_to_sql,
+    call_gemini_and_respond,
+    stream_and_respond,
+    handle_pitch_common,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -110,31 +119,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
         logger.warning("[EM CHAT] GEM_API_KEY non configuree — fallback")
         return {"response": _fallback, "source": "fallback", "mode": mode}, None
 
-    contents = []
-
-    history = (history or [])[-20:]
-    if history and history[-1].role == "user" and history[-1].content == message:
-        history = history[:-1]
-
-    _skip_insult_response = False
-    for msg in history:
-        if msg.role == "user" and _detect_insulte(msg.content):
-            _skip_insult_response = True
-            continue
-        if msg.role == "assistant" and _skip_insult_response:
-            _skip_insult_response = False
-            continue
-        _skip_insult_response = False
-
-        role = "user" if msg.role == "user" else "model"
-        content = _strip_sponsor_from_text(msg.content) if role == "model" else msg.content
-        if contents and contents[-1]["role"] == role:
-            contents[-1]["parts"][0]["text"] += "\n" + content
-        else:
-            contents.append({"role": role, "parts": [{"text": content}]})
-
-    while contents and contents[0]["role"] == "model":
-        contents.pop(0)
+    contents, history = build_gemini_contents(history, message, _detect_insulte)
 
     # ── Anti-re-introduction : TOUJOURS injecté (le welcome JS a déjà fait la présentation) ──
     system_prompt += (
@@ -567,90 +552,19 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
             except Exception as e:
                 logger.warning(f"[EM CHAT] Erreur stats BDD (numero={numero}): {e}")
 
-    # Phase SQL : Text-to-SQL fallback
-    # V65: skip SQL for pure conversational messages (no digit, no data keyword)
-    _skip_sql = not force_sql and not _has_data_signal(message)
-    if _skip_sql:
-        logger.info(f'[EM CHAT] Skip Phase SQL — no data signal | question="{message[:60]}"')
-    if not _continuation_mode and not enrichment_context and not _skip_sql:
+    # Phase SQL : Text-to-SQL fallback (shared helper)
+    enrichment_context, _sql_query, _sql_status = await run_text_to_sql(
+        message, http_client, gem_api_key, history,
+        generate_sql_fn=_generate_sql_em, validate_sql_fn=_validate_sql,
+        ensure_limit_fn=_ensure_limit, execute_sql_fn=_execute_safe_sql,
+        format_result_fn=_format_sql_result, max_per_session=_MAX_SQL_PER_SESSION,
+        log_prefix="[EM TEXT2SQL]", force_sql=force_sql,
+        has_data_signal_fn=_has_data_signal,
+        continuation_mode=_continuation_mode, enrichment_context=enrichment_context,
+        sql_gen_kwargs={"lang": lang},
+    )
+    if _sql_query or _sql_status != "N/A":
         _phase = "SQL"
-        _sql_count = sum(1 for m in (history or []) if m.role == "user")
-        if _sql_count >= _MAX_SQL_PER_SESSION:
-            logger.info(f"[EM TEXT2SQL] Rate-limit session ({_sql_count} echanges)")
-        else:
-            t0 = time.monotonic()
-            try:
-                sql = await asyncio.wait_for(
-                    _generate_sql_em(message, http_client, gem_api_key, history=history, lang=lang),
-                    timeout=10.0,
-                )
-                if sql and sql.strip().upper() != "NO_SQL" and _validate_sql(sql):
-                    _sql_query = sql
-                    sql = _ensure_limit(sql)
-                    rows = await asyncio.wait_for(
-                        _execute_safe_sql(sql), timeout=5.0
-                    )
-                    t_total = int((time.monotonic() - t0) * 1000)
-                    if rows is not None and len(rows) > 0:
-                        _sql_status = "OK"
-                        enrichment_context = _format_sql_result(rows)
-                        logger.info(
-                            f'[EM TEXT2SQL] question="{message[:80]}" | '
-                            f'sql="{sql[:120]}" | status=OK | '
-                            f'rows={len(rows)} | time={t_total}ms'
-                        )
-                    elif rows is not None:
-                        _sql_status = "EMPTY"
-                        enrichment_context = "[RÉSULTAT SQL]\nAucun résultat trouvé pour cette requête."
-                        logger.info(
-                            f'[EM TEXT2SQL] question="{message[:80]}" | '
-                            f'sql="{sql[:120]}" | status=EMPTY | '
-                            f'rows=0 | time={t_total}ms'
-                        )
-                    else:
-                        _sql_status = "ERROR"
-                        enrichment_context = "[RÉSULTAT SQL]\nAucun résultat trouvé pour cette requête."
-                        logger.warning(
-                            f'[EM TEXT2SQL] question="{message[:80]}" | '
-                            f'sql="{sql[:120]}" | status=EXEC_ERROR | '
-                            f'time={t_total}ms'
-                        )
-                elif sql and sql.strip().upper() == "NO_SQL":
-                    _sql_status = "NO_SQL"
-                    logger.info(
-                        f'[EM TEXT2SQL] question="{message[:80]}" | '
-                        f'sql=NO_SQL | status=NO_SQL | '
-                        f'time={int((time.monotonic() - t0) * 1000)}ms'
-                    )
-                elif sql:
-                    _sql_query = sql
-                    _sql_status = "REJECTED"
-                    logger.warning(
-                        f'[EM TEXT2SQL] question="{message[:80]}" | '
-                        f'sql="{sql[:120]}" | status=REJECTED | '
-                        f'time={int((time.monotonic() - t0) * 1000)}ms'
-                    )
-                else:
-                    _sql_status = "ERROR"
-                    logger.warning(
-                        f'[EM TEXT2SQL] question="{message[:80]}" | '
-                        f'status=GEN_ERROR | '
-                        f'time={int((time.monotonic() - t0) * 1000)}ms'
-                    )
-            except asyncio.TimeoutError:
-                _sql_status = "ERROR"
-                logger.warning(
-                    f'[EM TEXT2SQL] question="{message[:80]}" | '
-                    f'status=TIMEOUT | '
-                    f'time={int((time.monotonic() - t0) * 1000)}ms'
-                )
-            except Exception as e:
-                _sql_status = "ERROR"
-                logger.warning(
-                    f'[EM TEXT2SQL] question="{message[:80]}" | '
-                    f'status=ERROR | error="{e}" | '
-                    f'time={int((time.monotonic() - t0) * 1000)}ms'
-                )
 
     # Quand force_sql=True et Phase SQL echoue, NE PAS fallback vers
     # Phase 3 (donnees globales sans filtre date) — cela retournerait
@@ -715,106 +629,32 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
 
 def _log_from_meta_em(meta, message, response_preview="",
                       is_error=False, error_detail=None):
-    """Helper: call log_chat_exchange from _chat_meta dict (EM module)."""
-    if not meta:
-        return
-    log_chat_exchange(
-        module="em", lang=meta.get("lang", "fr"), question=message,
-        response_preview=response_preview,
-        phase_detected=meta.get("phase", "unknown"),
-        sql_generated=meta.get("sql_query"),
-        sql_status=meta.get("sql_status", "N/A"),
-        duration_ms=int((time.monotonic() - meta["t0"]) * 1000),
-        grid_count=meta.get("grid_count", 0),
-        has_exclusions=meta.get("has_exclusions", False),
-        is_error=is_error, error_detail=error_detail,
-    )
+    """Helper: call log_chat_exchange from _chat_meta dict (EM, delegates to shared)."""
+    _log_from_meta_shared(meta, "em", meta.get("lang", "fr") if meta else "fr",
+                          message, response_preview, is_error=is_error, error_detail=error_detail)
 
 
 async def handle_chat_em(message: str, history: list, page: str, http_client, lang: str = "fr") -> dict:
-    """
-    Pipeline 12 phases du chatbot HYBRIDE EuroMillions.
-    Retourne dict(response=str, source=str, mode=str).
-    """
+    """Pipeline 12 phases du chatbot HYBRIDE EuroMillions. Retourne dict(response, source, mode)."""
     early, ctx = await _prepare_chat_context_em(message, history, page, http_client, lang)
     if early:
         _log_from_meta_em(early.get("_chat_meta"), message, early.get("response", ""))
         return early
-
-    mode = ctx["mode"]
-    _fallback = ctx["fallback"]
-
-    try:
-        response = await gemini_breaker.call(
-            http_client,
-            GEMINI_MODEL_URL,
-            headers={
-                "Content-Type": "application/json",
-                "x-goog-api-key": ctx["gem_api_key"],
-            },
-            json={
-                "system_instruction": {
-                    "parts": [{"text": ctx["system_prompt"]}]
-                },
-                "contents": ctx["contents"],
-                "generationConfig": {
-                    "temperature": 0.8,
-                    "maxOutputTokens": 300,
-                },
-            },
-            timeout=15.0,
-        )
-
-        if response.status_code == 200:
-            data = response.json()
-            candidates = data.get("candidates", [])
-            if candidates:
-                parts = candidates[0].get("content", {}).get("parts", [])
-                if parts:
-                    text = parts[0].get("text", "").strip()
-                    if text:
-                        text = _clean_response(text)
-                        if ctx["insult_prefix"]:
-                            text = ctx["insult_prefix"] + "\n\n" + text
-                        sponsor_line = _get_sponsor_if_due(ctx["history"], lang=ctx["lang"], module="em")
-                        if sponsor_line:
-                            text += "\n\n" + sponsor_line
-                        logger.info(
-                            f"[EM CHAT] OK (page={page}, mode={mode})"
-                        )
-                        _log_from_meta_em(ctx.get("_chat_meta"), message, text)
-                        return {"response": text, "source": "gemini", "mode": mode}
-
-        logger.warning(
-            f"[EM CHAT] Reponse Gemini invalide: {response.status_code}"
-        )
-        _log_from_meta_em(ctx.get("_chat_meta"), message, is_error=True, error_detail=f"HTTP {response.status_code}")
-        return {"response": _fallback, "source": "fallback", "mode": mode}
-
-    except CircuitOpenError:
-        logger.warning("[EM CHAT] Circuit breaker ouvert — fallback")
-        _log_from_meta_em(ctx.get("_chat_meta"), message, is_error=True, error_detail="CircuitOpen")
-        return {"response": _fallback, "source": "fallback_circuit", "mode": mode}
-    except httpx.TimeoutException:
-        logger.warning("[EM CHAT] Timeout Gemini (15s) — fallback")
-        _log_from_meta_em(ctx.get("_chat_meta"), message, is_error=True, error_detail="Timeout")
-        return {"response": _fallback, "source": "fallback", "mode": mode}
-    except Exception as e:
-        logger.error(f"[EM CHAT] Erreur Gemini: {e}")
-        _log_from_meta_em(ctx.get("_chat_meta"), message, is_error=True, error_detail=str(e)[:255])
-        return {"response": _fallback, "source": "fallback", "mode": mode}
+    ctx["_http_client"] = http_client
+    return await call_gemini_and_respond(
+        ctx, ctx["fallback"], "[EM CHAT]", "em", lang, message, page,
+        sponsor_kwargs={"lang": ctx["lang"], "module": "em"},
+        breaker=gemini_breaker,
+    )
 
 
 def _sse_event_em(data):
-    """Format dict as SSE event line."""
-    return f"data: {json.dumps(data, ensure_ascii=False)}\n\n"
+    """Format dict as SSE event line (delegates to shared)."""
+    return _sse_event_shared(data)
 
 
 async def handle_chat_stream_em(message: str, history: list, page: str, http_client, lang: str = "fr"):
-    """
-    Async generator — SSE streaming du chatbot HYBRIDE EuroMillions.
-    Yields SSE event strings: data: {...}\n\n
-    """
+    """Async generator — SSE streaming du chatbot HYBRIDE EuroMillions. Yields SSE event strings."""
     early, ctx = await _prepare_chat_context_em(message, history, page, http_client, lang)
     if early:
         _log_from_meta_em(early.get("_chat_meta"), message, early.get("response", ""))
@@ -826,84 +666,14 @@ async def handle_chat_stream_em(message: str, history: list, page: str, http_cli
         })
         return
 
-    mode = ctx["mode"]
-    _fallback = ctx["fallback"]
-    _stream_chunks = []
-
-    try:
-        if ctx["insult_prefix"]:
-            yield _sse_event_em({
-                "chunk": ctx["insult_prefix"] + "\n\n",
-                "source": "gemini", "mode": mode, "is_done": False,
-            })
-
-        has_chunks = False
-        _buf = StreamBuffer()
-        async for chunk in stream_gemini_chat(
-            http_client, ctx["gem_api_key"], ctx["system_prompt"],
-            ctx["contents"], timeout=15.0,
-            call_type="chat_em", lang=lang,
-        ):
-            safe = _buf.add_chunk(chunk)
-            if not safe:
-                continue
-            has_chunks = True
-            _stream_chunks.append(safe)
-            yield _sse_event_em({
-                "chunk": safe, "source": "gemini", "mode": mode, "is_done": False,
-            })
-
-        # Flush remaining buffer
-        _remaining = _buf.flush()
-        if _remaining:
-            has_chunks = True
-            _stream_chunks.append(_remaining)
-            yield _sse_event_em({
-                "chunk": _remaining, "source": "gemini", "mode": mode, "is_done": False,
-            })
-
-        if not has_chunks:
-            _log_from_meta_em(ctx.get("_chat_meta"), message, _fallback, is_error=True, error_detail="NoChunks")
-            yield _sse_event_em({
-                "chunk": _fallback,
-                "source": "fallback", "mode": mode, "is_done": True,
-            })
-            return
-
-        sponsor_line = _get_sponsor_if_due(ctx["history"], lang=ctx["lang"], module="em")
-        if sponsor_line:
-            yield _sse_event_em({
-                "chunk": "\n\n" + sponsor_line,
-                "source": "gemini", "mode": mode, "is_done": False,
-            })
-
-        yield _sse_event_em({
-            "chunk": "", "source": "gemini", "mode": mode, "is_done": True,
-        })
-        _log_from_meta_em(ctx.get("_chat_meta"), message, "".join(_stream_chunks))
-        logger.info(f"[EM CHAT] Stream OK (page={page}, mode={mode})")
-
-    except CircuitOpenError:
-        logger.warning("[EM CHAT] Circuit breaker ouvert — fallback")
-        _log_from_meta_em(ctx.get("_chat_meta"), message, is_error=True, error_detail="CircuitOpen")
-        yield _sse_event_em({
-            "chunk": _fallback,
-            "source": "fallback_circuit", "mode": mode, "is_done": True,
-        })
-    except httpx.TimeoutException:
-        logger.warning("[EM CHAT] Timeout Gemini (15s) — fallback")
-        _log_from_meta_em(ctx.get("_chat_meta"), message, is_error=True, error_detail="Timeout")
-        yield _sse_event_em({
-            "chunk": _fallback,
-            "source": "fallback", "mode": mode, "is_done": True,
-        })
-    except Exception as e:
-        logger.error(f"[EM CHAT] Erreur streaming: {e}")
-        _log_from_meta_em(ctx.get("_chat_meta"), message, is_error=True, error_detail=str(e)[:255])
-        yield _sse_event_em({
-            "chunk": _fallback,
-            "source": "fallback", "mode": mode, "is_done": True,
-        })
+    ctx["_http_client"] = http_client
+    async for event in stream_and_respond(
+        ctx, ctx["fallback"], "[EM CHAT]", "em", lang,
+        message, page, call_type="chat_em",
+        sponsor_kwargs={"lang": ctx["lang"], "module": "em"},
+        stream_fn=stream_gemini_chat,
+    ):
+        yield event
 
 
 # =========================
@@ -911,200 +681,30 @@ async def handle_chat_stream_em(message: str, history: list, page: str, http_cli
 # =========================
 
 async def handle_pitch_em(grilles: list, http_client, lang: str = "fr") -> dict:
-    """
-    Genere des pitchs HYBRIDE personnalises pour chaque grille EM via Gemini.
-    Retourne dict(success, data, error, status_code).
-    """
-    # Validation
+    """Genere des pitchs HYBRIDE personnalises pour chaque grille EM via Gemini."""
+    # Validation EM
     if not grilles or len(grilles) > 5:
-        return {
-            "success": False, "data": None,
-            "error": "Entre 1 et 5 grilles requises",
-            "status_code": 400,
-        }
-
+        return {"success": False, "data": None, "error": "Entre 1 et 5 grilles requises", "status_code": 400}
     for i, g in enumerate(grilles):
         if len(g.numeros) != 5:
-            return {
-                "success": False, "data": None,
-                "error": f"Grille {i+1}: 5 numéros requis",
-                "status_code": 400,
-            }
+            return {"success": False, "data": None, "error": f"Grille {i+1}: 5 numéros requis", "status_code": 400}
         if len(set(g.numeros)) != 5:
-            return {
-                "success": False, "data": None,
-                "error": f"Grille {i+1}: numéros doivent être uniques",
-                "status_code": 400,
-            }
+            return {"success": False, "data": None, "error": f"Grille {i+1}: numéros doivent être uniques", "status_code": 400}
         if not all(1 <= n <= 50 for n in g.numeros):
-            return {
-                "success": False, "data": None,
-                "error": f"Grille {i+1}: numéros entre 1 et 50",
-                "status_code": 400,
-            }
-        # Validate etoiles
+            return {"success": False, "data": None, "error": f"Grille {i+1}: numéros entre 1 et 50", "status_code": 400}
         if g.etoiles is not None:
             if len(g.etoiles) > 2:
-                return {
-                    "success": False, "data": None,
-                    "error": f"Grille {i+1}: maximum 2 étoiles",
-                    "status_code": 400,
-                }
+                return {"success": False, "data": None, "error": f"Grille {i+1}: maximum 2 étoiles", "status_code": 400}
             if len(g.etoiles) != len(set(g.etoiles)):
-                return {
-                    "success": False, "data": None,
-                    "error": f"Grille {i+1}: étoiles doivent être uniques",
-                    "status_code": 400,
-                }
+                return {"success": False, "data": None, "error": f"Grille {i+1}: étoiles doivent être uniques", "status_code": 400}
             if not all(1 <= e <= 12 for e in g.etoiles):
-                return {
-                    "success": False, "data": None,
-                    "error": f"Grille {i+1}: étoiles entre 1 et 12",
-                    "status_code": 400,
-                }
+                return {"success": False, "data": None, "error": f"Grille {i+1}: étoiles entre 1 et 12", "status_code": 400}
 
-    # Preparer le contexte stats
     grilles_data = [{"numeros": g.numeros, "etoiles": g.etoiles, "score_conformite": g.score_conformite, "severity": g.severity} for g in grilles]
-
-    try:
-        context = await asyncio.wait_for(prepare_grilles_pitch_context(grilles_data, lang=lang), timeout=30.0)
-    except asyncio.TimeoutError:
-        logger.error("[EM PITCH] Timeout 30s contexte stats")
-        return {
-            "success": False, "data": None,
-            "error": "Service temporairement indisponible",
-            "status_code": 503,
-        }
-    except Exception as e:
-        logger.warning(f"[EM PITCH] Erreur contexte stats: {e}")
-        return {
-            "success": False, "data": None,
-            "error": "Erreur données statistiques",
-            "status_code": 500,
-        }
-
-    if not context:
-        return {
-            "success": False, "data": None,
-            "error": "Impossible de préparer le contexte",
-            "status_code": 500,
-        }
-
-    # Charger le prompt (lang-aware)
-    system_prompt = load_prompt_em("prompt_pitch_grille_em", lang=lang)
-    if not system_prompt:
-        logger.error("[EM PITCH] Prompt pitch introuvable")
-        return {
-            "success": False, "data": None,
-            "error": "Prompt pitch introuvable",
-            "status_code": 500,
-        }
-
-    # Cle API
-    gem_api_key = os.environ.get("GEM_API_KEY") or os.environ.get("GEMINI_API_KEY")
-    if not gem_api_key:
-        return {
-            "success": False, "data": None,
-            "error": "API Gemini non configurée",
-            "status_code": 500,
-        }
-
-    # Appel Gemini
-    try:
-        response = await gemini_breaker.call(
-            http_client,
-            GEMINI_MODEL_URL,
-            headers={
-                "Content-Type": "application/json",
-                "x-goog-api-key": gem_api_key,
-            },
-            json={
-                "system_instruction": {
-                    "parts": [{"text": system_prompt}]
-                },
-                "contents": [{
-                    "role": "user",
-                    "parts": [{"text": context}]
-                }],
-                "generationConfig": {
-                    "temperature": 0.9,
-                    "maxOutputTokens": 600,
-                },
-            },
-            timeout=15.0,
-        )
-
-        if response.status_code != 200:
-            logger.warning(f"[EM PITCH] Gemini HTTP {response.status_code}")
-            return {
-                "success": False, "data": None,
-                "error": f"Gemini erreur HTTP {response.status_code}",
-                "status_code": 502,
-            }
-
-        data = response.json()
-        candidates = data.get("candidates", [])
-        if not candidates:
-            return {
-                "success": False, "data": None,
-                "error": "Gemini: aucune réponse",
-                "status_code": 502,
-            }
-
-        text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
-        if not text:
-            return {
-                "success": False, "data": None,
-                "error": "Gemini: réponse vide",
-                "status_code": 502,
-            }
-
-        # Parser le JSON
-        clean = text.strip()
-        if clean.startswith("```"):
-            clean = clean.split("\n", 1)[1] if "\n" in clean else clean[3:]
-            if clean.endswith("```"):
-                clean = clean[:-3]
-            clean = clean.strip()
-
-        try:
-            result = json.loads(clean)
-            pitchs = result.get("pitchs", [])
-        except (json.JSONDecodeError, AttributeError):
-            logger.warning(f"[EM PITCH] JSON invalide: {text[:200]}")
-            return {
-                "success": False, "data": None,
-                "error": "Gemini: JSON mal formé",
-                "status_code": 502,
-            }
-
-        # Sanitize : supprimer les caractères CJK/non-latin injectés par Gemini
-        pitchs = [_strip_non_latin(p) if isinstance(p, str) else p for p in pitchs]
-
-        logger.info(f"[EM PITCH] OK — {len(pitchs)} pitchs générés")
-        return {
-            "success": True, "data": {"pitchs": pitchs}, "error": None,
-            "status_code": 200,
-        }
-
-    except CircuitOpenError:
-        logger.warning("[EM PITCH] Circuit breaker ouvert — fallback")
-        return {
-            "success": False, "data": None,
-            "error": "Service Gemini temporairement indisponible",
-            "status_code": 503,
-        }
-    except httpx.TimeoutException:
-        logger.warning("[EM PITCH] Timeout Gemini (15s)")
-        return {
-            "success": False, "data": None,
-            "error": "Timeout Gemini",
-            "status_code": 503,
-        }
-    except Exception as e:
-        logger.error(f"[EM PITCH] Erreur: {e}")
-        return {
-            "success": False, "data": None,
-            "error": "Erreur interne du serveur",
-            "status_code": 500,
-        }
+    return await handle_pitch_common(
+        grilles_data, http_client, lang,
+        context_coro=prepare_grilles_pitch_context(grilles_data, lang=lang),
+        load_prompt_fn=lambda name: load_prompt_em(name, lang=lang),
+        prompt_name="prompt_pitch_grille_em",
+        log_prefix="[EM PITCH]", breaker=gemini_breaker,
+    )
