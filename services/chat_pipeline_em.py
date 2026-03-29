@@ -432,9 +432,8 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
         except Exception as e:
             logger.warning(f"[EM CHAT] Erreur analyse grille: {e}")
 
-    # Phase 3 : requete complexe
-    # V46: restored force_sql guard — get_classement_numeros() has no date_from
-    # param, so temporal queries (e.g. "top 10 en 2025") must go through Phase SQL.
+    # Phase 3 : requete complexe — skipped when force_sql=True (temporal query routed to SQL)
+    # V46: get_classement_numeros() has no date_from param, so temporal queries must go through Phase SQL.
     if not _continuation_mode and not force_sql and not enrichment_context:
         intent = _detect_requete_complexe_em(message)
         if intent:
@@ -453,8 +452,6 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                                     + "\n\n"
                                     + _format_complex_context_em(star_intent, star_data)
                                 )
-                                if force_sql:
-                                    force_sql = False
                                 logger.info(f"[EM CHAT] Requete complexe: classement boules + étoiles")
                                 data = None  # skip default formatting below
                         except Exception:
@@ -468,8 +465,6 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
 
                 if data:
                     enrichment_context = _format_complex_context_em(intent, data)
-                    if force_sql:
-                        force_sql = False  # Phase 3 handled it — cancel SQL bypass
                     logger.info(f"[EM CHAT] Requete complexe: {intent['type']}")
             except Exception as e:
                 logger.warning(f"[EM CHAT] Erreur requete complexe: {e}")

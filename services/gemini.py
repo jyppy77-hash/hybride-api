@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import time
+import asyncio
 import httpx
 
 from services.prompt_loader import load_prompt
@@ -203,73 +204,80 @@ async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, 
     _t0 = time.monotonic()
     _usage_tin = 0
     _usage_tout = 0
+    _max_attempts = 2  # 1 try + 1 retry on transient timeout
 
-    try:
-        async with http_client.stream(
-            "POST",
-            GEMINI_STREAM_URL,
-            headers={
-                "Content-Type": "application/json",
-                "x-goog-api-key": gem_api_key,
-            },
-            json={
-                "system_instruction": {"parts": [{"text": system_prompt}]},
-                "contents": contents,
-                "generationConfig": {
-                    "temperature": 0.8,
-                    "maxOutputTokens": 300,
+    for _attempt in range(_max_attempts):
+        try:
+            async with http_client.stream(
+                "POST",
+                GEMINI_STREAM_URL,
+                headers={
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": gem_api_key,
                 },
-            },
-            timeout=timeout,
-        ) as response:
-            if response.status_code >= 500 or response.status_code == 429:
-                gemini_breaker._record_failure()
-                return
+                json={
+                    "system_instruction": {"parts": [{"text": system_prompt}]},
+                    "contents": contents,
+                    "generationConfig": {
+                        "temperature": 0.8,
+                        "maxOutputTokens": 300,
+                    },
+                },
+                timeout=timeout,
+            ) as response:
+                if response.status_code >= 500 or response.status_code == 429:
+                    gemini_breaker._record_failure()
+                    return
 
-            if response.status_code != 200:
-                logger.warning(f"[STREAM] Gemini HTTP {response.status_code}")
-                return
+                if response.status_code != 200:
+                    logger.warning(f"[STREAM] Gemini HTTP {response.status_code}")
+                    return
 
-            async for line in response.aiter_lines():
-                if not line.startswith("data: "):
-                    continue
+                async for line in response.aiter_lines():
+                    if not line.startswith("data: "):
+                        continue
+                    try:
+                        data = json.loads(line[6:])
+                        # Capture usage_metadata from last chunk
+                        _um = data.get("usageMetadata")
+                        if _um:
+                            _usage_tin = _um.get("promptTokenCount", _usage_tin)
+                            _usage_tout = _um.get("candidatesTokenCount", _usage_tout)
+                        candidates = data.get("candidates", [])
+                        if candidates:
+                            parts = candidates[0].get("content", {}).get("parts", [])
+                            if parts:
+                                text = parts[0].get("text", "")
+                                if text:
+                                    yield text
+                    except json.JSONDecodeError:
+                        continue
+
+                gemini_breaker._record_success()
+
+                # Track usage after stream completes
+                _dur_ms = (time.monotonic() - _t0) * 1000
                 try:
-                    data = json.loads(line[6:])
-                    # Capture usage_metadata from last chunk
-                    _um = data.get("usageMetadata")
-                    if _um:
-                        _usage_tin = _um.get("promptTokenCount", _usage_tin)
-                        _usage_tout = _um.get("candidatesTokenCount", _usage_tout)
-                    candidates = data.get("candidates", [])
-                    if candidates:
-                        parts = candidates[0].get("content", {}).get("parts", [])
-                        if parts:
-                            text = parts[0].get("text", "")
-                            if text:
-                                yield text
-                except json.JSONDecodeError:
-                    continue
+                    from services.gcp_monitoring import track_gemini_call
+                    asyncio.ensure_future(track_gemini_call(
+                        _dur_ms, _usage_tin, _usage_tout, call_type=call_type, lang=lang))
+                except Exception:
+                    pass
+                return  # success — exit retry loop
 
-            gemini_breaker._record_success()
-
-            # Track usage after stream completes
+        except (httpx.TimeoutException, httpx.ConnectError, OSError):
+            if _attempt < _max_attempts - 1:
+                logger.warning("[STREAM] Gemini timeout, retry %d/%d (backoff 2s)",
+                               _attempt + 1, _max_attempts)
+                await asyncio.sleep(2)
+                continue
+            # Final attempt failed — record failure and raise
+            gemini_breaker._record_failure()
             _dur_ms = (time.monotonic() - _t0) * 1000
             try:
-                import asyncio
                 from services.gcp_monitoring import track_gemini_call
                 asyncio.ensure_future(track_gemini_call(
-                    _dur_ms, _usage_tin, _usage_tout, call_type=call_type, lang=lang))
+                    _dur_ms, error=True, call_type=call_type, lang=lang))
             except Exception:
                 pass
-
-    except (httpx.TimeoutException, httpx.ConnectError, OSError):
-        gemini_breaker._record_failure()
-        _dur_ms = (time.monotonic() - _t0) * 1000
-        try:
-            import asyncio
-            from services.gcp_monitoring import track_gemini_call
-            asyncio.ensure_future(track_gemini_call(
-                _dur_ms, error=True, call_type=call_type, lang=lang))
-        except Exception:
-            pass
-        raise
+            raise

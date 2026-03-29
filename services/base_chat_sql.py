@@ -46,6 +46,11 @@ def _validate_sql(sql: str) -> bool:
     # Bare UNION (without ALL) is blocked as potential injection vector.
     if "UNION" in upper and "UNION ALL" not in upper:
         return False
+    # Defense-in-depth: block deeply nested subqueries.
+    # UNION ALL unpivot legitimately uses up to 8 SELECTs (1 outer + 5 boules + 2 etoiles).
+    # Threshold at 10 blocks pathological nesting while allowing all valid patterns.
+    if upper.count("SELECT") > 10:
+        return False
     return True
 
 

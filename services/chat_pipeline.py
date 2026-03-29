@@ -56,7 +56,11 @@ _DRAW_COUNT_TTL = 3600  # 1h
 
 
 async def _get_draw_count(game: str = "loto") -> int:
-    """Return draw count from DB with 1h cache. Returns 0 on error."""
+    """Return draw count from DB with 1h cache. Returns 0 on error.
+
+    TTL 1h: after a new draw, count may be stale by 1 for up to 60min.
+    This is intentional — cosmetic impact only ("~980 tirages" vs "~981").
+    """
     now = time.monotonic()
     cached = _draw_count_cache.get(game)
     if cached and (now - cached[0]) < _DRAW_COUNT_TTL:
@@ -290,10 +294,10 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
         except Exception as e:
             logger.warning(f"[HYBRIDE CHAT] Phase G erreur: {e}")
 
-    # ── Phase A : Détection argent / gains / paris ──
-    if _detect_argent(message):
+    # ── Phase A : Détection argent / gains / paris (multilingue V71) ──
+    if _detect_argent(message, lang):
         _phase = "A"
-        _argent_resp = _get_argent_response(message)
+        _argent_resp = _get_argent_response(message, lang)
         if _insult_prefix:
             _argent_resp = _insult_prefix + "\n\n" + _argent_resp
         logger.info("[HYBRIDE CHAT] Argent detecte — court-circuit Phase A")
@@ -441,9 +445,8 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
         except Exception as e:
             logger.warning(f"[HYBRIDE CHAT] Erreur analyse grille: {e}")
 
-    # Phase 3 : requete complexe
-    # V46: restored force_sql guard — get_classement_numeros() has no date_from
-    # param, so temporal queries (e.g. "top 10 en 2025") must go through Phase SQL.
+    # Phase 3 : requete complexe — skipped when force_sql=True (temporal query routed to SQL)
+    # V46: get_classement_numeros() has no date_from param, so temporal queries must go through Phase SQL.
     if not _continuation_mode and not force_sql and not enrichment_context:
         intent = _detect_requete_complexe(message)
         if intent:
@@ -460,8 +463,6 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
 
                 if data:
                     enrichment_context = _format_complex_context(intent, data)
-                    if force_sql:
-                        force_sql = False  # Phase 3 handled it — cancel SQL bypass
                     logger.info(f"[HYBRIDE CHAT] Requete complexe: {intent['type']}")
             except Exception as e:
                 logger.warning(f"[HYBRIDE CHAT] Erreur requete complexe: {e}")

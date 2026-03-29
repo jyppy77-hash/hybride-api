@@ -298,38 +298,96 @@ from services.chat_responses_loto import (  # noqa: F401
 
 
 # ═══════════════════════════════════════════════════════
-# Phase A — Argent / gains / paris (FR)
+# Phase A — Argent / gains / paris (multilingue, V71)
+# FR patterns are the primary set; EN/ES/PT/DE/NL added for Loto pages
+# visited by non-FR users. Mirrors _ARGENT_*_EM dicts in
+# chat_detectors_em_guardrails.py.
 # ═══════════════════════════════════════════════════════
 
-_ARGENT_PHRASES_FR = [
-    r'\bdevenir\s+riche',
-    r'\bgros\s+lot',
-    r'\bsuper\s+cagnotte',
-    r'\btoucher\s+le\s+gros\s+lot',
-    r'\bcombien\s+(?:on|je|tu|peut[\s-]on)\s+gagn',
-    r'\bcombien\s+[çc]a\s+rapporte',
-    r'\bstrat[eé]gie\s+pour\s+gagner',
-    r'\best[\s-]ce\s+rentable',
-    r'\b[çc]a\s+rapporte',
-    r'\bretour\s+sur\s+investissement',
-    r'\b(?:vaut|vaudrait)\s+le\s+coup',
-    r'\bjoue[rs]?\s+\d+\s*[€$]',
-    r'\bmise\s+de\s+\d+',
-    r'\bbudget\s+de\s+\d+',
-    r'\b\d+\s*[€$]\s+par\s+(?:mois|semaine|an|jour)',
-    # V50 — adversarial patterns
-    r'\broi\b',
-    r'\bvivre\s+du\s+(?:loto|jeu|loterie)',
-    r'\brevenus?\s+passifs?',
-    r'\bmaximiser\s+(?:mes|les|ses)\s+gains',
-    r'\boptimiser\s+(?:mes|les|ses)\s+chances?\s+de\s+gagner',
-    r'\brentabiliser\s+(?:mes|les|ses)\s+(?:mises?|grilles?)',
-    r'\brendement\s+(?:de|des|sur)\s+(?:mes|les|ses)\s+(?:mises?|grilles?|jeux?)',
-    r'\bcapital\s+(?:de\s+)?(?:jeu|mise)',
-    r'\bplacement\s+(?:au\s+)?(?:loto|jeu|loterie)',
-    r'\b(?:investissement|investir)\s+(?:au|dans\s+le|sur\s+le)\s+(?:loto|jeu|loterie)',
-    r'\bstrat[eé]gie\s+(?:pour\s+)?rentabiliser',
-]
+_ARGENT_PHRASES = {
+    "fr": [
+        r'\bdevenir\s+riche',
+        r'\bgros\s+lot',
+        r'\bsuper\s+cagnotte',
+        r'\btoucher\s+le\s+gros\s+lot',
+        r'\bcombien\s+(?:on|je|tu|peut[\s-]on)\s+gagn',
+        r'\bcombien\s+[çc]a\s+rapporte',
+        r'\bstrat[eé]gie\s+pour\s+gagner',
+        r'\best[\s-]ce\s+rentable',
+        r'\b[çc]a\s+rapporte',
+        r'\bretour\s+sur\s+investissement',
+        r'\b(?:vaut|vaudrait)\s+le\s+coup',
+        r'\bjoue[rs]?\s+\d+\s*[€$]',
+        r'\bmise\s+de\s+\d+',
+        r'\bbudget\s+de\s+\d+',
+        r'\b\d+\s*[€$]\s+par\s+(?:mois|semaine|an|jour)',
+        # V50 — adversarial patterns
+        r'\broi\b',
+        r'\bvivre\s+du\s+(?:loto|jeu|loterie)',
+        r'\brevenus?\s+passifs?',
+        r'\bmaximiser\s+(?:mes|les|ses)\s+gains',
+        r'\boptimiser\s+(?:mes|les|ses)\s+chances?\s+de\s+gagner',
+        r'\brentabiliser\s+(?:mes|les|ses)\s+(?:mises?|grilles?)',
+        r'\brendement\s+(?:de|des|sur)\s+(?:mes|les|ses)\s+(?:mises?|grilles?|jeux?)',
+        r'\bcapital\s+(?:de\s+)?(?:jeu|mise)',
+        r'\bplacement\s+(?:au\s+)?(?:loto|jeu|loterie)',
+        r'\b(?:investissement|investir)\s+(?:au|dans\s+le|sur\s+le)\s+(?:loto|jeu|loterie)',
+        r'\bstrat[eé]gie\s+(?:pour\s+)?rentabiliser',
+    ],
+    "en": [
+        r'\bget\s+rich',
+        r'\bhow\s+much\s+can\s+(?:i|you|we)\s+win',
+        r'\bhow\s+much\s+does\s+it\s+pay',
+        r'\bstrategy\s+to\s+win',
+        r'\broi\b',
+        r'\b(?:live|living)\s+off\s+(?:the\s+)?(?:lottery|lotto)',
+        r'\bpassive\s+income',
+        r'\bmaximize?\s+(?:my|your|the)?\s*winnings?',
+        r'\bmake\s+money\s+(?:from|with|playing)\s+(?:lottery|lotto)',
+        r'\b(?:investment|invest)\s+in\s+(?:lottery|lotto|tickets?|gambling)',
+    ],
+    "es": [
+        r'\bhacerse\s+rico',
+        r'\bcu[aá]nto\s+se\s+gana',
+        r'\bestrategia\s+para\s+ganar',
+        r'\broi\b',
+        r'\bvivir\s+de\s+la\s+(?:loter[ií]a)',
+        r'\bretorno\s+de\s+inversi[oó]n',
+        r'\bmaximizar\s+(?:mis|las|sus)\s+ganancias',
+        r'\bingresos?\s+pasivos?',
+    ],
+    "pt": [
+        r'\bficar\s+rico',
+        r'\bquanto\s+se\s+ganha',
+        r'\bestrat[eé]gia\s+para\s+ganhar',
+        r'\broi\b',
+        r'\bviver\s+d[ao]\s+(?:lotaria|loteria)',
+        r'\bretorno\s+de\s+investimento',
+        r'\bmaximizar\s+(?:os\s+)?ganhos',
+        r'\brendimentos?\s+passivos?',
+    ],
+    "de": [
+        r'\breich\s+werden',
+        r'\bwie\s+viel\s+kann\s+man\s+gewinnen',
+        r'\bgewinnstrategie',
+        r'\broi\b',
+        r'\bvom\s+(?:lotto|spiel|lotteri?e)\s+leben',
+        r'\bgewinne?\s+maximieren',
+        r'\bpassives?\s+einkommen',
+    ],
+    "nl": [
+        r'\brijk\s+worden',
+        r'\bhoeveel\s+kun\s+je\s+winnen',
+        r'\bstrategie\s+om\s+te\s+winnen',
+        r'\broi\b',
+        r'\bleven\s+van\s+(?:de\s+)?(?:loterij|lotto)',
+        r'\bwinsten?\s+maximaliseren',
+        r'\bpassief\s+inkomen',
+    ],
+}
+
+# Backward compat alias — tests and scripts import this
+_ARGENT_PHRASES_FR = _ARGENT_PHRASES["fr"]
 
 # V65 — EuroMillions/EuroDreams game-name guard (avoid false positives on "euro(s)")
 # Matches: euromillion(s), euro million(s), euros million(s), eurodream(s),
@@ -337,38 +395,142 @@ _ARGENT_PHRASES_FR = [
 _EURO_GAME_RE = re.compile(
     r"(?:l['\u2019]?)?euros?\s*(?:mill|milh|dream)", re.IGNORECASE,
 )
-_EURO_GAME_SKIP = {"euro", "euros", "eur", "million", "millions"}
-
-_ARGENT_MOTS_FR = {
-    "argent", "euros", "eur",
-    "cagnotte", "jackpot",
-    "gains", "gagner",
-    "prix",
-    "million", "millions", "milliard", "milliards",
-    "mise", "miser",
-    "parier", "pari",
-    "lot",
-    "pognon", "fric", "thune", "thunes", "sous",
-    "riche", "fortune",
-    "profit", "bénéfice", "benefice",
-    "remporter",
-    "rentable", "rentabilité", "rentabilite",
-    "profitable", "investissement", "investir",
+_EURO_GAME_SKIP = {
+    "fr": {"euro", "euros", "eur", "million", "millions"},
+    "en": {"euro", "euros", "eur", "million", "millions"},
+    "es": {"euro", "euros", "eur", "millón", "millon", "millones"},
+    "pt": {"euro", "euros", "eur", "milhão", "milhao", "milhões", "milhoes"},
+    "de": {"euro", "euros", "eur", "million", "millionen"},
+    "nl": {"euro", "euros", "eur", "miljoen", "miljoenen"},
 }
 
-_ARGENT_STRONG_FR = [
-    r'\bdevenir\s+riche',
-    r'\bstrat[eé]gie\s+pour\s+gagner',
-    r'\btoucher\s+le\s+gros\s+lot',
-    r'\bcombien\s+(?:on|je|tu|peut[\s-]on)\s+gagn',
-    r'\bcombien\s+[çc]a\s+rapporte',
-    # V50 — L2 strong adversarial
-    r'\bvivre\s+du\s+(?:loto|jeu|loterie)',
-    r'\brevenus?\s+passifs?',
-    r'\bstrat[eé]gie\s+(?:pour\s+)?rentabiliser',
-]
+_ARGENT_MOTS = {
+    "fr": {
+        "argent", "euros", "eur",
+        "cagnotte", "jackpot",
+        "gains", "gagner",
+        "prix",
+        "million", "millions", "milliard", "milliards",
+        "mise", "miser",
+        "parier", "pari",
+        "lot",
+        "pognon", "fric", "thune", "thunes", "sous",
+        "riche", "fortune",
+        "profit", "bénéfice", "benefice",
+        "remporter",
+        "rentable", "rentabilité", "rentabilite",
+        "profitable", "investissement", "investir",
+    },
+    "en": {
+        "money", "euros", "eur",
+        "jackpot", "prize",
+        "win", "winning", "winnings",
+        "million", "millions",
+        "bet", "betting", "gambling",
+        "payout", "cash",
+        "rich", "fortune",
+        "profit",
+    },
+    "es": {
+        "dinero", "euros", "eur",
+        "bote", "premio",
+        "ganar", "ganancias",
+        "millón", "millon", "millones",
+        "apostar", "apuesta",
+        "rico", "fortuna",
+    },
+    "pt": {
+        "dinheiro", "euros", "eur",
+        "jackpot", "prémio", "premio",
+        "ganhar", "ganhos",
+        "milhão", "milhao", "milhões", "milhoes",
+        "apostar", "aposta",
+        "rico", "fortuna",
+    },
+    "de": {
+        "geld", "euro", "euros", "eur",
+        "jackpot", "gewinn", "gewinne", "gewinnen",
+        "million", "millionen",
+        "wetten", "einsatz",
+        "reich", "vermögen", "vermoegen",
+    },
+    "nl": {
+        "geld", "euro", "euros", "eur",
+        "jackpot", "prijs",
+        "winnen", "winst",
+        "miljoen", "miljoenen",
+        "gokken", "inzet",
+        "rijk", "fortuin",
+    },
+}
 
-_ARGENT_BETTING_FR = {"parier", "miser", "pari"}
+# Backward compat alias
+_ARGENT_MOTS_FR = _ARGENT_MOTS["fr"]
+
+_ARGENT_STRONG = {
+    "fr": [
+        r'\bdevenir\s+riche',
+        r'\bstrat[eé]gie\s+pour\s+gagner',
+        r'\btoucher\s+le\s+gros\s+lot',
+        r'\bcombien\s+(?:on|je|tu|peut[\s-]on)\s+gagn',
+        r'\bcombien\s+[çc]a\s+rapporte',
+        # V50 — L2 strong adversarial
+        r'\bvivre\s+du\s+(?:loto|jeu|loterie)',
+        r'\brevenus?\s+passifs?',
+        r'\bstrat[eé]gie\s+(?:pour\s+)?rentabiliser',
+    ],
+    "en": [
+        r'\bget\s+rich',
+        r'\bstrategy\s+to\s+win',
+        r'\bhow\s+much\s+can\s+(?:i|you|we)\s+win',
+        r'\bhow\s+much\s+does\s+it\s+pay',
+        r'\b(?:live|living)\s+off\s+(?:the\s+)?(?:lottery|lotto)',
+        r'\bpassive\s+income',
+    ],
+    "es": [
+        r'\bhacerse\s+rico',
+        r'\bestrategia\s+para\s+ganar',
+        r'\bcu[aá]nto\s+se\s+gana',
+        r'\bvivir\s+de\s+la\s+(?:loter[ií]a)',
+        r'\bingresos?\s+pasivos?',
+    ],
+    "pt": [
+        r'\bficar\s+rico',
+        r'\bestrat[eé]gia\s+para\s+ganhar',
+        r'\bquanto\s+se\s+ganha',
+        r'\bviver\s+d[ao]\s+(?:lotaria|loteria)',
+        r'\brendimentos?\s+passivos?',
+    ],
+    "de": [
+        r'\breich\s+werden',
+        r'\bgewinnstrategie',
+        r'\bwie\s+viel\s+kann\s+man\s+gewinnen',
+        r'\bvom\s+(?:lotto|spiel|lotteri?e)\s+leben',
+        r'\bpassives?\s+einkommen',
+    ],
+    "nl": [
+        r'\brijk\s+worden',
+        r'\bstrategie\s+om\s+te\s+winnen',
+        r'\bhoeveel\s+kun\s+je\s+winnen',
+        r'\bleven\s+van\s+(?:de\s+)?(?:loterij|lotto)',
+        r'\bpassief\s+inkomen',
+    ],
+}
+
+# Backward compat alias
+_ARGENT_STRONG_FR = _ARGENT_STRONG["fr"]
+
+_ARGENT_BETTING = {
+    "fr": {"parier", "miser", "pari"},
+    "en": {"bet", "betting", "gambling"},
+    "es": {"apostar", "apuesta"},
+    "pt": {"apostar", "aposta"},
+    "de": {"wetten", "einsatz"},
+    "nl": {"gokken", "inzet"},
+}
+
+# Backward compat alias
+_ARGENT_BETTING_FR = _ARGENT_BETTING["fr"]
 
 # V70 F08: argent response pools extracted to chat_responses_loto.py
 from services.chat_responses_loto import (  # noqa: F401
@@ -428,8 +590,13 @@ def _detect_score_question(message: str) -> bool:
     return False
 
 
-def _detect_argent(message: str) -> bool:
-    """Detecte si le message concerne l'argent, les gains ou les paris."""
+def _detect_argent(message: str, lang: str = "fr") -> bool:
+    """Detecte si le message concerne l'argent, les gains ou les paris (multilingue).
+
+    Args:
+        message: user message
+        lang: language code (fr/en/es/pt/de/nl), defaults to "fr"
+    """
     if _detect_generation(message):
         return False
     if _detect_score_question(message):
@@ -437,25 +604,34 @@ def _detect_argent(message: str) -> bool:
     if _detect_pedagogie_limites(message):
         return False
     lower = message.lower()
-    for pattern in _ARGENT_PHRASES_FR:
+    phrases = _ARGENT_PHRASES.get(lang, _ARGENT_PHRASES["fr"])
+    for pattern in phrases:
         if re.search(pattern, lower):
             return True
+    mots = _ARGENT_MOTS.get(lang, _ARGENT_MOTS["fr"])
     is_euro_game = bool(_EURO_GAME_RE.search(lower))
-    for mot in _ARGENT_MOTS_FR:
-        if is_euro_game and mot in _EURO_GAME_SKIP:
+    skip = _EURO_GAME_SKIP.get(lang, _EURO_GAME_SKIP["fr"]) if is_euro_game else set()
+    for mot in mots:
+        if mot in skip:
             continue
         if re.search(r'\b' + re.escape(mot) + r'\b', lower):
             return True
     return False
 
 
-def _get_argent_response(message: str) -> str:
-    """Selectionne une reponse argent selon le niveau (L1/L2/L3)."""
+def _get_argent_response(message: str, lang: str = "fr") -> str:
+    """Selectionne une reponse argent Loto selon le niveau (L1/L2/L3).
+
+    Responses are always in French (Loto = FDJ France market).
+    The lang parameter is used only for detection pattern selection.
+    """
     lower = message.lower()
-    for mot in _ARGENT_BETTING_FR:
+    betting = _ARGENT_BETTING.get(lang, _ARGENT_BETTING["fr"])
+    for mot in betting:
         if re.search(r'\b' + re.escape(mot) + r'\b', lower):
             return _ARGENT_L3[0]
-    for pattern in _ARGENT_STRONG_FR:
+    strong = _ARGENT_STRONG.get(lang, _ARGENT_STRONG["fr"])
+    for pattern in strong:
         if re.search(pattern, lower):
             return random.choice(_ARGENT_L2)
     return random.choice(_ARGENT_L1)

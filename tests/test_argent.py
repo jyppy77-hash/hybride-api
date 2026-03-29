@@ -667,3 +667,48 @@ class TestEuroGameNameGuard_EM:
 
     def test_em_nl_geld_reste_argent(self):
         assert _detect_argent_em("hoeveel geld", "nl") is True
+
+
+# ═══════════════════════════════════════════════════════
+# V71 — _detect_argent() Loto multilingue (F04)
+# Loto pages visitées par des utilisateurs non-FR
+# ═══════════════════════════════════════════════════════
+
+class TestDetectArgentLotoMultilang:
+    """F04: _detect_argent() must detect money keywords in all 6 languages."""
+
+    def test_fr_jackpot(self):
+        assert _detect_argent("combien vaut le jackpot", "fr") is True
+
+    def test_en_money(self):
+        assert _detect_argent("how much money can I win", "en") is True
+
+    def test_es_dinero(self):
+        assert _detect_argent("quiero ganar dinero", "es") is True
+
+    def test_pt_dinheiro(self):
+        assert _detect_argent("quero ganhar dinheiro", "pt") is True
+
+    def test_de_geld(self):
+        assert _detect_argent("wie viel Geld kann man gewinnen", "de") is True
+
+    def test_nl_geld(self):
+        assert _detect_argent("hoeveel geld kun je winnen", "nl") is True
+
+    def test_en_betting(self):
+        """EN betting keyword → L3 response."""
+        resp = _get_argent_response("I like gambling", "en")
+        assert resp in _ARGENT_L3
+
+    def test_en_strong(self):
+        """EN strong pattern → L2 response."""
+        resp = _get_argent_response("I want to get rich", "en")
+        assert resp in _ARGENT_L2
+
+    def test_en_not_stats(self):
+        """Normal English stats question must NOT trigger Phase A."""
+        assert _detect_argent("what is the most frequent number", "en") is False
+
+    def test_de_not_stats(self):
+        """Normal German stats question must NOT trigger Phase A."""
+        assert _detect_argent("welche Zahlen kommen am häufigsten vor", "de") is False

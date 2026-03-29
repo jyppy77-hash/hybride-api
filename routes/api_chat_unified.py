@@ -17,7 +17,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/{game}", tags=["Unified - Chat"])
 
-_SSE_HEADERS = {
+# Shared SSE headers — imported by api_chat.py and api_chat_em.py
+SSE_HEADERS = {
     "Cache-Control": "no-cache, no-transform",
     "Connection": "keep-alive",
     "X-Accel-Buffering": "no",
@@ -44,7 +45,7 @@ async def unified_hybride_chat(request: Request, game: ValidGame):
                 lang=payload.lang,  # F01: propagation lang comme EM
             ),
             media_type="text/event-stream",
-            headers=_SSE_HEADERS,
+            headers=SSE_HEADERS,
         )
     else:
         payload = EMChatRequest(**body)
@@ -57,7 +58,7 @@ async def unified_hybride_chat(request: Request, game: ValidGame):
                 lang=payload.lang,
             ),
             media_type="text/event-stream",
-            headers=_SSE_HEADERS,
+            headers=SSE_HEADERS,
         )
 
 

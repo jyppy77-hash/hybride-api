@@ -93,6 +93,32 @@ class TestValidateSql:
         )
         assert _validate_sql(sql) is True
 
+    # F05: subquery nesting defense-in-depth
+    def test_allows_single_select(self):
+        """Simple SELECT must pass."""
+        assert _validate_sql("SELECT boule_1 FROM tirages LIMIT 10") is True
+
+    def test_allows_union_all_8_selects(self):
+        """UNION ALL with 8 SELECTs (EM unpivot) must pass."""
+        sql = (
+            "SELECT num, COUNT(*) FROM ("
+            "SELECT boule_1 as num FROM tirages_euromillions "
+            "UNION ALL SELECT boule_2 FROM tirages_euromillions "
+            "UNION ALL SELECT boule_3 FROM tirages_euromillions "
+            "UNION ALL SELECT boule_4 FROM tirages_euromillions "
+            "UNION ALL SELECT boule_5 FROM tirages_euromillions "
+            "UNION ALL SELECT etoile_1 FROM tirages_euromillions "
+            "UNION ALL SELECT etoile_2 FROM tirages_euromillions"
+            ") t GROUP BY num ORDER BY COUNT(*) DESC LIMIT 10"
+        )
+        assert _validate_sql(sql) is True
+
+    def test_rejects_excessive_subqueries(self):
+        """More than 10 SELECTs must be rejected (pathological nesting)."""
+        parts = " UNION ALL ".join(f"SELECT boule_1 FROM t{i}" for i in range(12))
+        sql = f"SELECT * FROM ({parts}) x LIMIT 10"
+        assert _validate_sql(sql) is False
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # _ensure_limit

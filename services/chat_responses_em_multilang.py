@@ -15,12 +15,20 @@ from services.chat_detectors_em import (
 )
 from services.chat_utils_em import FALLBACK_RESPONSE_EM as FALLBACK_FR
 from services.chat_responses_em_en import (
-    _get_insult_response_em_en as _get_insult_response_en,
-    _get_insult_short_em_en as _get_insult_short_en,
-    _get_menace_response_em_en as _get_menace_response_en,
-    _get_compliment_response_em_en as _get_compliment_response_en,
-    _get_oor_response_em_en as _get_oor_response_en,
+    _get_insult_response_em_en as _get_insult_response_en,  # noqa: F401 — backward compat
+    _get_insult_short_em_en as _get_insult_short_en,  # noqa: F401
+    _get_menace_response_em_en as _get_menace_response_en,  # noqa: F401
+    _get_compliment_response_em_en as _get_compliment_response_en,  # noqa: F401
+    _get_oor_response_em_en as _get_oor_response_en,  # noqa: F401
+    _get_argent_response_em_en,  # noqa: F401 — re-exported for tests
     FALLBACK_RESPONSE_EM_EN as FALLBACK_EN,
+    # EN pool data — integrated into registries (V71 F08)
+    _INSULT_L1_EM_EN, _INSULT_L2_EM_EN, _INSULT_L3_EM_EN, _INSULT_L4_EM_EN,
+    _INSULT_SHORT_EM_EN, _MENACE_RESPONSES_EM_EN,
+    _COMPLIMENT_L1_EM_EN, _COMPLIMENT_L2_EM_EN, _COMPLIMENT_L3_EM_EN,
+    _COMPLIMENT_LOVE_EM_EN, _COMPLIMENT_MERCI_EM_EN,
+    _OOR_L1_EM_EN, _OOR_L2_EM_EN, _OOR_L3_EM_EN,
+    _OOR_CLOSE_EM_EN, _OOR_ZERO_NEG_EM_EN, _OOR_ETOILE_EM_EN,
 )
 
 # ═══════════════════════════════════════════════════════════
@@ -556,6 +564,7 @@ def _pick_no_repeat(pool, history):
 # --- Insult pool registries ---
 
 _INSULT_POOLS = {
+    "en": (_INSULT_L1_EM_EN, _INSULT_L2_EM_EN, _INSULT_L3_EM_EN, _INSULT_L4_EM_EN),
     "es": (_INSULT_L1_ES, _INSULT_L2_ES, _INSULT_L3_ES, _INSULT_L4_ES),
     "pt": (_INSULT_L1_PT, _INSULT_L2_PT, _INSULT_L3_PT, _INSULT_L4_PT),
     "de": (_INSULT_L1_DE, _INSULT_L2_DE, _INSULT_L3_DE, _INSULT_L4_DE),
@@ -563,6 +572,7 @@ _INSULT_POOLS = {
 }
 
 _INSULT_SHORT_POOLS = {
+    "en": _INSULT_SHORT_EM_EN,
     "es": _INSULT_SHORT_ES,
     "pt": _INSULT_SHORT_PT,
     "de": _INSULT_SHORT_DE,
@@ -570,6 +580,7 @@ _INSULT_SHORT_POOLS = {
 }
 
 _MENACE_POOLS = {
+    "en": _MENACE_RESPONSES_EM_EN,
     "es": _MENACE_ES,
     "pt": _MENACE_PT,
     "de": _MENACE_DE,
@@ -579,6 +590,7 @@ _MENACE_POOLS = {
 # --- Compliment pool registries ---
 
 _COMPLIMENT_POOLS = {
+    "en": (_COMPLIMENT_L1_EM_EN, _COMPLIMENT_L2_EM_EN, _COMPLIMENT_L3_EM_EN),
     "es": (_COMPLIMENT_L1_ES, _COMPLIMENT_L2_ES, _COMPLIMENT_L3_ES),
     "pt": (_COMPLIMENT_L1_PT, _COMPLIMENT_L2_PT, _COMPLIMENT_L3_PT),
     "de": (_COMPLIMENT_L1_DE, _COMPLIMENT_L2_DE, _COMPLIMENT_L3_DE),
@@ -586,6 +598,7 @@ _COMPLIMENT_POOLS = {
 }
 
 _COMPLIMENT_LOVE_POOLS = {
+    "en": _COMPLIMENT_LOVE_EM_EN,
     "es": _COMPLIMENT_LOVE_ES,
     "pt": _COMPLIMENT_LOVE_PT,
     "de": _COMPLIMENT_LOVE_DE,
@@ -593,6 +606,7 @@ _COMPLIMENT_LOVE_POOLS = {
 }
 
 _COMPLIMENT_MERCI_POOLS = {
+    "en": _COMPLIMENT_MERCI_EM_EN,
     "es": _COMPLIMENT_MERCI_ES,
     "pt": _COMPLIMENT_MERCI_PT,
     "de": _COMPLIMENT_MERCI_DE,
@@ -602,6 +616,7 @@ _COMPLIMENT_MERCI_POOLS = {
 # --- OOR pool registries ---
 
 _OOR_POOLS = {
+    "en": (_OOR_L1_EM_EN, _OOR_L2_EM_EN, _OOR_L3_EM_EN, _OOR_CLOSE_EM_EN, _OOR_ZERO_NEG_EM_EN, _OOR_ETOILE_EM_EN),
     "es": (_OOR_L1_ES, _OOR_L2_ES, _OOR_L3_ES, _OOR_CLOSE_ES, _OOR_ZERO_NEG_ES, _OOR_ETOILE_ES),
     "pt": (_OOR_L1_PT, _OOR_L2_PT, _OOR_L3_PT, _OOR_CLOSE_PT, _OOR_ZERO_NEG_PT, _OOR_ETOILE_PT),
     "de": (_OOR_L1_DE, _OOR_L2_DE, _OOR_L3_DE, _OOR_CLOSE_DE, _OOR_ZERO_NEG_DE, _OOR_ETOILE_DE),
@@ -622,8 +637,6 @@ def get_insult_response(lang: str, streak: int, history) -> str:
     """Return insult response in the correct language with streak escalation."""
     if lang == "fr":
         return _get_insult_response_fr(streak, history)
-    if lang == "en":
-        return _get_insult_response_en(streak, history)
     pools = _INSULT_POOLS.get(lang)
     if not pools:
         return _get_insult_response_fr(streak, history)
@@ -643,8 +656,6 @@ def get_insult_short(lang: str) -> str:
     """Return insult-short prefix in the correct language."""
     if lang == "fr":
         return _get_insult_short_fr()
-    if lang == "en":
-        return _get_insult_short_en()
     pool = _INSULT_SHORT_POOLS.get(lang)
     if not pool:
         return _get_insult_short_fr()
@@ -655,8 +666,6 @@ def get_menace_response(lang: str) -> str:
     """Return menace response in the correct language."""
     if lang == "fr":
         return _get_menace_response_fr()
-    if lang == "en":
-        return _get_menace_response_en()
     pool = _MENACE_POOLS.get(lang)
     if not pool:
         return _get_menace_response_fr()
@@ -667,10 +676,8 @@ def get_compliment_response(lang: str, compliment_type: str, streak: int, histor
     """Return compliment response in the correct language."""
     if lang == "fr":
         return _get_compliment_response_fr(compliment_type, streak, history)
-    if lang == "en":
-        return _get_compliment_response_en(compliment_type, streak, history)
 
-    # ES/PT/DE/NL
+    # EN/ES/PT/DE/NL — unified registry dispatch
     if compliment_type == "love":
         pool = _COMPLIMENT_LOVE_POOLS.get(lang)
     elif compliment_type == "merci":
@@ -696,8 +703,6 @@ def get_oor_response(lang: str, numero: int, context: str, streak: int) -> str:
     """Return OOR response in the correct language."""
     if lang == "fr":
         return _get_oor_response_fr(numero, context, streak)
-    if lang == "en":
-        return _get_oor_response_en(numero, context, streak)
 
     oor = _OOR_POOLS.get(lang)
     if not oor:

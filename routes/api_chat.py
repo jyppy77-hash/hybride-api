@@ -49,17 +49,11 @@ from services.chat_utils import (  # noqa: F401
     _load_sponsors_config,
 )
 from services.prompt_loader import load_prompt  # noqa: F401
+from routes.api_chat_unified import SSE_HEADERS  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
-
-_SSE_HEADERS = {
-    "Cache-Control": "no-cache, no-transform",
-    "Connection": "keep-alive",
-    "X-Accel-Buffering": "no",
-    "Content-Encoding": "identity",
-}
 
 
 @router.post("/api/hybride-chat")
@@ -75,7 +69,7 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
             lang=payload.lang,
         ),
         media_type="text/event-stream",
-        headers=_SSE_HEADERS,
+        headers=SSE_HEADERS,
     )
 
 
