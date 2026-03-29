@@ -16,7 +16,51 @@ GEMINI_STREAM_URL = (
 )
 
 
-async def enrich_analysis(analysis_local: str, window: str = "GLOBAL", *, http_client: httpx.AsyncClient) -> dict:
+# V70 F04: i18n system instructions for enrichment (mirrors em_gemini.py pattern)
+_ENRICHMENT_INSTRUCTIONS = {
+    "fr": (
+        "OBLIGATION ABSOLUE : Tu écris TOUJOURS en français correct "
+        "avec TOUS les accents (é, è, ê, ë, à, â, ç, ù, û, ô, î, ï). "
+        "Exemples : \"numéro\" (jamais \"numero\"), \"fréquence\" (jamais \"frequence\"), "
+        "\"régularité\" (jamais \"regularite\"), \"dernière\" (jamais \"derniere\"), "
+        "\"élevé\" (jamais \"eleve\"), \"intéressant\" (jamais \"interessant\"), "
+        "\"présente\" (jamais \"presente\"), \"conformité\" (jamais \"conformite\"), "
+        "\"équilibre\" (jamais \"equilibre\"), \"mérite\" (jamais \"merite\"), "
+        "\"sélection\" (jamais \"selection\"), \"mélange\" (jamais \"melange\"), "
+        "\"répartition\" (jamais \"repartition\"). "
+        "Un texte sans accents est considéré comme un BUG CRITIQUE."
+    ),
+    "en": (
+        "MANDATORY: You ALWAYS write in correct English. "
+        "Keep a professional, educational tone suitable for a PDF report. "
+        "Never promise winnings. Stay neutral and factual."
+    ),
+    "es": (
+        "OBLIGATORIO: Escribes SIEMPRE en español correcto. "
+        "Mantén un tono profesional y pedagógico adecuado para un informe PDF. "
+        "Nunca prometas ganancias. Mantente neutro y factual."
+    ),
+    "pt": (
+        "OBRIGATÓRIO: Escreves SEMPRE em português correto de Portugal "
+        "com TODOS os acentos (á, à, â, ã, é, ê, í, ó, ô, õ, ú, ç). "
+        "Mantém um tom profissional e pedagógico adequado a um relatório PDF. "
+        "Nunca prometas ganhos. Mantém-te neutro e factual."
+    ),
+    "de": (
+        "PFLICHT: Du schreibst IMMER in korrektem Deutsch "
+        "mit allen Umlauten (ä, ö, ü, ß). "
+        "Halte einen professionellen, pädagogischen Ton, der für einen PDF-Bericht geeignet ist. "
+        "Verspreche niemals Gewinne. Bleibe neutral und sachlich."
+    ),
+    "nl": (
+        "VERPLICHT: Je schrijft ALTIJD in correct Nederlands. "
+        "Houd een professionele, educatieve toon aan die geschikt is voor een PDF-rapport. "
+        "Beloof nooit winsten. Blijf neutraal en feitelijk."
+    ),
+}
+
+
+async def enrich_analysis(analysis_local: str, window: str = "GLOBAL", *, http_client: httpx.AsyncClient, lang: str = "fr") -> dict:
     """
     Enrichit le texte d'analyse local via Gemini.
     Utilise un prompt dynamique adapte a la fenetre d'analyse.
@@ -76,18 +120,7 @@ Texte a reformuler :
             json={
                 "systemInstruction": {
                     "parts": [{
-                        "text": (
-                            "OBLIGATION ABSOLUE : Tu écris TOUJOURS en français correct "
-                            "avec TOUS les accents (é, è, ê, ë, à, â, ç, ù, û, ô, î, ï). "
-                            "Exemples : \"numéro\" (jamais \"numero\"), \"fréquence\" (jamais \"frequence\"), "
-                            "\"régularité\" (jamais \"regularite\"), \"dernière\" (jamais \"derniere\"), "
-                            "\"élevé\" (jamais \"eleve\"), \"intéressant\" (jamais \"interessant\"), "
-                            "\"présente\" (jamais \"presente\"), \"conformité\" (jamais \"conformite\"), "
-                            "\"équilibre\" (jamais \"equilibre\"), \"mérite\" (jamais \"merite\"), "
-                            "\"sélection\" (jamais \"selection\"), \"mélange\" (jamais \"melange\"), "
-                            "\"répartition\" (jamais \"repartition\"). "
-                            "Un texte sans accents est considéré comme un BUG CRITIQUE."
-                        )
+                        "text": _ENRICHMENT_INSTRUCTIONS.get(lang, _ENRICHMENT_INSTRUCTIONS["fr"])
                     }]
                 },
                 "contents": [{
@@ -113,7 +146,7 @@ Texte a reformuler :
                 from services.gcp_monitoring import track_gemini_call
                 import asyncio
                 asyncio.ensure_future(track_gemini_call(
-                    _dur_ms, _tin, _tout, call_type="enrichment_loto", lang="fr"))
+                    _dur_ms, _tin, _tout, call_type="enrichment_loto", lang=lang))
             except Exception:
                 pass
             candidates = data.get("candidates", [])
@@ -139,7 +172,7 @@ Texte a reformuler :
                 from services.gcp_monitoring import track_gemini_call
                 import asyncio
                 asyncio.ensure_future(track_gemini_call(
-                    _dur_ms, error=True, call_type="enrichment_loto", lang="fr"))
+                    _dur_ms, error=True, call_type="enrichment_loto", lang=lang))
             except Exception:
                 pass
 

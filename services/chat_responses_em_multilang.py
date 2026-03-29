@@ -721,3 +721,98 @@ def get_oor_response(lang: str, numero: int, context: str, streak: int) -> str:
     diff = abs(numero - 50) if numero > 50 else abs(numero)
     s = "s" if diff > 1 else ""
     return response.format(num=numero, diff=diff, s=s, streak=streak + 1)
+
+
+# ═══════════════════════════════════════════════════════════
+# i18n invitation messages (V51 FIX 1 + FIX 5, moved from chat_pipeline_em.py V70 F05)
+# ═══════════════════════════════════════════════════════════
+
+_AFFIRMATION_INVITATION_EM = {
+    "fr": (
+        "Je suis pret a vous aider ! Que souhaitez-vous analyser ?\n\n"
+        "- Statistiques d'un numero (ex: le 7)\n"
+        "- Derniers tirages (ex: dernier tirage)\n"
+        "- Generer une grille optimisee (ex: genere une grille)\n"
+        "- Tendances chaud/froid (ex: numeros chauds)"
+    ),
+    "en": (
+        "I'm ready to help! What would you like to analyse?\n\n"
+        "- Number statistics (e.g. number 7)\n"
+        "- Latest draws (e.g. last draw)\n"
+        "- Generate an optimised grid (e.g. generate a grid)\n"
+        "- Hot/cold trends (e.g. hot numbers)"
+    ),
+    "es": (
+        "Estoy listo para ayudarte. Que deseas analizar?\n\n"
+        "- Estadisticas de un numero (ej: el 7)\n"
+        "- Ultimos sorteos (ej: ultimo sorteo)\n"
+        "- Generar una combinacion optimizada (ej: genera una combinacion)\n"
+        "- Tendencias caliente/frio (ej: numeros calientes)"
+    ),
+    "pt": (
+        "Estou pronto para te ajudar! O que queres analisar?\n\n"
+        "- Estatisticas de um numero (ex: o 7)\n"
+        "- Ultimos sorteios (ex: ultimo sorteio)\n"
+        "- Gerar uma grelha optimizada (ex: gera uma grelha)\n"
+        "- Tendencias quente/frio (ex: numeros quentes)"
+    ),
+    "de": (
+        "Ich bin bereit zu helfen! Was moechtest du analysieren?\n\n"
+        "- Statistiken einer Zahl (z.B. die 7)\n"
+        "- Letzte Ziehungen (z.B. letzte Ziehung)\n"
+        "- Optimierte Kombination generieren (z.B. generiere eine Kombination)\n"
+        "- Heiss/kalt Trends (z.B. heisse Zahlen)"
+    ),
+    "nl": (
+        "Ik ben klaar om te helpen! Wat wil je analyseren?\n\n"
+        "- Statistieken van een nummer (bv. nummer 7)\n"
+        "- Laatste trekkingen (bv. laatste trekking)\n"
+        "- Geoptimaliseerde combinatie genereren (bv. genereer een combinatie)\n"
+        "- Warm/koud trends (bv. warme nummers)"
+    ),
+}
+
+_GAME_KEYWORD_INVITATION_EM = {
+    "fr": (
+        "Bienvenue sur HYBRIDE EuroMillions ! Voici ce que je peux faire :\n\n"
+        "- Statistiques d'un numero (ex: le 7)\n"
+        "- Derniers tirages (ex: dernier tirage)\n"
+        "- Generer une grille optimisee (ex: genere une grille)\n"
+        "- Tendances chaud/froid (ex: numeros chauds)"
+    ),
+    "en": (
+        "Welcome to HYBRIDE EuroMillions! Here's what I can do:\n\n"
+        "- Number statistics (e.g. number 7)\n"
+        "- Latest draws (e.g. last draw)\n"
+        "- Generate an optimised grid (e.g. generate a grid)\n"
+        "- Hot/cold trends (e.g. hot numbers)"
+    ),
+    "es": (
+        "Bienvenido a HYBRIDE EuroMillions! Esto es lo que puedo hacer:\n\n"
+        "- Estadisticas de un numero (ej: el 7)\n"
+        "- Ultimos sorteos (ej: ultimo sorteo)\n"
+        "- Generar una combinacion optimizada (ej: genera una combinacion)\n"
+        "- Tendencias caliente/frio (ej: numeros calientes)"
+    ),
+    "pt": (
+        "Bem-vindo ao HYBRIDE EuroMillions! Eis o que posso fazer:\n\n"
+        "- Estatisticas de um numero (ex: o 7)\n"
+        "- Ultimos sorteios (ex: ultimo sorteio)\n"
+        "- Gerar uma grelha optimizada (ex: gera uma grelha)\n"
+        "- Tendencias quente/frio (ex: numeros quentes)"
+    ),
+    "de": (
+        "Willkommen bei HYBRIDE EuroMillions! Das kann ich fuer dich tun:\n\n"
+        "- Statistiken einer Zahl (z.B. die 7)\n"
+        "- Letzte Ziehungen (z.B. letzte Ziehung)\n"
+        "- Optimierte Kombination generieren (z.B. generiere eine Kombination)\n"
+        "- Heiss/kalt Trends (z.B. heisse Zahlen)"
+    ),
+    "nl": (
+        "Welkom bij HYBRIDE EuroMillions! Dit kan ik voor je doen:\n\n"
+        "- Statistieken van een nummer (bv. nummer 7)\n"
+        "- Laatste trekkingen (bv. laatste trekking)\n"
+        "- Geoptimaliseerde combinatie genereren (bv. genereer een combinatie)\n"
+        "- Warm/koud trends (bv. warme nummers)"
+    ),
+}

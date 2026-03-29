@@ -32,6 +32,7 @@ from services.chat_detectors import (
     _is_affirmation_simple, _detect_game_keyword_alone,  # V51
     _detect_salutation, _get_salutation_response,  # V65
     _has_data_signal,  # V65
+    _detect_grid_evaluation,  # V70
 )
 from services.chat_sql import (
     _get_prochain_tirage, _get_tirage_data, _generate_sql, _validate_sql,
@@ -162,8 +163,20 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
             '?' in message
             or bool(re.search(r'\b\d{1,2}\b', message))
             or any(kw in message.lower() for kw in (
+                # FR
                 "numéro", "numero", "tirage", "grille", "fréquence", "frequence",
                 "classement", "statistique", "stat", "analyse", "prochain",
+                # EN
+                "number", "draw", "grid", "frequency", "ranking", "statistic",
+                "analysis", "next",
+                # ES
+                "número", "sorteo", "resultado", "cuadrícula",
+                # PT
+                "sorteio", "grelha",
+                # DE
+                "ziehung", "zahlen", "ergebnis",
+                # NL
+                "trekking", "nummers", "resultaat",
             ))
         )
         if _has_question:
@@ -190,9 +203,21 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
                 '?' in message
                 or bool(re.search(r'\b\d{1,2}\b', message))
                 or any(kw in message.lower() for kw in (
+                    # FR
                     "numéro", "numero", "tirage", "grille", "fréquence", "frequence",
                     "combien", "c'est quoi", "quel", "quelle", "comment", "pourquoi",
                     "classement", "statistique", "stat", "analyse",
+                    # EN
+                    "number", "draw", "grid", "frequency", "ranking", "how",
+                    "what", "which", "why",
+                    # ES
+                    "número", "sorteo", "cuánto", "cuál",
+                    # PT
+                    "sorteio", "quanto", "qual",
+                    # DE
+                    "ziehung", "zahlen", "wie", "welche",
+                    # NL
+                    "trekking", "nummers", "hoeveel", "welke",
                 ))
             )
             if not _has_question_c:
@@ -274,6 +299,9 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
         logger.info("[HYBRIDE CHAT] Argent detecte — court-circuit Phase A")
         return {"response": _argent_resp, "source": "hybride_argent", "mode": mode, "_chat_meta": {"phase": _phase, "t0": _t0}}, None
 
+    # Phase GEO — EM-only (Loto = France-only, pas de détection pays)
+    # Voir chat_pipeline_em.py pour l'implémentation EM
+
     # ── Phase 0 : Continuation contextuelle ──
     _continuation_mode = False
     _enriched_message = None
@@ -334,6 +362,32 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
     # run even when a grid was generated (multi-action: "compare X vs Y + generate")
     enrichment_context = ""
 
+    # ── Phase EVAL : Évaluation grille soumise par l'utilisateur (V70) ──
+    # Placed after enrichment_context init, before stats phases.
+    # Skipped if Phase G already produced generation context (not an evaluation).
+    if not _generation_context:
+        _eval_result = _detect_grid_evaluation(message, game="loto")
+        if _eval_result:
+            _phase = "EVAL"
+            try:
+                _eval_nums = _eval_result["numeros"]
+                _eval_chance = _eval_result.get("chance")
+                grille_analysis = await asyncio.wait_for(
+                    analyze_grille_for_chat(_eval_nums, _eval_chance), timeout=30.0,
+                )
+                if grille_analysis:
+                    enrichment_context = _format_grille_context(grille_analysis)
+                    enrichment_context = enrichment_context.replace(
+                        "[ANALYSE DE GRILLE",
+                        "[ÉVALUATION GRILLE UTILISATEUR",
+                    )
+                    logger.info(
+                        f"[HYBRIDE CHAT] Phase EVAL — grille utilisateur evaluee: "
+                        f"{_eval_nums} chance={_eval_chance}"
+                    )
+            except Exception as e:
+                logger.warning(f"[HYBRIDE CHAT] Phase EVAL erreur: {e}")
+
     # Phase 0-bis : prochain tirage
     if not _continuation_mode and _detect_prochain_tirage(message):
         _phase = "0-bis"
@@ -375,8 +429,9 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
         logger.info("[HYBRIDE CHAT] Filtre temporel detecte, force Phase SQL")
 
     # Phase 2 : detection de grille (5 numeros)
+    # Skip if Phase EVAL already analyzed the grid (enrichment_context already set)
     grille_nums, grille_chance = (None, None) if _continuation_mode else _detect_grille(message)
-    if not force_sql and grille_nums is not None:
+    if not force_sql and not enrichment_context and grille_nums is not None:
         _phase = "2"
         try:
             grille_result = await asyncio.wait_for(analyze_grille_for_chat(grille_nums, grille_chance), timeout=30.0)
@@ -836,7 +891,7 @@ async def handle_chat_stream(message: str, history: list, page: str, http_client
 # PITCH GRILLES — Gemini
 # =========================
 
-async def handle_pitch(grilles: list, http_client) -> dict:
+async def handle_pitch(grilles: list, http_client, lang: str = "fr") -> dict:
     """
     Genere des pitchs HYBRIDE personnalises pour chaque grille via Gemini.
     Retourne dict(success, data, error, status_code).

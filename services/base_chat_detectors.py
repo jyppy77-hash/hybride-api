@@ -1685,3 +1685,134 @@ def _detect_site_rating(message: str) -> bool:
 def get_site_rating_response(lang: str = "fr") -> str:
     """Return the site rating invitation response for the given language."""
     return _SITE_RATING_RESPONSES.get(lang, _SITE_RATING_RESPONSES["fr"])
+
+
+# ────────────────────────────────────────────
+# Phase EVAL : Detection grille soumise pour evaluation (V70)
+# ────────────────────────────────────────────
+
+_GRID_EVAL_PATTERN = re.compile(
+    # FR
+    r'que?\s+(?:pensez|penses|pense[sz]?[\s-](?:tu|vous))\s+(?:de|d[\'ʼ])'
+    r'|(?:votre|ton)\s+avis\s+(?:sur|pour)'
+    r'|analy(?:ser?|se)\s+(?:ces|mes|les)\s+num[eé]ro'
+    r'|[eé]valu(?:er?|e)\s+(?:ma|cette|la|mes)\s+(?:grille|combinaison)'
+    r'|(?:ces|mes|les)\s+num[eé]ros?\s+(?:sont|est)\s+(?:bien|bon|bons|correct|valable|viable)'
+    r'|que?\s+(?:vaut|valent)\s+(?:cette|ma|ces|mes)\s+(?:grille|combinaison|num[eé]ro)'
+    r'|v[eé]rifi(?:er?|e)\s+(?:ma|mes|cette)\s+(?:grille|combinaison|num[eé]ro)'
+    r'|(?:donne|donner?|donnez?)\s+(?:(?:moi|nous)\s+)?(?:votre|ton|un)\s+avis'
+    r'|(?:comment\s+(?:est|sont)|c[\'ʼ]est\s+(?:bien|bon|correct))\s.*?\b(?:grille|num[eé]ro|combinaison)'
+    # EN
+    r'|what\s+do\s+you\s+think\s+(?:of|about)'
+    r'|(?:your|an?)\s+opinion\s+(?:on|about)'
+    r'|analy[sz]e\s+(?:these|my|the)\s+number'
+    r'|evaluate\s+(?:my|this|the)\s+(?:grid|combination|numbers?)'
+    r'|(?:are\s+)?(?:these|my)\s+numbers?\s+(?:good|ok|correct|valid|viable)'
+    r'|check\s+(?:my|these|the)\s+(?:numbers?|grid|combination)'
+    r'|(?:how\s+(?:is|are)|is\s+(?:this|it)\s+(?:good|ok))\s.*?\b(?:grid|number|combination)'
+    r'|rate\s+(?:my|this|these)\s+(?:numbers?|grid|combination)'
+    # ES
+    r'|qu[eé]\s+(?:opinas?|piensas?|te\s+parece[ns]?)\s+(?:de|sobre)'
+    r'|anali[zs]ar?\s+(?:estos?|mis?|las?)\s+n[uú]mero'
+    r'|evaluar?\s+(?:mi|esta|la)\s+(?:combinaci[oó]n|cuadr[ií]cula)'
+    r'|(?:son|est[aá]n?)\s+(?:bien|buenos?|correctos?)\s+(?:estos?|mis?)\s+n[uú]mero'
+    # PT
+    r'|o\s+que\s+acha(?:s|m)?\s+(?:de|d[eio]s?)'
+    r'|analisar?\s+(?:estes?|os\s+meus|os)\s+n[uú]mero'
+    r'|avaliar?\s+(?:a\s+minha|esta|os\s+meus)\s+(?:grelha|combina[cç][aã]o|n[uú]mero)'
+    # DE
+    r'|was\s+(?:h[aä]ltst|denkst|meinst)\s+(?:du|ihr|Sie)\s+(?:von|[uü]ber|zu|da(?:von|zu))'
+    r'|(?:diese|meine)\s+Zahlen\s+(?:analysi|bewerst|pr[uü]f)'
+    r'|(?:meine|diese)\s+(?:Zahlen|Kombination)\s+(?:gut|korrekt|in Ordnung)'
+    # NL
+    r'|wat\s+(?:vind|denk)\s+(?:je|jij|u)\s+(?:van|over|ervan)'
+    r'|(?:deze|mijn)\s+nummers?\s+analy[sz]'
+    r'|(?:mijn|deze)\s+(?:combinatie|nummers?)\s+(?:beoordel|check|controleer)'
+    r'|(?:zijn|is)\s+(?:deze|mijn)\s+(?:nummers?|combinatie)\s+(?:goed|correct|ok)',
+    re.IGNORECASE,
+)
+
+# Minimum numbers required for grid evaluation (partial grids accepted)
+_GRID_EVAL_MIN_NUMS = 3
+
+
+def _detect_grid_evaluation(message: str, game: str = "loto") -> dict | None:
+    """
+    Detect if user submits a grid for evaluation/analysis (6 langs).
+    Returns dict with extracted numbers or None if not an evaluation request.
+
+    Args:
+        message: user message
+        game: "loto" or "em" (determines number ranges)
+
+    Returns:
+        dict(numeros=list[int], chance=int|None, etoiles=list[int]|None) or None
+    """
+    if not _GRID_EVAL_PATTERN.search(message):
+        return None
+
+    # Extract all numbers from the message
+    text = message.lower()
+
+    max_boule = 49 if game == "loto" else 50
+    max_secondary = 10 if game == "loto" else 12
+
+    # Extract chance/etoiles first (secondary numbers)
+    chance = None
+    etoiles = None
+
+    if game == "loto":
+        # Detect chance number patterns
+        chance_re = re.compile(
+            r'(?:chance|compl[eé]mentaire|bonus|sp[eé]cial|n[°o]?\s*chance)\s*[:\s-]*(\d{1,2})'
+            r'|(?:et\s+le\s+|le\s+)(\d{1,2})\s+en\s+chance',
+            re.IGNORECASE,
+        )
+        for m in chance_re.finditer(text):
+            val = int(m.group(1) or m.group(2))
+            if 1 <= val <= max_secondary:
+                chance = val
+                text = text[:m.start()] + " " + text[m.end():]
+                break
+    else:
+        # Detect star patterns for EM
+        star_re = re.compile(
+            r'(?:[eé]toiles?|stars?|estrellas?|estrelas?|stern[e]?|sterren?)\s*[:\s-]*(\d{1,2})\s*(?:et|and|y|e|und|en|-)\s*(\d{1,2})'
+            r'|[☆★⭐]\s*(\d{1,2})\s*(?:et|and|y|e|und|en|-)\s*(\d{1,2})'
+            r'|\+\s*(\d{1,2})\s*(?:et|and|y|e|und|en|-)\s*(\d{1,2})\s*$',
+            re.IGNORECASE,
+        )
+        m = star_re.search(text)
+        if m:
+            groups = m.groups()
+            e1, e2 = None, None
+            for i in range(0, len(groups), 2):
+                if groups[i] is not None:
+                    e1, e2 = int(groups[i]), int(groups[i + 1])
+                    break
+            if e1 and e2 and 1 <= e1 <= max_secondary and 1 <= e2 <= max_secondary and e1 != e2:
+                etoiles = sorted([e1, e2])
+                text = text[:m.start()] + " " + text[m.end():]
+
+    # Extract main numbers
+    all_numbers = [int(x) for x in re.findall(r'\b(\d{1,2})\b', text)]
+    valid_nums = [n for n in all_numbers if 1 <= n <= max_boule]
+
+    # Deduplicate preserving order
+    seen = set()
+    unique_nums = []
+    for n in valid_nums:
+        if n not in seen:
+            seen.add(n)
+            unique_nums.append(n)
+
+    if len(unique_nums) < _GRID_EVAL_MIN_NUMS:
+        return None
+
+    result = {"numeros": unique_nums[:5]}
+    if game == "loto":
+        result["chance"] = chance
+    else:
+        result["etoiles"] = etoiles
+
+    return result

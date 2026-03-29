@@ -34,6 +34,7 @@ from services.chat_detectors import (
     _is_affirmation_simple, _detect_game_keyword_alone,  # V51
     _detect_salutation, _get_salutation_response,  # V65
     _has_data_signal,  # V65
+    _detect_grid_evaluation,  # V70
 )
 from services.chat_detectors_em import (
     _detect_mode_em, _detect_prochain_tirage_em,
@@ -47,6 +48,7 @@ from services.chat_detectors_em import (
 from services.chat_responses_em_multilang import (
     get_insult_response, get_insult_short, get_menace_response,
     get_compliment_response, get_oor_response, get_fallback,
+    _AFFIRMATION_INVITATION_EM, _GAME_KEYWORD_INVITATION_EM,  # V70 F05
 )
 from services.chat_sql_em import (
     _get_prochain_tirage_em, _get_tirage_data_em, _generate_sql_em,
@@ -70,99 +72,6 @@ from services.chat_logger import log_chat_exchange
 from services.chat_pipeline import _get_draw_count  # F02: shared draw count helper
 
 logger = logging.getLogger(__name__)
-
-
-# ── Messages i18n pour affirmation sans contexte (V51 FIX 1) ──
-_AFFIRMATION_INVITATION_EM = {
-    "fr": (
-        "Je suis pret a vous aider ! Que souhaitez-vous analyser ?\n\n"
-        "- Statistiques d'un numero (ex: le 7)\n"
-        "- Derniers tirages (ex: dernier tirage)\n"
-        "- Generer une grille optimisee (ex: genere une grille)\n"
-        "- Tendances chaud/froid (ex: numeros chauds)"
-    ),
-    "en": (
-        "I'm ready to help! What would you like to analyse?\n\n"
-        "- Number statistics (e.g. number 7)\n"
-        "- Latest draws (e.g. last draw)\n"
-        "- Generate an optimised grid (e.g. generate a grid)\n"
-        "- Hot/cold trends (e.g. hot numbers)"
-    ),
-    "es": (
-        "Estoy listo para ayudarte. Que deseas analizar?\n\n"
-        "- Estadisticas de un numero (ej: el 7)\n"
-        "- Ultimos sorteos (ej: ultimo sorteo)\n"
-        "- Generar una combinacion optimizada (ej: genera una combinacion)\n"
-        "- Tendencias caliente/frio (ej: numeros calientes)"
-    ),
-    "pt": (
-        "Estou pronto para te ajudar! O que queres analisar?\n\n"
-        "- Estatisticas de um numero (ex: o 7)\n"
-        "- Ultimos sorteios (ex: ultimo sorteio)\n"
-        "- Gerar uma grelha optimizada (ex: gera uma grelha)\n"
-        "- Tendencias quente/frio (ex: numeros quentes)"
-    ),
-    "de": (
-        "Ich bin bereit zu helfen! Was moechtest du analysieren?\n\n"
-        "- Statistiken einer Zahl (z.B. die 7)\n"
-        "- Letzte Ziehungen (z.B. letzte Ziehung)\n"
-        "- Optimierte Kombination generieren (z.B. generiere eine Kombination)\n"
-        "- Heiss/kalt Trends (z.B. heisse Zahlen)"
-    ),
-    "nl": (
-        "Ik ben klaar om te helpen! Wat wil je analyseren?\n\n"
-        "- Statistieken van een nummer (bv. nummer 7)\n"
-        "- Laatste trekkingen (bv. laatste trekking)\n"
-        "- Geoptimaliseerde combinatie genereren (bv. genereer een combinatie)\n"
-        "- Warm/koud trends (bv. warme nummers)"
-    ),
-}
-
-# ── Messages i18n pour mot-clé jeu seul (V51 FIX 5) ──
-_GAME_KEYWORD_INVITATION_EM = {
-    "fr": (
-        "Bienvenue sur HYBRIDE EuroMillions ! Voici ce que je peux faire :\n\n"
-        "- Statistiques d'un numero (ex: le 7)\n"
-        "- Derniers tirages (ex: dernier tirage)\n"
-        "- Generer une grille optimisee (ex: genere une grille)\n"
-        "- Tendances chaud/froid (ex: numeros chauds)"
-    ),
-    "en": (
-        "Welcome to HYBRIDE EuroMillions! Here's what I can do:\n\n"
-        "- Number statistics (e.g. number 7)\n"
-        "- Latest draws (e.g. last draw)\n"
-        "- Generate an optimised grid (e.g. generate a grid)\n"
-        "- Hot/cold trends (e.g. hot numbers)"
-    ),
-    "es": (
-        "Bienvenido a HYBRIDE EuroMillions! Esto es lo que puedo hacer:\n\n"
-        "- Estadisticas de un numero (ej: el 7)\n"
-        "- Ultimos sorteos (ej: ultimo sorteo)\n"
-        "- Generar una combinacion optimizada (ej: genera una combinacion)\n"
-        "- Tendencias caliente/frio (ej: numeros calientes)"
-    ),
-    "pt": (
-        "Bem-vindo ao HYBRIDE EuroMillions! Eis o que posso fazer:\n\n"
-        "- Estatisticas de um numero (ex: o 7)\n"
-        "- Ultimos sorteios (ex: ultimo sorteio)\n"
-        "- Gerar uma grelha optimizada (ex: gera uma grelha)\n"
-        "- Tendencias quente/frio (ex: numeros quentes)"
-    ),
-    "de": (
-        "Willkommen bei HYBRIDE EuroMillions! Das kann ich fuer dich tun:\n\n"
-        "- Statistiken einer Zahl (z.B. die 7)\n"
-        "- Letzte Ziehungen (z.B. letzte Ziehung)\n"
-        "- Optimierte Kombination generieren (z.B. generiere eine Kombination)\n"
-        "- Heiss/kalt Trends (z.B. heisse Zahlen)"
-    ),
-    "nl": (
-        "Welkom bij HYBRIDE EuroMillions! Dit kan ik voor je doen:\n\n"
-        "- Statistieken van een nummer (bv. nummer 7)\n"
-        "- Laatste trekkingen (bv. laatste trekking)\n"
-        "- Geoptimaliseerde combinatie genereren (bv. genereer een combinatie)\n"
-        "- Warm/koud trends (bv. warme nummers)"
-    ),
-}
 
 
 # =========================
@@ -284,10 +193,22 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
                 '?' in message
                 or bool(re.search(r'\b\d{1,2}\b', message))
                 or any(kw in message.lower() for kw in (
+                    # FR
                     "numéro", "numero", "tirage", "grille", "fréquence", "frequence",
                     "combien", "c'est quoi", "quel", "quelle", "comment", "pourquoi",
                     "classement", "statistique", "stat", "analyse",
                     "étoile", "etoile",
+                    # EN
+                    "number", "draw", "grid", "frequency", "ranking", "how",
+                    "what", "which", "why", "star",
+                    # ES
+                    "número", "sorteo", "estrella", "cuánto", "cuál",
+                    # PT
+                    "sorteio", "estrela", "quanto", "qual",
+                    # DE
+                    "ziehung", "zahlen", "stern", "wie", "welche",
+                    # NL
+                    "trekking", "nummers", "ster", "hoeveel", "welke",
                 ))
             )
             if not _has_question_c:
@@ -432,6 +353,32 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
     # run even when a grid was generated (multi-action: "compare X vs Y + generate")
     enrichment_context = ""
 
+    # ── Phase EVAL : Évaluation grille soumise par l'utilisateur (V70) ──
+    # Placed after enrichment_context init, before stats phases.
+    # Skipped if Phase G already produced generation context (not an evaluation).
+    if not _generation_context:
+        _eval_result = _detect_grid_evaluation(message, game="em")
+        if _eval_result:
+            _phase = "EVAL"
+            try:
+                _eval_nums = _eval_result["numeros"]
+                _eval_etoiles = _eval_result.get("etoiles")
+                grille_analysis = await asyncio.wait_for(
+                    analyze_grille_for_chat(_eval_nums, _eval_etoiles, lang=lang), timeout=30.0,
+                )
+                if grille_analysis:
+                    enrichment_context = _format_grille_context_em(grille_analysis)
+                    enrichment_context = enrichment_context.replace(
+                        "[ANALYSE DE GRILLE",
+                        "[ÉVALUATION GRILLE UTILISATEUR",
+                    )
+                    logger.info(
+                        f"[EM CHAT] Phase EVAL — grille utilisateur evaluee: "
+                        f"{_eval_nums} etoiles={_eval_etoiles} (lang={lang})"
+                    )
+            except Exception as e:
+                logger.warning(f"[EM CHAT] Phase EVAL erreur: {e}")
+
     # Phase 0-bis : prochain tirage
     if not _continuation_mode and _detect_prochain_tirage_em(message):
         _phase = "0-bis"
@@ -473,8 +420,9 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
         logger.info("[EM CHAT] Filtre temporel detecte, force Phase SQL")
 
     # Phase 2 : detection de grille (5 numeros + etoiles)
+    # Skip if Phase EVAL already analyzed the grid (enrichment_context already set)
     grille_nums, grille_etoiles = (None, None) if _continuation_mode else _detect_grille_em(message)
-    if not force_sql and grille_nums is not None:
+    if not force_sql and not enrichment_context and grille_nums is not None:
         _phase = "2"
         try:
             grille_result = await asyncio.wait_for(analyze_grille_for_chat(grille_nums, grille_etoiles, lang=lang), timeout=30.0)

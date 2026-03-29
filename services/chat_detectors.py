@@ -48,6 +48,8 @@ from services.base_chat_detectors import (  # noqa: F401
     # V65 — Salutation + data signal
     _detect_salutation, _get_salutation_response,
     _has_data_signal,
+    # V70 — Grid evaluation
+    _detect_grid_evaluation,
 )
 
 

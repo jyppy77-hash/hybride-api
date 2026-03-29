@@ -86,6 +86,7 @@ async def api_pitch_grilles(request: Request, payload: PitchGrillesRequest):
     result = await handle_pitch(
         payload.grilles,
         request.app.state.httpx_client,
+        lang=payload.lang if hasattr(payload, "lang") else "fr",
     )
     status = result.pop("status_code", 200)
     if status != 200:

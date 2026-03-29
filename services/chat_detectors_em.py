@@ -14,6 +14,7 @@ from services.base_chat_detectors import (
     _detect_paires, _detect_triplets,
     _detect_generation, _detect_generation_mode,
     _is_affirmation_simple, _detect_game_keyword_alone,  # V51
+    _detect_grid_evaluation,  # V70
 )
 
 

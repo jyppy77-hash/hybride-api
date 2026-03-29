@@ -74,6 +74,7 @@ async def unified_pitch_grilles(request: Request, game: ValidGame):
         result = await pipeline.handle_pitch(
             payload.grilles,
             request.app.state.httpx_client,
+            lang=payload.lang if hasattr(payload, "lang") else "fr",
         )
     else:
         payload = EMPitchGrillesRequest(**body)
