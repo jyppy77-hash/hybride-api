@@ -1,9 +1,12 @@
 """
-Shared Gemini enrichment logic — V71 R3c.
+Shared Gemini enrichment logic — V71 R3c / V73 F03.
 
 Extracts the common Gemini call → parse → track → fallback flow
 from gemini.py and em_gemini.py. Both files delegate to
 _enrich_analysis_base() with game-specific parameters.
+
+F03: _gemini_call_with_fallback() extracts the shared try/except skeleton
+(CircuitOpen/Timeout/Exception → fallback) used by 3 call sites.
 """
 
 import os
@@ -14,6 +17,22 @@ import httpx
 from services.circuit_breaker import gemini_breaker, CircuitOpenError
 
 logger = logging.getLogger(__name__)
+
+# F12: track fire-and-forget tasks for graceful shutdown
+_PENDING_TASKS: set = set()
+
+
+def _track_task(task):
+    """Add a task to _PENDING_TASKS with auto-discard on completion."""
+    _PENDING_TASKS.add(task)
+    task.add_done_callback(_PENDING_TASKS.discard)
+
+
+async def await_pending_tasks(timeout: float = 5.0):
+    """Await all pending fire-and-forget tasks (for graceful shutdown)."""
+    import asyncio
+    if _PENDING_TASKS:
+        await asyncio.wait(_PENDING_TASKS, timeout=timeout)
 
 GEMINI_MODEL_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
@@ -62,6 +81,42 @@ ENRICHMENT_INSTRUCTIONS = {
 }
 
 
+async def _gemini_call_with_fallback(
+    coro,
+    *,
+    fallback_fn,
+    log_prefix: str = "[GEMINI]",
+    breaker=None,
+):
+    """
+    F03: shared try/except skeleton for Gemini calls.
+
+    Wraps a coroutine (the Gemini HTTP call) with CircuitOpen/Timeout/Exception
+    handling, returning a fallback on failure.
+
+    Args:
+        coro: awaitable — the Gemini breaker.call() coroutine
+        fallback_fn: callable(error_type: str) → fallback value
+            error_type is one of: "circuit_open", "timeout", "error"
+        log_prefix: for logging
+        breaker: unused (kept for API symmetry, caller passes breaker to coro)
+
+    Returns:
+        httpx.Response on success, or the result of fallback_fn(error_type) on failure.
+    """
+    try:
+        return await coro
+    except CircuitOpenError:
+        logger.warning(f"{log_prefix} Circuit breaker ouvert — fallback")
+        return fallback_fn("circuit_open")
+    except httpx.TimeoutException:
+        logger.warning(f"{log_prefix} Timeout Gemini — fallback")
+        return fallback_fn("timeout")
+    except Exception as e:
+        logger.error(f"{log_prefix} Erreur Gemini: {e}")
+        return fallback_fn("error")
+
+
 async def enrich_analysis_base(
     analysis_local: str,
     prompt: str,
@@ -101,9 +156,16 @@ async def enrich_analysis_base(
 
     logger.debug(f"{log_prefix} Prompt construit ({len(prompt)} chars), appel Gemini...")
 
-    try:
-        _t0 = time.monotonic()
-        response = await _breaker.call(
+    _fallback_local = {"analysis_enriched": analysis_local, "source": "hybride_local"}
+
+    def _fallback(error_type):
+        if error_type == "circuit_open":
+            return {"analysis_enriched": analysis_local, "source": "fallback_circuit"}
+        return _fallback_local
+
+    _t0 = time.monotonic()
+    result = await _gemini_call_with_fallback(
+        _breaker.call(
             http_client,
             GEMINI_MODEL_URL,
             headers={
@@ -120,50 +182,48 @@ async def enrich_analysis_base(
                     "maxOutputTokens": 250,
                 },
             },
-        )
+        ),
+        fallback_fn=_fallback,
+        log_prefix=log_prefix,
+    )
 
-        _dur_ms = (time.monotonic() - _t0) * 1000
-        if response.status_code == 200:
-            data = response.json()
-            _usage = data.get("usageMetadata", {})
-            _tin = _usage.get("promptTokenCount", 0)
-            _tout = _usage.get("candidatesTokenCount", 0)
-            try:
-                from services.gcp_monitoring import track_gemini_call
-                import asyncio
-                asyncio.ensure_future(track_gemini_call(
-                    _dur_ms, _tin, _tout, call_type=call_type, lang=lang))
-            except Exception:
-                pass
-            candidates = data.get("candidates", [])
-            if candidates:
-                content = candidates[0].get("content", {})
-                parts = content.get("parts", [])
-                if parts:
-                    enriched_text = parts[0].get("text", "").strip()
-                    if enriched_text:
-                        logger.info(f"{log_prefix} Gemini OK")
-                        return {"analysis_enriched": enriched_text, "source": "gemini_enriched"}
+    # If fallback was returned (dict, not httpx.Response)
+    if isinstance(result, dict):
+        return result
 
-            logger.warning(f"{log_prefix} Reponse Gemini incomplete — fallback local")
-        else:
-            logger.warning(f"{log_prefix} Reponse Gemini HTTP {response.status_code}")
-            try:
-                from services.gcp_monitoring import track_gemini_call
-                import asyncio
-                asyncio.ensure_future(track_gemini_call(
-                    _dur_ms, error=True, call_type=call_type, lang=lang))
-            except Exception:
-                pass
+    response = result
+    _dur_ms = (time.monotonic() - _t0) * 1000
+    if response.status_code == 200:
+        data = response.json()
+        _usage = data.get("usageMetadata", {})
+        _tin = _usage.get("promptTokenCount", 0)
+        _tout = _usage.get("candidatesTokenCount", 0)
+        try:
+            from services.gcp_monitoring import track_gemini_call
+            import asyncio
+            _track_task(asyncio.ensure_future(track_gemini_call(
+                _dur_ms, _tin, _tout, call_type=call_type, lang=lang)))
+        except Exception:
+            pass
+        candidates = data.get("candidates", [])
+        if candidates:
+            content = candidates[0].get("content", {})
+            parts = content.get("parts", [])
+            if parts:
+                enriched_text = parts[0].get("text", "").strip()
+                if enriched_text:
+                    logger.info(f"{log_prefix} Gemini OK")
+                    return {"analysis_enriched": enriched_text, "source": "gemini_enriched"}
 
-        return {"analysis_enriched": analysis_local, "source": "hybride_local"}
+        logger.warning(f"{log_prefix} Reponse Gemini incomplete — fallback local")
+    else:
+        logger.warning(f"{log_prefix} Reponse Gemini HTTP {response.status_code}")
+        try:
+            from services.gcp_monitoring import track_gemini_call
+            import asyncio
+            _track_task(asyncio.ensure_future(track_gemini_call(
+                _dur_ms, error=True, call_type=call_type, lang=lang)))
+        except Exception:
+            pass
 
-    except CircuitOpenError:
-        logger.warning(f"{log_prefix} Circuit breaker ouvert — fallback local")
-        return {"analysis_enriched": analysis_local, "source": "fallback_circuit"}
-    except httpx.TimeoutException:
-        logger.warning(f"{log_prefix} Timeout Gemini (20s) - fallback local")
-        return {"analysis_enriched": analysis_local, "source": "hybride_local"}
-    except Exception as e:
-        logger.error(f"{log_prefix} Erreur Gemini: {e}", exc_info=True)
-        return {"analysis_enriched": analysis_local, "source": "fallback"}
+    return _fallback_local

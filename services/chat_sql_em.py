@@ -1,6 +1,6 @@
 """
 Text-to-SQL — EuroMillions thin wrapper.
-Shared validation/execution/formatting in base_chat_sql.py.
+Shared validation/cleaning/execution/formatting in base_chat_sql.py.
 EM-specific: prochain tirage EM, tirage data EM, SQL generation (prompt EM, table tirages_euromillions).
 """
 
@@ -11,23 +11,20 @@ import db_cloudsql
 from services.prompt_loader import load_prompt_em
 from services.gemini import GEMINI_MODEL_URL
 from services.circuit_breaker import gemini_breaker
+from services.base_chat_sql import (
+    _JOURS_FR, _clean_gemini_sql, _build_gemini_sql_contents, _guard_non_sql,
+)
 
 # Re-export shared functions (consumers import from here)
 from services.base_chat_sql import (  # noqa: F401
-    _validate_sql, _ensure_limit,
+    _validate_sql, _ensure_limit, _execute_safe_sql, _format_sql_result,
     _MAX_SQL_PER_SESSION, _SQL_FORBIDDEN,
 )
-from services.chat_sql import _execute_safe_sql, _format_sql_result  # noqa: F401
 
 logger = logging.getLogger(__name__)
 
 # Jours de tirage EuroMillions : mardi (1), vendredi (4)
 _JOURS_TIRAGE_EM = [1, 4]
-
-_JOURS_FR = {
-    0: "lundi", 1: "mardi", 2: "mercredi", 3: "jeudi",
-    4: "vendredi", 5: "samedi", 6: "dimanche",
-}
 
 
 async def _get_prochain_tirage_em() -> str | None:
@@ -122,18 +119,7 @@ async def _generate_sql_em(question: str, client, api_key: str, history: list = 
         return None
     sql_prompt = sql_prompt.replace("{TODAY}", today_str)
 
-    sql_contents = []
-    if history:
-        for msg in history[-6:]:
-            role = "user" if msg.role == "user" else "model"
-            if sql_contents and sql_contents[-1]["role"] == role:
-                sql_contents[-1]["parts"][0]["text"] += "\n" + msg.content
-            else:
-                sql_contents.append({"role": role, "parts": [{"text": msg.content}]})
-    while sql_contents and sql_contents[0]["role"] == "model":
-        sql_contents.pop(0)
-
-    sql_contents.append({"role": "user", "parts": [{"text": question}]})
+    sql_contents = _build_gemini_sql_contents(question, history)
 
     try:
         response = await gemini_breaker.call(
@@ -158,24 +144,9 @@ async def _generate_sql_em(question: str, client, api_key: str, history: list = 
             data = response.json()
             candidates = data.get("candidates", [])
             if candidates:
-                text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
-                if text.startswith("```"):
-                    text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-                    if text.endswith("```"):
-                        text = text[:-3]
-                    text = text.strip()
-                if text.upper().startswith("SQL"):
-                    text = text[3:].strip()
-                    if text.startswith("\n"):
-                        text = text[1:]
-                text = text.strip()
-                # Guard: reject if Gemini returned natural language instead of SQL
-                if text and text.upper() != "NO_SQL" and not text.upper().startswith("SELECT"):
-                    logger.warning(
-                        f"[EM TEXT-TO-SQL] Non-SQL output rejected: \"{text[:100]}\""
-                    )
-                    return "NO_SQL"
-                return text
+                raw = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
+                text = _clean_gemini_sql(raw)
+                return _guard_non_sql(text, "EM TEXT-TO-SQL")
         return None
     except Exception as e:
         logger.warning(f"[EM TEXT-TO-SQL] Erreur generation SQL: {e}")

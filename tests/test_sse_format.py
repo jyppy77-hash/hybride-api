@@ -1,13 +1,21 @@
 """
 Tests SSE format validation — data: prefix, JSON parsable, is_done termination.
-F14 audit V71.
+F14 audit V71 + F06 audit V72.
 """
 
 import json
 import asyncio
+import os
 
 from services.chat_pipeline import _sse_event, handle_chat_stream
 from services.chat_pipeline_em import handle_chat_stream_em
+
+
+def _ensure_db_env():
+    os.environ.setdefault("DB_USER", "test")
+    os.environ.setdefault("DB_PASS", "test")
+    os.environ.setdefault("DB_NAME", "test")
+    os.environ.setdefault("DB_HOST", "127.0.0.1")
 
 
 # ═══════════════════════════════════════════════════════
@@ -73,11 +81,7 @@ class TestSseEarlyReturn:
 
     def test_insult_sse_format_loto(self):
         """Insult message → SSE with data: prefix, valid JSON, is_done=True."""
-        import os
-        os.environ.setdefault("DB_USER", "test")
-        os.environ.setdefault("DB_PASS", "test")
-        os.environ.setdefault("DB_NAME", "test")
-        os.environ.setdefault("DB_HOST", "127.0.0.1")
+        _ensure_db_env()
 
         events = _collect_sse(handle_chat_stream(
             "tu es nul espèce d'idiot",
@@ -100,11 +104,7 @@ class TestSseEarlyReturn:
 
     def test_insult_sse_format_em(self):
         """Insult message EM → SSE with data: prefix, valid JSON, is_done=True."""
-        import os
-        os.environ.setdefault("DB_USER", "test")
-        os.environ.setdefault("DB_PASS", "test")
-        os.environ.setdefault("DB_NAME", "test")
-        os.environ.setdefault("DB_HOST", "127.0.0.1")
+        _ensure_db_env()
 
         events = _collect_sse(handle_chat_stream_em(
             "you are stupid idiot",
@@ -122,3 +122,89 @@ class TestSseEarlyReturn:
 
         last = json.loads(events[-1][len("data: "):].strip())
         assert last["is_done"] is True
+
+
+# ═══════════════════════════════════════════════════════
+# F06: Additional SSE streaming tests
+# ═══════════════════════════════════════════════════════
+
+def _validate_sse_events(events):
+    """Shared validator: every event must be well-formed SSE."""
+    assert len(events) >= 1, "Expected at least 1 SSE event"
+    for event in events:
+        assert event.startswith("data: "), f"Missing data: prefix: {event[:50]}"
+        assert event.endswith("\n\n"), f"Missing double newline"
+        json_str = event[len("data: "):].strip()
+        parsed = json.loads(json_str)
+        assert "chunk" in parsed
+        assert "is_done" in parsed
+    last = json.loads(events[-1][len("data: "):].strip())
+    assert last["is_done"] is True
+    return last
+
+
+class TestSseComplimentEarlyReturn:
+    """Phase C (compliment) must produce valid SSE without Gemini."""
+
+    def test_compliment_loto_sse(self):
+        _ensure_db_env()
+        events = _collect_sse(handle_chat_stream(
+            "tu es génial merci beaucoup",
+            [],
+            "index",
+            None,
+            lang="fr",
+        ))
+        _validate_sse_events(events)
+
+    def test_compliment_em_sse(self):
+        _ensure_db_env()
+        events = _collect_sse(handle_chat_stream_em(
+            "you are amazing thank you",
+            [],
+            "em_index",
+            None,
+            lang="en",
+        ))
+        _validate_sse_events(events)
+
+
+class TestSseSalutationEarlyReturn:
+    """Phase SALUTATION must produce valid SSE without Gemini."""
+
+    def test_salutation_loto_sse(self):
+        _ensure_db_env()
+        events = _collect_sse(handle_chat_stream(
+            "bonjour",
+            [],
+            "index",
+            None,
+            lang="fr",
+        ))
+        _validate_sse_events(events)
+
+    def test_salutation_em_sse(self):
+        _ensure_db_env()
+        events = _collect_sse(handle_chat_stream_em(
+            "hello",
+            [],
+            "em_index",
+            None,
+            lang="en",
+        ))
+        _validate_sse_events(events)
+
+
+class TestSseAffirmation:
+    """Affirmation early-return → valid SSE."""
+
+    def test_affirmation_loto_sse(self):
+        _ensure_db_env()
+        events = _collect_sse(handle_chat_stream(
+            "oui",
+            [],
+            "index",
+            None,
+            lang="fr",
+        ))
+        _validate_sse_events(events)

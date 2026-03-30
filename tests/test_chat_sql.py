@@ -225,7 +225,7 @@ class TestGetTirageData:
 class TestExecuteSafeSql:
 
     @pytest.mark.asyncio
-    @patch("services.chat_sql.db_cloudsql")
+    @patch("services.base_chat_sql.db_cloudsql")
     async def test_returns_rows(self, mock_db):
         cursor = AsyncMock()
         mock_db.get_connection_readonly = lambda: _async_conn(cursor)
@@ -235,7 +235,7 @@ class TestExecuteSafeSql:
         assert result == [{"num": 7, "freq": 120}]
 
     @pytest.mark.asyncio
-    @patch("services.chat_sql.db_cloudsql")
+    @patch("services.base_chat_sql.db_cloudsql")
     async def test_returns_none_on_error(self, mock_db):
         cursor = AsyncMock()
         mock_db.get_connection_readonly = lambda: _async_conn(cursor)
@@ -257,7 +257,7 @@ class TestExecuteSafeSql:
         assert result is None
 
     @pytest.mark.asyncio
-    @patch("services.chat_sql.db_cloudsql")
+    @patch("services.base_chat_sql.db_cloudsql")
     async def test_uses_readonly_pool(self, mock_db):
         """S04: _execute_safe_sql must use get_connection_readonly (not get_connection)."""
         cursor = AsyncMock()

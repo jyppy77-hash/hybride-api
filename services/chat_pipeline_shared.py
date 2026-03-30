@@ -33,6 +33,7 @@ import httpx
 
 from services.circuit_breaker import gemini_breaker, CircuitOpenError, GeminiCircuitBreaker
 from services.gemini import GEMINI_MODEL_URL, stream_gemini_chat
+from services.gemini_shared import _gemini_call_with_fallback
 from services.chat_utils import (
     _clean_response, _strip_non_latin, _get_sponsor_if_due,
     _strip_sponsor_from_text, _enrich_with_context, _format_date_fr, StreamBuffer,
@@ -205,6 +206,22 @@ _TIRAGE_NOT_FOUND_EM = {
 
 
 # ═══════════════════════════════════════════════════════
+# F05: Centralized timeout constants (seconds)
+# ═══════════════════════════════════════════════════════
+
+_TIMEOUTS = {
+    "sql_generate": 10,
+    "sql_execute": 5,
+    "gemini_chat": 15,
+    "gemini_stream": 15,
+    "pitch_context": 30,
+    "pitch_gemini": 15,
+    "stats_analysis": 30,
+    "enrichment": 20,
+}
+
+
+# ═══════════════════════════════════════════════════════
 # SSE event formatter
 # ═══════════════════════════════════════════════════════
 
@@ -308,12 +325,12 @@ async def run_text_to_sql(message, http_client, gem_api_key, history,
             kwargs.update(sql_gen_kwargs)
         sql = await asyncio.wait_for(
             generate_sql_fn(message, http_client, gem_api_key, **kwargs),
-            timeout=10.0,
+            timeout=_TIMEOUTS["sql_generate"],
         )
         if sql and sql.strip().upper() != "NO_SQL" and validate_sql_fn(sql):
             _sql_query = sql
             sql = ensure_limit_fn(sql)
-            rows = await asyncio.wait_for(execute_sql_fn(sql), timeout=5.0)
+            rows = await asyncio.wait_for(execute_sql_fn(sql), timeout=_TIMEOUTS["sql_execute"])
             t_total = int((time.monotonic() - t0) * 1000)
             if rows is not None and len(rows) > 0:
                 _sql_status = "OK"
@@ -394,8 +411,14 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
     mode = ctx["mode"]
     _breaker = breaker or gemini_breaker
 
-    try:
-        response = await _breaker.call(
+    def _fallback(error_type):
+        detail = {"circuit_open": "CircuitOpen", "timeout": "Timeout"}.get(error_type, error_type)
+        log_from_meta(ctx.get("_chat_meta"), module, lang, message, is_error=True, error_detail=detail)
+        source = "fallback_circuit" if error_type == "circuit_open" else "fallback"
+        return {"response": fallback, "source": source, "mode": mode}
+
+    result = await _gemini_call_with_fallback(
+        _breaker.call(
             ctx["_http_client"],
             GEMINI_MODEL_URL,
             headers={
@@ -407,44 +430,39 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
                 "contents": ctx["contents"],
                 "generationConfig": {"temperature": 0.8, "maxOutputTokens": 300},
             },
-            timeout=15.0,
-        )
+            timeout=_TIMEOUTS["gemini_chat"],
+        ),
+        fallback_fn=_fallback,
+        log_prefix=log_prefix,
+    )
 
-        if response.status_code == 200:
-            data = response.json()
-            candidates = data.get("candidates", [])
-            if candidates:
-                parts = candidates[0].get("content", {}).get("parts", [])
-                if parts:
-                    text = parts[0].get("text", "").strip()
-                    if text:
-                        text = _clean_response(text)
-                        if ctx["insult_prefix"]:
-                            text = ctx["insult_prefix"] + "\n\n" + text
-                        s_kwargs = sponsor_kwargs or {}
-                        sponsor_line = _get_sponsor_if_due(ctx["history"], **s_kwargs)
-                        if sponsor_line:
-                            text += "\n\n" + sponsor_line
-                        logger.info(f"{log_prefix} OK (page={page}, mode={mode})")
-                        log_from_meta(ctx.get("_chat_meta"), module, lang, message, text)
-                        return {"response": text, "source": "gemini", "mode": mode}
+    # If fallback was returned (dict with "response" key, not httpx.Response)
+    if isinstance(result, dict):
+        return result
 
-        logger.warning(f"{log_prefix} Reponse Gemini invalide: {response.status_code}")
-        log_from_meta(ctx.get("_chat_meta"), module, lang, message, is_error=True, error_detail=f"HTTP {response.status_code}")
-        return {"response": fallback, "source": "fallback", "mode": mode}
+    response = result
+    if response.status_code == 200:
+        data = response.json()
+        candidates = data.get("candidates", [])
+        if candidates:
+            parts = candidates[0].get("content", {}).get("parts", [])
+            if parts:
+                text = parts[0].get("text", "").strip()
+                if text:
+                    text = _clean_response(text)
+                    if ctx["insult_prefix"]:
+                        text = ctx["insult_prefix"] + "\n\n" + text
+                    s_kwargs = sponsor_kwargs or {}
+                    sponsor_line = _get_sponsor_if_due(ctx["history"], **s_kwargs)
+                    if sponsor_line:
+                        text += "\n\n" + sponsor_line
+                    logger.info(f"{log_prefix} OK (page={page}, mode={mode})")
+                    log_from_meta(ctx.get("_chat_meta"), module, lang, message, text)
+                    return {"response": text, "source": "gemini", "mode": mode}
 
-    except CircuitOpenError:
-        logger.warning(f"{log_prefix} Circuit breaker ouvert — fallback")
-        log_from_meta(ctx.get("_chat_meta"), module, lang, message, is_error=True, error_detail="CircuitOpen")
-        return {"response": fallback, "source": "fallback_circuit", "mode": mode}
-    except httpx.TimeoutException:
-        logger.warning(f"{log_prefix} Timeout Gemini (15s) — fallback")
-        log_from_meta(ctx.get("_chat_meta"), module, lang, message, is_error=True, error_detail="Timeout")
-        return {"response": fallback, "source": "fallback", "mode": mode}
-    except Exception as e:
-        logger.error(f"{log_prefix} Erreur Gemini: {e}")
-        log_from_meta(ctx.get("_chat_meta"), module, lang, message, is_error=True, error_detail=str(e)[:255])
-        return {"response": fallback, "source": "fallback", "mode": mode}
+    logger.warning(f"{log_prefix} Reponse Gemini invalide: {response.status_code}")
+    log_from_meta(ctx.get("_chat_meta"), module, lang, message, is_error=True, error_detail=f"HTTP {response.status_code}")
+    return {"response": fallback, "source": "fallback", "mode": mode}
 
 
 # ═══════════════════════════════════════════════════════
@@ -474,7 +492,7 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
         _buf = StreamBuffer()
         async for chunk in _stream(
             ctx["_http_client"], ctx["gem_api_key"], ctx["system_prompt"],
-            ctx["contents"], timeout=15.0,
+            ctx["contents"], timeout=_TIMEOUTS["gemini_stream"],
             call_type=call_type, lang=lang,
         ):
             safe = _buf.add_chunk(chunk)
@@ -584,9 +602,9 @@ async def handle_pitch_common(grilles_data, http_client, lang,
     Returns result dict.
     """
     try:
-        context = await asyncio.wait_for(context_coro, timeout=30.0)
+        context = await asyncio.wait_for(context_coro, timeout=_TIMEOUTS["pitch_context"])
     except asyncio.TimeoutError:
-        logger.error(f"{log_prefix} Timeout 30s contexte stats")
+        logger.error(f"{log_prefix} Timeout {_TIMEOUTS['pitch_context']}s contexte stats")
         return {"success": False, "data": None, "error": "Service temporairement indisponible", "status_code": 503}
     except Exception as e:
         logger.warning(f"{log_prefix} Erreur contexte stats: {e}")
@@ -605,8 +623,16 @@ async def handle_pitch_common(grilles_data, http_client, lang,
         return {"success": False, "data": None, "error": "API Gemini non configurée", "status_code": 500}
 
     _breaker = breaker or gemini_breaker
-    try:
-        response = await _breaker.call(
+
+    def _fallback(error_type):
+        if error_type == "circuit_open":
+            return {"success": False, "data": None, "error": "Service Gemini temporairement indisponible", "status_code": 503}
+        if error_type == "timeout":
+            return {"success": False, "data": None, "error": "Timeout Gemini", "status_code": 503}
+        return {"success": False, "data": None, "error": "Erreur interne du serveur", "status_code": 500}
+
+    result = await _gemini_call_with_fallback(
+        _breaker.call(
             http_client,
             GEMINI_MODEL_URL,
             headers={"Content-Type": "application/json", "x-goog-api-key": gem_api_key},
@@ -615,39 +641,36 @@ async def handle_pitch_common(grilles_data, http_client, lang,
                 "contents": [{"role": "user", "parts": [{"text": context}]}],
                 "generationConfig": {"temperature": 0.9, "maxOutputTokens": 600},
             },
-            timeout=15.0,
-        )
+            timeout=_TIMEOUTS["pitch_gemini"],
+        ),
+        fallback_fn=_fallback,
+        log_prefix=log_prefix,
+    )
 
-        if response.status_code != 200:
-            logger.warning(f"{log_prefix} Gemini HTTP {response.status_code}")
-            return {"success": False, "data": None, "error": f"Gemini erreur HTTP {response.status_code}", "status_code": 502}
+    if isinstance(result, dict):
+        return result
 
-        data = response.json()
-        candidates = data.get("candidates", [])
-        if not candidates:
-            return {"success": False, "data": None, "error": "Gemini: aucune réponse", "status_code": 502}
+    response = result
+    if response.status_code != 200:
+        logger.warning(f"{log_prefix} Gemini HTTP {response.status_code}")
+        return {"success": False, "data": None, "error": f"Gemini erreur HTTP {response.status_code}", "status_code": 502}
 
-        text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
-        if not text:
-            return {"success": False, "data": None, "error": "Gemini: réponse vide", "status_code": 502}
+    data = response.json()
+    candidates = data.get("candidates", [])
+    if not candidates:
+        return {"success": False, "data": None, "error": "Gemini: aucune réponse", "status_code": 502}
 
-        pitchs, error = parse_pitch_json(text)
-        if error:
-            logger.warning(f"{log_prefix} JSON invalide: {text[:200]}")
-            return error
+    text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
+    if not text:
+        return {"success": False, "data": None, "error": "Gemini: réponse vide", "status_code": 502}
 
-        logger.info(f"{log_prefix} OK — {len(pitchs)} pitchs générés")
-        return {"success": True, "data": {"pitchs": pitchs}, "error": None, "status_code": 200}
+    pitchs, error = parse_pitch_json(text)
+    if error:
+        logger.warning(f"{log_prefix} JSON invalide: {text[:200]}")
+        return error
 
-    except CircuitOpenError:
-        logger.warning(f"{log_prefix} Circuit breaker ouvert — fallback")
-        return {"success": False, "data": None, "error": "Service Gemini temporairement indisponible", "status_code": 503}
-    except httpx.TimeoutException:
-        logger.warning(f"{log_prefix} Timeout Gemini (15s)")
-        return {"success": False, "data": None, "error": "Timeout Gemini", "status_code": 503}
-    except Exception as e:
-        logger.error(f"{log_prefix} Erreur: {e}")
-        return {"success": False, "data": None, "error": "Erreur interne du serveur", "status_code": 500}
+    logger.info(f"{log_prefix} OK — {len(pitchs)} pitchs générés")
+    return {"success": True, "data": {"pitchs": pitchs}, "error": None, "status_code": 200}
 
 
 # ═══════════════════════════════════════════════════════
@@ -821,7 +844,7 @@ async def _prepare_chat_context_base(
                 }
                 if any((_exclusions or {}).values()):
                     _gen_kwargs["exclusions"] = _exclusions
-                _gen_result = await asyncio.wait_for(_gen_fn(**_gen_kwargs), timeout=30.0)
+                _gen_result = await asyncio.wait_for(_gen_fn(**_gen_kwargs), timeout=_TIMEOUTS["stats_analysis"])
                 if _gen_result and _gen_result.get("grids"):
                     _grids = _gen_result["grids"][:_grid_count]
                     _active_excl = _exclusions if any((_exclusions or {}).values()) else None
@@ -919,7 +942,7 @@ async def _prepare_chat_context_base(
                     _analyze_kw["lang"] = lang
                 grille_analysis = await asyncio.wait_for(
                     cfg["analyze_grille_for_chat"](_eval_nums, _eval_secondary, **_analyze_kw),
-                    timeout=30.0,
+                    timeout=_TIMEOUTS["stats_analysis"],
                 )
                 if grille_analysis:
                     enrichment_context = cfg["format_grille_context"](grille_analysis)
@@ -938,7 +961,7 @@ async def _prepare_chat_context_base(
     if not _continuation_mode and cfg["detect_prochain_tirage"](message):
         _phase = "0-bis"
         try:
-            tirage_ctx = await asyncio.wait_for(cfg["get_prochain_tirage"](), timeout=30.0)
+            tirage_ctx = await asyncio.wait_for(cfg["get_prochain_tirage"](), timeout=_TIMEOUTS["stats_analysis"])
             if tirage_ctx:
                 enrichment_context = tirage_ctx
                 logger.info(f"{_lp} Prochain tirage injecte")
@@ -952,7 +975,7 @@ async def _prepare_chat_context_base(
             _phase = "T"
             try:
                 tirage_data = await asyncio.wait_for(
-                    cfg["get_tirage_data"](tirage_target), timeout=30.0
+                    cfg["get_tirage_data"](tirage_target), timeout=_TIMEOUTS["stats_analysis"]
                 )
                 if tirage_data:
                     enrichment_context = cfg["format_tirage_context"](tirage_data)
@@ -979,7 +1002,7 @@ async def _prepare_chat_context_base(
                 _analyze_kw["lang"] = lang
             grille_result = await asyncio.wait_for(
                 cfg["analyze_grille_for_chat"](grille_nums, grille_secondary, **_analyze_kw),
-                timeout=30.0,
+                timeout=_TIMEOUTS["stats_analysis"],
             )
             if grille_result:
                 enrichment_context = cfg["format_grille_context"](grille_result)
@@ -997,7 +1020,7 @@ async def _prepare_chat_context_base(
                 if intent["type"] == "classement":
                     data = await asyncio.wait_for(
                         cfg["get_classement"](intent["num_type"], intent["tri"], intent["limit"]),
-                        timeout=30.0,
+                        timeout=_TIMEOUTS["stats_analysis"],
                     )
                     # EM: if user asks for both boules AND étoiles
                     _wants_both = cfg.get("wants_both_fn")
@@ -1005,7 +1028,7 @@ async def _prepare_chat_context_base(
                         try:
                             star_data = await asyncio.wait_for(
                                 cfg["get_classement"]("etoile", intent["tri"], intent["limit"]),
-                                timeout=30.0,
+                                timeout=_TIMEOUTS["stats_analysis"],
                             )
                             if star_data:
                                 star_intent = {**intent, "num_type": "etoile"}
@@ -1021,12 +1044,12 @@ async def _prepare_chat_context_base(
                 elif intent["type"] == "comparaison":
                     data = await asyncio.wait_for(
                         cfg["get_comparaison"](intent["num1"], intent["num2"], intent["num_type"]),
-                        timeout=30.0,
+                        timeout=_TIMEOUTS["stats_analysis"],
                     )
                 elif intent["type"] == "categorie":
                     data = await asyncio.wait_for(
                         cfg["get_categorie"](intent["categorie"], intent["num_type"]),
-                        timeout=30.0,
+                        timeout=_TIMEOUTS["stats_analysis"],
                     )
 
                 if data:
@@ -1046,7 +1069,7 @@ async def _prepare_chat_context_base(
                     cfg["get_comparaison_with_period"](
                         intent["num1"], intent["num2"], intent["num_type"], _date_from
                     ),
-                    timeout=30.0,
+                    timeout=_TIMEOUTS["stats_analysis"],
                 )
                 if data:
                     enrichment_context = cfg["format_complex_context"](intent, data)
@@ -1074,7 +1097,7 @@ async def _prepare_chat_context_base(
             _phase = "P"
             try:
                 triplets_data = await asyncio.wait_for(
-                    cfg["get_triplet_correlations"](top_n=5), timeout=30.0
+                    cfg["get_triplet_correlations"](top_n=5), timeout=_TIMEOUTS["stats_analysis"]
                 )
                 if triplets_data:
                     enrichment_context = cfg["format_triplets_context"](triplets_data)
@@ -1088,14 +1111,14 @@ async def _prepare_chat_context_base(
             _phase = "P"
             try:
                 pairs_data = await asyncio.wait_for(
-                    cfg["get_pair_correlations"](top_n=5), timeout=30.0
+                    cfg["get_pair_correlations"](top_n=5), timeout=_TIMEOUTS["stats_analysis"]
                 )
                 if pairs_data:
                     enrichment_context = cfg["format_pairs_context"](pairs_data)
                     # EM: star pairs
                     _get_star_pairs = cfg.get("get_star_pair_correlations")
                     if _get_star_pairs:
-                        star_data = await asyncio.wait_for(_get_star_pairs(top_n=5), timeout=30.0)
+                        star_data = await asyncio.wait_for(_get_star_pairs(top_n=5), timeout=_TIMEOUTS["stats_analysis"])
                         if star_data:
                             enrichment_context += "\n\n" + cfg["format_star_pairs_context"](star_data)
                     logger.info(f"{_lp} Paires injectees")
@@ -1124,7 +1147,7 @@ async def _prepare_chat_context_base(
             _phase = "1"
             try:
                 stats = await asyncio.wait_for(
-                    cfg["get_numero_stats"](numero, type_num), timeout=30.0
+                    cfg["get_numero_stats"](numero, type_num), timeout=_TIMEOUTS["stats_analysis"]
                 )
                 if stats:
                     enrichment_context = cfg["format_stats_context"](stats)

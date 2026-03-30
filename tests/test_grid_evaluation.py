@@ -349,3 +349,46 @@ class TestPhaseEvalPipeline:
         # A generation request with "génère" should not match eval patterns
         # because eval patterns look for opinion/analysis words
         assert r is None
+
+
+# ═══════════════════════════════════════════════════════
+# F10: Additional edge case tests
+# ═══════════════════════════════════════════════════════
+
+class TestGridEvalEdgeCases:
+    """Edge cases for _detect_grid_evaluation."""
+
+    def test_partial_grid_3_numbers(self):
+        """Partial grid with only 3 numbers should still detect."""
+        from services.base_chat_detectors import _detect_grid_evaluation
+        r = _detect_grid_evaluation("que penses-tu de la grille 5 12 23", game="loto")
+        assert r is not None
+        assert len(r["numeros"]) == 3
+
+    def test_numbers_out_of_range_filtered_loto(self):
+        """Numbers outside Loto range (1-49) should be filtered out."""
+        from services.base_chat_detectors import _detect_grid_evaluation
+        r = _detect_grid_evaluation("évalue ma grille 5 12 55 99 23 34 45", game="loto")
+        if r:
+            for n in r["numeros"]:
+                assert 1 <= n <= 49
+
+    def test_no_numbers_no_detection(self):
+        """Message without numbers should not trigger eval."""
+        from services.base_chat_detectors import _detect_grid_evaluation
+        r = _detect_grid_evaluation("que penses-tu de mon approche statistique", game="loto")
+        assert r is None
+
+    def test_em_grid_evaluation(self):
+        """EM grid should detect with valid EM eval pattern."""
+        from services.base_chat_detectors import _detect_grid_evaluation
+        r = _detect_grid_evaluation("what do you think of 5 12 23 34 45", game="em")
+        assert r is not None
+        assert len(r["numeros"]) == 5
+
+    def test_chance_detection(self):
+        """Chance number should be extracted when present."""
+        from services.base_chat_detectors import _detect_grid_evaluation
+        r = _detect_grid_evaluation("évalue ma grille 5 12 23 34 45 chance 7", game="loto")
+        assert r is not None
+        assert r["chance"] == 7

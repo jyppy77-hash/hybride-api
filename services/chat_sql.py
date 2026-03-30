@@ -1,23 +1,24 @@
 """
 Text-to-SQL — Loto thin wrapper.
-Shared validation in base_chat_sql.py.
+Shared validation/cleaning/execution/formatting in base_chat_sql.py.
 Loto-specific: prochain tirage, tirage data, SQL generation (prompt Loto, table tirages).
 """
 
-import re
 import logging
 from datetime import date, timedelta
 
 from services.prompt_loader import load_prompt
 from services.gemini import GEMINI_MODEL_URL
 from services.circuit_breaker import gemini_breaker
-from services.chat_detectors import _JOURS_TIRAGE, _JOURS_FR
-from services.base_chat_utils import _format_date_fr
+from services.chat_detectors import _JOURS_TIRAGE
+from services.base_chat_sql import (
+    _JOURS_FR, _clean_gemini_sql, _build_gemini_sql_contents, _guard_non_sql,
+)
 import db_cloudsql
 
 # Re-export shared functions (consumers import from here)
 from services.base_chat_sql import (  # noqa: F401
-    _validate_sql, _ensure_limit,
+    _validate_sql, _ensure_limit, _execute_safe_sql, _format_sql_result,
     _MAX_SQL_PER_SESSION, _SQL_FORBIDDEN,
 )
 
@@ -128,21 +129,7 @@ async def _generate_sql(question: str, client, api_key: str, history: list = Non
     today_str = date.today().strftime("%Y-%m-%d")
     sql_prompt = sql_prompt.replace("{TODAY}", today_str)
 
-    # Construire les contents avec historique pour resolution de contexte
-    sql_contents = []
-    if history:
-        for msg in history[-6:]:
-            role = "user" if msg.role == "user" else "model"
-            # Fusionner les messages consecutifs de meme role (requis par Gemini)
-            if sql_contents and sql_contents[-1]["role"] == role:
-                sql_contents[-1]["parts"][0]["text"] += "\n" + msg.content
-            else:
-                sql_contents.append({"role": role, "parts": [{"text": msg.content}]})
-    # Gemini exige que contents commence par "user"
-    while sql_contents and sql_contents[0]["role"] == "model":
-        sql_contents.pop(0)
-
-    sql_contents.append({"role": "user", "parts": [{"text": question}]})
+    sql_contents = _build_gemini_sql_contents(question, history)
 
     try:
         response = await gemini_breaker.call(
@@ -167,68 +154,10 @@ async def _generate_sql(question: str, client, api_key: str, history: list = Non
             data = response.json()
             candidates = data.get("candidates", [])
             if candidates:
-                text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
-                # Nettoyer les backticks eventuels
-                if text.startswith("```"):
-                    text = text.split("\n", 1)[1] if "\n" in text else text[3:]
-                    if text.endswith("```"):
-                        text = text[:-3]
-                    text = text.strip()
-                if text.upper().startswith("SQL"):
-                    text = text[3:].strip()
-                    if text.startswith("\n"):
-                        text = text[1:]
-                text = text.strip()
-                # F04: guard non-SQL — reject if Gemini returned natural language instead of SQL
-                if text and text.upper() != "NO_SQL" and not text.upper().startswith("SELECT"):
-                    logger.warning("[TEXT-TO-SQL] Non-SQL output rejected: %s", text[:100])
-                    return "NO_SQL"
-                return text
+                raw = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
+                text = _clean_gemini_sql(raw)
+                return _guard_non_sql(text, "TEXT-TO-SQL")
         return None
     except Exception as e:
         logger.warning(f"[TEXT-TO-SQL] Erreur generation SQL: {e}")
         return None
-
-
-# ────────────────────────────────────────────
-# Execution + formatting (kept here for patch compatibility)
-# ────────────────────────────────────────────
-
-async def _execute_safe_sql(sql: str) -> list | None:
-    """Execute le SQL valide avec connexion DB. Defense-in-depth: re-validates."""
-    # F03: defense-in-depth — validate even if caller should have validated
-    if not _validate_sql(sql):
-        logger.warning("[TEXT2SQL] _execute_safe_sql rejected unvalidated SQL: %s", sql[:100])
-        return None
-    try:
-        async with db_cloudsql.get_connection_readonly() as conn:
-            cursor = await conn.cursor()
-            await cursor.execute(sql)
-            rows = await cursor.fetchall()
-            return rows
-    except Exception as e:
-        logger.warning(f"[TEXT-TO-SQL] Erreur execution SQL: {e}")
-        return None
-
-
-def _format_sql_result(rows: list) -> str:
-    """Formate les resultats SQL en bloc de contexte pour Gemini."""
-    if not rows:
-        return "[RÉSULTAT SQL]\nAucun résultat trouvé pour cette requête."
-
-    lines = ["[RÉSULTAT SQL]"]
-
-    for row in rows[:20]:
-        parts = []
-        for key, val in row.items():
-            if hasattr(val, 'strftime'):
-                val = _format_date_fr(str(val))
-            elif isinstance(val, str) and re.match(r'^\d{4}-\d{2}-\d{2}$', val):
-                val = _format_date_fr(val)
-            parts.append(f"{key}: {val}")
-        lines.append(" | ".join(parts))
-
-    if len(rows) > 20:
-        lines.append(f"... ({len(rows)} résultats au total, 20 premiers affichés)")
-
-    return "\n".join(lines)

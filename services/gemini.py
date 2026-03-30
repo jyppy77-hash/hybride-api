@@ -7,7 +7,7 @@ import httpx
 
 from services.prompt_loader import load_prompt
 from services.circuit_breaker import gemini_breaker, CircuitOpenError
-from services.gemini_shared import enrich_analysis_base, ENRICHMENT_INSTRUCTIONS
+from services.gemini_shared import enrich_analysis_base, ENRICHMENT_INSTRUCTIONS, _track_task
 
 logger = logging.getLogger(__name__)
 
@@ -127,8 +127,8 @@ async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, 
                 _dur_ms = (time.monotonic() - _t0) * 1000
                 try:
                     from services.gcp_monitoring import track_gemini_call
-                    asyncio.ensure_future(track_gemini_call(
-                        _dur_ms, _usage_tin, _usage_tout, call_type=call_type, lang=lang))
+                    _track_task(asyncio.ensure_future(track_gemini_call(
+                        _dur_ms, _usage_tin, _usage_tout, call_type=call_type, lang=lang)))
                 except Exception:
                     pass
                 return  # success — exit retry loop
@@ -144,8 +144,8 @@ async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, 
             _dur_ms = (time.monotonic() - _t0) * 1000
             try:
                 from services.gcp_monitoring import track_gemini_call
-                asyncio.ensure_future(track_gemini_call(
-                    _dur_ms, error=True, call_type=call_type, lang=lang))
+                _track_task(asyncio.ensure_future(track_gemini_call(
+                    _dur_ms, error=True, call_type=call_type, lang=lang)))
             except Exception:
                 pass
             raise

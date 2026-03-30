@@ -1,9 +1,13 @@
 """
-Base Text-to-SQL — shared validation and constants.
-Game-specific SQL generation, execution, and DB queries stay in wrappers.
+Base Text-to-SQL — shared validation, constants, cleaning, execution, formatting.
+Game-specific SQL generation, DB queries, and prompts stay in wrappers.
 """
 
+import re
 import logging
+
+import db_cloudsql
+from services.base_chat_utils import _format_date_fr
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +24,12 @@ _SQL_FORBIDDEN = [
     "SLEEP", "BENCHMARK", "LOAD_FILE", "INTO OUTFILE", "INTO DUMPFILE",
     "INFORMATION_SCHEMA", "MYSQL.", "PERFORMANCE_SCHEMA", "SYS.",
 ]
+
+# F04: single source of truth for French weekday names (shared Loto + EM)
+_JOURS_FR = {
+    0: "lundi", 1: "mardi", 2: "mercredi", 3: "jeudi",
+    4: "vendredi", 5: "samedi", 6: "dimanche",
+}
 
 
 # ────────────────────────────────────────────
@@ -60,3 +70,100 @@ def _ensure_limit(sql: str, max_limit: int = 50) -> str:
     if "LIMIT" not in upper:
         return sql.rstrip() + f" LIMIT {max_limit}"
     return sql
+
+
+# ────────────────────────────────────────────
+# SQL cleaning — F14: deduplicated from chat_sql + chat_sql_em
+# ────────────────────────────────────────────
+
+def _clean_gemini_sql(raw: str) -> str:
+    """Nettoie le SQL brut retourne par Gemini (backticks, markdown, prefix 'sql')."""
+    text = raw.strip()
+    if text.startswith("```"):
+        text = text.split("\n", 1)[1] if "\n" in text else text[3:]
+        if text.endswith("```"):
+            text = text[:-3]
+        text = text.strip()
+    if text.upper().startswith("SQL"):
+        text = text[3:].strip()
+        if text.startswith("\n"):
+            text = text[1:]
+    return text.strip()
+
+
+# ────────────────────────────────────────────
+# Gemini contents builder (shared Loto + EM)
+# ────────────────────────────────────────────
+
+def _build_gemini_sql_contents(question: str, history: list = None) -> list:
+    """Construit les contents Gemini avec historique pour resolution de contexte."""
+    sql_contents = []
+    if history:
+        for msg in history[-6:]:
+            role = "user" if msg.role == "user" else "model"
+            # Fusionner les messages consecutifs de meme role (requis par Gemini)
+            if sql_contents and sql_contents[-1]["role"] == role:
+                sql_contents[-1]["parts"][0]["text"] += "\n" + msg.content
+            else:
+                sql_contents.append({"role": role, "parts": [{"text": msg.content}]})
+    # Gemini exige que contents commence par "user"
+    while sql_contents and sql_contents[0]["role"] == "model":
+        sql_contents.pop(0)
+
+    sql_contents.append({"role": "user", "parts": [{"text": question}]})
+    return sql_contents
+
+
+# ────────────────────────────────────────────
+# Gemini call for SQL generation (shared Loto + EM)
+# ────────────────────────────────────────────
+
+def _guard_non_sql(text: str, log_prefix: str) -> str | None:
+    """Reject if Gemini returned natural language instead of SQL. Returns cleaned text or 'NO_SQL'."""
+    if text and text.upper() != "NO_SQL" and not text.upper().startswith("SELECT"):
+        logger.warning("[%s] Non-SQL output rejected: %s", log_prefix, text[:100])
+        return "NO_SQL"
+    return text
+
+
+# ────────────────────────────────────────────
+# Execution + formatting (shared Loto + EM)
+# ────────────────────────────────────────────
+
+async def _execute_safe_sql(sql: str) -> list | None:
+    """Execute le SQL valide avec connexion DB readonly. Defense-in-depth: re-validates."""
+    if not _validate_sql(sql):
+        logger.warning("[TEXT2SQL] _execute_safe_sql rejected unvalidated SQL: %s", sql[:100])
+        return None
+    try:
+        async with db_cloudsql.get_connection_readonly() as conn:
+            cursor = await conn.cursor()
+            await cursor.execute(sql)
+            rows = await cursor.fetchall()
+            return rows
+    except Exception as e:
+        logger.warning(f"[TEXT-TO-SQL] Erreur execution SQL: {e}")
+        return None
+
+
+def _format_sql_result(rows: list) -> str:
+    """Formate les resultats SQL en bloc de contexte pour Gemini."""
+    if not rows:
+        return "[RÉSULTAT SQL]\nAucun résultat trouvé pour cette requête."
+
+    lines = ["[RÉSULTAT SQL]"]
+
+    for row in rows[:20]:
+        parts = []
+        for key, val in row.items():
+            if hasattr(val, 'strftime'):
+                val = _format_date_fr(str(val))
+            elif isinstance(val, str) and re.match(r'^\d{4}-\d{2}-\d{2}$', val):
+                val = _format_date_fr(val)
+            parts.append(f"{key}: {val}")
+        lines.append(" | ".join(parts))
+
+    if len(rows) > 20:
+        lines.append(f"... ({len(rows)} résultats au total, 20 premiers affichés)")
+
+    return "\n".join(lines)
