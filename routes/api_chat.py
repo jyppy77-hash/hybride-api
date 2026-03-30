@@ -11,6 +11,8 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from schemas import HybrideChatRequest, HybrideChatResponse, PitchGrillesRequest
 from rate_limit import limiter
 from services.chat_pipeline import handle_chat, handle_pitch, handle_chat_stream
+from services.chat_rate_limit import check_chat_rate, get_rate_limit_message
+from utils import get_client_ip
 
 # Re-exports pour api_chat_em.py et les tests
 # (preserve la surface publique existante)
@@ -60,6 +62,16 @@ router = APIRouter()
 @limiter.limit("10/minute")
 async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
     """Endpoint chatbot HYBRIDE — SSE streaming via Gemini 2.0 Flash."""
+    client_ip = get_client_ip(request)
+    allowed, retry_after = check_chat_rate(client_ip)
+    if not allowed:
+        lang = getattr(payload, "lang", "fr") or "fr"
+        logger.warning("[CHAT_RATE_LIMIT] IP %s exceeded %d msg/h", client_ip, 70)
+        return JSONResponse(status_code=429, content={
+            "error": "rate_limit",
+            "message": get_rate_limit_message(lang),
+            "retry_after_seconds": retry_after,
+        })
     return StreamingResponse(
         handle_chat_stream(
             payload.message,

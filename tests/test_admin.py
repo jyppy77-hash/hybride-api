@@ -258,6 +258,34 @@ class TestAdminAPIImpressions:
         assert data["chart"] == []
         assert data["table"] == []
 
+    def test_api_impressions_kpi_includes_chatbot_inline(self):
+        """KPI impressions must include sponsor-inline-shown (chatbot E4) and sponsor-result-shown."""
+        client = _authed_client()
+
+        async def mock_fetchall(sql, params=None):
+            if "GROUP BY event_type" in sql:
+                return [
+                    {"event_type": "sponsor-popup-shown", "cnt": 40, "sessions": 10},
+                    {"event_type": "sponsor-inline-shown", "cnt": 25, "sessions": 8},
+                    {"event_type": "sponsor-result-shown", "cnt": 15, "sessions": 5},
+                    {"event_type": "sponsor-click", "cnt": 3, "sessions": 3},
+                ]
+            if "GROUP BY sponsor_id" in sql:
+                return [
+                    {"sponsor_id": "LOTO_FR_A", "total": 80, "impressions": 80, "clics": 3, "videos": 0, "sessions": 20},
+                ]
+            return []
+
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 20})
+            resp = client.get("/admin/api/impressions?period=7d")
+
+        data = resp.json()
+        # 40 (popup) + 25 (inline/chatbot) + 15 (result) = 80
+        assert data["kpi"]["impressions"] == 80
+        assert data["kpi"]["clicks"] == 3
+
 
 class TestAdminAPIVotes:
     """API /admin/api/votes tests."""

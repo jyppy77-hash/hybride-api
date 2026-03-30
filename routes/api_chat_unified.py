@@ -12,6 +12,8 @@ from rate_limit import limiter
 from config.games import ValidGame, get_config, get_chat_pipeline
 from schemas import HybrideChatRequest, HybrideChatResponse, PitchGrillesRequest
 from em_schemas import EMChatRequest, EMChatResponse, EMPitchGrillesRequest
+from services.chat_rate_limit import check_chat_rate, get_rate_limit_message
+from utils import get_client_ip
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +35,17 @@ async def unified_hybride_chat(request: Request, game: ValidGame):
     pipeline = get_chat_pipeline(cfg)
 
     body = await request.json()
+
+    client_ip = get_client_ip(request)
+    allowed, retry_after = check_chat_rate(client_ip)
+    if not allowed:
+        lang = body.get("lang", "fr") or "fr"
+        logger.warning("[CHAT_RATE_LIMIT] IP %s exceeded %d msg/h", client_ip, 70)
+        return JSONResponse(status_code=429, content={
+            "error": "rate_limit",
+            "message": get_rate_limit_message(lang),
+            "retry_after_seconds": retry_after,
+        })
 
     if game == ValidGame.loto:
         payload = HybrideChatRequest(**body)

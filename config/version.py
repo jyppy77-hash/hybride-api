@@ -3,12 +3,12 @@ Configuration centralisée des versions LotoIA.
 Tous les fichiers du projet DOIVENT importer depuis ce module.
 """
 
-APP_VERSION = "1.5.012"
+APP_VERSION = "1.5.013"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-03-29"
+VERSION_DATE = "2026-03-30"
 
 # Sitemap lastmod — updated at each deployment (not dynamic date.today())
-LAST_DEPLOY_DATE = "2026-03-29"
+LAST_DEPLOY_DATE = "2026-03-30"
 
 # Alias pour compatibilité avec engine/version.py
 __version__ = APP_VERSION

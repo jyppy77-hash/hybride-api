@@ -356,14 +356,14 @@ async def admin_api_impressions(
         total_clicks = 0
         for r in rows:
             et = r["event_type"]
-            if et == "sponsor-popup-shown":
-                kpi["impressions"] = _dec(r["cnt"])
-                total_imp = _dec(r["cnt"])
+            if et in ("sponsor-popup-shown", "sponsor-inline-shown", "sponsor-result-shown"):
+                total_imp += _dec(r["cnt"])
             elif et == "sponsor-click":
                 kpi["clicks"] = _dec(r["cnt"])
                 total_clicks = _dec(r["cnt"])
             elif et == "sponsor-video-played":
                 kpi["videos"] = _dec(r["cnt"])
+        kpi["impressions"] = total_imp
 
         sess_row = await db_cloudsql.async_fetchone(
             f"SELECT COUNT(DISTINCT session_hash) AS s FROM sponsor_impressions WHERE {w}",
@@ -381,7 +381,7 @@ async def admin_api_impressions(
         rows = await db_cloudsql.async_fetchall(
             f"SELECT sponsor_id, "
             f"  COUNT(*) AS total, "
-            f"  SUM(CASE WHEN event_type = 'sponsor-popup-shown' THEN 1 ELSE 0 END) AS impressions, "
+            f"  SUM(CASE WHEN event_type IN ('sponsor-popup-shown', 'sponsor-inline-shown', 'sponsor-result-shown') THEN 1 ELSE 0 END) AS impressions, "
             f"  SUM(CASE WHEN event_type = 'sponsor-click' THEN 1 ELSE 0 END) AS clics, "
             f"  SUM(CASE WHEN event_type = 'sponsor-video-played' THEN 1 ELSE 0 END) AS videos, "
             f"  COUNT(DISTINCT session_hash) AS sessions "
