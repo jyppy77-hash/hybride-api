@@ -131,10 +131,11 @@ def _guard_non_sql(text: str, log_prefix: str) -> str | None:
 # ────────────────────────────────────────────
 
 async def _execute_safe_sql(sql: str) -> list | None:
-    """Execute le SQL valide avec connexion DB readonly. Defense-in-depth: re-validates."""
+    """Execute le SQL valide avec connexion DB readonly. Defense-in-depth: re-validates + ensure LIMIT."""
     if not _validate_sql(sql):
         logger.warning("[TEXT2SQL] _execute_safe_sql rejected unvalidated SQL: %s", sql[:100])
         return None
+    sql = _ensure_limit(sql)  # F02 V74: defense-in-depth — cap LIMIT even if caller forgot
     try:
         async with db_cloudsql.get_connection_readonly() as conn:
             cursor = await conn.cursor()

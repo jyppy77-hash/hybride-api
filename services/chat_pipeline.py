@@ -59,6 +59,7 @@ from services.chat_pipeline_shared import (
     stream_and_respond,
     handle_pitch_common,
     _prepare_chat_context_base,
+    _build_config_base,  # F03 V74
     _QUESTION_KEYWORDS_INSULT,
     _QUESTION_KEYWORDS_COMPLIMENT,
     ANTI_REINTRO_BLOCK,
@@ -102,8 +103,12 @@ async def _get_draw_count(game: str = "loto") -> int:
 # =========================
 
 def _build_loto_config():
-    """Build Loto game config at call time so test patches on module-level bindings are picked up."""
-    return {
+    """Build Loto game config at call time so test patches on module-level bindings are picked up.
+
+    F03 V74: game-agnostic detectors provided by _build_config_base(); only Loto-specific
+    overrides are listed here.
+    """
+    return _build_config_base({
         # Identity
         "game": "loto",
         "log_prefix": "[HYBRIDE CHAT]",
@@ -115,7 +120,7 @@ def _build_loto_config():
         "get_fallback": lambda lang: FALLBACK_RESPONSE,
         # Mode
         "detect_mode": _detect_mode,
-        # Shared detectors (must be in config so test patches on this module work)
+        # Shared detectors — must reference this module's bindings for test patch compat
         "detect_insulte": _detect_insulte,
         "count_insult_streak": _count_insult_streak,
         "detect_compliment": _detect_compliment,
@@ -208,7 +213,7 @@ def _build_loto_config():
         "sql_log_prefix": "[TEXT2SQL]",
         # Final
         "build_session_context": _build_session_context,
-    }
+    })
 
 
 async def _prepare_chat_context(message: str, history: list, page: str, http_client, lang: str = "fr"):

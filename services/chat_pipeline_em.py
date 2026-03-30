@@ -80,6 +80,7 @@ from services.chat_pipeline_shared import (
     stream_and_respond,
     handle_pitch_common,
     _prepare_chat_context_base,
+    _build_config_base,  # F03 V74
     _QUESTION_KEYWORDS_INSULT,
     _QUESTION_KEYWORDS_COMPLIMENT,
     ANTI_REINTRO_BLOCK,
@@ -94,8 +95,12 @@ logger = logging.getLogger(__name__)
 # =========================
 
 def _build_em_config():
-    """Build EM game config at call time so test patches on module-level bindings are picked up."""
-    return {
+    """Build EM game config at call time so test patches on module-level bindings are picked up.
+
+    F03 V74: game-agnostic detectors provided by _build_config_base(); only EM-specific
+    overrides are listed here.
+    """
+    return _build_config_base({
         # Identity
         "game": "em",
         "log_prefix": "[EM CHAT]",
@@ -107,7 +112,7 @@ def _build_em_config():
         "get_fallback": get_fallback,
         # Mode
         "detect_mode": _detect_mode_em,
-        # Shared detectors
+        # Shared detectors — must reference this module's bindings for test patch compat
         "detect_insulte": _detect_insulte,
         "count_insult_streak": _count_insult_streak,
         "detect_compliment": _detect_compliment,
@@ -206,7 +211,7 @@ def _build_em_config():
         "sql_gen_kwargs": lambda lang: {"lang": lang},
         # Final
         "build_session_context": _build_session_context_em,
-    }
+    })
 
 
 async def _prepare_chat_context_em(message: str, history: list, page: str, http_client, lang: str = "fr"):

@@ -61,6 +61,15 @@ logger = logging.getLogger(__name__)
 # Shared constants — V72 F01/F03/F04/F07
 # ═══════════════════════════════════════════════════════
 
+# F01 V74: language names for system prompt injection when lang != "fr"
+_LANG_NAMES = {
+    "en": "anglais",
+    "es": "espagnol",
+    "pt": "portugais",
+    "de": "allemand",
+    "nl": "néerlandais",
+}
+
 # F03: _has_question keywords — shared across Phase I (Loto+EM)
 # Used to detect if an insult/compliment message also contains a real question.
 _QUESTION_KEYWORDS_INSULT = (
@@ -219,6 +228,26 @@ _TIMEOUTS = {
     "stats_analysis": 30,
     "enrichment": 20,
 }
+
+
+# ═══════════════════════════════════════════════════════
+# F03 V74: shared config base — DRY for _build_loto_config / _build_em_config
+# ═══════════════════════════════════════════════════════
+
+def _build_config_base(overrides: dict) -> dict:
+    """Build config from game-specific overrides.
+
+    Game-agnostic detectors (24 functions: _detect_insulte, _detect_compliment, etc.)
+    are intentionally listed in each pipeline's overrides — NOT in this base dict —
+    because existing tests patch them on the pipeline module (e.g.
+    ``patch("services.chat_pipeline._detect_insulte")``).  Those patches only work
+    when the config dict holds a reference to the pipeline-module binding, not
+    to chat_pipeline_shared's copy.
+
+    This function centralises the construction pattern and can hold truly shared
+    non-callable defaults in the future.
+    """
+    return dict(overrides)
 
 
 # ═══════════════════════════════════════════════════════
@@ -744,6 +773,15 @@ async def _prepare_chat_context_base(
     draw_count = await _get_draw_count(cfg["draw_count_game"])
     if draw_count and "{DRAW_COUNT}" in system_prompt:
         system_prompt = system_prompt.replace("{DRAW_COUNT}", str(draw_count))
+
+    # ── F01 V74: Force language when lang != "fr" (Loto prompt is FR-only) ──
+    if lang != "fr" and lang in _LANG_NAMES:
+        system_prompt += (
+            f"\n\n[LANGUE — RÈGLE OBLIGATOIRE]\n"
+            f"Tu DOIS répondre UNIQUEMENT en {_LANG_NAMES[lang]}. "
+            f"L'utilisateur parle {_LANG_NAMES[lang]}. "
+            f"Ne réponds JAMAIS dans une autre langue."
+        )
 
     # ── Anti-re-introduction ──
     system_prompt += ANTI_REINTRO_BLOCK
