@@ -477,7 +477,7 @@ def test_endpoint_pairs_top_n():
         with patch("services.stats_service.get_pair_correlations", new=mock_fn):
             resp = client.get("/api/loto/stats/pairs?top_n=3")
     assert resp.status_code == 200
-    mock_fn.assert_called_once_with(top_n=3, window=None)
+    mock_fn.assert_called_once_with(top_n=3, window=None, order="hot")
 
 
 def test_endpoint_pairs_window():
@@ -493,4 +493,4 @@ def test_endpoint_pairs_window():
         with patch("services.stats_service.get_pair_correlations", new=mock_fn):
             resp = client.get("/api/loto/stats/pairs?window=5A")
     assert resp.status_code == 200
-    mock_fn.assert_called_once_with(top_n=10, window="5A")
+    mock_fn.assert_called_once_with(top_n=10, window="5A", order="hot")

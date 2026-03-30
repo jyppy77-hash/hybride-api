@@ -844,14 +844,15 @@ class BaseStatsService:
     # Corrélations de paires
     # ──────────────────────────────────────
 
-    async def get_pair_correlations(self, *, top_n=10, window=None):
+    async def get_pair_correlations(self, *, top_n=10, window=None, order="hot"):
         """
         Top paires de boules co-occurrentes (C(5,2)=10 paires par tirage).
         window: "2A","5A" etc. = filtre date en annees, None = global.
-        Cache: {prefix}pairs:{window}:{top_n}, TTL 1h.
+        order: "hot" (DESC, most frequent) or "cold" (ASC, least frequent).
+        Cache: {prefix}pairs:{window}:{top_n}:{order}, TTL 1h.
         Retour: dict(pairs=[{num_a, num_b, count, percentage, rank}], total_draws, window)
         """
-        cache_key = f"{self.cfg.cache_prefix}pairs:{window}:{top_n}"
+        cache_key = f"{self.cfg.cache_prefix}pairs:{window}:{top_n}:{order}"
         cached = await cache_get(cache_key)
         if cached is not None:
             return cached
@@ -910,11 +911,12 @@ class BaseStatsService:
                 )
                 all_params.extend(params_per_union)
 
+            sort_dir = "ASC" if order == "cold" else "DESC"
             sql = (
                 f"SELECT num_a, num_b, COUNT(*) AS pair_count FROM ("
                 f"{' UNION ALL '.join(unions)}"
                 f") AS pairs GROUP BY num_a, num_b "
-                f"ORDER BY pair_count DESC LIMIT %s"
+                f"ORDER BY pair_count {sort_dir} LIMIT %s"
             )
             all_params.append(top_n)
 
@@ -943,6 +945,87 @@ class BaseStatsService:
           except Exception as e:
             logger.error(
                 f"Erreur get_pair_correlations{self.cfg.log_label}: {e}"
+            )
+            return None
+
+    async def get_single_pair(self, *, n1: int, n2: int):
+        """
+        Co-occurrence count + rank for a specific pair of numbers.
+        n1 and n2 are normalized (n1 < n2).
+        Cache: {prefix}pair_single:{n1}:{n2}, TTL 1h.
+        Returns: dict(n1, n2, count, percentage, rank, total_draws, total_pairs) or None.
+        """
+        a, b = min(n1, n2), max(n1, n2)
+        cache_key = f"{self.cfg.cache_prefix}pair_single:{a}:{b}"
+        cached = await cache_get(cache_key)
+        if cached is not None:
+            return cached
+
+        async with self._get_connection() as conn:
+          try:
+            cursor = await conn.cursor()
+
+            await cursor.execute(
+                f"SELECT COUNT(*) as total FROM {self.cfg.table}"
+            )
+            total_draws = (await cursor.fetchone())['total']
+
+            if total_draws == 0:
+                result = {"n1": a, "n2": b, "count": 0, "percentage": 0.0,
+                          "rank": 0, "total_draws": 0, "total_pairs": 0}
+                await cache_set(cache_key, result)
+                return result
+
+            # Count for the specific pair
+            pair_cols = [
+                ("boule_1", "boule_2"), ("boule_1", "boule_3"),
+                ("boule_1", "boule_4"), ("boule_1", "boule_5"),
+                ("boule_2", "boule_3"), ("boule_2", "boule_4"),
+                ("boule_2", "boule_5"), ("boule_3", "boule_4"),
+                ("boule_3", "boule_5"), ("boule_4", "boule_5"),
+            ]
+            unions = " UNION ALL ".join(
+                f"SELECT LEAST({ca}, {cb}) AS num_a, GREATEST({ca}, {cb}) AS num_b "
+                f"FROM {self.cfg.table}"
+                for ca, cb in pair_cols
+            )
+
+            # Get count for this specific pair
+            sql_count = (
+                f"SELECT COUNT(*) AS pair_count FROM ({unions}) AS pairs "
+                f"WHERE num_a = %s AND num_b = %s"
+            )
+            await cursor.execute(sql_count, [a, b])
+            row = await cursor.fetchone()
+            pair_count = row['pair_count']
+
+            # Get rank + total pairs in a single query (avoids 2 extra heavy scans)
+            sql_rank = (
+                f"SELECT "
+                f"SUM(CASE WHEN pair_count > %s THEN 1 ELSE 0 END) AS better, "
+                f"COUNT(*) AS tp "
+                f"FROM ("
+                f"SELECT num_a, num_b, COUNT(*) AS pair_count FROM ({unions}) AS p2 "
+                f"GROUP BY num_a, num_b"
+                f") AS ranked"
+            )
+            await cursor.execute(sql_rank, [pair_count])
+            rank_row = await cursor.fetchone()
+            rank = rank_row['better'] + 1
+            total_pairs = rank_row['tp']
+
+            pct = round(pair_count / total_draws * 100, 1)
+            result = {
+                "n1": a, "n2": b, "count": pair_count,
+                "percentage": pct, "rank": rank,
+                "total_draws": total_draws, "total_pairs": total_pairs,
+            }
+            await cache_set(cache_key, result)
+            return result
+
+          except Exception as e:
+            logger.error(
+                f"Erreur get_single_pair{self.cfg.log_label}: {e}"
             )
             return None
 
@@ -1057,16 +1140,17 @@ class BaseStatsService:
             )
             return None
 
-    async def get_star_pair_correlations(self, *, top_n=10, window=None):
+    async def get_star_pair_correlations(self, *, top_n=10, window=None, order="hot"):
         """
         Paires d'etoiles EM (1 seule paire par tirage → simple GROUP BY).
         Ne fait rien si le jeu n'a pas exactement 2 colonnes secondaires.
+        order: "hot" (DESC) or "cold" (ASC).
         """
         if len(self.cfg.secondary_columns) != 2:
             return None
 
         col_a, col_b = self.cfg.secondary_columns
-        cache_key = f"{self.cfg.cache_prefix}star_pairs:{window}:{top_n}"
+        cache_key = f"{self.cfg.cache_prefix}star_pairs:{window}:{top_n}:{order}"
         cached = await cache_get(cache_key)
         if cached is not None:
             return cached
@@ -1100,13 +1184,14 @@ class BaseStatsService:
                 )
             total_draws = (await cursor.fetchone())['total']
 
+            sort_dir = "ASC" if order == "cold" else "DESC"
             sql = (
                 f"SELECT LEAST({col_a}, {col_b}) AS num_a, "
                 f"GREATEST({col_a}, {col_b}) AS num_b, "
                 f"COUNT(*) AS pair_count "
                 f"FROM {self.cfg.table} {date_filter} "
                 f"GROUP BY num_a, num_b "
-                f"ORDER BY pair_count DESC LIMIT %s"
+                f"ORDER BY pair_count {sort_dir} LIMIT %s"
             )
             params.append(top_n)
             await cursor.execute(sql, params)
@@ -1134,5 +1219,74 @@ class BaseStatsService:
           except Exception as e:
             logger.error(
                 f"Erreur get_star_pair_correlations{self.cfg.log_label}: {e}"
+            )
+            return None
+
+    async def get_single_star_pair(self, *, s1: int, s2: int):
+        """
+        Co-occurrence count + rank for a specific star pair.
+        Returns None if the game has no star columns.
+        """
+        if len(self.cfg.secondary_columns) != 2:
+            return None
+
+        col_a, col_b = self.cfg.secondary_columns
+        a, b = min(s1, s2), max(s1, s2)
+        cache_key = f"{self.cfg.cache_prefix}star_pair_single:{a}:{b}"
+        cached = await cache_get(cache_key)
+        if cached is not None:
+            return cached
+
+        async with self._get_connection() as conn:
+          try:
+            cursor = await conn.cursor()
+
+            await cursor.execute(
+                f"SELECT COUNT(*) as total FROM {self.cfg.table}"
+            )
+            total_draws = (await cursor.fetchone())['total']
+
+            if total_draws == 0:
+                result = {"s1": a, "s2": b, "count": 0, "percentage": 0.0,
+                          "rank": 0, "total_draws": 0, "total_pairs": 0}
+                await cache_set(cache_key, result)
+                return result
+
+            # Count for this specific star pair
+            sql_count = (
+                f"SELECT COUNT(*) AS pair_count FROM {self.cfg.table} "
+                f"WHERE LEAST({col_a}, {col_b}) = %s AND GREATEST({col_a}, {col_b}) = %s"
+            )
+            await cursor.execute(sql_count, [a, b])
+            pair_count = (await cursor.fetchone())['pair_count']
+
+            # Rank + total pairs in a single query
+            sql_rank = (
+                f"SELECT "
+                f"SUM(CASE WHEN pair_count > %s THEN 1 ELSE 0 END) AS better, "
+                f"COUNT(*) AS tp "
+                f"FROM ("
+                f"SELECT LEAST({col_a}, {col_b}) AS sa, GREATEST({col_a}, {col_b}) AS sb, "
+                f"COUNT(*) AS pair_count "
+                f"FROM {self.cfg.table} GROUP BY sa, sb"
+                f") AS ranked"
+            )
+            await cursor.execute(sql_rank, [pair_count])
+            rank_row = await cursor.fetchone()
+            rank = rank_row['better'] + 1
+            total_pairs = rank_row['tp']
+
+            pct = round(pair_count / total_draws * 100, 1)
+            result = {
+                "s1": a, "s2": b, "count": pair_count,
+                "percentage": pct, "rank": rank,
+                "total_draws": total_draws, "total_pairs": total_pairs,
+            }
+            await cache_set(cache_key, result)
+            return result
+
+          except Exception as e:
+            logger.error(
+                f"Erreur get_single_star_pair{self.cfg.log_label}: {e}"
             )
             return None

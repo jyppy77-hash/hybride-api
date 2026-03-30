@@ -611,11 +611,12 @@ async def unified_stats_pairs(
     request: Request, game: ValidGame,
     top_n: int = Query(default=10, ge=1, le=50),
     window: Optional[str] = Query(default=None, pattern="^[1-9]A$"),
+    order: str = Query(default="hot", pattern="^(hot|cold)$"),
 ):
     cfg = get_config(game)
     svc = get_stats_service(cfg)
 
-    result = await svc.get_pair_correlations(top_n=top_n, window=window)
+    result = await svc.get_pair_correlations(top_n=top_n, window=window, order=order)
     if result is None:
         return JSONResponse(status_code=500, content={
             "success": False, "data": None,
@@ -626,12 +627,64 @@ async def unified_stats_pairs(
 
     if game == ValidGame.euromillions:
         star_result = await svc.get_star_pair_correlations(
-            top_n=top_n, window=window
+            top_n=top_n, window=window, order=order
         )
         if star_result:
             response["star_pairs"] = star_result["pairs"]
 
     return response
+
+
+# =========================
+# Single pair lookup
+# =========================
+
+@router.get("/stats/pair")
+@limiter.limit("60/minute")
+async def unified_stats_single_pair(
+    request: Request, game: ValidGame,
+    n1: int = Query(..., ge=1, le=50),
+    n2: int = Query(..., ge=1, le=50),
+):
+    if n1 == n2:
+        return JSONResponse(status_code=422, content={
+            "success": False, "error": "n1 and n2 must be different",
+        })
+
+    cfg = get_config(game)
+    svc = get_stats_service(cfg)
+
+    result = await svc.get_single_pair(n1=n1, n2=n2)
+    if result is None:
+        return JSONResponse(status_code=500, content={
+            "success": False, "error": "Erreur interne du serveur",
+        })
+
+    return {"success": True, "game": game.value, **result}
+
+
+@router.get("/stats/star-pair")
+@limiter.limit("60/minute")
+async def unified_stats_single_star_pair(
+    request: Request, game: ValidGame,
+    s1: int = Query(..., ge=1, le=12),
+    s2: int = Query(..., ge=1, le=12),
+):
+    if s1 == s2:
+        return JSONResponse(status_code=422, content={
+            "success": False, "error": "s1 and s2 must be different",
+        })
+
+    cfg = get_config(game)
+    svc = get_stats_service(cfg)
+
+    result = await svc.get_single_star_pair(s1=s1, s2=s2)
+    if result is None:
+        return JSONResponse(status_code=500, content={
+            "success": False, "error": "Erreur interne du serveur",
+        })
+
+    return {"success": True, "game": game.value, **result}
 
 
 # =========================

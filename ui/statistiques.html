@@ -411,6 +411,234 @@
             color: var(--theme-text-muted);
         }
 
+        /* ---- Paires ---- */
+        .pairs-section { margin-bottom: 32px; }
+        .pairs-title { font-size: 1.3rem; margin-bottom: 8px; }
+        .pairs-title-hot { color: #ef4444; }
+        .pairs-title-cold { color: #3b82f6; }
+        .pairs-subtitle { font-size: 0.9rem; color: var(--theme-text-secondary); margin-bottom: 16px; }
+        .pairs-loading { padding: 24px; text-align: center; color: var(--theme-text-secondary); }
+        .pairs-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+        .pairs-table th {
+            text-align: left;
+            padding: 10px 12px;
+            border-bottom: 2px solid var(--theme-border);
+            color: var(--theme-text-secondary);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .pairs-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--theme-border);
+            vertical-align: middle;
+        }
+        .pairs-table tbody tr:hover { background: rgba(102, 126, 234, 0.04); }
+        .pair-balls {
+            display: inline-flex;
+            gap: 6px;
+            align-items: center;
+        }
+        .pair-ball {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: white;
+        }
+        .pair-ball-hot { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3); }
+        .pair-ball-cold { background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3); }
+        .pair-freq-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .pair-freq-track {
+            flex: 1;
+            height: 8px;
+            background: var(--theme-border);
+            border-radius: 4px;
+            overflow: hidden;
+            min-width: 60px;
+        }
+        .pair-freq-fill-hot { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #f97316, #ef4444); }
+        .pair-freq-fill-cold { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #60a5fa, #3b82f6); }
+        .pair-freq-pct { font-size: 0.85rem; font-weight: 600; color: var(--theme-text-primary); min-width: 42px; }
+
+        /* ---- Pairs sub-tabs ---- */
+        .pairs-sub-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+        .pairs-sub-tab {
+            padding: 9px 20px;
+            background: transparent;
+            border: 1.5px solid var(--theme-border);
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: var(--theme-text-secondary);
+            transition: all 0.25s ease;
+            font-family: inherit;
+        }
+        .pairs-sub-tab:hover {
+            background: rgba(102, 126, 234, 0.08);
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        .pairs-sub-tab.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            box-shadow: 0 2px 8px rgba(26, 115, 232, 0.3);
+        }
+
+        /* ---- Pairs grid (49 numbers) ---- */
+        .pairs-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            max-width: 400px;
+            margin: 0 auto 28px;
+        }
+        .pairs-grid-btn {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 50%;
+            border: 1.5px solid var(--theme-border);
+            background: var(--theme-bg-card);
+            color: var(--theme-text-primary);
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+            box-shadow: 0 1px 3px rgba(0,0,0,.06);
+        }
+        .pairs-grid-btn:hover {
+            border-color: var(--primary);
+            transform: scale(1.08);
+            box-shadow: 0 2px 10px rgba(26, 115, 232, 0.25);
+        }
+        .pairs-grid-btn.selected {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 3px 12px rgba(239, 68, 68, 0.45);
+            transform: scale(1.08);
+        }
+
+        /* ---- Pair selection display ---- */
+        .pairs-selection {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            padding: 16px 20px;
+            background: var(--theme-bg-card);
+            border: 1px solid var(--theme-border);
+            border-radius: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.05);
+        }
+        .pairs-selected-label { font-weight: 600; color: var(--theme-text-secondary); font-size: 0.9rem; }
+        .pairs-sel-ball {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: white;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark, #1557b0));
+            box-shadow: 0 2px 8px rgba(26, 115, 232, 0.3);
+            transition: all 0.25s ease;
+        }
+        .pairs-sel-ball.empty {
+            background: var(--theme-border);
+            color: var(--theme-text-secondary);
+            box-shadow: none;
+        }
+        .pairs-sel-separator { font-size: 1.2rem; font-weight: 700; color: var(--theme-text-secondary); }
+        .pairs-reset-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 16px;
+            border: 1.5px solid var(--theme-border);
+            border-radius: 20px;
+            background: var(--theme-bg-card);
+            color: var(--theme-text-secondary);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            margin-left: 8px;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,.04);
+        }
+        .pairs-reset-btn:hover {
+            background: rgba(239, 68, 68, 0.08);
+            border-color: #ef4444;
+            color: #ef4444;
+            box-shadow: 0 2px 6px rgba(239, 68, 68, 0.15);
+        }
+
+        /* ---- Pair result card ---- */
+        .pairs-result {
+            background: var(--theme-bg-card);
+            border: 1px solid var(--theme-border);
+            border-radius: 14px;
+            padding: 28px 24px;
+            text-align: center;
+            margin-bottom: 24px;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 4px 16px rgba(0,0,0,.07);
+            transition: border-left-color 0.3s ease;
+        }
+        .pairs-result.result-warm { border-left-color: #ef4444; }
+        .pairs-result.result-cold { border-left-color: #3b82f6; }
+        .pairs-result-balls { display: flex; justify-content: center; gap: 14px; margin-bottom: 18px; }
+        .pairs-result-ball {
+            width: 52px; height: 52px; border-radius: 50%;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 1.35rem; font-weight: 700; color: white;
+            transition: transform 0.3s ease;
+        }
+        .pairs-result-ball.warm { background: linear-gradient(135deg, #f97316, #ef4444); box-shadow: 0 4px 14px rgba(239,68,68,.35); }
+        .pairs-result-ball.neutral { background: linear-gradient(135deg, var(--primary), var(--primary-dark, #1557b0)); box-shadow: 0 4px 14px rgba(26,115,232,.3); }
+        .pairs-result-ball.cold { background: linear-gradient(135deg, #60a5fa, #3b82f6); box-shadow: 0 4px 14px rgba(59,130,246,.35); }
+        .pairs-result-stat { font-size: 1.05rem; margin-bottom: 10px; color: var(--theme-text-primary); line-height: 1.5; }
+        .pairs-result-stat strong { font-size: 1.15rem; }
+        .pairs-result-bar { max-width: 300px; margin: 18px auto 0; }
+        .pairs-result-track { height: 10px; background: var(--theme-border); border-radius: 6px; overflow: hidden; }
+        .pairs-result-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease-out; }
+
+        @media (max-width: 768px) {
+            .pairs-grid { grid-template-columns: repeat(5, 1fr); max-width: 280px; gap: 6px; }
+            .pairs-grid-btn { font-size: 0.85rem; }
+            .pairs-selection { flex-wrap: wrap; gap: 8px; padding: 12px; }
+            .pair-ball { width: 30px; height: 30px; font-size: 0.8rem; }
+            .pair-freq-track { min-width: 40px; }
+            .pairs-result { padding: 20px 16px; }
+            .pairs-result-ball { width: 46px; height: 46px; font-size: 1.2rem; }
+            .pairs-sub-tabs { gap: 6px; }
+            .pairs-sub-tab { padding: 8px 14px; font-size: 0.82rem; }
+        }
+
         /* ---- Responsive ---- */
         @media (max-width: 768px) {
             .numbers-grid {
@@ -508,6 +736,7 @@
                 <button class="tab active" onclick="switchTab('historique')">📅 Historique des tirages</button>
                 <button class="tab" onclick="switchTab('analyse')">🔍 Analyse par numéro</button>
                 <button class="tab" onclick="switchTab('topflop')">📌 Top / Flop</button>
+                <button class="tab" onclick="switchTab('pairs')">🔗 Paires</button>
                 <picture><source srcset="/static/Hybride-audit.webp" type="image/webp"><img src="/static/Hybride-audit.png?v=1" class="band-hybride-stat" alt="Mascotte HYBRIDE - Analyse statistique des tirages du Loto" width="163" height="173"></picture>
             </div>
 
@@ -611,6 +840,69 @@
                     Ces fréquences représentent le nombre de sorties de chaque numéro sur l'ensemble de l'historique.
                     Elles sont purement descriptives et n'impliquent aucune prédiction sur les tirages futurs.<br>
                     Consultez le <a href="/loto/numeros-les-plus-sortis">classement complet des numéros les plus sortis</a> avec analyse et interprétation.
+                </div>
+            </div>
+
+            <!-- ONGLET 4 : Paires -->
+            <div id="tab-pairs" class="tab-content">
+                <div class="pairs-sub-tabs">
+                    <button class="pairs-sub-tab active" onclick="switchPairsSubTab('classement')">📊 Classement</button>
+                    <button class="pairs-sub-tab" onclick="switchPairsSubTab('recherche')">🔍 Recherche</button>
+                </div>
+
+                <!-- Sous-onglet Classement -->
+                <div id="pairs-classement" class="pairs-sub-content">
+                    <p style="margin-bottom: 24px; color: var(--theme-text-secondary);">
+                        Co-occurrences des paires de numéros sur l'ensemble de l'historique (C(5,2) = 10 paires par tirage).
+                    </p>
+
+                    <div class="pairs-section pairs-hot-section">
+                        <h3 class="pairs-title pairs-title-hot">🔥 Top 10 paires les plus fréquentes</h3>
+                        <p class="pairs-subtitle" id="pairs-subtitle-hot"></p>
+                        <div id="pairs-hot-loading" class="pairs-loading">Chargement...</div>
+                        <table class="pairs-table" id="pairs-hot-table" style="display:none;">
+                            <thead>
+                                <tr><th>#</th><th>Paire</th><th>Sorties</th><th>Fréquence</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <div class="pairs-section pairs-cold-section">
+                        <h3 class="pairs-title pairs-title-cold">❄️ Top 10 paires les moins fréquentes</h3>
+                        <p class="pairs-subtitle" id="pairs-subtitle-cold"></p>
+                        <div id="pairs-cold-loading" class="pairs-loading">Chargement...</div>
+                        <table class="pairs-table" id="pairs-cold-table" style="display:none;">
+                            <thead>
+                                <tr><th>#</th><th>Paire</th><th>Sorties</th><th>Fréquence</th></tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Sous-onglet Recherche -->
+                <div id="pairs-recherche" class="pairs-sub-content" style="display:none;">
+                    <h3 style="margin-bottom:8px;">Rechercher une paire</h3>
+                    <p style="margin-bottom:20px;color:var(--theme-text-secondary);">Sélectionnez 2 numéros pour voir leur co-occurrence dans l'historique.</p>
+
+                    <div class="pairs-grid" id="pairs-number-grid"></div>
+
+                    <div class="pairs-selection" id="pairs-selection">
+                        <span class="pairs-selected-label">Sélection :</span>
+                        <span id="pairs-sel-1" class="pairs-sel-ball empty">?</span>
+                        <span class="pairs-sel-separator">+</span>
+                        <span id="pairs-sel-2" class="pairs-sel-ball empty">?</span>
+                        <button id="pairs-reset-btn" class="pairs-reset-btn" onclick="resetPairSelection()" style="display:none;">✕ Reset</button>
+                    </div>
+
+                    <div id="pairs-result" class="pairs-result" style="display:none;"></div>
+                </div>
+
+                <div class="info-note">
+                    <strong>⚠️ Avertissement :</strong><br>
+                    Les co-occurrences passées ne prédisent pas les tirages futurs.
+                    Chaque combinaison a la même probabilité mathématique.
                 </div>
             </div>
         </div>
@@ -958,6 +1250,171 @@
             if (tabName === 'topflop' && topData.length === 0) {
                 loadTopFlop();
             }
+            // Charger les paires au premier accès
+            if (tabName === 'pairs' && !pairsLoaded) {
+                loadPairs();
+            }
+        }
+
+        // ========== PAIRES ==========
+        var pairsLoaded = false;
+
+        function loadPairs() {
+            Promise.all([
+                fetch('/api/loto/stats/pairs?top_n=10&order=hot').then(function(r){ return r.json(); }),
+                fetch('/api/loto/stats/pairs?top_n=10&order=cold').then(function(r){ return r.json(); })
+            ]).then(function(results) {
+                var hotData = results[0];
+                var coldData = results[1];
+                if (hotData.success) {
+                    renderPairsTable('pairs-hot', hotData.pairs, 'hot', hotData.total_draws);
+                    document.getElementById('pairs-subtitle-hot').textContent = 'Sur les ' + hotData.total_draws.toLocaleString('fr-FR') + ' derniers tirages du Loto';
+                }
+                if (coldData.success) {
+                    renderPairsTable('pairs-cold', coldData.pairs, 'cold', coldData.total_draws);
+                    document.getElementById('pairs-subtitle-cold').textContent = 'Sur les ' + coldData.total_draws.toLocaleString('fr-FR') + ' derniers tirages du Loto';
+                }
+                pairsLoaded = true;
+            }).catch(function(err) {
+                document.getElementById('pairs-hot-loading').textContent = 'Erreur de chargement.';
+                document.getElementById('pairs-cold-loading').textContent = 'Erreur de chargement.';
+            });
+        }
+
+        // ========== PAIRES — Sub-tabs ==========
+        function switchPairsSubTab(name) {
+            document.querySelectorAll('.pairs-sub-tab').forEach(function(t){ t.classList.remove('active'); });
+            document.querySelectorAll('.pairs-sub-content').forEach(function(c){ c.style.display = 'none'; });
+            event.target.classList.add('active');
+            document.getElementById('pairs-' + name).style.display = 'block';
+            // Build grid on first visit
+            if (name === 'recherche' && !pairsGridBuilt) { buildPairsGrid(); pairsGridBuilt = true; }
+        }
+
+        // ========== PAIRES — Grille cliquable ==========
+        var pairsGridBuilt = false;
+        var pairsSelected = [];
+
+        function buildPairsGrid() {
+            var grid = document.getElementById('pairs-number-grid');
+            for (var i = 1; i <= 49; i++) {
+                var btn = document.createElement('button');
+                btn.className = 'pairs-grid-btn';
+                btn.textContent = i;
+                btn.setAttribute('data-num', i);
+                btn.addEventListener('click', onPairsGridClick);
+                grid.appendChild(btn);
+            }
+        }
+
+        function onPairsGridClick(e) {
+            var num = parseInt(e.target.getAttribute('data-num'));
+            var idx = pairsSelected.indexOf(num);
+            if (idx !== -1) {
+                // Deselect
+                pairsSelected.splice(idx, 1);
+                e.target.classList.remove('selected');
+                updatePairsSelectionUI();
+                document.getElementById('pairs-result').style.display = 'none';
+                return;
+            }
+            if (pairsSelected.length >= 2) {
+                // FIFO: deselect oldest
+                var oldest = pairsSelected.shift();
+                var oldBtn = document.querySelector('.pairs-grid-btn[data-num="' + oldest + '"]');
+                if (oldBtn) oldBtn.classList.remove('selected');
+            }
+            pairsSelected.push(num);
+            e.target.classList.add('selected');
+            updatePairsSelectionUI();
+            if (pairsSelected.length === 2) {
+                lookupPair(pairsSelected[0], pairsSelected[1]);
+            }
+        }
+
+        function updatePairsSelectionUI() {
+            var s1 = document.getElementById('pairs-sel-1');
+            var s2 = document.getElementById('pairs-sel-2');
+            var resetBtn = document.getElementById('pairs-reset-btn');
+            s1.textContent = pairsSelected[0] || '?';
+            s1.className = 'pairs-sel-ball' + (pairsSelected[0] ? '' : ' empty');
+            s2.textContent = pairsSelected[1] || '?';
+            s2.className = 'pairs-sel-ball' + (pairsSelected[1] ? '' : ' empty');
+            resetBtn.style.display = pairsSelected.length > 0 ? 'inline-block' : 'none';
+        }
+
+        function resetPairSelection() {
+            pairsSelected = [];
+            document.querySelectorAll('.pairs-grid-btn.selected').forEach(function(b){ b.classList.remove('selected'); });
+            updatePairsSelectionUI();
+            document.getElementById('pairs-result').style.display = 'none';
+        }
+
+        function lookupPair(a, b) {
+            var n1 = Math.min(a, b), n2 = Math.max(a, b);
+            var resultDiv = document.getElementById('pairs-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p style="color:var(--theme-text-secondary);">Chargement...</p>';
+            fetch('/api/loto/stats/pair?n1=' + n1 + '&n2=' + n2)
+                .then(function(r){ return r.json(); })
+                .then(function(data) {
+                    if (!data.success) { resultDiv.innerHTML = '<p>Erreur</p>'; return; }
+                    var pctRank = Math.round((1 - data.rank / data.total_pairs) * 100);
+                    var ballClass = pctRank >= 90 ? 'warm' : pctRank <= 10 ? 'cold' : 'neutral';
+                    var fillColor = pctRank >= 90 ? '#ef4444' : pctRank <= 10 ? '#3b82f6' : 'var(--primary)';
+                    var barWidth = Math.max(Math.round(data.percentage / 3 * 100), 3);
+                    var rankLabel = data.rank === 1 ? '1<sup>re</sup>' : data.rank + '<sup>e</sup>';
+                    var resultClass = pctRank >= 90 ? ' result-warm' : pctRank <= 10 ? ' result-cold' : '';
+                    resultDiv.className = 'pairs-result' + resultClass;
+                    resultDiv.innerHTML =
+                        '<div class="pairs-result-balls">' +
+                            '<span class="pairs-result-ball ' + ballClass + '">' + data.n1 + '</span>' +
+                            '<span class="pairs-result-ball ' + ballClass + '">' + data.n2 + '</span>' +
+                        '</div>' +
+                        '<p class="pairs-result-stat">Sortis ensemble <strong>' + data.count + ' fois</strong> sur ' + data.total_draws.toLocaleString('fr-FR') + ' tirages</p>' +
+                        '<p class="pairs-result-stat">Fréquence : <strong>' + data.percentage.toFixed(1) + '%</strong></p>' +
+                        '<p class="pairs-result-stat">Rang : <strong>' + rankLabel + '</strong> sur ' + data.total_pairs.toLocaleString('fr-FR') + ' paires possibles</p>' +
+                        '<div class="pairs-result-bar"><div class="pairs-result-track"><div class="pairs-result-fill" style="width:' + barWidth + '%;background:' + fillColor + ';"></div></div></div>';
+                })
+                .catch(function() {
+                    resultDiv.innerHTML = '<p style="color:#ef4444;">Erreur de chargement.</p>';
+                });
+        }
+
+        function renderPairsTable(prefix, pairs, type, totalDraws) {
+            var table = document.getElementById(prefix + '-table');
+            var loading = document.getElementById(prefix + '-loading');
+            var tbody = table.querySelector('tbody');
+            var maxCount = pairs.length > 0 ? pairs[0].count : 1;
+            if (type === 'cold' && pairs.length > 0) {
+                maxCount = pairs[pairs.length - 1].count;
+            }
+            var ballClass = type === 'hot' ? 'pair-ball-hot' : 'pair-ball-cold';
+            var fillClass = type === 'hot' ? 'pair-freq-fill-hot' : 'pair-freq-fill-cold';
+
+            tbody.innerHTML = '';
+            pairs.forEach(function(p) {
+                var pct = p.percentage;
+                var barWidth = type === 'hot'
+                    ? Math.round(p.count / maxCount * 100)
+                    : Math.round(maxCount / Math.max(p.count, 1) * 100);
+                barWidth = Math.max(barWidth, 5);
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td style="font-weight:600;color:var(--theme-text-secondary);width:40px;">' + p.rank + '</td>' +
+                    '<td><span class="pair-balls">' +
+                        '<span class="pair-ball ' + ballClass + '">' + p.num_a + '</span>' +
+                        '<span class="pair-ball ' + ballClass + '">' + p.num_b + '</span>' +
+                    '</span></td>' +
+                    '<td style="font-weight:600;">' + p.count + '</td>' +
+                    '<td><div class="pair-freq-bar">' +
+                        '<div class="pair-freq-track"><div class="' + fillClass + '" style="width:' + barWidth + '%"></div></div>' +
+                        '<span class="pair-freq-pct">' + pct.toFixed(1) + '%</span>' +
+                    '</div></td>';
+                tbody.appendChild(tr);
+            });
+            loading.style.display = 'none';
+            table.style.display = 'table';
         }
     </script>
     <script src="/ui/static/nav-scroll.js?v=1" defer></script>

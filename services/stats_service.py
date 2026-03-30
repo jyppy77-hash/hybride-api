@@ -116,6 +116,7 @@ get_comparaison_with_period = _svc.get_comparaison_with_period
 get_numeros_par_categorie = _svc.get_numeros_par_categorie
 prepare_grilles_pitch_context = _svc.prepare_grilles_pitch_context
 get_pair_correlations = _svc.get_pair_correlations
+get_single_pair = _svc.get_single_pair
 get_triplet_correlations = _svc.get_triplet_correlations
 
 

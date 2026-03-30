@@ -479,6 +479,85 @@
                 font-size: 1.1rem;
             }
         }
+
+        /* ---- Paires ---- */
+        .pairs-section { margin-bottom: 32px; }
+        .pairs-title { font-size: 1.3rem; margin-bottom: 8px; }
+        .pairs-title-hot { color: #ef4444; }
+        .pairs-title-cold { color: #3b82f6; }
+        .pairs-title-stars { color: #eab308; }
+        .pairs-subtitle { font-size: 0.9rem; color: var(--theme-text-secondary, var(--text-muted)); margin-bottom: 16px; }
+        .pairs-loading { padding: 24px; text-align: center; color: var(--theme-text-secondary, var(--text-muted)); }
+        .pairs-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+        .pairs-table th { text-align: left; padding: 10px 12px; border-bottom: 2px solid var(--theme-border, #e5e7eb); color: var(--theme-text-secondary, var(--text-muted)); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .pairs-table td { padding: 10px 12px; border-bottom: 1px solid var(--theme-border, #e5e7eb); vertical-align: middle; }
+        .pairs-table tbody tr:hover { background: rgba(102, 126, 234, 0.04); }
+        .pair-balls { display: inline-flex; gap: 6px; align-items: center; }
+        .pair-ball { width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 700; color: white; }
+        .pair-ball-hot { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 2px 6px rgba(239,68,68,.3); }
+        .pair-ball-cold { background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 2px 6px rgba(59,130,246,.3); }
+        .pair-ball-star-hot { background: linear-gradient(135deg, #f59e0b, #eab308); box-shadow: 0 2px 6px rgba(234,179,8,.3); }
+        .pair-ball-star-cold { background: linear-gradient(135deg, #60a5fa, #3b82f6); box-shadow: 0 2px 6px rgba(59,130,246,.3); }
+        .pair-freq-bar { display: flex; align-items: center; gap: 8px; }
+        .pair-freq-track { flex: 1; height: 8px; background: var(--theme-border, #e5e7eb); border-radius: 4px; overflow: hidden; min-width: 60px; }
+        .pair-freq-fill-hot { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #f97316, #ef4444); }
+        .pair-freq-fill-cold { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #60a5fa, #3b82f6); }
+        .pair-freq-fill-star { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #fbbf24, #eab308); }
+        .pair-freq-pct { font-size: 0.85rem; font-weight: 600; min-width: 42px; }
+
+        /* ---- Pairs sub-tabs ---- */
+        .pairs-sub-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+        .pairs-sub-tab { padding: 9px 20px; background: transparent; border: 1.5px solid var(--theme-border, #e5e7eb); border-radius: 24px; cursor: pointer; font-size: 0.88rem; font-weight: 600; color: var(--theme-text-secondary, var(--text-muted)); transition: all 0.25s ease; font-family: inherit; }
+        .pairs-sub-tab:hover { background: rgba(102,126,234,.08); border-color: var(--primary, #667eea); color: var(--primary, #667eea); }
+        .pairs-sub-tab.active { background: var(--primary, #667eea); border-color: var(--primary, #667eea); color: white; box-shadow: 0 2px 8px rgba(26,115,232,.3); }
+
+        /* ---- Pairs grid ---- */
+        .pairs-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; max-width: 460px; margin: 0 auto 28px; }
+        .pairs-grid.stars-grid { grid-template-columns: repeat(6, 1fr); max-width: 280px; }
+        .pairs-grid-btn { width: 100%; aspect-ratio: 1; border-radius: 50%; border: 1.5px solid var(--theme-border, #e5e7eb); background: var(--theme-bg-card, #fff); color: var(--theme-text-primary, #1f2937); font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease; font-family: inherit; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+        .pairs-grid-btn:hover { border-color: var(--primary, #667eea); transform: scale(1.08); box-shadow: 0 2px 10px rgba(26,115,232,.25); }
+        .pairs-grid-btn.selected { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border-color: transparent; box-shadow: 0 3px 12px rgba(239,68,68,.45); transform: scale(1.08); }
+        .pairs-grid-btn.star-selected { background: linear-gradient(135deg, #f59e0b, #eab308); color: white; border-color: transparent; box-shadow: 0 3px 12px rgba(234,179,8,.45); transform: scale(1.08); }
+
+        /* ---- Pair selection ---- */
+        .pairs-selection { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 24px; padding: 16px 20px; background: var(--theme-bg-card, #fff); border: 1px solid var(--theme-border, #e5e7eb); border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+        .pairs-selected-label { font-weight: 600; color: var(--theme-text-secondary, var(--text-muted)); font-size: 0.9rem; }
+        .pairs-sel-ball { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; color: white; background: linear-gradient(135deg, var(--primary, #667eea), #1557b0); box-shadow: 0 2px 8px rgba(26,115,232,.3); transition: all .25s ease; }
+        .pairs-sel-ball.empty { background: var(--theme-border, #e5e7eb); color: var(--theme-text-secondary, var(--text-muted)); box-shadow: none; }
+        .pairs-sel-ball.star-ball { background: linear-gradient(135deg, #f59e0b, #eab308); box-shadow: 0 2px 8px rgba(234,179,8,.3); }
+        .pairs-sel-ball.star-ball.empty { background: var(--theme-border, #e5e7eb); color: var(--theme-text-secondary, var(--text-muted)); box-shadow: none; }
+        .pairs-sel-separator { font-size: 1.2rem; font-weight: 700; color: var(--theme-text-secondary, var(--text-muted)); }
+        .pairs-reset-btn { display: inline-flex; align-items: center; gap: 4px; padding: 8px 16px; border: 1.5px solid var(--theme-border, #e5e7eb); border-radius: 20px; background: var(--theme-bg-card, #fff); color: var(--theme-text-secondary, var(--text-muted)); font-size: .82rem; font-weight: 600; cursor: pointer; font-family: inherit; margin-left: 8px; transition: all .2s ease; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+        .pairs-reset-btn:hover { background: rgba(239,68,68,.08); border-color: #ef4444; color: #ef4444; }
+
+        /* ---- Pair result card ---- */
+        .pairs-result { background: var(--theme-bg-card, #fff); border: 1px solid var(--theme-border, #e5e7eb); border-radius: 14px; padding: 28px 24px; text-align: center; margin-bottom: 24px; border-left: 4px solid var(--primary, #667eea); box-shadow: 0 4px 16px rgba(0,0,0,.07); }
+        .pairs-result.result-warm { border-left-color: #ef4444; }
+        .pairs-result.result-cold { border-left-color: #3b82f6; }
+        .pairs-result.result-star { border-left-color: #eab308; }
+        .pairs-result-balls { display: flex; justify-content: center; gap: 14px; margin-bottom: 18px; }
+        .pairs-result-ball { width: 52px; height: 52px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.35rem; font-weight: 700; color: white; }
+        .pairs-result-ball.warm { background: linear-gradient(135deg, #f97316, #ef4444); box-shadow: 0 4px 14px rgba(239,68,68,.35); }
+        .pairs-result-ball.neutral { background: linear-gradient(135deg, var(--primary, #667eea), #1557b0); box-shadow: 0 4px 14px rgba(26,115,232,.3); }
+        .pairs-result-ball.cold { background: linear-gradient(135deg, #60a5fa, #3b82f6); box-shadow: 0 4px 14px rgba(59,130,246,.35); }
+        .pairs-result-ball.star { background: linear-gradient(135deg, #f59e0b, #eab308); box-shadow: 0 4px 14px rgba(234,179,8,.35); }
+        .pairs-result-stat { font-size: 1.05rem; margin-bottom: 10px; line-height: 1.5; color: var(--theme-text-primary, #1f2937); }
+        .pairs-result-stat strong { font-size: 1.15rem; }
+        .pairs-result-bar { max-width: 300px; margin: 18px auto 0; }
+        .pairs-result-track { height: 10px; background: var(--theme-border, #e5e7eb); border-radius: 6px; overflow: hidden; }
+        .pairs-result-fill { height: 100%; border-radius: 6px; transition: width .6s ease-out; }
+
+        @media (max-width: 768px) {
+            .pairs-grid { grid-template-columns: repeat(5, 1fr); max-width: 260px; }
+            .pairs-grid.stars-grid { grid-template-columns: repeat(4, 1fr); max-width: 200px; }
+            .pairs-grid-btn { font-size: .82rem; }
+            .pairs-selection { flex-wrap: wrap; gap: 8px; padding: 12px; }
+            .pair-ball { width: 30px; height: 30px; font-size: .8rem; }
+            .pair-freq-track { min-width: 40px; }
+            .pairs-result { padding: 20px 16px; }
+            .pairs-result-ball { width: 46px; height: 46px; font-size: 1.2rem; }
+            .pairs-sub-tab { padding: 8px 14px; font-size: .82rem; }
+        }
     </style>
 {% endblock %}
 
@@ -492,6 +571,7 @@
                 <button class="tab active" onclick="switchTab('historique')">&#128197; {{ _('Historique des tirages') }}</button>
                 <button class="tab" onclick="switchTab('analyse')">&#128269; {{ _('Analyse par numéro') }}</button>
                 <button class="tab" onclick="switchTab('topflop')">&#128204; {{ _('Top / Flop') }}</button>
+                <button class="tab" onclick="switchTab('pairs')">&#128279; {{ _('Paires') }}</button>
             </div>
 
             <!-- ONGLET 1 : Historique des tirages -->
@@ -593,6 +673,59 @@
                     {{ _('Elles sont purement descriptives et n\'impliquent aucune prédiction sur les tirages futurs.') }}
                 </div>
             </div>
+
+            <!-- ONGLET 4 : Paires -->
+            <div id="tab-pairs" class="tab-content">
+                <div class="pairs-sub-tabs">
+                    <button class="pairs-sub-tab active" onclick="switchPairsSubTab('classement')">&#128202; {{ _('Classement') }}</button>
+                    <button class="pairs-sub-tab" onclick="switchPairsSubTab('recherche')">&#128269; {{ _('Recherche') }}</button>
+                </div>
+
+                <!-- Sous-onglet Classement -->
+                <div id="pairs-classement" class="pairs-sub-content">
+                    <p style="margin-bottom:24px;color:var(--theme-text-secondary,var(--text-muted));">
+                        {{ _('Co-occurrences des paires de numéros et d\'étoiles sur l\'ensemble de l\'historique.') }}
+                    </p>
+                    <div class="pairs-section"><h3 class="pairs-title pairs-title-hot">&#128293; {{ _('Top 10 paires de boules les plus fréquentes') }}</h3><p class="pairs-subtitle" id="pairs-subtitle-hot"></p><div id="pairs-hot-loading" class="pairs-loading">{{ _('Chargement...') }}</div><table class="pairs-table" id="pairs-hot-table" style="display:none;"><thead><tr><th>#</th><th>{{ _('Paire') }}</th><th>{{ _('Sorties') }}</th><th>{{ _('Fréquence') }}</th></tr></thead><tbody></tbody></table></div>
+                    <div class="pairs-section"><h3 class="pairs-title pairs-title-cold">&#10052;&#65039; {{ _('Top 10 paires de boules les moins fréquentes') }}</h3><p class="pairs-subtitle" id="pairs-subtitle-cold"></p><div id="pairs-cold-loading" class="pairs-loading">{{ _('Chargement...') }}</div><table class="pairs-table" id="pairs-cold-table" style="display:none;"><thead><tr><th>#</th><th>{{ _('Paire') }}</th><th>{{ _('Sorties') }}</th><th>{{ _('Fréquence') }}</th></tr></thead><tbody></tbody></table></div>
+                    <div class="pairs-section"><h3 class="pairs-title pairs-title-stars">&#11088; {{ _('Top 10 paires d\'étoiles les plus fréquentes') }}</h3><p class="pairs-subtitle" id="pairs-subtitle-stars-hot"></p><div id="pairs-stars-hot-loading" class="pairs-loading">{{ _('Chargement...') }}</div><table class="pairs-table" id="pairs-stars-hot-table" style="display:none;"><thead><tr><th>#</th><th>{{ _('Paire') }}</th><th>{{ _('Sorties') }}</th><th>{{ _('Fréquence') }}</th></tr></thead><tbody></tbody></table></div>
+                    <div class="pairs-section"><h3 class="pairs-title pairs-title-cold">&#10052;&#65039; {{ _('Top 10 paires d\'étoiles les moins fréquentes') }}</h3><p class="pairs-subtitle" id="pairs-subtitle-stars-cold"></p><div id="pairs-stars-cold-loading" class="pairs-loading">{{ _('Chargement...') }}</div><table class="pairs-table" id="pairs-stars-cold-table" style="display:none;"><thead><tr><th>#</th><th>{{ _('Paire') }}</th><th>{{ _('Sorties') }}</th><th>{{ _('Fréquence') }}</th></tr></thead><tbody></tbody></table></div>
+                </div>
+
+                <!-- Sous-onglet Recherche -->
+                <div id="pairs-recherche" class="pairs-sub-content" style="display:none;">
+                    <h3 style="margin-bottom:8px;">{{ _('Rechercher une paire de boules') }}</h3>
+                    <p style="margin-bottom:20px;color:var(--theme-text-secondary,var(--text-muted));">{{ _('Sélectionnez 2 numéros pour voir leur co-occurrence.') }}</p>
+                    <div class="pairs-grid" id="pairs-number-grid"></div>
+                    <div class="pairs-selection" id="pairs-selection">
+                        <span class="pairs-selected-label">{{ _('Sélection :') }}</span>
+                        <span id="pairs-sel-1" class="pairs-sel-ball empty">?</span>
+                        <span class="pairs-sel-separator">+</span>
+                        <span id="pairs-sel-2" class="pairs-sel-ball empty">?</span>
+                        <button id="pairs-reset-btn" class="pairs-reset-btn" onclick="resetPairSelection()" style="display:none;">&#10005; {{ _('Reset') }}</button>
+                    </div>
+                    <div id="pairs-result" class="pairs-result" style="display:none;"></div>
+
+                    <hr style="border:none;border-top:1px solid var(--theme-border,#e5e7eb);margin:32px 0;">
+
+                    <h3 style="margin-bottom:8px;">&#11088; {{ _('Rechercher une paire d\'étoiles') }}</h3>
+                    <p style="margin-bottom:20px;color:var(--theme-text-secondary,var(--text-muted));">{{ _('Sélectionnez 2 étoiles pour voir leur co-occurrence.') }}</p>
+                    <div class="pairs-grid stars-grid" id="pairs-star-grid"></div>
+                    <div class="pairs-selection" id="stars-selection">
+                        <span class="pairs-selected-label">{{ _('Sélection :') }}</span>
+                        <span id="stars-sel-1" class="pairs-sel-ball star-ball empty">?</span>
+                        <span class="pairs-sel-separator">+</span>
+                        <span id="stars-sel-2" class="pairs-sel-ball star-ball empty">?</span>
+                        <button id="stars-reset-btn" class="pairs-reset-btn" onclick="resetStarSelection()" style="display:none;">&#10005; {{ _('Reset') }}</button>
+                    </div>
+                    <div id="stars-result" class="pairs-result" style="display:none;"></div>
+                </div>
+
+                <div class="info-note">
+                    <strong>{{ _('Avertissement :') }}</strong><br>
+                    {{ _('Les co-occurrences passées ne prédisent pas les tirages futurs. Chaque combinaison a la même probabilité mathématique.') }}
+                </div>
+            </div>
         </div>
 
         {# ── CTA HYBRIDE ── #}
@@ -638,7 +771,9 @@
             cannotAnalyzeStar: {{ _('Impossible d\'analyser l\'étoile')|tojson }},
             cannotLoadData: {{ _('Impossible de charger les données')|tojson }},
             noDataAvailable: {{ _('Aucune donnée disponible.')|tojson }},
-            appearances: {{ _('sorties')|tojson }}
+            appearances: {{ _('sorties')|tojson }},
+            pairsOn: {{ _('sur')|tojson }},
+            pairsDraws: {{ _('tirages')|tojson }}
         };
 
         // =====================================================================
@@ -690,6 +825,9 @@
             // Charger les donnees Top/Flop si premier acces
             if (tabName === 'topflop' && !topFlopLoaded) {
                 loadTopFlop();
+            }
+            if (tabName === 'pairs' && !pairsLoaded) {
+                loadPairs();
             }
         }
 
@@ -883,6 +1021,192 @@
                     '<div class="count">' + count + ' ' + STRINGS.appearances + '</div>';
                 grid.appendChild(card);
             });
+        }
+
+        // =====================================================================
+        //  ONGLET 4 : PAIRES
+        // =====================================================================
+
+        var pairsLoaded = false;
+        var pairsGridBuilt = false;
+        var pairsSelected = [];
+        var starsSelected = [];
+
+        var PS = {
+            together: {{ _('Sortis ensemble')|tojson }},
+            times: {{ _('fois')|tojson }},
+            on: {{ _('sur')|tojson }},
+            draws: {{ _('tirages')|tojson }},
+            frequency: {{ _('Fréquence')|tojson }},
+            rank: {{ _('Rang')|tojson }},
+            possible: {{ _('paires possibles')|tojson }},
+            loading: {{ _('Chargement...')|tojson }},
+            error: {{ _('Erreur de chargement.')|tojson }}
+        };
+
+        function loadPairs() {
+            Promise.all([
+                fetch('/api/euromillions/stats/pairs?top_n=10&order=hot').then(function(r){return r.json();}),
+                fetch('/api/euromillions/stats/pairs?top_n=10&order=cold').then(function(r){return r.json();})
+            ]).then(function(results) {
+                var hot = results[0], cold = results[1];
+                if (hot.success) {
+                    renderPairsTable('pairs-hot', hot.pairs, 'hot', hot.total_draws);
+                    document.getElementById('pairs-subtitle-hot').textContent = PS.on + ' ' + hot.total_draws.toLocaleString() + ' ' + PS.draws;
+                    if (hot.star_pairs) {
+                        renderPairsTable('pairs-stars-hot', hot.star_pairs, 'star-hot', hot.total_draws);
+                        document.getElementById('pairs-subtitle-stars-hot').textContent = PS.on + ' ' + hot.total_draws.toLocaleString() + ' ' + PS.draws;
+                    }
+                }
+                if (cold.success) {
+                    renderPairsTable('pairs-cold', cold.pairs, 'cold', cold.total_draws);
+                    document.getElementById('pairs-subtitle-cold').textContent = PS.on + ' ' + cold.total_draws.toLocaleString() + ' ' + PS.draws;
+                    if (cold.star_pairs) {
+                        renderPairsTable('pairs-stars-cold', cold.star_pairs, 'star-cold', cold.total_draws);
+                        document.getElementById('pairs-subtitle-stars-cold').textContent = PS.on + ' ' + cold.total_draws.toLocaleString() + ' ' + PS.draws;
+                    }
+                }
+                pairsLoaded = true;
+            }).catch(function() {
+                ['pairs-hot','pairs-cold','pairs-stars-hot','pairs-stars-cold'].forEach(function(id) {
+                    var el = document.getElementById(id + '-loading');
+                    if (el) el.textContent = PS.error;
+                });
+            });
+        }
+
+        function renderPairsTable(prefix, pairs, type, totalDraws) {
+            var table = document.getElementById(prefix + '-table');
+            var loading = document.getElementById(prefix + '-loading');
+            if (!table || !loading) return;
+            var tbody = table.querySelector('tbody');
+            var maxCount = pairs.length > 0 ? pairs[0].count : 1;
+            var isHot = type.indexOf('hot') !== -1;
+            if (!isHot && pairs.length > 0) maxCount = pairs[pairs.length - 1].count;
+            var isStar = type.indexOf('star') !== -1;
+            var ballClass = isStar ? (isHot ? 'pair-ball-star-hot' : 'pair-ball-star-cold') : (isHot ? 'pair-ball-hot' : 'pair-ball-cold');
+            var fillClass = isStar ? 'pair-freq-fill-star' : (isHot ? 'pair-freq-fill-hot' : 'pair-freq-fill-cold');
+            tbody.innerHTML = '';
+            pairs.forEach(function(p) {
+                var barWidth = isHot ? Math.round(p.count / maxCount * 100) : Math.round(maxCount / Math.max(p.count, 1) * 100);
+                barWidth = Math.max(barWidth, 5);
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td style="font-weight:600;color:var(--theme-text-secondary,var(--text-muted));width:40px;">' + p.rank + '</td>' +
+                    '<td><span class="pair-balls"><span class="pair-ball ' + ballClass + '">' + p.num_a + '</span><span class="pair-ball ' + ballClass + '">' + p.num_b + '</span></span></td>' +
+                    '<td style="font-weight:600;">' + p.count + '</td>' +
+                    '<td><div class="pair-freq-bar"><div class="pair-freq-track"><div class="' + fillClass + '" style="width:' + barWidth + '%"></div></div><span class="pair-freq-pct">' + p.percentage.toFixed(1) + '%</span></div></td>';
+                tbody.appendChild(tr);
+            });
+            loading.style.display = 'none';
+            table.style.display = 'table';
+        }
+
+        function switchPairsSubTab(name) {
+            document.querySelectorAll('.pairs-sub-tab').forEach(function(t){t.classList.remove('active');});
+            document.querySelectorAll('.pairs-sub-content').forEach(function(c){c.style.display='none';});
+            event.target.classList.add('active');
+            document.getElementById('pairs-' + name).style.display = 'block';
+            if (name === 'recherche' && !pairsGridBuilt) { buildPairsGrids(); pairsGridBuilt = true; }
+        }
+
+        function buildPairsGrids() {
+            var grid = document.getElementById('pairs-number-grid');
+            for (var i = 1; i <= 50; i++) {
+                var btn = document.createElement('button');
+                btn.className = 'pairs-grid-btn';
+                btn.textContent = i;
+                btn.setAttribute('data-num', i);
+                btn.addEventListener('click', onBallGridClick);
+                grid.appendChild(btn);
+            }
+            var sgrid = document.getElementById('pairs-star-grid');
+            for (var j = 1; j <= 12; j++) {
+                var sb = document.createElement('button');
+                sb.className = 'pairs-grid-btn';
+                sb.textContent = j;
+                sb.setAttribute('data-star', j);
+                sb.addEventListener('click', onStarGridClick);
+                sgrid.appendChild(sb);
+            }
+        }
+
+        function onBallGridClick(e) {
+            var num = parseInt(e.target.getAttribute('data-num'));
+            var idx = pairsSelected.indexOf(num);
+            if (idx !== -1) { pairsSelected.splice(idx, 1); e.target.classList.remove('selected'); updateBallSelUI(); document.getElementById('pairs-result').style.display = 'none'; return; }
+            if (pairsSelected.length >= 2) { var old = pairsSelected.shift(); var ob = document.querySelector('.pairs-grid-btn[data-num="' + old + '"]'); if (ob) ob.classList.remove('selected'); }
+            pairsSelected.push(num); e.target.classList.add('selected'); updateBallSelUI();
+            if (pairsSelected.length === 2) lookupBallPair(pairsSelected[0], pairsSelected[1]);
+        }
+        function updateBallSelUI() {
+            document.getElementById('pairs-sel-1').textContent = pairsSelected[0] || '?';
+            document.getElementById('pairs-sel-1').className = 'pairs-sel-ball' + (pairsSelected[0] ? '' : ' empty');
+            document.getElementById('pairs-sel-2').textContent = pairsSelected[1] || '?';
+            document.getElementById('pairs-sel-2').className = 'pairs-sel-ball' + (pairsSelected[1] ? '' : ' empty');
+            document.getElementById('pairs-reset-btn').style.display = pairsSelected.length > 0 ? 'inline-flex' : 'none';
+        }
+        function resetPairSelection() {
+            pairsSelected = [];
+            document.querySelectorAll('#pairs-number-grid .pairs-grid-btn.selected').forEach(function(b){b.classList.remove('selected');});
+            updateBallSelUI(); document.getElementById('pairs-result').style.display = 'none';
+        }
+        function lookupBallPair(a, b) {
+            var n1 = Math.min(a, b), n2 = Math.max(a, b);
+            var rd = document.getElementById('pairs-result');
+            rd.style.display = 'block'; rd.innerHTML = '<p>' + PS.loading + '</p>';
+            fetch('/api/euromillions/stats/pair?n1=' + n1 + '&n2=' + n2)
+                .then(function(r){return r.json();})
+                .then(function(d) { if (!d.success) { rd.innerHTML = '<p>' + PS.error + '</p>'; return; } renderPairResult(rd, d, 'ball'); })
+                .catch(function() { rd.innerHTML = '<p style="color:#ef4444;">' + PS.error + '</p>'; });
+        }
+
+        function onStarGridClick(e) {
+            var num = parseInt(e.target.getAttribute('data-star'));
+            var idx = starsSelected.indexOf(num);
+            if (idx !== -1) { starsSelected.splice(idx, 1); e.target.classList.remove('star-selected'); updateStarSelUI(); document.getElementById('stars-result').style.display = 'none'; return; }
+            if (starsSelected.length >= 2) { var old = starsSelected.shift(); var ob = document.querySelector('.pairs-grid-btn[data-star="' + old + '"]'); if (ob) ob.classList.remove('star-selected'); }
+            starsSelected.push(num); e.target.classList.add('star-selected'); updateStarSelUI();
+            if (starsSelected.length === 2) lookupStarPair(starsSelected[0], starsSelected[1]);
+        }
+        function updateStarSelUI() {
+            document.getElementById('stars-sel-1').textContent = starsSelected[0] || '?';
+            document.getElementById('stars-sel-1').className = 'pairs-sel-ball star-ball' + (starsSelected[0] ? '' : ' empty');
+            document.getElementById('stars-sel-2').textContent = starsSelected[1] || '?';
+            document.getElementById('stars-sel-2').className = 'pairs-sel-ball star-ball' + (starsSelected[1] ? '' : ' empty');
+            document.getElementById('stars-reset-btn').style.display = starsSelected.length > 0 ? 'inline-flex' : 'none';
+        }
+        function resetStarSelection() {
+            starsSelected = [];
+            document.querySelectorAll('#pairs-star-grid .pairs-grid-btn.star-selected').forEach(function(b){b.classList.remove('star-selected');});
+            updateStarSelUI(); document.getElementById('stars-result').style.display = 'none';
+        }
+        function lookupStarPair(a, b) {
+            var s1 = Math.min(a, b), s2 = Math.max(a, b);
+            var rd = document.getElementById('stars-result');
+            rd.style.display = 'block'; rd.innerHTML = '<p>' + PS.loading + '</p>';
+            fetch('/api/euromillions/stats/star-pair?s1=' + s1 + '&s2=' + s2)
+                .then(function(r){return r.json();})
+                .then(function(d) { if (!d.success) { rd.innerHTML = '<p>' + PS.error + '</p>'; return; } renderPairResult(rd, d, 'star'); })
+                .catch(function() { rd.innerHTML = '<p style="color:#ef4444;">' + PS.error + '</p>'; });
+        }
+
+        function renderPairResult(el, d, type) {
+            var isStar = type === 'star';
+            var k1 = isStar ? 's1' : 'n1', k2 = isStar ? 's2' : 'n2';
+            var pctRank = Math.round((1 - d.rank / d.total_pairs) * 100);
+            var ballClass = isStar ? 'star' : (pctRank >= 90 ? 'warm' : pctRank <= 10 ? 'cold' : 'neutral');
+            var fillColor = isStar ? '#eab308' : (pctRank >= 90 ? '#ef4444' : pctRank <= 10 ? '#3b82f6' : 'var(--primary,#667eea)');
+            var barWidth = Math.max(Math.round(d.percentage / 3 * 100), 3);
+            var rankLabel = d.rank === 1 ? '1<sup>re</sup>' : d.rank + '<sup>e</sup>';
+            var resultClass = isStar ? ' result-star' : (pctRank >= 90 ? ' result-warm' : pctRank <= 10 ? ' result-cold' : '');
+            el.className = 'pairs-result' + resultClass;
+            el.innerHTML =
+                '<div class="pairs-result-balls"><span class="pairs-result-ball ' + ballClass + '">' + d[k1] + '</span><span class="pairs-result-ball ' + ballClass + '">' + d[k2] + '</span></div>' +
+                '<p class="pairs-result-stat">' + PS.together + ' <strong>' + d.count + ' ' + PS.times + '</strong> ' + PS.on + ' ' + d.total_draws.toLocaleString() + ' ' + PS.draws + '</p>' +
+                '<p class="pairs-result-stat">' + PS.frequency + ' : <strong>' + d.percentage.toFixed(1) + '%</strong></p>' +
+                '<p class="pairs-result-stat">' + PS.rank + ' : <strong>' + rankLabel + '</strong> ' + PS.on + ' ' + d.total_pairs.toLocaleString() + ' ' + PS.possible + '</p>' +
+                '<div class="pairs-result-bar"><div class="pairs-result-track"><div class="pairs-result-fill" style="width:' + barWidth + '%;background:' + fillColor + ';"></div></div></div>';
         }
     </script>
 {% endblock %}

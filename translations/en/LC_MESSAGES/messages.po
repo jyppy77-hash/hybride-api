@@ -4996,3 +4996,73 @@ msgid_plural "{count} tirages"
 msgstr[0] "1 draw"
 msgstr[1] "{count} draws"
 
+#: ui/templates/em/statistiques.html — Pairs tab
+msgid "Paires"
+msgstr "Pairs"
+
+msgid "Recherche"
+msgstr "Search"
+
+msgid "Sortis ensemble"
+msgstr "Drawn together"
+
+msgid "sur"
+msgstr "out of"
+
+msgid "Rang"
+msgstr "Rank"
+
+msgid "paires possibles"
+msgstr "possible pairs"
+
+msgid "Erreur de chargement."
+msgstr "Loading error."
+
+msgid "Paire"
+msgstr "Pair"
+
+msgid "Sorties"
+msgstr "Draws"
+
+msgid "Sélection :"
+msgstr "Selection:"
+
+msgid "Avertissement :"
+msgstr "Disclaimer:"
+
+msgid "Co-occurrences des paires de numéros et d'étoiles sur l'ensemble de l'historique."
+msgstr "Co-occurrences of number and star pairs across all draw history."
+
+msgid "Top 10 paires de boules les plus fréquentes"
+msgstr "Top 10 most frequent number pairs"
+
+msgid "Top 10 paires de boules les moins fréquentes"
+msgstr "Top 10 least frequent number pairs"
+
+msgid "Top 10 paires d'étoiles les plus fréquentes"
+msgstr "Top 10 most frequent star pairs"
+
+msgid "Top 10 paires d'étoiles les moins fréquentes"
+msgstr "Top 10 least frequent star pairs"
+
+msgid "Rechercher une paire de boules"
+msgstr "Search for a number pair"
+
+msgid "Sélectionnez 2 numéros pour voir leur co-occurrence."
+msgstr "Select 2 numbers to see their co-occurrence."
+
+msgid "Rechercher une paire d'étoiles"
+msgstr "Search for a star pair"
+
+msgid "Sélectionnez 2 étoiles pour voir leur co-occurrence."
+msgstr "Select 2 stars to see their co-occurrence."
+
+msgid "Les co-occurrences passées ne prédisent pas les tirages futurs. Chaque combinaison a la même probabilité mathématique."
+msgstr "Past co-occurrences do not predict future draws. Every combination has the same mathematical probability."
+
+msgid "Chargement..."
+msgstr "Loading..."
+
+
+msgid "Reset"
+msgstr "Reset"

@@ -5276,3 +5276,72 @@ msgstr ""
 #~ "Intelligenz. HYBRIDE-Engine, KI-Chatbot, "
 #~ "Echtzeit-Statistiken."
 
+#: ui/templates/em/statistiques.html — Pairs tab
+msgid "Paires"
+msgstr "Paare"
+
+msgid "Recherche"
+msgstr "Suche"
+
+msgid "Sortis ensemble"
+msgstr "Zusammen gezogen"
+
+msgid "sur"
+msgstr "von"
+
+msgid "Rang"
+msgstr "Rang"
+
+msgid "paires possibles"
+msgstr "mögliche Paare"
+
+msgid "Erreur de chargement."
+msgstr "Ladefehler."
+
+msgid "Paire"
+msgstr "Paar"
+
+msgid "Sorties"
+msgstr "Ziehungen"
+
+msgid "Sélection :"
+msgstr "Auswahl:"
+
+msgid "Avertissement :"
+msgstr "Hinweis:"
+
+msgid "Co-occurrences des paires de numéros et d'étoiles sur l'ensemble de l'historique."
+msgstr "Häufigkeiten der Zahlen- und Sternpaare über die gesamte Ziehungshistorie."
+
+msgid "Top 10 paires de boules les plus fréquentes"
+msgstr "Top 10 häufigste Zahlenpaare"
+
+msgid "Top 10 paires de boules les moins fréquentes"
+msgstr "Top 10 seltenste Zahlenpaare"
+
+msgid "Top 10 paires d'étoiles les plus fréquentes"
+msgstr "Top 10 häufigste Sternpaare"
+
+msgid "Top 10 paires d'étoiles les moins fréquentes"
+msgstr "Top 10 seltenste Sternpaare"
+
+msgid "Rechercher une paire de boules"
+msgstr "Ein Zahlenpaar suchen"
+
+msgid "Sélectionnez 2 numéros pour voir leur co-occurrence."
+msgstr "Wählen Sie 2 Zahlen, um ihre gemeinsame Häufigkeit zu sehen."
+
+msgid "Rechercher une paire d'étoiles"
+msgstr "Ein Sternpaar suchen"
+
+msgid "Sélectionnez 2 étoiles pour voir leur co-occurrence."
+msgstr "Wählen Sie 2 Sterne, um ihre gemeinsame Häufigkeit zu sehen."
+
+msgid "Les co-occurrences passées ne prédisent pas les tirages futurs. Chaque combinaison a la même probabilité mathématique."
+msgstr "Vergangene Häufigkeiten sagen keine zukünftigen Ziehungen voraus. Jede Kombination hat dieselbe mathematische Wahrscheinlichkeit."
+
+msgid "Chargement..."
+msgstr "Laden..."
+
+msgid "Reset"
+msgstr "Zurücksetzen"

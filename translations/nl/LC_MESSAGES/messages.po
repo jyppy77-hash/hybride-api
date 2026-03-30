@@ -5242,3 +5242,72 @@ msgstr ""
 #~ "intelligentie. HYBRIDE-engine, AI-chatbot, "
 #~ "realtime statistieken."
 
+#: ui/templates/em/statistiques.html — Pairs tab
+msgid "Paires"
+msgstr "Paren"
+
+msgid "Recherche"
+msgstr "Zoeken"
+
+msgid "Sortis ensemble"
+msgstr "Samen getrokken"
+
+msgid "sur"
+msgstr "van"
+
+msgid "Rang"
+msgstr "Rang"
+
+msgid "paires possibles"
+msgstr "mogelijke paren"
+
+msgid "Erreur de chargement."
+msgstr "Laadfout."
+
+msgid "Paire"
+msgstr "Paar"
+
+msgid "Sorties"
+msgstr "Trekkingen"
+
+msgid "Sélection :"
+msgstr "Selectie:"
+
+msgid "Avertissement :"
+msgstr "Waarschuwing:"
+
+msgid "Co-occurrences des paires de numéros et d'étoiles sur l'ensemble de l'historique."
+msgstr "Co-occurrences van nummer- en sterrenparen over de volledige trekkingshistorie."
+
+msgid "Top 10 paires de boules les plus fréquentes"
+msgstr "Top 10 meest voorkomende nummerparen"
+
+msgid "Top 10 paires de boules les moins fréquentes"
+msgstr "Top 10 minst voorkomende nummerparen"
+
+msgid "Top 10 paires d'étoiles les plus fréquentes"
+msgstr "Top 10 meest voorkomende sterrenparen"
+
+msgid "Top 10 paires d'étoiles les moins fréquentes"
+msgstr "Top 10 minst voorkomende sterrenparen"
+
+msgid "Rechercher une paire de boules"
+msgstr "Een nummerpaar zoeken"
+
+msgid "Sélectionnez 2 numéros pour voir leur co-occurrence."
+msgstr "Selecteer 2 nummers om hun co-occurrence te zien."
+
+msgid "Rechercher une paire d'étoiles"
+msgstr "Een sterrenpaar zoeken"
+
+msgid "Sélectionnez 2 étoiles pour voir leur co-occurrence."
+msgstr "Selecteer 2 sterren om hun co-occurrence te zien."
+
+msgid "Les co-occurrences passées ne prédisent pas les tirages futurs. Chaque combinaison a la même probabilité mathématique."
+msgstr "Eerdere co-occurrences voorspellen geen toekomstige trekkingen. Elke combinatie heeft dezelfde wiskundige kans."
+
+msgid "Chargement..."
+msgstr "Laden..."
+
+msgid "Reset"
+msgstr "Reset"

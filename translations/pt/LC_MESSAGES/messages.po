@@ -5198,3 +5198,72 @@ msgstr ""
 #~ " inteligência artificial. Motor HYBRIDE, "
 #~ "chatbot IA, estatísticas em tempo real."
 
+#: ui/templates/em/statistiques.html — Pairs tab
+msgid "Paires"
+msgstr "Pares"
+
+msgid "Recherche"
+msgstr "Pesquisa"
+
+msgid "Sortis ensemble"
+msgstr "Sorteados juntos"
+
+msgid "sur"
+msgstr "de"
+
+msgid "Rang"
+msgstr "Posição"
+
+msgid "paires possibles"
+msgstr "pares possíveis"
+
+msgid "Erreur de chargement."
+msgstr "Erro de carregamento."
+
+msgid "Paire"
+msgstr "Par"
+
+msgid "Sorties"
+msgstr "Sorteios"
+
+msgid "Sélection :"
+msgstr "Seleção:"
+
+msgid "Avertissement :"
+msgstr "Aviso:"
+
+msgid "Co-occurrences des paires de numéros et d'étoiles sur l'ensemble de l'historique."
+msgstr "Co-ocorrências de pares de números e estrelas em todo o histórico de sorteios."
+
+msgid "Top 10 paires de boules les plus fréquentes"
+msgstr "Top 10 pares de números mais frequentes"
+
+msgid "Top 10 paires de boules les moins fréquentes"
+msgstr "Top 10 pares de números menos frequentes"
+
+msgid "Top 10 paires d'étoiles les plus fréquentes"
+msgstr "Top 10 pares de estrelas mais frequentes"
+
+msgid "Top 10 paires d'étoiles les moins fréquentes"
+msgstr "Top 10 pares de estrelas menos frequentes"
+
+msgid "Rechercher une paire de boules"
+msgstr "Pesquisar um par de números"
+
+msgid "Sélectionnez 2 numéros pour voir leur co-occurrence."
+msgstr "Selecione 2 números para ver a sua co-ocorrência."
+
+msgid "Rechercher une paire d'étoiles"
+msgstr "Pesquisar um par de estrelas"
+
+msgid "Sélectionnez 2 étoiles pour voir leur co-occurrence."
+msgstr "Selecione 2 estrelas para ver a sua co-ocorrência."
+
+msgid "Les co-occurrences passées ne prédisent pas les tirages futurs. Chaque combinaison a la même probabilité mathématique."
+msgstr "As co-ocorrências passadas não preveem sorteios futuros. Cada combinação tem a mesma probabilidade matemática."
+
+msgid "Chargement..."
+msgstr "Carregando..."
+
+msgid "Reset"
+msgstr "Reiniciar"
