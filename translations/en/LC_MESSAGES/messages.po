@@ -5066,3 +5066,43 @@ msgstr "Loading..."
 
 msgid "Reset"
 msgstr "Reset"
+
+#: ui/templates/em/news.html — Pairs announcement
+msgid "30 mars 2026"
+msgstr "March 30, 2026"
+
+msgid "NOUVEAU"
+msgstr "NEW"
+
+msgid "Nouveau : Découvrez les paires de numéros et d'étoiles les plus fréquentes de l'EuroMillions"
+msgstr "New: Discover the most frequent number and star pairs in EuroMillions"
+
+msgid "Saviez-vous que certaines paires de numéros sortent ensemble plus souvent que d'autres ? Notre nouvel outil Paires, disponible gratuitement dans l'onglet Statistiques, vous permet d'explorer les co-occurrences de tous les numéros et étoiles de l'EuroMillions."
+msgstr "Did you know that some number pairs are drawn together more often than others? Our new Pairs tool, available for free in the Statistics tab, lets you explore the co-occurrences of all EuroMillions numbers and stars."
+
+msgid "Les paires de boules les plus fréquentes"
+msgstr "The most frequent number pairs"
+
+msgid "Sur plus de 730 tirages analysés, certaines combinaisons de deux numéros reviennent plus souvent que la moyenne. Le classement Top 10 des paires chaudes vous révèle lesquelles. Chaque paire est accompagnée de son nombre de sorties, de sa fréquence et d'une barre de progression visuelle."
+msgstr "Over more than 730 draws analysed, some two-number combinations come up more often than average. The Top 10 hot pairs ranking reveals which ones. Each pair comes with its draw count, frequency and a visual progress bar."
+
+msgid "Les paires d'étoiles"
+msgstr "Star pairs"
+
+msgid "L'EuroMillions propose aussi 12 étoiles combinées par paires. Avec 66 paires possibles, certaines associations reviennent nettement plus souvent. Découvrez le classement des paires d'étoiles chaudes et froides dans l'onglet dédié."
+msgstr "EuroMillions also features 12 stars combined in pairs. With 66 possible pairs, some combinations come up significantly more often. Discover the hot and cold star pair rankings in the dedicated tab."
+
+msgid "Recherchez votre paire favorite"
+msgstr "Search for your favourite pair"
+
+msgid "Notre grille interactive vous permet de sélectionner deux numéros (parmi 50) ou deux étoiles (parmi 12) en un clic. Le résultat s'affiche instantanément : nombre de sorties communes, fréquence, et rang sur les 1 225 paires de boules ou 66 paires d'étoiles possibles."
+msgstr "Our interactive grid lets you select two numbers (out of 50) or two stars (out of 12) in one click. The result appears instantly: number of joint draws, frequency, and rank out of 1,225 number pairs or 66 star pairs."
+
+msgid "Rappel statistique"
+msgstr "Statistical reminder"
+
+msgid "Les co-occurrences passées sont des données purement descriptives. Elles ne prédisent en aucun cas les tirages futurs. Chaque combinaison a exactement la même probabilité mathématique d'être tirée. LotoIA est un outil d'analyse statistique, pas un outil de prédiction."
+msgstr "Past co-occurrences are purely descriptive data. They do not predict future draws in any way. Every combination has exactly the same mathematical probability of being drawn. LotoIA is a statistical analysis tool, not a prediction tool."
+
+msgid "Explorez les paires dès maintenant dans l'onglet Statistiques."
+msgstr "Explore pairs now in the Statistics tab."
