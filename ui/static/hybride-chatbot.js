@@ -260,6 +260,13 @@
             })
             .then(function (res) {
                 clearTimeout(timeoutId);
+                if (res.status === 429) {
+                    return res.json().then(function (body) {
+                        removeTyping();
+                        addMessage('\uD83D\uDED1 ' + (body.message || 'Rate limit exceeded'), 'bot');
+                        isSending = false;
+                    });
+                }
                 if (!res.ok) throw new Error('HTTP ' + res.status);
 
                 var reader = res.body.getReader();

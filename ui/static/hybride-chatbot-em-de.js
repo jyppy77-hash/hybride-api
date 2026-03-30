@@ -227,6 +227,12 @@
             })
             .then(function (res) {
                 clearTimeout(timeoutId);
+                if (res.status === 429) {
+                    return res.json().then(function (body) {
+                        removeTyping();
+                        addMessage('\uD83D\uDED1 ' + (body.message || 'Rate limit exceeded'), 'bot');
+                    });
+                }
                 if (!res.ok) throw new Error('HTTP ' + res.status);
                 return res.json();
             })
