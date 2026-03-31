@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: LotoIA 1.0\n"
 "Report-Msgid-Bugs-To: contact@lotoia.fr\n"
-"POT-Creation-Date: 2026-03-31 10:27+0200\n"
+"POT-Creation-Date: 2026-03-31 11:15+0200\n"
 "PO-Revision-Date: 2026-02-28 00:00+0100\n"
 "Last-Translator: LotoIA <contact@lotoia.fr>\n"
 "Language: nl\n"
@@ -210,7 +210,7 @@ msgid "Analyse statistique Loto & EuroMillions"
 msgstr "Statistische analyse Lotto & EuroMillions"
 
 #: ui/templates/em/_base.html:56 ui/templates/em/a-propos.html:100
-#: ui/templates/em/euromillions-ia.html:53 ui/templates/em/faq.html:79
+#: ui/templates/em/euromillions-ia.html:53 ui/templates/em/faq.html:103
 #: ui/templates/em/generateur.html:55 ui/templates/em/historique.html:45
 #: ui/templates/em/hybride.html:60 ui/templates/em/methodologie.html:58
 #: ui/templates/em/moteur.html:87 ui/templates/em/news.html:67
@@ -249,7 +249,7 @@ msgstr "Exploratie"
 
 #: ui/templates/em/_footer.html:12 ui/templates/em/_hero.html:17
 #: ui/templates/em/accueil.html:722 ui/templates/em/accueil.html:833
-#: ui/templates/em/hybride.html:408 ui/templates/em/statistiques.html:73
+#: ui/templates/em/hybride.html:416 ui/templates/em/statistiques.html:73
 msgid "Statistiques"
 msgstr "Statistieken"
 
@@ -309,7 +309,7 @@ msgstr ""
 "Gokkliniek: www.gokkliniek.be (gratis hulplijn)."
 
 #: ui/templates/em/_footer.html:53 ui/templates/em/euromillions-ia.html:247
-#: ui/templates/em/hybride.html:436
+#: ui/templates/em/hybride.html:444
 msgid "Interdiction de jeu aux mineurs."
 msgstr "Kansspelen zijn verboden voor minderjarigen."
 
@@ -323,7 +323,7 @@ msgid "Auditer une grille"
 msgstr "Een rooster analyseren"
 
 #: ui/templates/em/_hero.html:13 ui/templates/em/accueil.html:719
-#: ui/templates/em/accueil.html:828 ui/templates/em/hybride.html:406
+#: ui/templates/em/accueil.html:828 ui/templates/em/hybride.html:414
 msgid "Explorer des grilles"
 msgstr "Roosters verkennen"
 
@@ -587,7 +587,7 @@ msgid "Nous n'incitons jamais à jouer plus ou à augmenter ses mises"
 msgstr "Wij moedigen nooit aan om meer te spelen of de inzet te verhogen"
 
 #: ui/templates/em/a-propos.html:173 ui/templates/em/euromillions-ia.html:246
-#: ui/templates/em/hybride.html:435
+#: ui/templates/em/hybride.html:443
 #, python-format
 msgid ""
 "Si vous ou un proche avez des difficultés avec le jeu, contactez <a "
@@ -1537,11 +1537,11 @@ msgstr ""
 "href=\"%(sim_url)s\">roosteranalyse</a>, <a "
 "href=\"%(stats_url)s\">statistieken</a> en AI-chatbot."
 
-#: ui/templates/em/euromillions-ia.html:244 ui/templates/em/hybride.html:433
+#: ui/templates/em/euromillions-ia.html:244 ui/templates/em/hybride.html:441
 msgid "Jeu responsable"
 msgstr "Verantwoord spelen"
 
-#: ui/templates/em/euromillions-ia.html:245 ui/templates/em/hybride.html:434
+#: ui/templates/em/euromillions-ia.html:245 ui/templates/em/hybride.html:442
 msgid ""
 "L'EuroMillions est un jeu de hasard. Jouer comporte des risques : "
 "endettement, isolement, dépendance. Ne jouez jamais plus que ce que vous "
@@ -1551,12 +1551,12 @@ msgstr ""
 "schulden, isolement, verslaving. Speel nooit meer dan wat u zich kunt "
 "veroorloven te verliezen."
 
-#: ui/templates/em/euromillions-ia.html:258 ui/templates/em/hybride.html:447
+#: ui/templates/em/euromillions-ia.html:258 ui/templates/em/hybride.html:455
 #: ui/templates/em/methodologie.html:174 ui/templates/em/moteur.html:218
 msgid "Explorer des grilles EuroMillions"
 msgstr "EuroMillions-roosters verkennen"
 
-#: ui/templates/em/euromillions-ia.html:259 ui/templates/em/hybride.html:448
+#: ui/templates/em/euromillions-ia.html:259 ui/templates/em/hybride.html:456
 #: ui/templates/em/moteur.html:219
 msgid ""
 "Utilisez le moteur HYBRIDE pour générer des grilles statistiquement "
@@ -1565,7 +1565,7 @@ msgstr ""
 "Gebruik de HYBRIDE-engine om statistisch geoptimaliseerde roosters te "
 "genereren."
 
-#: ui/templates/em/euromillions-ia.html:262 ui/templates/em/hybride.html:451
+#: ui/templates/em/euromillions-ia.html:262 ui/templates/em/hybride.html:459
 #: ui/templates/em/methodologie.html:178 ui/templates/em/moteur.html:222
 msgid "Lancer l'exploration"
 msgstr "Exploratie starten"
@@ -1599,7 +1599,7 @@ msgstr ""
 "Alle antwoorden over de werking van de EuroMillions-engine en verantwoord"
 " spelen."
 
-#: ui/templates/em/faq.html:32 ui/templates/em/faq.html:249
+#: ui/templates/em/faq.html:32 ui/templates/em/faq.html:273
 msgid "Comment fonctionne le simulateur de grilles EuroMillions ?"
 msgstr "Hoe werkt de EuroMillions-roostersimulator?"
 
@@ -1616,7 +1616,7 @@ msgstr ""
 "langetermijnanalyse en recente trends om roosters van 5 nummers (1-50) en"
 " 2 sterren (1-12) te genereren."
 
-#: ui/templates/em/faq.html:40 ui/templates/em/faq.html:260
+#: ui/templates/em/faq.html:40 ui/templates/em/faq.html:284
 msgid "Le EuroMillions est-il prévisible ?"
 msgstr "Is EuroMillions voorspelbaar?"
 
@@ -1629,7 +1629,7 @@ msgstr ""
 "NEE. EuroMillions is een puur kansspel. Kans om de jackpot te winnen: 1 "
 "op 139 838 160. Ons hulpmiddel is zuiver statistisch en beschrijvend."
 
-#: ui/templates/em/faq.html:48 ui/templates/em/faq.html:291
+#: ui/templates/em/faq.html:48 ui/templates/em/faq.html:315
 msgid "Que signifient numéros chauds et froids ?"
 msgstr "Wat betekenen warme en koude nummers?"
 
@@ -1643,7 +1643,7 @@ msgstr ""
 "is zelden getrokken. De analyse omvat de 50 hoofdnummers EN de 12 "
 "sterren."
 
-#: ui/templates/em/faq.html:56 ui/templates/em/faq.html:303
+#: ui/templates/em/faq.html:56 ui/templates/em/faq.html:327
 msgid "Comment sont calculées les étoiles ?"
 msgstr "Hoe worden de sterren berekend?"
 
@@ -1655,7 +1655,7 @@ msgstr ""
 "De 2 sterren (1-12) worden apart geanalyseerd met hun eigen frequentie, "
 "afwijking en categorie warm/koud/neutraal."
 
-#: ui/templates/em/faq.html:64 ui/templates/em/faq.html:321
+#: ui/templates/em/faq.html:64 ui/templates/em/faq.html:345
 msgid "D'où viennent les données ?"
 msgstr "Waar komen de gegevens vandaan?"
 
@@ -1669,27 +1669,74 @@ msgstr ""
 "database bevat meerdere jaren aan historische gegevens en wordt "
 "bijgewerkt na elke officiële trekking (dinsdag en vrijdag)."
 
-#: ui/templates/em/faq.html:228
+#: ui/templates/em/faq.html:72
+msgid "Qu'est-ce qu'une paire de numéros à l'EuroMillions ?"
+msgstr "Wat is een nummerpaar bij EuroMillions?"
+
+#: ui/templates/em/faq.html:75
+msgid ""
+"Une paire correspond à deux numéros (boules ou étoiles) tirés ensemble "
+"lors d'un même tirage EuroMillions. LotoIA analyse les co-occurrences sur"
+" l'historique complet : 1 225 paires de boules possibles et 66 paires "
+"d'étoiles possibles."
+msgstr ""
+"Een paar bestaat uit twee nummers (ballen of sterren) die samen "
+"getrokken zijn in dezelfde EuroMillions-trekking. LotoIA analyseert de "
+"co-voorkomens over de volledige geschiedenis: 1 225 mogelijke "
+"nummerparen en 66 mogelijke sterrenparen."
+
+#: ui/templates/em/faq.html:80
+msgid "Comment consulter les paires les plus fréquentes à l'EuroMillions ?"
+msgstr "Hoe de meest voorkomende EuroMillions-paren bekijken?"
+
+#: ui/templates/em/faq.html:83
+msgid ""
+"Rendez-vous sur la page Paires EuroMillions pour accéder au classement "
+"des paires de boules et d'étoiles (chaudes et froides), ainsi qu'à deux "
+"outils de recherche interactifs : une grille de 50 boules et une grille "
+"de 12 étoiles."
+msgstr ""
+"Bezoek de pagina EuroMillions Paren voor de ranglijst van nummer- en "
+"sterrenparen (hot en cold), plus twee interactieve zoektools: een raster "
+"van 50 ballen en een raster van 12 sterren."
+
+#: ui/templates/em/faq.html:88
+msgid "Les paires de numéros permettent-elles de prédire l'EuroMillions ?"
+msgstr "Kunnen nummerparen EuroMillions-resultaten voorspellen?"
+
+#: ui/templates/em/faq.html:91
+msgid ""
+"Non. L'analyse des paires est un outil statistique basé sur l'historique "
+"des tirages. Chaque tirage est indépendant et les résultats passés "
+"n'influencent pas les tirages futurs. LotoIA fournit des données "
+"factuelles, pas des prédictions."
+msgstr ""
+"Nee. De paaranalyse is een statistisch hulpmiddel gebaseerd op de "
+"trekkingsgeschiedenis. Elke trekking is onafhankelijk en eerdere "
+"resultaten beïnvloeden toekomstige trekkingen niet. LotoIA levert "
+"feitelijke gegevens, geen voorspellingen."
+
+#: ui/templates/em/faq.html:252
 msgid "Accès rapide"
 msgstr "Snelle toegang"
 
-#: ui/templates/em/faq.html:230 ui/templates/em/faq.html:245
+#: ui/templates/em/faq.html:254 ui/templates/em/faq.html:269
 msgid "Fonctionnement"
 msgstr "Werking"
 
-#: ui/templates/em/faq.html:231 ui/templates/em/faq.html:287
+#: ui/templates/em/faq.html:255 ui/templates/em/faq.html:311
 msgid "Numéros et Étoiles"
 msgstr "Nummers en sterren"
 
-#: ui/templates/em/faq.html:232 ui/templates/em/faq.html:317
+#: ui/templates/em/faq.html:256 ui/templates/em/faq.html:341
 msgid "Données"
 msgstr "Gegevens"
 
-#: ui/templates/em/faq.html:233 ui/templates/em/faq.html:346
+#: ui/templates/em/faq.html:257 ui/templates/em/faq.html:370
 msgid "Jeu Responsable"
 msgstr "Verantwoord spelen"
 
-#: ui/templates/em/faq.html:253
+#: ui/templates/em/faq.html:277
 #, python-format
 msgid ""
 "Notre simulateur utilise le <strong>moteur HYBRIDE</strong>, un "
@@ -1700,7 +1747,7 @@ msgstr ""
 " dat <strong>%(total)s+ historische trekkingen</strong> van de "
 "EuroMillions analyseert."
 
-#: ui/templates/em/faq.html:254
+#: ui/templates/em/faq.html:278
 msgid ""
 "Le système combine analyse long terme et tendances récentes pour générer "
 "des grilles de <strong>5 numéros (1-50)</strong> et <strong>2 étoiles "
@@ -1710,7 +1757,7 @@ msgstr ""
 "van <strong>5 nummers (1-50)</strong> en <strong>2 sterren "
 "(1-12)</strong> te genereren."
 
-#: ui/templates/em/faq.html:264
+#: ui/templates/em/faq.html:288
 msgid ""
 "<strong>NON.</strong> L'EuroMillions est un jeu de pur hasard. Aucune "
 "méthode, algorithme ou statistique ne peut prédire les résultats futurs."
@@ -1718,7 +1765,7 @@ msgstr ""
 "<strong>NEE.</strong> EuroMillions is een puur kansspel. Geen enkele "
 "methode, algoritme of statistiek kan toekomstige resultaten voorspellen."
 
-#: ui/templates/em/faq.html:265
+#: ui/templates/em/faq.html:289
 msgid ""
 "Notre outil est <strong>purement statistique et descriptif</strong>. Il "
 "ne garantit AUCUN gain."
@@ -1726,15 +1773,15 @@ msgstr ""
 "Ons hulpmiddel is <strong>zuiver statistisch en beschrijvend</strong>. "
 "Het garandeert GEEN ENKELE winst."
 
-#: ui/templates/em/faq.html:266
+#: ui/templates/em/faq.html:290
 msgid "<em>Probabilité de gagner le jackpot : 1 sur 139 838 160</em>"
 msgstr "<em>Kans om de jackpot te winnen: 1 op 139 838 160</em>"
 
-#: ui/templates/em/faq.html:272
+#: ui/templates/em/faq.html:296
 msgid "Quelle est la différence avec le Loto ?"
 msgstr "Wat is het verschil met de Loto?"
 
-#: ui/templates/em/faq.html:276
+#: ui/templates/em/faq.html:300
 msgid ""
 "L'EuroMillions utilise <strong>5 numéros de 1 à 50 + 2 étoiles de 1 à "
 "12</strong>, contre 5 numéros de 1 à 49 + 1 chance de 1 à 10 pour le "
@@ -1744,7 +1791,7 @@ msgstr ""
 "tot 12</strong>, tegenover 5 nummers van 1 tot 49 + 1 kansnummer van 1 "
 "tot 10 voor de Loto."
 
-#: ui/templates/em/faq.html:277
+#: ui/templates/em/faq.html:301
 msgid ""
 "Les tirages EuroMillions ont lieu les <strong>mardis et "
 "vendredis</strong>, tandis que le Loto se joue les lundis, mercredis et "
@@ -1754,7 +1801,7 @@ msgstr ""
 "vrijdag</strong>, terwijl de Loto op maandag, woensdag en zaterdag wordt "
 "gespeeld."
 
-#: ui/templates/em/faq.html:278
+#: ui/templates/em/faq.html:302
 msgid ""
 "Le moteur utilisé est <strong>HYBRIDE</strong>, une adaptation spécifique"
 " du moteur HYBRIDE pour les règles EuroMillions."
@@ -1762,7 +1809,7 @@ msgstr ""
 "De gebruikte engine is <strong>HYBRIDE</strong>, een specifieke "
 "aanpassing van de HYBRIDE-engine aan de EuroMillions-regels."
 
-#: ui/templates/em/faq.html:295
+#: ui/templates/em/faq.html:319
 msgid ""
 "Un <strong>numéro chaud</strong> est sorti fréquemment sur les 2 "
 "dernières années de tirages."
@@ -1770,7 +1817,7 @@ msgstr ""
 "Een <strong>warm nummer</strong> is vaak getrokken in de laatste 2 jaar "
 "aan trekkingen."
 
-#: ui/templates/em/faq.html:296
+#: ui/templates/em/faq.html:320
 msgid ""
 "Un <strong>numéro froid</strong> est rarement sorti sur cette même "
 "période. Ces numéros ont un retard important."
@@ -1778,7 +1825,7 @@ msgstr ""
 "Een <strong>koud nummer</strong> is zelden getrokken in dezelfde periode."
 " Deze nummers hebben een aanzienlijke achterstand."
 
-#: ui/templates/em/faq.html:297
+#: ui/templates/em/faq.html:321
 msgid ""
 "L'analyse porte sur les <strong>50 numéros principaux</strong> ET les "
 "<strong>12 étoiles</strong>."
@@ -1786,7 +1833,7 @@ msgstr ""
 "De analyse omvat de <strong>50 hoofdnummers</strong> EN de <strong>12 "
 "sterren</strong>."
 
-#: ui/templates/em/faq.html:307
+#: ui/templates/em/faq.html:331
 msgid ""
 "Les <strong>2 étoiles (1-12)</strong> sont analysées séparément avec leur"
 " propre fréquence, écart et catégorie chaud/froid/neutre."
@@ -1794,7 +1841,7 @@ msgstr ""
 "De <strong>2 sterren (1-12)</strong> worden apart geanalyseerd met hun "
 "eigen frequentie, afwijking en categorie warm/koud/neutraal."
 
-#: ui/templates/em/faq.html:308
+#: ui/templates/em/faq.html:332
 msgid ""
 "Le moteur HYBRIDE traite les étoiles comme un espace combinatoire "
 "distinct des numéros principaux."
@@ -1802,7 +1849,7 @@ msgstr ""
 "De HYBRIDE-engine behandelt de sterren als een apart combinatorisch "
 "domein, los van de hoofdnummers."
 
-#: ui/templates/em/faq.html:325
+#: ui/templates/em/faq.html:349
 msgid ""
 "Les données proviennent des <strong>tirages officiels de "
 "l'EuroMillions</strong>."
@@ -1810,7 +1857,7 @@ msgstr ""
 "De gegevens zijn afkomstig van de <strong>officiële EuroMillions-"
 "trekkingen</strong>."
 
-#: ui/templates/em/faq.html:326
+#: ui/templates/em/faq.html:350
 #, python-format
 msgid ""
 "La base contient <strong>%(total)s tirages</strong> couvrant plusieurs "
@@ -1819,11 +1866,11 @@ msgstr ""
 "De database bevat <strong>%(total)s trekkingen</strong> die meerdere "
 "jaren aan historische gegevens omvatten."
 
-#: ui/templates/em/faq.html:332
+#: ui/templates/em/faq.html:356
 msgid "À quelle fréquence la base est-elle mise à jour ?"
 msgstr "Hoe vaak wordt de database bijgewerkt?"
 
-#: ui/templates/em/faq.html:336
+#: ui/templates/em/faq.html:360
 msgid ""
 "La base est mise à jour <strong>régulièrement après chaque tirage "
 "officiel</strong> (mardi et vendredi)."
@@ -1831,7 +1878,7 @@ msgstr ""
 "De database wordt <strong>regelmatig bijgewerkt na elke officiële "
 "trekking</strong> (dinsdag en vrijdag)."
 
-#: ui/templates/em/faq.html:337
+#: ui/templates/em/faq.html:361
 msgid ""
 "Les grilles sont générées en temps réel à chaque utilisation selon les "
 "dernières données disponibles."
@@ -1839,63 +1886,63 @@ msgstr ""
 "De roosters worden bij elk gebruik in realtime gegenereerd op basis van "
 "de meest recente beschikbare gegevens."
 
-#: ui/templates/em/faq.html:350
+#: ui/templates/em/faq.html:374
 msgid "Quels sont les risques du jeu ?"
 msgstr "Wat zijn de risico's van spelen?"
 
-#: ui/templates/em/faq.html:354
+#: ui/templates/em/faq.html:378
 msgid ""
 "Les jeux d'argent et de hasard, dont l'EuroMillions, comportent des "
 "risques :"
 msgstr "Kansspelen, waaronder EuroMillions, brengen risico's met zich mee:"
 
-#: ui/templates/em/faq.html:356
+#: ui/templates/em/faq.html:380
 msgid "<strong>Pertes financières</strong> : Vous pouvez perdre l'argent misé"
 msgstr "<strong>Financiële verliezen</strong>: U kunt het ingezette geld verliezen"
 
-#: ui/templates/em/faq.html:357
+#: ui/templates/em/faq.html:381
 msgid "<strong>Addiction</strong> : Le jeu peut devenir pathologique"
 msgstr "<strong>Verslaving</strong>: Spelen kan pathologisch worden"
 
-#: ui/templates/em/faq.html:358
+#: ui/templates/em/faq.html:382
 msgid "<strong>Impact psychologique</strong> : Stress, anxiété, frustration"
 msgstr "<strong>Psychologische impact</strong>: Stress, angst, frustratie"
 
-#: ui/templates/em/faq.html:359
+#: ui/templates/em/faq.html:383
 msgid "<strong>Conséquences familiales</strong> : Endettement, conflits"
 msgstr "<strong>Familiale gevolgen</strong>: Schulden, conflicten"
 
-#: ui/templates/em/faq.html:361
+#: ui/templates/em/faq.html:385
 msgid "<strong>Règles d'or</strong> :"
 msgstr "<strong>Gouden regels</strong>:"
 
-#: ui/templates/em/faq.html:363
+#: ui/templates/em/faq.html:387
 msgid "Ne jouez jamais plus que ce que vous pouvez vous permettre de perdre"
 msgstr "Speel nooit meer dan wat u zich kunt veroorloven te verliezen"
 
-#: ui/templates/em/faq.html:364
+#: ui/templates/em/faq.html:388
 msgid "L'EuroMillions doit rester un divertissement occasionnel"
 msgstr "EuroMillions moet een occasioneel vermaak blijven"
 
-#: ui/templates/em/faq.html:365
+#: ui/templates/em/faq.html:389
 msgid "N'essayez jamais de \"vous refaire\" après une perte"
 msgstr "Probeer nooit om verlies goed te maken door verder te spelen"
 
-#: ui/templates/em/faq.html:372
+#: ui/templates/em/faq.html:396
 msgid "Ou trouver de l'aide en cas d'addiction ?"
 msgstr "Waar vindt u hulp bij verslaving?"
 
-#: ui/templates/em/faq.html:376
+#: ui/templates/em/faq.html:400
 msgid "Si vous ou un proche rencontrez des difficultés avec le jeu :"
 msgstr "Als u of iemand in uw omgeving problemen heeft met spelen:"
 
-#: ui/templates/em/faq.html:379
+#: ui/templates/em/faq.html:403
 msgid "Téléphone : <strong>09 74 75 13 13</strong> (appel non surtaxé)"
 msgstr ""
 "Telefoon: <strong>Gokkliniek 078 15 13 14</strong> (gratis hulplijn, "
 "België)"
 
-#: ui/templates/em/faq.html:380
+#: ui/templates/em/faq.html:404
 #, python-format
 msgid ""
 "Site web : <a href=\"%(url)s\" target=\"_blank\" "
@@ -1904,27 +1951,27 @@ msgstr ""
 "Website: <a href=\"%(url)s\" target=\"_blank\" "
 "rel=\"noopener\">%(name)s</a>"
 
-#: ui/templates/em/faq.html:381
+#: ui/templates/em/faq.html:405
 msgid "Chat en ligne disponible"
 msgstr "Online chat beschikbaar"
 
-#: ui/templates/em/faq.html:382
+#: ui/templates/em/faq.html:406
 msgid "Service gratuit, anonyme et confidentiel"
 msgstr "Gratis, anoniem en vertrouwelijk"
 
-#: ui/templates/em/faq.html:384
+#: ui/templates/em/faq.html:408
 msgid "Horaires : 7j/7 de 8h à 2h du matin"
 msgstr "Bereikbaarheid: maandag t/m vrijdag van 9u tot 17u"
 
-#: ui/templates/em/faq.html:390
+#: ui/templates/em/faq.html:414
 msgid "Le jeu est-il interdit aux mineurs ?"
 msgstr "Zijn kansspelen verboden voor minderjarigen?"
 
-#: ui/templates/em/faq.html:394
+#: ui/templates/em/faq.html:418
 msgid "<strong>OUI, absolument.</strong>"
 msgstr "<strong>JA, absoluut.</strong>"
 
-#: ui/templates/em/faq.html:395
+#: ui/templates/em/faq.html:419
 msgid ""
 "En France, les jeux d'argent et de hasard sont <strong>strictement "
 "interdits aux moins de 18 ans</strong>."
@@ -1932,7 +1979,7 @@ msgstr ""
 "In België zijn kansspelen <strong>strikt verboden voor personen jonger "
 "dan 18 jaar</strong>."
 
-#: ui/templates/em/faq.html:396
+#: ui/templates/em/faq.html:420
 msgid ""
 "Cette règle s'applique à l'EuroMillions, au Loto, PMU, casinos, paris "
 "sportifs, etc."
@@ -1940,17 +1987,17 @@ msgstr ""
 "Deze regel geldt voor EuroMillions, Lotto, casino's, sportweddenschappen,"
 " enz."
 
-#: ui/templates/em/faq.html:397
+#: ui/templates/em/faq.html:421
 msgid ""
 "Les parents sont responsables de l'utilisation d'Internet par leurs "
 "enfants."
 msgstr "Ouders zijn verantwoordelijk voor het internetgebruik van hun kinderen."
 
-#: ui/templates/em/faq.html:410
+#: ui/templates/em/faq.html:434
 msgid "Prêt à générer vos grilles EuroMillions ?"
 msgstr "Klaar om uw EuroMillions-roosters te genereren?"
 
-#: ui/templates/em/faq.html:411
+#: ui/templates/em/faq.html:435
 msgid ""
 "Utilisez notre moteur HYBRIDE pour créer des grilles statistiquement "
 "optimisées."
@@ -1958,7 +2005,7 @@ msgstr ""
 "Gebruik onze HYBRIDE-engine om statistisch geoptimaliseerde roosters te "
 "maken."
 
-#: ui/templates/em/faq.html:414 ui/templates/em/generateur.html:121
+#: ui/templates/em/faq.html:438 ui/templates/em/generateur.html:121
 msgid "Simuler mes grilles"
 msgstr "Mijn roosters simuleren"
 
@@ -2173,7 +2220,7 @@ msgstr "Database installeren"
 msgid "Réinitialiser la base"
 msgstr "Database herstellen"
 
-#: ui/templates/em/generateur.html:271 ui/templates/em/hybride.html:353
+#: ui/templates/em/generateur.html:271 ui/templates/em/hybride.html:361
 #: ui/templates/em/methodologie.html:89
 msgid "Mise à jour"
 msgstr "Bijwerken"
@@ -2438,7 +2485,7 @@ msgstr "Anti-hallucinatie door systematische verificatie"
 msgid "HYBRIDE — Chatbot IA"
 msgstr "HYBRIDE — AI-chatbot"
 
-#: ui/templates/em/hybride.html:73 ui/templates/em/hybride.html:417
+#: ui/templates/em/hybride.html:73 ui/templates/em/hybride.html:425
 msgid "Comment fonctionne le chatbot HYBRIDE pour l'EuroMillions ?"
 msgstr "Hoe werkt de HYBRIDE-chatbot voor de EuroMillions?"
 
@@ -2455,7 +2502,7 @@ msgstr ""
 "waarna Gemini (Google DeepMind) een feitelijk antwoord formuleert op "
 "basis van de opgehaalde gegevens. Nul hallucinatie."
 
-#: ui/templates/em/hybride.html:81 ui/templates/em/hybride.html:420
+#: ui/templates/em/hybride.html:81 ui/templates/em/hybride.html:428
 msgid "Le chatbot peut-il prédire les résultats EuroMillions ?"
 msgstr "Kan de chatbot de EuroMillions-resultaten voorspellen?"
 
@@ -2471,7 +2518,7 @@ msgstr ""
 "gegevens uit het verleden om feitelijke statistieken te leveren, het "
 "voorspelt de toekomst niet."
 
-#: ui/templates/em/hybride.html:89 ui/templates/em/hybride.html:423
+#: ui/templates/em/hybride.html:89 ui/templates/em/hybride.html:431
 msgid "En quoi HYBRIDE est différent de ChatGPT pour l'EuroMillions ?"
 msgstr "Waarin verschilt HYBRIDE van ChatGPT voor de EuroMillions?"
 
@@ -2488,7 +2535,7 @@ msgstr ""
 "%(total)s+ officiële EuroMillions-trekkingen opgeslagen in Cloud SQL. Elk"
 " antwoord is geverifieerd, niet verzonnen."
 
-#: ui/templates/em/hybride.html:97 ui/templates/em/hybride.html:426
+#: ui/templates/em/hybride.html:97 ui/templates/em/hybride.html:434
 msgid "Le chatbot est-il disponible dans ma langue ?"
 msgstr "Is de chatbot beschikbaar in mijn taal?"
 
@@ -2502,7 +2549,23 @@ msgstr ""
 "Duits en Nederlands. De interface en antwoorden passen zich automatisch "
 "aan de taal van de pagina aan."
 
-#: ui/templates/em/hybride.html:224
+#: ui/templates/em/hybride.html:105
+msgid "Le chatbot HYBRIDE peut-il analyser les paires EuroMillions ?"
+msgstr "Kan de HYBRIDE-chatbot EuroMillions-paren analyseren?"
+
+#: ui/templates/em/hybride.html:108
+msgid ""
+"Oui, le chatbot HYBRIDE peut répondre à vos questions sur les paires de "
+"boules et d'étoiles grâce à son moteur Text-to-SQL. Demandez-lui par "
+"exemple « quelles sont les paires de boules les plus fréquentes ? » ou « "
+"combien de fois les étoiles 3 et 7 sont-elles sorties ensemble ? »."
+msgstr ""
+"Ja, de HYBRIDE-chatbot kan uw vragen over nummer- en sterrenparen "
+"beantwoorden dankzij zijn Text-to-SQL-engine. Vraag hem bijvoorbeeld "
+"'welke nummerparen komen het meest voor?' of 'hoe vaak zijn de sterren "
+"3 en 7 samen getrokken?'."
+
+#: ui/templates/em/hybride.html:232
 #, python-format
 msgid ""
 "<strong>HYBRIDE</strong> est le chatbot IA intégré à LotoIA. Il est "
@@ -2517,7 +2580,7 @@ msgstr ""
 "andere generatieve AI, raadt HYBRIDE niet: het bevraagt de echte gegevens"
 " en antwoordt u met <strong>verifieerbare feiten</strong>."
 
-#: ui/templates/em/hybride.html:225
+#: ui/templates/em/hybride.html:233
 msgid ""
 "Vous pouvez lui poser des questions sur les numéros (1-50), les étoiles "
 "(1-12), les tirages, les fréquences ou le fonctionnement du moteur. Il "
@@ -2529,11 +2592,11 @@ msgstr ""
 "alle EuroMillions-pagina's van LotoIA — klik op het pictogram rechtsonder"
 " om het te proberen."
 
-#: ui/templates/em/hybride.html:230
+#: ui/templates/em/hybride.html:238
 msgid "Qu'est-ce qu'une IA « Grounded » ?"
 msgstr "Wat is een « Grounded » AI?"
 
-#: ui/templates/em/hybride.html:232
+#: ui/templates/em/hybride.html:240
 msgid ""
 "Le terme <strong>« Grounded »</strong> (ancré) désigne une IA dont les "
 "réponses sont fondées sur des données vérifiées, et non sur l'imagination"
@@ -2543,7 +2606,7 @@ msgstr ""
 " de antwoorden gebaseerd zijn op geverifieerde gegevens, en niet op "
 "verbeelding of taalprobabiliteiten."
 
-#: ui/templates/em/hybride.html:234
+#: ui/templates/em/hybride.html:242
 msgid ""
 "La différence fondamentale avec les modèles de langage classiques "
 "(ChatGPT, Gemini en mode libre, Claude) est cruciale :"
@@ -2551,7 +2614,7 @@ msgstr ""
 "Het fundamentele verschil met klassieke taalmodellen (ChatGPT, Gemini in "
 "vrije modus, Claude) is cruciaal:"
 
-#: ui/templates/em/hybride.html:236
+#: ui/templates/em/hybride.html:244
 msgid ""
 "Un <strong>LLM classique</strong> génère une réponse qui « semble "
 "correcte » à partir de ses connaissances d'entraînement. Il peut inventer"
@@ -2563,7 +2626,7 @@ msgstr ""
 "gegevens verwarren of plausibele maar onjuiste antwoorden produceren — "
 "dit noemt men <strong>hallucinatie</strong>."
 
-#: ui/templates/em/hybride.html:237
+#: ui/templates/em/hybride.html:245
 msgid ""
 "Une <strong>IA Grounded</strong> comme HYBRIDE interroge d'abord sa base "
 "de données, récupère les faits pertinents, puis formule sa réponse à "
@@ -2574,11 +2637,11 @@ msgstr ""
 "antwoord op basis van deze geverifieerde gegevens. Geen ruimte voor "
 "verzinsels."
 
-#: ui/templates/em/hybride.html:241
+#: ui/templates/em/hybride.html:249
 msgid "L'analogie simple"
 msgstr "De eenvoudige analogie"
 
-#: ui/templates/em/hybride.html:242
+#: ui/templates/em/hybride.html:250
 msgid ""
 "un ami qui répond de mémoire. Souvent pertinent, parfois complètement "
 "faux, et vous ne pouvez pas vérifier."
@@ -2586,7 +2649,7 @@ msgstr ""
 "een vriend die uit het geheugen antwoordt. Vaak relevant, soms volledig "
 "fout, en u kunt het niet verifiëren."
 
-#: ui/templates/em/hybride.html:243
+#: ui/templates/em/hybride.html:251
 msgid ""
 "un bibliothécaire qui va chercher dans les archives avant de répondre. "
 "Plus lent d'une seconde, mais toujours factuel."
@@ -2594,7 +2657,7 @@ msgstr ""
 "een bibliothecaris die eerst in de archieven zoekt voordat hij antwoordt."
 " Een seconde trager, maar altijd feitelijk."
 
-#: ui/templates/em/hybride.html:246
+#: ui/templates/em/hybride.html:254
 msgid ""
 "En termes techniques, HYBRIDE utilise une architecture appelée "
 "<strong>RAG</strong> (Retrieval-Augmented Generation) : le modèle « "
@@ -2608,11 +2671,11 @@ msgstr ""
 "vervolgens zijn antwoord met deze geverifieerde gegevens. Het resultaat: "
 "<strong>nul hallucinatie</strong> bij vragen over EuroMillions."
 
-#: ui/templates/em/hybride.html:251
+#: ui/templates/em/hybride.html:259
 msgid "Comment HYBRIDE accède aux données en temps réel"
 msgstr "Hoe HYBRIDE in realtime toegang heeft tot de gegevens"
 
-#: ui/templates/em/hybride.html:253
+#: ui/templates/em/hybride.html:261
 #, python-format
 msgid ""
 "HYBRIDE n'est pas un chatbot décoratif. Il est connecté à la même base de"
@@ -2623,7 +2686,7 @@ msgstr ""
 "database als de <a href=\"%(moteur_url)s\">exploratie-engine</a> en de <a"
 " href=\"%(stats_url)s\">statistieken</a> van LotoIA:"
 
-#: ui/templates/em/hybride.html:256
+#: ui/templates/em/hybride.html:264
 #, python-format
 msgid ""
 "<strong>%(total)s+ tirages officiels EuroMillions</strong> (plusieurs "
@@ -2632,7 +2695,7 @@ msgstr ""
 "<strong>%(total)s+ officiële EuroMillions-trekkingen</strong> (meerdere "
 "jaren aan geschiedenis)"
 
-#: ui/templates/em/hybride.html:257
+#: ui/templates/em/hybride.html:265
 msgid ""
 "<strong>Synchronisation automatique</strong> après chaque tirage officiel"
 " (mardi et vendredi)"
@@ -2640,7 +2703,7 @@ msgstr ""
 "<strong>Automatische synchronisatie</strong> na elke officiële trekking "
 "(dinsdag en vrijdag)"
 
-#: ui/templates/em/hybride.html:258
+#: ui/templates/em/hybride.html:266
 msgid ""
 "Base hébergée sur <strong>Google Cloud SQL</strong> pour la fiabilité et "
 "la rapidité"
@@ -2648,15 +2711,15 @@ msgstr ""
 "Database gehost op <strong>Google Cloud SQL</strong> voor betrouwbaarheid"
 " en snelheid"
 
-#: ui/templates/em/hybride.html:261
+#: ui/templates/em/hybride.html:269
 msgid "Le parcours d'une question"
 msgstr "Het traject van een vraag"
 
-#: ui/templates/em/hybride.html:263
+#: ui/templates/em/hybride.html:271
 msgid "<strong>Vous posez votre question</strong> dans le chatbot (texte libre)"
 msgstr "<strong>U stelt uw vraag</strong> in de chatbot (vrije tekst)"
 
-#: ui/templates/em/hybride.html:264
+#: ui/templates/em/hybride.html:272
 msgid ""
 "<strong>HYBRIDE analyse votre intention</strong> et identifie les données"
 " nécessaires"
@@ -2664,11 +2727,11 @@ msgstr ""
 "<strong>HYBRIDE analyseert uw intentie</strong> en identificeert de "
 "benodigde gegevens"
 
-#: ui/templates/em/hybride.html:265
+#: ui/templates/em/hybride.html:273
 msgid "<strong>Il interroge la base de données</strong> Cloud SQL en temps réel"
 msgstr "<strong>Het bevraagt de database</strong> Cloud SQL in realtime"
 
-#: ui/templates/em/hybride.html:266
+#: ui/templates/em/hybride.html:274
 msgid ""
 "<strong>Gemini (Google DeepMind)</strong> formule une réponse claire à "
 "partir des données récupérées"
@@ -2676,7 +2739,7 @@ msgstr ""
 "<strong>Gemini (Google DeepMind)</strong> formuleert een duidelijk "
 "antwoord op basis van de opgehaalde gegevens"
 
-#: ui/templates/em/hybride.html:267
+#: ui/templates/em/hybride.html:275
 msgid ""
 "<strong>Vérification anti-hallucination</strong> : la réponse est ancrée "
 "exclusivement sur les données EuroMillions"
@@ -2684,7 +2747,7 @@ msgstr ""
 "<strong>Anti-hallucinatieverificatie</strong>: het antwoord is "
 "uitsluitend verankerd in de EuroMillions-gegevens"
 
-#: ui/templates/em/hybride.html:268
+#: ui/templates/em/hybride.html:276
 msgid ""
 "<strong>Vous recevez une réponse factuelle</strong>, généralement en "
 "moins de 3 secondes"
@@ -2692,7 +2755,7 @@ msgstr ""
 "<strong>U ontvangt een feitelijk antwoord</strong>, doorgaans in minder "
 "dan 3 seconden"
 
-#: ui/templates/em/hybride.html:271
+#: ui/templates/em/hybride.html:279
 #, python-format
 msgid ""
 "Les données utilisées par HYBRIDE sont <strong>exactement les "
@@ -2704,15 +2767,15 @@ msgstr ""
 " die weergegeven op de pagina <a href=\"%(stats_url)s\">Statistieken</a>."
 " Geen alternatieve database, geen geschatte gegevens."
 
-#: ui/templates/em/hybride.html:276
+#: ui/templates/em/hybride.html:284
 msgid "Ce que vous pouvez demander à HYBRIDE"
 msgstr "Wat u aan HYBRIDE kunt vragen"
 
-#: ui/templates/em/hybride.html:278
+#: ui/templates/em/hybride.html:286
 msgid "Questions sur les numéros et les étoiles"
 msgstr "Vragen over nummers en sterren"
 
-#: ui/templates/em/hybride.html:279
+#: ui/templates/em/hybride.html:287
 msgid ""
 "HYBRIDE connaît l'historique complet de chaque numéro (1 à 50) et chaque "
 "étoile (1 à 12)."
@@ -2720,77 +2783,77 @@ msgstr ""
 "HYBRIDE kent de volledige geschiedenis van elk nummer (1 tot 50) en elke "
 "ster (1 tot 12)."
 
-#: ui/templates/em/hybride.html:281
+#: ui/templates/em/hybride.html:289
 msgid "\"Combien de fois le 22 est sorti en 2024 ?\""
 msgstr "\"Hoe vaak is nummer 22 getrokken in 2024?\""
 
-#: ui/templates/em/hybride.html:282
+#: ui/templates/em/hybride.html:290
 msgid "\"Quel est le numéro le plus sorti depuis 2019 ?\""
 msgstr "\"Welk nummer is het meest getrokken sinds 2019?\""
 
-#: ui/templates/em/hybride.html:283
+#: ui/templates/em/hybride.html:291
 msgid "\"Quelle étoile sort le plus souvent ?\""
 msgstr "\"Welke ster wordt het vaakst getrokken?\""
 
-#: ui/templates/em/hybride.html:284
+#: ui/templates/em/hybride.html:292
 msgid "\"Quels numéros ne sont pas sortis depuis plus de 20 tirages ?\""
 msgstr "\"Welke nummers zijn al meer dan 20 trekkingen niet getrokken?\""
 
-#: ui/templates/em/hybride.html:287
+#: ui/templates/em/hybride.html:295
 msgid "Questions sur les tirages"
 msgstr "Vragen over trekkingen"
 
-#: ui/templates/em/hybride.html:288
+#: ui/templates/em/hybride.html:296
 msgid "Retrouvez n'importe quel tirage par date ou explorez l'historique complet."
 msgstr "Vind elke trekking op datum terug of verken de volledige geschiedenis."
 
-#: ui/templates/em/hybride.html:290
+#: ui/templates/em/hybride.html:298
 msgid "\"Quel était le résultat du tirage du 14 janvier 2025 ?\""
 msgstr "\"Wat was het resultaat van de trekking van 14 januari 2025?\""
 
-#: ui/templates/em/hybride.html:291
+#: ui/templates/em/hybride.html:299
 msgid "\"Combien de tirages ont eu lieu en 2024 ?\""
 msgstr "\"Hoeveel trekkingen hebben er plaatsgevonden in 2024?\""
 
-#: ui/templates/em/hybride.html:292
+#: ui/templates/em/hybride.html:300
 msgid "\"Quel tirage a eu la somme la plus élevée ?\""
 msgstr "\"Welke trekking had de hoogste som?\""
 
-#: ui/templates/em/hybride.html:293
+#: ui/templates/em/hybride.html:301
 msgid "\"Montre-moi les 5 derniers tirages.\""
 msgstr "\"Toon mij de 5 laatste trekkingen.\""
 
-#: ui/templates/em/hybride.html:296
+#: ui/templates/em/hybride.html:304
 msgid "Questions sur les statistiques"
 msgstr "Vragen over statistieken"
 
-#: ui/templates/em/hybride.html:297
+#: ui/templates/em/hybride.html:305
 msgid "HYBRIDE calcule les statistiques à la volée à partir de la base complète."
 msgstr ""
 "HYBRIDE berekent de statistieken ter plekke op basis van de volledige "
 "database."
 
-#: ui/templates/em/hybride.html:299
+#: ui/templates/em/hybride.html:307
 msgid "\"Quels sont les 5 numéros les plus chauds en ce moment ?\""
 msgstr "\"Wat zijn de 5 warmste nummers op dit moment?\""
 
-#: ui/templates/em/hybride.html:300
+#: ui/templates/em/hybride.html:308
 msgid "\"Quelle est la fréquence moyenne de sortie du numéro 42 ?\""
 msgstr "\"Wat is de gemiddelde trekkingsfrequentie van nummer 42?\""
 
-#: ui/templates/em/hybride.html:301
+#: ui/templates/em/hybride.html:309
 msgid "\"Y a-t-il des paires de numéros qui sortent souvent ensemble ?\""
 msgstr "\"Zijn er nummerparen die vaak samen getrokken worden?\""
 
-#: ui/templates/em/hybride.html:302
+#: ui/templates/em/hybride.html:310
 msgid "\"Quelle étoile est la plus en retard ?\""
 msgstr "\"Welke ster heeft de meeste achterstand?\""
 
-#: ui/templates/em/hybride.html:305
+#: ui/templates/em/hybride.html:313
 msgid "Questions pédagogiques"
 msgstr "Educatieve vragen"
 
-#: ui/templates/em/hybride.html:306
+#: ui/templates/em/hybride.html:314
 msgid ""
 "HYBRIDE explique aussi le fonctionnement de la plateforme et les concepts"
 " statistiques."
@@ -2798,27 +2861,27 @@ msgstr ""
 "HYBRIDE legt ook de werking van het platform en de statistische concepten"
 " uit."
 
-#: ui/templates/em/hybride.html:308
+#: ui/templates/em/hybride.html:316
 msgid "\"Comment fonctionne le moteur HYBRIDE ?\""
 msgstr "\"Hoe werkt de HYBRIDE-engine?\""
 
-#: ui/templates/em/hybride.html:309
+#: ui/templates/em/hybride.html:317
 msgid "\"C'est quoi un numéro chaud ?\""
 msgstr "\"Wat is een warm nummer?\""
 
-#: ui/templates/em/hybride.html:310
+#: ui/templates/em/hybride.html:318
 msgid "\"L'EuroMillions est-il vraiment aléatoire ?\""
 msgstr "\"Is EuroMillions echt willekeurig?\""
 
-#: ui/templates/em/hybride.html:311
+#: ui/templates/em/hybride.html:319
 msgid "\"Dans quels pays peut-on jouer à l'EuroMillions ?\""
 msgstr "\"In welke landen kan men EuroMillions spelen?\""
 
-#: ui/templates/em/hybride.html:317
+#: ui/templates/em/hybride.html:325
 msgid "Ce que HYBRIDE ne fait PAS"
 msgstr "Wat HYBRIDE NIET doet"
 
-#: ui/templates/em/hybride.html:319
+#: ui/templates/em/hybride.html:327
 msgid ""
 "HYBRIDE est un assistant d'<strong>analyse</strong>, pas un oracle. Voici"
 " ce qu'il refuse de faire :"
@@ -2826,7 +2889,7 @@ msgstr ""
 "HYBRIDE is een <strong>analyse</strong>-assistent, geen orakel. Dit is "
 "wat het weigert te doen:"
 
-#: ui/templates/em/hybride.html:322
+#: ui/templates/em/hybride.html:330
 msgid ""
 "Il <strong>ne prédit PAS</strong> les résultats futurs — l'EuroMillions "
 "est un jeu de hasard pur"
@@ -2834,7 +2897,7 @@ msgstr ""
 "Het <strong>voorspelt NIET</strong> de toekomstige resultaten — "
 "EuroMillions is een puur kansspel"
 
-#: ui/templates/em/hybride.html:323
+#: ui/templates/em/hybride.html:331
 msgid ""
 "Il <strong>ne promet PAS</strong> de gains — aucune méthode ne peut "
 "garantir un gain à l'EuroMillions"
@@ -2842,7 +2905,7 @@ msgstr ""
 "Het <strong>belooft GEEN</strong> winst — geen enkele methode kan winst "
 "bij EuroMillions garanderen"
 
-#: ui/templates/em/hybride.html:324
+#: ui/templates/em/hybride.html:332
 msgid ""
 "Il <strong>ne donne PAS</strong> de « numéros magiques » ou de « "
 "combinaisons gagnantes »"
@@ -2850,7 +2913,7 @@ msgstr ""
 "Het <strong>geeft GEEN</strong> « magische nummers » of « winnende "
 "combinaties »"
 
-#: ui/templates/em/hybride.html:325
+#: ui/templates/em/hybride.html:333
 msgid ""
 "Il <strong>refuse les questions hors-sujet</strong> (politique, médecine,"
 " cuisine…)"
@@ -2858,7 +2921,7 @@ msgstr ""
 "Het <strong>weigert off-topic vragen</strong> (politiek, geneeskunde, "
 "koken…)"
 
-#: ui/templates/em/hybride.html:326
+#: ui/templates/em/hybride.html:334
 msgid ""
 "Il <strong>rappelle systématiquement</strong> que l'EuroMillions est un "
 "jeu de hasard et que jouer comporte des risques"
@@ -2866,7 +2929,7 @@ msgstr ""
 "Het <strong>herinnert systematisch</strong> eraan dat EuroMillions een "
 "kansspel is en dat spelen risico's met zich meebrengt"
 
-#: ui/templates/em/hybride.html:329
+#: ui/templates/em/hybride.html:337
 #, python-format
 msgid ""
 "Cette honnêteté n'est pas une limitation — c'est une "
@@ -2880,11 +2943,11 @@ msgstr ""
 "transparantie en integriteit. Lees meer in ons artikel <a "
 "href=\"%(ia_url)s\">EuroMillions en kunstmatige intelligentie</a>."
 
-#: ui/templates/em/hybride.html:334
+#: ui/templates/em/hybride.html:342
 msgid "HYBRIDE vs ChatGPT — Le comparatif"
 msgstr "HYBRIDE vs ChatGPT — De vergelijking"
 
-#: ui/templates/em/hybride.html:336
+#: ui/templates/em/hybride.html:344
 msgid ""
 "Pourquoi ne pas simplement utiliser ChatGPT pour analyser l'EuroMillions "
 "? Voici la différence concrète :"
@@ -2892,82 +2955,82 @@ msgstr ""
 "Waarom niet gewoon ChatGPT gebruiken om EuroMillions te analyseren? Hier "
 "is het concrete verschil:"
 
-#: ui/templates/em/hybride.html:341
+#: ui/templates/em/hybride.html:349
 msgid "Critère"
 msgstr "Criterium"
 
-#: ui/templates/em/hybride.html:348
+#: ui/templates/em/hybride.html:356
 msgid "Données EuroMillions réelles"
 msgstr "Echte EuroMillions-gegevens"
 
-#: ui/templates/em/hybride.html:349
+#: ui/templates/em/hybride.html:357
 #, python-format
 msgid "%(total)s+ tirages officiels"
 msgstr "%(total)s+ officiële trekkingen"
 
-#: ui/templates/em/hybride.html:350
+#: ui/templates/em/hybride.html:358
 msgid "Aucune base de données"
 msgstr "Geen database"
 
-#: ui/templates/em/hybride.html:354
+#: ui/templates/em/hybride.html:362
 msgid "Après chaque tirage"
 msgstr "Na elke trekking"
 
-#: ui/templates/em/hybride.html:355
+#: ui/templates/em/hybride.html:363
 msgid "Knowledge cutoff figé"
 msgstr "Vaststaand knowledge cutoff"
 
-#: ui/templates/em/hybride.html:358
+#: ui/templates/em/hybride.html:366
 msgid "Anti-hallucination"
 msgstr "Anti-hallucinatie"
 
-#: ui/templates/em/hybride.html:359
+#: ui/templates/em/hybride.html:367
 msgid "Vérification systématique"
 msgstr "Systematische verificatie"
 
-#: ui/templates/em/hybride.html:360
+#: ui/templates/em/hybride.html:368
 msgid "Peut inventer des données"
 msgstr "Kan gegevens verzinnen"
 
-#: ui/templates/em/hybride.html:363
+#: ui/templates/em/hybride.html:371
 msgid "Spécialisé EuroMillions"
 msgstr "Gespecialiseerd in EuroMillions"
 
-#: ui/templates/em/hybride.html:364
+#: ui/templates/em/hybride.html:372
 #, python-format
 msgid "100%% dédié"
 msgstr "100%% toegewijd"
 
-#: ui/templates/em/hybride.html:365
+#: ui/templates/em/hybride.html:373
 msgid "Généraliste"
 msgstr "Generalistisch"
 
-#: ui/templates/em/hybride.html:368
+#: ui/templates/em/hybride.html:376
 msgid "Gratuit"
 msgstr "Gratis"
 
-#: ui/templates/em/hybride.html:369
+#: ui/templates/em/hybride.html:377
 #, python-format
 msgid "100%% gratuit — sans inscription"
 msgstr "100%% gratis — zonder registratie"
 
-#: ui/templates/em/hybride.html:370
+#: ui/templates/em/hybride.html:378
 msgid "Freemium"
 msgstr "Freemium"
 
-#: ui/templates/em/hybride.html:373
+#: ui/templates/em/hybride.html:381
 msgid "Personnalité"
 msgstr "Persoonlijkheid"
 
-#: ui/templates/em/hybride.html:374
+#: ui/templates/em/hybride.html:382
 msgid "Mascotte ludique et pédagogique"
 msgstr "Speelse en educatieve mascotte"
 
-#: ui/templates/em/hybride.html:375
+#: ui/templates/em/hybride.html:383
 msgid "Générique"
 msgstr "Generiek"
 
-#: ui/templates/em/hybride.html:380
+#: ui/templates/em/hybride.html:388
 msgid ""
 "Quand vous demandez à ChatGPT <em>« Quel numéro sort le plus à "
 "l'EuroMillions ? »</em>, il génère une réponse plausible basée sur des "
@@ -2981,11 +3044,11 @@ msgstr ""
 "vraag aan HYBRIDE stelt, bevraagt het de database in realtime en geeft u "
 "het <strong>echte antwoord</strong>, bijgewerkt tot de laatste trekking."
 
-#: ui/templates/em/hybride.html:385
+#: ui/templates/em/hybride.html:393
 msgid "La personnalité HYBRIDE"
 msgstr "De HYBRIDE-persoonlijkheid"
 
-#: ui/templates/em/hybride.html:387
+#: ui/templates/em/hybride.html:395
 msgid ""
 "HYBRIDE n'est pas un chatbot froid et technique. Il a été conçu pour être"
 " <strong>accessible, pédagogique et sympathique</strong> :"
@@ -2993,7 +3056,7 @@ msgstr ""
 "HYBRIDE is geen koude en technische chatbot. Het is ontworpen om "
 "<strong>toegankelijk, educatief en sympathiek</strong> te zijn:"
 
-#: ui/templates/em/hybride.html:390
+#: ui/templates/em/hybride.html:398
 msgid ""
 "<strong>Ton conversationnel</strong> — Il s'adresse à vous comme un "
 "assistant bienveillant, pas comme un rapport statistique"
@@ -3001,7 +3064,7 @@ msgstr ""
 "<strong>Conversationele toon</strong> — Het spreekt u aan als een "
 "welwillende assistent, niet als een statistisch rapport"
 
-#: ui/templates/em/hybride.html:391
+#: ui/templates/em/hybride.html:399
 msgid ""
 "<strong>Mise en forme claire</strong> — Il utilise des listes et des "
 "mises en forme pour rendre les données lisibles et agréables"
@@ -3009,7 +3072,7 @@ msgstr ""
 "<strong>Duidelijke opmaak</strong> — Het gebruikt lijsten en opmaak om de"
 " gegevens leesbaar en aangenaam te maken"
 
-#: ui/templates/em/hybride.html:392
+#: ui/templates/em/hybride.html:400
 msgid ""
 "<strong>Jeu responsable</strong> — Il rappelle régulièrement que "
 "l'EuroMillions est un jeu de hasard et oriente vers les organismes d'aide"
@@ -3019,7 +3082,7 @@ msgstr ""
 "EuroMillions een kansspel is en verwijst indien nodig naar "
 "hulporganisaties"
 
-#: ui/templates/em/hybride.html:393
+#: ui/templates/em/hybride.html:401
 msgid ""
 "<strong>Pédagogie</strong> — Il explique les concepts (numéros chauds, "
 "convergence, écart-type) dans un langage accessible"
@@ -3027,7 +3090,7 @@ msgstr ""
 "<strong>Pedagogie</strong> — Het legt de concepten uit (warme nummers, "
 "convergentie, standaardafwijking) in toegankelijke taal"
 
-#: ui/templates/em/hybride.html:394
+#: ui/templates/em/hybride.html:402
 msgid ""
 "<strong>Multilingue</strong> — Il répond en 6 langues et s'adapte "
 "automatiquement à la langue de la page"
@@ -3035,7 +3098,7 @@ msgstr ""
 "<strong>Meertalig</strong> — Het antwoordt in 6 talen en past zich "
 "automatisch aan de taal van de pagina aan"
 
-#: ui/templates/em/hybride.html:397
+#: ui/templates/em/hybride.html:405
 msgid ""
 "Sa philosophie : <strong>rendre les statistiques EuroMillions "
 "compréhensibles pour tous</strong>, du joueur occasionnel au passionné de"
@@ -3045,11 +3108,11 @@ msgstr ""
 "iedereen</strong>, van de occasionele speler tot de data-"
 "enthousiasteling."
 
-#: ui/templates/em/hybride.html:403
+#: ui/templates/em/hybride.html:411
 msgid "Essayez HYBRIDE maintenant"
 msgstr "Probeer HYBRIDE nu"
 
-#: ui/templates/em/hybride.html:404
+#: ui/templates/em/hybride.html:412
 msgid ""
 "Le chatbot est disponible sur toutes les pages EuroMillions de LotoIA. "
 "Cliquez sur l'icône en bas à droite pour commencer une conversation."
@@ -3057,15 +3120,15 @@ msgstr ""
 "De chatbot is beschikbaar op alle EuroMillions-pagina's van LotoIA. Klik "
 "op het pictogram rechtsonder om een gesprek te starten."
 
-#: ui/templates/em/hybride.html:407
+#: ui/templates/em/hybride.html:415
 msgid "Auditer ma grille"
 msgstr "Mijn rooster analyseren"
 
-#: ui/templates/em/hybride.html:415
+#: ui/templates/em/hybride.html:423
 msgid "Questions fréquentes sur HYBRIDE"
 msgstr "Veelgestelde vragen over HYBRIDE"
 
-#: ui/templates/em/hybride.html:418
+#: ui/templates/em/hybride.html:426
 #, python-format
 msgid ""
 "HYBRIDE utilise une architecture <strong>Grounded (RAG)</strong> : il "
@@ -3082,7 +3145,7 @@ msgstr ""
 "informatie niet in de database vindt, zegt het dat — in plaats van te "
 "verzinnen."
 
-#: ui/templates/em/hybride.html:421
+#: ui/templates/em/hybride.html:429
 msgid ""
 "<strong>Non.</strong> L'EuroMillions est un jeu de hasard pur et "
 "<strong>personne</strong> — aucune IA, aucun algorithme, aucun « système "
@@ -3096,7 +3159,7 @@ msgstr ""
 "gegevens uit het verleden om u feitelijke statistieken te geven. Het "
 "voorspelt de toekomst niet, en zegt dat duidelijk."
 
-#: ui/templates/em/hybride.html:424
+#: ui/templates/em/hybride.html:432
 #, python-format
 msgid ""
 "ChatGPT est un modèle de langage <strong>généraliste</strong> sans accès "
@@ -3110,7 +3173,7 @@ msgstr ""
 "AI die verbonden is met de %(total)s+ officiële EuroMillions-trekkingen "
 "opgeslagen in Cloud SQL. Elk antwoord is geverifieerd, niet verzonnen."
 
-#: ui/templates/em/hybride.html:427
+#: ui/templates/em/hybride.html:435
 msgid ""
 "HYBRIDE est disponible en <strong>6 langues</strong> : français, anglais,"
 " espagnol, portugais, allemand et néerlandais. L'interface et les "
@@ -4746,8 +4809,8 @@ msgid ""
 "l'EuroMillions. Classement hot/cold, recherche interactive et analyse de "
 "co-occurrences sur l'historique complet."
 msgstr ""
-"Ontdek de meest voorkomende nummer- en sterrenparen bij EuroMillions. "
-"Hot/cold-ranglijst, interactief zoeken en co-voorkomensanalyse over de "
+"Ontdek de meest voorkomende nummer- en sterrenparen bij EuroMillions. Hot"
+"/cold-ranglijst, interactief zoeken en co-voorkomensanalyse over de "
 "volledige trekkingsgeschiedenis."
 
 #: ui/templates/em/paires.html:12
@@ -4755,8 +4818,8 @@ msgid ""
 "Classement des paires de numéros et d'étoiles les plus fréquentes à "
 "l'EuroMillions. Recherche interactive."
 msgstr ""
-"Ranglijst van de meest voorkomende nummer- en sterrenparen bij EuroMillions. "
-"Interactief zoeken."
+"Ranglijst van de meest voorkomende nummer- en sterrenparen bij "
+"EuroMillions. Interactief zoeken."
 
 #: ui/templates/em/paires.html:21
 msgid "Paires EuroMillions — Co-occurrences | LotoIA"
@@ -4797,10 +4860,10 @@ msgid ""
 "par tirage. Sur l'ensemble de l'historique, certaines combinaisons "
 "apparaissent plus souvent que d'autres : ce sont les co-occurrences."
 msgstr ""
-"Bij EuroMillions worden per trekking 5 nummers uit 50 en 2 sterren uit 12 "
-"getrokken. Dit levert 10 nummerparen (C(5,2)) en 1 sterrenpaar per trekking "
-"op. Over de gehele geschiedenis komen sommige combinaties vaker voor dan "
-"andere: dit zijn de co-voorkomens."
+"Bij EuroMillions worden per trekking 5 nummers uit 50 en 2 sterren uit 12"
+" getrokken. Dit levert 10 nummerparen (C(5,2)) en 1 sterrenpaar per "
+"trekking op. Over de gehele geschiedenis komen sommige combinaties vaker "
+"voor dan andere: dit zijn de co-voorkomens."
 
 #: ui/templates/em/paires.html:149
 msgid ""
@@ -4813,9 +4876,9 @@ msgid ""
 msgstr ""
 "LotoIA analyseert alle 1 225 mogelijke nummerparen (C(50,2)) en 66 "
 "mogelijke sterrenparen (C(12,2)) over alle EuroMillions-trekkingen. De "
-"hot-ranglijst toont de 10 meest voorkomende paren, de cold-ranglijst de 10 "
-"minst voorkomende. Met de interactieve zoekfunctie kun je 2 nummers of 2 "
-"sterren selecteren om hun co-voorkomen direct te zien."
+"hot-ranglijst toont de 10 meest voorkomende paren, de cold-ranglijst de "
+"10 minst voorkomende. Met de interactieve zoekfunctie kun je 2 nummers of"
+" 2 sterren selecteren om hun co-voorkomen direct te zien."
 
 #: ui/templates/em/paires.html:152
 msgid "Rappel important :"
@@ -4952,10 +5015,11 @@ msgid ""
 msgstr ""
 "De paaranalyse is gebaseerd op een combinatorische berekening: voor elke "
 "trekking van 5 nummers uit 50 worden de 10 mogelijke paren geëxtraheerd "
-"(C(5,2)), en voor de 2 sterren uit 12 het enkele paar. Er wordt geteld hoe "
-"vaak elk paar voorkomt in de volledige geschiedenis. De paren worden "
-"gerangschikt op frequentie, van meest voorkomend (hot) tot minst voorkomend "
-"(cold). Met de interactieve zoekfunctie kun je elke combinatie controleren."
+"(C(5,2)), en voor de 2 sterren uit 12 het enkele paar. Er wordt geteld "
+"hoe vaak elk paar voorkomt in de volledige geschiedenis. De paren worden "
+"gerangschikt op frequentie, van meest voorkomend (hot) tot minst "
+"voorkomend (cold). Met de interactieve zoekfunctie kun je elke combinatie"
+" controleren."
 
 #: ui/templates/em/paires.html:228 ui/templates/em/statistiques.html:1036
 msgid "Sortis ensemble"

@@ -66,6 +66,30 @@
             "@type": "Answer",
             "text": {{ _('Les données proviennent des tirages officiels de l\'EuroMillions. La base contient plusieurs années d\'historique, mise à jour après chaque tirage officiel (mardi et vendredi).')|tojson }}
           }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Qu\'est-ce qu\'une paire de numéros à l\'EuroMillions ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Une paire correspond à deux numéros (boules ou étoiles) tirés ensemble lors d\'un même tirage EuroMillions. LotoIA analyse les co-occurrences sur l\'historique complet : 1 225 paires de boules possibles et 66 paires d\'étoiles possibles.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Comment consulter les paires les plus fréquentes à l\'EuroMillions ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Rendez-vous sur la page Paires EuroMillions pour accéder au classement des paires de boules et d\'étoiles (chaudes et froides), ainsi qu\'à deux outils de recherche interactifs : une grille de 50 boules et une grille de 12 étoiles.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Les paires de numéros permettent-elles de prédire l\'EuroMillions ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Non. L\'analyse des paires est un outil statistique basé sur l\'historique des tirages. Chaque tirage est indépendant et les résultats passés n\'influencent pas les tirages futurs. LotoIA fournit des données factuelles, pas des prédictions.')|tojson }}
+          }
         }
       ]
     }
