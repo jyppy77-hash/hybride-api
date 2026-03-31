@@ -40,9 +40,26 @@
     .nav-links a:hover { background: rgba(16,185,129,0.2); border-color: rgba(16,185,129,0.5); }
     .nav-links a.primary { background: #10b981; border-color: #10b981; }
     .nav-links a.primary:hover { background: #059669; }
+    .lang-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 24px; }
+    .lang-links a {
+        display: inline-block;
+        padding: 6px 14px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        text-decoration: none;
+        color: rgba(255,255,255,0.7);
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        transition: all 0.3s ease;
+    }
+    .lang-links a:hover { background: rgba(26,115,232,0.2); border-color: rgba(26,115,232,0.5); color: white; }
+    .lang-links a.detected { background: rgba(26,115,232,0.25); border-color: rgba(26,115,232,0.6); color: white; }
     .seo-links { margin-top: 32px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); line-height: 2; }
     .seo-links a { color: rgba(255,255,255,0.4); text-decoration: none; margin: 0 8px; font-size: 13px; }
     .seo-links a:hover { color: rgba(255,255,255,0.7); }
+    .msg { display: none; }
+    .msg.active { display: block; }
 </style>
     <script src="/ui/static/analytics.js?v=3" defer></script>
     <script src="/ui/static/tracker.js?v=4" defer></script>
@@ -50,24 +67,71 @@
 <body>
     <div class="container">
         <div class="code">404</div>
-        <h1>Page non trouvée</h1>
-        <p>Cette page n'existe pas ou a été déplacée.<br>Voici les sections principales de LotoIA :</p>
+
+        <div id="msg-fr" class="msg active">
+            <h1>Page non trouvée</h1>
+            <p>Cette page n'existe pas ou a été déplacée.</p>
+        </div>
+        <div id="msg-en" class="msg">
+            <h1>Page not found</h1>
+            <p>This page does not exist or has been moved.</p>
+        </div>
+        <div id="msg-es" class="msg">
+            <h1>Página no encontrada</h1>
+            <p>Esta página no existe o ha sido movida.</p>
+        </div>
+        <div id="msg-pt" class="msg">
+            <h1>Página não encontrada</h1>
+            <p>Esta página não existe ou foi movida.</p>
+        </div>
+        <div id="msg-de" class="msg">
+            <h1>Seite nicht gefunden</h1>
+            <p>Diese Seite existiert nicht oder wurde verschoben.</p>
+        </div>
+        <div id="msg-nl" class="msg">
+            <h1>Pagina niet gevonden</h1>
+            <p>Deze pagina bestaat niet of is verplaatst.</p>
+        </div>
+
+        <div class="lang-links">
+            <a href="/fr" id="lang-fr" data-lang="fr">Français</a>
+            <a href="/en" id="lang-en" data-lang="en">English</a>
+            <a href="/es" id="lang-es" data-lang="es">Español</a>
+            <a href="/pt" id="lang-pt" data-lang="pt">Português</a>
+            <a href="/de" id="lang-de" data-lang="de">Deutsch</a>
+            <a href="/nl" id="lang-nl" data-lang="nl">Nederlands</a>
+        </div>
+
         <div class="nav-links">
-            <a href="/accueil" class="primary">Accueil</a>
-            <a href="/loto">Loto France</a>
+            <a href="/accueil" class="primary">Accueil LotoIA</a>
+            <a href="/euromillions">EuroMillions</a>
             <a href="/loto/statistiques">Statistiques</a>
-            <a href="/historique">Historique</a>
             <a href="/faq">FAQ</a>
         </div>
         <div class="seo-links">
             <a href="/">Modules</a>
             <a href="/loto/analyse">Analyse de grille</a>
-            <a href="/loto/exploration">Exploration</a>
+            <a href="/historique">Historique</a>
             <a href="/news">Actualités</a>
             <a href="/moteur">Moteur HYBRIDE</a>
             <a href="/methodologie">Méthodologie</a>
         </div>
     </div>
+    <script>
+    (function() {
+        var lang = (navigator.language || navigator.userLanguage || 'fr').substring(0, 2).toLowerCase();
+        var supported = ['fr', 'en', 'es', 'pt', 'de', 'nl'];
+        if (supported.indexOf(lang) === -1) lang = 'en';
+        // Show detected language message
+        var msgs = document.querySelectorAll('.msg');
+        for (var i = 0; i < msgs.length; i++) msgs[i].classList.remove('active');
+        var target = document.getElementById('msg-' + lang);
+        if (target) target.classList.add('active');
+        // Highlight detected language link
+        var link = document.getElementById('lang-' + lang);
+        if (link) link.classList.add('detected');
+    })();
+    </script>
     <script src="/ui/static/cookie-consent.js?v=7" defer></script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc" data-before-send="umamiBeforeSend"></script>
 </body>

@@ -2392,8 +2392,14 @@ msgid "Historique EuroMillions | LotoIA"
 msgstr "EuroMillions-Verlauf | LotoIA"
 
 #: ui/templates/em/historique.html:11 ui/templates/em/historique.html:20
-msgid "Recherchez un tirage EuroMillions par date."
-msgstr "Suchen Sie eine EuroMillions-Ziehung nach Datum."
+msgid ""
+"Consultez l'historique complet des tirages EuroMillions. Recherchez un "
+"tirage par date et retrouvez les numéros gagnants et les étoiles depuis "
+"2004."
+msgstr ""
+"Durchsuchen Sie den vollständigen EuroMillions-Ziehungsverlauf. Suchen Sie "
+"eine Ziehung nach Datum und finden Sie die Gewinnzahlen und Sterne seit "
+"2004."
 
 #: ui/templates/em/historique.html:27
 msgid "Historique des tirages EuroMillions"

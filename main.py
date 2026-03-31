@@ -3,6 +3,7 @@ import re
 import time
 import uuid
 import asyncio
+import hashlib
 import contextvars
 from contextlib import asynccontextmanager
 from datetime import date, datetime
@@ -397,11 +398,27 @@ async def strip_trailing_slash(request: Request, call_next):
     return await call_next(request)
 
 
-# Middleware cache headers SEO
+# Middleware cache headers SEO + ETag
 @app.middleware("http")
 async def add_cache_headers(request: Request, call_next):
-    response = await call_next(request)
     path = request.url.path
+
+    # S13: ETag — check If-None-Match BEFORE processing (HTML pages only, not /api/ or /static/)
+    _is_html_route = not path.startswith(("/api/", "/static/", "/ui/static/"))
+    if _is_html_route and request.method == "GET":
+        etag = f'"{hashlib.md5(f"{APP_VERSION}:{path}".encode()).hexdigest()}"'
+        if_none_match = request.headers.get("if-none-match", "")
+        if if_none_match == etag:
+            from starlette.responses import Response
+            return Response(status_code=304, headers={"ETag": etag})
+
+    response = await call_next(request)
+
+    # S13: ETag — add on HTML responses (skip streaming/SSE)
+    content_type = response.headers.get("content-type", "")
+    if _is_html_route and "text/html" in content_type and response.status_code < 300:
+        etag = f'"{hashlib.md5(f"{APP_VERSION}:{path}".encode()).hexdigest()}"'
+        response.headers["ETag"] = etag
 
     # Cache long pour assets statiques
     if path.startswith("/static/") or path.startswith("/ui/static/"):

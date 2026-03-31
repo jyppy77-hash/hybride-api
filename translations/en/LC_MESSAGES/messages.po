@@ -2285,8 +2285,13 @@ msgid "Historique EuroMillions | LotoIA"
 msgstr "EuroMillions History | LotoIA"
 
 #: ui/templates/em/historique.html:11 ui/templates/em/historique.html:20
-msgid "Recherchez un tirage EuroMillions par date."
-msgstr "Search for a EuroMillions draw by date."
+msgid ""
+"Consultez l'historique complet des tirages EuroMillions. Recherchez un "
+"tirage par date et retrouvez les numéros gagnants et les étoiles depuis "
+"2004."
+msgstr ""
+"Browse the complete EuroMillions draw history. Search by date and find "
+"winning numbers and stars since 2004."
 
 #: ui/templates/em/historique.html:27
 msgid "Historique des tirages EuroMillions"
@@ -2740,19 +2745,19 @@ msgstr "HYBRIDE calculates statistics on the fly from the complete database."
 
 #: ui/templates/em/hybride.html:307
 msgid "\"Quels sont les 5 numéros les plus chauds en ce moment ?\""
-msgstr ""
+msgstr "\"What are the 5 hottest numbers right now?\""
 
 #: ui/templates/em/hybride.html:308
 msgid "\"Quelle est la fréquence moyenne de sortie du numéro 42 ?\""
-msgstr ""
+msgstr "\"What is the average draw frequency of number 42?\""
 
 #: ui/templates/em/hybride.html:309
 msgid "\"Y a-t-il des paires de numéros qui sortent souvent ensemble ?\""
-msgstr ""
+msgstr "\"Are there pairs of numbers that often come out together?\""
 
 #: ui/templates/em/hybride.html:310
 msgid "\"Quelle étoile est la plus en retard ?\""
-msgstr ""
+msgstr "\"Which star is the most overdue?\""
 
 #: ui/templates/em/hybride.html:313
 msgid "Questions pédagogiques"

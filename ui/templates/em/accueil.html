@@ -46,7 +46,7 @@
           "@type": "Offer",
           "price": "0",
           "priceCurrency": "EUR"
-        }{% if em_rating_count and em_rating_count >= 5 %},
+        }{% if em_rating_count and em_rating_count >= MIN_REVIEWS_FOR_RATING %},
         "aggregateRating": {
           "@type": "AggregateRating",
           "ratingValue": "{{ em_rating_value }}",

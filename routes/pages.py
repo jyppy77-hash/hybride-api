@@ -3,6 +3,7 @@ import re
 from fastapi import APIRouter
 from fastapi.responses import FileResponse, HTMLResponse
 import db_cloudsql
+from config.templates import MIN_REVIEWS_FOR_RATING
 
 router = APIRouter()
 
@@ -63,6 +64,12 @@ async def robots():
                         headers={"Cache-Control": "public, max-age=86400"})
 
 
+@router.get("/BingSiteAuth.xml")
+async def bing_site_auth():
+    """Bing Webmaster Tools verification file."""
+    return FileResponse("ui/BingSiteAuth.xml", media_type="application/xml",
+                        headers={"Cache-Control": "public, max-age=86400"})
+
 
 @router.get("/favicon.ico", include_in_schema=False)
 async def favicon():
@@ -96,8 +103,8 @@ async def page_accueil():
     with open("ui/accueil.html", "r", encoding="utf-8") as f:
         html = f.read()
 
-    # Injecter le schema dynamique seulement si assez de vrais avis (>= 5)
-    if review_count >= 5:
+    # Injecter le schema dynamique seulement si assez de vrais avis
+    if review_count >= MIN_REVIEWS_FOR_RATING:
         html = html.replace('"ratingValue": "4.6"', f'"ratingValue": "{avg_rating}"')
         html = html.replace('"ratingCount": "128"', f'"ratingCount": "{review_count}"')
     else:

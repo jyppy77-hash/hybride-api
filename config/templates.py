@@ -19,6 +19,9 @@ _ROOT = os.path.dirname(os.path.dirname(__file__))
 TEMPLATES_DIR = os.path.join(_ROOT, "ui", "templates")
 BASE_URL = "https://lotoia.fr"
 
+# ── SEO constants ────────────────────────────────────────────────────────
+MIN_REVIEWS_FOR_RATING = 5  # Minimum reviews to show AggregateRating in JSON-LD
+
 # ── Thread-safe gettext callables (read ctx_lang at render time) ─────────
 
 def _gettext(message: str) -> str:
@@ -39,6 +42,7 @@ env = Environment(
     extensions=["jinja2.ext.i18n"],
 )
 env.install_gettext_callables(_gettext, _ngettext, newstyle=False)
+env.globals["MIN_REVIEWS_FOR_RATING"] = MIN_REVIEWS_FOR_RATING
 
 # ── URL maps per language ────────────────────────────────────────────────
 

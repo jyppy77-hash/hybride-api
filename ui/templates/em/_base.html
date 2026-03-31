@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+    <meta name="msvalidate.01" content="26887D58A7CCF668A734B35D6892A403">
 
     {# ── Page-specific head (title, meta, OG, JSON-LD) ── #}
     {% block head %}{% endblock %}
@@ -12,6 +13,7 @@
     <link rel="alternate" hreflang="{{ tag.lang }}" href="{{ tag.url }}">
     {% endfor %}
 
+    {# ── Fonts: system font stack only (no external font to preload) — S08 verified 2026-03-31 ── #}
     {# ── Favicons + Manifest ── #}
     <link rel="icon" href="/favicon.ico" sizes="48x48">
     <link rel="icon" href="/ui/static/favicon.svg" sizes="any" type="image/svg+xml">
