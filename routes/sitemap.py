@@ -14,7 +14,7 @@ router = APIRouter()
 # ── Static Loto pages (FR only) ─────────────────────────────────────────
 
 _LOTO_PAGES = [
-    ("/accueil",                         0.9,  "daily"),
+    ("/accueil",                         1.0,  "daily"),
     ("/loto",                            0.95, "daily"),
     ("/loto/analyse",                    0.85, "daily"),
     ("/loto/statistiques",               0.85, "daily"),
@@ -23,6 +23,7 @@ _LOTO_PAGES = [
     ("/historique",                      0.7,  "daily"),
     ("/loto/intelligence-artificielle",  0.85, "monthly"),
     ("/loto/numeros-les-plus-sortis",    0.85, "daily"),
+    ("/loto/paires",                     0.85, "daily"),
     ("/hybride",                         0.8,  "monthly"),
     ("/a-propos",                        0.6,  "monthly"),
     ("/faq",                             0.6,  "monthly"),
@@ -44,6 +45,7 @@ _EM_PAGE_PRIORITY = {
     "methodologie":     (0.8,  "monthly"),
     "ia":               (0.8,  "monthly"),
     "hybride_page":     (0.7,  "monthly"),
+    "paires":           (0.85, "daily"),
     # Legal pages excluded — they have noindex,follow meta tag
     # "mentions", "confidentialite", "cookies", "disclaimer" → not in sitemap
 }

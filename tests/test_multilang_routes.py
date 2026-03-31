@@ -190,14 +190,14 @@ def test_date_locale_all_langs(lang):
 # ═══════════════════════════════════════════════
 
 def test_multilang_routes_registered():
-    """48 routes registered (12 pages x 4 langs)."""
+    """68 routes registered (17 pages x 4 langs)."""
     from routes.multilang_em_pages import router
     paths = [r.path for r in router.routes]
-    # Check all 4 langs have routes (7 main + 5 content + 4 legal = 16)
+    # Check all 4 langs have routes (7 main + 6 content + 4 legal = 17)
     for lang in ("pt", "es", "de", "nl"):
         lang_paths = [p for p in paths if p.startswith(f"/{lang}/")]
-        assert len(lang_paths) == 16, (
-            f"Expected 16 routes for {lang}, got {len(lang_paths)}: {lang_paths}"
+        assert len(lang_paths) == 17, (
+            f"Expected 17 routes for {lang}, got {len(lang_paths)}: {lang_paths}"
         )
 
 

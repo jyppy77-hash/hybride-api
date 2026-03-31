@@ -61,6 +61,7 @@ EM_URLS = {
         "methodologie":     "/euromillions/methodologie",
         "ia":               "/euromillions/intelligence-artificielle",
         "hybride_page":     "/euromillions/hybride",
+        "paires":           "/euromillions/paires",
     },
     "en": {
         "home":         "/en/euromillions",
@@ -80,6 +81,7 @@ EM_URLS = {
         "methodologie":     "/en/euromillions/methodology",
         "ia":               "/en/euromillions/artificial-intelligence",
         "hybride_page":     "/en/euromillions/hybride",
+        "paires":           "/en/euromillions/pairs",
     },
     "pt": {
         "home":         "/pt/euromillions",
@@ -99,6 +101,7 @@ EM_URLS = {
         "methodologie":     "/pt/euromillions/metodologia",
         "ia":               "/pt/euromillions/inteligencia-artificial",
         "hybride_page":     "/pt/euromillions/hybride",
+        "paires":           "/pt/euromillions/pares",
     },
     "es": {
         "home":         "/es/euromillions",
@@ -118,6 +121,7 @@ EM_URLS = {
         "methodologie":     "/es/euromillions/metodologia",
         "ia":               "/es/euromillions/inteligencia-artificial",
         "hybride_page":     "/es/euromillions/hybride",
+        "paires":           "/es/euromillions/pares",
     },
     "de": {
         "home":         "/de/euromillions",
@@ -137,6 +141,7 @@ EM_URLS = {
         "methodologie":     "/de/euromillions/methodik",
         "ia":               "/de/euromillions/kuenstliche-intelligenz",
         "hybride_page":     "/de/euromillions/hybride",
+        "paires":           "/de/euromillions/paare",
     },
     "nl": {
         "home":         "/nl/euromillions",
@@ -156,6 +161,7 @@ EM_URLS = {
         "methodologie":     "/nl/euromillions/methodologie",
         "ia":               "/nl/euromillions/kunstmatige-intelligentie",
         "hybride_page":     "/nl/euromillions/hybride",
+        "paires":           "/nl/euromillions/paren",
     },
 }
 
@@ -211,6 +217,11 @@ def _build_all_lang_switches(current_lang: str, page_key: str) -> list[dict]:
     return switches
 
 # ── Hreflang helpers ─────────────────────────────────────────────────────
+# NOTE: Cette fonction génère les hreflang dynamiquement pour les templates
+# Jinja2 (ES/PT/DE/NL). Les pages EM statiques FR (ui/em/) et EN
+# (ui/en/euromillions/) ont des hreflang HARDCODÉS dans le HTML.
+# Si une langue est ajoutée/retirée dans killswitch.ENABLED_LANGS,
+# les fichiers statiques doivent être mis à jour manuellement.
 
 def hreflang_tags(page_key: str) -> list[dict]:
     """Return hreflang link data [{lang, url}, ...] for a page.

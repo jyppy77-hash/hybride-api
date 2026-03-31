@@ -87,7 +87,7 @@ from config import killswitch
 _EM_LANG_PREFIXES = tuple(f"/{lc}/" for lc in killswitch.ENABLED_LANGS if lc != "fr")
 _SEO_ROUTES = {
     "/", "/accueil", "/loto", "/loto/analyse", "/loto/exploration",
-    "/loto/statistiques", "/faq", "/news",
+    "/loto/statistiques", "/loto/paires", "/faq", "/news",
     "/historique", "/methodologie", "/moteur", "/disclaimer",
     "/mentions-legales", "/politique-confidentialite", "/politique-cookies",
     "/fr", "/en", "/es", "/pt", "/de", "/nl",  # V53 launcher multilang
@@ -423,7 +423,8 @@ async def add_cache_headers(request: Request, call_next):
             timeval=stamp, localtime=False, usegmt=True,
         )
 
-    # Vary: Accept-Language + Content-Language sur les routes EM multilingues
+    # Vary: Accept-Language + Content-Language sur les routes EM multilingues uniquement.
+    # Les pages Loto FR-only n'ont pas Vary (mono-langue, pas de content negotiation).
     if path.startswith(_EM_LANG_PREFIXES) or path.startswith("/euromillions"):
         response.headers["Vary"] = "Accept-Language"
         # Content-Language: detect lang from path prefix
@@ -469,6 +470,7 @@ _UI_HTML_TO_CLEAN_URL = {
     "a-propos.html": "/a-propos",
     "hybride.html": "/hybride",
     "numeros-plus-sortis.html": "/loto/numeros-les-plus-sortis",
+    "paires.html": "/loto/paires",
 }
 
 _UI_EM_HTML_TO_CLEAN_URL = {

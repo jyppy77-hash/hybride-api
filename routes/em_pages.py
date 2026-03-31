@@ -266,6 +266,21 @@ async def em_cookies(request: Request):
     )
 
 
+@router.get("/euromillions/paires", include_in_schema=False)
+async def em_paires(request: Request):
+    """EuroMillions — Paires de numéros (co-occurrences)."""
+    if "fr" not in killswitch.ENABLED_LANGS:
+        return RedirectResponse(url="/accueil", status_code=302, headers=_KS_HEADERS)
+    return render_template(
+        "em/paires.html", request, lang="fr", page_key="paires",
+        body_class="subpage em-page",
+        include_nav_scroll=True,
+        hero_icon="\U0001f517",
+        hero_title="Paires EuroMillions — Co-occurrences",
+        hero_subtitle="Classement hot/cold et recherche interactive des paires de boules et d'étoiles",
+    )
+
+
 @router.get("/euromillions/avertissement", include_in_schema=False)
 async def em_disclaimer(request: Request):
     """EuroMillions — Avertissements."""

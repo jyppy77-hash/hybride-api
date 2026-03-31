@@ -38,6 +38,8 @@ _HERO_TEXTS = {
                "O que a IA pode — e nao pode — fazer pelas lotarias"),
         "hybride_page": ("Chatbot HYBRIDE EuroMillions",
                          "IA conversacional baseada em dados reais"),
+        "paires": ("Pares EuroMillions — Co-ocorrências",
+                   "Classificação hot/cold e pesquisa interativa de pares de bolas e estrelas"),
     },
     "es": {
         "generateur": ("Explorador de Cuadriculas EuroMillions",
@@ -62,6 +64,8 @@ _HERO_TEXTS = {
                "Lo que la IA puede — y no puede — hacer por las loterias"),
         "hybride_page": ("Chatbot HYBRIDE EuroMillions",
                          "IA conversacional basada en datos reales"),
+        "paires": ("Pares EuroMillions — Co-ocurrencias",
+                   "Clasificación hot/cold y búsqueda interactiva de pares de bolas y estrellas"),
     },
     "de": {
         "generateur": ("EuroMillions Raster-Explorer",
@@ -86,6 +90,8 @@ _HERO_TEXTS = {
                "Was KI fur Lotterien leisten kann — und was nicht"),
         "hybride_page": ("HYBRIDE Chatbot EuroMillions",
                          "Konversations-KI basierend auf realen Daten"),
+        "paires": ("EuroMillions Paare — Häufigkeitsanalyse",
+                   "Hot/Cold-Ranking und interaktive Paarsuche für Kugeln und Sterne"),
     },
     "nl": {
         "generateur": ("EuroMillions Rooster Verkenner",
@@ -110,6 +116,8 @@ _HERO_TEXTS = {
                "Wat AI wel — en niet — kan doen voor loterijen"),
         "hybride_page": ("HYBRIDE Chatbot EuroMillions",
                          "Conversationele AI gebaseerd op echte data"),
+        "paires": ("EuroMillions Paren — Co-voorkomens",
+                   "Hot/cold-ranglijst en interactief zoeken van nummerparen en sterren"),
     },
 }
 
@@ -174,6 +182,11 @@ _PAGE_DEFS = [
         "body_class": "subpage em-page",
         "include_nav_scroll": True,
         "hero_icon": "\U0001f916",
+    }),
+    ("paires", "em/paires.html", {
+        "body_class": "subpage em-page",
+        "include_nav_scroll": True,
+        "hero_icon": "\U0001f517",
     }),
     # Legal pages
     ("mentions", "em/mentions-legales.html", {

@@ -6,6 +6,7 @@
     <title>Actualités EuroMillions | LotoIA</title>
     <meta name="description" content="Actualités EuroMillions LotoIA : moteur HYBRIDE adapté 5+2, analyse statistique des tirages européens et chatbot IA dédié.">
     <link rel="canonical" href="https://lotoia.fr/euromillions/news">
+    <!-- SEO: hreflang hardcodes — synchroniser avec config/killswitch.py si une langue est ajoutee/retiree -->
     <link rel="alternate" hreflang="fr" href="https://lotoia.fr/euromillions/news">
     <link rel="alternate" hreflang="en" href="https://lotoia.fr/en/euromillions/news">
     <link rel="alternate" hreflang="es" href="https://lotoia.fr/es/euromillions/noticias">
@@ -37,6 +38,32 @@
     <script src="/ui/static/theme.js"></script>
     <script src="/ui/static/analytics.js?v=3" defer></script>
     <script src="/ui/static/tracker.js?v=4" defer></script>
+    <!-- JSON-LD CollectionPage -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      "name": "Actualités EuroMillions",
+      "description": "Suivez les actualités du module EuroMillions de LotoIA : évolutions du moteur HYBRIDE, nouvelles fonctionnalités et mises à jour.",
+      "url": "https://lotoia.fr/euromillions/news",
+      "provider": {
+        "@type": "Organization",
+        "name": "LotoIA",
+        "url": "https://lotoia.fr"
+      }
+    }
+    </script>
+    <!-- JSON-LD BreadcrumbList -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Accueil EuroMillions", "item": "https://lotoia.fr/euromillions"},
+        {"@type": "ListItem", "position": 2, "name": "Actualités", "item": "https://lotoia.fr/euromillions/news"}
+      ]
+    }
+    </script>
 
 </head>
 <body class="subpage em-page">

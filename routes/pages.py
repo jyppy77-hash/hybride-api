@@ -19,6 +19,7 @@ SEO_PAGES = {
     "/loto/statistiques": "statistiques.html",
     "/loto/intelligence-artificielle": "loto-ia.html",
     "/loto/numeros-les-plus-sortis": "numeros-les-plus-sortis.html",
+    "/loto/paires": "paires.html",
     "/faq": "faq.html",
     "/news": "news.html",
     "/historique": "historique.html",
@@ -68,9 +69,6 @@ async def favicon():
     return FileResponse("favicon.ico")
 
 
-@router.get("/BingSiteAuth.xml")
-def bing_auth():
-    return FileResponse("BingSiteAuth.xml")
 
 
 # =========================
@@ -152,6 +150,12 @@ async def page_loto_ia():
 async def page_loto_numeros():
     """Loto France — Numéros les plus sortis (classement fréquences)."""
     return serve_page("numeros-les-plus-sortis.html")
+
+
+@router.get("/loto/paires")
+async def page_loto_paires():
+    """Loto France — Paires de numéros (co-occurrences et classement)."""
+    return serve_page("paires.html")
 
 
 ## /statistiques et /simulateur supprimés — 301 vers /loto/statistiques et /loto/analyse (main.py)

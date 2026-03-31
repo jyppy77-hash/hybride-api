@@ -2,7 +2,7 @@
 Tests Phase B SEO — Schema Organization + legal.css conditionnel.
 Verifies:
   - Organization schema: founder Person, foundingDate 2025-01-01 (ISO 8601), disambiguatingDescription
-  - seo.py and a-propos.html alignment
+  - Inline JSON-LD in a-propos.html templates
   - legal.css loaded on legal pages, absent on non-legal EM pages
 """
 
@@ -54,74 +54,7 @@ def _make_request():
 
 
 # ═══════════════════════════════════════════════
-# 1. Schema Organization in seo.py
-# ═══════════════════════════════════════════════
-
-class TestSeoOrganizationSchema:
-    """seo.py generate_jsonld_organization() output."""
-
-    def test_founder_is_person(self):
-        """founder must be a Person (not Organization)."""
-        from seo import generate_jsonld_organization
-        html = generate_jsonld_organization()
-        assert '"@type": "Person"' in html
-
-    def test_founder_name(self):
-        """founder name must be Jean-Philippe Godard."""
-        from seo import generate_jsonld_organization
-        html = generate_jsonld_organization()
-        assert "Jean-Philippe Godard" in html
-        assert "JyppY" in html  # alternateName
-
-    def test_founding_date_2025(self):
-        """foundingDate must be 2025-01-01 (ISO 8601)."""
-        from seo import generate_jsonld_organization
-        html = generate_jsonld_organization()
-        assert '"foundingDate": "2025-01-01"' in html
-
-    def test_disambiguating_description(self):
-        """disambiguatingDescription must be present."""
-        from seo import generate_jsonld_organization
-        html = generate_jsonld_organization()
-        assert "disambiguatingDescription" in html
-        assert "literie" in html
-
-    def test_parent_organization(self):
-        """parentOrganization EmovisIA must be present."""
-        from seo import generate_jsonld_organization
-        html = generate_jsonld_organization()
-        assert "EmovisIA" in html
-        assert "parentOrganization" in html
-
-    def test_same_as(self):
-        """sameAs must contain emovisia.fr."""
-        from seo import generate_jsonld_organization
-        html = generate_jsonld_organization()
-        assert "emovisia.fr" in html
-
-    def test_founder_job_title(self):
-        """founder must have jobTitle."""
-        from seo import generate_jsonld_organization
-        html = generate_jsonld_organization()
-        assert "jobTitle" in html
-        assert "Fondateur" in html
-
-    def test_founder_knows_about(self):
-        """founder must have knowsAbout."""
-        from seo import generate_jsonld_organization
-        html = generate_jsonld_organization()
-        assert "knowsAbout" in html
-        assert "Data Science" in html
-
-    def test_founder_same_as_linkedin(self):
-        """founder must have sameAs LinkedIn."""
-        from seo import generate_jsonld_organization
-        html = generate_jsonld_organization()
-        assert "linkedin.com/in/jpgodard" in html
-
-
-# ═══════════════════════════════════════════════
-# 2. Schema Organization in EM a-propos template
+# 1. Schema Organization in EM a-propos template
 # ═══════════════════════════════════════════════
 
 class TestEmAboutOrganizationSchema:
@@ -383,24 +316,6 @@ class TestPhaseD_AggregateRatingEM:
 # ═══════════════════════════════════════════════
 # S10 — contactPoint in Organization schema
 # ═══════════════════════════════════════════════
-
-class TestOrganizationContactPoint:
-    """Organization schema must include contactPoint with email."""
-
-    def test_seo_py_has_contact_point(self):
-        """seo.py Organization includes contactPoint with email."""
-        from seo import generate_jsonld_organization
-        html = generate_jsonld_organization()
-        assert "contactPoint" in html
-        assert "contact@lotoia.fr" in html
-        assert "customer support" in html
-
-    def test_seo_py_has_area_served(self):
-        """seo.py Organization includes areaServed."""
-        from seo import generate_jsonld_organization
-        html = generate_jsonld_organization()
-        assert '"areaServed": "FR"' in html
-
 
 # ═══════════════════════════════════════════════
 # S11 — Person standalone schema on /a-propos

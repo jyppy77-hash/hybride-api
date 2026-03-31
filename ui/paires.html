@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
+    <title>Paires de Numéros Loto — Co-occurrences et Classement | LotoIA</title>
+    <meta name="description" content="Découvrez les paires de numéros les plus fréquentes au Loto. Classement hot/cold, recherche interactive et analyse de co-occurrences sur l'historique complet des tirages.">
+    <link rel="canonical" href="https://lotoia.fr/loto/paires">
+    <link rel="alternate" hreflang="fr" href="https://lotoia.fr/loto/paires">
+    <link rel="alternate" hreflang="x-default" href="https://lotoia.fr/loto/paires">
+    <link rel="icon" href="/favicon.ico" sizes="48x48">
+    <link rel="icon" href="/ui/static/favicon.svg" sizes="any" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/favicon.ico">
+    <link rel="manifest" href="/ui/site.webmanifest">
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="LotoIA">
+    <meta property="og:locale" content="fr_FR">
+    <meta property="og:title" content="Paires de Numéros Loto — Co-occurrences et Classement | LotoIA">
+    <meta property="og:description" content="Classement des paires de numéros les plus fréquentes au Loto. Recherche interactive et analyse de co-occurrences.">
+    <meta property="og:url" content="https://lotoia.fr/loto/paires">
+    <meta property="og:image" content="https://lotoia.fr/static/og-image.jpg">
+    <meta property="og:image:secure_url" content="https://lotoia.fr/static/og-image.jpg">
+    <meta property="og:image:type" content="image/jpeg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Paires de Numéros Loto — Co-occurrences | LotoIA">
+    <meta name="twitter:description" content="Classement hot/cold des paires et recherche interactive sur l'historique complet du Loto.">
+    <meta name="twitter:image" content="https://lotoia.fr/static/og-image.jpg">
+    <!-- JSON-LD Dataset -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Dataset",
+      "name": "Paires de numéros Loto — Co-occurrences",
+      "description": "Analyse statistique des co-occurrences de paires de numéros dans l'historique complet des tirages du Loto français",
+      "url": "https://lotoia.fr/loto/paires",
+      "creator": { "@type": "Organization", "name": "LotoIA", "url": "https://lotoia.fr" },
+      "license": "https://lotoia.fr/disclaimer",
+      "temporalCoverage": "2019/..",
+      "spatialCoverage": "France"
+    }
+    </script>
+    <!-- JSON-LD BreadcrumbList -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {"@type": "ListItem", "position": 1, "name": "Accueil", "item": "https://lotoia.fr/accueil"},
+        {"@type": "ListItem", "position": 2, "name": "Loto", "item": "https://lotoia.fr/loto"},
+        {"@type": "ListItem", "position": 3, "name": "Paires", "item": "https://lotoia.fr/loto/paires"}
+      ]
+    }
+    </script>
+    <!-- JSON-LD WebApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Analyseur de Paires Loto",
+      "url": "https://lotoia.fr/loto/paires",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "All",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+    }
+    </script>
+    <!-- Critical CSS inline -->
+    <style>
+    *{margin:0;padding:0;box-sizing:border-box}:root{--app-max-width:1140px;--app-padding-x:24px;--app-padding-y:40px;--primary:#1a73e8;--radius-sm:8px;--radius-md:12px;--radius-lg:16px;--theme-bg-main:linear-gradient(180deg,#0a0f1a 0%,#0f172a 50%,#1e1b4b 100%);--theme-bg-nav:linear-gradient(180deg,#0f172a 0%,#1e1b4b 100%);--theme-bg-header:linear-gradient(180deg,#0f172a 0%,#1e1b4b 100%);--theme-bg-card:#ffffff;--theme-text-primary:#1f2937;--theme-text-secondary:#6b7280;--theme-text-on-dark:rgba(255,255,255,.95);--theme-border:#e5e7eb;--theme-border-light:rgba(255,255,255,.1);--theme-shadow:0 2px 8px rgba(0,0,0,.1)}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;line-height:1.6;color:var(--theme-text-primary);min-height:100vh;font-size:16px;background:var(--theme-bg-main)}body.theme-night{--theme-bg-main:linear-gradient(180deg,#0a0f1a 0%,#0f172a 50%,#1e1b4b 100%);--theme-bg-nav:linear-gradient(180deg,#0f172a 0%,#1e1b4b 100%);--theme-bg-card:#1e293b;--theme-text-primary:#e2e8f0;--theme-text-secondary:#94a3b8;--theme-border:rgba(255,255,255,.1)}body.theme-day{--theme-bg-main:linear-gradient(180deg,#f0f4f8 0%,#e2e8f0 50%,#cbd5e1 100%);--theme-bg-nav:linear-gradient(180deg,#1e293b 0%,#334155 100%);--theme-bg-card:#ffffff;--theme-text-primary:#0f172a;--theme-text-secondary:#475569;--theme-border:#e2e8f0}.engine-nav-subpage{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:var(--theme-bg-nav);position:relative;z-index:100}.engine-nav-subpage .engine-nav-right{display:flex;align-items:center;gap:12px}.container,.stats-container,.loto-container{max-width:var(--app-max-width);width:100%;margin:0 auto;padding:var(--app-padding-y) var(--app-padding-x);box-sizing:border-box}.engine-nav-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:rgba(255,255,255,.08);color:var(--theme-text-on-dark);border-radius:var(--radius-sm);text-decoration:none;font-size:.88rem;font-weight:500}.engine-badge{display:inline-block;padding:4px 12px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);color:#10b981;border-radius:20px;font-size:.75rem;font-weight:600}.page-header{background:var(--theme-bg-header);color:var(--theme-text-on-dark);padding:30px 20px 60px;text-align:center;position:relative;overflow:hidden}.theme-switch{display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;background:var(--theme-border-light);border:1px solid var(--theme-border-light);border-radius:50%;color:var(--theme-text-on-dark);cursor:pointer;font-size:1.2rem}
+    </style>
+    <link rel="stylesheet" href="/ui/static/style.css?v=11" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/ui/static/style.css?v=11"></noscript>
+    <link rel="stylesheet" href="/ui/static/legal.css?v=7">
+    <script src="/ui/static/theme.js?v=7"></script>
+    <script src="/ui/static/analytics.js?v=3" defer></script>
+    <script src="/ui/static/tracker.js?v=4" defer></script>
+    <style>
+        /* ---- Paires ---- */
+        .pairs-section { margin-bottom: 32px; }
+        .pairs-title { font-size: 1.3rem; margin-bottom: 8px; }
+        .pairs-title-hot { color: #ef4444; }
+        .pairs-title-cold { color: #3b82f6; }
+        .pairs-subtitle { font-size: 0.9rem; color: var(--theme-text-secondary); margin-bottom: 16px; }
+        .pairs-loading { padding: 24px; text-align: center; color: var(--theme-text-secondary); }
+        .pairs-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+        .pairs-table th { text-align: left; padding: 10px 12px; border-bottom: 2px solid var(--theme-border); color: var(--theme-text-secondary); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .pairs-table td { padding: 10px 12px; border-bottom: 1px solid var(--theme-border); vertical-align: middle; }
+        .pairs-table tbody tr:hover { background: rgba(102, 126, 234, 0.04); }
+        .pair-balls { display: inline-flex; gap: 6px; align-items: center; }
+        .pair-ball { width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 700; color: white; }
+        .pair-ball-hot { background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3); }
+        .pair-ball-cold { background: linear-gradient(135deg, #3b82f6, #2563eb); box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3); }
+        .pair-freq-bar { display: flex; align-items: center; gap: 8px; }
+        .pair-freq-track { flex: 1; height: 8px; background: var(--theme-border); border-radius: 4px; overflow: hidden; min-width: 60px; }
+        .pair-freq-fill-hot { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #f97316, #ef4444); }
+        .pair-freq-fill-cold { height: 100%; border-radius: 4px; background: linear-gradient(90deg, #60a5fa, #3b82f6); }
+        .pair-freq-pct { font-size: 0.85rem; font-weight: 600; color: var(--theme-text-primary); min-width: 42px; }
+        /* ---- Pairs sub-tabs ---- */
+        .pairs-sub-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
+        .pairs-sub-tab { padding: 9px 20px; background: transparent; border: 1.5px solid var(--theme-border); border-radius: 24px; cursor: pointer; font-size: 0.88rem; font-weight: 600; color: var(--theme-text-secondary); transition: all 0.25s ease; font-family: inherit; }
+        .pairs-sub-tab:hover { background: rgba(102, 126, 234, 0.08); border-color: var(--primary); color: var(--primary); }
+        .pairs-sub-tab.active { background: var(--primary); border-color: var(--primary); color: white; box-shadow: 0 2px 8px rgba(26, 115, 232, 0.3); }
+        /* ---- Pairs grid (49 numbers) ---- */
+        .pairs-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; max-width: 400px; margin: 0 auto 28px; }
+        .pairs-grid-btn { width: 100%; aspect-ratio: 1; border-radius: 50%; border: 1.5px solid var(--theme-border); background: var(--theme-bg-card); color: var(--theme-text-primary); font-size: 0.95rem; font-weight: 700; cursor: pointer; transition: all 0.2s ease; font-family: inherit; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+        .pairs-grid-btn:hover { border-color: var(--primary); transform: scale(1.08); box-shadow: 0 2px 10px rgba(26, 115, 232, 0.25); }
+        .pairs-grid-btn.selected { background: linear-gradient(135deg, #ef4444, #dc2626); color: white; border-color: transparent; box-shadow: 0 3px 12px rgba(239, 68, 68, 0.45); transform: scale(1.08); }
+        /* ---- Pair selection display ---- */
+        .pairs-selection { display: flex; align-items: center; justify-content: center; gap: 12px; margin-bottom: 24px; padding: 16px 20px; background: var(--theme-bg-card); border: 1px solid var(--theme-border); border-radius: 14px; box-shadow: 0 2px 8px rgba(0,0,0,.05); }
+        .pairs-selected-label { font-weight: 600; color: var(--theme-text-secondary); font-size: 0.9rem; }
+        .pairs-sel-ball { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 700; color: white; background: linear-gradient(135deg, var(--primary), var(--primary-dark, #1557b0)); box-shadow: 0 2px 8px rgba(26, 115, 232, 0.3); transition: all 0.25s ease; }
+        .pairs-sel-ball.empty { background: var(--theme-border); color: var(--theme-text-secondary); box-shadow: none; }
+        .pairs-sel-separator { font-size: 1.2rem; font-weight: 700; color: var(--theme-text-secondary); }
+        .pairs-reset-btn { display: inline-flex; align-items: center; gap: 4px; padding: 8px 16px; border: 1.5px solid var(--theme-border); border-radius: 20px; background: var(--theme-bg-card); color: var(--theme-text-secondary); font-size: 0.82rem; font-weight: 600; cursor: pointer; font-family: inherit; margin-left: 8px; transition: all 0.2s ease; box-shadow: 0 1px 3px rgba(0,0,0,.04); }
+        .pairs-reset-btn:hover { background: rgba(239, 68, 68, 0.08); border-color: #ef4444; color: #ef4444; box-shadow: 0 2px 6px rgba(239, 68, 68, 0.15); }
+        /* ---- Pair result card ---- */
+        .pairs-result { background: var(--theme-bg-card); border: 1px solid var(--theme-border); border-radius: 14px; padding: 28px 24px; text-align: center; margin-bottom: 24px; border-left: 4px solid var(--primary); box-shadow: 0 4px 16px rgba(0,0,0,.07); transition: border-left-color 0.3s ease; }
+        .pairs-result.result-warm { border-left-color: #ef4444; }
+        .pairs-result.result-cold { border-left-color: #3b82f6; }
+        .pairs-result-balls { display: flex; justify-content: center; gap: 14px; margin-bottom: 18px; }
+        .pairs-result-ball { width: 52px; height: 52px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 1.35rem; font-weight: 700; color: white; transition: transform 0.3s ease; }
+        .pairs-result-ball.warm { background: linear-gradient(135deg, #f97316, #ef4444); box-shadow: 0 4px 14px rgba(239,68,68,.35); }
+        .pairs-result-ball.neutral { background: linear-gradient(135deg, var(--primary), var(--primary-dark, #1557b0)); box-shadow: 0 4px 14px rgba(26,115,232,.3); }
+        .pairs-result-ball.cold { background: linear-gradient(135deg, #60a5fa, #3b82f6); box-shadow: 0 4px 14px rgba(59,130,246,.35); }
+        .pairs-result-stat { font-size: 1.05rem; margin-bottom: 10px; color: var(--theme-text-primary); line-height: 1.5; }
+        .pairs-result-stat strong { font-size: 1.15rem; }
+        .pairs-result-bar { max-width: 300px; margin: 18px auto 0; }
+        .pairs-result-track { height: 10px; background: var(--theme-border); border-radius: 6px; overflow: hidden; }
+        .pairs-result-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease-out; }
+        @media (max-width: 768px) {
+            .pairs-grid { grid-template-columns: repeat(5, 1fr); max-width: 280px; gap: 6px; }
+            .pairs-grid-btn { font-size: 0.85rem; }
+            .pairs-selection { flex-wrap: wrap; gap: 8px; padding: 12px; }
+            .pair-ball { width: 30px; height: 30px; font-size: 0.8rem; }
+            .pair-freq-track { min-width: 40px; }
+            .pairs-result { padding: 20px 16px; }
+            .pairs-result-ball { width: 46px; height: 46px; font-size: 1.2rem; }
+            .pairs-sub-tabs { gap: 6px; }
+            .pairs-sub-tab { padding: 8px 14px; font-size: 0.82rem; }
+        }
+    </style>
+</head>
+<body class="subpage">
+    <nav class="engine-nav-subpage">
+        <a href="/loto/statistiques" class="engine-nav-btn">
+            <span class="nav-arrow">&larr;</span>
+            <span class="nav-text">Statistiques</span>
+        </a>
+        <div class="engine-nav-right">
+            <span class="engine-badge">Loto France</span>
+            <button id="theme-switch" class="theme-switch" title="Changer de thème">
+                <span class="icon-day">&#9728;&#65039;</span>
+                <span class="icon-night">&#127769;</span>
+            </button>
+        </div>
+    </nav>
+
+    <header class="page-header">
+        <h1>Paires de Numéros au Loto — Analyse des Co-occurrences</h1>
+        <p style="margin-top:8px;opacity:.85;">Classement hot/cold des 1 176 paires et recherche interactive</p>
+    </header>
+
+    <div class="container subpage-container">
+        <article class="legal-content">
+
+            <!-- Contenu SEO éditorial -->
+            <section class="legal-section">
+                <p>
+                    Au Loto, chaque tirage extrait 5 numéros parmi 49. Cela produit <strong>10 paires distinctes</strong> par tirage (C(5,2) = 10).
+                    Sur l'ensemble de l'historique, certaines combinaisons de deux numéros apparaissent plus souvent que d'autres :
+                    ce sont les <strong>co-occurrences</strong>, ou <em>paires</em>.
+                </p>
+                <p>
+                    LotoIA analyse les <strong>1 176 paires possibles</strong> (C(49,2)) sur l'intégralité des tirages depuis 2019.
+                    Le classement <strong>hot</strong> affiche les 10 paires les plus fréquentes, le classement <strong>cold</strong> les 10 moins fréquentes.
+                    La recherche interactive vous permet de sélectionner 2 numéros pour connaître instantanément leur fréquence de co-apparition, leur rang et leur pourcentage.
+                </p>
+                <p>
+                    <strong>Rappel important :</strong> les co-occurrences passées ne prédisent pas les tirages futurs.
+                    Chaque combinaison a strictement la même probabilité mathématique. Ces données sont un outil d'<strong>exploration statistique</strong>, pas de prédiction.
+                </p>
+            </section>
+
+            <!-- Outil interactif : sous-onglets -->
+            <section class="legal-section">
+                <div class="pairs-sub-tabs">
+                    <button class="pairs-sub-tab active" onclick="switchPairsSubTab('classement')">&#128202; Classement</button>
+                    <button class="pairs-sub-tab" onclick="switchPairsSubTab('recherche')">&#128269; Recherche</button>
+                </div>
+
+                <!-- Sous-onglet Classement -->
+                <div id="pairs-classement" class="pairs-sub-content">
+                    <h2 style="font-size:1.15rem;margin-bottom:16px;color:var(--theme-text-primary);">Classement des Paires</h2>
+                    <p style="margin-bottom: 24px; color: var(--theme-text-secondary);">
+                        Co-occurrences des paires de numéros sur l'ensemble de l'historique (C(5,2) = 10 paires par tirage).
+                    </p>
+
+                    <div class="pairs-section pairs-hot-section">
+                        <h3 class="pairs-title pairs-title-hot">&#128293; Top 10 paires les plus fréquentes</h3>
+                        <p class="pairs-subtitle" id="pairs-subtitle-hot"></p>
+                        <div id="pairs-hot-loading" class="pairs-loading">Chargement...</div>
+                        <table class="pairs-table" id="pairs-hot-table" style="display:none;">
+                            <thead><tr><th>#</th><th>Paire</th><th>Sorties</th><th>Fréquence</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+
+                    <div class="pairs-section pairs-cold-section">
+                        <h3 class="pairs-title pairs-title-cold">&#10052;&#65039; Top 10 paires les moins fréquentes</h3>
+                        <p class="pairs-subtitle" id="pairs-subtitle-cold"></p>
+                        <div id="pairs-cold-loading" class="pairs-loading">Chargement...</div>
+                        <table class="pairs-table" id="pairs-cold-table" style="display:none;">
+                            <thead><tr><th>#</th><th>Paire</th><th>Sorties</th><th>Fréquence</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Sous-onglet Recherche -->
+                <div id="pairs-recherche" class="pairs-sub-content" style="display:none;">
+                    <h2 style="font-size:1.15rem;margin-bottom:8px;color:var(--theme-text-primary);">Recherche de Paires</h2>
+                    <p style="margin-bottom:20px;color:var(--theme-text-secondary);">Sélectionnez 2 numéros pour voir leur co-occurrence dans l'historique.</p>
+
+                    <div class="pairs-grid" id="pairs-number-grid"></div>
+
+                    <div class="pairs-selection" id="pairs-selection">
+                        <span class="pairs-selected-label">Sélection :</span>
+                        <span id="pairs-sel-1" class="pairs-sel-ball empty">?</span>
+                        <span class="pairs-sel-separator">+</span>
+                        <span id="pairs-sel-2" class="pairs-sel-ball empty">?</span>
+                        <button id="pairs-reset-btn" class="pairs-reset-btn" onclick="resetPairSelection()" style="display:none;">&#10005; Reset</button>
+                    </div>
+
+                    <div id="pairs-result" class="pairs-result" style="display:none;"></div>
+                </div>
+
+                <div class="info-note">
+                    <strong>&#9888;&#65039; Avertissement :</strong><br>
+                    Les co-occurrences passées ne prédisent pas les tirages futurs.
+                    Chaque combinaison a la même probabilité mathématique.
+                </div>
+            </section>
+
+            <!-- Comment ça marche -->
+            <section class="legal-section">
+                <h2>Comment ça marche ?</h2>
+                <p>
+                    L'analyse de paires repose sur un calcul combinatoire simple : pour chaque tirage de 5 numéros, on extrait les 10 paires possibles (C(5,2) = 10).
+                    On comptabilise ensuite le nombre de fois où chaque paire apparaît dans l'historique complet des tirages du Loto depuis 2019.
+                    Les paires sont classées par fréquence d'apparition, du plus fréquent (<strong>hot</strong>) au moins fréquent (<strong>cold</strong>).
+                    La recherche interactive permet de vérifier n'importe quelle paire parmi les 1 176 possibles (C(49,2)).
+                </p>
+            </section>
+
+            <!-- CTAs -->
+            <section class="legal-section">
+                <h2>Aller plus loin</h2>
+                <div class="cta-cards">
+                    <a href="/loto/statistiques" class="cta-card">
+                        <span class="cta-card-icon">&#128200;</span>
+                        <h3>Statistiques en direct</h3>
+                        <p>Analyse par numéro, historique complet et Top/Flop dynamique</p>
+                    </a>
+                    <a href="/loto/numeros-les-plus-sortis" class="cta-card">
+                        <span class="cta-card-icon">&#127942;</span>
+                        <h3>Numéros les plus sortis</h3>
+                        <p>Classement complet des 49 numéros par fréquence</p>
+                    </a>
+                    <a href="/loto" class="cta-card">
+                        <span class="cta-card-icon">&#129504;</span>
+                        <h3>Explorer des grilles</h3>
+                        <p>Grilles générées par le moteur HYBRIDE</p>
+                    </a>
+                    <a href="/loto/analyse" class="cta-card">
+                        <span class="cta-card-icon">&#127919;</span>
+                        <h3>Auditer ma grille</h3>
+                        <p>Vérifiez l'équilibre de votre grille en temps réel</p>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Avertissement jeu responsable -->
+            <section class="legal-section">
+                <div class="info-box" style="background: #fef3c7; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+                    <p><strong>Jeu responsable</strong></p>
+                    <p>Le Loto est un jeu de hasard. Jouer comporte des risques : endettement, isolement, dépendance. Ne jouez jamais plus que ce que vous pouvez vous permettre de perdre.</p>
+                    <p>Appelez le <strong>09 74 75 13 13</strong> (appel non surtaxé) — <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
+                    <p>Interdiction de jeu aux mineurs.</p>
+                </div>
+            </section>
+
+        </article>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-nav">
+                <a href="/">Modules</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/accueil">Accueil</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/loto">Loto France</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/loto/analyse">Analyse</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/loto/statistiques">Statistiques</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/loto/paires">Paires</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/historique">Historique</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/news">Actualités</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/faq">FAQ</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/moteur">Moteur</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/methodologie">Méthodologie</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/hybride">HYBRIDE</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/loto/intelligence-artificielle">Loto et IA</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/loto/numeros-les-plus-sortis">Numéros les plus sortis</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/a-propos">À propos</a>
+            </div>
+            <div class="footer-legal">
+                <a href="/mentions-legales">Mentions légales</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/politique-confidentialite">Confidentialité</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/politique-cookies">Cookies</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/disclaimer">Avertissements</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="#" onclick="event.preventDefault();if(window.LotoIAContact)LotoIAContact.openModal(window.location.pathname);">Nous contacter</a>
+            </div>
+            <div class="footer-crosslink" style="margin:12px 0;padding:8px 0;border-top:1px solid var(--theme-border);font-size:.85rem;">
+                <a href="/euromillions">EuroMillions IA</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/euromillions/statistiques">Stats EM</a>
+                <span class="footer-sep">&bull;</span>
+                <a href="/euromillions/generateur">Générateur EM</a>
+            </div>
+            <p class="footer-brand">LotoIA.fr <span class="app-version"></span></p>
+            <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dépendance. Appelez le 09 74 75 13 13 (appel non surtaxé).</p>
+            <p class="footer-help">Interdiction de jeu aux mineurs. <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
+            <div class="credits">
+                <p class="dev-by">Développé par <strong>JyppY</strong></p>
+            </div>
+        </footer>
+    </div>
+
+    <button id="scroll-to-top" class="scroll-to-top" aria-label="Retour en haut">&uarr;</button>
+
+    <script>
+        // ========== PAIRES — Load data ==========
+        function loadPairs() {
+            Promise.all([
+                fetch('/api/loto/stats/pairs?top_n=10&order=hot').then(function(r){ return r.json(); }),
+                fetch('/api/loto/stats/pairs?top_n=10&order=cold').then(function(r){ return r.json(); })
+            ]).then(function(results) {
+                var hotData = results[0];
+                var coldData = results[1];
+                if (hotData.success) {
+                    renderPairsTable('pairs-hot', hotData.pairs, 'hot', hotData.total_draws);
+                    document.getElementById('pairs-subtitle-hot').textContent = 'Sur les ' + hotData.total_draws.toLocaleString('fr-FR') + ' derniers tirages du Loto';
+                }
+                if (coldData.success) {
+                    renderPairsTable('pairs-cold', coldData.pairs, 'cold', coldData.total_draws);
+                    document.getElementById('pairs-subtitle-cold').textContent = 'Sur les ' + coldData.total_draws.toLocaleString('fr-FR') + ' derniers tirages du Loto';
+                }
+            }).catch(function() {
+                document.getElementById('pairs-hot-loading').textContent = 'Erreur de chargement.';
+                document.getElementById('pairs-cold-loading').textContent = 'Erreur de chargement.';
+            });
+        }
+
+        // ========== PAIRES — Sub-tabs ==========
+        function switchPairsSubTab(name) {
+            document.querySelectorAll('.pairs-sub-tab').forEach(function(t){ t.classList.remove('active'); });
+            document.querySelectorAll('.pairs-sub-content').forEach(function(c){ c.style.display = 'none'; });
+            event.target.classList.add('active');
+            document.getElementById('pairs-' + name).style.display = 'block';
+            if (name === 'recherche' && !pairsGridBuilt) { buildPairsGrid(); pairsGridBuilt = true; }
+        }
+
+        // ========== PAIRES — Grille cliquable ==========
+        var pairsGridBuilt = false;
+        var pairsSelected = [];
+
+        function buildPairsGrid() {
+            var grid = document.getElementById('pairs-number-grid');
+            for (var i = 1; i <= 49; i++) {
+                var btn = document.createElement('button');
+                btn.className = 'pairs-grid-btn';
+                btn.textContent = i;
+                btn.setAttribute('data-num', i);
+                btn.addEventListener('click', onPairsGridClick);
+                grid.appendChild(btn);
+            }
+        }
+
+        function onPairsGridClick(e) {
+            var num = parseInt(e.target.getAttribute('data-num'));
+            var idx = pairsSelected.indexOf(num);
+            if (idx !== -1) {
+                pairsSelected.splice(idx, 1);
+                e.target.classList.remove('selected');
+                updatePairsSelectionUI();
+                document.getElementById('pairs-result').style.display = 'none';
+                return;
+            }
+            if (pairsSelected.length >= 2) {
+                var oldest = pairsSelected.shift();
+                var oldBtn = document.querySelector('.pairs-grid-btn[data-num="' + oldest + '"]');
+                if (oldBtn) oldBtn.classList.remove('selected');
+            }
+            pairsSelected.push(num);
+            e.target.classList.add('selected');
+            updatePairsSelectionUI();
+            if (pairsSelected.length === 2) {
+                lookupPair(pairsSelected[0], pairsSelected[1]);
+            }
+        }
+
+        function updatePairsSelectionUI() {
+            var s1 = document.getElementById('pairs-sel-1');
+            var s2 = document.getElementById('pairs-sel-2');
+            var resetBtn = document.getElementById('pairs-reset-btn');
+            s1.textContent = pairsSelected[0] || '?';
+            s1.className = 'pairs-sel-ball' + (pairsSelected[0] ? '' : ' empty');
+            s2.textContent = pairsSelected[1] || '?';
+            s2.className = 'pairs-sel-ball' + (pairsSelected[1] ? '' : ' empty');
+            resetBtn.style.display = pairsSelected.length > 0 ? 'inline-block' : 'none';
+        }
+
+        function resetPairSelection() {
+            pairsSelected = [];
+            document.querySelectorAll('.pairs-grid-btn.selected').forEach(function(b){ b.classList.remove('selected'); });
+            updatePairsSelectionUI();
+            document.getElementById('pairs-result').style.display = 'none';
+        }
+
+        function lookupPair(a, b) {
+            var n1 = Math.min(a, b), n2 = Math.max(a, b);
+            var resultDiv = document.getElementById('pairs-result');
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = '<p style="color:var(--theme-text-secondary);">Chargement...</p>';
+            fetch('/api/loto/stats/pair?n1=' + n1 + '&n2=' + n2)
+                .then(function(r){ return r.json(); })
+                .then(function(data) {
+                    if (!data.success) { resultDiv.innerHTML = '<p>Erreur</p>'; return; }
+                    var pctRank = Math.round((1 - data.rank / data.total_pairs) * 100);
+                    var ballClass = pctRank >= 90 ? 'warm' : pctRank <= 10 ? 'cold' : 'neutral';
+                    var fillColor = pctRank >= 90 ? '#ef4444' : pctRank <= 10 ? '#3b82f6' : 'var(--primary)';
+                    var barWidth = Math.max(Math.round(data.percentage / 3 * 100), 3);
+                    var rankLabel = data.rank === 1 ? '1<sup>re</sup>' : data.rank + '<sup>e</sup>';
+                    var resultClass = pctRank >= 90 ? ' result-warm' : pctRank <= 10 ? ' result-cold' : '';
+                    resultDiv.className = 'pairs-result' + resultClass;
+                    resultDiv.innerHTML =
+                        '<div class="pairs-result-balls">' +
+                            '<span class="pairs-result-ball ' + ballClass + '">' + data.n1 + '</span>' +
+                            '<span class="pairs-result-ball ' + ballClass + '">' + data.n2 + '</span>' +
+                        '</div>' +
+                        '<p class="pairs-result-stat">Sortis ensemble <strong>' + data.count + ' fois</strong> sur ' + data.total_draws.toLocaleString('fr-FR') + ' tirages</p>' +
+                        '<p class="pairs-result-stat">Fréquence : <strong>' + data.percentage.toFixed(1) + '%</strong></p>' +
+                        '<p class="pairs-result-stat">Rang : <strong>' + rankLabel + '</strong> sur ' + data.total_pairs.toLocaleString('fr-FR') + ' paires possibles</p>' +
+                        '<div class="pairs-result-bar"><div class="pairs-result-track"><div class="pairs-result-fill" style="width:' + barWidth + '%;background:' + fillColor + ';"></div></div></div>';
+                })
+                .catch(function() {
+                    resultDiv.innerHTML = '<p style="color:#ef4444;">Erreur de chargement.</p>';
+                });
+        }
+
+        function renderPairsTable(prefix, pairs, type, totalDraws) {
+            var table = document.getElementById(prefix + '-table');
+            var loading = document.getElementById(prefix + '-loading');
+            var tbody = table.querySelector('tbody');
+            var maxCount = pairs.length > 0 ? pairs[0].count : 1;
+            if (type === 'cold' && pairs.length > 0) {
+                maxCount = pairs[pairs.length - 1].count;
+            }
+            var ballClass = type === 'hot' ? 'pair-ball-hot' : 'pair-ball-cold';
+            var fillClass = type === 'hot' ? 'pair-freq-fill-hot' : 'pair-freq-fill-cold';
+            tbody.innerHTML = '';
+            pairs.forEach(function(p) {
+                var pct = p.percentage;
+                var barWidth = type === 'hot'
+                    ? Math.round(p.count / maxCount * 100)
+                    : Math.round(maxCount / Math.max(p.count, 1) * 100);
+                barWidth = Math.max(barWidth, 5);
+                var tr = document.createElement('tr');
+                tr.innerHTML =
+                    '<td style="font-weight:600;color:var(--theme-text-secondary);width:40px;">' + p.rank + '</td>' +
+                    '<td><span class="pair-balls">' +
+                        '<span class="pair-ball ' + ballClass + '">' + p.num_a + '</span>' +
+                        '<span class="pair-ball ' + ballClass + '">' + p.num_b + '</span>' +
+                    '</span></td>' +
+                    '<td style="font-weight:600;">' + p.count + '</td>' +
+                    '<td><div class="pair-freq-bar">' +
+                        '<div class="pair-freq-track"><div class="' + fillClass + '" style="width:' + barWidth + '%"></div></div>' +
+                        '<span class="pair-freq-pct">' + pct.toFixed(1) + '%</span>' +
+                    '</div></td>';
+                tbody.appendChild(tr);
+            });
+            loading.style.display = 'none';
+            table.style.display = 'table';
+        }
+
+        // Auto-load pairs on page load
+        document.addEventListener('DOMContentLoaded', loadPairs);
+    </script>
+
+    <script src="/ui/static/scroll.js?v=7" defer></script>
+    <script src="/ui/static/cookie-consent.js?v=7" defer></script>
+
+    <!-- HYBRIDE Chatbot Widget -->
+    <div id="hybride-chatbot-root"></div>
+    <link rel="stylesheet" href="/ui/static/hybride-chatbot.css?v=4.3">
+    <script src="/ui/static/hybride-chatbot.js?v=4.4" defer></script>
+    <script src="/ui/static/version-inject.js" defer></script>
+
+    <!-- Bandeau Notation -->
+    <link rel="stylesheet" href="/ui/static/rating-popup.css?v=2">
+    <script src="/ui/static/rating-popup.js?v=2" defer></script>
+    <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc" data-before-send="umamiBeforeSend"></script>
+</body>
+</html>

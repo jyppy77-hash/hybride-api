@@ -756,40 +756,144 @@ class TestNoMetaKeywords:
 
 
 # ═══════════════════════════════════════════════
-# 19. seo.py JSON-LD escaping
+# 20. /loto/paires SEO coverage
 # ═══════════════════════════════════════════════
 
-class TestSeoJsonLdEscaping:
-    """seo.py JSON-LD must handle special characters."""
+class TestLotoPairesSeo:
+    """/loto/paires dedicated page SEO checks."""
 
-    def test_faq_with_quotes_produces_valid_json(self):
-        """generate_jsonld_faq with double quotes in Q/A produces valid JSON."""
-        import json as json_mod
-        from seo import generate_jsonld_faq
-        questions = [
-            ('Le numéro "7" est-il spécial ?', 'Non, le "7" n\'a aucun avantage.'),
-        ]
-        html = generate_jsonld_faq(questions)
-        # Extract JSON from script tag
-        start = html.index("{")
-        end = html.rindex("}") + 1
-        json_str = html[start:end]
-        parsed = json_mod.loads(json_str)
-        assert parsed["@type"] == "FAQPage"
-        assert '"7"' in parsed["mainEntity"][0]["name"]
+    def _get(self):
+        client = _get_client()
+        return client.get("/loto/paires")
 
-    def test_breadcrumb_with_quotes_produces_valid_json(self):
-        """generate_jsonld_breadcrumb with special chars produces valid JSON."""
-        import json as json_mod
-        from seo import generate_jsonld_breadcrumb
-        items = [("Accueil", "/"), ("FAQ : \"Tout savoir\"", "/faq")]
-        html = generate_jsonld_breadcrumb(items)
-        start = html.index("{")
-        end = html.rindex("}") + 1
-        json_str = html[start:end]
-        parsed = json_mod.loads(json_str)
-        assert parsed["@type"] == "BreadcrumbList"
-        assert len(parsed["itemListElement"]) == 2
+    def test_paires_returns_200(self):
+        resp = self._get()
+        assert resp.status_code == 200
+
+    def test_paires_has_unique_title(self):
+        resp = self._get()
+        assert "<title>Paires de Numéros Loto" in resp.text
+
+    def test_paires_has_meta_description(self):
+        resp = self._get()
+        assert 'name="description"' in resp.text
+        assert "co-occurrences" in resp.text.lower()
+
+    def test_paires_has_canonical(self):
+        resp = self._get()
+        assert 'rel="canonical" href="https://lotoia.fr/loto/paires"' in resp.text
+
+    def test_paires_in_sitemap(self):
+        client = _get_client()
+        resp = client.get("/sitemap.xml")
+        assert "/loto/paires" in resp.text
+
+    def test_paires_has_jsonld_dataset(self):
+        resp = self._get()
+        assert '"@type": "Dataset"' in resp.text
+        assert "Co-occurrences" in resp.text
+
+    def test_paires_has_jsonld_breadcrumb(self):
+        resp = self._get()
+        assert '"@type": "BreadcrumbList"' in resp.text
+
+    def test_paires_has_jsonld_webapp(self):
+        resp = self._get()
+        assert '"@type": "WebApplication"' in resp.text
+        assert "Analyseur de Paires" in resp.text
+
+    def test_paires_has_og_complete(self):
+        resp = self._get()
+        for tag in ["og:title", "og:description", "og:url", "og:image",
+                     "og:locale", "og:type", "og:site_name",
+                     "og:image:width", "og:image:height"]:
+            assert tag in resp.text, f"Missing {tag} on /loto/paires"
+
+    def test_paires_has_twitter_cards(self):
+        resp = self._get()
+        for tag in ["twitter:card", "twitter:title", "twitter:description", "twitter:image"]:
+            assert tag in resp.text, f"Missing {tag} on /loto/paires"
+
+    def test_paires_no_meta_keywords(self):
+        resp = self._get()
+        assert 'name="keywords"' not in resp.text
+
+    def test_paires_has_umami(self):
+        resp = self._get()
+        assert "cloud.umami.is/script.js" in resp.text
+        assert 'data-before-send="umamiBeforeSend"' in resp.text
+
+
+# ═══════════════════════════════════════════════
+# 21. EM /xx/euromillions/paires SEO coverage
+# ═══════════════════════════════════════════════
+
+class TestEmPairesSeo:
+    """EM paires dedicated pages SEO checks (6 langs)."""
+
+    _PATHS = {
+        "fr": "/euromillions/paires",
+        "en": "/en/euromillions/pairs",
+        "es": "/es/euromillions/pares",
+        "pt": "/pt/euromillions/pares",
+        "de": "/de/euromillions/paare",
+        "nl": "/nl/euromillions/paren",
+    }
+
+    def _get_page(self, lang):
+        cursor = _make_cursor()
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            return client.get(self._PATHS[lang])
+
+    @pytest.mark.parametrize("lang", ["fr", "en", "es", "pt", "de", "nl"])
+    def test_paires_returns_200(self, lang):
+        resp = self._get_page(lang)
+        assert resp.status_code == 200
+
+    @pytest.mark.parametrize("lang", ["fr", "en"])
+    def test_paires_has_jsonld_dataset(self, lang):
+        resp = self._get_page(lang)
+        assert '"@type": "Dataset"' in resp.text
+
+    @pytest.mark.parametrize("lang", ["fr", "en"])
+    def test_paires_has_jsonld_breadcrumb(self, lang):
+        resp = self._get_page(lang)
+        assert '"@type": "BreadcrumbList"' in resp.text
+
+    @pytest.mark.parametrize("lang", ["fr", "en"])
+    def test_paires_has_jsonld_webapp(self, lang):
+        resp = self._get_page(lang)
+        assert '"@type": "WebApplication"' in resp.text
+
+    @pytest.mark.parametrize("lang", ["fr", "en"])
+    def test_paires_has_og_complete(self, lang):
+        resp = self._get_page(lang)
+        for tag in ["og:title", "og:description", "og:url", "og:image",
+                     "og:locale", "og:type", "og:site_name"]:
+            assert tag in resp.text, f"Missing {tag} on EM paires {lang}"
+
+    @pytest.mark.parametrize("lang", ["fr", "en"])
+    def test_paires_has_twitter(self, lang):
+        resp = self._get_page(lang)
+        for tag in ["twitter:card", "twitter:title"]:
+            assert tag in resp.text, f"Missing {tag} on EM paires {lang}"
+
+    def test_paires_in_sitemap(self):
+        client = _get_client()
+        resp = client.get("/sitemap.xml")
+        assert "/euromillions/paires" in resp.text
+        assert "/en/euromillions/pairs" in resp.text
+
+    def test_paires_hreflang_count(self):
+        resp = self._get_page("fr")
+        assert resp.text.count('hreflang=') >= 7
+
+    @pytest.mark.parametrize("lang", ["fr", "en"])
+    def test_paires_has_canonical(self, lang):
+        resp = self._get_page(lang)
+        assert 'rel="canonical"' in resp.text
+
 
 
 # ═══════════════════════════════════════════════

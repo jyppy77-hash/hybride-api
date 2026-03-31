@@ -114,7 +114,8 @@
     {# ── Common scripts ── #}
     <script src="/ui/static/scroll.js?v=1"></script>
     {% if include_nav_scroll %}<script src="/ui/static/nav-scroll.js?v=1"></script>{% endif %}
-    <link rel="stylesheet" href="/ui/static/legal.css?v=7">
+    <link rel="stylesheet" href="/ui/static/legal.css?v=7" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/ui/static/legal.css?v=7"></noscript>
     <script src="/ui/static/cookie-consent.js?v=1"></script>
 
     {# ── Chatbot widget ── #}
