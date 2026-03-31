@@ -586,7 +586,7 @@ def _is_owner_ip(ip: str) -> bool:
         return True
     return any(ip.startswith(p) for p in _OWNER_PREFIXES)
 
-_OWNER_INJECT = b'<script>window.__OWNER__=true;</script>\n</head>'
+_OWNER_INJECT = b'<script>window.__OWNER__=true;function umamiBeforeSend(){return false;}</script>\n</head>'
 _OWNER_BODY_ATTR = (b' data-owner="1"', b"<body")
 
 

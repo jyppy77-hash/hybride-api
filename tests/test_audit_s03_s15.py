@@ -56,6 +56,18 @@ class TestS03UmamiPresence:
                 continue
             assert self.UMAMI_MARKER in content, f"Umami missing in {html_file}"
 
+    def test_umami_before_send_on_all_pages(self):
+        """Every Umami script tag must have data-before-send='umamiBeforeSend' for owner filtering."""
+        for html_file in self.ROOT.rglob("*.html"):
+            if "admin" in str(html_file):
+                continue
+            content = html_file.read_text(encoding="utf-8", errors="ignore")
+            if self.UMAMI_MARKER not in content:
+                continue
+            assert 'data-before-send="umamiBeforeSend"' in content, (
+                f"Umami script missing data-before-send in {html_file}"
+            )
+
     def test_no_umami_in_admin(self):
         """Admin templates must NOT include Umami (internal pages)."""
         admin_dir = self.ROOT / "templates" / "admin"
