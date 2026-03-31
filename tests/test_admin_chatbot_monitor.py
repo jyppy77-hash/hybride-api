@@ -190,14 +190,18 @@ class TestChatbotMonitorExport:
         from datetime import datetime
         client = _authed_client()
         mock_row = {
+            "id": 99,
             "created_at": datetime(2026, 3, 18, 14, 0, 0),
             "module": "loto", "lang": "fr",
             "question": "test question",
+            "response_preview": "Voici la réponse...",
             "phase_detected": "Gemini",
             "sql_generated": None, "sql_status": "N/A",
             "duration_ms": 200, "is_error": 0,
             "error_detail": None, "grid_count": 0,
             "has_exclusions": 0,
+            "gemini_tokens_in": 100, "gemini_tokens_out": 50,
+            "ip_hash": "a1b2c3d4e5f6", "session_hash": "s1s2s3s4s5s6",
         }
         with patch("routes.admin.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[mock_row])
@@ -207,7 +211,15 @@ class TestChatbotMonitorExport:
         assert "chatbot_log_" in resp.headers.get("content-disposition", "")
         lines = resp.text.strip().split("\n")
         assert len(lines) == 2  # header + 1 row
-        assert "created_at" in lines[0]
+        header = lines[0]
+        assert "created_at" in header
+        assert "response_preview" in header
+        assert "tokens_in" in header
+        assert "tokens_out" in header
+        assert "ip_hash" in header
+        assert "session_hash" in header
+        # Verify data row contains response
+        assert "Voici la réponse" in lines[1]
 
     def test_export_csv_with_filters(self):
         client = _authed_client()

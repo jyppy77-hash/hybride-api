@@ -4525,3 +4525,41 @@ msgstr ""
 msgid "sorties"
 msgstr ""
 
+#: ui/templates/em/faq.html — FAQ EuroMillions Q&A (V78)
+msgid "À quelle fréquence ont lieu les tirages EuroMillions ?"
+msgstr ""
+
+msgid "Les tirages EuroMillions ont lieu deux fois par semaine, les mardis et vendredis à 21h00 CET. LotoIA met à jour sa base de données après chaque tirage."
+msgstr ""
+
+msgid "Combien de numéros faut-il trouver pour gagner à l'EuroMillions ?"
+msgstr ""
+
+msgid "Pour remporter le jackpot, il faut trouver les 5 numéros principaux (1-50) et les 2 étoiles (1-12). Il y a 13 rangs de gains au total."
+msgstr ""
+
+msgid "Dans quels pays peut-on jouer à l'EuroMillions ?"
+msgstr ""
+
+msgid "L'EuroMillions est disponible dans 9 pays européens : France, Royaume-Uni, Espagne, Portugal, Belgique, Luxembourg, Irlande, Autriche et Suisse. LotoIA couvre les statistiques pour tous les pays participants."
+msgstr ""
+
+msgid "Quelle est la différence entre numéros chauds et froids ?"
+msgstr ""
+
+msgid ""
+"Les numéros chauds sont ceux tirés le plus fréquemment sur la période "
+"historique. Les numéros froids sont ceux tirés le moins fréquemment. "
+"LotoIA affiche les deux classements sur la page Statistiques. C'est "
+"purement descriptif — la fréquence passée ne prédit pas les tirages futurs."
+msgstr ""
+
+msgid "LotoIA est-il gratuit ?"
+msgstr ""
+
+msgid ""
+"Oui, LotoIA est entièrement gratuit. Tous les outils statistiques, le "
+"chatbot HYBRIDE, le générateur de grilles et le simulateur sont accessibles "
+"sans inscription ni paiement."
+msgstr ""
+

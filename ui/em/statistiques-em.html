@@ -431,6 +431,9 @@
             color: var(--theme-text-muted);
         }
 
+        .btn-secondary { padding: 8px 18px; border: 1px solid var(--theme-border, #e5e7eb); background: transparent; color: var(--theme-text-primary); border-radius: 8px; cursor: pointer; font-size: .9rem; transition: all .2s; }
+        .btn-secondary:hover { background: var(--primary, #667eea); color: #fff; border-color: var(--primary, #667eea); }
+
         /* ---- Responsive ---- */
         @media (max-width: 768px) {
             .numbers-grid {
@@ -613,11 +616,13 @@
                     <div class="topflop-section">
                         <h4 class="top-title">&#127942; Numéros les plus sortis</h4>
                         <div id="top-numbers-grid" class="numbers-grid"></div>
+                        <button id="btn-all-top-boules" onclick="toggleTopBoules()" class="btn-secondary" style="margin-top:12px;">Voir tous les numéros</button>
                     </div>
 
                     <div class="topflop-section">
                         <h4 class="flop-title">&#128201; Numéros les moins sortis</h4>
                         <div id="flop-numbers-grid" class="numbers-grid"></div>
+                        <button id="btn-all-flop-boules" onclick="toggleFlopBoules()" class="btn-secondary" style="margin-top:12px;">Voir tous les numéros</button>
                     </div>
                 </div>
 
@@ -628,11 +633,13 @@
                     <div class="topflop-section">
                         <h4 class="top-title">&#127942; Étoiles les plus sorties</h4>
                         <div id="top-stars-grid" class="numbers-grid"></div>
+                        <button id="btn-all-top-stars" onclick="toggleTopStars()" class="btn-secondary" style="margin-top:12px;">Voir toutes les étoiles</button>
                     </div>
 
                     <div class="topflop-section">
                         <h4 class="flop-title">&#128201; Étoiles les moins sorties</h4>
                         <div id="flop-stars-grid" class="numbers-grid"></div>
+                        <button id="btn-all-flop-stars" onclick="toggleFlopStars()" class="btn-secondary" style="margin-top:12px;">Voir toutes les étoiles</button>
                     </div>
                 </div>
 
@@ -716,6 +723,9 @@
         // =====================================================================
 
         var topFlopLoaded = false;
+        var allTopBoules = [], allFlopBoules = [], allTopStars = [], allFlopStars = [];
+        var showingAllTopBoules = false, showingAllFlopBoules = false;
+        var showingAllTopStars = false, showingAllFlopStars = false;
 
         function switchTab(tabName) {
             // Desactiver tous les onglets
@@ -879,16 +889,16 @@
                 if (data.success) {
                     var d = data.data || data;
 
-                    // Numeros — Top 5
-                    var topNumbers = d.top_numbers || d.top || [];
-                    var flopNumbers = d.flop_numbers || d.flop || [];
-                    var topStars = d.top_stars || d.top_etoiles || [];
-                    var flopStars = d.flop_stars || d.flop_etoiles || [];
+                    // Numeros — store full data for "Voir tous"
+                    allTopBoules = d.top_boules || d.top_numbers || d.top || [];
+                    allFlopBoules = d.flop_boules || d.flop_numbers || d.flop || [];
+                    allTopStars = d.top_stars || d.top_etoiles || [];
+                    allFlopStars = d.flop_stars || d.flop_etoiles || [];
 
-                    displayRanking('top-numbers-grid', topNumbers.slice(0, 5), 'top', false);
-                    displayRanking('flop-numbers-grid', flopNumbers.slice(0, 5), 'flop', false);
-                    displayRanking('top-stars-grid', topStars.slice(0, 5), 'top', true);
-                    displayRanking('flop-stars-grid', flopStars.slice(0, 5), 'flop', true);
+                    displayRanking('top-numbers-grid', allTopBoules.slice(0, 10), 'top', false);
+                    displayRanking('flop-numbers-grid', allFlopBoules.slice(0, 10), 'flop', false);
+                    displayRanking('top-stars-grid', allTopStars.slice(0, 5), 'top', true);
+                    displayRanking('flop-stars-grid', allFlopStars.slice(0, 5), 'flop', true);
 
                     topFlopLoaded = true;
                 } else {
@@ -922,6 +932,30 @@
                     '<div class="count">' + count + ' sorties</div>';
                 grid.appendChild(card);
             });
+        }
+
+        function toggleView(gridId, dataArr, showAll, type, isStar) {
+            displayRanking(gridId, showAll ? dataArr : dataArr.slice(0, isStar ? 5 : 10), type, isStar);
+        }
+        function toggleTopBoules() {
+            showingAllTopBoules = !showingAllTopBoules;
+            toggleView('top-numbers-grid', allTopBoules, showingAllTopBoules, 'top', false);
+            document.getElementById('btn-all-top-boules').textContent = showingAllTopBoules ? 'Voir moins' : 'Voir tous les numéros';
+        }
+        function toggleFlopBoules() {
+            showingAllFlopBoules = !showingAllFlopBoules;
+            toggleView('flop-numbers-grid', allFlopBoules, showingAllFlopBoules, 'flop', false);
+            document.getElementById('btn-all-flop-boules').textContent = showingAllFlopBoules ? 'Voir moins' : 'Voir tous les numéros';
+        }
+        function toggleTopStars() {
+            showingAllTopStars = !showingAllTopStars;
+            toggleView('top-stars-grid', allTopStars, showingAllTopStars, 'top', true);
+            document.getElementById('btn-all-top-stars').textContent = showingAllTopStars ? 'Voir moins' : 'Voir toutes les étoiles';
+        }
+        function toggleFlopStars() {
+            showingAllFlopStars = !showingAllFlopStars;
+            toggleView('flop-stars-grid', allFlopStars, showingAllFlopStars, 'flop', true);
+            document.getElementById('btn-all-flop-stars').textContent = showingAllFlopStars ? 'Voir moins' : 'Voir toutes les étoiles';
         }
     </script>
 

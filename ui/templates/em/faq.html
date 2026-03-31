@@ -90,6 +90,46 @@
             "@type": "Answer",
             "text": {{ _('Non. L\'analyse des paires est un outil statistique basé sur l\'historique des tirages. Chaque tirage est indépendant et les résultats passés n\'influencent pas les tirages futurs. LotoIA fournit des données factuelles, pas des prédictions.')|tojson }}
           }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('À quelle fréquence ont lieu les tirages EuroMillions ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Les tirages EuroMillions ont lieu deux fois par semaine, les mardis et vendredis à 21h00 CET. LotoIA met à jour sa base de données après chaque tirage.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Combien de numéros faut-il trouver pour gagner à l\'EuroMillions ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Pour remporter le jackpot, il faut trouver les 5 numéros principaux (1-50) et les 2 étoiles (1-12). Il y a 13 rangs de gains au total.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Dans quels pays peut-on jouer à l\'EuroMillions ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('L\'EuroMillions est disponible dans 9 pays européens : France, Royaume-Uni, Espagne, Portugal, Belgique, Luxembourg, Irlande, Autriche et Suisse. LotoIA couvre les statistiques pour tous les pays participants.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Quelle est la différence entre numéros chauds et froids ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Les numéros chauds sont ceux tirés le plus fréquemment sur la période historique. Les numéros froids sont ceux tirés le moins fréquemment. LotoIA affiche les deux classements sur la page Statistiques. C\'est purement descriptif — la fréquence passée ne prédit pas les tirages futurs.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('LotoIA est-il gratuit ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Oui, LotoIA est entièrement gratuit. Tous les outils statistiques, le chatbot HYBRIDE, le générateur de grilles et le simulateur sont accessibles sans inscription ni paiement.')|tojson }}
+          }
         }
       ]
     }
@@ -254,6 +294,7 @@
                 <li><a href="#fonctionnement">{{ _('Fonctionnement') }}</a></li>
                 <li><a href="#numeros-etoiles">{{ _('Numéros et Étoiles') }}</a></li>
                 <li><a href="#donnees">{{ _('Données') }}</a></li>
+                <li><a href="#euromillions-general">EuroMillions</a></li>
                 <li><a href="#jeu-responsable">{{ _('Jeu Responsable') }}</a></li>
             </ul>
         </nav>
@@ -359,6 +400,68 @@
                         <div class="faq-answer">
                             <p>{{ _('La base est mise à jour <strong>régulièrement après chaque tirage officiel</strong> (mardi et vendredi).')|safe }}</p>
                             <p>{{ _('Les grilles sont générées en temps réel à chaque utilisation selon les dernières données disponibles.') }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ===================================================================
+                     Catégorie : EuroMillions
+                     =================================================================== -->
+                <div class="faq-category" id="euromillions-general">
+                    <h2 class="faq-category-title">EuroMillions</h2>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('À quelle fréquence ont lieu les tirages EuroMillions ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('Les tirages EuroMillions ont lieu <strong>deux fois par semaine</strong>, les <strong>mardis et vendredis à 21h00 CET</strong>.')|safe }}</p>
+                            <p>{{ _('LotoIA met à jour sa base de données après chaque tirage.') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Combien de numéros faut-il trouver pour gagner à l\'EuroMillions ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('Pour remporter le jackpot, il faut trouver les <strong>5 numéros principaux (1-50)</strong> et les <strong>2 étoiles (1-12)</strong>.')|safe }}</p>
+                            <p>{{ _('Il y a <strong>13 rangs de gains</strong> au total.')|safe }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Dans quels pays peut-on jouer à l\'EuroMillions ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('L\'EuroMillions est disponible dans <strong>9 pays européens</strong> : France, Royaume-Uni, Espagne, Portugal, Belgique, Luxembourg, Irlande, Autriche et Suisse.')|safe }}</p>
+                            <p>{{ _('LotoIA couvre les statistiques pour tous les pays participants.') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Quelle est la différence entre numéros chauds et froids ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('Les <strong>numéros chauds</strong> sont ceux tirés le plus fréquemment sur la période historique. Les <strong>numéros froids</strong> sont ceux tirés le moins fréquemment.')|safe }}</p>
+                            <p>{{ _('LotoIA affiche les deux classements sur la page Statistiques. C\'est purement descriptif — la fréquence passée ne prédit pas les tirages futurs.') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('LotoIA est-il gratuit ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('<strong>Oui</strong>, LotoIA est entièrement gratuit.')|safe }}</p>
+                            <p>{{ _('Tous les outils statistiques, le chatbot HYBRIDE, le générateur de grilles et le simulateur sont accessibles <strong>sans inscription ni paiement</strong>.')|safe }}</p>
                         </div>
                     </div>
                 </div>

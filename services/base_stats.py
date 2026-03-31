@@ -1290,3 +1290,105 @@ class BaseStatsService:
                 f"Erreur get_single_star_pair{self.cfg.log_label}: {e}"
             )
             return None
+
+    async def get_pair_draws(self, *, n1: int, n2: int, limit: int = 50):
+        """
+        Return the list of draws where a specific pair co-occurred.
+        Each draw includes date + full numbers + secondary numbers.
+        """
+        a, b = min(n1, n2), max(n1, n2)
+        cache_key = f"{self.cfg.cache_prefix}pair_draws:{a}:{b}"
+        cached = await cache_get(cache_key)
+        if cached is not None:
+            return cached
+
+        async with self._get_connection() as conn:
+          try:
+            cursor = await conn.cursor()
+            sec_cols = ", ".join(self.cfg.secondary_columns)
+            sql = (
+                f"SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, "
+                f"{sec_cols} "
+                f"FROM {self.cfg.table} "
+                f"WHERE (%s IN (boule_1,boule_2,boule_3,boule_4,boule_5)) "
+                f"AND (%s IN (boule_1,boule_2,boule_3,boule_4,boule_5)) "
+                f"ORDER BY date_de_tirage DESC LIMIT %s"
+            )
+            await cursor.execute(sql, [a, b, limit])
+            rows = await cursor.fetchall()
+
+            draws = []
+            for row in rows:
+                d = {
+                    "date": row["date_de_tirage"].strftime("%Y-%m-%d"),
+                    "boules": sorted([
+                        row["boule_1"], row["boule_2"], row["boule_3"],
+                        row["boule_4"], row["boule_5"],
+                    ]),
+                }
+                if len(self.cfg.secondary_columns) == 1:
+                    d["secondary"] = [row[self.cfg.secondary_columns[0]]]
+                else:
+                    d["secondary"] = sorted([
+                        row[self.cfg.secondary_columns[0]],
+                        row[self.cfg.secondary_columns[1]],
+                    ])
+                draws.append(d)
+
+            result = {"n1": a, "n2": b, "draws": draws, "count": len(draws)}
+            await cache_set(cache_key, result)
+            return result
+
+          except Exception as e:
+            logger.error(
+                f"Erreur get_pair_draws{self.cfg.log_label}: {e}"
+            )
+            return None
+
+    async def get_star_pair_draws(self, *, s1: int, s2: int, limit: int = 50):
+        """
+        Return draws where a specific star pair co-occurred (EM only).
+        """
+        if len(self.cfg.secondary_columns) != 2:
+            return None
+
+        col_a, col_b = self.cfg.secondary_columns
+        a, b = min(s1, s2), max(s1, s2)
+        cache_key = f"{self.cfg.cache_prefix}star_pair_draws:{a}:{b}"
+        cached = await cache_get(cache_key)
+        if cached is not None:
+            return cached
+
+        async with self._get_connection() as conn:
+          try:
+            cursor = await conn.cursor()
+            sql = (
+                f"SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, "
+                f"{col_a}, {col_b} "
+                f"FROM {self.cfg.table} "
+                f"WHERE LEAST({col_a},{col_b}) = %s AND GREATEST({col_a},{col_b}) = %s "
+                f"ORDER BY date_de_tirage DESC LIMIT %s"
+            )
+            await cursor.execute(sql, [a, b, limit])
+            rows = await cursor.fetchall()
+
+            draws = []
+            for row in rows:
+                draws.append({
+                    "date": row["date_de_tirage"].strftime("%Y-%m-%d"),
+                    "boules": sorted([
+                        row["boule_1"], row["boule_2"], row["boule_3"],
+                        row["boule_4"], row["boule_5"],
+                    ]),
+                    "secondary": sorted([row[col_a], row[col_b]]),
+                })
+
+            result = {"s1": a, "s2": b, "draws": draws, "count": len(draws)}
+            await cache_set(cache_key, result)
+            return result
+
+          except Exception as e:
+            logger.error(
+                f"Erreur get_star_pair_draws{self.cfg.log_label}: {e}"
+            )
+            return None

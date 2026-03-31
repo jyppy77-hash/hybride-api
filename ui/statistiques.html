@@ -625,6 +625,14 @@
         .pairs-result-bar { max-width: 300px; margin: 18px auto 0; }
         .pairs-result-track { height: 10px; background: var(--theme-border); border-radius: 6px; overflow: hidden; }
         .pairs-result-fill { height: 100%; border-radius: 6px; transition: width 0.6s ease-out; }
+        .btn-dates-toggle { display: inline-block; margin-top: 16px; padding: 8px 18px; border: 1px solid var(--primary, #667eea); background: transparent; color: var(--primary, #667eea); border-radius: 20px; cursor: pointer; font-size: .9rem; transition: all .2s; }
+        .btn-dates-toggle:hover { background: var(--primary, #667eea); color: #fff; }
+        .dates-list { margin-top: 12px; }
+        .dates-table { width: 100%; border-collapse: collapse; font-size: .9rem; margin-top: 8px; }
+        .dates-table th { text-align: left; padding: 8px 10px; border-bottom: 2px solid var(--theme-border); color: var(--theme-text-secondary); font-size: .82rem; text-transform: uppercase; }
+        .dates-table td { padding: 8px 10px; border-bottom: 1px solid var(--theme-border); color: var(--theme-text-primary); }
+        .draw-ball { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary, #667eea); color: #fff; font-size: .78rem; font-weight: 600; margin: 1px; }
+        .draw-ball-sec { background: #ef4444; }
 
         @media (max-width: 768px) {
             .pairs-grid { grid-template-columns: repeat(5, 1fr); max-width: 280px; gap: 6px; }
@@ -1373,11 +1381,41 @@
                         '<p class="pairs-result-stat">Sortis ensemble <strong>' + data.count + ' fois</strong> sur ' + data.total_draws.toLocaleString('fr-FR') + ' tirages</p>' +
                         '<p class="pairs-result-stat">Fréquence : <strong>' + data.percentage.toFixed(1) + '%</strong></p>' +
                         '<p class="pairs-result-stat">Rang : <strong>' + rankLabel + '</strong> sur ' + data.total_pairs.toLocaleString('fr-FR') + ' paires possibles</p>' +
-                        '<div class="pairs-result-bar"><div class="pairs-result-track"><div class="pairs-result-fill" style="width:' + barWidth + '%;background:' + fillColor + ';"></div></div></div>';
+                        '<div class="pairs-result-bar"><div class="pairs-result-track"><div class="pairs-result-fill" style="width:' + barWidth + '%;background:' + fillColor + ';"></div></div></div>' +
+                        (data.count > 0 ? '<button id="btn-dates-loto" class="btn-dates-toggle" onclick="toggleLotoPairDates(' + data.n1 + ',' + data.n2 + ',' + data.count + ')">&#128197; Voir les dates (' + data.count + ')</button>' +
+                        '<div id="dates-loto-list" class="dates-list" style="display:none;"></div>' : '');
                 })
                 .catch(function() {
                     resultDiv.innerHTML = '<p style="color:#ef4444;">Erreur de chargement.</p>';
                 });
+        }
+
+        function toggleLotoPairDates(n1, n2, count) {
+            var btn = document.getElementById('btn-dates-loto');
+            var list = document.getElementById('dates-loto-list');
+            if (list.style.display !== 'none') {
+                list.style.display = 'none';
+                btn.innerHTML = '&#128197; Voir les dates (' + count + ')';
+                return;
+            }
+            btn.textContent = 'Masquer les dates';
+            list.style.display = 'block';
+            list.innerHTML = '<p style="color:var(--theme-text-secondary);">Chargement...</p>';
+            fetch('/api/loto/stats/pair-draws?n1=' + n1 + '&n2=' + n2)
+                .then(function(r){return r.json();})
+                .then(function(data) {
+                    if (!data.success || !data.draws.length) { list.innerHTML = '<p>Erreur de chargement.</p>'; return; }
+                    var html = '<table class="dates-table"><thead><tr><th>Date</th><th>Numéros</th></tr></thead><tbody>';
+                    data.draws.forEach(function(draw) {
+                        var nums = draw.boules.map(function(n){return '<span class="draw-ball">' + n + '</span>';}).join(' ');
+                        var sec = draw.secondary.map(function(n){return '<span class="draw-ball draw-ball-sec">' + n + '</span>';}).join(' ');
+                        var parts = draw.date.split('-');
+                        html += '<tr><td>' + parts[2] + '/' + parts[1] + '/' + parts[0] + '</td><td>' + nums + ' ' + sec + '</td></tr>';
+                    });
+                    html += '</tbody></table>';
+                    list.innerHTML = html;
+                })
+                .catch(function() { list.innerHTML = '<p style="color:#ef4444;">Erreur de chargement.</p>'; });
         }
 
         function renderPairsTable(prefix, pairs, type, totalDraws) {

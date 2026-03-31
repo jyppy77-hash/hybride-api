@@ -5697,3 +5697,78 @@ msgstr "Auftritte"
 #~ "Intelligenz. HYBRIDE-Engine, KI-Chatbot, "
 #~ "Echtzeit-Statistiken."
 
+#: FAQ EuroMillions — V78 new Q&A
+msgid "À quelle fréquence ont lieu les tirages EuroMillions ?"
+msgstr "Wie oft finden die EuroMillions-Ziehungen statt?"
+
+msgid "Les tirages EuroMillions ont lieu deux fois par semaine, les mardis et vendredis à 21h00 CET. LotoIA met à jour sa base de données après chaque tirage."
+msgstr "Die EuroMillions-Ziehungen finden zweimal pro Woche statt, dienstags und freitags um 21:00 Uhr MEZ. LotoIA aktualisiert seine Datenbank nach jeder Ziehung."
+
+msgid "Les tirages EuroMillions ont lieu <strong>deux fois par semaine</strong>, les <strong>mardis et vendredis à 21h00 CET</strong>."
+msgstr "Die EuroMillions-Ziehungen finden <strong>zweimal pro Woche</strong> statt, <strong>dienstags und freitags um 21:00 Uhr MEZ</strong>."
+
+msgid "LotoIA met à jour sa base de données après chaque tirage."
+msgstr "LotoIA aktualisiert seine Datenbank nach jeder Ziehung."
+
+msgid "Combien de numéros faut-il trouver pour gagner à l'EuroMillions ?"
+msgstr "Wie viele Zahlen muss man treffen, um bei EuroMillions zu gewinnen?"
+
+msgid "Pour remporter le jackpot, il faut trouver les 5 numéros principaux (1-50) et les 2 étoiles (1-12). Il y a 13 rangs de gains au total."
+msgstr "Um den Jackpot zu gewinnen, müssen alle 5 Hauptzahlen (1-50) und beide Sternzahlen (1-12) richtig getippt werden. Es gibt insgesamt 13 Gewinnränge."
+
+msgid "Pour remporter le jackpot, il faut trouver les <strong>5 numéros principaux (1-50)</strong> et les <strong>2 étoiles (1-12)</strong>."
+msgstr "Um den Jackpot zu gewinnen, müssen alle <strong>5 Hauptzahlen (1-50)</strong> und beide <strong>Sternzahlen (1-12)</strong> richtig getippt werden."
+
+msgid "Il y a <strong>13 rangs de gains</strong> au total."
+msgstr "Es gibt insgesamt <strong>13 Gewinnränge</strong>."
+
+msgid "Dans quels pays peut-on jouer à l'EuroMillions ?"
+msgstr "In welchen Ländern kann man EuroMillions spielen?"
+
+msgid "L'EuroMillions est disponible dans 9 pays européens : France, Royaume-Uni, Espagne, Portugal, Belgique, Luxembourg, Irlande, Autriche et Suisse. LotoIA couvre les statistiques pour tous les pays participants."
+msgstr "EuroMillions ist in 9 europäischen Ländern verfügbar: Frankreich, Großbritannien, Spanien, Portugal, Belgien, Luxemburg, Irland, Österreich und Schweiz. LotoIA deckt die Statistiken aller teilnehmenden Länder ab."
+
+msgid "L'EuroMillions est disponible dans <strong>9 pays européens</strong> : France, Royaume-Uni, Espagne, Portugal, Belgique, Luxembourg, Irlande, Autriche et Suisse."
+msgstr "EuroMillions ist in <strong>9 europäischen Ländern</strong> verfügbar: Frankreich, Großbritannien, Spanien, Portugal, Belgien, Luxemburg, Irland, Österreich und Schweiz."
+
+msgid "LotoIA couvre les statistiques pour tous les pays participants."
+msgstr "LotoIA deckt die Statistiken aller teilnehmenden Länder ab."
+
+msgid "Quelle est la différence entre numéros chauds et froids ?"
+msgstr "Was ist der Unterschied zwischen heißen und kalten Zahlen?"
+
+msgid ""
+"Les numéros chauds sont ceux tirés le plus fréquemment sur la période "
+"historique. Les numéros froids sont ceux tirés le moins fréquemment. "
+"LotoIA affiche les deux classements sur la page Statistiques. C'est "
+"purement descriptif — la fréquence passée ne prédit pas les tirages futurs."
+msgstr ""
+"Heiße Zahlen sind die am häufigsten gezogenen Zahlen im historischen "
+"Zeitraum. Kalte Zahlen sind die am seltensten gezogenen. LotoIA zeigt "
+"beide Ranglisten auf der Statistikseite an. Dies ist rein beschreibend "
+"— vergangene Häufigkeit sagt keine zukünftigen Ziehungen voraus."
+
+msgid "Les <strong>numéros chauds</strong> sont ceux tirés le plus fréquemment sur la période historique. Les <strong>numéros froids</strong> sont ceux tirés le moins fréquemment."
+msgstr "<strong>Heiße Zahlen</strong> sind die am häufigsten gezogenen Zahlen im historischen Zeitraum. <strong>Kalte Zahlen</strong> sind die am seltensten gezogenen."
+
+msgid "LotoIA affiche les deux classements sur la page Statistiques. C'est purement descriptif — la fréquence passée ne prédit pas les tirages futurs."
+msgstr "LotoIA zeigt beide Ranglisten auf der Statistikseite an. Dies ist rein beschreibend — vergangene Häufigkeit sagt keine zukünftigen Ziehungen voraus."
+
+msgid "LotoIA est-il gratuit ?"
+msgstr "Ist LotoIA kostenlos?"
+
+msgid ""
+"Oui, LotoIA est entièrement gratuit. Tous les outils statistiques, le "
+"chatbot HYBRIDE, le générateur de grilles et le simulateur sont accessibles "
+"sans inscription ni paiement."
+msgstr ""
+"Ja, LotoIA ist völlig kostenlos. Alle statistischen Werkzeuge, der "
+"HYBRIDE-Chatbot, der Zahlengenerator und der Simulator sind ohne "
+"Registrierung oder Zahlung zugänglich."
+
+msgid "<strong>Oui</strong>, LotoIA est entièrement gratuit."
+msgstr "<strong>Ja</strong>, LotoIA ist völlig kostenlos."
+
+msgid "Tous les outils statistiques, le chatbot HYBRIDE, le générateur de grilles et le simulateur sont accessibles <strong>sans inscription ni paiement</strong>."
+msgstr "Alle statistischen Werkzeuge, der HYBRIDE-Chatbot, der Zahlengenerator und der Simulator sind <strong>ohne Registrierung oder Zahlung</strong> zugänglich."
+

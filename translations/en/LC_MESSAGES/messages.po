@@ -5413,3 +5413,78 @@ msgid_plural "{count} tirages"
 msgstr[0] "1 draw"
 msgstr[1] "{count} draws"
 
+#: FAQ EuroMillions — V78 new Q&A
+msgid "À quelle fréquence ont lieu les tirages EuroMillions ?"
+msgstr "How often are EuroMillions draws held?"
+
+msgid "Les tirages EuroMillions ont lieu deux fois par semaine, les mardis et vendredis à 21h00 CET. LotoIA met à jour sa base de données après chaque tirage."
+msgstr "EuroMillions draws take place twice a week, on Tuesdays and Fridays at 21:00 CET. LotoIA updates its database after each draw."
+
+msgid "Les tirages EuroMillions ont lieu <strong>deux fois par semaine</strong>, les <strong>mardis et vendredis à 21h00 CET</strong>."
+msgstr "EuroMillions draws take place <strong>twice a week</strong>, on <strong>Tuesdays and Fridays at 21:00 CET</strong>."
+
+msgid "LotoIA met à jour sa base de données après chaque tirage."
+msgstr "LotoIA updates its database after each draw."
+
+msgid "Combien de numéros faut-il trouver pour gagner à l'EuroMillions ?"
+msgstr "How many numbers do I need to match to win at EuroMillions?"
+
+msgid "Pour remporter le jackpot, il faut trouver les 5 numéros principaux (1-50) et les 2 étoiles (1-12). Il y a 13 rangs de gains au total."
+msgstr "To win the jackpot, you need to match all 5 main numbers (1-50) and both Lucky Stars (1-12). There are 13 prize tiers in total."
+
+msgid "Pour remporter le jackpot, il faut trouver les <strong>5 numéros principaux (1-50)</strong> et les <strong>2 étoiles (1-12)</strong>."
+msgstr "To win the jackpot, you need to match all <strong>5 main numbers (1-50)</strong> and both <strong>Lucky Stars (1-12)</strong>."
+
+msgid "Il y a <strong>13 rangs de gains</strong> au total."
+msgstr "There are <strong>13 prize tiers</strong> in total."
+
+msgid "Dans quels pays peut-on jouer à l'EuroMillions ?"
+msgstr "In which countries can you play EuroMillions?"
+
+msgid "L'EuroMillions est disponible dans 9 pays européens : France, Royaume-Uni, Espagne, Portugal, Belgique, Luxembourg, Irlande, Autriche et Suisse. LotoIA couvre les statistiques pour tous les pays participants."
+msgstr "EuroMillions is available in 9 European countries: France, UK, Spain, Portugal, Belgium, Luxembourg, Ireland, Austria, and Switzerland. LotoIA covers statistics for all participating countries."
+
+msgid "L'EuroMillions est disponible dans <strong>9 pays européens</strong> : France, Royaume-Uni, Espagne, Portugal, Belgique, Luxembourg, Irlande, Autriche et Suisse."
+msgstr "EuroMillions is available in <strong>9 European countries</strong>: France, UK, Spain, Portugal, Belgium, Luxembourg, Ireland, Austria, and Switzerland."
+
+msgid "LotoIA couvre les statistiques pour tous les pays participants."
+msgstr "LotoIA covers statistics for all participating countries."
+
+msgid "Quelle est la différence entre numéros chauds et froids ?"
+msgstr "What is the difference between hot and cold numbers?"
+
+msgid ""
+"Les numéros chauds sont ceux tirés le plus fréquemment sur la période "
+"historique. Les numéros froids sont ceux tirés le moins fréquemment. "
+"LotoIA affiche les deux classements sur la page Statistiques. C'est "
+"purement descriptif — la fréquence passée ne prédit pas les tirages futurs."
+msgstr ""
+"Hot numbers are those drawn most frequently over the historical period. "
+"Cold numbers are those drawn least frequently. LotoIA displays both "
+"rankings on the Statistics page. This is purely descriptive — past "
+"frequency does not predict future draws."
+
+msgid "Les <strong>numéros chauds</strong> sont ceux tirés le plus fréquemment sur la période historique. Les <strong>numéros froids</strong> sont ceux tirés le moins fréquemment."
+msgstr "<strong>Hot numbers</strong> are those drawn most frequently over the historical period. <strong>Cold numbers</strong> are those drawn least frequently."
+
+msgid "LotoIA affiche les deux classements sur la page Statistiques. C'est purement descriptif — la fréquence passée ne prédit pas les tirages futurs."
+msgstr "LotoIA displays both rankings on the Statistics page. This is purely descriptive — past frequency does not predict future draws."
+
+msgid "LotoIA est-il gratuit ?"
+msgstr "Is LotoIA free to use?"
+
+msgid ""
+"Oui, LotoIA est entièrement gratuit. Tous les outils statistiques, le "
+"chatbot HYBRIDE, le générateur de grilles et le simulateur sont accessibles "
+"sans inscription ni paiement."
+msgstr ""
+"Yes, LotoIA is completely free. All statistical tools, the HYBRIDE chatbot, "
+"the grid generator, and the simulator are accessible without registration "
+"or payment."
+
+msgid "<strong>Oui</strong>, LotoIA est entièrement gratuit."
+msgstr "<strong>Yes</strong>, LotoIA is completely free."
+
+msgid "Tous les outils statistiques, le chatbot HYBRIDE, le générateur de grilles et le simulateur sont accessibles <strong>sans inscription ni paiement</strong>."
+msgstr "All statistical tools, the HYBRIDE chatbot, the grid generator, and the simulator are accessible <strong>without registration or payment</strong>."
+

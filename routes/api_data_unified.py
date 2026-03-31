@@ -688,6 +688,58 @@ async def unified_stats_single_star_pair(
 
 
 # =========================
+# Pair draws (detail: dates + full numbers)
+# =========================
+
+@router.get("/stats/pair-draws")
+@limiter.limit("30/minute")
+async def unified_stats_pair_draws(
+    request: Request, game: ValidGame,
+    n1: int = Query(..., ge=1, le=50),
+    n2: int = Query(..., ge=1, le=50),
+):
+    if n1 == n2:
+        return JSONResponse(status_code=422, content={
+            "success": False, "error": "n1 and n2 must be different",
+        })
+
+    cfg = get_config(game)
+    svc = get_stats_service(cfg)
+
+    result = await svc.get_pair_draws(n1=n1, n2=n2)
+    if result is None:
+        return JSONResponse(status_code=500, content={
+            "success": False, "error": "Erreur interne du serveur",
+        })
+
+    return {"success": True, "game": game.value, **result}
+
+
+@router.get("/stats/star-pair-draws")
+@limiter.limit("30/minute")
+async def unified_stats_star_pair_draws(
+    request: Request, game: ValidGame,
+    s1: int = Query(..., ge=1, le=12),
+    s2: int = Query(..., ge=1, le=12),
+):
+    if s1 == s2:
+        return JSONResponse(status_code=422, content={
+            "success": False, "error": "s1 and s2 must be different",
+        })
+
+    cfg = get_config(game)
+    svc = get_stats_service(cfg)
+
+    result = await svc.get_star_pair_draws(s1=s1, s2=s2)
+    if result is None:
+        return JSONResponse(status_code=500, content={
+            "success": False, "error": "Erreur interne du serveur",
+        })
+
+    return {"success": True, "game": game.value, **result}
+
+
+# =========================
 # Triplet correlations
 # =========================
 

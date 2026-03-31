@@ -2525,23 +2525,33 @@ async def admin_export_chatbot_log_csv(
 
     try:
         rows = await db_cloudsql.async_fetchall(
-            f"SELECT created_at, module, lang, question, phase_detected, sql_generated, "
-            f"sql_status, duration_ms, is_error, error_detail, grid_count, has_exclusions "
+            f"SELECT id, created_at, module, lang, question, response_preview, "
+            f"phase_detected, sql_generated, sql_status, duration_ms, "
+            f"grid_count, has_exclusions, is_error, error_detail, "
+            f"gemini_tokens_in, gemini_tokens_out, ip_hash, session_hash "
             f"FROM chat_log WHERE {w} ORDER BY created_at DESC LIMIT 5000",
             tuple(params),
         )
         buf = io.StringIO()
         writer = csv.writer(buf)
-        writer.writerow(["created_at", "module", "lang", "question", "phase", "sql", "sql_status",
-                         "duration_ms", "is_error", "error_detail", "grid_count", "has_exclusions"])
+        writer.writerow([
+            "id", "created_at", "module", "lang", "question", "response_preview",
+            "phase", "sql", "sql_status", "duration_ms",
+            "grid_count", "has_exclusions", "is_error", "error_detail",
+            "tokens_in", "tokens_out", "ip_hash", "session_hash",
+        ])
         for r in rows:
             writer.writerow([
+                r["id"],
                 r["created_at"].strftime("%Y-%m-%d %H:%M:%S") if r.get("created_at") else "",
-                r["module"], r["lang"], r["question"][:200],
-                r["phase_detected"], (r["sql_generated"] or "")[:200],
-                r["sql_status"], r["duration_ms"],
+                r["module"], r["lang"], r["question"] or "",
+                r["response_preview"] or "",
+                r["phase_detected"], (r["sql_generated"] or "")[:500],
+                r["sql_status"], _dec(r["duration_ms"]) or 0,
+                _dec(r["grid_count"]) or 0, int(r["has_exclusions"]),
                 int(r["is_error"]), r["error_detail"] or "",
-                r["grid_count"], int(r["has_exclusions"]),
+                _dec(r["gemini_tokens_in"]) or 0, _dec(r["gemini_tokens_out"]) or 0,
+                (r["ip_hash"] or "")[:12], (r["session_hash"] or "")[:12],
             ])
         return StreamingResponse(
             iter([buf.getvalue()]),

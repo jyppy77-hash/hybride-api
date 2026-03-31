@@ -50,10 +50,18 @@ _EM_PAGE_PRIORITY = {
     # "mentions", "confidentialite", "cookies", "disclaimer" → not in sitemap
 }
 
-# Multilang priority factor — non-FR EM pages get reduced priority
-# to signal Google that FR is the primary content language
-# and prevent crawl budget dilution on Loto FR pages.
-_MULTILANG_PRIORITY_FACTOR = 0.7
+# Multilang priority factors — non-FR EM pages get reduced priority
+# to signal Google that FR is the primary content language.
+# Differentiated by page importance: accueil (EN market important) > tools > content.
+_MULTILANG_PRIORITY_FACTORS = {
+    "home":         0.9,   # accueil — EN/ES/DE important markets
+    "generateur":   0.8,   # core tools
+    "simulateur":   0.8,
+    "statistiques": 0.8,
+    "paires":       0.8,
+    # All other pages (content, FAQ, news, historique, etc.) → default 0.7
+}
+_MULTILANG_PRIORITY_DEFAULT = 0.7
 
 
 def _url_block(loc: str, lastmod: str, freq: str, priority: float,
@@ -123,10 +131,9 @@ async def sitemap():
             if page_url and page_url not in seen:
                 seen.add(page_url)
                 alternates = _hreflang_alternates(page_key)
-                # Non-FR languages get reduced priority to protect
-                # Loto FR crawl budget and signal FR as primary
+                # Non-FR languages get reduced priority (differentiated by page type)
                 effective_priority = priority if lang == "fr" else round(
-                    priority * _MULTILANG_PRIORITY_FACTOR, 2
+                    priority * _MULTILANG_PRIORITY_FACTORS.get(page_key, _MULTILANG_PRIORITY_DEFAULT), 2
                 )
                 blocks.append(_url_block(
                     f"{BASE_URL}{page_url}", last_modified, freq,

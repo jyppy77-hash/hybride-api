@@ -72,7 +72,7 @@
         .pairs-loading { padding: 24px; text-align: center; color: var(--theme-text-secondary, var(--text-muted)); }
         .pairs-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
         .pairs-table th { text-align: left; padding: 10px 12px; border-bottom: 2px solid var(--theme-border, #e5e7eb); color: var(--theme-text-secondary, var(--text-muted)); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.5px; }
-        .pairs-table td { padding: 10px 12px; border-bottom: 1px solid var(--theme-border, #e5e7eb); vertical-align: middle; }
+        .pairs-table td { padding: 10px 12px; border-bottom: 1px solid var(--theme-border, #e5e7eb); vertical-align: middle; color: var(--theme-text-primary); }
         .pairs-table tbody tr:hover { background: rgba(102, 126, 234, 0.04); }
         .pair-balls { display: inline-flex; gap: 6px; align-items: center; }
         .pair-ball { width: 36px; height: 36px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 0.9rem; font-weight: 700; color: white; }
@@ -120,6 +120,14 @@
         .pairs-result-bar { max-width: 300px; margin: 18px auto 0; }
         .pairs-result-track { height: 10px; background: var(--theme-border, #e5e7eb); border-radius: 6px; overflow: hidden; }
         .pairs-result-fill { height: 100%; border-radius: 6px; transition: width .6s ease-out; }
+        .btn-dates-toggle { display: inline-block; margin-top: 16px; padding: 8px 18px; border: 1px solid var(--primary, #667eea); background: transparent; color: var(--primary, #667eea); border-radius: 20px; cursor: pointer; font-size: .9rem; transition: all .2s; }
+        .btn-dates-toggle:hover { background: var(--primary, #667eea); color: #fff; }
+        .dates-list { margin-top: 12px; }
+        .dates-table { width: 100%; border-collapse: collapse; font-size: .9rem; margin-top: 8px; }
+        .dates-table th { text-align: left; padding: 8px 10px; border-bottom: 2px solid var(--theme-border, #e5e7eb); color: var(--theme-text-secondary); font-size: .82rem; text-transform: uppercase; }
+        .dates-table td { padding: 8px 10px; border-bottom: 1px solid var(--theme-border, #e5e7eb); color: var(--theme-text-primary); }
+        .draw-ball { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--primary, #667eea); color: #fff; font-size: .78rem; font-weight: 600; margin: 1px; }
+        .draw-ball-sec { background: #eab308; color: #1a1a2e; }
         @media (max-width: 768px) {
             .pairs-grid { grid-template-columns: repeat(5, 1fr); max-width: 260px; }
             .pairs-grid.stars-grid { grid-template-columns: repeat(4, 1fr); max-width: 200px; }
@@ -233,7 +241,10 @@
             rank: {{ _('Rang')|tojson }},
             possible: {{ _('paires possibles')|tojson }},
             loading: {{ _('Chargement...')|tojson }},
-            error: {{ _('Erreur de chargement.')|tojson }}
+            error: {{ _('Erreur de chargement.')|tojson }},
+            showDates: {{ _('Voir les dates')|tojson }},
+            hideDates: {{ _('Masquer les dates')|tojson }},
+            stars: {{ _('Étoiles')|tojson }}
         };
         var pairsGridBuilt = false, pairsSelected = [], starsSelected = [];
 
@@ -365,12 +376,47 @@
             var rankLabel = d.rank === 1 ? '1<sup>re</sup>' : d.rank + '<sup>e</sup>';
             var resultClass = isStar ? ' result-star' : (pctRank >= 90 ? ' result-warm' : pctRank <= 10 ? ' result-cold' : '');
             el.className = 'pairs-result' + resultClass;
+            var btnId = isStar ? 'btn-dates-star' : 'btn-dates-ball';
+            var datesId = isStar ? 'dates-star-list' : 'dates-ball-list';
             el.innerHTML =
                 '<div class="pairs-result-balls"><span class="pairs-result-ball ' + ballClass + '">' + d[k1] + '</span><span class="pairs-result-ball ' + ballClass + '">' + d[k2] + '</span></div>' +
                 '<p class="pairs-result-stat">' + PS.together + ' <strong>' + d.count + ' ' + PS.times + '</strong> ' + PS.on + ' ' + d.total_draws.toLocaleString() + ' ' + PS.draws + '</p>' +
                 '<p class="pairs-result-stat">' + PS.frequency + ' : <strong>' + d.percentage.toFixed(1) + '%</strong></p>' +
                 '<p class="pairs-result-stat">' + PS.rank + ' : <strong>' + rankLabel + '</strong> ' + PS.on + ' ' + d.total_pairs.toLocaleString() + ' ' + PS.possible + '</p>' +
-                '<div class="pairs-result-bar"><div class="pairs-result-track"><div class="pairs-result-fill" style="width:' + barWidth + '%;background:' + fillColor + ';"></div></div></div>';
+                '<div class="pairs-result-bar"><div class="pairs-result-track"><div class="pairs-result-fill" style="width:' + barWidth + '%;background:' + fillColor + ';"></div></div></div>' +
+                (d.count > 0 ? '<button id="' + btnId + '" class="btn-dates-toggle" onclick="togglePairDates(\'' + type + '\',' + d[k1] + ',' + d[k2] + ',' + d.count + ')">&#128197; ' + PS.showDates + ' (' + d.count + ')</button>' +
+                '<div id="' + datesId + '" class="dates-list" style="display:none;"></div>' : '');
+        }
+        function togglePairDates(type, a, b, count) {
+            var isStar = type === 'star';
+            var btnId = isStar ? 'btn-dates-star' : 'btn-dates-ball';
+            var datesId = isStar ? 'dates-star-list' : 'dates-ball-list';
+            var btn = document.getElementById(btnId);
+            var list = document.getElementById(datesId);
+            if (list.style.display !== 'none') {
+                list.style.display = 'none';
+                btn.innerHTML = '&#128197; ' + PS.showDates + ' (' + count + ')';
+                return;
+            }
+            btn.textContent = PS.hideDates;
+            list.style.display = 'block';
+            list.innerHTML = '<p style="color:var(--theme-text-secondary);">' + PS.loading + '</p>';
+            var url = isStar
+                ? '/api/euromillions/stats/star-pair-draws?s1=' + a + '&s2=' + b
+                : '/api/euromillions/stats/pair-draws?n1=' + a + '&n2=' + b;
+            fetch(url).then(function(r){return r.json();}).then(function(data) {
+                if (!data.success || !data.draws.length) { list.innerHTML = '<p>' + PS.error + '</p>'; return; }
+                var secLabel = isStar ? PS.stars : 'Boules';
+                var html = '<table class="dates-table"><thead><tr><th>Date</th><th>' + secLabel + '</th></tr></thead><tbody>';
+                data.draws.forEach(function(draw) {
+                    var nums = draw.boules.map(function(n){return '<span class="draw-ball">' + n + '</span>';}).join(' ');
+                    var sec = draw.secondary.map(function(n){return '<span class="draw-ball draw-ball-sec">' + n + '</span>';}).join(' ');
+                    var parts = draw.date.split('-');
+                    html += '<tr><td>' + parts[2] + '/' + parts[1] + '/' + parts[0] + '</td><td>' + nums + ' ' + sec + '</td></tr>';
+                });
+                html += '</tbody></table>';
+                list.innerHTML = html;
+            }).catch(function() { list.innerHTML = '<p style="color:#ef4444;">' + PS.error + '</p>'; });
         }
         document.addEventListener('DOMContentLoaded', loadPairs);
     </script>
