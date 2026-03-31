@@ -207,6 +207,9 @@ async def launcher_redirect(request: Request):
     if not lang or lang not in killswitch.ENABLED_LANGS:
         lang = DEFAULT_LANG
 
+    # 302 intentionnel — redirection GeoIP dynamique (destination varie selon le visiteur)
+    # Google recommande 302 pour les redirections basées sur la localisation
+    # Ref: https://developers.google.com/search/docs/specialty/international/managing-multi-regional-sites
     return RedirectResponse(
         url=f"/{lang}", status_code=302,
         headers={"Vary": "Accept-Language"},
