@@ -5,7 +5,7 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
-APP_VERSION = "1.5.016"
+APP_VERSION = "1.5.018"
 APP_NAME = "LotoIA"
 VERSION_DATE = "2026-04-01"
 

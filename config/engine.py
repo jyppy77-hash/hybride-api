@@ -73,6 +73,21 @@ class EngineConfig:
     decay_rate: float = 0.05       # penalty per consecutive miss
     decay_floor: float = 0.50      # minimum multiplier (50% of raw score)
 
+    # Noise factor — intra-session diversification (F01 audit 01/04/2026)
+    noise_factor: float = 0.0      # default 0.0 = off; per-mode override in _NOISE_BY_MODE
+
+    # Wildcard froid — guaranteed cold number slot (F01 terrain 01/04/2026)
+    wildcard_enabled: bool = True
+    wildcard_pool_size: int = 15   # bottom-N numbers form the cold pool
+
+    # Scoring secondaire dédié (F08 audit — poids étoiles/chance)
+    poids_frequence_secondary: float = 0.85  # frequency weighs more for small spaces
+    poids_retard_secondary: float = 0.15     # lag weighs less (12 stars → every ~6 draws)
+
+    # Z-score penalization alternative (F06 terrain — opt-in)
+    penalization_method: str = "multiplicative"  # "multiplicative" (default) or "z_score"
+    z_score_offsets: tuple = (0.0, 2.0, 1.0, 0.5)  # T-1 (exclusion), T-2, T-3, T-4
+
 
 _STAR_SCORES = {5: 95, 4: 85, 3: 75, 2: 60, 1: 50}
 

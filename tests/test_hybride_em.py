@@ -233,7 +233,7 @@ def _get_em_t1():
 class TestEMValiderContraintes:
 
     def test_grille_parfaite(self):
-        nums = [3, 15, 26, 33, 47]  # pairs=2, bas=2(<=25), somme=124, disp=44, suites=0
+        nums = [4, 15, 26, 33, 47]  # pairs=2, bas=2(<=25), somme=125, disp=43, suites=0
         assert valider_contraintes(nums) == 1.0
 
     def test_penalite_somme_em(self):

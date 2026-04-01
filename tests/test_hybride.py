@@ -55,16 +55,14 @@ class TestValiderContraintes:
 
     def test_grille_parfaite(self):
         """Grille equilibree → score = 1.0."""
-        nums = [3, 15, 24, 33, 47]  # pairs=1, bas=3, somme=122, disp=44, suites=0
+        nums = [4, 15, 24, 33, 47]  # pairs=2, bas=3, somme=123, disp=43, suites=0
         assert valider_contraintes(nums) == 1.0
 
     def test_penalite_pairs(self):
-        """5 pairs → penalite 0.8."""
+        """5 pairs → hard-reject (score = 0.0, F05 V79)."""
         nums = [2, 4, 6, 8, 10]
         score = valider_contraintes(nums)
-        assert score < 1.0
-        # 5 pairs: *0.8, 5 bas: *0.85, somme=30 <70: *0.7, disp=8 <15: *0.6, suites=0
-        assert score == pytest.approx(0.8 * 0.85 * 0.7 * 0.6, rel=1e-6)
+        assert score == 0.0
 
     def test_penalite_somme(self):
         """Somme hors [70, 150] → penalite."""

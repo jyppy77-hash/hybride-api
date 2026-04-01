@@ -6,7 +6,9 @@ All game-specific differences are handled by EngineConfig.
 """
 
 import logging
+import math
 import random
+import statistics
 from datetime import datetime, timedelta, timezone
 
 from config.engine import EngineConfig
@@ -14,6 +16,14 @@ from config.i18n import _badges as _i18n_badges
 from services.decay_state import calculate_decay_multiplier
 
 logger = logging.getLogger(__name__)
+
+# Noise amplitude per generation mode (F01 audit — intra-session diversification).
+# conservative: no noise (faithful to scores). balanced: light. recent: moderate.
+_NOISE_BY_MODE = {
+    "conservative": 0.0,
+    "balanced": 0.08,
+    "recent": 0.12,
+}
 
 
 class HybrideEngine:
@@ -359,8 +369,11 @@ class HybrideEngine:
         retard = await self.calculer_retards_secondary(conn, date_limite)
         freq = self._minmax_normalize(freq)
         retard = self._minmax_normalize(retard)
+        # F08 audit: dedicated weights for secondary (85/15 vs primary 70/30)
+        pf = self.cfg.poids_frequence_secondary
+        pr = self.cfg.poids_retard_secondary
         return {
-            n: self.cfg.poids_frequence * freq.get(n, 0) + self.cfg.poids_retard * retard.get(n, 0)
+            n: pf * freq.get(n, 0) + pr * retard.get(n, 0)
             for n in range(self.cfg.secondary_min, self.cfg.secondary_max + 1)
         }
 
@@ -437,6 +450,62 @@ class HybrideEngine:
                 penalized[s] = 0.0 if coeff == 0.0 else penalized[s] * coeff
         return penalized
 
+    # ── Z-score penalization (alternative) ───────────────────────────
+
+    def apply_penalties_z_score(
+        self, scores: dict[int, float], recent_draws: list[dict],
+    ) -> dict[int, float]:
+        """Z-score alternative for recent-draw penalization.
+
+        Converts scores to z-scores (mean=0, std=1), then subtracts offsets
+        by tier (T-2: -2.0, T-3: -1.0, T-4: -0.5). T-1 remains hard-exclude.
+        Normalizes automatically across windows of different sizes.
+
+        Falls back to multiplicative method if std=0.
+        See audit 360° Engine HYBRIDE F06 — 01/04/2026.
+        """
+        if not recent_draws:
+            return scores
+
+        vals = [v for v in scores.values() if v > 0]
+        if len(vals) < 2:
+            return self.apply_boule_penalties(scores, recent_draws)
+        mean = statistics.mean(vals)
+        std = statistics.stdev(vals)
+        if std == 0:
+            return self.apply_boule_penalties(scores, recent_draws)
+
+        # Convert to z-scores
+        z_scores = {n: (s - mean) / std for n, s in scores.items()}
+
+        # Build number -> tier mapping (same logic as apply_boule_penalties)
+        offsets = self.cfg.z_score_offsets
+        num_offset: dict[int, float] = {}
+        for position, draw in enumerate(recent_draws[:len(offsets)]):
+            for i in range(1, 6):
+                n = draw.get(f'boule_{i}')
+                if n is not None and n not in num_offset:
+                    num_offset[n] = offsets[position]
+
+        # Apply offsets
+        for n, offset in num_offset.items():
+            if n in z_scores:
+                if offset == 0.0:  # T-1: hard exclude
+                    z_scores[n] = -999.0
+                else:
+                    z_scores[n] -= offset
+
+        # Convert back to positive scores
+        z_min = min(z_scores.values())
+        epsilon = 0.01
+        result = {}
+        for n, z in z_scores.items():
+            if num_offset.get(n, 1.0) == 0.0:  # T-1 hard excluded
+                result[n] = 0.0
+            else:
+                result[n] = max(0.0, z - z_min + epsilon)
+        return result
+
     # ── Anti-collision ────────────────────────────────────────────────
 
     def apply_anti_collision(self, scores: dict[int, float]) -> dict[int, float]:
@@ -484,14 +553,66 @@ class HybrideEngine:
             decayed[n] = score * multiplier
         return decayed
 
+    # ── Noise (intra-session diversification) ───────────────────────
+
+    @staticmethod
+    def apply_noise(scores: dict[int, float], noise_factor: float) -> dict[int, float]:
+        """Add gaussian noise proportional to score std-dev.
+
+        The noise amplitude auto-adapts: tight score windows get less noise,
+        dispersed windows get more. Each call produces a different draw.
+
+        Pipeline position: step 4b (after decay, before anti-collision).
+        See audit 360° Engine HYBRIDE F01 — 01/04/2026.
+        """
+        if noise_factor <= 0.0 or len(scores) < 2:
+            return scores
+        vals = [v for v in scores.values() if v > 0]
+        if len(vals) < 2:
+            return scores
+        std = statistics.stdev(vals)
+        if std == 0:
+            return scores
+        sigma = noise_factor * std
+        return {n: max(0.0, s + random.gauss(0, sigma)) for n, s in scores.items()}
+
+    # ── Wildcard froid (guaranteed cold slot) ────────────────────────
+
+    def _select_wildcard(
+        self, scores: dict[int, float], excluded: set[int],
+    ) -> int | None:
+        """Pick 1 number from the coldest pool (bottom-N by score).
+
+        Weighted random within the cold pool (T=1.5 for extra randomness).
+        Returns None if wildcard disabled or pool empty.
+        """
+        if not self.cfg.wildcard_enabled:
+            return None
+        candidates = sorted(
+            ((n, s) for n, s in scores.items() if n not in excluded and s > 0),
+            key=lambda x: x[1],
+        )
+        pool = candidates[:self.cfg.wildcard_pool_size]
+        if not pool:
+            return None
+        pool_scores = {n: s for n, s in pool}
+        probas = self.normaliser_en_probabilites(pool_scores, temperature=1.5)
+        nums = list(probas.keys())
+        weights = [probas[n] for n in nums]
+        return random.choices(nums, weights=weights, k=1)[0]
+
     # ── Validation ────────────────────────────────────────────────────
 
     def valider_contraintes(self, numeros: list[int]) -> float:
         if len(numeros) != self.cfg.num_count:
             raise ValueError(f"Expected {self.cfg.num_count} numbers, got {len(numeros)}")
-        score = 1.0
         nb_pairs = sum(1 for n in numeros if n % 2 == 0)
-        if nb_pairs < 1 or nb_pairs > 4:
+        # Hard-reject: all-even or all-odd (F05 audit 01/04/2026)
+        if nb_pairs == 0 or nb_pairs == self.cfg.num_count:
+            return 0.0
+        score = 1.0
+        # Soft penalty for near-extreme pair counts (1 or num_count-1)
+        if nb_pairs == 1 or nb_pairs == (self.cfg.num_count - 1):
             score *= 0.8
         nb_bas = sum(1 for n in numeros if n <= self.cfg.seuil_bas_haut)
         if nb_bas < 1 or nb_bas > 4:
@@ -583,12 +704,15 @@ class HybrideEngine:
             forced_secondary = []
         forced_set = set(forced_nums)
 
-        # Penalization
-        penalized = self.apply_boule_penalties(scores_hybrides, recent_draws or [])
-        # Decay score (step 4 — break kernel lock)
+        # Penalization (step 3 — multiplicative or z-score)
+        if self.cfg.penalization_method == "z_score":
+            penalized = self.apply_penalties_z_score(scores_hybrides, recent_draws or [])
+        else:
+            penalized = self.apply_boule_penalties(scores_hybrides, recent_draws or [])
+        # Decay score (step 4a — break kernel lock)
         if decay_state:
             penalized = self.apply_decay(penalized, decay_state)
-        # Anti-collision
+        # Anti-collision (step 5)
         if anti_collision:
             penalized = self.apply_anti_collision(penalized)
 
@@ -596,13 +720,25 @@ class HybrideEngine:
                          if penalized.get(n, 0) == 0.0 and n not in forced_set}
 
         temperature = self.cfg.temperature_by_mode.get(mode, 1.3)
-        probas = self.normaliser_en_probabilites(penalized, temperature=temperature)
+        noise_factor = _NOISE_BY_MODE.get(mode, self.cfg.noise_factor)
+
+        nb_to_draw = self.cfg.num_count - len(forced_nums)
+
+        # Wildcard: reserve 1 slot for a cold number if enabled and slots available
+        use_wildcard = (
+            self.cfg.wildcard_enabled
+            and nb_to_draw >= 2  # need at least 2 free slots (1 normal + 1 wildcard)
+        )
+        normal_draw_count = (nb_to_draw - 1) if use_wildcard else nb_to_draw
 
         meilleure_grille = None
         meilleur_score = 0
-        nb_to_draw = self.cfg.num_count - len(forced_nums)
 
         for _ in range(self.cfg.max_tentatives):
+            # Step 4b: fresh noise per attempt (intra-session diversification)
+            noisy = self.apply_noise(penalized, noise_factor)
+            probas = self.normaliser_en_probabilites(noisy, temperature=temperature)
+
             disponibles = [n for n in range(self.cfg.num_min, self.cfg.num_max + 1)
                            if n not in forced_set and n not in hard_excluded]
             disponibles = self._apply_exclusions(disponibles, exclusions)
@@ -612,20 +748,40 @@ class HybrideEngine:
             p_list = [probas[n] for n in disponibles]
 
             numeros = list(forced_nums)
-            # Weighted sampling without replacement: pop chosen number and its
-            # weight after each draw. random.choices() uses relative weights,
-            # so the remaining (un-normalized) weights are correct — no need
-            # to re-normalize to sum=1.0 after each pop.
-            for _ in range(nb_to_draw):
+            drawn_set = set(forced_nums)
+            # Weighted sampling without replacement
+            for _ in range(normal_draw_count):
                 num = random.choices(disponibles, weights=p_list, k=1)[0]
                 numeros.append(num)
+                drawn_set.add(num)
                 idx = disponibles.index(num)
                 disponibles.pop(idx)
                 p_list.pop(idx)
 
+            # Step 7b: wildcard cold slot
+            if use_wildcard:
+                # Wildcard must also respect exclusions dict
+                excl_set = set(exclusions.get("exclude_nums", [])) if exclusions else set()
+                wc = self._select_wildcard(noisy, drawn_set | hard_excluded | excl_set)
+                if wc is not None and wc not in drawn_set:
+                    numeros.append(wc)
+                else:
+                    # Fallback: draw 1 more normally
+                    if disponibles and p_list:
+                        num = random.choices(disponibles, weights=p_list, k=1)[0]
+                        numeros.append(num)
+                    elif disponibles:
+                        numeros.append(random.choice(disponibles))
+                    else:
+                        # Ultimate fallback: any non-drawn number
+                        remaining = [n for n in range(self.cfg.num_min, self.cfg.num_max + 1)
+                                     if n not in drawn_set]
+                        if remaining:
+                            numeros.append(random.choice(remaining))
+
             numeros = sorted(numeros)
             conf = self.valider_contraintes(numeros)
-            if conf > meilleur_score:
+            if meilleure_grille is None or conf > meilleur_score:
                 meilleure_grille = numeros
                 meilleur_score = conf
             if conf >= self.cfg.min_conformite:

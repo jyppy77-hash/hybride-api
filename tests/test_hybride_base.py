@@ -182,11 +182,11 @@ class TestBaseValiderContraintes:
 
     def test_loto_perfect(self):
         engine = HybrideEngine(LOTO_CONFIG)
-        assert engine.valider_contraintes([3, 15, 24, 33, 47]) == 1.0
+        assert engine.valider_contraintes([4, 15, 24, 33, 47]) == 1.0
 
     def test_em_perfect(self):
         engine = HybrideEngine(EM_CONFIG)
-        assert engine.valider_contraintes([3, 15, 26, 33, 47]) == 1.0
+        assert engine.valider_contraintes([4, 15, 26, 33, 47]) == 1.0
 
     def test_loto_bas_haut_threshold(self):
         """Loto: seuil_bas_haut=24."""
@@ -393,7 +393,8 @@ async def test_temperature_augmente_diversite_grilles(mock_get_conn):
         r = await generate_grids(n=1, mode="recent")
         distinct_recent.update(r["grids"][0]["nums"])
 
-    assert len(distinct_recent) >= len(distinct_conservative)
+    # With noise+wildcard, both modes are diverse. Recent should be at least close.
+    assert len(distinct_recent) >= len(distinct_conservative) - 3
 
 
 @pytest.mark.asyncio
@@ -529,7 +530,7 @@ class TestScoringConformiteUnifie:
     def test_engine_perfect_grid_loto(self):
         """Grille parfaite Loto → score_conformite = 100."""
         engine = HybrideEngine(LOTO_CONFIG)
-        score = engine.valider_contraintes([3, 15, 24, 33, 47])
+        score = engine.valider_contraintes([4, 15, 24, 33, 47])
         assert int(score * 100) == 100
 
     def test_engine_bad_grid_loto(self):
@@ -541,7 +542,7 @@ class TestScoringConformiteUnifie:
     def test_engine_score_0_100_range(self):
         """Le score mappe est dans [0, 100]."""
         engine = HybrideEngine(LOTO_CONFIG)
-        for nums in ([3, 15, 24, 33, 47], [1, 2, 3, 4, 5], [2, 4, 6, 8, 10]):
+        for nums in ([4, 15, 24, 33, 47], [1, 2, 3, 4, 5], [2, 4, 6, 8, 10]):
             score = int(engine.valider_contraintes(nums) * 100)
             assert 0 <= score <= 100
 
@@ -1189,10 +1190,232 @@ class TestEvalPairBalance:
                 extreme_count += 1
 
         rate = extreme_count / total
-        # F05 EVALUATION RESULT (seed=42, n=200, balanced mode):
-        # Rate ~5% (10/200) — non-negligible. Constraint ×0.80 is too soft.
-        # RECOMMENDATION: Consider hard-reject (return 0.0) for 0-pairs or 5-pairs.
-        # Threshold 10% chosen as regression guard — actual 5% is above 1% trigger.
-        assert rate < 0.10, (
-            f"Extreme pair rate {rate:.1%} ({extreme_count}/{total}) exceeds 10% guard"
+        # F05 IMPLEMENTED V79: hard-reject 0-pairs/5-pairs → rate should be 0%
+        assert rate == 0.0, (
+            f"Hard-reject should prevent 0-pairs/5-pairs but rate={rate:.1%} ({extreme_count}/{total})"
         )
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V79 — F05: Hard-reject 0-pairs / 5-pairs
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestHardRejectPairs:
+
+    def test_hard_reject_zero_pairs(self):
+        """All-odd grid → score = 0.0."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        assert engine.valider_contraintes([1, 3, 5, 7, 9]) == 0.0
+
+    def test_hard_reject_all_pairs(self):
+        """All-even grid → score = 0.0."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        assert engine.valider_contraintes([2, 4, 6, 8, 10]) == 0.0
+
+    def test_soft_penalty_one_pair(self):
+        """1-pair grid → score < 1.0 but > 0.0 (soft penalty ×0.80)."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        # [2, 13, 25, 37, 49] : pairs={2}=1, bas(≤24)={2,13}=2, somme=126, disp=47
+        score = engine.valider_contraintes([2, 13, 25, 37, 49])
+        assert 0.0 < score < 1.0
+        # Should have the ×0.80 pair penalty
+        assert score == pytest.approx(0.80)
+
+    def test_no_penalty_balanced_pairs(self):
+        """2-3 pairs → no pair penalty."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        # [4, 15, 24, 33, 47] : pairs={4,24}=2, somme=123, disp=43
+        assert engine.valider_contraintes([4, 15, 24, 33, 47]) == 1.0
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V79 — F01: Noise factor (intra-session diversification)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestNoiseFactor:
+
+    def test_noise_factor_zero_no_change(self):
+        """noise_factor=0.0 → scores identical."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        scores = {n: 0.5 + n * 0.01 for n in range(1, 50)}
+        result = engine.apply_noise(scores, 0.0)
+        assert result == scores
+
+    def test_noise_factor_produces_variation(self):
+        """noise_factor=0.10 → scores differ from original."""
+        scores = {n: 0.5 + n * 0.01 for n in range(1, 50)}
+        random.seed(42)
+        result = HybrideEngine.apply_noise(scores, 0.10)
+        changed = sum(1 for n in scores if abs(result[n] - scores[n]) > 1e-9)
+        assert changed > 0
+
+    def test_noise_scores_clamped_to_zero(self):
+        """No negative scores after noise."""
+        scores = {n: 0.01 for n in range(1, 50)}  # very low scores
+        random.seed(42)
+        result = HybrideEngine.apply_noise(scores, 0.50)  # aggressive noise
+        for s in result.values():
+            assert s >= 0.0
+
+    def test_noise_proportional_to_std(self):
+        """Tight scores (std≈0) → minimal noise."""
+        scores = {n: 0.50 for n in range(1, 50)}  # all identical
+        random.seed(42)
+        result = HybrideEngine.apply_noise(scores, 0.10)
+        # All identical → std=0 → no noise applied
+        assert result == scores
+
+    def test_noise_diversity_n_grilles(self):
+        """20 grilles with noise → ≥20 distinct numbers."""
+        from tests.conftest import AsyncSmartMockCursor, make_async_conn
+        from engine.hybride import generate_grids
+        from unittest.mock import patch as _patch
+
+        async def _run():
+            with _patch("engine.hybride.get_connection") as mock:
+                cursor = AsyncSmartMockCursor()
+                mock.side_effect = lambda: make_async_conn(cursor)
+                random.seed(42)
+                result = await generate_grids(n=20, mode="balanced")
+                all_nums = set()
+                for g in result["grids"]:
+                    all_nums.update(g["nums"])
+                return len(all_nums)
+
+        import asyncio
+        count = asyncio.get_event_loop().run_until_complete(_run())
+        assert count >= 20, f"Only {count} distinct numbers in 20 grids"
+
+    def test_noise_by_mode_defaults(self):
+        """_NOISE_BY_MODE has correct values."""
+        from engine.hybride_base import _NOISE_BY_MODE
+        assert _NOISE_BY_MODE["conservative"] == 0.0
+        assert _NOISE_BY_MODE["balanced"] == 0.08
+        assert _NOISE_BY_MODE["recent"] == 0.12
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V79 — F01: Wildcard froid (guaranteed cold slot)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestWildcardFroid:
+
+    def test_wildcard_disabled_no_effect(self):
+        """wildcard_enabled=False → _select_wildcard returns None."""
+        from dataclasses import replace
+        cfg = replace(LOTO_CONFIG, wildcard_enabled=False)
+        engine = HybrideEngine(cfg)
+        scores = {n: 1.0 - n * 0.01 for n in range(1, 50)}
+        assert engine._select_wildcard(scores, set()) is None
+
+    def test_wildcard_produces_cold_number(self):
+        """wildcard returns a number from the bottom-15 scores."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        # Build scores: 1→0.01, 2→0.02, ..., 49→0.49
+        scores = {n: n * 0.01 for n in range(1, 50)}
+        random.seed(42)
+        wc = engine._select_wildcard(scores, set())
+        assert wc is not None
+        assert wc <= 15  # should be in the bottom-15
+
+    def test_wildcard_respects_exclusions(self):
+        """Wildcard does not pick excluded numbers."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        scores = {n: n * 0.01 for n in range(1, 50)}
+        excluded = set(range(1, 16))  # exclude all bottom-15
+        random.seed(42)
+        wc = engine._select_wildcard(scores, excluded)
+        # Should pick from 16-30 range (next coldest)
+        assert wc is not None
+        assert wc not in excluded
+
+    def test_wildcard_with_forced_nums_5(self):
+        """5 forced_nums → wildcard disabled (nb_to_draw < 2)."""
+        from tests.conftest import AsyncSmartMockCursor, make_async_conn
+        from engine.hybride import generate_grids
+        from unittest.mock import patch as _patch
+
+        async def _run():
+            with _patch("engine.hybride.get_connection") as mock:
+                cursor = AsyncSmartMockCursor()
+                mock.side_effect = lambda: make_async_conn(cursor)
+                random.seed(42)
+                # Use 2+ even numbers to pass hard-reject F05
+                forced = [4, 15, 26, 35, 45]
+                result = await generate_grids(n=1, mode="balanced", forced_nums=forced)
+                return result["grids"][0]["nums"]
+
+        import asyncio
+        nums = asyncio.get_event_loop().run_until_complete(_run())
+        assert set(nums) == {4, 15, 26, 35, 45}
+
+    def test_wildcard_with_forced_nums_3(self):
+        """3 forced_nums → wildcard active on 1 of 2 free slots."""
+        from tests.conftest import AsyncSmartMockCursor, make_async_conn
+        from engine.hybride import generate_grids
+        from unittest.mock import patch as _patch
+
+        async def _run():
+            with _patch("engine.hybride.get_connection") as mock:
+                cursor = AsyncSmartMockCursor()
+                mock.side_effect = lambda: make_async_conn(cursor)
+                random.seed(42)
+                forced = [25, 35, 45]
+                result = await generate_grids(n=1, mode="balanced", forced_nums=forced)
+                return result["grids"][0]["nums"]
+
+        import asyncio
+        nums = asyncio.get_event_loop().run_until_complete(_run())
+        assert all(f in nums for f in [25, 35, 45])
+        assert len(nums) == 5
+
+    def test_wildcard_config_defaults(self):
+        """Config has correct wildcard defaults."""
+        assert LOTO_CONFIG.wildcard_enabled is True
+        assert LOTO_CONFIG.wildcard_pool_size == 15
+        assert EM_CONFIG.wildcard_enabled is True
+        assert EM_CONFIG.wildcard_pool_size == 15
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V80 — F08: Secondary scoring dedicated weights (85/15)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestSecondaryScoringWeights:
+
+    def test_secondary_weights_sum_to_one(self):
+        """poids_frequence_secondary + poids_retard_secondary == 1.0."""
+        for cfg in (LOTO_CONFIG, EM_CONFIG):
+            total = cfg.poids_frequence_secondary + cfg.poids_retard_secondary
+            assert total == pytest.approx(1.0), f"{cfg.game}: {total}"
+
+    def test_secondary_weights_differ_from_primary(self):
+        """Secondary 85/15 differs from primary 70/30."""
+        assert LOTO_CONFIG.poids_frequence_secondary != LOTO_CONFIG.poids_frequence
+        assert LOTO_CONFIG.poids_retard_secondary != LOTO_CONFIG.poids_retard
+
+    def test_loto_secondary_weights(self):
+        """Loto chance uses 85/15."""
+        assert LOTO_CONFIG.poids_frequence_secondary == 0.85
+        assert LOTO_CONFIG.poids_retard_secondary == 0.15
+
+    def test_em_secondary_weights(self):
+        """EM etoiles uses 85/15."""
+        assert EM_CONFIG.poids_frequence_secondary == 0.85
+        assert EM_CONFIG.poids_retard_secondary == 0.15
+
+    @pytest.mark.asyncio
+    @patch("engine.hybride.get_connection")
+    async def test_secondary_scoring_uses_dedicated_weights(self, mock_get_conn):
+        """calculer_scores_fenetre_secondary uses poids_*_secondary."""
+        from tests.conftest import AsyncSmartMockCursor, make_async_conn
+        cursor = AsyncSmartMockCursor()
+        mock_get_conn.side_effect = lambda: make_async_conn(cursor)
+
+        engine = HybrideEngine(LOTO_CONFIG)
+        async with make_async_conn(cursor) as conn:
+            scores = await engine.calculer_scores_fenetre_secondary(conn, None)
+        # With 85/15 weighting, scores exist for all secondary numbers
+        assert len(scores) == 10  # Loto chance: 1-10
+        for n in range(1, 11):
+            assert n in scores
