@@ -35,14 +35,14 @@ def generer_badges(numeros, scores_hybrides):
 async def generate_grids(
     n=5, mode="balanced", lang="fr",
     forced_nums=None, forced_chance=None, exclusions=None,
-    anti_collision=False,
+    anti_collision=False, decay_state=None,
 ):
     """Generate N Loto grids. Used by: services/chat_pipeline.py, tests."""
     forced_secondary = [forced_chance] if forced_chance is not None else None
     return await _engine.generate_grids(
         n=n, mode=mode, lang=lang, anti_collision=anti_collision,
         forced_nums=forced_nums, forced_secondary=forced_secondary,
-        exclusions=exclusions,
+        exclusions=exclusions, decay_state=decay_state,
         _get_connection=get_connection,
     )
 
@@ -50,8 +50,13 @@ async def generate_grids(
 # ── DEPRECATED V58 — consumed by routes/api_analyse.py:/ask only ──
 
 async def generate(prompt):
-    """DEPRECATED: Legacy wrapper consumed by /ask route (routes/api_analyse.py).
-    Use generate_grids() directly for new code. Will be removed when /ask is retired."""
+    """DEPRECATED V58 — Wrapper legacy pour /ask uniquement.
+
+    Consumer: routes/api_analyse.py (seul caller).
+    Sera supprime quand la route /ask sera retiree.
+    Utiliser generate_grids() directement pour tout nouveau code.
+    Voir audit 360° Engine HYBRIDE F07 — 01/04/2026.
+    """
     try:
         result = await generate_grids(n=3, mode="balanced")
         return {

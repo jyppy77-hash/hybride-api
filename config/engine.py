@@ -68,6 +68,11 @@ class EngineConfig:
     # Badge key for i18n (used by _generer_badges)
     badge_key: str
 
+    # Decay score — anti-lock rotation (F04 terrain 01/04/2026)
+    decay_enabled: bool = True
+    decay_rate: float = 0.05       # penalty per consecutive miss
+    decay_floor: float = 0.50      # minimum multiplier (50% of raw score)
+
 
 _STAR_SCORES = {5: 95, 4: 85, 3: 75, 2: 60, 1: 50}
 
@@ -146,8 +151,9 @@ EM_CONFIG = EngineConfig(
     poids_retard=0.3,
     modes=_MODES_3W,
     temperature_by_mode=_TEMPERATURES,
-    somme_min=75,
-    somme_max=175,
+    # V79 F04 terrain: resserré [75,175]→[95,160] pour corriger biais somme haute (+28pts vs réel)
+    somme_min=95,
+    somme_max=160,
     seuil_bas_haut=25,
     dispersion_min=15,
     max_consecutifs=2,

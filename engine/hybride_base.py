@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 
 from config.engine import EngineConfig
 from config.i18n import _badges as _i18n_badges
+from services.decay_state import calculate_decay_multiplier
 
 logger = logging.getLogger(__name__)
 
@@ -463,6 +464,26 @@ class HybrideEngine:
                 adjusted[s] *= self.cfg.secondary_anti_collision_malus
         return adjusted
 
+    # ── Decay score (anti-lock rotation) ────────────────────────────
+
+    def apply_decay(self, scores: dict[int, float], decay_state: dict[int, int]) -> dict[int, float]:
+        """Apply decay multiplier to break kernel lock.
+
+        Numbers selected N times without appearing in real draws
+        get progressively penalized (score × decay_multiplier).
+
+        Pipeline position: step 4 (after penalization, before anti-collision).
+        See audit 360° Engine HYBRIDE F04 — 01/04/2026.
+        """
+        if not self.cfg.decay_enabled or not decay_state:
+            return scores
+        decayed = {}
+        for n, score in scores.items():
+            misses = decay_state.get(n, 0)
+            multiplier = calculate_decay_multiplier(misses, self.cfg.decay_rate, self.cfg.decay_floor)
+            decayed[n] = score * multiplier
+        return decayed
+
     # ── Validation ────────────────────────────────────────────────────
 
     def valider_contraintes(self, numeros: list[int]) -> float:
@@ -554,6 +575,7 @@ class HybrideEngine:
         exclusions: dict | None = None,
         recent_draws: list[dict] | None = None,
         lang: str = "fr",
+        decay_state: dict[int, int] | None = None,
     ) -> dict:
         if forced_nums is None:
             forced_nums = []
@@ -563,6 +585,9 @@ class HybrideEngine:
 
         # Penalization
         penalized = self.apply_boule_penalties(scores_hybrides, recent_draws or [])
+        # Decay score (step 4 — break kernel lock)
+        if decay_state:
+            penalized = self.apply_decay(penalized, decay_state)
         # Anti-collision
         if anti_collision:
             penalized = self.apply_anti_collision(penalized)
@@ -732,10 +757,14 @@ class HybrideEngine:
         forced_nums: list[int] | None = None,
         forced_secondary: list[int] | None = None,
         exclusions: dict | None = None,
+        decay_state: dict[int, int] | None = None,
         _get_connection=None,
     ) -> dict:
         if _get_connection is None:
             from .db import get_connection as _get_connection
+
+        if decay_state is None and self.cfg.decay_enabled:
+            logger.debug("generate_grids: decay_enabled but no decay_state provided — skipping decay")
 
         async with _get_connection() as conn:
             scores_hybrides = await self.calculer_scores_hybrides(conn, mode=mode)
@@ -748,6 +777,7 @@ class HybrideEngine:
                     anti_collision=anti_collision,
                     forced_nums=forced_nums, forced_secondary=forced_secondary,
                     exclusions=exclusions, recent_draws=recent_draws, lang=lang,
+                    decay_state=decay_state,
                 )
                 grilles.append(grille)
 
@@ -789,6 +819,12 @@ class HybrideEngine:
                     'note': self._ANTI_COLLISION_NOTES.get(lang, self._ANTI_COLLISION_NOTES['fr']),
                 },
                 'temperature': self.cfg.temperature_by_mode.get(mode, 1.3),
+                'decay': {
+                    'enabled': self.cfg.decay_enabled,
+                    'active': decay_state is not None and len(decay_state) > 0,
+                    'rate': self.cfg.decay_rate,
+                    'floor': self.cfg.decay_floor,
+                },
                 'degraded_windows': await self._check_degraded_windows(
                     conn, nb_tirages, date_min, date_max,
                 ),

@@ -28,26 +28,17 @@ def generer_badges(numeros, scores_hybrides, lang="fr"):
     return _engine._generer_badges(numeros, scores_hybrides, lang)
 
 
-async def generer_etoiles(conn, mode="balanced", recent_draws=None, anti_collision=False):
-    """DEPRECATED: Use generate_grids() which calls generer_secondary() internally.
-    Used by: tests/test_hybride_em.py.
-    """
-    return await _engine.generer_secondary(
-        conn, mode=mode, recent_draws=recent_draws, anti_collision=anti_collision,
-    )
-
-
 # ── Main API (backward compat signature) ──────────────────────────────
 
 async def generate_grids(
     n=5, mode="balanced", lang="fr",
     forced_nums=None, forced_etoiles=None, exclusions=None,
-    anti_collision=False,
+    anti_collision=False, decay_state=None,
 ):
     """Generate N EuroMillions grids. Used by: services/chat_pipeline_em.py, tests."""
     return await _engine.generate_grids(
         n=n, mode=mode, lang=lang, anti_collision=anti_collision,
         forced_nums=forced_nums, forced_secondary=forced_etoiles,
-        exclusions=exclusions,
+        exclusions=exclusions, decay_state=decay_state,
         _get_connection=get_connection,
     )

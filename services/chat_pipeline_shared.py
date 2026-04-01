@@ -53,6 +53,7 @@ from services.chat_detectors import (
 )
 from services.stats_analysis import should_inject_pedagogical_context, PEDAGOGICAL_CONTEXT
 from services.chat_logger import log_chat_exchange
+from services.decay_state import get_decay_state, update_decay_after_generation
 
 logger = logging.getLogger(__name__)
 
@@ -874,11 +875,26 @@ async def _prepare_chat_context_base(
                 _generation_context = f"[ERREUR GÉNÉRATION] {_forced['error']}"
                 logger.info(f"{_lp} Phase G — erreur contrainte: {_forced['error']}")
             else:
+                # Decay state: load before generation (best-effort)
+                _decay = None
+                _game_name = "euromillions" if cfg.get("game") == "euromillions" else "loto"
+                try:
+                    import db_cloudsql as _db
+                    async with _db.get_connection() as _dconn:
+                        _decay = await get_decay_state(_dconn, _game_name, "ball")
+                except Exception:
+                    pass  # graceful — generate without decay
+
                 _gen_kwargs = {
                     "n": _grid_count, "mode": _gen_mode, "lang": lang,
                     "forced_nums": _forced["forced_nums"] or None,
                     cfg["gen_secondary_param"]: _forced[cfg["forced_secondary_key"]] or None,
+                    # DESIGN DECISION: anti_collision=True hardcode pour le chatbot.
+                    # Le chatbot optimise l'UX (eviter les numeros superstitieux partages).
+                    # L'API laisse le choix a l'utilisateur (default=False, opt-in via query param).
+                    # Voir audit 360° Engine HYBRIDE F03 — 01/04/2026.
                     "anti_collision": True,
+                    "decay_state": _decay,
                 }
                 if any((_exclusions or {}).values()):
                     _gen_kwargs["exclusions"] = _exclusions
@@ -904,6 +920,23 @@ async def _prepare_chat_context_base(
                         f"{_lp} Phase G — {len(_grids)} grille(s) generee(s) mode={_gen_mode} "
                         f"forced={_forced['forced_nums']} {cfg['forced_secondary_key']}={_sec_val}"
                     )
+                    # Update decay after generation (best-effort)
+                    try:
+                        _all_b = [n for g in _grids for n in g.get("nums", [])]
+                        _all_s = []
+                        for g in _grids:
+                            sec = g.get("etoiles") or g.get("chance")
+                            if isinstance(sec, list):
+                                _all_s.extend(sec)
+                            elif sec is not None:
+                                _all_s.append(sec)
+                        if _all_b:
+                            async with _db.get_connection() as _dconn:
+                                await update_decay_after_generation(
+                                    _dconn, _game_name, _all_b, _all_s or None,
+                                )
+                    except Exception:
+                        pass  # non-blocking
         except Exception as e:
             logger.warning(f"{_lp} Phase G erreur: {e}")
 

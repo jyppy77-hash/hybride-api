@@ -76,10 +76,10 @@ class TestFormatGrilleBase:
         grille.pop("chance", None)
         result = _format_grille_context_base(
             grille, "etoiles", "étoiles",
-            "75-175", 25, "26-50",
+            "95-160", 25, "26-50",
             match_key="etoiles_match", match_label=" + étoile(s)",
         )
-        assert "idéal : 75-175" in result
+        assert "idéal : 95-160" in result
         assert "Bas (1-25)" in result
         assert "Hauts (26-50)" in result
         assert "(étoiles: 2 7)" in result

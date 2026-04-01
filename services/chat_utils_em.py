@@ -50,7 +50,7 @@ def _format_grille_context_em(result: dict) -> str:
     """Formate l'analyse de grille EM en bloc de contexte pour Gemini."""
     return _format_grille_context_base(
         result, secondary_key="etoiles", secondary_label="étoiles",
-        sum_range="75-175", low_threshold=25, high_label="26-50",
+        sum_range="95-160", low_threshold=25, high_label="26-50",
         match_key="etoiles_match", match_label=" + étoile(s) communes",
     )
 

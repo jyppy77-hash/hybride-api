@@ -1,61 +1,43 @@
-"""Tests pour services/penalization.py — V1 legacy + V2 hard-exclude & fenetre 4 tirages."""
+"""Tests pour services/penalization.py — V2 hard-exclude & fenetre 4 tirages.
+
+V1 legacy tests removed in V79 (F02 audit Engine HYBRIDE).
+All callers now pass recent_draws (V2 mode required).
+"""
 import pytest
 from services.penalization import (
     compute_penalized_ranking,
-    COEFF_LAST_DRAW, COEFF_SECOND_LAST,
     PENALIZATION_COEFFS,
 )
 
 
 # ═══════════════════════════════════════════════
-# EXISTING V1 LEGACY TESTS (10) — must all pass
+# V2 — recent_draws REQUIRED (V79)
 # ═══════════════════════════════════════════════
 
-def test_no_penalization():
-    """Sans tirages recents, classement par frequence brute."""
+def test_recent_draws_none_raises():
+    """recent_draws=None raises ValueError since V79."""
+    freq = {1: 100, 2: 90, 3: 80}
+    with pytest.raises(ValueError, match="recent_draws is required"):
+        compute_penalized_ranking(freq, set(), set(), range(1, 4), top_n=3)
+
+
+def test_no_penalization_empty_recent():
+    """Empty recent_draws list: classement par frequence brute."""
     freq = {1: 100, 2: 90, 3: 80, 4: 70, 5: 60, 6: 50}
-    top, info = compute_penalized_ranking(freq, set(), set(), range(1, 7), top_n=3)
+    top, info = compute_penalized_ranking(
+        freq, set(), set(), range(1, 7), top_n=3, recent_draws=[],
+    )
     assert [x["number"] for x in top] == [1, 2, 3]
     assert [x["count"] for x in top] == [100, 90, 80]
     assert info["penalized_numbers"] == {}
 
 
-def test_last_draw_penalty_drops_ranking():
-    """Numero du dernier tirage penalise et recule dans le classement."""
-    freq = {1: 100, 2: 95, 3: 90}
-    # Numero 1 au dernier tirage : 100 * 0.7 = 70 < 95 et 90
-    top, info = compute_penalized_ranking(freq, {1}, set(), range(1, 4), top_n=3)
-    assert top[0]["number"] == 2  # 95 * 1.0 = 95
-    assert top[1]["number"] == 3  # 90 * 1.0 = 90
-    assert top[2]["number"] == 1  # 100 * 0.7 = 70
-    assert top[2]["count"] == 100  # frequence brute preservee
-
-
-def test_second_last_penalty():
-    """Numero de l'avant-dernier tirage penalise a 0.85."""
-    freq = {1: 100, 2: 90, 3: 80}
-    # Numero 1 : 100 * 0.85 = 85 => passe sous 2 (90) mais reste au-dessus de 3 (80)
-    top, info = compute_penalized_ranking(freq, set(), {1}, range(1, 4), top_n=3)
-    assert top[0]["number"] == 2  # 90
-    assert top[1]["number"] == 1  # 85 penalise
-    assert top[2]["number"] == 3  # 80
-    assert info["penalized_numbers"][1] == COEFF_SECOND_LAST
-
-
-def test_both_draws_worst_penalty():
-    """Numero present dans les 2 derniers tirages : pire penalite (0.7), pas de cumul."""
-    freq = {1: 100, 2: 71, 3: 69}
-    top, info = compute_penalized_ranking(freq, {1}, {1}, range(1, 4), top_n=3)
-    # Numero 1 : 100 * 0.7 = 70 < 71 (numero 2)
-    assert top[0]["number"] == 2
-    assert top[1]["number"] == 1
-    assert info["penalized_numbers"][1] == COEFF_LAST_DRAW  # 0.7, pas 0.595
-
-
 def test_raw_counts_always_preserved():
     """Le champ count montre toujours la frequence brute."""
     freq = {1: 200, 2: 100, 3: 50}
-    top, _ = compute_penalized_ranking(freq, {1, 2}, set(), range(1, 4), top_n=3)
+    top, _ = compute_penalized_ranking(
+        freq, set(), set(), range(1, 4), top_n=3, recent_draws=[{1, 2}],
+    )
     for item in top:
         assert item["count"] == freq[item["number"]]
 
@@ -63,7 +45,9 @@ def test_raw_counts_always_preserved():
 def test_top_before_penalization():
     """penalization_info contient le classement original avant penalites."""
     freq = {1: 100, 2: 95, 3: 90}
-    _, info = compute_penalized_ranking(freq, {1}, set(), range(1, 4), top_n=2)
+    _, info = compute_penalized_ranking(
+        freq, set(), set(), range(1, 4), top_n=2, recent_draws=[{1}],
+    )
     before = info["top_before_penalization"]
     assert before[0]["number"] == 1  # classement brut : 1 reste premier
     assert before[1]["number"] == 2
@@ -72,7 +56,9 @@ def test_top_before_penalization():
 def test_zero_frequency_not_affected():
     """Numero avec frequence 0 : penalisation sans effet."""
     freq = {1: 0, 2: 10, 3: 5}
-    top, info = compute_penalized_ranking(freq, {1}, set(), range(1, 4), top_n=2)
+    top, info = compute_penalized_ranking(
+        freq, set(), set(), range(1, 4), top_n=2, recent_draws=[{1}],
+    )
     assert top[0]["number"] == 2
     assert top[1]["number"] == 3
 
@@ -80,7 +66,9 @@ def test_zero_frequency_not_affected():
 def test_tie_break_by_number_ascending():
     """En cas d'egalite de frequence penalisee, le plus petit numero gagne."""
     freq = {5: 50, 3: 50, 7: 50}
-    top, _ = compute_penalized_ranking(freq, set(), set(), range(1, 8), top_n=3)
+    top, _ = compute_penalized_ranking(
+        freq, set(), set(), range(1, 8), top_n=3, recent_draws=[],
+    )
     penalized_top = [x for x in top if x["count"] == 50]
     numbers = [x["number"] for x in penalized_top]
     assert numbers == sorted(numbers)
@@ -89,20 +77,22 @@ def test_tie_break_by_number_ascending():
 def test_loto_range():
     """Simule le cas reel Loto France : range(1, 50), top 5."""
     freq = {i: 50 - abs(i - 25) for i in range(1, 50)}  # pic au milieu
-    last = {24, 25, 26, 27, 28}
-    top, info = compute_penalized_ranking(freq, last, set(), range(1, 50), top_n=5)
-    # Les numeros 24-28 sont penalises, d'autres doivent monter
+    recent = [{24, 25, 26, 27, 28}]  # T-1
+    top, info = compute_penalized_ranking(
+        freq, set(), set(), range(1, 50), top_n=5, recent_draws=recent,
+    )
     top_numbers = {x["number"] for x in top}
-    assert not top_numbers.issubset(last)  # au moins un numero hors dernier tirage
+    assert not top_numbers & {24, 25, 26, 27, 28}  # T-1 excluded
 
 
 def test_euromillions_stars_range():
     """Simule le cas reel EuroMillions etoiles : range(1, 13), top 3."""
     freq = {i: 30 + i for i in range(1, 13)}  # 12 a la plus haute freq
-    last_stars = {12, 11}
-    top, _ = compute_penalized_ranking(freq, last_stars, set(), range(1, 13), top_n=3)
-    # 12: 42*0.7=29.4, 11: 41*0.7=28.7 => devraient reculer
-    assert top[0]["number"] == 10  # 40 * 1.0 = 40
+    recent = [{12, 11}]  # T-1
+    top, _ = compute_penalized_ranking(
+        freq, set(), set(), range(1, 13), top_n=3, recent_draws=recent,
+    )
+    assert top[0]["number"] == 10  # 40 * 1.0 = 40 (12 and 11 excluded)
 
 
 # ═══════════════════════════════════════════════
@@ -267,31 +257,6 @@ def test_four_draw_window_same_number_multiple_draws():
 
 
 # ═══════════════════════════════════════════════
-# V2 — RETROCOMPATIBILITE TESTS (2)
-# ═══════════════════════════════════════════════
-
-def test_backward_compat_two_draws():
-    """Appel avec l'ancienne signature (2 tirages) fonctionne comme V1."""
-    freq = {1: 100, 2: 95, 3: 90}
-    top, info = compute_penalized_ranking(freq, {1}, set(), range(1, 4), top_n=3)
-    # V1 behavior: 1 penalized at 0.7 -> 70
-    assert top[0]["number"] == 2
-    assert top[1]["number"] == 3
-    assert top[2]["number"] == 1
-    assert info["penalized_numbers"][1] == COEFF_LAST_DRAW
-    assert "excluded_numbers" not in info  # V1 doesn't have this field
-
-
-def test_backward_compat_no_recent_draws():
-    """Appel sans recent_draws ni tirages recents : classement brut."""
-    freq = {1: 100, 2: 90, 3: 80}
-    top, info = compute_penalized_ranking(freq, set(), set(), range(1, 4), top_n=3)
-    assert [x["number"] for x in top] == [1, 2, 3]
-    assert info["penalized_numbers"] == {}
-    assert "excluded_numbers" not in info
-
-
-# ═══════════════════════════════════════════════
 # V2 — INTEGRATION TESTS (2)
 # ═══════════════════════════════════════════════
 
@@ -380,24 +345,22 @@ class TestCollisionRiskSuperstitious:
 
 
 # ═══════════════════════════════════════════════════════════════════════
-# V58 — F03: V1 legacy constants are distinct from V2
+# V79 — F02: V1 legacy path removed, excluded_numbers always present
 # ═══════════════════════════════════════════════════════════════════════
 
-class TestV1V2ConstantsDistinct:
+class TestV79NoV1Legacy:
 
-    def test_v1_constants_different_from_v2(self):
-        """V1 legacy constants (COEFF_LAST_DRAW/COEFF_SECOND_LAST) are NOT
-        the same as V2 PENALTY_COEFFICIENTS — they must not be confused."""
-        assert COEFF_LAST_DRAW != PENALIZATION_COEFFS[0], (
-            "V1 COEFF_LAST_DRAW should differ from V2 T-1 coefficient"
-        )
-        assert COEFF_SECOND_LAST != PENALIZATION_COEFFS[1], (
-            "V1 COEFF_SECOND_LAST should differ from V2 T-2 coefficient"
-        )
-
-    def test_v1_path_deprecated_in_source(self):
-        """V1 legacy path is marked DEPRECATED in source."""
-        import inspect
+    def test_no_v1_constants_in_module(self):
+        """V1 constants COEFF_LAST_DRAW/COEFF_SECOND_LAST are removed."""
         import services.penalization as mod
-        source = inspect.getsource(mod)
-        assert "DEPRECATED V58" in source
+        assert not hasattr(mod, "COEFF_LAST_DRAW")
+        assert not hasattr(mod, "COEFF_SECOND_LAST")
+
+    def test_excluded_numbers_always_in_info(self):
+        """excluded_numbers is always present in penalization_info (even if empty)."""
+        freq = {1: 100, 2: 90, 3: 80}
+        _, info = compute_penalized_ranking(
+            freq, set(), set(), range(1, 4), top_n=3, recent_draws=[],
+        )
+        assert "excluded_numbers" in info
+        assert info["excluded_numbers"] == []

@@ -11,7 +11,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from config.engine import EM_CONFIG
-from engine.hybride_em import generate_grids, valider_contraintes, generer_badges, generer_etoiles
+from engine.hybride_em import generate_grids, valider_contraintes, generer_badges
 from engine.hybride_base import HybrideEngine
 
 # Direct references — migrated from backward-compat re-exports (V57 audit fix F02).
@@ -237,7 +237,7 @@ class TestEMValiderContraintes:
         assert valider_contraintes(nums) == 1.0
 
     def test_penalite_somme_em(self):
-        """Somme hors [75, 175]."""
+        """Somme hors [95, 160]."""
         nums = [1, 2, 3, 4, 5]
         assert valider_contraintes(nums) < 1.0
 
@@ -595,84 +595,6 @@ async def test_em_exclusions_applied(mock_get_conn):
     for grid in result["grids"]:
         assert 7 not in grid["nums"]
         assert 13 not in grid["nums"]
-
-
-# ═══════════════════════════════════════════════════════════════════════
-# Star hybrid scoring (E03)
-# ═══════════════════════════════════════════════════════════════════════
-
-@pytest.mark.asyncio
-@patch("engine.hybride_em.get_connection")
-async def test_etoiles_always_two_distinct(mock_get_conn):
-    """generer_etoiles always returns 2 distinct stars."""
-    cursor = EMAsyncSmartMockCursor()
-    mock_get_conn.side_effect = lambda: make_em_conn(cursor)
-
-    for seed in range(20):
-        _random.seed(seed)
-        async with make_em_conn(cursor) as conn:
-            etoiles = await generer_etoiles(conn)
-        assert len(etoiles) == 2
-        assert len(set(etoiles)) == 2
-        assert all(ETOILE_MIN <= e <= ETOILE_MAX for e in etoiles)
-        assert etoiles == sorted(etoiles)
-
-
-@pytest.mark.asyncio
-@patch("engine.hybride_em.get_connection")
-async def test_etoiles_with_mode(mock_get_conn):
-    """generer_etoiles respects mode parameter."""
-    cursor = EMAsyncSmartMockCursor()
-    mock_get_conn.side_effect = lambda: make_em_conn(cursor)
-
-    for mode in ("conservative", "balanced", "recent"):
-        _random.seed(42)
-        async with make_em_conn(cursor) as conn:
-            etoiles = await generer_etoiles(conn, mode=mode)
-        assert len(etoiles) == 2
-        assert all(ETOILE_MIN <= e <= ETOILE_MAX for e in etoiles)
-
-
-@pytest.mark.asyncio
-@patch("engine.hybride_em.get_connection")
-async def test_etoiles_penalized(mock_get_conn):
-    """T-1 etoiles are excluded from generer_etoiles."""
-    cursor = EMAsyncSmartMockCursor()
-    mock_get_conn.side_effect = lambda: make_em_conn(cursor)
-
-    _, t1_etoiles = _get_em_t1()
-
-    # Get recent draws from mock
-    last_4 = sorted(FAKE_EM_TIRAGES, key=lambda t: t['date_de_tirage'])[-4:]
-    last_4.reverse()
-
-    excluded = set()
-    for seed in range(20):
-        _random.seed(seed)
-        async with make_em_conn(cursor) as conn:
-            etoiles = await generer_etoiles(conn, recent_draws=last_4)
-        for e in etoiles:
-            if e in t1_etoiles:
-                excluded.add(e)
-
-    assert len(excluded) == 0, (
-        f"T-1 etoiles {t1_etoiles} appeared in generated stars"
-    )
-
-
-@pytest.mark.asyncio
-@patch("engine.hybride_em.get_connection")
-async def test_etoiles_range(mock_get_conn):
-    """All generated etoiles are in [1-12]."""
-    cursor = EMAsyncSmartMockCursor()
-    mock_get_conn.side_effect = lambda: make_em_conn(cursor)
-
-    for seed in range(10):
-        _random.seed(seed)
-        async with make_em_conn(cursor) as conn:
-            etoiles = await generer_etoiles(conn)
-        for e in etoiles:
-            assert 1 <= e <= 12
 
 
 # ═══════════════════════════════════════════════════════════════════════

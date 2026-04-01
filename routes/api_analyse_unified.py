@@ -13,6 +13,7 @@ from rate_limit import limiter
 from config.games import ValidGame, get_config, get_engine
 from config.i18n import _badges, _analysis_strings
 from services.penalization import compute_penalized_ranking
+from services.decay_state import get_decay_state, update_decay_after_generation
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,10 @@ async def unified_generate(
     n: int = Query(default=3, ge=1, le=10, description="Nombre de grilles"),
     mode: str = Query(default="balanced", description="Mode: conservative, balanced, recent"),
     lang: str = Query(default="fr", pattern=r"^(fr|en|pt|es|de|nl)$"),
+    # DESIGN DECISION: anti_collision=False par defaut cote API.
+    # L'utilisateur peut activer via ?anti_collision=true.
+    # Le chatbot force True (voir chat_pipeline_shared.py).
+    # Voir audit 360° Engine HYBRIDE F03 — 01/04/2026.
     anti_collision: bool = Query(default=False, description="Anti-collision: boost high numbers"),
 ):
     cfg = get_config(game)
@@ -39,7 +44,37 @@ async def unified_generate(
             mode = "balanced"
 
         engine = get_engine(cfg)
-        result = await engine.generate_grids(n=n, mode=mode, lang=lang, anti_collision=anti_collision)
+
+        # Decay state: load before generation, update after
+        decay = None
+        game_name = "euromillions" if cfg.slug == "euromillions" else "loto"
+        try:
+            async with db_cloudsql.get_connection() as dconn:
+                decay = await get_decay_state(dconn, game_name, "ball")
+        except Exception:
+            logger.debug("decay_state unavailable — generating without decay")
+
+        result = await engine.generate_grids(
+            n=n, mode=mode, lang=lang, anti_collision=anti_collision,
+            decay_state=decay,
+        )
+
+        # Update decay after generation (best-effort)
+        try:
+            all_balls = []
+            all_stars = []
+            for g in result.get("grids", []):
+                all_balls.extend(g.get("nums", []))
+                sec = g.get("etoiles") or g.get("chance")
+                if isinstance(sec, list):
+                    all_stars.extend(sec)
+                elif sec is not None:
+                    all_stars.append(sec)
+            if all_balls:
+                async with db_cloudsql.get_connection() as dconn:
+                    await update_decay_after_generation(dconn, game_name, all_balls, all_stars or None)
+        except Exception:
+            logger.debug("decay update_after_generation failed — non-blocking")
 
         return {
             "success": True,

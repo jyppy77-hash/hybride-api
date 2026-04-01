@@ -4,15 +4,10 @@ Ajuste le classement des frequences pour reduire le biais vers les numeros recem
 Les frequences brutes affichees ne sont jamais modifiees.
 
 V2 — Hard-exclude T-1 + fenetre 4 tirages (F01+F02 audit 360°).
+V2-only since V79 (F02 audit Engine HYBRIDE — legacy V1 path removed 01/04/2026).
 """
 
 from config.engine import PENALTY_COEFFICIENTS, _SUPERSTITIOUS
-
-# DEPRECATED V58 — V1 legacy constants, different from V2 PENALTY_COEFFICIENTS.
-# Used only by V1 legacy path in compute_penalized_ranking() when recent_draws=None.
-# Will be removed when meta-analyse-local fully migrates to V2 (recent_draws mode).
-COEFF_LAST_DRAW = 0.7
-COEFF_SECOND_LAST = 0.85
 
 # V2 coefficients — imported from config/engine.py (single source of truth).
 PENALIZATION_COEFFS = list(PENALTY_COEFFICIENTS)
@@ -28,31 +23,36 @@ def compute_penalized_ranking(
     recent_draws: list[set[int]] | None = None,
 ) -> tuple[list[dict], dict]:
     """
-    Applique une penalisation post-tirage sur les frequences pour le classement.
+    Applique une penalisation V2 (hard-exclude T-1 + fenetre 4 tirages).
 
     Args:
         raw_freq: {numero: frequence_brute} issu de la BDD
-        last_draw_numbers: set des numeros du dernier tirage (legacy)
-        second_last_draw_numbers: set des numeros de l'avant-dernier tirage (legacy)
+        last_draw_numbers: UNUSED (legacy signature, kept for backward compat)
+        second_last_draw_numbers: UNUSED (legacy signature, kept for backward compat)
         num_range: plage de numeros valides (ex: range(1, 50) pour Loto boules)
         top_n: nombre de numeros a retourner (5 pour boules, 3 pour chance/etoiles)
-        recent_draws: [T-1, T-2, T-3, T-4] sets — V2 mode. Quand fourni,
-            last_draw_numbers et second_last_draw_numbers sont ignores.
+        recent_draws: [T-1, T-2, T-3, T-4] sets — REQUIRED.
 
     Returns:
         (top_list, penalization_info)
         - top_list: [{"number": N, "count": freq_brute}, ...] trie par freq penalisee
         - penalization_info: metadata pour transparence API
+
+    Raises:
+        ValueError: if recent_draws is None or empty.
     """
-    use_v2 = recent_draws is not None and len(recent_draws) > 0
+    if recent_draws is None:
+        raise ValueError(
+            "recent_draws is required (V1 legacy path removed in V79). "
+            "Pass recent_draws=[] for no penalization."
+        )
 
     # Build number -> best (lowest index) draw position
     draw_position: dict[int, int] = {}
-    if use_v2:
-        for pos, draw_set in enumerate(recent_draws):
-            for n in draw_set:
-                if n not in draw_position:
-                    draw_position[n] = pos
+    for pos, draw_set in enumerate(recent_draws):
+        for n in draw_set:
+            if n not in draw_position:
+                draw_position[n] = pos
 
     penalized_map: dict[int, float] = {}
     penalized_numbers: dict[int, float] = {}
@@ -61,30 +61,17 @@ def compute_penalized_ranking(
     for n in num_range:
         raw = raw_freq.get(n, 0)
 
-        if use_v2:
-            pos = draw_position.get(n)
-            if pos is not None and pos < len(PENALIZATION_COEFFS):
-                coeff = PENALIZATION_COEFFS[pos]
-            else:
-                coeff = 1.0
-
-            if coeff == 0.0:
-                excluded_set.add(n)
-                penalized_map[n] = -1.0  # sentinel — excluded
-                penalized_numbers[n] = 0.0
-            else:
-                penalized_map[n] = raw * coeff
-                if coeff < 1.0:
-                    penalized_numbers[n] = coeff
+        pos = draw_position.get(n)
+        if pos is not None and pos < len(PENALIZATION_COEFFS):
+            coeff = PENALIZATION_COEFFS[pos]
         else:
-            # DEPRECATED V58 — Legacy V1 path (uses COEFF_LAST_DRAW/COEFF_SECOND_LAST).
-            # Active only when recent_draws=None. Will be removed with V1 migration.
             coeff = 1.0
-            if n in last_draw_numbers:
-                coeff = COEFF_LAST_DRAW
-            elif n in second_last_draw_numbers:
-                coeff = COEFF_SECOND_LAST
 
+        if coeff == 0.0:
+            excluded_set.add(n)
+            penalized_map[n] = -1.0  # sentinel — excluded
+            penalized_numbers[n] = 0.0
+        else:
             penalized_map[n] = raw * coeff
             if coeff < 1.0:
                 penalized_numbers[n] = coeff
@@ -93,7 +80,7 @@ def compute_penalized_ranking(
     all_items = [{"number": n, "count": raw_freq.get(n, 0)} for n in num_range]
     all_items.sort(key=lambda x: (-penalized_map[x["number"]], x["number"]))
 
-    if use_v2 and excluded_set:
+    if excluded_set:
         # Hard-exclude: pick top_n from non-excluded numbers
         top_list = []
         for item in all_items:
@@ -111,9 +98,8 @@ def compute_penalized_ranking(
     penalization_info: dict = {
         "penalized_numbers": penalized_numbers,
         "top_before_penalization": top_before,
+        "excluded_numbers": sorted(excluded_set),
     }
-    if use_v2:
-        penalization_info["excluded_numbers"] = sorted(excluded_set)
 
     return top_list, penalization_info
 
