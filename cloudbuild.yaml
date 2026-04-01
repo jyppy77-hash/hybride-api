@@ -57,27 +57,35 @@ steps:
     args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:latest']
 
   # Deploy to Cloud Run — no traffic (I10 V66: smoke test before routing)
+  # SAFETY: only pass --update-env-vars when substitutions are non-empty,
+  # otherwise existing env vars (OWNER_IP, secrets) are wiped to empty strings.
   - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
     args:
-      - run
-      - deploy
-      - hybride-api-eu
-      - --image=europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:$COMMIT_SHA
-      - --region=europe-west1
-      - --platform=managed
-      - --allow-unauthenticated
-      - --port=8080
-      - --memory=1Gi
-      - --cpu=1
-      - --concurrency=40
-      - --max-instances=5
-      - --min-instances=1
-      - --timeout=120
-      - --cpu-boost
-      - --no-traffic
-      - --liveness-probe=httpGet.path=/health,httpGet.port=8080
-      - --startup-probe=httpGet.path=/health,httpGet.port=8080
-      - '--update-env-vars=OWNER_IP=${_OWNER_IP},OWNER_IPV6=${_OWNER_IPV6}'
+      - '-c'
+      - |
+        CMD="gcloud run deploy hybride-api-eu \
+          --image=europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:$COMMIT_SHA \
+          --region=europe-west1 \
+          --platform=managed \
+          --allow-unauthenticated \
+          --port=8080 \
+          --memory=1Gi \
+          --cpu=1 \
+          --concurrency=40 \
+          --max-instances=5 \
+          --min-instances=1 \
+          --timeout=120 \
+          --cpu-boost \
+          --no-traffic \
+          --liveness-probe=httpGet.path=/health,httpGet.port=8080 \
+          --startup-probe=httpGet.path=/health,httpGet.port=8080"
+        if [ -n "${_OWNER_IP}" ] && [ -n "${_OWNER_IPV6}" ]; then
+          CMD="$$CMD --update-env-vars=OWNER_IP=${_OWNER_IP},OWNER_IPV6=${_OWNER_IPV6}"
+        else
+          echo "WARNING: _OWNER_IP or _OWNER_IPV6 empty — skipping --update-env-vars to preserve existing values"
+        fi
+        eval $$CMD
 
   # Smoke test /health on the new revision (I10 V66)
   - name: 'gcr.io/cloud-builders/gcloud'
