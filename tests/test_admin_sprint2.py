@@ -166,7 +166,7 @@ class TestA08AuditLogging:
                 "raison_sociale": "Test", "siret": "", "adresse": "",
                 "code_postal": "", "ville": "", "pays": "France",
                 "email": "", "telephone": "", "tva_intra": "",
-                "taux_tva": 20, "iban": "", "bic": "", "logo_url": "",
+                "taux_tva": 0, "iban": "", "bic": "", "logo_url": "",
                 "forme_juridique": "EI", "rcs": "", "capital_social": "",
             })
             resp = client.post("/admin/config", data={
@@ -205,3 +205,102 @@ class TestA08AuditLogging:
         assert "ADMIN_AUDIT" in captured
         assert "action=tarif_update" in captured
         assert "code=LOTO_FR_A" in captured
+
+
+class TestTarifsV9:
+    """V9: Tarifs page renders mono-annonceur exclusif layout."""
+
+    def test_tarifs_page_renders_v9(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            resp = client.get("/admin/tarifs")
+        assert resp.status_code == 200
+        body = resp.text
+        assert "LOTOIA_EXCLU" in body
+        assert "EXCLUSIF" in body
+        assert "650" in body
+        assert "Palier" in body
+        assert "Garanties" in body
+
+    def test_tarifs_page_no_old_toggle(self):
+        """V9 removed EI/SASU toggle and 14-code grid."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            resp = client.get("/admin/tarifs")
+        body = resp.text
+        assert "billing-toggle" not in body
+        assert "LOTO_FR_A" not in body
+        assert "Packs regionaux" not in body
+
+    def test_tarifs_paliers_v9_data(self):
+        """V9 paliers use new pricing (650/815/1020/Sur mesure)."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            resp = client.get("/admin/tarifs")
+        body = resp.text
+        assert "815" in body
+        assert "1 020" in body
+        assert "Sur mesure" in body
+
+    def test_tarifs_api_returns_paliers_v9(self):
+        """GET /admin/api/tarifs returns V9 paliers."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[
+                {"config_key": "billing_mode", "config_value": "EI"},
+            ])
+            # Second call is for sponsor_tarifs
+            mock_db.async_fetchall.side_effect = [
+                [{"config_key": "billing_mode", "config_value": "EI"}],
+                [],
+            ]
+            resp = client.get("/admin/api/tarifs",
+                              headers={"Content-Type": "application/json"})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "paliers" in data
+        assert len(data["paliers"]) == 4
+        assert data["paliers"][0]["name"] == "Lancement"
+        # V9: no more packs key
+        assert "packs" not in data
+
+
+class TestConfigEI:
+    """Config page adapts for EI forme juridique."""
+
+    def test_config_page_renders_forme_select(self):
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={
+                "raison_sociale": "EmovisIA", "siret": "123", "adresse": "",
+                "code_postal": "", "ville": "", "pays": "France",
+                "email": "", "telephone": "", "tva_intra": "",
+                "taux_tva": 0, "iban": "", "bic": "",
+                "forme_juridique": "EI", "rcs": "", "capital_social": "",
+            })
+            resp = client.get("/admin/config")
+        assert resp.status_code == 200
+        body = resp.text
+        assert "cfg-forme" in body
+        assert "grp-rcs" in body
+        assert "grp-capital" in body
+        assert "293B" in body
+
+    def test_config_tva_default_zero_ei(self):
+        """EI: taux_tva default should be 0 (franchise en base)."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={
+                "raison_sociale": "EmovisIA", "siret": "123", "adresse": "",
+                "code_postal": "", "ville": "", "pays": "France",
+                "email": "", "telephone": "", "tva_intra": "",
+                "taux_tva": 0, "iban": "", "bic": "",
+                "forme_juridique": "EI", "rcs": "", "capital_social": "",
+            })
+            resp = client.get("/admin/config")
+        body = resp.text
+        # The TVA input should have value 0 for EI
+        assert 'value="0"' in body or "value=\"0\"" in body

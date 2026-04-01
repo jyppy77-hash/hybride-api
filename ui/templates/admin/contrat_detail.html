@@ -10,8 +10,8 @@
             <span class="kpi-label">Sponsor</span>
         </div>
         <div class="kpi-card">
-            <span class="kpi-value">{{ contrat.type_contrat }}</span>
-            <span class="kpi-label">Type</span>
+            <span class="kpi-value">{{ contrat.product_codes or 'LOTOIA_EXCLU' }}</span>
+            <span class="kpi-label">Code produit</span>
         </div>
         <div class="kpi-card">
             <span class="kpi-value">{{ "%.2f"|format(contrat.montant_mensuel_ht) }} EUR</span>
@@ -25,13 +25,18 @@
 
     <div class="kpi-bar">
         <span>Periode : <b>{{ contrat.date_debut }}</b> au <b>{{ contrat.date_fin }}</b></span>
+        {% if contrat.engagement_mois %}
+        <span style="margin-left:1.5rem;">Engagement : <b>{{ contrat.engagement_mois }} mois</b></span>
+        {% endif %}
     </div>
 
-    {% if contrat.product_codes %}
     <div class="kpi-bar">
-        <span><b>Product codes :</b> {{ contrat.product_codes }}</span>
+        <span>Pool : <b>{{ contrat.pool_impressions or 10000 }}</b> impressions/mois</span>
+        <span style="margin-left:1.5rem;">Depassement : <b>{{ contrat.mode_depassement or 'CPC' }}</b></span>
+        {% if contrat.plafond_mensuel %}
+        <span style="margin-left:1.5rem;">Plafond : <b>{{ "%.2f"|format(contrat.plafond_mensuel) }} EUR</b></span>
+        {% endif %}
     </div>
-    {% endif %}
 
     {% if contrat.conditions_particulieres %}
     <div class="kpi-bar">

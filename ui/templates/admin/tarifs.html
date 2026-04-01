@@ -2,265 +2,129 @@
 {% block title %}Tarifs{% endblock %}
 
 {% block content %}
-    <!-- ── EI / SASU Switch ──────────────────────────────────────── -->
-    <h2>Mode de facturation</h2>
-    <div class="billing-switch-card">
-        <div class="billing-switch-row">
-            <div class="billing-label {% if billing_mode == 'EI' %}billing-active{% endif %}" id="label-ei">
-                <strong>EI</strong>
-                <span class="billing-sub">Auto-entrepreneur — 4 codes FR</span>
+    <!-- ── Section 1 — Bandeau phase actuelle ────────────────────── -->
+    <div class="phase-banner">
+        <div class="phase-banner-label">PHASE ACTUELLE : <strong>EI</strong></div>
+        <div class="phase-banner-entity">Entite : <b>EmovisIA</b> — Jean-Philippe Godard</div>
+    </div>
+
+    <!-- ── Section 2 — Offre Partenaire Exclusif ─────────────────── -->
+    <h2>Offre Partenaire Exclusif</h2>
+    <div class="exclu-card">
+        <div class="exclu-card-header">
+            <div class="exclu-card-code">LOTOIA_EXCLU</div>
+            <span class="badge-exclu">EXCLUSIF</span>
+        </div>
+        <div class="exclu-card-price">650&#8364; <small>/mois</small></div>
+        <div class="exclu-card-details">
+            <div class="exclu-detail-row">
+                <span class="exclu-detail-label">Couverture</span>
+                <span>Loto France + EuroMillions 6 langues (9 pays)</span>
             </div>
-            <label class="toggle-switch">
-                <input type="checkbox" id="billing-toggle" {% if billing_mode == 'SASU' %}checked{% endif %}>
-                <span class="toggle-slider"></span>
-            </label>
-            <div class="billing-label {% if billing_mode == 'SASU' %}billing-active{% endif %}" id="label-sasu">
-                <strong>SASU</strong>
-                <span class="billing-sub">14 codes EU + packs regionaux</span>
+            <div class="exclu-detail-row">
+                <span class="exclu-detail-label">Pool</span>
+                <span>10 000 impressions / mois (garanti)</span>
+            </div>
+            <div class="exclu-detail-row">
+                <span class="exclu-detail-label">Engagement</span>
+                <span>3 mois minimum | 6 mois : -10% (585&#8364;/mois)</span>
             </div>
         </div>
-        <div class="billing-entity" id="entity-info">
-            {% if billing_mode == 'SASU' %}
-                <span>Entite : <b>{{ sasu_raison_sociale }}</b></span>
-                {% if sasu_siret %}<span> — SIRET : {{ sasu_siret }}</span>{% endif %}
-            {% else %}
-                <span>Entite : <b>{{ ei_raison_sociale }}</b></span>
-                {% if ei_siret %}<span> — SIRET : {{ ei_siret }}</span>{% endif %}
-            {% endif %}
+
+        <div class="exclu-placements">
+            <div class="exclu-placements-title">Emplacements</div>
+            <div class="table-wrap">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Emplacement</th>
+                            <th>Description</th>
+                            <th style="text-align:right">Part estimee</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>E1</td>
+                            <td>Simulateur / Generateur</td>
+                            <td>1 ou 2 encarts (au choix du partenaire)</td>
+                            <td style="text-align:right">~30%</td>
+                        </tr>
+                        <tr>
+                            <td>E2</td>
+                            <td>Video META 75</td>
+                            <td>Video/visuel 30s pendant le calcul IA</td>
+                            <td style="text-align:right">~10%</td>
+                        </tr>
+                        <tr>
+                            <td>E3</td>
+                            <td>Branding rapport PDF</td>
+                            <td>Logo + "Analyse offerte par..."</td>
+                            <td style="text-align:right">~10%</td>
+                        </tr>
+                        <tr>
+                            <td>E4</td>
+                            <td>Chatbot HYBRIDE</td>
+                            <td>Message sponsorise inline (1/3 reponses)</td>
+                            <td style="text-align:right">~30%</td>
+                        </tr>
+                        <tr>
+                            <td>E5</td>
+                            <td>Resultats generateur</td>
+                            <td>Banniere sous chaque grille</td>
+                            <td style="text-align:right">~20%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="exclu-card-status">
+            <span class="badge-actif">Actif</span>
         </div>
     </div>
 
-    <!-- ── Grille tarifaire (14 codes) — Cards by lang ───────────── -->
-    <h2>Grille tarifaire — 14 codes produit</h2>
-
-    {% set lang_meta = {
-        'fr': {'flag': 'FR', 'name': 'France / Francophone', 'css': 'lang-fr'},
-        'en': {'flag': 'EN', 'name': 'English / UK & Ireland', 'css': 'lang-en'},
-        'es': {'flag': 'ES', 'name': 'Espanol / Espagne', 'css': 'lang-es'},
-        'pt': {'flag': 'PT', 'name': 'Portugues / Portugal', 'css': 'lang-pt'},
-        'de': {'flag': 'DE', 'name': 'Deutsch / DACH', 'css': 'lang-de'},
-        'nl': {'flag': 'NL', 'name': 'Nederlands / Benelux', 'css': 'lang-nl'}
-    } %}
-
-    {% set ns = namespace(current_lang='') %}
-    {% for t in tarifs %}
-        {% if t.langue != ns.current_lang %}
-            {% if ns.current_lang != '' %}
-                </div></div>
-            {% endif %}
-            {% set ns.current_lang = t.langue %}
-            {% set meta = lang_meta.get(t.langue, {'flag': t.langue|upper, 'name': t.langue, 'css': ''}) %}
-            <div class="tarif-lang-group">
-                <div class="tarif-lang-header">
-                    <span class="tarif-lang-badge {{ meta.css }}">{{ meta.flag }}</span>
-                    <span class="tarif-lang-name">{{ meta.name }}</span>
-                </div>
-                <div class="tarif-cards">
-        {% endif %}
-
-        {% set is_locked = t.requires_sasu and billing_mode == 'EI' %}
-        <div class="tarif-card {{ 'tarif-card-premium' if t.tier == 'premium' else 'tarif-card-standard' }} {{ 'tarif-card-locked' if is_locked else '' }}"
-             data-code="{{ t.code }}" data-tarif="{{ t.tarif_mensuel }}" data-engagement="{{ t.engagement_min_mois }}"
-             data-red6="{{ t.reduction_6m }}" data-red12="{{ t.reduction_12m }}" data-active="{{ t.active }}">
-            {% if is_locked %}
-                <span class="tarif-card-lock">SASU</span>
-            {% endif %}
-            <div class="tarif-card-code">{{ t.code }}</div>
-            <span class="tarif-card-tier {{ 'tier-premium' if t.tier == 'premium' else 'tier-standard' }}">
-                {{ t.tier|capitalize }}
-            </span>
-            <div class="tarif-card-price">{{ t.tarif_mensuel }}€ <small>/mois</small></div>
-            <div class="tarif-card-meta">
-                <span>{{ t.pays }}</span>
-                <span>{{ t.emplacements }} — {{ t.engagement_min_mois }} mois min</span>
-                <span>-{{ t.reduction_6m }}% a 6m / -{{ t.reduction_12m }}% a 12m</span>
-            </div>
-            <div class="tarif-card-actions">
-                {% if not is_locked %}
-                    {% if t.active %}
-                        <span class="badge-actif">Actif</span>
-                    {% else %}
-                        <span class="badge-inactif">Inactif</span>
-                    {% endif %}
-                    <button class="btn btn-sm btn-ghost btn-edit-tarif" data-code="{{ t.code }}">Modifier</button>
-                {% endif %}
-            </div>
-        </div>
-    {% endfor %}
-    {% if tarifs %}
-        </div></div>
-    {% endif %}
-
-    <!-- ── Modal edit tarif ──────────────────────────────────────── -->
-    <div class="modal-overlay hidden" id="modal-overlay">
-        <div class="modal-card">
-            <h3 id="modal-title">Modifier tarif</h3>
-            <form id="edit-tarif-form" class="admin-form">
-                <input type="hidden" id="edit-code" name="code">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Tarif mensuel (EUR)</label>
-                        <input type="number" step="0.01" min="0" id="edit-tarif" name="tarif_mensuel" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Engagement min (mois)</label>
-                        <input type="number" min="1" max="36" id="edit-engagement" name="engagement_min_mois" required>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Reduction 6 mois (%)</label>
-                        <input type="number" step="0.01" min="0" max="100" id="edit-red6" name="reduction_6m">
-                    </div>
-                    <div class="form-group">
-                        <label>Reduction 12 mois (%)</label>
-                        <input type="number" step="0.01" min="0" max="100" id="edit-red12" name="reduction_12m">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Actif</label>
-                    <select id="edit-active" name="active">
-                        <option value="1">Oui</option>
-                        <option value="0">Non</option>
-                    </select>
-                </div>
-                <div class="form-actions">
-                    <button type="submit" class="btn btn-action">Enregistrer</button>
-                    <button type="button" class="btn btn-ghost" id="modal-cancel">Annuler</button>
-                </div>
-            </form>
-        </div>
+    <!-- ── Section 3 — Paliers d'audience ────────────────────────── -->
+    <h2>Paliers d'audience — Revision tarifaire</h2>
+    <div class="table-wrap">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>Palier</th>
+                    <th>Impressions / mois</th>
+                    <th style="text-align:right">Tarif mensuel</th>
+                    <th style="text-align:right">Hausse max</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in paliers %}
+                <tr>
+                    <td><strong>{{ p.name }}</strong></td>
+                    <td>{{ p.impressions }}</td>
+                    <td style="text-align:right">{{ p.tarif }}</td>
+                    <td style="text-align:right">{{ p.hausse }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     </div>
 
-    <!-- ── Packs regionaux ───────────────────────────────────────── -->
-    <h2>Packs regionaux</h2>
-    <div class="pack-cards">
-        {% for p in packs %}
-        <div class="pack-card {{ 'pack-card-locked' if p.requires_sasu and billing_mode == 'EI' else '' }}">
-            <div class="pack-card-name">{{ p.name }}</div>
-            <div class="pack-card-codes">{{ p.codes }}</div>
-            <div class="pack-card-detail">{{ p.pays }} — {{ p.tarif }}</div>
-            <div class="pack-card-status">
-                {% if p.requires_sasu and billing_mode == 'EI' %}
-                    <span class="badge-lock">Requiert SASU</span>
-                {% elif p.requires_sasu %}
-                    <span class="badge-actif">SASU</span>
-                {% else %}
-                    <span class="badge-actif">EI</span>
-                {% endif %}
-            </div>
-        </div>
-        {% endfor %}
+    <!-- ── Section 4 — Garanties de volume ───────────────────────── -->
+    <h2>Garanties de volume</h2>
+    <div class="garanties-card">
+        <ul class="garanties-list">
+            <li>
+                <strong>Report</strong> : si &lt; 7 000 impressions sur un mois &rarr; report sur le mois suivant (cumul 3 mois max)
+            </li>
+            <li>
+                <strong>Resiliation</strong> : si &lt; 3 000 impressions sur 2 mois consecutifs &rarr; resiliation sans frais (preavis 15j)
+            </li>
+            <li>
+                <strong>Depassement</strong> : au-dela de 10 000 impressions &rarr; CPC 0,30&#8364;/clic ou CPM 15&#8364;/1000 (au choix, revisable trimestriellement)
+            </li>
+            <li>
+                <strong>Plafond optionnel</strong> : le partenaire peut fixer un hard cap mensuel
+            </li>
+        </ul>
     </div>
-
-    <!-- ── Paliers d'audience ────────────────────────────────────── -->
-    <h2>Paliers d'audience (reference)</h2>
-    <div class="ref-cards">
-        {% for pl in paliers %}
-        <div class="ref-card">
-            <div class="ref-card-title">{{ pl.name }}</div>
-            <div class="ref-card-sub">{{ pl.impressions }} impressions/mois — {{ pl.hausse }}</div>
-            <div class="ref-card-prices">
-                <span class="ref-card-price">Std: <b>{{ pl.standard }}</b></span>
-                <span class="ref-card-price">Prem: <b>{{ pl.premium }}</b></span>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
-
-    <!-- ── Modeles overage ───────────────────────────────────────── -->
-    <h2>Modeles overage (CPC / CPM)</h2>
-    <p style="margin:0 0 12px;color:#8899aa;font-size:13px;">Au-dela des 10 000 impressions incluses par forfait</p>
-    <div class="ref-cards">
-        <div class="ref-card">
-            <div class="ref-card-title">CPC — Loto FR</div>
-            <div class="ref-card-sub">Performance (leads)</div>
-            <div class="ref-card-prices"><span class="ref-card-price"><b>0.30 EUR</b> / clic</span></div>
-        </div>
-        <div class="ref-card">
-            <div class="ref-card-title">CPC — EuroMillions</div>
-            <div class="ref-card-sub">Performance (leads)</div>
-            <div class="ref-card-prices"><span class="ref-card-price"><b>0.45 EUR</b> / clic</span></div>
-        </div>
-        <div class="ref-card">
-            <div class="ref-card-title">CPM</div>
-            <div class="ref-card-sub">Notoriete (branding) — uniforme</div>
-            <div class="ref-card-prices"><span class="ref-card-price"><b>15 EUR</b> / 1000 impressions</span></div>
-        </div>
-    </div>
-
-    <!-- ── Impressions incluses ────────────────────────────────── -->
-    <h2>Forfait inclus</h2>
-    <div class="ref-cards">
-        <div class="ref-card">
-            <div class="ref-card-title">10 000 impressions</div>
-            <div class="ref-card-sub">Incluses dans chaque forfait mensuel (Premium et Standard)</div>
-            <div class="ref-card-prices"><span class="ref-card-price">Au-dela : CPC ou CPM selon modele choisi</span></div>
-        </div>
-    </div>
-{% endblock %}
-
-{% block scripts %}
-<script>
-(function(){
-    // ── EI/SASU toggle ──────────────────────────────────────────
-    var toggle = document.getElementById('billing-toggle');
-    toggle.addEventListener('change', function(){
-        var mode = toggle.checked ? 'SASU' : 'EI';
-        fetch('/admin/api/tarifs/mode', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({mode: mode})
-        }).then(function(r){ return r.json(); })
-          .then(function(d){
-              if (d.ok) location.reload();
-              else alert(d.error || 'Erreur');
-          }).catch(function(){ alert('Erreur reseau'); });
-    });
-
-    // ── Modal edit ──────────────────────────────────────────────
-    var overlay = document.getElementById('modal-overlay');
-    var form = document.getElementById('edit-tarif-form');
-    var cancelBtn = document.getElementById('modal-cancel');
-
-    document.querySelectorAll('.btn-edit-tarif').forEach(function(btn){
-        btn.addEventListener('click', function(){
-            var code = btn.dataset.code;
-            var card = document.querySelector('.tarif-card[data-code="' + code + '"]');
-            document.getElementById('edit-code').value = code;
-            document.getElementById('modal-title').textContent = 'Modifier ' + code;
-            document.getElementById('edit-tarif').value = card.dataset.tarif;
-            document.getElementById('edit-engagement').value = card.dataset.engagement;
-            document.getElementById('edit-red6').value = card.dataset.red6;
-            document.getElementById('edit-red12').value = card.dataset.red12;
-            document.getElementById('edit-active').value = card.dataset.active;
-            overlay.classList.remove('hidden');
-        });
-    });
-
-    cancelBtn.addEventListener('click', function(){ overlay.classList.add('hidden'); });
-    overlay.addEventListener('click', function(e){ if (e.target === overlay) overlay.classList.add('hidden'); });
-
-    form.addEventListener('submit', function(e){
-        e.preventDefault();
-        var code = document.getElementById('edit-code').value;
-        var payload = {
-            tarif_mensuel: parseFloat(document.getElementById('edit-tarif').value),
-            engagement_min_mois: parseInt(document.getElementById('edit-engagement').value),
-            reduction_6m: parseFloat(document.getElementById('edit-red6').value),
-            reduction_12m: parseFloat(document.getElementById('edit-red12').value),
-            active: parseInt(document.getElementById('edit-active').value)
-        };
-        fetch('/admin/api/tarifs/' + encodeURIComponent(code), {
-            method: 'PUT',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload)
-        }).then(function(r){ return r.json(); })
-          .then(function(d){
-              if (d.ok) location.reload();
-              else alert(d.error || 'Erreur');
-          }).catch(function(){ alert('Erreur reseau'); });
-    });
-})();
-</script>
 {% endblock %}

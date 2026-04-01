@@ -1020,6 +1020,8 @@ async def admin_facture_pdf(request: Request, facture_id: int):
 # ══════════════════════════════════════════════════════════════════════════════
 
 _VALID_CONTRAT_STATUTS = ("brouillon", "envoye", "signe", "actif", "expire", "resilie")
+_VALID_TYPE_CONTRAT = ("standard", "premium", "pack_regional", "exclusif")
+_VALID_MODE_DEPASSEMENT = ("CPC", "CPM", "HYBRIDE")
 
 
 def _next_contrat_number(existing_count: int) -> str:
@@ -1068,6 +1070,20 @@ async def admin_contrat_create(request: Request):
         tpl = env.get_template("admin/contrat_form.html")
         return HTMLResponse(tpl.render(active="contrats", contrat=None, sponsors=sponsors, error="Le sponsor est obligatoire."), status_code=400)
 
+    type_contrat = form.get("type_contrat", "exclusif")
+    if type_contrat not in _VALID_TYPE_CONTRAT:
+        type_contrat = "exclusif"
+    # V9: product_codes is "LOTOIA_EXCLU" (stored as JSON array for backward compat)
+    raw_pc = form.get("product_codes", "LOTOIA_EXCLU")
+    product_codes = f'["{raw_pc}"]' if raw_pc and not raw_pc.startswith("[") else (raw_pc or None)
+    engagement_mois = int(form.get("engagement_mois", 3))
+    pool_impressions = int(form.get("pool_impressions", 10000))
+    mode_dep = form.get("mode_depassement", "CPC")
+    if mode_dep not in _VALID_MODE_DEPASSEMENT:
+        mode_dep = "CPC"
+    plafond_raw = form.get("plafond_mensuel", "")
+    plafond_mensuel = float(plafond_raw) if plafond_raw else None
+
     try:
         # Generate numero with retry on duplicate
         for _attempt in range(3):
@@ -1078,12 +1094,13 @@ async def admin_contrat_create(request: Request):
             try:
                 await db_cloudsql.async_query(
                     "INSERT INTO fia_contrats (sponsor_id, numero, type_contrat, product_codes, "
-                    "date_debut, date_fin, montant_mensuel_ht, conditions_particulieres) "
-                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-                    (int(sponsor_id), numero, form.get("type_contrat", "standard"),
-                     form.get("product_codes", "") or None,
+                    "date_debut, date_fin, montant_mensuel_ht, engagement_mois, "
+                    "pool_impressions, mode_depassement, plafond_mensuel, conditions_particulieres) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                    (int(sponsor_id), numero, type_contrat, product_codes,
                      form.get("date_debut"), form.get("date_fin"),
                      float(form.get("montant_mensuel_ht", 0)),
+                     engagement_mois, pool_impressions, mode_dep, plafond_mensuel,
                      form.get("conditions_particulieres", "") or None),
                 )
                 break
@@ -1142,14 +1159,29 @@ async def admin_contrat_update(request: Request, contrat_id: int):
         tpl = env.get_template("admin/contrat_form.html")
         return HTMLResponse(tpl.render(active="contrats", contrat=contrat, sponsors=sponsors, error="Le sponsor est obligatoire."), status_code=400)
 
+    type_contrat = form.get("type_contrat", "exclusif")
+    if type_contrat not in _VALID_TYPE_CONTRAT:
+        type_contrat = "exclusif"
+    raw_pc = form.get("product_codes", "LOTOIA_EXCLU")
+    product_codes = f'["{raw_pc}"]' if raw_pc and not raw_pc.startswith("[") else (raw_pc or None)
+    engagement_mois = int(form.get("engagement_mois", 3))
+    pool_impressions = int(form.get("pool_impressions", 10000))
+    mode_dep = form.get("mode_depassement", "CPC")
+    if mode_dep not in _VALID_MODE_DEPASSEMENT:
+        mode_dep = "CPC"
+    plafond_raw = form.get("plafond_mensuel", "")
+    plafond_mensuel = float(plafond_raw) if plafond_raw else None
+
     try:
         await db_cloudsql.async_query(
             "UPDATE fia_contrats SET sponsor_id=%s, type_contrat=%s, product_codes=%s, "
-            "date_debut=%s, date_fin=%s, montant_mensuel_ht=%s, conditions_particulieres=%s WHERE id=%s",
-            (int(sponsor_id), form.get("type_contrat", "standard"),
-             form.get("product_codes", "") or None,
+            "date_debut=%s, date_fin=%s, montant_mensuel_ht=%s, engagement_mois=%s, "
+            "pool_impressions=%s, mode_depassement=%s, plafond_mensuel=%s, "
+            "conditions_particulieres=%s WHERE id=%s",
+            (int(sponsor_id), type_contrat, product_codes,
              form.get("date_debut"), form.get("date_fin"),
              float(form.get("montant_mensuel_ht", 0)),
+             engagement_mois, pool_impressions, mode_dep, plafond_mensuel,
              form.get("conditions_particulieres", "") or None,
              contrat_id),
         )
@@ -1723,20 +1755,15 @@ async def admin_api_engagement(
 # TARIFS — Grille tarifaire EU + Switch EI/SASU
 # ══════════════════════════════════════════════════════════════════════════════
 
-_PACKS = [
-    {"name": "FR Complet", "codes": "LOTO_FR_A + EM_FR_A", "pays": "France (Loto+EM)", "tarif": "799 EUR (-10%)", "requires_sasu": False},
-    {"name": "DACH", "codes": "EM_DE_A", "pays": "DE, AT, CH", "tarif": "549 EUR", "requires_sasu": True},
-    {"name": "Benelux", "codes": "EM_FR_A + EM_NL_A", "pays": "BE, NL, LU", "tarif": "799 EUR (-10%)", "requires_sasu": True},
-    {"name": "Iberique", "codes": "EM_ES_A + EM_PT_A", "pays": "ES, PT", "tarif": "759 EUR (-15%)", "requires_sasu": True},
-    {"name": "Continental A", "codes": "LOTO_FR_A + 6x EM_*_A", "pays": "9 pays Premium", "tarif": "2 499 EUR (-25%)", "requires_sasu": True},
-    {"name": "Continental B", "codes": "LOTO_FR_B + 6x EM_*_B", "pays": "9 pays Standard", "tarif": "1 189 EUR (-20%)", "requires_sasu": True},
-]
+# V9 — mono-annonceur exclusif (LOTOIA_EXCLU, 650 EUR/mois)
+# Les anciens _PACKS V8 sont supprimés de l'affichage admin.
+# Les 14 codes produit restent en BDD pour le tracking impressions existant.
 
-_PALIERS = [
-    {"name": "Lancement", "impressions": "0-10K", "standard": "199 EUR (gel)", "premium": "449 EUR / 549 EUR T1", "hausse": "—"},
-    {"name": "Croissance", "impressions": "10K-30K", "standard": "249 EUR", "premium": "549 EUR / 649 EUR T1", "hausse": "+25% max"},
-    {"name": "Traction", "impressions": "30K-100K", "standard": "349 EUR", "premium": "699 EUR / 799 EUR T1", "hausse": "+25% max"},
-    {"name": "Scale", "impressions": "100K+", "standard": "Sur mesure", "premium": "Sur mesure", "hausse": "Negocie"},
+_PALIERS_V9 = [
+    {"name": "Lancement", "impressions": "0 - 10 000", "tarif": "650\u20ac (gel)", "hausse": "\u2014"},
+    {"name": "Croissance", "impressions": "10 001 - 40 000", "tarif": "815\u20ac", "hausse": "+25% max"},
+    {"name": "Traction", "impressions": "40 001 - 100 000", "tarif": "1 020\u20ac", "hausse": "+25% max"},
+    {"name": "Scale", "impressions": "100 001+", "tarif": "Sur mesure", "hausse": "Negocie"},
 ]
 
 _VALID_TARIF_CODES = frozenset([
@@ -1766,27 +1793,10 @@ async def admin_tarifs_page(request: Request):
     if redir:
         return redir
 
-    cfg = await _get_admin_config()
-    tarifs = []
-    try:
-        tarifs = await db_cloudsql.async_fetchall(
-            "SELECT * FROM sponsor_tarifs ORDER BY FIELD(langue,'fr','en','es','pt','de','nl'), tier DESC"
-        )
-        tarifs = [{k: (_dec(v) if isinstance(v, Decimal) else v) for k, v in row.items()} for row in tarifs]
-    except Exception as e:
-        logger.error("[ADMIN] tarifs read: %s", e)
-
     tpl = env.get_template("admin/tarifs.html")
     return HTMLResponse(tpl.render(
         active="tarifs",
-        billing_mode=cfg["billing_mode"],
-        ei_raison_sociale=cfg["ei_raison_sociale"],
-        ei_siret=cfg["ei_siret"],
-        sasu_raison_sociale=cfg["sasu_raison_sociale"],
-        sasu_siret=cfg["sasu_siret"],
-        tarifs=tarifs,
-        packs=_PACKS,
-        paliers=_PALIERS,
+        paliers=_PALIERS_V9,
     ))
 
 
@@ -1851,10 +1861,10 @@ async def admin_api_tarifs_data(request: Request):
         cfg = await _get_admin_config()
         tarifs = await db_cloudsql.async_fetchall("SELECT * FROM sponsor_tarifs ORDER BY code")
         tarifs = [{k: (_dec(v) if isinstance(v, Decimal) else v) for k, v in row.items()} for row in tarifs]
-        return JSONResponse({"billing_mode": cfg["billing_mode"], "tarifs": tarifs, "packs": _PACKS, "paliers": _PALIERS})
+        return JSONResponse({"billing_mode": cfg["billing_mode"], "tarifs": tarifs, "paliers": _PALIERS_V9})
     except Exception as e:
         logger.error("[ADMIN] tarifs API: %s", e)
-        return JSONResponse({"billing_mode": "EI", "tarifs": [], "packs": [], "paliers": []}, status_code=500)
+        return JSONResponse({"billing_mode": "EI", "tarifs": [], "paliers": []}, status_code=500)
 
 
 # ── GCP Monitoring ────────────────────────────────────────────────────────────

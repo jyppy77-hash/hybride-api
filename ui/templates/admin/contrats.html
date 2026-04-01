@@ -14,10 +14,11 @@
                 <tr>
                     <th>Numero</th>
                     <th>Sponsor</th>
-                    <th>Type</th>
+                    <th>Code produit</th>
                     <th>Debut</th>
                     <th>Fin</th>
                     <th>Mensuel HT</th>
+                    <th>Depassement</th>
                     <th>Statut</th>
                     <th>Actions</th>
                 </tr>
@@ -27,10 +28,11 @@
                 <tr>
                     <td>{{ c.numero }}</td>
                     <td>{{ c.sponsor_nom or c.sponsor_id }}</td>
-                    <td>{{ c.type_contrat }}</td>
+                    <td>{{ c.product_codes or '—' }}</td>
                     <td>{{ c.date_debut }}</td>
                     <td>{{ c.date_fin }}</td>
                     <td>{{ "%.2f"|format(c.montant_mensuel_ht) }} EUR</td>
+                    <td>{{ c.mode_depassement or 'CPC' }}</td>
                     <td><span class="badge-status badge-{{ c.statut }}">{{ c.statut }}</span></td>
                     <td>
                         <a href="/admin/contrats/{{ c.id }}" class="table-link">Detail</a>
@@ -38,7 +40,7 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="8" class="empty-state">Aucun contrat</td></tr>
+                <tr><td colspan="9" class="empty-state">Aucun contrat</td></tr>
                 {% endfor %}
             </tbody>
         </table>

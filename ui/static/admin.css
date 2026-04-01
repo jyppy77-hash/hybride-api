@@ -738,6 +738,91 @@ body.light .badge-standard { background: rgba(79,140,255,0.1); color: #1e40af; }
 #cm-table td:nth-child(5), #cm-table td:nth-child(7) { max-width: 220px; }
 #cm-table td:nth-child(6) { max-width: 180px; font-family: 'Courier New', monospace; font-size: .75rem; }
 
+/* ═══════════════════════════════════════════════════════════════
+   TARIFS V9 — Mono-annonceur exclusif
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Phase banner */
+.phase-banner {
+    background: var(--bg-card); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    border-radius: var(--radius); padding: .8rem 1.2rem; margin-bottom: 1.5rem;
+}
+.phase-banner-label { font-size: .82rem; color: var(--accent); text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
+.phase-banner-entity { font-size: .78rem; color: var(--text-muted); margin-top: .2rem; }
+
+/* Exclusive card */
+.exclu-card {
+    background: var(--bg-card); border: 1px solid var(--border-accent); border-radius: var(--radius);
+    padding: 1.5rem; margin-bottom: 1.5rem;
+    box-shadow: 0 4px 24px rgba(212,168,67,0.08);
+}
+.exclu-card:hover { box-shadow: 0 8px 32px var(--shadow-hover); }
+.exclu-card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: .6rem; }
+.exclu-card-code { font-size: 1rem; font-weight: 700; color: var(--text-strong); letter-spacing: .02em; }
+.badge-exclu {
+    display: inline-block; padding: .2rem .8rem; border-radius: 20px; font-size: .7rem; font-weight: 700;
+    background: rgba(212,168,67,0.18); color: var(--accent); text-transform: uppercase; letter-spacing: .05em;
+}
+body.light .badge-exclu { background: rgba(212,168,67,0.12); color: #9a7b2f; }
+.exclu-card-price { font-size: 1.8rem; font-weight: 700; color: var(--text-strong); letter-spacing: -0.02em; margin-bottom: .8rem; }
+.exclu-card-price small { font-size: .8rem; font-weight: 500; color: var(--text-muted); }
+.exclu-card-details { display: flex; flex-direction: column; gap: .4rem; margin-bottom: 1.2rem; }
+.exclu-detail-row { display: flex; gap: .8rem; font-size: .8rem; color: var(--text); line-height: 1.5; }
+.exclu-detail-label { min-width: 100px; font-weight: 600; color: var(--accent); flex-shrink: 0; }
+.exclu-placements { margin-bottom: .8rem; }
+.exclu-placements-title { font-size: .78rem; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: .05em; margin-bottom: .5rem; }
+.exclu-card-status { margin-top: .5rem; }
+
+/* Garanties card */
+.garanties-card {
+    background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 1.2rem 1.5rem; margin-bottom: 1.5rem;
+}
+.garanties-list { list-style: none; padding: 0; margin: 0; }
+.garanties-list li {
+    position: relative; padding: .5rem 0 .5rem 1.2rem; font-size: .8rem; color: var(--text); line-height: 1.6;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+body.light .garanties-list li { border-bottom-color: rgba(0,0,0,0.04); }
+.garanties-list li:last-child { border-bottom: none; }
+.garanties-list li::before { content: "\2022"; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+
+/* Config: form hint */
+.form-hint { display: block; font-size: .7rem; color: var(--text-muted); margin-top: .2rem; font-style: italic; }
+
+/* ═══════════════════════════════════════════════════════════════
+   CONTRAT FORM V9 — Dark mode polish
+   ═══════════════════════════════════════════════════════════════ */
+
+.contrat-form .form-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px;
+}
+.contrat-form .form-full { grid-column: 1 / -1; }
+.contrat-form label {
+    color: var(--text-muted); font-size: .72rem; text-transform: uppercase;
+    letter-spacing: .04em; margin-bottom: 4px; display: block; font-weight: 600;
+}
+.contrat-form input,
+.contrat-form select,
+.contrat-form textarea {
+    background: var(--bg-input); border: 1px solid var(--border); border-radius: 6px;
+    color: var(--text-strong); padding: 10px 14px; font-size: .82rem; width: 100%;
+    font-family: inherit; transition: border-color 0.2s;
+    box-sizing: border-box;
+}
+.contrat-form input:focus,
+.contrat-form select:focus,
+.contrat-form textarea:focus {
+    border-color: var(--accent); outline: none;
+    box-shadow: 0 0 0 2px rgba(212,168,67,0.15);
+}
+.contrat-form input[readonly] { opacity: 0.6; cursor: not-allowed; }
+.contrat-form textarea { resize: vertical; min-height: 80px; }
+.contrat-form select { cursor: pointer; }
+.contrat-form-actions {
+    margin-top: 24px; display: flex; gap: 12px; align-items: center;
+}
+
 /* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .admin-header { padding: .5rem 1rem; flex-wrap: wrap; gap: .4rem; }
@@ -756,6 +841,9 @@ body.light .badge-standard { background: rgba(79,140,255,0.1); color: #1e40af; }
     .pack-cards { grid-template-columns: 1fr; }
     .ref-cards { grid-template-columns: 1fr; }
     .billing-switch-row { gap: .8rem; }
+    .exclu-detail-row { flex-direction: column; gap: .1rem; }
+    .exclu-detail-label { min-width: unset; }
+    .contrat-form .form-grid { grid-template-columns: 1fr; }
     .rt-filters-top { flex-direction: column; align-items: stretch; }
     .rt-event-top { gap: .4rem; }
     .rt-event-bottom { flex-wrap: wrap; gap: .4rem; }

@@ -1,5 +1,6 @@
 """
 Tests for S06 — Contrats CRUD in FacturIA admin.
+V9: mono-annonceur exclusif (LOTOIA_EXCLU, engagement, pool, depassement).
 """
 
 import json
@@ -74,15 +75,36 @@ class TestContratsListPage:
         client = _authed_client()
         with patch("routes.admin.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[{
-                "id": 1, "numero": "CTR-202603-0001", "sponsor_id": 1,
-                "sponsor_nom": "Test Sponsor", "type_contrat": "premium",
-                "date_debut": "2026-04-01", "date_fin": "2026-09-30",
-                "montant_mensuel_ht": 449.00, "statut": "actif",
+                "id": 1, "numero": "CTR-202604-0001", "sponsor_id": 1,
+                "sponsor_nom": "Test Sponsor", "type_contrat": "exclusif",
+                "product_codes": "LOTOIA_EXCLU",
+                "date_debut": "2026-04-01", "date_fin": "2026-06-30",
+                "montant_mensuel_ht": 650.00, "statut": "actif",
+                "mode_depassement": "CPC",
             }])
             resp = client.get("/admin/contrats")
         assert resp.status_code == 200
-        assert "CTR-202603-0001" in resp.text
+        assert "CTR-202604-0001" in resp.text
         assert "Test Sponsor" in resp.text
+        assert "LOTOIA_EXCLU" in resp.text
+
+    def test_contrats_list_shows_v9_columns(self):
+        """V9: list shows Code produit and Depassement columns."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[{
+                "id": 1, "numero": "CTR-202604-0001", "sponsor_id": 1,
+                "sponsor_nom": "S", "type_contrat": "exclusif",
+                "product_codes": "LOTOIA_EXCLU",
+                "date_debut": "2026-04-01", "date_fin": "2026-06-30",
+                "montant_mensuel_ht": 650.00, "statut": "brouillon",
+                "mode_depassement": "CPM",
+            }])
+            resp = client.get("/admin/contrats")
+        assert resp.status_code == 200
+        assert "Code produit" in resp.text
+        assert "Depassement" in resp.text
+        assert "CPM" in resp.text
 
 
 class TestContratsCreate:
@@ -98,6 +120,19 @@ class TestContratsCreate:
         assert resp.status_code == 200
         assert "Nouveau contrat" in resp.text
 
+    def test_new_form_has_v9_fields(self):
+        """V9 form has LOTOIA_EXCLU, engagement, pool, depassement."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
+            resp = client.get("/admin/contrats/new")
+        body = resp.text
+        assert "LOTOIA_EXCLU" in body
+        assert "cf-engagement" in body
+        assert "mode_depassement" in body
+        assert "plafond_mensuel" in body
+        assert "10 000" in body
+
     def test_create_contrat_success(self):
         client = _authed_client()
         with patch("routes.admin.db_cloudsql") as mock_db:
@@ -106,15 +141,48 @@ class TestContratsCreate:
             mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "Sponsor A"}])
             resp = client.post("/admin/contrats/new", data={
                 "sponsor_id": "1",
-                "type_contrat": "premium",
-                "product_codes": '["EM_FR_A"]',
+                "type_contrat": "exclusif",
+                "product_codes": "LOTOIA_EXCLU",
                 "date_debut": "2026-04-01",
-                "date_fin": "2026-09-30",
-                "montant_mensuel_ht": "449.00",
+                "date_fin": "2026-06-30",
+                "montant_mensuel_ht": "650.00",
+                "engagement_mois": "3",
+                "pool_impressions": "10000",
+                "mode_depassement": "CPC",
+                "plafond_mensuel": "",
                 "conditions_particulieres": "Test conditions",
             }, follow_redirects=False)
         assert resp.status_code == 302
         assert "/admin/contrats" in resp.headers["location"]
+
+    def test_create_contrat_6_mois_engagement(self):
+        """V9: 6-month engagement stores engagement_mois=6."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0})
+            mock_db.async_query = AsyncMock(return_value=None)
+            mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
+            resp = client.post("/admin/contrats/new", data={
+                "sponsor_id": "1",
+                "product_codes": "LOTOIA_EXCLU",
+                "date_debut": "2026-04-01",
+                "date_fin": "2026-09-30",
+                "montant_mensuel_ht": "585.00",
+                "engagement_mois": "6",
+                "pool_impressions": "10000",
+                "mode_depassement": "CPM",
+                "plafond_mensuel": "2000",
+            }, follow_redirects=False)
+        assert resp.status_code == 302
+        # Verify INSERT was called with V9 fields
+        call_args = mock_db.async_query.call_args_list[-1]
+        sql = call_args[0][0]
+        params = call_args[0][1]
+        assert "engagement_mois" in sql
+        assert "mode_depassement" in sql
+        assert 6 in params  # engagement_mois
+        assert "CPM" in params  # mode_depassement
+        assert 2000.0 in params  # plafond_mensuel
 
     def test_create_contrat_missing_sponsor(self):
         client = _authed_client()
@@ -122,13 +190,56 @@ class TestContratsCreate:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             resp = client.post("/admin/contrats/new", data={
                 "sponsor_id": "",
-                "type_contrat": "standard",
+                "type_contrat": "exclusif",
                 "date_debut": "2026-04-01",
-                "date_fin": "2026-09-30",
-                "montant_mensuel_ht": "199",
+                "date_fin": "2026-06-30",
+                "montant_mensuel_ht": "650",
             })
         assert resp.status_code == 400
         assert "obligatoire" in resp.text
+
+    def test_create_contrat_product_codes_json_wrap(self):
+        """V9: bare product code is wrapped in JSON array."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0})
+            mock_db.async_query = AsyncMock(return_value=None)
+            mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
+            resp = client.post("/admin/contrats/new", data={
+                "sponsor_id": "1",
+                "product_codes": "LOTOIA_EXCLU",
+                "date_debut": "2026-04-01",
+                "date_fin": "2026-06-30",
+                "montant_mensuel_ht": "650",
+                "engagement_mois": "3",
+                "pool_impressions": "10000",
+                "mode_depassement": "CPC",
+            }, follow_redirects=False)
+        assert resp.status_code == 302
+        call_args = mock_db.async_query.call_args_list[-1]
+        params = call_args[0][1]
+        assert '["LOTOIA_EXCLU"]' in params
+
+    def test_create_contrat_invalid_mode_depassement_defaults_cpc(self):
+        """V9: invalid mode_depassement falls back to CPC."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0})
+            mock_db.async_query = AsyncMock(return_value=None)
+            mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
+            resp = client.post("/admin/contrats/new", data={
+                "sponsor_id": "1",
+                "product_codes": "LOTOIA_EXCLU",
+                "date_debut": "2026-04-01",
+                "date_fin": "2026-06-30",
+                "montant_mensuel_ht": "650",
+                "engagement_mois": "3",
+                "mode_depassement": "HACKED",
+            }, follow_redirects=False)
+        assert resp.status_code == 302
+        call_args = mock_db.async_query.call_args_list[-1]
+        params = call_args[0][1]
+        assert "CPC" in params
 
 
 class TestContratsDetail:
@@ -138,18 +249,42 @@ class TestContratsDetail:
         client = _authed_client()
         with patch("routes.admin.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={
-                "id": 1, "numero": "CTR-202603-0001", "sponsor_id": 1,
-                "sponsor_nom": "Sponsor X", "type_contrat": "premium",
-                "date_debut": "2026-04-01", "date_fin": "2026-09-30",
-                "montant_mensuel_ht": 449.00, "statut": "brouillon",
-                "product_codes": '["EM_FR_A"]',
+                "id": 1, "numero": "CTR-202604-0001", "sponsor_id": 1,
+                "sponsor_nom": "Sponsor X", "type_contrat": "exclusif",
+                "date_debut": "2026-04-01", "date_fin": "2026-06-30",
+                "montant_mensuel_ht": 650.00, "statut": "brouillon",
+                "product_codes": '["LOTOIA_EXCLU"]',
                 "conditions_particulieres": "Custom clause",
+                "engagement_mois": 3, "pool_impressions": 10000,
+                "mode_depassement": "CPC", "plafond_mensuel": None,
                 "sponsor_adresse": "", "sponsor_siret": "",
             })
             resp = client.get("/admin/contrats/1")
         assert resp.status_code == 200
-        assert "CTR-202603-0001" in resp.text
+        assert "CTR-202604-0001" in resp.text
         assert "Sponsor X" in resp.text
+
+    def test_contrat_detail_shows_v9_fields(self):
+        """V9 detail shows engagement, pool, depassement."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={
+                "id": 1, "numero": "CTR-202604-0001", "sponsor_id": 1,
+                "sponsor_nom": "S", "type_contrat": "exclusif",
+                "date_debut": "2026-04-01", "date_fin": "2026-09-30",
+                "montant_mensuel_ht": 585.00, "statut": "actif",
+                "product_codes": "LOTOIA_EXCLU",
+                "conditions_particulieres": None,
+                "engagement_mois": 6, "pool_impressions": 10000,
+                "mode_depassement": "CPM", "plafond_mensuel": 2000.00,
+                "sponsor_adresse": "", "sponsor_siret": "",
+            })
+            resp = client.get("/admin/contrats/1")
+        body = resp.text
+        assert "6 mois" in body
+        assert "10000" in body
+        assert "CPM" in body
+        assert "2000.00" in body
 
     def test_contrat_detail_not_found_redirects(self):
         client = _authed_client()
@@ -169,13 +304,45 @@ class TestContratsUpdate:
             mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
             resp = client.post("/admin/contrats/1/edit", data={
                 "sponsor_id": "1",
-                "type_contrat": "standard",
+                "type_contrat": "exclusif",
+                "product_codes": "LOTOIA_EXCLU",
                 "date_debut": "2026-04-01",
                 "date_fin": "2026-12-31",
-                "montant_mensuel_ht": "199.00",
+                "montant_mensuel_ht": "650.00",
+                "engagement_mois": "3",
+                "pool_impressions": "10000",
+                "mode_depassement": "CPC",
             }, follow_redirects=False)
         assert resp.status_code == 302
         assert "/admin/contrats/1" in resp.headers["location"]
+
+    def test_update_contrat_v9_fields_in_sql(self):
+        """V9 update sends engagement_mois, pool, depassement, plafond to DB."""
+        client = _authed_client()
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(return_value=None)
+            mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
+            resp = client.post("/admin/contrats/1/edit", data={
+                "sponsor_id": "1",
+                "product_codes": "LOTOIA_EXCLU",
+                "date_debut": "2026-04-01",
+                "date_fin": "2026-09-30",
+                "montant_mensuel_ht": "585.00",
+                "engagement_mois": "6",
+                "pool_impressions": "10000",
+                "mode_depassement": "HYBRIDE",
+                "plafond_mensuel": "3000",
+            }, follow_redirects=False)
+        assert resp.status_code == 302
+        call_args = mock_db.async_query.call_args_list[-1]
+        sql = call_args[0][0]
+        params = call_args[0][1]
+        assert "engagement_mois" in sql
+        assert "mode_depassement" in sql
+        assert "plafond_mensuel" in sql
+        assert 6 in params
+        assert "HYBRIDE" in params
+        assert 3000.0 in params
 
 
 class TestContratsStatusWorkflow:
@@ -212,19 +379,19 @@ class TestContratsPDF:
             mock_db.async_fetchone = AsyncMock(side_effect=[
                 # First call: contrat data
                 {
-                    "id": 1, "numero": "CTR-202603-0001", "sponsor_id": 1,
-                    "sponsor_nom": "PDF Test Sponsor", "type_contrat": "premium",
-                    "date_debut": "2026-04-01", "date_fin": "2026-09-30",
-                    "montant_mensuel_ht": 449.00, "statut": "signe",
-                    "product_codes": '["EM_FR_A", "EM_FR_B"]',
+                    "id": 1, "numero": "CTR-202604-0001", "sponsor_id": 1,
+                    "sponsor_nom": "PDF Test Sponsor", "type_contrat": "exclusif",
+                    "date_debut": "2026-04-01", "date_fin": "2026-06-30",
+                    "montant_mensuel_ht": 650.00, "statut": "signe",
+                    "product_codes": '["LOTOIA_EXCLU"]',
                     "conditions_particulieres": "Clause speciale",
                     "sponsor_adresse": "123 Rue Test", "sponsor_siret": "12345678901234",
                 },
                 # Second call: config entreprise
                 {
-                    "raison_sociale": "LotoIA SASU", "siret": "98765432109876",
+                    "raison_sociale": "EmovisIA", "siret": "98765432109876",
                     "adresse": "1 Rue LotoIA", "code_postal": "75001", "ville": "Paris",
-                    "email": "contact@lotoia.fr", "telephone": "", "taux_tva": 20,
+                    "email": "contact@lotoia.fr", "telephone": "", "taux_tva": 0,
                     "iban": "FR7612345", "bic": "BOUSFRPP",
                 },
             ])
@@ -257,11 +424,13 @@ class TestContratsEditForm:
         client = _authed_client()
         with patch("routes.admin.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={
-                "id": 1, "numero": "CTR-202603-0001", "sponsor_id": 1,
-                "type_contrat": "premium", "product_codes": '["EM_FR_A"]',
-                "date_debut": "2026-04-01", "date_fin": "2026-09-30",
-                "montant_mensuel_ht": 449.00, "statut": "brouillon",
+                "id": 1, "numero": "CTR-202604-0001", "sponsor_id": 1,
+                "type_contrat": "exclusif", "product_codes": '["LOTOIA_EXCLU"]',
+                "date_debut": "2026-04-01", "date_fin": "2026-06-30",
+                "montant_mensuel_ht": 650.00, "statut": "brouillon",
                 "conditions_particulieres": "Test clause",
+                "engagement_mois": 3, "pool_impressions": 10000,
+                "mode_depassement": "CPC", "plafond_mensuel": None,
             })
             mock_db.async_fetchall = AsyncMock(return_value=[
                 {"id": 1, "nom": "Sponsor A"},
@@ -280,7 +449,7 @@ class TestContratsEditForm:
 
 
 class TestContratsValidation:
-    """A20: Validation on contrat creation — missing required fields."""
+    """Validation on contrat creation — missing required fields."""
 
     def test_create_contrat_missing_dates(self):
         client = _authed_client()
@@ -290,10 +459,10 @@ class TestContratsValidation:
             mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
             resp = client.post("/admin/contrats/new", data={
                 "sponsor_id": "1",
-                "type_contrat": "standard",
+                "type_contrat": "exclusif",
                 "date_debut": "",
                 "date_fin": "",
-                "montant_mensuel_ht": "199",
+                "montant_mensuel_ht": "650",
             }, follow_redirects=False)
         # Empty dates cause DB error or 500 — route should not succeed with 302
         assert resp.status_code != 302 or resp.status_code == 302  # Route redirects on any outcome

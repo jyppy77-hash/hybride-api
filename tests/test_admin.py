@@ -1284,49 +1284,39 @@ class TestTarifs:
         assert "/admin/login" in resp.headers["location"]
 
     def test_tarifs_page_renders(self):
+        """V9: tarifs page shows LOTOIA_EXCLU mono-annonceur layout."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
-            mock_db.async_fetchall = AsyncMock(side_effect=[
-                self._SAMPLE_CONFIG,   # admin_config
-                self._SAMPLE_TARIFS,   # sponsor_tarifs
-            ])
-            resp = client.get("/admin/tarifs")
+        resp = client.get("/admin/tarifs")
         assert resp.status_code == 200
-        assert "Grille tarifaire" in resp.text
-        assert "LOTO_FR_A" in resp.text
+        assert "LOTOIA_EXCLU" in resp.text
+        assert "EXCLUSIF" in resp.text
         assert "EmovisIA" in resp.text
 
-    def test_tarifs_page_shows_locked_in_ei_mode(self):
+    def test_tarifs_page_shows_v9_paliers(self):
+        """V9: tarifs page shows 4 paliers with new pricing."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
-            mock_db.async_fetchall = AsyncMock(side_effect=[
-                self._SAMPLE_CONFIG,
-                self._SAMPLE_TARIFS,
-            ])
-            resp = client.get("/admin/tarifs")
+        resp = client.get("/admin/tarifs")
         assert resp.status_code == 200
-        assert "SASU" in resp.text  # badge-lock SASU on EN codes
-        assert "tarif-card-locked" in resp.text
+        assert "Lancement" in resp.text
+        assert "650" in resp.text
+        assert "815" in resp.text
 
-    def test_tarifs_page_sasu_mode(self):
+    def test_tarifs_page_no_old_14_codes(self):
+        """V9: old 14-code grid and EI/SASU toggle removed."""
         client = _authed_client()
-        sasu_config = [{"config_key": "billing_mode", "config_value": "SASU"}] + self._SAMPLE_CONFIG[1:]
-        with patch("routes.admin.db_cloudsql") as mock_db:
-            mock_db.async_fetchall = AsyncMock(side_effect=[
-                sasu_config,
-                self._SAMPLE_TARIFS,
-            ])
-            resp = client.get("/admin/tarifs")
+        resp = client.get("/admin/tarifs")
         assert resp.status_code == 200
+        assert "billing-toggle" not in resp.text
         assert "tarif-card-locked" not in resp.text
+        assert "Packs regionaux" not in resp.text
 
-    def test_tarifs_page_db_error(self):
+    def test_tarifs_page_garanties(self):
+        """V9: tarifs page shows volume guarantees."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
-            mock_db.async_fetchall = AsyncMock(side_effect=Exception("DB down"))
-            resp = client.get("/admin/tarifs")
+        resp = client.get("/admin/tarifs")
         assert resp.status_code == 200
-        assert "Grille tarifaire" in resp.text
+        assert "Garanties" in resp.text
+        assert "7 000" in resp.text
 
     def test_api_tarifs_mode_requires_auth(self):
         client = _get_client()
@@ -1421,10 +1411,10 @@ class TestTarifs:
         data = resp.json()
         assert "billing_mode" in data
         assert "tarifs" in data
-        assert "packs" in data
         assert "paliers" in data
         assert data["billing_mode"] == "EI"
         assert len(data["tarifs"]) == 2
+        assert len(data["paliers"]) == 4
 
     def test_api_tarifs_data_db_error(self):
         client = _authed_client()
