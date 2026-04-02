@@ -83,6 +83,12 @@ _COMPLIMENT_L3_EM_EN = [
     "💎 You know what? You're not bad yourself. Come on, show me your lucky numbers!",
 ]
 
+# F09 V84: L4 — redirect to features after 4+ compliments
+_COMPLIMENT_L4_EM_EN = [
+    "🚀 Thanks so much! How about exploring our features? Try asking me about statistics or generating an optimised grid!",
+    "🔍 You're too kind! But we've got loads to explore — ask me for a ranking, a comparison or an optimised grid!",
+]
+
 _COMPLIMENT_LOVE_EM_EN = [
     "😏 Stop it, you'll make me blush... well, if I had cheeks. Shall we look at your stats?",
     "🤖 I also... no wait, I'm an AI. But I appreciate you as a model user! 😄",
@@ -217,6 +223,8 @@ def _get_compliment_response_em_en(compliment_type: str, streak: int, history=No
         pool = _COMPLIMENT_LOVE_EM_EN
     elif compliment_type == "merci":
         pool = _COMPLIMENT_MERCI_EM_EN
+    elif streak >= 4:
+        pool = _COMPLIMENT_L4_EM_EN
     elif streak >= 3:
         pool = _COMPLIMENT_L3_EM_EN
     elif streak == 2:

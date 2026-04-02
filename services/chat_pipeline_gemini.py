@@ -27,6 +27,7 @@ from services.chat_logger import log_chat_exchange
 
 logger = logging.getLogger(__name__)
 
+_MAX_HISTORY_MESSAGES = 20
 
 # Timeout constants are defined in chat_pipeline_shared.py and passed as parameters.
 # This module does NOT import from shared (avoids circular dependency).
@@ -73,7 +74,10 @@ def build_gemini_contents(history, message, detect_insulte_fn):
     Strips insult exchanges, maps roles, deduplicates consecutive same-role messages.
     Returns the processed contents list and the (possibly trimmed) history.
     """
-    history = (history or [])[-20:]
+    history = history or []
+    if len(history) > _MAX_HISTORY_MESSAGES:
+        logger.info("Gemini history truncated: %d → %d messages", len(history), _MAX_HISTORY_MESSAGES)
+        history = history[-_MAX_HISTORY_MESSAGES:]
     if history and history[-1].role == "user" and history[-1].content == message:
         history = history[:-1]
 

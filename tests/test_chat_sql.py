@@ -745,3 +745,39 @@ class TestSqlInputTruncation:
         )
         assert len(captured_input) == 1
         assert len(captured_input[0]) == 500
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# F01 V84 — MySQL-style # comment blocked
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestHashCommentBlocked:
+
+    def test_validate_sql_rejects_hash_comment(self):
+        """F01 V84: MySQL # comment must be rejected (defense-in-depth)."""
+        assert _validate_sql(
+            "SELECT * FROM tirages # DROP TABLE tirages",
+            allowed_tables=ALLOWED_TABLES_LOTO,
+        ) is False
+
+    def test_validate_sql_accepts_normal_select(self):
+        """F01 V84: Normal SELECT without # still passes."""
+        assert _validate_sql(
+            "SELECT boule_1, COUNT(*) FROM tirages GROUP BY boule_1",
+            allowed_tables=ALLOWED_TABLES_LOTO,
+        ) is True
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# F04 V84 — _TABLE_RE subquery negative lookahead
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestTableReSubquery:
+
+    def test_validate_sql_subquery_no_false_warning(self):
+        """F04 V84: FROM (SELECT ...) subquery with authorized table must pass."""
+        sql = (
+            "SELECT * FROM tirages WHERE id IN "
+            "(SELECT id FROM tirages WHERE boule_1 = 7)"
+        )
+        assert _validate_sql(sql, allowed_tables=ALLOWED_TABLES_LOTO) is True

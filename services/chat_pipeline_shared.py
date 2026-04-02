@@ -248,7 +248,7 @@ async def run_text_to_sql(message, http_client, gem_api_key, history,
                           execute_sql_fn, format_result_fn, max_per_session,
                           log_prefix, force_sql, has_data_signal_fn,
                           continuation_mode, enrichment_context,
-                          lang="fr", sql_gen_kwargs=None):
+                          lang="fr", sql_gen_kwargs=None) -> tuple[str, str | None, str]:
     """
     Phase SQL block. Returns (enrichment_context, sql_query, sql_status).
     sql_gen_kwargs: extra kwargs for generate_sql_fn (e.g. lang for EM).
@@ -355,11 +355,22 @@ async def run_text_to_sql(message, http_client, gem_api_key, history,
 # Parametric pipeline orchestration — V72 F02
 # ═══════════════════════════════════════════════════════
 
+# Pipeline 21 étapes fonctionnelles (18 phases conceptuelles) :
+# 1. Phase I (Insulte) — 2. Phase C (Compliment) — 3. Phase R (Rating)
+# 4. Phase SALUTATION — 5. Phase G (Génération) — 6. Phase A (Argent)
+# 7. Phase GEO (EM only) — 8. Phase 0 (Continuation) — 9. Phase AFFIRMATION
+# 10. Phase GAME_KEYWORD — 11. Phase EVAL — 12. Phase 0-bis (Prochain tirage)
+# 13. Phase T (Tirage/Temporel) — 14. Phase 2 (Grille soumise)
+# 15. Phase 3 (Requête complexe) — 16. Phase 3-bis (Comparaison temporelle)
+# 17. Phase P+ (Co-occurrence N>3) — 18. Phase P (Paires/Triplets)
+# 19. Phase OOR (Hors limites) — 20. Phase 1 (Numéro unique) — 21. Phase SQL
+
+
 async def _prepare_chat_context_base(
     message: str, history: list, page: str, http_client, lang: str, cfg: dict,
-):
+) -> tuple[dict, dict | None]:
     """
-    Orchestration paramétrique des 19+ phases chatbot.
+    Orchestration paramétrique des 21 phases chatbot.
 
     cfg dict keys (all required unless noted):
       Identity: game, log_prefix, debug_prefix
@@ -595,7 +606,9 @@ async def _prepare_chat_context_base(
             logger.warning(f"{_lp} Phase G erreur: {e}")
 
     # ── Phase A : Détection argent / gains / paris ──
-    if cfg["detect_argent"](message, lang):
+    # F02 V84: skip Phase A if message contains a user grid — Phase EVAL handles it
+    _has_grid_eval = cfg["detect_grid_evaluation"](message, game=cfg["eval_game"])
+    if cfg["detect_argent"](message, lang) and not _has_grid_eval:
         _phase = "A"
         _argent_resp = cfg["get_argent_response"](message, lang)
         if _insult_prefix:

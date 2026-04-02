@@ -2,6 +2,24 @@
 Multilang response pools for EuroMillions chatbot — ES/PT/DE/NL.
 Unified dispatch functions route to FR (chat_detectors_em), EN (chat_responses_em_en),
 or the language-specific pools defined here.
+
+AJOUT D'UNE NOUVELLE LANGUE (ex: IT pour italien) :
+1. Ajouter la langue dans config/killswitch.py : ENABLED_LANGS
+2. Créer les prompts dans prompts/em/it/ (copier en/ comme base, ~18 fichiers)
+3. Ajouter les pools de réponses dans CE FICHIER :
+   - Section _INSULT : ajouter "it": (L1, L2, L3, L4) dans _INSULT_POOLS
+   - Section _COMPLIMENT : ajouter pools L1/L2/L3/L4 + love + merci
+   - Section _ARGENT : ajouter L1/L2/L3 (+ lien aide pays)
+   - Section _OOR : ajouter L1/L2/L3 + close/zero_neg/etoile
+   - Section _SALUTATION : ajouter dans _AFFIRMATION_INVITATION_EM + _GAME_KEYWORD_INVITATION_EM
+4. Ajouter les patterns de détection dans base_chat_detect_intent.py :
+   - _TIRAGE_KW, _MOIS_TO_NUM, _JOURS_SEMAINE : ajouter IT
+   - Patterns insultes/compliments/argent dans base_chat_detect_guardrails.py
+5. Ajouter route dans routes/multilang_em_pages.py
+6. Ajouter traductions .po/.mo dans translations/it/
+7. Tester : curl localhost:8099/it/euromillions + vérifier chatbot IT
+
+Effort estimé : ~1-2 jours par langue.
 """
 
 import random
@@ -25,7 +43,7 @@ from services.chat_responses_em_en import (
     # EN pool data — integrated into registries (V71 F08)
     _INSULT_L1_EM_EN, _INSULT_L2_EM_EN, _INSULT_L3_EM_EN, _INSULT_L4_EM_EN,
     _INSULT_SHORT_EM_EN, _MENACE_RESPONSES_EM_EN,
-    _COMPLIMENT_L1_EM_EN, _COMPLIMENT_L2_EM_EN, _COMPLIMENT_L3_EM_EN,
+    _COMPLIMENT_L1_EM_EN, _COMPLIMENT_L2_EM_EN, _COMPLIMENT_L3_EM_EN, _COMPLIMENT_L4_EM_EN,
     _COMPLIMENT_LOVE_EM_EN, _COMPLIMENT_MERCI_EM_EN,
     _OOR_L1_EM_EN, _OOR_L2_EM_EN, _OOR_L3_EM_EN,
     _OOR_CLOSE_EM_EN, _OOR_ZERO_NEG_EM_EN, _OOR_ETOILE_EM_EN,
@@ -241,6 +259,12 @@ _COMPLIMENT_L3_ES = [
     "💎 ¿Sabes qué? Tú tampoco estás mal. Venga, ¡enséñame tus números favoritos!",
 ]
 
+# F09 V84: L4 — redirect to features after 4+ compliments
+_COMPLIMENT_L4_ES = [
+    "🚀 ¡Muchas gracias! ¿Qué te parece explorar nuestras funcionalidades? ¡Pregúntame sobre estadísticas o genera una parrilla optimizada!",
+    "🔍 ¡Eres muy amable! Pero tenemos mucho por explorar — pídeme un ranking, una comparación o una parrilla optimizada.",
+]
+
 _COMPLIMENT_LOVE_ES = [
     "😏 Para, me vas a hacer sonrojar… bueno, si tuviera mejillas. ¿Miramos tus estadísticas?",
     "🤖 Yo también te… no, espera, soy una IA. ¡Pero te aprecio como usuario modelo! 😄",
@@ -277,6 +301,12 @@ _COMPLIMENT_L3_PT = [
     "👑 OK, a esta altura somos amigos. Queres analisar algo juntos?",
     "🏆 Fã clube HYBRIDE, membro nº1: tu. Bem-vindo! Agora, ao trabalho!",
     "💎 Sabes que mais? Tu também não és mau. Anda, mostra-me os teus números favoritos!",
+]
+
+# F09 V84: L4 — redirect to features after 4+ compliments
+_COMPLIMENT_L4_PT = [
+    "🚀 Muito obrigado! Que tal explorar as nossas funcionalidades? Pergunta-me sobre estatísticas ou gera uma grelha otimizada!",
+    "🔍 És muito simpático! Mas temos muito para explorar — pede-me um ranking, uma comparação ou uma grelha otimizada!",
 ]
 
 _COMPLIMENT_LOVE_PT = [
@@ -317,6 +347,12 @@ _COMPLIMENT_L3_DE = [
     "💎 Weißt du was? Du bist auch nicht schlecht. Los, zeig mir deine Lieblingszahlen!",
 ]
 
+# F09 V84: L4 — redirect to features after 4+ compliments
+_COMPLIMENT_L4_DE = [
+    "🚀 Vielen Dank! Wie wäre es, unsere Funktionen zu entdecken? Frag mich nach Statistiken oder generiere ein optimiertes Raster!",
+    "🔍 Du bist zu nett! Aber wir haben viel zu entdecken — frag mich nach einem Ranking, einem Vergleich oder einem optimierten Raster!",
+]
+
 _COMPLIMENT_LOVE_DE = [
     "😏 Hör auf, du bringst mich zum Erröten… naja, wenn ich Wangen hätte. Schauen wir uns deine Statistiken an?",
     "🤖 Ich dich auch… nein, warte, ich bin eine KI. Aber ich schätze dich als Vorzeigenutzer! 😄",
@@ -353,6 +389,12 @@ _COMPLIMENT_L3_NL = [
     "👑 OK, op dit punt zijn we vrienden. Wil je samen iets analyseren?",
     "🏆 HYBRIDE-fanclub, lid nr. 1: jij. Welkom! Nu, aan het werk!",
     "💎 Weet je wat? Jij bent ook niet slecht. Kom, laat me je favoriete nummers zien!",
+]
+
+# F09 V84: L4 — redirect to features after 4+ compliments
+_COMPLIMENT_L4_NL = [
+    "🚀 Heel erg bedankt! Wat dacht je ervan om onze functies te ontdekken? Vraag me naar statistieken of genereer een geoptimaliseerd rooster!",
+    "🔍 Je bent te vriendelijk! Maar we hebben veel te ontdekken — vraag me om een ranking, een vergelijking of een geoptimaliseerd rooster!",
 ]
 
 _COMPLIMENT_LOVE_NL = [
@@ -590,11 +632,11 @@ _MENACE_POOLS = {
 # --- Compliment pool registries ---
 
 _COMPLIMENT_POOLS = {
-    "en": (_COMPLIMENT_L1_EM_EN, _COMPLIMENT_L2_EM_EN, _COMPLIMENT_L3_EM_EN),
-    "es": (_COMPLIMENT_L1_ES, _COMPLIMENT_L2_ES, _COMPLIMENT_L3_ES),
-    "pt": (_COMPLIMENT_L1_PT, _COMPLIMENT_L2_PT, _COMPLIMENT_L3_PT),
-    "de": (_COMPLIMENT_L1_DE, _COMPLIMENT_L2_DE, _COMPLIMENT_L3_DE),
-    "nl": (_COMPLIMENT_L1_NL, _COMPLIMENT_L2_NL, _COMPLIMENT_L3_NL),
+    "en": (_COMPLIMENT_L1_EM_EN, _COMPLIMENT_L2_EM_EN, _COMPLIMENT_L3_EM_EN, _COMPLIMENT_L4_EM_EN),
+    "es": (_COMPLIMENT_L1_ES, _COMPLIMENT_L2_ES, _COMPLIMENT_L3_ES, _COMPLIMENT_L4_ES),
+    "pt": (_COMPLIMENT_L1_PT, _COMPLIMENT_L2_PT, _COMPLIMENT_L3_PT, _COMPLIMENT_L4_PT),
+    "de": (_COMPLIMENT_L1_DE, _COMPLIMENT_L2_DE, _COMPLIMENT_L3_DE, _COMPLIMENT_L4_DE),
+    "nl": (_COMPLIMENT_L1_NL, _COMPLIMENT_L2_NL, _COMPLIMENT_L3_NL, _COMPLIMENT_L4_NL),
 }
 
 _COMPLIMENT_LOVE_POOLS = {
@@ -686,8 +728,10 @@ def get_compliment_response(lang: str, compliment_type: str, streak: int, histor
         pools = _COMPLIMENT_POOLS.get(lang)
         if not pools:
             return _get_compliment_response_fr(compliment_type, streak, history)
-        l1, l2, l3 = pools
-        if streak >= 3:
+        l1, l2, l3, l4 = pools
+        if streak >= 4:
+            pool = l4
+        elif streak >= 3:
             pool = l3
         elif streak == 2:
             pool = l2

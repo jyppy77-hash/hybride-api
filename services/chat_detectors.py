@@ -342,6 +342,14 @@ _ARGENT_PHRASES = {
         r'\bmaximize?\s+(?:my|your|the)?\s*winnings?',
         r'\bmake\s+money\s+(?:from|with|playing)\s+(?:lottery|lotto)',
         r'\b(?:investment|invest)\s+in\s+(?:lottery|lotto|tickets?|gambling)',
+        # F07 V84 — enriched patterns
+        r'\bbest\s+strategy\s+to\s+win',
+        r'\bgambling\s+addiction',
+        r'\baddicted\s+to\s+(?:gambling|lottery|lotto)',
+        r'\bbetting\s+system',
+        r'\bborrow\w*\s+(?:money\s+)?(?:to|for)\s+(?:play|gambl|bet|lotter)',
+        r'\bbudget\s+(?:for|per)\s+(?:lottery|lotto|tickets?|gambling)',
+        r'\b\d+\s*[€$£]\s+(?:per|a|every)\s+(?:month|week|day|year)',
     ],
     "es": [
         r'\bhacerse\s+rico',
@@ -352,6 +360,14 @@ _ARGENT_PHRASES = {
         r'\bretorno\s+de\s+inversi[oó]n',
         r'\bmaximizar\s+(?:mis|las|sus)\s+ganancias',
         r'\bingresos?\s+pasivos?',
+        # F07 V84 — enriched patterns
+        r'\badicci[oó]n\s+al\s+juego',
+        r'\badicto\s+(?:a|al)\s+(?:juego|loter[ií]a)',
+        r'\bsistema\s+(?:para|de)\s+(?:ganar|apuestas)',
+        r'\bpedir\s+(?:prestado|cr[eé]dito)\s+para\s+jugar',
+        r'\bdeudas?\s+(?:de|por)\s+(?:juego|apuestas|loter[ií]a)',
+        r'\bpresupuesto\s+(?:para|de)\s+(?:juego|loter[ií]a|apuestas)',
+        r'\b\d+\s*[€$]\s+(?:al|por|cada)\s+(?:mes|semana|d[ií]a|a[nñ]o)',
     ],
     "pt": [
         r'\bficar\s+rico',
@@ -362,6 +378,14 @@ _ARGENT_PHRASES = {
         r'\bretorno\s+de\s+investimento',
         r'\bmaximizar\s+(?:os\s+)?ganhos',
         r'\brendimentos?\s+passivos?',
+        # F07 V84 — enriched patterns
+        r'\bv[ií]cio\s+(?:em|de)\s+jogo',
+        r'\bviciado\s+em\s+(?:jogo|lotaria|apostas)',
+        r'\bsistema\s+(?:para|de)\s+(?:ganhar|apostas)',
+        r'\bpedir\s+(?:emprestado|cr[eé]dito)\s+para\s+jogar',
+        r'\bd[ií]vidas?\s+(?:de|por)\s+(?:jogo|apostas)',
+        r'\bor[çc]amento\s+(?:para|de)\s+(?:jogo|lotaria|apostas)',
+        r'\b\d+\s*[€$]\s+por\s+(?:m[eê]s|semana|dia|ano)',
     ],
     "de": [
         r'\breich\s+werden',
@@ -371,6 +395,14 @@ _ARGENT_PHRASES = {
         r'\bvom\s+(?:lotto|spiel|lotteri?e)\s+leben',
         r'\bgewinne?\s+maximieren',
         r'\bpassives?\s+einkommen',
+        # F07 V84 — enriched patterns
+        r'\bspielsucht',
+        r'\bs[uü]chtig\s+nach\s+(?:gl[uü]cksspiel|lotto|wetten)',
+        r'\bwettsystem',
+        r'\bgeld\s+leihen\s+(?:zum|f[uü]r)\s+(?:spielen|wetten|lotto)',
+        r'\bschulden\s+(?:durch|wegen|vom)\s+(?:spielen|gl[uü]cksspiel|lotto)',
+        r'\bbudget\s+(?:f[uü]r|pro)\s+(?:lotto|spiel|wetten)',
+        r'\b\d+\s*[€$]\s+(?:pro|im|jeden?)\s+(?:monat|woche|tag|jahr)',
     ],
     "nl": [
         r'\brijk\s+worden',
@@ -380,6 +412,14 @@ _ARGENT_PHRASES = {
         r'\bleven\s+van\s+(?:de\s+)?(?:loterij|lotto)',
         r'\bwinsten?\s+maximaliseren',
         r'\bpassief\s+inkomen',
+        # F07 V84 — enriched patterns
+        r'\bgokverslaving',
+        r'\bverslaafd\s+aan\s+(?:gokken|loterij|lotto|wedden)',
+        r'\bwed(?:systeem|strategie)',
+        r'\bgeld\s+lenen\s+(?:om\s+te\s+)?(?:gokken|spelen|wedden)',
+        r'\bschulden\s+(?:door|van|vanwege)\s+(?:gokken|loterij|lotto)',
+        r'\bbudget\s+(?:voor|per)\s+(?:loterij|lotto|gokken)',
+        r'\b\d+\s*[€$]\s+per\s+(?:maand|week|dag|jaar)',
     ],
 }
 

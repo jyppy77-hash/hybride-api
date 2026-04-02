@@ -225,3 +225,5 @@ NEVER generate conversational text, greetings, grids, comments, or explanations.
 NEVER rephrase the question in natural language. NEVER return a sentence.
 NEVER copy conversation history into your output.
 If you cannot generate the SQL, return NO_SQL.
+
+[CRITICAL REMINDER] Conformity scores are NOT winning probabilities. Never present a score as a chance of winning.

@@ -117,6 +117,12 @@ _COMPLIMENT_L3_EM = [
     "💎 Tu sais quoi ? T'es pas mal non plus. Allez, montre-moi tes numéros fétiches !",
 ]
 
+# F09 V84: L4 — redirect to features after 4+ compliments
+_COMPLIMENT_L4_EM = [
+    "🚀 Merci beaucoup ! Que dirais-tu d'explorer nos fonctionnalités ? Essaie de me poser une question sur les statistiques ou de générer une grille !",
+    "🔍 T'es trop sympa ! Mais on a plein de choses à explorer — demande-moi un classement, une comparaison ou une grille optimisée !",
+]
+
 _COMPLIMENT_LOVE_EM = [
     "😏 Arrête tu vas me faire rougir... enfin si j'avais des joues. On regarde tes stats ?",
     "🤖 Moi aussi je... non attends, je suis une IA. Mais je t'apprécie en tant qu'utilisateur modèle ! 😄",
@@ -136,6 +142,8 @@ def _get_compliment_response_em(compliment_type: str, streak: int, history=None)
         pool = _COMPLIMENT_LOVE_EM
     elif compliment_type == "merci":
         pool = _COMPLIMENT_MERCI_EM
+    elif streak >= 4:
+        pool = _COMPLIMENT_L4_EM
     elif streak >= 3:
         pool = _COMPLIMENT_L3_EM
     elif streak == 2:

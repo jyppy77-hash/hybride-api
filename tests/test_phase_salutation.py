@@ -3,6 +3,12 @@ Tests Phase SALUTATION (V65) — 6 langues, guards historique/longueur, variante
 F10 audit V71.
 """
 
+import contextlib
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch, MagicMock
+
+import pytest
+
 from services.base_chat_detectors import (
     _detect_salutation, _get_salutation_response, _SALUTATION_MAX_WORDS,
 )
@@ -126,3 +132,45 @@ class TestSalutationResponse:
         """Unknown module falls back to loto."""
         resp = _get_salutation_response("unknown", "fr")
         assert "HYBRIDE" in resp
+
+
+# ═══════════════════════════════════════════════════════
+# F11 V84 — Pipeline integration: salutation routes correctly (6 langues)
+# ═══════════════════════════════════════════════════════
+
+def _loto_salutation_patches(stack, **overrides):
+    """Apply common Loto pipeline patches for salutation tests."""
+    defaults = {
+        "load_prompt": "sys",
+        "_detect_insulte": None,
+        "_detect_compliment": None,
+        "_detect_salutation": True,
+    }
+    defaults.update(overrides)
+    stack.enter_context(patch.dict("os.environ", {"GEM_API_KEY": "fake"}))
+    for name, rv in defaults.items():
+        stack.enter_context(patch(f"services.chat_pipeline.{name}", return_value=rv))
+
+
+class TestPipelineSalutationAllLangs:
+    """F11 V84: Pipeline integration — Phase SALUTATION routes correctly for all 6 languages."""
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("lang,greeting", [
+        ("fr", "bonjour"),
+        ("en", "hello"),
+        ("es", "hola"),
+        ("pt", "olá"),
+        ("de", "hallo"),
+        ("nl", "hallo"),
+    ])
+    async def test_pipeline_salutation_all_langs(self, lang, greeting):
+        """Greeting in each language → Phase SALUTATION early return (no Gemini)."""
+        from services.chat_pipeline import handle_chat
+
+        with contextlib.ExitStack() as stack:
+            _loto_salutation_patches(stack)
+            result = await handle_chat(greeting, [], "loto", MagicMock(), lang=lang)
+
+        assert result["source"] == "hybride_salutation"
+        assert len(result["response"]) > 0

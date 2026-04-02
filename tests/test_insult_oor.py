@@ -898,6 +898,13 @@ class TestComplimentResponse:
         resp = _get_compliment_response("compliment", 3)
         assert len(resp) > 0
 
+    def test_l4_redirect_after_four_compliments(self):
+        """F09 V84: L4 — 4+ compliments → redirect to features."""
+        resp = _get_compliment_response("compliment", 4)
+        assert len(resp) > 0
+        # L4 should contain an invitation to explore features
+        assert any(kw in resp.lower() for kw in ("fonctionnalit", "grille", "statistique", "explorer"))
+
     def test_love_response(self):
         resp = _get_compliment_response("love", 1)
         assert len(resp) > 0

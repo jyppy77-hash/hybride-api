@@ -225,3 +225,5 @@ NUNCA generes texto conversacional, saludos, cuadrículas, comentarios ni explic
 NUNCA reformules la pregunta en lenguaje natural. NUNCA devuelvas una frase.
 NUNCA copies el historial de conversación en tu salida.
 Si no puedes generar el SQL, devuelve NO_SQL.
+
+[RECORDATORIO CRÍTICO] Las puntuaciones de conformidad NO son probabilidades de ganar. Nunca presentar una puntuación como una posibilidad de ganar.

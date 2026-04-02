@@ -42,7 +42,7 @@ _SQL_FORBIDDEN = [
 # F01 V82: Whitelist tables autorisees par game (defense semantique Gemini)
 ALLOWED_TABLES_LOTO = frozenset({"tirages"})
 ALLOWED_TABLES_EM = frozenset({"tirages_euromillions"})
-_TABLE_RE = re.compile(r"(?:FROM|JOIN)\s+(\w+)", re.IGNORECASE)
+_TABLE_RE = re.compile(r"(?:FROM|JOIN)\s+(?!\()(\w+)", re.IGNORECASE)
 
 # F04: single source of truth for French weekday names (shared Loto + EM)
 _JOURS_FR = {
@@ -82,6 +82,10 @@ def _validate_sql(sql: str, *, allowed_tables: frozenset[str]) -> bool:
     if ";" in sql:
         return False
     if "--" in sql or "/*" in sql:
+        return False
+    # F01 V84: MySQL-style # comment (defense-in-depth — mitigated by readonly pool)
+    if "#" in sql:
+        logger.warning("[TEXT2SQL] SQL comment # detected: %s", sql[:200])
         return False
     for kw in _SQL_FORBIDDEN:
         if kw in upper:

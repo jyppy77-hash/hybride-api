@@ -258,3 +258,5 @@ Ne génère JAMAIS de texte conversationnel, de salutation, de grille, de commen
 Ne reformule JAMAIS la question en français. Ne retourne JAMAIS de phrase.
 Ne recopie JAMAIS l'historique de conversation dans ta sortie.
 Si tu ne sais pas générer le SQL, retourne NO_SQL.
+
+[RAPPEL CRITIQUE] Les scores de conformité ne sont PAS des probabilités de gain. Ne jamais présenter un score comme une chance de gagner.

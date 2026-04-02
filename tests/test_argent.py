@@ -4,6 +4,8 @@ Couvre la detection FR (Loto), multilingue (EM), les niveaux L1/L2/L3,
 la langue de reponse, et la non-regression des phases existantes.
 """
 
+import pytest
+
 from services.chat_detectors import (
     _detect_argent, _get_argent_response,
     _ARGENT_L1, _ARGENT_L2, _ARGENT_L3,
@@ -712,3 +714,60 @@ class TestDetectArgentLotoMultilang:
     def test_de_not_stats(self):
         """Normal German stats question must NOT trigger Phase A."""
         assert _detect_argent("welche Zahlen kommen am häufigsten vor", "de") is False
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# F07 V84 — Enriched multilingual argent patterns
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestArgentEnrichedPatterns:
+    """F07 V84: Verify expanded patterns catch gambling/addiction/system phrases."""
+
+    @pytest.mark.parametrize("msg", [
+        "how to win money with lottery",
+        "gambling addiction help",
+        "I'm addicted to gambling",
+        "betting system for lotto",
+        "borrow money to play lottery",
+        "budget for lottery tickets",
+    ])
+    def test_argent_en_expanded(self, msg):
+        assert _detect_argent(msg, "en") is True
+
+    @pytest.mark.parametrize("msg", [
+        "ganar dinero con la lotería",
+        "adicción al juego",
+        "sistema para ganar en la lotería",
+        "pedir prestado para jugar",
+        "deudas de juego",
+    ])
+    def test_argent_es_expanded(self, msg):
+        assert _detect_argent(msg, "es") is True
+
+    @pytest.mark.parametrize("msg", [
+        "Spielsucht ist ein Problem",
+        "süchtig nach Glücksspiel",
+        "Wettsystem für Lotto",
+        "Geld leihen zum Spielen",
+        "Schulden durch Glücksspiel",
+    ])
+    def test_argent_de_expanded(self, msg):
+        assert _detect_argent(msg, "de") is True
+
+    @pytest.mark.parametrize("msg", [
+        "gokverslaving hulp",
+        "verslaafd aan gokken",
+        "geld lenen om te gokken",
+        "schulden door gokken",
+    ])
+    def test_argent_nl_expanded(self, msg):
+        assert _detect_argent(msg, "nl") is True
+
+    @pytest.mark.parametrize("msg", [
+        "vício em jogo",
+        "viciado em apostas",
+        "pedir emprestado para jogar",
+        "dívidas de jogo",
+    ])
+    def test_argent_pt_expanded(self, msg):
+        assert _detect_argent(msg, "pt") is True
