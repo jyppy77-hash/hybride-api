@@ -1,14 +1,9 @@
-import os
-import re
-import asyncio
 import logging
 import time
-import json
-import httpx
 
 from services.prompt_loader import load_prompt
-from services.gemini import GEMINI_MODEL_URL, stream_gemini_chat
-from services.circuit_breaker import gemini_breaker, CircuitOpenError
+from services.gemini import stream_gemini_chat
+from services.circuit_breaker import gemini_breaker
 from services.stats_service import (
     get_numero_stats, analyze_grille_for_chat,
     get_classement_numeros, get_comparaison_numeros, get_comparaison_with_period,
@@ -37,32 +32,25 @@ from services.chat_detectors import (
 from services.chat_sql import (
     _get_prochain_tirage, _get_tirage_data, _generate_sql, _validate_sql,
     _ensure_limit, _execute_safe_sql, _format_sql_result, _MAX_SQL_PER_SESSION,
+    ALLOWED_TABLES_LOTO,
 )
 from services.chat_utils import (
-    FALLBACK_RESPONSE, _enrich_with_context, _clean_response, _strip_non_latin,
-    _strip_sponsor_from_text, _get_sponsor_if_due, _format_date_fr, StreamBuffer,
+    FALLBACK_RESPONSE, _enrich_with_context,
     _format_tirage_context, _format_stats_context, _format_grille_context,
     _format_complex_context, _format_pairs_context, _format_triplets_context,
     _build_session_context, _format_generation_context,
 )
-from services.chat_logger import log_chat_exchange
-from services.stats_analysis import should_inject_pedagogical_context, PEDAGOGICAL_CONTEXT
 from services.chat_responses_loto import (
     _AFFIRMATION_INVITATION_LOTO, _GAME_KEYWORD_INVITATION_LOTO,
 )
 from services.chat_pipeline_shared import (
     sse_event as _sse_event_shared,
     log_from_meta as _log_from_meta_shared,
-    build_gemini_contents,
-    run_text_to_sql,
     call_gemini_and_respond,
     stream_and_respond,
     handle_pitch_common,
     _prepare_chat_context_base,
     _build_config_base,  # F03 V74
-    _QUESTION_KEYWORDS_INSULT,
-    _QUESTION_KEYWORDS_COMPLIMENT,
-    ANTI_REINTRO_BLOCK,
     _TIRAGE_NOT_FOUND_LOTO,
 )
 import db_cloudsql
@@ -162,7 +150,10 @@ def _build_loto_config():
         # Phase A
         "detect_argent": _detect_argent,
         "get_argent_response": lambda msg, lang: _get_argent_response(msg, lang),
-        # Phase GEO (Loto: none)
+        # Phase GEO — intentionnellement absente côté Loto.
+        # Le Loto est géré par la FDJ et disponible uniquement en France métropolitaine + DOM-TOM.
+        # Contrairement à EuroMillions (9 pays × 6 langues), aucune détection géographique nécessaire.
+        # Ref: Audit 360° Chatbot HYBRIDE V81, faille F07.
         # Phase AFFIRMATION
         "affirmation_invitation": _AFFIRMATION_INVITATION_LOTO,
         "game_keyword_invitation": _GAME_KEYWORD_INVITATION_LOTO,
@@ -205,9 +196,9 @@ def _build_loto_config():
         "format_stats_context": _format_stats_context,
         # Phase SQL
         "generate_sql": _generate_sql,
-        "validate_sql": _validate_sql,
+        "validate_sql": lambda sql: _validate_sql(sql, allowed_tables=ALLOWED_TABLES_LOTO),
         "ensure_limit": _ensure_limit,
-        "execute_safe_sql": _execute_safe_sql,
+        "execute_safe_sql": lambda sql: _execute_safe_sql(sql, allowed_tables=ALLOWED_TABLES_LOTO),
         "format_sql_result": _format_sql_result,
         "max_sql_per_session": _MAX_SQL_PER_SESSION,
         "sql_log_prefix": "[TEXT2SQL]",

@@ -341,3 +341,24 @@ class TestHandlePitchLoto:
             )
         assert result["success"] is False
         assert result["status_code"] == 500
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# F12 V82 — Message truncation (MAX_MESSAGE_LENGTH)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestMessageTruncation:
+
+    @pytest.mark.asyncio
+    async def test_long_message_does_not_crash(self):
+        """A 5000-char message must not crash the pipeline (hits fallback path)."""
+        long_msg = "a" * 5000
+        with patch("services.chat_pipeline.load_prompt", return_value=None):
+            result = await handle_chat(long_msg, [], "loto", MagicMock())
+        assert result["source"] == "fallback"
+        assert "response" in result
+
+    def test_max_message_length_constant(self):
+        """MAX_MESSAGE_LENGTH is importable and equals 2000."""
+        from services.chat_pipeline_shared import MAX_MESSAGE_LENGTH
+        assert MAX_MESSAGE_LENGTH == 2000

@@ -4,17 +4,11 @@ Orchestre les 12 phases du chatbot EM (detection → enrichissement → Gemini).
 Meme pattern que chat_pipeline.py (Loto) avec detecteurs/formatage EM.
 """
 
-import os
-import re
-import asyncio
 import logging
-import time
-import json
-import httpx
 
 from services.prompt_loader import load_prompt_em
-from services.gemini import GEMINI_MODEL_URL, stream_gemini_chat
-from services.circuit_breaker import gemini_breaker, CircuitOpenError
+from services.gemini import stream_gemini_chat
+from services.circuit_breaker import gemini_breaker
 from services.em_stats_service import (
     get_numero_stats, analyze_grille_for_chat,
     get_classement_numeros, get_comparaison_numeros, get_comparaison_with_period,
@@ -53,12 +47,10 @@ from services.chat_responses_em_multilang import (
 from services.chat_sql_em import (
     _get_prochain_tirage_em, _get_tirage_data_em, _generate_sql_em,
     _validate_sql, _ensure_limit, _execute_safe_sql, _format_sql_result,
-    _MAX_SQL_PER_SESSION,
+    _MAX_SQL_PER_SESSION, ALLOWED_TABLES_EM,
 )
 from services.chat_utils import (
-    _enrich_with_context, _clean_response, _strip_non_latin,
-    _get_sponsor_if_due, _strip_sponsor_from_text, _format_date_fr,
-    StreamBuffer,
+    _enrich_with_context,
 )
 from services.chat_utils_em import (
     _format_tirage_context_em, _format_stats_context_em,
@@ -68,22 +60,14 @@ from services.chat_utils_em import (
     _build_session_context_em,
     _format_generation_context_em,
 )
-from services.chat_logger import log_chat_exchange
-from services.stats_analysis import should_inject_pedagogical_context, PEDAGOGICAL_CONTEXT
-from services.chat_pipeline import _get_draw_count  # F02: shared draw count helper
 from services.chat_pipeline_shared import (
     sse_event as _sse_event_shared,
     log_from_meta as _log_from_meta_shared,
-    build_gemini_contents,
-    run_text_to_sql,
     call_gemini_and_respond,
     stream_and_respond,
     handle_pitch_common,
     _prepare_chat_context_base,
     _build_config_base,  # F03 V74
-    _QUESTION_KEYWORDS_INSULT,
-    _QUESTION_KEYWORDS_COMPLIMENT,
-    ANTI_REINTRO_BLOCK,
     _TIRAGE_NOT_FOUND_EM,
 )
 
@@ -202,9 +186,9 @@ def _build_em_config():
         "format_stats_context": _format_stats_context_em,
         # Phase SQL
         "generate_sql": _generate_sql_em,
-        "validate_sql": _validate_sql,
+        "validate_sql": lambda sql: _validate_sql(sql, allowed_tables=ALLOWED_TABLES_EM),
         "ensure_limit": _ensure_limit,
-        "execute_safe_sql": _execute_safe_sql,
+        "execute_safe_sql": lambda sql: _execute_safe_sql(sql, allowed_tables=ALLOWED_TABLES_EM),
         "format_sql_result": _format_sql_result,
         "max_sql_per_session": _MAX_SQL_PER_SESSION,
         "sql_log_prefix": "[EM TEXT2SQL]",

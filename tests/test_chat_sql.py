@@ -13,6 +13,7 @@ import pytest
 from services.chat_sql import (
     _validate_sql, _ensure_limit, _format_sql_result,
     _get_tirage_data, _execute_safe_sql, _SQL_FORBIDDEN,
+    ALLOWED_TABLES_LOTO, ALLOWED_TABLES_EM,
 )
 from services.prompt_loader import load_prompt, load_prompt_em
 
@@ -474,3 +475,127 @@ class TestSqlPromptHardeningAllLangs:
         prompt = load_prompt_em("prompt_sql_generator_em", lang="nl")
         assert "ABSOLUTE REGEL" in prompt
         assert "NO_SQL" in prompt
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# F01 V82 — Table whitelist (semantic SQL injection defense)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestTableWhitelist:
+
+    def test_accepts_tirages_loto(self):
+        assert _validate_sql("SELECT * FROM tirages WHERE boule_1 = 7", allowed_tables=ALLOWED_TABLES_LOTO) is True
+
+    def test_accepts_tirages_em(self):
+        assert _validate_sql(
+            "SELECT * FROM tirages_euromillions WHERE boule_1 = 7",
+            allowed_tables=ALLOWED_TABLES_EM,
+        ) is True
+
+    def test_rejects_unauthorized_table(self):
+        assert _validate_sql(
+            "SELECT * FROM admin_config", allowed_tables=ALLOWED_TABLES_LOTO
+        ) is False
+
+    def test_rejects_join_unauthorized(self):
+        assert _validate_sql(
+            "SELECT t.* FROM tirages t JOIN sponsors s ON t.id = s.id",
+            allowed_tables=ALLOWED_TABLES_LOTO,
+        ) is False
+
+    def test_rejects_subquery_unauthorized(self):
+        assert _validate_sql(
+            "SELECT * FROM tirages WHERE boule_1 IN (SELECT id FROM chat_log)",
+            allowed_tables=ALLOWED_TABLES_LOTO,
+        ) is False
+
+    def test_rejects_no_from(self):
+        assert _validate_sql("SELECT 1+1", allowed_tables=ALLOWED_TABLES_LOTO) is False
+
+    def test_accepts_union_all_same_table(self):
+        sql = (
+            "SELECT boule_1 as num FROM tirages "
+            "UNION ALL SELECT boule_2 FROM tirages "
+            "UNION ALL SELECT boule_3 FROM tirages"
+        )
+        assert _validate_sql(sql, allowed_tables=ALLOWED_TABLES_LOTO) is True
+
+    def test_rejects_union_all_mixed_tables(self):
+        sql = (
+            "SELECT boule_1 FROM tirages "
+            "UNION ALL SELECT id FROM sponsors"
+        )
+        assert _validate_sql(sql, allowed_tables=ALLOWED_TABLES_LOTO) is False
+
+    def test_case_insensitive_table_match(self):
+        assert _validate_sql(
+            "SELECT * FROM TIRAGES WHERE boule_1 = 1",
+            allowed_tables=ALLOWED_TABLES_LOTO,
+        ) is True
+
+    def test_no_whitelist_backward_compat(self):
+        """Without allowed_tables, any table is accepted (backward compat)."""
+        assert _validate_sql("SELECT * FROM admin_config") is True
+
+    def test_em_rejects_loto_table(self):
+        assert _validate_sql(
+            "SELECT * FROM tirages", allowed_tables=ALLOWED_TABLES_EM
+        ) is False
+
+    def test_loto_rejects_em_table(self):
+        assert _validate_sql(
+            "SELECT * FROM tirages_euromillions", allowed_tables=ALLOWED_TABLES_LOTO
+        ) is False
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# F03 V82 — Multi-statement newline guard
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestMultiStatementNewline:
+
+    def test_rejects_newline_multi_statement(self):
+        sql = "SELECT * FROM tirages\nSELECT * FROM tirages"
+        assert _validate_sql(sql) is False
+
+    def test_accepts_union_all_multiline(self):
+        sql = (
+            "SELECT boule_1 as num FROM tirages\n"
+            "UNION ALL\n"
+            "SELECT boule_2 FROM tirages"
+        )
+        assert _validate_sql(sql) is True
+
+    def test_accepts_single_line(self):
+        assert _validate_sql("SELECT * FROM tirages LIMIT 10") is True
+
+    def test_rejects_newline_different_tables(self):
+        sql = "SELECT * FROM tirages\nDELETE FROM tirages"
+        assert _validate_sql(sql) is False
+
+    def test_accepts_union_all_multiline_with_whitelist(self):
+        sql = (
+            "SELECT boule_1 as num FROM tirages\n"
+            "UNION ALL\n"
+            "SELECT boule_2 FROM tirages"
+        )
+        assert _validate_sql(sql, allowed_tables=ALLOWED_TABLES_LOTO) is True
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# F05 V82 — Readonly pool fallback logs ERROR
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestReadonlyPoolFallbackLogLevel:
+
+    @pytest.mark.asyncio
+    async def test_readonly_fallback_logs_error(self):
+        """When DB_USER_READONLY is not set, init_pool_readonly logs at ERROR level."""
+        import db_cloudsql
+        with patch.object(db_cloudsql, "DB_USER_READONLY", ""), \
+             patch.object(db_cloudsql, "DB_PASSWORD_READONLY", ""), \
+             patch.object(db_cloudsql, "_pool_readonly", None), \
+             patch.object(db_cloudsql.logger, "error") as mock_err:
+            await db_cloudsql.init_pool_readonly()
+            mock_err.assert_called_once()
+            assert "SECURITY" in mock_err.call_args[0][0]

@@ -25,6 +25,11 @@ _SQL_FORBIDDEN = [
     "INFORMATION_SCHEMA", "MYSQL.", "PERFORMANCE_SCHEMA", "SYS.",
 ]
 
+# F01 V82: Whitelist tables autorisees par game (defense semantique Gemini)
+ALLOWED_TABLES_LOTO = frozenset({"tirages"})
+ALLOWED_TABLES_EM = frozenset({"tirages_euromillions"})
+_TABLE_RE = re.compile(r"(?:FROM|JOIN)\s+(\w+)", re.IGNORECASE)
+
 # F04: single source of truth for French weekday names (shared Loto + EM)
 _JOURS_FR = {
     0: "lundi", 1: "mardi", 2: "mercredi", 3: "jeudi",
@@ -36,12 +41,28 @@ _JOURS_FR = {
 # Validation (pure functions — no DB dependency)
 # ────────────────────────────────────────────
 
-def _validate_sql(sql: str) -> bool:
-    """Valide la securite du SQL genere (SELECT only, pas de mots interdits)."""
+def _validate_sql(sql: str, allowed_tables: frozenset[str] | None = None) -> bool:
+    """Valide la securite du SQL genere (SELECT only, pas de mots interdits).
+
+    Args:
+        sql: SQL string to validate.
+        allowed_tables: if provided, only these table names are permitted after FROM/JOIN.
+            When None (default), table whitelist check is skipped (backward compat).
+    """
     if not sql:
         return False
     if len(sql) > 1000:
         return False
+
+    # F03 V82: guard multi-statement par newline (defense-in-depth)
+    lines = [ln.strip() for ln in sql.strip().splitlines() if ln.strip()]
+    if len(lines) > 1:
+        joined = " ".join(lines)
+        if not re.search(r"\bUNION\s+ALL\b", joined, re.IGNORECASE):
+            logger.warning("[TEXT2SQL] Multi-statement SQL detected (newline): %s", sql[:200])
+            return False
+        sql = joined  # normalise en une seule ligne pour la suite
+
     upper = sql.strip().upper()
     if not upper.startswith("SELECT"):
         return False
@@ -61,6 +82,18 @@ def _validate_sql(sql: str) -> bool:
     # Threshold at 10 blocks pathological nesting while allowing all valid patterns.
     if upper.count("SELECT") > 10:
         return False
+
+    # F01 V82: whitelist tables — reject if SQL references unauthorized tables
+    if allowed_tables is not None:
+        tables_found = _TABLE_RE.findall(sql)
+        if not tables_found:
+            logger.warning("[TEXT2SQL] No FROM clause found in SQL: %s", sql[:200])
+            return False
+        for tbl in tables_found:
+            if tbl.lower() not in {t.lower() for t in allowed_tables}:
+                logger.warning("[TEXT2SQL] Unauthorized table '%s' in SQL: %s", tbl, sql[:200])
+                return False
+
     return True
 
 
@@ -130,9 +163,9 @@ def _guard_non_sql(text: str, log_prefix: str) -> str | None:
 # Execution + formatting (shared Loto + EM)
 # ────────────────────────────────────────────
 
-async def _execute_safe_sql(sql: str) -> list | None:
+async def _execute_safe_sql(sql: str, allowed_tables: frozenset[str] | None = None) -> list | None:
     """Execute le SQL valide avec connexion DB readonly. Defense-in-depth: re-validates + ensure LIMIT."""
-    if not _validate_sql(sql):
+    if not _validate_sql(sql, allowed_tables=allowed_tables):
         logger.warning("[TEXT2SQL] _execute_safe_sql rejected unvalidated SQL: %s", sql[:100])
         return None
     sql = _ensure_limit(sql)  # F02 V74: defense-in-depth — cap LIMIT even if caller forgot

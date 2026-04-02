@@ -87,7 +87,7 @@ def em_patches(**overrides):
             s.enter_context(patch(target, return_value=rv))
         s.enter_context(patch("services.chat_pipeline_em._generate_sql_em",
                               new_callable=AsyncMock, return_value=None))
-        s.enter_context(patch("services.chat_pipeline_em._get_draw_count",
+        s.enter_context(patch("services.chat_pipeline._get_draw_count",
                               new_callable=AsyncMock, return_value=500))
         yield
 

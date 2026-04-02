@@ -1,7 +1,15 @@
 """
-Response pools for Loto chatbot — FR.
+Response pools for Loto chatbot — FR uniquement.
 Insult (L1-L4), compliment (L1-L3/love/merci), menace, argent (L1-L3), OOR (L1-L3).
 Mirrors chat_responses_em_en.py / chat_responses_em_multilang.py architecture.
+
+NOTE ARCHITECTURE: Ces pools sont exclusivement en français.
+Le Loto est un produit FDJ disponible uniquement en France,
+donc l'i18n n'est pas nécessaire pour ce module.
+Si expansion multilingue du Loto envisagée à l'avenir,
+migrer vers le pattern chat_responses_em_multilang.py (dispatch par langue).
+Effort estimé: ~4h (362L à traduire × N langues).
+Ref: Audit 360° Chatbot HYBRIDE V81, faille F11.
 
 V70 F08 — extracted from chat_detectors.py for architecture consistency.
 """

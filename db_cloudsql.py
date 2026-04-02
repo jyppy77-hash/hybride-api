@@ -203,7 +203,7 @@ async def init_pool_readonly():
     if _pool_readonly is not None:
         return
     if not DB_USER_READONLY or not DB_PASSWORD_READONLY:
-        logger.warning("[DB] DB_USER_READONLY not set — chatbot SQL uses main pool (no isolation)")
+        logger.error("[DB] SECURITY: DB_USER_READONLY not set — chatbot SQL uses main pool with WRITE privileges (no isolation)")
         return
 
     _pool_readonly = await aiomysql.create_pool(

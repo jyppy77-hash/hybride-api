@@ -317,7 +317,7 @@ class TestPipelineAffirmation:
         """Oui without history → invitation message."""
         from services.chat_pipeline import _prepare_chat_context
         with patch("services.chat_pipeline.load_prompt", return_value="system prompt"), \
-             patch("services.chat_pipeline.os.environ.get", return_value="fake_key"), \
+             patch.dict("os.environ", {"GEM_API_KEY": "fake_key"}), \
              patch("services.stats_analysis.should_inject_pedagogical_context", return_value=False):
             result, ctx = await _prepare_chat_context("Oui", [], "home", None)
         assert result is not None
@@ -331,7 +331,7 @@ class TestPipelineAffirmation:
         history = _make_mock_history(4)
         from services.chat_pipeline import _prepare_chat_context
         with patch("services.chat_pipeline.load_prompt", return_value="system prompt"), \
-             patch("services.chat_pipeline.os.environ.get", return_value="fake_key"), \
+             patch.dict("os.environ", {"GEM_API_KEY": "fake_key"}), \
              patch("services.stats_analysis.should_inject_pedagogical_context", return_value=False):
             result, ctx = await _prepare_chat_context("Ok", history, "home", None)
         # "Ok" with history: Phase 0 continuation catches it first (priority)
@@ -343,7 +343,7 @@ class TestPipelineAffirmation:
         """'Loto' alone → orientation message."""
         from services.chat_pipeline import _prepare_chat_context
         with patch("services.chat_pipeline.load_prompt", return_value="system prompt"), \
-             patch("services.chat_pipeline.os.environ.get", return_value="fake_key"), \
+             patch.dict("os.environ", {"GEM_API_KEY": "fake_key"}), \
              patch("services.stats_analysis.should_inject_pedagogical_context", return_value=False):
             result, ctx = await _prepare_chat_context("Loto", [], "home", None)
         assert result is not None
@@ -356,7 +356,7 @@ class TestPipelineAffirmation:
         """'Euromillions' alone → orientation message EM."""
         from services.chat_pipeline_em import _prepare_chat_context_em
         with patch("services.chat_pipeline_em.load_prompt_em", return_value="system prompt"), \
-             patch("services.chat_pipeline_em.os.environ.get", return_value="fake_key"):
+             patch.dict("os.environ", {"GEM_API_KEY": "fake_key"}):
             result, ctx = await _prepare_chat_context_em("Euromillions", [], "home-em-fr", None, lang="fr")
         assert result is not None
         assert ctx is None
@@ -368,7 +368,7 @@ class TestPipelineAffirmation:
         """'Yes' without history in EM EN → invitation in English."""
         from services.chat_pipeline_em import _prepare_chat_context_em
         with patch("services.chat_pipeline_em.load_prompt_em", return_value="system prompt"), \
-             patch("services.chat_pipeline_em.os.environ.get", return_value="fake_key"):
+             patch.dict("os.environ", {"GEM_API_KEY": "fake_key"}):
             result, ctx = await _prepare_chat_context_em("Yes", [], "home-em-en", None, lang="en")
         assert result is not None
         assert "analyse" in result["response"].lower() or "help" in result["response"].lower()

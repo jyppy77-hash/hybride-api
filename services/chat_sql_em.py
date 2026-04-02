@@ -18,7 +18,7 @@ from services.base_chat_sql import (
 # Re-export shared functions (consumers import from here)
 from services.base_chat_sql import (  # noqa: F401
     _validate_sql, _ensure_limit, _execute_safe_sql, _format_sql_result,
-    _MAX_SQL_PER_SESSION, _SQL_FORBIDDEN,
+    _MAX_SQL_PER_SESSION, _SQL_FORBIDDEN, ALLOWED_TABLES_LOTO, ALLOWED_TABLES_EM,
 )
 
 logger = logging.getLogger(__name__)

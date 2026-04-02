@@ -31,25 +31,12 @@ import time
 import importlib
 import httpx
 
-from services.circuit_breaker import gemini_breaker, CircuitOpenError, GeminiCircuitBreaker
+from services.circuit_breaker import gemini_breaker, CircuitOpenError
 from services.gemini import GEMINI_MODEL_URL, stream_gemini_chat
 from services.gemini_shared import _gemini_call_with_fallback
 from services.chat_utils import (
     _clean_response, _strip_non_latin, _get_sponsor_if_due,
-    _strip_sponsor_from_text, _enrich_with_context, _format_date_fr, StreamBuffer,
-)
-from services.chat_detectors import (
-    _detect_insulte, _count_insult_streak,
-    _detect_compliment, _count_compliment_streak,
-    _detect_site_rating, get_site_rating_response,
-    _is_short_continuation, _detect_tirage, _has_temporal_filter, _extract_temporal_date,
-    _detect_generation, _detect_generation_mode, _extract_forced_numbers, _extract_grid_count,
-    _extract_exclusions,
-    _detect_cooccurrence_high_n, _get_cooccurrence_high_n_response,
-    _is_affirmation_simple, _detect_game_keyword_alone,
-    _detect_salutation, _get_salutation_response,
-    _has_data_signal,
-    _detect_grid_evaluation,
+    _strip_sponsor_from_text, _format_date_fr, StreamBuffer,
 )
 from services.stats_analysis import should_inject_pedagogical_context, PEDAGOGICAL_CONTEXT
 from services.chat_logger import log_chat_exchange
@@ -219,6 +206,8 @@ _TIRAGE_NOT_FOUND_EM = {
 # F05: Centralized timeout constants (seconds)
 # ═══════════════════════════════════════════════════════
 
+MAX_MESSAGE_LENGTH = 2000  # F12 V82: truncate user messages to limit Gemini token usage + regex cost
+
 _TIMEOUTS = {
     "sql_generate": 10,
     "sql_execute": 5,
@@ -343,9 +332,13 @@ async def run_text_to_sql(message, http_client, gem_api_key, history,
     if continuation_mode or enrichment_context or _skip_sql:
         return enrichment_context, _sql_query, _sql_status
 
-    _sql_count = sum(1 for m in (history or []) if m.role == "user")
+    # F02 V82: count actual SQL executions (not user messages) for rate-limit
+    _sql_count = sum(
+        1 for m in (history or [])
+        if m.role == "assistant" and "[RÉSULTAT SQL]" in (m.content or "")
+    )
     if _sql_count >= max_per_session:
-        logger.info(f"{log_prefix} Rate-limit session ({_sql_count} echanges)")
+        logger.info(f"{log_prefix} Rate-limit SQL session ({_sql_count} queries executed)")
         return enrichment_context, _sql_query, _sql_status
 
     t0 = time.monotonic()
@@ -754,6 +747,12 @@ async def _prepare_chat_context_base(
     """
     _t0 = time.monotonic()
     _lp = cfg["log_prefix"]
+
+    # F12 V82: truncate oversized messages before detection (protects 186 regex + Gemini tokens)
+    if len(message) > MAX_MESSAGE_LENGTH:
+        logger.warning("%s Message truncated: %d chars → %d", _lp, len(message), MAX_MESSAGE_LENGTH)
+        message = message[:MAX_MESSAGE_LENGTH]
+
     _fallback = cfg["get_fallback"](lang)
     mode = cfg["detect_mode"](message, page)
 

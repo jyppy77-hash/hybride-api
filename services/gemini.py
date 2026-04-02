@@ -1,4 +1,3 @@
-import os
 import json
 import logging
 import time
@@ -32,24 +31,15 @@ async def enrich_analysis(analysis_local: str, window: str = "GLOBAL", *, http_c
     if prompt_template:
         prompt = prompt_template + "\n" + analysis_local
     else:
-        # Safety fallback: used only if prompt file is missing from disk.
-        # In production, prompt files always exist. This is defense-in-depth.
-        prompt = f"""[LANGUE ET ORTHOGRAPHE — RÈGLE ABSOLUE]
-Tu réponds TOUJOURS en français correct avec TOUS les accents : é, è, ê, ë, à, â, ç, ù, û, ô, î, ï.
-Exemples obligatoires : "numéro" (jamais "numero"), "fréquence" (jamais "frequence"), "régularité" (jamais "regularite"), "dernière" (jamais "derniere"), "élevé" (jamais "eleve"), "intéressant" (jamais "interessant"), "présente" (jamais "presente"), "conformité" (jamais "conformite"), "éloigne" (jamais "eloigne"), "équilibre" (jamais "equilibre"), "mérite" (jamais "merite"), "peut-être" (jamais "peut-etre"), "sélection" (jamais "selection"), "mélange" (jamais "melange"), "répartition" (jamais "repartition").
-C'est une règle NON NÉGOCIABLE. Un texte sans accents est considéré comme un BUG.
-
-Tu es un expert en statistiques de loterie.
-Reformule ce texte d'analyse de manière pédagogique et accessible.
-Règles strictes :
-- Ne promets JAMAIS de gain
-- Reste neutre et informatif
-- Garde un ton professionnel
-- Maximum 4 phrases fluides
-- Ne modifie pas les chiffres
-
-Texte a reformuler :
-{analysis_local}"""
+        # F10 V82: minimal fallback with ERROR log (replaces 16-line hardcoded prompt).
+        # In production, prompt files always exist. This triggers monitoring alerts.
+        logger.error("[META TEXTE] CRITICAL: prompt file missing for window=%s — using minimal fallback", window_key)
+        prompt = (
+            "Tu es un assistant statistique pour le Loto français. "
+            "Reformule ce texte de manière concise et factuelle. "
+            "Ne promets jamais de gain. Maximum 4 phrases.\n\n"
+            + analysis_local
+        )
 
     return await enrich_analysis_base(
         analysis_local, prompt, http_client=http_client, lang=lang,

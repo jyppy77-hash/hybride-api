@@ -43,7 +43,7 @@ def em_patches(**overrides):
             s.enter_context(patch(target, return_value=rv))
         s.enter_context(patch("services.chat_pipeline_em._generate_sql_em",
                               new_callable=AsyncMock, return_value=None))
-        s.enter_context(patch("services.chat_pipeline_em._get_draw_count",
+        s.enter_context(patch("services.chat_pipeline._get_draw_count",
                               new_callable=AsyncMock, return_value=500))
         yield
 
@@ -281,8 +281,8 @@ class TestF09GeminiFallbackPrompt:
                     "Test analysis", "GLOBAL",
                     http_client=mock_client, lang="fr",
                 )
-                # Verify the fallback prompt was passed (contains the FR rules)
+                # F10 V82: fallback is now a minimal prompt (not the full 16-line hardcoded version)
                 call_args = mock_base.call_args
                 prompt_arg = call_args[0][1]  # second positional arg is the prompt
-                assert "RÈGLE ABSOLUE" in prompt_arg
-                assert "expert en statistiques" in prompt_arg
+                assert "assistant statistique" in prompt_arg
+                assert "Test analysis" in prompt_arg
