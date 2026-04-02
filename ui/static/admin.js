@@ -994,12 +994,28 @@ var LotoAdmin = (function() {
         overlay.style.display = 'flex';
     }
 
+    // ── Dashboard hard-refresh ──
+
+    function initDashboard() {
+        var btn = document.getElementById('btn-hard-refresh');
+        if (!btn) return;
+        btn.addEventListener('click', function() {
+            var icon = btn.querySelector('.hard-refresh-icon');
+            if (icon) icon.classList.add('spinning');
+            setTimeout(function() {
+                var url = location.href.split('?')[0];
+                location.href = url + '?_r=' + Date.now();
+            }, 500);
+        });
+    }
+
     return {
         initImpressions: initImpressions,
         initVotes: initVotes,
         initRealtime: initRealtime,
         initEngagement: initEngagement,
         initMessages: initMessages,
-        initChatbotMonitor: initChatbotMonitor
+        initChatbotMonitor: initChatbotMonitor,
+        initDashboard: initDashboard
     };
 })();

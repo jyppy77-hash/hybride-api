@@ -2,7 +2,12 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
-    <h2>Sponsor — Aujourd'hui</h2>
+    <div class="dashboard-header-row">
+        <h2>Sponsor — Aujourd'hui</h2>
+        <button class="btn-hard-refresh" id="btn-hard-refresh" title="Hard Refresh (bypass cache)">
+            <span class="hard-refresh-icon">&#x21BB;</span> Refresh
+        </button>
+    </div>
     <div class="kpi-grid">
         <div class="kpi-card">
             <span class="kpi-value">{{ impressions }}</span>
@@ -79,4 +84,8 @@
         <a href="/admin/api/votes/csv" class="nav-item">Export CSV — Votes</a>
         <a href="/admin/api/sponsor-report/pdf" class="nav-item">Export PDF — Rapport sponsor</a>
     </nav>
+{% endblock %}
+
+{% block scripts %}
+<script>LotoAdmin.initDashboard();</script>
 {% endblock %}

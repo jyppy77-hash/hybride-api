@@ -4740,6 +4740,32 @@ body.theme-day .chatbot-text strong {
     font-size: 10px;
 }
 
+.footer-crosslink {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 12px 0;
+    padding: 8px 0;
+    border-top: 1px solid var(--border);
+    font-size: .85rem;
+}
+
+.footer-crosslink a {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+}
+
+.footer-crosslink a:hover {
+    color: var(--primary);
+    background: rgba(26, 115, 232, 0.08);
+}
+
 .footer-brand {
     margin-bottom: 16px;
     color: var(--text-muted);
@@ -5218,6 +5244,14 @@ body.theme-night .faq-page .faq-category-title {
 body.theme-night .footer-disclaimer,
 body.theme-night .footer-legal a {
     opacity: 1;
+}
+
+body.theme-night .footer-crosslink a {
+    color: var(--theme-text-secondary, #aaa);
+}
+body.theme-night .footer-crosslink a:hover {
+    color: var(--primary);
+    background: rgba(26, 115, 232, 0.12);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════

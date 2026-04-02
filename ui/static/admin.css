@@ -823,6 +823,28 @@ body.light .garanties-list li { border-bottom-color: rgba(0,0,0,0.04); }
     margin-top: 24px; display: flex; gap: 12px; align-items: center;
 }
 
+/* ── Hard Refresh button (dashboard only) ────────────────────── */
+.dashboard-header-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 0;
+}
+.dashboard-header-row h2 { margin-bottom: 0; }
+.btn-hard-refresh {
+    display: inline-flex; align-items: center; gap: .4rem;
+    background: var(--bg-card); border: var(--glass-border);
+    backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+    color: var(--accent); font-size: .82rem; font-weight: 600;
+    padding: .4rem .9rem; border-radius: var(--radius-sm);
+    cursor: pointer; transition: var(--transition); line-height: 1;
+}
+.btn-hard-refresh:hover {
+    background: var(--bg-card-hover); border-color: var(--border-accent);
+    box-shadow: 0 0 12px var(--shadow-hover);
+}
+.hard-refresh-icon { font-size: 1.1rem; display: inline-block; }
+.hard-refresh-icon.spinning { animation: spin-refresh 0.5s ease-in-out; }
+@keyframes spin-refresh { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
 /* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .admin-header { padding: .5rem 1rem; flex-wrap: wrap; gap: .4rem; }
