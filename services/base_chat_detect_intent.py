@@ -134,19 +134,79 @@ def _detect_game_keyword_alone(message: str) -> bool:
 # ────────────────────────────────────────────
 
 _JOURS_SEMAINE = {
+    # FR
     "lundi": 0, "mardi": 1, "mercredi": 2, "jeudi": 3,
     "vendredi": 4, "samedi": 5, "dimanche": 6,
+    # EN
+    "monday": 0, "tuesday": 1, "wednesday": 2, "thursday": 3,
+    "friday": 4, "saturday": 5, "sunday": 6,
+    # ES
+    "lunes": 0, "martes": 1, "miércoles": 2, "miercoles": 2, "jueves": 3,
+    "viernes": 4, "sábado": 5, "sabado": 5, "domingo": 6,
+    # PT (sábado/domingo shared with ES)
+    "segunda": 0, "terça": 1, "terca": 1, "quarta": 2, "quinta": 3,
+    "sexta": 4,
+    # DE
+    "montag": 0, "dienstag": 1, "mittwoch": 2, "donnerstag": 3,
+    "freitag": 4, "samstag": 5, "sonntag": 6,
+    # NL
+    "maandag": 0, "dinsdag": 1, "woensdag": 2, "donderdag": 3,
+    "vrijdag": 4, "zaterdag": 5, "zondag": 6,
 }
 
-_TIRAGE_KW = r'(?:tirage|r[ée]sultat|num[eé]ro|nuro|boule|sorti|tomb[eé]|tir[eé])'
+_TIRAGE_KW = (
+    r'(?:'
+    r'tirage|r[ée]sultat|num[eé]ro|nuro|boule|sorti|tomb[eé]|tir[eé]'   # FR
+    r'|draw|result|number|drawn|ball'                                     # EN
+    r'|sorteo|resultado|n[uú]mero|bola'                                   # ES
+    r'|sorteio|resultado|n[uú]mero|bola'                                  # PT
+    r'|ziehung|ergebnis|zahlen|kugel|gezogen'                             # DE
+    r'|trekking|resultaat|uitslag|nummer|getrokken'                       # NL
+    r')'
+)
 
 _MOIS_TO_NUM = {
+    # FR
     "janvier": 1, "fevrier": 2, "mars": 3, "avril": 4,
     "mai": 5, "juin": 6, "juillet": 7, "aout": 8,
     "septembre": 9, "octobre": 10, "novembre": 11, "decembre": 12,
+    # EN
+    "january": 1, "february": 2, "march": 3, "april": 4,
+    "may": 5, "june": 6, "july": 7, "august": 8,
+    "september": 9, "october": 10, "november": 11, "december": 12,
+    # ES
+    "enero": 1, "febrero": 2, "marzo": 3, "abril": 4,
+    "mayo": 5, "junio": 6, "julio": 7, "agosto": 8,
+    "septiembre": 9, "octubre": 10, "noviembre": 11, "diciembre": 12,
+    # PT (abril/agosto shared with ES)
+    "janeiro": 1, "fevereiro": 2, "marco": 3,
+    "maio": 5, "junho": 6, "julho": 7,
+    "setembro": 9, "outubro": 10, "novembro": 11, "dezembro": 12,
+    # DE (april/august shared with EN)
+    "januar": 1, "februar": 2, "marz": 3, "maerz": 3,
+    "juni": 6, "juli": 7,
+    "oktober": 10, "dezember": 12,
+    # NL
+    "januari": 1, "februari": 2, "maart": 3,
+    "mei": 5, "augustus": 8,
 }
 
-_MOIS_NOM_RE = r'(janvier|f[eé]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[eé]cembre)'
+_MOIS_NOM_RE = (
+    r'('
+    # FR
+    r'janvier|f[eé]vrier|mars|avril|mai|juin|juillet|ao[uû]t|septembre|octobre|novembre|d[eé]cembre'
+    # EN
+    r'|january|february|march|april|may|june|july|august|september|october|november|december'
+    # ES
+    r'|enero|febrero|marzo|abril|mayo|junio|julio|agosto|septiembre|octubre|noviembre|diciembre'
+    # PT
+    r'|janeiro|fevereiro|mar[cç]o|abril|maio|junho|julho|setembro|outubro|novembro|dezembro'
+    # DE
+    r'|januar|februar|m[aä]rz|juni|juli|oktober|dezember'
+    # NL
+    r'|januari|februari|maart|mei|augustus'
+    r')'
+)
 
 
 _STAT_NEUTRALIZE_RE = re.compile(
@@ -186,15 +246,72 @@ _STAT_NEUTRALIZE_RE = re.compile(
 )
 
 
+_NEXT_KW_RE = re.compile(
+    r'\b(?:prochain|next|pr[oó]ximo|n[aä]chste|volgende)\b', re.IGNORECASE
+)
+
+_LATEST_KW_RE = re.compile(
+    r'(?:'
+    # FR: "dernier tirage", "dernière sortie"
+    r'(?:dernier|derni[eè]re)s?\s+' + _TIRAGE_KW + r'|'
+    # EN: "last draw", "latest result"
+    r'(?:last|latest|most\s+recent)\s+' + _TIRAGE_KW + r'|'
+    # ES: "último sorteo", "último resultado"
+    r'[uú]ltimo\s+' + _TIRAGE_KW + r'|'
+    # PT: "último sorteio", "último resultado"
+    r'[uú]ltimo\s+' + _TIRAGE_KW + r'|'
+    # DE: "letzte Ziehung", "letztes Ergebnis"
+    r'letzte[nrs]?\s+' + _TIRAGE_KW + r'|'
+    # NL: "laatste trekking", "laatste resultaat"
+    r'laatste\s+' + _TIRAGE_KW +
+    r')', re.IGNORECASE
+)
+
+# "quels numéros sont sortis" / "which numbers were drawn" / etc.
+_WHICH_DRAWN_RE = re.compile(
+    r'(?:'
+    r'(?:quels?|quel)\s+(?:num[eé]ro|nuro|boule).*sorti|'            # FR
+    r'qu.est.ce\s+qu.*sorti|'                                         # FR
+    r'(?:which|what)\s+(?:numbers?|balls?).*(?:drawn|came\s+out)|'    # EN
+    r'(?:qu[eé]|cu[aá]le?s?)\s+(?:n[uú]mero|bola).*(?:sali[oó]|result)|'  # ES
+    r'(?:quais|que)\s+(?:n[uú]mero|bola).*(?:sa[ií]r|result)|'       # PT
+    r'(?:welche)\s+(?:zahlen|kugel).*(?:gezogen|gekommen)|'           # DE
+    r'(?:welke)\s+(?:nummers?|ballen?).*(?:getrokken|gekomen)'        # NL
+    r')', re.IGNORECASE
+)
+
+# "avant-hier" / "day before yesterday" / "anteayer" / "anteontem" / "vorgestern" / "eergisteren"
+_DAY_BEFORE_YESTERDAY_RE = re.compile(
+    r'\b(?:avant[- ]hier|day\s+before\s+yesterday|anteayer|anteontem|vorgestern|eergisteren)\b',
+    re.IGNORECASE,
+)
+
+# "hier" / "yesterday" / "ayer" / "ontem" / "gestern" / "gisteren"
+_YESTERDAY_RE = re.compile(
+    r'\b(?:hier|yesterday|ayer|ontem|gestern|gisteren)\b', re.IGNORECASE
+)
+
+# "résultats" / "results" / "resultados" / "Ergebnisse" / "resultaten" (strong standalone)
+_RESULTS_STANDALONE_RE = re.compile(
+    r'\b(?:r[ée]sultats?|results?|resultados?|ergebnisse?|resultaten?|uitslagen?)\b',
+    re.IGNORECASE,
+)
+
+# DE date format: "15. März 2026" (dot after day number)
+_DE_DATE_RE = re.compile(
+    r'(\d{1,2})\.\s*' + _MOIS_NOM_RE + r'(?:\s+(\d{4}))?', re.IGNORECASE
+)
+
+
 def _detect_tirage(message: str):
     """
-    Detecte si l'utilisateur demande les resultats d'un tirage.
+    Detecte si l'utilisateur demande les resultats d'un tirage (6 langues).
     Returns: "latest", un objet date, ou None.
     """
     lower = message.lower()
 
-    # Exclure "prochain tirage" (gere par Phase 0)
-    if re.search(r'prochain', lower):
+    # Exclure "prochain tirage" / "next draw" (gere par Phase 0)
+    if _NEXT_KW_RE.search(lower):
         return None
 
     # Neutralize Phase T if statistical analysis words are present
@@ -212,11 +329,14 @@ def _detect_tirage(message: str):
         except ValueError:
             pass
 
-    # Date textuelle : "9 février 2026", "15 janvier", "3 mars 2025"
+    # Date textuelle : "9 février 2026", "15 January", "3 marzo 2025"
     m = re.search(r'(\d{1,2})\s+' + _MOIS_NOM_RE + r'(?:\s+(\d{4}))?', lower)
     if m and re.search(_TIRAGE_KW, lower):
         day = int(m.group(1))
-        month_str = m.group(2).replace('\xe9', 'e').replace('\xfb', 'u').replace('\xe8', 'e')
+        month_str = (m.group(2)
+                     .replace('\xe9', 'e').replace('\xfb', 'u')
+                     .replace('\xe8', 'e').replace('\xe7', 'c')
+                     .replace('\xe4', 'a'))
         month = _MOIS_TO_NUM.get(month_str)
         year = int(m.group(3)) if m.group(3) else date.today().year
         if month:
@@ -225,28 +345,55 @@ def _detect_tirage(message: str):
             except ValueError:
                 pass
 
-    # "dernier tirage", "derniers numeros", "derniere sortie"
-    if re.search(r'(?:dernier|derni[eè]re)s?\s+' + _TIRAGE_KW, lower):
+    # EN date format: "March 15 2026" / "March 15, 2026" (month before day)
+    m = re.search(_MOIS_NOM_RE + r'\s+(\d{1,2})(?:[,.]?\s+(\d{4}))?', lower)
+    if m and re.search(_TIRAGE_KW, lower):
+        month_str = (m.group(1)
+                     .replace('\xe9', 'e').replace('\xfb', 'u')
+                     .replace('\xe8', 'e').replace('\xe7', 'c')
+                     .replace('\xe4', 'a'))
+        month = _MOIS_TO_NUM.get(month_str)
+        day = int(m.group(2))
+        year = int(m.group(3)) if m.group(3) else date.today().year
+        if month:
+            try:
+                return date(year, month, day)
+            except ValueError:
+                pass
+
+    # DE date format: "15. März 2026"
+    m = _DE_DATE_RE.search(lower)
+    if m and re.search(_TIRAGE_KW, lower):
+        day = int(m.group(1))
+        month_str = m.group(2).replace('\xe4', 'a')
+        month = _MOIS_TO_NUM.get(month_str)
+        year = int(m.group(3)) if m.group(3) else date.today().year
+        if month:
+            try:
+                return date(year, month, day)
+            except ValueError:
+                pass
+
+    # "dernier tirage" / "last draw" / "último sorteo" etc.
+    if _LATEST_KW_RE.search(lower):
         return "latest"
 
-    # "quels numeros sont sortis", "qu'est-ce qui est sorti"
-    if re.search(r'(?:quels?|quel)\s+(?:num[eé]ro|nuro|boule).*sorti', lower):
-        return "latest"
-    if re.search(r'qu.est.ce\s+qu.*sorti', lower):
+    # "quels numéros sont sortis" / "which numbers were drawn" etc.
+    if _WHICH_DRAWN_RE.search(lower):
         return "latest"
 
-    # "avant-hier" (tester AVANT "hier")
-    if ('avant-hier' in lower or 'avant hier' in lower) and re.search(_TIRAGE_KW, lower):
+    # "avant-hier" / "day before yesterday" (tester AVANT "hier")
+    if _DAY_BEFORE_YESTERDAY_RE.search(lower) and re.search(_TIRAGE_KW, lower):
         return date.today() - timedelta(days=2)
 
-    # "hier"
-    if 'hier' in lower and re.search(_TIRAGE_KW, lower):
+    # "hier" / "yesterday" / "ayer" / "ontem" / "gestern" / "gisteren"
+    if _YESTERDAY_RE.search(lower) and re.search(_TIRAGE_KW, lower):
         return date.today() - timedelta(days=1)
     # "les numeros d'hier" (sans mot-cle tirage explicite)
     if re.search(r"(?:num[eé]ro|nuro)s?\s+d.?hier", lower):
         return date.today() - timedelta(days=1)
 
-    # Jour de la semaine : "tirage de samedi", "numeros de lundi"
+    # Jour de la semaine : "tirage de samedi", "draw from Saturday", etc.
     for jour, wd in _JOURS_SEMAINE.items():
         if jour in lower and re.search(_TIRAGE_KW, lower):
             today = date.today()
@@ -255,8 +402,8 @@ def _detect_tirage(message: str):
                 delta = 7
             return today - timedelta(days=delta)
 
-    # "resultats" seul (indicateur fort)
-    if re.search(r'\br[ée]sultats?\b', lower):
+    # "résultats" / "results" / "resultados" seul (indicateur fort)
+    if _RESULTS_STANDALONE_RE.search(lower):
         return "latest"
 
     return None
@@ -474,6 +621,87 @@ def _extract_top_n(message: str, default: int = 5, max_n: int = 20) -> int:
             if 1 <= n <= max_n:
                 return n
     return default
+
+
+# ═══════════════════════════════════════════════════════
+# Phase 3 — Base requête complexe (shared Loto + EM)
+# F06 V83: factorised from chat_detectors + chat_detectors_em_intent
+# ═══════════════════════════════════════════════════════
+
+def _detect_requete_complexe_base(
+    message: str, *,
+    comp_re: list,
+    cat_chaud_re: list,
+    cat_froid_re: list,
+    freq_desc_re: list,
+    freq_asc_re: list,
+    ecart_desc_re: list,
+    ecart_asc_re: list,
+    secondary_query_fn,
+    secondary_type: str,
+    primary_type: str,
+    max_primary: int,
+    max_secondary: int,
+    star_freq_re: list | None = None,
+) -> dict | None:
+    """Detect complex queries: rankings, comparisons, hot/cold categories.
+
+    Args:
+        comp_re: compiled comparison patterns (each must capture 2 groups: num1, num2).
+        cat_chaud_re / cat_froid_re: compiled hot/cold category patterns.
+        freq_desc_re / freq_asc_re: compiled frequency ranking patterns.
+        ecart_desc_re / ecart_asc_re: compiled gap ranking patterns.
+        secondary_query_fn: callable(lower) → bool (e.g. _is_chance_query, _is_star_query).
+        secondary_type: num_type for secondary numbers ("chance" or "etoile").
+        primary_type: num_type for primary numbers ("principal" or "boule").
+        max_primary: upper bound for primary numbers (49 Loto, 50 EM).
+        max_secondary: upper bound for secondary numbers (10 Loto chance, 12 EM stars).
+        star_freq_re: optional extra patterns for star-specific frequency (EM only).
+    """
+    lower = message.lower()
+
+    # --- Comparaison ---
+    for pat in comp_re:
+        m = pat.search(lower)
+        if m:
+            n1, n2 = int(m.group(1)), int(m.group(2))
+            is_secondary = secondary_query_fn(lower)
+            if is_secondary and 1 <= n1 <= max_secondary and 1 <= n2 <= max_secondary:
+                return {"type": "comparaison", "num1": n1, "num2": n2, "num_type": secondary_type}
+            if 1 <= n1 <= max_primary and 1 <= n2 <= max_primary and n1 != n2:
+                return {"type": "comparaison", "num1": n1, "num2": n2, "num_type": primary_type}
+
+    # --- Catégorie chaud/froid ---
+    if any(p.search(lower) for p in cat_chaud_re):
+        num_type = secondary_type if secondary_query_fn(lower) else primary_type
+        return {"type": "categorie", "categorie": "chaud", "num_type": num_type}
+
+    if any(p.search(lower) for p in cat_froid_re):
+        num_type = secondary_type if secondary_query_fn(lower) else primary_type
+        return {"type": "categorie", "categorie": "froid", "num_type": num_type}
+
+    # --- Classement ---
+    limit = _extract_top_n(lower)
+    is_secondary = secondary_query_fn(lower)
+    num_type = secondary_type if is_secondary else primary_type
+
+    # Star-specific frequency shortcut (EM only)
+    if star_freq_re and is_secondary and any(p.search(lower) for p in star_freq_re):
+        return {"type": "classement", "tri": "frequence_desc", "limit": limit, "num_type": secondary_type}
+
+    if any(p.search(lower) for p in freq_desc_re):
+        return {"type": "classement", "tri": "frequence_desc", "limit": limit, "num_type": num_type}
+
+    if any(p.search(lower) for p in freq_asc_re):
+        return {"type": "classement", "tri": "frequence_asc", "limit": limit, "num_type": num_type}
+
+    if any(p.search(lower) for p in ecart_desc_re):
+        return {"type": "classement", "tri": "ecart_desc", "limit": limit, "num_type": num_type}
+
+    if any(p.search(lower) for p in ecart_asc_re):
+        return {"type": "classement", "tri": "ecart_asc", "limit": limit, "num_type": num_type}
+
+    return None
 
 
 # ═══════════════════════════════════════════════════════
@@ -857,8 +1085,12 @@ _EXCLUDE_NUMS_RANGE_PATTERN = re.compile(
 )
 
 
-def _extract_exclusions(message: str) -> dict:
+def _extract_exclusions(message: str, max_num: int = 49) -> dict:
     """Extract exclusion constraints from generation request (6 languages).
+
+    Args:
+        message: user message to parse.
+        max_num: upper bound for valid numbers (Loto=49, EM=50).
 
     Returns dict with:
         exclude_ranges: list of (low, high) tuples
@@ -894,7 +1126,7 @@ def _extract_exclusions(message: str) -> dict:
     # Specific number exclusion: "sans le 13"
     for m in _EXCLUDE_NUMS_PATTERN.finditer(message):
         num = int(m.group(1))
-        if 1 <= num <= 50:
+        if 1 <= num <= max_num:
             result["exclude_nums"].append(num)
 
     # Deduplicate

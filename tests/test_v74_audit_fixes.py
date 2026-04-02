@@ -137,8 +137,8 @@ class TestF02EnsureLimit:
 
         with patch("services.base_chat_sql.db_cloudsql") as mock_db:
             mock_db.get_connection_readonly.return_value = mock_conn
-            from services.base_chat_sql import _execute_safe_sql
-            result = _run(_execute_safe_sql(sql_no_limit))
+            from services.base_chat_sql import _execute_safe_sql, ALLOWED_TABLES_LOTO
+            result = _run(_execute_safe_sql(sql_no_limit, allowed_tables=ALLOWED_TABLES_LOTO))
 
         assert len(executed_sql) == 1
         assert "LIMIT 50" in executed_sql[0]
@@ -159,8 +159,8 @@ class TestF02EnsureLimit:
 
         with patch("services.base_chat_sql.db_cloudsql") as mock_db:
             mock_db.get_connection_readonly.return_value = mock_conn
-            from services.base_chat_sql import _execute_safe_sql
-            result = _run(_execute_safe_sql(sql_with_limit))
+            from services.base_chat_sql import _execute_safe_sql, ALLOWED_TABLES_LOTO
+            result = _run(_execute_safe_sql(sql_with_limit, allowed_tables=ALLOWED_TABLES_LOTO))
 
         assert len(executed_sql) == 1
         assert executed_sql[0].count("LIMIT") == 1

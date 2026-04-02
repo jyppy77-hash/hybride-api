@@ -11,7 +11,7 @@ from services.chat_detectors import (
     _extract_top_n, _has_temporal_filter,
     _extract_grid_count, _extract_exclusions,
     _detect_salutation, _get_salutation_response,
-    _has_data_signal,
+    _has_data_signal, _detect_tirage,
 )
 
 
@@ -1296,3 +1296,113 @@ class TestDataSignal_HasSignal:
 
     def test_nl_frequentie(self):
         assert _has_data_signal("frequentie van nummer 7") is True
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# F05 V83 — _extract_exclusions() max_num game-aware
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestExtractExclusionsMaxNum:
+
+    def test_loto_rejects_50(self):
+        """F05: 'sans le 50' with max_num=49 → 50 not in exclusions."""
+        result = _extract_exclusions("sans le 50", max_num=49)
+        assert 50 not in result["exclude_nums"]
+
+    def test_loto_accepts_49(self):
+        """F05: 'sans le 49' with max_num=49 → 49 included."""
+        result = _extract_exclusions("sans le 49", max_num=49)
+        assert 49 in result["exclude_nums"]
+
+    def test_em_accepts_50(self):
+        """F05: 'without 50' with max_num=50 → 50 included."""
+        result = _extract_exclusions("without 50", max_num=50)
+        assert 50 in result["exclude_nums"]
+
+    def test_default_backward_compat(self):
+        """F05: Default max_num=49 matches Loto range."""
+        result = _extract_exclusions("sans le 49")
+        assert 49 in result["exclude_nums"]
+        result2 = _extract_exclusions("sans le 50")
+        assert 50 not in result2["exclude_nums"]
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# F07 V83 — _detect_tirage() multilingue (6 langues)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestDetectTirageMultilang:
+
+    # FR (existing behavior)
+    def test_fr_tirage_date(self):
+        result = _detect_tirage("tirage du 15 mars 2026")
+        assert result is not None and result != "latest"
+
+    def test_fr_dernier_tirage(self):
+        assert _detect_tirage("résultat du dernier tirage") == "latest"
+
+    # EN
+    def test_en_draw_date(self):
+        result = _detect_tirage("draw from March 15 2026")
+        assert result is not None and result != "latest"
+
+    def test_en_last_draw(self):
+        assert _detect_tirage("last draw results") == "latest"
+
+    def test_en_latest_result(self):
+        assert _detect_tirage("latest result") == "latest"
+
+    # ES
+    def test_es_sorteo_date(self):
+        result = _detect_tirage("sorteo del 15 marzo 2026")
+        assert result is not None and result != "latest"
+
+    def test_es_ultimo_sorteo(self):
+        assert _detect_tirage("último sorteo") == "latest"
+
+    # PT
+    def test_pt_sorteio_date(self):
+        result = _detect_tirage("sorteio de 15 janeiro 2026")
+        assert result is not None and result != "latest"
+
+    def test_pt_ultimo_sorteio(self):
+        assert _detect_tirage("último sorteio") == "latest"
+
+    # DE
+    def test_de_ziehung_date(self):
+        result = _detect_tirage("Ziehung vom 15. März 2026")
+        assert result is not None and result != "latest"
+
+    def test_de_letzte_ziehung(self):
+        assert _detect_tirage("letzte Ziehung") == "latest"
+
+    # NL
+    def test_nl_trekking_date(self):
+        result = _detect_tirage("trekking van 15 maart 2026")
+        assert result is not None and result != "latest"
+
+    def test_nl_laatste_trekking(self):
+        assert _detect_tirage("laatste trekking") == "latest"
+
+    # Yesterday multilang
+    def test_en_yesterday(self):
+        result = _detect_tirage("yesterday's draw")
+        assert result is not None and result != "latest"
+
+    def test_es_ayer(self):
+        result = _detect_tirage("sorteo de ayer")
+        assert result is not None and result != "latest"
+
+    def test_de_gestern(self):
+        result = _detect_tirage("Ziehung von gestern")
+        assert result is not None and result != "latest"
+
+    # Negatives — "next" blocks Phase T
+    def test_en_next_blocked(self):
+        assert _detect_tirage("next draw") is None
+
+    def test_de_nachste_blocked(self):
+        assert _detect_tirage("nächste Ziehung") is None
+
+    def test_es_proximo_blocked(self):
+        assert _detect_tirage("próximo sorteo") is None

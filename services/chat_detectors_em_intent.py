@@ -15,6 +15,7 @@ from services.base_chat_detectors import (
     _detect_generation, _detect_generation_mode,
     _is_affirmation_simple, _detect_game_keyword_alone,  # V51
     _detect_grid_evaluation,  # V70
+    _detect_requete_complexe_base,  # F06 V83
 )
 
 
@@ -332,67 +333,31 @@ def _detect_grille_em(message: str):
 
 # ════════════════════════════════════════════════════════════
 # Requete complexe EM (classement, comparaison, categorie)
+# F06 V83: thin wrapper — compiled comp patterns + base function
 # ════════════════════════════════════════════════════════════
 
+_EM_COMP_RE = [
+    re.compile(r'compar\w*\s+(?:le\s+)?(\d{1,2})\s+(?:et|avec|vs\.?)\s+(?:le\s+)?(\d{1,2})', re.I),
+    re.compile(r'(\d{1,2})\s+vs\.?\s+(\d{1,2})', re.I),
+    re.compile(r'diff[eé]rence\s+entre\s+(?:le\s+)?(\d{1,2})\s+et\s+(?:le\s+)?(\d{1,2})', re.I),
+    re.compile(r'entre\s+(?:le\s+)?(\d{1,2})\s+et\s+(?:le\s+)?(\d{1,2})\s.*(?:lequel|qui)', re.I),
+    re.compile(r'(?:compar|vergleich|vergelijk)\w*\b[^.?!]*?(?:du\s+|le\s+|el\s+|del\s+|o\s+|do\s+|da\s+|dos\s+|das\s+|de\s+|von\s+|van\s+)?(\d{1,2})\s+(?:et|avec|vs\.?|and|und|en|e|y)\s+(?:du\s+|le\s+|el\s+|del\s+|o\s+|do\s+|da\s+|dos\s+|das\s+|de\s+|von\s+|van\s+)?(\d{1,2})', re.I),
+]
+
+
 def _detect_requete_complexe_em(message: str):
-    """
-    Detecte les requetes complexes EM : classements, comparaisons, categories.
-    Returns: dict d'intention ou None.
-    """
-    lower = message.lower()
-
-    # --- Comparaison ---
-    comp_patterns = [
-        r'compar\w*\s+(?:le\s+)?(\d{1,2})\s+(?:et|avec|vs\.?)\s+(?:le\s+)?(\d{1,2})',
-        r'(\d{1,2})\s+vs\.?\s+(\d{1,2})',
-        r'diff[eé]rence\s+entre\s+(?:le\s+)?(\d{1,2})\s+et\s+(?:le\s+)?(\d{1,2})',
-        r'entre\s+(?:le\s+)?(\d{1,2})\s+et\s+(?:le\s+)?(\d{1,2})\s.*(?:lequel|qui)',
-        # Multilang flexible : "compare la fréquence du 31 et du 24", "compare 12 and 45",
-        # "compara o 31 e o 24", "vergleiche 31 und 24", "vergelijk 31 en 23"
-        r'(?:compar|vergleich|vergelijk)\w*\b[^.?!]*?(?:du\s+|le\s+|el\s+|del\s+|o\s+|do\s+|da\s+|dos\s+|das\s+|de\s+|von\s+|van\s+)?(\d{1,2})\s+(?:et|avec|vs\.?|and|und|en|e|y)\s+(?:du\s+|le\s+|el\s+|del\s+|o\s+|do\s+|da\s+|dos\s+|das\s+|de\s+|von\s+|van\s+)?(\d{1,2})',
-    ]
-    for pat in comp_patterns:
-        m = re.search(pat, lower)
-        if m:
-            n1, n2 = int(m.group(1)), int(m.group(2))
-            is_etoile = _is_star_query(lower)
-            if is_etoile and 1 <= n1 <= 12 and 1 <= n2 <= 12:
-                return {"type": "comparaison", "num1": n1, "num2": n2, "num_type": "etoile"}
-            if 1 <= n1 <= 50 and 1 <= n2 <= 50 and n1 != n2:
-                return {"type": "comparaison", "num1": n1, "num2": n2, "num_type": "boule"}
-
-    # --- Categorie chaud/froid (F06 V82: compiled regex) ---
-    if any(p.search(lower) for p in _CAT_CHAUD_RE):
-        num_type = "etoile" if _is_star_query(lower) else "boule"
-        return {"type": "categorie", "categorie": "chaud", "num_type": num_type}
-
-    if any(p.search(lower) for p in _CAT_FROID_RE):
-        num_type = "etoile" if _is_star_query(lower) else "boule"
-        return {"type": "categorie", "categorie": "froid", "num_type": num_type}
-
-    # --- Classement ---
-    limit = _extract_top_n(lower)
-
-    _star_kw = _is_star_query(lower)
-    num_type = "etoile" if _star_kw else "boule"
-
-    # --- Requêtes directes étoiles + fréquence (F06 V82: compiled regex) ---
-    if _star_kw and any(p.search(lower) for p in _STAR_FREQ_RE):
-        return {"type": "classement", "tri": "frequence_desc", "limit": limit, "num_type": "etoile"}
-
-    if any(p.search(lower) for p in _FREQ_DESC_RE):
-        return {"type": "classement", "tri": "frequence_desc", "limit": limit, "num_type": num_type}
-
-    if any(p.search(lower) for p in _FREQ_ASC_RE):
-        return {"type": "classement", "tri": "frequence_asc", "limit": limit, "num_type": num_type}
-
-    if any(p.search(lower) for p in _ECART_DESC_RE):
-        return {"type": "classement", "tri": "ecart_desc", "limit": limit, "num_type": num_type}
-
-    if any(p.search(lower) for p in _ECART_ASC_RE):
-        return {"type": "classement", "tri": "ecart_asc", "limit": limit, "num_type": num_type}
-
-    return None
+    """Detecte les requetes complexes EM (thin wrapper — F06 V83)."""
+    return _detect_requete_complexe_base(
+        message,
+        comp_re=_EM_COMP_RE,
+        cat_chaud_re=_CAT_CHAUD_RE, cat_froid_re=_CAT_FROID_RE,
+        freq_desc_re=_FREQ_DESC_RE, freq_asc_re=_FREQ_ASC_RE,
+        ecart_desc_re=_ECART_DESC_RE, ecart_asc_re=_ECART_ASC_RE,
+        secondary_query_fn=_is_star_query,
+        secondary_type="etoile", primary_type="boule",
+        max_primary=50, max_secondary=12,
+        star_freq_re=_STAR_FREQ_RE,
+    )
 
 
 # ════════════════════════════════════════════════════════════

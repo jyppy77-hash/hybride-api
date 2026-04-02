@@ -51,6 +51,8 @@ from services.base_chat_detectors import (  # noqa: F401
     _has_data_signal,
     # V70 — Grid evaluation
     _detect_grid_evaluation,
+    # Phase 3 — base requête complexe (F06 V83)
+    _detect_requete_complexe_base,
 )
 
 
@@ -206,71 +208,66 @@ def _detect_grille(message: str):
 
 # ────────────────────────────────────────────
 # Phase 3 : Detection requete complexe — Loto
+# F12 V83: pre-compiled regex (mirror EM pattern V82 F06)
 # ────────────────────────────────────────────
 
+_LOTO_COMP_RE = [
+    re.compile(r'compar\w*\s+(?:le\s+)?(\d{1,2})\s+(?:et|avec|vs\.?)\s+(?:le\s+)?(\d{1,2})', re.I),
+    re.compile(r'(\d{1,2})\s+vs\.?\s+(\d{1,2})', re.I),
+    re.compile(r'diff[eé]rence\s+entre\s+(?:le\s+)?(\d{1,2})\s+et\s+(?:le\s+)?(\d{1,2})', re.I),
+    re.compile(r'entre\s+(?:le\s+)?(\d{1,2})\s+et\s+(?:le\s+)?(\d{1,2})\s.*(?:lequel|qui)', re.I),
+    re.compile(r'compar\w*\b[^.?!]*?(?:du\s+|le\s+|el\s+|del\s+|o\s+|do\s+|da\s+|dos\s+|das\s+|de\s+|von\s+|van\s+)?(\d{1,2})\s+(?:et|avec|vs\.?|and|und|en|e|y)\s+(?:du\s+|le\s+|el\s+|del\s+|o\s+|do\s+|da\s+|dos\s+|das\s+|de\s+|von\s+|van\s+)?(\d{1,2})', re.I),
+]
+
+_LOTO_CAT_CHAUD_RE = [
+    re.compile(r'(?:quels?|les?|num[eé]ros?)\s+.*chauds?', re.I),
+    re.compile(r'chauds?\s+(?:en ce moment|actuellement)', re.I),
+    re.compile(r'(?:num[eé]ros?|lesquels)\s+(?:sont|en)\s+tendance', re.I),
+]
+
+_LOTO_CAT_FROID_RE = [
+    re.compile(r'(?:quels?|les?|num[eé]ros?)\s+.*froids?', re.I),
+    re.compile(r'froids?\s+(?:en ce moment|actuellement)', re.I),
+    re.compile(r'num[eé]ros?\s+(?:en\s+retard|qui\s+sort\w*\s+(?:pas|plus|jamais))', re.I),
+]
+
+_LOTO_FREQ_DESC_RE = [
+    re.compile(r'(?:plus|les?\s+plus)\s+(?:fr[eé]quent|sorti|courant|pr[eé]sent)', re.I),
+    re.compile(r'(?:top|meilleur|premier)\s+\d{0,2}\s*(?:num[eé]ro|boule|chance)?', re.I),
+    re.compile(r'num[eé]ros?\s+(?:les?\s+)?plus\s+(?:sorti|fr[eé]quent)', re.I),
+    re.compile(r'(?:quels?|quel)\s+(?:est|sont)\s+(?:le|les)\s+num[eé]ro', re.I),
+    re.compile(r'(?:sort\w*|tir[eé]\w*|appara[iî]\w*)\s+le\s+plus\s+(?:souvent|fr[eé]quemment)', re.I),
+]
+
+_LOTO_FREQ_ASC_RE = [
+    re.compile(r'(?:moins|les?\s+moins)\s+(?:fr[eé]quent|sorti|courant)', re.I),
+    re.compile(r'(?:flop|dernier|pire)\s+\d{0,2}', re.I),
+]
+
+_LOTO_ECART_DESC_RE = [
+    re.compile(r'(?:plus\s+(?:gros|grand|long)|plus\s+en)\s+(?:[eé]cart|retard)', re.I),
+    re.compile(r'(?:[eé]cart|retard)\s+(?:les?\s+)?plus\s+(?:gros|grand|long|important)', re.I),
+    re.compile(r'(?:plus\s+(?:long|grand)temps?)\s+(?:sans\s+)?sort', re.I),
+]
+
+_LOTO_ECART_ASC_RE = [
+    re.compile(r'(?:plus\s+(?:petit|court))\s+(?:[eé]cart|retard)', re.I),
+    re.compile(r'(?:sorti|apparu)\s+(?:le\s+plus\s+)?r[eé]cemment', re.I),
+]
+
+
 def _detect_requete_complexe(message: str):
-    """
-    Detecte les requetes complexes : classements, comparaisons, categories.
-    Returns: dict d'intention ou None.
-    """
-    lower = message.lower()
-
-    # --- Comparaison ---
-    comp_patterns = [
-        r'compar\w*\s+(?:le\s+)?(\d{1,2})\s+(?:et|avec|vs\.?)\s+(?:le\s+)?(\d{1,2})',
-        r'(\d{1,2})\s+vs\.?\s+(\d{1,2})',
-        r'diff[eé]rence\s+entre\s+(?:le\s+)?(\d{1,2})\s+et\s+(?:le\s+)?(\d{1,2})',
-        r'entre\s+(?:le\s+)?(\d{1,2})\s+et\s+(?:le\s+)?(\d{1,2})\s.*(?:lequel|qui)',
-        r'compar\w*\b[^.?!]*?(?:du\s+|le\s+|el\s+|del\s+|o\s+|do\s+|da\s+|dos\s+|das\s+|de\s+|von\s+|van\s+)?(\d{1,2})\s+(?:et|avec|vs\.?|and|und|en|e|y)\s+(?:du\s+|le\s+|el\s+|del\s+|o\s+|do\s+|da\s+|dos\s+|das\s+|de\s+|von\s+|van\s+)?(\d{1,2})',
-    ]
-    for pat in comp_patterns:
-        m = re.search(pat, lower)
-        if m:
-            n1, n2 = int(m.group(1)), int(m.group(2))
-            is_chance = _is_chance_query(lower)
-            if is_chance and 1 <= n1 <= 10 and 1 <= n2 <= 10:
-                return {"type": "comparaison", "num1": n1, "num2": n2, "num_type": "chance"}
-            if 1 <= n1 <= 49 and 1 <= n2 <= 49 and n1 != n2:
-                return {"type": "comparaison", "num1": n1, "num2": n2, "num_type": "principal"}
-
-    # --- Categorie chaud/froid ---
-    if re.search(r'(?:quels?|les?|num[eé]ros?)\s+.*chauds?', lower) or \
-       re.search(r'chauds?\s+(?:en ce moment|actuellement)', lower) or \
-       re.search(r'(?:num[eé]ros?|lesquels)\s+(?:sont|en)\s+tendance', lower):
-        num_type = "chance" if _is_chance_query(lower) else "principal"
-        return {"type": "categorie", "categorie": "chaud", "num_type": num_type}
-
-    if re.search(r'(?:quels?|les?|num[eé]ros?)\s+.*froids?', lower) or \
-       re.search(r'froids?\s+(?:en ce moment|actuellement)', lower) or \
-       re.search(r'num[eé]ros?\s+(?:en\s+retard|qui\s+sort\w*\s+(?:pas|plus|jamais))', lower):
-        num_type = "chance" if _is_chance_query(lower) else "principal"
-        return {"type": "categorie", "categorie": "froid", "num_type": num_type}
-
-    # --- Classement ---
-    limit = _extract_top_n(lower)
-    num_type = "chance" if _is_chance_query(lower) else "principal"
-
-    if re.search(r'(?:plus|les?\s+plus)\s+(?:fr[eé]quent|sorti|courant|pr[eé]sent)', lower) or \
-       re.search(r'(?:top|meilleur|premier)\s+\d{0,2}\s*(?:num[eé]ro|boule|chance)?', lower) or \
-       re.search(r'num[eé]ros?\s+(?:les?\s+)?plus\s+(?:sorti|fr[eé]quent)', lower) or \
-       re.search(r'(?:quels?|quel)\s+(?:est|sont)\s+(?:le|les)\s+num[eé]ro', lower) or \
-       re.search(r'(?:sort\w*|tir[eé]\w*|appara[iî]\w*)\s+le\s+plus\s+(?:souvent|fr[eé]quemment)', lower):
-        return {"type": "classement", "tri": "frequence_desc", "limit": limit, "num_type": num_type}
-
-    if re.search(r'(?:moins|les?\s+moins)\s+(?:fr[eé]quent|sorti|courant)', lower) or \
-       re.search(r'(?:flop|dernier|pire)\s+\d{0,2}', lower):
-        return {"type": "classement", "tri": "frequence_asc", "limit": limit, "num_type": num_type}
-
-    if re.search(r'(?:plus\s+(?:gros|grand|long)|plus\s+en)\s+(?:[eé]cart|retard)', lower) or \
-       re.search(r'(?:[eé]cart|retard)\s+(?:les?\s+)?plus\s+(?:gros|grand|long|important)', lower) or \
-       re.search(r'(?:plus\s+(?:long|grand)temps?)\s+(?:sans\s+)?sort', lower):
-        return {"type": "classement", "tri": "ecart_desc", "limit": limit, "num_type": num_type}
-
-    if re.search(r'(?:plus\s+(?:petit|court))\s+(?:[eé]cart|retard)', lower) or \
-       re.search(r'(?:sorti|apparu)\s+(?:le\s+plus\s+)?r[eé]cemment', lower):
-        return {"type": "classement", "tri": "ecart_asc", "limit": limit, "num_type": num_type}
-
-    return None
+    """Detecte les requetes complexes Loto (thin wrapper — F06 V83)."""
+    return _detect_requete_complexe_base(
+        message,
+        comp_re=_LOTO_COMP_RE,
+        cat_chaud_re=_LOTO_CAT_CHAUD_RE, cat_froid_re=_LOTO_CAT_FROID_RE,
+        freq_desc_re=_LOTO_FREQ_DESC_RE, freq_asc_re=_LOTO_FREQ_ASC_RE,
+        ecart_desc_re=_LOTO_ECART_DESC_RE, ecart_asc_re=_LOTO_ECART_ASC_RE,
+        secondary_query_fn=_is_chance_query,
+        secondary_type="chance", primary_type="principal",
+        max_primary=49, max_secondary=10,
+    )
 
 
 # ═══════════════════════════════════════════════════════

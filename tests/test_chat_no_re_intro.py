@@ -190,3 +190,79 @@ class TestAntiReIntroEM:
         assert "Eu sou HYBRIDE" in rappel
         assert "Ich bin HYBRIDE" in rappel
         assert "Ik ben HYBRIDE" in rappel
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# F14 V83 — _clean_response() anti-reintro guard (code-level)
+# ═══════════════════════════════════════════════════════════════════════
+
+from services.base_chat_utils import _clean_response
+
+
+class TestCleanResponseAntiReintro:
+
+    def test_strips_reintro_fr(self):
+        text = "Je suis HYBRIDE, l'assistant IA. Voici les stats..."
+        result = _clean_response(text)
+        assert "Je suis HYBRIDE" not in result
+        assert "Voici les stats..." in result
+
+    def test_strips_reintro_en(self):
+        text = "I am HYBRIDE, the assistant. Here are the results."
+        result = _clean_response(text)
+        assert "I am HYBRIDE" not in result
+        assert "Here are the results." in result
+
+    def test_strips_reintro_es(self):
+        text = "Soy HYBRIDE, el asistente de IA. Aquí están los datos."
+        result = _clean_response(text)
+        assert "Soy HYBRIDE" not in result
+        assert "datos" in result
+
+    def test_strips_reintro_de(self):
+        text = "Ich bin HYBRIDE, der Assistent. Hier sind die Daten."
+        result = _clean_response(text)
+        assert "Ich bin HYBRIDE" not in result
+        assert "Hier sind die Daten." in result
+
+    def test_strips_reintro_nl(self):
+        text = "Ik ben HYBRIDE, de assistent. Hier zijn de gegevens."
+        result = _clean_response(text)
+        assert "Ik ben HYBRIDE" not in result
+        assert "Hier zijn de gegevens." in result
+
+    def test_keeps_legitimate(self):
+        text = "Je suis certain que le numéro 7 est fréquent."
+        result = _clean_response(text)
+        assert result == text
+
+    def test_strips_mid_response(self):
+        text = "Les stats montrent...\n\nJe suis HYBRIDE, l'assistant. Pour rappel, le 7 est chaud."
+        result = _clean_response(text)
+        assert "Je suis HYBRIDE" not in result
+        assert "Les stats montrent..." in result
+        assert "Pour rappel" in result
+
+    def test_strips_reintro_pt(self):
+        text = "Sou HYBRIDE, o assistente. Aqui estão os dados."
+        result = _clean_response(text)
+        assert "Sou HYBRIDE" not in result
+        assert "dados" in result
+
+    def test_multiple_reintros_in_same_response(self):
+        """Two re-introductions in one response → both stripped."""
+        text = (
+            "Je suis HYBRIDE, l'assistant IA. Voici les stats.\n\n"
+            "Pour résumer...\n\n"
+            "Je suis HYBRIDE, l'assistant. Le numéro 7 est chaud."
+        )
+        result = _clean_response(text)
+        assert result.count("Je suis HYBRIDE") == 0
+        assert "Voici les stats." in result
+        assert "Le numéro 7 est chaud." in result
+
+    def test_keeps_je_suis_with_other_subject(self):
+        """'Je suis sûr que...' must NOT be stripped (not HYBRIDE/assistant)."""
+        text = "Je suis sûr que le numéro 7 est fréquent."
+        result = _clean_response(text)
+        assert result == text

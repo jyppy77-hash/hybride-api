@@ -123,7 +123,7 @@ def _build_loto_config():
         "detect_generation_mode": _detect_generation_mode,
         "extract_forced_numbers": _extract_forced_numbers,
         "extract_grid_count": _extract_grid_count,
-        "extract_exclusions": _extract_exclusions,
+        "extract_exclusions": lambda msg: _extract_exclusions(msg, max_num=49),
         "detect_cooccurrence_high_n": _detect_cooccurrence_high_n,
         "get_cooccurrence_high_n_response": _get_cooccurrence_high_n_response,
         "is_affirmation_simple": _is_affirmation_simple,

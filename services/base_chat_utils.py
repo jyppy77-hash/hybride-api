@@ -82,6 +82,21 @@ def _enrich_with_context(message: str, history: list) -> str:
 
 
 # ────────────────────────────────────────────
+# Anti-reintroduction guard (F14 V83)
+# ────────────────────────────────────────────
+
+# Matches "Je suis HYBRIDE, l'assistant..." but NOT "Je suis certain que..."
+# Requires HYBRIDE or assistant/asistente/Assistent/assistent after the verb.
+_REINTRO_RE = re.compile(
+    r'(?:^|\n\n?)'
+    r'(?:Je suis|I am|I\'m|Soy|Sou|Ich bin|Ik ben)\s+'
+    r'(?:HYBRIDE|l[\'\u2019]assistant|the assistant|el asistente|o assistente|der Assistent|de assistent)'
+    r'[^.!?\n]*[.!?]?\s*',
+    re.IGNORECASE | re.MULTILINE
+)
+
+
+# ────────────────────────────────────────────
 # Response cleaning
 # ────────────────────────────────────────────
 
@@ -119,6 +134,11 @@ def _clean_response(text: str) -> str:
         text = re.sub(tag, '', text)
     # Supprimer les caracteres CJK/non-latin injectes par Gemini
     text = _strip_non_latin(text)
+    # F14 V83: strip Gemini auto-introductions (defense-in-depth, 6 langs)
+    _reintro_match = _REINTRO_RE.search(text)
+    if _reintro_match:
+        logger.warning("Anti-reintro stripped: %s", _reintro_match.group().strip()[:80])
+        text = _REINTRO_RE.sub('', text)
     # Nettoyer les espaces multiples et lignes vides resultants
     text = re.sub(r'\n{3,}', '\n\n', text)
     text = re.sub(r'  +', ' ', text)

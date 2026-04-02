@@ -4,8 +4,11 @@ Shared validation/cleaning/execution/formatting in base_chat_sql.py.
 Loto-specific: prochain tirage, tirage data, SQL generation (prompt Loto, table tirages).
 """
 
+import asyncio
 import logging
 from datetime import date, timedelta
+
+import aiomysql
 
 from services.prompt_loader import load_prompt
 from services.gemini import GEMINI_MODEL_URL
@@ -19,7 +22,8 @@ import db_cloudsql
 # Re-export shared functions (consumers import from here)
 from services.base_chat_sql import (  # noqa: F401
     _validate_sql, _ensure_limit, _execute_safe_sql, _format_sql_result,
-    _MAX_SQL_PER_SESSION, _SQL_FORBIDDEN, ALLOWED_TABLES_LOTO, ALLOWED_TABLES_EM,
+    _MAX_SQL_PER_SESSION, _MAX_SQL_INPUT_LENGTH, _SQL_FORBIDDEN,
+    _SQL_LIMIT_MESSAGES, ALLOWED_TABLES_LOTO, ALLOWED_TABLES_EM,
 )
 
 logger = logging.getLogger(__name__)
@@ -57,12 +61,16 @@ async def _get_prochain_tirage() -> str | None:
 
         # Dernier tirage en BDD
         try:
-            async with db_cloudsql.get_connection() as conn:
+            async with db_cloudsql.get_connection_readonly() as conn:
                 cursor = await conn.cursor()
                 await cursor.execute("SELECT MAX(date_de_tirage) as last FROM tirages")
                 row = await cursor.fetchone()
                 last_draw = str(row['last']) if row and row['last'] else None
-        except Exception:
+        except (aiomysql.Error, asyncio.TimeoutError, ConnectionError, OSError) as e:
+            logger.error("[HYBRIDE CHAT] DB error prochain tirage (%s): %s", type(e).__name__, e)
+            last_draw = None
+        except Exception as e:
+            logger.exception("[HYBRIDE CHAT] Unexpected error prochain tirage: %s", e)
             last_draw = None
 
         lines = [f"[PROCHAIN TIRAGE]"]
@@ -72,8 +80,11 @@ async def _get_prochain_tirage() -> str | None:
             lines.append(f"Dernier tirage en base : {last_draw}")
 
         return "\n".join(lines)
+    except (aiomysql.Error, asyncio.TimeoutError, ConnectionError, OSError) as e:
+        logger.error("[HYBRIDE CHAT] Prochain tirage error (%s): %s", type(e).__name__, e)
+        return None
     except Exception as e:
-        logger.warning(f"[HYBRIDE CHAT] Erreur calcul prochain tirage: {e}")
+        logger.exception("[HYBRIDE CHAT] Unexpected prochain tirage error: %s", e)
         return None
 
 
@@ -111,8 +122,11 @@ async def _get_tirage_data(target) -> dict | None:
                 "chance": row["numero_chance"],
             }
         return None
+      except (aiomysql.Error, asyncio.TimeoutError, ConnectionError, OSError) as e:
+        logger.error("[HYBRIDE CHAT] _get_tirage_data error (%s): %s", type(e).__name__, e)
+        return None
       except Exception as e:
-        logger.error(f"[HYBRIDE CHAT] Erreur _get_tirage_data: {e}")
+        logger.exception("[HYBRIDE CHAT] Unexpected _get_tirage_data error: %s", e)
         return None
 
 
@@ -158,6 +172,9 @@ async def _generate_sql(question: str, client, api_key: str, history: list = Non
                 text = _clean_gemini_sql(raw)
                 return _guard_non_sql(text, "TEXT-TO-SQL")
         return None
+    except (aiomysql.Error, asyncio.TimeoutError, ConnectionError, OSError) as e:
+        logger.error("[TEXT-TO-SQL] SQL generation error (%s): %s", type(e).__name__, e)
+        return None
     except Exception as e:
-        logger.warning(f"[TEXT-TO-SQL] Erreur generation SQL: {e}")
+        logger.exception("[TEXT-TO-SQL] Unexpected SQL generation error: %s", e)
         return None

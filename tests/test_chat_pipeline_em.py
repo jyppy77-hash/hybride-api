@@ -90,6 +90,64 @@ class TestHandleChatEM:
         assert "99" in result["response"]
 
     @pytest.mark.asyncio
+    async def test_salutation_returns_local(self):
+        """Salutation 'bonjour' (history vide) → early return hybride_salutation."""
+        with patch("services.chat_pipeline_em.load_prompt_em", return_value="sys"), \
+             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
+             patch("services.chat_pipeline_em._detect_insulte", return_value=None), \
+             patch("services.chat_pipeline_em._detect_compliment", return_value=None), \
+             patch("services.chat_pipeline_em._detect_salutation", return_value=True):
+            result = await handle_chat_em("bonjour", [], "accueil-em", MagicMock())
+        assert result["source"] == "hybride_salutation"
+
+    @pytest.mark.asyncio
+    async def test_argent_returns_pedagogique(self):
+        """Question argent/addiction → early return hybride_argent."""
+        with patch("services.chat_pipeline_em.load_prompt_em", return_value="sys"), \
+             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
+             patch("services.chat_pipeline_em._detect_insulte", return_value=None), \
+             patch("services.chat_pipeline_em._detect_compliment", return_value=None), \
+             patch("services.chat_pipeline_em._detect_salutation", return_value=False), \
+             patch("services.chat_pipeline_em._detect_generation", return_value=False), \
+             patch("services.chat_pipeline_em._detect_grid_evaluation", return_value=None), \
+             patch("services.chat_pipeline_em._detect_argent_em", return_value=True):
+            result = await handle_chat_em("comment gagner à l'euromillions", [], "accueil-em", MagicMock())
+        assert result["source"] == "hybride_argent"
+
+    @pytest.mark.asyncio
+    async def test_continuation_oui(self):
+        """'oui' with history → continuation mode, still goes to Gemini."""
+        mock_client = MagicMock()
+
+        async def fake_call(*args, **kwargs):
+            return _make_gemini_response("Suite de la reponse EM")
+
+        history = [
+            _msg("user", "le numéro 7 sort souvent en EM ?"),
+            _msg("assistant", "Le 7 est sorti 45 fois."),
+        ]
+
+        with patch("services.chat_pipeline_em.load_prompt_em", return_value="sys"), \
+             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
+             patch("services.chat_pipeline_em._detect_insulte", return_value=None), \
+             patch("services.chat_pipeline_em._detect_compliment", return_value=None), \
+             patch("services.chat_pipeline_em._detect_salutation", return_value=False), \
+             patch("services.chat_pipeline_em._is_short_continuation", return_value=True), \
+             patch("services.chat_pipeline_em._detect_prochain_tirage_em", return_value=False), \
+             patch("services.chat_pipeline_em._detect_tirage", return_value=None), \
+             patch("services.chat_pipeline_em._has_temporal_filter", return_value=False), \
+             patch("services.chat_pipeline_em._detect_grille_em", return_value=(None, None)), \
+             patch("services.chat_pipeline_em._detect_requete_complexe_em", return_value=None), \
+             patch("services.chat_pipeline_em._detect_out_of_range_em", return_value=(None, None)), \
+             patch("services.chat_pipeline_em._detect_numero_em", return_value=(None, None)), \
+             patch("services.chat_pipeline_em._generate_sql_em", return_value=None), \
+             patch("services.chat_pipeline_em._build_session_context_em", return_value=""), \
+             patch("services.chat_pipeline_em.gemini_breaker") as mock_breaker:
+            mock_breaker.call = fake_call
+            result = await handle_chat_em("oui", history, "accueil-em", mock_client)
+        assert result["source"] == "gemini"
+
+    @pytest.mark.asyncio
     async def test_gemini_ok(self):
         """Flow normal → appel Gemini → source=gemini."""
         mock_client = MagicMock()

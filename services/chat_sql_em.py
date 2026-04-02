@@ -4,8 +4,11 @@ Shared validation/cleaning/execution/formatting in base_chat_sql.py.
 EM-specific: prochain tirage EM, tirage data EM, SQL generation (prompt EM, table tirages_euromillions).
 """
 
+import asyncio
 import logging
 from datetime import date, timedelta
+
+import aiomysql
 
 import db_cloudsql
 from services.prompt_loader import load_prompt_em
@@ -18,7 +21,8 @@ from services.base_chat_sql import (
 # Re-export shared functions (consumers import from here)
 from services.base_chat_sql import (  # noqa: F401
     _validate_sql, _ensure_limit, _execute_safe_sql, _format_sql_result,
-    _MAX_SQL_PER_SESSION, _SQL_FORBIDDEN, ALLOWED_TABLES_LOTO, ALLOWED_TABLES_EM,
+    _MAX_SQL_PER_SESSION, _MAX_SQL_INPUT_LENGTH, _SQL_FORBIDDEN,
+    _SQL_LIMIT_MESSAGES, ALLOWED_TABLES_LOTO, ALLOWED_TABLES_EM,
 )
 
 logger = logging.getLogger(__name__)
@@ -54,12 +58,16 @@ async def _get_prochain_tirage_em() -> str | None:
 
         # Dernier tirage en BDD
         try:
-            async with db_cloudsql.get_connection() as conn:
+            async with db_cloudsql.get_connection_readonly() as conn:
                 cursor = await conn.cursor()
                 await cursor.execute("SELECT MAX(date_de_tirage) as last FROM tirages_euromillions")
                 row = await cursor.fetchone()
                 last_draw = str(row['last']) if row and row['last'] else None
-        except Exception:
+        except (aiomysql.Error, asyncio.TimeoutError, ConnectionError, OSError) as e:
+            logger.error("[EM CHAT] DB error prochain tirage (%s): %s", type(e).__name__, e)
+            last_draw = None
+        except Exception as e:
+            logger.exception("[EM CHAT] Unexpected error prochain tirage: %s", e)
             last_draw = None
 
         lines = ["[PROCHAIN TIRAGE]"]
@@ -69,8 +77,11 @@ async def _get_prochain_tirage_em() -> str | None:
             lines.append(f"Dernier tirage en base : {last_draw}")
 
         return "\n".join(lines)
+    except (aiomysql.Error, asyncio.TimeoutError, ConnectionError, OSError) as e:
+        logger.error("[EM CHAT] Prochain tirage error (%s): %s", type(e).__name__, e)
+        return None
     except Exception as e:
-        logger.warning(f"[EM CHAT] Erreur calcul prochain tirage: {e}")
+        logger.exception("[EM CHAT] Unexpected prochain tirage error: %s", e)
         return None
 
 
@@ -106,8 +117,11 @@ async def _get_tirage_data_em(target) -> dict | None:
                 "etoiles": [row["etoile_1"], row["etoile_2"]],
             }
         return None
+      except (aiomysql.Error, asyncio.TimeoutError, ConnectionError, OSError) as e:
+        logger.error("[EM CHAT] _get_tirage_data_em error (%s): %s", type(e).__name__, e)
+        return None
       except Exception as e:
-        logger.error(f"[EM CHAT] Erreur _get_tirage_data_em: {e}")
+        logger.exception("[EM CHAT] Unexpected _get_tirage_data_em error: %s", e)
         return None
 
 
@@ -148,6 +162,9 @@ async def _generate_sql_em(question: str, client, api_key: str, history: list = 
                 text = _clean_gemini_sql(raw)
                 return _guard_non_sql(text, "EM TEXT-TO-SQL")
         return None
+    except (aiomysql.Error, asyncio.TimeoutError, ConnectionError, OSError) as e:
+        logger.error("[EM TEXT-TO-SQL] SQL generation error (%s): %s", type(e).__name__, e)
+        return None
     except Exception as e:
-        logger.warning(f"[EM TEXT-TO-SQL] Erreur generation SQL: {e}")
+        logger.exception("[EM TEXT-TO-SQL] Unexpected SQL generation error: %s", e)
         return None

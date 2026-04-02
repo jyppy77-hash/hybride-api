@@ -14,6 +14,7 @@ from services.chat_sql import (
     _validate_sql, _ensure_limit, _format_sql_result,
     _get_tirage_data, _execute_safe_sql, _SQL_FORBIDDEN,
     ALLOWED_TABLES_LOTO, ALLOWED_TABLES_EM,
+    _SQL_LIMIT_MESSAGES, _MAX_SQL_INPUT_LENGTH,
 )
 from services.prompt_loader import load_prompt, load_prompt_em
 
@@ -32,36 +33,36 @@ async def _async_conn(cursor):
 class TestValidateSql:
 
     def test_valid_select(self):
-        assert _validate_sql("SELECT boule_1 FROM tirages") is True
+        assert _validate_sql("SELECT boule_1 FROM tirages", allowed_tables=ALLOWED_TABLES_LOTO) is True
 
     def test_valid_select_complex(self):
-        assert _validate_sql("SELECT COUNT(*) as total FROM tirages WHERE boule_1 = 7") is True
+        assert _validate_sql("SELECT COUNT(*) as total FROM tirages WHERE boule_1 = 7", allowed_tables=ALLOWED_TABLES_LOTO) is True
 
     def test_rejects_empty(self):
-        assert _validate_sql("") is False
+        assert _validate_sql("", allowed_tables=ALLOWED_TABLES_LOTO) is False
 
     def test_rejects_none(self):
-        assert _validate_sql(None) is False
+        assert _validate_sql(None, allowed_tables=ALLOWED_TABLES_LOTO) is False
 
     def test_rejects_too_long(self):
-        assert _validate_sql("SELECT " + "x" * 1000) is False
+        assert _validate_sql("SELECT " + "x" * 1000, allowed_tables=ALLOWED_TABLES_LOTO) is False
 
     def test_rejects_non_select(self):
-        assert _validate_sql("INSERT INTO tirages VALUES (1,2,3,4,5,1)") is False
+        assert _validate_sql("INSERT INTO tirages VALUES (1,2,3,4,5,1)", allowed_tables=ALLOWED_TABLES_LOTO) is False
 
     def test_rejects_semicolon(self):
-        assert _validate_sql("SELECT 1; DROP TABLE tirages") is False
+        assert _validate_sql("SELECT 1; DROP TABLE tirages", allowed_tables=ALLOWED_TABLES_LOTO) is False
 
     def test_rejects_dash_comment(self):
-        assert _validate_sql("SELECT 1 -- comment") is False
+        assert _validate_sql("SELECT 1 -- comment", allowed_tables=ALLOWED_TABLES_LOTO) is False
 
     def test_rejects_block_comment(self):
-        assert _validate_sql("SELECT /* injection */ 1") is False
+        assert _validate_sql("SELECT /* injection */ 1", allowed_tables=ALLOWED_TABLES_LOTO) is False
 
     @pytest.mark.parametrize("kw", _SQL_FORBIDDEN)
     def test_rejects_forbidden_keyword(self, kw):
         sql = f"SELECT * FROM tirages WHERE {kw} something"
-        assert _validate_sql(sql) is False
+        assert _validate_sql(sql, allowed_tables=ALLOWED_TABLES_LOTO) is False
 
     def test_allows_union_all(self):
         """UNION ALL is legitimate for frequency counting (unpivot pattern)."""
@@ -74,12 +75,12 @@ class TestValidateSql:
             "UNION ALL SELECT boule_5 FROM tirages WHERE date_de_tirage >= '2026-01-01'"
             ") t GROUP BY num ORDER BY freq DESC LIMIT 5"
         )
-        assert _validate_sql(sql) is True
+        assert _validate_sql(sql, allowed_tables=ALLOWED_TABLES_LOTO) is True
 
     def test_rejects_bare_union(self):
         """Bare UNION (without ALL) is blocked as SQL injection vector."""
         sql = "SELECT boule_1 FROM tirages UNION SELECT password FROM users"
-        assert _validate_sql(sql) is False
+        assert _validate_sql(sql, allowed_tables=ALLOWED_TABLES_LOTO) is False
 
     def test_allows_union_all_no_where(self):
         """UNION ALL for all-time frequency query."""
@@ -92,12 +93,12 @@ class TestValidateSql:
             "UNION ALL SELECT boule_5 FROM tirages"
             ") t GROUP BY num ORDER BY freq DESC LIMIT 1"
         )
-        assert _validate_sql(sql) is True
+        assert _validate_sql(sql, allowed_tables=ALLOWED_TABLES_LOTO) is True
 
     # F05: subquery nesting defense-in-depth
     def test_allows_single_select(self):
         """Simple SELECT must pass."""
-        assert _validate_sql("SELECT boule_1 FROM tirages LIMIT 10") is True
+        assert _validate_sql("SELECT boule_1 FROM tirages LIMIT 10", allowed_tables=ALLOWED_TABLES_LOTO) is True
 
     def test_allows_union_all_8_selects(self):
         """UNION ALL with 8 SELECTs (EM unpivot) must pass."""
@@ -112,13 +113,13 @@ class TestValidateSql:
             "UNION ALL SELECT etoile_2 FROM tirages_euromillions"
             ") t GROUP BY num ORDER BY COUNT(*) DESC LIMIT 10"
         )
-        assert _validate_sql(sql) is True
+        assert _validate_sql(sql, allowed_tables=ALLOWED_TABLES_EM) is True
 
     def test_rejects_excessive_subqueries(self):
         """More than 10 SELECTs must be rejected (pathological nesting)."""
         parts = " UNION ALL ".join(f"SELECT boule_1 FROM t{i}" for i in range(12))
         sql = f"SELECT * FROM ({parts}) x LIMIT 10"
-        assert _validate_sql(sql) is False
+        assert _validate_sql(sql, allowed_tables=ALLOWED_TABLES_LOTO) is False
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -232,7 +233,7 @@ class TestExecuteSafeSql:
         mock_db.get_connection_readonly = lambda: _async_conn(cursor)
         cursor.fetchall = AsyncMock(return_value=[{"num": 7, "freq": 120}])
 
-        result = await _execute_safe_sql("SELECT num, freq FROM tirages")
+        result = await _execute_safe_sql("SELECT num, freq FROM tirages", allowed_tables=ALLOWED_TABLES_LOTO)
         assert result == [{"num": 7, "freq": 120}]
 
     @pytest.mark.asyncio
@@ -242,19 +243,19 @@ class TestExecuteSafeSql:
         mock_db.get_connection_readonly = lambda: _async_conn(cursor)
         cursor.execute = AsyncMock(side_effect=Exception("DB error"))
 
-        assert await _execute_safe_sql("SELECT 1") is None
+        assert await _execute_safe_sql("SELECT 1 FROM tirages", allowed_tables=ALLOWED_TABLES_LOTO) is None
 
     # F03: defense-in-depth — _execute_safe_sql rejects invalid SQL
     @pytest.mark.asyncio
     async def test_rejects_drop_table(self):
         """F03: _execute_safe_sql must reject DROP TABLE without hitting DB."""
-        result = await _execute_safe_sql("DROP TABLE tirages")
+        result = await _execute_safe_sql("DROP TABLE tirages", allowed_tables=ALLOWED_TABLES_LOTO)
         assert result is None
 
     @pytest.mark.asyncio
     async def test_rejects_insert(self):
         """F03: _execute_safe_sql must reject INSERT without hitting DB."""
-        result = await _execute_safe_sql("INSERT INTO tirages VALUES (1,2,3,4,5,1)")
+        result = await _execute_safe_sql("INSERT INTO tirages VALUES (1,2,3,4,5,1)", allowed_tables=ALLOWED_TABLES_LOTO)
         assert result is None
 
     @pytest.mark.asyncio
@@ -266,7 +267,7 @@ class TestExecuteSafeSql:
         mock_db.get_connection = MagicMock(side_effect=AssertionError("Must not use main pool"))
         cursor.fetchall = AsyncMock(return_value=[{"n": 1}])
 
-        result = await _execute_safe_sql("SELECT 1 FROM tirages")
+        result = await _execute_safe_sql("SELECT 1 FROM tirages", allowed_tables=ALLOWED_TABLES_LOTO)
         assert result == [{"n": 1}]
 
 
@@ -533,9 +534,10 @@ class TestTableWhitelist:
             allowed_tables=ALLOWED_TABLES_LOTO,
         ) is True
 
-    def test_no_whitelist_backward_compat(self):
-        """Without allowed_tables, any table is accepted (backward compat)."""
-        assert _validate_sql("SELECT * FROM admin_config") is True
+    def test_validate_sql_requires_allowed_tables(self):
+        """F03 V83: allowed_tables is required — omitting raises TypeError."""
+        with pytest.raises(TypeError):
+            _validate_sql("SELECT * FROM admin_config")
 
     def test_em_rejects_loto_table(self):
         assert _validate_sql(
@@ -556,7 +558,7 @@ class TestMultiStatementNewline:
 
     def test_rejects_newline_multi_statement(self):
         sql = "SELECT * FROM tirages\nSELECT * FROM tirages"
-        assert _validate_sql(sql) is False
+        assert _validate_sql(sql, allowed_tables=ALLOWED_TABLES_LOTO) is False
 
     def test_accepts_union_all_multiline(self):
         sql = (
@@ -564,14 +566,14 @@ class TestMultiStatementNewline:
             "UNION ALL\n"
             "SELECT boule_2 FROM tirages"
         )
-        assert _validate_sql(sql) is True
+        assert _validate_sql(sql, allowed_tables=ALLOWED_TABLES_LOTO) is True
 
     def test_accepts_single_line(self):
-        assert _validate_sql("SELECT * FROM tirages LIMIT 10") is True
+        assert _validate_sql("SELECT * FROM tirages LIMIT 10", allowed_tables=ALLOWED_TABLES_LOTO) is True
 
     def test_rejects_newline_different_tables(self):
         sql = "SELECT * FROM tirages\nDELETE FROM tirages"
-        assert _validate_sql(sql) is False
+        assert _validate_sql(sql, allowed_tables=ALLOWED_TABLES_LOTO) is False
 
     def test_accepts_union_all_multiline_with_whitelist(self):
         sql = (
@@ -599,3 +601,147 @@ class TestReadonlyPoolFallbackLogLevel:
             await db_cloudsql.init_pool_readonly()
             mock_err.assert_called_once()
             assert "SECURITY" in mock_err.call_args[0][0]
+
+
+# ═══════════════════════════════════��═════════════════════════════��═════
+# F01 V83 — SQL session limit applied with user message
+# ═════════════���══════════════════════════════════════════════��══════════
+
+class TestSqlSessionLimit:
+
+    @pytest.mark.asyncio
+    async def test_sql_limit_applied_returns_message(self):
+        """F01: When 10 SQL results in history, next SQL query is blocked with i18n message."""
+        from services.chat_pipeline_shared import run_text_to_sql
+
+        # Build history with 10 [RÉSULTAT SQL] assistant messages
+        history = []
+        for i in range(10):
+            msg = MagicMock()
+            msg.role = "assistant"
+            msg.content = f"[RÉSULTAT SQL]\nboule_1: {i}"
+            history.append(msg)
+
+        enrichment, sql_query, sql_status = await run_text_to_sql(
+            message="combien de tirages",
+            http_client=MagicMock(), gem_api_key="fake",
+            history=history,
+            generate_sql_fn=AsyncMock(), validate_sql_fn=MagicMock(),
+            ensure_limit_fn=MagicMock(), execute_sql_fn=AsyncMock(),
+            format_result_fn=MagicMock(), max_per_session=10,
+            log_prefix="[TEST]", force_sql=True,
+            has_data_signal_fn=lambda m: True,
+            continuation_mode=False, enrichment_context=None,
+            lang="fr",
+        )
+        assert enrichment == _SQL_LIMIT_MESSAGES["fr"]
+        assert sql_status == "LIMIT"
+        assert sql_query is None
+
+    @pytest.mark.asyncio
+    async def test_sql_limit_not_reached_allows_query(self):
+        """F01: With < 10 SQL results, query proceeds normally."""
+        from services.chat_pipeline_shared import run_text_to_sql
+
+        # Build history with 5 [RÉSULTAT SQL] assistant messages
+        history = []
+        for i in range(5):
+            msg = MagicMock()
+            msg.role = "assistant"
+            msg.content = f"[RÉSULTAT SQL]\nboule_1: {i}"
+            history.append(msg)
+
+        mock_gen = AsyncMock(return_value="NO_SQL")
+        enrichment, sql_query, sql_status = await run_text_to_sql(
+            message="bonjour",
+            http_client=MagicMock(), gem_api_key="fake",
+            history=history,
+            generate_sql_fn=mock_gen, validate_sql_fn=MagicMock(),
+            ensure_limit_fn=MagicMock(), execute_sql_fn=AsyncMock(),
+            format_result_fn=MagicMock(), max_per_session=10,
+            log_prefix="[TEST]", force_sql=True,
+            has_data_signal_fn=lambda m: True,
+            continuation_mode=False, enrichment_context=None,
+            lang="fr",
+        )
+        # generate_sql_fn was called — query was not blocked
+        mock_gen.assert_called_once()
+        assert sql_status == "NO_SQL"
+
+    @pytest.mark.asyncio
+    async def test_sql_limit_message_lang_en(self):
+        """F01: English message when lang='en'."""
+        from services.chat_pipeline_shared import run_text_to_sql
+
+        history = []
+        for i in range(10):
+            msg = MagicMock()
+            msg.role = "assistant"
+            msg.content = f"[RÉSULTAT SQL]\ndata: {i}"
+            history.append(msg)
+
+        enrichment, _, status = await run_text_to_sql(
+            message="how many draws",
+            http_client=MagicMock(), gem_api_key="fake",
+            history=history,
+            generate_sql_fn=AsyncMock(), validate_sql_fn=MagicMock(),
+            ensure_limit_fn=MagicMock(), execute_sql_fn=AsyncMock(),
+            format_result_fn=MagicMock(), max_per_session=10,
+            log_prefix="[TEST]", force_sql=True,
+            has_data_signal_fn=lambda m: True,
+            continuation_mode=False, enrichment_context=None,
+            lang="en",
+        )
+        assert enrichment == _SQL_LIMIT_MESSAGES["en"]
+        assert status == "LIMIT"
+
+
+# ════════════��═════════════════���═════════════════════════════��══════════
+# F03 V83 — allowed_tables required (keyword-only)
+# ══════════════════════════════════════���═══════════════════════════════���
+
+class TestAllowedTablesRequired:
+
+    def test_validate_sql_requires_allowed_tables(self):
+        """F03: Calling _validate_sql without allowed_tables raises TypeError."""
+        with pytest.raises(TypeError):
+            _validate_sql("SELECT * FROM tirages")
+
+    @pytest.mark.asyncio
+    async def test_execute_safe_sql_requires_allowed_tables(self):
+        """F03: Calling _execute_safe_sql without allowed_tables raises TypeError."""
+        with pytest.raises(TypeError):
+            await _execute_safe_sql("SELECT * FROM tirages")
+
+
+# ══════════════════��══════���═════════════════════════════════════════════
+# F09 V83 — SQL input truncated at 500 chars
+# ═════════════════════════��═════════════════════════════���═══════════════
+
+class TestSqlInputTruncation:
+
+    @pytest.mark.asyncio
+    async def test_sql_input_truncated_at_500_chars(self):
+        """F09: Message longer than 500 chars is truncated before Gemini SQL call."""
+        from services.chat_pipeline_shared import run_text_to_sql
+
+        long_message = "a" * 800
+        captured_input = []
+
+        async def fake_generate(msg, *args, **kwargs):
+            captured_input.append(msg)
+            return "NO_SQL"
+
+        await run_text_to_sql(
+            message=long_message,
+            http_client=MagicMock(), gem_api_key="fake",
+            history=[],
+            generate_sql_fn=fake_generate, validate_sql_fn=MagicMock(),
+            ensure_limit_fn=MagicMock(), execute_sql_fn=AsyncMock(),
+            format_result_fn=MagicMock(), max_per_session=10,
+            log_prefix="[TEST]", force_sql=True,
+            has_data_signal_fn=lambda m: True,
+            continuation_mode=False, enrichment_context=None,
+        )
+        assert len(captured_input) == 1
+        assert len(captured_input[0]) == 500

@@ -3,8 +3,11 @@ Base Text-to-SQL — shared validation, constants, cleaning, execution, formatti
 Game-specific SQL generation, DB queries, and prompts stay in wrappers.
 """
 
+import asyncio
 import re
 import logging
+
+import aiomysql
 
 import db_cloudsql
 from services.base_chat_utils import _format_date_fr
@@ -17,6 +20,17 @@ logger = logging.getLogger(__name__)
 # ────────────────────────────────────────────
 
 _MAX_SQL_PER_SESSION = 10
+_MAX_SQL_INPUT_LENGTH = 500
+
+# F01 V83: i18n messages when SQL session limit is reached
+_SQL_LIMIT_MESSAGES = {
+    "fr": "Vous avez atteint la limite de requêtes pour cette session. Rechargez la page pour continuer.",
+    "en": "You have reached the query limit for this session. Reload the page to continue.",
+    "es": "Ha alcanzado el límite de consultas para esta sesión. Recargue la página para continuar.",
+    "pt": "Você atingiu o limite de consultas para esta sessão. Recarregue a página para continuar.",
+    "de": "Sie haben das Abfragelimit für diese Sitzung erreicht. Laden Sie die Seite neu, um fortzufahren.",
+    "nl": "U heeft de limiet voor zoekopdrachten in deze sessie bereikt. Herlaad de pagina om verder te gaan.",
+}
 
 _SQL_FORBIDDEN = [
     "INSERT", "UPDATE", "DELETE", "DROP", "ALTER", "CREATE", "TRUNCATE",
@@ -41,13 +55,12 @@ _JOURS_FR = {
 # Validation (pure functions — no DB dependency)
 # ────────────────────────────────────────────
 
-def _validate_sql(sql: str, allowed_tables: frozenset[str] | None = None) -> bool:
+def _validate_sql(sql: str, *, allowed_tables: frozenset[str]) -> bool:
     """Valide la securite du SQL genere (SELECT only, pas de mots interdits).
 
     Args:
         sql: SQL string to validate.
-        allowed_tables: if provided, only these table names are permitted after FROM/JOIN.
-            When None (default), table whitelist check is skipped (backward compat).
+        allowed_tables: only these table names are permitted after FROM/JOIN (required).
     """
     if not sql:
         return False
@@ -84,15 +97,14 @@ def _validate_sql(sql: str, allowed_tables: frozenset[str] | None = None) -> boo
         return False
 
     # F01 V82: whitelist tables — reject if SQL references unauthorized tables
-    if allowed_tables is not None:
-        tables_found = _TABLE_RE.findall(sql)
-        if not tables_found:
-            logger.warning("[TEXT2SQL] No FROM clause found in SQL: %s", sql[:200])
+    tables_found = _TABLE_RE.findall(sql)
+    if not tables_found:
+        logger.warning("[TEXT2SQL] No FROM clause found in SQL: %s", sql[:200])
+        return False
+    for tbl in tables_found:
+        if tbl.lower() not in {t.lower() for t in allowed_tables}:
+            logger.warning("[TEXT2SQL] Unauthorized table '%s' in SQL: %s", tbl, sql[:200])
             return False
-        for tbl in tables_found:
-            if tbl.lower() not in {t.lower() for t in allowed_tables}:
-                logger.warning("[TEXT2SQL] Unauthorized table '%s' in SQL: %s", tbl, sql[:200])
-                return False
 
     return True
 
@@ -163,7 +175,7 @@ def _guard_non_sql(text: str, log_prefix: str) -> str | None:
 # Execution + formatting (shared Loto + EM)
 # ────────────────────────────────────────────
 
-async def _execute_safe_sql(sql: str, allowed_tables: frozenset[str] | None = None) -> list | None:
+async def _execute_safe_sql(sql: str, *, allowed_tables: frozenset[str]) -> list | None:
     """Execute le SQL valide avec connexion DB readonly. Defense-in-depth: re-validates + ensure LIMIT."""
     if not _validate_sql(sql, allowed_tables=allowed_tables):
         logger.warning("[TEXT2SQL] _execute_safe_sql rejected unvalidated SQL: %s", sql[:100])
@@ -175,8 +187,11 @@ async def _execute_safe_sql(sql: str, allowed_tables: frozenset[str] | None = No
             await cursor.execute(sql)
             rows = await cursor.fetchall()
             return rows
+    except (aiomysql.Error, asyncio.TimeoutError, ConnectionError, OSError) as e:
+        logger.error("[TEXT-TO-SQL] SQL execution error (%s): %s", type(e).__name__, e)
+        return None
     except Exception as e:
-        logger.warning(f"[TEXT-TO-SQL] Erreur execution SQL: {e}")
+        logger.exception("[TEXT-TO-SQL] Unexpected SQL execution error: %s", e)
         return None
 
 

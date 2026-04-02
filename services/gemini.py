@@ -16,6 +16,9 @@ GEMINI_STREAM_URL = (
     "gemini-2.0-flash:streamGenerateContent?alt=sse"
 )
 
+# F08 V83: 0.6 = balance factualité/naturel pour chatbot data-grounded
+_GEMINI_CHAT_TEMPERATURE = 0.6
+
 
 # V70 F04: i18n system instructions — now shared in gemini_shared.py
 _ENRICHMENT_INSTRUCTIONS = ENRICHMENT_INSTRUCTIONS  # backward compat alias
@@ -77,7 +80,7 @@ async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, 
                     "system_instruction": {"parts": [{"text": system_prompt}]},
                     "contents": contents,
                     "generationConfig": {
-                        "temperature": 0.8,
+                        "temperature": _GEMINI_CHAT_TEMPERATURE,
                         "maxOutputTokens": 300,
                     },
                 },
