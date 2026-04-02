@@ -282,3 +282,191 @@ class TestDecayDBFunctions:
         mock_conn.cursor = AsyncMock(side_effect=Exception("DB down"))
 
         await update_decay_after_draw(mock_conn, "loto", [1, 2, 3])
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Chatbot pipeline integration — decay called from Phase G
+# V83 F03: verify get_decay_state / update_decay_after_generation
+# are called from _prepare_chat_context_base() during grid generation.
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestDecayChatbotPipelineIntegration:
+    """Tests that decay functions are wired correctly in the chatbot pipeline."""
+
+    _FAKE_GRIDS = {
+        "grids": [{
+            "nums": [3, 12, 25, 33, 41],
+            "chance": 7,
+            "score": 82,
+            "badges": ["Equilibre"],
+        }],
+        "metadata": {"decay": {"enabled": True, "active": True}},
+    }
+
+    _FAKE_GRIDS_EM = {
+        "grids": [{
+            "nums": [5, 14, 22, 38, 47],
+            "etoiles": [3, 9],
+            "score": 78,
+            "badges": ["Equilibre"],
+        }],
+        "metadata": {"decay": {"enabled": True, "active": True}},
+    }
+
+    def _base_patches_loto(self):
+        """Common patches to reach Phase G in Loto pipeline."""
+        return [
+            patch("services.chat_pipeline.load_prompt", return_value="sys"),
+            patch.dict("os.environ", {"GEM_API_KEY": "fake"}),
+            patch("services.chat_pipeline._detect_insulte", return_value=None),
+            patch("services.chat_pipeline._detect_compliment", return_value=None),
+            patch("services.chat_pipeline._detect_salutation", return_value=False),
+            patch("services.chat_pipeline._detect_generation", return_value=True),
+            patch("services.chat_pipeline._detect_generation_mode", return_value="balanced"),
+            patch("services.chat_pipeline._extract_grid_count", return_value=1),
+            patch("services.chat_pipeline._extract_forced_numbers",
+                  return_value={"forced_nums": None, "forced_chance": None, "error": None}),
+            patch("services.chat_pipeline._extract_exclusions", return_value=None),
+            patch("services.chat_pipeline._detect_grid_evaluation", return_value=None),
+        ]
+
+    def _base_patches_em(self):
+        """Common patches to reach Phase G in EM pipeline."""
+        return [
+            patch("services.chat_pipeline_em.load_prompt_em", return_value="sys"),
+            patch.dict("os.environ", {"GEM_API_KEY": "fake"}),
+            patch("services.chat_pipeline_em._detect_insulte", return_value=None),
+            patch("services.chat_pipeline_em._detect_compliment", return_value=None),
+            patch("services.chat_pipeline_em._detect_salutation", return_value=False),
+            patch("services.chat_pipeline_em._detect_generation", return_value=True),
+            patch("services.chat_pipeline_em._detect_generation_mode", return_value="balanced"),
+            patch("services.chat_pipeline_em._extract_grid_count", return_value=1),
+            patch("services.chat_pipeline_em._extract_forced_numbers",
+                  return_value={"forced_nums": None, "forced_etoiles": None, "error": None}),
+            patch("services.chat_pipeline_em._extract_exclusions", return_value=None),
+            patch("services.chat_pipeline_em._detect_grid_evaluation", return_value=None),
+        ]
+
+    def _gemini_response(self, text="Voici votre grille"):
+        return MagicMock(
+            status_code=200,
+            json=MagicMock(return_value={
+                "candidates": [{"content": {"parts": [{"text": text}]}}],
+            }),
+        )
+
+    def _run_loto_generation(self, mock_decay, mock_update, grids=None):
+        """ExitStack helper — enter all patches for Loto Phase G, return breaker mock."""
+        from contextlib import ExitStack
+        stack = ExitStack()
+        for p in self._base_patches_loto():
+            stack.enter_context(p)
+        stack.enter_context(patch("engine.hybride.generate_grids",
+                                  new_callable=AsyncMock,
+                                  return_value=grids or self._FAKE_GRIDS))
+        stack.enter_context(patch("services.chat_pipeline_shared.get_decay_state", mock_decay))
+        stack.enter_context(patch("services.chat_pipeline_shared.update_decay_after_generation", mock_update))
+        stack.enter_context(patch("db_cloudsql.get_connection", return_value=AsyncMock()))
+        stack.enter_context(patch("services.chat_pipeline._build_session_context", return_value=""))
+        mock_breaker = stack.enter_context(patch("services.chat_pipeline.gemini_breaker"))
+        mock_breaker.call = AsyncMock(return_value=self._gemini_response())
+        return stack
+
+    def _run_em_generation(self, mock_decay, mock_update, grids=None):
+        """ExitStack helper — enter all patches for EM Phase G, return breaker mock."""
+        from contextlib import ExitStack
+        stack = ExitStack()
+        for p in self._base_patches_em():
+            stack.enter_context(p)
+        stack.enter_context(patch("engine.hybride_em.generate_grids",
+                                  new_callable=AsyncMock,
+                                  return_value=grids or self._FAKE_GRIDS_EM))
+        stack.enter_context(patch("services.chat_pipeline_shared.get_decay_state", mock_decay))
+        stack.enter_context(patch("services.chat_pipeline_shared.update_decay_after_generation", mock_update))
+        stack.enter_context(patch("db_cloudsql.get_connection", return_value=AsyncMock()))
+        stack.enter_context(patch("services.chat_pipeline_em._build_session_context_em", return_value=""))
+        mock_breaker = stack.enter_context(patch("services.chat_pipeline_em.gemini_breaker"))
+        mock_breaker.call = AsyncMock(return_value=self._gemini_response())
+        return stack
+
+    @pytest.mark.asyncio
+    async def test_pipeline_generation_calls_get_decay_state(self):
+        """Phase G generation → get_decay_state() called before grid generation."""
+        from services.chat_pipeline import handle_chat
+
+        mock_decay = AsyncMock(return_value={10: 5, 20: 3})
+        mock_update = AsyncMock()
+
+        with self._run_loto_generation(mock_decay, mock_update):
+            await handle_chat("genere une grille", [], "loto", MagicMock())
+
+        mock_decay.assert_called_once()
+        args = mock_decay.call_args
+        assert args[0][1] == "loto"  # game name
+        assert args[0][2] == "ball"  # number_type
+
+    @pytest.mark.asyncio
+    async def test_pipeline_generation_calls_update_decay_after(self):
+        """Phase G generation → update_decay_after_generation() called with generated nums."""
+        from services.chat_pipeline import handle_chat
+
+        mock_decay = AsyncMock(return_value={})
+        mock_update = AsyncMock()
+
+        with self._run_loto_generation(mock_decay, mock_update):
+            await handle_chat("genere une grille", [], "loto", MagicMock())
+
+        mock_update.assert_called_once()
+        args = mock_update.call_args
+        assert args[0][1] == "loto"  # game name
+        assert sorted(args[0][2]) == [3, 12, 25, 33, 41]  # generated balls
+
+    @pytest.mark.asyncio
+    async def test_pipeline_generation_continues_if_decay_fails(self):
+        """get_decay_state() raises → generation still works (graceful degradation)."""
+        from services.chat_pipeline import handle_chat
+
+        mock_decay = AsyncMock(side_effect=Exception("DB unavailable"))
+
+        with self._run_loto_generation(mock_decay, AsyncMock()):
+            result = await handle_chat("genere une grille", [], "loto", MagicMock())
+
+        # Pipeline should NOT crash — Gemini still called
+        assert result["source"] == "gemini"
+
+    @pytest.mark.asyncio
+    async def test_pipeline_em_generation_calls_decay(self):
+        """Phase G EM → get_decay_state() called with game='euromillions'."""
+        from services.chat_pipeline_em import handle_chat_em
+
+        mock_decay = AsyncMock(return_value={})
+        mock_update = AsyncMock()
+
+        with self._run_em_generation(mock_decay, mock_update):
+            await handle_chat_em("generate a grid", [], "euromillions", MagicMock(), lang="en")
+
+        mock_decay.assert_called_once()
+        args = mock_decay.call_args
+        assert args[0][1] == "euromillions"
+        mock_update.assert_called_once()
+        update_args = mock_update.call_args
+        assert sorted(update_args[0][2]) == [5, 14, 22, 38, 47]  # balls
+        assert sorted(update_args[0][3]) == [3, 9]  # stars
+
+    @pytest.mark.asyncio
+    async def test_pipeline_no_decay_when_no_generation(self):
+        """Non-generation message (insult) → decay functions NOT called."""
+        from services.chat_pipeline import handle_chat
+
+        mock_decay = AsyncMock(return_value={})
+        mock_update = AsyncMock()
+
+        with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
+             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
+             patch("services.chat_pipeline._detect_insulte", return_value="insulte"), \
+             patch("services.chat_pipeline_shared.get_decay_state", mock_decay), \
+             patch("services.chat_pipeline_shared.update_decay_after_generation", mock_update):
+            await handle_chat("t'es nul", [], "loto", MagicMock())
+
+        mock_decay.assert_not_called()
+        mock_update.assert_not_called()

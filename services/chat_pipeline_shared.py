@@ -531,7 +531,7 @@ async def _prepare_chat_context_base(
             else:
                 # Decay state: load before generation (best-effort)
                 _decay = None
-                _game_name = "euromillions" if cfg.get("game") == "euromillions" else "loto"
+                _game_name = "euromillions" if cfg.get("game") == "em" else "loto"
                 try:
                     import db_cloudsql as _db
                     async with _db.get_connection() as _dconn:

@@ -181,7 +181,7 @@ class TestGetTirageData:
     @patch("services.chat_sql.db_cloudsql")
     async def test_latest(self, mock_db):
         cursor = AsyncMock()
-        mock_db.get_connection = lambda: _async_conn(cursor)
+        mock_db.get_connection_readonly = lambda: _async_conn(cursor)
 
         cursor.fetchone = AsyncMock(return_value={
             "date_de_tirage": date(2026, 2, 3),
@@ -198,7 +198,7 @@ class TestGetTirageData:
     @patch("services.chat_sql.db_cloudsql")
     async def test_by_date(self, mock_db):
         cursor = AsyncMock()
-        mock_db.get_connection = lambda: _async_conn(cursor)
+        mock_db.get_connection_readonly = lambda: _async_conn(cursor)
 
         cursor.fetchone = AsyncMock(return_value={
             "date_de_tirage": date(2024, 6, 1),
@@ -214,7 +214,7 @@ class TestGetTirageData:
     @patch("services.chat_sql.db_cloudsql")
     async def test_returns_none_when_no_row(self, mock_db):
         cursor = AsyncMock()
-        mock_db.get_connection = lambda: _async_conn(cursor)
+        mock_db.get_connection_readonly = lambda: _async_conn(cursor)
         cursor.fetchone = AsyncMock(return_value=None)
 
         assert await _get_tirage_data(date(1999, 1, 1)) is None

@@ -98,7 +98,7 @@ async def _get_tirage_data(target) -> dict | None:
     target: "latest" ou un objet date.
     Retourne dict {date, boules, chance} ou None.
     """
-    async with db_cloudsql.get_connection() as conn:
+    async with db_cloudsql.get_connection_readonly() as conn:
       try:
         cursor = await conn.cursor()
         if target == "latest":
