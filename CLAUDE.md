@@ -1,7 +1,7 @@
 # CLAUDE.md — LotoIA HYBRIDE-API
 
 > Auto-loaded by Claude Code at session start. Source of truth for project context.
-> Last updated: 02/04/2026 (V82)
+> Last updated: 03/04/2026 (V85)
 
 ---
 
@@ -9,8 +9,8 @@
 
 - **Name**: LotoIA (lotoia.fr) — Statistical analysis platform for French Loto & EuroMillions
 - **Stack**: FastAPI / Python 3.13 / MariaDB (Cloud SQL) / Gemini 2.0 Flash / GCP Cloud Run (europe-west1)
-- **Version**: V82 — Release 1.5.018
-- **Tests**: 3946 (97 files, coverage 78%)
+- **Version**: V85 — Release 1.5.019
+- **Tests**: 4033+ (97 files, coverage 78%)
 - **Languages**: 6 (FR, EN, ES, PT, DE, NL) — all active
 - **EuroMillions**: LIVE since 15/03/2026 (EM_PUBLIC_ACCESS=true)
 - **Owner**: Jyppy (Jean-Philippe Godard), solo developer, auto-entrepreneur EmovisIA
@@ -52,11 +52,13 @@ py -3 -m pytest tests/test_specific.py -x -q         # single file
 py -3 -m ruff check .
 py -3 -m ruff check --select F401 services/          # specific rule
 
-# Deploy staging
+# Deploy staging (manual submit)
 gcloud builds submit --config=cloudbuild-staging.yaml --substitutions=_OWNER_IP="86.212.92.243",_OWNER_IPV6="2a01:cb05:8700:5900:"
 
-# Deploy prod (after staging validation)
-gcloud builds submit --config=cloudbuild.yaml --substitutions=_OWNER_IP="86.212.92.243",_OWNER_IPV6="2a01:cb05:8700:5900:"
+# Deploy prod (trigger automatique via git push — NE PAS utiliser gcloud builds submit)
+git push
+# Le trigger Cloud Build prod se déclenche automatiquement sur git push
+# $COMMIT_SHA est rempli automatiquement par le trigger (vide en submit manuel → build fail)
 ```
 
 ---
@@ -73,7 +75,7 @@ hybride-api/
 ├── engine/                    # HYBRIDE engine (base class config-driven, Loto/EM wrappers, stats)
 ├── prompts/                   # Gemini prompts — Loto FR + EM 6 langs (115 files)
 ├── ui/                        # HTML pages, Jinja2 templates, static assets (JS/CSS)
-├── tests/                     # 97 files pytest (3946 tests)
+├── tests/                     # 97 files pytest (4033+ tests)
 ├── translations/              # Babel/gettext i18n (749 entries × 6 langs, 0 empty/0 fuzzy)
 ├── migrations/                # MySQL migrations (001-022)
 ├── cloudbuild.yaml            # CI/CD: ruff → pytest --cov → deploy
@@ -184,6 +186,8 @@ Key files: `chat_pipeline_shared.py` (1301L orchestrator), `chat_pipeline.py` (L
 - **Prod**: Cloud Run `hybride-api-eu` (europe-west1, min=1, max=10, 1Gi, 2 workers)
 - **Staging**: Cloud Run `hybride-api-staging` (min=0, max=3, 512Mi, DB=lotofrance_staging)
 - **CI/CD**: cloudbuild.yaml — ruff → pytest (--cov-fail-under=70) → build → deploy
+- **Prod deploy**: via `git push` → trigger Cloud Build automatique (NE PAS utiliser `gcloud builds submit` pour la prod — `$COMMIT_SHA` vide en submit manuel)
+- **Staging deploy**: via `gcloud builds submit --config=cloudbuild-staging.yaml` (submit manuel OK)
 - **Registry**: Artifact Registry (migrated from gcr.io V49)
 - **Costs**: GCP ~90€/month (Google for Startups credits)
 
@@ -192,10 +196,17 @@ Key files: `chat_pipeline_shared.py` (1301L orchestrator), `chat_pipeline.py` (L
 ## Roadmap Context
 
 1. **EmovisIA 2.0** — Priority #1 (UX/UI Awwwards → backend PHP→FastAPI → Stripe/CRM → chat)
-2. **LotoIA chatbot audit fixes** — V82 sprint in progress
+2. **Sprint SEO V85** — 13 failles corrigées (score 9.0→9.8/10), admin.js fix
 3. **FAQ Phase 2+3** — translation 5 languages
 4. **Sponsor contracts** — outreach 4 FR sponsors
 5. **Business plan**: Phase 1 (EI, 4 FR sponsors) → Phase 2 (SASU) → Phase 3 (9 EU countries, neobanks)
+
+---
+
+## Known Pre-existing Bugs
+
+- **contact-form.js/css manquants sur pages Loto FR** — le lien "Nous contacter" (footer) appelle `LotoIAContact.openModal()` mais les scripts ne sont jamais chargés. Guard `if(window.LotoIAContact)` empêche l'erreur JS mais le modal ne s'ouvre pas. À corriger.
+- **Chevauchement CSS chatbot bubble / scroll-to-top** — les éléments `position: fixed` (bulle chatbot, bouton scroll) peuvent capturer des clicks destinés aux liens de navigation en dessous (z-index). À investiguer.
 
 ---
 
