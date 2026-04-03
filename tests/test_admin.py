@@ -658,6 +658,32 @@ class TestExportPDF:
         assert resp.headers.get("content-type") == "application/pdf"
         assert resp.content[:4] == b"%PDF"
 
+    def test_pdf_impressions_aggregates_all_three_event_types(self):
+        """PDF must count popup+inline+result as impressions (aligned with dashboard KPI)."""
+        client = _authed_client()
+        mock_rows = [
+            {"event_type": "sponsor-popup-shown", "cnt": 5000},
+            {"event_type": "sponsor-inline-shown", "cnt": 3000},
+            {"event_type": "sponsor-result-shown", "cnt": 2000},
+            {"event_type": "sponsor-click", "cnt": 14},
+            {"event_type": "sponsor-video-played", "cnt": 172},
+        ]
+        with patch("routes.admin.db_cloudsql") as mock_db, \
+             patch("services.admin_pdf.generate_sponsor_report_pdf") as mock_pdf:
+            mock_db.async_fetchall = AsyncMock(side_effect=[mock_rows, []])
+            mock_db.async_fetchone = AsyncMock(return_value={"s": 554})
+            import io
+            mock_pdf.return_value = io.BytesIO(b"%PDF-fake")
+            resp = client.get("/admin/api/sponsor-report/pdf?period=30d")
+
+        assert resp.status_code == 200
+        # Verify KPI dict passed to PDF generator has aggregated impressions (popup+inline+result)
+        kpi_arg = mock_pdf.call_args[0][0]
+        assert kpi_arg["impressions"] == 10000, f"Expected 10000 (5000+3000+2000), got {kpi_arg['impressions']}"
+        assert kpi_arg["clicks"] == 14
+        assert kpi_arg["videos"] == 172
+        assert kpi_arg["sessions"] == 554
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # SPONSORS CRUD

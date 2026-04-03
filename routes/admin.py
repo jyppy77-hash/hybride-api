@@ -650,12 +650,13 @@ async def admin_export_sponsor_report_pdf(
         total_imp = total_clicks = 0
         for r in rows:
             et = r["event_type"]
-            if et == "sponsor-popup-shown":
-                kpi["impressions"] = _dec(r["cnt"]); total_imp = _dec(r["cnt"])
+            if et in ("sponsor-popup-shown", "sponsor-inline-shown", "sponsor-result-shown"):
+                total_imp += _dec(r["cnt"])
             elif et == "sponsor-click":
                 kpi["clicks"] = _dec(r["cnt"]); total_clicks = _dec(r["cnt"])
             elif et == "sponsor-video-played":
                 kpi["videos"] = _dec(r["cnt"])
+        kpi["impressions"] = total_imp
         sess = await db_cloudsql.async_fetchone(
             f"SELECT COUNT(DISTINCT session_hash) AS s FROM sponsor_impressions WHERE {w}", tuple(params))
         kpi["sessions"] = _dec(sess["s"]) if sess else 0
