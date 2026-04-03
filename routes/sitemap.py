@@ -118,9 +118,13 @@ async def sitemap():
             alternates=_launcher_alternates,
         ))
 
-    # Loto pages (always FR)
+    # Loto pages (always FR) — hreflang auto-référentiel fr + x-default
     for path, priority, freq in _LOTO_PAGES:
-        blocks.append(_url_block(f"{BASE_URL}{path}", last_modified, freq, priority))
+        loto_url = f"{BASE_URL}{path}"
+        blocks.append(_url_block(
+            loto_url, last_modified, freq, priority,
+            alternates=[("fr", loto_url), ("x-default", loto_url)],
+        ))
 
     # EuroMillions pages for each enabled language
     seen = set()

@@ -4,6 +4,7 @@ from fastapi import APIRouter
 from fastapi.responses import FileResponse, HTMLResponse
 import db_cloudsql
 from config.templates import MIN_REVIEWS_FOR_RATING
+from config.version import LAST_DEPLOY_DATE
 
 router = APIRouter()
 
@@ -105,15 +106,15 @@ async def page_accueil():
 
     # Injecter le schema dynamique seulement si assez de vrais avis
     if review_count >= MIN_REVIEWS_FOR_RATING:
-        html = html.replace('"ratingValue": "4.6"', f'"ratingValue": "{avg_rating}"')
-        html = html.replace('"ratingCount": "128"', f'"ratingCount": "{review_count}"')
+        html = html.replace("__RATING_VALUE__", str(avg_rating))
+        html = html.replace("__RATING_COUNT__", str(review_count))
     else:
-        # Retirer le bloc AggregateRating hardcode (eviter penalite Google)
+        # Retirer le bloc AggregateRating (eviter penalite Google)
         html = html.replace(
             ',\n        "aggregateRating": {\n'
             '          "@type": "AggregateRating",\n'
-            '          "ratingValue": "4.6",\n'
-            '          "ratingCount": "128",\n'
+            '          "ratingValue": "__RATING_VALUE__",\n'
+            '          "ratingCount": "__RATING_COUNT__",\n'
             '          "bestRating": "5",\n'
             '          "worstRating": "1"\n'
             '        }',
@@ -150,13 +151,19 @@ async def page_loto_statistiques():
 @router.get("/loto/intelligence-artificielle")
 async def page_loto_ia():
     """Loto France — Page pilier IA et analyse statistique."""
-    return serve_page("loto-ia.html")
+    with open("ui/loto-ia.html", "r", encoding="utf-8") as f:
+        html = f.read()
+    html = html.replace("__DATE_MODIFIED__", LAST_DEPLOY_DATE)
+    return HTMLResponse(content=html)
 
 
 @router.get("/loto/numeros-les-plus-sortis")
 async def page_loto_numeros():
     """Loto France — Numéros les plus sortis (classement fréquences)."""
-    return serve_page("numeros-les-plus-sortis.html")
+    with open("ui/numeros-les-plus-sortis.html", "r", encoding="utf-8") as f:
+        html = f.read()
+    html = html.replace("__DATE_MODIFIED__", LAST_DEPLOY_DATE)
+    return HTMLResponse(content=html)
 
 
 @router.get("/loto/paires")

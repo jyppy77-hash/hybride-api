@@ -1,7 +1,7 @@
 {
-  "name": "LotoIA - Générateur de Grilles Loto",
+  "name": "LotoIA — Analyse Loto et EuroMillions par IA",
   "short_name": "LotoIA",
-  "description": "Moteur HYBRIDE - Analyse statistique du Loto français",
+  "description": "Analyse statistique du Loto FDJ et de l'EuroMillions par intelligence artificielle. Moteur HYBRIDE, chatbot IA, simulateur.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#0f172a",

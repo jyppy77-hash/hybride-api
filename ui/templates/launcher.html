@@ -410,7 +410,8 @@
             }
         }
     </style>
-    <link rel="stylesheet" href="/ui/static/legal.css">
+    <link rel="stylesheet" href="/ui/static/legal.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/ui/static/legal.css"></noscript>
     <script src="/ui/static/analytics.js?v=3" defer></script>
     <script src="/ui/static/tracker.js?v=4" defer></script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc" data-before-send="umamiBeforeSend"></script>
@@ -516,8 +517,9 @@
         LotoIA.fr &mdash; {{ _("Analyse statistique Loto & EuroMillions") }}
     </div>
 
-    <script src="/ui/static/cookie-consent.js"></script>
-    <link rel="stylesheet" href="/ui/static/contact-form.css?v=3">
+    <script defer src="/ui/static/cookie-consent.js"></script>
+    <link rel="stylesheet" href="/ui/static/contact-form.css?v=3" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/ui/static/contact-form.css?v=3"></noscript>
     <script src="/ui/static/contact-form.js?v=3" defer></script>
     <script>
     (function(){var a=document.querySelector('.seo-accordion'),f=document.querySelector('.launcher-footer');if(a&&f){a.addEventListener('toggle',function(){f.style.display=a.open?'none':'';});}})();

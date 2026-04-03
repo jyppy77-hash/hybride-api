@@ -114,24 +114,27 @@
     </script>
 
     {# ── Common scripts ── #}
-    <script src="/ui/static/scroll.js?v=1"></script>
-    {% if include_nav_scroll %}<script src="/ui/static/nav-scroll.js?v=1"></script>{% endif %}
+    <script defer src="/ui/static/scroll.js?v=1"></script>
+    {% if include_nav_scroll %}<script defer src="/ui/static/nav-scroll.js?v=1"></script>{% endif %}
     <link rel="stylesheet" href="/ui/static/legal.css?v=7" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="/ui/static/legal.css?v=7"></noscript>
-    <script src="/ui/static/cookie-consent.js?v=1"></script>
+    <script defer src="/ui/static/cookie-consent.js?v=1"></script>
 
     {# ── Chatbot widget ── #}
-    <link rel="stylesheet" href="/ui/static/hybride-chatbot.css?v=4.3">
+    <link rel="stylesheet" href="/ui/static/hybride-chatbot.css?v=4.3" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/ui/static/hybride-chatbot.css?v=4.3"></noscript>
     <div id="hybride-chatbot-root"></div>
-    <script src="{{ chatbot_js }}"></script>
-    <script src="/ui/static/version-inject.js"></script>
+    <script defer src="{{ chatbot_js }}"></script>
+    <script defer src="/ui/static/version-inject.js"></script>
 
     {# ── Contact form modal ── #}
-    <link rel="stylesheet" href="/ui/static/contact-form.css?v=3">
+    <link rel="stylesheet" href="/ui/static/contact-form.css?v=3" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/ui/static/contact-form.css?v=3"></noscript>
     <script src="/ui/static/contact-form.js?v=3" defer></script>
 
     {# ── Rating popup ── #}
-    <link rel="stylesheet" href="/ui/static/rating-popup.css?v=3">
+    <link rel="stylesheet" href="/ui/static/rating-popup.css?v=3" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/ui/static/rating-popup.css?v=3"></noscript>
     <script src="{{ rating_js }}" defer></script>
 
     {% block post_scripts %}{% endblock %}

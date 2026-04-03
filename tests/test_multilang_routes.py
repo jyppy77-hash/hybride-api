@@ -458,16 +458,19 @@ def test_sitemap_hreflang_bidirectional():
     assert 'hreflang="x-default" href="https://lotoia.fr/euromillions"' in body
 
 
-def test_sitemap_loto_no_hreflang():
-    """Loto FR pages should NOT have xhtml:link alternates (single language)."""
+def test_sitemap_loto_hreflang_self_referential():
+    """Loto FR pages have auto-referential hreflang fr + x-default (V85 S07)."""
     client = _get_client()
     resp = client.get("/sitemap.xml")
     body = resp.text
-    # Extract the /accueil URL block — it must NOT have xhtml:link
-    # (V53: launcher blocks before Loto DO have hreflang, so isolate Loto only)
+    # Extract the /accueil URL block — it must have fr + x-default hreflang
     accueil_start = body.index(f"{BASE_URL}/accueil</loc>")
     accueil_block = body[accueil_start:body.index("</url>", accueil_start)]
-    assert "xhtml:link" not in accueil_block
+    assert 'hreflang="fr"' in accueil_block
+    assert 'hreflang="x-default"' in accueil_block
+    assert f"{BASE_URL}/accueil" in accueil_block
+    # Only 2 hreflang tags (fr + x-default), not 6+ like EM pages
+    assert accueil_block.count("xhtml:link") == 2
 
 
 def test_sitemap_url_count():

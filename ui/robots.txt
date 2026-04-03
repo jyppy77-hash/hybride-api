@@ -13,6 +13,7 @@ Allow: /loto/exploration
 Allow: /loto/statistiques
 Allow: /loto/intelligence-artificielle
 Allow: /loto/numeros-les-plus-sortis
+Allow: /loto/paires
 Allow: /hybride
 Allow: /a-propos
 Allow: /faq
@@ -68,6 +69,9 @@ User-agent: CCBot
 Disallow: /
 
 User-agent: anthropic-ai
+Disallow: /
+
+User-agent: GPTBot
 Disallow: /
 
 User-agent: Google-Extended
