@@ -348,7 +348,7 @@ def render_template(
                 "de": "/ui/static/hybride-chatbot-em-de.js?v=1.1",
                 "nl": "/ui/static/hybride-chatbot-em-nl.js?v=1.1",
             }.get(lang, "/ui/static/hybride-chatbot-em.js?v=1.3"),
-            "rating_js": "/ui/static/rating-popup.js?v=8",
+            "rating_js": "/ui/static/rating-popup.js?v=9",
 
             # Gambling help
             "gambling_help_url": help_info["url"],

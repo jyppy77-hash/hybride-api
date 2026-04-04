@@ -144,53 +144,67 @@
             }
         }
 
-        // Show comment section if not already shown
-        if (document.getElementById('rating-comment-section')) return;
-
         var banner = document.getElementById('rating-banner');
         if (!banner) return;
 
-        var section = document.createElement('div');
-        section.id = 'rating-comment-section';
-        section.className = 'rating-comment-section';
+        // Create comment section once (lazy init)
+        var section = document.getElementById('rating-comment-section');
+        if (!section) {
+            section = document.createElement('div');
+            section.id = 'rating-comment-section';
+            section.className = 'rating-comment-section';
 
-        var textarea = document.createElement('textarea');
-        textarea.id = 'rating-comment-input';
-        textarea.className = 'rating-comment-input';
-        textarea.maxLength = 500;
-        textarea.rows = 2;
-        textarea.placeholder = rating >= 4
-            ? (LI.rating_comment_positive || 'Un commentaire ? (optionnel)')
-            : (LI.rating_comment_negative || "Qu'est-ce qu'on pourrait am\u00e9liorer ? (optionnel)");
+            var textarea = document.createElement('textarea');
+            textarea.id = 'rating-comment-input';
+            textarea.className = 'rating-comment-input';
+            textarea.maxLength = 500;
+            textarea.rows = 2;
 
-        var counterRow = document.createElement('div');
-        counterRow.className = 'rating-comment-footer';
+            var counterRow = document.createElement('div');
+            counterRow.className = 'rating-comment-footer';
 
-        var counter = document.createElement('span');
-        counter.className = 'rating-comment-counter';
-        counter.textContent = (LI.rating_comment_counter || '{n} / 500').replace('{n}', '0');
+            var counter = document.createElement('span');
+            counter.className = 'rating-comment-counter';
+            counter.textContent = (LI.rating_comment_counter || '{n} / 500').replace('{n}', '0');
 
-        var submitBtn = document.createElement('button');
-        submitBtn.className = 'rating-comment-submit';
-        submitBtn.textContent = LI.rating_submit || 'Envoyer';
+            var submitBtn = document.createElement('button');
+            submitBtn.className = 'rating-comment-submit';
+            submitBtn.textContent = LI.rating_submit || 'Envoyer';
 
-        textarea.addEventListener('input', function () {
-            var n = textarea.value.length;
-            counter.textContent = (LI.rating_comment_counter || '{n} / 500').replace('{n}', String(n));
-        });
+            textarea.addEventListener('input', function () {
+                var n = textarea.value.length;
+                counter.textContent = (LI.rating_comment_counter || '{n} / 500').replace('{n}', String(n));
+            });
 
-        submitBtn.addEventListener('click', function () {
-            submitBannerRating(selectedRating, textarea.value.trim());
-        });
+            submitBtn.addEventListener('click', function () {
+                submitBannerRating(selectedRating, textarea.value.trim());
+            });
 
-        counterRow.appendChild(counter);
-        counterRow.appendChild(submitBtn);
-        section.appendChild(textarea);
-        section.appendChild(counterRow);
+            counterRow.appendChild(counter);
+            counterRow.appendChild(submitBtn);
+            section.appendChild(textarea);
+            section.appendChild(counterRow);
 
-        // Insert before the close button
-        var closeBtn = banner.querySelector('.rating-banner-close');
-        banner.insertBefore(section, closeBtn);
+            // Insert before the close button
+            var closeBtn = banner.querySelector('.rating-banner-close');
+            banner.insertBefore(section, closeBtn);
+        }
+
+        // Feedback text only for low ratings (1-2 stars)
+        var textarea = document.getElementById('rating-comment-input');
+        if (rating <= 2) {
+            section.style.display = '';
+            if (textarea) {
+                textarea.placeholder = LI.rating_comment_negative || "Qu'est-ce qu'on pourrait am\u00e9liorer ? (optionnel)";
+            }
+        } else {
+            section.style.display = 'none';
+            if (textarea) {
+                textarea.value = '';
+            }
+            // Submit directly for 3-5 stars (no comment needed)
+            submitBannerRating(rating, '');
+        }
     }
 
     function submitBannerRating(rating, comment) {
