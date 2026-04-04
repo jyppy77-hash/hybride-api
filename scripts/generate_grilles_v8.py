@@ -1,6 +1,7 @@
 """
 Generate V8 sponsor pricing grids (Loto FR + EM Europe) as PDF.
 Usage: py -3 scripts/generate_grilles_v8.py
+UTF-8 font support via DejaVuSans (fallback Vera from ReportLab).
 """
 import os
 from reportlab.lib.pagesizes import A4
@@ -12,6 +13,42 @@ from reportlab.platypus import (
     PageBreak, KeepTogether,
 )
 from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT, TA_JUSTIFY
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+
+
+def _register_fonts():
+    """Enregistre polices UTF-8 : DejaVuSans -> Vera (fallback ReportLab)."""
+    import reportlab as _rl
+    _rl_fonts = os.path.join(os.path.dirname(_rl.__file__), 'fonts')
+    _font_map = {
+        'DejaVuSans': [
+            os.path.join(_rl_fonts, 'DejaVuSans.ttf'),
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+            os.path.join(_rl_fonts, 'Vera.ttf'),
+        ],
+        'DejaVuSans-Bold': [
+            os.path.join(_rl_fonts, 'DejaVuSans-Bold.ttf'),
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+            os.path.join(_rl_fonts, 'VeraBd.ttf'),
+        ],
+        'DejaVuSans-Oblique': [
+            os.path.join(_rl_fonts, 'DejaVuSans-Oblique.ttf'),
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf',
+            os.path.join(_rl_fonts, 'VeraIt.ttf'),
+        ],
+    }
+    for _name, _paths in _font_map.items():
+        for _path in _paths:
+            if os.path.isfile(_path):
+                try:
+                    pdfmetrics.registerFont(TTFont(_name, _path))
+                except Exception:
+                    continue
+                break
+
+
+_register_fonts()
 
 # ── Colors ──
 DARK_BLUE = HexColor("#1B2A4A")
@@ -35,65 +72,65 @@ def make_styles():
     styles = {}
     styles["title"] = ParagraphStyle(
         "title", parent=ss["Title"],
-        fontName="Helvetica-Bold", fontSize=22, leading=28,
+        fontName="DejaVuSans-Bold", fontSize=22, leading=28,
         textColor=DARK_BLUE, alignment=TA_CENTER, spaceAfter=4,
     )
     styles["subtitle"] = ParagraphStyle(
         "subtitle", parent=ss["Normal"],
-        fontName="Helvetica", fontSize=11, leading=14,
+        fontName="DejaVuSans", fontSize=11, leading=14,
         textColor=DARK_BLUE, alignment=TA_CENTER, spaceAfter=2,
     )
     styles["confidential"] = ParagraphStyle(
         "confidential", parent=ss["Normal"],
-        fontName="Helvetica-Bold", fontSize=9, leading=12,
+        fontName="DejaVuSans-Bold", fontSize=9, leading=12,
         textColor=white, alignment=TA_CENTER,
         backColor=DARK_BLUE, spaceBefore=6, spaceAfter=6,
         borderPadding=(6, 10, 6, 10),
     )
     styles["h2"] = ParagraphStyle(
         "h2", parent=ss["Heading2"],
-        fontName="Helvetica-Bold", fontSize=15, leading=20,
+        fontName="DejaVuSans-Bold", fontSize=15, leading=20,
         textColor=DARK_BLUE, spaceBefore=14, spaceAfter=8,
     )
     styles["h3"] = ParagraphStyle(
         "h3", parent=ss["Heading3"],
-        fontName="Helvetica-Bold", fontSize=12, leading=16,
+        fontName="DejaVuSans-Bold", fontSize=12, leading=16,
         textColor=DARK_BLUE, spaceBefore=10, spaceAfter=6,
     )
     styles["body"] = ParagraphStyle(
         "body", parent=ss["Normal"],
-        fontName="Helvetica", fontSize=9, leading=13,
+        fontName="DejaVuSans", fontSize=9, leading=13,
         textColor=black, alignment=TA_JUSTIFY,
     )
     styles["body_small"] = ParagraphStyle(
         "body_small", parent=ss["Normal"],
-        fontName="Helvetica", fontSize=7.5, leading=10,
+        fontName="DejaVuSans", fontSize=7.5, leading=10,
         textColor=HexColor("#666666"), alignment=TA_LEFT,
     )
     styles["body_italic"] = ParagraphStyle(
         "body_italic", parent=ss["Normal"],
-        fontName="Helvetica-Oblique", fontSize=7.5, leading=10,
+        fontName="DejaVuSans-Oblique", fontSize=7.5, leading=10,
         textColor=HexColor("#666666"),
     )
     styles["bullet"] = ParagraphStyle(
         "bullet", parent=ss["Normal"],
-        fontName="Helvetica", fontSize=9, leading=13,
+        fontName="DejaVuSans", fontSize=9, leading=13,
         textColor=black, leftIndent=14, bulletIndent=0,
         spaceBefore=2, spaceAfter=2,
     )
     styles["contact_center"] = ParagraphStyle(
         "contact_center", parent=ss["Normal"],
-        fontName="Helvetica", fontSize=10, leading=14,
+        fontName="DejaVuSans", fontSize=10, leading=14,
         textColor=DARK_BLUE, alignment=TA_CENTER,
     )
     styles["contact_bold"] = ParagraphStyle(
         "contact_bold", parent=ss["Normal"],
-        fontName="Helvetica-Bold", fontSize=11, leading=15,
+        fontName="DejaVuSans-Bold", fontSize=11, leading=15,
         textColor=DARK_BLUE, alignment=TA_CENTER,
     )
     styles["gold_banner"] = ParagraphStyle(
         "gold_banner", parent=ss["Normal"],
-        fontName="Helvetica-Bold", fontSize=10, leading=14,
+        fontName="DejaVuSans-Bold", fontSize=10, leading=14,
         textColor=DARK_BLUE, alignment=TA_CENTER,
         backColor=GOLD, borderPadding=(6, 10, 6, 10),
     )
@@ -114,9 +151,9 @@ def _base_table_style(header_bg=HEADER_BLUE, n_rows=1):
     ts = [
         ("BACKGROUND", (0, 0), (-1, 0), header_bg),
         ("TEXTCOLOR", (0, 0), (-1, 0), white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME", (0, 0), (-1, 0), "DejaVuSans-Bold"),
         ("FONTSIZE", (0, 0), (-1, 0), 8.5),
-        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+        ("FONTNAME", (0, 1), (-1, -1), "DejaVuSans"),
         ("FONTSIZE", (0, 1), (-1, -1), 8),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -136,11 +173,11 @@ def _pack_table_style(header_bg=HEADER_BLUE, n_rows=14):
         ("BACKGROUND", (1, 0), (1, 0), HEADER_BLUE),
         ("BACKGROUND", (2, 0), (2, 0), PURPLE),
         ("TEXTCOLOR", (1, 0), (2, 0), white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTNAME", (0, 0), (-1, 0), "DejaVuSans-Bold"),
         ("FONTSIZE", (0, 0), (-1, 0), 8.5),
-        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+        ("FONTNAME", (0, 1), (-1, -1), "DejaVuSans"),
         ("FONTSIZE", (0, 1), (-1, -1), 8),
-        ("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"),
+        ("FONTNAME", (0, 1), (0, -1), "DejaVuSans-Bold"),
         ("ALIGN", (1, 0), (-1, -1), "CENTER"),
         ("ALIGN", (0, 0), (0, -1), "LEFT"),
         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -157,7 +194,7 @@ def _pack_table_style(header_bg=HEADER_BLUE, n_rows=14):
 # ── Footer callback ──
 def _footer(canvas, doc, version_tag=VERSION_TAG):
     canvas.saveState()
-    canvas.setFont("Helvetica", 7)
+    canvas.setFont("DejaVuSans", 7)
     canvas.setFillColor(HexColor("#999999"))
     canvas.drawString(MARGIN, 12 * mm, version_tag)
     canvas.drawRightString(PAGE_W - MARGIN, 12 * mm, f"Page {doc.page}")
@@ -213,7 +250,7 @@ def contact_section(S):
     ct.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, -1), GOLD),
         ("TEXTCOLOR", (0, 0), (-1, -1), DARK_BLUE),
-        ("FONTNAME", (0, 0), (-1, -1), "Helvetica-Bold"),
+        ("FONTNAME", (0, 0), (-1, -1), "DejaVuSans-Bold"),
         ("FONTSIZE", (0, 0), (-1, -1), 11),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ("TOPPADDING", (0, 0), (-1, -1), 6),
@@ -295,7 +332,7 @@ def generate_loto_pdf(output_path):
     conf_t.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, -1), DARK_BLUE),
         ("TEXTCOLOR", (0, 0), (-1, -1), white),
-        ("FONTNAME", (0, 0), (-1, -1), "Helvetica-Bold"),
+        ("FONTNAME", (0, 0), (-1, -1), "DejaVuSans-Bold"),
         ("FONTSIZE", (0, 0), (-1, -1), 8.5),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ("TOPPADDING", (0, 0), (-1, -1), 8),
@@ -378,8 +415,8 @@ def generate_loto_pdf(output_path):
     col_w_nom = [30 * mm, 22 * mm, 25 * mm, 48 * mm, 35 * mm]
     t = Table(data_nom, colWidths=col_w_nom)
     ts = _base_table_style(n_rows=2)
-    ts.append(("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"))
-    ts.append(("FONTNAME", (4, 1), (4, -1), "Helvetica-Bold"))
+    ts.append(("FONTNAME", (0, 1), (0, -1), "DejaVuSans-Bold"))
+    ts.append(("FONTNAME", (4, 1), (4, -1), "DejaVuSans-Bold"))
     t.setStyle(TableStyle(ts))
     elements.append(t)
     elements.append(Spacer(1, 2 * mm))
@@ -410,7 +447,7 @@ def generate_loto_pdf(output_path):
     col_w_emp = [12 * mm, 30 * mm, 35 * mm, 38 * mm, 30 * mm]
     t = Table(data_emp, colWidths=col_w_emp)
     ts = _base_table_style(n_rows=5)
-    ts.append(("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"))
+    ts.append(("FONTNAME", (0, 1), (0, -1), "DejaVuSans-Bold"))
     t.setStyle(TableStyle(ts))
     elements.append(t)
     elements.append(Spacer(1, 2 * mm))
@@ -454,7 +491,7 @@ def generate_loto_pdf(output_path):
     ap_t.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, -1), GOLD),
         ("TEXTCOLOR", (0, 0), (-1, -1), DARK_BLUE),
-        ("FONTNAME", (0, 0), (-1, -1), "Helvetica-Bold"),
+        ("FONTNAME", (0, 0), (-1, -1), "DejaVuSans-Bold"),
         ("FONTSIZE", (0, 0), (-1, -1), 10),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ("TOPPADDING", (0, 0), (-1, -1), 6),
@@ -487,8 +524,8 @@ def generate_loto_pdf(output_path):
     ]
     t = Table(data_cpc, colWidths=[38 * mm, 62 * mm, 62 * mm])
     ts = _base_table_style(n_rows=3)
-    ts.append(("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"))
-    ts.append(("FONTNAME", (1, 1), (-1, 1), "Helvetica-Bold"))
+    ts.append(("FONTNAME", (0, 1), (0, -1), "DejaVuSans-Bold"))
+    ts.append(("FONTNAME", (1, 1), (-1, 1), "DejaVuSans-Bold"))
     t.setStyle(TableStyle(ts))
     elements.append(t)
     elements.append(Spacer(1, 2 * mm))
@@ -535,8 +572,8 @@ def generate_loto_pdf(output_path):
     col_w_pal = [28 * mm, 35 * mm, 30 * mm, 30 * mm, 25 * mm]
     t = Table(data_pal, colWidths=col_w_pal)
     ts = _base_table_style(n_rows=4)
-    ts.append(("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"))
-    ts.append(("FONTNAME", (2, 1), (3, 1), "Helvetica-Bold"))
+    ts.append(("FONTNAME", (0, 1), (0, -1), "DejaVuSans-Bold"))
+    ts.append(("FONTNAME", (2, 1), (3, 1), "DejaVuSans-Bold"))
     t.setStyle(TableStyle(ts))
     elements.append(t)
     elements.append(Spacer(1, 2 * mm))
@@ -574,7 +611,7 @@ def generate_loto_pdf(output_path):
     col_w_perf = [32 * mm, 100 * mm, 28 * mm]
     t = Table(data_perf, colWidths=col_w_perf)
     ts = _base_table_style(n_rows=6)
-    ts.append(("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"))
+    ts.append(("FONTNAME", (0, 1), (0, -1), "DejaVuSans-Bold"))
     ts.append(("ALIGN", (0, 1), (0, -1), "LEFT"))
     ts.append(("ALIGN", (1, 1), (1, -1), "LEFT"))
     t.setStyle(TableStyle(ts))
@@ -608,7 +645,7 @@ def generate_loto_pdf(output_path):
     col_w_emv = [32 * mm, 32 * mm, 28 * mm, 65 * mm]
     t = Table(data_em_vision, colWidths=col_w_emv)
     ts = _base_table_style(n_rows=6)
-    ts.append(("FONTNAME", (0, 1), (1, -1), "Helvetica-Bold"))
+    ts.append(("FONTNAME", (0, 1), (1, -1), "DejaVuSans-Bold"))
     t.setStyle(TableStyle(ts))
     elements.append(t)
     elements.append(Spacer(1, 4 * mm))
@@ -682,7 +719,7 @@ def generate_em_pdf(output_path):
     conf_t.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, -1), DARK_BLUE),
         ("TEXTCOLOR", (0, 0), (-1, -1), white),
-        ("FONTNAME", (0, 0), (-1, -1), "Helvetica-Bold"),
+        ("FONTNAME", (0, 0), (-1, -1), "DejaVuSans-Bold"),
         ("FONTSIZE", (0, 0), (-1, -1), 8.5),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ("TOPPADDING", (0, 0), (-1, -1), 8),
@@ -748,7 +785,7 @@ def generate_em_pdf(output_path):
     ]
     t = Table(data_tier, colWidths=[38 * mm, 42 * mm, 80 * mm])
     ts = _base_table_style(n_rows=2)
-    ts.append(("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"))
+    ts.append(("FONTNAME", (0, 1), (0, -1), "DejaVuSans-Bold"))
     ts.append(("ALIGN", (1, 1), (-1, -1), "LEFT"))
     ts.append(("BACKGROUND", (0, 1), (-1, 1), HexColor("#E8E0F0")))
     t.setStyle(TableStyle(ts))
@@ -768,8 +805,8 @@ def generate_em_pdf(output_path):
     col_w_codes = [24 * mm, 24 * mm, 22 * mm, 35 * mm, 22 * mm, 22 * mm, 14 * mm]
     t = Table(data_codes, colWidths=col_w_codes)
     ts = _base_table_style(n_rows=6)
-    ts.append(("FONTNAME", (0, 1), (1, -1), "Helvetica-Bold"))
-    ts.append(("FONTNAME", (4, 1), (5, -1), "Helvetica-Bold"))
+    ts.append(("FONTNAME", (0, 1), (1, -1), "DejaVuSans-Bold"))
+    ts.append(("FONTNAME", (4, 1), (5, -1), "DejaVuSans-Bold"))
     t.setStyle(TableStyle(ts))
     elements.append(t)
     elements.append(Spacer(1, 2 * mm))
@@ -798,7 +835,7 @@ def generate_em_pdf(output_path):
     col_w_emp = [12 * mm, 30 * mm, 35 * mm, 38 * mm, 30 * mm]
     t = Table(data_emp, colWidths=col_w_emp)
     ts = _base_table_style(n_rows=5)
-    ts.append(("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"))
+    ts.append(("FONTNAME", (0, 1), (0, -1), "DejaVuSans-Bold"))
     t.setStyle(TableStyle(ts))
     elements.append(t)
     elements.append(Spacer(1, 2 * mm))
@@ -864,7 +901,7 @@ def generate_em_pdf(output_path):
     ap_t.setStyle(TableStyle([
         ("BACKGROUND", (0, 0), (-1, -1), GOLD),
         ("TEXTCOLOR", (0, 0), (-1, -1), DARK_BLUE),
-        ("FONTNAME", (0, 0), (-1, -1), "Helvetica-Bold"),
+        ("FONTNAME", (0, 0), (-1, -1), "DejaVuSans-Bold"),
         ("FONTSIZE", (0, 0), (-1, -1), 10),
         ("ALIGN", (0, 0), (-1, -1), "CENTER"),
         ("TOPPADDING", (0, 0), (-1, -1), 6),
@@ -900,8 +937,8 @@ def generate_em_pdf(output_path):
     col_w_reg = [24 * mm, 26 * mm, 22 * mm, 22 * mm, 18 * mm, 22 * mm, 22 * mm]
     t = Table(data_reg, colWidths=col_w_reg)
     ts = _base_table_style(n_rows=6)
-    ts.append(("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"))
-    ts.append(("FONTNAME", (5, 1), (5, -1), "Helvetica-Bold"))
+    ts.append(("FONTNAME", (0, 1), (0, -1), "DejaVuSans-Bold"))
+    ts.append(("FONTNAME", (5, 1), (5, -1), "DejaVuSans-Bold"))
     t.setStyle(TableStyle(ts))
     elements.append(t)
     elements.append(Spacer(1, 2 * mm))
@@ -930,8 +967,8 @@ def generate_em_pdf(output_path):
     ]
     t = Table(data_cpc, colWidths=[38 * mm, 62 * mm, 62 * mm])
     ts = _base_table_style(n_rows=3)
-    ts.append(("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"))
-    ts.append(("FONTNAME", (1, 1), (-1, 1), "Helvetica-Bold"))
+    ts.append(("FONTNAME", (0, 1), (0, -1), "DejaVuSans-Bold"))
+    ts.append(("FONTNAME", (1, 1), (-1, 1), "DejaVuSans-Bold"))
     t.setStyle(TableStyle(ts))
     elements.append(t)
     elements.append(Spacer(1, 2 * mm))
@@ -982,8 +1019,8 @@ def generate_em_pdf(output_path):
     col_w_pal = [28 * mm, 35 * mm, 28 * mm, 28 * mm, 25 * mm]
     t = Table(data_pal1, colWidths=col_w_pal)
     ts = _base_table_style(n_rows=4)
-    ts.append(("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"))
-    ts.append(("FONTNAME", (2, 1), (3, 1), "Helvetica-Bold"))
+    ts.append(("FONTNAME", (0, 1), (0, -1), "DejaVuSans-Bold"))
+    ts.append(("FONTNAME", (2, 1), (3, 1), "DejaVuSans-Bold"))
     t.setStyle(TableStyle(ts))
     elements.append(t)
     elements.append(Spacer(1, 4 * mm))
@@ -1000,8 +1037,8 @@ def generate_em_pdf(output_path):
     ]
     t = Table(data_pal2, colWidths=col_w_pal)
     ts = _base_table_style(n_rows=4)
-    ts.append(("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"))
-    ts.append(("FONTNAME", (2, 1), (3, 1), "Helvetica-Bold"))
+    ts.append(("FONTNAME", (0, 1), (0, -1), "DejaVuSans-Bold"))
+    ts.append(("FONTNAME", (2, 1), (3, 1), "DejaVuSans-Bold"))
     t.setStyle(TableStyle(ts))
     elements.append(t)
     elements.append(Spacer(1, 2 * mm))
@@ -1039,7 +1076,7 @@ def generate_em_pdf(output_path):
     col_w_perf = [32 * mm, 100 * mm, 28 * mm]
     t = Table(data_perf, colWidths=col_w_perf)
     ts = _base_table_style(n_rows=6)
-    ts.append(("FONTNAME", (0, 1), (0, -1), "Helvetica-Bold"))
+    ts.append(("FONTNAME", (0, 1), (0, -1), "DejaVuSans-Bold"))
     ts.append(("ALIGN", (0, 1), (0, -1), "LEFT"))
     ts.append(("ALIGN", (1, 1), (1, -1), "LEFT"))
     t.setStyle(TableStyle(ts))

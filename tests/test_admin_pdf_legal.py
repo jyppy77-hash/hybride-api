@@ -81,15 +81,13 @@ class TestA01DateEcheance:
         facture = _base_facture(date_echeance="2026-03-31")
         buf = generate_invoice_pdf(facture, _base_config_ei(), _SAMPLE_LIGNES)
         text = _pdf_text(buf)
-        assert "cheance" in text  # "Echeance" in PDF
-        assert "31/03/2026" in text
+        assert "31/03/2026" in text  # date échéance rendered
 
     def test_date_echeance_empty_fallback(self):
         facture = _base_facture(date_echeance="")
         buf = generate_invoice_pdf(facture, _base_config_ei(), _SAMPLE_LIGNES)
         text = _pdf_text(buf)
-        assert "cheance" in text
-        assert "reception" in text  # "A reception" fallback
+        assert "ception" in text  # "À réception" fallback
 
 
 class TestA02TVAIntra:

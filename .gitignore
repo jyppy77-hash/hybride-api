@@ -72,3 +72,4 @@ data/
 
 # Windows reserved
 nul
+scripts/generate_grilles_v9.py

@@ -1,9 +1,12 @@
 """
 Admin PDF generation — sponsor reports + invoices.
 Aligned with FacturIA visual style (bleu fonce / dore / gris).
+UTF-8 font support via DejaVuSans (fallback Vera from ReportLab).
 """
 
 import io
+import os
+import logging
 from datetime import date, datetime
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
@@ -11,6 +14,46 @@ from reportlab.lib.colors import HexColor
 from reportlab.lib.enums import TA_RIGHT, TA_CENTER
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+
+logger = logging.getLogger(__name__)
+
+
+def _register_fonts():
+    """Enregistre polices UTF-8 : DejaVuSans (Linux/Cloud Run) -> Vera (fallback ReportLab)."""
+    import reportlab as _rl
+    _rl_fonts = os.path.join(os.path.dirname(_rl.__file__), 'fonts')
+    _font_map = {
+        'DejaVuSans': [
+            os.path.join(_rl_fonts, 'DejaVuSans.ttf'),
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf',
+            os.path.join(_rl_fonts, 'Vera.ttf'),
+        ],
+        'DejaVuSans-Bold': [
+            os.path.join(_rl_fonts, 'DejaVuSans-Bold.ttf'),
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf',
+            os.path.join(_rl_fonts, 'VeraBd.ttf'),
+        ],
+        'DejaVuSans-Oblique': [
+            os.path.join(_rl_fonts, 'DejaVuSans-Oblique.ttf'),
+            '/usr/share/fonts/truetype/dejavu/DejaVuSans-Oblique.ttf',
+            os.path.join(_rl_fonts, 'VeraIt.ttf'),
+        ],
+    }
+    for _name, _paths in _font_map.items():
+        for _path in _paths:
+            if os.path.isfile(_path):
+                try:
+                    pdfmetrics.registerFont(TTFont(_name, _path))
+                except Exception:
+                    continue
+                break
+        else:
+            logger.error("[ADMIN-PDF] Aucune police trouvée pour %s", _name)
+
+
+_register_fonts()
 
 
 # FacturIA palette
@@ -24,12 +67,12 @@ BLANC = HexColor('#ffffff')
 
 _base = getSampleStyleSheet()
 
-_LOGO = ParagraphStyle('Logo', fontName='Helvetica-Bold', fontSize=18, textColor=BLEU_FONCE, leading=22)
-_TITLE_R = ParagraphStyle('TitleR', fontName='Helvetica-Bold', fontSize=16, textColor=BLEU_FONCE, alignment=TA_RIGHT, leading=20)
-_SECTION = ParagraphStyle('Section', parent=_base['Heading2'], fontName='Helvetica-Bold', fontSize=11, textColor=BLEU, spaceBefore=6*mm, spaceAfter=3*mm)
-_NORMAL = ParagraphStyle('Normal2', parent=_base['Normal'], fontName='Helvetica', fontSize=9, textColor=NOIR, leading=13)
-_PETIT = ParagraphStyle('Petit', parent=_base['Normal'], fontName='Helvetica', fontSize=8, textColor=GRIS, leading=11)
-_FOOTER = ParagraphStyle('Footer', parent=_base['Normal'], fontName='Helvetica', fontSize=7, textColor=GRIS, alignment=TA_CENTER)
+_LOGO = ParagraphStyle('Logo', fontName='DejaVuSans-Bold', fontSize=18, textColor=BLEU_FONCE, leading=22)
+_TITLE_R = ParagraphStyle('TitleR', fontName='DejaVuSans-Bold', fontSize=16, textColor=BLEU_FONCE, alignment=TA_RIGHT, leading=20)
+_SECTION = ParagraphStyle('Section', parent=_base['Heading2'], fontName='DejaVuSans-Bold', fontSize=11, textColor=BLEU, spaceBefore=6*mm, spaceAfter=3*mm)
+_NORMAL = ParagraphStyle('Normal2', parent=_base['Normal'], fontName='DejaVuSans', fontSize=9, textColor=NOIR, leading=13)
+_PETIT = ParagraphStyle('Petit', parent=_base['Normal'], fontName='DejaVuSans', fontSize=8, textColor=GRIS, leading=11)
+_FOOTER = ParagraphStyle('Footer', parent=_base['Normal'], fontName='DejaVuSans', fontSize=7, textColor=GRIS, alignment=TA_CENTER)
 
 
 def _format_euros(montant):
@@ -51,11 +94,11 @@ def _detail_table_style(num_rows):
     styles = [
         ('BACKGROUND', (0, 0), (-1, 0), BLEU_FONCE),
         ('TEXTCOLOR', (0, 0), (-1, 0), BLANC),
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 0), (-1, 0), 'DejaVuSans-Bold'),
         ('FONTSIZE', (0, 0), (-1, 0), 9),
         ('BOTTOMPADDING', (0, 0), (-1, 0), 3*mm),
         ('TOPPADDING', (0, 0), (-1, 0), 3*mm),
-        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('FONTNAME', (0, 1), (-1, -1), 'DejaVuSans'),
         ('FONTSIZE', (0, 1), (-1, -1), 9),
         ('TEXTCOLOR', (0, 1), (-1, -1), NOIR),
         ('BOTTOMPADDING', (0, 1), (-1, -1), 2.5*mm),
@@ -90,13 +133,13 @@ def generate_sponsor_report_pdf(kpi: dict, table_data: list, period_label: str) 
     elements.append(header)
     elements.append(Spacer(1, 4*mm))
 
-    elements.append(Paragraph(f"Periode : {period_label} | Genere le {_format_date_fr(date.today())}", _PETIT))
+    elements.append(Paragraph(f"Période : {period_label} | Généré le {_format_date_fr(date.today())}", _PETIT))
     elements.append(Spacer(1, 8*mm))
 
     # KPI block
     elements.append(Paragraph("INDICATEURS", _SECTION))
     kpi_rows = [
-        ["Impressions", "Clics", "Videos", "CTR", "Sessions"],
+        ["Impressions", "Clics", "Vidéos", "CTR", "Sessions"],
         [
             str(kpi.get("impressions", 0)),
             str(kpi.get("clicks", 0)),
@@ -112,7 +155,7 @@ def generate_sponsor_report_pdf(kpi: dict, table_data: list, period_label: str) 
 
     # Detail table
     if table_data:
-        elements.append(Paragraph("DETAIL PAR JOUR / EVENT / PAGE", _SECTION))
+        elements.append(Paragraph("DÉTAIL PAR JOUR / EVENT / PAGE", _SECTION))
         headers = ["Date", "Event", "Page", "Lang", "Device", "Pays", "Nb"]
         rows = [headers]
         for r in table_data[:200]:
@@ -127,9 +170,9 @@ def generate_sponsor_report_pdf(kpi: dict, table_data: list, period_label: str) 
 
     def footer(canvas_obj, doc_obj):
         canvas_obj.saveState()
-        canvas_obj.setFont('Helvetica', 7)
+        canvas_obj.setFont('DejaVuSans', 7)
         canvas_obj.setFillColor(GRIS)
-        canvas_obj.drawCentredString(A4[0] / 2, 12*mm, "LotoIA — Rapport genere automatiquement")
+        canvas_obj.drawCentredString(A4[0] / 2, 12*mm, "LotoIA — Rapport généré automatiquement")
         canvas_obj.restoreState()
 
     doc.build(elements, onFirstPage=footer, onLaterPages=footer)
@@ -217,19 +260,19 @@ def generate_invoice_pdf(facture: dict, config: dict, lignes: list) -> io.BytesI
     # Dates — A01: date d'echeance now rendered
     de = _format_date_fr(facture.get('date_emission', ''))
     dec_raw = facture.get('date_echeance', '')
-    dec = _format_date_fr(dec_raw) if dec_raw else "A reception"
+    dec = _format_date_fr(dec_raw) if dec_raw else "À réception"
     pd = _format_date_fr(facture.get('periode_debut', ''))
     pf = _format_date_fr(facture.get('periode_fin', ''))
     info = Table(
         [
-            ["Date d'emission :", de, "Periode :", f"{pd} au {pf}"],
-            ["Echeance :", dec, "", ""],
+            ["Date d'émission :", de, "Période :", f"{pd} au {pf}"],
+            ["Échéance :", dec, "", ""],
         ],
         colWidths=[35*mm, 50*mm, 25*mm, 60*mm],
     )
     info.setStyle(TableStyle([
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
-        ('FONTNAME', (2, 0), (2, 0), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 0), (0, -1), 'DejaVuSans-Bold'),
+        ('FONTNAME', (2, 0), (2, 0), 'DejaVuSans-Bold'),
         ('FONTSIZE', (0, 0), (-1, -1), 9),
         ('TEXTCOLOR', (0, 0), (0, -1), GRIS),
         ('TEXTCOLOR', (2, 0), (2, 0), GRIS),
@@ -240,8 +283,8 @@ def generate_invoice_pdf(facture: dict, config: dict, lignes: list) -> io.BytesI
     elements.append(Spacer(1, 8*mm))
 
     # Detail lines
-    elements.append(Paragraph("DETAIL DE LA PRESTATION", _SECTION))
-    rows = [["Designation", "Quantite", "Prix unit.", "Montant HT"]]
+    elements.append(Paragraph("DÉTAIL DE LA PRESTATION", _SECTION))
+    rows = [["Désignation", "Quantité", "Prix unit.", "Montant HT"]]
     for l in lignes:
         rows.append([
             l.get("description", ""),
@@ -264,7 +307,7 @@ def generate_invoice_pdf(facture: dict, config: dict, lignes: list) -> io.BytesI
     tt = Table(totaux, colWidths=[35*mm, 35*mm], hAlign='RIGHT')
     nb = len(totaux)
     tt.setStyle(TableStyle([
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+        ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
         ('FONTSIZE', (0, 0), (-1, -1), 10),
         ('ALIGN', (0, 0), (0, -1), 'LEFT'),
         ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
@@ -272,7 +315,7 @@ def generate_invoice_pdf(facture: dict, config: dict, lignes: list) -> io.BytesI
         ('BOTTOMPADDING', (0, 0), (-1, -1), 2*mm),
         ('TEXTCOLOR', (0, 0), (-1, -2), NOIR),
         ('LINEBELOW', (0, 0), (-1, nb - 2), 0.5, GRIS),
-        ('FONTNAME', (0, nb - 1), (-1, nb - 1), 'Helvetica-Bold'),
+        ('FONTNAME', (0, nb - 1), (-1, nb - 1), 'DejaVuSans-Bold'),
         ('FONTSIZE', (0, nb - 1), (-1, nb - 1), 12),
         ('BACKGROUND', (0, nb - 1), (-1, nb - 1), BLEU_FONCE),
         ('TEXTCOLOR', (0, nb - 1), (-1, nb - 1), BLANC),
@@ -287,7 +330,7 @@ def generate_invoice_pdf(facture: dict, config: dict, lignes: list) -> io.BytesI
     # Payment conditions
     elements.append(HRFlowable(width="100%", thickness=0.5, color=GRIS, spaceBefore=2*mm, spaceAfter=2*mm))
     elements.append(Paragraph(
-        "Conditions de paiement : reglement a 30 jours a compter de la date d'emission.",
+        "Conditions de paiement : règlement à 30 jours à compter de la date d'émission.",
         _PETIT,
     ))
 
@@ -296,15 +339,15 @@ def generate_invoice_pdf(facture: dict, config: dict, lignes: list) -> io.BytesI
     bic = config.get("bic", "")
     if iban:
         elements.append(Spacer(1, 3*mm))
-        elements.append(Paragraph(f"Coordonnees bancaires : IBAN {iban} | BIC {bic}", _PETIT))
+        elements.append(Paragraph(f"Coordonnées bancaires : IBAN {iban} | BIC {bic}", _PETIT))
 
     # A03: Mentions legales — penalites de retard + indemnite recouvrement
     elements.append(Spacer(1, 5*mm))
     elements.append(HRFlowable(width="100%", thickness=0.5, color=GRIS, spaceBefore=1*mm, spaceAfter=2*mm))
     elements.append(Paragraph(
-        "Mentions legales : En cas de retard de paiement, une penalite de 3 fois le taux "
-        "d'interet legal sera appliquee (Art. L441-10 du Code de Commerce). Une indemnite "
-        "forfaitaire de 40 EUR pour frais de recouvrement sera egalement due "
+        "Mentions légales : En cas de retard de paiement, une pénalité de 3 fois le taux "
+        "d'intérêt légal sera appliquée (Art. L441-10 du Code de Commerce). Une indemnité "
+        "forfaitaire de 40 EUR pour frais de recouvrement sera également due "
         "(Art. D441-5 du Code de Commerce).",
         _PETIT,
     ))
@@ -314,7 +357,7 @@ def generate_invoice_pdf(facture: dict, config: dict, lignes: list) -> io.BytesI
 
     def add_footer(canvas_obj, doc_obj):
         canvas_obj.saveState()
-        canvas_obj.setFont('Helvetica', 7)
+        canvas_obj.setFont('DejaVuSans', 7)
         canvas_obj.setFillColor(GRIS)
         canvas_obj.drawCentredString(A4[0] / 2, 12*mm, footer_text)
         canvas_obj.restoreState()
@@ -344,13 +387,13 @@ def generate_realtime_report_pdf(kpi: dict, by_type: dict, table_data: list, per
     elements.append(header)
     elements.append(Spacer(1, 4*mm))
 
-    elements.append(Paragraph(f"Periode : {period_label} | Genere le {_format_date_fr(date.today())}", _PETIT))
+    elements.append(Paragraph(f"Période : {period_label} | Généré le {_format_date_fr(date.today())}", _PETIT))
     elements.append(Spacer(1, 8*mm))
 
     # KPI block
     elements.append(Paragraph("INDICATEURS", _SECTION))
     kpi_rows = [
-        ["Total events", "Derniere heure", "Types distincts"],
+        ["Total events", "Dernière heure", "Types distincts"],
         [str(kpi.get("total", 0)), str(kpi.get("hour", 0)), str(kpi.get("types", 0))],
     ]
     t = Table(kpi_rows, colWidths=[56*mm]*3)
@@ -360,7 +403,7 @@ def generate_realtime_report_pdf(kpi: dict, by_type: dict, table_data: list, per
 
     # By type breakdown
     if by_type:
-        elements.append(Paragraph("REPARTITION PAR TYPE", _SECTION))
+        elements.append(Paragraph("RÉPARTITION PAR TYPE", _SECTION))
         bt_rows = [["Type", "Nombre"]]
         for etype, cnt in sorted(by_type.items(), key=lambda x: -x[1]):
             bt_rows.append([etype, str(cnt)])
@@ -371,7 +414,7 @@ def generate_realtime_report_pdf(kpi: dict, by_type: dict, table_data: list, per
 
     # Detail table
     if table_data:
-        elements.append(Paragraph("DETAIL DES EVENEMENTS", _SECTION))
+        elements.append(Paragraph("DÉTAIL DES ÉVÉNEMENTS", _SECTION))
         headers = ["Date/Heure", "Event", "Page", "Lang", "Device", "Pays"]
         rows = [headers]
         for r in table_data[:200]:
@@ -385,9 +428,9 @@ def generate_realtime_report_pdf(kpi: dict, by_type: dict, table_data: list, per
 
     def footer(canvas_obj, doc_obj):
         canvas_obj.saveState()
-        canvas_obj.setFont('Helvetica', 7)
+        canvas_obj.setFont('DejaVuSans', 7)
         canvas_obj.setFillColor(GRIS)
-        canvas_obj.drawCentredString(A4[0] / 2, 12*mm, "LotoIA — Rapport realtime genere automatiquement")
+        canvas_obj.drawCentredString(A4[0] / 2, 12*mm, "LotoIA — Rapport realtime généré automatiquement")
         canvas_obj.restoreState()
 
     doc.build(elements, onFirstPage=footer, onLaterPages=footer)
@@ -467,7 +510,7 @@ def generate_contrat_pdf(contrat: dict, config: dict) -> io.BytesIO:
 
     details_rows = [
         ["Type :", type_c.replace("_", " ").title()],
-        ["Duree :", f"Du {dd} au {df}"],
+        ["Durée :", f"Du {dd} au {df}"],
         ["Tarif mensuel HT :", montant],
     ]
     product_codes = contrat.get("product_codes", "")
@@ -476,7 +519,7 @@ def generate_contrat_pdf(contrat: dict, config: dict) -> io.BytesIO:
 
     dt = Table(details_rows, colWidths=[45*mm, 125*mm])
     dt.setStyle(TableStyle([
-        ('FONTNAME', (0, 0), (0, -1), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 0), (0, -1), 'DejaVuSans-Bold'),
         ('FONTSIZE', (0, 0), (-1, -1), 10),
         ('TEXTCOLOR', (0, 0), (0, -1), GRIS),
         ('TEXTCOLOR', (1, 0), (1, -1), NOIR),
@@ -490,12 +533,12 @@ def generate_contrat_pdf(contrat: dict, config: dict) -> io.BytesIO:
     elements.append(Paragraph("EMPLACEMENTS SPONSORS", _SECTION))
     elements.append(Spacer(1, 3*mm))
     emplacements = [
-        ["E1", "Popup interstitiel", "Affichage avant generation de grille"],
-        ["E2", "Video META 75", "Spot video dans l'analyse META 75 grilles"],
+        ["E1", "Popup interstitiel", "Affichage avant génération de grille"],
+        ["E2", "Vidéo META 75", "Spot vidéo dans l'analyse META 75 grilles"],
         ["E3", "Mention PDF", "Logo et mention dans les PDFs d'analyse"],
         ["E4", "Chatbot inline", "Insertion dans le chatbot (3 messages sur 6)"],
-        ["E5", "Banner resultats", "Banniere apres les resultats du simulateur"],
-        ["E6", "PDF download", "Tracking au telechargement PDF"],
+        ["E5", "Bannière résultats", "Bannière après les résultats du simulateur"],
+        ["E6", "PDF download", "Tracking au téléchargement PDF"],
     ]
     if type_c == "standard":
         emplacements = [e for e in emplacements if e[0] in ("E1", "E4", "E5")]
@@ -509,10 +552,10 @@ def generate_contrat_pdf(contrat: dict, config: dict) -> io.BytesIO:
     elements.append(Paragraph("CONDITIONS", _SECTION))
     elements.append(Spacer(1, 3*mm))
     conditions = [
-        "Paiement : reglement a 30 jours a compter de la date de facturation.",
-        "Resiliation : possible avec un preavis de 30 jours.",
-        "Donnees : conformite RGPD — seuls des hash SHA-256 anonymes sont stockes. Aucune donnee personnelle.",
-        "Reporting : acces au dashboard d'impressions, export CSV et PDF inclus.",
+        "Paiement : règlement à 30 jours à compter de la date de facturation.",
+        "Résiliation : possible avec un préavis de 30 jours.",
+        "Données : conformité RGPD — seuls des hash SHA-256 anonymes sont stockés. Aucune donnée personnelle.",
+        "Reporting : accès au dashboard d'impressions, export CSV et PDF inclus.",
     ]
     for c in conditions:
         elements.append(Paragraph(f"• {c}", _NORMAL))
@@ -542,7 +585,7 @@ def generate_contrat_pdf(contrat: dict, config: dict) -> io.BytesIO:
         ('BOTTOMPADDING', (0, 0), (-1, -1), 3*mm),
         ('LINEBELOW', (0, 0), (0, 0), 0.5, GRIS),
         ('LINEBELOW', (1, 0), (1, 0), 0.5, GRIS),
-        ('FONTNAME', (0, 1), (-1, 1), 'Helvetica'),
+        ('FONTNAME', (0, 1), (-1, 1), 'DejaVuSans'),
         ('TEXTCOLOR', (0, 1), (-1, 1), GRIS),
         ('FONTSIZE', (0, 1), (-1, 1), 8),
     ]))
@@ -552,7 +595,7 @@ def generate_contrat_pdf(contrat: dict, config: dict) -> io.BytesIO:
 
     def add_footer(canvas_obj, doc_obj):
         canvas_obj.saveState()
-        canvas_obj.setFont('Helvetica', 7)
+        canvas_obj.setFont('DejaVuSans', 7)
         canvas_obj.setFillColor(GRIS)
         canvas_obj.drawCentredString(A4[0] / 2, 12*mm, footer_text)
         canvas_obj.restoreState()
