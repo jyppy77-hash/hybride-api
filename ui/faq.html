@@ -1032,7 +1032,7 @@
     <!-- Bandeau Notation -->
     <link rel="stylesheet" href="/ui/static/rating-popup.css?v=2">
     <script src="/ui/static/rating-popup.js?v=9" defer></script>
-    <script>function umamiBeforeSend(payload){return payload;}</script>
+    <script>function umamiBeforeSend(type,payload){if(window.__OWNER__)return false;return payload;}</script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc" data-before-send="umamiBeforeSend"></script>
     <!-- Contact form modal -->
     <link rel="stylesheet" href="/ui/static/contact-form.css?v=3" media="print" onload="this.media='all'">
