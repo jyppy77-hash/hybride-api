@@ -1,7 +1,7 @@
 import re
 
 from fastapi import APIRouter
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 import db_cloudsql
 from config.templates import MIN_REVIEWS_FOR_RATING
 from config.version import LAST_DEPLOY_DATE
@@ -63,6 +63,15 @@ async def robots():
     """Robots.txt pour SEO."""
     return FileResponse("ui/robots.txt", media_type="text/plain",
                         headers={"Cache-Control": "public, max-age=86400"})
+
+
+@router.get("/.well-known/traffic-advice")
+async def traffic_advice():
+    """Chrome prefetch proxy opt-in (traffic-advice spec)."""
+    return JSONResponse(
+        [{"user_agent": "prefetch-proxy", "fraction": 1.0}],
+        headers={"Cache-Control": "public, max-age=86400"},
+    )
 
 
 @router.get("/BingSiteAuth.xml")
