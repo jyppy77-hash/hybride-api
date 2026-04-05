@@ -904,9 +904,9 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.5.018 (V80 release)."""
+        """APP_VERSION == 1.5.019 (V80 release)."""
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.5.018"
+        assert APP_VERSION == "1.5.019"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""
