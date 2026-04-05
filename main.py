@@ -669,10 +669,15 @@ class UmamiOwnerFilterMiddleware:
                     start_msg = body_chunks[0][1]
                     new_headers = [
                         (k, v) for k, v in start_msg.get("headers", [])
-                        if k.lower() != b"content-length"
+                        if k.lower() not in (b"content-length", b"cache-control")
                     ]
                     new_headers.append(
                         (b"content-length", str(len(full_body)).encode())
+                    )
+                    # Owner-injected responses must NOT be cached by intermediaries
+                    # (Google Frontend would serve __OWNER__=true to all visitors)
+                    new_headers.append(
+                        (b"cache-control", b"private, no-cache")
                     )
                     await send({**start_msg, "headers": new_headers})
                     await send({
