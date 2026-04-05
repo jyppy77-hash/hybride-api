@@ -97,6 +97,41 @@ class TestCleanResponse:
         text = "Le numero 7 est sorti 120 fois sur 967 tirages."
         assert _clean_response(text) == text
 
+    # ── F05 V86: blocs tool_code / python ────────────────────────────
+
+    def test_strips_tool_code_block(self):
+        raw = 'Intéressant !\n```tool_code\nfrom datetime import datetime\nresult = execute_sql("SELECT")\n```\n'
+        cleaned = _clean_response(raw)
+        assert "tool_code" not in cleaned
+        assert "import" not in cleaned
+        assert "execute_sql" not in cleaned
+
+    def test_strips_python_block(self):
+        raw = 'Voici :\n```python\ndef foo():\n    pass\n```\n'
+        cleaned = _clean_response(raw)
+        assert "```python" not in cleaned
+        assert "def foo" not in cleaned
+
+    def test_strips_truncated_tool_code(self):
+        raw = 'Un instant...\n```tool_code\nfrom datetime import datetime\nresult = execute_sql("SELECT'
+        cleaned = _clean_response(raw)
+        assert "tool_code" not in cleaned
+        assert "execute_sql" not in cleaned
+
+    def test_fallback_after_code_removal(self):
+        raw = '```tool_code\nimport os\nos.listdir()\n```'
+        cleaned = _clean_response(raw)
+        assert len(cleaned) > 10
+        assert "tool_code" not in cleaned
+        assert "import" not in cleaned
+
+    def test_code_removal_preserves_surrounding_text(self):
+        raw = 'Le 7 est sorti 142 fois.\n```tool_code\nimport os\n```\nBonne question !'
+        cleaned = _clean_response(raw)
+        assert "142 fois" in cleaned
+        assert "Bonne question" in cleaned
+        assert "tool_code" not in cleaned
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # _strip_sponsor_from_text

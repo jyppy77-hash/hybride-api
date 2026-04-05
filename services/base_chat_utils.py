@@ -97,11 +97,33 @@ _REINTRO_RE = re.compile(
 
 
 # ────────────────────────────────────────────
+# Code block stripping (Gemini tool_code hallucinations)
+# ────────────────────────────────────────────
+
+# Blocs ```tool_code ou ```python (avec ou sans fermeture ```)
+_RE_CODE_BLOCK = re.compile(r'```(?:tool_code|python)\s*\n.*?(?:```|$)', re.DOTALL)
+
+_CODE_FALLBACK = {
+    "fr": "Je n'ai pas pu formuler une réponse claire. Peux-tu reformuler ta question ?",
+    "en": "I couldn't formulate a clear answer. Could you rephrase your question?",
+    "es": "No pude formular una respuesta clara. ¿Podrías reformular tu pregunta?",
+    "pt": "Não consegui formular uma resposta clara. Podes reformular a tua pergunta?",
+    "de": "Ich konnte keine klare Antwort formulieren. Kannst du deine Frage umformulieren?",
+    "nl": "Ik kon geen duidelijk antwoord formuleren. Kun je je vraag herformuleren?",
+}
+
+
+# ────────────────────────────────────────────
 # Response cleaning
 # ────────────────────────────────────────────
 
-def _clean_response(text: str) -> str:
-    """Supprime les tags internes qui ne doivent pas etre vus par l'utilisateur."""
+def _clean_response(text: str, lang: str = "fr") -> str:
+    """Supprime les tags internes et blocs de code qui ne doivent pas etre vus par l'utilisateur."""
+    # F05 V86: supprimer les blocs ```tool_code / ```python hallucines par Gemini
+    _had_code_block = bool(_RE_CODE_BLOCK.search(text))
+    if _had_code_block:
+        logger.warning("Code block stripped: %s", _RE_CODE_BLOCK.search(text).group()[:120])
+        text = _RE_CODE_BLOCK.sub('', text)
     internal_tags = [
         r'\[RÉSULTAT SQL\]',
         r'\[RESULTAT SQL\]',
@@ -144,7 +166,11 @@ def _clean_response(text: str) -> str:
     text = re.sub(r'  +', ' ', text)
     # strip(\n\r) only — preserver les espaces aux bords des chunks SSE
     # pour eviter le collage de mots ("Jene peux pas") lors de la concatenation JS
-    return text.strip('\n\r')
+    text = text.strip('\n\r')
+    # F05: si un bloc de code a ete supprime et que la reponse est vide, fallback
+    if _had_code_block and (not text or len(text.strip()) < 10):
+        return _CODE_FALLBACK.get(lang, _CODE_FALLBACK["en"])
+    return text
 
 
 # ────────────────────────────────────────────
