@@ -29,6 +29,16 @@ def _get_client():
         import importlib
         import rate_limit as rl_mod
         importlib.reload(rl_mod)
+        import routes.admin_helpers as admin_helpers_mod
+        importlib.reload(admin_helpers_mod)
+        import routes.admin_dashboard as admin_dashboard_mod
+        importlib.reload(admin_dashboard_mod)
+        import routes.admin_impressions as admin_impressions_mod
+        importlib.reload(admin_impressions_mod)
+        import routes.admin_sponsors as admin_sponsors_mod
+        importlib.reload(admin_sponsors_mod)
+        import routes.admin_monitoring as admin_monitoring_mod
+        importlib.reload(admin_monitoring_mod)
         import routes.admin as admin_mod
         importlib.reload(admin_mod)
         import main as main_mod
@@ -64,7 +74,7 @@ class TestContratsListPage:
 
     def test_contrats_list_renders(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             resp = client.get("/admin/contrats")
         assert resp.status_code == 200
@@ -73,7 +83,7 @@ class TestContratsListPage:
 
     def test_contrats_list_with_data(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[{
                 "id": 1, "numero": "CTR-202604-0001", "sponsor_id": 1,
                 "sponsor_nom": "Test Sponsor", "type_contrat": "exclusif",
@@ -91,7 +101,7 @@ class TestContratsListPage:
     def test_contrats_list_shows_v9_columns(self):
         """V9: list shows Code produit and Depassement columns."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[{
                 "id": 1, "numero": "CTR-202604-0001", "sponsor_id": 1,
                 "sponsor_nom": "S", "type_contrat": "exclusif",
@@ -112,7 +122,7 @@ class TestContratsCreate:
 
     def test_contrats_new_form_renders(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[
                 {"id": 1, "nom": "Sponsor A"},
             ])
@@ -123,7 +133,7 @@ class TestContratsCreate:
     def test_new_form_has_v9_fields(self):
         """V9 form has LOTOIA_EXCLU, engagement, pool, depassement."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
             resp = client.get("/admin/contrats/new")
         body = resp.text
@@ -135,7 +145,7 @@ class TestContratsCreate:
 
     def test_create_contrat_success(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0})
             mock_db.async_query = AsyncMock(return_value=None)
             mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "Sponsor A"}])
@@ -158,7 +168,7 @@ class TestContratsCreate:
     def test_create_contrat_6_mois_engagement(self):
         """V9: 6-month engagement stores engagement_mois=6."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0})
             mock_db.async_query = AsyncMock(return_value=None)
             mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
@@ -186,7 +196,7 @@ class TestContratsCreate:
 
     def test_create_contrat_missing_sponsor(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             resp = client.post("/admin/contrats/new", data={
                 "sponsor_id": "",
@@ -201,7 +211,7 @@ class TestContratsCreate:
     def test_create_contrat_product_codes_json_wrap(self):
         """V9: bare product code is wrapped in JSON array."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0})
             mock_db.async_query = AsyncMock(return_value=None)
             mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
@@ -223,7 +233,7 @@ class TestContratsCreate:
     def test_create_contrat_invalid_mode_depassement_defaults_cpc(self):
         """V9: invalid mode_depassement falls back to CPC."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0})
             mock_db.async_query = AsyncMock(return_value=None)
             mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
@@ -247,7 +257,7 @@ class TestContratsDetail:
 
     def test_contrat_detail_renders(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={
                 "id": 1, "numero": "CTR-202604-0001", "sponsor_id": 1,
                 "sponsor_nom": "Sponsor X", "type_contrat": "exclusif",
@@ -267,7 +277,7 @@ class TestContratsDetail:
     def test_contrat_detail_shows_v9_fields(self):
         """V9 detail shows engagement, pool, depassement."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={
                 "id": 1, "numero": "CTR-202604-0001", "sponsor_id": 1,
                 "sponsor_nom": "S", "type_contrat": "exclusif",
@@ -288,7 +298,7 @@ class TestContratsDetail:
 
     def test_contrat_detail_not_found_redirects(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value=None)
             resp = client.get("/admin/contrats/999", follow_redirects=False)
         assert resp.status_code == 302
@@ -299,7 +309,7 @@ class TestContratsUpdate:
 
     def test_update_contrat_success(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock(return_value=None)
             mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
             resp = client.post("/admin/contrats/1/edit", data={
@@ -319,7 +329,7 @@ class TestContratsUpdate:
     def test_update_contrat_v9_fields_in_sql(self):
         """V9 update sends engagement_mois, pool, depassement, plafond to DB."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock(return_value=None)
             mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
             resp = client.post("/admin/contrats/1/edit", data={
@@ -351,7 +361,7 @@ class TestContratsStatusWorkflow:
     @pytest.mark.parametrize("new_statut", ["brouillon", "envoye", "signe", "actif", "expire", "resilie"])
     def test_valid_status_transition(self, new_statut):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock(return_value=None)
             resp = client.post(f"/admin/contrats/1/status", data={
                 "statut": new_statut,
@@ -361,7 +371,7 @@ class TestContratsStatusWorkflow:
 
     def test_invalid_status_ignored(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock(return_value=None)
             resp = client.post("/admin/contrats/1/status", data={
                 "statut": "hacked_status",
@@ -375,7 +385,7 @@ class TestContratsPDF:
 
     def test_contrat_pdf_returns_pdf(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(side_effect=[
                 # First call: contrat data
                 {
@@ -402,7 +412,7 @@ class TestContratsPDF:
 
     def test_contrat_pdf_not_found_redirects(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value=None)
             resp = client.get("/admin/contrats/999/pdf", follow_redirects=False)
         assert resp.status_code == 302
@@ -422,7 +432,7 @@ class TestContratsEditForm:
 
     def test_edit_form_renders(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={
                 "id": 1, "numero": "CTR-202604-0001", "sponsor_id": 1,
                 "type_contrat": "exclusif", "product_codes": '["LOTOIA_EXCLU"]',
@@ -441,7 +451,7 @@ class TestContratsEditForm:
 
     def test_edit_form_not_found_redirects(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value=None)
             resp = client.get("/admin/contrats/9999/edit", follow_redirects=False)
         assert resp.status_code == 302
@@ -453,7 +463,7 @@ class TestContratsValidation:
 
     def test_create_contrat_missing_dates(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0})
             mock_db.async_query = AsyncMock()
             mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])

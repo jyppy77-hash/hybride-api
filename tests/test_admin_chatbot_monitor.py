@@ -21,6 +21,16 @@ _db_env = patch.dict(os.environ, {
 def _get_client():
     with _db_env, _static_patch, _static_call:
         import importlib
+        import routes.admin_helpers as admin_helpers_mod
+        importlib.reload(admin_helpers_mod)
+        import routes.admin_dashboard as admin_dashboard_mod
+        importlib.reload(admin_dashboard_mod)
+        import routes.admin_impressions as admin_impressions_mod
+        importlib.reload(admin_impressions_mod)
+        import routes.admin_sponsors as admin_sponsors_mod
+        importlib.reload(admin_sponsors_mod)
+        import routes.admin_monitoring as admin_monitoring_mod
+        importlib.reload(admin_monitoring_mod)
         import routes.admin as admin_mod
         importlib.reload(admin_mod)
         import main as main_mod
@@ -79,7 +89,7 @@ class TestChatbotMonitorAPI:
 
     def test_api_chatbot_log_returns_json(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={
                 "total": Decimal(5), "rejected": Decimal(1),
                 "sql_total": Decimal(3), "errors": Decimal(0),
@@ -97,7 +107,7 @@ class TestChatbotMonitorAPI:
 
     def test_api_chatbot_log_with_filters(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={
                 "total": Decimal(2), "rejected": Decimal(0),
                 "sql_total": Decimal(0), "errors": Decimal(0),
@@ -112,7 +122,7 @@ class TestChatbotMonitorAPI:
 
     def test_api_chatbot_log_kpi_calculations(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={
                 "total": Decimal(100), "rejected": Decimal(5),
                 "sql_total": Decimal(20), "errors": Decimal(3),
@@ -152,7 +162,7 @@ class TestChatbotMonitorAPI:
             "gemini_tokens_out": 80,
             "session_hash": "abc123def456xyz",
         }
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={
                 "total": Decimal(1), "rejected": Decimal(0),
                 "sql_total": Decimal(1), "errors": Decimal(0),
@@ -173,7 +183,7 @@ class TestChatbotMonitorAPI:
 
     def test_api_chatbot_log_db_error_returns_empty(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(side_effect=Exception("DB down"))
             mock_db.async_fetchall = AsyncMock(side_effect=Exception("DB down"))
             resp = client.get("/admin/api/chatbot-log")
@@ -203,7 +213,7 @@ class TestChatbotMonitorExport:
             "gemini_tokens_in": 100, "gemini_tokens_out": 50,
             "ip_hash": "a1b2c3d4e5f6", "session_hash": "s1s2s3s4s5s6",
         }
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[mock_row])
             resp = client.get("/admin/export/chatbot-log/csv?period=24h")
         assert resp.status_code == 200
@@ -223,7 +233,7 @@ class TestChatbotMonitorExport:
 
     def test_export_csv_with_filters(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             resp = client.get("/admin/export/chatbot-log/csv?period=7d&module=em&phase=SQL")
         assert resp.status_code == 200

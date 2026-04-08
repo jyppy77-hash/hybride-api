@@ -524,8 +524,9 @@ class TestCommentFeature:
         import routes.admin as admin_mod
         admin_mod.db_cloudsql = mock_db
 
+        import routes.admin_helpers as admin_helpers_mod
         resp = client.get("/admin/api/votes?period=all",
-                          cookies={"lotoia_admin_token": admin_mod._ADMIN_TOKEN or "fake"})
+                          cookies={"lotoia_admin_token": admin_helpers_mod.ADMIN_TOKEN or "fake"})
 
         # If no admin token configured, we get 401 or 403 — that's expected in test env
         if resp.status_code == 200:

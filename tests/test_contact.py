@@ -33,10 +33,11 @@ def _get_client_and_mock():
         mock_db = MagicMock()
         import routes.api_contact as contact_mod
         contact_mod.db_cloudsql = mock_db
-        import routes.admin as admin_mod
-        admin_mod.db_cloudsql = mock_db
+        import routes.admin_monitoring as admin_monitoring_mod
+        admin_monitoring_mod.db_cloudsql = mock_db
+        import routes.admin_helpers as admin_helpers_mod
         client = TestClient(main_mod.app, raise_server_exceptions=False)
-        return client, mock_db, admin_mod
+        return client, mock_db, admin_helpers_mod
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -191,7 +192,7 @@ class TestAdminMessages:
 
     def test_admin_list_messages(self):
         """API admin retourne les messages (si authentifie)."""
-        client, mock_db, admin_mod = _get_client_and_mock()
+        client, mock_db, admin_helpers_mod = _get_client_and_mock()
 
         async def fake_fetchone(sql, params=None):
             return {"total": 2, "unread": 1, "today": 1}
@@ -206,8 +207,8 @@ class TestAdminMessages:
         mock_db.async_fetchall = fake_fetchall
 
         cookies = {}
-        if admin_mod._ADMIN_TOKEN:
-            cookies["lotoia_admin_token"] = admin_mod._ADMIN_TOKEN
+        if admin_helpers_mod.ADMIN_TOKEN:
+            cookies["lotoia_admin_token"] = admin_helpers_mod.ADMIN_TOKEN
 
         resp = client.get("/admin/api/messages", cookies=cookies)
         if resp.status_code == 200:
@@ -218,7 +219,7 @@ class TestAdminMessages:
 
     def test_admin_filter_sujet(self):
         """Filtre par sujet fonctionne."""
-        client, mock_db, admin_mod = _get_client_and_mock()
+        client, mock_db, admin_helpers_mod = _get_client_and_mock()
 
         captured_params = []
 
@@ -233,8 +234,8 @@ class TestAdminMessages:
         mock_db.async_fetchall = fake_fetchall
 
         cookies = {}
-        if admin_mod._ADMIN_TOKEN:
-            cookies["lotoia_admin_token"] = admin_mod._ADMIN_TOKEN
+        if admin_helpers_mod.ADMIN_TOKEN:
+            cookies["lotoia_admin_token"] = admin_helpers_mod.ADMIN_TOKEN
 
         resp = client.get("/admin/api/messages?sujet=bug", cookies=cookies)
         if resp.status_code == 200:
@@ -243,7 +244,7 @@ class TestAdminMessages:
 
     def test_admin_filter_lu(self):
         """Filtre lu/non-lu fonctionne."""
-        client, mock_db, admin_mod = _get_client_and_mock()
+        client, mock_db, admin_helpers_mod = _get_client_and_mock()
 
         async def fake_fetchone(sql, params=None):
             return {"total": 0, "unread": 0, "today": 0}
@@ -254,15 +255,15 @@ class TestAdminMessages:
         mock_db.async_fetchall = fake_fetchall
 
         cookies = {}
-        if admin_mod._ADMIN_TOKEN:
-            cookies["lotoia_admin_token"] = admin_mod._ADMIN_TOKEN
+        if admin_helpers_mod.ADMIN_TOKEN:
+            cookies["lotoia_admin_token"] = admin_helpers_mod.ADMIN_TOKEN
 
         resp = client.get("/admin/api/messages?lu=0", cookies=cookies)
         assert resp.status_code in (200, 401, 403)
 
     def test_admin_mark_read(self):
         """POST mark-read → lu = 1."""
-        client, mock_db, admin_mod = _get_client_and_mock()
+        client, mock_db, admin_helpers_mod = _get_client_and_mock()
 
         captured_sql = []
 
@@ -272,8 +273,8 @@ class TestAdminMessages:
         mock_db.async_query = capture_query
 
         cookies = {}
-        if admin_mod._ADMIN_TOKEN:
-            cookies["lotoia_admin_token"] = admin_mod._ADMIN_TOKEN
+        if admin_helpers_mod.ADMIN_TOKEN:
+            cookies["lotoia_admin_token"] = admin_helpers_mod.ADMIN_TOKEN
 
         resp = client.post("/admin/api/messages/1/read", cookies=cookies)
         if resp.status_code == 200:
@@ -281,15 +282,15 @@ class TestAdminMessages:
 
     def test_admin_count_unread(self):
         """Compteur non-lus correct."""
-        client, mock_db, admin_mod = _get_client_and_mock()
+        client, mock_db, admin_helpers_mod = _get_client_and_mock()
 
         async def fake_fetchone(sql, params=None):
             return {"cnt": 3}
         mock_db.async_fetchone = fake_fetchone
 
         cookies = {}
-        if admin_mod._ADMIN_TOKEN:
-            cookies["lotoia_admin_token"] = admin_mod._ADMIN_TOKEN
+        if admin_helpers_mod.ADMIN_TOKEN:
+            cookies["lotoia_admin_token"] = admin_helpers_mod.ADMIN_TOKEN
 
         resp = client.get("/admin/api/messages/count-unread", cookies=cookies)
         if resp.status_code == 200:

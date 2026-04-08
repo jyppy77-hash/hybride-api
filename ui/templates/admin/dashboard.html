@@ -3,10 +3,18 @@
 
 {% block content %}
     <div class="dashboard-header-row">
-        <h2>Sponsor — 24 dernières heures</h2>
-        <button class="btn-hard-refresh" id="btn-hard-refresh" title="Hard Refresh (bypass cache)">
-            <span class="hard-refresh-icon">&#x21BB;</span> Refresh
-        </button>
+        <h2>Sponsor — {{ period_label }}</h2>
+        <div style="display:flex;align-items:center;gap:12px;">
+            <select id="period-select" style="background:var(--bg-input);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-xs);padding:.4rem .6rem;font-size:.8rem;font-family:inherit;" onchange="window.location='/admin?period='+this.value">
+                <option value="today" {% if period == 'today' %}selected{% endif %}>Aujourd'hui</option>
+                <option value="24h" {% if period == '24h' %}selected{% endif %}>24 dernieres heures</option>
+                <option value="week" {% if period == 'week' %}selected{% endif %}>7 derniers jours</option>
+                <option value="month" {% if period == 'month' %}selected{% endif %}>30 derniers jours</option>
+            </select>
+            <button class="btn-hard-refresh" id="btn-hard-refresh" title="Hard Refresh (bypass cache)">
+                <span class="hard-refresh-icon">&#x21BB;</span> Refresh
+            </button>
+        </div>
     </div>
     <div class="kpi-grid">
         <div class="kpi-card">

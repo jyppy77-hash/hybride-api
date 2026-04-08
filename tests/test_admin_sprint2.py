@@ -29,6 +29,16 @@ def _get_client():
         import importlib
         import rate_limit as rl_mod
         importlib.reload(rl_mod)
+        import routes.admin_helpers as admin_helpers_mod
+        importlib.reload(admin_helpers_mod)
+        import routes.admin_dashboard as admin_dashboard_mod
+        importlib.reload(admin_dashboard_mod)
+        import routes.admin_impressions as admin_impressions_mod
+        importlib.reload(admin_impressions_mod)
+        import routes.admin_sponsors as admin_sponsors_mod
+        importlib.reload(admin_sponsors_mod)
+        import routes.admin_monitoring as admin_monitoring_mod
+        importlib.reload(admin_monitoring_mod)
         import routes.admin as admin_mod
         importlib.reload(admin_mod)
         import main as main_mod
@@ -57,7 +67,7 @@ class TestA05RatingsDateFilter:
                 return {"review_count": 5, "avg_rating": 4.0}
             return {"cnt": 0}
 
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_dashboard.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             mock_db.async_fetchone = AsyncMock(side_effect=mock_fetchone)
             resp = client.get("/admin")
@@ -88,7 +98,7 @@ class TestA06EventTypeDateFilter:
                 "type_count": 0, "unique_visitors": 0,
             }
 
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
             mock_db.async_fetchone = AsyncMock(side_effect=mock_fetchone)
             resp = client.get("/admin/api/realtime?period=24h")
@@ -133,7 +143,7 @@ class TestA07FactureGroupBy:
                 return {"cnt": 0}
             return None
 
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
             mock_db.async_fetchone = AsyncMock(side_effect=mock_fetchone)
             mock_db.async_query = AsyncMock()
@@ -160,7 +170,7 @@ class TestA08AuditLogging:
 
     def test_config_save_logs_audit(self, capsys):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
             mock_db.async_fetchone = AsyncMock(return_value={
                 "raison_sociale": "Test", "siret": "", "adresse": "",
@@ -180,7 +190,7 @@ class TestA08AuditLogging:
 
     def test_tarif_mode_logs_audit(self, capsys):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
             resp = client.post("/admin/api/tarifs/mode", json={"mode": "SASU"})
         assert resp.status_code == 200
@@ -191,7 +201,7 @@ class TestA08AuditLogging:
 
     def test_tarif_update_logs_audit(self, capsys):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
             resp = client.put("/admin/api/tarifs/LOTO_FR_A", json={
                 "tarif_mensuel": 399.00,
@@ -212,7 +222,7 @@ class TestTarifsV9:
 
     def test_tarifs_page_renders_v9(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             resp = client.get("/admin/tarifs")
         assert resp.status_code == 200
@@ -226,7 +236,7 @@ class TestTarifsV9:
     def test_tarifs_page_no_old_toggle(self):
         """V9 removed EI/SASU toggle and 14-code grid."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             resp = client.get("/admin/tarifs")
         body = resp.text
@@ -237,7 +247,7 @@ class TestTarifsV9:
     def test_tarifs_paliers_v9_data(self):
         """V9 paliers use new pricing (650/815/1020/Sur mesure)."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             resp = client.get("/admin/tarifs")
         body = resp.text
@@ -248,7 +258,7 @@ class TestTarifsV9:
     def test_tarifs_api_returns_paliers_v9(self):
         """GET /admin/api/tarifs returns V9 paliers."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[
                 {"config_key": "billing_mode", "config_value": "EI"},
             ])
@@ -273,7 +283,7 @@ class TestConfigEI:
 
     def test_config_page_renders_forme_select(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={
                 "raison_sociale": "EmovisIA", "siret": "123", "adresse": "",
                 "code_postal": "", "ville": "", "pays": "France",
@@ -292,7 +302,7 @@ class TestConfigEI:
     def test_config_tva_default_zero_ei(self):
         """EI: taux_tva default should be 0 (franchise en base)."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={
                 "raison_sociale": "EmovisIA", "siret": "123", "adresse": "",
                 "code_postal": "", "ville": "", "pays": "France",

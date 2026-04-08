@@ -505,6 +505,16 @@ def _get_client():
         import importlib
         import rate_limit as rl_mod
         importlib.reload(rl_mod)
+        import routes.admin_helpers as admin_helpers_mod
+        importlib.reload(admin_helpers_mod)
+        import routes.admin_dashboard as admin_dashboard_mod
+        importlib.reload(admin_dashboard_mod)
+        import routes.admin_impressions as admin_impressions_mod
+        importlib.reload(admin_impressions_mod)
+        import routes.admin_sponsors as admin_sponsors_mod
+        importlib.reload(admin_sponsors_mod)
+        import routes.admin_monitoring as admin_monitoring_mod
+        importlib.reload(admin_monitoring_mod)
         import routes.admin as admin_mod
         importlib.reload(admin_mod)
         import main as main_mod

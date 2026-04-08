@@ -30,6 +30,16 @@ def _get_client():
         import importlib
         import rate_limit as rl_mod
         importlib.reload(rl_mod)
+        import routes.admin_helpers as admin_helpers_mod
+        importlib.reload(admin_helpers_mod)
+        import routes.admin_dashboard as admin_dashboard_mod
+        importlib.reload(admin_dashboard_mod)
+        import routes.admin_impressions as admin_impressions_mod
+        importlib.reload(admin_impressions_mod)
+        import routes.admin_sponsors as admin_sponsors_mod
+        importlib.reload(admin_sponsors_mod)
+        import routes.admin_monitoring as admin_monitoring_mod
+        importlib.reload(admin_monitoring_mod)
         import routes.admin as admin_mod
         importlib.reload(admin_mod)
         import main as main_mod
@@ -99,7 +109,7 @@ class TestAdminLoginRateLimit:
 
     def test_admin_login_rate_limit_is_3_per_minute(self):
         """Le decorateur slowapi sur POST /admin/login est 3/minute."""
-        import routes.admin as mod
+        import routes.admin_dashboard as mod
         src = open(mod.__file__, encoding="utf-8").read()
         # Doit contenir 3/minute, pas 5/minute
         assert '@limiter.limit("3/minute")' in src
@@ -151,8 +161,8 @@ class TestAdminCookieMaxAge:
         assert "Max-Age=604800" not in cookie_header
 
     def test_source_code_max_age_value(self):
-        """Le code source admin.py contient max_age=86400, pas 86400 * 7."""
-        import routes.admin as mod
+        """Le code source admin_dashboard.py contient max_age=86400, pas 86400 * 7."""
+        import routes.admin_dashboard as mod
         src = open(mod.__file__, encoding="utf-8").read()
         assert "max_age=86400," in src
         assert "max_age=86400 * 7" not in src

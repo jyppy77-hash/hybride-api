@@ -27,6 +27,16 @@ def _get_client():
         import importlib
         import rate_limit as rl_mod
         importlib.reload(rl_mod)
+        import routes.admin_helpers as admin_helpers_mod
+        importlib.reload(admin_helpers_mod)
+        import routes.admin_dashboard as admin_dashboard_mod
+        importlib.reload(admin_dashboard_mod)
+        import routes.admin_impressions as admin_impressions_mod
+        importlib.reload(admin_impressions_mod)
+        import routes.admin_sponsors as admin_sponsors_mod
+        importlib.reload(admin_sponsors_mod)
+        import routes.admin_monitoring as admin_monitoring_mod
+        importlib.reload(admin_monitoring_mod)
         import routes.admin as admin_mod
         importlib.reload(admin_mod)
         import main as main_mod
@@ -52,7 +62,7 @@ class TestMessageSoftDelete:
 
     def test_delete_existing_message_returns_ok(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={"id": 42})
             mock_db.async_query = AsyncMock()
             resp = client.delete("/admin/api/messages/42")
@@ -61,7 +71,7 @@ class TestMessageSoftDelete:
 
     def test_delete_nonexistent_message_returns_404(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value=None)
             resp = client.delete("/admin/api/messages/999")
         assert resp.status_code == 404
@@ -75,7 +85,7 @@ class TestMessageSoftDelete:
     def test_delete_sets_deleted_flag(self):
         """Verify the UPDATE query sets deleted=1."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={"id": 7})
             mock_db.async_query = AsyncMock()
             client.delete("/admin/api/messages/7")
@@ -92,7 +102,7 @@ class TestMessageListingExcludesDeleted:
         """SQL queries include deleted = 0 condition."""
         client = _authed_client()
         captured_sqls = []
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             async def capture_fetchone(sql, params=None):
                 captured_sqls.append(sql)
                 return {"total": 0, "unread": 0, "today": 0}
@@ -110,7 +120,7 @@ class TestMessageListingExcludesDeleted:
         """count-unread endpoint also filters deleted=0."""
         client = _authed_client()
         captured_sql = []
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             async def capture_fetchone(sql, params=None):
                 captured_sql.append(sql)
                 return {"cnt": 3}
@@ -122,7 +132,7 @@ class TestMessageListingExcludesDeleted:
     def test_counters_reflect_non_deleted_only(self):
         """Summary KPI returns counts for non-deleted messages only."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={"total": 5, "unread": 2, "today": 1})
             mock_db.async_fetchall = AsyncMock(return_value=[])
             resp = client.get("/admin/api/messages")

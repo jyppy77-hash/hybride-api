@@ -31,6 +31,16 @@ def _get_client():
         import importlib
         import rate_limit as rl_mod
         importlib.reload(rl_mod)
+        import routes.admin_helpers as admin_helpers_mod
+        importlib.reload(admin_helpers_mod)
+        import routes.admin_dashboard as admin_dashboard_mod
+        importlib.reload(admin_dashboard_mod)
+        import routes.admin_impressions as admin_impressions_mod
+        importlib.reload(admin_impressions_mod)
+        import routes.admin_sponsors as admin_sponsors_mod
+        importlib.reload(admin_sponsors_mod)
+        import routes.admin_monitoring as admin_monitoring_mod
+        importlib.reload(admin_monitoring_mod)
         import routes.admin as admin_mod
         importlib.reload(admin_mod)
         import main as main_mod
@@ -80,7 +90,7 @@ class TestE2EPipelineImpressionDashboard:
             assert "LOTO_FR_A" in insert_args[1]
 
         # Step 2: Query dashboard KPI
-        with patch("routes.admin.db_cloudsql") as mock_admin_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_admin_db:
             mock_admin_db.async_fetchall = AsyncMock(side_effect=[
                 # KPI query → 1 impression
                 [{"event_type": "sponsor-popup-shown", "cnt": 1, "sessions": 1}],
@@ -111,7 +121,7 @@ class TestE2EPipelineImpressionFacture:
         """Create a facture → verify montant_ht is calculated from impression counts."""
         client = _authed_client()
 
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             # Sponsor list for form
             mock_db.async_fetchall = AsyncMock(side_effect=[
                 [{"id": 1, "nom": "Test Corp"}],  # sponsors list
@@ -252,7 +262,7 @@ class TestE2EPipelineContratSponsor:
         client = _authed_client()
 
         # Step 1: Create sponsor
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock(return_value=None)
             mock_db.async_fetchone = AsyncMock(return_value={"id": 42})
             mock_db.async_fetchall = AsyncMock(return_value=[])
@@ -264,7 +274,7 @@ class TestE2EPipelineContratSponsor:
             assert resp.status_code == 302
 
         # Step 2: Create contrat
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0})
             mock_db.async_query = AsyncMock(return_value=None)
             mock_db.async_fetchall = AsyncMock(return_value=[{"id": 42, "nom": "E2E Test Sponsor"}])
@@ -280,7 +290,7 @@ class TestE2EPipelineContratSponsor:
 
         # Step 3: Status transitions (brouillon → envoye → signe → actif)
         for statut in ["envoye", "signe", "actif"]:
-            with patch("routes.admin.db_cloudsql") as mock_db:
+            with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
                 mock_db.async_query = AsyncMock(return_value=None)
                 resp = client.post("/admin/contrats/1/status", data={
                     "statut": statut,
@@ -289,7 +299,7 @@ class TestE2EPipelineContratSponsor:
                 mock_db.async_query.assert_called_once()
 
         # Step 4: Generate PDF
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(side_effect=[
                 # contrat data
                 {
@@ -317,7 +327,7 @@ class TestE2EPipelineContratSponsor:
     def test_contrat_list_shows_entries(self):
         """Contrats list endpoint returns data."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[
                 {
                     "id": 1, "numero": "CTR-202603-0001", "sponsor_id": 42,

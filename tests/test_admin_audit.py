@@ -29,6 +29,16 @@ def _get_client():
         import importlib
         import rate_limit as rl_mod
         importlib.reload(rl_mod)
+        import routes.admin_helpers as admin_helpers_mod
+        importlib.reload(admin_helpers_mod)
+        import routes.admin_dashboard as admin_dashboard_mod
+        importlib.reload(admin_dashboard_mod)
+        import routes.admin_impressions as admin_impressions_mod
+        importlib.reload(admin_impressions_mod)
+        import routes.admin_sponsors as admin_sponsors_mod
+        importlib.reload(admin_sponsors_mod)
+        import routes.admin_monitoring as admin_monitoring_mod
+        importlib.reload(admin_monitoring_mod)
         import routes.admin as admin_mod
         importlib.reload(admin_mod)
         import main as main_mod
@@ -49,7 +59,7 @@ class TestAdminAuditBan:
 
     def test_ban_ip_logs_audit(self, capsys):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
             resp = client.post(
                 "/admin/api/ban",
@@ -63,7 +73,7 @@ class TestAdminAuditBan:
 
     def test_unban_ip_logs_audit(self, capsys):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
             resp = client.post(
                 "/admin/api/unban",
@@ -80,7 +90,7 @@ class TestAdminAuditSponsor:
 
     def test_sponsor_create_logs_audit(self, capsys):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
             mock_db.async_fetchone = AsyncMock(return_value={"id": 42})
             resp = client.post(

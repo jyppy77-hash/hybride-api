@@ -30,6 +30,16 @@ def _get_client():
         import importlib
         import rate_limit as rl_mod
         importlib.reload(rl_mod)
+        import routes.admin_helpers as admin_helpers_mod
+        importlib.reload(admin_helpers_mod)
+        import routes.admin_dashboard as admin_dashboard_mod
+        importlib.reload(admin_dashboard_mod)
+        import routes.admin_impressions as admin_impressions_mod
+        importlib.reload(admin_impressions_mod)
+        import routes.admin_sponsors as admin_sponsors_mod
+        importlib.reload(admin_sponsors_mod)
+        import routes.admin_monitoring as admin_monitoring_mod
+        importlib.reload(admin_monitoring_mod)
         import routes.admin as admin_mod
         importlib.reload(admin_mod)
         import main as main_mod
@@ -80,7 +90,7 @@ class TestAdminAuth:
 
     def test_dashboard_accessible_with_valid_cookie(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_dashboard.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0, "review_count": 0, "avg_rating": 0})
             resp = client.get("/admin")
         assert resp.status_code == 200
@@ -130,7 +140,7 @@ class TestAdminDashboard:
                 return {"review_count": 10, "avg_rating": 4.5}
             return None
 
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_dashboard.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
             mock_db.async_fetchone = AsyncMock(side_effect=mock_fetchone)
             resp = client.get("/admin")
@@ -160,7 +170,7 @@ class TestAdminDashboard:
                 return {"review_count": 0, "avg_rating": 0}
             return {"active": 0, "hits": 0, "cnt": 0}
 
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_dashboard.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
             mock_db.async_fetchone = AsyncMock(side_effect=mock_fetchone)
             resp = client.get("/admin")
@@ -173,12 +183,12 @@ class TestAdminDashboard:
         assert ">48<" in body  # total_impressions in KPI card
         assert ">30<" in body  # popups only
         # Clicks (5) should NOT be in total impressions
-        assert "24 derni" in body  # section title "24 dernières heures"
+        assert "Aujourd" in body  # section title default "Aujourd'hui"
 
     def test_dashboard_handles_db_error(self):
         client = _authed_client()
 
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_dashboard.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=Exception("DB down"))
             mock_db.async_fetchone = AsyncMock(side_effect=Exception("DB down"))
             resp = client.get("/admin")
@@ -188,7 +198,7 @@ class TestAdminDashboard:
 
     def test_dashboard_has_active_nav_links(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_dashboard.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0, "review_count": 0, "avg_rating": 0})
             resp = client.get("/admin")
         assert '/admin/impressions' in resp.text
@@ -197,6 +207,49 @@ class TestAdminDashboard:
         assert '/admin/factures' in resp.text
         assert '/admin/tarifs' in resp.text
         assert '/admin/config' in resp.text
+
+    def test_dashboard_period_default_today(self):
+        """V88: default period is today (midnight Paris)."""
+        client = _authed_client()
+        with patch("routes.admin_dashboard.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0, "review_count": 0, "avg_rating": 0, "active": 0, "hits": 0})
+            resp = client.get("/admin")
+        assert resp.status_code == 200
+        assert "Aujourd" in resp.text
+
+    def test_dashboard_period_week(self):
+        """V88: ?period=week filters sponsor KPIs over 7 days."""
+        client = _authed_client()
+
+        captured_sql = []
+
+        async def mock_fetchall(sql, params=None):
+            captured_sql.append(sql)
+            return []
+
+        with patch("routes.admin_dashboard.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0, "review_count": 0, "avg_rating": 0, "active": 0, "hits": 0})
+            resp = client.get("/admin?period=week")
+        assert resp.status_code == 200
+        assert "7 derniers jours" in resp.text
+        # Sponsor query should use NOW() - INTERVAL 7 DAY
+        assert any("7 DAY" in sql for sql in captured_sql)
+
+    def test_dashboard_period_dropdown_present(self):
+        """V88: dropdown with 4 period options."""
+        client = _authed_client()
+        with patch("routes.admin_dashboard.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0, "review_count": 0, "avg_rating": 0, "active": 0, "hits": 0})
+            resp = client.get("/admin")
+        assert resp.status_code == 200
+        assert 'id="period-select"' in resp.text
+        assert 'value="today"' in resp.text
+        assert 'value="24h"' in resp.text
+        assert 'value="week"' in resp.text
+        assert 'value="month"' in resp.text
 
 
 class TestAdminPages:
@@ -238,7 +291,7 @@ class TestAdminAPIImpressions:
 
     def test_api_impressions_returns_json(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
             resp = client.get("/admin/api/impressions?period=7d")
@@ -253,7 +306,7 @@ class TestAdminAPIImpressions:
 
     def test_api_impressions_with_filters(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
             resp = client.get("/admin/api/impressions?period=today&event_type=sponsor-click&lang=fr&device=mobile")
@@ -264,7 +317,7 @@ class TestAdminAPIImpressions:
 
     def test_api_impressions_custom_period(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
             resp = client.get("/admin/api/impressions?period=custom&date_start=2026-03-01&date_end=2026-03-05")
@@ -273,7 +326,7 @@ class TestAdminAPIImpressions:
 
     def test_api_impressions_invalid_filter_ignored(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
             resp = client.get("/admin/api/impressions?event_type=hacked&lang=xx&device=hacked")
@@ -282,7 +335,7 @@ class TestAdminAPIImpressions:
 
     def test_api_impressions_db_error(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=Exception("DB down"))
             mock_db.async_fetchone = AsyncMock(side_effect=Exception("DB down"))
             resp = client.get("/admin/api/impressions?period=7d")
@@ -311,7 +364,7 @@ class TestAdminAPIImpressions:
                 ]
             return []
 
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
             mock_db.async_fetchone = AsyncMock(return_value={"s": 20})
             resp = client.get("/admin/api/impressions?period=7d")
@@ -388,33 +441,33 @@ class TestPeriodHelper:
     """Test _period_to_dates helper."""
 
     def test_today(self):
-        from routes.admin import _period_to_dates
+        from routes.admin_helpers import period_to_dates as _period_to_dates
         from datetime import date, timedelta
         ds, de = _period_to_dates("today")
         assert ds == date.today()
         assert de == date.today() + timedelta(days=1)
 
     def test_7d(self):
-        from routes.admin import _period_to_dates
+        from routes.admin_helpers import period_to_dates as _period_to_dates
         from datetime import date, timedelta
         ds, de = _period_to_dates("7d")
         assert ds == date.today() - timedelta(days=6)
 
     def test_custom_valid(self):
-        from routes.admin import _period_to_dates
+        from routes.admin_helpers import period_to_dates as _period_to_dates
         from datetime import date, timedelta
         ds, de = _period_to_dates("custom", "2026-01-01", "2026-01-31")
         assert ds == date(2026, 1, 1)
         assert de == date(2026, 2, 1)
 
     def test_custom_invalid_falls_back(self):
-        from routes.admin import _period_to_dates
+        from routes.admin_helpers import period_to_dates as _period_to_dates
         from datetime import date
         ds, de = _period_to_dates("custom", "bad", "bad")
         assert ds == date.today()
 
     def test_all(self):
-        from routes.admin import _period_to_dates
+        from routes.admin_helpers import period_to_dates as _period_to_dates
         from datetime import date
         ds, de = _period_to_dates("all")
         assert ds == date(2020, 1, 1)
@@ -430,7 +483,7 @@ class TestAdminAPIImpressionsSponsor:
     def test_impressions_api_returns_by_sponsor(self):
         """by_sponsor bloc present dans la reponse JSON."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
             resp = client.get("/admin/api/impressions?period=7d")
@@ -448,7 +501,7 @@ class TestAdminAPIImpressionsSponsor:
             calls.append((sql, params))
             return []
 
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
             mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
             resp = client.get("/admin/api/impressions?period=7d&sponsor_id=LOTO_FR_A")
@@ -469,7 +522,7 @@ class TestAdminAPIImpressionsSponsor:
                          "page": "/", "lang": "fr", "device": "desktop", "country": "FR", "cnt": 10}]
             return []
 
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
             mock_db.async_fetchone = AsyncMock(return_value={"s": 5})
             resp = client.get("/admin/api/impressions?period=7d")
@@ -490,7 +543,7 @@ class TestAdminAPIImpressionsSponsor:
                 ]
             return []
 
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
             mock_db.async_fetchone = AsyncMock(return_value={"s": 35})
             resp = client.get("/admin/api/impressions?period=7d")
@@ -508,7 +561,7 @@ class TestAdminAPIImpressionsSponsor:
     def test_impressions_api_unknown_sponsor_id_returns_empty(self):
         """sponsor_id=FAKE_CODE (invalide) est ignore, pas de filtre applique."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
             resp = client.get("/admin/api/impressions?sponsor_id=FAKE_CODE")
@@ -552,7 +605,7 @@ class TestAdminTarifFilter:
             calls.append((sql, params))
             return []
 
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
             mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
             resp = client.get("/admin/api/impressions?period=7d&tarif=A")
@@ -571,7 +624,7 @@ class TestAdminTarifFilter:
             calls.append((sql, params))
             return []
 
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
             mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
             resp = client.get("/admin/api/impressions?period=7d&tarif=B")
@@ -591,7 +644,7 @@ class TestAdminTarifFilter:
             return [{"day": "2026-03-01", "sponsor_id": "EM_FR_A", "event_type": "sponsor-popup-shown",
                      "page": "/", "lang": "fr", "device": "mobile", "country": "FR", "cnt": 3}]
 
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
             resp = client.get("/admin/api/impressions/csv?period=7d&tarif=A")
 
@@ -611,7 +664,7 @@ class TestAdminTarifFilter:
             calls.append((sql, params))
             return []
 
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
             mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
             resp = client.get("/admin/api/sponsor-report/pdf?period=7d&tarif=B")
@@ -633,7 +686,7 @@ class TestExportCSV:
 
     def test_csv_impressions_returns_csv(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[
                 {"day": "2026-03-01", "sponsor_id": "EM_FR_A", "event_type": "sponsor-popup-shown", "page": "/",
                  "lang": "fr", "device": "mobile", "country": "FR", "cnt": 5}
@@ -666,7 +719,7 @@ class TestExportCSV:
 
     def test_csv_impressions_db_error_returns_empty(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=Exception("DB down"))
             resp = client.get("/admin/api/impressions/csv?period=7d")
 
@@ -684,7 +737,7 @@ class TestExportPDF:
 
     def test_pdf_report_returns_pdf(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
             resp = client.get("/admin/api/sponsor-report/pdf?period=7d")
@@ -703,7 +756,7 @@ class TestExportPDF:
             {"event_type": "sponsor-click", "cnt": 14},
             {"event_type": "sponsor-video-played", "cnt": 172},
         ]
-        with patch("routes.admin.db_cloudsql") as mock_db, \
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db, \
              patch("services.admin_pdf.generate_sponsor_report_pdf") as mock_pdf:
             mock_db.async_fetchall = AsyncMock(side_effect=[mock_rows, []])
             mock_db.async_fetchone = AsyncMock(return_value={"s": 554})
@@ -734,7 +787,7 @@ class TestSponsors:
 
     def test_sponsors_list_renders(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             resp = client.get("/admin/sponsors")
         assert resp.status_code == 200
@@ -754,7 +807,7 @@ class TestSponsors:
 
     def test_sponsor_create_success(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
             mock_db.async_fetchone = AsyncMock(return_value={"id": 1})
             resp = client.post("/admin/sponsors/new", data={
@@ -768,7 +821,7 @@ class TestSponsors:
 
     def test_sponsor_edit_form_renders(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={
                 "id": 1, "nom": "Test", "contact_nom": "", "contact_email": "",
                 "contact_tel": "", "adresse": "", "siret": "", "notes": "", "actif": 1,
@@ -780,14 +833,14 @@ class TestSponsors:
 
     def test_sponsor_edit_not_found_redirects(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value=None)
             resp = client.get("/admin/sponsors/999/edit", follow_redirects=False)
         assert resp.status_code == 302
 
     def test_sponsor_update_success(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
             mock_db.async_fetchall = AsyncMock(return_value=[])
             resp = client.post("/admin/sponsors/1/edit", data={
@@ -811,7 +864,7 @@ class TestFactures:
 
     def test_factures_list_renders(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             resp = client.get("/admin/factures")
         assert resp.status_code == 200
@@ -819,7 +872,7 @@ class TestFactures:
 
     def test_facture_new_form_renders(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "Sponsor1"}])
             resp = client.get("/admin/factures/new")
         assert resp.status_code == 200
@@ -827,14 +880,14 @@ class TestFactures:
 
     def test_facture_create_missing_fields(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             resp = client.post("/admin/factures/new", data={"sponsor_id": "", "periode_debut": "", "periode_fin": ""})
         assert resp.status_code == 400
 
     def test_facture_create_success(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[
                 [{"id": 1, "nom": "S1"}],  # sponsors list
                 [{"id": 1, "event_type": "sponsor-popup-shown", "prix_unitaire": 0.01, "description": "Impression"}],  # grille
@@ -855,7 +908,7 @@ class TestFactures:
 
     def test_facture_detail_renders(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={
                 "id": 1, "numero": "FIA-202603-0001", "sponsor_id": 1,
                 "sponsor_nom": "TestSponsor", "date_emission": "2026-03-01",
@@ -870,21 +923,21 @@ class TestFactures:
 
     def test_facture_detail_not_found(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value=None)
             resp = client.get("/admin/factures/999", follow_redirects=False)
         assert resp.status_code == 302
 
     def test_facture_status_update(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
             resp = client.post("/admin/factures/1/status", data={"statut": "envoyee"}, follow_redirects=False)
         assert resp.status_code == 302
 
     def test_facture_status_invalid_ignored(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
             resp = client.post("/admin/factures/1/status", data={"statut": "hacked"}, follow_redirects=False)
         assert resp.status_code == 302
@@ -892,7 +945,7 @@ class TestFactures:
 
     def test_facture_pdf_download(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(side_effect=[
                 {  # facture
                     "id": 1, "numero": "FIA-202603-0001", "sponsor_id": 1,
@@ -930,7 +983,7 @@ class TestConfig:
 
     def test_config_page_renders(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={
                 "raison_sociale": "LotoIA", "siret": "", "adresse": "",
                 "code_postal": "", "ville": "", "pays": "France",
@@ -943,7 +996,7 @@ class TestConfig:
 
     def test_config_save(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
             mock_db.async_fetchone = AsyncMock(return_value={
                 "raison_sociale": "Updated", "siret": "123",
@@ -1236,7 +1289,7 @@ class TestAdminEngagement:
     def test_engagement_nav_link_present(self):
         """Le lien Engagement est dans la nav admin."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_dashboard.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0, "review_count": 0, "avg_rating": 0})
             resp = client.get("/admin")
         assert "/admin/engagement" in resp.text
@@ -1285,7 +1338,7 @@ class TestRealtime:
     def test_realtime_api_returns_json(self):
         client = _authed_client()
         from datetime import datetime
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[
                 [{"event_type": "chatbot-open", "page": "/loto", "module": "loto",
                   "lang": "fr", "device": "desktop", "country": "FR",
@@ -1308,7 +1361,7 @@ class TestRealtime:
 
     def test_nav_contains_realtime_link(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_dashboard.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0, "review_count": 0, "avg_rating": 0})
             resp = client.get("/admin")
         assert "/admin/realtime" in resp.text
@@ -1386,7 +1439,7 @@ class TestTarifs:
 
     def test_api_tarifs_mode_switch_to_sasu(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
             resp = client.post("/admin/api/tarifs/mode", json={"mode": "SASU"})
         assert resp.status_code == 200
@@ -1396,7 +1449,7 @@ class TestTarifs:
 
     def test_api_tarifs_mode_switch_to_ei(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
             resp = client.post("/admin/api/tarifs/mode", json={"mode": "EI"})
         assert resp.status_code == 200
@@ -1409,7 +1462,7 @@ class TestTarifs:
 
     def test_api_tarifs_mode_db_error(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock(side_effect=Exception("DB down"))
             resp = client.post("/admin/api/tarifs/mode", json={"mode": "SASU"})
         assert resp.status_code == 500
@@ -1421,7 +1474,7 @@ class TestTarifs:
 
     def test_api_tarifs_update_success(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
             resp = client.put("/admin/api/tarifs/LOTO_FR_A", json={
                 "tarif_mensuel": 399.00,
@@ -1448,7 +1501,7 @@ class TestTarifs:
 
     def test_api_tarifs_update_db_error(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock(side_effect=Exception("DB down"))
             resp = client.put("/admin/api/tarifs/EM_FR_A", json={
                 "tarif_mensuel": 349, "engagement_min_mois": 6, "reduction_6m": 10, "reduction_12m": 20, "active": 1,
@@ -1462,7 +1515,7 @@ class TestTarifs:
 
     def test_api_tarifs_data_returns_json(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[
                 self._SAMPLE_CONFIG,
                 self._SAMPLE_TARIFS,
@@ -1479,7 +1532,7 @@ class TestTarifs:
 
     def test_api_tarifs_data_db_error(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=Exception("DB down"))
             resp = client.get("/admin/api/tarifs")
         assert resp.status_code == 500
@@ -1507,7 +1560,7 @@ class TestAdminRealtimePeriod:
 
     def test_default_period_today(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[_rt_mock_rows(), [{"event_type": "chatbot-open", "cnt": 1}], [{"event_type": "chatbot-open"}]])
             mock_db.async_fetchone = AsyncMock(return_value={"total_count": 2, "hour_count": 2, "type_count": 2, "unique_visitors": 2})
             resp = client.get("/admin/api/realtime")
@@ -1518,7 +1571,7 @@ class TestAdminRealtimePeriod:
 
     def test_period_week(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[_rt_mock_rows(), [{"event_type": "chatbot-open", "cnt": 5}], [{"event_type": "chatbot-open"}]])
             mock_db.async_fetchone = AsyncMock(return_value={"total_count": 5, "hour_count": 2, "type_count": 1, "unique_visitors": 3})
             resp = client.get("/admin/api/realtime?period=week")
@@ -1528,7 +1581,7 @@ class TestAdminRealtimePeriod:
 
     def test_period_month(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[_rt_mock_rows(), [{"event_type": "chatbot-open", "cnt": 20}], [{"event_type": "chatbot-open"}]])
             mock_db.async_fetchone = AsyncMock(return_value={"total_count": 20, "hour_count": 2, "type_count": 1, "unique_visitors": 8})
             resp = client.get("/admin/api/realtime?period=month")
@@ -1538,7 +1591,7 @@ class TestAdminRealtimePeriod:
 
     def test_invalid_period_defaults_today(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[_rt_mock_rows(), [{"event_type": "chatbot-open", "cnt": 2}], [{"event_type": "chatbot-open"}]])
             mock_db.async_fetchone = AsyncMock(return_value={"total_count": 2, "hour_count": 2, "type_count": 1, "unique_visitors": 1})
             resp = client.get("/admin/api/realtime?period=invalid")
@@ -1546,7 +1599,7 @@ class TestAdminRealtimePeriod:
 
     def test_combined_event_type_and_period(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[_rt_mock_rows(), [{"event_type": "chatbot-open", "cnt": 3}], [{"event_type": "chatbot-open"}]])
             mock_db.async_fetchone = AsyncMock(return_value={"total_count": 3, "hour_count": 1, "type_count": 1, "unique_visitors": 2})
             resp = client.get("/admin/api/realtime?event_type=chatbot-open&period=week")
@@ -1560,7 +1613,7 @@ class TestAdminRealtimeByType:
 
     def test_by_type_present(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[
                 _rt_mock_rows(),
                 [{"event_type": "chatbot-open", "cnt": 1}, {"event_type": "rating-submitted", "cnt": 1}],
@@ -1575,7 +1628,7 @@ class TestAdminRealtimeByType:
 
     def test_by_type_empty_on_error(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=Exception("DB down"))
             resp = client.get("/admin/api/realtime")
         data = resp.json()
@@ -1588,7 +1641,7 @@ class TestRealtimeUniqueVisitors:
     def test_unique_visitors_field_present(self):
         """API response contains unique_visitors in kpi."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[
                 _rt_mock_rows(),
                 [{"event_type": "chatbot-open", "cnt": 2}],
@@ -1605,7 +1658,7 @@ class TestRealtimeUniqueVisitors:
     def test_unique_visitors_deduplication(self):
         """Two events from same session_hash = 1 unique visitor."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[
                 _rt_mock_rows(),
                 [{"event_type": "chatbot-open", "cnt": 2}],
@@ -1623,7 +1676,7 @@ class TestRealtimeUniqueVisitors:
         """unique_visitors works with all 4 period filters."""
         client = _authed_client()
         for period in ("24h", "today", "week", "month"):
-            with patch("routes.admin.db_cloudsql") as mock_db:
+            with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
                 mock_db.async_fetchall = AsyncMock(side_effect=[
                     _rt_mock_rows(),
                     [{"event_type": "chatbot-open", "cnt": 3}],
@@ -1639,7 +1692,7 @@ class TestRealtimeUniqueVisitors:
     def test_unique_visitors_zero_on_error(self):
         """Error fallback includes unique_visitors=0."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=Exception("DB down"))
             resp = client.get("/admin/api/realtime")
         data = resp.json()
@@ -1651,7 +1704,7 @@ class TestAdminExportRealtimeCSV:
 
     def test_csv_export_returns_csv(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=_rt_mock_rows())
             resp = client.get("/admin/export/realtime/csv?period=today")
         assert resp.status_code == 200
@@ -1666,7 +1719,7 @@ class TestAdminExportRealtimeCSV:
 
     def test_csv_export_with_period_week(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=_rt_mock_rows())
             resp = client.get("/admin/export/realtime/csv?period=week")
         assert resp.status_code == 200
@@ -1678,7 +1731,7 @@ class TestAdminExportRealtimePDF:
 
     def test_pdf_export_returns_pdf(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[
                 [{"event_type": "chatbot-open", "cnt": 2}],
                 _rt_mock_rows(),
@@ -1695,7 +1748,7 @@ class TestAdminExportRealtimePDF:
 
     def test_pdf_export_with_period_month(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[
                 [{"event_type": "chatbot-open", "cnt": 10}],
                 _rt_mock_rows(),
@@ -1715,7 +1768,7 @@ class TestPeriod24h:
 
     def test_impressions_24h(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
             resp = client.get("/admin/api/impressions?period=24h")
@@ -1735,7 +1788,7 @@ class TestPeriod24h:
 
     def test_realtime_24h(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[
                 _rt_mock_rows(),
                 [{"event_type": "chatbot-open", "cnt": 3}],
@@ -1750,7 +1803,7 @@ class TestPeriod24h:
     def test_impressions_default_is_24h(self):
         """No period param → defaults to 24h."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
             resp = client.get("/admin/api/impressions")
@@ -1768,7 +1821,7 @@ class TestPeriod24h:
     def test_realtime_default_is_24h(self):
         """No period param → defaults to 24h."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[
                 _rt_mock_rows(),
                 [{"event_type": "chatbot-open", "cnt": 2}],
@@ -1781,7 +1834,7 @@ class TestPeriod24h:
     def test_today_still_works(self):
         """Regression: period=today still works on all 3 endpoints."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
             r1 = client.get("/admin/api/impressions?period=today")
@@ -1796,7 +1849,7 @@ class TestPeriod24h:
     def test_7d_still_works(self):
         """Regression: period=7d still works."""
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_impressions.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             mock_db.async_fetchone = AsyncMock(return_value={"s": 0})
             resp = client.get("/admin/api/impressions?period=7d")
@@ -1829,7 +1882,7 @@ class TestAdminActivity:
 
     def test_api_activity_returns_json(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             resp = client.get("/admin/api/activity")
         data = resp.json()
@@ -1840,7 +1893,7 @@ class TestAdminActivity:
 
     def test_api_activity_with_minutes_param(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             resp = client.get("/admin/api/activity?minutes=1")
         data = resp.json()
@@ -1866,7 +1919,7 @@ class TestAdminActivity:
             {"session_hash": "a1b2c3d4e5f6a7b8", "page": "/euromillions"},
             {"session_hash": "a1b2c3d4e5f6a7b8", "page": "/euromillions/statistiques"},
         ]
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[mock_rows, mock_pages])
             resp = client.get("/admin/api/activity?minutes=5")
         data = resp.json()
@@ -1886,7 +1939,7 @@ class TestAdminActivity:
 
     def test_api_history_returns_json(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             resp = client.get("/admin/api/activity/history")
         data = resp.json()
@@ -1900,7 +1953,7 @@ class TestAdminActivity:
 
     def test_api_history_with_hours_param(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             resp = client.get("/admin/api/activity/history?hours=6")
         data = resp.json()
@@ -1925,7 +1978,7 @@ class TestAdminActivity:
             {"session_hash": "abcdef1234567890", "page": "/en/euromillions", "created_at": datetime(2026, 3, 15, 15, 55, 0)},
             {"session_hash": "abcdef1234567890", "page": "/en/euromillions/statistics", "created_at": datetime(2026, 3, 15, 15, 57, 0)},
         ]
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[mock_rows, mock_pages])
             resp = client.get("/admin/api/activity/history?hours=24")
         data = resp.json()
@@ -1956,7 +2009,7 @@ class TestAdminBan:
 
     def test_ban_ip(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
             resp = client.post("/admin/api/ban", json={"ip": "1.2.3.4", "reason": "test"})
         assert resp.status_code == 200
@@ -1976,7 +2029,7 @@ class TestAdminBan:
 
     def test_unban_ip(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
             resp = client.post("/admin/api/unban", json={"ip": "1.2.3.4"})
         assert resp.status_code == 200
@@ -1989,7 +2042,7 @@ class TestAdminBan:
 
     def test_banned_list_empty(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[])
             resp = client.get("/admin/api/banned")
         data = resp.json()
@@ -1999,7 +2052,7 @@ class TestAdminBan:
 
     def test_banned_list_with_entries(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=[
                 {"ip": "1.2.3.4", "reason": "flood", "source": "manual",
                  "banned_at": datetime(2026, 3, 15, 16, 0, 0),
@@ -2014,7 +2067,7 @@ class TestAdminBan:
 
     def test_ban_permanent(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
             resp = client.post("/admin/api/ban", json={
                 "ip": "5.6.7.8", "reason": "test", "duration_hours": None,
@@ -2025,7 +2078,7 @@ class TestAdminBan:
 
     def test_ban_temporary(self):
         client = _authed_client()
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
             resp = client.post("/admin/api/ban", json={
                 "ip": "5.6.7.8", "reason": "temp", "duration_hours": 2,
@@ -2230,7 +2283,7 @@ class TestActivitySqlGroupBy:
         mock_pages = [
             {"session_hash": "aabb1122ccdd3344", "page": "/euromillions"},
         ]
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(side_effect=[mock_rows, mock_pages])
             resp = client.get("/admin/api/activity?minutes=5")
         assert resp.status_code == 200
@@ -2254,7 +2307,7 @@ class TestActivitySqlGroupBy:
                 "last_page": "/euromillions/nl",
             },
         ]
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchall = AsyncMock(return_value=mock_rows)
             resp = client.get("/admin/api/activity/history?hours=6")
         assert resp.status_code == 200
@@ -2344,7 +2397,7 @@ class TestDatetimeFormat:
         from datetime import datetime
         client = _authed_client()
         mock_dt = datetime(2026, 3, 17, 14, 30, 45)
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             async def fake_fetchall(sql, params=None):
                 if "SELECT event_type" in sql:
                     return [{"event_type": "page-view", "page": "/", "module": "",
@@ -2371,7 +2424,7 @@ class TestDatetimeFormat:
         from datetime import datetime
         client = _authed_client()
         mock_dt = datetime(2026, 3, 17, 14, 30, 45)
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             async def fake_fetchall(sql, params=None):
                 if "GROUP BY session_hash" in sql:
                     return [{"session_hash": "abc12345" * 8, "country": "FR",
@@ -2393,7 +2446,7 @@ class TestDatetimeFormat:
         from datetime import datetime
         client = _authed_client()
         mock_dt = datetime(2026, 3, 17, 14, 30, 45)
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             async def fake_fetchall(sql, params=None):
                 if "GROUP BY session_hash" in sql:
                     return [{"session_hash": "def67890" * 8, "country": "US",
@@ -2491,7 +2544,7 @@ class TestAuditAdminFixes:
         from datetime import datetime
         client = _authed_client()
         mock_dt = datetime(2026, 3, 17, 14, 30, 45)
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             async def fake_fetchone(sql, params=None):
                 return {"total": 1, "unread": 0, "today": 1}
             mock_db.async_fetchone = fake_fetchone
@@ -2523,7 +2576,7 @@ class TestAuditAdminFixes:
         from datetime import datetime
         client = _authed_client()
         mock_dt = datetime(2026, 3, 17, 14, 30, 45)
-        with patch("routes.admin.db_cloudsql") as mock_db:
+        with patch("routes.admin_monitoring.db_cloudsql") as mock_db:
             async def fake_fetchall(sql, params=None):
                 if "GROUP BY session_hash" in sql:
                     return [{"session_hash": "abc12345" * 8, "country": "FR",
