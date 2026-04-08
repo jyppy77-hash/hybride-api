@@ -585,25 +585,10 @@ app.add_middleware(I18nMiddleware)
 # on the Umami script tag, this silently blocks analytics for the owner.
 # =========================
 
-_OWNER_IP = os.environ.get("OWNER_IP", "").strip()
-_OWNER_IPV6 = os.environ.get("OWNER_IPV6", "").strip()
+from utils import is_owner_ip as _is_owner_ip  # V87 F04 — single source of truth
 
-_OWNER_EXACT = {"127.0.0.1", "::1"}  # localhost toujours exclu (dev)
-_OWNER_PREFIXES = []  # IPv6 prefix match (privacy extensions)
-
-if _OWNER_IP:
-    _OWNER_EXACT.add(_OWNER_IP)
-if _OWNER_IPV6:
-    _OWNER_PREFIXES.append(_OWNER_IPV6)
-
-logger.info("UmamiOwnerFilter: raw OWNER_IP=%r OWNER_IPV6=%r", _OWNER_IP, _OWNER_IPV6)
-logger.info("UmamiOwnerFilter: exact=%s prefixes=%s", _OWNER_EXACT, _OWNER_PREFIXES)
-
-
-def _is_owner_ip(ip: str) -> bool:
-    if ip in _OWNER_EXACT:
-        return True
-    return any(ip.startswith(p) for p in _OWNER_PREFIXES)
+logger.info("UmamiOwnerFilter: OWNER_IP=%r OWNER_IPV6=%r",
+            os.environ.get("OWNER_IP", ""), os.environ.get("OWNER_IPV6", ""))
 
 _OWNER_INJECT = b'<script>window.__OWNER__=true;</script>\n</head>'
 _OWNER_BODY_ATTR = (b' data-owner="1"', b"<body")

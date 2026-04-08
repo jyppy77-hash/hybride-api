@@ -140,6 +140,41 @@ class TestAdminDashboard:
         assert "4.5" in resp.text
         assert "10" in resp.text
 
+    def test_dashboard_total_impressions(self):
+        """V87 F01: total_impressions = popup + inline + result."""
+        client = _authed_client()
+
+        async def mock_fetchall(sql, params=None):
+            if "sponsor_impressions" in sql:
+                return [
+                    {"event_type": "sponsor-popup-shown", "cnt": 30},
+                    {"event_type": "sponsor-click", "cnt": 5},
+                    {"event_type": "sponsor-inline-shown", "cnt": 10},
+                    {"event_type": "sponsor-result-shown", "cnt": 8},
+                    {"event_type": "sponsor-pdf-downloaded", "cnt": 2},
+                ]
+            return []
+
+        async def mock_fetchone(sql, params=None):
+            if "ratings" in sql:
+                return {"review_count": 0, "avg_rating": 0}
+            return {"active": 0, "hits": 0, "cnt": 0}
+
+        with patch("routes.admin.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
+            mock_db.async_fetchone = AsyncMock(side_effect=mock_fetchone)
+            resp = client.get("/admin")
+
+        assert resp.status_code == 200
+        body = resp.text
+        # Total = popup(30) + inline(10) + result(8) = 48
+        assert "Impressions totales" in body
+        assert "Popups" in body
+        assert ">48<" in body  # total_impressions in KPI card
+        assert ">30<" in body  # popups only
+        # Clicks (5) should NOT be in total impressions
+        assert "24 derni" in body  # section title "24 dernières heures"
+
     def test_dashboard_handles_db_error(self):
         client = _authed_client()
 

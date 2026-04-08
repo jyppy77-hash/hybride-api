@@ -1,8 +1,11 @@
 """
-Tests for utils.py — shared IP extraction utility.
+Tests for utils.py — shared IP extraction + owner IP detection.
 """
 
+import importlib
+import os
 from unittest.mock import MagicMock
+
 from utils import get_client_ip, get_client_ip_from_scope
 
 
@@ -89,3 +92,97 @@ class TestGetClientIpFromScope:
         """Scope without client → returns empty string."""
         scope = {"headers": []}
         assert get_client_ip_from_scope(scope) == ""
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# is_owner_ip  (V87 F04 — single source of truth in utils.py)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class TestIsOwnerIp:
+    """Test owner IP detection with proper CIDR /64 matching."""
+
+    def _reload_with_env(self, ipv4="", ipv6=""):
+        """Reload utils with custom OWNER_IP / OWNER_IPV6 env vars."""
+        with (
+            MagicMock()  # placeholder
+        ):
+            pass
+        env = {"OWNER_IP": ipv4, "OWNER_IPV6": ipv6}
+        orig_ip = os.environ.get("OWNER_IP", "")
+        orig_v6 = os.environ.get("OWNER_IPV6", "")
+        os.environ["OWNER_IP"] = ipv4
+        os.environ["OWNER_IPV6"] = ipv6
+        try:
+            import utils as utils_mod
+            importlib.reload(utils_mod)
+            return utils_mod.is_owner_ip
+        finally:
+            os.environ["OWNER_IP"] = orig_ip
+            os.environ["OWNER_IPV6"] = orig_v6
+
+    def _cleanup(self):
+        import utils as utils_mod
+        importlib.reload(utils_mod)
+
+    def test_ipv4_exact_match(self):
+        fn = self._reload_with_env(ipv4="86.212.92.243")
+        try:
+            assert fn("86.212.92.243") is True
+        finally:
+            self._cleanup()
+
+    def test_ipv4_no_match(self):
+        fn = self._reload_with_env(ipv4="86.212.92.243")
+        try:
+            assert fn("203.0.113.50") is False
+        finally:
+            self._cleanup()
+
+    def test_ipv6_cidr64_match(self):
+        fn = self._reload_with_env(ipv6="2a01:cb05:8700:5900:")
+        try:
+            assert fn("2a01:cb05:8700:5900:1111:2222:3333:4444") is True
+        finally:
+            self._cleanup()
+
+    def test_ipv6_cidr64_different_prefix(self):
+        fn = self._reload_with_env(ipv6="2a01:cb05:8700:5900:")
+        try:
+            assert fn("2a01:cb05:8700:5901:180b:4c1b:2226:7349") is False
+        finally:
+            self._cleanup()
+
+    def test_ipv6_compressed_form(self):
+        fn = self._reload_with_env(ipv6="2a01:cb05:8700:5900:")
+        try:
+            assert fn("2a01:cb05:8700:5900::1") is True
+        finally:
+            self._cleanup()
+
+    def test_loopback_v4_always(self):
+        fn = self._reload_with_env()
+        try:
+            assert fn("127.0.0.1") is True
+        finally:
+            self._cleanup()
+
+    def test_loopback_v6_always(self):
+        fn = self._reload_with_env()
+        try:
+            assert fn("::1") is True
+        finally:
+            self._cleanup()
+
+    def test_invalid_ip_returns_false(self):
+        fn = self._reload_with_env(ipv4="1.2.3.4")
+        try:
+            assert fn("not-an-ip") is False
+        finally:
+            self._cleanup()
+
+    def test_empty_string_returns_false(self):
+        fn = self._reload_with_env(ipv4="1.2.3.4")
+        try:
+            assert fn("") is False
+        finally:
+            self._cleanup()

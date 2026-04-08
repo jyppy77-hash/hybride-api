@@ -173,7 +173,7 @@ async def admin_dashboard(request: Request):
     try:
         rows = await db_cloudsql.async_fetchall(
             "SELECT event_type, COUNT(*) AS cnt FROM sponsor_impressions "
-            "WHERE DATE(created_at) = CURDATE() GROUP BY event_type",
+            "WHERE created_at >= NOW() - INTERVAL 24 HOUR GROUP BY event_type",
         )
         _kpi_map = {
             "sponsor-popup-shown": "impressions",
@@ -197,6 +197,8 @@ async def admin_dashboard(request: Request):
         pdf_downloaded = _kpi_vals["pdf_downloaded"]
     except Exception as e:
         logger.error("[ADMIN] sponsor query failed: %s", e)
+
+    total_impressions = impressions + inline_shown + result_shown
 
     avg_rating = 0.0
     review_count = 0
@@ -239,6 +241,7 @@ async def admin_dashboard(request: Request):
     tpl = env.get_template("admin/dashboard.html")
     return HTMLResponse(tpl.render(
         active="dashboard",
+        total_impressions=total_impressions,
         impressions=impressions,
         clicks=clicks,
         videos=videos,
@@ -2267,7 +2270,7 @@ async def admin_api_messages(
     try:
         row = await db_cloudsql.async_fetchone(
             f"SELECT COUNT(*) AS total, SUM(CASE WHEN lu = 0 THEN 1 ELSE 0 END) AS unread, "
-            f"SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) AS today "
+            f"SUM(CASE WHEN created_at >= NOW() - INTERVAL 24 HOUR THEN 1 ELSE 0 END) AS today "
             f"FROM contact_messages WHERE {w}",
             tuple(params),
         )

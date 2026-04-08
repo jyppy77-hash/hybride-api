@@ -9,7 +9,6 @@ Filters out owner IP to avoid polluting analytics data.
 import hashlib
 import json
 import logging
-import os
 import re
 from datetime import date
 
@@ -27,21 +26,8 @@ _MAX_EVENT_LEN = 80
 _MAX_PAGE_LEN = 200
 _MAX_PRODUCT_CODE_LEN = 20
 
-# Owner IP filtering (reuse same env vars as main.py UmamiOwnerFilter)
-_OWNER_IP = os.environ.get("OWNER_IP", "").strip()
-_OWNER_IPV6 = os.environ.get("OWNER_IPV6", "").strip()
-_OWNER_EXACT = {"127.0.0.1", "::1"}
-_OWNER_PREFIXES = []
-if _OWNER_IP:
-    _OWNER_EXACT.add(_OWNER_IP)
-if _OWNER_IPV6:
-    _OWNER_PREFIXES.append(_OWNER_IPV6)
-
-
-def _is_owner_ip(ip: str) -> bool:
-    if ip in _OWNER_EXACT:
-        return True
-    return any(ip.startswith(p) for p in _OWNER_PREFIXES)
+# Owner IP filtering — V87 F04: single source of truth in utils.py
+from utils import is_owner_ip as _is_owner_ip
 
 
 def _get_client_ip(request: Request) -> str:

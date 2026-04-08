@@ -3,15 +3,19 @@
 
 {% block content %}
     <div class="dashboard-header-row">
-        <h2>Sponsor — Aujourd'hui</h2>
+        <h2>Sponsor — 24 dernières heures</h2>
         <button class="btn-hard-refresh" id="btn-hard-refresh" title="Hard Refresh (bypass cache)">
             <span class="hard-refresh-icon">&#x21BB;</span> Refresh
         </button>
     </div>
     <div class="kpi-grid">
         <div class="kpi-card">
+            <span class="kpi-value" style="color:#10b981;">{{ total_impressions }}</span>
+            <span class="kpi-label">Impressions totales</span>
+        </div>
+        <div class="kpi-card">
             <span class="kpi-value">{{ impressions }}</span>
-            <span class="kpi-label">Impressions</span>
+            <span class="kpi-label">Popups</span>
         </div>
         <div class="kpi-card">
             <span class="kpi-value">{{ clicks }}</span>

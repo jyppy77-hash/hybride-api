@@ -154,7 +154,7 @@ async def _get_gemini_counters() -> dict:
             "COALESCE(SUM(tokens_in), 0) AS tokens_in, "
             "COALESCE(SUM(tokens_out), 0) AS tokens_out, "
             "COALESCE(SUM(duration_ms), 0) AS total_ms "
-            "FROM gemini_tracking WHERE ts >= CURDATE()"
+            "FROM gemini_tracking WHERE ts >= NOW() - INTERVAL 24 HOUR"
         )
         if row:
             result = {
@@ -623,7 +623,7 @@ async def get_gemini_breakdown() -> dict:
             "COALESCE(SUM(tokens_out), 0) AS tokens_out, "
             "COALESCE(SUM(duration_ms), 0) AS total_ms, "
             "COALESCE(SUM(is_error), 0) AS errors "
-            "FROM gemini_tracking WHERE ts >= CURDATE() "
+            "FROM gemini_tracking WHERE ts >= NOW() - INTERVAL 24 HOUR "
             "GROUP BY call_type"
         )
         type_map = {r["call_type"]: r for r in type_rows} if type_rows else {}
@@ -644,7 +644,7 @@ async def get_gemini_breakdown() -> dict:
             "SELECT lang, COUNT(*) AS calls, "
             "COALESCE(SUM(tokens_in), 0) AS tokens_in, "
             "COALESCE(SUM(tokens_out), 0) AS tokens_out "
-            "FROM gemini_tracking WHERE ts >= CURDATE() "
+            "FROM gemini_tracking WHERE ts >= NOW() - INTERVAL 24 HOUR "
             "GROUP BY lang"
         )
         lang_map = {r["lang"]: r for r in lang_rows} if lang_rows else {}

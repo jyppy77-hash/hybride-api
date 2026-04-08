@@ -2,7 +2,44 @@
 Shared utilities — used across routes, middleware, and main.py.
 """
 
+import os
+from ipaddress import ip_address, ip_network
+
 from fastapi import Request
+
+# ── Owner IP detection (single source of truth) ─────────────────────────────
+# IPv4: exact match.  IPv6: CIDR /64 (handles privacy extensions).
+# Aligned with middleware/ip_ban.py logic.
+
+_OWNER_IP = os.environ.get("OWNER_IP", "").strip()
+_OWNER_IPV6 = os.environ.get("OWNER_IPV6", "").strip()
+
+_OWNER_EXACT: set[str] = {"127.0.0.1", "::1"}
+if _OWNER_IP:
+    _OWNER_EXACT.add(_OWNER_IP)
+
+_owner_net_v6 = None
+if _OWNER_IPV6:
+    _v6 = _OWNER_IPV6.rstrip(":")
+    if "::" not in _v6:
+        _v6 += "::"
+    try:
+        _owner_net_v6 = ip_network(f"{_v6}/64", strict=False)
+    except ValueError:
+        pass
+
+
+def is_owner_ip(ip: str) -> bool:
+    """Owner IP detection — IPv4 exact + IPv6 CIDR /64."""
+    if ip in _OWNER_EXACT:
+        return True
+    if _owner_net_v6:
+        try:
+            if ip_address(ip) in _owner_net_v6:
+                return True
+        except ValueError:
+            pass
+    return False
 
 
 def get_client_ip(request: Request) -> str:

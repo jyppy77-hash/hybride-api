@@ -115,7 +115,7 @@ class TestGeminiCountersDB:
             assert counters["tokens_out"] == 3000
             assert counters["total_ms"] == 50000
             sql = mock_db.async_fetchone.call_args[0][0]
-            assert "CURDATE()" in sql
+            assert "NOW() - INTERVAL 24 HOUR" in sql
 
     @pytest.mark.asyncio
     async def test_cached_locally_60s(self):
