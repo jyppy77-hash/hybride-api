@@ -4,6 +4,12 @@ Universal event tracking endpoint — POST /api/track
 Receives all frontend events from tracker.js (fire-and-forget).
 RGPD-compliant: stores SHA-256 session hash only, no raw IP.
 Filters out owner IP to avoid polluting analytics data.
+
+NOTE ARCHITECTURE (V92 S06):
+event_log.product_code n'a pas de FK vers sponsor_tarifs.code — design intentionnel.
+Les product_codes event_log incluent des codes génériques (LOTO_FR sans suffixe A/B)
+qui n'existent pas dans sponsor_tarifs. L'intégrité est assurée par la validation
+VALID_PRODUCT_CODES (V92 S02).
 """
 
 import hashlib

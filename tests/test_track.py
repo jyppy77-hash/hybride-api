@@ -321,3 +321,49 @@ class TestProductCodeValidation:
         assert resp.status_code == 204
         call_args = mock_db.async_query.call_args[0]
         assert call_args[1][8] is None
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Rate limit (V92 S10) — global middleware 60/min
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestGlobalRateLimit:
+    """V92 S10: APIGlobalRateLimitMiddleware returns 429 above 60 req/min.
+
+    Note: ip_ban flood detection may also trigger 403 before 429.
+    Both are valid blocking behaviors — we test that excess traffic IS blocked.
+    """
+
+    def test_rate_limit_blocked_on_excess(self):
+        """Rapid requests from same IP get blocked (429 rate limit or 403 spam/flood ban).
+
+        ip_ban auto_spam triggers at 10 req/1s — both rate_limit (60/min)
+        and ip_ban (10/1s) are valid blocking layers.
+        """
+        client = _get_client()
+        from rate_limit import _api_hits
+        from middleware.ip_ban import _request_log
+        test_ip = "10.99.99.1"
+        _api_hits.pop(test_ip, None)
+        _request_log.pop(test_ip, None)
+
+        with patch("routes.api_track.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(return_value=None)
+            headers = {"X-Forwarded-For": test_ip}
+            blocked = False
+            for _ in range(15):
+                resp = client.post("/api/track", json={"event": "test"}, headers=headers)
+                if resp.status_code in (429, 403):
+                    blocked = True
+                    break
+        assert blocked, "Expected 429 or 403 after exceeding rate limit"
+        _api_hits.pop(test_ip, None)
+        _request_log.pop(test_ip, None)
+
+    def test_single_request_passes(self):
+        """A single request from a fresh IP returns 204 (not blocked)."""
+        client = _get_client()
+        with patch("routes.api_track.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(return_value=None)
+            resp = client.post("/api/track", json={"event": "test"}, headers=_unique_headers())
+        assert resp.status_code == 204

@@ -59,6 +59,25 @@
         </div>
     </div>
 
+    {% if factures_impayees_count > 0 or contrats_proches %}
+    <h2 style="color:#f59e0b;">Alertes</h2>
+    <div class="kpi-grid">
+        {% if factures_impayees_count > 0 %}
+        <div class="kpi-card" style="border-left:3px solid #ef4444;">
+            <span class="kpi-value" style="color:#ef4444;">{{ factures_impayees_count }}</span>
+            <span class="kpi-label">Factures impayees > 60j</span>
+            <span class="kpi-sub" style="color:#8891a4;font-size:.75rem;">Total : {{ "%.2f"|format(factures_impayees_total) }} EUR</span>
+        </div>
+        {% endif %}
+        {% for contrat in contrats_proches %}
+        <div class="kpi-card" style="border-left:3px solid #f59e0b;">
+            <span class="kpi-value" style="color:#f59e0b;">{{ contrat.days_left }}j</span>
+            <span class="kpi-label">Echeance {{ contrat.sponsor_name }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <h2>Activite <span class="rt-dot rt-dot-live"></span></h2>
     <div class="kpi-grid">
         <div class="kpi-card rt-kpi-visitors">

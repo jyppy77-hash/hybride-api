@@ -191,6 +191,7 @@ def generate_sponsor_report_pdf(kpi: dict, table_data: list, period_label: str) 
 def generate_invoice_pdf(facture: dict, config: dict, lignes: list) -> io.BytesIO:
     buf = io.BytesIO()
     doc = SimpleDocTemplate(buf, pagesize=A4, leftMargin=20*mm, rightMargin=20*mm, topMargin=20*mm, bottomMargin=25*mm)
+    statut = (facture.get("statut") or "brouillon").lower()
     elements = []
 
     # Header
@@ -356,14 +357,28 @@ def generate_invoice_pdf(facture: dict, config: dict, lignes: list) -> io.BytesI
         _PETIT,
     ))
 
-    # Footer
+    # Footer with page numbering + conditional BROUILLON watermark (V92 S07)
     footer_text = f"{rs} — SIRET : {siret}" if siret else rs
+    _is_brouillon = statut == "brouillon"
 
     def add_footer(canvas_obj, doc_obj):
         canvas_obj.saveState()
+        # V92 S07: watermark BROUILLON (diagonal, semi-transparent)
+        if _is_brouillon:
+            canvas_obj.setFont('DejaVuSans-Bold', 60)
+            canvas_obj.setFillColor(HexColor("#FF0000"))
+            canvas_obj.setFillAlpha(0.08)
+            canvas_obj.saveState()
+            canvas_obj.translate(A4[0] / 2, A4[1] / 2)
+            canvas_obj.rotate(45)
+            canvas_obj.drawCentredString(0, 0, "BROUILLON")
+            canvas_obj.restoreState()
+        # Footer text + page number
         canvas_obj.setFont('DejaVuSans', 7)
         canvas_obj.setFillColor(GRIS)
-        canvas_obj.drawCentredString(A4[0] / 2, 12*mm, footer_text)
+        canvas_obj.setFillAlpha(1.0)
+        page_num = canvas_obj.getPageNumber()
+        canvas_obj.drawCentredString(A4[0] / 2, 12*mm, f"{footer_text}  —  Page {page_num}")
         canvas_obj.restoreState()
 
     doc.build(elements, onFirstPage=add_footer, onLaterPages=add_footer)

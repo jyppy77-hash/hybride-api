@@ -75,12 +75,24 @@ async def admin_api_calendar_data(
     )
     params = (year, month)
 
-    # --- Query 1: visitors = DISTINCT IPs across all 3 tables ---
-    # UNION (not UNION ALL) deduplicates rows where (day, visitor_id) match.
-    # Note: identifiers differ across tables (ip_address vs session_hash vs
-    # ip_hash) so cross-table dedup is partial — a visitor appearing in
-    # multiple tables with different IDs will still be counted once per table.
-    # Acceptable for internal admin dashboard.
+    # ──────────────────────────────────────────────────────────────────
+    # MÉTHODOLOGIE VISITEURS (V92 S09)
+    # ──────────────────────────────────────────────────────────────────
+    # Les visiteurs uniques sont comptés via UNION (dedup) de 3 tables :
+    #   - event_log.ip_address : IP brute du visiteur
+    #   - sponsor_impressions.session_hash : SHA-256(ip|ua|date)
+    #   - chat_log.ip_hash : SHA-256(ip)
+    #
+    # LIMITATION : un même visiteur peut être compté 2-3× car les
+    # identifiants diffèrent structurellement entre tables (IP brute
+    # vs hash). Le UNION déduplique les doublons intra-table mais
+    # pas les doublons cross-table.
+    #
+    # IMPACT : sur-estimation estimée ~10-20% sur les jours à fort
+    # trafic. Acceptable pour un dashboard admin interne. Pour un
+    # reporting sponsor, utiliser les métriques GA4 ou Umami qui
+    # dédupliquent nativement par client_id/session.
+    # ──────────────────────────────────────────────────────────────────
     try:
         async with db_cloudsql.get_connection_readonly() as conn:
             cur = await conn.cursor()

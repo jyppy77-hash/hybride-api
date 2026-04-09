@@ -186,7 +186,7 @@ const CookieConsent = (function() {
             analytics: {
                 id: 'analytics',
                 required: false,
-                cookies: []
+                cookies: ['_ga', '_ga_*']
             },
             advertising: {
                 id: 'advertising',

@@ -55,9 +55,13 @@
                 {% for g in grille %}
                 <div class="tarif-row">
                     <select name="tarif_event[]">
-                        <option value="sponsor-popup-shown" {{ 'selected' if g.event_type == 'sponsor-popup-shown' }}>Impression</option>
+                        <option value="sponsor-popup-shown" {{ 'selected' if g.event_type == 'sponsor-popup-shown' }}>Popup (shown)</option>
                         <option value="sponsor-click" {{ 'selected' if g.event_type == 'sponsor-click' }}>Clic</option>
-                        <option value="sponsor-video-played" {{ 'selected' if g.event_type == 'sponsor-video-played' }}>Video</option>
+                        <option value="sponsor-video-played" {{ 'selected' if g.event_type == 'sponsor-video-played' }}>Video (played)</option>
+                        <option value="sponsor-inline-shown" {{ 'selected' if g.event_type == 'sponsor-inline-shown' }}>Chatbot (inline)</option>
+                        <option value="sponsor-result-shown" {{ 'selected' if g.event_type == 'sponsor-result-shown' }}>Resultat (banner)</option>
+                        <option value="sponsor-pdf-downloaded" {{ 'selected' if g.event_type == 'sponsor-pdf-downloaded' }}>PDF (download)</option>
+                        <option value="sponsor-pdf-mention" {{ 'selected' if g.event_type == 'sponsor-pdf-mention' }}>PDF (mention)</option>
                     </select>
                     <input type="number" step="0.0001" name="tarif_prix[]" value="{{ g.prix_unitaire }}" placeholder="Prix unitaire EUR">
                     <input type="text" name="tarif_desc[]" value="{{ g.description or '' }}" placeholder="Description">
@@ -67,9 +71,13 @@
             {% else %}
                 <div class="tarif-row">
                     <select name="tarif_event[]">
-                        <option value="sponsor-popup-shown">Impression</option>
+                        <option value="sponsor-popup-shown">Popup (shown)</option>
                         <option value="sponsor-click">Clic</option>
-                        <option value="sponsor-video-played">Video</option>
+                        <option value="sponsor-video-played">Video (played)</option>
+                        <option value="sponsor-inline-shown">Chatbot (inline)</option>
+                        <option value="sponsor-result-shown">Resultat (banner)</option>
+                        <option value="sponsor-pdf-downloaded">PDF (download)</option>
+                        <option value="sponsor-pdf-mention">PDF (mention)</option>
                     </select>
                     <input type="number" step="0.0001" name="tarif_prix[]" placeholder="Prix unitaire EUR">
                     <input type="text" name="tarif_desc[]" placeholder="Description">
@@ -91,7 +99,7 @@
 document.getElementById('btn-add-tarif').addEventListener('click', function() {
     var row = document.createElement('div');
     row.className = 'tarif-row';
-    row.innerHTML = '<select name="tarif_event[]"><option value="sponsor-popup-shown">Impression</option><option value="sponsor-click">Clic</option><option value="sponsor-video-played">Video</option></select><input type="number" step="0.0001" name="tarif_prix[]" placeholder="Prix unitaire EUR"><input type="text" name="tarif_desc[]" placeholder="Description"><button type="button" class="btn-remove-tarif" onclick="this.closest(\'.tarif-row\').remove()">X</button>';
+    row.innerHTML = '<select name="tarif_event[]"><option value="sponsor-popup-shown">Popup (shown)</option><option value="sponsor-click">Clic</option><option value="sponsor-video-played">Video (played)</option><option value="sponsor-inline-shown">Chatbot (inline)</option><option value="sponsor-result-shown">Resultat (banner)</option><option value="sponsor-pdf-downloaded">PDF (download)</option><option value="sponsor-pdf-mention">PDF (mention)</option></select><input type="number" step="0.0001" name="tarif_prix[]" placeholder="Prix unitaire EUR"><input type="text" name="tarif_desc[]" placeholder="Description"><button type="button" class="btn-remove-tarif" onclick="this.closest(\'.tarif-row\').remove()">X</button>';
     document.getElementById('tarif-rows').appendChild(row);
 });
 </script>

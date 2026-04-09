@@ -598,6 +598,35 @@ async def admin_config_save(request: Request):
         return redir
 
     form = await request.form()
+
+    # V92 S04: defense-in-depth — SASU/SAS/SARL/EURL require rcs + capital_social
+    forme_juridique = (form.get("forme_juridique") or "EI").strip()
+    rcs = (form.get("rcs") or "").strip()
+    capital_social = (form.get("capital_social") or "").strip()
+    if forme_juridique != "EI":
+        missing = []
+        if not rcs:
+            missing.append("RCS")
+        if not capital_social:
+            missing.append("capital social")
+        if missing:
+            cfg = {}
+            try:
+                cfg = await db_cloudsql.async_fetchone("SELECT * FROM fia_config_entreprise WHERE id = 1") or {}
+            except Exception:
+                pass
+            from services.alerting import DEFAULT_THRESHOLDS, get_alert_thresholds
+            try:
+                alert_cfg = await get_alert_thresholds()
+            except Exception:
+                alert_cfg = dict(DEFAULT_THRESHOLDS)
+            tpl = env.get_template("admin/config.html")
+            return HTMLResponse(tpl.render(
+                active="config", cfg=cfg, success=False,
+                alert_cfg=alert_cfg, alert_success=False,
+                error=f"{forme_juridique} requiert : {', '.join(missing)}",
+            ))
+
     try:
         await db_cloudsql.async_query(
             "UPDATE fia_config_entreprise SET raison_sociale=%s, siret=%s, adresse=%s, "
@@ -610,8 +639,7 @@ async def admin_config_save(request: Request):
              form.get("email", ""), form.get("telephone", ""),
              form.get("tva_intra", ""), float(form.get("taux_tva", 20)),
              form.get("iban", ""), form.get("bic", ""),
-             form.get("forme_juridique", "EI"), form.get("rcs", ""),
-             form.get("capital_social", "")),
+             forme_juridique, rcs, capital_social),
         )
         from middleware.ip_ban import _extract_client_ip
         logger.info("[ADMIN_AUDIT] action=config_update ip=%s", _extract_client_ip(request))

@@ -7,7 +7,7 @@
     'use strict';
 
     var ENDPOINT = '/api/track';
-    var DEDUP_TTL = 2000; // ms — ignore duplicate event within 2s
+    var DEDUP_TTL = 1000; // ms — ignore duplicate event within 1s (V92 S13: was 2s)
 
     function getDevice() {
         var w = window.innerWidth || document.documentElement.clientWidth;
@@ -41,7 +41,11 @@
     }
 
     function dedupKey(event, meta) {
-        return event + '|' + JSON.stringify(meta || {});
+        // V92 S13: key = event + page (not full meta) — allows same event from
+        // different pages in rapid navigation, while still deduplicating
+        // genuine double-fires on the same page.
+        var page = (meta && meta.page) || window.location.pathname;
+        return event + '|' + page;
     }
 
     var _lastEvents = {};

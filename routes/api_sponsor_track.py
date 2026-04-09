@@ -4,6 +4,11 @@ Sponsor tracking endpoint — POST /api/sponsor/track
 Receives sponsor events from frontend JS (fire-and-forget).
 RGPD-compliant: stores SHA-256 hashes only, no raw IP.
 Filters out owner IP to avoid polluting billing data.
+
+NOTE ARCHITECTURE (V92 S06):
+sponsor_impressions.sponsor_id n'a pas de FK vers fia_sponsors.id — design intentionnel.
+Le sponsor_id est le product_code (ex: LOTO_FR_A) validé contre sponsors.json à l'insertion.
+Les orphelins sont acceptés (impressions historiques d'un sponsor désactivé restent pour reporting).
 """
 
 import hashlib

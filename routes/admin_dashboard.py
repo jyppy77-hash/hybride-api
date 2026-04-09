@@ -151,6 +151,35 @@ async def admin_dashboard(request: Request, period: str = Query("today")):
     except Exception as e:
         logger.error("[ADMIN] activity KPI query failed: %s", e)
 
+    # V92 S12: alertes factures impayées + échéances contrats
+    factures_impayees_count = 0
+    factures_impayees_total = 0.0
+    contrats_proches = []
+    try:
+        f_row = await db_cloudsql.async_fetchone(
+            "SELECT COUNT(*) AS cnt, COALESCE(SUM(montant_ttc), 0) AS total "
+            "FROM fia_factures WHERE statut NOT IN ('payee') "
+            "AND date_emission < NOW() - INTERVAL 60 DAY"
+        )
+        if f_row:
+            factures_impayees_count = _dec(f_row["cnt"])
+            factures_impayees_total = round(float(f_row["total"] or 0), 2)
+    except Exception as e:
+        logger.error("[ADMIN] unpaid invoices query failed: %s", e)
+    try:
+        c_rows = await db_cloudsql.async_fetchall(
+            "SELECT s.nom AS sponsor_name, c.date_fin, "
+            "DATEDIFF(c.date_fin, NOW()) AS days_left "
+            "FROM fia_contrats c JOIN fia_sponsors s ON c.sponsor_id = s.id "
+            "WHERE c.statut = 'actif' AND c.date_fin IS NOT NULL "
+            "ORDER BY c.date_fin ASC LIMIT 3"
+        )
+        if c_rows:
+            contrats_proches = [{"sponsor_name": r["sponsor_name"],
+                                 "days_left": _dec(r["days_left"])} for r in c_rows]
+    except Exception as e:
+        logger.error("[ADMIN] contract expiry query failed: %s", e)
+
     tpl = env.get_template("admin/dashboard.html")
     return HTMLResponse(tpl.render(
         active="dashboard",
@@ -169,4 +198,7 @@ async def admin_dashboard(request: Request, period: str = Query("today")):
         active_visitors=active_visitors,
         hits_24h=hits_24h,
         banned_count=banned_count,
+        factures_impayees_count=factures_impayees_count,
+        factures_impayees_total=factures_impayees_total,
+        contrats_proches=contrats_proches,
     ))
