@@ -114,8 +114,8 @@ async def admin_dashboard(request: Request, period: str = Query("today")):
     review_count = 0
     try:
         row = await db_cloudsql.async_fetchone(
-            "SELECT COUNT(*) AS review_count, COALESCE(ROUND(AVG(rating), 1), 0) AS avg_rating "
-            "FROM ratings WHERE created_at >= NOW() - INTERVAL 90 DAY"
+            f"SELECT COUNT(*) AS review_count, COALESCE(ROUND(AVG(rating), 1), 0) AS avg_rating "
+            f"FROM ratings WHERE {sponsor_where}"
         )
         if row:
             review_count = row["review_count"] or 0

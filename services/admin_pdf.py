@@ -76,7 +76,11 @@ _FOOTER = ParagraphStyle('Footer', parent=_base['Normal'], fontName='DejaVuSans'
 
 
 def _format_euros(montant):
-    return f"{montant:,.2f} EUR".replace(",", " ").replace(".", ",").replace(" ", " ")
+    """Formate un montant en EUR français : 1234.56 → '1 234,56 EUR'."""
+    from babel.numbers import format_currency
+    if montant is None:
+        montant = 0
+    return format_currency(montant, 'EUR', locale='fr_FR', currency_digits=True, format_type='standard')
 
 
 def _format_date_fr(d):

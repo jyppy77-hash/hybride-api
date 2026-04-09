@@ -76,6 +76,11 @@ async def admin_api_calendar_data(
     params = (year, month)
 
     # --- Query 1: visitors = DISTINCT IPs across all 3 tables ---
+    # UNION (not UNION ALL) deduplicates rows where (day, visitor_id) match.
+    # Note: identifiers differ across tables (ip_address vs session_hash vs
+    # ip_hash) so cross-table dedup is partial — a visitor appearing in
+    # multiple tables with different IDs will still be counted once per table.
+    # Acceptable for internal admin dashboard.
     try:
         async with db_cloudsql.get_connection_readonly() as conn:
             cur = await conn.cursor()
@@ -83,10 +88,10 @@ async def admin_api_calendar_data(
                 f"SELECT day, COUNT(DISTINCT visitor_id) AS visitors FROM ("
                 f"  SELECT DAY({_TZ}) AS day, ip_address AS visitor_id"
                 f"  FROM event_log WHERE {where_tz}"
-                f"  UNION ALL"
+                f"  UNION"
                 f"  SELECT DAY({_TZ}) AS day, session_hash AS visitor_id"
                 f"  FROM sponsor_impressions WHERE {where_tz}"
-                f"  UNION ALL"
+                f"  UNION"
                 f"  SELECT DAY({_TZ}) AS day, ip_hash AS visitor_id"
                 f"  FROM chat_log WHERE {where_tz}"
                 f") AS all_ips GROUP BY day",

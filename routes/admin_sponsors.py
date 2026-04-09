@@ -227,7 +227,9 @@ async def admin_facture_create(request: Request):
         return HTMLResponse(tpl.render(active="factures", sponsors=sponsors, error="Dates invalides."), status_code=400)
 
     try:
-        # Get sponsor pricing grid
+        # fia_grille_tarifaire: per-sponsor × event_type unit pricing (CPC/CPM).
+        # Source of truth for invoice calculation.
+        # See also: sponsor_tarifs (monthly packages, admin /tarifs interface).
         grille = await db_cloudsql.async_fetchall(
             "SELECT * FROM fia_grille_tarifaire WHERE sponsor_id = %s", (sponsor_id,))
 
@@ -736,6 +738,9 @@ async def admin_api_tarifs_mode(request: Request):
         return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
 
 
+# sponsor_tarifs: monthly packages per product_code (LOTOIA_EXCLU V9).
+# Used for admin /tarifs interface and commercial pricing grid.
+# See also: fia_grille_tarifaire (per-event unit pricing, invoice calculation).
 @router.put("/admin/api/tarifs/{code}", include_in_schema=False)
 async def admin_api_tarifs_update(request: Request, code: str):
     err = _require_auth_json(request)

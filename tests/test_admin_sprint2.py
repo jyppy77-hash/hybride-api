@@ -55,9 +55,10 @@ def _authed_client():
 
 
 class TestA05RatingsDateFilter:
-    """A05: Dashboard ratings query must have a date filter (90 days)."""
+    """A05: Dashboard ratings query must have a date filter matching period dropdown (V91 F02)."""
 
-    def test_ratings_query_has_date_filter(self):
+    def test_ratings_query_uses_period_filter(self):
+        """Default period='today' → ratings WHERE uses CONVERT_TZ (not hardcoded 90 DAY)."""
         client = _authed_client()
         sql_calls = []
 
@@ -75,7 +76,29 @@ class TestA05RatingsDateFilter:
         assert resp.status_code == 200
         ratings_sql = [s for s in sql_calls if "ratings" in s]
         assert len(ratings_sql) == 1
-        assert "INTERVAL 90 DAY" in ratings_sql[0]
+        # V91 F02: ratings now respects dropdown period (default=today → CONVERT_TZ)
+        assert "CONVERT_TZ" in ratings_sql[0] or "INTERVAL" in ratings_sql[0]
+
+    def test_ratings_query_month_uses_30_day(self):
+        """period='month' → ratings WHERE uses INTERVAL 30 DAY."""
+        client = _authed_client()
+        sql_calls = []
+
+        async def mock_fetchone(sql, params=None):
+            sql_calls.append(sql)
+            if "ratings" in sql:
+                return {"review_count": 10, "avg_rating": 3.5}
+            return {"cnt": 0}
+
+        with patch("routes.admin_dashboard.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            mock_db.async_fetchone = AsyncMock(side_effect=mock_fetchone)
+            resp = client.get("/admin?period=month")
+
+        assert resp.status_code == 200
+        ratings_sql = [s for s in sql_calls if "ratings" in s]
+        assert len(ratings_sql) == 1
+        assert "INTERVAL 30 DAY" in ratings_sql[0]
 
 
 class TestA06EventTypeDateFilter:

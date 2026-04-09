@@ -27,9 +27,12 @@
     }
 
     function getProductCode(meta) {
-        // Explicit product_code from caller (sponsor/meta75 events)
+        // Explicit product_code from caller — sponsor events pass the full
+        // code with A/B suffix (e.g. LOTO_FR_A, EM_EN_B) so event_log
+        // records match sponsor_impressions.sponsor_id exactly.
         if (meta && meta.product_code) return meta.product_code;
-        // Auto-deduce from module + lang
+        // Auto-deduce from module + lang (no A/B suffix — general tracking
+        // only needs the game/lang granularity, not the sponsor slot).
         var mod = (meta && meta.module) || '';
         var lang = getLang().toUpperCase();
         if (mod === 'loto') return 'LOTO_FR';
