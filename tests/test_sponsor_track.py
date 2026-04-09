@@ -159,6 +159,18 @@ class TestSponsorTrack:
         event = SponsorEvent(event_type="sponsor-popup-shown", page="/loto")
         assert event.sponsor_id is None
 
+    def test_sponsor_pdf_mention_event(self, _mock_db):
+        """V92 S05: sponsor-pdf-mention (E3) is accepted as valid event."""
+        client = _get_client()
+        resp = client.post("/api/sponsor/track", json={
+            "event_type": "sponsor-pdf-mention",
+            "page": "/loto/analyse",
+            "lang": "fr",
+            "device": "desktop",
+            "sponsor_id": "LOTO_FR_A",
+        })
+        assert resp.status_code == 204
+
 
 class TestDetectCountry:
     """Test _detect_country helper (CF-IPCountry + Accept-Language fallback)."""

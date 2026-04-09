@@ -689,6 +689,10 @@ function openMetaResultPopupEM(data) {
         });
     }
 
+    // EVENT 3b - V92 S05: PDF mention sponsor (E3 — branding passif, distinct de E6 download)
+    fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-pdf-mention', sponsor_id: SPONSOR_VIDEO_75_EM.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+    if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-pdf-mention', { sponsor_id: SPONSOR_VIDEO_75_EM.id, product_code: SPONSOR_VIDEO_75_EM.id });
+
     var graphBarsBoules = generateGraphBarsHTMLEM(data.graph_boules, 'N\u00b0');
     var graphBarsEtoiles = generateGraphBarsHTMLEM(data.graph_etoiles, '\u2605');
     var analysisText = finalAnalysisTextEM;

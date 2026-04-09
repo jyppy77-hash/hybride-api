@@ -29,6 +29,9 @@ _MAX_PRODUCT_CODE_LEN = 20
 # Owner IP filtering — V87 F04: single source of truth in utils.py
 from utils import is_owner_ip as _is_owner_ip
 
+# Valid product codes — V92 S02: silently nullify invalid codes (DRY from admin_helpers)
+from routes.admin_helpers import VALID_PRODUCT_CODES as _VALID_PRODUCT_CODES
+
 
 def _get_client_ip(request: Request) -> str:
     from utils import get_client_ip
@@ -50,7 +53,7 @@ def _detect_country(request: Request) -> str:
         m = re.search(r"([a-z]{2})-([A-Z]{2})", accept_lang)
         if m:
             return m.group(2)
-    return "??"
+    return None
 
 
 @router.post("/track", status_code=204, response_class=Response)
@@ -92,6 +95,8 @@ async def track_event(request: Request):
         device = "desktop"
     country = _detect_country(request)
     product_code = str(data.get("product_code", ""))[:_MAX_PRODUCT_CODE_LEN] or None
+    if product_code and product_code not in _VALID_PRODUCT_CODES:
+        product_code = None  # V92 S02: silently nullify invalid codes
     meta = data.get("meta")
     meta_json = json.dumps(meta) if isinstance(meta, dict) else None
 

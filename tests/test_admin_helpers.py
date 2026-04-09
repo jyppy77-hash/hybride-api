@@ -150,7 +150,7 @@ class TestNumberGenerators:
 
 class TestValidationSets:
     def test_valid_events_count(self):
-        assert len(VALID_EVENTS) == 6
+        assert len(VALID_EVENTS) == 7  # V92 S05: +sponsor-pdf-mention
 
     def test_valid_langs_count(self):
         assert VALID_LANGS == {"fr", "en", "es", "pt", "de", "nl"}

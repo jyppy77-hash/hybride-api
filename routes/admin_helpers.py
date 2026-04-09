@@ -166,7 +166,7 @@ def next_contrat_number(existing_count: int) -> str:
 # VALIDATION SETS
 # ══════════════════════════════════════════════════════════════════════════════
 
-VALID_EVENTS = {"sponsor-popup-shown", "sponsor-click", "sponsor-video-played", "sponsor-inline-shown", "sponsor-result-shown", "sponsor-pdf-downloaded"}
+VALID_EVENTS = {"sponsor-popup-shown", "sponsor-click", "sponsor-video-played", "sponsor-inline-shown", "sponsor-result-shown", "sponsor-pdf-downloaded", "sponsor-pdf-mention"}
 VALID_LANGS = {"fr", "en", "es", "pt", "de", "nl"}
 VALID_DEVICES = {"mobile", "desktop", "tablet"}
 VALID_SOURCES = {"chatbot_loto", "chatbot_em", "chatbot_em_en", "popup_accueil", "popup_em"}

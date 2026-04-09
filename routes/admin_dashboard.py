@@ -79,7 +79,7 @@ async def admin_dashboard(request: Request, period: str = Query("today")):
     sponsor_where = _PERIOD_SQL[period]
     period_label = _PERIOD_LABELS.get(period, period)
 
-    impressions = clicks = videos = inline_shown = result_shown = pdf_downloaded = 0
+    impressions = clicks = videos = inline_shown = result_shown = pdf_downloaded = pdf_mention = 0
     try:
         rows = await db_cloudsql.async_fetchall(
             f"SELECT event_type, COUNT(*) AS cnt FROM sponsor_impressions "
@@ -92,9 +92,11 @@ async def admin_dashboard(request: Request, period: str = Query("today")):
             "sponsor-inline-shown": "inline_shown",
             "sponsor-result-shown": "result_shown",
             "sponsor-pdf-downloaded": "pdf_downloaded",
+            "sponsor-pdf-mention": "pdf_mention",
         }
         _kpi_vals = {"impressions": 0, "clicks": 0, "videos": 0,
-                     "inline_shown": 0, "result_shown": 0, "pdf_downloaded": 0}
+                     "inline_shown": 0, "result_shown": 0, "pdf_downloaded": 0,
+                     "pdf_mention": 0}
         for r in rows:
             key = _kpi_map.get(r["event_type"])
             if key:
@@ -105,6 +107,7 @@ async def admin_dashboard(request: Request, period: str = Query("today")):
         inline_shown = _kpi_vals["inline_shown"]
         result_shown = _kpi_vals["result_shown"]
         pdf_downloaded = _kpi_vals["pdf_downloaded"]
+        pdf_mention = _kpi_vals["pdf_mention"]
     except Exception as e:
         logger.error("[ADMIN] sponsor query failed: %s", e)
 
@@ -160,6 +163,7 @@ async def admin_dashboard(request: Request, period: str = Query("today")):
         inline_shown=inline_shown,
         result_shown=result_shown,
         pdf_downloaded=pdf_downloaded,
+        pdf_mention=pdf_mention,
         avg_rating=avg_rating,
         review_count=review_count,
         active_visitors=active_visitors,

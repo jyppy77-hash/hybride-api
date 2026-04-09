@@ -184,7 +184,8 @@ class TestTrackEndpoint:
         call_args = mock_db.async_query.call_args[0]
         assert call_args[1][8] is None
 
-    def test_product_code_truncated(self):
+    def test_product_code_truncated_and_invalid_nullified(self):
+        """Overlong product_code is truncated then nullified (not in VALID_PRODUCT_CODES)."""
         client = _get_client()
         with patch("routes.api_track.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock(return_value=None)
@@ -194,7 +195,7 @@ class TestTrackEndpoint:
             }, headers=_unique_headers())
         assert resp.status_code == 204
         call_args = mock_db.async_query.call_args[0]
-        assert len(call_args[1][8]) == 20
+        assert call_args[1][8] is None  # V92 S02: truncated "XXX…" is invalid → None
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -266,8 +267,8 @@ class TestDetectCountryCF:
         call_args = mock_db.async_query.call_args[0]
         assert call_args[1][5] == "ES"
 
-    def test_nothing_returns_unknown(self):
-        """No CF-IPCountry, no Accept-Language → returns '??'."""
+    def test_nothing_returns_none(self):
+        """No CF-IPCountry, no Accept-Language → returns None (V92 S03)."""
         client = _get_client()
         h = _unique_headers()
         with patch("routes.api_track.db_cloudsql") as mock_db:
@@ -275,4 +276,48 @@ class TestDetectCountryCF:
             resp = client.post("/api/track", json={"event": "test"}, headers=h)
         assert resp.status_code == 204
         call_args = mock_db.async_query.call_args[0]
-        assert call_args[1][5] == "??"
+        assert call_args[1][5] is None
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# Product code validation (V92 S02)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestProductCodeValidation:
+    """V92 S02: invalid product_code silently nullified."""
+
+    def test_valid_product_code_accepted(self):
+        """Valid product_code is stored as-is."""
+        client = _get_client()
+        with patch("routes.api_track.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(return_value=None)
+            resp = client.post("/api/track", json={
+                "event": "test", "product_code": "EM_EN_A",
+            }, headers=_unique_headers())
+        assert resp.status_code == 204
+        call_args = mock_db.async_query.call_args[0]
+        assert call_args[1][8] == "EM_EN_A"
+
+    def test_invalid_product_code_nullified(self):
+        """Invalid product_code is silently set to None."""
+        client = _get_client()
+        with patch("routes.api_track.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(return_value=None)
+            resp = client.post("/api/track", json={
+                "event": "test", "product_code": "HACKED_CODE",
+            }, headers=_unique_headers())
+        assert resp.status_code == 204
+        call_args = mock_db.async_query.call_args[0]
+        assert call_args[1][8] is None
+
+    def test_empty_product_code_stays_none(self):
+        """Empty product_code stays None."""
+        client = _get_client()
+        with patch("routes.api_track.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock(return_value=None)
+            resp = client.post("/api/track", json={
+                "event": "test", "product_code": "",
+            }, headers=_unique_headers())
+        assert resp.status_code == 204
+        call_args = mock_db.async_query.call_args[0]
+        assert call_args[1][8] is None

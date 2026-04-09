@@ -769,6 +769,10 @@ function openMetaResultPopup(data) {
         });
     }
 
+    // EVENT 3b - V92 S05: PDF mention sponsor (E3 — branding passif, distinct de E6 download)
+    fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-pdf-mention', sponsor_id: 'LOTO_FR_A', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+    if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-pdf-mention', { sponsor_id: 'LOTO_FR_A', product_code: 'LOTO_FR_A' });
+
     const graphBars = generateGraphBarsHTML(data.graph);
     const analysisText = finalAnalysisText;
     const analysisSource = window._metaAnalysisSource || 'unknown';

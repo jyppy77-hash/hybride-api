@@ -41,7 +41,12 @@
         "tier": "premium",
         "name": "Espace Premium EM",
         "tagline": {
-          "fr": "Cet espace premium EuroMillions est réservé à un partenaire officiel"
+          "fr": "Cet espace premium EuroMillions est réservé à un partenaire officiel",
+          "en": "This premium EuroMillions space is reserved for an official partner",
+          "es": "Este espacio premium EuroMillions está reservado para un socio oficial",
+          "pt": "Este espaço premium EuroMillions é reservado para um parceiro oficial",
+          "de": "Dieser Premium EuroMillions-Platz ist einem offiziellen Partner vorbehalten",
+          "nl": "Deze premium EuroMillions-ruimte is gereserveerd voor een officiële partner"
         },
         "url": "mailto:partenariats@lotoia.fr",
         "active": true
@@ -51,7 +56,12 @@
         "tier": "standard",
         "name": "Espace Standard EM",
         "tagline": {
-          "fr": "Cet espace EuroMillions est réservé à nos partenaires"
+          "fr": "Cet espace EuroMillions est réservé à nos partenaires",
+          "en": "This EuroMillions space is reserved for our partners",
+          "es": "Este espacio EuroMillions está reservado para nuestros socios",
+          "pt": "Este espaço EuroMillions é reservado para os nossos parceiros",
+          "de": "Dieser EuroMillions-Platz ist für unsere Partner reserviert",
+          "nl": "Deze EuroMillions-ruimte is gereserveerd voor onze partners"
         },
         "url": "mailto:partenariats@lotoia.fr",
         "active": true
@@ -63,7 +73,12 @@
         "tier": "premium",
         "name": "Premium EuroMillions Space",
         "tagline": {
-          "en": "This premium EuroMillions space is reserved for an official partner"
+          "fr": "Cet espace premium EuroMillions est réservé à un partenaire officiel",
+          "en": "This premium EuroMillions space is reserved for an official partner",
+          "es": "Este espacio premium EuroMillions está reservado para un socio oficial",
+          "pt": "Este espaço premium EuroMillions é reservado para um parceiro oficial",
+          "de": "Dieser Premium EuroMillions-Platz ist einem offiziellen Partner vorbehalten",
+          "nl": "Deze premium EuroMillions-ruimte is gereserveerd voor een officiële partner"
         },
         "url": "mailto:partenariats@lotoia.fr",
         "active": true
@@ -73,7 +88,12 @@
         "tier": "standard",
         "name": "Standard EuroMillions Space",
         "tagline": {
-          "en": "This EuroMillions space is reserved for our partners"
+          "fr": "Cet espace EuroMillions est réservé à nos partenaires",
+          "en": "This EuroMillions space is reserved for our partners",
+          "es": "Este espacio EuroMillions está reservado para nuestros socios",
+          "pt": "Este espaço EuroMillions é reservado para os nossos parceiros",
+          "de": "Dieser EuroMillions-Platz ist für unsere Partner reserviert",
+          "nl": "Deze EuroMillions-ruimte is gereserveerd voor onze partners"
         },
         "url": "mailto:partenariats@lotoia.fr",
         "active": true
@@ -85,7 +105,12 @@
         "tier": "premium",
         "name": "Espacio Premium EuroMillions",
         "tagline": {
-          "es": "Este espacio premium EuroMillions está reservado para un socio oficial"
+          "fr": "Cet espace premium EuroMillions est réservé à un partenaire officiel",
+          "en": "This premium EuroMillions space is reserved for an official partner",
+          "es": "Este espacio premium EuroMillions está reservado para un socio oficial",
+          "pt": "Este espaço premium EuroMillions é reservado para um parceiro oficial",
+          "de": "Dieser Premium EuroMillions-Platz ist einem offiziellen Partner vorbehalten",
+          "nl": "Deze premium EuroMillions-ruimte is gereserveerd voor een officiële partner"
         },
         "url": "mailto:partenariats@lotoia.fr",
         "active": true
@@ -95,7 +120,12 @@
         "tier": "standard",
         "name": "Espacio Estándar EuroMillions",
         "tagline": {
-          "es": "Este espacio EuroMillions está reservado para nuestros socios"
+          "fr": "Cet espace EuroMillions est réservé à nos partenaires",
+          "en": "This EuroMillions space is reserved for our partners",
+          "es": "Este espacio EuroMillions está reservado para nuestros socios",
+          "pt": "Este espaço EuroMillions é reservado para os nossos parceiros",
+          "de": "Dieser EuroMillions-Platz ist für unsere Partner reserviert",
+          "nl": "Deze EuroMillions-ruimte is gereserveerd voor onze partners"
         },
         "url": "mailto:partenariats@lotoia.fr",
         "active": true
@@ -107,7 +137,12 @@
         "tier": "premium",
         "name": "Espaço Premium EuroMillions",
         "tagline": {
-          "pt": "Este espaço premium EuroMillions é reservado para um parceiro oficial"
+          "fr": "Cet espace premium EuroMillions est réservé à un partenaire officiel",
+          "en": "This premium EuroMillions space is reserved for an official partner",
+          "es": "Este espacio premium EuroMillions está reservado para un socio oficial",
+          "pt": "Este espaço premium EuroMillions é reservado para um parceiro oficial",
+          "de": "Dieser Premium EuroMillions-Platz ist einem offiziellen Partner vorbehalten",
+          "nl": "Deze premium EuroMillions-ruimte is gereserveerd voor een officiële partner"
         },
         "url": "mailto:partenariats@lotoia.fr",
         "active": true
@@ -117,7 +152,12 @@
         "tier": "standard",
         "name": "Espaço Standard EuroMillions",
         "tagline": {
-          "pt": "Este espaço EuroMillions é reservado para os nossos parceiros"
+          "fr": "Cet espace EuroMillions est réservé à nos partenaires",
+          "en": "This EuroMillions space is reserved for our partners",
+          "es": "Este espacio EuroMillions está reservado para nuestros socios",
+          "pt": "Este espaço EuroMillions é reservado para os nossos parceiros",
+          "de": "Dieser EuroMillions-Platz ist für unsere Partner reserviert",
+          "nl": "Deze EuroMillions-ruimte is gereserveerd voor onze partners"
         },
         "url": "mailto:partenariats@lotoia.fr",
         "active": true
@@ -129,7 +169,12 @@
         "tier": "premium",
         "name": "Premium EuroMillions-Platz",
         "tagline": {
-          "de": "Dieser Premium EuroMillions-Platz ist einem offiziellen Partner vorbehalten"
+          "fr": "Cet espace premium EuroMillions est réservé à un partenaire officiel",
+          "en": "This premium EuroMillions space is reserved for an official partner",
+          "es": "Este espacio premium EuroMillions está reservado para un socio oficial",
+          "pt": "Este espaço premium EuroMillions é reservado para um parceiro oficial",
+          "de": "Dieser Premium EuroMillions-Platz ist einem offiziellen Partner vorbehalten",
+          "nl": "Deze premium EuroMillions-ruimte is gereserveerd voor een officiële partner"
         },
         "url": "mailto:partenariats@lotoia.fr",
         "active": true
@@ -139,7 +184,12 @@
         "tier": "standard",
         "name": "Standard EuroMillions-Platz",
         "tagline": {
-          "de": "Dieser EuroMillions-Platz ist für unsere Partner reserviert"
+          "fr": "Cet espace EuroMillions est réservé à nos partenaires",
+          "en": "This EuroMillions space is reserved for our partners",
+          "es": "Este espacio EuroMillions está reservado para nuestros socios",
+          "pt": "Este espaço EuroMillions é reservado para os nossos parceiros",
+          "de": "Dieser EuroMillions-Platz ist für unsere Partner reserviert",
+          "nl": "Deze EuroMillions-ruimte is gereserveerd voor onze partners"
         },
         "url": "mailto:partenariats@lotoia.fr",
         "active": true
@@ -151,6 +201,11 @@
         "tier": "premium",
         "name": "Premium EuroMillions-ruimte",
         "tagline": {
+          "fr": "Cet espace premium EuroMillions est réservé à un partenaire officiel",
+          "en": "This premium EuroMillions space is reserved for an official partner",
+          "es": "Este espacio premium EuroMillions está reservado para un socio oficial",
+          "pt": "Este espaço premium EuroMillions é reservado para um parceiro oficial",
+          "de": "Dieser Premium EuroMillions-Platz ist einem offiziellen Partner vorbehalten",
           "nl": "Deze premium EuroMillions-ruimte is gereserveerd voor een officiële partner"
         },
         "url": "mailto:partenariats@lotoia.fr",
@@ -161,6 +216,11 @@
         "tier": "standard",
         "name": "Standaard EuroMillions-ruimte",
         "tagline": {
+          "fr": "Cet espace EuroMillions est réservé à nos partenaires",
+          "en": "This EuroMillions space is reserved for our partners",
+          "es": "Este espacio EuroMillions está reservado para nuestros socios",
+          "pt": "Este espaço EuroMillions é reservado para os nossos parceiros",
+          "de": "Dieser EuroMillions-Platz ist für unsere Partner reserviert",
           "nl": "Deze EuroMillions-ruimte is gereserveerd voor onze partners"
         },
         "url": "mailto:partenariats@lotoia.fr",
