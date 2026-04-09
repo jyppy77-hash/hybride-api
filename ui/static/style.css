@@ -2963,6 +2963,30 @@ a.back-link-dark:hover {
     gap: 8px;
 }
 
+/* Partner card — dark mode (glassmorphism) */
+body.theme-night .partner-card {
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 3px solid rgba(26, 115, 232, 0.4);
+    box-shadow: none;
+}
+body.theme-night .partner-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+body.theme-night .partner-badge {
+    color: rgba(255, 255, 255, 0.35);
+}
+body.theme-night .partner-text {
+    color: rgba(255, 255, 255, 0.6);
+}
+body.theme-night .partner-cta {
+    color: rgba(26, 115, 232, 0.6);
+}
+body.theme-night .partner-cta:hover {
+    color: rgba(26, 115, 232, 0.85);
+}
+
 /* =================================================================
    RESULTS DISPLAY PREMIUM
    ================================================================= */
@@ -5610,5 +5634,21 @@ body.theme-night .sponsor-result-banner {
 }
 body.theme-night .sponsor-result-banner a {
     color: #60a5fa;
+}
+
+/* === Ball Drop Animation V89 === */
+@keyframes ballDrop {
+    0%   { opacity: 0; transform: translateY(-60px) scale(0.8); }
+    60%  { opacity: 1; transform: translateY(18px) scale(1.07); }
+    80%  { transform: translateY(-10px) scale(0.97); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.ball-drop { opacity: 0; }
+.ball-drop.ball-animate {
+    animation: ballDrop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+    .ball-drop { opacity: 1 !important; }
+    .ball-drop.ball-animate { animation: none !important; opacity: 1 !important; transform: none !important; }
 }
 

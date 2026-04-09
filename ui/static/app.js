@@ -1007,6 +1007,38 @@ function createPartnerCard(index) {
 }
 
 /**
+ * Anime les boules d'un container grille par grille (style tirage TV).
+ * @param {HTMLElement} container - Le container parent contenant les .grid-visual-card
+ */
+function animateBallDrop(container) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var cards = container.querySelectorAll('.grid-visual-card');
+    function animateCard(card) {
+        var mains = card.querySelectorAll('.grid-visual-numbers .visual-ball.main');
+        mains.forEach(function(b, i) {
+            setTimeout(function() { b.classList.add('ball-animate'); }, i * 150);
+        });
+        var sep = card.querySelector('.visual-ball.separator');
+        if (sep) setTimeout(function() { sep.classList.add('ball-animate'); }, 900);
+        var ch = card.querySelector('.visual-ball.chance');
+        if (ch) setTimeout(function() { ch.classList.add('ball-animate'); }, 900);
+        var badges = card.querySelectorAll('.visual-badge');
+        badges.forEach(function(bg, j) {
+            setTimeout(function() { bg.classList.add('ball-animate'); }, 1100 + j * 100);
+        });
+    }
+    var obs = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+            if (e.isIntersecting) {
+                obs.unobserve(e.target);
+                animateCard(e.target);
+            }
+        });
+    }, { threshold: 0.3 });
+    cards.forEach(function(card) { obs.observe(card); });
+}
+
+/**
  * Affiche les grilles générées avec cards partenaire intercalées
  * @param {Array} grids - Tableau des grilles générées
  * @param {Object} metadata - Métadonnées de génération
@@ -1065,10 +1097,10 @@ function displayGridsWithAds(grids, metadata, targetDate) {
 
                 <div class="grid-visual-numbers">
                     ${[...grid.nums].sort((a, b) => a - b).map(n => `
-                        <div class="visual-ball main">${String(n).padStart(2, '0')}</div>
+                        <div class="visual-ball main ball-drop">${String(n).padStart(2, '0')}</div>
                     `).join('')}
-                    <div class="visual-ball separator">+</div>
-                    <div class="visual-ball chance">${String(grid.chance).padStart(2, '0')}</div>
+                    <div class="visual-ball separator ball-drop">+</div>
+                    <div class="visual-ball chance ball-drop">${String(grid.chance).padStart(2, '0')}</div>
                 </div>
 
                 <div class="grid-visual-badges">
@@ -1093,7 +1125,7 @@ function displayGridsWithAds(grids, metadata, targetDate) {
                             badgeClass = 'badge-gap';
                         }
 
-                        return `<span class="visual-badge ${badgeClass}">${icon} ${badge}</span>`;
+                        return `<span class="visual-badge ${badgeClass} ball-drop">${icon} ${badge}</span>`;
                     }).join('')}
                 </div>
 
@@ -1137,6 +1169,7 @@ function displayGridsWithAds(grids, metadata, targetDate) {
     // Titre et affichage
     document.getElementById('result-title').textContent = 'Analyse du tirage';
     showSuccess();
+    animateBallDrop(keyInfo);
 }
 
 /**
@@ -1208,10 +1241,10 @@ function displayGridsVisual(grids, metadata, targetDate) {
 
                 <div class="grid-visual-numbers">
                     ${[...grid.nums].sort((a, b) => a - b).map(n => `
-                        <div class="visual-ball main">${String(n).padStart(2, '0')}</div>
+                        <div class="visual-ball main ball-drop">${String(n).padStart(2, '0')}</div>
                     `).join('')}
-                    <div class="visual-ball separator">+</div>
-                    <div class="visual-ball chance">${String(grid.chance).padStart(2, '0')}</div>
+                    <div class="visual-ball separator ball-drop">+</div>
+                    <div class="visual-ball chance ball-drop">${String(grid.chance).padStart(2, '0')}</div>
                 </div>
 
                 <div class="grid-visual-badges">
@@ -1236,7 +1269,7 @@ function displayGridsVisual(grids, metadata, targetDate) {
                             badgeClass = 'badge-gap';
                         }
 
-                        return `<span class="visual-badge ${badgeClass}">${icon} ${badge}</span>`;
+                        return `<span class="visual-badge ${badgeClass} ball-drop">${icon} ${badge}</span>`;
                     }).join('')}
                 </div>
             </div>
@@ -1266,6 +1299,7 @@ function displayGridsVisual(grids, metadata, targetDate) {
     // Titre et affichage
     document.getElementById('result-title').textContent = 'Analyse du tirage';
     showSuccess();
+    animateBallDrop(keyInfo);
 }
 
 // ================================================================

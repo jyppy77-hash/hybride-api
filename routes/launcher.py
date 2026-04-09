@@ -10,6 +10,7 @@ from markupsafe import Markup
 from config import killswitch
 from config.i18n import ctx_lang
 from config.templates import env, BASE_URL, _OG_LOCALE, EM_URLS
+from config.version import APP_VERSION
 
 router = APIRouter()
 
@@ -176,6 +177,7 @@ def _render_launcher(lang: str, request: Request) -> HTMLResponse:
             "og_locale": _OG_LOCALE.get(lang, "en_GB"),
             "hreflang_tags": hreflang_tags,
             "legal_urls": legal_urls,
+            "app_version": APP_VERSION,
         }
 
         template = env.get_template("launcher.html")

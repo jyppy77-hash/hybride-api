@@ -525,5 +525,90 @@
     <script>
     (function(){var a=document.querySelector('.seo-accordion'),f=document.querySelector('.launcher-footer');if(a&&f){a.addEventListener('toggle',function(){f.style.display=a.open?'none':'';});}})();
     </script>
+    <style>
+      @keyframes _introGrad{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+    </style>
+    <script>
+    /* LotoIA Intro V2 — Gradient curtains + favicon split + release split */
+    (function(){
+      if(sessionStorage.getItem('lotoia_intro_seen'))return;
+      if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+        sessionStorage.setItem('lotoia_intro_seen','1');return;
+      }
+
+      var cont=document.querySelector('.launcher-container');
+      var foot=document.querySelector('.launcher-footer');
+      if(cont)cont.style.visibility='hidden';
+      if(foot)foot.style.visibility='hidden';
+
+      var grad='linear-gradient(-45deg,#4285F4,#0f172a,#A142F4,#34A853,#EA4335,#7c3aed)';
+      var curtainBase='position:absolute;top:0;height:100%;overflow:hidden;'
+        +'background:'+grad+';background-size:400% 400%;animation:_introGrad 3s ease infinite;'
+        +'transition:transform 1.3s cubic-bezier(0.77,0,0.175,1);';
+      var imgSize='width:clamp(120px,25vw,250px);height:auto;display:block;';
+      var relStyle='font-size:clamp(0.8rem,1.5vw,1.2rem);color:rgba(255,255,255,0.7);'
+        +'font-family:monospace;letter-spacing:0.1em;white-space:nowrap;';
+
+      /* Overlay */
+      var ov=document.createElement('div');
+      ov.id='lotoia-intro';
+      ov.style.cssText='position:fixed;inset:0;z-index:99999;overflow:hidden;';
+
+      /* Left curtain */
+      var cL=document.createElement('div');
+      cL.style.cssText=curtainBase+'left:0;width:50.1%;';
+
+      var fL=document.createElement('div');
+      fL.style.cssText='position:absolute;top:50%;left:100%;transform:translate(-50%,-55%);';
+      var iL=document.createElement('img');
+      iL.src='/ui/static/favicon.svg';iL.alt='';iL.style.cssText=imgSize;
+      fL.appendChild(iL);cL.appendChild(fL);
+
+      var rL=document.createElement('div');
+      rL.style.cssText='position:absolute;top:50%;left:100%;transform:translate(-50%,calc(-55% + clamp(80px,14vw,140px)));'+relStyle;
+      rL.textContent='Release {{ app_version }}';
+      cL.appendChild(rL);
+
+      /* Right curtain */
+      var cR=document.createElement('div');
+      cR.style.cssText=curtainBase+'right:0;width:50.1%;';
+
+      var fR=document.createElement('div');
+      fR.style.cssText='position:absolute;top:50%;right:100%;transform:translate(50%,-55%);';
+      var iR=document.createElement('img');
+      iR.src='/ui/static/favicon.svg';iR.alt='';iR.style.cssText=imgSize;
+      fR.appendChild(iR);cR.appendChild(fR);
+
+      var rR=document.createElement('div');
+      rR.style.cssText='position:absolute;top:50%;right:100%;transform:translate(50%,calc(-55% + clamp(80px,14vw,140px)));'+relStyle;
+      rR.textContent='Release {{ app_version }}';
+      cR.appendChild(rR);
+
+      ov.appendChild(cL);ov.appendChild(cR);
+      document.body.prepend(ov);
+
+      function cleanup(){
+        if(!ov.parentNode)return;
+        ov.parentNode.removeChild(ov);
+        sessionStorage.setItem('lotoia_intro_seen','1');
+      }
+
+      /* Open curtains at 1.5s */
+      setTimeout(function(){
+        cL.style.transform='translateX(-100%)';
+        cR.style.transform='translateX(100%)';
+        if(cont)cont.style.visibility='visible';
+        if(foot)foot.style.visibility='visible';
+        setTimeout(cleanup,1400);
+      },1500);
+
+      /* Safety */
+      setTimeout(function(){
+        if(cont)cont.style.visibility='visible';
+        if(foot)foot.style.visibility='visible';
+        cleanup();
+      },4000);
+    })();
+    </script>
 </body>
 </html>

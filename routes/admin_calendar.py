@@ -80,14 +80,14 @@ async def admin_api_calendar_data(
         async with db_cloudsql.get_connection_readonly() as conn:
             cur = await conn.cursor()
             await cur.execute(
-                f"SELECT day, COUNT(DISTINCT ip_address) AS visitors FROM ("
-                f"  SELECT DAY({_TZ}) AS day, ip_address"
+                f"SELECT day, COUNT(DISTINCT visitor_id) AS visitors FROM ("
+                f"  SELECT DAY({_TZ}) AS day, ip_address AS visitor_id"
                 f"  FROM event_log WHERE {where_tz}"
                 f"  UNION ALL"
-                f"  SELECT DAY({_TZ}) AS day, ip_address"
+                f"  SELECT DAY({_TZ}) AS day, session_hash AS visitor_id"
                 f"  FROM sponsor_impressions WHERE {where_tz}"
                 f"  UNION ALL"
-                f"  SELECT DAY({_TZ}) AS day, ip_address"
+                f"  SELECT DAY({_TZ}) AS day, ip_hash AS visitor_id"
                 f"  FROM chat_log WHERE {where_tz}"
                 f") AS all_ips GROUP BY day",
                 params * 3,

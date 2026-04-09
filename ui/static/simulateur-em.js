@@ -446,8 +446,7 @@ function displayBadges(badges) {
 
     badges.forEach(function(badge, index) {
         var el = document.createElement('span');
-        el.className = 'badge';
-        el.style.animationDelay = (index * 0.1) + 's';
+        el.className = 'badge ball-drop';
 
         var icon = '\u{1F3AF}';
         for (var key in iconMap) {
@@ -555,16 +554,14 @@ function displaySelectedGrid(nums, etoile1, etoile2) {
     var sorted = nums.slice().sort(function(a, b) { return a - b; });
     sorted.forEach(function(n, index) {
         var ball = document.createElement('div');
-        ball.className = 'selected-ball main';
+        ball.className = 'selected-ball main ball-drop';
         ball.textContent = n;
-        ball.style.animationDelay = (index * 0.1) + 's';
         container.appendChild(ball);
     });
 
     var sep = document.createElement('div');
-    sep.className = 'selected-ball separator';
+    sep.className = 'selected-ball separator ball-drop';
     sep.textContent = '+';
-    sep.style.animationDelay = '0.5s';
     container.appendChild(sep);
 
     var stars = [etoile1, etoile2].filter(Boolean).sort(function(a, b) { return a - b; });
@@ -572,10 +569,29 @@ function displaySelectedGrid(nums, etoile1, etoile2) {
 
     stars.forEach(function(s, index) {
         var starBall = document.createElement('div');
-        starBall.className = 'selected-ball chance';
+        starBall.className = 'selected-ball chance ball-drop';
         starBall.textContent = s;
-        starBall.style.animationDelay = (0.6 + index * 0.1) + 's';
         container.appendChild(starBall);
+    });
+
+    animateBallDropSimulateurEM(container);
+}
+
+function animateBallDropSimulateurEM(container) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var mains = container.querySelectorAll('.selected-ball.main');
+    mains.forEach(function(b, i) {
+        setTimeout(function() { b.classList.add('ball-animate'); }, i * 150);
+    });
+    var sep = container.querySelector('.selected-ball.separator');
+    if (sep) setTimeout(function() { sep.classList.add('ball-animate'); }, 900);
+    var stars = container.querySelectorAll('.selected-ball.chance');
+    stars.forEach(function(s, j) {
+        setTimeout(function() { s.classList.add('ball-animate'); }, 900 + j * 150);
+    });
+    var badges = document.querySelectorAll('#badges-container .badge');
+    badges.forEach(function(bg, j) {
+        setTimeout(function() { bg.classList.add('ball-animate'); }, 1100 + j * 100);
     });
 }
 

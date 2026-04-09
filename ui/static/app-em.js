@@ -10,6 +10,7 @@ var nextDrawDate = null;
 
 // DOM Elements
 const btnAnalyze = document.getElementById('btn-analyze');
+const btnCopy = document.getElementById('btn-copy');
 const resultsSection = document.getElementById('results-section');
 const successState = document.getElementById('success-state');
 const errorState = document.getElementById('error-state');
@@ -38,6 +39,7 @@ async function fetchTiragesEM(endpoint) {
 function init() {
     initNextDraw();
     if (btnAnalyze) btnAnalyze.addEventListener('click', handleAnalyze);
+    if (btnCopy) btnCopy.addEventListener('click', handleCopyEM);
     initGridCountSelector();
     updateStatsDisplay();
     setInterval(updateStatsDisplay, 5 * 60 * 1000);
@@ -248,6 +250,86 @@ async function handleAnalyze() {
 }
 
 // ================================================================
+// PARTNER CARD — EuroMillions
+// ================================================================
+
+function trackAdImpressionEM(adId) {}
+function trackAdClickEM(adId, partnerId) {}
+
+function createPartnerCardEM(index) {
+    var adId = 'ad_' + Date.now() + '_' + index;
+    var partnerId = 'partner_demo';
+    trackAdImpressionEM(adId);
+    return '<div class="partner-card" data-ad-id="' + adId + '" data-partner-id="' + partnerId + '">' +
+        '<div class="partner-content">' +
+        '<div class="partner-badge">' + (LI.partner_label || 'Partenaire') + '</div>' +
+        '<div class="partner-body">' +
+        '<p class="partner-text">LotoIA.fr ' + (LI.partner_text || 'est propulsé par nos partenaires') + '</p>' +
+        '<a href="#" class="partner-cta" onclick="trackAdClickEM(\'' + adId + '\',\'' + partnerId + '\');return false;">' +
+        (LI.partner_cta || 'En savoir plus') + '</a>' +
+        '</div></div></div>';
+}
+
+// ================================================================
+// BALL DROP ANIMATION — EuroMillions
+// ================================================================
+
+function animateBallDropEM(container) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var cards = container.querySelectorAll('.grid-visual-card');
+    function animateCard(card) {
+        var mains = card.querySelectorAll('.grid-visual-numbers .visual-ball.main');
+        mains.forEach(function(b, i) {
+            setTimeout(function() { b.classList.add('ball-animate'); }, i * 150);
+        });
+        var sep = card.querySelector('.visual-ball.separator');
+        if (sep) setTimeout(function() { sep.classList.add('ball-animate'); }, 900);
+        var stars = card.querySelectorAll('.visual-ball.chance');
+        stars.forEach(function(s, j) {
+            setTimeout(function() { s.classList.add('ball-animate'); }, 900 + j * 150);
+        });
+        var badges = card.querySelectorAll('.visual-badge');
+        badges.forEach(function(bg, j) {
+            setTimeout(function() { bg.classList.add('ball-animate'); }, 1100 + j * 100);
+        });
+    }
+    var obs = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) {
+            if (e.isIntersecting) {
+                obs.unobserve(e.target);
+                animateCard(e.target);
+            }
+        });
+    }, { threshold: 0.3 });
+    cards.forEach(function(card) { obs.observe(card); });
+}
+
+// ================================================================
+// COPY GRIDS — EuroMillions
+// ================================================================
+
+function handleCopyEM() {
+    if (!currentResult || !currentResult.grids) return;
+    var text = currentResult.grids.map(function(grid, i) {
+        var nums = grid.nums.slice().sort(function(a, b) { return a - b; })
+            .map(function(n) { return String(n).padStart(2, '0'); }).join(' ');
+        var stars = (grid.etoiles || []).slice().sort(function(a, b) { return a - b; })
+            .map(function(s) { return String(s).padStart(2, '0'); }).join(' ');
+        return (LI.grid_label || 'Grille') + ' ' + (i + 1) + ' : ' + nums + ' + ' + stars;
+    }).join('\n');
+    navigator.clipboard.writeText(text).then(function() {
+        if (window.LotoIAAnalytics && window.LotoIAAnalytics.product) {
+            window.LotoIAAnalytics.product.copyGrid({});
+        }
+        var orig = btnCopy.textContent;
+        btnCopy.textContent = '\u2713';
+        setTimeout(function() { btnCopy.textContent = orig; }, 1500);
+    }).catch(function() {
+        alert(LI.copy_error || 'Erreur lors de la copie');
+    });
+}
+
+// ================================================================
 // DISPLAY GRIDS — EuroMillions (5 nums + 2 etoiles)
 // ================================================================
 
@@ -286,13 +368,13 @@ function displayGridsEM(grids, metadata, targetDate) {
             '<div class="grid-visual-numbers">';
 
         grid.nums.slice().sort(function(a, b) { return a - b; }).forEach(function(n) {
-            html += '<div class="visual-ball main">' + String(n).padStart(2, '0') + '</div>';
+            html += '<div class="visual-ball main ball-drop">' + String(n).padStart(2, '0') + '</div>';
         });
 
-        html += '<div class="visual-ball separator">+</div>';
+        html += '<div class="visual-ball separator ball-drop">+</div>';
 
         (grid.etoiles || []).slice().sort(function(a, b) { return a - b; }).forEach(function(s) {
-            html += '<div class="visual-ball chance">' + String(s).padStart(2, '0') + '</div>';
+            html += '<div class="visual-ball chance ball-drop">' + String(s).padStart(2, '0') + '</div>';
         });
 
         html += '</div><div class="grid-visual-badges">';
@@ -307,7 +389,7 @@ function displayGridsEM(grids, metadata, targetDate) {
             else if (badge.toLowerCase().indexOf('hybride') !== -1) { icon = '\u2699\uFE0F'; badgeClass = 'badge-hybrid'; }
             else if (badge.toLowerCase().indexOf('retard') !== -1 || badge.toLowerCase().indexOf('overdue') !== -1) { icon = '\u23F0'; badgeClass = 'badge-gap'; }
 
-            html += '<span class="visual-badge ' + badgeClass + '">' + icon + ' ' + badge + '</span>';
+            html += '<span class="visual-badge ' + badgeClass + ' ball-drop">' + icon + ' ' + badge + '</span>';
         });
 
         html += '</div>' +
@@ -315,6 +397,10 @@ function displayGridsEM(grids, metadata, targetDate) {
                 '<span class="pitch-icon">\u{1F916}</span> ' + LI.pitch_loading +
             '</div>' +
         '</div>';
+
+        if (index < grids.length - 1) {
+            html += createPartnerCardEM(index);
+        }
     });
 
     html += '<div class="results-footer">' +
@@ -337,6 +423,7 @@ function displayGridsEM(grids, metadata, targetDate) {
     var resultTitle = document.getElementById('result-title');
     if (resultTitle) resultTitle.textContent = LI.result_title;
     showSuccess();
+    if (keyInfo) animateBallDropEM(keyInfo);
 }
 
 // ================================================================

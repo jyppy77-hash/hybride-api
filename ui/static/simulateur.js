@@ -443,8 +443,7 @@ function displayBadges(badges) {
 
     badges.forEach((badge, index) => {
         const el = document.createElement('span');
-        el.className = 'badge';
-        el.style.animationDelay = `${index * 0.1}s`;
+        el.className = 'badge ball-drop';
 
         // Find matching icon
         let icon = '🎯'; // default
@@ -627,25 +626,41 @@ function displaySelectedGrid(nums, chance) {
     const sorted = [...nums].sort((a, b) => a - b);
     sorted.forEach((n, index) => {
         const ball = document.createElement('div');
-        ball.className = 'selected-ball main';
+        ball.className = 'selected-ball main ball-drop';
         ball.textContent = n;
-        ball.style.animationDelay = `${index * 0.1}s`;
         container.appendChild(ball);
     });
 
     // Separator
     const sep = document.createElement('div');
-    sep.className = 'selected-ball separator';
+    sep.className = 'selected-ball separator ball-drop';
     sep.textContent = '+';
-    sep.style.animationDelay = '0.5s';
     container.appendChild(sep);
 
     // Chance
     const chanceBall = document.createElement('div');
-    chanceBall.className = 'selected-ball chance';
+    chanceBall.className = 'selected-ball chance ball-drop';
     chanceBall.textContent = chance;
-    chanceBall.style.animationDelay = '0.6s';
     container.appendChild(chanceBall);
+
+    // Ball drop animation
+    animateBallDropSimulateur(container);
+}
+
+function animateBallDropSimulateur(container) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    var mains = container.querySelectorAll('.selected-ball.main');
+    mains.forEach(function(b, i) {
+        setTimeout(function() { b.classList.add('ball-animate'); }, i * 150);
+    });
+    var sep = container.querySelector('.selected-ball.separator');
+    if (sep) setTimeout(function() { sep.classList.add('ball-animate'); }, 900);
+    var ch = container.querySelector('.selected-ball.chance');
+    if (ch) setTimeout(function() { ch.classList.add('ball-animate'); }, 900);
+    var badges = document.querySelectorAll('#badges-container .badge');
+    badges.forEach(function(bg, j) {
+        setTimeout(function() { bg.classList.add('ball-animate'); }, 1100 + j * 100);
+    });
 }
 
 /**
