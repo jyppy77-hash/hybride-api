@@ -32,7 +32,7 @@ import importlib
 from services.base_chat_sql import _SQL_LIMIT_MESSAGES, _MAX_SQL_INPUT_LENGTH
 from services.chat_utils import _format_date_fr
 from services.stats_analysis import should_inject_pedagogical_context, PEDAGOGICAL_CONTEXT
-from services.decay_state import get_decay_state, update_decay_after_generation
+from services.decay_state import get_decay_state
 
 # F15 V83: Gemini interaction helpers extracted to chat_pipeline_gemini.py
 from services.chat_pipeline_gemini import (  # noqa: F401 — re-exported for backward compat
@@ -585,23 +585,9 @@ async def _prepare_chat_context_base(
                         f"{_lp} Phase G — {len(_grids)} grille(s) generee(s) mode={_gen_mode} "
                         f"forced={_forced['forced_nums']} {cfg['forced_secondary_key']}={_sec_val}"
                     )
-                    # Update decay after generation (best-effort)
-                    try:
-                        _all_b = [n for g in _grids for n in g.get("nums", [])]
-                        _all_s = []
-                        for g in _grids:
-                            sec = g.get("etoiles") or g.get("chance")
-                            if isinstance(sec, list):
-                                _all_s.extend(sec)
-                            elif sec is not None:
-                                _all_s.append(sec)
-                        if _all_b:
-                            async with _db.get_connection() as _dconn:
-                                await update_decay_after_generation(
-                                    _dconn, _game_name, _all_b, _all_s or None,
-                                )
-                    except Exception:
-                        logger.warning(f"{_lp} Decay update failed — non-blocking", exc_info=True)
+                    # V94 hotfix: decay write removed from chatbot pipeline.
+                    # Decay state is now updated ONLY when a new real draw is imported
+                    # (via check_and_update_decay or admin route). Chatbot is READ-ONLY.
         except Exception as e:
             logger.warning(f"{_lp} Phase G erreur: {e}")
 

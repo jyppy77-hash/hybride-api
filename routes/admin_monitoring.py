@@ -272,6 +272,29 @@ async def admin_circuit_breaker_reset(request: Request):
     return JSONResponse({"status": "closed", "previous_state": prev_state, "message": "Circuit breaker reset"})
 
 
+# V94 hotfix: Decay state admin update
+@router.post("/admin/api/decay/update", include_in_schema=False)
+async def admin_decay_update(request: Request):
+    """Trigger decay state update for both games (auto-detects new draws)."""
+    err = _require_auth_json(request)
+    if err:
+        return err
+    from middleware.ip_ban import _extract_client_ip
+    real_ip = _extract_client_ip(request)
+    from services.decay_state import check_and_update_decay
+    results = {}
+    try:
+        async with db_cloudsql.get_connection() as conn:
+            results["loto"] = await check_and_update_decay(conn, "loto", "tirages")
+        async with db_cloudsql.get_connection() as conn:
+            results["euromillions"] = await check_and_update_decay(conn, "euromillions", "tirages_euromillions")
+    except Exception as e:
+        logger.error("[ADMIN] decay update error: %s", e)
+        return JSONResponse({"error": str(e)}, status_code=500)
+    logger.info("[ADMIN_AUDIT] action=decay_update ip=%s results=%s", real_ip, results)
+    return JSONResponse({"status": "ok", "results": results})
+
+
 # ── Activity monitor ─────────────────────────────────────────────────────────
 
 @router.get("/admin/activity", response_class=HTMLResponse, include_in_schema=False)

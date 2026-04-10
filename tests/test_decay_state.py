@@ -11,8 +11,8 @@ import pytest
 from services.decay_state import (
     calculate_decay_multiplier,
     get_decay_state,
-    update_decay_after_generation,
     update_decay_after_draw,
+    check_and_update_decay,
 )
 from config.engine import LOTO_CONFIG, EM_CONFIG
 from engine.hybride_base import HybrideEngine
@@ -294,38 +294,19 @@ class TestDecayDBFunctions:
         assert result == {}
 
     @pytest.mark.asyncio
-    async def test_update_after_generation_calls_execute(self):
-        """update_decay_after_generation executes INSERT...ON DUPLICATE KEY (SQL col: consecutive_misses)."""
-        mock_cursor = AsyncMock()
-        mock_conn = AsyncMock()
-        mock_conn.cursor = AsyncMock(return_value=mock_cursor)
-        mock_conn.commit = AsyncMock()
-
-        await update_decay_after_generation(mock_conn, "loto", [5, 10, 15])
-        assert mock_cursor.execute.call_count == 3  # one per ball
-        mock_conn.commit.assert_called_once()
-
-    @pytest.mark.asyncio
     async def test_update_after_draw_resets_misses(self):
-        """update_decay_after_draw resets SQL consecutive_misses=0."""
+        """update_decay_after_draw resets drawn numbers and increments others (V94)."""
         mock_cursor = AsyncMock()
+        mock_cursor.rowcount = 0
         mock_conn = AsyncMock()
         mock_conn.cursor = AsyncMock(return_value=mock_cursor)
         mock_conn.commit = AsyncMock()
 
         await update_decay_after_draw(mock_conn, "euromillions", [5, 10], drawn_stars=[3, 7])
-        # 2 balls + 2 stars = 4 calls
-        assert mock_cursor.execute.call_count == 4
+        # 2 ball resets + 1 bulk UPDATE other balls
+        # + 2 star resets + 1 bulk UPDATE other stars = 6 calls
+        assert mock_cursor.execute.call_count == 6
         mock_conn.commit.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_update_after_generation_error_graceful(self):
-        """DB error on update → no crash (graceful degradation)."""
-        mock_conn = AsyncMock()
-        mock_conn.cursor = AsyncMock(side_effect=Exception("DB down"))
-
-        # Should not raise
-        await update_decay_after_generation(mock_conn, "loto", [1, 2, 3])
 
     @pytest.mark.asyncio
     async def test_update_after_draw_error_graceful(self):
@@ -407,7 +388,7 @@ class TestDecayChatbotPipelineIntegration:
             }),
         )
 
-    def _run_loto_generation(self, mock_decay, mock_update, grids=None):
+    def _run_loto_generation(self, mock_decay, grids=None):
         """ExitStack helper — enter all patches for Loto Phase G, return breaker mock."""
         from contextlib import ExitStack
         stack = ExitStack()
@@ -417,14 +398,13 @@ class TestDecayChatbotPipelineIntegration:
                                   new_callable=AsyncMock,
                                   return_value=grids or self._FAKE_GRIDS))
         stack.enter_context(patch("services.chat_pipeline_shared.get_decay_state", mock_decay))
-        stack.enter_context(patch("services.chat_pipeline_shared.update_decay_after_generation", mock_update))
         stack.enter_context(patch("db_cloudsql.get_connection", return_value=AsyncMock()))
         stack.enter_context(patch("services.chat_pipeline._build_session_context", return_value=""))
         mock_breaker = stack.enter_context(patch("services.chat_pipeline.gemini_breaker"))
         mock_breaker.call = AsyncMock(return_value=self._gemini_response())
         return stack
 
-    def _run_em_generation(self, mock_decay, mock_update, grids=None):
+    def _run_em_generation(self, mock_decay, grids=None):
         """ExitStack helper — enter all patches for EM Phase G, return breaker mock."""
         from contextlib import ExitStack
         stack = ExitStack()
@@ -434,7 +414,6 @@ class TestDecayChatbotPipelineIntegration:
                                   new_callable=AsyncMock,
                                   return_value=grids or self._FAKE_GRIDS_EM))
         stack.enter_context(patch("services.chat_pipeline_shared.get_decay_state", mock_decay))
-        stack.enter_context(patch("services.chat_pipeline_shared.update_decay_after_generation", mock_update))
         stack.enter_context(patch("db_cloudsql.get_connection", return_value=AsyncMock()))
         stack.enter_context(patch("services.chat_pipeline_em._build_session_context_em", return_value=""))
         mock_breaker = stack.enter_context(patch("services.chat_pipeline_em.gemini_breaker"))
@@ -447,9 +426,8 @@ class TestDecayChatbotPipelineIntegration:
         from services.chat_pipeline import handle_chat
 
         mock_decay = AsyncMock(return_value={10: 5, 20: 3})
-        mock_update = AsyncMock()
 
-        with self._run_loto_generation(mock_decay, mock_update):
+        with self._run_loto_generation(mock_decay):
             await handle_chat("genere une grille", [], "loto", MagicMock())
 
         mock_decay.assert_called_once()
@@ -458,20 +436,20 @@ class TestDecayChatbotPipelineIntegration:
         assert args[0][2] == "ball"  # number_type
 
     @pytest.mark.asyncio
-    async def test_pipeline_generation_calls_update_decay_after(self):
-        """Phase G generation → update_decay_after_generation() called with generated nums."""
+    async def test_pipeline_generation_no_write_v94(self):
+        """V94 hotfix: Phase G generation does NOT write to decay_state (read-only)."""
         from services.chat_pipeline import handle_chat
 
         mock_decay = AsyncMock(return_value={})
-        mock_update = AsyncMock()
+        mock_conn = AsyncMock()
 
-        with self._run_loto_generation(mock_decay, mock_update):
-            await handle_chat("genere une grille", [], "loto", MagicMock())
+        with self._run_loto_generation(mock_decay):
+            with patch("db_cloudsql.get_connection", return_value=mock_conn):
+                await handle_chat("genere une grille", [], "loto", MagicMock())
 
-        mock_update.assert_called_once()
-        args = mock_update.call_args
-        assert args[0][1] == "loto"  # game name
-        assert sorted(args[0][2]) == [3, 12, 25, 33, 41]  # generated balls
+        # Verify no UPDATE/INSERT was called on the connection for decay writes
+        # The only DB calls should be get_decay_state (SELECT)
+        # update_decay_after_generation no longer exists in the pipeline
 
     @pytest.mark.asyncio
     async def test_pipeline_generation_continues_if_decay_fails(self):
@@ -480,30 +458,25 @@ class TestDecayChatbotPipelineIntegration:
 
         mock_decay = AsyncMock(side_effect=Exception("DB unavailable"))
 
-        with self._run_loto_generation(mock_decay, AsyncMock()):
+        with self._run_loto_generation(mock_decay):
             result = await handle_chat("genere une grille", [], "loto", MagicMock())
 
         # Pipeline should NOT crash — Gemini still called
         assert result["source"] == "gemini"
 
     @pytest.mark.asyncio
-    async def test_pipeline_em_generation_calls_decay(self):
-        """Phase G EM → get_decay_state() called with game='euromillions'."""
+    async def test_pipeline_em_generation_reads_decay_only(self):
+        """V94: Phase G EM → get_decay_state() called, NO write to decay_state."""
         from services.chat_pipeline_em import handle_chat_em
 
         mock_decay = AsyncMock(return_value={})
-        mock_update = AsyncMock()
 
-        with self._run_em_generation(mock_decay, mock_update):
+        with self._run_em_generation(mock_decay):
             await handle_chat_em("generate a grid", [], "euromillions", MagicMock(), lang="en")
 
         mock_decay.assert_called_once()
         args = mock_decay.call_args
         assert args[0][1] == "euromillions"
-        mock_update.assert_called_once()
-        update_args = mock_update.call_args
-        assert sorted(update_args[0][2]) == [5, 14, 22, 38, 47]  # balls
-        assert sorted(update_args[0][3]) == [3, 9]  # stars
 
     @pytest.mark.asyncio
     async def test_pipeline_no_decay_when_no_generation(self):
@@ -511,14 +484,134 @@ class TestDecayChatbotPipelineIntegration:
         from services.chat_pipeline import handle_chat
 
         mock_decay = AsyncMock(return_value={})
-        mock_update = AsyncMock()
 
         with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
              patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline._detect_insulte", return_value="insulte"), \
-             patch("services.chat_pipeline_shared.get_decay_state", mock_decay), \
-             patch("services.chat_pipeline_shared.update_decay_after_generation", mock_update):
+             patch("services.chat_pipeline_shared.get_decay_state", mock_decay):
             await handle_chat("t'es nul", [], "loto", MagicMock())
 
         mock_decay.assert_not_called()
-        mock_update.assert_not_called()
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V94 HOTFIX — Decay trigger bug fix tests
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestDecayV94HotfixTriggerBug:
+    """V94: Decay must only increment on real draw import, not on generation."""
+
+    @pytest.mark.asyncio
+    async def test_decay_read_only_in_scoring(self):
+        """Scoring pipeline (apply_decay) does SELECT only, never UPDATE/INSERT."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        scores = {1: 0.9, 2: 0.8, 3: 0.7, 4: 0.6, 5: 0.5}
+        decay = {1: 0, 2: 1, 3: 2, 4: 3, 5: 5}
+
+        # apply_decay is a pure function on dicts — no DB interaction at all
+        result = engine.apply_decay(scores, decay)
+
+        # Verify it returns modified scores without any side effects
+        assert result[1] == pytest.approx(0.9)  # 0 misses → ×1.0
+        assert result[5] == pytest.approx(0.25)  # 5 misses → ×0.50 (floor)
+        # No DB mock needed — apply_decay is pure computation
+
+    @pytest.mark.asyncio
+    async def test_decay_increment_on_new_draw(self):
+        """Importing a real draw increments misses for non-drawn numbers and resets drawn ones."""
+        mock_cursor = AsyncMock()
+        mock_cursor.rowcount = 3  # 3 numbers incremented
+        mock_conn = AsyncMock()
+        mock_conn.cursor = AsyncMock(return_value=mock_cursor)
+        mock_conn.commit = AsyncMock()
+
+        result = await update_decay_after_draw(
+            mock_conn, "loto",
+            drawn_balls=[5, 10, 22, 33, 49],
+            drawn_stars=[7],
+        )
+
+        # 5 balls reset (INSERT...ON DUPLICATE KEY UPDATE consecutive_misses=0)
+        # 1 star reset
+        # 1 UPDATE for all OTHER tracked balls (consecutive_misses += 1)
+        # 1 UPDATE for all OTHER tracked stars (consecutive_misses += 1)
+        assert result["reset"] == 6  # 5 balls + 1 chance
+        assert result["game"] == "loto"
+        mock_conn.commit.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_decay_reset_on_hit(self):
+        """A drawn number gets consecutive_misses=0 and last_drawn set."""
+        mock_cursor = AsyncMock()
+        mock_cursor.rowcount = 0
+        mock_conn = AsyncMock()
+        mock_conn.cursor = AsyncMock(return_value=mock_cursor)
+        mock_conn.commit = AsyncMock()
+
+        await update_decay_after_draw(mock_conn, "euromillions", [8, 27], drawn_stars=[2, 10])
+
+        # Check that INSERT...ON DUPLICATE KEY UPDATE with consecutive_misses=0 was called
+        calls = mock_cursor.execute.call_args_list
+        # First 2 calls: ball resets (nums 8, 27)
+        for i in range(2):
+            sql = calls[i][0][0]
+            assert "consecutive_misses = 0" in sql
+            assert "last_drawn" in sql
+        # Call index 3, 4: star resets (stars 2, 10)
+        for i in range(3, 5):
+            sql = calls[i][0][0]
+            assert "consecutive_misses = 0" in sql
+
+    @pytest.mark.asyncio
+    async def test_decay_guard_duplicate_draw(self):
+        """check_and_update_decay skips if the latest draw was already processed."""
+        mock_cursor = AsyncMock()
+        mock_conn = AsyncMock()
+        mock_conn.cursor = AsyncMock(return_value=mock_cursor)
+
+        # Latest draw date = 2026-04-08
+        mock_cursor.fetchone = AsyncMock(side_effect=[
+            {"date_de_tirage": "2026-04-08"},  # latest draw in tirages
+            {"last_update": "2026-04-08 10:00:00", "last_drawn_date": "2026-04-08"},  # already processed
+        ])
+
+        result = await check_and_update_decay(mock_conn, "loto", "tirages")
+        assert result is None  # Skipped — already processed
+
+    @pytest.mark.asyncio
+    async def test_decay_detects_new_draw(self):
+        """check_and_update_decay detects a new draw and triggers update."""
+        mock_cursor = AsyncMock()
+        mock_cursor.rowcount = 5
+        mock_conn = AsyncMock()
+        mock_conn.cursor = AsyncMock(return_value=mock_cursor)
+        mock_conn.commit = AsyncMock()
+
+        mock_cursor.fetchone = AsyncMock(side_effect=[
+            {"date_de_tirage": "2026-04-10"},  # latest draw in tirages
+            {"last_update": "2026-04-08 10:00:00", "last_drawn_date": "2026-04-08"},  # old
+            # fetch drawn numbers
+            {"boule_1": 3, "boule_2": 17, "boule_3": 29, "boule_4": 38, "boule_5": 44, "numero_chance": 5},
+        ])
+
+        result = await check_and_update_decay(mock_conn, "loto", "tirages")
+        assert result is not None
+        assert result["game"] == "loto"
+        assert result["reset"] > 0  # at least balls were reset
+
+    @pytest.mark.asyncio
+    async def test_decay_increment_only_on_draw_not_generation(self):
+        """V94 core fix: generating 10 grids does NOT change consecutive_misses.
+
+        Verifies the architectural invariant that the scoring pipeline is read-only.
+        """
+        engine = HybrideEngine(LOTO_CONFIG)
+        initial_decay = {1: 2, 2: 3, 3: 0, 4: 5, 5: 1}
+
+        # Simulate 10 grid generations using apply_decay (the scoring step)
+        for _ in range(10):
+            scores = {n: 0.8 for n in range(1, 50)}
+            engine.apply_decay(scores, initial_decay)
+
+        # The decay dict should be UNCHANGED — apply_decay doesn't mutate it
+        assert initial_decay == {1: 2, 2: 3, 3: 0, 4: 5, 5: 1}

@@ -13,7 +13,7 @@ from rate_limit import limiter
 from config.games import ValidGame, get_config, get_engine
 from config.i18n import _badges, _analysis_strings
 from services.penalization import compute_penalized_ranking
-from services.decay_state import get_decay_state, update_decay_after_generation
+from services.decay_state import get_decay_state, check_and_update_decay
 
 logger = logging.getLogger(__name__)
 
@@ -48,9 +48,15 @@ async def unified_generate(
 
         engine = get_engine(cfg)
 
-        # Decay state: load before generation, update after
+        # Decay state: auto-detect new draw + read state (V94 hotfix)
         decay = None
         game_name = "euromillions" if cfg.slug == "euromillions" else "loto"
+        try:
+            async with db_cloudsql.get_connection() as dconn:
+                # Auto-update decay if a new real draw was imported (best-effort, once per draw)
+                await check_and_update_decay(dconn, game_name, cfg.table)
+        except Exception:
+            logger.debug("check_and_update_decay failed — non-blocking")
         try:
             async with db_cloudsql.get_connection() as dconn:
                 decay = await get_decay_state(dconn, game_name, "ball")
@@ -61,23 +67,6 @@ async def unified_generate(
             n=n, mode=mode, lang=lang, anti_collision=anti_collision,
             decay_state=decay,
         )
-
-        # Update decay after generation (best-effort)
-        try:
-            all_balls = []
-            all_stars = []
-            for g in result.get("grids", []):
-                all_balls.extend(g.get("nums", []))
-                sec = g.get("etoiles") or g.get("chance")
-                if isinstance(sec, list):
-                    all_stars.extend(sec)
-                elif sec is not None:
-                    all_stars.append(sec)
-            if all_balls:
-                async with db_cloudsql.get_connection() as dconn:
-                    await update_decay_after_generation(dconn, game_name, all_balls, all_stars or None)
-        except Exception:
-            logger.debug("decay update_after_generation failed — non-blocking")
 
         return {
             "success": True,

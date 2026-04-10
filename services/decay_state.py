@@ -1,15 +1,19 @@
 """
 Decay state persistence for HYBRIDE engine.
-Tracks consecutive selections per number to enable score decay
+Tracks consecutive misses per number to enable score decay
 and break kernel lock (same numbers selected N draws in a row).
 
 Table: hybride_decay_state
-Pipeline position: AFTER penalization, BEFORE anti-collision (step 4).
-See audit 360° Engine HYBRIDE F04 — 01/04/2026.
+Pipeline position: READ-ONLY during scoring (step 4, AFTER penalization, BEFORE anti-collision).
+WRITE only on new real draw import (check_and_update_decay / update_decay_after_draw).
 
-Note (V93 F07): Python API uses "consecutive_selections" — the number of times
-the engine selected a number without it appearing in a real draw. The SQL column
-is still named "consecutive_misses" (no migration). Mapping is done in this module.
+Architecture (V94 hotfix):
+    - Scoring pipeline (generate_grids, chatbot Phase G, API /generate) → READ ONLY (get_decay_state)
+    - New real draw detected → WRITE (check_and_update_decay auto-detects, or update_decay_after_draw manual)
+    - Admin route /admin/api/decay/update → manual trigger
+
+Note (V93 F07): Python API uses "consecutive_selections" in some comments — the SQL column
+is "consecutive_misses" (no migration). This module always uses the SQL column name in queries.
 """
 
 import logging
@@ -52,23 +56,21 @@ def calculate_decay_multiplier(
     return max(floor, decay)
 
 
-# ── Async DB access ──────────────────────────────────────────────────
+# ── Async DB access — READ (used by scoring pipeline) ───────────────
 
 async def get_decay_state(
     conn, game: str, number_type: str = "ball",
 ) -> dict[int, int]:
-    """Return {number_value: consecutive_selections} for a game and type.
+    """Return {number_value: consecutive_misses} for a game and type.
 
     Returns {} if the table is empty (first launch) or on error.
     Graceful degradation: never raises — returns empty dict on failure.
 
-    Note: SQL column is "consecutive_misses" (legacy name, no migration).
-    Python API returns values as consecutive_selections.
+    READ-ONLY — safe to call from scoring pipeline, API, chatbot.
     """
     try:
         cursor = await conn.cursor()
         await cursor.execute(
-            # SQL column "consecutive_misses" = consecutive_selections in Python API (V93 F07)
             "SELECT number_value, consecutive_misses "
             "FROM hybride_decay_state "
             "WHERE game = %s AND number_type = %s",
@@ -81,86 +83,161 @@ async def get_decay_state(
         return {}
 
 
-async def update_decay_after_generation(
-    conn,
-    game: str,
-    generated_balls: list[int],
-    generated_stars: list[int] | None = None,
-) -> None:
-    """Increment consecutive_selections for each generated number.
-
-    Called AFTER each grid generation. For each generated number:
-    consecutive_selections += 1, last_played = today.
-    Numbers NOT generated are untouched.
-
-    Note: SQL column is "consecutive_misses" (legacy name, no migration).
-    """
-    today = date.today().isoformat()
-    try:
-        cursor = await conn.cursor()
-        for num in generated_balls:
-            await cursor.execute(
-                # SQL column "consecutive_misses" = consecutive_selections (V93 F07)
-                "INSERT INTO hybride_decay_state "
-                "(game, number_type, number_value, consecutive_misses, last_played) "
-                "VALUES (%s, 'ball', %s, 1, %s) "
-                "ON DUPLICATE KEY UPDATE "
-                "consecutive_misses = consecutive_misses + 1, last_played = %s",
-                (game, num, today, today),
-            )
-        if generated_stars:
-            ntype = "star" if game == "euromillions" else "chance"
-            for s in generated_stars:
-                await cursor.execute(
-                    "INSERT INTO hybride_decay_state "
-                    "(game, number_type, number_value, consecutive_misses, last_played) "
-                    "VALUES (%s, %s, %s, 1, %s) "
-                    "ON DUPLICATE KEY UPDATE "
-                    "consecutive_misses = consecutive_misses + 1, last_played = %s",
-                    (game, ntype, s, today, today),
-                )
-        await conn.commit()
-    except Exception:
-        logger.warning("update_decay_after_generation failed for %s — skipping", game)
-
+# ── Async DB access — WRITE (called on new real draw ONLY) ──────────
 
 async def update_decay_after_draw(
     conn,
     game: str,
     drawn_balls: list[int],
     drawn_stars: list[int] | None = None,
-) -> None:
-    """Reset consecutive_selections for drawn numbers.
+) -> dict:
+    """Update decay state after a real draw is imported.
 
-    Called when a new real draw is inserted in DB.
-    For each drawn number: consecutive_selections = 0, last_drawn = today.
+    Called ONCE per real draw — NOT from the scoring pipeline.
 
-    Note: SQL column is "consecutive_misses" (legacy name, no migration).
+    Logic:
+    - Numbers that appeared in the draw → reset consecutive_misses=0, set last_drawn=draw date
+    - ALL other numbers already tracked → consecutive_misses += 1 (they missed this draw)
+
+    Returns summary dict {reset: int, incremented: int, game: str}.
     """
     today = date.today().isoformat()
+    reset_count = 0
+    incremented_count = 0
     try:
         cursor = await conn.cursor()
+
+        # 1. Reset drawn balls: consecutive_misses=0, last_drawn=today
         for num in drawn_balls:
             await cursor.execute(
-                # SQL column "consecutive_misses" = consecutive_selections (V93 F07)
                 "INSERT INTO hybride_decay_state "
-                "(game, number_type, number_value, consecutive_misses, last_drawn) "
-                "VALUES (%s, 'ball', %s, 0, %s) "
+                "(game, number_type, number_value, consecutive_misses, last_drawn, last_played) "
+                "VALUES (%s, 'ball', %s, 0, %s, %s) "
                 "ON DUPLICATE KEY UPDATE "
-                "consecutive_misses = 0, last_drawn = %s",
-                (game, num, today, today),
+                "consecutive_misses = 0, last_drawn = %s, updated_at = NOW()",
+                (game, num, today, today, today),
             )
+            reset_count += 1
+
+        # 2. Increment all OTHER tracked balls (they missed this draw)
+        if drawn_balls:
+            placeholders = ",".join(["%s"] * len(drawn_balls))
+            await cursor.execute(
+                "UPDATE hybride_decay_state "
+                "SET consecutive_misses = consecutive_misses + 1, updated_at = NOW() "
+                "WHERE game = %s AND number_type = 'ball' "
+                f"AND number_value NOT IN ({placeholders})",
+                (game, *drawn_balls),
+            )
+            incremented_count += cursor.rowcount
+
+        # 3. Reset drawn stars/chance
         if drawn_stars:
             ntype = "star" if game == "euromillions" else "chance"
             for s in drawn_stars:
                 await cursor.execute(
                     "INSERT INTO hybride_decay_state "
-                    "(game, number_type, number_value, consecutive_misses, last_drawn) "
-                    "VALUES (%s, %s, %s, 0, %s) "
+                    "(game, number_type, number_value, consecutive_misses, last_drawn, last_played) "
+                    "VALUES (%s, %s, %s, 0, %s, %s) "
                     "ON DUPLICATE KEY UPDATE "
-                    "consecutive_misses = 0, last_drawn = %s",
-                    (game, ntype, s, today, today),
+                    "consecutive_misses = 0, last_drawn = %s, updated_at = NOW()",
+                    (game, ntype, s, today, today, today),
                 )
+                reset_count += 1
+
+            # 4. Increment all OTHER tracked stars/chance
+            star_placeholders = ",".join(["%s"] * len(drawn_stars))
+            await cursor.execute(
+                "UPDATE hybride_decay_state "
+                "SET consecutive_misses = consecutive_misses + 1, updated_at = NOW() "
+                "WHERE game = %s AND number_type = %s "
+                f"AND number_value NOT IN ({star_placeholders})",
+                (game, ntype, *drawn_stars),
+            )
+            incremented_count += cursor.rowcount
+
         await conn.commit()
+        logger.info(
+            "update_decay_after_draw OK for %s — %d reset, %d incremented",
+            game, reset_count, incremented_count,
+        )
+        return {"game": game, "reset": reset_count, "incremented": incremented_count}
     except Exception:
-        logger.warning("update_decay_after_draw failed for %s — skipping", game)
+        logger.warning("update_decay_after_draw failed for %s — skipping", game, exc_info=True)
+        return {"game": game, "reset": 0, "incremented": 0, "error": True}
+
+
+async def check_and_update_decay(conn, game: str, table_name: str) -> dict | None:
+    """Auto-detect new real draw and update decay state if needed.
+
+    Compares the latest draw date in the draws table vs the MAX(updated_at)
+    in hybride_decay_state. If a newer draw exists, triggers update_decay_after_draw.
+
+    Safe to call from the scoring path — it only WRITES when a genuinely new draw
+    is detected (typically once per draw, ~3x/week for Loto, ~2x/week for EM).
+
+    Returns update summary or None if no new draw detected.
+    """
+    try:
+        cursor = await conn.cursor()
+
+        # Get the most recent draw date from the draws table
+        await cursor.execute(
+            f"SELECT date_de_tirage FROM {table_name} "
+            "ORDER BY date_de_tirage DESC LIMIT 1",
+        )
+        latest_draw_row = await cursor.fetchone()
+        if not latest_draw_row:
+            return None
+        latest_draw_date = latest_draw_row["date_de_tirage"]
+
+        # Get the most recent update in decay_state for this game
+        await cursor.execute(
+            "SELECT MAX(updated_at) AS last_update, MAX(last_drawn) AS last_drawn_date "
+            "FROM hybride_decay_state WHERE game = %s",
+            (game,),
+        )
+        decay_row = await cursor.fetchone()
+        last_drawn_date = decay_row["last_drawn_date"] if decay_row else None
+
+        # Guard: if the latest draw was already processed, skip
+        if last_drawn_date is not None and str(last_drawn_date) >= str(latest_draw_date):
+            return None
+
+        # New draw detected — fetch drawn numbers
+        if game == "euromillions":
+            await cursor.execute(
+                f"SELECT boule_1, boule_2, boule_3, boule_4, boule_5, etoile_1, etoile_2 "
+                f"FROM {table_name} WHERE date_de_tirage = %s LIMIT 1",
+                (latest_draw_date,),
+            )
+        else:
+            await cursor.execute(
+                f"SELECT boule_1, boule_2, boule_3, boule_4, boule_5, numero_chance "
+                f"FROM {table_name} WHERE date_de_tirage = %s LIMIT 1",
+                (latest_draw_date,),
+            )
+
+        draw_row = await cursor.fetchone()
+        if not draw_row:
+            return None
+
+        drawn_balls = [draw_row[f"boule_{i}"] for i in range(1, 6)]
+
+        if game == "euromillions":
+            drawn_stars = [draw_row["etoile_1"], draw_row["etoile_2"]]
+        elif "numero_chance" in draw_row and draw_row["numero_chance"] is not None:
+            drawn_stars = [draw_row["numero_chance"]]
+        else:
+            drawn_stars = None
+
+        logger.info(
+            "check_and_update_decay: new draw detected for %s (date=%s, balls=%s, stars=%s)",
+            game, latest_draw_date, drawn_balls, drawn_stars,
+        )
+
+        return await update_decay_after_draw(conn, game, drawn_balls, drawn_stars)
+
+    except Exception:
+        logger.warning("check_and_update_decay failed for %s — skipping", game, exc_info=True)
+        return None
