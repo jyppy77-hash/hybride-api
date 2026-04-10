@@ -24,45 +24,82 @@ from engine.hybride_base import HybrideEngine
 
 class TestCalculateDecayMultiplier:
 
-    def test_zero_misses(self):
-        """0 misses → 1.0 (no penalty)."""
+    def test_zero_selections(self):
+        """0 selections → 1.0 (no penalty)."""
         assert calculate_decay_multiplier(0) == 1.0
 
-    def test_one_miss(self):
-        """1 miss → 0.95 with default rate 0.05."""
-        assert calculate_decay_multiplier(1) == pytest.approx(0.95)
+    def test_one_selection(self):
+        """1 selection → 0.897 with default rate 0.10, acceleration 0.03.
+        Formula: 1 - (1 × 0.10 × (1 + 1×0.03)) = 1 - 0.103 = 0.897."""
+        assert calculate_decay_multiplier(1) == pytest.approx(0.897, abs=0.001)
 
-    def test_five_misses(self):
-        """5 misses → 0.75."""
-        assert calculate_decay_multiplier(5) == pytest.approx(0.75)
+    def test_two_selections(self):
+        """2 selections → 0.788.
+        Formula: 1 - (2 × 0.10 × (1 + 2×0.03)) = 1 - 0.212 = 0.788."""
+        assert calculate_decay_multiplier(2) == pytest.approx(0.788, abs=0.001)
 
-    def test_ten_misses_hits_floor(self):
-        """10 misses → 0.50 (floor)."""
+    def test_three_selections(self):
+        """3 selections → 0.673.
+        Formula: 1 - (3 × 0.10 × (1 + 3×0.03)) = 1 - 0.327 = 0.673."""
+        assert calculate_decay_multiplier(3) == pytest.approx(0.673, abs=0.001)
+
+    def test_five_selections_hits_floor(self):
+        """5 selections → 0.50 (floor).
+        Raw: 1 - (5 × 0.10 × 1.15) = 0.425 → clamped to floor."""
+        assert calculate_decay_multiplier(5) == pytest.approx(0.50)
+
+    def test_ten_selections_clamped_at_floor(self):
+        """10 selections → 0.50 (clamped, does not go below floor)."""
         assert calculate_decay_multiplier(10) == pytest.approx(0.50)
 
-    def test_twenty_misses_clamped_at_floor(self):
-        """20 misses → 0.50 (clamped, does not go below floor)."""
+    def test_twenty_selections_clamped_at_floor(self):
+        """20 selections → 0.50 (clamped, does not go below floor)."""
         assert calculate_decay_multiplier(20) == pytest.approx(0.50)
 
-    def test_negative_misses(self):
-        """Negative misses → 1.0 (guard)."""
+    def test_negative_selections(self):
+        """Negative selections → 1.0 (guard)."""
         assert calculate_decay_multiplier(-1) == 1.0
 
-    def test_custom_rate(self):
-        """Custom decay_rate=0.10 → 3 misses = 0.70."""
-        assert calculate_decay_multiplier(3, decay_rate=0.10) == pytest.approx(0.70)
+    def test_custom_rate_no_acceleration(self):
+        """Custom rate=0.10, acceleration=0.0 → linear: 3 selections = 0.70."""
+        assert calculate_decay_multiplier(3, decay_rate=0.10, acceleration=0.0) == pytest.approx(0.70)
 
     def test_custom_floor(self):
-        """Custom floor=0.30 → 15 misses = 0.30 (not 0.25)."""
+        """Custom floor=0.30 → clamped at floor."""
         assert calculate_decay_multiplier(15, decay_rate=0.05, floor=0.30) == pytest.approx(0.30)
 
     def test_zero_rate(self):
-        """decay_rate=0.0 → always 1.0 regardless of misses."""
+        """decay_rate=0.0 → always 1.0 regardless of selections."""
         assert calculate_decay_multiplier(100, decay_rate=0.0) == 1.0
 
     def test_floor_one(self):
         """floor=1.0 → always 1.0 (decay effectively disabled)."""
         assert calculate_decay_multiplier(10, decay_rate=0.05, floor=1.0) == 1.0
+
+    def test_acceleration_increases_penalty(self):
+        """With acceleration, each selection weighs more than the previous."""
+        m1 = calculate_decay_multiplier(1)
+        m2 = calculate_decay_multiplier(2)
+        m3 = calculate_decay_multiplier(3)
+        # Penalty increments should grow (accelerate)
+        penalty_1_to_2 = m1 - m2
+        penalty_2_to_3 = m2 - m3
+        assert penalty_2_to_3 > penalty_1_to_2
+
+    def test_acceleration_zero_is_linear(self):
+        """acceleration=0.0 → linear decay (no acceleration)."""
+        m1 = calculate_decay_multiplier(1, decay_rate=0.10, acceleration=0.0)
+        m2 = calculate_decay_multiplier(2, decay_rate=0.10, acceleration=0.0)
+        m3 = calculate_decay_multiplier(3, decay_rate=0.10, acceleration=0.0)
+        assert m1 == pytest.approx(0.90)
+        assert m2 == pytest.approx(0.80)
+        assert m3 == pytest.approx(0.70)
+
+    def test_decay_rate_secondary_higher(self):
+        """Secondary rate (étoiles) produces more aggressive decay."""
+        mult_boules = calculate_decay_multiplier(2, decay_rate=0.10, acceleration=0.03)
+        mult_etoiles = calculate_decay_multiplier(2, decay_rate=0.15, acceleration=0.03)
+        assert mult_etoiles < mult_boules
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -88,32 +125,43 @@ class TestApplyDecay:
         assert result == scores
 
     def test_decay_applied(self):
-        """Numbers with misses get decayed scores."""
+        """Numbers with selections get decayed scores (V92: rate=0.10, accel=0.03)."""
         engine = HybrideEngine(LOTO_CONFIG)
         scores = {1: 1.0, 2: 1.0, 3: 1.0}
-        decay = {1: 0, 2: 5, 3: 10}
+        # 0 selections → ×1.00, 3 selections → ×0.673, 5 selections → ×0.50 (floor)
+        decay = {1: 0, 2: 3, 3: 5}
         result = engine.apply_decay(scores, decay)
-        assert result[1] == pytest.approx(1.0)   # 0 misses → ×1.00
-        assert result[2] == pytest.approx(0.75)   # 5 misses → ×0.75
-        assert result[3] == pytest.approx(0.50)   # 10 misses → ×0.50
+        assert result[1] == pytest.approx(1.0)
+        assert result[2] == pytest.approx(0.673, abs=0.001)
+        assert result[3] == pytest.approx(0.50)
 
     def test_decay_preserves_zero_scores(self):
         """T-1 hard-excluded (score=0.0) stays 0.0 after decay."""
         engine = HybrideEngine(LOTO_CONFIG)
         scores = {1: 0.0, 2: 0.8}
-        decay = {1: 5, 2: 5}
+        decay = {1: 3, 2: 3}
         result = engine.apply_decay(scores, decay)
-        assert result[1] == 0.0  # 0 × 0.75 = 0
-        assert result[2] == pytest.approx(0.6)  # 0.8 × 0.75
+        assert result[1] == 0.0  # 0 × anything = 0
+        assert result[2] == pytest.approx(0.8 * 0.673, abs=0.001)
 
     def test_unknown_numbers_get_no_decay(self):
-        """Numbers not in decay_state treated as 0 misses."""
+        """Numbers not in decay_state treated as 0 selections."""
         engine = HybrideEngine(LOTO_CONFIG)
         scores = {1: 0.8, 2: 0.8}
-        decay = {1: 5}  # only num 1 in decay
+        decay = {1: 3}  # only num 1 in decay
         result = engine.apply_decay(scores, decay)
-        assert result[1] == pytest.approx(0.6)   # 0.8 × 0.75
+        assert result[1] == pytest.approx(0.8 * 0.673, abs=0.001)
         assert result[2] == pytest.approx(0.8)   # no decay (0 misses)
+
+    def test_decay_with_secondary_rate(self):
+        """apply_decay with rate override uses decay_rate_secondary."""
+        engine = HybrideEngine(EM_CONFIG)
+        scores = {1: 1.0, 2: 1.0}
+        decay = {1: 2, 2: 0}
+        # rate=0.15 (EM secondary), accel=0.03: 1 - (2 × 0.15 × 1.06) = 0.682
+        result = engine.apply_decay(scores, decay, rate=engine.cfg.decay_rate_secondary)
+        assert result[1] == pytest.approx(0.682, abs=0.001)
+        assert result[2] == pytest.approx(1.0)
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -124,13 +172,17 @@ class TestDecayConfig:
 
     def test_loto_decay_defaults(self):
         assert LOTO_CONFIG.decay_enabled is True
-        assert LOTO_CONFIG.decay_rate == 0.05
+        assert LOTO_CONFIG.decay_rate == 0.10
         assert LOTO_CONFIG.decay_floor == 0.50
+        assert LOTO_CONFIG.decay_acceleration == 0.03
+        assert LOTO_CONFIG.decay_rate_secondary == 0.12
 
     def test_em_decay_defaults(self):
         assert EM_CONFIG.decay_enabled is True
-        assert EM_CONFIG.decay_rate == 0.05
+        assert EM_CONFIG.decay_rate == 0.10
         assert EM_CONFIG.decay_floor == 0.50
+        assert EM_CONFIG.decay_acceleration == 0.03
+        assert EM_CONFIG.decay_rate_secondary == 0.15
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -209,7 +261,7 @@ class TestDecayDBFunctions:
 
     @pytest.mark.asyncio
     async def test_get_decay_state_returns_dict(self):
-        """get_decay_state returns {number: misses} dict."""
+        """get_decay_state returns {number: selections} dict."""
         mock_cursor = AsyncMock()
         mock_cursor.fetchall = AsyncMock(return_value=[
             {"number_value": 5, "consecutive_misses": 3},
@@ -243,7 +295,7 @@ class TestDecayDBFunctions:
 
     @pytest.mark.asyncio
     async def test_update_after_generation_calls_execute(self):
-        """update_decay_after_generation executes INSERT...ON DUPLICATE KEY."""
+        """update_decay_after_generation executes INSERT...ON DUPLICATE KEY (SQL col: consecutive_misses)."""
         mock_cursor = AsyncMock()
         mock_conn = AsyncMock()
         mock_conn.cursor = AsyncMock(return_value=mock_cursor)
@@ -255,7 +307,7 @@ class TestDecayDBFunctions:
 
     @pytest.mark.asyncio
     async def test_update_after_draw_resets_misses(self):
-        """update_decay_after_draw executes INSERT...consecutive_misses=0."""
+        """update_decay_after_draw resets SQL consecutive_misses=0."""
         mock_cursor = AsyncMock()
         mock_conn = AsyncMock()
         mock_conn.cursor = AsyncMock(return_value=mock_cursor)

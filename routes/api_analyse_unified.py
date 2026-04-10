@@ -31,10 +31,13 @@ async def unified_generate(
     n: int = Query(default=3, ge=1, le=10, description="Nombre de grilles"),
     mode: str = Query(default="balanced", description="Mode: conservative, balanced, recent"),
     lang: str = Query(default="fr", pattern=r"^(fr|en|pt|es|de|nl)$"),
-    # DESIGN DECISION: anti_collision=False par defaut cote API.
-    # L'utilisateur peut activer via ?anti_collision=true.
-    # Le chatbot force True (voir chat_pipeline_shared.py).
-    # Voir audit 360° Engine HYBRIDE F03 — 01/04/2026.
+    # --- Design Decision (Audit 360° F03 — 10/04/2026) ---
+    # forced_nums, exclusions, forced_chance/forced_etoiles are intentionally
+    # chatbot-exclusive (extracted from natural language via Phase G detection).
+    # The REST API exposes mode, n, lang, anti_collision only — keeping the API
+    # surface simple. Users who need forced numbers use the chatbot.
+    # anti_collision=False by default (opt-in); chatbot hardcodes True.
+    # ---
     anti_collision: bool = Query(default=False, description="Anti-collision: boost high numbers"),
 ):
     cfg = get_config(game)

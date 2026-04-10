@@ -1,16 +1,12 @@
 """
 Backward compat — routes Loto analyse.
 Thin wrappers delegating to unified routes.
-Keeps /ask (Loto-only, no EM equivalent).
+V93: /ask route removed (F01 audit — generate() DEPRECATED since V58).
 """
 
-from fastapi import APIRouter, HTTPException, Query, Request
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, Query, Request
 from typing import Optional
-import logging
 
-from engine.hybride import generate
-from schemas import AskPayload
 from rate_limit import limiter
 from config.games import ValidGame
 from routes.api_analyse_unified import (
@@ -19,24 +15,9 @@ from routes.api_analyse_unified import (
     unified_analyze_custom_grid,
 )
 
-logger = logging.getLogger(__name__)
-
 router = APIRouter()
 
 _LOTO = ValidGame.loto
-
-
-# ── /ask — Loto-only, stays here ──
-
-@router.post("/ask")
-@limiter.limit("60/minute")
-async def ask(request: Request, payload: AskPayload):
-    """Endpoint principal du moteur HYBRIDE."""
-    try:
-        result = await generate(payload.prompt)
-        return {"success": True, "response": result}
-    except Exception:
-        raise HTTPException(status_code=500, detail="Internal engine error")
 
 
 # ── Wrappers ──

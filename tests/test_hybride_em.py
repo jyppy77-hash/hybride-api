@@ -237,7 +237,7 @@ class TestEMValiderContraintes:
         assert valider_contraintes(nums) == 1.0
 
     def test_penalite_somme_em(self):
-        """Somme hors [95, 160]."""
+        """Somme hors [95, 175]."""
         nums = [1, 2, 3, 4, 5]
         assert valider_contraintes(nums) < 1.0
 

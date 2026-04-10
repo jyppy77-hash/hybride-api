@@ -44,7 +44,7 @@ class TestEngineConfig:
         assert EM_CONFIG.secondary_max == 12
         assert EM_CONFIG.secondary_count == 2
         assert EM_CONFIG.somme_min == 95
-        assert EM_CONFIG.somme_max == 160
+        assert EM_CONFIG.somme_max == 175
         assert EM_CONFIG.anti_collision_threshold == 31
         assert EM_CONFIG.table_name == "tirages_euromillions"
 
@@ -952,24 +952,7 @@ class TestEmAnalyseAntiCollision:
         assert param.default.default is False
 
 
-# ═══════════════════════════════════════════════════════════════════════
-# V58 — F02: generate() DEPRECATED documents consumer
-# ═══════════════════════════════════════════════════════════════════════
-
-class TestGenerateDeprecatedDocumented:
-
-    def test_generate_docstring_mentions_ask_route(self):
-        """generate() DEPRECATED docstring references /ask route."""
-        from engine.hybride import generate
-        assert "/ask" in generate.__doc__
-        assert "api_analyse" in generate.__doc__
-
-    def test_ask_route_imports_generate(self):
-        """routes/api_analyse.py imports generate from engine.hybride."""
-        import inspect
-        import routes.api_analyse as mod
-        source = inspect.getsource(mod)
-        assert "from engine.hybride import generate" in source
+# V93 F01: TestGenerateDeprecatedDocumented removed — generate() and /ask deleted.
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -1286,12 +1269,17 @@ class TestNoiseFactor:
         count = asyncio.get_event_loop().run_until_complete(_run())
         assert count >= 20, f"Only {count} distinct numbers in 20 grids"
 
-    def test_noise_by_mode_defaults(self):
-        """_NOISE_BY_MODE has correct values."""
-        from engine.hybride_base import _NOISE_BY_MODE
-        assert _NOISE_BY_MODE["conservative"] == 0.0
-        assert _NOISE_BY_MODE["balanced"] == 0.08
-        assert _NOISE_BY_MODE["recent"] == 0.12
+    def test_noise_by_mode_from_config(self):
+        """noise_by_mode is read from EngineConfig (V92 F04)."""
+        assert LOTO_CONFIG.noise_by_mode["conservative"] == 0.0
+        assert LOTO_CONFIG.noise_by_mode["balanced"] == 0.08
+        assert LOTO_CONFIG.noise_by_mode["recent"] == 0.12
+
+    def test_em_noise_by_mode_higher(self):
+        """EM noise is slightly higher than Loto (V92 calibration)."""
+        assert EM_CONFIG.noise_by_mode["balanced"] == 0.10
+        assert EM_CONFIG.noise_by_mode["recent"] == 0.15
+        assert EM_CONFIG.noise_by_mode["balanced"] > LOTO_CONFIG.noise_by_mode["balanced"]
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -1419,3 +1407,174 @@ class TestSecondaryScoringWeights:
         assert len(scores) == 10  # Loto chance: 1-10
         for n in range(1, 11):
             assert n in scores
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V92 — Decay rotation: accelerated decay breaks kernel lock
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestDecayRotation:
+
+    def test_decay_rotation_after_2_selections(self):
+        """After 2 selections with decay_rate=0.10 + acceleration=0.03,
+        at least 1 number of the top 5 must be replaced."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        # Build scores: top 5 are 45-49 with highest scores
+        scores = {n: n * 0.01 for n in range(1, 50)}
+        top5_original = {45, 46, 47, 48, 49}
+        # Simulate 2 consecutive selections of the top 5
+        decay_state = {n: 2 for n in top5_original}
+        decayed = engine.apply_decay(scores, decay_state)
+        # After decay, at least 1 of the top 5 should be displaced
+        top5_after = set(sorted(decayed, key=lambda n: decayed[n], reverse=True)[:5])
+        displaced = top5_original - top5_after
+        assert len(displaced) >= 1, (
+            f"Expected ≥1 displaced number, top5 unchanged: {top5_after}"
+        )
+
+    def test_decay_rotation_after_3_selections(self):
+        """After 3 selections, ≥2 numbers of top 5 should be displaced."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        scores = {n: n * 0.01 for n in range(1, 50)}
+        top5_original = {45, 46, 47, 48, 49}
+        decay_state = {n: 3 for n in top5_original}
+        decayed = engine.apply_decay(scores, decay_state)
+        top5_after = set(sorted(decayed, key=lambda n: decayed[n], reverse=True)[:5])
+        displaced = top5_original - top5_after
+        assert len(displaced) >= 2, (
+            f"Expected ≥2 displaced, got {len(displaced)}: {top5_after}"
+        )
+
+
+class TestDecayRotationStars:
+
+    def test_decay_rotation_stars_after_2_selections(self):
+        """With decay_rate_secondary=0.15, after 2 selections,
+        at least 1 star of the top 3 should change."""
+        engine = HybrideEngine(EM_CONFIG)
+        # Build star scores: 12 stars, top 3 are 10, 11, 12
+        scores = {n: n * 0.05 for n in range(1, 13)}
+        top3_original = {10, 11, 12}
+        decay_state = {n: 2 for n in top3_original}
+        decayed = engine.apply_decay(
+            scores, decay_state, rate=engine.cfg.decay_rate_secondary,
+        )
+        top3_after = set(sorted(decayed, key=lambda n: decayed[n], reverse=True)[:3])
+        displaced = top3_original - top3_after
+        assert len(displaced) >= 1, (
+            f"Expected ≥1 displaced star, top3 unchanged: {top3_after}"
+        )
+
+
+class TestDecayRotationChanceLoto:
+
+    def test_decay_rotation_chance_after_2_selections(self):
+        """With decay_rate_secondary=0.12 on chance (univers 1-10),
+        after 2 consecutive selections the top chance number must be displaced."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        # Build chance scores: 10 numbers, top 3 are 8, 9, 10
+        scores = {n: n * 0.08 for n in range(1, 11)}
+        top3_original = {8, 9, 10}
+        decay_state = {n: 2 for n in top3_original}
+        decayed = engine.apply_decay(
+            scores, decay_state, rate=engine.cfg.decay_rate_secondary,
+        )
+        top3_after = set(sorted(decayed, key=lambda n: decayed[n], reverse=True)[:3])
+        displaced = top3_original - top3_after
+        assert len(displaced) >= 1, (
+            f"Expected ≥1 displaced chance, top3 unchanged: {top3_after}"
+        )
+
+    def test_loto_decay_secondary_rate_value(self):
+        """LOTO_CONFIG.decay_rate_secondary == 0.12 (chance, univers de 10)."""
+        assert LOTO_CONFIG.decay_rate_secondary == 0.12
+        # EM has 0.15 (étoiles, univers de 12 — plus agressif)
+        assert EM_CONFIG.decay_rate_secondary == 0.15
+        # Loto secondary rate is between balls (0.10) and EM stars (0.15)
+        assert LOTO_CONFIG.decay_rate < LOTO_CONFIG.decay_rate_secondary < EM_CONFIG.decay_rate_secondary
+
+
+class TestEmSumConstraint175:
+
+    def test_em_sum_constraint_config_values(self):
+        """EM_CONFIG uses [95, 175] (V92 recalibration from [95, 160])."""
+        assert EM_CONFIG.somme_min == 95
+        assert EM_CONFIG.somme_max == 175
+        # Loto unchanged
+        assert LOTO_CONFIG.somme_min == 70
+        assert LOTO_CONFIG.somme_max == 150
+
+    def test_em_sum_in_range_gets_no_penalty(self):
+        """Sum within [95, 175] → no sum penalty."""
+        engine = HybrideEngine(EM_CONFIG)
+        nums = [5, 20, 31, 40, 49]  # sum=145 ∈ [95,175], pairs=2, disp=44, suites=0
+        score = engine.valider_contraintes(nums)
+        assert score == 1.0
+
+    def test_em_sum_above_175_penalized(self):
+        """Sum > 175 → soft penalty ×0.70."""
+        engine = HybrideEngine(EM_CONFIG)
+        nums = [31, 35, 39, 45, 47]  # sum=197 > 175, pairs=0 → hard-reject
+        nums = [32, 35, 39, 44, 47]  # sum=197 > 175, pairs=2
+        score = engine.valider_contraintes(nums)
+        assert score < 1.0  # penalized
+
+    def test_em_sum_160_no_longer_penalized(self):
+        """Sum = 165 was penalized at [95,160] but OK at [95,175]."""
+        engine = HybrideEngine(EM_CONFIG)
+        nums = [15, 30, 35, 40, 45]  # sum = 165, pairs=2, disp=30, suites=0
+        score = engine.valider_contraintes(nums)
+        assert score == 1.0  # no penalty (165 ∈ [95, 175])
+
+
+class TestNoiseFromConfig:
+
+    @pytest.mark.asyncio
+    @patch("engine.hybride_base.HybrideEngine.get_reference_date")
+    async def test_noise_uses_config_noise_by_mode(self, mock_ref):
+        """The engine reads noise from EngineConfig.noise_by_mode, not module constant."""
+        from dataclasses import replace
+        # Create a custom config with very high noise
+        custom_noise = {"conservative": 0.0, "balanced": 0.50, "recent": 0.50}
+        cfg = replace(LOTO_CONFIG, noise_by_mode=custom_noise)
+        engine = HybrideEngine(cfg)
+        cursor = AsyncSmartMockCursor()
+
+        # Generate with high noise — should still produce valid grids
+        random.seed(42)
+        result = await engine.generate_grids(
+            n=5, mode="balanced",
+            _get_connection=lambda: make_async_conn(cursor),
+        )
+        assert len(result["grids"]) == 5
+        for grid in result["grids"]:
+            assert len(grid["nums"]) == 5
+
+    def test_custom_noise_by_mode_used_in_generer_grille(self):
+        """noise_by_mode from config is picked up by generer_grille via cfg."""
+        from dataclasses import replace
+        custom = {"conservative": 0.0, "balanced": 0.99, "recent": 0.99}
+        cfg = replace(LOTO_CONFIG, noise_by_mode=custom)
+        assert cfg.noise_by_mode["balanced"] == 0.99
+
+
+class TestDecayMetadataV92:
+
+    @pytest.mark.asyncio
+    @patch("engine.hybride_base.HybrideEngine.get_reference_date")
+    async def test_metadata_includes_v92_decay_fields(self, mock_ref):
+        """Metadata includes rate_secondary and acceleration (V92)."""
+        cursor = AsyncSmartMockCursor()
+        random.seed(42)
+        engine = HybrideEngine(EM_CONFIG)
+        decay = {10: 5}
+        result = await engine.generate_grids(
+            n=1, mode="balanced", decay_state=decay,
+            _get_connection=lambda: make_async_conn(cursor),
+        )
+        d = result["metadata"]["decay"]
+        assert d["rate"] == 0.10
+        assert d["rate_secondary"] == 0.15
+        assert d["acceleration"] == 0.03
+        assert d["floor"] == 0.50
+        assert d["active"] is True

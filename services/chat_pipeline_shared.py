@@ -548,7 +548,7 @@ async def _prepare_chat_context_base(
                     async with _db.get_connection() as _dconn:
                         _decay = await get_decay_state(_dconn, _game_name, "ball")
                 except Exception:
-                    pass  # graceful — generate without decay
+                    logger.warning(f"{_lp} Decay state load failed — generating without decay", exc_info=True)
 
                 _gen_kwargs = {
                     "n": _grid_count, "mode": _gen_mode, "lang": lang,
@@ -601,7 +601,7 @@ async def _prepare_chat_context_base(
                                     _dconn, _game_name, _all_b, _all_s or None,
                                 )
                     except Exception:
-                        pass  # non-blocking
+                        logger.warning(f"{_lp} Decay update failed — non-blocking", exc_info=True)
         except Exception as e:
             logger.warning(f"{_lp} Phase G erreur: {e}")
 

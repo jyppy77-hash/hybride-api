@@ -13,17 +13,9 @@ from datetime import datetime, timedelta, timezone
 
 from config.engine import EngineConfig
 from config.i18n import _badges as _i18n_badges
-from services.decay_state import calculate_decay_multiplier
+from services.decay_state import calculate_decay_multiplier, get_decay_state
 
 logger = logging.getLogger(__name__)
-
-# Noise amplitude per generation mode (F01 audit — intra-session diversification).
-# conservative: no noise (faithful to scores). balanced: light. recent: moderate.
-_NOISE_BY_MODE = {
-    "conservative": 0.0,
-    "balanced": 0.08,
-    "recent": 0.12,
-}
 
 
 class HybrideEngine:
@@ -535,21 +527,30 @@ class HybrideEngine:
 
     # ── Decay score (anti-lock rotation) ────────────────────────────
 
-    def apply_decay(self, scores: dict[int, float], decay_state: dict[int, int]) -> dict[int, float]:
-        """Apply decay multiplier to break kernel lock.
+    def apply_decay(
+        self, scores: dict[int, float], decay_state: dict[int, int],
+        rate: float | None = None,
+    ) -> dict[int, float]:
+        """Apply accelerated decay multiplier to break kernel lock.
 
         Numbers selected N times without appearing in real draws
         get progressively penalized (score × decay_multiplier).
+        V92: acceleration makes each consecutive selection weigh more.
+
+        Args:
+            rate: override decay_rate (used for secondary with decay_rate_secondary).
 
         Pipeline position: step 4 (after penalization, before anti-collision).
-        See audit 360° Engine HYBRIDE F04 — 01/04/2026.
         """
         if not self.cfg.decay_enabled or not decay_state:
             return scores
+        r = rate if rate is not None else self.cfg.decay_rate
         decayed = {}
         for n, score in scores.items():
-            misses = decay_state.get(n, 0)
-            multiplier = calculate_decay_multiplier(misses, self.cfg.decay_rate, self.cfg.decay_floor)
+            selections = decay_state.get(n, 0)
+            multiplier = calculate_decay_multiplier(
+                selections, r, self.cfg.decay_floor, self.cfg.decay_acceleration,
+            )
             decayed[n] = score * multiplier
         return decayed
 
@@ -656,9 +657,15 @@ class HybrideEngine:
         self, conn, mode: str = "balanced",
         recent_draws: list[dict] | None = None,
         anti_collision: bool = False,
+        decay_state_secondary: dict[int, int] | None = None,
     ) -> list[int]:
         scores = await self.calculer_scores_hybrides_secondary(conn, mode=mode)
         scores = self.apply_secondary_penalties(scores, recent_draws or [])
+        # V92: decay for secondary numbers (stars/chance) with dedicated rate
+        if decay_state_secondary:
+            scores = self.apply_decay(
+                scores, decay_state_secondary, rate=self.cfg.decay_rate_secondary,
+            )
         if anti_collision:
             scores = self.apply_secondary_anti_collision(scores)
 
@@ -697,6 +704,7 @@ class HybrideEngine:
         recent_draws: list[dict] | None = None,
         lang: str = "fr",
         decay_state: dict[int, int] | None = None,
+        decay_state_secondary: dict[int, int] | None = None,
     ) -> dict:
         if forced_nums is None:
             forced_nums = []
@@ -720,7 +728,7 @@ class HybrideEngine:
                          if penalized.get(n, 0) == 0.0 and n not in forced_set}
 
         temperature = self.cfg.temperature_by_mode.get(mode, 1.3)
-        noise_factor = _NOISE_BY_MODE.get(mode, self.cfg.noise_factor)
+        noise_factor = self.cfg.noise_by_mode.get(mode, self.cfg.noise_factor)
 
         nb_to_draw = self.cfg.num_count - len(forced_nums)
 
@@ -796,6 +804,7 @@ class HybrideEngine:
         elif forced_secondary:
             all_sec = await self.generer_secondary(
                 conn, mode=mode, recent_draws=recent_draws, anti_collision=anti_collision,
+                decay_state_secondary=decay_state_secondary,
             )
             secondary = list(forced_secondary)
             for s in all_sec:
@@ -805,6 +814,7 @@ class HybrideEngine:
         else:
             secondary = await self.generer_secondary(
                 conn, mode=mode, recent_draws=recent_draws, anti_collision=anti_collision,
+                decay_state_secondary=decay_state_secondary,
             )
 
         score_final = self._calculer_score_final(score_conformite, self.cfg.star_to_legacy_score)
@@ -926,6 +936,16 @@ class HybrideEngine:
             scores_hybrides = await self.calculer_scores_hybrides(conn, mode=mode)
             recent_draws = await self.get_recent_draws(conn)
 
+            # V92: load secondary decay state (stars/chance) for rotation
+            decay_state_secondary = None
+            if self.cfg.decay_enabled and decay_state is not None:
+                try:
+                    game_name = "euromillions" if self.cfg.game == "em" else "loto"
+                    ntype = "star" if self.cfg.game == "em" else "chance"
+                    decay_state_secondary = await get_decay_state(conn, game_name, ntype)
+                except Exception:
+                    logger.debug("decay_state_secondary unavailable — generating without secondary decay")
+
             grilles = []
             for _ in range(n):
                 grille = await self.generer_grille(
@@ -934,6 +954,7 @@ class HybrideEngine:
                     forced_nums=forced_nums, forced_secondary=forced_secondary,
                     exclusions=exclusions, recent_draws=recent_draws, lang=lang,
                     decay_state=decay_state,
+                    decay_state_secondary=decay_state_secondary,
                 )
                 grilles.append(grille)
 
@@ -979,6 +1000,8 @@ class HybrideEngine:
                     'enabled': self.cfg.decay_enabled,
                     'active': decay_state is not None and len(decay_state) > 0,
                     'rate': self.cfg.decay_rate,
+                    'rate_secondary': self.cfg.decay_rate_secondary,
+                    'acceleration': self.cfg.decay_acceleration,
                     'floor': self.cfg.decay_floor,
                 },
                 'degraded_windows': await self._check_degraded_windows(

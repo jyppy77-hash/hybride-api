@@ -3,14 +3,9 @@ Engine d'analyse Loto - Version HYBRIDE_OPTIMAL V1
 Thin wrapper over HybrideEngine (E06 audit fix).
 """
 
-import logging
-from datetime import datetime, timezone
-
 from config.engine import LOTO_CONFIG
 from .hybride_base import HybrideEngine
 from .db import get_connection
-
-logger = logging.getLogger(__name__)
 
 # Singleton engine instance
 _engine = HybrideEngine(LOTO_CONFIG)
@@ -45,28 +40,3 @@ async def generate_grids(
         exclusions=exclusions, decay_state=decay_state,
         _get_connection=get_connection,
     )
-
-
-# ── DEPRECATED V58 — consumed by routes/api_analyse.py:/ask only ──
-
-async def generate(prompt):
-    """DEPRECATED V58 — Wrapper legacy pour /ask uniquement.
-
-    Consumer: routes/api_analyse.py (seul caller).
-    Sera supprime quand la route /ask sera retiree.
-    Utiliser generate_grids() directement pour tout nouveau code.
-    Voir audit 360° Engine HYBRIDE F07 — 01/04/2026.
-    """
-    try:
-        result = await generate_grids(n=3, mode="balanced")
-        return {
-            "engine": "HYBRIDE_OPTIMAL_V1",
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-            "input": prompt,
-            "result": result
-        }
-    except Exception as e:
-        return {
-            "engine": "HYBRIDE_OPTIMAL_V1",
-            "error": str(e)
-        }

@@ -1,5 +1,5 @@
 """Configuration moteur HYBRIDE — Loto et EuroMillions."""
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 
 @dataclass(frozen=True)
@@ -68,13 +68,20 @@ class EngineConfig:
     # Badge key for i18n (used by _generer_badges)
     badge_key: str
 
-    # Decay score — anti-lock rotation (F04 terrain 01/04/2026)
+    # Decay score — anti-lock rotation (V79 F04, V92 calibration)
     decay_enabled: bool = True
-    decay_rate: float = 0.05       # penalty per consecutive miss
+    decay_rate: float = 0.10       # penalty per consecutive miss (V92: 0.05→0.10)
     decay_floor: float = 0.50      # minimum multiplier (50% of raw score)
+    decay_acceleration: float = 0.03  # progressive acceleration per miss (V92)
+    decay_rate_secondary: float = 0.10  # secondary numbers (stars/chance) — override per game
 
-    # Noise factor — intra-session diversification (F01 audit 01/04/2026)
-    noise_factor: float = 0.0      # default 0.0 = off; per-mode override in _NOISE_BY_MODE
+    # Noise factor — intra-session diversification (V79 F01, V92 F04: migrated to config)
+    noise_factor: float = 0.0      # default 0.0 = off; overridden by noise_by_mode
+    noise_by_mode: dict = field(default_factory=lambda: {
+        "conservative": 0.0,
+        "balanced": 0.08,
+        "recent": 0.12,
+    })
 
     # Wildcard froid — guaranteed cold number slot (F01 terrain 01/04/2026)
     wildcard_enabled: bool = True
@@ -145,6 +152,10 @@ LOTO_CONFIG = EngineConfig(
     avertissement="Le Loto reste un jeu de pur hasard. Aucune garantie de gain.",
     star_to_legacy_score=_STAR_SCORES,
     badge_key="hybride_loto",
+    # V92 calibration — decay accéléré + secondary dédié
+    decay_rate=0.10,
+    decay_rate_secondary=0.12,  # chance — univers de 10
+    decay_acceleration=0.03,
 )
 
 EM_CONFIG = EngineConfig(
@@ -166,9 +177,9 @@ EM_CONFIG = EngineConfig(
     poids_retard=0.3,
     modes=_MODES_3W,
     temperature_by_mode=_TEMPERATURES,
-    # V79 F04 terrain: resserré [75,175]→[95,160] pour corriger biais somme haute (+28pts vs réel)
+    # V79 F04→V92: [75,175]→[95,160]→[95,175]. V92 recalibration: 160 sur-contraint (+25.7 vs réel)
     somme_min=95,
-    somme_max=160,
+    somme_max=175,
     seuil_bas_haut=25,
     dispersion_min=15,
     max_consecutifs=2,
@@ -185,4 +196,10 @@ EM_CONFIG = EngineConfig(
     avertissement="L'EuroMillions reste un jeu de pur hasard. Aucune garantie de gain.",
     star_to_legacy_score=_STAR_SCORES,
     badge_key="hybride_em",
+    # V92 calibration — decay accéléré + secondary agressif (univers 12 étoiles)
+    decay_rate=0.10,
+    decay_rate_secondary=0.15,  # étoiles — univers de 12, rotation rapide
+    decay_acceleration=0.03,
+    # V92 F04: noise migré dans config, EM légèrement plus élevé (diversité univers 50)
+    noise_by_mode={"conservative": 0.0, "balanced": 0.10, "recent": 0.15},
 )

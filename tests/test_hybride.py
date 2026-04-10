@@ -9,7 +9,7 @@ from unittest.mock import patch
 import pytest
 
 from config.engine import LOTO_CONFIG
-from engine.hybride import generate, generate_grids, valider_contraintes, generer_badges
+from engine.hybride import generate_grids, valider_contraintes, generer_badges
 from engine.hybride_base import HybrideEngine
 
 # Direct references — migrated from backward-compat re-exports (V57 audit fix F02).
@@ -262,22 +262,7 @@ async def test_generate_metadata_fields(mock_get_conn):
     assert "hasard" in meta["avertissement"].lower()
 
 
-@pytest.mark.asyncio
-@patch("engine.hybride.get_connection")
-async def test_generate_wrapper(mock_get_conn):
-    """generate(prompt) retourne la structure attendue."""
-    cursor = AsyncSmartMockCursor()
-    mock_get_conn.side_effect = lambda: make_async_conn(cursor)
-    random.seed(42)
-
-    result = await generate("test prompt")
-
-    assert "engine" in result
-    assert result["engine"] == "HYBRIDE_OPTIMAL_V1"
-    assert "result" in result
-    assert "grids" in result["result"]
-    assert "timestamp" in result
-    assert result["input"] == "test prompt"
+# V93 F01: generate() DEPRECATED removed (was consumed by /ask only).
 
 
 # ═══════════════════════════════════════════════════════════════════════
