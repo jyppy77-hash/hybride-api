@@ -358,7 +358,7 @@ class TestAntiSpam:
         assert ip_hash is not None
         # Ne doit PAS etre une IP en clair
         assert "." not in ip_hash  # pas de format x.x.x.x
-        assert len(ip_hash) == 16  # SHA-256 tronque a 16 chars
+        assert len(ip_hash) == 64  # S08 V94: full SHA-256 hash (was 16)
 
     def test_upsert_sql_contains_on_duplicate(self):
         """La requete SQL contient ON DUPLICATE KEY UPDATE (MySQL upsert)."""

@@ -140,6 +140,38 @@ class TestEnsureLimit:
         result = _ensure_limit("SELECT * FROM tirages", max_limit=20)
         assert result.endswith("LIMIT 20")
 
+    # S03 V94: cap existing LIMIT when above max_limit
+    def test_caps_excessive_limit(self):
+        result = _ensure_limit("SELECT * FROM tirages LIMIT 1000000")
+        assert "LIMIT 50" in result
+        assert "1000000" not in result
+
+    def test_preserves_small_limit(self):
+        sql = "SELECT * FROM tirages LIMIT 10"
+        assert _ensure_limit(sql) == sql
+
+    def test_caps_mysql_offset_syntax(self):
+        """LIMIT offset, count → cap count."""
+        result = _ensure_limit("SELECT * FROM tirages LIMIT 100, 500")
+        assert "500" not in result
+        assert "50" in result
+        assert "100," in result  # offset preserved
+
+    def test_preserves_small_mysql_offset(self):
+        sql = "SELECT * FROM tirages LIMIT 5, 10"
+        assert _ensure_limit(sql) == sql
+
+    def test_caps_limit_with_offset(self):
+        """LIMIT N OFFSET M → cap N."""
+        result = _ensure_limit("SELECT * FROM tirages LIMIT 999 OFFSET 5")
+        assert "999" not in result
+        assert "50" in result
+        assert "OFFSET 5" in result
+
+    def test_preserves_small_limit_with_offset(self):
+        sql = "SELECT * FROM tirages LIMIT 10 OFFSET 20"
+        assert _ensure_limit(sql) == sql
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # _format_sql_result

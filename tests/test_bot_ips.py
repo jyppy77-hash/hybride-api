@@ -498,6 +498,8 @@ class TestOwnerIpv6Cidr:
         """IPv6 within the /64 of OWNER_IPV6 is recognized as owner."""
         with patch.dict(os.environ, {"OWNER_IPV6": "2a01:cb05:8700:5900::1"}):
             import importlib
+            import utils
+            importlib.reload(utils)  # S07 V94: owner IP centralized in utils
             import middleware.ip_ban as ban_mod
             importlib.reload(ban_mod)
             # Same /64, different interface ID (privacy extension)
@@ -507,6 +509,8 @@ class TestOwnerIpv6Cidr:
         """IPv6 outside the /64 of OWNER_IPV6 is NOT owner."""
         with patch.dict(os.environ, {"OWNER_IPV6": "2a01:cb05:8700:5900::1"}):
             import importlib
+            import utils
+            importlib.reload(utils)  # S07 V94: owner IP centralized in utils
             import middleware.ip_ban as ban_mod
             importlib.reload(ban_mod)
             # Different /64 subnet
@@ -573,3 +577,38 @@ class TestAdminIpRestriction:
         )
         # Should be allowed (302 to dashboard or 200) — NOT 403
         assert resp.status_code != 403
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# S04 V94 — _request_log memory bound (LRU eviction)
+# ═══════════════════════════════════════════════════════════════════════
+
+
+class TestRequestLogMemoryBound:
+
+    def test_request_log_evicted_above_10k(self):
+        """S04 V94: _request_log triggers LRU eviction above 10K IPs."""
+        from middleware.ip_ban import _request_log, _record_request, _MAX_TRACKED_IPS
+        _request_log.clear()
+        # Inject 10_001 fake IPs with ascending timestamps
+        for i in range(_MAX_TRACKED_IPS + 1):
+            ip = f"10.{i // 65536}.{(i // 256) % 256}.{i % 256}"
+            _request_log[ip] = [float(i)]
+        assert len(_request_log) > _MAX_TRACKED_IPS
+        # Next _record_request should trigger eviction
+        _record_request("192.168.99.99")
+        assert len(_request_log) <= _MAX_TRACKED_IPS
+
+    def test_recent_ips_survive_request_log_eviction(self):
+        """S04 V94: recent IPs in _request_log survive eviction."""
+        from middleware.ip_ban import _request_log, _evict_oldest, _MAX_TRACKED_IPS
+        _request_log.clear()
+        # Old IPs
+        for i in range(9_000):
+            _request_log[f"10.{i // 65536}.{(i // 256) % 256}.{i % 256}"] = [1.0]
+        # Recent IPs
+        for i in range(2_000):
+            _request_log[f"192.168.{i // 256}.{i % 256}"] = [999999.0]
+        _evict_oldest(_request_log, _MAX_TRACKED_IPS)
+        recent_count = sum(1 for ip in _request_log if ip.startswith("192.168."))
+        assert recent_count == 2_000

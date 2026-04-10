@@ -7,6 +7,7 @@ P1-3 : Cookie admin max_age = 1 jour
 """
 
 import os
+import time
 from unittest.mock import patch, AsyncMock
 
 import pytest
@@ -284,18 +285,35 @@ class TestPermissionsPolicyExtended:
 
 
 class TestApiHitsMemoryBound:
-    """S04 — _api_hits dict is cleared when exceeding 10K entries."""
+    """S05 V94 — _api_hits LRU eviction when exceeding 10K entries."""
 
-    def test_api_hits_cleared_above_10k(self):
-        """Injecting >10K IPs then making a request clears the dict."""
+    def test_api_hits_evicted_above_10k(self):
+        """S05 V94: LRU eviction keeps ~80%, not full clear."""
         import rate_limit as rl_mod
         rl_mod._api_hits.clear()
-        # Inject 10_001 fake IPs
+        # Inject 10_001 fake IPs with recent timestamps (not pruned by sliding window)
+        now = time.monotonic()
         for i in range(10_001):
-            rl_mod._api_hits[f"10.{i // 65536}.{(i // 256) % 256}.{i % 256}"].append(0.0)
+            rl_mod._api_hits[f"10.{i // 65536}.{(i // 256) % 256}.{i % 256}"].append(now - 10 + (i / 10_001))
         assert len(rl_mod._api_hits) > 10_000
-        # One more request should trigger the clear
-        client = _get_client()
-        client.get("/api/version")
-        # Dict was cleared then re-populated with only the new request's IP
-        assert len(rl_mod._api_hits) <= 2
+        # Directly trigger eviction (avoids middleware side effects)
+        rl_mod._evict_oldest_deque(rl_mod._api_hits, 10_000)
+        assert len(rl_mod._api_hits) <= 10_000
+        assert len(rl_mod._api_hits) >= 7_000  # at least 70% kept
+
+    def test_recent_ips_survive_eviction(self):
+        """S05 V94: recent IPs are kept, old IPs are evicted."""
+        import rate_limit as rl_mod
+        rl_mod._api_hits.clear()
+        # Old IPs with low timestamps
+        for i in range(9_000):
+            rl_mod._api_hits[f"10.{i // 65536}.{(i // 256) % 256}.{i % 256}"].append(1.0)
+        # Recent IPs with high timestamps
+        for i in range(2_000):
+            rl_mod._api_hits[f"192.168.{i // 256}.{i % 256}"].append(999999.0)
+        assert len(rl_mod._api_hits) > 10_000
+        # Trigger eviction
+        rl_mod._evict_oldest_deque(rl_mod._api_hits, 10_000)
+        # Recent 192.168.x IPs should all survive
+        recent_count = sum(1 for ip in rl_mod._api_hits if ip.startswith("192.168."))
+        assert recent_count == 2_000

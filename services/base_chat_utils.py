@@ -72,9 +72,13 @@ def _enrich_with_context(message: str, history: list) -> str:
     if not last_assistant or not last_user_question:
         return message
 
+    # S06 V94: sanitize history before injecting into enrichment context
+    safe_user = _sanitize_history_message(last_user_question)
+    safe_assistant = _sanitize_history_message(last_assistant[:300])
+
     enriched = (
-        f"[CONTEXTE CONTINUATION] L'utilisateur avait demandé : \"{last_user_question}\". "
-        f"Tu avais répondu : \"{last_assistant[:300]}\". "
+        f"[CONTEXTE CONTINUATION] L'utilisateur avait demandé : \"{safe_user}\". "
+        f"Tu avais répondu : \"{safe_assistant}\". "
         f"L'utilisateur répond maintenant : \"{message}\". "
         f"Continue sur le même sujet en répondant à ta propre proposition."
     )
@@ -94,6 +98,73 @@ _REINTRO_RE = re.compile(
     r'[^.!?\n]*[.!?]?\s*',
     re.IGNORECASE | re.MULTILINE
 )
+
+
+# ────────────────────────────────────────────
+# S06 V94: Sanitize history messages before enrichment
+# ────────────────────────────────────────────
+
+_INJECTION_RE = re.compile(
+    r'(?:'
+    # Instructions système explicites (6 langues)
+    r'ignor[ea]\s+(?:tes|your|las|deine|je|as\s+tuas)\s+'
+    r'(?:instructions?|r[eè]gles?|rules?|instrucciones|Anweisungen|regels?|instruções|regras)'
+    r'|oublie\s+(?:tes|les)\s+r[eè]gles'
+    r'|forget\s+your\s+(?:rules|instructions)'
+    r'|olvida\s+tus\s+(?:reglas|instrucciones)'
+    r'|vergiss\s+deine\s+(?:Regeln|Anweisungen)'
+    r'|vergeet\s+je\s+(?:regels|instructies)'
+    r'|esquece\s+as\s+tuas\s+(?:regras|instruções)'
+    # "from now on" patterns
+    r'|[àa]\s+partir\s+de\s+(?:maintenant|ahora|agora)'
+    r'|from\s+now\s+on'
+    r'|ab\s+jetzt'
+    r'|vanaf\s+nu'
+    # "you are now" patterns
+    r'|tu\s+es\s+maintenant'
+    r'|you\s+are\s+now'
+    r'|ahora\s+eres'
+    r'|du\s+bist\s+jetzt'
+    r'|je\s+bent\s+nu'
+    r'|agora\s+[ée]s'
+    # Role/identity override
+    r'|nouveau\s+r[oô]le|new\s+role|nuevo\s+rol|neue\s+Rolle|nieuwe\s+rol|novo\s+papel'
+    r'|respond\s+as|act\s+as|behave\s+as|pretend\s+(?:you\s+are|to\s+be)'
+    r'|you\s+must\s+always'
+    r'|r[eé]ponds?\s+comme|agis\s+comme|comporte-toi\s+comme'
+    # LLM prompt injection markers
+    r'|\[/?(?:SYSTEM|INST|SYS)\]'
+    r'|<<SYS>>|<</SYS>>'
+    r'|</s>'
+    r'|system\s*:'
+    r')',
+    re.IGNORECASE,
+)
+
+_INTERNAL_TAG_RE = re.compile(
+    r'\['
+    r'[A-ZÀ-Ü][A-ZÀ-Ü0-9_ ]*'
+    r'(?:INSTRUCTION|SYSTEM|RULE|RÈGLE|KRITISCH|OBLIGATOIRE|RAPPEL|DONNÉES|RÉSULTAT)'
+    r'[A-ZÀ-Ü0-9_ ]*'
+    r'\]',
+    re.IGNORECASE,
+)
+
+
+def _sanitize_history_message(msg: str) -> str:
+    """S06 V94: neutralize prompt injection patterns in history before enrichment.
+
+    Replaces injection patterns with [CONTENU FILTRÉ] to preserve message structure
+    while neutralizing malicious instructions. Conservative: only targets known
+    prompt injection patterns, not general conversation.
+    """
+    if not msg:
+        return msg
+    result = _INJECTION_RE.sub("[CONTENU FILTRÉ]", msg)
+    result = _INTERNAL_TAG_RE.sub("[CONTENU FILTRÉ]", result)
+    if result != msg:
+        logger.warning("[SANITIZE] Prompt injection pattern filtered in history message")
+    return result
 
 
 # ────────────────────────────────────────────

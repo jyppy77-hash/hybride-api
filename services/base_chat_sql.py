@@ -42,7 +42,8 @@ _SQL_FORBIDDEN = [
 # F01 V82: Whitelist tables autorisees par game (defense semantique Gemini)
 ALLOWED_TABLES_LOTO = frozenset({"tirages"})
 ALLOWED_TABLES_EM = frozenset({"tirages_euromillions"})
-_TABLE_RE = re.compile(r"(?:FROM|JOIN)\s+(?!\()(\w+)", re.IGNORECASE)
+# S13 V94: capture table names with or without backticks
+_TABLE_RE = re.compile(r"(?:FROM|JOIN)\s+(?!\()(?:`(\w+)`|(\w+))", re.IGNORECASE)
 
 # F04: single source of truth for French weekday names (shared Loto + EM)
 _JOURS_FR = {
@@ -101,7 +102,9 @@ def _validate_sql(sql: str, *, allowed_tables: frozenset[str]) -> bool:
         return False
 
     # F01 V82: whitelist tables — reject if SQL references unauthorized tables
-    tables_found = _TABLE_RE.findall(sql)
+    # S13 V94: findall returns (backtick_group, plain_group) tuples — merge
+    raw_matches = _TABLE_RE.findall(sql)
+    tables_found = [g1 or g2 for g1, g2 in raw_matches]
     if not tables_found:
         logger.warning("[TEXT2SQL] No FROM clause found in SQL: %s", sql[:200])
         return False
@@ -113,11 +116,28 @@ def _validate_sql(sql: str, *, allowed_tables: frozenset[str]) -> bool:
     return True
 
 
+# S03 V94: regex to extract and cap existing LIMIT value
+_LIMIT_RE = re.compile(
+    r"\bLIMIT\s+(\d+)\s*(?:,\s*(\d+))?(?:\s+OFFSET\s+\d+)?",
+    re.IGNORECASE,
+)
+
+
 def _ensure_limit(sql: str, max_limit: int = 50) -> str:
     """Ajoute LIMIT si absent, plafonne a max_limit si present."""
-    upper = sql.strip().upper()
-    if "LIMIT" not in upper:
+    m = _LIMIT_RE.search(sql)
+    if not m:
         return sql.rstrip() + f" LIMIT {max_limit}"
+    # LIMIT offset, count (MySQL syntax) → cap count (group 2)
+    if m.group(2) is not None:
+        count = int(m.group(2))
+        if count > max_limit:
+            return sql[:m.start(2)] + str(max_limit) + sql[m.end(2):]
+    else:
+        # LIMIT N  or  LIMIT N OFFSET M → cap N
+        count = int(m.group(1))
+        if count > max_limit:
+            return sql[:m.start(1)] + str(max_limit) + sql[m.end(1):]
     return sql
 
 

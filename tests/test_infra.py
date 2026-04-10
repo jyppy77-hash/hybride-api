@@ -183,26 +183,26 @@ class TestMiddlewarePipeline:
 
 class TestRateLimiterMemoryBound:
 
-    def test_api_hits_cleared_above_max_tracked_ips(self):
-        """_api_hits dict is cleared when it exceeds 10K entries."""
-        from rate_limit import _api_hits, _API_MAX_TRACKED_IPS
+    def test_api_hits_evicted_above_max_tracked_ips(self):
+        """S05 V94: _api_hits LRU eviction (~20% removed, not full clear)."""
+        import time as _time
+        from rate_limit import _api_hits, _API_MAX_TRACKED_IPS, _evict_oldest_deque
         _api_hits.clear()
 
-        # Fill with 10001 fake IPs
+        # Fill with 10001 fake IPs with recent timestamps
+        now = _time.monotonic()
         for i in range(_API_MAX_TRACKED_IPS + 1):
-            _api_hits[f"10.0.{i // 256}.{i % 256}"] = MagicMock()
+            from collections import deque
+            _api_hits[f"10.0.{i // 256}.{i % 256}"] = deque([now - 10 + (i / 10_001)])
 
         assert len(_api_hits) > _API_MAX_TRACKED_IPS
 
-        # The middleware should clear on next request
-        client, main_mod = _get_client()
-        with patch.object(main_mod, 'db_cloudsql') as mock_db:
-            mock_db.get_connection = _async_cm_conn(AsyncMock())
-            # Make an /api/ request to trigger the middleware
-            client.get("/api/version")
+        # Trigger eviction directly
+        _evict_oldest_deque(_api_hits, _API_MAX_TRACKED_IPS)
 
-        # Dict should have been cleared (and only the new IP added)
-        assert len(_api_hits) <= 2
+        # S05 V94: LRU eviction keeps ~80%, not full clear
+        assert len(_api_hits) <= _API_MAX_TRACKED_IPS
+        assert len(_api_hits) >= 7_000
         _api_hits.clear()
 
 

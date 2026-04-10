@@ -11,10 +11,8 @@ Cloud Run: no filesystem, everything in MySQL.
 """
 
 import logging
-import os
 import time
 from collections import defaultdict
-from ipaddress import ip_address, ip_network
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
@@ -30,6 +28,8 @@ _COUNTER_SKIP_PREFIXES = (
     "/sitemap.xml", "/site.webmanifest", "/admin/",
 )
 
+import os
+
 # ── Kill switch ──────────────────────────────────────────────────────────────
 
 IP_BAN_ENABLED = os.getenv("IP_BAN_ENABLED", "true").lower() == "true"
@@ -43,39 +43,8 @@ _FLOOD_WINDOW = 300.0   # seconds (5 min)
 _AUTO_BAN_HOURS = 1     # auto-ban duration
 
 # ── Owner exclusion (never auto-ban) ────────────────────────────────────────
-
-_OWNER_IP = os.environ.get("OWNER_IP", "").strip()
-_OWNER_IPV6 = os.environ.get("OWNER_IPV6", "").strip()
-_OWNER_EXACT: set[str] = {"127.0.0.1", "::1"}
-if _OWNER_IP:
-    _OWNER_EXACT.add(_OWNER_IP)
-
-# S05: strict CIDR /64 matching for IPv6 owner (aligned with em_access_control.py)
-_owner_net_v6 = None
-if _OWNER_IPV6:
-    # Normalize: strip trailing colon(s) and ensure :: suffix for valid IPv6
-    _v6_clean = _OWNER_IPV6.rstrip(":")
-    if "::" not in _v6_clean:
-        _v6_clean += "::"
-    try:
-        _owner_net_v6 = ip_network(f"{_v6_clean}/64", strict=False)
-    except ValueError:
-        logger.warning("[IP_BAN] Invalid OWNER_IPV6 %r — IPv6 owner matching disabled", _OWNER_IPV6)
-
-
-def _is_owner_or_loopback(ip_str: str) -> bool:
-    """Never auto-ban owner or loopback IPs."""
-    if ip_str in _OWNER_EXACT:
-        return True
-    try:
-        addr = ip_address(ip_str)
-        if addr.is_loopback:
-            return True
-        if _owner_net_v6 and addr in _owner_net_v6:
-            return True
-    except ValueError:
-        return False
-    return False
+# S07 V94: centralized in utils.py — single source of truth
+from utils import is_owner_ip as _is_owner_or_loopback  # noqa: E402
 
 
 # ── Banned IPs cache (from MySQL) ───────────────────────────────────────────
@@ -134,6 +103,18 @@ async def is_banned(ip: str) -> bool:
 # ── Auto-ban: request counters (sliding window) ─────────────────────────────
 
 _request_log: dict[str, list[float]] = defaultdict(list)
+_MAX_TRACKED_IPS = 10_000  # S04 V94: memory bound
+
+
+def _evict_oldest(d: dict, max_size: int, pct: float = 0.2) -> None:
+    """S04 V94: LRU eviction — remove oldest pct% entries by last-seen timestamp."""
+    n_remove = int(max_size * pct)
+    if n_remove < 1:
+        n_remove = 1
+    sorted_ips = sorted(d.keys(), key=lambda ip: d[ip][-1] if d[ip] else 0)
+    for ip in sorted_ips[:n_remove]:
+        del d[ip]
+    logger.warning("[IP_BAN] LRU eviction: %d IPs removed (%d remaining)", n_remove, len(d))
 
 
 def _record_request(ip: str) -> None:
@@ -144,6 +125,9 @@ def _record_request(ip: str) -> None:
     cutoff = now - _FLOOD_WINDOW
     _request_log[ip] = [t for t in timestamps if t > cutoff]
     _request_log[ip].append(now)
+    # S04 V94: LRU eviction when exceeding cap
+    if len(_request_log) > _MAX_TRACKED_IPS:
+        _evict_oldest(_request_log, _MAX_TRACKED_IPS)
 
 
 def _check_auto_ban(ip: str) -> str | None:

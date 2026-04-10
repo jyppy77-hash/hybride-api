@@ -44,6 +44,7 @@ EMAIL_COOLDOWN = 3600    # 1 hour between same email alert
 
 # In-memory cooldown fallback (when Redis unavailable)
 _mem_cooldowns: dict[str, float] = {}  # key → expiry timestamp
+_MAX_COOLDOWN_ENTRIES = 1000  # S11 V94: memory bound
 
 # SMTP config from env
 _SMTP_HOST = os.getenv("SMTP_HOST", "")
@@ -105,6 +106,12 @@ async def _set_cooldown(key: str, cooldown: int) -> None:
     """Set cooldown for an alert key."""
     _redis = _cache._redis
     if not _redis:
+        # S11 V94: evict oldest entries when exceeding cap
+        if len(_mem_cooldowns) >= _MAX_COOLDOWN_ENTRIES:
+            sorted_keys = sorted(_mem_cooldowns, key=_mem_cooldowns.get)
+            for k in sorted_keys[:len(_mem_cooldowns) // 5]:
+                del _mem_cooldowns[k]
+            logger.warning("[ALERTING] _mem_cooldowns LRU eviction (%d remaining)", len(_mem_cooldowns))
         _mem_cooldowns[key] = time.time() + cooldown
         return
     try:
@@ -213,7 +220,9 @@ def _send_email_sync(alert: Alert) -> None:
         logger.warning("SMTP not configured — skipping alert email")
         return
 
-    subject = f"[LotoIA ALERTE] {alert.metric_name} critique"
+    # S10 V94: sanitize metric_name to prevent email header injection (CRLF)
+    safe_name = alert.metric_name.replace('\r', ' ').replace('\n', ' ')
+    subject = f"[LotoIA ALERTE] {safe_name} critique"
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     body = f"""ALERTE CRITIQUE — LotoIA Monitoring

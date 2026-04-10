@@ -30,15 +30,21 @@ if _OWNER_IPV6:
 
 
 def is_owner_ip(ip: str) -> bool:
-    """Owner IP detection — IPv4 exact + IPv6 CIDR /64."""
+    """Owner IP detection — IPv4 exact + IPv6 CIDR /64 + loopback.
+
+    S07 V94: single source of truth for owner detection.
+    Used by middleware/ip_ban.py, services/chat_rate_limit.py, routes/*.
+    """
     if ip in _OWNER_EXACT:
         return True
-    if _owner_net_v6:
-        try:
-            if ip_address(ip) in _owner_net_v6:
-                return True
-        except ValueError:
-            pass
+    try:
+        addr = ip_address(ip)
+        if addr.is_loopback:
+            return True
+        if _owner_net_v6 and addr in _owner_net_v6:
+            return True
+    except ValueError:
+        pass
     return False
 
 

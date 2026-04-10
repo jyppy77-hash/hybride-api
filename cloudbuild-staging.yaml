@@ -73,27 +73,40 @@ steps:
     args: ['push', 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:staging-latest']
 
   # Deploy to Cloud Run STAGING — no traffic (I10 V66: smoke test before routing)
+  # SAFETY S01 V94: only pass --update-env-vars when substitutions are non-empty,
+  # otherwise existing env vars (OWNER_IP, secrets) are wiped to empty strings.
   - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
     args:
-      - run
-      - deploy
-      - hybride-api-staging
-      - --image=europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:staging-$COMMIT_SHA
-      - --region=europe-west1
-      - --platform=managed
-      - --allow-unauthenticated
-      - --port=8080
-      - --memory=512Mi
-      - --cpu=1
-      - --concurrency=20
-      - --max-instances=3
-      - --min-instances=0
-      - --timeout=120
-      - --cpu-boost
-      - --no-traffic
-      - --liveness-probe=httpGet.path=/health,httpGet.port=8080
-      - --startup-probe=httpGet.path=/health,httpGet.port=8080
-      - '--update-env-vars=OWNER_IP=${_OWNER_IP},OWNER_IPV6=${_OWNER_IPV6},DB_NAME=${_DB_NAME}'
+      - '-c'
+      - |
+        CMD="gcloud run deploy hybride-api-staging \
+          --image=europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:staging-$COMMIT_SHA \
+          --region=europe-west1 \
+          --platform=managed \
+          --allow-unauthenticated \
+          --port=8080 \
+          --memory=512Mi \
+          --cpu=1 \
+          --concurrency=20 \
+          --max-instances=3 \
+          --min-instances=0 \
+          --timeout=120 \
+          --cpu-boost \
+          --no-traffic \
+          --liveness-probe=httpGet.path=/health,httpGet.port=8080 \
+          --startup-probe=httpGet.path=/health,httpGet.port=8080"
+        if [ -n "${_OWNER_IP}" ] && [ -n "${_OWNER_IPV6}" ]; then
+          CMD="$$CMD --update-env-vars=OWNER_IP=${_OWNER_IP},OWNER_IPV6=${_OWNER_IPV6}"
+        else
+          echo "WARNING: _OWNER_IP or _OWNER_IPV6 empty — skipping --update-env-vars to preserve existing values"
+        fi
+        if [ -n "${_DB_NAME}" ]; then
+          CMD="$$CMD --update-env-vars=DB_NAME=${_DB_NAME}"
+        else
+          echo "WARNING: _DB_NAME empty — skipping DB_NAME update to preserve existing value"
+        fi
+        eval $$CMD
 
   # Smoke test /health on the new revision (I10 V66)
   - name: 'gcr.io/cloud-builders/gcloud'

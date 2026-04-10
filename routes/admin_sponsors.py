@@ -29,6 +29,8 @@ from routes.admin_helpers import (
     PALIERS_V9 as _PALIERS_V9,
 )
 
+from rate_limit import limiter  # S15 V94
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["admin"])
@@ -354,6 +356,7 @@ async def admin_facture_update_status(request: Request, facture_id: int):
 
 
 @router.get("/admin/factures/{facture_id}/pdf", include_in_schema=False)
+@limiter.limit("30/minute")  # S15 V94
 async def admin_facture_pdf(request: Request, facture_id: int):
     redir = _require_auth(request)
     if redir:
@@ -633,6 +636,7 @@ async def admin_contrat_update_status(request: Request, contrat_id: int):
 
 
 @router.get("/admin/contrats/{contrat_id}/pdf", include_in_schema=False)
+@limiter.limit("30/minute")  # S15 V94
 async def admin_contrat_pdf(request: Request, contrat_id: int):
     redir = _require_auth(request)
     if redir:

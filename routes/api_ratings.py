@@ -28,7 +28,7 @@ async def submit_rating(data: RatingSubmit, request: Request):
     try:
         # Hash IP pour anti-spam RGPD-friendly
         client_ip = get_client_ip(request)
-        ip_hash = hashlib.sha256(client_ip.encode()).hexdigest()[:16]
+        ip_hash = hashlib.sha256(client_ip.encode()).hexdigest()  # S08 V94: full 64-char hash
 
         # User-Agent pour analytics
         user_agent = (request.headers.get("user-agent") or "")[:500]

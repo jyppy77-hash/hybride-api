@@ -13,6 +13,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 
 import db_cloudsql
 from config.templates import env
+from rate_limit import limiter  # S15 V94
 from routes.admin_helpers import (
     require_auth as _require_auth,
     require_auth_json as _require_auth_json,
@@ -109,6 +110,7 @@ async def admin_api_realtime(request: Request, event_type: str = "all", period: 
 # ── Realtime exports ──────────────────────────────────────────────────────────
 
 @router.get("/admin/export/realtime/csv", include_in_schema=False)
+@limiter.limit("30/minute")  # S15 V94
 async def admin_export_realtime_csv(request: Request, event_type: str = "all", period: str = "24h"):
     redirect = _require_auth(request)
     if redirect:
@@ -142,6 +144,7 @@ async def admin_export_realtime_csv(request: Request, event_type: str = "all", p
 
 
 @router.get("/admin/export/realtime/pdf", include_in_schema=False)
+@limiter.limit("30/minute")  # S15 V94
 async def admin_export_realtime_pdf(request: Request, event_type: str = "all", period: str = "24h"):
     redirect = _require_auth(request)
     if redirect:
@@ -844,6 +847,7 @@ async def admin_api_chatbot_log(
 
 
 @router.get("/admin/export/chatbot-log/csv", include_in_schema=False)
+@limiter.limit("30/minute")  # S15 V94
 async def admin_export_chatbot_log_csv(
     request: Request,
     period: str = Query("24h"),

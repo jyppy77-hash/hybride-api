@@ -61,10 +61,15 @@ COOKIE_NAME = "lotoia_admin_token"
 
 def check_admin_ip(request: Request) -> JSONResponse | None:
     """Restrict admin access to OWNER_IP only. Returns 403 response or None."""
-    from middleware.ip_ban import _is_owner_or_loopback, _extract_client_ip
-    real_ip = _extract_client_ip(request)
-    if not real_ip or real_ip == "testclient":
-        return None  # TestClient / empty → allow (dev)
+    from middleware.ip_ban import _is_owner_or_loopback
+    from utils import get_client_ip
+    real_ip = get_client_ip(request)
+    # S09 V94: "testclient" = pytest TestClient → allow. Empty IP = block.
+    if real_ip == "testclient":
+        return None
+    if not real_ip:
+        logger.warning("[ADMIN_AUDIT] action=admin_empty_ip_blocked path=%s", request.url.path)
+        return JSONResponse({"error": "Forbidden"}, status_code=403)
     if _is_owner_or_loopback(real_ip):
         return None
     logger.warning("[ADMIN_AUDIT] action=admin_ip_blocked ip=%s path=%s", real_ip, request.url.path)

@@ -43,8 +43,10 @@ def test_message_71_blocked_with_retry():
 def test_owner_ip_always_allowed():
     """Owner IP should be exempt even beyond 70 messages."""
     with patch.dict(os.environ, {"OWNER_IP": "10.99.99.99"}):
-        # Re-import to pick up new OWNER_IP
+        # S07 V94: must reload utils first (owner IP centralized there)
         import importlib
+        import utils
+        importlib.reload(utils)
         import services.chat_rate_limit as mod
         importlib.reload(mod)
         try:
@@ -53,6 +55,7 @@ def test_owner_ip_always_allowed():
                 assert allowed
                 assert retry == 0
         finally:
+            importlib.reload(utils)
             importlib.reload(mod)
 
 
@@ -82,14 +85,35 @@ def test_reset_after_window_expired():
 
 
 def test_memory_bound_10k():
-    """Dict should not exceed _CHAT_MAX_TRACKED_IPS entries."""
+    """S05 V94: LRU eviction when exceeding 10K entries (not full clear)."""
     from services.chat_rate_limit import check_chat_rate, _chat_hits, _CHAT_MAX_TRACKED_IPS
-    # Fill with 10001 fake IPs directly
+    _chat_hits.clear()
+    # Fill with 10001 fake IPs with ascending timestamps
+    from collections import deque
     for i in range(_CHAT_MAX_TRACKED_IPS + 1):
-        _chat_hits[f"10.{i // 65536}.{(i // 256) % 256}.{i % 256}"] = type(_chat_hits.get("x", []))()
-    # Next call should trigger cleanup
+        _chat_hits[f"10.{i // 65536}.{(i // 256) % 256}.{i % 256}"] = deque([float(i)])
+    assert len(_chat_hits) > _CHAT_MAX_TRACKED_IPS
+    # Next call should trigger LRU eviction
     check_chat_rate("192.168.99.99")
     assert len(_chat_hits) <= _CHAT_MAX_TRACKED_IPS
+    # S05 V94: at least 70% kept (LRU eviction, not full clear)
+    assert len(_chat_hits) >= 7_000
+
+
+def test_lru_eviction_keeps_recent():
+    """S05 V94: recent IPs survive LRU eviction, old IPs are removed."""
+    from services.chat_rate_limit import _chat_hits, _evict_oldest_deque
+    _chat_hits.clear()
+    from collections import deque
+    # Old IPs
+    for i in range(9_000):
+        _chat_hits[f"10.{i // 65536}.{(i // 256) % 256}.{i % 256}"] = deque([1.0])
+    # Recent IPs
+    for i in range(2_000):
+        _chat_hits[f"192.168.{i // 256}.{i % 256}"] = deque([999999.0])
+    _evict_oldest_deque(_chat_hits, 10_000)
+    recent_count = sum(1 for ip in _chat_hits if ip.startswith("192.168."))
+    assert recent_count == 2_000
 
 
 def test_i18n_message_lang_en():

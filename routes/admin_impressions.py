@@ -13,6 +13,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 
 import db_cloudsql
 from config.templates import env
+from rate_limit import limiter  # S15 V94
 from routes.admin_helpers import (
     require_auth as _require_auth,
     require_auth_json as _require_auth_json,
@@ -154,6 +155,7 @@ async def admin_api_impressions(
 # ── Exports ──────────────────────────────────────────────────────────────────
 
 @router.get("/admin/api/impressions/csv", include_in_schema=False)
+@limiter.limit("30/minute")  # S15 V94
 async def admin_export_impressions_csv(
     request: Request,
     period: str = Query("24h"),
@@ -198,6 +200,7 @@ async def admin_export_impressions_csv(
 
 
 @router.get("/admin/api/sponsor-report/pdf", include_in_schema=False)
+@limiter.limit("30/minute")  # S15 V94
 async def admin_export_sponsor_report_pdf(
     request: Request,
     period: str = Query("24h"),

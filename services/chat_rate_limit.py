@@ -6,10 +6,8 @@ Owner IPs are always exempt.
 """
 
 import logging
-import os
 import time
 from collections import deque
-from ipaddress import ip_address, ip_network
 
 logger = logging.getLogger(__name__)
 
@@ -31,42 +29,24 @@ _RATE_LIMIT_MESSAGES: dict[str, str] = {
 }
 
 # ── Owner exclusion ─────────────────────────────────────────────────────────
-
-_OWNER_IP = os.environ.get("OWNER_IP", "").strip()
-_OWNER_IPV6 = os.environ.get("OWNER_IPV6", "").strip()
-_OWNER_EXACT: set[str] = {"127.0.0.1", "::1"}
-if _OWNER_IP:
-    _OWNER_EXACT.add(_OWNER_IP)
-
-_owner_net_v6 = None
-if _OWNER_IPV6:
-    _v6_clean = _OWNER_IPV6.rstrip(":")
-    if "::" not in _v6_clean:
-        _v6_clean += "::"
-    try:
-        _owner_net_v6 = ip_network(f"{_v6_clean}/64", strict=False)
-    except ValueError:
-        pass
-
-
-def _is_owner(ip_str: str) -> bool:
-    """Check if IP belongs to owner (exempt from rate limit)."""
-    if ip_str in _OWNER_EXACT:
-        return True
-    try:
-        addr = ip_address(ip_str)
-        if addr.is_loopback:
-            return True
-        if _owner_net_v6 and addr in _owner_net_v6:
-            return True
-    except ValueError:
-        return False
-    return False
+# S07 V94: centralized in utils.py — single source of truth
+from utils import is_owner_ip as _is_owner  # noqa: E402
 
 
 # ── Rate limit state ────────────────────────────────────────────────────────
 
 _chat_hits: dict[str, deque[float]] = {}
+
+
+def _evict_oldest_deque(d: dict[str, deque], max_size: int, pct: float = 0.2) -> None:
+    """S05 V94: LRU eviction — remove oldest pct% entries by last-seen timestamp."""
+    n_remove = int(max_size * pct)
+    if n_remove < 1:
+        n_remove = 1
+    sorted_ips = sorted(d.keys(), key=lambda ip: d[ip][-1] if d[ip] else 0)
+    for ip in sorted_ips[:n_remove]:
+        del d[ip]
+    logger.warning("[CHAT_RATE_LIMIT] LRU eviction: %d IPs removed (%d remaining)", n_remove, len(d))
 
 
 def check_chat_rate(ip: str) -> tuple[bool, int]:
@@ -79,10 +59,9 @@ def check_chat_rate(ip: str) -> tuple[bool, int]:
 
     now = time.monotonic()
 
-    # Memory bound: clear all if too many IPs tracked
+    # S05 V94: LRU eviction instead of full clear (prevents rate limit bypass)
     if len(_chat_hits) > _CHAT_MAX_TRACKED_IPS:
-        _chat_hits.clear()
-        logger.warning("[CHAT_RATE_LIMIT] _chat_hits cleared — exceeded %d entries", _CHAT_MAX_TRACKED_IPS)
+        _evict_oldest_deque(_chat_hits, _CHAT_MAX_TRACKED_IPS)
 
     if ip not in _chat_hits:
         _chat_hits[ip] = deque()

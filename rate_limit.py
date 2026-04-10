@@ -30,8 +30,19 @@ limiter = Limiter(key_func=_get_real_ip)
 # ---------------------------------------------------------------------------
 _API_GLOBAL_LIMIT = 60          # requests per window
 _API_WINDOW_SECONDS = 60        # 1-minute sliding window
-_API_MAX_TRACKED_IPS = 10_000   # S04: memory bound — clear dict above this
+_API_MAX_TRACKED_IPS = 10_000   # S04: memory bound
 _api_hits: dict[str, deque[float]] = defaultdict(deque)
+
+
+def _evict_oldest_deque(d: dict[str, deque], max_size: int, pct: float = 0.2) -> None:
+    """S05 V94: LRU eviction — remove oldest pct% entries by last-seen timestamp."""
+    n_remove = int(max_size * pct)
+    if n_remove < 1:
+        n_remove = 1
+    sorted_ips = sorted(d.keys(), key=lambda ip: d[ip][-1] if d[ip] else 0)
+    for ip in sorted_ips[:n_remove]:
+        del d[ip]
+    logger.warning("[RATE_LIMIT] LRU eviction: %d IPs removed (%d remaining)", n_remove, len(d))
 
 
 class APIGlobalRateLimitMiddleware(BaseHTTPMiddleware):
@@ -45,10 +56,9 @@ class APIGlobalRateLimitMiddleware(BaseHTTPMiddleware):
         ip = _get_real_ip(request)
         now = time.monotonic()
 
-        # S04: prevent unbounded memory growth under distributed DDoS
+        # S05 V94: LRU eviction instead of full clear (prevents rate limit bypass)
         if len(_api_hits) > _API_MAX_TRACKED_IPS:
-            _api_hits.clear()
-            logger.warning("[RATE_LIMIT] _api_hits cleared — exceeded %d entries", _API_MAX_TRACKED_IPS)
+            _evict_oldest_deque(_api_hits, _API_MAX_TRACKED_IPS)
 
         bucket = _api_hits[ip]
 
