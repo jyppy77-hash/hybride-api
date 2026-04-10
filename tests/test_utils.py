@@ -6,7 +6,7 @@ import importlib
 import os
 from unittest.mock import MagicMock
 
-from utils import get_client_ip, get_client_ip_from_scope
+from utils import get_client_ip, get_client_ip_from_scope, detect_country
 
 
 class TestGetClientIp:
@@ -186,3 +186,53 @@ class TestIsOwnerIp:
             assert fn("") is False
         finally:
             self._cleanup()
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# detect_country  (S05 V93 — single source of truth in utils.py)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+class TestDetectCountry:
+    """S05 V93: detect_country() extracted from api_track/api_sponsor_track."""
+
+    def _make_request(self, cf_ipcountry=None, accept_lang=None):
+        req = MagicMock()
+        headers = {}
+        if cf_ipcountry is not None:
+            headers["cf-ipcountry"] = cf_ipcountry
+        if accept_lang is not None:
+            headers["accept-language"] = accept_lang
+        req.headers = headers
+        return req
+
+    def test_cf_header_returns_country(self):
+        req = self._make_request(cf_ipcountry="FR")
+        assert detect_country(req) == "FR"
+
+    def test_cf_header_lowercase_normalized(self):
+        req = self._make_request(cf_ipcountry="de")
+        assert detect_country(req) == "DE"
+
+    def test_cf_xx_falls_through(self):
+        req = self._make_request(cf_ipcountry="XX")
+        assert detect_country(req) is None
+
+    def test_cf_t1_falls_through(self):
+        req = self._make_request(cf_ipcountry="T1")
+        assert detect_country(req) is None
+
+    def test_accept_language_fallback(self):
+        req = self._make_request(accept_lang="fr-FR,fr;q=0.9,en;q=0.8")
+        assert detect_country(req) == "FR"
+
+    def test_accept_language_en_us(self):
+        req = self._make_request(accept_lang="en-US,en;q=0.9")
+        assert detect_country(req) == "US"
+
+    def test_no_headers_returns_none(self):
+        req = self._make_request()
+        assert detect_country(req) is None
+
+    def test_cf_priority_over_accept_lang(self):
+        req = self._make_request(cf_ipcountry="DE", accept_lang="fr-FR")
+        assert detect_country(req) == "DE"

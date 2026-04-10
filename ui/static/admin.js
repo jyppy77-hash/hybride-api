@@ -205,7 +205,7 @@ var LotoAdmin = (function() {
         var seen = {};
         chartData.forEach(function(r) { if (!seen[r.day]) { labels.push(r.day); seen[r.day] = true; } });
 
-        var types = { 'sponsor-popup-shown': { label: 'Impressions', color: '#3b82f6' }, 'sponsor-click': { label: 'Clics', color: '#10b981' }, 'sponsor-video-played': { label: 'Videos', color: '#f59e0b' }, 'sponsor-inline-shown': { label: 'Chatbot', color: '#8b5cf6' }, 'sponsor-result-shown': { label: 'Résultats', color: '#ec4899' }, 'sponsor-pdf-downloaded': { label: 'PDF', color: '#06b6d4' } };
+        var types = { 'sponsor-popup-shown': { label: 'Impressions', color: '#3b82f6' }, 'sponsor-click': { label: 'Clics', color: '#10b981' }, 'sponsor-video-played': { label: 'Videos', color: '#f59e0b' }, 'sponsor-inline-shown': { label: 'Chatbot', color: '#8b5cf6' }, 'sponsor-result-shown': { label: 'Résultats', color: '#ec4899' }, 'sponsor-pdf-downloaded': { label: 'PDF', color: '#06b6d4' }, 'sponsor-pdf-mention': { label: 'PDF mention', color: '#14b8a6' } };
         var datasets = [];
         Object.keys(types).forEach(function(evType) {
             var vals = labels.map(function(d) {
@@ -1138,7 +1138,7 @@ var LotoAdmin = (function() {
             tooltip.innerHTML =
                 '<strong>' + cell._dayNum + ' ' + MONTHS_FR[state.month - 1] + ' ' + state.year + '</strong><br>' +
                 'Visiteurs: <b>' + dd.visitors + '</b><br>' +
-                'Sessions: <b>' + dd.sessions + '</b><br>' +
+                'Événements: <b>' + dd.sessions + '</b><br>' +
                 'Impressions: <b>' + dd.impressions + '</b><br>' +
                 'Chatbot: <b>' + dd.chatbot + '</b>';
             tooltip.style.display = 'block';

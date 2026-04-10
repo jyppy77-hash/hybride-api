@@ -462,6 +462,7 @@ class TestContratsValidation:
     """Validation on contrat creation — missing required fields."""
 
     def test_create_contrat_missing_dates(self):
+        """Empty dates are allowed (nullable) — route succeeds."""
         client = _authed_client()
         with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0})
@@ -474,8 +475,193 @@ class TestContratsValidation:
                 "date_fin": "",
                 "montant_mensuel_ht": "650",
             }, follow_redirects=False)
-        # Empty dates cause DB error or 500 — route should not succeed with 302
-        assert resp.status_code != 302 or resp.status_code == 302  # Route redirects on any outcome
+        assert resp.status_code == 302
+
+
+class TestContratsDateValidation:
+    """S04 V93: server-side date validation on contrat create/update."""
+
+    def test_create_invalid_date_debut_returns_400(self):
+        client = _authed_client()
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
+            resp = client.post("/admin/contrats/new", data={
+                "sponsor_id": "1",
+                "date_debut": "not-a-date",
+                "date_fin": "2026-06-30",
+                "montant_mensuel_ht": "650",
+            })
+        assert resp.status_code == 400
+        assert "Date de début invalide" in resp.text
+
+    def test_create_invalid_date_fin_returns_400(self):
+        client = _authed_client()
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
+            resp = client.post("/admin/contrats/new", data={
+                "sponsor_id": "1",
+                "date_debut": "2026-04-01",
+                "date_fin": "31/06/2026",
+                "montant_mensuel_ht": "650",
+            })
+        assert resp.status_code == 400
+        assert "Date de fin invalide" in resp.text
+
+    def test_create_date_fin_before_debut_returns_400(self):
+        client = _authed_client()
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
+            resp = client.post("/admin/contrats/new", data={
+                "sponsor_id": "1",
+                "date_debut": "2026-06-01",
+                "date_fin": "2026-04-01",
+                "montant_mensuel_ht": "650",
+            })
+        assert resp.status_code == 400
+        assert "postérieure" in resp.text
+
+    def test_create_date_fin_equals_debut_returns_400(self):
+        client = _authed_client()
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
+            resp = client.post("/admin/contrats/new", data={
+                "sponsor_id": "1",
+                "date_debut": "2026-04-01",
+                "date_fin": "2026-04-01",
+                "montant_mensuel_ht": "650",
+            })
+        assert resp.status_code == 400
+        assert "postérieure" in resp.text
+
+    def test_create_valid_dates_succeeds(self):
+        client = _authed_client()
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0})
+            mock_db.async_query = AsyncMock()
+            mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
+            resp = client.post("/admin/contrats/new", data={
+                "sponsor_id": "1",
+                "date_debut": "2026-04-01",
+                "date_fin": "2026-06-30",
+                "montant_mensuel_ht": "650",
+                "engagement_mois": "3",
+                "pool_impressions": "10000",
+                "mode_depassement": "CPC",
+            }, follow_redirects=False)
+        assert resp.status_code == 302
+
+    def test_update_invalid_date_debut_returns_400(self):
+        client = _authed_client()
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={
+                "id": 1, "sponsor_id": 1, "type_contrat": "exclusif",
+                "date_debut": "2026-04-01", "date_fin": "2026-06-30",
+                "montant_mensuel_ht": 650.00, "statut": "brouillon",
+                "product_codes": "LOTOIA_EXCLU", "conditions_particulieres": None,
+                "engagement_mois": 3, "pool_impressions": 10000,
+                "mode_depassement": "CPC", "plafond_mensuel": None,
+            })
+            mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
+            resp = client.post("/admin/contrats/1/edit", data={
+                "sponsor_id": "1",
+                "date_debut": "invalid",
+                "date_fin": "2026-06-30",
+                "montant_mensuel_ht": "650",
+            })
+        assert resp.status_code == 400
+        assert "Date de début invalide" in resp.text
+
+    def test_update_date_fin_before_debut_returns_400(self):
+        client = _authed_client()
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={
+                "id": 1, "sponsor_id": 1, "type_contrat": "exclusif",
+                "date_debut": "2026-04-01", "date_fin": "2026-06-30",
+                "montant_mensuel_ht": 650.00, "statut": "brouillon",
+                "product_codes": "LOTOIA_EXCLU", "conditions_particulieres": None,
+                "engagement_mois": 3, "pool_impressions": 10000,
+                "mode_depassement": "CPC", "plafond_mensuel": None,
+            })
+            mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
+            resp = client.post("/admin/contrats/1/edit", data={
+                "sponsor_id": "1",
+                "date_debut": "2026-06-01",
+                "date_fin": "2026-04-01",
+                "montant_mensuel_ht": "650",
+            })
+        assert resp.status_code == 400
+        assert "postérieure" in resp.text
+
+    def test_update_valid_dates_succeeds(self):
+        client = _authed_client()
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
+            mock_db.async_query = AsyncMock()
+            mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
+            resp = client.post("/admin/contrats/1/edit", data={
+                "sponsor_id": "1",
+                "date_debut": "2026-04-01",
+                "date_fin": "2026-12-31",
+                "montant_mensuel_ht": "650",
+                "engagement_mois": "3",
+                "pool_impressions": "10000",
+                "mode_depassement": "CPC",
+            }, follow_redirects=False)
+        assert resp.status_code == 302
+
+
+class TestContratsMontantValidation:
+    """S14 V93: montant_mensuel_ht must be >= 0."""
+
+    def test_create_negative_montant_returns_400(self):
+        client = _authed_client()
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
+            resp = client.post("/admin/contrats/new", data={
+                "sponsor_id": "1",
+                "date_debut": "2026-04-01",
+                "date_fin": "2026-06-30",
+                "montant_mensuel_ht": "-100",
+            })
+        assert resp.status_code == 400
+        assert "négatif" in resp.text
+
+    def test_update_negative_montant_returns_400(self):
+        client = _authed_client()
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={
+                "id": 1, "sponsor_id": 1, "type_contrat": "exclusif",
+                "date_debut": "2026-04-01", "date_fin": "2026-06-30",
+                "montant_mensuel_ht": 650.00, "statut": "brouillon",
+                "product_codes": "LOTOIA_EXCLU", "conditions_particulieres": None,
+                "engagement_mois": 3, "pool_impressions": 10000,
+                "mode_depassement": "CPC", "plafond_mensuel": None,
+            })
+            mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
+            resp = client.post("/admin/contrats/1/edit", data={
+                "sponsor_id": "1",
+                "date_debut": "2026-04-01",
+                "date_fin": "2026-06-30",
+                "montant_mensuel_ht": "-50",
+            })
+        assert resp.status_code == 400
+        assert "négatif" in resp.text
+
+    def test_create_zero_montant_succeeds(self):
+        client = _authed_client()
+        with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0})
+            mock_db.async_query = AsyncMock()
+            mock_db.async_fetchall = AsyncMock(return_value=[{"id": 1, "nom": "S"}])
+            resp = client.post("/admin/contrats/new", data={
+                "sponsor_id": "1",
+                "date_debut": "2026-04-01",
+                "date_fin": "2026-06-30",
+                "montant_mensuel_ht": "0",
+                "engagement_mois": "3",
+                "pool_impressions": "10000",
+                "mode_depassement": "CPC",
+            }, follow_redirects=False)
+        assert resp.status_code == 302
 
 
 class TestContratsNavbar:

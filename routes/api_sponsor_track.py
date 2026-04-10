@@ -14,7 +14,6 @@ Les orphelins sont acceptés (impressions historiques d'un sponsor désactivé r
 import hashlib
 import json
 import logging
-import re
 from datetime import date
 from pathlib import Path
 
@@ -49,26 +48,8 @@ try:
 except Exception:
     logger.warning("[SPONSOR TRACK] Failed to load valid sponsor IDs from sponsors.json")
 
-# Owner IP filtering — V87 F04: single source of truth in utils.py
-from utils import is_owner_ip as _is_owner_ip
-
-
-def _get_client_ip(request: Request) -> str:
-    from utils import get_client_ip
-    return get_client_ip(request)
-
-
-def _detect_country(request: Request) -> str | None:
-    """Detect visitor country (CF-IPCountry GeoIP → Accept-Language fallback)."""
-    cf = request.headers.get("cf-ipcountry", "").strip().upper()
-    if cf and cf not in ("XX", "T1", ""):
-        return cf
-    accept_lang = request.headers.get("accept-language", "")
-    if accept_lang:
-        m = re.search(r"([a-z]{2})-([A-Z]{2})", accept_lang)
-        if m:
-            return m.group(2)
-    return None
+# S05 V93: single source of truth for owner IP, country detection, client IP
+from utils import is_owner_ip as _is_owner_ip, detect_country as _detect_country, get_client_ip as _get_client_ip
 
 
 class SponsorEvent(BaseModel):

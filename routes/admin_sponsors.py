@@ -34,6 +34,22 @@ logger = logging.getLogger(__name__)
 router = APIRouter(tags=["admin"])
 
 
+def _safe_int(value, default: int) -> int:
+    """S13 V93: safe int conversion — fallback to default on invalid input."""
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return default
+
+
+def _safe_float(value, default: float) -> float:
+    """S14 V93: safe float conversion — fallback to default on invalid input."""
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return default
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # SPONSORS CRUD
 # ══════════════════════════════════════════════════════════════════════════════
@@ -82,7 +98,7 @@ async def admin_sponsor_create(request: Request):
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
             (nom, form.get("contact_nom", ""), form.get("contact_email", ""),
              form.get("contact_tel", ""), form.get("adresse", ""),
-             form.get("siret", ""), form.get("notes", ""), int(form.get("actif", 1))),
+             form.get("siret", ""), form.get("notes", ""), _safe_int(form.get("actif", 1), 1)),
         )
         row = await db_cloudsql.async_fetchone("SELECT LAST_INSERT_ID() AS id")
         sponsor_id = row["id"]
@@ -140,21 +156,29 @@ async def admin_sponsor_update(request: Request, sponsor_id: int):
             "adresse=%s, siret=%s, notes=%s, actif=%s WHERE id=%s",
             (nom, form.get("contact_nom", ""), form.get("contact_email", ""),
              form.get("contact_tel", ""), form.get("adresse", ""),
-             form.get("siret", ""), form.get("notes", ""), int(form.get("actif", 1)), sponsor_id),
+             form.get("siret", ""), form.get("notes", ""), _safe_int(form.get("actif", 1), 1), sponsor_id),
         )
         logger.info("[ADMIN_AUDIT] action=sponsor_update sponsor_id=%s name=%s", sponsor_id, nom)
 
-        # Replace pricing grid
-        await db_cloudsql.async_query("DELETE FROM fia_grille_tarifaire WHERE sponsor_id = %s", (sponsor_id,))
+        # Replace pricing grid (S03 V93: transactional DELETE+INSERT)
         events = form.getlist("tarif_event[]")
         prices = form.getlist("tarif_prix[]")
         descs = form.getlist("tarif_desc[]")
-        for ev, pr, desc in zip(events, prices, descs):
-            if ev in _VALID_EVENTS and pr:
-                await db_cloudsql.async_query(
-                    "INSERT INTO fia_grille_tarifaire (sponsor_id, event_type, prix_unitaire, description) VALUES (%s, %s, %s, %s)",
-                    (sponsor_id, ev, float(pr), desc),
-                )
+        async with db_cloudsql.get_connection() as conn:
+            async with conn.cursor() as cur:
+                await conn.begin()
+                try:
+                    await cur.execute("DELETE FROM fia_grille_tarifaire WHERE sponsor_id = %s", (sponsor_id,))
+                    for ev, pr, desc in zip(events, prices, descs):
+                        if ev in _VALID_EVENTS and pr:
+                            await cur.execute(
+                                "INSERT INTO fia_grille_tarifaire (sponsor_id, event_type, prix_unitaire, description) VALUES (%s, %s, %s, %s)",
+                                (sponsor_id, ev, float(pr), desc),
+                            )
+                    await conn.commit()
+                except Exception:
+                    await conn.rollback()
+                    raise
     except Exception as e:
         logger.error("[ADMIN] sponsor update: %s", e)
 
@@ -410,13 +434,43 @@ async def admin_contrat_create(request: Request):
     # V9: product_codes is "LOTOIA_EXCLU" (stored as JSON array for backward compat)
     raw_pc = form.get("product_codes", "LOTOIA_EXCLU")
     product_codes = f'["{raw_pc}"]' if raw_pc and not raw_pc.startswith("[") else (raw_pc or None)
-    engagement_mois = int(form.get("engagement_mois", 3))
-    pool_impressions = int(form.get("pool_impressions", 10000))
+    engagement_mois = _safe_int(form.get("engagement_mois", 3), 3)
+    pool_impressions = _safe_int(form.get("pool_impressions", 10000), 10000)
     mode_dep = form.get("mode_depassement", "CPC")
     if mode_dep not in _VALID_MODE_DEPASSEMENT:
         mode_dep = "CPC"
     plafond_raw = form.get("plafond_mensuel", "")
-    plafond_mensuel = float(plafond_raw) if plafond_raw else None
+    plafond_mensuel = _safe_float(plafond_raw, 0) if plafond_raw else None
+    # S14 V93: montant >= 0
+    montant_mensuel_ht = _safe_float(form.get("montant_mensuel_ht", 0), 0)
+    if montant_mensuel_ht < 0:
+        sponsors = await db_cloudsql.async_fetchall("SELECT id, nom FROM fia_sponsors WHERE actif = 1 ORDER BY nom") or []
+        tpl = env.get_template("admin/contrat_form.html")
+        return HTMLResponse(tpl.render(active="contrats", contrat=None, sponsors=sponsors, error="Le montant mensuel HT ne peut pas être négatif"), status_code=400)
+    if plafond_mensuel is not None and plafond_mensuel < 0:
+        sponsors = await db_cloudsql.async_fetchall("SELECT id, nom FROM fia_sponsors WHERE actif = 1 ORDER BY nom") or []
+        tpl = env.get_template("admin/contrat_form.html")
+        return HTMLResponse(tpl.render(active="contrats", contrat=None, sponsors=sponsors, error="Le plafond mensuel ne peut pas être négatif"), status_code=400)
+
+    # S04 V93: validate dates server-side
+    date_debut_str = (form.get("date_debut") or "").strip()
+    date_fin_str = (form.get("date_fin") or "").strip()
+    try:
+        date_debut_val = date.fromisoformat(date_debut_str) if date_debut_str else None
+    except ValueError:
+        sponsors = await db_cloudsql.async_fetchall("SELECT id, nom FROM fia_sponsors WHERE actif = 1 ORDER BY nom") or []
+        tpl = env.get_template("admin/contrat_form.html")
+        return HTMLResponse(tpl.render(active="contrats", contrat=None, sponsors=sponsors, error="Date de début invalide (format attendu : AAAA-MM-JJ)"), status_code=400)
+    try:
+        date_fin_val = date.fromisoformat(date_fin_str) if date_fin_str else None
+    except ValueError:
+        sponsors = await db_cloudsql.async_fetchall("SELECT id, nom FROM fia_sponsors WHERE actif = 1 ORDER BY nom") or []
+        tpl = env.get_template("admin/contrat_form.html")
+        return HTMLResponse(tpl.render(active="contrats", contrat=None, sponsors=sponsors, error="Date de fin invalide (format attendu : AAAA-MM-JJ)"), status_code=400)
+    if date_debut_val and date_fin_val and date_fin_val <= date_debut_val:
+        sponsors = await db_cloudsql.async_fetchall("SELECT id, nom FROM fia_sponsors WHERE actif = 1 ORDER BY nom") or []
+        tpl = env.get_template("admin/contrat_form.html")
+        return HTMLResponse(tpl.render(active="contrats", contrat=None, sponsors=sponsors, error="La date de fin doit être postérieure à la date de début"), status_code=400)
 
     try:
         # Generate numero with retry on duplicate
@@ -431,9 +485,9 @@ async def admin_contrat_create(request: Request):
                     "date_debut, date_fin, montant_mensuel_ht, engagement_mois, "
                     "pool_impressions, mode_depassement, plafond_mensuel, conditions_particulieres) "
                     "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
-                    (int(sponsor_id), numero, type_contrat, product_codes,
-                     form.get("date_debut"), form.get("date_fin"),
-                     float(form.get("montant_mensuel_ht", 0)),
+                    (_safe_int(sponsor_id, 0), numero, type_contrat, product_codes,
+                     date_debut_str or None, date_fin_str or None,
+                     montant_mensuel_ht,
                      engagement_mois, pool_impressions, mode_dep, plafond_mensuel,
                      form.get("conditions_particulieres", "") or None),
                 )
@@ -498,13 +552,48 @@ async def admin_contrat_update(request: Request, contrat_id: int):
         type_contrat = "exclusif"
     raw_pc = form.get("product_codes", "LOTOIA_EXCLU")
     product_codes = f'["{raw_pc}"]' if raw_pc and not raw_pc.startswith("[") else (raw_pc or None)
-    engagement_mois = int(form.get("engagement_mois", 3))
-    pool_impressions = int(form.get("pool_impressions", 10000))
+    engagement_mois = _safe_int(form.get("engagement_mois", 3), 3)
+    pool_impressions = _safe_int(form.get("pool_impressions", 10000), 10000)
     mode_dep = form.get("mode_depassement", "CPC")
     if mode_dep not in _VALID_MODE_DEPASSEMENT:
         mode_dep = "CPC"
     plafond_raw = form.get("plafond_mensuel", "")
-    plafond_mensuel = float(plafond_raw) if plafond_raw else None
+    plafond_mensuel = _safe_float(plafond_raw, 0) if plafond_raw else None
+    # S14 V93: montant >= 0
+    montant_mensuel_ht = _safe_float(form.get("montant_mensuel_ht", 0), 0)
+    if montant_mensuel_ht < 0:
+        contrat = await db_cloudsql.async_fetchone("SELECT * FROM fia_contrats WHERE id = %s", (contrat_id,))
+        sponsors = await db_cloudsql.async_fetchall("SELECT id, nom FROM fia_sponsors WHERE actif = 1 ORDER BY nom") or []
+        tpl = env.get_template("admin/contrat_form.html")
+        return HTMLResponse(tpl.render(active="contrats", contrat=contrat, sponsors=sponsors, error="Le montant mensuel HT ne peut pas être négatif"), status_code=400)
+    if plafond_mensuel is not None and plafond_mensuel < 0:
+        contrat = await db_cloudsql.async_fetchone("SELECT * FROM fia_contrats WHERE id = %s", (contrat_id,))
+        sponsors = await db_cloudsql.async_fetchall("SELECT id, nom FROM fia_sponsors WHERE actif = 1 ORDER BY nom") or []
+        tpl = env.get_template("admin/contrat_form.html")
+        return HTMLResponse(tpl.render(active="contrats", contrat=contrat, sponsors=sponsors, error="Le plafond mensuel ne peut pas être négatif"), status_code=400)
+
+    # S04 V93: validate dates server-side
+    date_debut_str = (form.get("date_debut") or "").strip()
+    date_fin_str = (form.get("date_fin") or "").strip()
+    try:
+        date_debut_val = date.fromisoformat(date_debut_str) if date_debut_str else None
+    except ValueError:
+        contrat = await db_cloudsql.async_fetchone("SELECT * FROM fia_contrats WHERE id = %s", (contrat_id,))
+        sponsors = await db_cloudsql.async_fetchall("SELECT id, nom FROM fia_sponsors WHERE actif = 1 ORDER BY nom") or []
+        tpl = env.get_template("admin/contrat_form.html")
+        return HTMLResponse(tpl.render(active="contrats", contrat=contrat, sponsors=sponsors, error="Date de début invalide (format attendu : AAAA-MM-JJ)"), status_code=400)
+    try:
+        date_fin_val = date.fromisoformat(date_fin_str) if date_fin_str else None
+    except ValueError:
+        contrat = await db_cloudsql.async_fetchone("SELECT * FROM fia_contrats WHERE id = %s", (contrat_id,))
+        sponsors = await db_cloudsql.async_fetchall("SELECT id, nom FROM fia_sponsors WHERE actif = 1 ORDER BY nom") or []
+        tpl = env.get_template("admin/contrat_form.html")
+        return HTMLResponse(tpl.render(active="contrats", contrat=contrat, sponsors=sponsors, error="Date de fin invalide (format attendu : AAAA-MM-JJ)"), status_code=400)
+    if date_debut_val and date_fin_val and date_fin_val <= date_debut_val:
+        contrat = await db_cloudsql.async_fetchone("SELECT * FROM fia_contrats WHERE id = %s", (contrat_id,))
+        sponsors = await db_cloudsql.async_fetchall("SELECT id, nom FROM fia_sponsors WHERE actif = 1 ORDER BY nom") or []
+        tpl = env.get_template("admin/contrat_form.html")
+        return HTMLResponse(tpl.render(active="contrats", contrat=contrat, sponsors=sponsors, error="La date de fin doit être postérieure à la date de début"), status_code=400)
 
     try:
         await db_cloudsql.async_query(
@@ -512,9 +601,9 @@ async def admin_contrat_update(request: Request, contrat_id: int):
             "date_debut=%s, date_fin=%s, montant_mensuel_ht=%s, engagement_mois=%s, "
             "pool_impressions=%s, mode_depassement=%s, plafond_mensuel=%s, "
             "conditions_particulieres=%s WHERE id=%s",
-            (int(sponsor_id), type_contrat, product_codes,
-             form.get("date_debut"), form.get("date_fin"),
-             float(form.get("montant_mensuel_ht", 0)),
+            (_safe_int(sponsor_id, 0), type_contrat, product_codes,
+             date_debut_str or None, date_fin_str or None,
+             montant_mensuel_ht,
              engagement_mois, pool_impressions, mode_dep, plafond_mensuel,
              form.get("conditions_particulieres", "") or None,
              contrat_id),

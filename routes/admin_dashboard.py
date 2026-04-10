@@ -158,7 +158,7 @@ async def admin_dashboard(request: Request, period: str = Query("today")):
     try:
         f_row = await db_cloudsql.async_fetchone(
             "SELECT COUNT(*) AS cnt, COALESCE(SUM(montant_ttc), 0) AS total "
-            "FROM fia_factures WHERE statut NOT IN ('payee') "
+            "FROM fia_factures WHERE statut = 'envoyee' "
             "AND date_emission < NOW() - INTERVAL 60 DAY"
         )
         if f_row:

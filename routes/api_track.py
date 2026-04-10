@@ -15,7 +15,6 @@ VALID_PRODUCT_CODES (V92 S02).
 import hashlib
 import json
 import logging
-import re
 from datetime import date
 
 from fastapi import APIRouter, Request
@@ -38,28 +37,8 @@ from utils import is_owner_ip as _is_owner_ip
 # Valid product codes — V92 S02: silently nullify invalid codes (DRY from admin_helpers)
 from routes.admin_helpers import VALID_PRODUCT_CODES as _VALID_PRODUCT_CODES
 
-
-def _get_client_ip(request: Request) -> str:
-    from utils import get_client_ip
-    return get_client_ip(request)
-
-
-def _detect_country(request: Request) -> str:
-    """Detect visitor country.
-
-    Priority 1: CF-IPCountry header (real GeoIP via Cloudflare, free).
-    Priority 2: Accept-Language fallback (browser locale, not reliable geo).
-    CF special codes: XX (unknown), T1 (Tor) → treated as unknown.
-    """
-    cf = request.headers.get("cf-ipcountry", "").strip().upper()
-    if cf and cf not in ("XX", "T1", ""):
-        return cf
-    accept_lang = request.headers.get("accept-language", "")
-    if accept_lang:
-        m = re.search(r"([a-z]{2})-([A-Z]{2})", accept_lang)
-        if m:
-            return m.group(2)
-    return None
+# S05 V93: single source of truth for country detection + client IP
+from utils import detect_country as _detect_country, get_client_ip as _get_client_ip
 
 
 @router.post("/track", status_code=204, response_class=Response)

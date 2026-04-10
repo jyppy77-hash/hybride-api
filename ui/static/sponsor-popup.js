@@ -12,6 +12,11 @@
 
 var LI = window.LotoIA_i18n || {};
 
+// NOTE ARCHITECTURE (V93 S17) :
+// SPONSORS_CONFIG est hardcode LOTO_FR_A/B — design intentionnel en mono-annonceur.
+// Contrairement a sponsor-popup75.js qui recoit le sponsor_id depuis le backend,
+// le popup standard utilise une config statique. En multi-sponsors, migrer vers
+// une injection dynamique depuis sponsors.json via un endpoint API.
 const SPONSORS_CONFIG = [
     {
         id: 'LOTO_FR_A',

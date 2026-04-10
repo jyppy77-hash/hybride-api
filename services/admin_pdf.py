@@ -485,13 +485,32 @@ def generate_contrat_pdf(contrat: dict, config: dict) -> io.BytesIO:
     cp = config.get("code_postal", "")
     ville = config.get("ville", "")
     siret = config.get("siret", "")
+    forme = config.get("forme_juridique", "") or "EI"
+    rcs = config.get("rcs", "") or ""
+    capital = config.get("capital_social", "") or ""
+    tva_intra = config.get("tva_intra", "") or ""
+
     emitter_parts = [f"<b>{rs}</b>"]
+    # S08 V93: forme juridique aligned with invoice PDF (A09)
+    if forme.upper() in ("EI", ""):
+        emitter_parts.append("Entrepreneur Individuel")
+    else:
+        legal_line = forme
+        if capital:
+            legal_line += f" au capital de {capital} EUR"
+        if rcs:
+            legal_line += f" — RCS {rcs}"
+        emitter_parts.append(legal_line)
     if addr:
         emitter_parts.append(addr.replace('\n', '<br/>'))
     if cp or ville:
         emitter_parts.append(f"{cp} {ville}".strip())
     if siret:
         emitter_parts.append(f"SIRET : {siret}")
+    if tva_intra:
+        emitter_parts.append(f"TVA intra. : {tva_intra}")
+    else:
+        emitter_parts.append("TVA non applicable, art. 293 B du CGI")
     email = config.get("email", "")
     if email:
         emitter_parts.append(email)
@@ -616,7 +635,9 @@ def generate_contrat_pdf(contrat: dict, config: dict) -> io.BytesIO:
         canvas_obj.saveState()
         canvas_obj.setFont('DejaVuSans', 7)
         canvas_obj.setFillColor(GRIS)
-        canvas_obj.drawCentredString(A4[0] / 2, 12*mm, footer_text)
+        # S09 V93: page numbering aligned with invoice PDF
+        page_num = canvas_obj.getPageNumber()
+        canvas_obj.drawCentredString(A4[0] / 2, 12*mm, f"{footer_text}  —  Page {page_num}")
         canvas_obj.restoreState()
 
     doc.build(elements, onFirstPage=add_footer, onLaterPages=add_footer)

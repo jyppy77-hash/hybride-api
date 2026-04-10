@@ -59,6 +59,24 @@ def get_client_ip(request: Request) -> str:
     return client_host or ""
 
 
+def detect_country(request: Request) -> str | None:
+    """Detect visitor country from CF-IPCountry header with Accept-Language fallback.
+
+    CF special codes: XX (unknown), T1 (Tor) → treated as unknown.
+    Returns None if unavailable.
+    """
+    import re
+    cf = request.headers.get("cf-ipcountry", "").strip().upper()
+    if cf and cf not in ("XX", "T1", ""):
+        return cf
+    accept_lang = request.headers.get("accept-language", "")
+    if accept_lang:
+        m = re.search(r"([a-z]{2})-([A-Z]{2})", accept_lang)
+        if m:
+            return m.group(2)
+    return None
+
+
 def get_client_ip_from_scope(scope: dict) -> str:
     """Extract real client IP from raw ASGI scope headers.
 

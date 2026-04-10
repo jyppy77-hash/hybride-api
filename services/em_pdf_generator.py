@@ -12,10 +12,19 @@ import io
 import json
 import tempfile
 import logging
+from functools import lru_cache
 
 from config.version import APP_VERSION
 
 logger = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=1)
+def _load_sponsors_config():
+    """S12 V93: cached sponsors.json read (avoids I/O on every PDF generation)."""
+    _cfg_path = os.path.join(os.path.dirname(__file__), "..", "config", "sponsors.json")
+    with open(_cfg_path, encoding="utf-8") as f:
+        return json.load(f)
 
 
 PDF_LABELS = {
@@ -519,9 +528,7 @@ def generate_em_meta_pdf(analysis: str = "", window: str = "75 tirages",
             sponsor_title = L["sponsor_title"]
             sponsor_email = "partenariats@lotoia.fr"
             try:
-                _cfg_path = os.path.join(os.path.dirname(__file__), "..", "config", "sponsors.json")
-                with open(_cfg_path, encoding="utf-8") as _sf:
-                    _scfg = json.load(_sf)
+                _scfg = _load_sponsors_config()
                 _em_key = f"em_{lang}"
                 _slot_a = _scfg.get("slots", {}).get(_em_key, {}).get("slot_a", {})
                 if not _slot_a:

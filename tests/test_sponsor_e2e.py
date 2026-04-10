@@ -170,11 +170,9 @@ class TestE2EPipelineImpressionFacture:
                 "periode_fin": "2026-03-31",
             }, follow_redirects=False)
 
-            # Should redirect to factures list on success
-            assert resp.status_code in (302, 500)
-            # If 302 = success, the INSERT was called
-            if resp.status_code == 302:
-                mock_db.async_query.assert_called()
+            # S16 V93: strict assertion — 500 would mask a real failure
+            assert resp.status_code == 302
+            mock_db.async_query.assert_called()
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -231,11 +229,12 @@ class TestE2EEventLogMirror:
             product_codes = [str(p) for p in params if isinstance(p, str) and "LOTO_FR_A" in str(p)]
             assert len(product_codes) >= 1
 
-    def test_all_six_sponsor_events_accepted_by_track(self):
-        """All 6 sponsor event types must be accepted by /api/track."""
+    def test_all_seven_sponsor_events_accepted_by_track(self):
+        """All 7 sponsor event types must be accepted by /api/track (S15 V93: +sponsor-pdf-mention)."""
         events = [
             "sponsor-popup-shown", "sponsor-click", "sponsor-video-played",
             "sponsor-inline-shown", "sponsor-result-shown", "sponsor-pdf-downloaded",
+            "sponsor-pdf-mention",
         ]
         client = _get_client()
         for event in events:
