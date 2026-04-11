@@ -12,14 +12,16 @@
 
 var LI = window.LotoIA_i18n || {};
 
-// NOTE ARCHITECTURE (V93 S17) :
-// SPONSORS_CONFIG est hardcode LOTO_FR_A/B — design intentionnel en mono-annonceur.
-// Contrairement a sponsor-popup75.js qui recoit le sponsor_id depuis le backend,
-// le popup standard utilise une config statique. En multi-sponsors, migrer vers
-// une injection dynamique depuis sponsors.json via un endpoint API.
+// V95: Sponsor IDs derived from module/lang pattern (aligned with popup75-em.js).
+// Loto is FR-only, so the IDs are always LOTO_FR_A/B. The names, descriptions,
+// and badges are injected via LotoIA_i18n (backend-driven, 6 languages).
+var _SPONSOR_MODULE = (LI.sponsor_module || 'LOTO').toUpperCase();
+var _SPONSOR_LANG = (LI.sponsor_lang || 'FR').toUpperCase();
+var _SPONSOR_PREFIX = _SPONSOR_MODULE + '_' + _SPONSOR_LANG;
+
 const SPONSORS_CONFIG = [
     {
-        id: 'LOTO_FR_A',
+        id: _SPONSOR_PREFIX + '_A',
         name: LI.sponsor1_name || 'Espace Premium',
         url: 'mailto:partenariats@lotoia.fr',
         icon: '\u2B50',
@@ -29,7 +31,7 @@ const SPONSORS_CONFIG = [
         badgeType: 'primary'
     },
     {
-        id: 'LOTO_FR_B',
+        id: _SPONSOR_PREFIX + '_B',
         name: LI.sponsor2_name || 'Votre marque ici',
         url: 'mailto:partenariats@lotoia.fr',
         icon: '\uD83D\uDCE3',

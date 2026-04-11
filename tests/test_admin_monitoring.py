@@ -240,3 +240,85 @@ class TestCircuitBreakerReset:
             resp = client.post("/admin/api/circuit-breaker/reset")
         assert resp.status_code == 200
         assert resp.json()["previous_state"] == "HALF_OPEN"
+
+
+# ── T10-T15: Realtime API (V95 F03) ──────────────────────────────────────────
+
+class TestRealtimeAPIAuth:
+    """T10: /admin/api/realtime requires auth."""
+
+    def test_realtime_api_requires_auth(self):
+        client = _get_client()
+        resp = client.get("/admin/api/realtime")
+        assert resp.status_code == 401
+
+
+class TestRealtimeAPI:
+    """T11-T15: /admin/api/realtime returns correct JSON."""
+
+    def test_realtime_returns_json_200(self):
+        """T11: Authed request returns 200 with expected keys."""
+        client = _authed_client()
+        mock_events = [
+            {"event_type": "page_view", "page": "/accueil", "module": "",
+             "lang": "fr", "device": "desktop", "country": "FR",
+             "created_at": __import__("datetime").datetime(2026, 4, 11, 10, 0, 0)},
+        ]
+        mock_kpi = {"total_count": 42, "hour_count": 5, "type_count": 3, "unique_visitors": 10}
+        mock_by_type = [{"event_type": "page_view", "cnt": 42}]
+        mock_event_types = [{"event_type": "page_view"}, {"event_type": "chatbot-message"}]
+        with patch("db_cloudsql.async_fetchall", new_callable=AsyncMock) as mock_all, \
+             patch("db_cloudsql.async_fetchone", new_callable=AsyncMock, return_value=mock_kpi):
+            mock_all.side_effect = [mock_events, mock_by_type, mock_event_types]
+            resp = client.get("/admin/api/realtime")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "events" in data
+        assert "kpi" in data
+        assert "by_type" in data
+        assert "event_types" in data
+        assert data["kpi"]["total"] == 42
+        assert len(data["events"]) == 1
+
+    def test_realtime_kpi_structure(self):
+        """T12: KPI contains expected fields."""
+        client = _authed_client()
+        mock_kpi = {"total_count": 0, "hour_count": 0, "type_count": 0, "unique_visitors": 0}
+        with patch("db_cloudsql.async_fetchall", new_callable=AsyncMock, return_value=[]), \
+             patch("db_cloudsql.async_fetchone", new_callable=AsyncMock, return_value=mock_kpi):
+            resp = client.get("/admin/api/realtime")
+        data = resp.json()
+        kpi = data["kpi"]
+        assert "total" in kpi
+        assert "hour" in kpi
+        assert "types" in kpi
+        assert "unique_visitors" in kpi
+
+    def test_realtime_period_filter(self):
+        """T13: period=month is accepted."""
+        client = _authed_client()
+        mock_kpi = {"total_count": 0, "hour_count": 0, "type_count": 0, "unique_visitors": 0}
+        with patch("db_cloudsql.async_fetchall", new_callable=AsyncMock, return_value=[]), \
+             patch("db_cloudsql.async_fetchone", new_callable=AsyncMock, return_value=mock_kpi):
+            resp = client.get("/admin/api/realtime?period=month")
+        assert resp.status_code == 200
+
+    def test_realtime_invalid_period_defaults(self):
+        """T14: Invalid period defaults to 24h (no error)."""
+        client = _authed_client()
+        mock_kpi = {"total_count": 0, "hour_count": 0, "type_count": 0, "unique_visitors": 0}
+        with patch("db_cloudsql.async_fetchall", new_callable=AsyncMock, return_value=[]), \
+             patch("db_cloudsql.async_fetchone", new_callable=AsyncMock, return_value=mock_kpi):
+            resp = client.get("/admin/api/realtime?period=invalid")
+        assert resp.status_code == 200
+
+    def test_realtime_db_error_returns_empty(self):
+        """T15: DB error returns graceful empty response."""
+        client = _authed_client()
+        with patch("db_cloudsql.async_fetchall", new_callable=AsyncMock, side_effect=Exception("DB down")), \
+             patch("db_cloudsql.async_fetchone", new_callable=AsyncMock, side_effect=Exception("DB down")):
+            resp = client.get("/admin/api/realtime")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["events"] == []
+        assert data["kpi"]["total"] == 0

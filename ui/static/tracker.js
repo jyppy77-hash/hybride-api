@@ -87,5 +87,13 @@
                 navigator.sendBeacon(ENDPOINT, new Blob([JSON.stringify(payload)], {type: 'application/json'}));
             } catch (e2) {}
         }
+
+        // V95: Forward custom events to Umami (pageviews are auto-captured by
+        // the Umami script, but custom events require an explicit call).
+        try {
+            if (typeof umami !== 'undefined' && typeof umami.track === 'function') {
+                umami.track(event, { page: payload.page, product_code: payload.product_code });
+            }
+        } catch (e3) {}
     };
 })();
