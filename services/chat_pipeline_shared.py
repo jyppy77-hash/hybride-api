@@ -200,6 +200,92 @@ _TIRAGE_NOT_FOUND_EM = {
     ),
 }
 
+# V96: Guard — Phase T found data for ONE date, warn Gemini not to invent others
+_TIRAGE_SINGLE_DATE_GUARD = {
+    "fr": (
+        "\n[AVERTISSEMENT — DONNÉE UNIQUE]\n"
+        "Les données ci-dessus concernent UNIQUEMENT le tirage du {date}. "
+        "Tu N'AS PAS de données pour d'autres tirages mentionnés dans la question. "
+        "Pour tout autre tirage non fourni ci-dessus, réponds que tu n'as pas cette donnée "
+        "et propose de chercher une date à la fois. Ne JAMAIS inventer de numéros."
+    ),
+    "en": (
+        "\n[WARNING — SINGLE DATA POINT]\n"
+        "The data above covers ONLY the draw on {date}. "
+        "You do NOT have data for any other draws mentioned in the question. "
+        "For any other draw not provided above, respond that you don't have that data "
+        "and offer to look up one date at a time. NEVER invent numbers."
+    ),
+    "es": (
+        "\n[ADVERTENCIA — DATO ÚNICO]\n"
+        "Los datos anteriores cubren ÚNICAMENTE el sorteo del {date}. "
+        "NO tienes datos de otros sorteos mencionados en la pregunta. "
+        "Para cualquier otro sorteo no proporcionado, responde que no tienes ese dato. "
+        "NUNCA inventes números."
+    ),
+    "pt": (
+        "\n[AVISO — DADO ÚNICO]\n"
+        "Os dados acima cobrem APENAS o sorteio de {date}. "
+        "NÃO tens dados de outros sorteios mencionados na pergunta. "
+        "Para qualquer outro sorteio não fornecido, responde que não tens esse dado. "
+        "NUNCA inventes números."
+    ),
+    "de": (
+        "\n[WARNUNG — EINZELNE DATEN]\n"
+        "Die obigen Daten betreffen NUR die Ziehung vom {date}. "
+        "Du hast KEINE Daten für andere in der Frage erwähnte Ziehungen. "
+        "Für jede andere nicht bereitgestellte Ziehung antworte, dass du diese Daten nicht hast. "
+        "NIEMALS Zahlen erfinden."
+    ),
+    "nl": (
+        "\n[WAARSCHUWING — ENKEL GEGEVEN]\n"
+        "De bovenstaande gegevens betreffen ALLEEN de trekking van {date}. "
+        "Je hebt GEEN gegevens voor andere trekkingen in de vraag. "
+        "Voor elke andere niet verstrekte trekking, antwoord dat je die gegevens niet hebt. "
+        "NOOIT nummers verzinnen."
+    ),
+}
+
+# V96: Guard — Phase T detected but exception occurred, no data available
+_TIRAGE_ERROR_GUARD = {
+    "fr": (
+        "[RÉSULTAT TIRAGE — ERREUR]\n"
+        "Une erreur s'est produite lors de la recherche du tirage demandé.\n"
+        "IMPORTANT : Ne PAS inventer de numéros. Indique simplement qu'une "
+        "erreur technique empêche de retrouver ce tirage pour le moment."
+    ),
+    "en": (
+        "[DRAW RESULT — ERROR]\n"
+        "An error occurred while looking up the requested draw.\n"
+        "IMPORTANT: Do NOT invent numbers. Simply state that a "
+        "technical error prevents retrieving this draw at the moment."
+    ),
+    "es": (
+        "[RESULTADO SORTEO — ERROR]\n"
+        "Se produjo un error al buscar el sorteo solicitado.\n"
+        "IMPORTANTE: NO inventes números. Indica simplemente que un "
+        "error técnico impide recuperar este sorteo en este momento."
+    ),
+    "pt": (
+        "[RESULTADO SORTEIO — ERRO]\n"
+        "Ocorreu um erro ao procurar o sorteio solicitado.\n"
+        "IMPORTANTE: NÃO inventes números. Indica simplesmente que um "
+        "erro técnico impede a recuperação deste sorteio neste momento."
+    ),
+    "de": (
+        "[ZIEHUNGSERGEBNIS — FEHLER]\n"
+        "Bei der Suche nach der angeforderten Ziehung ist ein Fehler aufgetreten.\n"
+        "WICHTIG: Erfinde KEINE Zahlen. Gib einfach an, dass ein "
+        "technischer Fehler das Abrufen dieser Ziehung derzeit verhindert."
+    ),
+    "nl": (
+        "[TREKKINGSRESULTAAT — FOUT]\n"
+        "Er is een fout opgetreden bij het opzoeken van de gevraagde trekking.\n"
+        "BELANGRIJK: Verzin GEEN nummers. Geef gewoon aan dat een "
+        "technische fout het ophalen van deze trekking momenteel verhindert."
+    ),
+}
+
 
 # ═══════════════════════════════════════════════════════
 # F05: Centralized timeout constants (seconds)
@@ -703,6 +789,10 @@ async def _prepare_chat_context_base(
                 )
                 if tirage_data:
                     enrichment_context = cfg["format_tirage_context"](tirage_data)
+                    # V96: Append single-date guard if message may contain other dates
+                    _tirage_date_fr = _format_date_fr(str(tirage_data['date']))
+                    _guard_tpl = _TIRAGE_SINGLE_DATE_GUARD.get(lang, _TIRAGE_SINGLE_DATE_GUARD["fr"])
+                    enrichment_context += _guard_tpl.format(date=_tirage_date_fr)
                     logger.info(f"{_lp} Tirage injecte: {tirage_data['date']}")
                 elif tirage_target != "latest":
                     date_fr = _format_date_fr(str(tirage_target))
@@ -711,6 +801,9 @@ async def _prepare_chat_context_base(
                     logger.info(f"{_lp} Tirage introuvable pour: {tirage_target}")
             except Exception as e:
                 logger.warning(f"{_lp} Erreur tirage: {e}")
+                # V96: Inject error guard to prevent Gemini from inventing numbers
+                if not enrichment_context:
+                    enrichment_context = _TIRAGE_ERROR_GUARD.get(lang, _TIRAGE_ERROR_GUARD["fr"])
 
     force_sql = not _continuation_mode and not enrichment_context and cfg["has_temporal_filter"](message)
     if force_sql:
@@ -951,5 +1044,6 @@ async def _prepare_chat_context_base(
             "phase": _phase, "t0": _t0, "lang": lang,
             "sql_query": _sql_query, "sql_status": _sql_status,
             "grid_count": _grid_count, "has_exclusions": _has_exclusions,
+            "enrichment_context": enrichment_context,
         },
     }

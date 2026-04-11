@@ -274,3 +274,43 @@ class TestParametricPipelineConfig:
         assert cfg["eval_game"] == "em"
         assert cfg["secondary_field"] == "etoiles"
         assert cfg.get("detect_country") is not None  # EM has Phase GEO
+
+
+# ═══════════════════════════════════════════════════════
+# V96: Phase T guards — anti-hallucination
+# ═══════════════════════════════════════════════════════
+
+class TestPhaseTGuards:
+    """V96: Single-date guard and error guard constants."""
+
+    def test_single_date_guard_all_6_langs(self):
+        from services.chat_pipeline_shared import _TIRAGE_SINGLE_DATE_GUARD
+        for lang in ("fr", "en", "es", "pt", "de", "nl"):
+            tpl = _TIRAGE_SINGLE_DATE_GUARD[lang]
+            assert "{date}" in tpl, f"Missing {{date}} placeholder in {lang}"
+            assert "UNIQUEMENT" in tpl or "ONLY" in tpl or "ÚNICAMENTE" in tpl or \
+                   "APENAS" in tpl or "NUR" in tpl or "ALLEEN" in tpl, \
+                   f"Missing exclusivity keyword in {lang}"
+
+    def test_error_guard_all_6_langs(self):
+        from services.chat_pipeline_shared import _TIRAGE_ERROR_GUARD
+        for lang in ("fr", "en", "es", "pt", "de", "nl"):
+            msg = _TIRAGE_ERROR_GUARD[lang]
+            assert len(msg) > 50, f"Error guard too short for {lang}"
+            # Must contain anti-invention instruction
+            assert "invent" in msg.lower() or "erfind" in msg.lower() or "verzin" in msg.lower(), \
+                   f"Missing anti-invention instruction in {lang}"
+
+    def test_single_date_guard_format(self):
+        """Guard template formats correctly with a date."""
+        from services.chat_pipeline_shared import _TIRAGE_SINGLE_DATE_GUARD
+        result = _TIRAGE_SINGLE_DATE_GUARD["fr"].format(date="samedi 4 avril 2026")
+        assert "samedi 4 avril 2026" in result
+        assert "UNIQUEMENT" in result
+
+    def test_error_guard_no_placeholder(self):
+        """Error guard has no format placeholder (static message)."""
+        from services.chat_pipeline_shared import _TIRAGE_ERROR_GUARD
+        for lang in ("fr", "en", "es", "pt", "de", "nl"):
+            assert "{" not in _TIRAGE_ERROR_GUARD[lang], \
+                   f"Unexpected placeholder in error guard {lang}"

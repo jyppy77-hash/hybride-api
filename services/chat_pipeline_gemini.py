@@ -9,6 +9,7 @@ Direction: chat_pipeline_shared.py imports FROM this module (not the reverse).
 """
 
 import os
+import re
 import json
 import asyncio
 import logging
@@ -30,6 +31,42 @@ logger = logging.getLogger(__name__)
 _MAX_HISTORY_MESSAGES = 20
 
 # Timeout constants are defined in chat_pipeline_shared.py and passed as parameters.
+
+# V96: Anti-hallucination — extract numbers from SQL result and verify Gemini response
+_SQL_TAG_RE = re.compile(
+    r'\[RÉSULTAT SQL[^\]]*\](.*?)(?:\[/RÉSULTAT SQL\]|$)',
+    re.DOTALL,
+)
+
+
+def _check_sql_number_hallucination(
+    enrichment_context: str, gemini_response: str, phase: str, log_prefix: str,
+) -> None:
+    """Log a warning when draw numbers from SQL result are missing in Gemini response.
+
+    Only checks for Phase T (specific draw results) and Phase SQL,
+    where SQL typically returns draw numbers that must appear verbatim.
+    """
+    if phase not in ("T", "SQL"):
+        return
+    m = _SQL_TAG_RE.search(enrichment_context or "")
+    if not m:
+        return
+    sql_body = m.group(1)
+    # Only check if this looks like a draw result (contains "numero" or numbered columns)
+    if "aucun résultat" in sql_body.lower():
+        return
+    sql_numbers = set(re.findall(r'\b(\d{1,2})\b', sql_body))
+    if not sql_numbers:
+        return
+    response_numbers = set(re.findall(r'\b(\d{1,2})\b', gemini_response))
+    missing = sql_numbers - response_numbers
+    if missing:
+        logger.warning(
+            "HALLUCINATION_RISK: %s SQL numbers %s missing from Gemini response. "
+            "Phase=%s | sql_excerpt=%.200s",
+            log_prefix, sorted(missing, key=int), phase, sql_body.strip(),
+        )
 # This module does NOT import from shared (avoids circular dependency).
 
 
@@ -240,7 +277,14 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
         yield sse_event({
             "chunk": "", "source": "gemini", "mode": mode, "is_done": True,
         })
-        log_from_meta(ctx.get("_chat_meta"), module, lang, message, "".join(_stream_chunks))
+        _full_response = "".join(_stream_chunks)
+        log_from_meta(ctx.get("_chat_meta"), module, lang, message, _full_response)
+        # V96: Anti-hallucination check — warn if SQL numbers missing from response
+        _meta = ctx.get("_chat_meta") or {}
+        _check_sql_number_hallucination(
+            _meta.get("enrichment_context", ""), _full_response,
+            _meta.get("phase", ""), log_prefix,
+        )
         logger.info(f"{log_prefix} Stream OK (page={page}, mode={mode})")
 
     except CircuitOpenError:

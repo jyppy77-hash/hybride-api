@@ -301,3 +301,65 @@ def test_nl_has_own_prompts():
     en = load_prompt_em("prompt_hybride_em", "en")
     assert nl != en
     assert "VERPLICHTE REGEL" in nl or "HYBRIDE" in nl
+
+
+# ═══════════════════════════════════════════════
+# V96: Anti-hallucination block in all chatbot prompts
+# ═══════════════════════════════════════════════
+
+_ANTI_HALLUCINATION_KEYWORDS = {
+    "fr": "ANTI-HALLUCINATION NUMÉRIQUE",
+    "en": "NUMERICAL ANTI-HALLUCINATION",
+    "es": "ANTI-ALUCINACIÓN NUMÉRICA",
+    "pt": "ANTI-ALUCINAÇÃO NUMÉRICA",
+    "de": "NUMERISCHE ANTI-HALLUZINATION",
+    "nl": "NUMERIEKE ANTI-HALLUCINATIE",
+}
+
+
+def test_v96_anti_hallucination_loto_fr():
+    """V96: Loto FR prompt has anti-hallucination block."""
+    from services.prompt_loader import load_prompt
+    text = load_prompt("CHATBOT")
+    assert "ANTI-HALLUCINATION" in text
+    assert "ERREUR GRAVE" in text
+
+
+@pytest.mark.parametrize("lang", ["fr", "en", "es", "pt", "de", "nl"])
+def test_v96_anti_hallucination_em_all_langs(lang):
+    """V96: EM prompt in each language has anti-hallucination block."""
+    from services.prompt_loader import load_prompt_em
+    text = load_prompt_em("prompt_hybride_em", lang)
+    keyword = _ANTI_HALLUCINATION_KEYWORDS[lang]
+    assert keyword in text, f"Missing '{keyword}' in EM {lang} prompt"
+
+
+# ═══════════════════════════════════════════════
+# V96: Anti-invention draw data block in all chatbot prompts
+# ═══════════════════════════════════════════════
+
+_ANTI_INVENTION_KEYWORDS = {
+    "fr": "DONNÉES TIRAGES",
+    "en": "DRAW DATA",
+    "es": "DATOS DE SORTEOS",
+    "pt": "DADOS DE SORTEIOS",
+    "de": "ZIEHUNGSDATEN",
+    "nl": "TREKKINGSGEGEVENS",
+}
+
+
+def test_v96_anti_invention_loto_fr():
+    """V96: Loto FR prompt has anti-invention draw data block."""
+    from services.prompt_loader import load_prompt
+    text = load_prompt("CHATBOT")
+    assert "DONNÉES TIRAGES" in text
+    assert "JAMAIS inventer" in text or "JAMAIS\ninventer" in text
+
+
+@pytest.mark.parametrize("lang", ["fr", "en", "es", "pt", "de", "nl"])
+def test_v96_anti_invention_em_all_langs(lang):
+    """V96: EM prompt in each language has anti-invention draw data block."""
+    from services.prompt_loader import load_prompt_em
+    text = load_prompt_em("prompt_hybride_em", lang)
+    keyword = _ANTI_INVENTION_KEYWORDS[lang]
+    assert keyword in text, f"Missing '{keyword}' in EM {lang} prompt"

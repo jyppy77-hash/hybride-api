@@ -224,7 +224,7 @@ def _format_sql_result(rows: list) -> str:
     if not rows:
         return "[RÉSULTAT SQL]\nAucun résultat trouvé pour cette requête."
 
-    lines = ["[RÉSULTAT SQL]"]
+    lines = ["[RÉSULTAT SQL — CHIFFRES EXACTS, NE PAS MODIFIER]"]
 
     for row in rows[:20]:
         parts = []
@@ -238,5 +238,7 @@ def _format_sql_result(rows: list) -> str:
 
     if len(rows) > 20:
         lines.append(f"... ({len(rows)} résultats au total, 20 premiers affichés)")
+
+    lines.append("[/RÉSULTAT SQL]")
 
     return "\n".join(lines)

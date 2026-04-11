@@ -123,7 +123,32 @@ _GENERATION_PATTERN = re.compile(
     # V65 — NL bare combinatie at start
     r'^\s*(?:een|\d+)\s+combinaties?\b|'
     # V65 — NL welke nummers spelen
-    r'\bwelke\s+nummers?\s+.{0,15}spelen',
+    r'\bwelke\s+nummers?\s+.{0,15}spelen|'
+    # ────────────────────────────────────────────────────────────────────
+    # V96 — "verb + (pronoun)? + digit + number keyword" (6 langs)
+    # Catches: "sélectionne 5 numéros", "select 5 numbers", "pick me 5
+    # numbers", "donne nous 5 numéros", "elige 5 números", etc.
+    # ────────────────────────────────────────────────────────────────────
+    r'\b(?:s[eé]lectionne|choisis|donne|propose|tire|fais|'
+    r'select|pick|choose|give|make|'
+    r'dame|elige|selecciona|haz|'
+    r'd[aá]|escolhe|seleciona|faz|'
+    r'gib|w[aä]hl|erstell|'
+    r'geef|kies|maak)\w*'
+    r'\s+(?:moi|me|nous|us|mir|uns|me)?\s*'
+    r'\d+\s+(?:\w+\s+){0,3}'
+    r'(?:num[eé]ros?|numbers?|n[uú]meros?|zahlen|nummers?)\b|'
+    # ────────────────────────────────────────────────────────────────────
+    # V96 — "the N best numbers" / "les N meilleurs numéros" (6 langs)
+    # Catches: "les 5 meilleurs numéros", "the best 5 numbers",
+    # "los 5 mejores números", "die 5 besten Zahlen", etc.
+    # ────────────────────────────────────────────────────────────────────
+    r'\b(?:les?|the|los?|os?|die|de)\s+'
+    r'(?:'
+    r'\d+\s+(?:\w+\s+){0,2}(?:meilleurs?|best|mejores?|melhores?|besten?|beste)\s+|'
+    r'(?:meilleurs?|best|mejores?|melhores?|besten?|beste)\s+(?:\w+\s+){0,2}\d+\s+'
+    r')'
+    r'(?:num[eé]ros?|numbers?|n[uú]meros?|zahlen|nummers?)\b',
     re.IGNORECASE
 )
 

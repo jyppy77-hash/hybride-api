@@ -102,6 +102,145 @@ class TestDetectGenerationPositive:
 
 
 # ═══════════════════════════════════════════════════════════════════════
+# V96 — "verb + digit + numbers" (6 langs) — Phase G
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestDetectGenerationVerbDigitNumbers:
+    """V96: 'donne moi 5 numéros', 'select 5 numbers', etc."""
+
+    # ── FR ──
+    def test_fr_donne_moi_5_numeros(self):
+        assert _detect_generation("donne moi 5 numéros du loto") is True
+
+    def test_fr_donne_moi_5_numeros_tendances(self):
+        assert _detect_generation("Ok, donne moi 5 numéros du loto selon les tendances et les statistiques") is True
+
+    def test_fr_donne_hyphen_moi_5_numeros(self):
+        assert _detect_generation("donne-moi 5 numéros selon les tendances") is True
+
+    def test_fr_propose_moi_3_numeros(self):
+        assert _detect_generation("propose moi 3 numéros") is True
+
+    def test_fr_choisis_5_numeros(self):
+        assert _detect_generation("choisis 5 numéros pour ce soir") is True
+
+    def test_fr_selectionne_5_numeros(self):
+        assert _detect_generation("sélectionne 5 numéros") is True
+
+    def test_fr_donne_nous_5_numeros(self):
+        assert _detect_generation("donne nous 5 numéros") is True
+
+    def test_fr_donne_5_numeros_sans_accent(self):
+        assert _detect_generation("donne 5 numeros du loto") is True
+
+    # ── EN ──
+    def test_en_give_me_5_numbers(self):
+        assert _detect_generation("give me 5 numbers based on trends") is True
+
+    def test_en_pick_5_numbers(self):
+        assert _detect_generation("pick 5 numbers for tonight") is True
+
+    def test_en_pick_me_5_numbers(self):
+        assert _detect_generation("pick me 5 numbers") is True
+
+    def test_en_select_5_numbers(self):
+        assert _detect_generation("select 5 numbers") is True
+
+    def test_en_choose_5_numbers(self):
+        assert _detect_generation("choose 5 numbers for me") is True
+
+    # ── ES ──
+    def test_es_dame_5_numeros(self):
+        assert _detect_generation("dame 5 números según las tendencias") is True
+
+    def test_es_elige_5_numeros(self):
+        assert _detect_generation("elige 5 números") is True
+
+    def test_es_selecciona_5_numeros(self):
+        assert _detect_generation("selecciona 5 números") is True
+
+    # ── PT ──
+    def test_pt_da_me_5_numeros(self):
+        assert _detect_generation("dá-me 5 números") is True
+
+    def test_pt_escolhe_5_numeros(self):
+        assert _detect_generation("escolhe 5 números") is True
+
+    def test_pt_seleciona_5_numeros(self):
+        assert _detect_generation("seleciona 5 números") is True
+
+    # ── DE ──
+    def test_de_gib_mir_5_zahlen(self):
+        assert _detect_generation("gib mir 5 Zahlen") is True
+
+    def test_de_wahle_5_zahlen(self):
+        assert _detect_generation("wähle 5 Zahlen") is True
+
+    # ── NL ──
+    def test_nl_geef_me_5_nummers(self):
+        assert _detect_generation("geef me 5 nummers") is True
+
+    def test_nl_kies_5_nummers(self):
+        assert _detect_generation("kies 5 nummers") is True
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V96 — "the N best numbers" superlative pattern (6 langs)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestDetectGenerationSuperlative:
+    """V96: 'les 5 meilleurs numéros', 'the best 5 numbers', etc."""
+
+    def test_fr_les_5_meilleurs(self):
+        assert _detect_generation("les 5 meilleurs numéros") is True
+
+    def test_fr_les_meilleurs_5(self):
+        assert _detect_generation("les meilleurs 5 numéros") is True
+
+    def test_en_the_5_best(self):
+        assert _detect_generation("the 5 best numbers") is True
+
+    def test_en_the_best_5(self):
+        assert _detect_generation("the best 5 numbers") is True
+
+    def test_es_los_5_mejores(self):
+        assert _detect_generation("los 5 mejores números") is True
+
+    def test_pt_os_5_melhores(self):
+        assert _detect_generation("os 5 melhores números") is True
+
+    def test_de_die_5_besten(self):
+        assert _detect_generation("die 5 besten Zahlen") is True
+
+    def test_nl_de_5_beste(self):
+        assert _detect_generation("de 5 beste nummers") is True
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V96 — Negative: Phase 1 / Phase T / Phase 3 must NOT trigger Phase G
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestDetectGenerationNegativeV96:
+    """V96: Messages that must NOT trigger Phase G."""
+
+    def test_fr_numero_le_plus_sorti(self):
+        """Phase 1 — single number stats."""
+        assert _detect_generation("donne moi le numéro le plus sorti") is False
+
+    def test_en_most_frequent_number(self):
+        """Phase 1 — single number stats."""
+        assert _detect_generation("give me the most frequent number") is False
+
+    def test_fr_frequence_42(self):
+        """Phase 1 — specific number query."""
+        assert _detect_generation("quel est le numéro le plus fréquent") is False
+
+    def test_fr_combien_fois_7(self):
+        """Phase 1 — frequency count."""
+        assert _detect_generation("combien de fois le 7 est sorti") is False
+
+
+# ═══════════════════════════════════════════════════════════════════════
 # _detect_generation — FALSE (PAS des demandes de generation)
 # ═══════════════════════════════════════════════════════════════════════
 

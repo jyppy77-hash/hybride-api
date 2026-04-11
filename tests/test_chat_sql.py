@@ -202,6 +202,24 @@ class TestFormatSqlResult:
         lines = [l for l in result.split("\n") if l.startswith("num:")]
         assert len(lines) == 20
 
+    def test_v96_tag_reinforced(self):
+        """V96: Tag includes anti-hallucination instruction."""
+        rows = [{"boule_1": 17, "boule_2": 28}]
+        result = _format_sql_result(rows)
+        assert "CHIFFRES EXACTS" in result
+        assert "NE PAS MODIFIER" in result
+
+    def test_v96_closing_tag(self):
+        """V96: Result has closing tag."""
+        rows = [{"boule_1": 17}]
+        result = _format_sql_result(rows)
+        assert "[/RÉSULTAT SQL]" in result
+
+    def test_v96_empty_no_closing_tag(self):
+        """V96: Empty result has no closing tag (no numbers to protect)."""
+        result = _format_sql_result([])
+        assert "[/RÉSULTAT SQL]" not in result
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # _get_tirage_data — mock DB
@@ -813,3 +831,61 @@ class TestTableReSubquery:
             "(SELECT id FROM tirages WHERE boule_1 = 7)"
         )
         assert _validate_sql(sql, allowed_tables=ALLOWED_TABLES_LOTO) is True
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V96 — Anti-hallucination check
+# ═══════════════════════════════════════════════════════════════════════
+
+from services.chat_pipeline_gemini import _check_sql_number_hallucination
+
+
+class TestSQLHallucinationCheck:
+    """V96: _check_sql_number_hallucination warns when numbers diverge."""
+
+    def test_no_warning_when_numbers_match(self, caplog):
+        """All SQL numbers present in Gemini response — no warning."""
+        sql = "[RÉSULTAT SQL — CHIFFRES EXACTS]\nboule_1: 17 | boule_2: 28 | boule_3: 30\n[/RÉSULTAT SQL]"
+        response = "Les numéros sont 17, 28 et 30."
+        _check_sql_number_hallucination(sql, response, "T", "[LOTO]")
+        assert "HALLUCINATION_RISK" not in caplog.text
+
+    def test_warning_when_numbers_missing(self, caplog):
+        """SQL numbers missing from Gemini response — warning logged."""
+        import logging
+        with caplog.at_level(logging.WARNING):
+            sql = "[RÉSULTAT SQL — CHIFFRES EXACTS]\nboule_1: 17 | boule_2: 28 | boule_3: 30\n[/RÉSULTAT SQL]"
+            response = "Les numéros sont 1, 8, 28."
+            _check_sql_number_hallucination(sql, response, "T", "[LOTO]")
+        assert "HALLUCINATION_RISK" in caplog.text
+        assert "17" in caplog.text
+        assert "30" in caplog.text
+
+    def test_skips_non_sql_phases(self, caplog):
+        """Phase G or Phase 1 — no check performed."""
+        sql = "[RÉSULTAT SQL]\nboule_1: 17\n[/RÉSULTAT SQL]"
+        _check_sql_number_hallucination(sql, "foo", "G", "[LOTO]")
+        _check_sql_number_hallucination(sql, "foo", "1", "[LOTO]")
+        assert "HALLUCINATION_RISK" not in caplog.text
+
+    def test_skips_empty_result(self, caplog):
+        """'Aucun résultat' — no numbers to check."""
+        sql = "[RÉSULTAT SQL]\nAucun résultat trouvé pour cette requête."
+        _check_sql_number_hallucination(sql, "nothing found", "SQL", "[LOTO]")
+        assert "HALLUCINATION_RISK" not in caplog.text
+
+    def test_skips_when_no_enrichment(self, caplog):
+        """No enrichment context — no check."""
+        _check_sql_number_hallucination("", "some response", "T", "[LOTO]")
+        _check_sql_number_hallucination(None, "some response", "T", "[LOTO]")
+        assert "HALLUCINATION_RISK" not in caplog.text
+
+    def test_phase_sql_also_checked(self, caplog):
+        """Phase SQL is also checked (not just Phase T)."""
+        import logging
+        with caplog.at_level(logging.WARNING):
+            sql = "[RÉSULTAT SQL — CHIFFRES EXACTS]\nfreq: 42\n[/RÉSULTAT SQL]"
+            response = "La fréquence est de 99."
+            _check_sql_number_hallucination(sql, response, "SQL", "[LOTO]")
+        assert "HALLUCINATION_RISK" in caplog.text
+        assert "42" in caplog.text
