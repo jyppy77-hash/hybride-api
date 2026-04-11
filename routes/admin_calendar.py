@@ -84,9 +84,14 @@ async def admin_api_calendar_data(
     #   - chat_log.ip_hash : SHA-256(ip)
     #
     # LIMITATION : un même visiteur peut être compté 2-3× car les
-    # identifiants diffèrent structurellement entre tables (IP brute
-    # vs hash). Le UNION déduplique les doublons intra-table mais
-    # pas les doublons cross-table.
+    # identifiants diffèrent structurellement entre tables (hash IP
+    # vs hash session). Le UNION déduplique les doublons intra-table
+    # mais pas les doublons cross-table.
+    #
+    # COLLATION : sponsor_impressions utilise utf8mb4_unicode_ci
+    # (migration 002) tandis que event_log/chat_log utilisent
+    # utf8mb4_general_ci. Sans COLLATE explicite, le UNION échoue
+    # avec ERROR 1271 "Illegal mix of collations".
     #
     # IMPACT : sur-estimation estimée ~10-20% sur les jours à fort
     # trafic. Acceptable pour un dashboard admin interne. Pour un
@@ -98,13 +103,13 @@ async def admin_api_calendar_data(
             cur = await conn.cursor()
             await cur.execute(
                 f"SELECT day, COUNT(DISTINCT visitor_id) AS visitors FROM ("
-                f"  SELECT DAY({_TZ}) AS day, session_hash AS visitor_id"
+                f"  SELECT DAY({_TZ}) AS day, session_hash COLLATE utf8mb4_general_ci AS visitor_id"
                 f"  FROM event_log WHERE {where_tz}"
                 f"  UNION"
-                f"  SELECT DAY({_TZ}) AS day, session_hash AS visitor_id"
+                f"  SELECT DAY({_TZ}) AS day, session_hash COLLATE utf8mb4_general_ci AS visitor_id"
                 f"  FROM sponsor_impressions WHERE {where_tz}"
                 f"  UNION"
-                f"  SELECT DAY({_TZ}) AS day, ip_hash AS visitor_id"
+                f"  SELECT DAY({_TZ}) AS day, ip_hash COLLATE utf8mb4_general_ci AS visitor_id"
                 f"  FROM chat_log WHERE {where_tz}"
                 f") AS all_ips GROUP BY day",
                 params * 3,
