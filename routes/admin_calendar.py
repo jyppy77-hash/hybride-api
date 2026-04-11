@@ -79,7 +79,7 @@ async def admin_api_calendar_data(
     # MÉTHODOLOGIE VISITEURS (V92 S09)
     # ──────────────────────────────────────────────────────────────────
     # Les visiteurs uniques sont comptés via UNION (dedup) de 3 tables :
-    #   - event_log.ip_address : IP brute du visiteur
+    #   - event_log.session_hash : SHA-256(ip|ua|date) du visiteur
     #   - sponsor_impressions.session_hash : SHA-256(ip|ua|date)
     #   - chat_log.ip_hash : SHA-256(ip)
     #
@@ -98,7 +98,7 @@ async def admin_api_calendar_data(
             cur = await conn.cursor()
             await cur.execute(
                 f"SELECT day, COUNT(DISTINCT visitor_id) AS visitors FROM ("
-                f"  SELECT DAY({_TZ}) AS day, ip_address AS visitor_id"
+                f"  SELECT DAY({_TZ}) AS day, session_hash AS visitor_id"
                 f"  FROM event_log WHERE {where_tz}"
                 f"  UNION"
                 f"  SELECT DAY({_TZ}) AS day, session_hash AS visitor_id"
