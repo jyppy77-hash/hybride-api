@@ -30,8 +30,11 @@ import time
 import importlib
 from collections.abc import AsyncGenerator
 
+from datetime import date as _date_cls
+
 from services.base_chat_sql import _SQL_LIMIT_MESSAGES, _MAX_SQL_INPUT_LENGTH
 from services.chat_utils import _format_date_fr
+from services.base_chat_utils import _format_last_draw_context
 from services.stats_analysis import should_inject_pedagogical_context, PEDAGOGICAL_CONTEXT
 from services.decay_state import get_decay_state
 
@@ -1040,6 +1043,32 @@ async def _prepare_chat_context_base(
                 if stats:
                     enrichment_context = cfg["format_stats_context"](stats)
                     logger.info(f"{_lp} Stats BDD injectees: numero={numero}, type={type_num}")
+                    # V99 F01: enrich with last draw numbers to prevent hallucination
+                    _derniere = stats.get("derniere_sortie")
+                    if _derniere:
+                        _tirage_enriched = False
+                        try:
+                            _target = (
+                                _date_cls.fromisoformat(_derniere)
+                                if isinstance(_derniere, str) else _derniere
+                            )
+                            _tirage = await asyncio.wait_for(
+                                cfg["get_tirage_data"](_target),
+                                timeout=_TIMEOUTS["stats_analysis"],
+                            )
+                            if _tirage:
+                                enrichment_context += "\n\n" + _format_last_draw_context(_tirage)
+                                _tirage_enriched = True
+                                logger.info(f"{_lp} Phase 1 enriched with last draw: {_target}")
+                        except Exception as e:
+                            logger.warning(f"{_lp} Phase 1 last draw enrichment error: {e}")
+                        # V99 F04: guard when tirage numbers unavailable
+                        if not _tirage_enriched:
+                            _date_fr = _format_date_fr(str(_derniere))
+                            enrichment_context += (
+                                f"\n\n[AVERTISSEMENT : les numéros du tirage du {_date_fr} "
+                                f"ne sont pas disponibles. NE PAS inventer de numéros.]"
+                            )
             except Exception as e:
                 logger.warning(f"{_lp} Erreur stats BDD (numero={numero}): {e}")
 

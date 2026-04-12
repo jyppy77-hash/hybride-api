@@ -370,7 +370,7 @@ def _format_stats_context_base(stats: dict, type_map: dict, default_classement: 
     derniere_sortie_fr = _format_date_fr(stats['derniere_sortie'])
 
     return (
-        f"[DONNÉES TEMPS RÉEL - Numéro {type_label} {stats['numero']}]\n"
+        f"[DONNÉES TEMPS RÉEL — CHIFFRES EXACTS - Numéro {type_label} {stats['numero']}]\n"
         f"Fréquence totale : {stats['frequence_totale']} apparitions "
         f"sur {stats['total_tirages']} tirages ({stats['pourcentage_apparition']})\n"
         f"Dernière sortie : {derniere_sortie_fr}\n"
@@ -378,8 +378,32 @@ def _format_stats_context_base(stats: dict, type_map: dict, default_classement: 
         f"Écart moyen : {stats['ecart_moyen']} tirages\n"
         f"Classement fréquence : {stats['classement']}e sur {classement_sur}\n"
         f"Catégorie : {cat}\n"
-        f"Période analysée : {_format_periode_fr(stats['periode'])}"
+        f"Période analysée : {_format_periode_fr(stats['periode'])}\n"
+        f"[/DONNÉES TEMPS RÉEL]"
     )
+
+
+# V99 F01: Anti-hallucination — last draw enrichment for Phase 1
+def _format_last_draw_context(tirage: dict) -> str:
+    """Format last draw data with anti-hallucination tag for Phase 1 enrichment.
+
+    Works for both Loto (key 'chance') and EM (key 'etoiles').
+    The [CHIFFRES EXACTS, NE PAS MODIFIER] tag instructs Gemini to reproduce
+    the numbers verbatim rather than inventing them.
+    """
+    date_fr = _format_date_fr(str(tirage["date"]))
+    boules = " - ".join(str(b) for b in tirage["boules"])
+    lines = [
+        f"[RÉSULTAT TIRAGE — CHIFFRES EXACTS, NE PAS MODIFIER]",
+        f"Tirage du {date_fr} : {boules}",
+    ]
+    if "chance" in tirage:
+        lines[1] += f" | Numéro Chance : {tirage['chance']}"
+    elif "etoiles" in tirage:
+        etoiles = " - ".join(str(e) for e in tirage["etoiles"])
+        lines[1] += f" | Étoiles : {etoiles}"
+    lines.append("[/RÉSULTAT TIRAGE]")
+    return "\n".join(lines)
 
 
 def _format_grille_context_base(result: dict, secondary_key: str, secondary_label: str,

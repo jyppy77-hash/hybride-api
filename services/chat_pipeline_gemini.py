@@ -32,46 +32,77 @@ _MAX_HISTORY_MESSAGES = 20
 
 # Timeout constants are defined in chat_pipeline_shared.py and passed as parameters.
 
-# V96: Anti-hallucination — extract numbers from SQL result and verify Gemini response
-_SQL_TAG_RE = re.compile(
-    r'\[RÉSULTAT SQL[^\]]*\](.*?)(?:\[/RÉSULTAT SQL\]|$)',
+# V99 F05: Factual data tags — when present, lower temperature to reduce hallucination
+_FACTUAL_TAGS = ("[RÉSULTAT SQL", "[RÉSULTAT TIRAGE", "[DONNÉES TEMPS RÉEL")
+_TEMPERATURE_FACTUAL = 0.2
+_TEMPERATURE_CONVERSATIONAL = _GEMINI_CHAT_TEMPERATURE  # 0.6
+
+
+def _get_temperature(ctx: dict) -> float:
+    """Adaptive temperature: low for factual data responses, normal otherwise."""
+    meta = ctx.get("_chat_meta") or {}
+    enrichment = meta.get("enrichment_context", "")
+    if any(tag in enrichment for tag in _FACTUAL_TAGS):
+        return _TEMPERATURE_FACTUAL
+    return _TEMPERATURE_CONVERSATIONAL
+
+# V96+V99: Anti-hallucination — extract numbers from context and verify Gemini response
+# V99 F03: broadened to match [RÉSULTAT TIRAGE] and [DONNÉES TEMPS RÉEL] in addition to [RÉSULTAT SQL]
+_DATA_TAG_RE = re.compile(
+    r'\[(?:RÉSULTAT SQL|RÉSULTAT TIRAGE|DONNÉES TEMPS RÉEL)[^\]]*\](.*?)(?:\[/(?:RÉSULTAT SQL|RÉSULTAT TIRAGE)\]|$)',
     re.DOTALL,
+)
+
+# V99 F08: detect draw-like number sequences in Gemini response (e.g. "12 - 14 - 22 - 31 - 44")
+_DRAW_SEQUENCE_RE = re.compile(
+    r'(\d{1,2})\s*[-–—,]\s*(\d{1,2})\s*[-–—,]\s*(\d{1,2})\s*[-–—,]\s*(\d{1,2})\s*[-–—,]\s*(\d{1,2})',
 )
 
 
 def _check_sql_number_hallucination(
     enrichment_context: str, gemini_response: str, phase: str, log_prefix: str,
 ) -> None:
-    """Log a warning when draw numbers from SQL result are missing in Gemini response.
+    """Log a warning when draw numbers from context are missing in Gemini response,
+    or when Gemini invents numbers absent from context.
 
-    Only checks for Phase T (specific draw results) and Phase SQL,
-    where SQL typically returns draw numbers that must appear verbatim.
+    V99 F03: checks Phase 1 (single number stats + tirage enrichment),
+    Phase T (specific draw), and Phase SQL (text-to-SQL results).
 
-    The check extracts numbers from the [RÉSULTAT SQL — CHIFFRES EXACTS, NE PAS MODIFIER]
-    block (injected by _format_sql_result in base_chat_sql.py) and verifies they appear
-    in the Gemini response text. The regex _SQL_TAG_RE matches the opening tag pattern
-    regardless of the exact suffix after "RÉSULTAT SQL".
+    V99 F08: also detects *invented* numbers — draw-like sequences in the
+    response that contain numbers absent from the enrichment context.
     """
-    if phase not in ("T", "SQL"):
+    if phase not in ("1", "T", "SQL"):
         return
-    m = _SQL_TAG_RE.search(enrichment_context or "")
+    m = _DATA_TAG_RE.search(enrichment_context or "")
     if not m:
         return
-    sql_body = m.group(1)
-    # Only check if this looks like a draw result (contains "numero" or numbered columns)
-    if "aucun résultat" in sql_body.lower():
+    data_body = m.group(1)
+    if "aucun résultat" in data_body.lower():
         return
-    sql_numbers = set(re.findall(r'\b(\d{1,2})\b', sql_body))
-    if not sql_numbers:
+    context_numbers = set(re.findall(r'\b(\d{1,2})\b', data_body))
+    if not context_numbers:
         return
     response_numbers = set(re.findall(r'\b(\d{1,2})\b', gemini_response))
-    missing = sql_numbers - response_numbers
+    # Check 1: numbers from context missing in response
+    missing = context_numbers - response_numbers
     if missing:
         logger.warning(
-            "HALLUCINATION_RISK: %s SQL numbers %s missing from Gemini response. "
-            "Phase=%s | sql_excerpt=%.200s",
-            log_prefix, sorted(missing, key=int), phase, sql_body.strip(),
+            "HALLUCINATION_RISK: %s context numbers %s missing from Gemini response. "
+            "Phase=%s | data_excerpt=%.200s",
+            log_prefix, sorted(missing, key=int), phase, data_body.strip(),
         )
+    # V99 F08: Check 2 — invented numbers in draw-like sequences
+    seq_match = _DRAW_SEQUENCE_RE.search(gemini_response)
+    if seq_match:
+        seq_nums = set(seq_match.groups())
+        invented = seq_nums - context_numbers
+        if invented:
+            logger.warning(
+                "HALLUCINATION_INVENTED: %s numbers %s in response draw sequence "
+                "but ABSENT from context. Phase=%s | sequence=%s",
+                log_prefix, sorted(invented, key=int), phase,
+                seq_match.group(0),
+            )
 # This module does NOT import from shared (avoids circular dependency).
 
 
@@ -179,7 +210,7 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
             json={
                 "system_instruction": {"parts": [{"text": ctx["system_prompt"]}]},
                 "contents": ctx["contents"],
-                "generationConfig": {"temperature": _GEMINI_CHAT_TEMPERATURE, "maxOutputTokens": 300},
+                "generationConfig": {"temperature": _get_temperature(ctx), "maxOutputTokens": 300},
             },
             timeout=ctx.get("_timeout_gemini_chat", 15),
         ),
@@ -245,6 +276,7 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
             ctx["_http_client"], ctx["gem_api_key"], ctx["system_prompt"],
             ctx["contents"], timeout=ctx.get("_timeout_gemini_stream", 15),
             call_type=call_type, lang=lang,
+            temperature=_get_temperature(ctx),
         ):
             safe = _buf.add_chunk(chunk)
             if not safe:

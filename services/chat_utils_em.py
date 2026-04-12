@@ -29,15 +29,19 @@ FALLBACK_RESPONSE_EM = (
 # ────────────────────────────────────────────
 
 def _format_tirage_context_em(tirage: dict) -> str:
-    """Formate les resultats d'un tirage EM en bloc de contexte pour Gemini."""
+    """Formate les resultats d'un tirage EM en bloc de contexte pour Gemini.
+
+    V99 F06: tag CHIFFRES EXACTS + closing tag for anti-hallucination.
+    """
     date_fr = _format_date_fr(str(tirage["date"]))
     boules = " - ".join(str(b) for b in tirage["boules"])
     etoiles = " - ".join(str(e) for e in tirage["etoiles"])
     return (
-        f"[RÉSULTAT TIRAGE - {date_fr}]\n"
+        f"[RÉSULTAT TIRAGE — CHIFFRES EXACTS, NE PAS MODIFIER - {date_fr}]\n"
         f"Date du tirage : {date_fr}\n"
         f"Numéros principaux : {boules}\n"
-        f"Étoiles : {etoiles}"
+        f"Étoiles : {etoiles}\n"
+        f"[/RÉSULTAT TIRAGE]"
     )
 
 

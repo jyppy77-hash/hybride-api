@@ -862,10 +862,9 @@ class TestSQLHallucinationCheck:
         assert "30" in caplog.text
 
     def test_skips_non_sql_phases(self, caplog):
-        """Phase G or Phase 1 — no check performed."""
+        """Phase G — no check performed. V99 F03: Phase 1 is now checked."""
         sql = "[RÉSULTAT SQL]\nboule_1: 17\n[/RÉSULTAT SQL]"
         _check_sql_number_hallucination(sql, "foo", "G", "[LOTO]")
-        _check_sql_number_hallucination(sql, "foo", "1", "[LOTO]")
         assert "HALLUCINATION_RISK" not in caplog.text
 
     def test_skips_empty_result(self, caplog):

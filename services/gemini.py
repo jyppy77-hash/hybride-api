@@ -52,7 +52,7 @@ async def enrich_analysis(analysis_local: str, window: str = "GLOBAL", *, http_c
 
 
 async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, timeout=15.0,
-                             call_type="", lang=""):
+                             call_type="", lang="", temperature=None):
     """
     Async generator — stream text chunks from Gemini streaming API.
     Yields str chunks. Manages circuit breaker state manually.
@@ -80,7 +80,7 @@ async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, 
                     "system_instruction": {"parts": [{"text": system_prompt}]},
                     "contents": contents,
                     "generationConfig": {
-                        "temperature": _GEMINI_CHAT_TEMPERATURE,
+                        "temperature": temperature if temperature is not None else _GEMINI_CHAT_TEMPERATURE,
                         "maxOutputTokens": 300,
                     },
                 },
