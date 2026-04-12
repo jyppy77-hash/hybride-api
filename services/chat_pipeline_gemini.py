@@ -46,6 +46,11 @@ def _check_sql_number_hallucination(
 
     Only checks for Phase T (specific draw results) and Phase SQL,
     where SQL typically returns draw numbers that must appear verbatim.
+
+    The check extracts numbers from the [RÉSULTAT SQL — CHIFFRES EXACTS, NE PAS MODIFIER]
+    block (injected by _format_sql_result in base_chat_sql.py) and verifies they appear
+    in the Gemini response text. The regex _SQL_TAG_RE matches the opening tag pattern
+    regardless of the exact suffix after "RÉSULTAT SQL".
     """
     if phase not in ("T", "SQL"):
         return

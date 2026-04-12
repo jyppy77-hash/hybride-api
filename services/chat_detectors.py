@@ -17,6 +17,7 @@ from services.base_chat_detectors import (  # noqa: F401
     # Phase 0 — continuation + affirmation (V51)
     CONTINUATION_PATTERNS, _CONTINUATION_WORDS, _is_short_continuation,
     _is_affirmation_simple, _detect_game_keyword_alone,
+    _is_refusal, _get_refusal_response, _REFUSAL_RESPONSES,  # V98c
     # Phase T — tirage detection
     _JOURS_SEMAINE, _TIRAGE_KW, _MOIS_TO_NUM, _MOIS_NOM_RE,
     _STAT_NEUTRALIZE_RE, _detect_tirage,
@@ -223,6 +224,11 @@ _LOTO_CAT_CHAUD_RE = [
     re.compile(r'(?:quels?|les?|num[eé]ros?)\s+.*chauds?', re.I),
     re.compile(r'chauds?\s+(?:en ce moment|actuellement)', re.I),
     re.compile(r'(?:num[eé]ros?|lesquels)\s+(?:sont|en)\s+tendance', re.I),
+    re.compile(r'\b(?:hot|hottest)\s+numbers?\b', re.I),
+    re.compile(r'\bn[uú]meros?\s+(?:calientes?|quentes?)\b', re.I),
+    re.compile(r'\bn[uú]meros?\s+(?:em\s+(?:alta|tend[eê]ncia)|do\s+momento)\b', re.I),
+    re.compile(r'\bhei[sß]e\s+zahlen\b', re.I),
+    re.compile(r'\bhete\s+nummers\b', re.I),
 ]
 
 _LOTO_CAT_FROID_RE = [
@@ -237,6 +243,11 @@ _LOTO_FREQ_DESC_RE = [
     re.compile(r'num[eé]ros?\s+(?:les?\s+)?plus\s+(?:sorti|fr[eé]quent)', re.I),
     re.compile(r'(?:quels?|quel)\s+(?:est|sont)\s+(?:le|les)\s+num[eé]ro', re.I),
     re.compile(r'(?:sort\w*|tir[eé]\w*|appara[iî]\w*)\s+le\s+plus\s+(?:souvent|fr[eé]quemment)', re.I),
+    re.compile(r'\b(?:most\s+(?:drawn|common|frequent)|most\s+often)\b', re.I),
+    re.compile(r'\bm[aá]s\s+(?:sorteados?|frecuentes?)\b', re.I),
+    re.compile(r'\bmais\s+(?:sorteados?|frequentes?)\b', re.I),
+    re.compile(r'\b(?:am\s+h[aä]ufigsten|meistgezogen)\b', re.I),
+    re.compile(r'\b(?:meest\s+getrokken|vaakst\s+getrokken)\b', re.I),
 ]
 
 _LOTO_FREQ_ASC_RE = [
@@ -248,11 +259,21 @@ _LOTO_ECART_DESC_RE = [
     re.compile(r'(?:plus\s+(?:gros|grand|long)|plus\s+en)\s+(?:[eé]cart|retard)', re.I),
     re.compile(r'(?:[eé]cart|retard)\s+(?:les?\s+)?plus\s+(?:gros|grand|long|important)', re.I),
     re.compile(r'(?:plus\s+(?:long|grand)temps?)\s+(?:sans\s+)?sort', re.I),
+    re.compile(r'\b(?:largest|biggest|longest)\s+(?:gap|delay)\b', re.I),
+    re.compile(r'\bmayor\s+(?:retraso|intervalo)\b', re.I),
+    re.compile(r'\bmaior\s+(?:atraso|intervalo|pausa)\b', re.I),
+    re.compile(r'\bgr[oö][sß]te[rn]?\s+(?:abstand|verz[oö]gerung)\b', re.I),
+    re.compile(r'\bgrootste\s+(?:achterstand|vertraging)\b', re.I),
 ]
 
 _LOTO_ECART_ASC_RE = [
     re.compile(r'(?:plus\s+(?:petit|court))\s+(?:[eé]cart|retard)', re.I),
     re.compile(r'(?:sorti|apparu)\s+(?:le\s+plus\s+)?r[eé]cemment', re.I),
+    re.compile(r'\b(?:smallest|shortest)\s+(?:gap|delay)\b', re.I),
+    re.compile(r'\bmenor\s+(?:retraso|intervalo)\b', re.I),
+    re.compile(r'\bmenor\s+(?:atraso|intervalo|pausa)\b', re.I),
+    re.compile(r'\bkleinste[rn]?\s+(?:abstand|verz[oö]gerung)\b', re.I),
+    re.compile(r'\bkleinste\s+(?:achterstand|vertraging)\b', re.I),
 ]
 
 

@@ -29,6 +29,7 @@ from services.chat_detectors import (
     _detect_salutation, _get_salutation_response,  # V65
     _has_data_signal,  # V65
     _detect_grid_evaluation,  # V70
+    _is_refusal, _get_refusal_response,  # V98c
 )
 from services.chat_detectors_em import (
     _detect_mode_em, _detect_prochain_tirage_em,
@@ -63,9 +64,10 @@ from services.chat_utils_em import (
 from services.chat_pipeline_shared import (
     sse_event as _sse_event_shared,
     log_from_meta as _log_from_meta_shared,
-    call_gemini_and_respond,
-    stream_and_respond,
+    call_gemini_and_respond,  # noqa: F401 — re-exported for test patches
+    stream_and_respond,  # noqa: F401 — re-exported for test patches
     handle_pitch_common,
+    handle_chat_common, handle_stream_common,  # F07 V98
     _prepare_chat_context_base,
     _build_config_base,  # F03 V74
     _TIRAGE_NOT_FOUND_EM,
@@ -115,6 +117,8 @@ def _build_em_config():
         "detect_cooccurrence_high_n": _detect_cooccurrence_high_n,
         "get_cooccurrence_high_n_response": _get_cooccurrence_high_n_response,
         "is_affirmation_simple": _is_affirmation_simple,
+        "is_refusal": _is_refusal,  # V98c
+        "get_refusal_response": _get_refusal_response,  # V98c
         "detect_game_keyword_alone": _detect_game_keyword_alone,
         "detect_salutation": _detect_salutation,
         "get_salutation_response": _get_salutation_response,
@@ -218,15 +222,13 @@ def _log_from_meta_em(meta, message, response_preview="",
 
 async def handle_chat_em(message: str, history: list, page: str, http_client, lang: str = "fr") -> dict:
     """Pipeline 12 phases du chatbot HYBRIDE EuroMillions. Retourne dict(response, source, mode)."""
-    early, ctx = await _prepare_chat_context_em(message, history, page, http_client, lang)
-    if early:
-        _log_from_meta_em(early.get("_chat_meta"), message, early.get("response", ""))
-        return early
-    ctx["_http_client"] = http_client
-    return await call_gemini_and_respond(
-        ctx, ctx["fallback"], "[EM CHAT]", "em", lang, message, page,
-        sponsor_kwargs={"lang": ctx["lang"], "module": "em"},
+    return await handle_chat_common(
+        message, history, page, http_client, lang,
+        prepare_context_fn=_prepare_chat_context_em,
+        default_fallback="",  # EM uses ctx["fallback"] set by _build_em_config
+        log_prefix="[EM CHAT]", module="em",
         breaker=gemini_breaker,
+        sponsor_kwargs={"lang": lang, "module": "em"},
     )
 
 
@@ -237,23 +239,14 @@ def _sse_event_em(data):
 
 async def handle_chat_stream_em(message: str, history: list, page: str, http_client, lang: str = "fr"):
     """Async generator — SSE streaming du chatbot HYBRIDE EuroMillions. Yields SSE event strings."""
-    early, ctx = await _prepare_chat_context_em(message, history, page, http_client, lang)
-    if early:
-        _log_from_meta_em(early.get("_chat_meta"), message, early.get("response", ""))
-        yield _sse_event_em({
-            "chunk": early["response"],
-            "source": early["source"],
-            "mode": early["mode"],
-            "is_done": True,
-        })
-        return
-
-    ctx["_http_client"] = http_client
-    async for event in stream_and_respond(
-        ctx, ctx["fallback"], "[EM CHAT]", "em", lang,
-        message, page, call_type="chat_em",
-        sponsor_kwargs={"lang": ctx["lang"], "module": "em"},
-        stream_fn=stream_gemini_chat,
+    async for event in handle_stream_common(
+        message, history, page, http_client, lang,
+        prepare_context_fn=_prepare_chat_context_em,
+        default_fallback="",  # EM uses ctx["fallback"] set by _build_em_config
+        log_prefix="[EM CHAT]", module="em",
+        call_type="chat_em",
+        stream_fn=stream_gemini_chat, breaker=gemini_breaker,
+        sponsor_kwargs={"lang": lang, "module": "em"},
     ):
         yield event
 

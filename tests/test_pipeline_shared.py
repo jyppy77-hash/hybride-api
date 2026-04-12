@@ -3,6 +3,7 @@ Tests for chat_pipeline_shared.py — V71 R3a backward-compat + shared helpers.
 """
 
 import json
+import pytest
 from types import SimpleNamespace
 
 from services.chat_pipeline_shared import (
@@ -314,3 +315,46 @@ class TestPhaseTGuards:
         for lang in ("fr", "en", "es", "pt", "de", "nl"):
             assert "{" not in _TIRAGE_ERROR_GUARD[lang], \
                    f"Unexpected placeholder in error guard {lang}"
+
+
+# ═══════════════════════════════════════════════════════
+# F08 V98 — SQL result tag + hallucination check
+# ═══════════════════════════════════════════════════════
+
+class TestSQLResultTag:
+    """Verify SQL result formatting and hallucination detection."""
+
+    def test_format_sql_result_contains_chiffres_exacts_tag(self):
+        """_format_sql_result must include the CHIFFRES EXACTS tag."""
+        from services.base_chat_sql import _format_sql_result
+        rows = [{"numero": 7, "frequence": 42}]
+        result = _format_sql_result(rows)
+        assert "CHIFFRES EXACTS" in result
+        assert "[RÉSULTAT SQL" in result
+        assert "[/RÉSULTAT SQL]" in result
+
+    def test_check_sql_number_hallucination_detects_missing(self, caplog):
+        """_check_sql_number_hallucination logs warning when numbers are missing."""
+        import logging
+        from services.chat_pipeline_gemini import _check_sql_number_hallucination
+        context = "[RÉSULTAT SQL — CHIFFRES EXACTS]\nnumero: 7 | frequence: 42\n[/RÉSULTAT SQL]"
+        # Response mentions 42 but not 7
+        response = "Ce numéro a été tiré 42 fois."
+        with caplog.at_level(logging.WARNING):
+            _check_sql_number_hallucination(context, response, "SQL", "[TEST]")
+        assert "HALLUCINATION_RISK" in caplog.text
+        assert "7" in caplog.text
+
+    def test_check_sql_hallucination_no_crash_on_empty(self):
+        """Hallucination check handles empty inputs gracefully."""
+        from services.chat_pipeline_gemini import _check_sql_number_hallucination
+        _check_sql_number_hallucination("", "", "SQL", "[TEST]")
+        _check_sql_number_hallucination(None, "response", "T", "[TEST]")
+        _check_sql_number_hallucination("no sql tag here", "response", "SQL", "[TEST]")
+
+    def test_check_sql_hallucination_skips_non_sql_phase(self):
+        """Hallucination check skips phases other than T and SQL."""
+        from services.chat_pipeline_gemini import _check_sql_number_hallucination
+        context = "[RÉSULTAT SQL]\nnumero: 7\n[/RÉSULTAT SQL]"
+        # Should not log anything for Phase G
+        _check_sql_number_hallucination(context, "no numbers", "G", "[TEST]")

@@ -113,6 +113,7 @@ _CAT_CHAUD_RE = [
     re.compile(r'\bn[uú]meros?\s+(?:del\s+momento|de\s+moda)\b', re.I),
     re.compile(r'\bn[uú]meros?\s+quentes?\b', re.I),
     re.compile(r'\bn[uú]meros?\s+do\s+momento\b', re.I),
+    re.compile(r'\bn[uú]meros?\s+em\s+(?:alta|tend[eê]ncia)\b', re.I),
     re.compile(r'\bhei[sß]e\s+zahlen\b', re.I),
     re.compile(r'\baktuell\w*\s+zahlen\b', re.I),
     re.compile(r'\bhete\s+nummers\b', re.I),
@@ -150,6 +151,7 @@ _FREQ_DESC_RE = [
     re.compile(r'\b(?:most\s+(?:drawn|common|frequent)|most\s+often|hottest)\b', re.I),
     re.compile(r'\bm[aá]s\s+(?:sorteados?|frecuentes?|comunes?)\b', re.I),
     re.compile(r'\bmais\s+(?:sorteados?|frequentes?|comuns?)\b', re.I),
+    re.compile(r'\b(?:top|melhor|primeiro)\s+\d{0,2}\s*n[uú]meros?\b', re.I),
     re.compile(r'\b(?:am\s+h[aä]ufigsten|h[aä]ufigsten?\s+gezogen|meistgezogen)\b', re.I),
     re.compile(r'\b(?:meest\s+getrokken|meest\s+voorkomend|vaakst\s+getrokken|vaakst\s+voor)\b', re.I),
     re.compile(r'\branking\b|\brangliste\b|\branglijst\b|\bclasificaci[oó]n\b|\bclassifica[çc][aã]o\b', re.I),
@@ -173,7 +175,8 @@ _ECART_DESC_RE = [
     re.compile(r'(?:plus\s+(?:long|grand)temps?)\s+(?:sans\s+)?sort', re.I),
     re.compile(r'\b(?:largest|biggest|longest)\s+(?:gap|delay)\b', re.I),
     re.compile(r'\bmayor\s+(?:retraso|intervalo)\b', re.I),
-    re.compile(r'\bmaior\s+(?:atraso|intervalo)\b', re.I),
+    re.compile(r'\bmaior\s+(?:atraso|intervalo|pausa)\b', re.I),
+    re.compile(r'\bmais\s+tempo\s+sem\s+(?:sair|sortear)\b', re.I),
     re.compile(r'\bgr[oö][sß]te[rn]?\s+(?:abstand|verz[oö]gerung)\b', re.I),
     re.compile(r'\bl[aä]ngste[rn]?\s+(?:abstand|verz[oö]gerung)\b', re.I),
     re.compile(r'\bgrootste\s+(?:achterstand|vertraging)\b', re.I),
@@ -186,7 +189,8 @@ _ECART_ASC_RE = [
     re.compile(r'(?:sorti|apparu)\s+(?:le\s+plus\s+)?r[eé]cemment', re.I),
     re.compile(r'\b(?:smallest|shortest)\s+(?:gap|delay)\b', re.I),
     re.compile(r'\bmenor\s+(?:retraso|intervalo)\b', re.I),
-    re.compile(r'\bmenor\s+(?:atraso|intervalo)\b', re.I),
+    re.compile(r'\bmenor\s+(?:atraso|intervalo|pausa)\b', re.I),
+    re.compile(r'\b(?:sa[ií](?:do|u)|apareceu)\s+(?:mais\s+)?recentemente\b', re.I),
     re.compile(r'\bkleinste[rn]?\s+(?:abstand|verz[oö]gerung)\b', re.I),
     re.compile(r'\bk[uü]rzeste[rn]?\s+(?:abstand|verz[oö]gerung)\b', re.I),
     re.compile(r'\bkleinste\s+(?:achterstand|vertraging)\b', re.I),
@@ -342,6 +346,7 @@ _EM_COMP_RE = [
     re.compile(r'diff[eé]rence\s+entre\s+(?:le\s+)?(\d{1,2})\s+et\s+(?:le\s+)?(\d{1,2})', re.I),
     re.compile(r'entre\s+(?:le\s+)?(\d{1,2})\s+et\s+(?:le\s+)?(\d{1,2})\s.*(?:lequel|qui)', re.I),
     re.compile(r'(?:compar|vergleich|vergelijk)\w*\b[^.?!]*?(?:du\s+|le\s+|el\s+|del\s+|o\s+|do\s+|da\s+|dos\s+|das\s+|de\s+|von\s+|van\s+)?(\d{1,2})\s+(?:et|avec|vs\.?|and|und|en|e|y)\s+(?:du\s+|le\s+|el\s+|del\s+|o\s+|do\s+|da\s+|dos\s+|das\s+|de\s+|von\s+|van\s+)?(\d{1,2})', re.I),
+    re.compile(r'compara[rç]\w*\s+(?:o\s+)?(\d{1,2})\s+(?:e|com)\s+(?:o\s+)?(\d{1,2})', re.I),
 ]
 
 

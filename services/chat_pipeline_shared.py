@@ -28,6 +28,7 @@ import asyncio
 import logging
 import time
 import importlib
+from collections.abc import AsyncGenerator
 
 from services.base_chat_sql import _SQL_LIMIT_MESSAGES, _MAX_SQL_INPUT_LENGTH
 from services.chat_utils import _format_date_fr
@@ -323,6 +324,66 @@ def _build_config_base(overrides: dict) -> dict:
     non-callable defaults in the future.
     """
     return dict(overrides)
+
+
+# ═══════════════════════════════════════════════════════
+# F07 V98: Shared chat/stream handlers (DRY Loto/EM)
+# ═══════════════════════════════════════════════════════
+
+
+async def handle_chat_common(
+    message: str, history: list, page: str, http_client, lang: str,
+    prepare_context_fn, default_fallback: str, log_prefix: str, module: str,
+    breaker, sponsor_kwargs: dict | None = None,
+) -> dict:
+    """Shared handler for Loto and EM chat — returns dict(response, source, mode).
+
+    F07 V98: factorises handle_chat / handle_chat_em into a single function.
+    ``prepare_context_fn`` must accept (message, history, page, http_client, lang=lang).
+    Fallback is taken from ctx["fallback"] if present, else *default_fallback*.
+    ``breaker`` is the circuit breaker instance (passed from caller for test patching).
+    """
+    early, ctx = await prepare_context_fn(message, history, page, http_client, lang=lang)
+    if early:
+        log_from_meta(early.get("_chat_meta"), module, lang, message,
+                      early.get("response", ""))
+        return early
+    ctx["_http_client"] = http_client
+    fallback = ctx.get("fallback", default_fallback)
+    return await call_gemini_and_respond(
+        ctx, fallback, log_prefix, module, lang, message, page,
+        sponsor_kwargs=sponsor_kwargs, breaker=breaker,
+    )
+
+
+async def handle_stream_common(
+    message: str, history: list, page: str, http_client, lang: str,
+    prepare_context_fn, default_fallback: str, log_prefix: str, module: str,
+    call_type: str, stream_fn, breaker, sponsor_kwargs: dict | None = None,
+) -> AsyncGenerator[str, None]:
+    """Shared SSE streaming handler for Loto and EM chat — yields SSE event strings.
+
+    F07 V98: factorises handle_chat_stream / handle_chat_stream_em.
+    ``stream_fn`` and ``breaker`` are passed from caller for test patching.
+    """
+    early, ctx = await prepare_context_fn(message, history, page, http_client, lang=lang)
+    if early:
+        log_from_meta(early.get("_chat_meta"), module, lang, message,
+                      early.get("response", ""))
+        yield sse_event({
+            "chunk": early["response"], "source": early["source"],
+            "mode": early["mode"], "is_done": True,
+        })
+        return
+    ctx["_http_client"] = http_client
+    fallback = ctx.get("fallback", default_fallback)
+    async for event in stream_and_respond(
+        ctx, fallback, log_prefix, module, lang,
+        message, page, call_type=call_type,
+        sponsor_kwargs=sponsor_kwargs,
+        stream_fn=stream_fn,
+    ):
+        yield event
 
 
 # ═══════════════════════════════════════════════════════
@@ -708,6 +769,16 @@ async def _prepare_chat_context_base(
             logger.info(
                 f"{_lp} Reponse courte detectee: \"{message}\" → enrichissement contextuel"
             )
+
+    # ── Phase REFUS : refus simple → court-circuit Python (V98c) ──
+    # Conditions : (1) pas déjà en continuation, (2) refus simple, (3) historique ≥ 2
+    if not _continuation_mode and cfg["is_refusal"](message) and len(history) >= 2:
+        _phase = "REFUS"
+        _resp = cfg["get_refusal_response"](lang)
+        if _insult_prefix:
+            _resp = _insult_prefix + "\n\n" + _resp
+        logger.info(f"{_lp} Phase REFUS — refus simple detecte: \"{message}\" (lang={lang})")
+        return _early(_resp, "hybride_refusal")
 
     # ── Phase AFFIRMATION : affirmation simple ──
     if not _continuation_mode and cfg["is_affirmation_simple"](message):

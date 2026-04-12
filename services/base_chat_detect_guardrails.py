@@ -6,9 +6,6 @@ site rating detection. Split from base_chat_detectors.py (V70 F10).
 
 import re
 import random
-import logging
-
-logger = logging.getLogger(__name__)
 
 _INSULTE_MOTS = {
     # FR

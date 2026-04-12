@@ -28,6 +28,7 @@ from services.chat_detectors import (
     _detect_salutation, _get_salutation_response,  # V65
     _has_data_signal,  # V65
     _detect_grid_evaluation,  # V70
+    _is_refusal, _get_refusal_response,  # V98c
 )
 from services.chat_sql import (
     _get_prochain_tirage, _get_tirage_data, _generate_sql, _validate_sql,
@@ -46,9 +47,10 @@ from services.chat_responses_loto import (
 from services.chat_pipeline_shared import (
     sse_event as _sse_event_shared,
     log_from_meta as _log_from_meta_shared,
-    call_gemini_and_respond,
-    stream_and_respond,
+    call_gemini_and_respond,  # noqa: F401 — re-exported for test patches
+    stream_and_respond,  # noqa: F401 — re-exported for test patches
     handle_pitch_common,
+    handle_chat_common, handle_stream_common,  # F07 V98
     _prepare_chat_context_base,
     _build_config_base,  # F03 V74
     _TIRAGE_NOT_FOUND_LOTO,
@@ -127,6 +129,8 @@ def _build_loto_config():
         "detect_cooccurrence_high_n": _detect_cooccurrence_high_n,
         "get_cooccurrence_high_n_response": _get_cooccurrence_high_n_response,
         "is_affirmation_simple": _is_affirmation_simple,
+        "is_refusal": _is_refusal,  # V98c
+        "get_refusal_response": _get_refusal_response,  # V98c
         "detect_game_keyword_alone": _detect_game_keyword_alone,
         "detect_salutation": _detect_salutation,
         "get_salutation_response": _get_salutation_response,
@@ -229,13 +233,11 @@ def _log_from_meta(meta, module, lang, message, response_preview="",
 
 async def handle_chat(message: str, history: list, page: str, http_client, lang: str = "fr") -> dict:
     """Pipeline 12 phases du chatbot HYBRIDE. Retourne dict(response, source, mode)."""
-    early, ctx = await _prepare_chat_context(message, history, page, http_client, lang=lang)
-    if early:
-        _log_from_meta(early.get("_chat_meta"), "loto", lang, message, early.get("response", ""))
-        return early
-    ctx["_http_client"] = http_client
-    return await call_gemini_and_respond(
-        ctx, FALLBACK_RESPONSE, "[HYBRIDE CHAT]", "loto", lang, message, page,
+    return await handle_chat_common(
+        message, history, page, http_client, lang,
+        prepare_context_fn=_prepare_chat_context,
+        default_fallback=FALLBACK_RESPONSE,
+        log_prefix="[HYBRIDE CHAT]", module="loto",
         breaker=gemini_breaker,
     )
 
@@ -247,22 +249,13 @@ def _sse_event(data):
 
 async def handle_chat_stream(message: str, history: list, page: str, http_client, lang: str = "fr"):
     """Async generator — SSE streaming du chatbot HYBRIDE. Yields SSE event strings."""
-    early, ctx = await _prepare_chat_context(message, history, page, http_client, lang=lang)
-    if early:
-        _log_from_meta(early.get("_chat_meta"), "loto", lang, message, early.get("response", ""))
-        yield _sse_event({
-            "chunk": early["response"],
-            "source": early["source"],
-            "mode": early["mode"],
-            "is_done": True,
-        })
-        return
-
-    ctx["_http_client"] = http_client
-    async for event in stream_and_respond(
-        ctx, FALLBACK_RESPONSE, "[HYBRIDE CHAT]", "loto", lang,
-        message, page, call_type="chat_loto",
-        stream_fn=stream_gemini_chat,
+    async for event in handle_stream_common(
+        message, history, page, http_client, lang,
+        prepare_context_fn=_prepare_chat_context,
+        default_fallback=FALLBACK_RESPONSE,
+        log_prefix="[HYBRIDE CHAT]", module="loto",
+        call_type="chat_loto",
+        stream_fn=stream_gemini_chat, breaker=gemini_breaker,
     ):
         yield event
 

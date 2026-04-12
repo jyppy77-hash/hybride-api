@@ -5,10 +5,7 @@ Split from base_chat_detect_intent.py (F05 V84).
 """
 
 import re
-import logging
 from datetime import date, timedelta
-
-logger = logging.getLogger(__name__)
 
 # ────────────────────────────────────────────
 # Phase T : Detection tirage (date / dernier)

@@ -776,3 +776,77 @@ class TestStreamBuffer:
         sponsor = "\n\n📢 Découvrez notre partenaire : LotoBonus.fr"
         result = buf.add_chunk(sponsor)
         assert "LotoBonus.fr" in result
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# F06 V98 — Phase 3-bis temporal filter multilang (ES/PT/DE/NL)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestTemporalFilterMultilang:
+    """_has_temporal_filter detects temporal expressions in all 6 languages."""
+
+    # ── ES ──
+    def test_es_ultimos_meses(self):
+        assert _has_temporal_filter("los últimos 6 meses") is True
+
+    def test_es_en_2024(self):
+        assert _has_temporal_filter("estadísticas en 2024") is True
+
+    def test_es_entre_anos(self):
+        assert _has_temporal_filter("entre 2024 y 2025") is True
+
+    # ── PT ──
+    def test_pt_ultimos_meses(self):
+        assert _has_temporal_filter("nos últimos 6 meses") is True
+
+    def test_pt_em_2024(self):
+        assert _has_temporal_filter("estatísticas em 2024") is True
+
+    def test_pt_entre_anos(self):
+        assert _has_temporal_filter("entre 2024 e 2025") is True
+
+    # ── DE ──
+    def test_de_letzten_monate(self):
+        assert _has_temporal_filter("die letzten 6 monate") is True
+
+    def test_de_im_2024(self):
+        assert _has_temporal_filter("Statistik im 2024") is True
+
+    def test_de_zwischen_jahren(self):
+        assert _has_temporal_filter("zwischen 2024 und 2025") is True
+
+    # ── NL ──
+    def test_nl_laatste_maanden(self):
+        assert _has_temporal_filter("de laatste 6 maanden") is True
+
+    def test_nl_in_2024(self):
+        assert _has_temporal_filter("statistieken in 2024") is True
+
+    def test_nl_tussen_jaren(self):
+        assert _has_temporal_filter("tussen 2024 en 2025") is True
+
+
+class TestComparaisonTemporelleMultilang:
+    """Phase 3-bis: comparison + temporal filter in ES/PT/DE/NL."""
+
+    def test_es_compare_temporal(self):
+        msg = "Compara el 12 y el 34 en los últimos 6 meses"
+        assert _has_temporal_filter(msg) is True
+        intent = _detect_requete_complexe_em(msg)
+        assert intent is not None
+        assert intent["type"] == "comparaison"
+
+    def test_pt_compare_temporal(self):
+        msg = "Compara o 12 e o 34 nos últimos 6 meses"
+        assert _has_temporal_filter(msg) is True
+        intent = _detect_requete_complexe_em(msg)
+        assert intent is not None
+        assert intent["type"] == "comparaison"
+
+    def test_de_vergleich_temporal(self):
+        msg = "Vergleiche die 12 und 34 die letzten 6 monate"
+        assert _has_temporal_filter(msg) is True
+
+    def test_nl_vergelijk_temporal(self):
+        msg = "Vergelijk 12 en 34 in de laatste 6 maanden"
+        assert _has_temporal_filter(msg) is True

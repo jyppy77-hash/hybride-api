@@ -12,10 +12,7 @@ All existing imports from this module continue to work (backward compatibility).
 """
 
 import re
-import logging
 from datetime import date  # noqa: F401 — re-exported
-
-logger = logging.getLogger(__name__)
 
 # ═══════════════════════════════════════════════════════
 # Re-exports — backward compatibility (F05 V84)
@@ -85,6 +82,101 @@ _CONTINUATION_WORDS = {
     "claro", "doch", "zeig", "mostra", "laat", "toon", "nee",
     "non", "nan", "nope", "nein", "não", "no",
 }
+
+
+# ────────────────────────────────────────────
+# Phase REFUS : Détection refus simple (V98c)
+# Court-circuit Python après Phase 0 / avant AFFIRMATION.
+# Le message ENTIER doit être un refus (ancres ^...$).
+# ────────────────────────────────────────────
+
+_REFUSAL_RE = re.compile(
+    r"^(?:"
+    # FR — refus + indifférence
+    r"non(?:\s+merci)?|pas\s+(?:intéressé|besoin|la\s+peine|envie)|"
+    r"c['']?est\s+bon|[çc]a\s+(?:ira|va)|"
+    r"non\s+(?:c['']?est\s+bon|[çc]a\s+va|pas\s+la\s+peine)|"
+    r"je\s+m['']?en\s+fiche|rien\s+[àa]\s+faire|osef|"
+    # EN — refusal + indifference
+    r"no(?:\s+thanks?)?|not?\s+interested|i['']?m\s+(?:good|fine|ok)|"
+    r"no\s+(?:need|thank\s+you)|nah|nope|don['']?t\s+care|whatever|"
+    # ES — rechazo + indiferencia
+    r"no(?:\s+gracias)?|no\s+me\s+interesa|estoy\s+bien|no\s+hace\s+falta|"
+    r"me\s+da\s+igual|paso|"
+    # PT — recusa + indiferença
+    r"n[ãa]o(?:\s+obrigad[oa])?|n[ãa]o\s+(?:estou\s+interessad[oa]|preciso)|"
+    r"est[áa]\s+bem\s+assim|tanto\s+faz|"
+    # DE — Ablehnung + Gleichgültigkeit
+    r"nein(?:\s+danke)?|kein\s+interesse|passt\s+schon|nicht\s+n[öo]tig|"
+    r"ist\s+mir\s+egal|egal|"
+    # NL — weigering + onverschilligheid
+    r"nee(?:\s+(?:bedankt|dank\s+je))?|niet\s+(?:nodig|ge[ïi]nteresseerd)|"
+    r"het\s+is\s+goed\s+zo|boeit\s+niet"
+    r")[\s.!?,]*$",
+    re.IGNORECASE | re.UNICODE,
+)
+
+_REFUSAL_RESPONSES: dict[str, list[str]] = {
+    "fr": [
+        "Ça roule ! Si tu as besoin, n'hésite pas. 😊",
+        "Pas de souci ! Je suis là si tu as d'autres questions. 👍",
+        "OK ! N'hésite pas si tu veux explorer d'autres stats.",
+        "Très bien ! Tu sais où me trouver. 😊",
+        "Compris ! Reviens quand tu veux. 👍",
+    ],
+    "en": [
+        "All good! Feel free to ask if you need anything. 😊",
+        "No problem! I'm here if you have other questions. 👍",
+        "OK! Don't hesitate if you want to explore more stats.",
+        "Got it! You know where to find me. 😊",
+        "Understood! Come back anytime. 👍",
+    ],
+    "es": [
+        "¡Perfecto! No dudes en preguntar si necesitas algo. 😊",
+        "¡Sin problema! Estoy aquí si tienes otras preguntas. 👍",
+        "¡OK! No dudes en explorar más estadísticas.",
+        "¡Entendido! Ya sabes dónde encontrarme. 😊",
+        "¡Comprendido! Vuelve cuando quieras. 👍",
+    ],
+    "pt": [
+        "Tudo bem! Não hesites se precisares de algo. 😊",
+        "Sem problema! Estou aqui se tiveres outras perguntas. 👍",
+        "OK! Não hesites se quiseres explorar mais estatísticas.",
+        "Entendido! Sabes onde me encontrar. 😊",
+        "Compreendido! Volta quando quiseres. 👍",
+    ],
+    "de": [
+        "Alles klar! Melde dich, wenn du etwas brauchst. 😊",
+        "Kein Problem! Ich bin hier, wenn du weitere Fragen hast. 👍",
+        "OK! Zögere nicht, weitere Statistiken zu erkunden.",
+        "Verstanden! Du weißt, wo du mich findest. 😊",
+        "In Ordnung! Komm jederzeit wieder. 👍",
+    ],
+    "nl": [
+        "Prima! Aarzel niet als je iets nodig hebt. 😊",
+        "Geen probleem! Ik ben hier als je andere vragen hebt. 👍",
+        "OK! Aarzel niet om meer statistieken te verkennen.",
+        "Begrepen! Je weet waar je me kunt vinden. 😊",
+        "Duidelijk! Kom gerust terug wanneer je wilt. 👍",
+    ],
+}
+
+
+def _is_refusal(msg: str) -> bool:
+    """Détecte si le message est un refus simple (Non, Non merci, etc.).
+
+    V98c: Phase REFUS — court-circuit Python, pas d'appel Gemini.
+    Le message ENTIER doit matcher (ancres ^...$), donc
+    "non mais donne moi une grille" ne matche PAS.
+    """
+    return bool(_REFUSAL_RE.match(msg.strip()))
+
+
+def _get_refusal_response(lang: str = "fr") -> str:
+    """Return a random refusal response for the given language."""
+    import random
+    pool = _REFUSAL_RESPONSES.get(lang, _REFUSAL_RESPONSES["fr"])
+    return random.choice(pool)
 
 
 def _is_short_continuation(message: str) -> bool:

@@ -4,9 +4,6 @@ Split from base_chat_detect_intent.py (F05 V84)."""
 
 import re
 import random
-import logging
-
-logger = logging.getLogger(__name__)
 
 
 # ────────────────────────────────────────────

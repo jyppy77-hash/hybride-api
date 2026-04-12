@@ -45,6 +45,8 @@ from services.base_chat_detect_intent import (  # noqa: F401
     _GRID_EVAL_PATTERN, _GRID_EVAL_MIN_NUMS, _detect_grid_evaluation,
     # Phase 3 — base requête complexe (F06 V83)
     _detect_requete_complexe_base,
+    # Phase REFUS (V98c)
+    _REFUSAL_RE, _REFUSAL_RESPONSES, _is_refusal, _get_refusal_response,
 )
 
 from services.base_chat_detect_guardrails import (  # noqa: F401
