@@ -190,6 +190,14 @@ async def lifespan(app):
                 logger.warning("[BOT_IPS] Refresh failed, using current lists: %s", e)
             await asyncio.sleep(6 * 3600)  # 6h
     asyncio.create_task(_supervised_loop(_periodic_bot_refresh, "periodic_bot_refresh"))
+    # V97: IndexNow ping post-deploy (fire-and-forget, 30s delay, prod only)
+    if os.getenv("K_SERVICE") and os.getenv("ENVIRONMENT", "").lower() != "staging":
+        async def _indexnow_post_deploy():
+            await asyncio.sleep(30)
+            from services.indexnow import submit_all_sitemap_urls
+            result = await submit_all_sitemap_urls(client=app.state.httpx_client)
+            logger.info("[INDEXNOW] Post-deploy ping: %s", result)
+        asyncio.create_task(_supervised_task(_indexnow_post_deploy(), "indexnow_post_deploy"))
     yield
     await close_cache()
     await db_cloudsql.close_pool_readonly()
@@ -774,6 +782,20 @@ async def block_templates_access(rest: str):
 async def favicon():
     """Serve favicon.ico from project root with correct Content-Type."""
     return FileResponse("favicon.ico", media_type="image/x-icon")
+
+
+# =========================
+# IndexNow verification key (V97)
+# =========================
+
+from services.indexnow import INDEXNOW_KEY as _INDEXNOW_KEY
+
+if _INDEXNOW_KEY:
+    @app.get(f"/{_INDEXNOW_KEY}.txt", include_in_schema=False)
+    async def indexnow_key_file():
+        """Serve IndexNow verification key file (text/plain)."""
+        from starlette.responses import Response as _Resp
+        return _Resp(content=_INDEXNOW_KEY, media_type="text/plain")
 
 
 # =========================

@@ -919,3 +919,46 @@ async def admin_export_chatbot_log_csv(
     except Exception as e:
         logger.error("[ADMIN] chatbot-log CSV: %s", e)
         return JSONResponse({"error": str(e)}, status_code=500)
+
+
+# ── IndexNow submit (V97) ───────────────────────────────────────────────────
+
+@router.post("/admin/api/indexnow/submit", include_in_schema=False)
+@limiter.limit("10/hour")
+async def admin_indexnow_submit(request: Request):
+    """Submit URLs to IndexNow (Bing/Yandex/Naver/Seznam).
+
+    Body JSON optional: {"urls": ["https://..."]}
+    If urls absent or empty → submits all sitemap URLs.
+    Rate limit: 5/hour to avoid spamming IndexNow.
+    """
+    err = _require_auth_json(request)
+    if err:
+        return err
+
+    from services.indexnow import submit_indexnow, submit_all_sitemap_urls, INDEXNOW_KEY
+
+    if not INDEXNOW_KEY:
+        return JSONResponse({"error": "IndexNow key not configured"}, status_code=503)
+
+    try:
+        body = await request.json()
+    except Exception:
+        body = {}
+
+    custom_urls = body.get("urls") if isinstance(body, dict) else None
+
+    if custom_urls and isinstance(custom_urls, list):
+        # Validate: only accept strings starting with https://
+        valid_urls = [u for u in custom_urls if isinstance(u, str) and u.startswith("https://")]
+        if not valid_urls:
+            return JSONResponse({"error": "No valid URLs provided"}, status_code=400)
+        result = await submit_indexnow(valid_urls)
+    else:
+        result = await submit_all_sitemap_urls()
+
+    return JSONResponse({
+        "status": "ok",
+        "submitted": result.get("submitted", 0),
+        "indexnow_response": result.get("status"),
+    })
