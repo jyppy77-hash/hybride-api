@@ -471,3 +471,191 @@ class TestF06ChiffresExactsTag:
         tirage = {"date": date(2026, 3, 14), "boules": [10, 22, 23, 25, 46], "chance": 3}
         result = _format_last_draw_context(tirage)
         assert "CHIFFRES EXACTS" in result
+
+
+# ═══════════════════════════════════════════════════════
+# V100 R01 — Non-streaming path hallucination check
+# ═══════════════════════════════════════════════════════
+
+from services.chat_pipeline_gemini import call_gemini_and_respond
+
+
+class TestR01NonStreamingCheck:
+    """V100 R01: _check_sql_number_hallucination is called in non-streaming path."""
+
+    @pytest.mark.asyncio
+    async def test_check_called_on_success(self):
+        """call_gemini_and_respond calls hallucination check after successful response."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "Le tirage : 10 - 22 - 23 - 25 - 46."}]}}],
+        }
+
+        ctx = {
+            "mode": "balanced",
+            "_http_client": MagicMock(),
+            "gem_api_key": "fake",
+            "system_prompt": "test",
+            "contents": [],
+            "insult_prefix": "",
+            "history": [],
+            "_chat_meta": {
+                "enrichment_context": "[RÉSULTAT TIRAGE — CHIFFRES EXACTS]\n10 - 22\n[/RÉSULTAT TIRAGE]",
+                "phase": "1",
+                "t0": 0,
+                "lang": "fr",
+            },
+        }
+
+        with patch("services.chat_pipeline_gemini._gemini_call_with_fallback", return_value=mock_response), \
+             patch("services.chat_pipeline_gemini._check_sql_number_hallucination") as mock_check:
+            await call_gemini_and_respond(
+                ctx, "fallback", "[TEST]", "loto", "fr", "test", "home",
+            )
+            mock_check.assert_called_once()
+            args = mock_check.call_args[0]
+            assert "[RÉSULTAT TIRAGE" in args[0]  # enrichment_context
+            assert "10 - 22 - 23 - 25 - 46" in args[1]  # gemini response text
+            assert args[2] == "1"  # phase
+
+    @pytest.mark.asyncio
+    async def test_check_not_called_on_fallback(self):
+        """call_gemini_and_respond does NOT call hallucination check on fallback."""
+        ctx = {
+            "mode": "balanced",
+            "_http_client": MagicMock(),
+            "gem_api_key": "fake",
+            "system_prompt": "test",
+            "contents": [],
+            "insult_prefix": "",
+            "history": [],
+            "_chat_meta": {"enrichment_context": "", "phase": "1", "t0": 0, "lang": "fr"},
+        }
+        fallback_result = {"response": "fallback", "source": "fallback", "mode": "balanced"}
+
+        with patch("services.chat_pipeline_gemini._gemini_call_with_fallback", return_value=fallback_result), \
+             patch("services.chat_pipeline_gemini._check_sql_number_hallucination") as mock_check:
+            result = await call_gemini_and_respond(
+                ctx, "fallback", "[TEST]", "loto", "fr", "test", "home",
+            )
+            mock_check.assert_not_called()
+            assert result["source"] == "fallback"
+
+    @pytest.mark.asyncio
+    async def test_check_no_crash_without_meta(self):
+        """call_gemini_and_respond handles missing _chat_meta gracefully."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "OK"}]}}],
+        }
+
+        ctx = {
+            "mode": "balanced",
+            "_http_client": MagicMock(),
+            "gem_api_key": "fake",
+            "system_prompt": "test",
+            "contents": [],
+            "insult_prefix": "",
+            "history": [],
+        }
+
+        with patch("services.chat_pipeline_gemini._gemini_call_with_fallback", return_value=mock_response), \
+             patch("services.chat_pipeline_gemini._check_sql_number_hallucination") as mock_check:
+            result = await call_gemini_and_respond(
+                ctx, "fallback", "[TEST]", "loto", "fr", "test", "home",
+            )
+            mock_check.assert_called_once()
+            assert result["source"] == "gemini"
+
+
+# ═══════════════════════════════════════════════════════
+# V100 R04 — Extended draw sequence regex
+# ═══════════════════════════════════════════════════════
+
+from services.chat_pipeline_gemini import _DRAW_SEQUENCE_RE
+
+
+class TestR04DrawSequenceExtended:
+    """V100 R04: _DRAW_SEQUENCE_RE matches multilang conjunction separators."""
+
+    def test_dash_separator_still_works(self):
+        """Original dash separator still matches."""
+        assert _DRAW_SEQUENCE_RE.search("10 - 22 - 23 - 25 - 46")
+
+    def test_comma_separator_still_works(self):
+        """Original comma separator still matches."""
+        assert _DRAW_SEQUENCE_RE.search("10, 22, 23, 25, 46")
+
+    def test_fr_et_separator(self):
+        """French 'et' conjunction matches."""
+        m = _DRAW_SEQUENCE_RE.search("10, 22, 23 et 25, 46")
+        assert m
+        assert m.groups() == ("10", "22", "23", "25", "46")
+
+    def test_en_and_separator(self):
+        """English 'and' conjunction matches."""
+        m = _DRAW_SEQUENCE_RE.search("10, 22, 23 and 25, 46")
+        assert m
+        assert m.groups() == ("10", "22", "23", "25", "46")
+
+    def test_es_y_separator(self):
+        """Spanish 'y' conjunction matches."""
+        m = _DRAW_SEQUENCE_RE.search("10 - 22 - 23 - 25 y 46")
+        assert m
+        assert m.groups() == ("10", "22", "23", "25", "46")
+
+    def test_de_und_separator(self):
+        """German 'und' conjunction matches."""
+        m = _DRAW_SEQUENCE_RE.search("10, 22, 23, 25 und 46")
+        assert m
+        assert m.groups() == ("10", "22", "23", "25", "46")
+
+    def test_nl_en_separator(self):
+        """Dutch 'en' conjunction matches."""
+        m = _DRAW_SEQUENCE_RE.search("10 - 22 - 23 - 25 en 46")
+        assert m
+        assert m.groups() == ("10", "22", "23", "25", "46")
+
+    def test_pt_e_separator(self):
+        """Portuguese 'e' conjunction matches."""
+        m = _DRAW_SEQUENCE_RE.search("10, 22, 23, 25 e 46")
+        assert m
+        assert m.groups() == ("10", "22", "23", "25", "46")
+
+    def test_all_et_separators(self):
+        """All 5 separators as 'et' — extreme case."""
+        m = _DRAW_SEQUENCE_RE.search("10 et 22 et 23 et 25 et 46")
+        assert m
+        assert m.groups() == ("10", "22", "23", "25", "46")
+
+    def test_mixed_dash_and_et(self):
+        """Mix of dash and 'et' separators."""
+        m = _DRAW_SEQUENCE_RE.search("10 - 22 - 23 - 25 et 46")
+        assert m
+        assert m.groups() == ("10", "22", "23", "25", "46")
+
+
+class TestR04NoFalsePositives:
+    """V100 R04: normal text with 'et'/'and' must NOT trigger draw sequence match."""
+
+    def test_normal_sentence_with_et(self):
+        """Normal sentence with 'et' does not match."""
+        assert not _DRAW_SEQUENCE_RE.search("il a mangé et bu du café")
+
+    def test_two_numbers_with_et(self):
+        """Two numbers with 'et' — not 5, no match."""
+        assert not _DRAW_SEQUENCE_RE.search("Le 22 et le 33 sont chauds")
+
+    def test_three_numbers_not_enough(self):
+        """Three numbers — not 5, no match."""
+        assert not _DRAW_SEQUENCE_RE.search("Les numéros 10, 22 et 33")
+
+    def test_score_fraction_no_match(self):
+        """Score like '85/100' is not a draw sequence."""
+        assert not _DRAW_SEQUENCE_RE.search("Score de conformité : 85/100")
+
+    def test_stats_text_no_match(self):
+        """Stats text does not trigger false positive."""
+        assert not _DRAW_SEQUENCE_RE.search("Le 22 est sorti 104 fois sur 980 tirages.")

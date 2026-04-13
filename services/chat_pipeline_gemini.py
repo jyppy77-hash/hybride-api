@@ -54,8 +54,10 @@ _DATA_TAG_RE = re.compile(
 )
 
 # V99 F08: detect draw-like number sequences in Gemini response (e.g. "12 - 14 - 22 - 31 - 44")
+# V100 R04: extended to support multilang conjunctions (et/and/y/und/en/e)
+_DRAW_SEP = r'(?:\s*[-–—,]\s*|\s+(?:et|and|y|und|en|e)\s+)'
 _DRAW_SEQUENCE_RE = re.compile(
-    r'(\d{1,2})\s*[-–—,]\s*(\d{1,2})\s*[-–—,]\s*(\d{1,2})\s*[-–—,]\s*(\d{1,2})\s*[-–—,]\s*(\d{1,2})',
+    rf'(\d{{1,2}}){_DRAW_SEP}(\d{{1,2}}){_DRAW_SEP}(\d{{1,2}}){_DRAW_SEP}(\d{{1,2}}){_DRAW_SEP}(\d{{1,2}})',
 )
 
 
@@ -240,6 +242,12 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
                         text += "\n\n" + sponsor_line
                     logger.info(f"{log_prefix} OK (page={page}, mode={mode})")
                     log_from_meta(ctx.get("_chat_meta"), module, lang, message, text)
+                    # V100 R01: Anti-hallucination check (aligned with stream_and_respond)
+                    _meta = ctx.get("_chat_meta") or {}
+                    _check_sql_number_hallucination(
+                        _meta.get("enrichment_context", ""), text,
+                        _meta.get("phase", ""), log_prefix,
+                    )
                     return {"response": text, "source": "gemini", "mode": mode}
 
     logger.warning(f"{log_prefix} Reponse Gemini invalide: {response.status_code}")
