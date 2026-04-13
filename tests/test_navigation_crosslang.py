@@ -224,15 +224,15 @@ class TestJsonLdLicense:
             content = f.read()
         assert '"license": "https://lotoia.fr/mentions-legales"' not in content
 
-    def test_license_uses_template_vars(self):
-        """License field should reference {{ base_url }} and {{ urls.mentions }}."""
+    def test_license_uses_cc_url(self):
+        """License field should use Creative Commons BY-NC-ND 4.0 URL."""
         filepath = os.path.join(
             os.path.dirname(os.path.dirname(__file__)),
             "ui", "templates", "em", "statistiques.html",
         )
         with open(filepath, encoding="utf-8") as f:
             content = f.read()
-        assert "{{ base_url }}{{ urls.mentions }}" in content
+        assert "https://creativecommons.org/licenses/by-nc-nd/4.0/" in content
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
