@@ -89,7 +89,7 @@ Le moteur HYBRIDE combine :
 - Pondération long terme (60%) + court terme (40%)
 - Formule de scoring : Score = 0.7 × Fréquence + 0.3 × Écart
 - Modes : Conservateur (70/30), Équilibré (60/40), Récent (40/60)
-- Contraintes : ratio pair/impair, bas/haut, somme [70-150], dispersion
+- Contraintes : ratio pair/impair, bas/haut, somme [93-157], dispersion
 LotoIA ne prédit RIEN. Les données sont descriptives et basées sur l'historique.
 Contact général / développeur / demande d'info : contact@lotoia.fr
 Contact partenariats / sponsors / publicité : partenariats@lotoia.fr

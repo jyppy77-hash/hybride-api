@@ -5652,3 +5652,143 @@ body.theme-night .sponsor-result-banner a {
     .ball-drop.ball-animate { animation: none !important; opacity: 1 !important; transform: none !important; }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   V108: Dark mode contrast fix — generators + simulators (Loto + EM)
+   Badges, convergence labels, analysis text, grid cards
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* --- Visual badges: hardcoded pastels → dark-adapted --- */
+body.theme-night .visual-badge.badge-default {
+    background: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+}
+
+body.theme-night .visual-badge.badge-hot {
+    background: rgba(239, 68, 68, 0.15);
+    color: #fca5a5;
+}
+
+body.theme-night .visual-badge.badge-spectrum {
+    background: rgba(59, 130, 246, 0.15);
+    color: #93c5fd;
+}
+
+body.theme-night .visual-badge.badge-balanced {
+    background: rgba(34, 197, 94, 0.15);
+    color: #86efac;
+}
+
+body.theme-night .visual-badge.badge-hybrid {
+    background: rgba(168, 85, 247, 0.15);
+    color: #d8b4fe;
+}
+
+body.theme-night .visual-badge.badge-gap {
+    background: rgba(249, 115, 22, 0.15);
+    color: #fdba74;
+}
+
+/* --- Convergence indicator (profil chaud/équilibré/froid) --- */
+body.theme-night .grid-convergence-indicator .convergence-label {
+    color: var(--theme-text-secondary);
+}
+
+body.theme-night .grid-convergence-indicator.convergence-elevated .convergence-value {
+    color: #818cf8;
+    background: rgba(129, 140, 248, 0.12);
+}
+
+body.theme-night .grid-convergence-indicator.convergence-moderate .convergence-value {
+    color: #a5b4fc;
+    background: rgba(165, 180, 252, 0.10);
+}
+
+body.theme-night .grid-convergence-indicator.convergence-partial .convergence-value {
+    color: #c7d2fe;
+    background: rgba(199, 210, 254, 0.08);
+}
+
+/* --- Grid card background & text --- */
+body.theme-night .grid-visual-card {
+    background: var(--theme-bg-card);
+    border-color: var(--theme-border);
+}
+
+/* --- Analysis header title --- */
+body.theme-night .analysis-header h3 {
+    color: var(--theme-text-primary);
+}
+
+/* --- Results header (generator: "Grilles Recommandées Pour Le...") --- */
+body.theme-night .results-header h2 {
+    color: #e2e8f0;
+}
+
+body.theme-night .results-meta {
+    color: #94a3b8;
+}
+
+body.theme-night .results-meta span {
+    background: rgba(255, 255, 255, 0.06);
+    color: #94a3b8;
+}
+
+/* --- Key info section (generator result card) --- */
+body.theme-night .key-info {
+    background: rgba(255, 255, 255, 0.04);
+}
+
+/* --- Meta items (date, mode, tirages count) --- */
+body.theme-night .meta-item {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--theme-text-secondary);
+}
+
+/* --- Grid header (GRILLE #N label) --- */
+body.theme-night .grid-visual-header .grid-number {
+    color: var(--theme-text-primary);
+}
+
+body.theme-night .grid-visual-header .grid-score {
+    color: var(--theme-text-secondary);
+}
+
+/* --- News CTA button (V109) --- */
+.news-cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 28px;
+    font-size: 15px;
+    font-weight: 600;
+    background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25);
+    margin-top: 16px;
+}
+
+.news-cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(59, 130, 246, 0.35);
+    color: white;
+    text-decoration: none;
+}
+
+.news-cta-btn:active {
+    transform: translateY(0);
+}
+
+body.theme-night .news-cta-btn {
+    background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.2);
+}
+
+body.theme-night .news-cta-btn:hover {
+    box-shadow: 0 6px 24px rgba(99, 102, 241, 0.3);
+}
+

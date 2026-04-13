@@ -95,6 +95,36 @@ class EngineConfig:
     penalization_method: str = "multiplicative"  # "multiplicative" (default) or "z_score"
     z_score_offsets: tuple = (0.0, 2.0, 1.0, 0.5)  # T-1 (exclusion), T-2, T-3, T-4
 
+    # V104: Zone stratification — 1 number per zone for spatial diversity
+    # Empty tuple = disabled (legacy global draw). Set per game below.
+    zones: tuple = ()
+
+    # V105: Saturation Brake — intra-batch rotation (Gemini Deep Research R4)
+    # Numbers selected in grid i get score × saturation_brake in grid i+1.
+    saturation_brake: float = 0.20        # ×0.20 for balls (80% reduction)
+    saturation_brake_secondary: float = 0.30  # ×0.30 for stars/chance (70% reduction, smaller universe)
+
+    # V106: Unpopularity scoring — penalize over-played numbers (Gemini Deep Research R3)
+    # Applied to balls only (not stars/chance — universe too small).
+    unpopularity_enabled: bool = True
+
+    # V107: ESI (Even Spacing Index) filter — reject over-regular or clustered grids
+    # Post-generation validation, not scoring. Applied in generer_grille() retry loop.
+    esi_min: int = 20    # reject if ESI < min (too regular, over-played pattern)
+    esi_max: int = 800   # reject if ESI > max (too clustered, atypical)
+
+
+# V104: Zone boundaries for stratified selection (Gemini Deep Research R1)
+LOTO_ZONES = ((1, 10), (11, 20), (21, 30), (31, 40), (41, 49))
+EM_ZONES = ((1, 10), (11, 20), (21, 30), (31, 40), (41, 50))
+
+# V106: Unpopularity coefficients (Gemini Deep Research R3 P2)
+# Source: "Number preferences in lotteries" (Cambridge),
+#         "The Demand for Lotto: Conscious Selection" (ResearchGate)
+UNPOP_BIRTHDAY_MONTHS = 0.85    # 1-12: over-selected as birth months
+UNPOP_BIRTHDAY_DAYS = 0.92      # 13-31: over-selected as birth days
+UNPOP_LUCKY_SEVEN = 0.80        # 7: universal lucky number
+UNPOP_MULTIPLES_OF_5 = 0.93     # 5,10,15,...: round-number preference
 
 _STAR_SCORES = {5: 95, 4: 85, 3: 75, 2: 60, 1: 50}
 
@@ -134,8 +164,9 @@ LOTO_CONFIG = EngineConfig(
     poids_retard=0.3,
     modes=_MODES_3W,
     temperature_by_mode=_TEMPERATURES,
-    somme_min=70,
-    somme_max=150,
+    # V103: calibré [μ-σ, μ+σ] — E(S)=125.0, σ=32.4 pour 5/49
+    somme_min=93,
+    somme_max=157,
     seuil_bas_haut=24,
     dispersion_min=15,
     max_consecutifs=2,
@@ -156,6 +187,10 @@ LOTO_CONFIG = EngineConfig(
     decay_rate=0.10,
     decay_rate_secondary=0.12,  # chance — univers de 10
     decay_acceleration=0.03,
+    # V104: zone stratification
+    zones=LOTO_ZONES,
+    # V107: ESI — Loto 5/49
+    esi_max=750,
 )
 
 EM_CONFIG = EngineConfig(
@@ -177,9 +212,9 @@ EM_CONFIG = EngineConfig(
     poids_retard=0.3,
     modes=_MODES_3W,
     temperature_by_mode=_TEMPERATURES,
-    # V79 F04→V92: [75,175]→[95,160]→[95,175]. V92 recalibration: 160 sur-contraint (+25.7 vs réel)
-    somme_min=95,
-    somme_max=175,
+    # V103: calibré [μ-σ, μ+σ] — E(S)=127.5, σ=33.8 pour 5/50
+    somme_min=94,
+    somme_max=161,
     seuil_bas_haut=25,
     dispersion_min=15,
     max_consecutifs=2,
@@ -202,4 +237,6 @@ EM_CONFIG = EngineConfig(
     decay_acceleration=0.03,
     # V92 F04: noise migré dans config, EM légèrement plus élevé (diversité univers 50)
     noise_by_mode={"conservative": 0.0, "balanced": 0.10, "recent": 0.15},
+    # V104: zone stratification
+    zones=EM_ZONES,
 )

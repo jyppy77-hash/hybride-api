@@ -14,6 +14,8 @@ from datetime import datetime, timedelta, timezone
 from config.engine import EngineConfig
 from config.i18n import _badges as _i18n_badges
 from services.decay_state import calculate_decay_multiplier, get_decay_state
+from services.penalization import get_unpopularity_multiplier
+from services.esi import validate_esi
 
 logger = logging.getLogger(__name__)
 
@@ -658,6 +660,7 @@ class HybrideEngine:
         recent_draws: list[dict] | None = None,
         anti_collision: bool = False,
         decay_state_secondary: dict[int, int] | None = None,
+        saturated_secondary: set[int] | None = None,
     ) -> list[int]:
         scores = await self.calculer_scores_hybrides_secondary(conn, mode=mode)
         scores = self.apply_secondary_penalties(scores, recent_draws or [])
@@ -666,6 +669,11 @@ class HybrideEngine:
             scores = self.apply_decay(
                 scores, decay_state_secondary, rate=self.cfg.decay_rate_secondary,
             )
+        # V105: Saturation Brake for secondary numbers
+        if saturated_secondary:
+            _brake = self.cfg.saturation_brake_secondary
+            scores = {n: (s * _brake if n in saturated_secondary else s)
+                      for n, s in scores.items()}
         if anti_collision:
             scores = self.apply_secondary_anti_collision(scores)
 
@@ -691,6 +699,37 @@ class HybrideEngine:
             probas.pop(idx)
         return sorted(result)
 
+    # ── V104: Zone-stratified selection ─────────────────────────────────
+
+    def _draw_stratified(
+        self,
+        probas: dict[int, float],
+        forced_set: set[int],
+        hard_excluded: set[int],
+        exclusions: dict | None,
+    ) -> list[int]:
+        """Draw 1 number per zone using weighted sampling.
+
+        Each zone yields exactly 1 number. If a zone is empty after
+        exclusions and hard-exclude, the exclusions are relaxed for that zone.
+        """
+        result = []
+        for lo, hi in self.cfg.zones:
+            pool = [n for n in range(lo, hi + 1)
+                    if n not in forced_set and n not in hard_excluded]
+            pool = self._apply_exclusions(pool, exclusions)
+            if not pool:
+                # Relax exclusions — keep only hard-exclude
+                pool = [n for n in range(lo, hi + 1)
+                        if n not in forced_set and n not in hard_excluded]
+            if not pool:
+                # Ultimate fallback — any number in zone (ignore hard-exclude too)
+                pool = [n for n in range(lo, hi + 1) if n not in forced_set]
+            weights = [probas.get(n, 0.001) for n in pool]
+            choice = random.choices(pool, weights=weights, k=1)[0]
+            result.append(choice)
+        return result
+
     # ── Grid generation ───────────────────────────────────────────────
 
     async def generer_grille(
@@ -705,6 +744,8 @@ class HybrideEngine:
         lang: str = "fr",
         decay_state: dict[int, int] | None = None,
         decay_state_secondary: dict[int, int] | None = None,
+        saturated_balls: set[int] | None = None,
+        saturated_secondary: set[int] | None = None,
     ) -> dict:
         if forced_nums is None:
             forced_nums = []
@@ -720,6 +761,18 @@ class HybrideEngine:
         # Decay score (step 4a — break kernel lock)
         if decay_state:
             penalized = self.apply_decay(penalized, decay_state)
+        # V105: Saturation Brake (step 4c — after decay, before anti-collision)
+        # Numbers selected in a previous grid of the same batch get heavily penalized.
+        # forced_nums are excluded from saturation (user-chosen, must be respected).
+        if saturated_balls:
+            _brake = self.cfg.saturation_brake
+            penalized = {n: (s * _brake if n in saturated_balls and n not in forced_set else s)
+                         for n, s in penalized.items()}
+        # V106: Unpopularity scoring (step 4d — after saturation, before anti-collision)
+        # Penalizes over-played numbers (calendar bias, lucky 7, multiples of 5).
+        # Applied to balls only, not secondary (universe too small).
+        if self.cfg.unpopularity_enabled:
+            penalized = {n: s * get_unpopularity_multiplier(n) for n, s in penalized.items()}
         # Anti-collision (step 5)
         if anti_collision:
             penalized = self.apply_anti_collision(penalized)
@@ -732,10 +785,15 @@ class HybrideEngine:
 
         nb_to_draw = self.cfg.num_count - len(forced_nums)
 
+        # V104: use zone-stratified draw when zones configured and no forced numbers
+        use_stratified = bool(self.cfg.zones) and not forced_nums
+
         # Wildcard: reserve 1 slot for a cold number if enabled and slots available
+        # Disabled in stratified mode (zone 5 already guarantees high/cold numbers)
         use_wildcard = (
             self.cfg.wildcard_enabled
-            and nb_to_draw >= 2  # need at least 2 free slots (1 normal + 1 wildcard)
+            and nb_to_draw >= 2
+            and not use_stratified
         )
         normal_draw_count = (nb_to_draw - 1) if use_wildcard else nb_to_draw
 
@@ -747,52 +805,61 @@ class HybrideEngine:
             noisy = self.apply_noise(penalized, noise_factor)
             probas = self.normaliser_en_probabilites(noisy, temperature=temperature)
 
-            disponibles = [n for n in range(self.cfg.num_min, self.cfg.num_max + 1)
-                           if n not in forced_set and n not in hard_excluded]
-            disponibles = self._apply_exclusions(disponibles, exclusions)
-            if len(disponibles) < nb_to_draw:
+            if use_stratified:
+                # V104: 1 number per zone
+                numeros = self._draw_stratified(probas, forced_set, hard_excluded, exclusions)
+            else:
+                # Legacy global draw (used when forced_nums or zones not configured)
                 disponibles = [n for n in range(self.cfg.num_min, self.cfg.num_max + 1)
-                               if n not in forced_set]
-            p_list = [probas[n] for n in disponibles]
+                               if n not in forced_set and n not in hard_excluded]
+                disponibles = self._apply_exclusions(disponibles, exclusions)
+                if len(disponibles) < nb_to_draw:
+                    disponibles = [n for n in range(self.cfg.num_min, self.cfg.num_max + 1)
+                                   if n not in forced_set]
+                p_list = [probas[n] for n in disponibles]
 
-            numeros = list(forced_nums)
-            drawn_set = set(forced_nums)
-            # Weighted sampling without replacement
-            for _ in range(normal_draw_count):
-                num = random.choices(disponibles, weights=p_list, k=1)[0]
-                numeros.append(num)
-                drawn_set.add(num)
-                idx = disponibles.index(num)
-                disponibles.pop(idx)
-                p_list.pop(idx)
+                numeros = list(forced_nums)
+                drawn_set = set(forced_nums)
+                # Weighted sampling without replacement
+                for _ in range(normal_draw_count):
+                    num = random.choices(disponibles, weights=p_list, k=1)[0]
+                    numeros.append(num)
+                    drawn_set.add(num)
+                    idx = disponibles.index(num)
+                    disponibles.pop(idx)
+                    p_list.pop(idx)
 
-            # Step 7b: wildcard cold slot
-            if use_wildcard:
-                # Wildcard must also respect exclusions dict
-                excl_set = set(exclusions.get("exclude_nums", [])) if exclusions else set()
-                wc = self._select_wildcard(noisy, drawn_set | hard_excluded | excl_set)
-                if wc is not None and wc not in drawn_set:
-                    numeros.append(wc)
-                else:
-                    # Fallback: draw 1 more normally
-                    if disponibles and p_list:
-                        num = random.choices(disponibles, weights=p_list, k=1)[0]
-                        numeros.append(num)
-                    elif disponibles:
-                        numeros.append(random.choice(disponibles))
+                # Step 7b: wildcard cold slot
+                if use_wildcard:
+                    excl_set = set(exclusions.get("exclude_nums", [])) if exclusions else set()
+                    wc = self._select_wildcard(noisy, drawn_set | hard_excluded | excl_set)
+                    if wc is not None and wc not in drawn_set:
+                        numeros.append(wc)
                     else:
-                        # Ultimate fallback: any non-drawn number
-                        remaining = [n for n in range(self.cfg.num_min, self.cfg.num_max + 1)
-                                     if n not in drawn_set]
-                        if remaining:
-                            numeros.append(random.choice(remaining))
+                        if disponibles and p_list:
+                            num = random.choices(disponibles, weights=p_list, k=1)[0]
+                            numeros.append(num)
+                        elif disponibles:
+                            numeros.append(random.choice(disponibles))
+                        else:
+                            remaining = [n for n in range(self.cfg.num_min, self.cfg.num_max + 1)
+                                         if n not in drawn_set]
+                            if remaining:
+                                numeros.append(random.choice(remaining))
 
             numeros = sorted(numeros)
             conf = self.valider_contraintes(numeros)
-            if meilleure_grille is None or conf > meilleur_score:
+            # V107: ESI filter — reject over-regular or clustered grids
+            _esi_ok = validate_esi(
+                numeros, self.cfg.num_max,
+                self.cfg.esi_min, self.cfg.esi_max,
+            )
+            # Grid quality: conformity score, penalized if ESI fails
+            _effective_conf = conf if _esi_ok else conf * 0.5
+            if meilleure_grille is None or _effective_conf > meilleur_score:
                 meilleure_grille = numeros
-                meilleur_score = conf
-            if conf >= self.cfg.min_conformite:
+                meilleur_score = _effective_conf
+            if conf >= self.cfg.min_conformite and _esi_ok:
                 break
 
         numeros = meilleure_grille
@@ -805,6 +872,7 @@ class HybrideEngine:
             all_sec = await self.generer_secondary(
                 conn, mode=mode, recent_draws=recent_draws, anti_collision=anti_collision,
                 decay_state_secondary=decay_state_secondary,
+                saturated_secondary=saturated_secondary,
             )
             secondary = list(forced_secondary)
             for s in all_sec:
@@ -815,6 +883,7 @@ class HybrideEngine:
             secondary = await self.generer_secondary(
                 conn, mode=mode, recent_draws=recent_draws, anti_collision=anti_collision,
                 decay_state_secondary=decay_state_secondary,
+                saturated_secondary=saturated_secondary,
             )
 
         score_final = self._calculer_score_final(score_conformite, self.cfg.star_to_legacy_score)
@@ -947,6 +1016,9 @@ class HybrideEngine:
                     logger.debug("decay_state_secondary unavailable — generating without secondary decay")
 
             grilles = []
+            # V105: Saturation Brake — accumulate selected numbers across batch
+            _saturated_balls: set[int] = set()
+            _saturated_secondary: set[int] = set()
             for _ in range(n):
                 grille = await self.generer_grille(
                     conn, scores_hybrides, mode=mode,
@@ -955,8 +1027,17 @@ class HybrideEngine:
                     exclusions=exclusions, recent_draws=recent_draws, lang=lang,
                     decay_state=decay_state,
                     decay_state_secondary=decay_state_secondary,
+                    saturated_balls=_saturated_balls if _saturated_balls else None,
+                    saturated_secondary=_saturated_secondary if _saturated_secondary else None,
                 )
                 grilles.append(grille)
+                # Accumulate for next grid in batch
+                _saturated_balls.update(grille['nums'])
+                _sec = grille.get(self.cfg.secondary_name)
+                if isinstance(_sec, list):
+                    _saturated_secondary.update(_sec)
+                elif _sec is not None:
+                    _saturated_secondary.add(_sec)
 
             grilles = sorted(grilles, key=lambda g: g['score'], reverse=True)
 

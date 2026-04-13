@@ -7,10 +7,36 @@ V2 — Hard-exclude T-1 + fenetre 4 tirages (F01+F02 audit 360°).
 V2-only since V79 (F02 audit Engine HYBRIDE — legacy V1 path removed 01/04/2026).
 """
 
-from config.engine import PENALTY_COEFFICIENTS, _SUPERSTITIOUS
+from config.engine import (
+    PENALTY_COEFFICIENTS, _SUPERSTITIOUS,
+    UNPOP_BIRTHDAY_MONTHS, UNPOP_BIRTHDAY_DAYS,
+    UNPOP_LUCKY_SEVEN, UNPOP_MULTIPLES_OF_5,
+)
+from services.decay_state import calculate_decay_multiplier
 
 # V2 coefficients — imported from config/engine.py (single source of truth).
 PENALIZATION_COEFFS = list(PENALTY_COEFFICIENTS)
+
+
+def get_unpopularity_multiplier(num: int) -> float:
+    """V106: Calculate unpopularity multiplier for a ball number.
+
+    Penalizes numbers that are over-played by the public (calendar bias,
+    lucky numbers, round-number preference). Coefficients are multiplicative.
+
+    Returns a float between ~0.79 (worst: birthday month + multiple of 5)
+    and 1.0 (no penalty: numbers 32+ not multiple of 5).
+    """
+    mult = 1.0
+    if num == 7:
+        mult *= UNPOP_LUCKY_SEVEN
+    elif 1 <= num <= 12:
+        mult *= UNPOP_BIRTHDAY_MONTHS
+    if 13 <= num <= 31:
+        mult *= UNPOP_BIRTHDAY_DAYS
+    if num > 0 and num % 5 == 0:
+        mult *= UNPOP_MULTIPLES_OF_5
+    return mult
 
 
 def compute_penalized_ranking(
@@ -21,6 +47,9 @@ def compute_penalized_ranking(
     top_n: int,
     *,
     recent_draws: list[set[int]] | None = None,
+    decay_state: dict[int, int] | None = None,
+    zones: tuple | None = None,
+    unpopularity: bool = True,
 ) -> tuple[list[dict], dict]:
     """
     Applique une penalisation V2 (hard-exclude T-1 + fenetre 4 tirages).
@@ -32,6 +61,12 @@ def compute_penalized_ranking(
         num_range: plage de numeros valides (ex: range(1, 50) pour Loto boules)
         top_n: nombre de numeros a retourner (5 pour boules, 3 pour chance/etoiles)
         recent_draws: [T-1, T-2, T-3, T-4] sets — REQUIRED.
+        decay_state: {number: consecutive_misses} from hybride_decay_state table (V102).
+            Applied AFTER T-1→T-4 penalization. None or {} = no decay applied.
+        zones: tuple of (lo, hi) zone boundaries for V104 stratified top (optional).
+            When provided, penalization_info includes stratified_top: best number per zone.
+        unpopularity: apply V106 unpopularity scoring (default True).
+            Penalizes over-played numbers (1-31, lucky 7, multiples of 5).
 
     Returns:
         (top_list, penalization_info)
@@ -76,6 +111,29 @@ def compute_penalized_ranking(
             if coeff < 1.0:
                 penalized_numbers[n] = coeff
 
+    # V102: apply decay multiplier after T-1→T-4 penalization
+    # Numbers with consecutive_misses > 0 get their penalized score further reduced.
+    # Excluded numbers (T-1, penalized_map=-1.0) are skipped — already out of the ranking.
+    decay_applied: dict[int, float] = {}
+    if decay_state:
+        for n in num_range:
+            misses = decay_state.get(n, 0)
+            if misses > 0 and penalized_map.get(n, 0) > 0:
+                multiplier = calculate_decay_multiplier(misses)
+                penalized_map[n] *= multiplier
+                decay_applied[n] = multiplier
+
+    # V106: apply unpopularity scoring after decay
+    # Penalizes over-played numbers (calendar bias, lucky 7, multiples of 5).
+    unpopularity_applied: dict[int, float] = {}
+    if unpopularity:
+        for n in num_range:
+            if penalized_map.get(n, 0) > 0:
+                mult = get_unpopularity_multiplier(n)
+                if mult < 1.0:
+                    penalized_map[n] *= mult
+                    unpopularity_applied[n] = mult
+
     # Build sorted list — excluded numbers sink to the bottom
     all_items = [{"number": n, "count": raw_freq.get(n, 0)} for n in num_range]
     all_items.sort(key=lambda x: (-penalized_map[x["number"]], x["number"]))
@@ -95,10 +153,26 @@ def compute_penalized_ranking(
     raw_sorted = sorted(all_items, key=lambda x: (-x["count"], x["number"]))
     top_before = [{"number": x["number"], "count": x["count"]} for x in raw_sorted[:top_n]]
 
+    # V104: stratified top — best non-excluded number per zone
+    stratified_top: list[dict] = []
+    if zones:
+        for lo, hi in zones:
+            best = None
+            for item in all_items:
+                n = item["number"]
+                if lo <= n <= hi and n not in excluded_set:
+                    best = {"number": n, "count": item["count"], "zone": f"{lo}-{hi}"}
+                    break
+            if best:
+                stratified_top.append(best)
+
     penalization_info: dict = {
         "penalized_numbers": penalized_numbers,
         "top_before_penalization": top_before,
         "excluded_numbers": sorted(excluded_set),
+        "decay_applied": decay_applied,
+        "unpopularity_applied": unpopularity_applied,
+        "stratified_top": stratified_top,
     }
 
     return top_list, penalization_info

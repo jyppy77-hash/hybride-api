@@ -1230,3 +1230,70 @@ body.theme-day .chatbot-text strong {
     cursor: pointer;
     font-family: inherit;
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   V108: Dark mode contrast fix — simulateur badges + convergence
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* --- Simulateur badges --- */
+body.theme-night .badge {
+    background: rgba(255, 255, 255, 0.06);
+    color: #cbd5e1;
+    border-color: rgba(255, 255, 255, 0.12);
+}
+
+body.theme-night .badge.hot {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
+}
+
+body.theme-night .badge.balance {
+    background: rgba(34, 197, 94, 0.15);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: #86efac;
+}
+
+body.theme-night .badge.spectre {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: #93c5fd;
+}
+
+body.theme-night .badge.model {
+    background: rgba(168, 85, 247, 0.15);
+    border-color: rgba(168, 85, 247, 0.3);
+    color: #d8b4fe;
+}
+
+body.theme-night .badge.cold {
+    background: rgba(6, 182, 212, 0.15);
+    border-color: rgba(6, 182, 212, 0.3);
+    color: #67e8f9;
+}
+
+/* --- Convergence display --- */
+body.theme-night .convergence-display {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.theme-night .convergence-display-label {
+    color: var(--theme-text-secondary, #94a3b8);
+}
+
+body.theme-night .convergence-display-value {
+    color: #818cf8;
+}
+
+body.theme-night .convergence-display.convergence-moderate .convergence-display-value {
+    color: #a5b4fc;
+}
+
+body.theme-night .convergence-display.convergence-intermediate .convergence-display-value {
+    color: #c7d2fe;
+}
+
+body.theme-night .convergence-display.convergence-partial .convergence-display-value {
+    color: #94a3b8;
+}

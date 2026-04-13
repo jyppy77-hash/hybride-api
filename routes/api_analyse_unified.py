@@ -14,6 +14,7 @@ from config.games import ValidGame, get_config, get_engine
 from config.i18n import _badges, _analysis_strings
 from services.penalization import compute_penalized_ranking
 from services.decay_state import get_decay_state, check_and_update_decay
+from config.engine import LOTO_ZONES, EM_ZONES
 
 logger = logging.getLogger(__name__)
 
@@ -212,6 +213,27 @@ async def unified_meta_analyse_local(
             last_draw_date = draw_dates[0] if draw_dates else None
             second_last_date = draw_dates[1] if len(draw_dates) >= 2 else None
 
+        # V102: read decay state for META ranking (outside main conn block)
+        game_name = "euromillions" if not is_loto else "loto"
+        decay_balls: dict[int, int] = {}
+        decay_secondary: dict[int, int] = {}
+        try:
+            async with db_cloudsql.get_connection() as dconn:
+                await check_and_update_decay(dconn, game_name, cfg.table)
+        except Exception:
+            logger.debug("check_and_update_decay META failed — non-blocking")
+        try:
+            async with db_cloudsql.get_connection() as dconn:
+                decay_balls = await get_decay_state(dconn, game_name, "ball")
+                _ntype = "chance" if is_loto else "star"
+                decay_secondary = await get_decay_state(dconn, game_name, _ntype)
+        except Exception:
+            logger.debug("decay_state META unavailable — ranking without decay")
+
+        async with db_cloudsql.get_connection() as conn:
+            cursor = await conn.cursor()
+
+            _zones = LOTO_ZONES if is_loto else EM_ZONES
             top_numbers, penal_info_balls = compute_penalized_ranking(
                 raw_freq=freq_map,
                 last_draw_numbers=set(),
@@ -219,6 +241,8 @@ async def unified_meta_analyse_local(
                 num_range=range(1, cfg.num_range[1] + 1),
                 top_n=5,
                 recent_draws=recent_balls,
+                decay_state=decay_balls,
+                zones=_zones,
             )
 
             # Secondary numbers (chance / etoiles)
@@ -237,6 +261,8 @@ async def unified_meta_analyse_local(
                     num_range=range(1, 11),
                     top_n=3,
                     recent_draws=recent_secondary,
+                    decay_state=decay_secondary,
+                    unpopularity=False,  # V106: chance universe too small
                 )
             else:
                 await cursor.execute(f"""
@@ -254,6 +280,8 @@ async def unified_meta_analyse_local(
                     num_range=range(1, 13),
                     top_n=3,
                     recent_draws=recent_secondary,
+                    decay_state=decay_secondary,
+                    unpopularity=False,  # V106: stars universe too small
                 )
 
             # Dates de la fenetre
@@ -617,7 +645,7 @@ async def unified_analyze_custom_grid(
         suggestions = []
         alert_message = None
         somme_avg = 125 if is_loto else 127
-        somme_range_text = "80 et 170" if is_loto else "80 et 175"
+        somme_range_text = "93 et 157" if is_loto else "94 et 161"
         bas_haut_text = f"(1-{mid})"
         hauts_text = f"({mid+1}-{cfg.num_range[1]})"
         dispersion_max = cfg.num_range[1] - 1

@@ -5760,3 +5760,94 @@ msgstr "<strong>Sí</strong>, LotoIA es completamente gratuito."
 msgid "Tous les outils statistiques, le chatbot HYBRIDE, le générateur de grilles et le simulateur sont accessibles <strong>sans inscription ni paiement</strong>."
 msgstr "Todas las herramientas estadísticas, el chatbot HYBRIDE, el generador de combinaciones y el simulador son accesibles <strong>sin registro ni pago</strong>."
 
+
+msgid "13 avril 2026"
+msgstr "13 de abril de 2026"
+
+msgid "Moteur HYBRIDE v2.0 : analyse plus intelligente, grilles mieux construites"
+msgstr "Motor HYBRIDE v2.0: análisis más inteligente, cuadrículas mejor construidas"
+
+msgid ""
+"LotoIA fait évoluer son moteur d'analyse statistique HYBRIDE vers la version 2.0. Cette mise à jour majeure intègre six nouvelles couches "
+"d'optimisation, développées à partir de recherches académiques en combinatoire et en théorie des jeux."
+msgstr ""
+"LotoIA hace evolucionar su motor de análisis estadístico HYBRIDE a la versión 2.0. Esta actualización importante integra seis nuevas capas "
+"de optimización, desarrolladas a partir de investigaciones académicas en combinatoria y teoría de juegos."
+
+msgid "Stratification par zones"
+msgstr "Estratificación por zonas"
+
+msgid ""
+"Le moteur ne sélectionne plus les 5 meilleurs numéros absolus. Il découpe l'univers de jeu en 5 zones égales (1-10, 11-20, 21-30, 31-40, "
+"41-50) et sélectionne le meilleur numéro de chaque zone. Résultat : des grilles naturellement diversifiées, avec une couverture spatiale "
+"complète."
+msgstr ""
+"El motor ya no selecciona los 5 mejores números absolutos. Divide el universo de juego en 5 zonas iguales (1-10, 11-20, 21-30, 31-40, "
+"41-50) y selecciona el mejor número de cada zona. Resultado: cuadrículas naturalmente diversificadas, con una cobertura espacial completa."
+
+msgid "Contrainte de somme calibrée"
+msgstr "Restricción de suma calibrada"
+
+msgid ""
+"La fourchette de somme des grilles est désormais alignée sur la distribution statistique réelle des tirages (intervalle ±1 écart-type autour "
+"de la moyenne théorique). Fini les grilles dont la somme s'éloigne du profil habituel des tirages."
+msgstr ""
+"El rango de suma de las cuadrículas está ahora alineado con la distribución estadística real de los sorteos (intervalo ±1 desviación "
+"estándar alrededor de la media teórica). Se acabaron las cuadrículas cuya suma se aleja del perfil habitual de los sorteos."
+
+msgid "Decay visible dans les analyses"
+msgstr "Decay visible en los análisis"
+
+msgid ""
+"Le mécanisme de rotation (Decay Score) est désormais intégré dans les rapports PDF META DONNÉE. Les classements reflètent maintenant la "
+"dynamique réelle du moteur, pas seulement les fréquences brutes."
+msgstr ""
+"El mecanismo de rotación (Decay Score) está ahora integrado en los informes PDF META DATOS. Las clasificaciones reflejan ahora la dinámica "
+"real del motor, no solo las frecuencias brutas."
+
+msgid "Rotation forcée (Saturation Brake)"
+msgstr "Rotación forzada (Saturation Brake)"
+
+msgid ""
+"Quand plusieurs grilles sont générées en même temps, chaque grille tient compte des précédentes pour éviter les répétitions. Le moteur "
+"explore activement de nouvelles combinaisons au lieu de reproduire la même grille."
+msgstr ""
+"Cuando se generan varias cuadrículas al mismo tiempo, cada una tiene en cuenta las anteriores para evitar repeticiones. El motor explora "
+"activamente nuevas combinaciones en lugar de reproducir la misma cuadrícula."
+
+msgid "Optimisation anti-partage"
+msgstr "Optimización anti-reparto"
+
+msgid ""
+"Le moteur intègre désormais un scoring d'impopularité basé sur les études académiques sur le comportement des joueurs. Les numéros "
+"sur-joués par le public (dates de naissance, chiffres porte-bonheur) sont légèrement pénalisés pour favoriser des grilles qui maximisent le "
+"gain espéré en cas de jackpot."
+msgstr ""
+"El motor integra ahora una puntuación de impopularidad basada en estudios académicos sobre el comportamiento de los jugadores. Los números "
+"más jugados por el público (fechas de nacimiento, números de la suerte) son ligeramente penalizados para favorecer cuadrículas que "
+"maximicen la ganancia esperada en caso de bote."
+
+msgid "Filtre de naturalité (ESI)"
+msgstr "Filtro de naturalidad (ESI)"
+
+msgid ""
+"Chaque grille est validée par l'Even Spacing Index, un indice qui mesure la dispersion des numéros. Les grilles trop régulières "
+"(sur-jouées) ou trop clusterisées (atypiques) sont automatiquement rejetées."
+msgstr ""
+"Cada cuadrícula es validada por el Even Spacing Index, un índice que mide la dispersión de los números. Las cuadrículas demasiado regulares "
+"(sobre-jugadas) o demasiado agrupadas (atípicas) son rechazadas automáticamente."
+
+msgid ""
+"L'EuroMillions reste un jeu de hasard. Chaque combinaison a exactement la même probabilité d'être tirée. LotoIA est un outil d'analyse "
+"statistique pédagogique : il ne prédit pas les résultats, il optimise la construction des grilles en s'appuyant sur les mathématiques "
+"combinatoires et la théorie des jeux."
+msgstr ""
+"El EuroMillones sigue siendo un juego de azar. Cada combinación tiene exactamente la misma probabilidad de salir sorteada. LotoIA es una "
+"herramienta de análisis estadístico pedagógica: no predice resultados, optimiza la construcción de cuadrículas basándose en las matemáticas "
+"combinatorias y la teoría de juegos."
+
+msgid "Testez le nouveau moteur dès maintenant dans le Générateur de grilles."
+msgstr "Prueba el nuevo motor ahora en el Generador de cuadrículas."
+
+msgid "Testez le nouveau moteur dès maintenant"
+msgstr "Prueba el nuevo motor ahora"

@@ -25,8 +25,8 @@ class GameConfig:
     cache_prefix: str            # "" | "em:"
     log_label: str               # "" | " EM"
     mid_threshold: int           # 24 | 25
-    somme_range: tuple           # (70, 150) | (75, 175) — conformity scoring
-    somme_pitch_range: tuple     # (100, 140) | (75, 175) — pitch display
+    somme_range: tuple           # (93, 157) | (94, 161) — conformity scoring (V103 [μ-σ, μ+σ])
+    somme_pitch_range: tuple     # (93, 157) | (94, 161) — pitch display (V103)
     freq_divisor: int            # 49 | 50
     secondary_key: str           # "chance" | "etoiles"
     secondary_match_key: str     # "chance_match" | "etoiles_match"

@@ -5488,3 +5488,92 @@ msgstr "<strong>Yes</strong>, LotoIA is completely free."
 msgid "Tous les outils statistiques, le chatbot HYBRIDE, le générateur de grilles et le simulateur sont accessibles <strong>sans inscription ni paiement</strong>."
 msgstr "All statistical tools, the HYBRIDE chatbot, the grid generator, and the simulator are accessible <strong>without registration or payment</strong>."
 
+
+msgid "13 avril 2026"
+msgstr "13 April 2026"
+
+msgid "Moteur HYBRIDE v2.0 : analyse plus intelligente, grilles mieux construites"
+msgstr "HYBRIDE Engine v2.0: smarter analysis, better-built grids"
+
+msgid ""
+"LotoIA fait évoluer son moteur d'analyse statistique HYBRIDE vers la version 2.0. Cette mise à jour majeure intègre six nouvelles couches "
+"d'optimisation, développées à partir de recherches académiques en combinatoire et en théorie des jeux."
+msgstr ""
+"LotoIA upgrades its HYBRIDE statistical analysis engine to version 2.0. This major update integrates six new optimisation layers, developed "
+"from academic research in combinatorics and game theory."
+
+msgid "Stratification par zones"
+msgstr "Zone stratification"
+
+msgid ""
+"Le moteur ne sélectionne plus les 5 meilleurs numéros absolus. Il découpe l'univers de jeu en 5 zones égales (1-10, 11-20, 21-30, 31-40, "
+"41-50) et sélectionne le meilleur numéro de chaque zone. Résultat : des grilles naturellement diversifiées, avec une couverture spatiale "
+"complète."
+msgstr ""
+"The engine no longer selects the 5 best overall numbers. It divides the number pool into 5 equal zones (1-10, 11-20, 21-30, 31-40, 41-50) "
+"and picks the best number from each zone. Result: naturally diversified grids with complete spatial coverage."
+
+msgid "Contrainte de somme calibrée"
+msgstr "Calibrated sum constraint"
+
+msgid ""
+"La fourchette de somme des grilles est désormais alignée sur la distribution statistique réelle des tirages (intervalle ±1 écart-type autour "
+"de la moyenne théorique). Fini les grilles dont la somme s'éloigne du profil habituel des tirages."
+msgstr ""
+"The grid sum range is now aligned with the actual statistical distribution of real draws (±1 standard deviation around the theoretical mean). "
+"No more grids whose sum strays from the typical draw profile."
+
+msgid "Decay visible dans les analyses"
+msgstr "Decay visible in analyses"
+
+msgid ""
+"Le mécanisme de rotation (Decay Score) est désormais intégré dans les rapports PDF META DONNÉE. Les classements reflètent maintenant la "
+"dynamique réelle du moteur, pas seulement les fréquences brutes."
+msgstr ""
+"The rotation mechanism (Decay Score) is now integrated into META DATA PDF reports. Rankings now reflect the engine's real dynamics, not just "
+"raw frequencies."
+
+msgid "Rotation forcée (Saturation Brake)"
+msgstr "Forced rotation (Saturation Brake)"
+
+msgid ""
+"Quand plusieurs grilles sont générées en même temps, chaque grille tient compte des précédentes pour éviter les répétitions. Le moteur "
+"explore activement de nouvelles combinaisons au lieu de reproduire la même grille."
+msgstr ""
+"When multiple grids are generated at once, each grid accounts for the previous ones to avoid repetitions. The engine actively explores new "
+"combinations instead of reproducing the same grid."
+
+msgid "Optimisation anti-partage"
+msgstr "Anti-sharing optimisation"
+
+msgid ""
+"Le moteur intègre désormais un scoring d'impopularité basé sur les études académiques sur le comportement des joueurs. Les numéros "
+"sur-joués par le public (dates de naissance, chiffres porte-bonheur) sont légèrement pénalisés pour favoriser des grilles qui maximisent le "
+"gain espéré en cas de jackpot."
+msgstr ""
+"The engine now includes an unpopularity scoring based on academic studies of player behaviour. Numbers over-played by the public (birth "
+"dates, lucky numbers) are slightly penalised to favour grids that maximise expected winnings in case of a jackpot."
+
+msgid "Filtre de naturalité (ESI)"
+msgstr "Naturalness filter (ESI)"
+
+msgid ""
+"Chaque grille est validée par l'Even Spacing Index, un indice qui mesure la dispersion des numéros. Les grilles trop régulières "
+"(sur-jouées) ou trop clusterisées (atypiques) sont automatiquement rejetées."
+msgstr ""
+"Each grid is validated by the Even Spacing Index, a metric that measures number dispersion. Grids that are too regular (over-played) or too "
+"clustered (atypical) are automatically rejected."
+
+msgid ""
+"L'EuroMillions reste un jeu de hasard. Chaque combinaison a exactement la même probabilité d'être tirée. LotoIA est un outil d'analyse "
+"statistique pédagogique : il ne prédit pas les résultats, il optimise la construction des grilles en s'appuyant sur les mathématiques "
+"combinatoires et la théorie des jeux."
+msgstr ""
+"EuroMillions remains a game of chance. Every combination has exactly the same probability of being drawn. LotoIA is an educational "
+"statistical analysis tool: it does not predict results, it optimises grid construction using combinatorial mathematics and game theory."
+
+msgid "Testez le nouveau moteur dès maintenant dans le Générateur de grilles."
+msgstr "Try the new engine now in the Grid Generator."
+
+msgid "Testez le nouveau moteur dès maintenant"
+msgstr "Try the new engine now"

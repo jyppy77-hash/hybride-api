@@ -147,7 +147,7 @@ def _format_grille_context(result: dict) -> str:
     """Formate l'analyse de grille Loto en bloc de contexte pour Gemini."""
     return _format_grille_context_base(
         result, secondary_key="chance", secondary_label="chance",
-        sum_range="100-140", low_threshold=24, high_label="25-49",
+        sum_range="93-157", low_threshold=24, high_label="25-49",
         match_key="chance_match", match_label=" + chance",
     )
 
@@ -215,7 +215,7 @@ def _format_generation_context(grid_data: dict) -> str:
     lines.append("[BREAKDOWN — Critères de sélection]")
     lines.append(f"Équilibre pair/impair : {pairs} pairs, {impairs} impairs")
     lines.append(f"Équilibre bas/haut (1-24 / 25-49) : {bas} bas, {hauts} hauts")
-    lines.append(f"Somme des numéros : {somme} (cible optimale : 70-150)")
+    lines.append(f"Somme des numéros : {somme} (cible optimale : 93-157)")
     lines.append(f"Dispersion (max - min) : {dispersion}")
     for n in nums:
         tags = []

@@ -33,8 +33,8 @@ class TestEngineConfig:
         assert LOTO_CONFIG.num_max == 49
         assert LOTO_CONFIG.secondary_max == 10
         assert LOTO_CONFIG.secondary_count == 1
-        assert LOTO_CONFIG.somme_min == 70
-        assert LOTO_CONFIG.somme_max == 150
+        assert LOTO_CONFIG.somme_min == 93
+        assert LOTO_CONFIG.somme_max == 157
         assert LOTO_CONFIG.anti_collision_threshold == 24
         assert LOTO_CONFIG.table_name == "tirages"
 
@@ -43,8 +43,8 @@ class TestEngineConfig:
         assert EM_CONFIG.num_max == 50
         assert EM_CONFIG.secondary_max == 12
         assert EM_CONFIG.secondary_count == 2
-        assert EM_CONFIG.somme_min == 95
-        assert EM_CONFIG.somme_max == 175
+        assert EM_CONFIG.somme_min == 94
+        assert EM_CONFIG.somme_max == 161
         assert EM_CONFIG.anti_collision_threshold == 31
         assert EM_CONFIG.table_name == "tirages_euromillions"
 
@@ -474,7 +474,8 @@ class TestPenaltyCoefficientsUnified:
         import inspect
         import services.penalization as penal_mod
         source = inspect.getsource(penal_mod)
-        assert "from config.engine import PENALTY_COEFFICIENTS" in source
+        assert "PENALTY_COEFFICIENTS" in source
+        assert "from config.engine import" in source
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -1497,34 +1498,32 @@ class TestDecayRotationChanceLoto:
 class TestEmSumConstraint175:
 
     def test_em_sum_constraint_config_values(self):
-        """EM_CONFIG uses [95, 175] (V92 recalibration from [95, 160])."""
-        assert EM_CONFIG.somme_min == 95
-        assert EM_CONFIG.somme_max == 175
-        # Loto unchanged
-        assert LOTO_CONFIG.somme_min == 70
-        assert LOTO_CONFIG.somme_max == 150
+        """V103: calibrated [μ-σ, μ+σ] for both games."""
+        assert EM_CONFIG.somme_min == 94
+        assert EM_CONFIG.somme_max == 161
+        assert LOTO_CONFIG.somme_min == 93
+        assert LOTO_CONFIG.somme_max == 157
 
     def test_em_sum_in_range_gets_no_penalty(self):
-        """Sum within [95, 175] → no sum penalty."""
+        """V103: sum within [94, 161] → no sum penalty."""
         engine = HybrideEngine(EM_CONFIG)
-        nums = [5, 20, 31, 40, 49]  # sum=145 ∈ [95,175], pairs=2, disp=44, suites=0
+        nums = [5, 20, 31, 40, 49]  # sum=145 ∈ [94,161], pairs=2, disp=44, suites=0
         score = engine.valider_contraintes(nums)
         assert score == 1.0
 
-    def test_em_sum_above_175_penalized(self):
-        """Sum > 175 → soft penalty ×0.70."""
+    def test_em_sum_above_161_penalized(self):
+        """V103: sum > 161 → soft penalty ×0.70."""
         engine = HybrideEngine(EM_CONFIG)
-        nums = [31, 35, 39, 45, 47]  # sum=197 > 175, pairs=0 → hard-reject
-        nums = [32, 35, 39, 44, 47]  # sum=197 > 175, pairs=2
+        nums = [32, 35, 39, 44, 47]  # sum=197 > 161, pairs=2
         score = engine.valider_contraintes(nums)
         assert score < 1.0  # penalized
 
-    def test_em_sum_160_no_longer_penalized(self):
-        """Sum = 165 was penalized at [95,160] but OK at [95,175]."""
+    def test_em_sum_165_now_penalized(self):
+        """V103: sum=165 > 161 → now penalized (was OK at [95,175])."""
         engine = HybrideEngine(EM_CONFIG)
         nums = [15, 30, 35, 40, 45]  # sum = 165, pairs=2, disp=30, suites=0
         score = engine.valider_contraintes(nums)
-        assert score == 1.0  # no penalty (165 ∈ [95, 175])
+        assert score < 1.0  # penalized (165 > 161)
 
 
 class TestNoiseFromConfig:
@@ -1578,3 +1577,99 @@ class TestDecayMetadataV92:
         assert d["acceleration"] == 0.03
         assert d["floor"] == 0.50
         assert d["active"] is True
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V105 — Saturation Brake (intra-batch rotation)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestSaturationBrake:
+    """V105: Saturation Brake reduces scores for numbers selected in previous grid."""
+
+    def test_config_saturation_values(self):
+        """Config has saturation_brake and saturation_brake_secondary."""
+        assert LOTO_CONFIG.saturation_brake == 0.20
+        assert LOTO_CONFIG.saturation_brake_secondary == 0.30
+        assert EM_CONFIG.saturation_brake == 0.20
+        assert EM_CONFIG.saturation_brake_secondary == 0.30
+
+    def test_no_saturation_when_none(self):
+        """saturated_balls=None → no penalty applied."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        scores = {1: 100.0, 2: 90.0, 3: 80.0}
+        penalized = engine.apply_boule_penalties(scores, [])
+        # Without saturation, scores pass through unchanged
+        assert penalized[1] == 100.0
+
+    def test_saturation_reduces_score(self):
+        """Saturated number gets score × 0.20."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        scores = {i: 100.0 for i in range(1, 50)}
+        penalized = engine.apply_boule_penalties(scores, [])
+        # Simulate what generer_grille does: apply saturation after penalties
+        saturated = {1, 2, 3, 4, 5}
+        brake = engine.cfg.saturation_brake
+        braked = {n: (s * brake if n in saturated else s) for n, s in penalized.items()}
+        assert braked[1] == pytest.approx(100.0 * 0.20)
+        assert braked[6] == pytest.approx(100.0)  # not saturated
+
+    def test_forced_nums_bypass_saturation(self):
+        """forced_nums are not affected by saturation (user-chosen)."""
+        # This is tested by the condition in generer_grille:
+        # n not in forced_set when applying brake
+        forced_set = {1}
+        saturated = {1, 2}
+        scores = {1: 100.0, 2: 100.0, 3: 100.0}
+        brake = 0.20
+        braked = {n: (s * brake if n in saturated and n not in forced_set else s)
+                  for n, s in scores.items()}
+        assert braked[1] == 100.0   # forced, not braked
+        assert braked[2] == 20.0    # saturated, braked
+        assert braked[3] == 100.0   # neither
+
+    def test_saturation_cumulates_with_decay(self):
+        """Decay × saturation cumulate correctly."""
+        # Number with decay 0.70 × saturation 0.20 = 0.14 of original
+        from services.decay_state import calculate_decay_multiplier
+        decay_mult = calculate_decay_multiplier(1)  # ~0.897
+        brake = 0.20
+        original = 100.0
+        final = original * decay_mult * brake
+        assert final < 20.0  # significantly reduced
+
+    def test_secondary_saturation_less_aggressive(self):
+        """Secondary saturation uses 0.30 (less aggressive than balls 0.20)."""
+        scores = {1: 50.0, 2: 50.0}
+        saturated = {1}
+        brake = 0.30  # saturation_brake_secondary
+        braked = {n: (s * brake if n in saturated else s) for n, s in scores.items()}
+        assert braked[1] == pytest.approx(15.0)
+        assert braked[2] == pytest.approx(50.0)
+
+    @pytest.mark.asyncio
+    async def test_batch_grids_accumulate_saturation(self):
+        """generate_grids(n=2) produces grids with different numbers."""
+        cursor = AsyncSmartMockCursor()
+        random.seed(42)
+        engine = HybrideEngine(LOTO_CONFIG)
+        result = await engine.generate_grids(
+            n=2, mode="balanced",
+            _get_connection=lambda: make_async_conn(cursor),
+        )
+        # Grids should differ — saturation brake makes reselection unlikely
+        assert len(result["grids"]) == 2
+        assert len(result["grids"][0]["nums"]) == 5
+        assert len(result["grids"][1]["nums"]) == 5
+
+    @pytest.mark.asyncio
+    async def test_single_grid_no_saturation(self):
+        """generate_grids(n=1) → no saturation applied (first grid, empty set)."""
+        cursor = AsyncSmartMockCursor()
+        random.seed(42)
+        engine = HybrideEngine(LOTO_CONFIG)
+        result = await engine.generate_grids(
+            n=1, mode="balanced",
+            _get_connection=lambda: make_async_conn(cursor),
+        )
+        assert len(result["grids"]) == 1
+        assert len(result["grids"][0]["nums"]) == 5

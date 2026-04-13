@@ -55,7 +55,7 @@ The conformity score measures how well a grid matches historical statistical pat
 It is calculated from 6 weighted criteria:
 - Odd/even balance (ideal: 2-3 or 3-2)
 - Low/high balance (1-25 vs 26-50, ideal: 2-3 or 3-2)
-- Number sum (ideal range: 95-160 for EuroMillions)
+- Number sum (ideal range: 94-161 for EuroMillions)
 - Spread (min-max gap, ideal: 20-45)
 - Historical frequencies (presence of hot numbers in the grid)
 - Consecutive numbers (0-1 pair ideal, 3+ pairs = penalty)

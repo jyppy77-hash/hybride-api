@@ -55,7 +55,7 @@ Le score de conformité mesure à quel point une grille respecte les patterns
 statistiques historiques. Il est calculé sur 6 critères pondérés :
 - Équilibre pair/impair (idéal : 2-3 ou 3-2)
 - Équilibre bas/haut (1-25 vs 26-50, idéal : 2-3 ou 3-2)
-- Somme des numéros (plage idéale : 95-160 pour l'EuroMillions)
+- Somme des numéros (plage idéale : 94-161 pour l'EuroMillions)
 - Dispersion (écart min-max, idéal : 20-45)
 - Fréquences historiques (présence de numéros chauds dans la grille)
 - Numéros consécutifs (0-1 paire idéale, 3+ paires = pénalité)

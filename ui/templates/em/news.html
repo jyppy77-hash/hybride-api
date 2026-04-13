@@ -41,6 +41,15 @@
       "@graph": [
         {
           "@type": "NewsArticle",
+          "headline": {{ _('Moteur HYBRIDE v2.0 : analyse plus intelligente, grilles mieux construites')|tojson }},
+          "datePublished": "2026-04-13", "dateModified": "2026-04-13",
+          "author": {"@type": "Person", "name": "Jean-Philippe Godard", "alternateName": "JyppY", "url": "{{ base_url }}/a-propos"},
+          "publisher": {"@type": "Organization", "name": "LotoIA", "url": "{{ base_url }}", "logo": {"@type": "ImageObject", "url": "{{ base_url }}/ui/static/og-image.jpg"}},
+          "image": "{{ base_url }}/ui/static/og-image.jpg",
+          "mainEntityOfPage": "{{ canonical_url }}"
+        },
+        {
+          "@type": "NewsArticle",
           "headline": {{ _('Nouveau : Découvrez les paires de numéros et d\'étoiles les plus fréquentes de l\'EuroMillions')|tojson }},
           "datePublished": "2026-03-30", "dateModified": "2026-03-30",
           "author": {"@type": "Person", "name": "Jean-Philippe Godard", "alternateName": "JyppY", "url": "{{ base_url }}/a-propos"},
@@ -117,6 +126,40 @@
         <section class="news-section">
 
             <article class="news-post featured">
+                <div class="news-meta">
+                    <span class="news-date">{{ _('13 avril 2026') }}</span>
+                    <span class="news-tag news-tag-update">Release 1.6.000</span>
+                </div>
+                <h2 class="news-title"><span>&#128640;</span> {{ _('Moteur HYBRIDE v2.0 : analyse plus intelligente, grilles mieux construites') }}</h2>
+                <div class="news-content">
+                    <p>{{ _('LotoIA fait évoluer son moteur d\'analyse statistique HYBRIDE vers la version 2.0. Cette mise à jour majeure intègre six nouvelles couches d\'optimisation, développées à partir de recherches académiques en combinatoire et en théorie des jeux.') }}</p>
+
+                    <h3>{{ _('Stratification par zones') }}</h3>
+                    <p>{{ _('Le moteur ne sélectionne plus les 5 meilleurs numéros absolus. Il découpe l\'univers de jeu en 5 zones égales (1-10, 11-20, 21-30, 31-40, 41-50) et sélectionne le meilleur numéro de chaque zone. Résultat : des grilles naturellement diversifiées, avec une couverture spatiale complète.') }}</p>
+
+                    <h3>{{ _('Contrainte de somme calibrée') }}</h3>
+                    <p>{{ _('La fourchette de somme des grilles est désormais alignée sur la distribution statistique réelle des tirages (intervalle ±1 écart-type autour de la moyenne théorique). Fini les grilles dont la somme s\'éloigne du profil habituel des tirages.') }}</p>
+
+                    <h3>{{ _('Decay visible dans les analyses') }}</h3>
+                    <p>{{ _('Le mécanisme de rotation (Decay Score) est désormais intégré dans les rapports PDF META DONNÉE. Les classements reflètent maintenant la dynamique réelle du moteur, pas seulement les fréquences brutes.') }}</p>
+
+                    <h3>{{ _('Rotation forcée (Saturation Brake)') }}</h3>
+                    <p>{{ _('Quand plusieurs grilles sont générées en même temps, chaque grille tient compte des précédentes pour éviter les répétitions. Le moteur explore activement de nouvelles combinaisons au lieu de reproduire la même grille.') }}</p>
+
+                    <h3>{{ _('Optimisation anti-partage') }}</h3>
+                    <p>{{ _('Le moteur intègre désormais un scoring d\'impopularité basé sur les études académiques sur le comportement des joueurs. Les numéros sur-joués par le public (dates de naissance, chiffres porte-bonheur) sont légèrement pénalisés pour favoriser des grilles qui maximisent le gain espéré en cas de jackpot.') }}</p>
+
+                    <h3>{{ _('Filtre de naturalité (ESI)') }}</h3>
+                    <p>{{ _('Chaque grille est validée par l\'Even Spacing Index, un indice qui mesure la dispersion des numéros. Les grilles trop régulières (sur-jouées) ou trop clusterisées (atypiques) sont automatiquement rejetées.') }}</p>
+
+                    <h3>{{ _('Rappel statistique') }}</h3>
+                    <p>{{ _('L\'EuroMillions reste un jeu de hasard. Chaque combinaison a exactement la même probabilité d\'être tirée. LotoIA est un outil d\'analyse statistique pédagogique : il ne prédit pas les résultats, il optimise la construction des grilles en s\'appuyant sur les mathématiques combinatoires et la théorie des jeux.') }}</p>
+
+                    <p><a href="{{ urls.generator }}" class="news-cta-btn">🚀 {{ _('Testez le nouveau moteur dès maintenant') }}</a></p>
+                </div>
+            </article>
+
+            <article class="news-post">
                 <div class="news-meta">
                     <span class="news-date">{{ _('30 mars 2026') }}</span>
                     <span class="news-tag news-tag-launch">{{ _('NOUVEAU') }}</span>

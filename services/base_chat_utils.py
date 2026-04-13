@@ -413,7 +413,7 @@ def _format_grille_context_base(result: dict, secondary_key: str, secondary_labe
 
     secondary_key: key in result for secondary number(s) ("chance" or "etoiles").
     secondary_label: display label ("chance" or "étoiles").
-    sum_range: ideal sum range string (e.g. "100-140" or "75-175").
+    sum_range: ideal sum range string (e.g. "93-157" or "94-161").
     low_threshold: boundary for bas/haut split (24 for Loto, 25 for EM).
     high_label: label for high numbers (e.g. "25-49" or "26-50").
     match_key: key in meilleure_correspondance for secondary match.

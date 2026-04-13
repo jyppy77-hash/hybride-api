@@ -64,9 +64,9 @@ class TestFormatGrilleBase:
     def test_loto_ranges(self):
         result = _format_grille_context_base(
             _SAMPLE_GRILLE, "chance", "chance",
-            "100-140", 24, "25-49",
+            "93-157", 24, "25-49",
         )
-        assert "idéal : 100-140" in result
+        assert "idéal : 93-157" in result
         assert "Bas (1-24)" in result
         assert "Hauts (25-49)" in result
         assert "(chance: 3)" in result
@@ -76,10 +76,10 @@ class TestFormatGrilleBase:
         grille.pop("chance", None)
         result = _format_grille_context_base(
             grille, "etoiles", "étoiles",
-            "95-160", 25, "26-50",
+            "94-161", 25, "26-50",
             match_key="etoiles_match", match_label=" + étoile(s)",
         )
-        assert "idéal : 95-160" in result
+        assert "idéal : 94-161" in result
         assert "Bas (1-25)" in result
         assert "Hauts (26-50)" in result
         assert "(étoiles: 2 7)" in result

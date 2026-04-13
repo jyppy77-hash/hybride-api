@@ -50,7 +50,7 @@ Le score de conformité mesure à quel point une grille respecte les patterns
 statistiques historiques. Il est calculé sur 6 critères pondérés :
 - Équilibre pair/impair (idéal : 2-3 ou 3-2)
 - Équilibre bas/haut (1-24 vs 25-49, idéal : 2-3 ou 3-2)
-- Somme des numéros (plage idéale : 100-140 pour le Loto)
+- Somme des numéros (plage idéale : 93-157 pour le Loto)
 - Dispersion (écart min-max, idéal : 20-45)
 - Fréquences historiques (présence de numéros chauds dans la grille)
 - Numéros consécutifs (0-1 paire idéale, 3+ paires = pénalité)
