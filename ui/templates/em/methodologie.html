@@ -49,6 +49,24 @@
       }
     }
     </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Dataset",
+      "name": {{ _('Données statistiques EuroMillions — Méthodologie HYBRIDE')|tojson }},
+      "description": {{ _('Jeu de données statistiques des tirages EuroMillions analysés selon la méthodologie « 5 ans + 2 » par le moteur HYBRIDE.')|tojson }},
+      "url": {{ canonical_url|tojson }},
+      "license": "https://creativecommons.org/licenses/by-nc-nd/4.0/",
+      "creator": {
+        "@type": "Organization",
+        "name": "LotoIA",
+        "url": "https://lotoia.fr"
+      },
+      "temporalCoverage": "2004/..",
+      "spatialCoverage": "Europe",
+      "isAccessibleForFree": true
+    }
+    </script>
     <!-- JSON-LD BreadcrumbList -->
     <script type="application/ld+json">
     {
