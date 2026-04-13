@@ -637,6 +637,207 @@ class TestR04DrawSequenceExtended:
         assert m.groups() == ("10", "22", "23", "25", "46")
 
 
+# ═══════════════════════════════════════════════════════
+# V101 — Strict mode: block invented numbers, log-only missing
+# ═══════════════════════════════════════════════════════
+
+from services.chat_pipeline_gemini import _STRICT_HALLUCINATION_MESSAGES
+
+
+class TestV101StrictModeReturn:
+    """V101: _check_sql_number_hallucination returns safe replacement on invented numbers."""
+
+    def test_returns_none_when_no_problem(self):
+        """No hallucination → returns None (response unchanged)."""
+        ctx = (
+            "[RÉSULTAT TIRAGE — CHIFFRES EXACTS]\n"
+            "Tirage : 10 - 22 - 23 - 25 - 46\n"
+            "[/RÉSULTAT TIRAGE]"
+        )
+        response = "Le tirage : 10 - 22 - 23 - 25 - 46."
+        result = _check_sql_number_hallucination(ctx, response, "1", "[TEST]")
+        assert result is None
+
+    def test_returns_replacement_on_invented(self):
+        """Invented numbers → returns safe replacement string."""
+        ctx = (
+            "[RÉSULTAT TIRAGE — CHIFFRES EXACTS]\n"
+            "Tirage : 10 - 22 - 23 - 25 - 46\n"
+            "[/RÉSULTAT TIRAGE]"
+        )
+        # Gemini hallucinated: 12 - 14 - 22 - 31 - 44
+        response = "Le tirage : 12 - 14 - 22 - 31 - 44."
+        result = _check_sql_number_hallucination(ctx, response, "T", "[TEST]", lang="fr")
+        assert result is not None
+        assert isinstance(result, str)
+
+    def test_replacement_contains_real_data(self):
+        """Replacement message contains the real numbers from context."""
+        ctx = (
+            "[RÉSULTAT TIRAGE — CHIFFRES EXACTS]\n"
+            "Tirage : 10 - 22 - 23 - 25 - 46\n"
+            "[/RÉSULTAT TIRAGE]"
+        )
+        response = "Le tirage : 12 - 14 - 22 - 31 - 44."
+        result = _check_sql_number_hallucination(ctx, response, "T", "[TEST]", lang="fr")
+        assert "10" in result
+        assert "22" in result
+        assert "23" in result
+        assert "25" in result
+        assert "46" in result
+
+    def test_returns_none_on_missing_only(self):
+        """Missing numbers (F03) → log-only, returns None (no block)."""
+        ctx = (
+            "[RÉSULTAT TIRAGE — CHIFFRES EXACTS]\n"
+            "Tirage : 10 - 22 - 23 - 25 - 46\n"
+            "[/RÉSULTAT TIRAGE]"
+        )
+        # Response mentions 22 but omits 10, 23, 25, 46 — no draw sequence invented
+        response = "Le numéro 22 est sorti dans ce tirage."
+        result = _check_sql_number_hallucination(ctx, response, "1", "[TEST]", lang="fr")
+        assert result is None
+
+    def test_returns_none_for_non_checked_phase(self):
+        """Phase G → not checked, returns None."""
+        ctx = "[RÉSULTAT SQL]\ndata\n[/RÉSULTAT SQL]"
+        result = _check_sql_number_hallucination(ctx, "invented 12 - 14 - 22 - 31 - 44", "G", "[TEST]")
+        assert result is None
+
+    def test_returns_none_empty_context(self):
+        """Empty context → returns None."""
+        result = _check_sql_number_hallucination("", "response", "1", "[TEST]")
+        assert result is None
+
+    def test_returns_none_none_context(self):
+        """None context → returns None."""
+        result = _check_sql_number_hallucination(None, "response", "1", "[TEST]")
+        assert result is None
+
+
+class TestV101StrictI18n:
+    """V101: safe replacement messages in 6 languages."""
+
+    _CTX = (
+        "[RÉSULTAT TIRAGE — CHIFFRES EXACTS]\n"
+        "Tirage : 10 - 22 - 23 - 25 - 46\n"
+        "[/RÉSULTAT TIRAGE]"
+    )
+    _HALLUCINATED = "Le tirage : 12 - 14 - 22 - 31 - 44."
+
+    def test_fr_message(self):
+        result = _check_sql_number_hallucination(self._CTX, self._HALLUCINATED, "T", "[T]", lang="fr")
+        assert result.startswith("Voici les données exactes")
+
+    def test_en_message(self):
+        result = _check_sql_number_hallucination(self._CTX, self._HALLUCINATED, "T", "[T]", lang="en")
+        assert result.startswith("Here are the exact data")
+
+    def test_es_message(self):
+        result = _check_sql_number_hallucination(self._CTX, self._HALLUCINATED, "T", "[T]", lang="es")
+        assert result.startswith("Aquí están los datos exactos")
+
+    def test_pt_message(self):
+        result = _check_sql_number_hallucination(self._CTX, self._HALLUCINATED, "T", "[T]", lang="pt")
+        assert result.startswith("Aqui estão os dados exatos")
+
+    def test_de_message(self):
+        result = _check_sql_number_hallucination(self._CTX, self._HALLUCINATED, "T", "[T]", lang="de")
+        assert result.startswith("Hier sind die genauen Daten")
+
+    def test_nl_message(self):
+        result = _check_sql_number_hallucination(self._CTX, self._HALLUCINATED, "T", "[T]", lang="nl")
+        assert result.startswith("Hier zijn de exacte gegevens")
+
+    def test_unknown_lang_falls_back_to_fr(self):
+        result = _check_sql_number_hallucination(self._CTX, self._HALLUCINATED, "T", "[T]", lang="xx")
+        assert result.startswith("Voici les données exactes")
+
+    def test_all_langs_contain_real_numbers(self):
+        for lang_code in ("fr", "en", "es", "pt", "de", "nl"):
+            result = _check_sql_number_hallucination(self._CTX, self._HALLUCINATED, "T", "[T]", lang=lang_code)
+            assert "10" in result and "46" in result, f"lang={lang_code} missing real numbers"
+
+
+class TestV101NonStreamingIntegration:
+    """V101: non-streaming path replaces response on invented hallucination."""
+
+    @pytest.mark.asyncio
+    async def test_response_replaced_on_invented(self):
+        """call_gemini_and_respond replaces text when invented numbers detected."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "Le tirage : 12 - 14 - 22 - 31 - 44."}]}}],
+        }
+
+        ctx = {
+            "mode": "balanced",
+            "_http_client": MagicMock(),
+            "gem_api_key": "fake",
+            "system_prompt": "test",
+            "contents": [],
+            "insult_prefix": "",
+            "history": [],
+            "_chat_meta": {
+                "enrichment_context": (
+                    "[RÉSULTAT TIRAGE — CHIFFRES EXACTS]\n"
+                    "Tirage : 10 - 22 - 23 - 25 - 46\n"
+                    "[/RÉSULTAT TIRAGE]"
+                ),
+                "phase": "T",
+                "t0": 0,
+                "lang": "fr",
+            },
+        }
+
+        with patch("services.chat_pipeline_gemini._gemini_call_with_fallback", return_value=mock_response):
+            result = await call_gemini_and_respond(
+                ctx, "fallback", "[TEST]", "loto", "fr", "test", "home",
+            )
+            # Response should be the safe replacement, not the hallucinated text
+            assert "12 - 14" not in result["response"]  # hallucinated numbers removed
+            assert "10" in result["response"]  # real numbers present
+            assert "Voici les données exactes" in result["response"]
+            assert result["source"] == "gemini"
+
+    @pytest.mark.asyncio
+    async def test_response_unchanged_when_no_hallucination(self):
+        """call_gemini_and_respond keeps original text when no hallucination."""
+        mock_response = MagicMock()
+        mock_response.status_code = 200
+        mock_response.json.return_value = {
+            "candidates": [{"content": {"parts": [{"text": "Le tirage : 10 - 22 - 23 - 25 - 46."}]}}],
+        }
+
+        ctx = {
+            "mode": "balanced",
+            "_http_client": MagicMock(),
+            "gem_api_key": "fake",
+            "system_prompt": "test",
+            "contents": [],
+            "insult_prefix": "",
+            "history": [],
+            "_chat_meta": {
+                "enrichment_context": (
+                    "[RÉSULTAT TIRAGE — CHIFFRES EXACTS]\n"
+                    "Tirage : 10 - 22 - 23 - 25 - 46\n"
+                    "[/RÉSULTAT TIRAGE]"
+                ),
+                "phase": "T",
+                "t0": 0,
+                "lang": "fr",
+            },
+        }
+
+        with patch("services.chat_pipeline_gemini._gemini_call_with_fallback", return_value=mock_response):
+            result = await call_gemini_and_respond(
+                ctx, "fallback", "[TEST]", "loto", "fr", "test", "home",
+            )
+            assert "10 - 22 - 23 - 25 - 46" in result["response"]
+            assert "Voici les données exactes" not in result["response"]
+
+
 class TestR04NoFalsePositives:
     """V100 R04: normal text with 'et'/'and' must NOT trigger draw sequence match."""
 

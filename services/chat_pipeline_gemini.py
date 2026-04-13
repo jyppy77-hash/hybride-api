@@ -61,31 +61,42 @@ _DRAW_SEQUENCE_RE = re.compile(
 )
 
 
+_STRICT_HALLUCINATION_MESSAGES = {
+    "fr": "Voici les données exactes issues de notre base :\n\n{data}",
+    "en": "Here are the exact data from our database:\n\n{data}",
+    "es": "Aquí están los datos exactos de nuestra base de datos:\n\n{data}",
+    "pt": "Aqui estão os dados exatos da nossa base de dados:\n\n{data}",
+    "de": "Hier sind die genauen Daten aus unserer Datenbank:\n\n{data}",
+    "nl": "Hier zijn de exacte gegevens uit onze database:\n\n{data}",
+}
+
+
 def _check_sql_number_hallucination(
     enrichment_context: str, gemini_response: str, phase: str, log_prefix: str,
-) -> None:
-    """Log a warning when draw numbers from context are missing in Gemini response,
-    or when Gemini invents numbers absent from context.
+    lang: str = "fr",
+) -> str | None:
+    """Check Gemini response for hallucinated draw numbers.
 
-    V99 F03: checks Phase 1 (single number stats + tirage enrichment),
-    Phase T (specific draw), and Phase SQL (text-to-SQL results).
+    Returns None when the response is OK, or a safe replacement message
+    when invented numbers are detected (V101 strict mode).
 
-    V99 F08: also detects *invented* numbers — draw-like sequences in the
-    response that contain numbers absent from the enrichment context.
+    V99 F03: HALLUCINATION_RISK (missing numbers) → log-only, returns None.
+    V99 F08: HALLUCINATION_INVENTED (invented numbers) → log + returns safe
+    replacement message containing the real data from enrichment context.
     """
     if phase not in ("1", "T", "SQL"):
-        return
+        return None
     m = _DATA_TAG_RE.search(enrichment_context or "")
     if not m:
-        return
+        return None
     data_body = m.group(1)
     if "aucun résultat" in data_body.lower():
-        return
+        return None
     context_numbers = set(re.findall(r'\b(\d{1,2})\b', data_body))
     if not context_numbers:
-        return
+        return None
     response_numbers = set(re.findall(r'\b(\d{1,2})\b', gemini_response))
-    # Check 1: numbers from context missing in response
+    # Check 1: numbers from context missing in response — log-only (incomplete ≠ false)
     missing = context_numbers - response_numbers
     if missing:
         logger.warning(
@@ -93,7 +104,7 @@ def _check_sql_number_hallucination(
             "Phase=%s | data_excerpt=%.200s",
             log_prefix, sorted(missing, key=int), phase, data_body.strip(),
         )
-    # V99 F08: Check 2 — invented numbers in draw-like sequences
+    # V99 F08 + V101 strict: invented numbers in draw-like sequences → BLOCK
     seq_match = _DRAW_SEQUENCE_RE.search(gemini_response)
     if seq_match:
         seq_nums = set(seq_match.groups())
@@ -105,6 +116,10 @@ def _check_sql_number_hallucination(
                 log_prefix, sorted(invented, key=int), phase,
                 seq_match.group(0),
             )
+            # V101: strict mode — return safe replacement with real data
+            tpl = _STRICT_HALLUCINATION_MESSAGES.get(lang, _STRICT_HALLUCINATION_MESSAGES["fr"])
+            return tpl.format(data=data_body.strip())
+    return None
 # This module does NOT import from shared (avoids circular dependency).
 
 
@@ -242,12 +257,15 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
                         text += "\n\n" + sponsor_line
                     logger.info(f"{log_prefix} OK (page={page}, mode={mode})")
                     log_from_meta(ctx.get("_chat_meta"), module, lang, message, text)
-                    # V100 R01: Anti-hallucination check (aligned with stream_and_respond)
+                    # V100 R01 + V101 strict: Anti-hallucination check
                     _meta = ctx.get("_chat_meta") or {}
-                    _check_sql_number_hallucination(
+                    _safe_replacement = _check_sql_number_hallucination(
                         _meta.get("enrichment_context", ""), text,
                         _meta.get("phase", ""), log_prefix,
+                        lang=_meta.get("lang", lang),
                     )
+                    if _safe_replacement:
+                        text = _safe_replacement
                     return {"response": text, "source": "gemini", "mode": mode}
 
     logger.warning(f"{log_prefix} Reponse Gemini invalide: {response.status_code}")
@@ -324,11 +342,13 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
         })
         _full_response = "".join(_stream_chunks)
         log_from_meta(ctx.get("_chat_meta"), module, lang, message, _full_response)
-        # V96: Anti-hallucination check — warn if SQL numbers missing from response
+        # V96+V101: Anti-hallucination check — log-only on streaming path
+        # (stream already sent to client, cannot be replaced)
         _meta = ctx.get("_chat_meta") or {}
         _check_sql_number_hallucination(
             _meta.get("enrichment_context", ""), _full_response,
             _meta.get("phase", ""), log_prefix,
+            lang=_meta.get("lang", lang),
         )
         logger.info(f"{log_prefix} Stream OK (page={page}, mode={mode})")
 
