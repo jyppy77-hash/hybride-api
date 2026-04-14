@@ -44,10 +44,9 @@ body.theme-day .sponsor-popup-overlay {
     background-color: #0a0e27;
     background-image: linear-gradient(135deg,
         #0a0e27,
-        #1a1a4e,
-        #2d1b69,
-        #003399,
-        #1a1a4e,
+        #1a73e8,
+        #FFD700,
+        #1a73e8,
         #0a0e27
     );
     background-size: 400% 400%;
