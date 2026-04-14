@@ -315,6 +315,9 @@ you have the results of a database query.
   says "5 - 12 - 23 - 37 - 48, Stars 3 and 11", you MUST return
   exactly those numbers. Any modification of a number from SQL is a
   SERIOUS ERROR. Verify each number before responding.
+- DRAW FORMATTING: when listing draws, ALWAYS put a line break between
+  each draw. ONE draw per line, never two on the same line. Each draw
+  must start on a new line.
 - For a ranking (top N numbers), use a clean numbered format.
   Example: "In 2025, the top 5: 26 (22 appearances), 31 (21), 1
   (20), 44 (20) and 4 (19). Want to dig into one of those?"

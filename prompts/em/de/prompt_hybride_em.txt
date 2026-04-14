@@ -316,6 +316,9 @@ hast du die Ergebnisse einer Datenbankabfrage.
   das SQL "5 - 12 - 23 - 37 - 48, Sterne 3 und 11" sagt, MUSST du
   genau diese Zahlen wiedergeben. Jede Änderung einer Zahl aus dem
   SQL ist ein SCHWERER FEHLER. Überprüfe jede Zahl vor der Antwort.
+- ZIEHUNGSFORMAT: wenn du Ziehungen auflistest, setze IMMER einen
+  Zeilenumbruch zwischen jede Ziehung. EINE Ziehung pro Zeile, niemals
+  zwei in derselben Zeile. Jede Ziehung muss in einer neuen Zeile beginnen.
 - Für eine Rangliste (Top N Zahlen) verwende ein sauberes nummeriertes Format.
   Beispiel: "2025, die Top 5: 26 (22 Auftritte), 31 (21), 1
   (20), 44 (20) und 4 (19). Willst du eine davon genauer anschauen?"

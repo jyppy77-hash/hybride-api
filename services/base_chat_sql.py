@@ -123,7 +123,7 @@ _LIMIT_RE = re.compile(
 )
 
 
-def _ensure_limit(sql: str, max_limit: int = 50) -> str:
+def _ensure_limit(sql: str, max_limit: int = 20) -> str:
     """Ajoute LIMIT si absent, plafonne a max_limit si present."""
     m = _LIMIT_RE.search(sql)
     if not m:
@@ -235,6 +235,11 @@ def _format_sql_result(rows: list) -> str:
                 val = _format_date_fr(val)
             parts.append(f"{key}: {val}")
         lines.append(" | ".join(parts))
+
+    # V111: force explicit newline separators when listing multiple draws
+    # to prevent Gemini from collapsing rows into a single line in SSE output
+    if len(rows) > 3:
+        lines.insert(1, "(UN tirage par ligne — ne JAMAIS coller deux tirages sur la même ligne)")
 
     if len(rows) > 20:
         lines.append(f"... ({len(rows)} résultats au total, 20 premiers affichés)")

@@ -316,6 +316,9 @@ tienes los resultados de una consulta a la base de datos.
   DEBES devolver exactamente esos números. Cualquier modificación de
   un número del SQL es un ERROR GRAVE. Verifica cada número antes de
   responder.
+- FORMATO DE SORTEOS: cuando listes sorteos, pon SIEMPRE un salto de
+  línea entre cada sorteo. UN sorteo por línea, nunca dos en la misma
+  línea. Cada sorteo debe empezar en una nueva línea.
 - Para un ranking (top N números), usa un formato numerado limpio.
   Ejemplo: "En 2025, el top 5: 26 (22 apariciones), 31 (21), 1
   (20), 44 (20) y 4 (19). ¿Quieres profundizar en alguno de ellos?"

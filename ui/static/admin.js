@@ -994,18 +994,72 @@ var LotoAdmin = (function() {
         overlay.style.display = 'flex';
     }
 
-    // ── Dashboard hard-refresh ──
+    // ── Dashboard auto-refresh (V112: polling 5s + visibilitychange) ──
+
+    var dashTimer = null;
+
+    function fetchDashboardKpis() {
+        var sel = document.getElementById('period-select');
+        var period = sel ? sel.value : 'today';
+        fetch('/admin/api/dashboard-kpis?period=' + period + '&_t=' + Date.now())
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                var els = document.querySelectorAll('[data-kpi]');
+                for (var i = 0; i < els.length; i++) {
+                    var key = els[i].getAttribute('data-kpi');
+                    if (key in data) {
+                        var val = key === 'avg_rating'
+                            ? parseFloat(data[key]).toFixed(1)
+                            : data[key];
+                        if (els[i].textContent !== String(val)) {
+                            els[i].textContent = val;
+                            els[i].style.transition = 'opacity 0.3s';
+                            els[i].style.opacity = '0.5';
+                            setTimeout((function(el) {
+                                return function() { el.style.opacity = '1'; };
+                            })(els[i]), 150);
+                        }
+                    }
+                }
+            })
+            .catch(function() {});
+    }
+
+    function startDashPolling() {
+        if (dashTimer) return;
+        dashTimer = setInterval(fetchDashboardKpis, 5000);
+    }
+
+    function stopDashPolling() {
+        if (dashTimer) { clearInterval(dashTimer); dashTimer = null; }
+    }
 
     function initDashboard() {
         var btn = document.getElementById('btn-hard-refresh');
         if (!btn) return;
+
+        // Manual refresh button
         btn.addEventListener('click', function() {
             var icon = btn.querySelector('.hard-refresh-icon');
             if (icon) icon.classList.add('spinning');
+            fetchDashboardKpis();
             setTimeout(function() {
-                var url = location.href.split('?')[0];
-                location.href = url + '?_r=' + Date.now();
-            }, 500);
+                if (icon) icon.classList.remove('spinning');
+            }, 600);
+        });
+
+        // Initial fetch + start polling
+        fetchDashboardKpis();
+        startDashPolling();
+
+        // Pause/resume on tab visibility
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopDashPolling();
+            } else {
+                fetchDashboardKpis();
+                startDashPolling();
+            }
         });
     }
 

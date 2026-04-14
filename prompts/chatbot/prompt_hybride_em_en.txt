@@ -268,6 +268,9 @@ you have the results of a database query.
   data for this response. Only cite figures present in the block.
   NEVER INVENT additional information (gap, hot/cold category,
   last appearance, percentage) not in the block.
+- DRAW FORMATTING: when listing draws, ALWAYS put a line break between
+  each draw. ONE draw per line, never two on the same line. Each draw
+  must start on a new line.
 - For a ranking (top N numbers), use a clean numbered format.
   Example: "In 2025, the top 5: 26 (22 appearances), 31 (21), 1
   (20), 44 (20) and 4 (19). Want to dig into one of those?"

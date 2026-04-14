@@ -130,20 +130,20 @@ class TestEnsureLimit:
 
     def test_adds_limit_when_absent(self):
         result = _ensure_limit("SELECT * FROM tirages")
-        assert result.endswith("LIMIT 50")
+        assert result.endswith("LIMIT 20")
 
     def test_preserves_existing_limit(self):
         sql = "SELECT * FROM tirages LIMIT 10"
         assert _ensure_limit(sql) == sql
 
     def test_custom_max_limit(self):
-        result = _ensure_limit("SELECT * FROM tirages", max_limit=20)
-        assert result.endswith("LIMIT 20")
+        result = _ensure_limit("SELECT * FROM tirages", max_limit=5)
+        assert result.endswith("LIMIT 5")
 
     # S03 V94: cap existing LIMIT when above max_limit
     def test_caps_excessive_limit(self):
         result = _ensure_limit("SELECT * FROM tirages LIMIT 1000000")
-        assert "LIMIT 50" in result
+        assert "LIMIT 20" in result
         assert "1000000" not in result
 
     def test_preserves_small_limit(self):
@@ -154,7 +154,7 @@ class TestEnsureLimit:
         """LIMIT offset, count → cap count."""
         result = _ensure_limit("SELECT * FROM tirages LIMIT 100, 500")
         assert "500" not in result
-        assert "50" in result
+        assert "20" in result
         assert "100," in result  # offset preserved
 
     def test_preserves_small_mysql_offset(self):
@@ -165,12 +165,31 @@ class TestEnsureLimit:
         """LIMIT N OFFSET M → cap N."""
         result = _ensure_limit("SELECT * FROM tirages LIMIT 999 OFFSET 5")
         assert "999" not in result
-        assert "50" in result
+        assert "20" in result
         assert "OFFSET 5" in result
 
     def test_preserves_small_limit_with_offset(self):
         sql = "SELECT * FROM tirages LIMIT 10 OFFSET 20"
         assert _ensure_limit(sql) == sql
+
+    # V111: default cap is now 20 (was 50)
+    def test_v111_default_cap_is_20(self):
+        """_ensure_limit default cap is 20 — prevents Gemini from generating LIMIT 50."""
+        result = _ensure_limit("SELECT * FROM tirages LIMIT 50")
+        assert "LIMIT 20" in result
+        assert "LIMIT 50" not in result
+
+    def test_v111_caps_30_to_20(self):
+        """_ensure_limit reduces LIMIT 30 to 20."""
+        result = _ensure_limit("SELECT * FROM tirages ORDER BY date_de_tirage DESC LIMIT 30")
+        assert "LIMIT 20" in result
+        assert "LIMIT 30" not in result
+
+    def test_v111_adds_limit_20_when_absent(self):
+        """_ensure_limit adds LIMIT 20 when no LIMIT clause exists."""
+        sql = "SELECT date_de_tirage, boule_1 FROM tirages ORDER BY date_de_tirage DESC"
+        result = _ensure_limit(sql)
+        assert result.endswith("LIMIT 20")
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -219,6 +238,31 @@ class TestFormatSqlResult:
         """V96: Empty result has no closing tag (no numbers to protect)."""
         result = _format_sql_result([])
         assert "[/RÉSULTAT SQL]" not in result
+
+    # V111: multi-row formatting instruction
+    def test_v111_multi_row_formatting_hint(self):
+        """V111: When rows > 3, insert formatting instruction for Gemini."""
+        rows = [{"date_de_tirage": f"2026-04-0{i}", "boule_1": i} for i in range(1, 6)]
+        result = _format_sql_result(rows)
+        assert "UN tirage par ligne" in result
+
+    def test_v111_no_hint_for_few_rows(self):
+        """V111: No formatting hint when rows <= 3."""
+        rows = [{"date_de_tirage": "2026-04-01", "boule_1": 7}]
+        result = _format_sql_result(rows)
+        assert "UN tirage par ligne" not in result
+
+    def test_v111_exactly_3_rows_no_hint(self):
+        """V111: Exactly 3 rows — no hint (threshold is > 3)."""
+        rows = [{"num": i} for i in range(3)]
+        result = _format_sql_result(rows)
+        assert "UN tirage par ligne" not in result
+
+    def test_v111_4_rows_has_hint(self):
+        """V111: 4 rows — hint is present."""
+        rows = [{"num": i} for i in range(4)]
+        result = _format_sql_result(rows)
+        assert "UN tirage par ligne" in result
 
 
 # ═══════════════════════════════════════════════════════════════════════

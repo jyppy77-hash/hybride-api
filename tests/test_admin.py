@@ -251,6 +251,102 @@ class TestAdminDashboard:
         assert 'value="week"' in resp.text
         assert 'value="month"' in resp.text
 
+    # V112: Dashboard auto-refresh tests
+
+    def test_dashboard_cache_control_no_store(self):
+        """V112: Dashboard HTML response has Cache-Control: no-store."""
+        client = _authed_client()
+        with patch("routes.admin_dashboard.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0, "review_count": 0, "avg_rating": 0, "active": 0, "hits": 0})
+            resp = client.get("/admin")
+        assert resp.status_code == 200
+        assert "no-store" in resp.headers.get("cache-control", "")
+
+    def test_dashboard_has_data_kpi_attributes(self):
+        """V112: KPI cards have data-kpi attributes for JS polling."""
+        client = _authed_client()
+        with patch("routes.admin_dashboard.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0, "review_count": 0, "avg_rating": 0, "active": 0, "hits": 0})
+            resp = client.get("/admin")
+        assert resp.status_code == 200
+        assert 'data-kpi="total_impressions"' in resp.text
+        assert 'data-kpi="clicks"' in resp.text
+        assert 'data-kpi="avg_rating"' in resp.text
+        assert 'data-kpi="active_visitors"' in resp.text
+        assert 'data-kpi="hits_24h"' in resp.text
+
+    def test_dashboard_has_live_dot(self):
+        """V112: Dashboard has LIVE pulse indicator."""
+        client = _authed_client()
+        with patch("routes.admin_dashboard.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0, "review_count": 0, "avg_rating": 0, "active": 0, "hits": 0})
+            resp = client.get("/admin")
+        assert resp.status_code == 200
+        assert 'id="dash-live-dot"' in resp.text
+        assert 'rt-dot-live' in resp.text
+
+    def test_dashboard_kpis_api_returns_json(self):
+        """V112: /admin/api/dashboard-kpis returns JSON with all KPI fields."""
+        client = _authed_client()
+
+        async def mock_fetchall(sql, params=None):
+            if "sponsor_impressions" in sql:
+                return [
+                    {"event_type": "sponsor-popup-shown", "cnt": 10},
+                    {"event_type": "sponsor-click", "cnt": 3},
+                    {"event_type": "sponsor-inline-shown", "cnt": 5},
+                    {"event_type": "sponsor-result-shown", "cnt": 2},
+                ]
+            return []
+
+        async def mock_fetchone(sql, params=None):
+            if "ratings" in sql:
+                return {"review_count": 8, "avg_rating": 4.2}
+            if "session_hash" in sql:
+                return {"active": 12}
+            if "event_log" in sql:
+                return {"hits": 500}
+            if "banned_ips" in sql:
+                return {"cnt": 3}
+            return None
+
+        with patch("routes.admin_dashboard.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
+            mock_db.async_fetchone = AsyncMock(side_effect=mock_fetchone)
+            resp = client.get("/admin/api/dashboard-kpis?period=today")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["total_impressions"] == 17  # 10 + 5 + 2
+        assert data["impressions"] == 10
+        assert data["clicks"] == 3
+        assert data["avg_rating"] == 4.2
+        assert data["review_count"] == 8
+        assert data["active_visitors"] == 12
+        assert data["hits_24h"] == 500
+        assert data["banned_count"] == 3
+        assert "no-store" in resp.headers.get("cache-control", "")
+
+    def test_dashboard_kpis_api_requires_auth(self):
+        """V112: /admin/api/dashboard-kpis requires authentication."""
+        client = _get_client()
+        resp = client.get("/admin/api/dashboard-kpis")
+        assert resp.status_code == 401
+
+    def test_dashboard_kpis_api_invalid_period(self):
+        """V112: Invalid period defaults to today."""
+        client = _authed_client()
+        with patch("routes.admin_dashboard.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(return_value=[])
+            mock_db.async_fetchone = AsyncMock(return_value={"cnt": 0, "review_count": 0, "avg_rating": 0, "active": 0, "hits": 0})
+            resp = client.get("/admin/api/dashboard-kpis?period=invalid")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "total_impressions" in data
+
 
 class TestAdminPages:
     """Impressions and votes page tests."""

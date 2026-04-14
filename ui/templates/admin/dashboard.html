@@ -3,7 +3,7 @@
 
 {% block content %}
     <div class="dashboard-header-row">
-        <h2>Sponsor — {{ period_label }}</h2>
+        <h2>Sponsor — {{ period_label }} <span class="rt-dot rt-dot-live" id="dash-live-dot" title="Auto-refresh 5s"></span></h2>
         <div style="display:flex;align-items:center;gap:12px;">
             <select id="period-select" style="background:var(--bg-input);color:var(--text);border:1px solid var(--border);border-radius:var(--radius-xs);padding:.4rem .6rem;font-size:.8rem;font-family:inherit;" onchange="window.location='/admin?period='+this.value">
                 <option value="today" {% if period == 'today' %}selected{% endif %}>Aujourd'hui</option>
@@ -18,31 +18,31 @@
     </div>
     <div class="kpi-grid">
         <div class="kpi-card">
-            <span class="kpi-value" style="color:#10b981;">{{ total_impressions }}</span>
+            <span class="kpi-value" style="color:#10b981;" data-kpi="total_impressions">{{ total_impressions }}</span>
             <span class="kpi-label">Impressions totales</span>
         </div>
         <div class="kpi-card">
-            <span class="kpi-value">{{ impressions }}</span>
+            <span class="kpi-value" data-kpi="impressions">{{ impressions }}</span>
             <span class="kpi-label">Popups</span>
         </div>
         <div class="kpi-card">
-            <span class="kpi-value">{{ clicks }}</span>
+            <span class="kpi-value" data-kpi="clicks">{{ clicks }}</span>
             <span class="kpi-label">Clics</span>
         </div>
         <div class="kpi-card">
-            <span class="kpi-value">{{ videos }}</span>
+            <span class="kpi-value" data-kpi="videos">{{ videos }}</span>
             <span class="kpi-label">Videos</span>
         </div>
         <div class="kpi-card">
-            <span class="kpi-value">{{ inline_shown }}</span>
+            <span class="kpi-value" data-kpi="inline_shown">{{ inline_shown }}</span>
             <span class="kpi-label">Chatbot</span>
         </div>
         <div class="kpi-card">
-            <span class="kpi-value">{{ result_shown }}</span>
+            <span class="kpi-value" data-kpi="result_shown">{{ result_shown }}</span>
             <span class="kpi-label">Resultats</span>
         </div>
         <div class="kpi-card">
-            <span class="kpi-value">{{ pdf_downloaded }}</span>
+            <span class="kpi-value" data-kpi="pdf_downloaded">{{ pdf_downloaded }}</span>
             <span class="kpi-label">PDF</span>
         </div>
     </div>
@@ -50,11 +50,11 @@
     <h2>Ratings — Global</h2>
     <div class="kpi-grid">
         <div class="kpi-card">
-            <span class="kpi-value">{{ "%.1f"|format(avg_rating) }}</span>
+            <span class="kpi-value" data-kpi="avg_rating">{{ "%.1f"|format(avg_rating) }}</span>
             <span class="kpi-label">Note moyenne</span>
         </div>
         <div class="kpi-card">
-            <span class="kpi-value">{{ review_count }}</span>
+            <span class="kpi-value" data-kpi="review_count">{{ review_count }}</span>
             <span class="kpi-label">Nb votes</span>
         </div>
     </div>
@@ -81,15 +81,15 @@
     <h2>Activite <span class="rt-dot rt-dot-live"></span></h2>
     <div class="kpi-grid">
         <div class="kpi-card rt-kpi-visitors">
-            <span class="kpi-value rt-kpi-accent-amber">{{ active_visitors }}</span>
+            <span class="kpi-value rt-kpi-accent-amber" data-kpi="active_visitors">{{ active_visitors }}</span>
             <span class="kpi-label">Visiteurs actifs (5 min)</span>
         </div>
         <div class="kpi-card">
-            <span class="kpi-value rt-kpi-accent-gold">{{ hits_24h }}</span>
+            <span class="kpi-value rt-kpi-accent-gold" data-kpi="hits_24h">{{ hits_24h }}</span>
             <span class="kpi-label">Hits 24h</span>
         </div>
         <div class="kpi-card">
-            <span class="kpi-value" style="color:#ef4444;">{{ banned_count }}</span>
+            <span class="kpi-value" style="color:#ef4444;" data-kpi="banned_count">{{ banned_count }}</span>
             <span class="kpi-label">IPs bannies</span>
         </div>
     </div>

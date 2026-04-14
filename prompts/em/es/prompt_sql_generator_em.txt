@@ -45,7 +45,7 @@ Para contar frecuencias de TODAS las estrellas:
 
 REGLAS SQL ESTRICTAS:
 - Solo SELECT (nunca INSERT, UPDATE, DELETE, DROP, ALTER, CREATE)
-- Siempre añadir LIMIT (máximo 50)
+- Siempre añadir LIMIT (máximo 20). Si la pregunta pide "todos los sorteos" o "los últimos sorteos", usa LIMIT 20
 - Tabla permitida: tirages_euromillions únicamente
 - Sintaxis MySQL 8.0
 - Sin punto y coma al final
@@ -57,7 +57,7 @@ Cuando el usuario pregunta si varios números salieron "juntos",
 - Cada número principal debe tener su propio bloque (boule_1 = N OR boule_2 = N OR ... OR boule_5 = N)
 - Los bloques se enlazan con AND (no OR)
 - Para estrellas: (etoile_1 = E OR etoile_2 = E)
-- Si la pregunta es "¿salieron?" o "¿han salido?", devuelve los sorteos coincidentes con SELECT date_de_tirage, boule_1..5, etoile_1, etoile_2 y ORDER BY date_de_tirage DESC LIMIT 50
+- Si la pregunta es "¿salieron?" o "¿han salido?", devuelve los sorteos coincidentes con SELECT date_de_tirage, boule_1..5, etoile_1, etoile_2 y ORDER BY date_de_tirage DESC LIMIT 20
 
 RESOLUCIÓN TEMPORAL (CRÍTICA):
 REGLA DE PRIORIDAD: si el usuario menciona un período, un año
@@ -99,6 +99,9 @@ SELECT COUNT(*) as total_sorties FROM tirages_euromillions WHERE etoile_1 = 3 OR
 P: ¿cuándo salió el 7 por primera vez?
 SELECT MIN(date_de_tirage) as premiere_sortie FROM tirages_euromillions WHERE boule_1 = 7 OR boule_2 = 7 OR boule_3 = 7 OR boule_4 = 7 OR boule_5 = 7
 
+P: los últimos sorteos / los números ganadores del EuroMillions
+SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, etoile_1, etoile_2 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 20
+
 P: último sorteo
 SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, etoile_1, etoile_2 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 1
 
@@ -133,7 +136,7 @@ P: ¿han salido el 9 y el 22 juntos?
 SELECT COUNT(*) as ensemble FROM tirages_euromillions WHERE (boule_1 = 9 OR boule_2 = 9 OR boule_3 = 9 OR boule_4 = 9 OR boule_5 = 9) AND (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22)
 
 P: ¿cuándo salieron el 16, el 22 y el 41 al mismo tiempo?
-SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, etoile_1, etoile_2 FROM tirages_euromillions WHERE (boule_1 = 16 OR boule_2 = 16 OR boule_3 = 16 OR boule_4 = 16 OR boule_5 = 16) AND (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) AND (boule_1 = 41 OR boule_2 = 41 OR boule_3 = 41 OR boule_4 = 41 OR boule_5 = 41) ORDER BY date_de_tirage DESC LIMIT 50
+SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, etoile_1, etoile_2 FROM tirages_euromillions WHERE (boule_1 = 16 OR boule_2 = 16 OR boule_3 = 16 OR boule_4 = 16 OR boule_5 = 16) AND (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) AND (boule_1 = 41 OR boule_2 = 41 OR boule_3 = 41 OR boule_4 = 41 OR boule_5 = 41) ORDER BY date_de_tirage DESC LIMIT 20
 
 P: ¿cuántas veces ha salido el 7 en enero?
 SELECT COUNT(*) as total_sorties FROM tirages_euromillions WHERE (boule_1 = 7 OR boule_2 = 7 OR boule_3 = 7 OR boule_4 = 7 OR boule_5 = 7) AND MONTH(date_de_tirage) = 1 AND YEAR(date_de_tirage) = YEAR(CURDATE()) LIMIT 1

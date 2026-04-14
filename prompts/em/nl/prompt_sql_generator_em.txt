@@ -45,7 +45,7 @@ Om frequenties van ALLE sterren te tellen:
 
 STRIKTE SQL-REGELS:
 - Alleen SELECT (nooit INSERT, UPDATE, DELETE, DROP, ALTER, CREATE)
-- Altijd LIMIT toevoegen (maximaal 50)
+- Altijd LIMIT toevoegen (maximaal 20). Als de vraag "alle trekkingen" of "de laatste trekkingen" vraagt, gebruik LIMIT 20
 - Toegestane tabel: alleen tirages_euromillions
 - MySQL 8.0 syntax
 - Geen puntkomma aan het einde
@@ -57,7 +57,7 @@ Wanneer de gebruiker vraagt of meerdere nummers "samen" zijn getrokken,
 - Elk hoofdnummer moet zijn eigen blok hebben (boule_1 = N OR boule_2 = N OR ... OR boule_5 = N)
 - Blokken worden gekoppeld met AND (niet OR)
 - Voor sterren: (etoile_1 = E OR etoile_2 = E)
-- Als de vraag "zijn ze?" of "zijn ze voorgekomen?" luidt, geef de overeenkomende trekkingen met SELECT date_de_tirage, boule_1..5, etoile_1, etoile_2 en ORDER BY date_de_tirage DESC LIMIT 50
+- Als de vraag "zijn ze?" of "zijn ze voorgekomen?" luidt, geef de overeenkomende trekkingen met SELECT date_de_tirage, boule_1..5, etoile_1, etoile_2 en ORDER BY date_de_tirage DESC LIMIT 20
 
 TIJDSRESOLUTIE (KRITIEK):
 PRIORITEITSREGEL: als de gebruiker een periode, een jaar
@@ -99,6 +99,9 @@ SELECT COUNT(*) as total_sorties FROM tirages_euromillions WHERE etoile_1 = 3 OR
 V: Wanneer is de 7 voor het eerst getrokken?
 SELECT MIN(date_de_tirage) as premiere_sortie FROM tirages_euromillions WHERE boule_1 = 7 OR boule_2 = 7 OR boule_3 = 7 OR boule_4 = 7 OR boule_5 = 7
 
+V: De laatste trekkingen / de EuroMillions winnende nummers
+SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, etoile_1, etoile_2 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 20
+
 V: Laatste trekking
 SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, etoile_1, etoile_2 FROM tirages_euromillions ORDER BY date_de_tirage DESC LIMIT 1
 
@@ -133,7 +136,7 @@ V: Zijn de 9 en de 22 samen getrokken?
 SELECT COUNT(*) as ensemble FROM tirages_euromillions WHERE (boule_1 = 9 OR boule_2 = 9 OR boule_3 = 9 OR boule_4 = 9 OR boule_5 = 9) AND (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22)
 
 V: Wanneer zijn de 16, 22 en 41 tegelijkertijd getrokken?
-SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, etoile_1, etoile_2 FROM tirages_euromillions WHERE (boule_1 = 16 OR boule_2 = 16 OR boule_3 = 16 OR boule_4 = 16 OR boule_5 = 16) AND (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) AND (boule_1 = 41 OR boule_2 = 41 OR boule_3 = 41 OR boule_4 = 41 OR boule_5 = 41) ORDER BY date_de_tirage DESC LIMIT 50
+SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, etoile_1, etoile_2 FROM tirages_euromillions WHERE (boule_1 = 16 OR boule_2 = 16 OR boule_3 = 16 OR boule_4 = 16 OR boule_5 = 16) AND (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) AND (boule_1 = 41 OR boule_2 = 41 OR boule_3 = 41 OR boule_4 = 41 OR boule_5 = 41) ORDER BY date_de_tirage DESC LIMIT 20
 
 V: Hoe vaak is de 7 getrokken in januari?
 SELECT COUNT(*) as total_sorties FROM tirages_euromillions WHERE (boule_1 = 7 OR boule_2 = 7 OR boule_3 = 7 OR boule_4 = 7 OR boule_5 = 7) AND MONTH(date_de_tirage) = 1 AND YEAR(date_de_tirage) = YEAR(CURDATE()) LIMIT 1

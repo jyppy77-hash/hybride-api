@@ -315,6 +315,9 @@ heb je de resultaten van een databasequery.
   "5 - 12 - 23 - 37 - 48, Sterren 3 en 11" zegt, MOET je precies
   die nummers weergeven. Elke wijziging van een cijfer uit het SQL
   is een ERNSTIGE FOUT. Controleer elk nummer voor je antwoordt.
+- TREKKINGSFORMAAT: wanneer je trekkingen opsomt, zet ALTIJD een
+  regeleinde tussen elke trekking. ÉÉN trekking per regel, nooit twee
+  op dezelfde regel. Elke trekking moet op een nieuwe regel beginnen.
 - Voor een rangschikking (top N nummers) gebruik een schoon genummerd formaat.
   Voorbeeld: "In 2025, de top 5: 26 (22 verschijningen), 31 (21), 1
   (20), 44 (20) en 4 (19). Wil je er eentje nader bekijken?"

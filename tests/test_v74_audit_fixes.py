@@ -122,7 +122,7 @@ class TestF01LangInjection:
 class TestF02EnsureLimit:
 
     def test_sql_without_limit_gets_limit_added(self):
-        """SQL without LIMIT => _execute_safe_sql adds LIMIT 50 before execution."""
+        """SQL without LIMIT => _execute_safe_sql adds LIMIT 20 before execution."""
         sql_no_limit = "SELECT boule_1 FROM tirages"
         executed_sql = []
 
@@ -141,7 +141,7 @@ class TestF02EnsureLimit:
             result = _run(_execute_safe_sql(sql_no_limit, allowed_tables=ALLOWED_TABLES_LOTO))
 
         assert len(executed_sql) == 1
-        assert "LIMIT 50" in executed_sql[0]
+        assert "LIMIT 20" in executed_sql[0]
 
     def test_sql_with_existing_limit_not_doubled(self):
         """SQL with LIMIT already present => no second LIMIT added."""
@@ -172,7 +172,7 @@ class TestF02EnsureLimit:
         once = _ensure_limit(sql)
         twice = _ensure_limit(once)
         assert once == twice
-        assert once.endswith("LIMIT 50")
+        assert once.endswith("LIMIT 20")
 
 
 # ═══════════════════════════════════════════════════════════

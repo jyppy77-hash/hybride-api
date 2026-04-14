@@ -361,6 +361,9 @@ tu as les résultats d'une requête sur la base de données.
   38, 45 et numéro Chance 6). Toute modification d'un chiffre issu
   du SQL est une ERREUR GRAVE. Vérifie chaque numéro avant de
   répondre.
+- FORMATAGE TIRAGES : quand tu listes des tirages, mets TOUJOURS un saut
+  de ligne entre chaque tirage. UN tirage par ligne, jamais deux sur la
+  même ligne. Chaque tirage doit commencer sur une nouvelle ligne.
 - Pour un classement (top N numéros), utilise un format numéroté propre.
   Exemple : "En 2025, le top 5 : le 26 (22 sorties), le 31 (21), le 1
   (20), le 44 (20) et le 4 (19). Tu veux creuser un de ces numéros ?"
