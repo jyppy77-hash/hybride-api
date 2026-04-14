@@ -36,7 +36,9 @@ async def admin_calendar_page(request: Request):
     if redir:
         return redir
     tpl = env.get_template("admin/calendar.html")
-    return HTMLResponse(tpl.render(active="calendar"))
+    resp = HTMLResponse(tpl.render(active="calendar"))
+    resp.headers["Cache-Control"] = "no-store, no-cache, must-revalidate"
+    return resp
 
 
 @router.get("/admin/api/calendar-data", include_in_schema=False)
@@ -179,4 +181,7 @@ async def admin_api_calendar_data(
     except Exception as e:
         logger.error("[ADMIN CALENDAR] chat_log query failed: %s", e)
 
-    return JSONResponse({"year": year, "month": month, "days": days})
+    return JSONResponse(
+        {"year": year, "month": month, "days": days},
+        headers={"Cache-Control": "no-store"},
+    )

@@ -1063,7 +1063,9 @@ var LotoAdmin = (function() {
         });
     }
 
-    // ── Calendar heatmap ── (migrated from inline calendar.html — F11 V91)
+    // ── Calendar heatmap ── (migrated from inline calendar.html — F11 V91, V115: auto-refresh 10s)
+
+    var calTimer = null;
 
     function initCalendar() {
         var MONTHS_FR = ['Janvier','Fevrier','Mars','Avril','Mai','Juin',
@@ -1084,10 +1086,10 @@ var LotoAdmin = (function() {
 
         if (!grid || !labelEl) return; // guard: not on calendar page
 
-        // ── Fetch data ──
+        // ── Fetch data (V115: cache-bust) ──
         function fetchData() {
             labelEl.textContent = MONTHS_FR[state.month - 1] + ' ' + state.year;
-            fetchJSON('/admin/api/calendar-data?year=' + state.year + '&month=' + state.month)
+            fetchJSON('/admin/api/calendar-data?year=' + state.year + '&month=' + state.month + '&_t=' + Date.now())
                 .then(function(d) {
                     if (!d) return;
                     state.data = d;
@@ -1224,8 +1226,28 @@ var LotoAdmin = (function() {
             render();
         });
 
+        // ── Polling (V115: auto-refresh 10s + visibilitychange) ──
+        function startCalPolling() {
+            if (calTimer) return;
+            calTimer = setInterval(fetchData, 10000);
+        }
+
+        function stopCalPolling() {
+            if (calTimer) { clearInterval(calTimer); calTimer = null; }
+        }
+
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopCalPolling();
+            } else {
+                fetchData();
+                startCalPolling();
+            }
+        });
+
         // ── Init ──
         fetchData();
+        startCalPolling();
     }
 
     return {

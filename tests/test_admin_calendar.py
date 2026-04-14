@@ -467,3 +467,47 @@ class TestCalendarPage:
         resp = client.get("/admin/calendar", follow_redirects=False)
         assert resp.status_code == 302
         assert "/admin/login" in resp.headers["location"]
+
+    # V115: Cache-Control + LIVE dot
+
+    def test_page_cache_control_no_store(self):
+        """V115: Calendar page has Cache-Control: no-store."""
+        client = _authed_client()
+        resp = client.get("/admin/calendar")
+        assert resp.status_code == 200
+        assert "no-store" in resp.headers.get("cache-control", "")
+
+    def test_api_cache_control_no_store(self):
+        """V115: Calendar API has Cache-Control: no-store."""
+        client = _authed_client()
+        with patch("routes.admin_calendar.db_cloudsql") as mock_db:
+
+            class FakeCtx:
+                async def __aenter__(self):
+                    class FakeConn:
+                        async def cursor(self):
+                            class FakeCursor:
+                                async def execute(self, sql, params=None):
+                                    pass
+
+                                async def fetchall(self):
+                                    return []
+                            return FakeCursor()
+                    return FakeConn()
+
+                async def __aexit__(self, *args):
+                    pass
+
+            mock_db.get_connection_readonly.return_value = FakeCtx()
+            resp = client.get("/admin/api/calendar-data?year=2026&month=4")
+
+        assert resp.status_code == 200
+        assert "no-store" in resp.headers.get("cache-control", "")
+
+    def test_page_has_live_dot(self):
+        """V115: Calendar page has LIVE pulse indicator."""
+        client = _authed_client()
+        resp = client.get("/admin/calendar")
+        assert resp.status_code == 200
+        assert 'id="cal-live-dot"' in resp.text
+        assert 'rt-dot-live' in resp.text
