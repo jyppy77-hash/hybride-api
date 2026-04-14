@@ -11,20 +11,26 @@ from fastapi import Request
 # IPv4: exact match.  IPv6: CIDR /64 (handles privacy extensions).
 # Aligned with middleware/ip_ban.py logic.
 
-_OWNER_IP = os.environ.get("OWNER_IP", "").strip()
-_OWNER_IPV6 = os.environ.get("OWNER_IPV6", "").strip()
+_OWNER_IP_RAW = os.environ.get("OWNER_IP", "").strip()
+_OWNER_IPV6_RAW = os.environ.get("OWNER_IPV6", "").strip()
 
+# V113: support pipe-separated multi-IP (e.g. "ip1|ip2|ip3")
 _OWNER_EXACT: set[str] = {"127.0.0.1", "::1"}
-if _OWNER_IP:
-    _OWNER_EXACT.add(_OWNER_IP)
+for _ip in _OWNER_IP_RAW.split("|"):
+    _ip = _ip.strip()
+    if _ip:
+        _OWNER_EXACT.add(_ip)
 
-_owner_net_v6 = None
-if _OWNER_IPV6:
-    _v6 = _OWNER_IPV6.rstrip(":")
+_owner_nets_v6: list = []
+for _v6_raw in _OWNER_IPV6_RAW.split("|"):
+    _v6_raw = _v6_raw.strip()
+    if not _v6_raw:
+        continue
+    _v6 = _v6_raw.rstrip(":")
     if "::" not in _v6:
         _v6 += "::"
     try:
-        _owner_net_v6 = ip_network(f"{_v6}/64", strict=False)
+        _owner_nets_v6.append(ip_network(f"{_v6}/64", strict=False))
     except ValueError:
         pass
 
@@ -33,6 +39,7 @@ def is_owner_ip(ip: str) -> bool:
     """Owner IP detection — IPv4 exact + IPv6 CIDR /64 + loopback.
 
     S07 V94: single source of truth for owner detection.
+    V113: supports pipe-separated multi-IP in OWNER_IP / OWNER_IPV6.
     Used by middleware/ip_ban.py, services/chat_rate_limit.py, routes/*.
     """
     if ip in _OWNER_EXACT:
@@ -41,8 +48,9 @@ def is_owner_ip(ip: str) -> bool:
         addr = ip_address(ip)
         if addr.is_loopback:
             return True
-        if _owner_net_v6 and addr in _owner_net_v6:
-            return True
+        for net in _owner_nets_v6:
+            if addr in net:
+                return True
     except ValueError:
         pass
     return False

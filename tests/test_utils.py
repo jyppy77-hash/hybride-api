@@ -187,6 +187,60 @@ class TestIsOwnerIp:
         finally:
             self._cleanup()
 
+    # V113: multi-IP pipe-separated support
+
+    def test_multi_ipv4_first_matches(self):
+        fn = self._reload_with_env(ipv4="86.212.92.243|92.184.105.206")
+        try:
+            assert fn("86.212.92.243") is True
+        finally:
+            self._cleanup()
+
+    def test_multi_ipv4_second_matches(self):
+        fn = self._reload_with_env(ipv4="86.212.92.243|92.184.105.206")
+        try:
+            assert fn("92.184.105.206") is True
+        finally:
+            self._cleanup()
+
+    def test_multi_ipv4_none_matches(self):
+        fn = self._reload_with_env(ipv4="86.212.92.243|92.184.105.206")
+        try:
+            assert fn("203.0.113.50") is False
+        finally:
+            self._cleanup()
+
+    def test_multi_ipv6_first_prefix_matches(self):
+        fn = self._reload_with_env(ipv6="2a01:cb05:8700:5900:|2a01:cb09:8047:361e:")
+        try:
+            assert fn("2a01:cb05:8700:5900:aaaa:bbbb:cccc:dddd") is True
+        finally:
+            self._cleanup()
+
+    def test_multi_ipv6_second_prefix_matches(self):
+        fn = self._reload_with_env(ipv6="2a01:cb05:8700:5900:|2a01:cb09:8047:361e:")
+        try:
+            assert fn("2a01:cb09:8047:361e:1111:2222:3333:4444") is True
+        finally:
+            self._cleanup()
+
+    def test_multi_pipe_with_empty_segments(self):
+        """Pipe with empty segments (||, trailing |) must not crash."""
+        fn = self._reload_with_env(ipv4="86.212.92.243||92.184.105.206|")
+        try:
+            assert fn("92.184.105.206") is True
+            assert fn("86.212.92.243") is True
+        finally:
+            self._cleanup()
+
+    def test_empty_env_returns_false(self):
+        """Empty OWNER_IP/OWNER_IPV6 → only loopback matches."""
+        fn = self._reload_with_env(ipv4="", ipv6="")
+        try:
+            assert fn("86.212.92.243") is False
+        finally:
+            self._cleanup()
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # detect_country  (S05 V93 — single source of truth in utils.py)
