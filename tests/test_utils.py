@@ -241,6 +241,56 @@ class TestIsOwnerIp:
         finally:
             self._cleanup()
 
+    # V114: CIDR IPv4 support
+
+    def test_cidr_v4_slash16_match(self):
+        fn = self._reload_with_env(ipv4="92.184.0.0/16")
+        try:
+            assert fn("92.184.106.109") is True
+        finally:
+            self._cleanup()
+
+    def test_cidr_v4_slash16_no_match(self):
+        fn = self._reload_with_env(ipv4="92.184.0.0/16")
+        try:
+            assert fn("92.185.0.1") is False
+        finally:
+            self._cleanup()
+
+    def test_cidr_v4_slash24_match(self):
+        fn = self._reload_with_env(ipv4="92.184.105.0/24")
+        try:
+            assert fn("92.184.105.50") is True
+        finally:
+            self._cleanup()
+
+    def test_cidr_v4_mixed_exact_and_cidr(self):
+        """Mix exact IP + CIDR in same OWNER_IP pipe list."""
+        fn = self._reload_with_env(ipv4="86.212.92.243|92.184.0.0/16")
+        try:
+            assert fn("86.212.92.243") is True
+            assert fn("92.184.200.1") is True
+            assert fn("10.0.0.1") is False
+        finally:
+            self._cleanup()
+
+    def test_cidr_v4_invalid_no_crash(self):
+        """Invalid CIDR format logs warning but doesn't crash."""
+        fn = self._reload_with_env(ipv4="not_a_cidr/16")
+        try:
+            assert fn("92.184.0.1") is False
+        finally:
+            self._cleanup()
+
+    def test_exact_v4_still_works(self):
+        """Regression: exact IPv4 (no /) continues to work."""
+        fn = self._reload_with_env(ipv4="86.212.92.243")
+        try:
+            assert fn("86.212.92.243") is True
+            assert fn("86.212.92.244") is False
+        finally:
+            self._cleanup()
+
 
 # ═══════════════════════════════════════════════════════════════════════════════
 # detect_country  (S05 V93 — single source of truth in utils.py)
