@@ -296,3 +296,84 @@ class TestBuildEngagementWhere:
     def test_with_product_code(self):
         w, params, ds, de = build_engagement_where("today", "", "", "", "", "", "", product_code="LOTO_FR")
         assert "product_code = %s" in w
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# F04 V117: validate_contrat_form tests
+# ══════════════════════════════════════════════════════════════════════════════
+
+class TestValidateContratForm:
+    def test_valid_form(self):
+        from routes.admin_helpers import validate_contrat_form
+        form = {
+            "sponsor_id": "1",
+            "type_contrat": "exclusif",
+            "product_codes": "LOTOIA_EXCLU",
+            "engagement_mois": "6",
+            "pool_impressions": "10000",
+            "mode_depassement": "CPC",
+            "montant_mensuel_ht": "650",
+            "date_debut": "2026-04-01",
+            "date_fin": "2026-09-30",
+            "conditions_particulieres": "Test",
+        }
+        data, error = validate_contrat_form(form)
+        assert error is None
+        assert data is not None
+        assert data["sponsor_id"] == 1
+        assert data["type_contrat"] == "exclusif"
+        assert data["engagement_mois"] == 6
+        assert data["montant_mensuel_ht"] == 650.0
+        assert data["date_debut"] == "2026-04-01"
+        assert data["date_fin"] == "2026-09-30"
+        assert data["conditions_particulieres"] == "Test"
+
+    def test_missing_sponsor(self):
+        from routes.admin_helpers import validate_contrat_form
+        data, error = validate_contrat_form({"sponsor_id": ""})
+        assert data is None
+        assert "sponsor" in error.lower()
+
+    def test_invalid_dates_fin_before_debut(self):
+        from routes.admin_helpers import validate_contrat_form
+        form = {
+            "sponsor_id": "1",
+            "date_debut": "2026-09-01",
+            "date_fin": "2026-04-01",
+            "montant_mensuel_ht": "650",
+        }
+        data, error = validate_contrat_form(form)
+        assert data is None
+        assert "postérieure" in error
+
+    def test_negative_montant(self):
+        from routes.admin_helpers import validate_contrat_form
+        form = {
+            "sponsor_id": "1",
+            "montant_mensuel_ht": "-100",
+        }
+        data, error = validate_contrat_form(form)
+        assert data is None
+        assert "négatif" in error
+
+    def test_invalid_mode_defaults_to_cpc(self):
+        from routes.admin_helpers import validate_contrat_form
+        form = {
+            "sponsor_id": "1",
+            "mode_depassement": "INVALID",
+            "montant_mensuel_ht": "650",
+        }
+        data, error = validate_contrat_form(form)
+        assert error is None
+        assert data["mode_depassement"] == "CPC"
+
+    def test_invalid_date_format(self):
+        from routes.admin_helpers import validate_contrat_form
+        form = {
+            "sponsor_id": "1",
+            "date_debut": "not-a-date",
+            "montant_mensuel_ht": "650",
+        }
+        data, error = validate_contrat_form(form)
+        assert data is None
+        assert "Date de début invalide" in error

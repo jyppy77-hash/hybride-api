@@ -1,5 +1,5 @@
 /**
- * LotoIA Admin — AJAX filters + Chart.js
+ * LotoIA Admin — AJAX filters + Chart.js — v16
  */
 var LotoAdmin = (function() {
     'use strict';
@@ -385,6 +385,16 @@ var LotoAdmin = (function() {
         }
 
         startAutoRefresh();
+
+        // F08 V117: Pause/resume on tab visibility (same pattern as dashboard + calendar)
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopAutoRefresh();
+            } else {
+                loadRealtime();
+                startAutoRefresh();
+            }
+        });
     }
 
     function startAutoRefresh() {

@@ -266,8 +266,8 @@ async def admin_circuit_breaker_reset(request: Request):
     err = _require_auth_json(request)
     if err:
         return err
-    from middleware.ip_ban import _extract_client_ip
-    real_ip = _extract_client_ip(request)
+    from utils import get_client_ip
+    real_ip = get_client_ip(request)
     from services.circuit_breaker import gemini_breaker
     prev_state = gemini_breaker.state
     gemini_breaker.force_close()
@@ -282,8 +282,8 @@ async def admin_decay_update(request: Request):
     err = _require_auth_json(request)
     if err:
         return err
-    from middleware.ip_ban import _extract_client_ip
-    real_ip = _extract_client_ip(request)
+    from utils import get_client_ip
+    real_ip = get_client_ip(request)
     from services.decay_state import check_and_update_decay
     results = {}
     try:

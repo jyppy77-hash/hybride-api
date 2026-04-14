@@ -904,9 +904,9 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.000 (V109 HYBRIDE v2.0 release)."""
+        """APP_VERSION == 1.6.001 (V117 Audit 360° Admin Back-Office)."""
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.000"
+        assert APP_VERSION == "1.6.001"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

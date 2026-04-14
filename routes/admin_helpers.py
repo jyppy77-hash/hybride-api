@@ -43,6 +43,8 @@ __all__ = [
     # Where builders
     "build_impressions_where", "build_votes_where",
     "build_realtime_where", "build_engagement_where",
+    # Contrat form validation
+    "validate_contrat_form",
 ]
 
 
@@ -367,5 +369,91 @@ def build_engagement_where(period, date_start, date_end, event_type, module, lan
         where.append("product_code = %s")
         params.append(product_code)
     return " AND ".join(where), params, ds, de
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# SAFE CONVERSIONS
+# ══════════════════════════════════════════════════════════════════════════════
+
+def _safe_int(value, default: int) -> int:
+    """Safe int conversion — fallback to default on invalid input."""
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return default
+
+
+def _safe_float(value, default: float) -> float:
+    """Safe float conversion — fallback to default on invalid input."""
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return default
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# CONTRAT FORM VALIDATION (F04 V117: DRY refacto)
+# ══════════════════════════════════════════════════════════════════════════════
+
+def validate_contrat_form(form: dict) -> tuple[dict | None, str | None]:
+    """Validate contrat form fields shared between create and update.
+
+    Returns (validated_data, None) on success or (None, error_message) on failure.
+    """
+    sponsor_id = form.get("sponsor_id")
+    if not sponsor_id:
+        return None, "Le sponsor est obligatoire."
+
+    type_contrat = form.get("type_contrat", "exclusif")
+    if type_contrat not in VALID_TYPE_CONTRAT:
+        type_contrat = "exclusif"
+
+    # V9: product_codes stored as JSON array for backward compat
+    raw_pc = form.get("product_codes", "LOTOIA_EXCLU")
+    product_codes = f'["{raw_pc}"]' if raw_pc and not raw_pc.startswith("[") else (raw_pc or None)
+
+    engagement_mois = _safe_int(form.get("engagement_mois", 3), 3)
+    pool_impressions = _safe_int(form.get("pool_impressions", 10000), 10000)
+
+    mode_dep = form.get("mode_depassement", "CPC")
+    if mode_dep not in VALID_MODE_DEPASSEMENT:
+        mode_dep = "CPC"
+
+    plafond_raw = form.get("plafond_mensuel", "")
+    plafond_mensuel = _safe_float(plafond_raw, 0) if plafond_raw else None
+
+    montant_mensuel_ht = _safe_float(form.get("montant_mensuel_ht", 0), 0)
+    if montant_mensuel_ht < 0:
+        return None, "Le montant mensuel HT ne peut pas être négatif"
+    if plafond_mensuel is not None and plafond_mensuel < 0:
+        return None, "Le plafond mensuel ne peut pas être négatif"
+
+    # S04 V93: validate dates server-side
+    date_debut_str = (form.get("date_debut") or "").strip()
+    date_fin_str = (form.get("date_fin") or "").strip()
+    try:
+        date_debut_val = date.fromisoformat(date_debut_str) if date_debut_str else None
+    except ValueError:
+        return None, "Date de début invalide (format attendu : AAAA-MM-JJ)"
+    try:
+        date_fin_val = date.fromisoformat(date_fin_str) if date_fin_str else None
+    except ValueError:
+        return None, "Date de fin invalide (format attendu : AAAA-MM-JJ)"
+    if date_debut_val and date_fin_val and date_fin_val <= date_debut_val:
+        return None, "La date de fin doit être postérieure à la date de début"
+
+    return {
+        "sponsor_id": _safe_int(sponsor_id, 0),
+        "type_contrat": type_contrat,
+        "product_codes": product_codes,
+        "engagement_mois": engagement_mois,
+        "pool_impressions": pool_impressions,
+        "mode_depassement": mode_dep,
+        "plafond_mensuel": plafond_mensuel,
+        "montant_mensuel_ht": montant_mensuel_ht,
+        "date_debut": date_debut_str or None,
+        "date_fin": date_fin_str or None,
+        "conditions_particulieres": form.get("conditions_particulieres", "") or None,
+    }, None
 
 

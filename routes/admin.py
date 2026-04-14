@@ -16,6 +16,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 
 import db_cloudsql
 from config.templates import env
+from rate_limit import limiter
 from routes.admin_helpers import (
     require_auth as _require_auth,
     require_auth_json as _require_auth_json,
@@ -150,6 +151,7 @@ async def admin_api_votes_count_new(request: Request):
 
 
 @router.get("/admin/api/votes/csv", include_in_schema=False)
+@limiter.limit("30/minute")  # F05 V117
 async def admin_export_votes_csv(
     request: Request,
     period: str = Query("all"),
