@@ -364,7 +364,7 @@ def render_template(
             "app_js": "/ui/static/app-em.js?v=9",
             "simulateur_js": "/ui/static/simulateur-em.js?v=7",
             "sponsor_js": "/ui/static/em/sponsor-popup-em.js?v=8",
-            "sponsor75_js": "/ui/static/sponsor-popup75-em.js?v=10",
+            "sponsor75_js": "/ui/static/sponsor-popup75-em.js?v=11",
             "faq_js": "/ui/static/faq-em.js?v=7",
 
             # Page overrides

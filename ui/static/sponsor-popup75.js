@@ -859,7 +859,12 @@ function openMetaResultPopup(data) {
     if (pdfBtn) {
         pdfBtn.addEventListener('click', () => {
             if (window.LotoIA_track) LotoIA_track('meta75-pdf-download', {module: 'loto', sponsor_id: 'LOTO_FR_A', product_code: 'LOTO_FR_A'});
-            fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-pdf-downloaded', sponsor_id: 'LOTO_FR_A', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+            // V119: keepalive + sendBeacon fallback — le fetch PDF lourd qui suit peut annuler un fetch léger sans keepalive
+            try {
+                fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ event_type: 'sponsor-pdf-downloaded', sponsor_id: 'LOTO_FR_A', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+            } catch (e) {
+                try { navigator.sendBeacon('/api/sponsor/track', new Blob([JSON.stringify({ event_type: 'sponsor-pdf-downloaded', sponsor_id: 'LOTO_FR_A', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop' })], {type: 'application/json'})); } catch (e2) {}
+            }
             if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-pdf-downloaded', { sponsor_id: 'LOTO_FR_A', product_code: 'LOTO_FR_A' });
             if (window.LotoIAAnalytics?.productEngine?.track) {
                 window.LotoIAAnalytics.productEngine.track('meta_pdf_export', { version: 75 });
