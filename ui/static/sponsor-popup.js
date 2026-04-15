@@ -299,10 +299,22 @@ function showSponsorPopup(config) {
         document.body.style.overflow = 'hidden';
         document.body.classList.add('sponsor-popup-active');
 
-        SPONSORS_CONFIG.forEach(function(s) {
-            fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-popup-shown', sponsor_id: s.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
-            if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-popup-shown', { sponsor_id: s.id, product_code: s.id });
-        });
+        // Mono-sponsor LOTOIA_EXCLU : 1 popup = 1 impression (pas 1 par card)
+        var mainSponsor = SPONSORS_CONFIG[0];
+        fetch('/api/sponsor/track', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                event_type: 'sponsor-popup-shown',
+                sponsor_id: mainSponsor.id,
+                page: window.location.pathname,
+                lang: document.documentElement.lang || 'fr',
+                device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop'
+            })
+        }).catch(function() {});
+        if (typeof LotoIA_track === 'function') {
+            LotoIA_track('sponsor-popup-shown', { sponsor_id: mainSponsor.id, product_code: mainSponsor.id });
+        }
 
         // Bouton Annuler (style via CSS)
         const modal = overlay.querySelector('.sponsor-popup-modal');
@@ -328,8 +340,8 @@ function showSponsorPopup(config) {
             closePopup();
         });
 
-        // Track impressions
-        trackImpression(SPONSORS_CONFIG.map(s => s.id));
+        // Track impressions GA4 — mono-sponsor : 1 seul ID
+        trackImpression([mainSponsor.id]);
 
         // Elements d'animation
         const progressBar = document.getElementById('sponsor-progress');

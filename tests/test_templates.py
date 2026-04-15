@@ -237,8 +237,8 @@ def test_hreflang_en_rendered():
 
 _PAGE_CONFIGS = [
     ("em/accueil.html", "accueil", {"nav_back_url": "/", "body_class": "accueil-page em-page", "show_disclaimer_link": True}),
-    ("em/generateur.html", "generateur", {"body_class": "loto-page em-page", "include_nav_scroll": True, "show_disclaimer_link": True, "hero_icon": "⭐", "hero_title": "Exploration de grilles EuroMillions", "hero_subtitle": "Analyse", "sponsor75_js": "/ui/static/sponsor-popup75-em.js?v=10", "sponsor_js": "/ui/static/sponsor-popup-em.js?v=4", "app_js": "/ui/static/app-em.js?v=3"}),
-    ("em/simulateur.html", "simulateur", {"body_class": "simulator-page em-page", "include_nav_scroll": True, "hero_icon": "⭐", "hero_title": "Analyse de grille EuroMillions", "hero_subtitle": "Audit", "simulateur_js": "/ui/static/simulateur-em.js?v=1", "sponsor_js": "/ui/static/em/sponsor-popup-em.js?v=3"}),
+    ("em/generateur.html", "generateur", {"body_class": "loto-page em-page", "include_nav_scroll": True, "show_disclaimer_link": True, "hero_icon": "⭐", "hero_title": "Exploration de grilles EuroMillions", "hero_subtitle": "Analyse", "sponsor75_js": "/ui/static/sponsor-popup75-em.js?v=10", "sponsor_js": "/ui/static/em/sponsor-popup-em.js?v=8", "app_js": "/ui/static/app-em.js?v=9"}),
+    ("em/simulateur.html", "simulateur", {"body_class": "simulator-page em-page", "include_nav_scroll": True, "hero_icon": "⭐", "hero_title": "Analyse de grille EuroMillions", "hero_subtitle": "Audit", "simulateur_js": "/ui/static/simulateur-em.js?v=1", "sponsor_js": "/ui/static/em/sponsor-popup-em.js?v=4"}),
     ("em/statistiques.html", "statistiques", {"include_nav_scroll": True, "show_disclaimer_link": True, "hero_icon": "📊", "hero_title": "Statistiques EuroMillions", "hero_subtitle": "Fréquences"}),
     ("em/historique.html", "historique", {"hero_icon": "📅", "hero_title": "Historique des tirages", "hero_subtitle": "Recherchez un tirage", "footer_style": "margin-top: 48px;"}),
     ("em/faq.html", "faq", {"hero_icon": "❓", "hero_title": "FAQ EuroMillions", "hero_subtitle": "Toutes les réponses", "em_db_total": 729, "faq_js": "/ui/static/faq-em.js?v=1"}),

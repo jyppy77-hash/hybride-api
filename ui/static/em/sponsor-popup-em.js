@@ -353,10 +353,22 @@ function showSponsorPopupSimulateurEM(config) {
         document.body.classList.add('sponsor-popup-active');
         startFloatingStars();
 
-        SPONSORS_CONFIG_EM.forEach(function(s) {
-            fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-popup-shown', sponsor_id: s.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
-            if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-popup-shown', { sponsor_id: s.id, product_code: s.id });
-        });
+        // Mono-sponsor LOTOIA_EXCLU : 1 popup = 1 impression (pas 1 par card)
+        var mainSponsor = SPONSORS_CONFIG_EM[0];
+        fetch('/api/sponsor/track', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                event_type: 'sponsor-popup-shown',
+                sponsor_id: mainSponsor.id,
+                page: window.location.pathname,
+                lang: document.documentElement.lang || 'fr',
+                device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop'
+            })
+        }).catch(function() {});
+        if (typeof LotoIA_track === 'function') {
+            LotoIA_track('sponsor-popup-shown', { sponsor_id: mainSponsor.id, product_code: mainSponsor.id });
+        }
 
         // Bouton Annuler
         var modal = overlay.querySelector('.sponsor-popup-modal');
@@ -381,8 +393,8 @@ function showSponsorPopupSimulateurEM(config) {
             closePopup();
         });
 
-        // Track impressions
-        trackImpressionSimulateurEM(SPONSORS_CONFIG_EM.map(function(s) { return s.id; }));
+        // Track impressions GA4 — mono-sponsor : 1 seul ID
+        trackImpressionSimulateurEM([mainSponsor.id]);
 
         // Elements d'animation
         var progressBar = document.getElementById('sponsor-progress');

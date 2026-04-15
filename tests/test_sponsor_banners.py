@@ -19,6 +19,8 @@ _APP_JS = os.path.join(_ROOT, "ui", "static", "app.js")
 _APP_EM_JS = os.path.join(_ROOT, "ui", "static", "app-em.js")
 _SP75_JS = os.path.join(_ROOT, "ui", "static", "sponsor-popup75.js")
 _SP75_EM_JS = os.path.join(_ROOT, "ui", "static", "sponsor-popup75-em.js")
+_SP_POPUP_JS = os.path.join(_ROOT, "ui", "static", "sponsor-popup.js")
+_SP_POPUP_EM_JS = os.path.join(_ROOT, "ui", "static", "em", "sponsor-popup-em.js")
 
 
 def _read(path: str) -> str:
@@ -341,3 +343,71 @@ class TestTrackingMeta75Result:
         block = src[idx:idx + 6000]
         assert block.count("LotoIA_track") >= 1
         assert "sponsor-result-shown" in block
+
+
+# ================================================================
+# REGRESSION F05 — Popup mono-sponsor : 1 fetch popup-shown, pas 2
+# ================================================================
+
+class TestPopupMonoSponsorLoto:
+    """V119 F05: popup must send exactly 1 popup-shown fetch, not forEach on 2 cards."""
+
+    @pytest.fixture(autouse=True)
+    def _load(self):
+        self.src = _read(_SP_POPUP_JS)
+
+    def test_no_foreach_sponsors_config(self):
+        """SPONSORS_CONFIG.forEach must NOT be used for tracking (double-count bug)."""
+        assert "SPONSORS_CONFIG.forEach" not in self.src
+
+    def test_single_popup_shown_fetch(self):
+        """Only 1 fetch with popup-shown must exist in the popup tracking block."""
+        # Find the mono-sponsor tracking block
+        assert "mainSponsor = SPONSORS_CONFIG[0]" in self.src
+        # Count popup-shown occurrences in fetch calls
+        count = self.src.count("event_type: 'sponsor-popup-shown'")
+        assert count == 1, f"Expected 1 popup-shown fetch, found {count}"
+
+    def test_single_lotoia_track_popup_shown(self):
+        """Only 1 LotoIA_track('sponsor-popup-shown') call must exist."""
+        count = self.src.count("LotoIA_track('sponsor-popup-shown'")
+        assert count == 1, f"Expected 1 LotoIA_track popup-shown, found {count}"
+
+    def test_main_sponsor_uses_config_zero(self):
+        """mainSponsor must reference SPONSORS_CONFIG[0] (card A = sponsor principal)."""
+        assert "SPONSORS_CONFIG[0]" in self.src
+
+    def test_track_impression_ga4_single_id(self):
+        """trackImpression must be called with [mainSponsor.id], not full array."""
+        assert "trackImpression([mainSponsor.id])" in self.src
+
+
+class TestPopupMonoSponsorEM:
+    """V119 F05: EM popup must send exactly 1 popup-shown fetch, not forEach on 2 cards."""
+
+    @pytest.fixture(autouse=True)
+    def _load(self):
+        self.src = _read(_SP_POPUP_EM_JS)
+
+    def test_no_foreach_sponsors_config_em(self):
+        """SPONSORS_CONFIG_EM.forEach must NOT be used for tracking (double-count bug)."""
+        assert "SPONSORS_CONFIG_EM.forEach" not in self.src
+
+    def test_single_popup_shown_fetch(self):
+        """Only 1 fetch with popup-shown must exist in the popup tracking block."""
+        assert "mainSponsor = SPONSORS_CONFIG_EM[0]" in self.src
+        count = self.src.count("event_type: 'sponsor-popup-shown'")
+        assert count == 1, f"Expected 1 popup-shown fetch, found {count}"
+
+    def test_single_lotoia_track_popup_shown(self):
+        """Only 1 LotoIA_track('sponsor-popup-shown') call must exist."""
+        count = self.src.count("LotoIA_track('sponsor-popup-shown'")
+        assert count == 1, f"Expected 1 LotoIA_track popup-shown, found {count}"
+
+    def test_main_sponsor_uses_config_zero(self):
+        """mainSponsor must reference SPONSORS_CONFIG_EM[0] (card A = sponsor principal)."""
+        assert "SPONSORS_CONFIG_EM[0]" in self.src
+
+    def test_track_impression_ga4_single_id(self):
+        """trackImpressionSimulateurEM must be called with [mainSponsor.id], not full array."""
+        assert "trackImpressionSimulateurEM([mainSponsor.id])" in self.src
