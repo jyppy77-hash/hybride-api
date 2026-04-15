@@ -151,7 +151,7 @@ class TestAdminDashboard:
         assert "10" in resp.text
 
     def test_dashboard_total_impressions(self):
-        """V87 F01: total_impressions = popup + inline + result."""
+        """V120: total_impressions = ALL event_types, card PDF = pdf_downloaded + pdf_mention."""
         client = _authed_client()
 
         async def mock_fetchall(sql, params=None):
@@ -159,9 +159,11 @@ class TestAdminDashboard:
                 return [
                     {"event_type": "sponsor-popup-shown", "cnt": 30},
                     {"event_type": "sponsor-click", "cnt": 5},
+                    {"event_type": "sponsor-video-played", "cnt": 4},
                     {"event_type": "sponsor-inline-shown", "cnt": 10},
                     {"event_type": "sponsor-result-shown", "cnt": 8},
                     {"event_type": "sponsor-pdf-downloaded", "cnt": 2},
+                    {"event_type": "sponsor-pdf-mention", "cnt": 3},
                 ]
             return []
 
@@ -177,13 +179,53 @@ class TestAdminDashboard:
 
         assert resp.status_code == 200
         body = resp.text
-        # Total = popup(30) + inline(10) + result(8) = 48
+        # Total = 30+5+4+10+8+2+3 = 62 (ALL event_types)
         assert "Impressions totales" in body
-        assert "Popups" in body
-        assert ">48<" in body  # total_impressions in KPI card
-        assert ">30<" in body  # popups only
-        # Clicks (5) should NOT be in total impressions
-        assert "Aujourd" in body  # section title default "Aujourd'hui"
+        assert ">62<" in body  # total_impressions = ALL event_types
+        assert ">30<" in body  # popups
+        assert ">2<" in body   # pdf_downloaded
+        assert ">3<" in body   # pdf_mention
+        assert "PDF Branding" in body  # 7th card label
+        assert "Aujourd" in body
+
+    def test_dashboard_total_equals_sum_of_cards(self):
+        """V120: total_impressions = sum of all individual cards."""
+        client = _authed_client()
+
+        async def mock_fetchall(sql, params=None):
+            if "sponsor_impressions" in sql:
+                return [
+                    {"event_type": "sponsor-popup-shown", "cnt": 20},
+                    {"event_type": "sponsor-click", "cnt": 7},
+                    {"event_type": "sponsor-video-played", "cnt": 3},
+                    {"event_type": "sponsor-inline-shown", "cnt": 11},
+                    {"event_type": "sponsor-result-shown", "cnt": 6},
+                    {"event_type": "sponsor-pdf-downloaded", "cnt": 4},
+                    {"event_type": "sponsor-pdf-mention", "cnt": 1},
+                ]
+            return []
+
+        async def mock_fetchone(sql, params=None):
+            if "ratings" in sql:
+                return {"review_count": 0, "avg_rating": 0}
+            return {"active": 0, "hits": 0, "cnt": 0}
+
+        with patch("routes.admin_dashboard.db_cloudsql") as mock_db:
+            mock_db.async_fetchall = AsyncMock(side_effect=mock_fetchall)
+            mock_db.async_fetchone = AsyncMock(side_effect=mock_fetchone)
+            resp = client.get("/admin/api/dashboard-kpis?period=today")
+
+        data = resp.json()
+        # Sum of 7 cards = popups + clicks + videos + chatbot + results + pdf + pdf_mention
+        card_sum = (
+            data["impressions"] + data["clicks"] + data["videos"]
+            + data["inline_shown"] + data["result_shown"]
+            + data["pdf_downloaded"] + data["pdf_mention"]
+        )
+        assert data["total_impressions"] == card_sum
+        assert data["total_impressions"] == 52  # 20+7+3+11+6+4+1
+        assert data["pdf_downloaded"] == 4
+        assert data["pdf_mention"] == 1
 
     def test_dashboard_handles_db_error(self):
         client = _authed_client()
@@ -289,7 +331,7 @@ class TestAdminDashboard:
         assert 'rt-dot-live' in resp.text
 
     def test_dashboard_kpis_api_returns_json(self):
-        """V112: /admin/api/dashboard-kpis returns JSON with all KPI fields."""
+        """V120: /admin/api/dashboard-kpis returns JSON with all KPI fields."""
         client = _authed_client()
 
         async def mock_fetchall(sql, params=None):
@@ -297,8 +339,11 @@ class TestAdminDashboard:
                 return [
                     {"event_type": "sponsor-popup-shown", "cnt": 10},
                     {"event_type": "sponsor-click", "cnt": 3},
+                    {"event_type": "sponsor-video-played", "cnt": 1},
                     {"event_type": "sponsor-inline-shown", "cnt": 5},
                     {"event_type": "sponsor-result-shown", "cnt": 2},
+                    {"event_type": "sponsor-pdf-downloaded", "cnt": 2},
+                    {"event_type": "sponsor-pdf-mention", "cnt": 1},
                 ]
             return []
 
@@ -320,9 +365,11 @@ class TestAdminDashboard:
 
         assert resp.status_code == 200
         data = resp.json()
-        assert data["total_impressions"] == 17  # 10 + 5 + 2
+        assert data["total_impressions"] == 24  # 10+3+1+5+2+2+1 = ALL event_types
         assert data["impressions"] == 10
         assert data["clicks"] == 3
+        assert data["pdf_downloaded"] == 2
+        assert data["pdf_mention"] == 1
         assert data["avg_rating"] == 4.2
         assert data["review_count"] == 8
         assert data["active_visitors"] == 12

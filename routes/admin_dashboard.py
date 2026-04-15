@@ -113,7 +113,11 @@ async def _fetch_dashboard_kpis(sponsor_where: str) -> dict:
     except Exception as e:
         logger.error("[ADMIN] dashboard KPI sponsor query failed: %s", e)
 
-    kpis["total_impressions"] = kpis["impressions"] + kpis["inline_shown"] + kpis["result_shown"]
+    kpis["total_impressions"] = (
+        kpis["impressions"] + kpis["clicks"] + kpis["videos"]
+        + kpis["inline_shown"] + kpis["result_shown"]
+        + kpis["pdf_downloaded"] + kpis["pdf_mention"]
+    )
 
     # Ratings
     try:
@@ -233,8 +237,5 @@ async def admin_dashboard_kpis(request: Request, period: str = Query("today")):
         period = "today"
 
     kpis = await _fetch_dashboard_kpis(_PERIOD_SQL[period])
-
-    # JSON endpoint omits pdf_mention (not displayed in polling)
-    kpis.pop("pdf_mention", None)
 
     return JSONResponse(kpis, headers={"Cache-Control": "no-store"})
