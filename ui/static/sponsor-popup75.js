@@ -811,6 +811,11 @@ function openMetaResultPopup(data) {
                 <p class="meta-result-analysis-text">${analysisText}</p>
             </div>
 
+            <div class="meta-result-partner" style="margin: 16px 0 8px; padding: 10px 14px; border-left: 3px solid rgba(26,115,232,0.5); background: rgba(26,115,232,0.06); border-radius: 6px; max-height: 60px; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 1.5px; color: #888; font-weight: 600; white-space: nowrap;">PARTENAIRE</span>
+                <span style="font-size: 13px; color: var(--text-secondary, #aaa);">LotoIA.fr est propulsé par nos partenaires</span>
+            </div>
+
             <div class="meta-result-actions">
                 <button class="meta-result-btn meta-result-btn-close" id="meta-result-close">
                     Fermer
@@ -826,6 +831,10 @@ function openMetaResultPopup(data) {
 
     document.body.appendChild(overlay);
     document.body.style.overflow = 'hidden';
+
+    // Tracking couche 1+2 — result-shown (bannière PARTENAIRE visible sur écran résultat)
+    fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-result-shown', sponsor_id: 'LOTO_FR_A', page: window.location.pathname, lang: 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+    if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-result-shown', { sponsor_id: 'LOTO_FR_A', product_code: 'LOTO_FR_A' });
 
     // Event listeners
     const closeBtn = overlay.querySelector('#meta-result-close');

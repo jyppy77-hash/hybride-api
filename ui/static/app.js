@@ -970,14 +970,42 @@ function displayStatsResult(data) {
 function trackGridGeneration(grid, gridNumber, targetDate) {}
 
 /**
- * Tracking impression pub (orphan route removed)
+ * Tracking impression bannière sponsor — 3 couches (facturation + event_log + GA4)
  */
-function trackAdImpression(adId) {}
+function trackAdImpression(adId) {
+    // Couche 1 — sponsor_impressions (source facturation)
+    fetch('/api/sponsor/track', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            event_type: 'sponsor-result-shown',
+            sponsor_id: 'LOTO_FR_A',
+            page: window.location.pathname,
+            lang: 'fr',
+            device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop'
+        })
+    }).catch(function() {});
+    // Couche 2 — event_log
+    if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-result-shown', { sponsor_id: 'LOTO_FR_A', product_code: 'LOTO_FR_A' });
+}
 
 /**
- * Tracking clic pub (orphan route removed)
+ * Tracking clic bannière sponsor
  */
-function trackAdClick(adId, partnerId) {}
+function trackAdClick(adId, partnerId) {
+    fetch('/api/sponsor/track', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            event_type: 'sponsor-click',
+            sponsor_id: 'LOTO_FR_A',
+            page: window.location.pathname,
+            lang: 'fr',
+            device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop'
+        })
+    }).catch(function() {});
+    if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-click', { sponsor_id: 'LOTO_FR_A', product_code: 'LOTO_FR_A' });
+}
 
 /**
  * Cree une card partenaire elegante
@@ -1138,10 +1166,8 @@ function displayGridsWithAds(grids, metadata, targetDate) {
         // Tracking grille individuelle
         trackGridGeneration(grid, index + 1, targetDate);
 
-        // Afficher card partenaire APRES chaque grille (sauf la derniere)
-        if (index < grids.length - 1) {
-            html += createPartnerCard(index);
-        }
+        // Afficher card partenaire APRES chaque grille
+        html += createPartnerCard(index);
     });
 
     // Footer disclaimer

@@ -253,8 +253,46 @@ async function handleAnalyze() {
 // PARTNER CARD — EuroMillions
 // ================================================================
 
-function trackAdImpressionEM(adId) {}
-function trackAdClickEM(adId, partnerId) {}
+function _getEmSponsorId() {
+    var emLang = (LI.locale || 'fr-FR').split('-')[0].toLowerCase() || 'fr';
+    return 'EM_' + emLang.toUpperCase() + '_A';
+}
+
+function trackAdImpressionEM(adId) {
+    var sponsorId = _getEmSponsorId();
+    var emLang = (LI.locale || 'fr-FR').split('-')[0].toLowerCase() || 'fr';
+    // Couche 1 — sponsor_impressions (source facturation)
+    fetch('/api/sponsor/track', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            event_type: 'sponsor-result-shown',
+            sponsor_id: sponsorId,
+            page: window.location.pathname,
+            lang: emLang,
+            device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop'
+        })
+    }).catch(function() {});
+    // Couche 2 — event_log
+    if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-result-shown', { sponsor_id: sponsorId, product_code: sponsorId });
+}
+
+function trackAdClickEM(adId, partnerId) {
+    var sponsorId = _getEmSponsorId();
+    var emLang = (LI.locale || 'fr-FR').split('-')[0].toLowerCase() || 'fr';
+    fetch('/api/sponsor/track', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            event_type: 'sponsor-click',
+            sponsor_id: sponsorId,
+            page: window.location.pathname,
+            lang: emLang,
+            device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop'
+        })
+    }).catch(function() {});
+    if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-click', { sponsor_id: sponsorId, product_code: sponsorId });
+}
 
 function createPartnerCardEM(index) {
     var adId = 'ad_' + Date.now() + '_' + index;
@@ -398,9 +436,8 @@ function displayGridsEM(grids, metadata, targetDate) {
             '</div>' +
         '</div>';
 
-        if (index < grids.length - 1) {
-            html += createPartnerCardEM(index);
-        }
+        // Afficher card partenaire APRES chaque grille
+        html += createPartnerCardEM(index);
     });
 
     html += '<div class="results-footer">' +
