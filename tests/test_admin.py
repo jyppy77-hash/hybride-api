@@ -179,17 +179,17 @@ class TestAdminDashboard:
 
         assert resp.status_code == 200
         body = resp.text
-        # Total = 30+5+4+10+8+2+3 = 62 (ALL event_types)
+        # V121: total = 30+10+8+3 = 51 (4 impression types: popup+inline+result+pdf-mention)
         assert "Impressions totales" in body
-        assert ">62<" in body  # total_impressions = ALL event_types
+        assert ">51<" in body  # total_impressions = 4 visual impression types
         assert ">30<" in body  # popups
         assert ">2<" in body   # pdf_downloaded
         assert ">3<" in body   # pdf_mention
         assert "PDF Branding" in body  # 7th card label
         assert "Aujourd" in body
 
-    def test_dashboard_total_equals_sum_of_cards(self):
-        """V120: total_impressions = sum of all individual cards."""
+    def test_dashboard_total_equals_sum_of_impression_types(self):
+        """V121: total_impressions = 4 visual impression types (popup+inline+result+pdf-mention)."""
         client = _authed_client()
 
         async def mock_fetchall(sql, params=None):
@@ -216,14 +216,15 @@ class TestAdminDashboard:
             resp = client.get("/admin/api/dashboard-kpis?period=today")
 
         data = resp.json()
-        # Sum of 7 cards = popups + clicks + videos + chatbot + results + pdf + pdf_mention
-        card_sum = (
-            data["impressions"] + data["clicks"] + data["videos"]
-            + data["inline_shown"] + data["result_shown"]
-            + data["pdf_downloaded"] + data["pdf_mention"]
+        # V121: total = 4 visual impression types (popup+inline+result+pdf-mention)
+        impression_sum = (
+            data["impressions"]       # sponsor-popup-shown
+            + data["inline_shown"]    # sponsor-inline-shown
+            + data["result_shown"]    # sponsor-result-shown
+            + data["pdf_mention"]     # sponsor-pdf-mention
         )
-        assert data["total_impressions"] == card_sum
-        assert data["total_impressions"] == 52  # 20+7+3+11+6+4+1
+        assert data["total_impressions"] == impression_sum
+        assert data["total_impressions"] == 38  # 20+11+6+1
         assert data["pdf_downloaded"] == 4
         assert data["pdf_mention"] == 1
 
@@ -365,7 +366,8 @@ class TestAdminDashboard:
 
         assert resp.status_code == 200
         data = resp.json()
-        assert data["total_impressions"] == 24  # 10+3+1+5+2+2+1 = ALL event_types
+        # V121: total = 4 visual impression types: 10+5+2+1 = 18
+        assert data["total_impressions"] == 18
         assert data["impressions"] == 10
         assert data["clicks"] == 3
         assert data["pdf_downloaded"] == 2
@@ -889,15 +891,17 @@ class TestExportPDF:
         assert resp.headers.get("content-type") == "application/pdf"
         assert resp.content[:4] == b"%PDF"
 
-    def test_pdf_impressions_aggregates_all_three_event_types(self):
-        """PDF must count popup+inline+result as impressions (aligned with dashboard KPI)."""
+    def test_pdf_impressions_aggregates_4_impression_types(self):
+        """V121: PDF must count popup+inline+result+pdf-mention as impressions."""
         client = _authed_client()
         mock_rows = [
             {"event_type": "sponsor-popup-shown", "cnt": 5000},
             {"event_type": "sponsor-inline-shown", "cnt": 3000},
             {"event_type": "sponsor-result-shown", "cnt": 2000},
+            {"event_type": "sponsor-pdf-mention", "cnt": 500},
             {"event_type": "sponsor-click", "cnt": 14},
             {"event_type": "sponsor-video-played", "cnt": 172},
+            {"event_type": "sponsor-pdf-downloaded", "cnt": 88},
         ]
         with patch("routes.admin_impressions.db_cloudsql") as mock_db, \
              patch("services.admin_pdf.generate_sponsor_report_pdf") as mock_pdf:
@@ -908,9 +912,9 @@ class TestExportPDF:
             resp = client.get("/admin/api/sponsor-report/pdf?period=30d")
 
         assert resp.status_code == 200
-        # Verify KPI dict passed to PDF generator has aggregated impressions (popup+inline+result)
         kpi_arg = mock_pdf.call_args[0][0]
-        assert kpi_arg["impressions"] == 10000, f"Expected 10000 (5000+3000+2000), got {kpi_arg['impressions']}"
+        # V121: 5000+3000+2000+500 = 10500 (4 impression types)
+        assert kpi_arg["impressions"] == 10500, f"Expected 10500, got {kpi_arg['impressions']}"
         assert kpi_arg["clicks"] == 14
         assert kpi_arg["videos"] == 172
         assert kpi_arg["sessions"] == 554

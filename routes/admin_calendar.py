@@ -147,10 +147,15 @@ async def admin_api_calendar_data(
     try:
         async with db_cloudsql.get_connection_readonly() as conn:
             cur = await conn.cursor()
+            # V121 — filtre 4 types impression (exclut click/video/pdf-dl)
             await cur.execute(
                 f"SELECT DAY({_TZ}) AS day, "
                 f"COUNT(*) AS impressions "
                 f"FROM sponsor_impressions WHERE {where_tz} "
+                f"AND event_type IN ("
+                f"  'sponsor-popup-shown','sponsor-inline-shown',"
+                f"  'sponsor-result-shown','sponsor-pdf-mention'"
+                f") "
                 f"GROUP BY day",
                 params,
             )

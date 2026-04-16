@@ -70,7 +70,9 @@ async def admin_api_impressions(
         total_clicks = 0
         for r in rows:
             et = r["event_type"]
-            if et in ("sponsor-popup-shown", "sponsor-inline-shown", "sponsor-result-shown"):
+            # V121 — 4 types impression (ajout sponsor-pdf-mention)
+            if et in ("sponsor-popup-shown", "sponsor-inline-shown",
+                       "sponsor-result-shown", "sponsor-pdf-mention"):
                 total_imp += _dec(r["cnt"])
             elif et == "sponsor-click":
                 kpi["clicks"] = _dec(r["cnt"])
@@ -95,7 +97,8 @@ async def admin_api_impressions(
         rows = await db_cloudsql.async_fetchall(
             f"SELECT sponsor_id, "
             f"  COUNT(*) AS total, "
-            f"  SUM(CASE WHEN event_type IN ('sponsor-popup-shown', 'sponsor-inline-shown', 'sponsor-result-shown') THEN 1 ELSE 0 END) AS impressions, "
+            f"  SUM(CASE WHEN event_type IN ('sponsor-popup-shown', 'sponsor-inline-shown', "
+            f"    'sponsor-result-shown', 'sponsor-pdf-mention') THEN 1 ELSE 0 END) AS impressions, "
             f"  SUM(CASE WHEN event_type = 'sponsor-click' THEN 1 ELSE 0 END) AS clics, "
             f"  SUM(CASE WHEN event_type = 'sponsor-video-played' THEN 1 ELSE 0 END) AS videos, "
             f"  COUNT(DISTINCT session_hash) AS sessions "
@@ -228,7 +231,9 @@ async def admin_export_sponsor_report_pdf(
         total_imp = total_clicks = 0
         for r in rows:
             et = r["event_type"]
-            if et in ("sponsor-popup-shown", "sponsor-inline-shown", "sponsor-result-shown"):
+            # V121 — 4 types impression (ajout sponsor-pdf-mention)
+            if et in ("sponsor-popup-shown", "sponsor-inline-shown",
+                       "sponsor-result-shown", "sponsor-pdf-mention"):
                 total_imp += _dec(r["cnt"])
             elif et == "sponsor-click":
                 kpi["clicks"] = _dec(r["cnt"]); total_clicks = _dec(r["cnt"])

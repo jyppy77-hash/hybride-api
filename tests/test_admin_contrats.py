@@ -275,7 +275,7 @@ class TestContratsDetail:
         assert "Sponsor X" in resp.text
 
     def test_contrat_detail_shows_v9_fields(self):
-        """V9 detail shows engagement, pool, depassement."""
+        """V9/V121 detail shows engagement, pool widget with consumption data."""
         client = _authed_client()
         with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value={
@@ -292,9 +292,9 @@ class TestContratsDetail:
             resp = client.get("/admin/contrats/1")
         body = resp.text
         assert "6 mois" in body
-        assert "10000" in body
-        assert "CPM" in body
-        assert "2000.00" in body
+        # V121: widget shows "10 000" (formatted) + mode description
+        assert "10 000" in body
+        assert "Facturation" in body
 
     def test_contrat_detail_not_found_redirects(self):
         client = _authed_client()

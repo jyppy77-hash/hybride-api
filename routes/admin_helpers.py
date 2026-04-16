@@ -11,6 +11,7 @@ import os
 import secrets
 from datetime import date, timedelta, datetime
 from decimal import Decimal
+from zoneinfo import ZoneInfo
 
 from fastapi import Request
 from fastapi.responses import JSONResponse, RedirectResponse
@@ -45,6 +46,9 @@ __all__ = [
     "build_realtime_where", "build_engagement_where",
     # Contrat form validation
     "validate_contrat_form",
+    # V121 — Pool impressions
+    "IMPRESSION_EVENT_TYPES",
+    "get_contract_impressions_consumed",
 ]
 
 
@@ -455,5 +459,110 @@ def validate_contrat_form(form: dict) -> tuple[dict | None, str | None]:
         "date_fin": date_fin_str or None,
         "conditions_particulieres": form.get("conditions_particulieres", "") or None,
     }, None
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# V121 — POOL IMPRESSIONS CONSUMPTION
+# ══════════════════════════════════════════════════════════════════════════════
+
+_TZ_PARIS = ZoneInfo("Europe/Paris")
+
+# 4 impression event_types (V121 semantic alignment)
+IMPRESSION_EVENT_TYPES = (
+    "sponsor-popup-shown",
+    "sponsor-inline-shown",
+    "sponsor-result-shown",
+    "sponsor-pdf-mention",
+)
+
+_MONTHS_FR = [
+    "", "janvier", "fevrier", "mars", "avril", "mai", "juin",
+    "juillet", "aout", "septembre", "octobre", "novembre", "decembre",
+]
+
+
+async def get_contract_impressions_consumed(contrat: dict) -> dict:
+    """Calculate impression pool consumption for a contract on the current calendar cycle.
+
+    V121 — 4 impression types (popup + inline + result + pdf-mention).
+    Cycle: calendar month (1st to last day, Europe/Paris timezone).
+    V121: LOTOIA_EXCLU mono-annonceur — no sponsor_id filter needed.
+    TODO V122: add sponsor_id mapping for multi-sponsor support.
+    """
+    import db_cloudsql
+
+    quota = contrat.get("pool_impressions") or 10000
+    mode = contrat.get("mode_depassement") or "HYBRIDE"
+
+    # Cycle calendaire Europe/Paris — aware datetime
+    now_paris = datetime.now(_TZ_PARIS)
+    cycle_start = now_paris.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    if now_paris.month == 12:
+        cycle_end = cycle_start.replace(year=now_paris.year + 1, month=1)
+    else:
+        cycle_end = cycle_start.replace(month=now_paris.month + 1)
+
+    last_day = (cycle_end - timedelta(days=1)).day
+    cycle_label = (
+        f"1er au {last_day} {_MONTHS_FR[now_paris.month]} {now_paris.year}"
+        f" — reset le 1er {_MONTHS_FR[cycle_end.month]} {cycle_end.year}"
+    )
+    next_month_label = f"{_MONTHS_FR[cycle_end.month]} {cycle_end.year}"
+
+    # Naive strings for MySQL CONVERT_TZ('...', 'Europe/Paris', '+00:00')
+    cycle_start_str = cycle_start.strftime("%Y-%m-%d %H:%M:%S")
+    cycle_end_str = cycle_end.strftime("%Y-%m-%d %H:%M:%S")
+
+    result = {
+        "popup": 0, "inline": 0, "result": 0, "pdf_mention": 0,
+        "total": 0, "quota": quota, "percent": 0.0,
+        "status": "ok", "mode_depassement": mode, "surplus": 0,
+        "cycle_start": cycle_start, "cycle_end": cycle_end,
+        "cycle_label": cycle_label,
+        "next_month_label": next_month_label,
+    }
+
+    try:
+        # V121: LOTOIA_EXCLU mono-annonceur — all events belong to the single sponsor
+        # V122: add WHERE sponsor_id filtering for multi-sponsor
+        row = await db_cloudsql.async_fetchone(
+            "SELECT "
+            "  SUM(CASE WHEN event_type = 'sponsor-popup-shown'  THEN 1 ELSE 0 END) AS popup, "
+            "  SUM(CASE WHEN event_type = 'sponsor-inline-shown' THEN 1 ELSE 0 END) AS inline_shown, "
+            "  SUM(CASE WHEN event_type = 'sponsor-result-shown' THEN 1 ELSE 0 END) AS result_shown, "
+            "  SUM(CASE WHEN event_type = 'sponsor-pdf-mention'  THEN 1 ELSE 0 END) AS pdf_mention "
+            "FROM sponsor_impressions "
+            "WHERE event_type IN ("
+            "  'sponsor-popup-shown','sponsor-inline-shown',"
+            "  'sponsor-result-shown','sponsor-pdf-mention'"
+            ") "
+            "AND created_at >= CONVERT_TZ(%s, 'Europe/Paris', '+00:00') "
+            "AND created_at <  CONVERT_TZ(%s, 'Europe/Paris', '+00:00')",
+            (cycle_start_str, cycle_end_str),
+        )
+        if row:
+            result["popup"] = int(row["popup"] or 0)
+            result["inline"] = int(row["inline_shown"] or 0)
+            result["result"] = int(row["result_shown"] or 0)
+            result["pdf_mention"] = int(row["pdf_mention"] or 0)
+    except Exception as e:
+        logger.error("[ADMIN] pool consumption query failed: %s", e)
+
+    total = result["popup"] + result["inline"] + result["result"] + result["pdf_mention"]
+    result["total"] = total
+    result["surplus"] = max(0, total - quota)
+
+    if quota > 0:
+        result["percent"] = round(total / quota * 100, 1)
+
+    pct = result["percent"]
+    if pct >= 100:
+        result["status"] = "exceeded"
+    elif pct >= 90:
+        result["status"] = "critical"
+    elif pct >= 70:
+        result["status"] = "warn"
+
+    return result
 
 

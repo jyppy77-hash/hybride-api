@@ -451,6 +451,110 @@ class TestCalendarData:
         assert day19["chatbot"] == 52
 
 
+class TestCalendarV121:
+    """V121: calendar heatmap filters on 4 impression types only."""
+
+    def test_calendar_heatmap_filters_4_types(self):
+        """V121: impressions query includes event_type IN filter (excludes click/video/pdf-dl)."""
+        captured_sql = {"sql": None}
+
+        class FakeCursor:
+            def __init__(self):
+                self._idx = None
+
+            async def execute(self, sql, params=None):
+                # Capture the impressions query (3rd query — after visitors + sessions)
+                if "sponsor_impressions" in sql and "impressions" in sql:
+                    captured_sql["sql"] = sql
+                self._idx = 0
+
+            async def fetchall(self):
+                return []
+
+        class FakeConn:
+            async def cursor(self):
+                return FakeCursor()
+
+        class FakeCtx:
+            async def __aenter__(self):
+                return FakeConn()
+
+            async def __aexit__(self, *args):
+                pass
+
+        client = _authed_client()
+        with patch("routes.admin_calendar.db_cloudsql") as mock_db:
+            mock_db.get_connection_readonly.return_value = FakeCtx()
+            resp = client.get("/admin/api/calendar-data?year=2026&month=4")
+
+        assert resp.status_code == 200
+        sql = captured_sql["sql"]
+        assert sql is not None, "Impressions query was not captured"
+        # V121: must filter on 4 impression types
+        assert "event_type IN" in sql, f"Missing event_type IN filter: {sql}"
+        assert "sponsor-popup-shown" in sql
+        assert "sponsor-inline-shown" in sql
+        assert "sponsor-result-shown" in sql
+        assert "sponsor-pdf-mention" in sql
+        # Must NOT include non-impression types
+        assert "sponsor-click" not in sql
+        assert "sponsor-video-played" not in sql
+        assert "sponsor-pdf-downloaded" not in sql
+
+    def test_calendar_excludes_non_impression_from_count(self):
+        """V121: days with only click/video/pdf-dl should show 0 impressions."""
+        # The SQL now filters event_type IN (4 types), so the DB won't return
+        # click/video/pdf-dl rows. We simulate: day 1 has impression data,
+        # day 2 has none (all filtered out by SQL).
+        call_idx = {"i": 0}
+        all_rows = [
+            # visitors
+            [{"day": 1, "visitors": 10}, {"day": 2, "visitors": 5}],
+            # sessions
+            [{"day": 1, "sessions": 20}, {"day": 2, "sessions": 15}],
+            # impressions (filtered by SQL — only 4 types returned)
+            [{"day": 1, "impressions": 42}],  # day 2: no impression rows (all were click/video)
+            # chatbot
+            [{"day": 1, "chatbot": 3}, {"day": 2, "chatbot": 7}],
+        ]
+
+        class FakeCursor:
+            def __init__(self):
+                self._idx = None
+
+            async def execute(self, sql, params=None):
+                self._idx = call_idx["i"]
+                call_idx["i"] += 1
+
+            async def fetchall(self):
+                if self._idx is not None and self._idx < len(all_rows):
+                    return all_rows[self._idx]
+                return []
+
+        class FakeConn:
+            async def cursor(self):
+                return FakeCursor()
+
+        class FakeCtx:
+            async def __aenter__(self):
+                return FakeConn()
+
+            async def __aexit__(self, *args):
+                pass
+
+        client = _authed_client()
+        with patch("routes.admin_calendar.db_cloudsql") as mock_db:
+            mock_db.get_connection_readonly.return_value = FakeCtx()
+            resp = client.get("/admin/api/calendar-data?year=2026&month=4")
+
+        assert resp.status_code == 200
+        data = resp.json()
+        # Day 1: has impression data
+        assert data["days"]["1"]["impressions"] == 42
+        # Day 2: no impressions (click/video filtered out by SQL)
+        assert data["days"]["2"]["impressions"] == 0
+
+
 class TestCalendarPage:
     """HTML page tests."""
 

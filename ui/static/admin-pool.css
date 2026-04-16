@@ -1,0 +1,136 @@
+/* V121 — Pool impressions widget (contrats list + detail) */
+
+:root {
+    --pool-ok: #10b981;
+    --pool-warn: #f59e0b;
+    --pool-critical: #f97316;
+    --pool-exceeded: #ef4444;
+    --pool-bonus: #8b5cf6;
+    --pool-bar-bg: rgba(255,255,255,0.08);
+    --pool-widget-bg: rgba(255,255,255,0.04);
+    --pool-widget-border: rgba(255,255,255,0.1);
+}
+body.light {
+    --pool-bar-bg: rgba(0,0,0,0.06);
+    --pool-widget-bg: rgba(255,255,255,0.6);
+    --pool-widget-border: rgba(0,0,0,0.1);
+}
+
+/* ── Progress bar (shared) ────────────────────────────────────────────── */
+
+.pool-bar-fill {
+    height: 100%;
+    border-radius: inherit;
+    transition: width 600ms ease, background 300ms ease;
+}
+.pool-bar-fill.pool-ok       { background: var(--pool-ok); }
+.pool-bar-fill.pool-warn     { background: var(--pool-warn); }
+.pool-bar-fill.pool-critical { background: var(--pool-critical); }
+.pool-bar-fill.pool-exceeded { background: var(--pool-exceeded); }
+.pool-bar-fill.pool-bonus    { background: linear-gradient(135deg, #6366f1, var(--pool-bonus), #a78bfa); }
+
+/* ── Mini bar (contrats list table) ───────────────────────────────────── */
+
+.pool-mini { display: flex; flex-wrap: wrap; align-items: center; gap: .3rem; min-width: 160px; }
+.pool-bar-mini {
+    width: 100px; height: 8px;
+    background: var(--pool-bar-bg);
+    border-radius: 4px; overflow: hidden;
+}
+.pool-mini-pct { font-size: .75rem; font-weight: 700; color: var(--text-strong); }
+.pool-mini-count { font-size: .65rem; color: var(--text-muted); width: 100%; }
+
+/* ── Badges ───────────────────────────────────────────────────────────── */
+
+.pool-badge-bonus {
+    display: inline-block; padding: .1rem .45rem; border-radius: 10px;
+    font-size: .6rem; font-weight: 700; letter-spacing: .03em;
+    background: linear-gradient(135deg, #6366f1, var(--pool-bonus));
+    color: #fff;
+}
+.pool-badge-draft {
+    display: inline-block; padding: .1rem .45rem; border-radius: 10px;
+    font-size: .6rem; font-weight: 700; letter-spacing: .03em;
+    background: rgba(255,255,255,0.08); color: #8b8b9e;
+}
+body.light .pool-badge-draft { background: rgba(0,0,0,0.06); color: #6b7280; }
+
+/* ── Widget (contrat detail) ──────────────────────────────────────────── */
+
+.pool-widget {
+    background: var(--pool-widget-bg);
+    border: 1px solid var(--pool-widget-border);
+    border-radius: 12px; padding: 1.2rem 1.5rem;
+    margin: .8rem 0;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+}
+.pool-widget-title {
+    font-size: .7rem; font-weight: 700; letter-spacing: .12em;
+    color: var(--text-muted); text-transform: uppercase; margin-bottom: .8rem;
+}
+.pool-bar-large {
+    width: 100%; height: 14px;
+    background: var(--pool-bar-bg);
+    border-radius: 7px; overflow: hidden;
+    margin-bottom: .5rem;
+}
+.pool-widget-pct {
+    font-size: 1.8rem; font-weight: 700; color: var(--text-strong);
+    letter-spacing: -0.02em;
+}
+.pool-widget-count {
+    font-size: .8rem; color: var(--text-muted); margin-bottom: .8rem;
+}
+
+/* ── Messages contextuels ─────────────────────────────────────────────── */
+
+.pool-msg {
+    font-size: .78rem; font-weight: 600; padding: .5rem .8rem;
+    border-radius: 8px; margin: .6rem 0;
+}
+.pool-msg-bonus   { background: rgba(99,102,241,0.12); color: #a78bfa; }
+.pool-msg-blocked { background: rgba(239,68,68,0.12);  color: #ef4444; }
+.pool-msg-surplus { background: rgba(249,115,22,0.12); color: #f97316; }
+body.light .pool-msg-bonus   { background: rgba(99,102,241,0.08); color: #6366f1; }
+body.light .pool-msg-blocked { background: rgba(239,68,68,0.08);  color: #dc2626; }
+body.light .pool-msg-surplus { background: rgba(249,115,22,0.08); color: #ea580c; }
+
+/* ── Breakdown cards ──────────────────────────────────────────────────── */
+
+.pool-breakdown {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: .6rem; margin: .8rem 0;
+}
+.pool-bd-card {
+    background: var(--pool-bar-bg); border-radius: 8px;
+    padding: .6rem; text-align: center;
+    transition: transform 200ms ease, opacity 200ms ease;
+}
+.pool-bd-card:hover { transform: scale(1.02); opacity: .9; }
+.pool-bd-value { display: block; font-size: 1.1rem; font-weight: 700; color: var(--text-strong); }
+.pool-bd-label { display: block; font-size: .6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; margin-top: .2rem; }
+
+/* ── Cycle + mode desc ────────────────────────────────────────────────── */
+
+.pool-cycle { font-size: .72rem; color: var(--text-muted); margin-top: .5rem; }
+.pool-mode-desc { font-size: .68rem; color: var(--text-muted); font-style: italic; margin-top: .2rem; }
+
+/* ── Plafond mensuel (optional) ────────────────────────────────────────── */
+
+.pool-plafond {
+    font-size: .72rem;
+    color: var(--text-muted);
+    margin-top: .4rem;
+    padding-top: .4rem;
+    border-top: 1px dashed var(--pool-widget-border);
+}
+
+/* ── Responsive < 768px ───────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .pool-breakdown { grid-template-columns: repeat(2, 1fr); }
+    .pool-widget { padding: .8rem 1rem; }
+    .pool-widget-pct { font-size: 1.4rem; }
+    .pool-bar-mini { width: 70px; }
+    .pool-mini { min-width: 120px; }
+}

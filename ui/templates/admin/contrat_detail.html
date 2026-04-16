@@ -30,6 +30,67 @@
         {% endif %}
     </div>
 
+    {% if impressions_data %}
+    {% set ip = impressions_data %}
+    <div class="pool-widget">
+        <div class="pool-widget-title">VOTRE POOL D'IMPRESSIONS</div>
+        <div class="pool-bar-large">
+            <div class="pool-bar-fill pool-{{ ip.status }}{% if ip.status == 'exceeded' and ip.mode_depassement == 'HYBRIDE' %} pool-bonus{% endif %}"
+                 style="width:{{ ip.percent if ip.percent <= 100 else 100 }}%"></div>
+        </div>
+        <div class="pool-widget-pct">{{ ip.percent }}%</div>
+        <div class="pool-widget-count">
+            {{ "{:,}".format(ip.total).replace(",", " ") }} / {{ "{:,}".format(ip.quota).replace(",", " ") }} impressions
+        </div>
+
+        {% if ip.status == 'exceeded' %}
+            {% if ip.mode_depassement == 'HYBRIDE' %}
+            <div class="pool-msg pool-msg-bonus">
+                <span class="pool-badge-bonus">BONUS</span> +{{ "{:,}".format(ip.surplus).replace(",", " ") }} impressions gratuites ce mois-ci
+            </div>
+            {% elif ip.mode_depassement == 'STRICT' %}
+            <div class="pool-msg pool-msg-blocked">
+                POOL EPUISE — pubs suspendues jusqu'au 1er {{ ip.next_month_label }}
+            </div>
+            {% else %}
+            <div class="pool-msg pool-msg-surplus">
+                +{{ "{:,}".format(ip.surplus).replace(",", " ") }} impressions hors pool a facturer
+            </div>
+            {% endif %}
+        {% endif %}
+
+        <div class="pool-breakdown">
+            <div class="pool-bd-card">
+                <span class="pool-bd-value">{{ "{:,}".format(ip.popup).replace(",", " ") }}</span>
+                <span class="pool-bd-label">Popup</span>
+            </div>
+            <div class="pool-bd-card">
+                <span class="pool-bd-value">{{ "{:,}".format(ip.inline).replace(",", " ") }}</span>
+                <span class="pool-bd-label">Chatbot</span>
+            </div>
+            <div class="pool-bd-card">
+                <span class="pool-bd-value">{{ "{:,}".format(ip.result).replace(",", " ") }}</span>
+                <span class="pool-bd-label">Resultats</span>
+            </div>
+            <div class="pool-bd-card">
+                <span class="pool-bd-value">{{ "{:,}".format(ip.pdf_mention).replace(",", " ") }}</span>
+                <span class="pool-bd-label">Mention PDF</span>
+            </div>
+        </div>
+
+        <div class="pool-cycle">{{ ip.cycle_label }}</div>
+        <div class="pool-mode-desc">
+            {% if ip.mode_depassement == 'HYBRIDE' %}Impressions supplementaires offertes au-dela du pool
+            {% elif ip.mode_depassement == 'STRICT' %}Diffusion suspendue au-dela du pool
+            {% else %}Facturation a l'impression au-dela du pool{% endif %}
+        </div>
+        {% if contrat.plafond_mensuel %}
+        <div class="pool-plafond">
+            Plafond mensuel : <b>{{ "%.2f"|format(contrat.plafond_mensuel) }} EUR</b>
+        </div>
+        {% endif %}
+    </div>
+    {% else %}
     <div class="kpi-bar">
         <span>Pool : <b>{{ contrat.pool_impressions or 10000 }}</b> impressions/mois</span>
         <span style="margin-left:1.5rem;">Depassement : <b>{{ contrat.mode_depassement or 'CPC' }}</b></span>
@@ -37,6 +98,7 @@
         <span style="margin-left:1.5rem;">Plafond : <b>{{ "%.2f"|format(contrat.plafond_mensuel) }} EUR</b></span>
         {% endif %}
     </div>
+    {% endif %}
 
     {% if contrat.conditions_particulieres %}
     <div class="kpi-bar">

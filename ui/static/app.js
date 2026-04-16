@@ -977,6 +977,7 @@ function trackAdImpression(adId) {
     fetch('/api/sponsor/track', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
+        keepalive: true,
         body: JSON.stringify({
             event_type: 'sponsor-result-shown',
             sponsor_id: 'LOTO_FR_A',

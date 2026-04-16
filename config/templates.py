@@ -342,12 +342,12 @@ def render_template(
 
             # JS paths — chatbot per language (S01: full E4 coverage)
             "chatbot_js": {
-                "en": "/ui/en/euromillions/static/hybride-chatbot-em-en.js?v=1.2",
-                "es": "/ui/static/hybride-chatbot-em-es.js?v=1.1",
-                "pt": "/ui/static/hybride-chatbot-em-pt.js?v=1.1",
-                "de": "/ui/static/hybride-chatbot-em-de.js?v=1.1",
-                "nl": "/ui/static/hybride-chatbot-em-nl.js?v=1.1",
-            }.get(lang, "/ui/static/hybride-chatbot-em.js?v=1.3"),
+                "en": "/ui/en/euromillions/static/hybride-chatbot-em-en.js?v=1.3",
+                "es": "/ui/static/hybride-chatbot-em-es.js?v=1.2",
+                "pt": "/ui/static/hybride-chatbot-em-pt.js?v=1.2",
+                "de": "/ui/static/hybride-chatbot-em-de.js?v=1.2",
+                "nl": "/ui/static/hybride-chatbot-em-nl.js?v=1.2",
+            }.get(lang, "/ui/static/hybride-chatbot-em.js?v=1.4"),
             "rating_js": "/ui/static/rating-popup.js?v=9",
 
             # Gambling help
@@ -361,10 +361,10 @@ def render_template(
             "js_labels": get_js_labels(lang),
 
             # Default JS paths (pages may override via **extra)
-            "app_js": "/ui/static/app-em.js?v=9",
-            "simulateur_js": "/ui/static/simulateur-em.js?v=7",
-            "sponsor_js": "/ui/static/em/sponsor-popup-em.js?v=8",
-            "sponsor75_js": "/ui/static/sponsor-popup75-em.js?v=11",
+            "app_js": "/ui/static/app-em.js?v=10",
+            "simulateur_js": "/ui/static/simulateur-em.js?v=8",
+            "sponsor_js": "/ui/static/em/sponsor-popup-em.js?v=9",
+            "sponsor75_js": "/ui/static/sponsor-popup75-em.js?v=12",
             "faq_js": "/ui/static/faq-em.js?v=7",
 
             # Page overrides

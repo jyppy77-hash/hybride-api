@@ -28,6 +28,7 @@ from routes.admin_helpers import (
     VALID_MODE_DEPASSEMENT as _VALID_MODE_DEPASSEMENT,
     VALID_TARIF_CODES as _VALID_TARIF_CODES,
     PALIERS_V9 as _PALIERS_V9,
+    get_contract_impressions_consumed as _get_pool_consumed,
 )
 
 from rate_limit import limiter  # S15 V94
@@ -405,8 +406,17 @@ async def admin_contrats_list(request: Request):
         )
     except Exception as e:
         logger.error("[ADMIN] contrats list: %s", e)
+
+    # V121 — Pool consumption for active/brouillon contracts
+    pool_data = {}
+    for c in contrats:
+        if c.get("statut") in ("actif", "brouillon"):
+            try:
+                pool_data[c["id"]] = await _get_pool_consumed(c)
+            except Exception as e:
+                logger.error("[ADMIN] pool consumption contrat %s: %s", c.get("id"), e)
     tpl = env.get_template("admin/contrats.html")
-    return HTMLResponse(tpl.render(active="contrats", contrats=contrats))
+    return HTMLResponse(tpl.render(active="contrats", contrats=contrats, pool_data=pool_data))
 
 
 @router.get("/admin/contrats/new", response_class=HTMLResponse, include_in_schema=False)
@@ -476,8 +486,16 @@ async def admin_contrat_detail(request: Request, contrat_id: int):
         "LEFT JOIN fia_sponsors s ON c.sponsor_id = s.id WHERE c.id = %s", (contrat_id,))
     if not contrat:
         return RedirectResponse(url="/admin/contrats", status_code=302)
+
+    # V121 — Pool consumption for active/brouillon contracts
+    impressions_data = None
+    if contrat.get("statut") in ("actif", "brouillon"):
+        try:
+            impressions_data = await _get_pool_consumed(contrat)
+        except Exception as e:
+            logger.error("[ADMIN] pool consumption contrat %s: %s", contrat_id, e)
     tpl = env.get_template("admin/contrat_detail.html")
-    return HTMLResponse(tpl.render(active="contrats", contrat=contrat))
+    return HTMLResponse(tpl.render(active="contrats", contrat=contrat, impressions_data=impressions_data))
 
 
 @router.get("/admin/contrats/{contrat_id}/edit", response_class=HTMLResponse, include_in_schema=False)

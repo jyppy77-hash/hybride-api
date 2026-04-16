@@ -113,10 +113,13 @@ async def _fetch_dashboard_kpis(sponsor_where: str) -> dict:
     except Exception as e:
         logger.error("[ADMIN] dashboard KPI sponsor query failed: %s", e)
 
+    # V121 — "impression" = exposition visuelle payante (4 types)
+    # Exclut clicks, videos, pdf_downloaded (interactions post-affichage)
     kpis["total_impressions"] = (
-        kpis["impressions"] + kpis["clicks"] + kpis["videos"]
-        + kpis["inline_shown"] + kpis["result_shown"]
-        + kpis["pdf_downloaded"] + kpis["pdf_mention"]
+        kpis["impressions"]       # sponsor-popup-shown
+        + kpis["inline_shown"]    # sponsor-inline-shown
+        + kpis["result_shown"]    # sponsor-result-shown
+        + kpis["pdf_mention"]     # sponsor-pdf-mention
     )
 
     # Ratings

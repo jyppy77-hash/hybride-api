@@ -358,6 +358,7 @@ function showSponsorPopupSimulateurEM(config) {
         fetch('/api/sponsor/track', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            keepalive: true,
             body: JSON.stringify({
                 event_type: 'sponsor-popup-shown',
                 sponsor_id: mainSponsor.id,

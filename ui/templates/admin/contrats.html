@@ -19,6 +19,7 @@
                     <th>Fin</th>
                     <th>Mensuel HT</th>
                     <th>Depassement</th>
+                    <th>Consommation</th>
                     <th>Statut</th>
                     <th>Actions</th>
                 </tr>
@@ -33,6 +34,27 @@
                     <td>{{ c.date_fin }}</td>
                     <td>{{ "%.2f"|format(c.montant_mensuel_ht) }} EUR</td>
                     <td>{{ c.mode_depassement or 'CPC' }}</td>
+                    <td>
+                        {% set pd = pool_data.get(c.id) if pool_data else None %}
+                        {% if pd %}
+                        <div class="pool-mini">
+                            <div class="pool-bar-mini">
+                                <div class="pool-bar-fill pool-{{ pd.status }}{% if pd.status == 'exceeded' and pd.mode_depassement == 'HYBRIDE' %} pool-bonus{% endif %}"
+                                     style="width:{{ pd.percent if pd.percent <= 100 else 100 }}%"></div>
+                            </div>
+                            <span class="pool-mini-pct">{{ pd.percent }}%</span>
+                            <span class="pool-mini-count">{{ "{:,}".format(pd.total).replace(",", " ") }} / {{ "{:,}".format(pd.quota).replace(",", " ") }}</span>
+                            {% if pd.status == 'exceeded' and pd.mode_depassement == 'HYBRIDE' %}
+                            <span class="pool-badge-bonus">BONUS</span>
+                            {% endif %}
+                            {% if c.statut == 'brouillon' %}
+                            <span class="pool-badge-draft">BROUILLON</span>
+                            {% endif %}
+                        </div>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
                     <td><span class="badge-status badge-{{ c.statut }}">{{ c.statut }}</span></td>
                     <td>
                         <a href="/admin/contrats/{{ c.id }}" class="table-link">Detail</a>
@@ -40,7 +62,7 @@
                     </td>
                 </tr>
                 {% else %}
-                <tr><td colspan="9" class="empty-state">Aucun contrat</td></tr>
+                <tr><td colspan="10" class="empty-state">Aucun contrat</td></tr>
                 {% endfor %}
             </tbody>
         </table>

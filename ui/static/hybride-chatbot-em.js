@@ -344,6 +344,7 @@
                         fetch('/api/sponsor/track', {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
+                            keepalive: true,
                             body: JSON.stringify({
                                 event_type: 'sponsor-inline-shown',
                                 sponsor_id: sponsorId,

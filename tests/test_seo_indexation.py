@@ -904,9 +904,9 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.003 (V119 Fix F05 double comptage popup mono-sponsor)."""
+        """APP_VERSION == 1.6.004 (V121 Alignement 4 types impression + keepalive + widget pool)."""
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.003"
+        assert APP_VERSION == "1.6.004"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

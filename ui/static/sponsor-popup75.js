@@ -304,7 +304,7 @@ function showSponsorPopup75(config) {
         document.body.style.overflow = 'hidden';
         document.body.classList.add('sponsor-popup-active');
 
-        fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-popup-shown', sponsor_id: SPONSOR_VIDEO_75.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+        fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ event_type: 'sponsor-popup-shown', sponsor_id: SPONSOR_VIDEO_75.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
         if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-popup-shown', { sponsor_id: SPONSOR_VIDEO_75.id, product_code: SPONSOR_VIDEO_75.id });
 
         var sponsorVideo = overlay.querySelector('.sponsor-video');
@@ -770,7 +770,7 @@ function openMetaResultPopup(data) {
     }
 
     // EVENT 3b - V92 S05: PDF mention sponsor (E3 — branding passif, distinct de E6 download)
-    fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-pdf-mention', sponsor_id: 'LOTO_FR_A', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+    fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ event_type: 'sponsor-pdf-mention', sponsor_id: 'LOTO_FR_A', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
     if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-pdf-mention', { sponsor_id: 'LOTO_FR_A', product_code: 'LOTO_FR_A' });
 
     const graphBars = generateGraphBarsHTML(data.graph);
@@ -833,7 +833,7 @@ function openMetaResultPopup(data) {
     document.body.style.overflow = 'hidden';
 
     // Tracking couche 1+2 — result-shown (bannière PARTENAIRE visible sur écran résultat)
-    fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_type: 'sponsor-result-shown', sponsor_id: 'LOTO_FR_A', page: window.location.pathname, lang: 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+    fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ event_type: 'sponsor-result-shown', sponsor_id: 'LOTO_FR_A', page: window.location.pathname, lang: 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
     if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-result-shown', { sponsor_id: 'LOTO_FR_A', product_code: 'LOTO_FR_A' });
 
     // Event listeners
