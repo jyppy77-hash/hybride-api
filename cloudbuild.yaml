@@ -24,7 +24,7 @@ steps:
     env:
       - 'HOME=/tmp'
 
-  # Run 4719 tests inside the builder image (blocks deploy on failure)
+  # Run full test suite inside the builder image (blocks deploy on failure)
   - name: 'europe-west1-docker.pkg.dev/$PROJECT_ID/hybride-api/hybride-api:builder'
     entrypoint: 'sh'
     args:

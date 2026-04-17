@@ -5,9 +5,9 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
-APP_VERSION = "1.6.004"
+APP_VERSION = "1.6.005"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-04-16"
+VERSION_DATE = "2026-04-17"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

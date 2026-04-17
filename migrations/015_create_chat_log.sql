@@ -24,3 +24,20 @@ CREATE TABLE IF NOT EXISTS chat_log (
     INDEX idx_chat_log_status (sql_status),
     INDEX idx_chat_log_error (is_error)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
+-- ============================================================
+-- DOWN (rollback manuel — à décommenter et exécuter en prod si besoin)
+-- Complexité : 🟢
+-- Data loss potentielle : oui (90j retention batched, audit chatbot + debug phase detection)
+-- PITR requis : recommandé
+-- ============================================================
+-- -- ÉTAPE 1 : vérifier volume (90j retention via cleanup_chat_log)
+-- SELECT COUNT(*) FROM chat_log;
+-- -- Si résultat != 0, exporter avant drop (voir migrations/ROLLBACK_PROCEDURE.md §Export)
+--
+-- -- ÉTAPE 2 : drop
+-- DROP TABLE IF EXISTS chat_log;
+-- -- Note : rend /admin/chatbot-monitor inopérant
+-- -- services/chat_logger.py::log_chat() fire-and-forget, catche l'exception (logger.warning)
+-- -- → chatbot continue de fonctionner pour les users, seul le monitor admin est KO

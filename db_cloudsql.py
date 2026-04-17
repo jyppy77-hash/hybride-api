@@ -8,6 +8,23 @@ Supporte automatiquement :
 - PROD  : Unix socket Cloud Run (/cloudsql/...)
 
 Configuration via variables d'environnement (.env ou Cloud Run)
+
+Query timeouts (F01 V122) — double ceinture pour éviter qu'une requête lente
+bloque un slot de pool jusqu'au timeout Cloud Run (120s) :
+
+  1. Layer server-side (universelle à toutes les connexions du pool) :
+     `init_command = "SET SESSION MAX_EXECUTION_TIME=10000"` dans
+     `_build_pool_kwargs()`. MariaDB/MySQL tue automatiquement toute SELECT
+     dépassant 10s. **Ne s'applique qu'aux SELECT** — les INSERT/UPDATE/DELETE
+     longs ne sont PAS interrompus par ce mécanisme serveur.
+
+  2. Layer client-side (opt-in, couvre aussi DML) :
+     `execute_with_timeout(cur, sql, params, timeout=10)` — wrapper
+     `asyncio.wait_for` autour de `cur.execute()`. Lève `asyncio.TimeoutError`
+     si dépassé. **À utiliser sur les chemins critiques** (endpoints
+     utilisateur, tâches de fond qui ne doivent pas bloquer le pool).
+     Les callers génériques (async_query/fetchone/fetchall) ne l'utilisent PAS
+     par défaut — opt-in explicite pour éviter les faux positifs sur batch SQL.
 """
 
 import asyncio
@@ -100,13 +117,19 @@ _POOL_RECYCLE = 1800  # 30 min (was 3600 — faster stale connection eviction)
 
 
 def _build_pool_kwargs(user: str, password: str, minsize: int, maxsize: int) -> dict:
-    """Build common aiomysql pool kwargs."""
+    """Build common aiomysql pool kwargs.
+
+    F01 V122: `init_command` applies `SET SESSION MAX_EXECUTION_TIME=10000`
+    on every connection acquired from the pool (server-side SELECT timeout,
+    10s). Recycled connections re-run init_command automatically — no drift.
+    """
     kwargs = dict(
         minsize=minsize, maxsize=maxsize,
         user=user, password=password, db=DB_NAME,
         charset="utf8mb4", cursorclass=aiomysql.DictCursor,
         autocommit=True, connect_timeout=5,
         pool_recycle=_POOL_RECYCLE,
+        init_command="SET SESSION MAX_EXECUTION_TIME=10000",  # F01 V122: 10s server-side SELECT cap
     )
     if is_production():
         kwargs["unix_socket"] = f"/cloudsql/{CLOUD_SQL_CONNECTION_NAME}"
@@ -393,6 +416,34 @@ async def async_fetchall(sql: str, params=None) -> list[dict]:
         cur = await conn.cursor()
         await cur.execute(sql, params)
         return await cur.fetchall()
+
+
+# ============================================================================
+# F01 V122 — Query timeout helper (client-side, opt-in)
+# ============================================================================
+
+async def execute_with_timeout(cur, sql: str, params=None, timeout: float = 10.0):
+    """Execute a query with a client-side asyncio timeout.
+
+    Wraps `cur.execute()` in `asyncio.wait_for` so a slow query cannot hold
+    a pool slot indefinitely. Complements the server-side
+    `SET SESSION MAX_EXECUTION_TIME=10000` (which only covers SELECT).
+
+    Use for critical paths where a hard app-level cap is required regardless
+    of query type (INSERT/UPDATE/DELETE included). Raises `asyncio.TimeoutError`
+    on timeout (the underlying query may continue server-side until
+    MAX_EXECUTION_TIME for SELECT, or until completion for DML).
+
+    Generic callers (async_query/fetchone/fetchall) do NOT use this by default
+    to avoid false positives on legitimate batch SQL.
+
+    Args:
+        cur: an acquired aiomysql cursor (from `conn.cursor()`).
+        sql: SQL statement.
+        params: optional parameters tuple/dict.
+        timeout: seconds before asyncio cancels the execute coroutine (default 10.0).
+    """
+    return await asyncio.wait_for(cur.execute(sql, params), timeout=timeout)
 
 
 # ============================================================================
