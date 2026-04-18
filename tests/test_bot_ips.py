@@ -139,21 +139,22 @@ class TestWhitelistPrecedence:
 
 class TestBlacklist:
 
-    def test_claudebot_ip_blacklisted(self):
-        """ClaudeBot IP 160.79.104.x is blacklisted with CIDR source."""
+    def test_claudebot_ip_NOT_blacklisted_V122(self):
+        """V122 BONUS Q7: ClaudeBot IP 160.79.104.x est retiré de la blacklist CIDR.
+        Désormais whitelisté via UA dans config/ai_bots.py (pivot "transparency for audits")."""
         matched, source = is_blacklisted("160.79.104.1")
-        assert matched is True
-        assert source.startswith("cidr:")
+        assert matched is False
+        assert source is None
 
-    def test_petalbot_ip_blacklisted(self):
-        """PetalBot IP 114.119.130.x is blacklisted with CIDR source."""
-        matched, source = is_blacklisted("114.119.130.1")
-        assert matched is True
-        assert source.startswith("cidr:")
-
-    def test_claudebot_ipv6_blacklisted(self):
-        """ClaudeBot IPv6 2607:6bc0::x is blacklisted with CIDR source."""
+    def test_claudebot_ipv6_NOT_blacklisted_V122(self):
+        """V122 BONUS Q7: ClaudeBot IPv6 2607:6bc0::x retiré de la blacklist."""
         matched, source = is_blacklisted("2607:6bc0::1")
+        assert matched is False
+        assert source is None
+
+    def test_petalbot_still_blacklisted_cidr(self):
+        """V122: PetalBot (SEO scraper) reste blacklisté CIDR après pivot AI bots."""
+        matched, source = is_blacklisted("114.119.130.1")
         assert matched is True
         assert source.startswith("cidr:")
 
@@ -169,12 +170,11 @@ class TestBlacklist:
         """Empty string returns (False, None)."""
         assert is_blacklisted("") == (False, None)
 
-    def test_is_blacklisted_returns_source_cidr(self):
-        """P1: is_blacklisted() returns the matching CIDR network in source."""
-        matched, source = is_blacklisted("160.79.104.1")
+    def test_is_blacklisted_returns_source_cidr_petalbot(self):
+        """P1: is_blacklisted() returns the matching CIDR network in source (PetalBot V122)."""
+        matched, source = is_blacklisted("114.119.130.1")
         assert matched is True
-        # Source should contain the actual CIDR that matched
-        assert "160.79.104.0/23" in source
+        assert "114.119.128.0/19" in source
 
     def test_is_blacklisted_returns_source_dynamic(self):
         """P1: is_blacklisted() returns 'dynamic_ip_set' for IPs from IPsum/Tor."""
@@ -377,8 +377,8 @@ class TestRefresh:
         await refresh_from_remote(mock_client)
         # Static GCP range still whitelisted
         assert is_whitelisted_bot("35.191.0.1") is True
-        # Static ClaudeBot still blacklisted
-        assert is_blacklisted("160.79.104.1")[0] is True
+        # V122: PetalBot still blacklisted (ClaudeBot retiré bonus Q7)
+        assert is_blacklisted("114.119.130.1")[0] is True
 
     @pytest.mark.asyncio
     async def test_refresh_partial_failure(self):

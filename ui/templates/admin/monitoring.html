@@ -247,6 +247,25 @@
 
 /* ── Donut chart container ──────────────────────────────────── */
 .mon-donut-wrap { max-width: 180px; margin: .5rem auto 0; }
+
+/* ── V123 Phase 2.5 — Bot Intelligence widgets ──────────────── */
+.bot-feed-tile {
+    display: flex; flex-direction: column;
+    min-width: 92px; padding: .55rem .55rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg-card-alt);
+    border-left: 3px solid #888;
+    font-size: .65rem;
+    cursor: default;
+    transition: var(--transition);
+}
+.bot-feed-tile:hover { background: var(--bg-card-hover); transform: translateY(-1px); }
+.bot-feed-tile.health-green  { border-left-color: #00c853; }
+.bot-feed-tile.health-orange { border-left-color: #ff9800; }
+.bot-feed-tile.health-red    { border-left-color: #ff5252; cursor: pointer; }
+.bot-feed-tile .tile-name  { font-weight: 700; color: var(--text); margin-bottom: 2px; }
+.bot-feed-tile .tile-age   { color: var(--text-muted); font-size: .6rem; }
+.bot-feed-tile .tile-count { color: var(--text-muted); font-size: .6rem; margin-top: 2px; }
 </style>
 {% endblock %}
 
@@ -437,6 +456,49 @@
             <tbody id="tbl-by-lang-body"><tr><td colspan="4" style="text-align:center;color:var(--text-muted)">Chargement...</td></tr></tbody>
         </table>
     </div>
+</div>
+
+<!-- ── V123 Phase 2.5 — Bot Intelligence ──────────────────────────── -->
+<div class="mon-section" style="display:flex;align-items:center;gap:.8rem">
+    Bot Intelligence
+    <span class="mon-dot mon-dot-healthy" style="color:rgba(0,200,83,.5)"></span>
+</div>
+
+<div class="mon-grid">
+    <div class="mon-card"><span class="mon-card-icon">🤖</span><span class="mon-card-value" id="v-bot-total">—</span><span class="mon-card-label">Total 24h</span></div>
+    <div class="mon-card"><span class="mon-card-icon">✅</span><span class="mon-card-value" id="v-bot-allowed">—</span><span class="mon-card-label">Autorises</span></div>
+    <div class="mon-card"><span class="mon-card-icon">🛡️</span><span class="mon-card-value" id="v-bot-blocked">—</span><span class="mon-card-label">Bloques</span></div>
+    <div class="mon-card"><span class="mon-card-icon">👑</span><span class="mon-card-value" id="v-bot-top" style="font-size:1.1rem">—</span><span class="mon-card-label">Top bot</span></div>
+</div>
+
+<div class="mon-period-toggle" id="bot-period-toggle" style="margin-top:1rem">
+    <button class="mon-period-btn active" data-hours="24">24h</button>
+    <button class="mon-period-btn" data-hours="168">7 jours</button>
+    <button class="mon-period-btn" data-hours="720">30 jours</button>
+</div>
+
+<div class="mon-chart-wrap" style="padding:1rem 1.2rem">
+    <h4 style="font-size:.72rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.1em;margin:0 0 .8rem">Bot Feeds Health</h4>
+    <div id="bot-feeds-tiles" style="display:flex;flex-wrap:wrap;gap:.6rem"><span style="color:var(--text-muted);font-size:.7rem">Chargement...</span></div>
+</div>
+
+<div class="mon-chart-grid">
+    <div class="mon-chart-wrap"><canvas id="chart-bots-timeline"></canvas></div>
+    <div class="mon-table-wrap">
+        <h4>AI Bots Breakdown (top 10)</h4>
+        <table class="mon-mini-table" id="tbl-bots-breakdown">
+            <thead><tr><th>Bot</th><th>Hits</th><th>% total</th></tr></thead>
+            <tbody id="tbl-bots-breakdown-body"><tr><td colspan="3" style="text-align:center;color:var(--text-muted)">Chargement...</td></tr></tbody>
+        </table>
+    </div>
+</div>
+
+<div class="mon-table-wrap" style="margin-top:1rem">
+    <h4>Bots bloques (Categorie C - 24h)</h4>
+    <table class="mon-mini-table" id="tbl-bots-blocked">
+        <thead><tr><th>UA match</th><th>Tentatives</th><th>Derniere</th></tr></thead>
+        <tbody id="tbl-bots-blocked-body"><tr><td colspan="3" style="text-align:center;color:var(--text-muted)">Chargement...</td></tr></tbody>
+    </table>
 </div>
 
 <!-- Footer -->
@@ -816,22 +878,212 @@
         fetchHistory();
     });
 
+    /* ══════════════════════════════════════════════════════════════
+       V123 Phase 2.5 — Bot Intelligence widgets
+       ══════════════════════════════════════════════════════════════ */
+
+    var botPeriodHours = 24;
+    var BOT_COLORS = ['#4f8cff','#10b981','#f59e0b','#ef4444','#a78bfa'];
+
+    function escHtml(s) {
+        if (s == null) return '';
+        var d = document.createElement('div');
+        d.textContent = String(s);
+        return d.innerHTML;
+    }
+
+    function fmtAgeH(hours) {
+        if (hours == null) return 'N/A';
+        if (hours < 1) return Math.round(hours * 60) + 'min';
+        if (hours < 48) return Math.round(hours) + 'h';
+        return Math.round(hours / 24) + 'j';
+    }
+
+    function fmtIso(iso) {
+        if (!iso) return '—';
+        try {
+            var d = new Date(iso);
+            return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        } catch (e) { return '—'; }
+    }
+
+    /* ── Widget 1 — Bot Feeds Health tiles ─────────────────── */
+    function renderBotFeedsTiles(data) {
+        var container = document.getElementById('bot-feeds-tiles');
+        if (!container) return;
+        var feeds = (data && data.feeds) || [];
+        if (!feeds.length) {
+            container.innerHTML = '<span style="color:var(--text-muted);font-size:.7rem">Aucune donnée — Premier refresh en cours...</span>';
+            return;
+        }
+        container.innerHTML = feeds.map(function(f) {
+            var cls = 'bot-feed-tile health-' + f.health;
+            var age = f.age_hours != null ? fmtAgeH(f.age_hours) : 'N/A';
+            var count = (f.cidrs_count || 0) + ' CIDRs';
+            var tooltip = escHtml(f.source) + ' — ' + age + ' — ' + count +
+                          (f.error_msg ? ' — ERR: ' + escHtml((f.error_msg || '').slice(0, 80)) : '');
+            return '<div class="' + cls + '" title="' + tooltip + '">' +
+                '<span class="tile-name">' + escHtml(f.source) + '</span>' +
+                '<span class="tile-age">' + age + '</span>' +
+                '<span class="tile-count">' + count + '</span>' +
+                '</div>';
+        }).join('');
+    }
+
+    function fetchBotFeeds() {
+        fetch('/admin/api/bot-feeds-status', { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(renderBotFeedsTiles)
+            .catch(function(e) { console.error('[BOT_INTEL] feeds fetch', e); });
+    }
+
+    /* ── Widget 3 + KPIs — AI Bots stats (allowed) ─────────── */
+    function renderBotStats(data) {
+        var bots = (data && data.bots) || [];
+        var total = (data && data.total_hits) || 0;
+        animateValue(document.getElementById('v-bot-allowed'), String(total));
+        var top = bots.length ? bots[0].canonical_name : '—';
+        animateValue(document.getElementById('v-bot-top'), top);
+
+        var tbody = document.getElementById('tbl-bots-breakdown-body');
+        if (!tbody) return;
+        if (!bots.length) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted)">Aucun bot observé pour l\'instant</td></tr>';
+            return;
+        }
+        var top10 = bots.slice(0, 10);
+        tbody.innerHTML = top10.map(function(r) {
+            var pct = total > 0 ? ((r.hits / total) * 100).toFixed(1) : '0.0';
+            return '<tr><td>' + escHtml(r.canonical_name) + '</td><td>' + fmt(r.hits) +
+                '</td><td>' + pct + '%</td></tr>';
+        }).join('');
+    }
+
+    function fetchAiBotsStats(hours) {
+        fetch('/admin/api/ai-bots/stats?hours=' + hours, { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(renderBotStats)
+            .catch(function(e) { console.error('[BOT_INTEL] stats fetch', e); });
+    }
+
+    /* ── Widget 4 — Blocked bots (Cat C) ───────────────────── */
+    function renderBotsBlocked(data) {
+        var blocked = (data && data.blocked_bots) || [];
+        var total = (data && data.total_blocked) || 0;
+        animateValue(document.getElementById('v-bot-blocked'), String(total));
+        // Total = allowed + blocked
+        var allowedEl = document.getElementById('v-bot-allowed');
+        var allowed = allowedEl ? parseInt(allowedEl.textContent, 10) || 0 : 0;
+        animateValue(document.getElementById('v-bot-total'), String(allowed + total));
+
+        var tbody = document.getElementById('tbl-bots-blocked-body');
+        if (!tbody) return;
+        if (!blocked.length) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--text-muted)">Aucune tentative bloquée</td></tr>';
+            return;
+        }
+        tbody.innerHTML = blocked.map(function(r) {
+            return '<tr><td>' + escHtml(r.canonical_name) + '</td><td>' + fmt(r.hits) +
+                '</td><td>' + fmtIso(r.last_seen) + '</td></tr>';
+        }).join('');
+    }
+
+    function fetchAiBotsBlocked(hours) {
+        fetch('/admin/api/ai-bots/blocked?hours=' + hours, { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(renderBotsBlocked)
+            .catch(function(e) { console.error('[BOT_INTEL] blocked fetch', e); });
+    }
+
+    /* ── Widget 2 — Timeline chart (Chart.js) ──────────────── */
+    function renderBotsTimeline(data) {
+        if (!charts.botsTimeline) return;
+        var buckets = (data && data.buckets) || [];
+        var series = (data && data.series) || [];
+        charts.botsTimeline.data.labels = buckets;
+        charts.botsTimeline.data.datasets = series.map(function(s, i) {
+            return {
+                label: s.name,
+                data: s.data,
+                borderColor: BOT_COLORS[i % BOT_COLORS.length],
+                backgroundColor: BOT_COLORS[i % BOT_COLORS.length] + '22',
+                tension: 0.25,
+                borderWidth: 2,
+                pointRadius: 1,
+            };
+        });
+        charts.botsTimeline.update('none');
+    }
+
+    function fetchAiBotsTimeline(hours) {
+        fetch('/admin/api/ai-bots/timeline?hours=' + hours, { credentials: 'same-origin' })
+            .then(function(r) { return r.json(); })
+            .then(renderBotsTimeline)
+            .catch(function(e) { console.error('[BOT_INTEL] timeline fetch', e); });
+    }
+
+    /* ── Bot period toggle ─────────────────────────────────── */
+    document.getElementById('bot-period-toggle').addEventListener('click', function(e) {
+        var btn = e.target.closest('.mon-period-btn');
+        if (!btn) return;
+        botPeriodHours = parseInt(btn.dataset.hours, 10) || 24;
+        this.querySelectorAll('.mon-period-btn').forEach(function(b) { b.classList.remove('active'); });
+        btn.classList.add('active');
+        fetchAiBotsStats(botPeriodHours);
+        fetchAiBotsBlocked(botPeriodHours);
+        fetchAiBotsTimeline(botPeriodHours);
+    });
+
+    function fetchAllBotIntel() {
+        fetchBotFeeds();
+        fetchAiBotsStats(botPeriodHours);
+        fetchAiBotsBlocked(botPeriodHours);
+        fetchAiBotsTimeline(botPeriodHours);
+    }
+
     /* ── Init ───────────────────────────────────────────────── */
     createCharts();
+    // V123: add botsTimeline chart to existing `charts` registry
+    charts.botsTimeline = new Chart(document.getElementById('chart-bots-timeline'), {
+        type: 'line',
+        data: { labels: [], datasets: [] },
+        options: Object.assign({}, chartOpts, {
+            plugins: {
+                title: { display: true, text: 'Bots visits (top 5)', color: 'rgba(255,255,255,.6)', font: { size: 11 } },
+                legend: chartOpts.plugins.legend,
+                tooltip: chartOpts.plugins.tooltip
+            }
+        })
+    });
+
     fetchMetrics();
     fetchHistory();
     fetchBreakdown();
+    fetchAllBotIntel();
     timer = setInterval(function() {
         fetchMetrics();
         fetchBreakdown();
+        fetchAllBotIntel();
     }, REFRESH_MS);
-    // Refresh history every 5 min
     setInterval(fetchHistory, 300000);
+
+    /* ── V123 Q8 — visibilitychange pause/resume ───────────── */
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            if (timer) { clearInterval(timer); timer = null; }
+        } else if (!timer) {
+            fetchMetrics(); fetchBreakdown(); fetchAllBotIntel();
+            timer = setInterval(function() {
+                fetchMetrics(); fetchBreakdown(); fetchAllBotIntel();
+            }, REFRESH_MS);
+        }
+    });
 
     document.getElementById('btn-refresh').addEventListener('click', function() {
         fetchMetrics();
         fetchHistory();
         fetchBreakdown();
+        fetchAllBotIntel();
         this.textContent = 'Chargement...';
         var btn = this;
         setTimeout(function() { btn.textContent = 'Rafraichir maintenant'; }, 800);

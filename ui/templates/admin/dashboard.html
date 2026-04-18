@@ -101,6 +101,25 @@
         <a href="/admin/activity" class="nav-item">Activity Monitor (live + historique + ban)</a>
     </nav>
 
+    <h2>Bot Intelligence (24h) <span class="rt-dot rt-dot-live"></span></h2>
+    <div class="kpi-grid">
+        <div class="kpi-card">
+            <span class="kpi-value" style="color:#10b981;" data-kpi="bot_allowed_24h">{{ bot_allowed_24h|default(0) }}</span>
+            <span class="kpi-label">Bots autorises</span>
+            <span class="kpi-sub" style="color:#8891a4;font-size:.75rem;"><span data-kpi="bot_distinct_count">{{ bot_distinct_count|default(0) }}</span> bots differents</span>
+        </div>
+        <div class="kpi-card" style="border-left:3px solid #f59e0b;">
+            <span class="kpi-value" style="color:#f59e0b;" data-kpi="bot_blocked_24h">{{ bot_blocked_24h|default(0) }}</span>
+            <span class="kpi-label">Bots bloques</span>
+            <span class="kpi-sub" style="color:#8891a4;font-size:.75rem;">Scrapers SEO abusifs</span>
+        </div>
+        <div class="kpi-card">
+            <span class="kpi-value" style="color:#4f8cff;"><span data-kpi="bot_human_ratio_pct">{{ bot_human_ratio_pct|default(0) }}</span>%</span>
+            <span class="kpi-label">Ratio bot/humain</span>
+            <span class="kpi-sub" style="color:#8891a4;font-size:.75rem;">Humains : <span data-kpi="human_hits_24h">{{ human_hits_24h|default(0) }}</span></span>
+        </div>
+    </div>
+
     <h2>Navigation</h2>
     <nav class="admin-nav">
         <a href="/admin/impressions" class="nav-item">Impressions sponsor (detail)</a>

@@ -90,12 +90,13 @@ _STATIC_WHITELIST_CIDRS = [
 ]
 
 # ── Static BLACKLIST CIDR ranges (hardcoded fallback) ────────────────────────
+# BONUS Q7 V122: ClaudeBot retiré de la blacklist CIDR suite au pivot
+# "Sovereignty over code, transparency for audits" (17/04/2026).
+# ClaudeBot/anthropic-ai/Claude-Web sont désormais whitelistés via UA dans
+# config/ai_bots.py (ALLOWED_AI_USER_AGENTS). Voir docs/AI_BOTS_WHITELIST.md.
 
 _STATIC_BLACKLIST_CIDRS = [
-    # ClaudeBot (Anthropic)
-    "160.79.104.0/23",
-    "2607:6bc0::/48",
-    # PetalBot (Huawei)
+    # PetalBot (Huawei) — SEO scraper agressif, pas AI legitimate
     "114.119.128.0/19",
 ]
 
@@ -297,6 +298,9 @@ async def refresh_from_remote(httpx_client) -> dict:
     dynamic_bl_cidrs: list[str] = []
     dynamic_bl_ips: set[str] = set()
 
+    # BONUS Q8 V122: log each refresh attempt to bot_feed_refresh_log (fail-safe)
+    from services.bot_feeds_monitor import log_refresh_result
+
     # ── Whitelist JSON sources ──
     for name, url in WHITELIST_JSON_SOURCES.items():
         try:
@@ -308,9 +312,11 @@ async def refresh_from_remote(httpx_client) -> dict:
                 logger.warning("[BOT_IPS] Whitelist %s returned only %d CIDRs (expected 3+), possible corruption", name, len(cidrs))
             dynamic_wl_cidrs.extend(cidrs)
             logger.info("[BOT_IPS] Whitelist %s: %d CIDRs", name, len(cidrs))
+            await log_refresh_result(name, "ok", len(cidrs))
         except Exception as e:
             errors.append(f"whitelist:{name}: {e}")
             logger.warning("[BOT_IPS] Whitelist %s fetch failed: %s", name, e)
+            await log_refresh_result(name, "error", 0, str(e))
 
     # ── Blacklist JSON sources ──
     for name, url in BLACKLIST_JSON_SOURCES.items():
@@ -323,9 +329,11 @@ async def refresh_from_remote(httpx_client) -> dict:
                 logger.warning("[BOT_IPS] Blacklist %s returned only %d CIDRs (expected 3+), possible corruption", name, len(cidrs))
             dynamic_bl_cidrs.extend(cidrs)
             logger.info("[BOT_IPS] Blacklist %s: %d CIDRs", name, len(cidrs))
+            await log_refresh_result(name, "ok", len(cidrs))
         except Exception as e:
             errors.append(f"blacklist:{name}: {e}")
             logger.warning("[BOT_IPS] Blacklist %s fetch failed: %s", name, e)
+            await log_refresh_result(name, "error", 0, str(e))
 
     # ── Blacklist text sources ──
     for name, url in BLACKLIST_TEXT_SOURCES.items():
@@ -342,9 +350,11 @@ async def refresh_from_remote(httpx_client) -> dict:
                 else:
                     dynamic_bl_ips.add(entry)
             logger.info("[BOT_IPS] Blacklist %s: %d entries", name, len(entries))
+            await log_refresh_result(name, "ok", len(entries))
         except Exception as e:
             errors.append(f"blacklist_text:{name}: {e}")
             logger.warning("[BOT_IPS] Blacklist %s fetch failed: %s", name, e)
+            await log_refresh_result(name, "error", 0, str(e))
 
     # ── Merge static + dynamic, collapse ──
     # S08: atomic swap — build new lists/set locally, then assign in one shot

@@ -191,25 +191,60 @@ async def ip_ban_middleware(request: Request, call_next):
     if is_whitelisted_bot(client_ip):
         return await call_next(request)
 
-    # 2. Blacklist check — instant block for known bad IPs (AI scrapers, Tor, etc.)
-    is_bl, bl_source = is_blacklisted(client_ip)
-    if is_bl:
-        logger.warning("[BOT_IPS] blacklisted IP blocked: %s on %s (source=%s)", client_ip, request.url.path, bl_source)
-        return JSONResponse(status_code=403, content={"detail": "Forbidden"})
-
-    # 3. Suspicious path check — instant ban for vulnerability scanners
+    # 2. Suspicious path check — défense-en-profondeur (appliqué avant AI bots)
+    # V122: déplacé AVANT le stage AI pour empêcher tout bot IA détourné de scanner /.env
     path = request.url.path
     if is_suspicious_path(path):
         logger.warning("[BOT_IPS] suspicious path scan: %s -> %s", client_ip, path)
         await _auto_ban_ip(client_ip, f"suspicious_path:{path[:80]}")
         return JSONResponse(status_code=403, content={"detail": "Forbidden"})
 
-    # 4. Check if already banned (MySQL cache)
+    # 3. V122 — AI UA whitelist (pivot "Sovereignty over code, transparency for audits")
+    # Kill-switch: AI_BOTS_WHITELIST_ENABLED (default true on Cloud Run, false in dev).
+    # Blocklist UA (Ahrefs/Semrush/...) appliquée même si kill-switch OFF (défense-en-profondeur).
+    from config.ai_bots import (
+        AI_BOTS_WHITELIST_ENABLED, BLOCKED_AI_USER_AGENTS, match_ai_bot, is_blocked_ai_bot,
+        check_ai_bot_rate_limit, record_ai_bot_access, record_ai_bot_blocked,
+    )
+    ua = request.headers.get("user-agent", "")
+    if is_blocked_ai_bot(ua):
+        # V123 Phase 2.5 — log blocked bot for admin monitoring widget 4
+        ua_lower = ua.lower()
+        matched_sub = next((s for s in BLOCKED_AI_USER_AGENTS if s in ua_lower), "unknown")
+        record_ai_bot_blocked(matched_sub)
+        logger.warning("[AI_BOTS] blocked UA: %s (match=%s) on %s (ip=%s)",
+                       ua[:100], matched_sub, path, client_ip)
+        return JSONResponse(status_code=403, content={"detail": "Forbidden"})
+    if AI_BOTS_WHITELIST_ENABLED:
+        canonical = match_ai_bot(ua)
+        if canonical:
+            if not check_ai_bot_rate_limit(client_ip, canonical):
+                logger.warning("[AI_BOTS] rate limit exceeded: %s (ip=%s) on %s",
+                               canonical, client_ip, path)
+                return JSONResponse(
+                    status_code=429,
+                    content={"error": "Trop de requetes. Reessayez dans quelques instants."},
+                )
+            record_ai_bot_access(canonical)
+            # V123 Phase 2.5 Extension A — mark request for downstream handlers
+            # (api_track skip, template injection for analytics guard).
+            request.state.ai_bot_canonical = canonical
+            # Bonus C — downgrade allowed log to debug (100K+ req/day economy)
+            logger.debug("[AI_BOTS] allowed: %s (ip=%s) on %s", canonical, client_ip, path)
+            return await call_next(request)
+
+    # 4. Blacklist check — instant block for known bad IPs (Tor, IPsum, PetalBot, etc.)
+    is_bl, bl_source = is_blacklisted(client_ip)
+    if is_bl:
+        logger.warning("[BOT_IPS] blacklisted IP blocked: %s on %s (source=%s)", client_ip, request.url.path, bl_source)
+        return JSONResponse(status_code=403, content={"detail": "Forbidden"})
+
+    # 5. Check if already banned (MySQL cache)
     if await is_banned(client_ip):
         logger.warning("[IP_BAN] blocked %s on %s", client_ip, request.url.path)
         return JSONResponse(status_code=403, content={"detail": "Forbidden"})
 
-    # 5. Record + check auto-ban (skip static/admin paths)
+    # 6. Record + check auto-ban (skip static/admin paths)
     if not any(path.startswith(p) for p in _COUNTER_SKIP_PREFIXES):
         _record_request(client_ip)
         source = _check_auto_ban(client_ip)

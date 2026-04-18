@@ -568,6 +568,81 @@ async def admin_api_refresh_bot_ips(request: Request):
         return JSONResponse({"error": str(e)}, status_code=500)
 
 
+# ── V122 Phase 2/4 — Bot feeds health + AI bots access (BONUS Q8) ───────────
+
+@router.get("/admin/api/bot-feeds-status", include_in_schema=False)
+async def admin_api_bot_feeds_status(request: Request):
+    """Return latest refresh per bot IP feed source + health flags.
+
+    Identifies silent failures (feed not refreshed > 24h → red flag) to prevent
+    production running on stale fallback CIDRs (scenario identified Phase ÉTAPE 1).
+    """
+    err = _require_auth_json(request)
+    if err:
+        return err
+    try:
+        from services.bot_feeds_monitor import get_feeds_status
+        data = await get_feeds_status()
+        return JSONResponse(data)
+    except Exception as e:
+        logger.error("[ADMIN] bot-feeds-status: %s", e)
+        return JSONResponse({"feeds": [], "summary": {"total": 0, "green": 0, "orange": 0, "red": 0}},
+                            status_code=500)
+
+
+@router.get("/admin/api/ai-bots/stats", include_in_schema=False)
+async def admin_api_ai_bots_stats(request: Request, hours: int = Query(24, ge=1, le=720)):
+    """Aggregate AI bots access counters (Catégorie A) over last N hours.
+
+    Query param `hours`: 1-720 (30 days max). Default 24h.
+    """
+    err = _require_auth_json(request)
+    if err:
+        return err
+    try:
+        from services.bot_feeds_monitor import get_ai_bots_stats
+        data = await get_ai_bots_stats(hours=hours)
+        return JSONResponse(data)
+    except Exception as e:
+        logger.error("[ADMIN] ai-bots/stats: %s", e)
+        return JSONResponse({"period_hours": hours, "bots": [], "total_hits": 0},
+                            status_code=500)
+
+
+# ── V123 Phase 2.5 — Blocked bots + Timeline (widgets 2, 4) ─────────────────
+
+@router.get("/admin/api/ai-bots/blocked", include_in_schema=False)
+async def admin_api_ai_bots_blocked(request: Request, hours: int = Query(24, ge=1, le=720)):
+    """V123 Phase 2.5 — Aggregated Cat C blocked UAs over last N hours."""
+    err = _require_auth_json(request)
+    if err:
+        return err
+    try:
+        from services.bot_feeds_monitor import get_blocked_bots_stats
+        data = await get_blocked_bots_stats(hours=hours)
+        return JSONResponse(data)
+    except Exception as e:
+        logger.error("[ADMIN] ai-bots/blocked: %s", e)
+        return JSONResponse({"period_hours": hours, "blocked_bots": [], "total_blocked": 0},
+                            status_code=500)
+
+
+@router.get("/admin/api/ai-bots/timeline", include_in_schema=False)
+async def admin_api_ai_bots_timeline(request: Request, hours: int = Query(24, ge=1, le=720)):
+    """V123 Phase 2.5 — Bucketized timeline (1h/6h/1d) for Chart.js line chart."""
+    err = _require_auth_json(request)
+    if err:
+        return err
+    try:
+        from services.bot_feeds_monitor import get_ai_bots_timeline
+        data = await get_ai_bots_timeline(hours=hours)
+        return JSONResponse(data)
+    except Exception as e:
+        logger.error("[ADMIN] ai-bots/timeline: %s", e)
+        return JSONResponse({"period_hours": hours, "buckets": [], "series": []},
+                            status_code=500)
+
+
 # ══════════════════════════════════════════════════════════════════════════════
 # CONTACT MESSAGES (V41)
 # ══════════════════════════════════════════════════════════════════════════════

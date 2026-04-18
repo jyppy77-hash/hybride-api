@@ -201,4 +201,4 @@ class TestVersion:
 
     def test_app_version(self):
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.005"
+        assert APP_VERSION == "1.6.006"

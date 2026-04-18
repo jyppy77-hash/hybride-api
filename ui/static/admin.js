@@ -1,5 +1,6 @@
 /**
- * LotoIA Admin — AJAX filters + Chart.js — v16
+ * LotoIA Admin — AJAX filters + Chart.js — v17
+ * V123 Phase 2.5: Bot Intelligence widgets (dashboard 3 KPIs + monitoring section).
  */
 var LotoAdmin = (function() {
     'use strict';

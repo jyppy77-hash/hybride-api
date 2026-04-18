@@ -199,6 +199,16 @@ async def admin_dashboard(request: Request, period: str = Query("today")):
 
     kpis = await _fetch_dashboard_kpis(_PERIOD_SQL[period])
 
+    # V123 Phase 2.5 — Bot Intelligence KPIs (24h fixed, independent of period)
+    try:
+        from services.bot_feeds_monitor import get_bot_dashboard_kpis
+        bot_kpis = await get_bot_dashboard_kpis(hours=24)
+        kpis.update(bot_kpis)
+    except Exception as e:
+        logger.warning("[ADMIN] bot KPIs fallback: %s", e)
+        kpis.update({"bot_allowed_24h": 0, "bot_blocked_24h": 0,
+                     "bot_distinct_count": 0, "bot_human_ratio_pct": 0, "human_hits_24h": 0})
+
     # HTML-specific: detailed contrats proches list (with sponsor names)
     contrats_proches = []
     try:
@@ -240,5 +250,15 @@ async def admin_dashboard_kpis(request: Request, period: str = Query("today")):
         period = "today"
 
     kpis = await _fetch_dashboard_kpis(_PERIOD_SQL[period])
+
+    # V123 Phase 2.5 — merge bot KPIs for polling endpoint too (data-kpi auto-update)
+    try:
+        from services.bot_feeds_monitor import get_bot_dashboard_kpis
+        bot_kpis = await get_bot_dashboard_kpis(hours=24)
+        kpis.update(bot_kpis)
+    except Exception as e:
+        logger.warning("[ADMIN] bot KPIs fallback (polling): %s", e)
+        kpis.update({"bot_allowed_24h": 0, "bot_blocked_24h": 0,
+                     "bot_distinct_count": 0, "bot_human_ratio_pct": 0, "human_hits_24h": 0})
 
     return JSONResponse(kpis, headers={"Cache-Control": "no-store"})

@@ -66,6 +66,12 @@ async def track_event(request: Request):
     if _is_owner_ip(client_ip):
         return Response(status_code=204)
 
+    # V123 Phase 2.5 Extension A — anti-pollution: mark is_ai_bot=1 for bots Cat A.
+    # request.state.ai_bot_canonical is set by middleware/ip_ban.py when match_ai_bot()
+    # matched. The row is still inserted (observability) but flagged to be excluded
+    # from human stats via event_log.is_ai_bot filter.
+    is_ai_bot = 1 if getattr(request.state, "ai_bot_canonical", None) else 0
+
     # Session hash (RGPD)
     ua = request.headers.get("user-agent", "")
     today = date.today().isoformat()
@@ -89,11 +95,11 @@ async def track_event(request: Request):
         await db_cloudsql.async_query(
             """
             INSERT INTO event_log
-                (event_type, page, module, lang, device, country, session_hash, meta_json, product_code)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                (event_type, page, module, lang, device, country, session_hash, meta_json, product_code, is_ai_bot)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (event, page, module, lang, device,
-             country, session_hash, meta_json, product_code),
+             country, session_hash, meta_json, product_code, is_ai_bot),
         )
     except Exception as e:
         logger.error("[EVENT TRACK] insert failed: %s", e)

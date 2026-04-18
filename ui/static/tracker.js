@@ -53,8 +53,9 @@
     window.LotoIA_track = function(event, meta) {
         if (!event) return;
 
-        // Owner filter — skip if owner flag is set (defense-in-depth: script + body attr)
-        if (window.__OWNER__ || (document.body && document.body.dataset.owner === '1')) return;
+        // Owner filter + V123 AI bot filter — skip if any pollution flag set (defense-in-depth: script + body attr)
+        if (window.__OWNER__ || window.__IS_AI_BOT__ ||
+            (document.body && (document.body.dataset.owner === '1' || document.body.dataset.aiBot === '1'))) return;
 
         // Dedup
         var key = dedupKey(event, meta);

@@ -190,6 +190,16 @@ async def lifespan(app):
                 logger.warning("[BOT_IPS] Refresh failed, using current lists: %s", e)
             await asyncio.sleep(6 * 3600)  # 6h
     asyncio.create_task(_supervised_loop(_periodic_bot_refresh, "periodic_bot_refresh"))
+    # V122 Phase 2/4 — Flush AI bot access counters every 60s to ai_bot_access_log
+    async def _periodic_ai_counter_flush():
+        from services.bot_feeds_monitor import flush_ai_bot_counters
+        while True:
+            await asyncio.sleep(60)
+            try:
+                await flush_ai_bot_counters()
+            except Exception as e:
+                logger.warning("[AI_BOTS] flush failed (retry next cycle): %s", e)
+    asyncio.create_task(_supervised_loop(_periodic_ai_counter_flush, "periodic_ai_counter_flush"))
     # V97: IndexNow ping post-deploy (fire-and-forget, 30s delay, prod only)
     if os.getenv("K_SERVICE") and os.getenv("ENVIRONMENT", "").lower() != "staging":
         async def _indexnow_post_deploy():
@@ -600,10 +610,28 @@ logger.info("UmamiOwnerFilter: OWNER_IP=%r OWNER_IPV6=%r",
 
 _OWNER_INJECT = b'<script>window.__OWNER__=true;</script>\n</head>'
 _OWNER_BODY_ATTR = (b' data-owner="1"', b"<body")
+# V123 Phase 2.5 Extension A — AI bot marker for analytics guards
+_AI_BOT_INJECT = b'<script>window.__IS_AI_BOT__=true;</script>\n</head>'
+
+
+def _extract_ua_from_scope(scope) -> str:
+    """Read User-Agent header from ASGI scope (lowercased, max 500 chars)."""
+    for k, v in scope.get("headers", []):
+        if k == b"user-agent":
+            try:
+                return v.decode("latin-1", errors="replace")[:500]
+            except Exception:
+                return ""
+    return ""
 
 
 class UmamiOwnerFilterMiddleware:
-    """Inject window.__OWNER__=true into HTML responses for the owner IP."""
+    """Inject window.__OWNER__=true AND/OR window.__IS_AI_BOT__=true into HTML
+    responses for owner IP and/or detected AI bots (V123 Phase 2.5 Extension A).
+
+    Both flags skip external analytics (GA4, Umami cloud, Wysistat ACPM) via
+    client-side guards in analytics.js + tracker.js + umamiBeforeSend callback.
+    """
 
     def __init__(self, app):
         self.app = app
@@ -620,13 +648,28 @@ class UmamiOwnerFilterMiddleware:
         path = scope.get("path", "")
         is_owner = _is_owner_ip(client_ip)
 
-        if not is_owner:
+        # V123 Phase 2.5 — detect AI bot by UA (same matching as ip_ban_middleware)
+        is_ai_bot = False
+        if not is_owner:  # owner always wins
+            ua = _extract_ua_from_scope(scope)
+            if ua:
+                try:
+                    from config.ai_bots import match_ai_bot, AI_BOTS_WHITELIST_ENABLED
+                    if AI_BOTS_WHITELIST_ENABLED and match_ai_bot(ua):
+                        is_ai_bot = True
+                except Exception:
+                    pass
+
+        if not is_owner and not is_ai_bot:
             await self.app(scope, receive, send)
             return
 
-        logger.info("UmamiOwnerFilter: INJECT __OWNER__ | ip=%s path=%s", client_ip, path)
+        if is_owner:
+            logger.info("UmamiOwnerFilter: INJECT __OWNER__ | ip=%s path=%s", client_ip, path)
+        elif is_ai_bot:
+            logger.debug("UmamiOwnerFilter: INJECT __IS_AI_BOT__ | ip=%s path=%s", client_ip, path)
 
-        # Owner IP detected — check if response is HTML, then inject flag
+        # Flag(s) to inject — check response content-type first
         is_html = False
         body_chunks = []
 
@@ -636,7 +679,6 @@ class UmamiOwnerFilterMiddleware:
             if message["type"] == "http.response.start":
                 hdrs = dict(message.get("headers", []))
                 ct = hdrs.get(b"content-type", b"").decode().lower()
-                ce = hdrs.get(b"content-encoding", b"").decode().lower()
                 is_html = "text/html" in ct
                 if not is_html:
                     await send(message)
@@ -655,9 +697,17 @@ class UmamiOwnerFilterMiddleware:
                     full_body = b"".join(
                         chunk for tag, chunk in body_chunks if tag == "body"
                     )
-                    full_body = full_body.replace(b"</head>", _OWNER_INJECT, 1)
-                    # Also inject data-owner="1" on <body> tag for defense-in-depth
-                    full_body = full_body.replace(b"<body", b"<body" + _OWNER_BODY_ATTR[0], 1)
+                    # Build a single inject block with the flags that apply
+                    inject_scripts = b""
+                    if is_owner:
+                        inject_scripts += b'<script>window.__OWNER__=true;</script>\n'
+                    if is_ai_bot:
+                        inject_scripts += b'<script>window.__IS_AI_BOT__=true;</script>\n'
+                    full_body = full_body.replace(b"</head>", inject_scripts + b"</head>", 1)
+                    if is_owner:
+                        full_body = full_body.replace(b"<body", b"<body" + _OWNER_BODY_ATTR[0], 1)
+                    if is_ai_bot:
+                        full_body = full_body.replace(b"<body", b"<body" + b' data-ai-bot="1"', 1)
 
                     start_msg = body_chunks[0][1]
                     new_headers = [
@@ -667,8 +717,8 @@ class UmamiOwnerFilterMiddleware:
                     new_headers.append(
                         (b"content-length", str(len(full_body)).encode())
                     )
-                    # Owner-injected responses must NOT be cached by intermediaries
-                    # (Google Frontend would serve __OWNER__=true to all visitors)
+                    # Injected responses must NOT be cached by intermediaries
+                    # (Google Frontend would serve flags to all visitors)
                     new_headers.append(
                         (b"cache-control", b"private, no-cache")
                     )

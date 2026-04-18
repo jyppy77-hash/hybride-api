@@ -255,9 +255,9 @@
         // Anti-double boot
         if (state.gtagBooted) return;
 
-        // Owner IP filter (window.__OWNER__)
-        // Injected by OwnerFilterMiddleware in main.py
-        if (window.__OWNER__) {
+        // Owner IP filter (window.__OWNER__) + V123 AI bot filter (window.__IS_AI_BOT__)
+        // Injected by OwnerFilterMiddleware in main.py (Extension A anti-pollution)
+        if (window.__OWNER__ || window.__IS_AI_BOT__) {
             state.gtagBooted = true;
             state.gtagLoadFailed = true;
             state.gtagScriptReady = true;

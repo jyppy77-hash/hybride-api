@@ -61,45 +61,32 @@ Disallow: /ask
 Disallow: /docs
 Disallow: /openapi.json
 
-# === AI / SCRAPING BOTS ===
-User-agent: ClaudeBot
-Disallow: /
+# === AI CRAWLERS AUTORISES (V122 — pivot "transparency for audits") ===
+# Les bots IA Catégorie A sont implicitement autorisés par "User-agent: *" ci-dessus.
+# Whitelist technique (User-Agent) : config/ai_bots.py::ALLOWED_AI_USER_AGENTS.
+# Rate-limit : 100 req/min par (IP, UA). Kill-switch : AI_BOTS_WHITELIST_ENABLED.
+# Voir docs/AI_BOTS_WHITELIST.md pour la liste complète + rationale.
 
-User-agent: CCBot
-Disallow: /
-
-User-agent: anthropic-ai
-Disallow: /
-
-User-agent: GPTBot
-Disallow: /
-
-User-agent: Google-Extended
-Disallow: /
-
-User-agent: Applebot-Extended
-Disallow: /
-
-User-agent: meta-externalagent
-Disallow: /
-
-User-agent: Bytespider
-Disallow: /
-
-User-agent: Amazonbot
-Disallow: /
-
-# === SEO SCRAPERS ===
+# === SCRAPERS BLOQUES (Catégorie C — SEO agressifs + ambigus) ===
 User-agent: AhrefsBot
 Disallow: /
 
 User-agent: SemrushBot
 Disallow: /
 
+User-agent: MJ12bot
+Disallow: /
+
+User-agent: DotBot
+Disallow: /
+
 User-agent: PetalBot
 Disallow: /
 
-User-agent: cohere-ai
+User-agent: Bytespider
+Disallow: /
+
+User-agent: Amazonbot
 Disallow: /
 
 # === SITEMAP ===
