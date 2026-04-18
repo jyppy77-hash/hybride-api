@@ -446,8 +446,12 @@ async def add_cache_headers(request: Request, call_next):
             response.headers["Cache-Control"] = "public, max-age=2592000"  # 30 jours
 
     # Cache court pour pages HTML (SEO routes) — skip redirects (kill switch 302)
+    # V123.1 hotfix: `private` (was `public`) pour empêcher le GFE Cloud Run / Cloudflare
+    # de cacher côté edge. Un cache edge partagé sert la même réponse à tous les UAs,
+    # ce qui fait que UmamiOwnerFilterMiddleware ne tourne jamais pour les AI bots
+    # arrivant après un humain → __IS_AI_BOT__ jamais injecté. Browser cache conservé (1h).
     if (path.endswith(".html") or path in _SEO_ROUTES) and response.status_code < 300:
-        response.headers["Cache-Control"] = "public, max-age=3600"  # 1 heure
+        response.headers["Cache-Control"] = "private, max-age=3600"  # 1 heure browser-only
 
     # Last-Modified sur les pages HTML uniquement — date fixe = LAST_DEPLOY_DATE
     content_type = response.headers.get("content-type", "")

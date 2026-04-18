@@ -904,9 +904,9 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.006 (V123 Phase 2.5 — Widgets Bot Intelligence + Extension A anti-pollution analytics)."""
+        """APP_VERSION == 1.6.007 (V123.1 hotfix — HTML Cache-Control: private pour empêcher GFE cache de bypasser middleware AI bot)."""
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.006"
+        assert APP_VERSION == "1.6.007"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""
