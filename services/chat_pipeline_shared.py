@@ -788,15 +788,32 @@ async def _prepare_chat_context_base(
     # ── Phase 0 : Continuation contextuelle ──
     _continuation_mode = False
     _enriched_message = None
+    _sql_reroute_applied = False  # V125 Sous-phase 2 Volet B
 
     if cfg["is_short_continuation"](message) and history:
-        _enriched_message = cfg["enrich_with_context"](message, history)
-        if _enriched_message != message:
-            _continuation_mode = True
-            _phase = "0"
+        # V125 Sous-phase 2 Volet B: avant d'activer continuation_mode, tester
+        # si le dernier message assistant propose une action SQL-évocatrice
+        # (cas log #2093 : "Tu veux connaître son historique complet ?").
+        # Si oui, reformuler message en requête explicite et laisser le
+        # pipeline normal activer Phase SQL via `_sql_reroute_applied → force_sql`.
+        _reroute_fn = cfg.get("sql_continuation_reroute")
+        _reroute = _reroute_fn(history, lang) if _reroute_fn else None
+        if _reroute:
+            _old_message = message
+            message = _reroute
+            _sql_reroute_applied = True
             logger.info(
-                f"{_lp} Reponse courte detectee: \"{message}\" → enrichissement contextuel"
+                f"{_lp} V125 SQL-continuation reroute: \"{_old_message}\" → "
+                f"\"{message}\" (lang={lang})"
             )
+        else:
+            _enriched_message = cfg["enrich_with_context"](message, history)
+            if _enriched_message != message:
+                _continuation_mode = True
+                _phase = "0"
+                logger.info(
+                    f"{_lp} Reponse courte detectee: \"{message}\" → enrichissement contextuel"
+                )
 
     # ── Phase REFUS : refus simple → court-circuit Python (V98c) ──
     # Conditions : (1) pas déjà en continuation, (2) refus simple, (3) historique ≥ 2
@@ -904,9 +921,16 @@ async def _prepare_chat_context_base(
                 if not enrichment_context:
                     enrichment_context = _TIRAGE_ERROR_GUARD.get(lang, _TIRAGE_ERROR_GUARD["fr"])
 
-    force_sql = not _continuation_mode and not enrichment_context and cfg["has_temporal_filter"](message)
+    # V125 Sous-phase 2 Volet B: reroute SQL-continuation force Phase SQL
+    # (contourne Phase 1 qui capturerait le numéro inclus dans la reformulation).
+    force_sql = _sql_reroute_applied or (
+        not _continuation_mode and not enrichment_context and cfg["has_temporal_filter"](message)
+    )
     if force_sql:
-        logger.info(f"{_lp} Filtre temporel detecte, force Phase SQL")
+        if _sql_reroute_applied:
+            logger.info(f"{_lp} V125 SQL-reroute force Phase SQL (bypass Phase 1)")
+        else:
+            logger.info(f"{_lp} Filtre temporel detecte, force Phase SQL")
 
     # Phase 2 : detection de grille
     grille_nums, grille_secondary = (None, None) if _continuation_mode else cfg["detect_grille"](message)

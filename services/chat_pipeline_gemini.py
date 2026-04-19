@@ -71,9 +71,31 @@ _STRICT_HALLUCINATION_MESSAGES = {
 }
 
 
+def _extract_last_factual_context(history: list | None) -> str | None:
+    """V125 A2: récupère le dernier message assistant SI contient un tag factuel.
+
+    Utilisé pour activer un check transitif hallucination sur Phase 0 (continuation)
+    quand l'historique récent contient encore [RÉSULTAT TIRAGE], [RÉSULTAT SQL]
+    ou [DONNÉES TEMPS RÉEL]. Retourne None si aucun tag factuel.
+    """
+    if not history:
+        return None
+    for msg in reversed(history):
+        role = getattr(msg, "role", None)
+        content = getattr(msg, "content", None)
+        if role is None and isinstance(msg, dict):
+            role = msg.get("role")
+            content = msg.get("content")
+        if role == "assistant" and content:
+            if _DATA_TAG_RE.search(content):
+                return content
+            return None
+    return None
+
+
 def _check_sql_number_hallucination(
     enrichment_context: str, gemini_response: str, phase: str, log_prefix: str,
-    lang: str = "fr",
+    lang: str = "fr", history: list | None = None,
 ) -> str | None:
     """Check Gemini response for hallucinated draw numbers.
 
@@ -83,8 +105,28 @@ def _check_sql_number_hallucination(
     V99 F03: HALLUCINATION_RISK (missing numbers) → log-only, returns None.
     V99 F08: HALLUCINATION_INVENTED (invented numbers) → log + returns safe
     replacement message containing the real data from enrichment context.
+    V125 A2: scope Phase 0 transitif — check activé si l'historique récent
+    contient un tag factuel (défense contre fuite résiduelle via history).
+    V125 A3: détection orpheline inconditionnelle — log warning si séquence
+    5-nums draw-like apparaît dans réponse sans aucun contexte factuel.
     """
-    if phase not in ("1", "T", "SQL"):
+    # V125 A3: orphan sequence detection (inconditional, log-only, any phase)
+    if gemini_response:
+        _seq_orphan = _DRAW_SEQUENCE_RE.search(gemini_response)
+        if _seq_orphan and not _DATA_TAG_RE.search(enrichment_context or ""):
+            logger.warning(
+                "HALLUCINATION_ORPHAN_SEQUENCE: %s sequence '%s' in response "
+                "but NO factual context tag. Phase=%s | excerpt=%.200s",
+                log_prefix, _seq_orphan.group(0), phase, gemini_response[:200],
+            )
+
+    # V125 A2: Phase 0 transitif — active check si historique récent factuel
+    if phase == "0":
+        transitive = _extract_last_factual_context(history)
+        if not transitive:
+            return None
+        enrichment_context = transitive
+    elif phase not in ("1", "T", "SQL"):
         return None
     m = _DATA_TAG_RE.search(enrichment_context or "")
     if not m:
@@ -257,12 +299,13 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
                         text += "\n\n" + sponsor_line
                     logger.info(f"{log_prefix} OK (page={page}, mode={mode})")
                     log_from_meta(ctx.get("_chat_meta"), module, lang, message, text)
-                    # V100 R01 + V101 strict: Anti-hallucination check
+                    # V100 R01 + V101 strict + V125 A2/A3: Anti-hallucination check
                     _meta = ctx.get("_chat_meta") or {}
                     _safe_replacement = _check_sql_number_hallucination(
                         _meta.get("enrichment_context", ""), text,
                         _meta.get("phase", ""), log_prefix,
                         lang=_meta.get("lang", lang),
+                        history=ctx.get("history"),
                     )
                     if _safe_replacement:
                         text = _safe_replacement
@@ -342,13 +385,14 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
         })
         _full_response = "".join(_stream_chunks)
         log_from_meta(ctx.get("_chat_meta"), module, lang, message, _full_response)
-        # V96+V101: Anti-hallucination check — log-only on streaming path
+        # V96+V101+V125 A2/A3: Anti-hallucination check — log-only on streaming path
         # (stream already sent to client, cannot be replaced)
         _meta = ctx.get("_chat_meta") or {}
         _check_sql_number_hallucination(
             _meta.get("enrichment_context", ""), _full_response,
             _meta.get("phase", ""), log_prefix,
             lang=_meta.get("lang", lang),
+            history=ctx.get("history"),
         )
         logger.info(f"{log_prefix} Stream OK (page={page}, mode={mode})")
 

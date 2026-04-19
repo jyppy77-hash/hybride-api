@@ -54,6 +54,9 @@ from services.base_chat_detectors import (  # noqa: F401
     _detect_grid_evaluation,
     # Phase 3 — base requête complexe (F06 V83)
     _detect_requete_complexe_base,
+    # V125 — SQL continuation re-routing (Sous-phase 2 Volet B)
+    _SQL_EVOCATIVE_KEYWORDS, _SQL_REROUTE_TEMPLATES, _SQL_REROUTE_FALLBACK,
+    _NUM_EXTRACT_RE, _is_sql_continuation, _sql_continuation_reroute,
 )
 
 

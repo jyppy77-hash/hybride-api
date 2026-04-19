@@ -391,3 +391,173 @@ class TestGetSponsorIfDue:
         with patch("services.chat_utils._load_sponsors_config", return_value=_SPONSORS_V2):
             result = _get_sponsor_if_due(self._history(2), lang="fr", module="em")
             assert "LOTO_FR" not in result
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# V125 Sous-phase 1 — Couverture 14/14 patterns code-leak (audit V124 tableau B.2)
+# Cas déclencheur : log chat_log#2093 (19/04/2026, Loto FR) — leak ```sql + ```json[
+# ─────────────────────────────────────────────────────────────────────────────
+
+class TestV125CodeLeak:
+    """V125 Sous-phase 1 : _RE_CODE_BLOCK doit stripper 14/14 patterns du tableau B.2."""
+
+    def test_strips_python_single_line(self):
+        """B.2 pattern #1 — ```python x=1``` single-line avec espace (nouveau V125)."""
+        result = _clean_response("Voici: ```python x=1```")
+        assert "```" not in result
+        assert "x=1" not in result
+
+    def test_strips_python_multiline(self):
+        """B.2 pattern #2 — ```python\\ncode\\n``` (V86 existant, non-régression)."""
+        raw = "Voici :\n```python\ndef foo():\n    pass\n```\n"
+        result = _clean_response(raw)
+        assert "```python" not in result
+        assert "def foo" not in result
+
+    def test_strips_tool_code(self):
+        """B.2 pattern #3 — ```tool_code\\n…\\n``` (V86 existant, non-régression)."""
+        raw = "Un instant...\n```tool_code\nfrom datetime import datetime\n```"
+        result = _clean_response(raw)
+        assert "tool_code" not in result
+
+    def test_strips_sql_lowercase(self):
+        """B.2 pattern #4 — ```sql\\nSELECT…``` (CAS #2093 premier bloc)."""
+        raw = "```sql\nSELECT * FROM tirages WHERE boule_1 = 30\n```"
+        result = _clean_response(raw)
+        assert "SELECT" not in result
+        assert "tirages" not in result
+
+    def test_strips_sql_uppercase(self):
+        """B.2 pattern #5 — ```SQL majuscules (case-insensitive V125)."""
+        raw = "```SQL\nSELECT 1\n```"
+        result = _clean_response(raw)
+        assert "SELECT" not in result
+
+    def test_strips_json_block(self):
+        """B.2 pattern #6 — ```json\\n[…]\\n```."""
+        raw = '```json\n[{"Date": "2024-01-01"}]\n```'
+        result = _clean_response(raw)
+        assert "Date" not in result
+        assert "2024" not in result
+
+    def test_strips_json_bracket_glued(self):
+        """B.2 pattern #7 — ```json[ crochet collé (CAS #2093 second bloc)."""
+        raw = '```json[\n{"Date": "12 février 2024", "N1": 4}\n]```'
+        result = _clean_response(raw)
+        assert "Date" not in result
+        assert "février" not in result
+
+    def test_strips_javascript(self):
+        """B.2 pattern #8 — ```javascript\\ncode\\n```."""
+        raw = "```javascript\nconsole.log(1)\n```"
+        result = _clean_response(raw)
+        assert "console" not in result
+
+    def test_strips_js_short(self):
+        """B.2 pattern #8b — ```js\\ncode\\n```."""
+        raw = "```js\nconsole.log('secret')\n```"
+        result = _clean_response(raw)
+        assert "console" not in result
+        assert "secret" not in result
+
+    def test_strips_plaintext(self):
+        """B.2 pattern #9 — ```plaintext\\n…\\n```."""
+        raw = "```plaintext\nSECRET_TOKEN=abc123\n```"
+        result = _clean_response(raw)
+        assert "SECRET_TOKEN" not in result
+
+    def test_strips_bare_fence(self):
+        """B.2 pattern #10 — ```\\ncode\\n``` fence nu sans langage."""
+        raw = "Voici le code:\n```\nrm -rf /\n```\nFin."
+        result = _clean_response(raw)
+        assert "rm -rf" not in result
+
+    def test_strips_truncated_sql(self):
+        """B.2 pattern #11 — ```sql tronqué sans closing ``` (CAS #2093 stream coupé)."""
+        raw = "Un instant...\n```sql\nSELECT * FROM tirages WHERE"
+        result = _clean_response(raw)
+        assert "SELECT" not in result
+        assert "tirages" not in result
+
+    def test_strips_truncated_json(self):
+        """B.2 pattern #11b — ```json[ tronqué (CAS #2093)."""
+        raw = '```json[\n{"Date": "12 février 2024", "N1":'
+        result = _clean_response(raw)
+        assert "Date" not in result
+
+    def test_strips_multi_blocks_sql_json(self):
+        """B.2 pattern #12 — multi code blocks SQL + JSON (CAS #2093 complet)."""
+        raw = (
+            '```sql\nSELECT * FROM tirages\n```\n'
+            '```json[\n{"Date": "2024", "N1": 4}\n]```'
+        )
+        result = _clean_response(raw)
+        assert "SELECT" not in result
+        assert "tirages" not in result
+        assert "Date" not in result
+
+    def test_preserves_inline_backticks(self):
+        """B.2 pattern #14 — backticks inline (simple `x`) NE doivent PAS être strippés (anti-FP)."""
+        raw = "La variable `x` vaut 3 et `y` est défini aussi."
+        result = _clean_response(raw)
+        assert "`x`" in result
+        assert "`y`" in result
+        assert "3" in result
+
+
+class TestV125Scenario2093:
+    """V125 — Reproduction du cas exact chat_log#2093 (19/04/2026, Loto FR)."""
+
+    def test_scenario_2093_fully_stripped(self):
+        """Reproduit la réponse Gemini leakée dans log#2093. Aucun artefact ne doit subsister."""
+        gemini_response_2093 = (
+            '```sql\n'
+            'SELECT\n'
+            ' date_tirage AS "Date",\n'
+            ' num_1 AS "N1",\n'
+            ' num_2 AS "N2",\n'
+            ' num_3 AS "N3",\n'
+            ' num_4 AS "N4",\n'
+            ' num_5 AS "N5",\n'
+            ' num_chance AS "Chance"\n'
+            'FROM\n'
+            ' tirages\n'
+            'WHERE\n'
+            ' num_1 = 30 OR num_2 = 30 OR num_3 = 30 OR num_4 = 30 OR num_5 = 30\n'
+            'ORDER BY\n'
+            ' date_tirage DESC\n'
+            'LIMIT\n'
+            ' 5;\n'
+            '```\n'
+            '```json[\n'
+            ' {\n'
+            ' "Date": "12 février 2024",\n'
+            ' "N1": 4,\n'
+            ' "N2": 10,\n'
+            ' "N3": 27,\n'
+            ' "N4": 30,\n'
+            ' "N5": 41,\n'
+            ' "Chance": 4\n'
+            ' },\n'
+            ' {\n'
+            ' "Date": "27 décembre 2023",\n'
+            ' "N1": 6,\n'
+            ' "N2": 26,\n'
+            ' "N3": 30,\n'
+            ' "N4": 32,\n'
+            ' "N5": 47,\n'
+            ' "'
+        )
+        cleaned = _clean_response(gemini_response_2093)
+        # Tous les artefacts SQL doivent disparaître
+        assert "SELECT" not in cleaned
+        assert "FROM" not in cleaned
+        assert "tirages" not in cleaned
+        assert "date_tirage" not in cleaned
+        assert "num_1" not in cleaned
+        assert "num_chance" not in cleaned
+        # Tous les artefacts JSON doivent disparaître
+        assert "```" not in cleaned
+        assert '"Date"' not in cleaned
+        assert "février" not in cleaned
+        assert "décembre" not in cleaned

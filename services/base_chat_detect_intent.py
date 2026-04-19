@@ -501,3 +501,128 @@ def _detect_grid_evaluation(message: str, game: str = "loto") -> dict | None:
         result["etoiles"] = etoiles
 
     return result
+
+
+# ════════════════════════════════════════════════════════════════════
+# V125 Sous-phase 2 Volet B — SQL continuation re-routing
+# Détecte les cas "oui" / "ok" / "yes" / etc. qui suivent une proposition
+# modèle SQL-évocatrice ("Tu veux connaître son historique complet ?")
+# pour re-router vers Text-to-SQL au lieu de fallback Gemini conversationnel.
+# Déclencheur : log chat_log#2093 (19/04/2026, Loto FR) → fuite bloc SQL +
+# JSON avec schéma DB inventé.
+# ════════════════════════════════════════════════════════════════════
+
+# Mots-clés évocateurs SQL par langue — détecte les propositions modèle qui
+# suggèrent une action de consultation data (historique, liste complète, etc.).
+# Normalisation côté appelant : last_assistant_msg.lower() puis `in`.
+_SQL_EVOCATIVE_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "fr": (
+        "historique", "stats complètes", "statistiques complètes",
+        "détail", "détails", "liste complète", "liste des tirages",
+        "tirages où", "fréquence complète", "répartition complète",
+    ),
+    "en": (
+        "history", "full stats", "full statistics", "detail", "details",
+        "complete list", "list of draws", "draws where", "full frequency",
+        "full breakdown",
+    ),
+    "es": (
+        "historial", "estadísticas completas", "detalle", "detalles",
+        "lista completa", "sorteos donde", "frecuencia completa",
+    ),
+    "pt": (
+        "histórico", "estatísticas completas", "detalhe", "detalhes",
+        "lista completa", "sorteios onde", "frequência completa",
+    ),
+    "de": (
+        "verlauf", "vollständige statistiken", "detail", "einzelheiten",
+        "vollständige liste", "ziehungen wo", "vollständige häufigkeit",
+    ),
+    "nl": (
+        "geschiedenis", "volledige statistieken", "detail", "details",
+        "volledige lijst", "trekkingen waar", "volledige frequentie",
+    ),
+}
+
+# Reformulations envoyées au pipeline après re-routage. Contiennent le mot-clé
+# "historique"/"history"/... qui sera ingéré par Gemini SQL generator pour
+# produire un SELECT complet (pattern observé dans log #2094, 3.6s, 20 lignes).
+_SQL_REROUTE_TEMPLATES: dict[str, str] = {
+    "fr": "historique complet du {num}",
+    "en": "full history of {num}",
+    "es": "historial completo del {num}",
+    "pt": "histórico completo do {num}",
+    "de": "vollständiger Verlauf der {num}",
+    "nl": "volledige geschiedenis van {num}",
+}
+
+_SQL_REROUTE_FALLBACK: dict[str, str] = {
+    "fr": "donne-moi l'historique complet",
+    "en": "give me the full history",
+    "es": "dame el historial completo",
+    "pt": "dá-me o histórico completo",
+    "de": "gib mir den vollständigen Verlauf",
+    "nl": "geef me de volledige geschiedenis",
+}
+
+# Regex extraction numéro mentionné dans le dernier message assistant.
+# Capture 1-2 chiffres précédés d'un indicateur linguistique (article,
+# numéro/number, OU type spécifique : étoile/chance/boule/star/ball/stern/…).
+# Couvre 6 langues avec normalisation `re.IGNORECASE`.
+_NUM_EXTRACT_RE = re.compile(
+    r'(?:'
+    r'le|la|the|el|o|der|die|das|de|het|'
+    r'numéro|numero|número|number|nummer|zahl|'
+    r'étoile|etoile|chance|boule|'
+    r'star|ball|'
+    r'estrella|bola|'
+    r'estrela|'
+    r'stern|kugel|'
+    r'ster|bal'
+    r')\s+(\d{1,2})\b',
+    re.IGNORECASE,
+)
+
+
+def _is_sql_continuation(last_assistant_msg: str, lang: str = "fr") -> bool:
+    """V125: détecte si le dernier message assistant propose une action SQL-évocatrice.
+
+    Cas typique #2093: "Tu veux connaître son historique complet ?" → True.
+    Retourne False sur message vide, message conversationnel, ou lang inconnue.
+    """
+    if not last_assistant_msg:
+        return False
+    text = last_assistant_msg.lower()
+    keywords = _SQL_EVOCATIVE_KEYWORDS.get(lang, _SQL_EVOCATIVE_KEYWORDS["fr"])
+    return any(kw in text for kw in keywords)
+
+
+def _sql_continuation_reroute(history: list, lang: str = "fr") -> str | None:
+    """V125: si dernier message assistant est SQL-évocateur, retourne une
+    reformulation explicite qui forcera Phase SQL via `_sql_reroute_applied`.
+
+    Extrait le numéro mentionné (ex: "Le 30 est sorti 115 fois"). Si aucun
+    numéro extractible, retourne la reformulation générique. Retourne None
+    si l'historique ne justifie pas de re-routage (comportement V124 préservé).
+
+    Supporte msg comme objet Pydantic (role/content attrs) ou dict.
+    """
+    if not history or len(history) < 2:
+        return None
+    last_assistant = None
+    for msg in reversed(history):
+        role = getattr(msg, "role", None)
+        content = getattr(msg, "content", None)
+        if role is None and isinstance(msg, dict):
+            role = msg.get("role")
+            content = msg.get("content")
+        if role == "assistant" and content:
+            last_assistant = content
+            break
+    if not last_assistant or not _is_sql_continuation(last_assistant, lang):
+        return None
+    num_match = _NUM_EXTRACT_RE.search(last_assistant)
+    if num_match:
+        tpl = _SQL_REROUTE_TEMPLATES.get(lang, _SQL_REROUTE_TEMPLATES["fr"])
+        return tpl.format(num=num_match.group(1))
+    return _SQL_REROUTE_FALLBACK.get(lang, _SQL_REROUTE_FALLBACK["fr"])

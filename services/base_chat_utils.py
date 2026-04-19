@@ -171,8 +171,29 @@ def _sanitize_history_message(msg: str) -> str:
 # Code block stripping (Gemini tool_code hallucinations)
 # ────────────────────────────────────────────
 
-# Blocs ```tool_code ou ```python (avec ou sans fermeture ```)
-_RE_CODE_BLOCK = re.compile(r'```(?:tool_code|python)\s*\n.*?(?:```|$)', re.DOTALL)
+# V125 Sous-phase 1 — extension couverture code-leak (audit V124, cas log #2093).
+# Couvre : tool_code, python, sql, json, javascript/js, typescript/ts,
+# bash/shell/sh, plaintext/text, yaml/yml, xml, html, css, markdown.
+# Variantes acceptées après le fence language :
+#   - ```lang\n…        (newline classique, style Markdown standard)
+#   - ```lang …         (espace, style single-line ```python x=1```)
+#   - ```lang[\n…       (crochet ou accolade collé, cas #2093 : ```json[)
+#   - ```\n…            (fence nu sans langage)
+# Troncation via (?:```|$) pour matcher aussi les streams coupés maxOutputTokens.
+# Choix `\s*` (zero-or-more) plutôt que `\s+` : couvre les variantes single-line
+# comme ```json[]``` en plus des multiline. Risque faux-positif marginal accepté
+# (usage non-standard de triple-backticks dans un message user de chat stats
+# loterie est improbable — et le user input ne passe pas par clean_response).
+_RE_CODE_BLOCK = re.compile(
+    r'```'
+    r'(?:tool_code|python|sql|json|javascript|js|typescript|ts|'
+    r'bash|shell|sh|plaintext|text|yaml|yml|xml|html|css|markdown|md)?'
+    r'[\[\{]?'
+    r'\s*'
+    r'.*?'
+    r'(?:```|$)',
+    re.DOTALL | re.IGNORECASE,
+)
 
 _CODE_FALLBACK = {
     "fr": "Je n'ai pas pu formuler une réponse claire. Peux-tu reformuler ta question ?",

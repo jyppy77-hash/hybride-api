@@ -47,6 +47,9 @@ from services.base_chat_detect_intent import (  # noqa: F401
     _detect_requete_complexe_base,
     # Phase REFUS (V98c)
     _REFUSAL_RE, _REFUSAL_RESPONSES, _is_refusal, _get_refusal_response,
+    # V125 — SQL continuation re-routing (Sous-phase 2 Volet B)
+    _SQL_EVOCATIVE_KEYWORDS, _SQL_REROUTE_TEMPLATES, _SQL_REROUTE_FALLBACK,
+    _NUM_EXTRACT_RE, _is_sql_continuation, _sql_continuation_reroute,
 )
 
 from services.base_chat_detect_guardrails import (  # noqa: F401

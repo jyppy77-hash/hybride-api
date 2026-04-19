@@ -30,6 +30,7 @@ from services.chat_detectors import (
     _has_data_signal,  # V65
     _detect_grid_evaluation,  # V70
     _is_refusal, _get_refusal_response,  # V98c
+    _sql_continuation_reroute,  # V125 Sous-phase 2 Volet B
 )
 from services.chat_detectors_em import (
     _detect_mode_em, _detect_prochain_tirage_em,
@@ -119,6 +120,7 @@ def _build_em_config():
         "is_affirmation_simple": _is_affirmation_simple,
         "is_refusal": _is_refusal,  # V98c
         "get_refusal_response": _get_refusal_response,  # V98c
+        "sql_continuation_reroute": _sql_continuation_reroute,  # V125 Sous-phase 2 Volet B
         "detect_game_keyword_alone": _detect_game_keyword_alone,
         "detect_salutation": _detect_salutation,
         "get_salutation_response": _get_salutation_response,
