@@ -542,7 +542,7 @@ class HybrideEngine:
         Args:
             rate: override decay_rate (used for secondary with decay_rate_secondary).
 
-        Pipeline position: step 4 (after penalization, before anti-collision).
+        Pipeline position: step 4a (after penalization, before persistent brake).
         """
         if not self.cfg.decay_enabled or not decay_state:
             return scores
@@ -555,6 +555,30 @@ class HybrideEngine:
             )
             decayed[n] = score * multiplier
         return decayed
+
+    # ── V110: Persistent saturation brake (inter-draw rotation) ──────
+
+    def apply_persistent_brake(
+        self,
+        scores: dict[int, float],
+        brake_map: dict[int, float] | None,
+    ) -> dict[int, float]:
+        """V110 — Apply inter-draw persistent saturation brake.
+
+        Unlike the uniform decay multiplier which preserves the ratio
+        score_a / score_b for all not-drawn numbers, this brake is applied
+        ONLY to numbers selected in canonical grids of T-1 (×0.20) and T-2 (×0.50).
+        This creates a differential that CAN reverse intra-zone ordering.
+
+        Numbers not in brake_map keep their score unchanged (implicit ×1.0).
+        Numbers already at score 0 (hard-excluded T-1) stay at 0.
+
+        Pipeline position: step 4b (after decay 4a, before intra-batch saturation 4c).
+        See docs/AUDIT_360_DECAY_META_PIPELINE_V123.md axis 4 — F01.1-01.
+        """
+        if not brake_map:
+            return scores
+        return {n: s * brake_map.get(n, 1.0) for n, s in scores.items()}
 
     # ── Noise (intra-session diversification) ───────────────────────
 
@@ -661,6 +685,7 @@ class HybrideEngine:
         anti_collision: bool = False,
         decay_state_secondary: dict[int, int] | None = None,
         saturated_secondary: set[int] | None = None,
+        persistent_brake_map_secondary: dict[int, float] | None = None,
     ) -> list[int]:
         scores = await self.calculer_scores_hybrides_secondary(conn, mode=mode)
         scores = self.apply_secondary_penalties(scores, recent_draws or [])
@@ -669,7 +694,10 @@ class HybrideEngine:
             scores = self.apply_decay(
                 scores, decay_state_secondary, rate=self.cfg.decay_rate_secondary,
             )
-        # V105: Saturation Brake for secondary numbers
+        # V110: Persistent saturation brake for secondary (step 4b — inter-draw)
+        if persistent_brake_map_secondary:
+            scores = self.apply_persistent_brake(scores, persistent_brake_map_secondary)
+        # V105: Saturation Brake for secondary numbers (step 4c — intra-batch)
         if saturated_secondary:
             _brake = self.cfg.saturation_brake_secondary
             scores = {n: (s * _brake if n in saturated_secondary else s)
@@ -746,6 +774,8 @@ class HybrideEngine:
         decay_state_secondary: dict[int, int] | None = None,
         saturated_balls: set[int] | None = None,
         saturated_secondary: set[int] | None = None,
+        persistent_brake_map: dict[int, float] | None = None,
+        persistent_brake_map_secondary: dict[int, float] | None = None,
     ) -> dict:
         if forced_nums is None:
             forced_nums = []
@@ -761,7 +791,13 @@ class HybrideEngine:
         # Decay score (step 4a — break kernel lock)
         if decay_state:
             penalized = self.apply_decay(penalized, decay_state)
-        # V105: Saturation Brake (step 4c — after decay, before anti-collision)
+        # V110: Persistent saturation brake (step 4b — inter-draw rotation)
+        # Brakes specifically the numbers selected in the canonical grid of T-1 (and T-2).
+        # forced_nums are excluded (user-chosen must be respected).
+        if persistent_brake_map:
+            _brake_map_filtered = {n: m for n, m in persistent_brake_map.items() if n not in forced_set}
+            penalized = self.apply_persistent_brake(penalized, _brake_map_filtered)
+        # V105: Saturation Brake (step 4c — intra-batch rotation, after persistent)
         # Numbers selected in a previous grid of the same batch get heavily penalized.
         # forced_nums are excluded from saturation (user-chosen, must be respected).
         if saturated_balls:
@@ -873,6 +909,7 @@ class HybrideEngine:
                 conn, mode=mode, recent_draws=recent_draws, anti_collision=anti_collision,
                 decay_state_secondary=decay_state_secondary,
                 saturated_secondary=saturated_secondary,
+                persistent_brake_map_secondary=persistent_brake_map_secondary,
             )
             secondary = list(forced_secondary)
             for s in all_sec:
@@ -884,6 +921,7 @@ class HybrideEngine:
                 conn, mode=mode, recent_draws=recent_draws, anti_collision=anti_collision,
                 decay_state_secondary=decay_state_secondary,
                 saturated_secondary=saturated_secondary,
+                persistent_brake_map_secondary=persistent_brake_map_secondary,
             )
 
         score_final = self._calculer_score_final(score_conformite, self.cfg.star_to_legacy_score)
@@ -993,6 +1031,8 @@ class HybrideEngine:
         forced_secondary: list[int] | None = None,
         exclusions: dict | None = None,
         decay_state: dict[int, int] | None = None,
+        persistent_brake_map: dict[int, float] | None = None,
+        persistent_brake_map_secondary: dict[int, float] | None = None,
         _get_connection=None,
     ) -> dict:
         if _get_connection is None:
@@ -1029,6 +1069,8 @@ class HybrideEngine:
                     decay_state_secondary=decay_state_secondary,
                     saturated_balls=_saturated_balls if _saturated_balls else None,
                     saturated_secondary=_saturated_secondary if _saturated_secondary else None,
+                    persistent_brake_map=persistent_brake_map,
+                    persistent_brake_map_secondary=persistent_brake_map_secondary,
                 )
                 grilles.append(grille)
                 # Accumulate for next grid in batch
@@ -1084,6 +1126,14 @@ class HybrideEngine:
                     'rate_secondary': self.cfg.decay_rate_secondary,
                     'acceleration': self.cfg.decay_acceleration,
                     'floor': self.cfg.decay_floor,
+                },
+                'persistent_brake': {
+                    'enabled': self.cfg.saturation_persistent_enabled,
+                    'active_balls': bool(persistent_brake_map),
+                    'active_secondary': bool(persistent_brake_map_secondary),
+                    't1_multiplier': self.cfg.saturation_brake_persistent_t1,
+                    't2_multiplier': self.cfg.saturation_brake_persistent_t2,
+                    'window': self.cfg.saturation_persistent_window,
                 },
                 'degraded_windows': await self._check_degraded_windows(
                     conn, nb_tirages, date_min, date_max,

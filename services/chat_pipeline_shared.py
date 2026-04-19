@@ -692,11 +692,33 @@ async def _prepare_chat_context_base(
             else:
                 # Decay state: load before generation (best-effort)
                 _decay = None
+                _brake_balls = None
+                _brake_secondary = None
                 _game_name = "euromillions" if cfg.get("game") == "em" else "loto"
                 try:
                     import db_cloudsql as _db
                     async with _db.get_connection() as _dconn:
                         _decay = await get_decay_state(_dconn, _game_name, "ball")
+                        # V110: load persistent brake maps READ-ONLY (invariant V94 extended).
+                        # Chatbot NEVER writes to hybride_selection_history.
+                        try:
+                            _gen_mod_for_cfg = importlib.import_module(cfg["gen_engine_module"])
+                            _engine_cfg = _gen_mod_for_cfg._engine.cfg
+                            if getattr(_engine_cfg, "saturation_persistent_enabled", False):
+                                from services.selection_history import get_persistent_brake_map
+                                from config.games import get_next_draw_date, ValidGame
+                                _game_enum = (ValidGame.euromillions if _game_name == "euromillions"
+                                              else ValidGame.loto)
+                                _next_date = get_next_draw_date(_game_enum)
+                                _sec_type = "star" if _game_name == "euromillions" else "chance"
+                                _brake_balls = await get_persistent_brake_map(
+                                    _dconn, _game_name, _next_date, "ball", _engine_cfg,
+                                )
+                                _brake_secondary = await get_persistent_brake_map(
+                                    _dconn, _game_name, _next_date, _sec_type, _engine_cfg,
+                                )
+                        except Exception:
+                            logger.debug(f"{_lp} persistent brake load failed — generating without")
                 except Exception:
                     logger.warning(f"{_lp} Decay state load failed — generating without decay", exc_info=True)
 
@@ -710,6 +732,9 @@ async def _prepare_chat_context_base(
                     # Voir audit 360° Engine HYBRIDE F03 — 01/04/2026.
                     "anti_collision": True,
                     "decay_state": _decay,
+                    # V110: persistent brake (read-only, no write from chatbot)
+                    "persistent_brake_map": _brake_balls or None,
+                    "persistent_brake_map_secondary": _brake_secondary or None,
                 }
                 if any((_exclusions or {}).values()):
                     _gen_kwargs["exclusions"] = _exclusions

@@ -10,10 +10,14 @@ import logging
 
 import db_cloudsql
 from rate_limit import limiter
-from config.games import ValidGame, get_config, get_engine
+from config.games import ValidGame, get_config, get_engine, get_next_draw_date
 from config.i18n import _badges, _analysis_strings
 from services.penalization import compute_penalized_ranking
 from services.decay_state import get_decay_state, check_and_update_decay
+from services.selection_history import (
+    get_persistent_brake_map,
+    record_canonical_selection,
+)
 from config.engine import LOTO_ZONES, EM_ZONES
 
 logger = logging.getLogger(__name__)
@@ -52,6 +56,12 @@ async def unified_generate(
         # Decay state: auto-detect new draw + read state (V94 hotfix)
         decay = None
         game_name = "euromillions" if cfg.slug == "euromillions" else "loto"
+        secondary_type = "star" if game_name == "euromillions" else "chance"
+        # V110: compute target draw date ONCE for both read (brake map) and write (record canonical)
+        next_draw_date = get_next_draw_date(game)
+        brake_balls: dict = {}
+        brake_secondary: dict = {}
+
         try:
             async with db_cloudsql.get_connection() as dconn:
                 # Auto-update decay if a new real draw was imported (best-effort, once per draw)
@@ -61,13 +71,47 @@ async def unified_generate(
         try:
             async with db_cloudsql.get_connection() as dconn:
                 decay = await get_decay_state(dconn, game_name, "ball")
+                # V110: load persistent brake maps (best-effort, non-blocking).
+                # get_persistent_brake_map returns {} if engine.cfg.saturation_persistent_enabled=False.
+                brake_balls = await get_persistent_brake_map(
+                    dconn, game_name, next_draw_date, "ball", engine.cfg,
+                )
+                brake_secondary = await get_persistent_brake_map(
+                    dconn, game_name, next_draw_date, secondary_type, engine.cfg,
+                )
         except Exception:
-            logger.debug("decay_state unavailable — generating without decay")
+            logger.debug("decay_state/brake load failed — generating without")
 
         result = await engine.generate_grids(
             n=n, mode=mode, lang=lang, anti_collision=anti_collision,
             decay_state=decay,
+            persistent_brake_map=brake_balls or None,
+            persistent_brake_map_secondary=brake_secondary or None,
         )
+
+        # V110: record the canonical grid (best score after batch sort = grids[0])
+        # for the target draw date. Idempotent via UNIQUE KEY — first /generate
+        # call of the day wins. Chatbot NEVER calls this (V94 invariant extended).
+        if engine.cfg.saturation_persistent_enabled and result.get('grids'):
+            try:
+                canonical = result['grids'][0]
+                sec_val = canonical.get(engine.cfg.secondary_name)
+                if isinstance(sec_val, list):
+                    sec_list = sec_val
+                elif sec_val is not None:
+                    sec_list = [sec_val]
+                else:
+                    sec_list = []
+                selected = {
+                    "ball": canonical.get("nums", []),
+                    secondary_type: sec_list,
+                }
+                async with db_cloudsql.get_connection() as dconn:
+                    await record_canonical_selection(
+                        dconn, game_name, next_draw_date, selected,
+                    )
+            except Exception:
+                logger.debug("record_canonical_selection failed — non-blocking")
 
         return {
             "success": True,

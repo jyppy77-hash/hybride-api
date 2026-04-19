@@ -31,12 +31,18 @@ async def generate_grids(
     n=5, mode="balanced", lang="fr",
     forced_nums=None, forced_chance=None, exclusions=None,
     anti_collision=False, decay_state=None,
+    persistent_brake_map=None, persistent_brake_map_secondary=None,
 ):
-    """Generate N Loto grids. Used by: services/chat_pipeline.py, tests."""
+    """Generate N Loto grids. Used by: services/chat_pipeline.py, tests.
+
+    V110: persistent_brake_map / _secondary — inter-draw rotation. See audit 01.1 rev.2.
+    """
     forced_secondary = [forced_chance] if forced_chance is not None else None
     return await _engine.generate_grids(
         n=n, mode=mode, lang=lang, anti_collision=anti_collision,
         forced_nums=forced_nums, forced_secondary=forced_secondary,
         exclusions=exclusions, decay_state=decay_state,
+        persistent_brake_map=persistent_brake_map,
+        persistent_brake_map_secondary=persistent_brake_map_secondary,
         _get_connection=get_connection,
     )

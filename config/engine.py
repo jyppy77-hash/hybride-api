@@ -104,6 +104,15 @@ class EngineConfig:
     saturation_brake: float = 0.20        # ×0.20 for balls (80% reduction)
     saturation_brake_secondary: float = 0.30  # ×0.30 for stars/chance (70% reduction, smaller universe)
 
+    # V110: Persistent Saturation Brake — inter-draw rotation (audit 01.1 rev.2 — F01.1-01)
+    # Numbers from the canonical grid of draw T-1 get score × t1_multiplier on draw T.
+    # Addresses the mathematical uniformity of decay documented in audit (intra-zone lock).
+    # Shadow rollout: enabled=False by default → activation via env var after 48h pre-fill.
+    saturation_brake_persistent_t1: float = 0.20      # multiplier for T-1 canonical selections
+    saturation_brake_persistent_t2: float = 0.50      # multiplier for T-2 canonical selections
+    saturation_persistent_enabled: bool = False       # master flag (read+write). ENV override: CONFIG_SATURATION_PERSISTENT_ENABLED
+    saturation_persistent_window: int = 2             # 1 = T-1 only, 2 = T-1 + T-2
+
     # V106: Unpopularity scoring — penalize over-played numbers (Gemini Deep Research R3)
     # Applied to balls only (not stars/chance — universe too small).
     unpopularity_enabled: bool = True

@@ -1673,3 +1673,106 @@ class TestSaturationBrake:
         )
         assert len(result["grids"]) == 1
         assert len(result["grids"][0]["nums"]) == 5
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V110 — Persistent Saturation Brake (inter-draw rotation)
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestPersistentBrake:
+    """V110: Persistent brake applies to numbers from canonical grid T-1 / T-2."""
+
+    def test_apply_persistent_brake_multiplies_correctly(self):
+        """Scores targeted by brake_map get multiplied; others unchanged."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        scores = {1: 22.0, 2: 20.0, 3: 18.0}
+        brake_map = {1: 0.20, 2: 0.50}
+        result = engine.apply_persistent_brake(scores, brake_map)
+        assert result[1] == pytest.approx(22.0 * 0.20)  # 4.40
+        assert result[2] == pytest.approx(20.0 * 0.50)  # 10.00
+        assert result[3] == pytest.approx(18.0)  # unchanged
+
+    def test_apply_persistent_brake_leaves_non_listed_untouched(self):
+        """Number not in brake_map → implicit multiplier 1.0 (no change)."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        scores = {5: 100.0, 10: 80.0, 15: 60.0}
+        brake_map = {5: 0.20}
+        result = engine.apply_persistent_brake(scores, brake_map)
+        assert result[5] == pytest.approx(20.0)
+        assert result[10] == pytest.approx(80.0)
+        assert result[15] == pytest.approx(60.0)
+
+    def test_apply_persistent_brake_with_none_returns_scores(self):
+        """brake_map=None → scores returned as-is (identity)."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        scores = {1: 100.0, 2: 80.0}
+        result = engine.apply_persistent_brake(scores, None)
+        assert result == scores
+
+    def test_apply_persistent_brake_with_empty_dict_returns_scores(self):
+        """brake_map={} → scores returned as-is (identity — empty dict is falsy)."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        scores = {1: 100.0, 2: 80.0}
+        result = engine.apply_persistent_brake(scores, {})
+        assert result == scores
+
+    def test_persistent_brake_composes_with_decay(self):
+        """decay (×0.897) × persistent brake (×0.20) = compound reduction."""
+        from services.decay_state import calculate_decay_multiplier
+        engine = HybrideEngine(LOTO_CONFIG)
+        scores = {36: 22.0}
+        decayed = engine.apply_decay(scores, {36: 1})  # 1 miss
+        # decay: 22 × 0.897 = 19.734
+        assert decayed[36] == pytest.approx(22.0 * calculate_decay_multiplier(1))
+        # persistent brake: 19.734 × 0.20 = 3.9468
+        braked = engine.apply_persistent_brake(decayed, {36: 0.20})
+        assert braked[36] == pytest.approx(22.0 * calculate_decay_multiplier(1) * 0.20)
+
+    def test_persistent_brake_preserves_zero_scores(self):
+        """Hard-excluded numbers (T-1 with score 0) stay at 0 after brake."""
+        engine = HybrideEngine(LOTO_CONFIG)
+        scores = {1: 0.0, 2: 100.0}
+        brake_map = {1: 0.20, 2: 0.50}
+        result = engine.apply_persistent_brake(scores, brake_map)
+        assert result[1] == 0.0  # 0 × anything = 0
+        assert result[2] == pytest.approx(50.0)
+
+    def test_config_persistent_brake_values(self):
+        """Config defaults match V110 spec (0.20/0.50/window=2/enabled=False)."""
+        assert LOTO_CONFIG.saturation_brake_persistent_t1 == 0.20
+        assert LOTO_CONFIG.saturation_brake_persistent_t2 == 0.50
+        assert LOTO_CONFIG.saturation_persistent_enabled is False
+        assert LOTO_CONFIG.saturation_persistent_window == 2
+        assert EM_CONFIG.saturation_brake_persistent_t1 == 0.20
+        assert EM_CONFIG.saturation_brake_persistent_t2 == 0.50
+
+    @pytest.mark.asyncio
+    async def test_generate_grids_accepts_persistent_brake_map(self):
+        """generate_grids signature accepts persistent_brake_map kwargs."""
+        cursor = AsyncSmartMockCursor()
+        random.seed(42)
+        engine = HybrideEngine(LOTO_CONFIG)
+        result = await engine.generate_grids(
+            n=1, mode="balanced",
+            persistent_brake_map={36: 0.20, 42: 0.50},
+            persistent_brake_map_secondary={2: 0.20},
+            _get_connection=lambda: make_async_conn(cursor),
+        )
+        assert len(result["grids"]) == 1
+        # Metadata should include persistent_brake block
+        assert "persistent_brake" in result["metadata"]
+        assert result["metadata"]["persistent_brake"]["active_balls"] is True
+        assert result["metadata"]["persistent_brake"]["active_secondary"] is True
+
+    @pytest.mark.asyncio
+    async def test_generate_grids_persistent_brake_inactive_when_none(self):
+        """generate_grids with persistent_brake_map=None → metadata.active=False."""
+        cursor = AsyncSmartMockCursor()
+        random.seed(42)
+        engine = HybrideEngine(LOTO_CONFIG)
+        result = await engine.generate_grids(
+            n=1, mode="balanced",
+            _get_connection=lambda: make_async_conn(cursor),
+        )
+        assert result["metadata"]["persistent_brake"]["active_balls"] is False
+        assert result["metadata"]["persistent_brake"]["active_secondary"] is False
