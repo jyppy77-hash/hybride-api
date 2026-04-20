@@ -289,4 +289,5 @@ async def handle_pitch(grilles: list, http_client, lang: str = "fr") -> dict:
         context_coro=prepare_grilles_pitch_context(grilles_data),
         load_prompt_fn=load_prompt, prompt_name="PITCH_GRILLE",
         log_prefix="[PITCH]", breaker=gemini_breaker_pitch,
+        max_retries=2,  # V128: 3 total attempts (initial + 2 retries) on 429
     )

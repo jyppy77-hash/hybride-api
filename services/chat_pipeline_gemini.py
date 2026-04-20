@@ -872,7 +872,8 @@ async def handle_pitch_common(grilles_data, http_client, lang,
                               context_coro,
                               load_prompt_fn, prompt_name,
                               log_prefix, breaker=None,
-                              timeout_context=30, timeout_gemini=15):
+                              timeout_context=30, timeout_gemini=15,
+                              max_retries: int = 0):
     """
     Common pitch pipeline after validation.
     context_coro: awaitable that returns the stats context string.
@@ -930,6 +931,7 @@ async def handle_pitch_common(grilles_data, http_client, lang,
                 "generationConfig": {"temperature": 0.9, "maxOutputTokens": 600},
             },
             timeout=timeout_gemini,
+            max_retries=max_retries,  # V128: retry on 429 if caller opts in
         ),
         fallback_fn=_fallback,
         log_prefix=log_prefix,

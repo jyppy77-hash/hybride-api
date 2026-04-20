@@ -904,9 +904,9 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.012 (V128bis — 3-state monitoring + grace period + per-phase breakers exposure)."""
+        """APP_VERSION == 1.6.013 (V128 — retry exponential backoff Gemini 429 on pitch-grilles)."""
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.012"
+        assert APP_VERSION == "1.6.013"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

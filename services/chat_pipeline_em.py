@@ -286,4 +286,5 @@ async def handle_pitch_em(grilles: list, http_client, lang: str = "fr") -> dict:
         load_prompt_fn=lambda name: load_prompt_em(name, lang=lang),
         prompt_name="prompt_pitch_grille_em",
         log_prefix="[EM PITCH]", breaker=gemini_breaker_pitch,
+        max_retries=2,  # V128: 3 total attempts (initial + 2 retries) on 429
     )

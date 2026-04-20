@@ -7,6 +7,7 @@ Etats :
   HALF_OPEN → 1 requete test autorisee, si OK → CLOSED, sinon → OPEN
 """
 
+import asyncio
 import time
 import logging
 
@@ -48,25 +49,87 @@ class GeminiCircuitBreaker:
             self._state = new_state
 
     async def call(
-        self, client: httpx.AsyncClient, *args, **kwargs
+        self,
+        client: httpx.AsyncClient,
+        *args,
+        max_retries: int = 0,
+        **kwargs,
     ) -> httpx.Response:
-        """Wrap client.post() avec logique circuit breaker."""
-        current = self.state
-        if current == self.OPEN:
-            raise CircuitOpenError("Circuit ouvert — fallback immediat")
+        """Wrap client.post() with circuit breaker + optional V128 retry on 429.
 
-        try:
-            response = await client.post(*args, **kwargs)
-        except (httpx.TimeoutException, httpx.ConnectError, OSError):
+        max_retries=0 (default, V127 behavior): single attempt, failure recorded
+        on 429/5xx, success otherwise. Zero regression vs V127.
+
+        max_retries=N (V128, opt-in): retry exponential backoff on 429.
+          - Backoff = 200ms * 2**attempt (200, 400, 800ms...), honoring
+            Retry-After header when present (numeric seconds).
+          - Total wall time capped at 3s cumulative — abort if exhausted.
+          - CB state re-checked at each iteration (OPEN → abort immediately).
+          - Max 1 failure recorded per user request (not per attempt):
+            retries are silent, only the terminal response counts.
+          - Retry only on 429 (throttle). 5xx / network exceptions = 1 attempt.
+        """
+        start = time.monotonic()
+        last_response: httpx.Response | None = None
+
+        for attempt in range(max_retries + 1):
+            # CB state check — respect OPEN set by concurrent failures
+            if self.state == self.OPEN:
+                raise CircuitOpenError("Circuit ouvert — fallback immediat")
+
+            # Cap total wall time (only beyond attempt 0 — initial always allowed)
+            if attempt > 0 and time.monotonic() - start >= 3.0:
+                logger.info(
+                    "[V128_RETRY] cap total=3s exhausted before attempt=%d", attempt,
+                )
+                break
+
+            try:
+                response = await client.post(*args, **kwargs)
+            except (httpx.TimeoutException, httpx.ConnectError, OSError):
+                # Network exception = hard failure, no retry (different failure mode)
+                self._record_failure()
+                raise
+
+            last_response = response
+
+            # V128: retry on 429 if budget remaining
+            if response.status_code == 429 and attempt < max_retries:
+                retry_after_raw = response.headers.get("retry-after")
+                backoff = 0.2 * (2 ** attempt)  # default 200, 400, 800ms
+                if retry_after_raw:
+                    try:
+                        backoff = float(retry_after_raw)
+                    except (ValueError, TypeError):
+                        pass  # non-numeric (HTTP-date) → keep exponential default
+
+                remaining = 3.0 - (time.monotonic() - start)
+                if remaining <= 0:
+                    logger.info("[V128_RETRY] no budget left at attempt=%d", attempt)
+                    break
+                backoff = min(backoff, remaining)
+
+                logger.info(
+                    "[V128_RETRY] attempt=%d/%d 429, backoff=%dms (retry_after=%r)",
+                    attempt + 1, max_retries, int(backoff * 1000), retry_after_raw,
+                )
+                await asyncio.sleep(backoff)
+                continue  # next iteration
+
+            # Terminal response (not 429, OR 429 on last attempt)
+            if response.status_code >= 500 or response.status_code == 429:
+                self._record_failure()
+            else:
+                self._record_success()
+            return response
+
+        # Loop exhausted via cap — record 1 failure on last response (max 1/user)
+        if last_response is not None:
             self._record_failure()
-            raise
+            return last_response
 
-        if response.status_code >= 500 or response.status_code == 429:
-            self._record_failure()
-        else:
-            self._record_success()
-
-        return response
+        # Defensive — unreachable (except branch raises before reaching here)
+        raise CircuitOpenError("V128 retry exhausted without response")
 
     def _record_success(self) -> None:
         if self._state == self.HALF_OPEN:
