@@ -44,8 +44,10 @@ class TestIsSqlContinuation:
         assert _is_sql_continuation("Tu veux le détail de ce tirage ?", "fr") is True
 
     def test_fr_conversation_not_sql(self):
-        """Message assistant conversationnel sans keyword SQL → False."""
-        assert _is_sql_continuation("Tu veux creuser un autre sujet ?", "fr") is False
+        """Message assistant conversationnel sans keyword SQL → False.
+        V126 L13 : 'creuser' est désormais keyword → message changé pour
+        préserver l'esprit du test V125 (conversation pure sans keyword)."""
+        assert _is_sql_continuation("Tu veux parler d'autre chose ?", "fr") is False
 
     def test_en_history(self):
         assert _is_sql_continuation("Want to see the full history?", "en") is True
@@ -142,10 +144,12 @@ class TestSqlContinuationReroute:
         assert "30" in result
 
     def test_oui_after_conversation_no_reroute(self):
-        """Message assistant sans keyword SQL → None (comportement V124)."""
+        """Message assistant sans keyword SQL → None (comportement V124).
+        V126 L13 : wording changé de 'creuser un autre sujet' à 'parler d'autre
+        chose' car 'creuser' est désormais keyword SQL-évocateur."""
         history = [
             _msg("user", "salut"),
-            _msg("assistant", "Salut ! Tu veux creuser un autre sujet ?"),
+            _msg("assistant", "Salut ! Tu veux parler d'autre chose ?"),
         ]
         assert _sql_continuation_reroute(history, "fr") is None
 

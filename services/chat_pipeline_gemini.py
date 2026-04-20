@@ -14,6 +14,7 @@ import json
 import asyncio
 import logging
 import time
+from datetime import date
 
 import httpx
 
@@ -24,6 +25,7 @@ from services.chat_utils import (
     _clean_response, _strip_non_latin, _get_sponsor_if_due,
     _strip_sponsor_from_text, StreamBuffer,
 )
+from services.base_chat_utils import _format_last_draw_context
 from services.chat_logger import log_chat_exchange
 
 logger = logging.getLogger(__name__)
@@ -36,14 +38,53 @@ _MAX_HISTORY_MESSAGES = 20
 _FACTUAL_TAGS = ("[RÉSULTAT SQL", "[RÉSULTAT TIRAGE", "[DONNÉES TEMPS RÉEL")
 _TEMPERATURE_FACTUAL = 0.2
 _TEMPERATURE_CONVERSATIONAL = _GEMINI_CHAT_TEMPERATURE  # 0.6
+# V126 3/5 : température intermédiaire pour Phase 0 dont l'historique récent
+# contient un keyword SQL-évocateur (ex: "historique complet ?"). Réduit la
+# créativité hallucinante sur "oui" qui suit une proposition data-oriented.
+_TEMPERATURE_PHASE0_SQL_EVOCATIVE = 0.4
+
+
+def _history_has_sql_evocative_tail(history: list | None, lang: str) -> bool:
+    """V126 3/5 : dernier message assistant contient-il un keyword SQL-évocateur ?
+
+    Réutilise `_is_sql_continuation` V125 comme source unique de vérité.
+    Retourne False sur history vide / aucun assistant / keyword absent.
+    """
+    if not history:
+        return False
+    from services.base_chat_detect_intent import _is_sql_continuation
+    for msg in reversed(history):
+        role = getattr(msg, "role", None)
+        content = getattr(msg, "content", None)
+        if role is None and isinstance(msg, dict):
+            role = msg.get("role")
+            content = msg.get("content")
+        if role == "assistant" and content:
+            return _is_sql_continuation(content, lang)
+    return False
 
 
 def _get_temperature(ctx: dict) -> float:
-    """Adaptive temperature: low for factual data responses, normal otherwise."""
+    """Adaptive temperature.
+
+    - V99 F05 : T=0.2 si contexte factuel (tag [RÉSULTAT SQL/TIRAGE/DONNÉES]).
+    - V126 3/5 : T=0.4 si Phase 0 ET dernier assistant contient un keyword
+      SQL-évocateur (historique / détail / liste complète…). Évite la
+      génération créative d'un tirage inventé sur un "oui" enchaîné.
+    - Sinon : T=0.6 conversationnel.
+    """
     meta = ctx.get("_chat_meta") or {}
     enrichment = meta.get("enrichment_context", "")
     if any(tag in enrichment for tag in _FACTUAL_TAGS):
         return _TEMPERATURE_FACTUAL
+
+    # V126 3/5 : Phase 0 + historique SQL-évocateur → T=0.4
+    phase = meta.get("phase", "")
+    if phase == "0":
+        lang = meta.get("lang", "fr")
+        if _history_has_sql_evocative_tail(ctx.get("history"), lang):
+            return _TEMPERATURE_PHASE0_SQL_EVOCATIVE
+
     return _TEMPERATURE_CONVERSATIONAL
 
 # V96+V99: Anti-hallucination — extract numbers from context and verify Gemini response
@@ -163,6 +204,344 @@ def _check_sql_number_hallucination(
             return tpl.format(data=data_body.strip())
     return None
 # This module does NOT import from shared (avoids circular dependency).
+
+
+# ═══════════════════════════════════════════════════════
+# V126 4/5 — DB schema whitelist + hallucinated identifier guard (option 4-Y)
+# ═══════════════════════════════════════════════════════
+
+# A2 — Fallback cache statique (colonnes réelles lues dans code V124 +
+# migrations/add_indexes.sql + services/chat_sql.py + chat_sql_em.py).
+# Utilisé si `_build_schema_whitelist` ne peut pas DESCRIBE la DB au boot
+# (DB down, rolling upgrade…). Le service démarre quand même, logger.error
+# signale l'usage du fallback. Test CI `test_fallback_matches_current_schema`
+# compare cette liste à la vraie DB pour détecter un drift silencieux.
+_SCHEMA_WHITELIST_FALLBACK: frozenset[str] = frozenset({
+    # Loto `tirages`
+    "id", "date_de_tirage", "jour_de_tirage",
+    "boule_1", "boule_2", "boule_3", "boule_4", "boule_5",
+    "numero_chance",
+    "nombre_de_gagnant_au_rang1", "rapport_du_rang1",
+    "created_at",
+    # EM `tirages_euromillions`
+    "etoile_1", "etoile_2",
+})
+
+# Whitelist globale populée au boot via DESCRIBE. Vide jusqu'à _build_schema_whitelist.
+_SCHEMA_WHITELIST: set[str] = set()
+
+# A1 — Regex resserrée : UNIQUEMENT pattern `lettres_chiffres` pur d'ID SQL.
+# La variante `[a-z]+_[a-z]+` a été retirée car elle match du français naturel
+# avec underscore (ex: `base_de_donnees`). Le pattern conservé (`boule_N`,
+# `num_5`, etc.) est discriminant.
+_SUSPICIOUS_IDENT_RE = re.compile(r'\b[a-z]{3,}_\d{1,2}\b')
+
+# A1 — Liste noire explicite : hallucinations récurrentes NON-captées par la
+# regex (car pas de chiffre suffixé). CC Max peut l'étendre selon patterns réels.
+_KNOWN_HALLUCINATED_IDENTIFIERS: frozenset[str] = frozenset({
+    "num_chance",       # vrai : numero_chance
+    "date_tirage",      # vrai : date_de_tirage
+    "draw_date",        # EN inventé
+    "lucky_num",        # invention pure
+    "ball_id",          # invention pure
+    "star_id",          # EN inventé (vrai : etoile_1, etoile_2)
+    "draw_id",          # EN inventé
+    "number_chance",    # pseudo-anglais
+    "chance_number",    # pseudo-anglais
+})
+
+
+async def _build_schema_whitelist() -> set[str]:
+    """V126 4/5 (option Y) : construit la whitelist schéma DB au boot.
+
+    DESCRIBE `tirages` + `tirages_euromillions` → populate `_SCHEMA_WHITELIST`.
+    Fallback sur `_SCHEMA_WHITELIST_FALLBACK` si DB down (logger.error).
+
+    Appelée depuis `main.py::lifespan` après init_pool_readonly.
+    """
+    global _SCHEMA_WHITELIST
+    columns: set[str] = set()
+    try:
+        import db_cloudsql
+        async with db_cloudsql.get_connection_readonly() as conn:
+            cursor = await conn.cursor()
+            for table in ("tirages", "tirages_euromillions"):
+                try:
+                    await cursor.execute(f"DESCRIBE {table}")
+                    rows = await cursor.fetchall()
+                    for r in rows:
+                        col = r.get("Field") if isinstance(r, dict) else (r[0] if r else None)
+                        if col:
+                            columns.add(col.lower())
+                except Exception as _e:
+                    logger.warning(
+                        "V126 4/5 DESCRIBE %s failed: %s — continuing",
+                        table, _e,
+                    )
+        if columns:
+            _SCHEMA_WHITELIST = columns
+            logger.info(
+                "V126 4/5 schema whitelist built from DB: %d columns (%s)",
+                len(columns), sorted(columns)[:10],
+            )
+            return columns
+    except Exception as e:
+        logger.error(
+            "V126 4/5 DESCRIBE failed entirely, falling back to static list: %s",
+            e,
+        )
+    _SCHEMA_WHITELIST = set(_SCHEMA_WHITELIST_FALLBACK)
+    logger.info(
+        "V126 4/5 schema whitelist using STATIC FALLBACK: %d columns",
+        len(_SCHEMA_WHITELIST),
+    )
+    return _SCHEMA_WHITELIST
+
+
+def _check_sql_schema_hallucination(
+    response: str, log_prefix: str, lang: str = "fr",
+) -> str | None:
+    """V126 4/5 : détecte des identifiants DB-like hallucinés dans la réponse.
+
+    Deux couches combinées :
+      - regex `_SUSPICIOUS_IDENT_RE` (lettres_chiffres) → ex `num_1`, `ball_5`
+      - liste noire `_KNOWN_HALLUCINATED_IDENTIFIERS` pour patterns sans chiffre
+
+    Tokens flagged = suspects non présents dans `_SCHEMA_WHITELIST`.
+    Retourne un message safe si ≥ 1 suspect, None sinon.
+
+    Garde-fou : si `_SCHEMA_WHITELIST` vide (boot DESCRIBE pas encore exécuté,
+    ex. en tests sans startup), retourne None — évite FP sur init incomplète.
+    """
+    if not response or not _SCHEMA_WHITELIST:
+        return None
+    response_lower = response.lower()
+    suspects: list[str] = []
+    # Regex scan
+    for match in _SUSPICIOUS_IDENT_RE.finditer(response_lower):
+        tok = match.group(0)
+        if tok not in _SCHEMA_WHITELIST:
+            suspects.append(tok)
+    # Liste noire
+    for known in _KNOWN_HALLUCINATED_IDENTIFIERS:
+        if known not in _SCHEMA_WHITELIST and re.search(
+            r'\b' + re.escape(known) + r'\b', response_lower,
+        ):
+            if known not in suspects:
+                suspects.append(known)
+    if not suspects:
+        return None
+    logger.warning(
+        "%s V126 4/5 SCHEMA_HALLUCINATION_DETECTED: %s | excerpt=%.200s",
+        log_prefix, suspects[:5], response[:200],
+    )
+    return _STRICT_HALLUCINATION_MESSAGES.get(
+        lang, _STRICT_HALLUCINATION_MESSAGES["fr"],
+    ).format(data="(détails techniques retirés — reformule ta question sans jargon SQL)")
+
+
+# ═══════════════════════════════════════════════════════
+# V126 3.5-A — Phase 0 draw-date post-hoc verification (option A stricte)
+# ═══════════════════════════════════════════════════════
+
+# Multi-lang month names → number map. Couvre FR/EN/ES/PT/DE/NL + abrévs EN.
+# Construit via boucle pour lisibilité — résultat : dict statique.
+_MONTH_NAME_TO_NUM: dict[str, int] = {}
+for _names, _n in (
+    # FR
+    (("janvier",), 1), (("février", "fevrier"), 2), (("mars",), 3),
+    (("avril",), 4), (("mai",), 5), (("juin",), 6), (("juillet",), 7),
+    (("août", "aout"), 8), (("septembre",), 9), (("octobre",), 10),
+    (("novembre",), 11), (("décembre", "decembre"), 12),
+    # EN (short forms included for "Jan 28, 2026" style)
+    (("january", "jan"), 1), (("february", "feb"), 2), (("march", "mar"), 3),
+    (("april", "apr"), 4), (("june", "jun"), 6), (("july", "jul"), 7),
+    (("august", "aug"), 8), (("september", "sep", "sept"), 9),
+    (("october", "oct"), 10), (("november", "nov"), 11),
+    (("december", "dec"), 12),
+    # ES (duplicates with FR/EN ignored by dict update)
+    (("enero",), 1), (("febrero",), 2), (("marzo",), 3),
+    (("mayo",), 5), (("agosto",), 8), (("septiembre", "setiembre"), 9),
+    (("octubre",), 10), (("noviembre",), 11), (("diciembre",), 12),
+    # PT
+    (("janeiro",), 1), (("fevereiro",), 2), (("março", "marco"), 3),
+    (("maio",), 5), (("junho",), 6), (("julho",), 7),
+    (("setembro",), 9), (("outubro",), 10), (("dezembro",), 12),
+    # DE
+    (("januar",), 1), (("februar",), 2), (("märz", "maerz"), 3),
+    (("oktober",), 10), (("dezember",), 12),
+    # NL
+    (("januari",), 1), (("februari",), 2), (("maart",), 3),
+    (("mei",), 5), (("augustus",), 8),
+):
+    for _name in _names:
+        _MONTH_NAME_TO_NUM.setdefault(_name, _n)
+
+# Pattern union sorted longest-first to avoid partial matches (ex: "jan" before "january")
+_MONTH_RE = "(?:" + "|".join(
+    sorted(set(_MONTH_NAME_TO_NUM), key=len, reverse=True)
+) + ")"
+
+# Pattern D Month YYYY (FR/EN/DE/NL/PT/ES with optional "de") — the common form.
+# V126.1 F1-bis : `\.?` ajouté après le jour pour accepter le format allemand
+# `12. Dezember 2025` (point ordinal). Rétrocompat V126 `12 Dezember 2025` OK.
+_DATE_RE_DMY = re.compile(
+    rf"\b(\d{{1,2}})\.?\s*(?:de\s+)?({_MONTH_RE})\s+(?:de\s+)?(\d{{4}})\b",
+    re.IGNORECASE,
+)
+# Pattern Month D, YYYY (EN US style)
+_DATE_RE_MDY = re.compile(
+    rf"\b({_MONTH_RE})\s+(\d{{1,2}}),?\s+(\d{{4}})\b",
+    re.IGNORECASE,
+)
+# Pattern ISO YYYY-MM-DD — universal, tried first
+_DATE_RE_ISO = re.compile(r"\b(\d{4})-(\d{1,2})-(\d{1,2})\b")
+
+# V126.1 F3 — Extraction des 2 étoiles EM (6 langs + Unicode ★/☆/⭐).
+# Formats observés prod / prompts Gemini :
+#   FR : "étoiles 3 et 8", "étoile 3, étoile 8", "3 et 8 étoiles"
+#   EN : "stars: 3 - 8", "stars 3 and 8", "star 3, star 8"
+#   ES : "estrellas 3 y 8"     PT : "estrelas 3 e 8"
+#   DE : "Sterne 3 und 8"      NL : "sterren 3 en 8"
+# Le mot-clé étoile peut être répété entre les 2 chiffres ("star 3, star 8").
+_STAR_WORDS = r'(?:[ée]toiles?|stars?|estrellas?|estrelas?|sterne?n?|sterren|[★☆⭐])'
+_EM_STARS_RE = re.compile(
+    _STAR_WORDS + r'\s*[:\-]?\s*(\d{1,2})\s*[-–—,]?\s*'
+    r'(?:(?:et|and|y|e|und|en)\s+)?'
+    + _STAR_WORDS + r'?\s*(\d{1,2})',
+    re.IGNORECASE,
+)
+
+
+def _parse_draw_date_multilang(text: str) -> date | None:
+    """V126 3.5-A : parse une date dans la réponse (6 langues + ISO).
+    Retourne un objet `date` ou None si aucun pattern ne match.
+
+    Ordre de tentative : ISO > D Month YYYY > Month D, YYYY.
+    Les erreurs ValueError (jour invalide) sont silencieuses → None.
+    """
+    m = _DATE_RE_ISO.search(text)
+    if m:
+        try:
+            return date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+        except ValueError:
+            pass
+    m = _DATE_RE_DMY.search(text)
+    if m:
+        try:
+            day = int(m.group(1))
+            month = _MONTH_NAME_TO_NUM[m.group(2).lower()]
+            year = int(m.group(3))
+            return date(year, month, day)
+        except (ValueError, KeyError):
+            pass
+    m = _DATE_RE_MDY.search(text)
+    if m:
+        try:
+            month = _MONTH_NAME_TO_NUM[m.group(1).lower()]
+            day = int(m.group(2))
+            year = int(m.group(3))
+            return date(year, month, day)
+        except (ValueError, KeyError):
+            pass
+    return None
+
+
+async def _recheck_phase0_draw_accuracy(
+    response: str, phase: str, lang: str, log_prefix: str,
+    get_tirage_fn,
+    game: str = "loto",
+) -> str | None:
+    """V126 3.5-A + V126.1 F3 : Phase 0 post-hoc — si la réponse Gemini cite
+    un tirage (date + séquence 5-numéros), vérifier que les numéros
+    correspondent au vrai tirage en base.
+
+    V126.1 F3 : si `game == "em"` et le tirage a des étoiles, extraire aussi
+    les 2 étoiles citées dans la réponse via `_EM_STARS_RE` et les comparer
+    au vrai tirage. Mismatch sur boules OU étoiles → replacement.
+
+    Args:
+        response: texte Gemini post-clean
+        phase: phase détectée ("0" requis sinon early return)
+        lang: code langue 6 langs (fr/en/es/pt/de/nl)
+        log_prefix: préfixe pour warnings
+        get_tirage_fn: async (date) -> dict|None game-specific
+        game: "loto" (défaut rétrocompat V126) ou "em"
+
+    Returns :
+      - message safe (str) si mismatch détecté → utiliser côté non-stream
+        pour remplacer la réponse. Sur stream : log-only (stream déjà émis).
+      - None si phase != "0", pas de séquence, pas de date, ou numéros OK.
+
+    Budget DB : 1 appel `get_tirage_fn(date)` avec timeout 3s. Échec DB
+    (timeout/erreur) → warning + return None, ne bloque jamais.
+    """
+    if phase != "0" or not response:
+        return None
+    if not get_tirage_fn:
+        return None
+    seq_match = _DRAW_SEQUENCE_RE.search(response)
+    if not seq_match:
+        return None
+    parsed_date = _parse_draw_date_multilang(response)
+    if not parsed_date:
+        return None
+    try:
+        tirage = await asyncio.wait_for(get_tirage_fn(parsed_date), timeout=3)
+    except asyncio.TimeoutError:
+        logger.warning(
+            "%s V126 3.5-A reapply TIMEOUT on DB lookup for %s",
+            log_prefix, parsed_date,
+        )
+        return None
+    except Exception as e:
+        logger.warning(
+            "%s V126 3.5-A reapply DB lookup error for %s: %s",
+            log_prefix, parsed_date, e,
+        )
+        return None
+    if not tirage:
+        logger.warning(
+            "%s V126 3.5-A PHASE0_DATE_NOT_IN_DB: date=%s cited but absent | "
+            "cited_seq=%s",
+            log_prefix, parsed_date, seq_match.group(0),
+        )
+        return _STRICT_HALLUCINATION_MESSAGES.get(
+            lang, _STRICT_HALLUCINATION_MESSAGES["fr"],
+        ).format(data=f"(aucune donnée disponible pour le {parsed_date})")
+    real_nums = set(str(n) for n in tirage["boules"])
+    cited_nums = set(seq_match.groups())
+    boules_mismatch = cited_nums != real_nums
+
+    # V126.1 F3 : check étoiles EM (5 boules correctes mais étoiles fausses
+    # possible → défense-en-profondeur).
+    stars_mismatch = False
+    cited_stars: set[str] = set()
+    real_stars: set[str] = set()
+    if game == "em" and tirage.get("etoiles"):
+        stars_match = _EM_STARS_RE.search(response)
+        if stars_match:
+            cited_stars = {stars_match.group(1), stars_match.group(2)}
+            real_stars = {str(s) for s in tirage["etoiles"]}
+            if cited_stars != real_stars:
+                stars_mismatch = True
+
+    if boules_mismatch or stars_mismatch:
+        logger.warning(
+            "%s V126.1 PHASE0_DRAW_MISMATCH: date=%s boules_real=%s boules_cited=%s "
+            "stars_mismatch=%s stars_real=%s stars_cited=%s",
+            log_prefix, parsed_date,
+            sorted(real_nums, key=int),
+            sorted(cited_nums, key=int),
+            stars_mismatch,
+            sorted(real_stars, key=int) if real_stars else [],
+            sorted(cited_stars, key=int) if cited_stars else [],
+        )
+        safe_data = _format_last_draw_context(tirage)
+        return _STRICT_HALLUCINATION_MESSAGES.get(
+            lang, _STRICT_HALLUCINATION_MESSAGES["fr"],
+        ).format(data=safe_data)
+    return None
 
 
 # ═══════════════════════════════════════════════════════
@@ -309,6 +688,22 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
                     )
                     if _safe_replacement:
                         text = _safe_replacement
+                    # V126 3.5-A + V126.1 F3: Phase 0 post-hoc draw-date verification
+                    # (remplacement effectif sur path non-streaming, étoiles EM si game=em)
+                    _phase0_replace = await _recheck_phase0_draw_accuracy(
+                        text, _meta.get("phase", ""),
+                        _meta.get("lang", lang), log_prefix,
+                        get_tirage_fn=ctx.get("_get_tirage_fn"),
+                        game=ctx.get("_game", "loto"),
+                    )
+                    if _phase0_replace:
+                        text = _phase0_replace
+                    # V126 4/5: Schema hallucination check — remplacement non-stream
+                    _schema_replace = _check_sql_schema_hallucination(
+                        text, log_prefix, lang=_meta.get("lang", lang),
+                    )
+                    if _schema_replace:
+                        text = _schema_replace
                     return {"response": text, "source": "gemini", "mode": mode}
 
     logger.warning(f"{log_prefix} Reponse Gemini invalide: {response.status_code}")
@@ -393,6 +788,21 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
             _meta.get("phase", ""), log_prefix,
             lang=_meta.get("lang", lang),
             history=ctx.get("history"),
+        )
+        # V126 3.5-A + V126.1 F3: Phase 0 post-hoc draw-date verification —
+        # LOG-ONLY on stream (stream déjà émis, cannot replace).
+        try:
+            await _recheck_phase0_draw_accuracy(
+                _full_response, _meta.get("phase", ""),
+                _meta.get("lang", lang), log_prefix,
+                get_tirage_fn=ctx.get("_get_tirage_fn"),
+                game=ctx.get("_game", "loto"),
+            )
+        except Exception as _e:
+            logger.warning("%s V126 3.5-A stream recheck failed: %s", log_prefix, _e)
+        # V126 4/5: Schema hallucination check — LOG-ONLY sur stream (déjà émis)
+        _check_sql_schema_hallucination(
+            _full_response, log_prefix, lang=_meta.get("lang", lang),
         )
         logger.info(f"{log_prefix} Stream OK (page={page}, mode={mode})")
 

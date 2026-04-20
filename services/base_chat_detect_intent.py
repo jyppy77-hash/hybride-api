@@ -515,34 +515,98 @@ def _detect_grid_evaluation(message: str, game: str = "loto") -> dict | None:
 # Mots-clés évocateurs SQL par langue — détecte les propositions modèle qui
 # suggèrent une action de consultation data (historique, liste complète, etc.).
 # Normalisation côté appelant : last_assistant_msg.lower() puis `in`.
+# V126 L13 : extension ~9 keywords par langue (creuser, explorer, analyse
+# complète, voir plus…). Cible : messages user directs du type "je veux
+# creuser l'historique" qui n'étaient pas couverts en V125 (Volet B ne
+# regardait que le dernier msg assistant).
 _SQL_EVOCATIVE_KEYWORDS: dict[str, tuple[str, ...]] = {
     "fr": (
         "historique", "stats complètes", "statistiques complètes",
         "détail", "détails", "liste complète", "liste des tirages",
         "tirages où", "fréquence complète", "répartition complète",
+        # V126 L13
+        "creuser", "explorer", "analyse complète", "liste",
+        "voir plus", "d'autres infos", "autres infos", "plus d'infos",
+        "approfondir",
+        # V126.1 F2 — formulations Gemini observées sur cas terrain
+        "en savoir plus", "ce tirage", "ce dernier tirage",
+        "cette combinaison", "cette combi", "ces numéros",
+        "analyser cette", "analyser ce", "regarder ce", "regarder cette",
     ),
     "en": (
         "history", "full stats", "full statistics", "detail", "details",
         "complete list", "list of draws", "draws where", "full frequency",
         "full breakdown",
+        # V126 L13
+        "dig deeper", "explore", "full analysis", "list", "see more",
+        "more info", "more information", "deeper", "drill down",
+        # V126.1 F2 — cas terrain log 2118 EM EN (20/04/2026)
+        "know more", "that draw", "this draw", "that combo", "this combo",
+        "those numbers", "these numbers", "analyse this", "analyze this",
+        "look at this", "look at that", "want to know",
     ),
     "es": (
         "historial", "estadísticas completas", "detalle", "detalles",
         "lista completa", "sorteos donde", "frecuencia completa",
+        # V126 L13
+        "profundizar", "explorar", "análisis completo", "lista",
+        "más información", "más info", "ver más", "ahondar",
+        # V126.1 F2
+        "saber más", "ese sorteo", "este sorteo", "esa combinación",
+        "esta combinación", "esos números", "estos números",
+        "analizar este", "analizar esto",
     ),
     "pt": (
         "histórico", "estatísticas completas", "detalhe", "detalhes",
         "lista completa", "sorteios onde", "frequência completa",
+        # V126 L13
+        "aprofundar", "explorar", "análise completa", "lista",
+        "mais informações", "mais info", "ver mais",
+        # V126.1 F2
+        "saber mais", "esse sorteio", "este sorteio", "essa combinação",
+        "esta combinação", "esses números", "estes números",
+        "analisar este", "analisar isto",
     ),
     "de": (
         "verlauf", "vollständige statistiken", "detail", "einzelheiten",
         "vollständige liste", "ziehungen wo", "vollständige häufigkeit",
+        # V126 L13
+        "vertiefen", "erkunden", "vollständige analyse", "liste",
+        "weitere infos", "mehr infos", "mehr sehen",
+        # V126.1 F2 (accusatif + datif)
+        "mehr wissen", "diese ziehung", "dieser ziehung", "diese kombination",
+        "dieser kombination", "diese zahlen", "analysieren",
     ),
     "nl": (
         "geschiedenis", "volledige statistieken", "detail", "details",
         "volledige lijst", "trekkingen waar", "volledige frequentie",
+        # V126 L13
+        "uitdiepen", "verkennen", "volledige analyse", "lijst",
+        "meer info", "meer informatie", "meer zien", "doorgraven",
+        # V126.1 F2
+        "meer weten", "die trekking", "deze trekking", "die combinatie",
+        "deze combinatie", "die nummers", "deze nummers", "analyseren",
     ),
 }
+
+# V126 L13 : USER-direct detection. Complémentaire à _is_sql_continuation
+# (V125, basé sur dernier assistant). Ici on scanne le message USER courant :
+# si SQL-keyword présent et message assez long (≥ 3 chars), on force Phase SQL
+# via un flag dédié dans le pipeline (Volet B' aux côtés de Volet B).
+def _is_user_sql_request(message: str, lang: str = "fr") -> bool:
+    """V126 L13 : message USER direct (pas post-affirmation) contient-il
+    un keyword SQL-évocateur ? Déclenche Phase SQL via Volet B'.
+
+    Retourne False sur message court (< 3 chars après strip) ou vide.
+    """
+    if not message:
+        return False
+    stripped = message.strip()
+    if len(stripped) < 3:
+        return False
+    text = stripped.lower()
+    keywords = _SQL_EVOCATIVE_KEYWORDS.get(lang, _SQL_EVOCATIVE_KEYWORDS["fr"])
+    return any(kw in text for kw in keywords)
 
 # Reformulations envoyées au pipeline après re-routage. Contiennent le mot-clé
 # "historique"/"history"/... qui sera ingéré par Gemini SQL generator pour

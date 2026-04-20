@@ -30,6 +30,7 @@ from services.chat_detectors import (
     _detect_grid_evaluation,  # V70
     _is_refusal, _get_refusal_response,  # V98c
     _sql_continuation_reroute,  # V125 Sous-phase 2 Volet B
+    _is_user_sql_request,  # V126 L13 Volet B'
 )
 from services.chat_sql import (
     _get_prochain_tirage, _get_tirage_data, _generate_sql, _validate_sql,
@@ -133,6 +134,7 @@ def _build_loto_config():
         "is_refusal": _is_refusal,  # V98c
         "get_refusal_response": _get_refusal_response,  # V98c
         "sql_continuation_reroute": _sql_continuation_reroute,  # V125 Sous-phase 2 Volet B
+        "is_user_sql_request": _is_user_sql_request,  # V126 L13 Volet B'
         "detect_game_keyword_alone": _detect_game_keyword_alone,
         "detect_salutation": _detect_salutation,
         "get_salutation_response": _get_salutation_response,

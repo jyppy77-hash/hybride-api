@@ -815,6 +815,19 @@ async def _prepare_chat_context_base(
                     f"{_lp} Reponse courte detectee: \"{message}\" → enrichissement contextuel"
                 )
 
+    # V126 L13 Volet B' : USER direct avec SQL-keyword (pas une affirmation courte).
+    # Déclenche force_sql sans réécrire le message (la présence du keyword
+    # dans le texte original suffit à Gemini SQL generator + has_data_signal).
+    # Complémentaire au Volet B V125 (qui exige affirmation post-proposition).
+    if not _sql_reroute_applied and not _continuation_mode:
+        _user_sql_fn = cfg.get("is_user_sql_request")
+        if _user_sql_fn and _user_sql_fn(message, lang):
+            _sql_reroute_applied = True
+            logger.info(
+                f"{_lp} V126 L13 USER-direct SQL reroute: "
+                f"\"{message[:60]}\" (lang={lang})"
+            )
+
     # ── Phase REFUS : refus simple → court-circuit Python (V98c) ──
     # Conditions : (1) pas déjà en continuation, (2) refus simple, (3) historique ≥ 2
     if not _continuation_mode and cfg["is_refusal"](message) and len(history) >= 2:
@@ -1189,6 +1202,10 @@ async def _prepare_chat_context_base(
         "history": history,
         "lang": lang,
         "fallback": _fallback,
+        # V126 3.5-A: game-specific tirage lookup for Phase 0 post-hoc check
+        "_get_tirage_fn": cfg["get_tirage_data"],
+        # V126.1 F3: game identifier for EM stars check in _recheck_phase0_draw_accuracy
+        "_game": cfg.get("game", "loto"),
         "_chat_meta": {
             "phase": _phase, "t0": _t0, "lang": lang,
             "sql_query": _sql_query, "sql_status": _sql_status,

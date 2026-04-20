@@ -57,6 +57,8 @@ from services.base_chat_detectors import (  # noqa: F401
     # V125 — SQL continuation re-routing (Sous-phase 2 Volet B)
     _SQL_EVOCATIVE_KEYWORDS, _SQL_REROUTE_TEMPLATES, _SQL_REROUTE_FALLBACK,
     _NUM_EXTRACT_RE, _is_sql_continuation, _sql_continuation_reroute,
+    # V126 — L13 Volet B' : détection USER direct avec SQL-keyword
+    _is_user_sql_request,
 )
 
 
@@ -456,6 +458,18 @@ _ARGENT_PHRASES_FR = _ARGENT_PHRASES["fr"]
 _EURO_GAME_RE = re.compile(
     r"(?:l['\u2019]?)?euros?\s*(?:mill|milh|dream)", re.IGNORECASE,
 )
+
+# V126 L12 — Technical/SQL vocabulary guard : si le message contient des
+# termes techniques (SQL, requête, query, API, JSON…), NE PAS déclencher
+# Phase A (argent). Défense-en-profondeur contre FP terrain du type
+# "fais une requete sql" qui prenait une réponse argent (log 19/04/2026).
+_TECHNICAL_VOCAB_RE = re.compile(
+    r'\b(?:sql|requ[eê]tes?|requetes?|query|queries|select\s+(?:from|\*)|'
+    r'from\s+tirages?|where\s+\w+|api|endpoint|'
+    r'code|json|yaml|xml|python|script|bdd|database|'
+    r'base\s+de\s+donn[eé]es|schem[aá]|columns?|colonnes?|tables?)\b',
+    re.IGNORECASE,
+)
 _EURO_GAME_SKIP = {
     "fr": {"euro", "euros", "eur", "million", "millions"},
     "en": {"euro", "euros", "eur", "million", "millions"},
@@ -663,6 +677,10 @@ def _detect_argent(message: str, lang: str = "fr") -> bool:
     if _detect_score_question(message):
         return False
     if _detect_pedagogie_limites(message):
+        return False
+    # V126 L12 : vocabulaire technique (SQL, requête, JSON, API…) → skip Phase A.
+    # Couvre le cas log 19/04/2026 "fais une requete sql" (FP guardrail).
+    if _TECHNICAL_VOCAB_RE.search(message):
         return False
     lower = message.lower()
     phrases = _ARGENT_PHRASES.get(lang, _ARGENT_PHRASES["fr"])

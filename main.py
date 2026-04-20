@@ -172,6 +172,12 @@ async def lifespan(app):
     await db_cloudsql.init_pool_readonly()
     await init_cache()
     await _ensure_monitoring_tables()
+    # V126 4/5: build DB schema whitelist (DESCRIBE) — non-blocking fallback static
+    try:
+        from services.chat_pipeline_gemini import _build_schema_whitelist
+        await _build_schema_whitelist()
+    except Exception as _e:
+        logger.error("V126 4/5 schema whitelist boot failed: %s", _e)
     # Non-blocking retention cleanup (90 days) — I02 V66: supervised
     from services.gcp_monitoring import cleanup_event_log, cleanup_chat_log, cleanup_gemini_tracking
     asyncio.create_task(_supervised_task(cleanup_event_log(days=90), "cleanup_event_log"))

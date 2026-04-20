@@ -153,6 +153,16 @@ _ARGENT_PHRASES_EM = {
 _EURO_GAME_RE_EM = re.compile(
     r"(?:l['\u2019]?)?euros?\s*(?:mill|milh|dream)", re.IGNORECASE,
 )
+
+# V126 L12 — Technical/SQL vocabulary guard (symétrie Loto V99 F09).
+# Voir services/chat_detectors.py::_TECHNICAL_VOCAB_RE pour le raisonnement.
+_TECHNICAL_VOCAB_RE_EM = re.compile(
+    r'\b(?:sql|requ[eê]tes?|requetes?|query|queries|select\s+(?:from|\*)|'
+    r'from\s+tirages?|where\s+\w+|api|endpoint|'
+    r'code|json|yaml|xml|python|script|bdd|database|'
+    r'base\s+de\s+donn[eé]es|schem[aá]|columns?|colonnes?|tables?)\b',
+    re.IGNORECASE,
+)
 _EURO_GAME_SKIP_EM = {
     "fr": {"euro", "euros", "eur", "million", "millions", "milliard", "milliards"},
     "en": {"euro", "euros", "eur", "million", "millions", "billion", "billions"},
@@ -461,6 +471,9 @@ def _detect_argent_em(message: str, lang: str) -> bool:
     if _detect_score_question_em(message, lang):
         return False
     if _detect_pedagogie_limites_em(message, lang):
+        return False
+    # V126 L12 : vocabulaire technique → skip Phase A (symétrie Loto V99 F09).
+    if _TECHNICAL_VOCAB_RE_EM.search(message):
         return False
     lower = message.lower()
     phrases = _ARGENT_PHRASES_EM.get(lang, _ARGENT_PHRASES_EM["fr"])

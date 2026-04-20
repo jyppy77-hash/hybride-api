@@ -50,6 +50,8 @@ from services.base_chat_detect_intent import (  # noqa: F401
     # V125 — SQL continuation re-routing (Sous-phase 2 Volet B)
     _SQL_EVOCATIVE_KEYWORDS, _SQL_REROUTE_TEMPLATES, _SQL_REROUTE_FALLBACK,
     _NUM_EXTRACT_RE, _is_sql_continuation, _sql_continuation_reroute,
+    # V126 — L13 Volet B' : USER direct SQL-keyword detection
+    _is_user_sql_request,
 )
 
 from services.base_chat_detect_guardrails import (  # noqa: F401
