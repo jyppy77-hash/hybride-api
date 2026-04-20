@@ -111,7 +111,7 @@ class TestF03HandlePitchLang:
              patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline.prepare_grilles_pitch_context",
                    new_callable=AsyncMock, return_value="ctx"), \
-             patch("services.chat_pipeline.gemini_breaker") as mb:
+             patch("services.chat_pipeline.gemini_breaker_pitch") as mb:
             mb.call = AsyncMock(return_value=resp)
             result = await handle_pitch([grille], MagicMock(), lang="fr")
         assert result["success"] is True
@@ -129,7 +129,7 @@ class TestF03HandlePitchLang:
              patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline.prepare_grilles_pitch_context",
                    new_callable=AsyncMock, return_value="ctx"), \
-             patch("services.chat_pipeline.gemini_breaker") as mb:
+             patch("services.chat_pipeline.gemini_breaker_pitch") as mb:
             mb.call = AsyncMock(return_value=resp)
             result = await handle_pitch([grille], MagicMock(), lang="en")
         assert result["success"] is True

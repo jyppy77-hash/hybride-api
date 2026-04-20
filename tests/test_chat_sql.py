@@ -406,7 +406,7 @@ class TestGenerateSqlNonSqlGuard:
     """F04: _generate_sql must return NO_SQL when Gemini returns natural language."""
 
     @pytest.mark.asyncio
-    @patch("services.chat_sql.gemini_breaker")
+    @patch("services.chat_sql.gemini_breaker_sql")
     async def test_rejects_natural_language(self, mock_breaker):
         """Gemini returning natural language gets rejected to NO_SQL."""
         mock_response = MagicMock()
@@ -421,7 +421,7 @@ class TestGenerateSqlNonSqlGuard:
         assert result == "NO_SQL"
 
     @pytest.mark.asyncio
-    @patch("services.chat_sql.gemini_breaker")
+    @patch("services.chat_sql.gemini_breaker_sql")
     async def test_allows_valid_select(self, mock_breaker):
         """Gemini returning valid SELECT passes through."""
         mock_response = MagicMock()
@@ -436,7 +436,7 @@ class TestGenerateSqlNonSqlGuard:
         assert result == "SELECT COUNT(*) FROM tirages"
 
     @pytest.mark.asyncio
-    @patch("services.chat_sql.gemini_breaker")
+    @patch("services.chat_sql.gemini_breaker_sql")
     async def test_allows_no_sql(self, mock_breaker):
         """Gemini returning NO_SQL passes through."""
         mock_response = MagicMock()

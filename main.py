@@ -933,8 +933,10 @@ async def health():
     except Exception:
         db_status = "unreachable"
 
-    gemini_state = gemini_breaker.state
-    gemini_status = "ok" if gemini_state == "closed" else "circuit_open"
+    # V127 — état des 3 breakers per-phase (chat/sql/pitch)
+    from services.circuit_breaker import ALL_BREAKERS
+    gemini_breakers = {name: b.state for name, b in ALL_BREAKERS.items()}
+    gemini_status = "ok" if all(s == "closed" for s in gemini_breakers.values()) else "circuit_open"
 
     # I01 V67: Redis health check (cache is non-critical — doesn't affect overall status)
     redis_status = "ok"
@@ -957,6 +959,7 @@ async def health():
         "version": __version__,
         "database": db_status,
         "gemini": gemini_status,
+        "gemini_breakers": gemini_breakers,
         "redis": redis_status,
         "uptime_seconds": round(time.monotonic() - _STARTED_AT),
     }

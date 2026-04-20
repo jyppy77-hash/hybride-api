@@ -88,5 +88,23 @@ class GeminiCircuitBreaker:
         logger.warning("[CIRCUIT] Force closed by admin (was %s, failures=%d)", prev, 0)
 
 
-# Instance partagee — un circuit pour toute l'API Gemini
-gemini_breaker = GeminiCircuitBreaker()
+# V127 — Per-phase breakers (audit V126.1 : éviter qu'un 429 SQL tue chat+pitch)
+# Threshold différencié par criticité user-facing :
+#   chat=5  : tolérant (UX humain), 5 failures ≈ 5 req user avant fallback
+#   sql=3   : strict (défense DB, T=0)
+#   pitch=3 : strict (1 appel lourd 600 tokens, T=0.9)
+gemini_breaker_chat = GeminiCircuitBreaker(failure_threshold=5, open_timeout=60.0)
+gemini_breaker_sql = GeminiCircuitBreaker(failure_threshold=3, open_timeout=60.0)
+gemini_breaker_pitch = GeminiCircuitBreaker(failure_threshold=3, open_timeout=60.0)
+
+# Alias rétrocompat V127 — `gemini_breaker` continue de pointer sur le chat
+# breaker pour ne pas casser les imports existants (gemini.py, gemini_shared.py,
+# em_gemini.py, gcp_monitoring.py, main.py, admin_monitoring.py).
+gemini_breaker = gemini_breaker_chat
+
+# Helper pour reset/state des 3 breakers (admin + /health)
+ALL_BREAKERS = {
+    "chat": gemini_breaker_chat,
+    "sql": gemini_breaker_sql,
+    "pitch": gemini_breaker_pitch,
+}

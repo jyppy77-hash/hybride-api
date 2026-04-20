@@ -3,7 +3,7 @@ import time
 
 from services.prompt_loader import load_prompt
 from services.gemini import stream_gemini_chat
-from services.circuit_breaker import gemini_breaker
+from services.circuit_breaker import gemini_breaker, gemini_breaker_pitch
 from services.stats_service import (
     get_numero_stats, analyze_grille_for_chat,
     get_classement_numeros, get_comparaison_numeros, get_comparaison_with_period,
@@ -288,5 +288,5 @@ async def handle_pitch(grilles: list, http_client, lang: str = "fr") -> dict:
         grilles_data, http_client, lang,
         context_coro=prepare_grilles_pitch_context(grilles_data),
         load_prompt_fn=load_prompt, prompt_name="PITCH_GRILLE",
-        log_prefix="[PITCH]", breaker=gemini_breaker,
+        log_prefix="[PITCH]", breaker=gemini_breaker_pitch,
     )

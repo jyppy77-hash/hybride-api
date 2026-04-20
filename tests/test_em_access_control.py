@@ -428,12 +428,18 @@ class TestOwnerIpv6EnvVar:
     """S03 — OWNER_IPV6 must come from os.environ, not a hardcoded value."""
 
     def test_owner_ipv6_from_env_var(self):
-        """Reload module with a custom OWNER_IPV6 env var and verify it's used."""
+        """Reload module with a custom OWNER_IPV6 env var and verify it's used.
+
+        V127 : em_access_control délègue à utils.is_owner_ip, donc on doit
+        reload utils AUSSI pour que le nouvel env var soit pris en compte.
+        """
         fake_ipv6 = "2001:db8:aaaa:bbbb:cccc:dddd:eeee:ffff"
         import middleware.em_access_control as mod
+        import utils as utils_mod
         try:
             with pytest.MonkeyPatch.context() as mp:
                 mp.setenv("OWNER_IPV6", fake_ipv6)
+                importlib.reload(utils_mod)
                 importlib.reload(mod)
                 assert mod.OWNER_IPV6 == fake_ipv6
                 # /64 sibling must be recognized as owner
@@ -441,6 +447,7 @@ class TestOwnerIpv6EnvVar:
                 # Different /64 must NOT be owner
                 assert mod.is_owner_ip("2001:db8:aaaa:cccc::1") is False
         finally:
-            # Restore module to original env-based state
+            # Restore both modules to original env-based state
             os.environ.setdefault("OWNER_IPV6", _TEST_OWNER_IPV6)
+            importlib.reload(utils_mod)
             importlib.reload(mod)

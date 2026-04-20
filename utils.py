@@ -36,6 +36,14 @@ for _v6_raw in _OWNER_IPV6_RAW.split("|"):
     _v6_raw = _v6_raw.strip()
     if not _v6_raw:
         continue
+    # V127 — Try full IPv6 form first (ip_network strict=False truncates to /64).
+    # Handles both full address "2a01:cb05:...:7349" and /64 prefix "2a01:cb05:8700:5900".
+    try:
+        _owner_nets_v6.append(ip_network(f"{_v6_raw}/64", strict=False))
+        continue
+    except ValueError:
+        pass
+    # Fallback: short prefix like "2a01:cb05:8700:5900" → pad with "::" to make it valid
     _v6 = _v6_raw.rstrip(":")
     if "::" not in _v6:
         _v6 += "::"

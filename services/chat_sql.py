@@ -12,7 +12,7 @@ import aiomysql
 
 from services.prompt_loader import load_prompt
 from services.gemini import GEMINI_MODEL_URL
-from services.circuit_breaker import gemini_breaker
+from services.circuit_breaker import gemini_breaker_sql
 from services.chat_detectors import _JOURS_TIRAGE
 from services.base_chat_sql import (
     _JOURS_FR, _clean_gemini_sql, _build_gemini_sql_contents, _guard_non_sql,
@@ -146,7 +146,7 @@ async def _generate_sql(question: str, client, api_key: str, history: list = Non
     sql_contents = _build_gemini_sql_contents(question, history)
 
     try:
-        response = await gemini_breaker.call(
+        response = await gemini_breaker_sql.call(
             client,
             GEMINI_MODEL_URL,
             headers={

@@ -8,7 +8,7 @@ import logging
 
 from services.prompt_loader import load_prompt_em
 from services.gemini import stream_gemini_chat
-from services.circuit_breaker import gemini_breaker
+from services.circuit_breaker import gemini_breaker, gemini_breaker_pitch
 from services.em_stats_service import (
     get_numero_stats, analyze_grille_for_chat,
     get_classement_numeros, get_comparaison_numeros, get_comparaison_with_period,
@@ -285,5 +285,5 @@ async def handle_pitch_em(grilles: list, http_client, lang: str = "fr") -> dict:
         context_coro=prepare_grilles_pitch_context(grilles_data, lang=lang),
         load_prompt_fn=lambda name: load_prompt_em(name, lang=lang),
         prompt_name="prompt_pitch_grille_em",
-        log_prefix="[EM PITCH]", breaker=gemini_breaker,
+        log_prefix="[EM PITCH]", breaker=gemini_breaker_pitch,
     )

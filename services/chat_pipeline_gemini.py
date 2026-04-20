@@ -21,6 +21,7 @@ import httpx
 from services.circuit_breaker import gemini_breaker, CircuitOpenError
 from services.gemini import GEMINI_MODEL_URL, stream_gemini_chat, _GEMINI_CHAT_TEMPERATURE
 from services.gemini_shared import _gemini_call_with_fallback
+from services.gemini_cache import pitch_cache
 from services.chat_utils import (
     _clean_response, _strip_non_latin, _get_sponsor_if_due,
     _strip_sponsor_from_text, StreamBuffer,
@@ -486,11 +487,15 @@ async def _recheck_phase0_draw_accuracy(
     parsed_date = _parse_draw_date_multilang(response)
     if not parsed_date:
         return None
+    # V127 — timeout réduit 3s → 1s (audit V126.1 décision 4 Option C).
+    # Garde le bloquant pour préserver la défense anti-hallucination V126,
+    # mais limite l'impact latence non-streaming à +1s pire cas (vs +3s avant).
+    # DB readonly p95 < 100ms en charge normale → 0 dégradation observable.
     try:
-        tirage = await asyncio.wait_for(get_tirage_fn(parsed_date), timeout=3)
+        tirage = await asyncio.wait_for(get_tirage_fn(parsed_date), timeout=1.0)
     except asyncio.TimeoutError:
         logger.warning(
-            "%s V126 3.5-A reapply TIMEOUT on DB lookup for %s",
+            "%s V127 reapply TIMEOUT (1s) on DB lookup for %s — log-only fallback",
             log_prefix, parsed_date,
         )
         return None
@@ -873,7 +878,17 @@ async def handle_pitch_common(grilles_data, http_client, lang,
     context_coro: awaitable that returns the stats context string.
     Calls context_coro → load_prompt → Gemini → parse JSON.
     Returns result dict.
+
+    V127 — Cache hit short-circuit : si grilles_data + lang + prompt_name déjà
+    vus dans les 24h, retourne le payload caché (skip context_coro + Gemini).
+    Marqué `from_cache: True` pour observabilité admin/tests. Ne cache QUE
+    les succès (status_code=200 + pitchs OK).
     """
+    # V127 — Cache hit short-circuit
+    _cached = pitch_cache.get(grilles_data, lang, prompt_name)
+    if _cached:
+        return {**_cached, "from_cache": True}
+
     try:
         context = await asyncio.wait_for(context_coro, timeout=timeout_context)
     except asyncio.TimeoutError:
@@ -943,4 +958,7 @@ async def handle_pitch_common(grilles_data, http_client, lang,
         return error
 
     logger.info(f"{log_prefix} OK — {len(pitchs)} pitchs générés")
-    return {"success": True, "data": {"pitchs": pitchs}, "error": None, "status_code": 200}
+    result = {"success": True, "data": {"pitchs": pitchs}, "error": None, "status_code": 200}
+    # V127 — cache succès (grilles_data + lang + prompt_name pour 24h)
+    pitch_cache.set(grilles_data, lang, prompt_name, result)
+    return result

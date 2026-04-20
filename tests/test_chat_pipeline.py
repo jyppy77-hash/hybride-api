@@ -320,11 +320,15 @@ class TestHandlePitchLoto:
         async def fake_call(*args, **kwargs):
             return gemini_resp
 
+        # V127 — pitch utilise gemini_breaker_pitch (pas l'alias chat)
         with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
              patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline.prepare_grilles_pitch_context", new_callable=AsyncMock, return_value="ctx"), \
-             patch("services.chat_pipeline.gemini_breaker") as mock_breaker:
+             patch("services.chat_pipeline.gemini_breaker_pitch") as mock_breaker:
             mock_breaker.call = fake_call
+            # V127 — clear cache pour ne pas avoir un hit d'un test précédent
+            from services.gemini_cache import pitch_cache
+            pitch_cache.clear()
             result = await handle_pitch(
                 [_grille([5, 15, 25, 35, 45])],
                 mock_client,
@@ -334,6 +338,9 @@ class TestHandlePitchLoto:
 
     @pytest.mark.asyncio
     async def test_pitch_no_prompt(self):
+        # V127 — clear cache (pollution possible depuis test_pitch_ok même grille)
+        from services.gemini_cache import pitch_cache
+        pitch_cache.clear()
         with patch("services.chat_pipeline.load_prompt", return_value=None), \
              patch("services.chat_pipeline.prepare_grilles_pitch_context", new_callable=AsyncMock, return_value="ctx"):
             result = await handle_pitch(

@@ -259,20 +259,28 @@ async def admin_monitoring_page(request: Request):
     return HTMLResponse(tpl.render(active="monitoring"))
 
 
-# I16 V66: Circuit breaker admin reset
+# I16 V66 + V127: Circuit breaker admin reset (per-phase chat/sql/pitch)
 @router.post("/admin/api/circuit-breaker/reset", include_in_schema=False)
 async def admin_circuit_breaker_reset(request: Request):
-    """Force Gemini circuit breaker to CLOSED state."""
+    """V127 — Force les 3 Gemini breakers (chat/sql/pitch) à CLOSED."""
     err = _require_auth_json(request)
     if err:
         return err
     from utils import get_client_ip
     real_ip = get_client_ip(request)
-    from services.circuit_breaker import gemini_breaker
-    prev_state = gemini_breaker.state
-    gemini_breaker.force_close()
-    logger.info("[ADMIN_AUDIT] action=circuit_breaker_reset ip=%s prev_state=%s", real_ip, prev_state)
-    return JSONResponse({"status": "closed", "previous_state": prev_state, "message": "Circuit breaker reset"})
+    from services.circuit_breaker import ALL_BREAKERS
+    prev_states = {name: b.state for name, b in ALL_BREAKERS.items()}
+    for b in ALL_BREAKERS.values():
+        b.force_close()
+    logger.info(
+        "[ADMIN_AUDIT] action=circuit_breaker_reset ip=%s prev_states=%s",
+        real_ip, prev_states,
+    )
+    return JSONResponse({
+        "status": "closed",
+        "previous_states": prev_states,
+        "message": "All 3 breakers reset (chat/sql/pitch)",
+    })
 
 
 # V94 hotfix: Decay state admin update

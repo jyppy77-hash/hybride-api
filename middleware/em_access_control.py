@@ -15,7 +15,7 @@ IPv6: uses /64 network match to handle privacy extensions (suffix rotation).
 import logging
 import os
 import re
-from ipaddress import ip_address, ip_network
+from ipaddress import ip_address
 
 from fastapi import Request
 from fastapi.responses import RedirectResponse
@@ -28,18 +28,12 @@ EM_PUBLIC_ACCESS = os.getenv("EM_PUBLIC_ACCESS", "true").lower() in (
     "true", "1", "yes",
 )
 
+# V127 — Owner detection délégué à utils.is_owner_ip (single source of truth,
+# supporte pipe-separated multi-IP V113 + CIDR IPv4 V114 + IPv6 /64).
+# Audit V126.1 : fixe les 8 warnings/24h causés par parsing OWNER_IPV6 avec
+# séparateur `|` non géré dans l'ancienne logique locale.
+# `OWNER_IPV6` exposé pour rétrocompat tests (lecture brute env, pas de parsing).
 OWNER_IPV6 = os.environ.get("OWNER_IPV6", "")
-
-# /64 network match: covers IPv6 privacy extensions (OS rotates the suffix).
-# The /64 prefix is assigned per household by the ISP — safe to match on.
-try:
-    _OWNER_NET_V6 = ip_network(OWNER_IPV6 + "/64", strict=False) if OWNER_IPV6 else None
-except ValueError:
-    logger.warning("Invalid OWNER_IPV6=%r — IPv6 owner detection disabled", OWNER_IPV6)
-    _OWNER_NET_V6 = None
-
-# Optional IPv4 from env (already set on Cloud Run for Umami owner filter).
-_OWNER_IPV4 = os.getenv("OWNER_IP", "").strip()
 
 # ── Protected route patterns (compiled once at import) ────────────────────────
 
@@ -70,21 +64,14 @@ def get_client_ip(request: Request) -> str:
 
 
 def is_owner_ip(client_ip_str: str) -> bool:
-    """Check if client IP belongs to the site owner (IPv6 /64 or IPv4)."""
-    try:
-        client = ip_address(client_ip_str)
-    except ValueError:
-        return False
-    if client.is_loopback:
-        return True
-    if client.version == 6:
-        return _OWNER_NET_V6 is not None and client in _OWNER_NET_V6
-    if _OWNER_IPV4:
-        try:
-            return client == ip_address(_OWNER_IPV4)
-        except ValueError:
-            pass
-    return False
+    """Check if client IP belongs to the site owner.
+
+    V127 : delegated to utils.is_owner_ip (single source of truth — supports
+    IPv6 /64, IPv4 exact, CIDR IPv4 notation, pipe-separated multi-IP).
+    Removes ~20L duplicated logic and fixes the OWNER_IPV6 `|` parsing bug.
+    """
+    from utils import is_owner_ip as _shared
+    return _shared(client_ip_str)
 
 
 def is_em_route(path: str) -> bool:

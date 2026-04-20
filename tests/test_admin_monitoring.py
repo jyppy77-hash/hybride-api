@@ -219,27 +219,40 @@ class TestCircuitBreakerReset:
         assert resp.status_code == 401
 
     def test_reset_works_and_logs_audit(self, capsys):
+        """V127 — reset des 3 breakers (chat/sql/pitch), retour `previous_states` dict."""
+        import time
         client = _authed_client()
-        with patch("services.circuit_breaker.gemini_breaker") as mock_breaker:
-            mock_breaker.state = "OPEN"
-            mock_breaker.force_close = lambda: None
+        from services.circuit_breaker import ALL_BREAKERS
+        # Force OPEN avec _opened_at récent pour éviter auto-bascule HALF_OPEN
+        ALL_BREAKERS["chat"]._set_state("open")
+        ALL_BREAKERS["chat"]._opened_at = time.monotonic()
+        try:
             resp = client.post("/admin/api/circuit-breaker/reset")
+        finally:
+            for b in ALL_BREAKERS.values():
+                b.force_close()
         assert resp.status_code == 200
         data = resp.json()
         assert data["status"] == "closed"
-        assert data["previous_state"] == "OPEN"
+        assert "previous_states" in data
+        assert set(data["previous_states"].keys()) == {"chat", "sql", "pitch"}
+        assert data["previous_states"]["chat"] == "open"
         captured = capsys.readouterr().out
         assert "ADMIN_AUDIT" in captured
         assert "circuit_breaker_reset" in captured
 
     def test_reset_returns_previous_state(self):
+        """V127 — `previous_states` est un dict {chat, sql, pitch}."""
         client = _authed_client()
-        with patch("services.circuit_breaker.gemini_breaker") as mock_breaker:
-            mock_breaker.state = "HALF_OPEN"
-            mock_breaker.force_close = lambda: None
+        from services.circuit_breaker import ALL_BREAKERS
+        ALL_BREAKERS["sql"]._set_state("half_open")
+        try:
             resp = client.post("/admin/api/circuit-breaker/reset")
+        finally:
+            for b in ALL_BREAKERS.values():
+                b.force_close()
         assert resp.status_code == 200
-        assert resp.json()["previous_state"] == "HALF_OPEN"
+        assert resp.json()["previous_states"]["sql"] == "half_open"
 
 
 # ── T10-T15: Realtime API (V95 F03) ──────────────────────────────────────────
