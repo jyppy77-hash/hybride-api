@@ -73,8 +73,8 @@ steps:
           --memory=1Gi \
           --cpu=1 \
           --concurrency=40 \
-          --max-instances=5 \
-          --min-instances=1 \
+          --max-instances=15 \
+          --min-instances=2 \
           --timeout=120 \
           --cpu-boost \
           --no-traffic \
