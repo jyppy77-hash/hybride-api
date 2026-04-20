@@ -83,7 +83,27 @@ def _get_project_id() -> str | None:
     return _GCP_PROJECT
 
 
-def _determine_status(error_rate: float, latency_p95_ms: float) -> str:
+def _determine_status(
+    error_rate: float,
+    latency_p95_ms: float,
+    total_requests: int = 0,
+    absolute_errors: int = 0,
+) -> str:
+    """V128bis: hybrid logic — grace period for low-traffic windows.
+
+    Low traffic (< 100 req/5min, weekends/nights): use absolute error count
+    to avoid false "down" from statistical noise (e.g. 3 errors on 40 req = 7.5%
+    ratio, but only 3 absolute failures in 5min).
+
+    Normal traffic (>= 100 req/5min): use strict ratio thresholds.
+    """
+    if total_requests < 100:
+        if absolute_errors < 10 and latency_p95_ms < 5000:
+            return "healthy"
+        if absolute_errors < 20 and latency_p95_ms < 8000:
+            return "degraded"
+        return "down"
+
     if error_rate < 0.01 and latency_p95_ms < 3000:
         return "healthy"
     if error_rate < 0.05 and latency_p95_ms < 5000:
@@ -257,6 +277,7 @@ def _fetch_request_count(client, project_name, base_filter, interval, metrics):
         metrics["requests_per_second"] = round(total_count / 300, 2) if total_count else 0
         metrics["error_rate_5xx"] = round(error_count / total_count, 4) if total_count else 0
         metrics["_total_requests_5min"] = total_count
+        metrics["_total_errors_5min"] = error_count  # V128bis: absolute count for grace period
     except Exception as e:
         logger.debug("request_count fetch error: %s", e)
 
@@ -431,7 +452,12 @@ async def get_gcp_metrics() -> dict:
     if not cloud_metrics:
         status = "unknown"
     else:
-        status = _determine_status(m["error_rate_5xx"], m["latency_p95_ms"])
+        status = _determine_status(
+            m["error_rate_5xx"],
+            m["latency_p95_ms"],
+            total_requests=cloud_metrics.get("_total_requests_5min", 0),
+            absolute_errors=cloud_metrics.get("_total_errors_5min", 0),
+        )
 
     # Check alerts (non-blocking email in background)
     active_alerts = []
@@ -441,12 +467,14 @@ async def get_gcp_metrics() -> dict:
     except Exception as e:
         logger.debug("Alert check error: %s", e)
 
-    # I16 V66: include circuit breaker state for admin dashboard
+    # I16 V66 + V128bis: expose all 3 per-phase breakers (chat/sql/pitch)
     try:
-        from services.circuit_breaker import gemini_breaker
-        circuit_state = gemini_breaker.state
+        from services.circuit_breaker import ALL_BREAKERS
+        gemini_breakers = {name: b.state for name, b in ALL_BREAKERS.items()}
     except Exception:
-        circuit_state = "unknown"
+        gemini_breakers = {"chat": "unknown", "sql": "unknown", "pitch": "unknown"}
+    # Backward-compat: aggregated state (= "closed" only if all 3 are closed)
+    circuit_state = "closed" if all(s == "closed" for s in gemini_breakers.values()) else "open"
 
     payload = {
         "status": status,
@@ -454,6 +482,7 @@ async def get_gcp_metrics() -> dict:
         "metrics": m,
         "gemini": gemini_section,
         "gemini_circuit": circuit_state,
+        "gemini_breakers": gemini_breakers,  # V128bis: per-phase dict
         "costs": costs,
         "active_alerts": active_alerts,
         "redis_connected": _cache._redis is not None,

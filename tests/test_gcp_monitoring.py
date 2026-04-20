@@ -25,33 +25,55 @@ from services.gcp_monitoring import (
 # ═══════════════════════════════════════════════════════════════════════
 
 class TestDetermineStatus:
+    # V128bis: legacy tests now pass total_requests=500 to force strict mode.
+    # Grace-period (low-traffic) tests added in dedicated section below.
 
     def test_healthy(self):
-        assert _determine_status(0.005, 2000) == "healthy"
+        assert _determine_status(0.005, 2000, total_requests=500, absolute_errors=3) == "healthy"
 
     def test_healthy_zero(self):
-        assert _determine_status(0.0, 0) == "healthy"
+        assert _determine_status(0.0, 0, total_requests=500, absolute_errors=0) == "healthy"
 
     def test_degraded_high_error(self):
-        assert _determine_status(0.03, 2000) == "degraded"
+        assert _determine_status(0.03, 2000, total_requests=500, absolute_errors=15) == "degraded"
 
     def test_degraded_high_latency(self):
-        assert _determine_status(0.005, 4000) == "degraded"
+        assert _determine_status(0.005, 4000, total_requests=500, absolute_errors=3) == "degraded"
 
     def test_down_very_high_error(self):
-        assert _determine_status(0.06, 1000) == "down"
+        assert _determine_status(0.06, 1000, total_requests=500, absolute_errors=30) == "down"
 
     def test_down_very_high_latency(self):
-        assert _determine_status(0.03, 6000) == "down"
+        assert _determine_status(0.03, 6000, total_requests=500, absolute_errors=15) == "down"
 
     def test_boundary_healthy(self):
-        assert _determine_status(0.0099, 2999) == "healthy"
+        assert _determine_status(0.0099, 2999, total_requests=500, absolute_errors=5) == "healthy"
 
     def test_boundary_degraded(self):
-        assert _determine_status(0.01, 3000) == "degraded"
+        assert _determine_status(0.01, 3000, total_requests=500, absolute_errors=5) == "degraded"
 
     def test_boundary_down(self):
-        assert _determine_status(0.05, 5000) == "down"
+        assert _determine_status(0.05, 5000, total_requests=500, absolute_errors=25) == "down"
+
+    # V128bis: grace period + hybrid logic tests ─────────────────────────
+
+    def test_status_degraded_normal_traffic(self):
+        """Degraded: moderate deviation on normal-traffic window."""
+        assert _determine_status(0.02, 4000, total_requests=500, absolute_errors=10) == "degraded"
+
+    def test_status_healthy_low_traffic_grace(self):
+        """V128bis: grace period absorbs false 'down' in low-traffic windows."""
+        # 10% ratio but only 4 absolute failures on 40 req -> healthy (grace)
+        assert _determine_status(0.10, 1000, total_requests=40, absolute_errors=4) == "healthy"
+
+    def test_status_down_low_traffic_real_incident(self):
+        """Low traffic but high absolute error count still flags 'down'."""
+        # 40 req, 25 absolute errors -> real incident even at low volume
+        assert _determine_status(0.625, 2000, total_requests=40, absolute_errors=25) == "down"
+
+    def test_status_degraded_low_traffic(self):
+        """Grace period degraded tier: 10-19 absolute errors OR p95 5-8s."""
+        assert _determine_status(0.20, 3000, total_requests=50, absolute_errors=12) == "degraded"
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -265,6 +287,8 @@ class TestGetGcpMetrics:
         cloud_metrics = {
             "error_rate_5xx": 0.03,
             "latency_p95_ms": 4000,
+            "_total_requests_5min": 500,  # V128bis: trigger strict mode (grace would give "healthy")
+            "_total_errors_5min": 15,
         }
         with (
             patch("services.gcp_monitoring.cache_get", AsyncMock(return_value=None)),
@@ -295,7 +319,7 @@ class TestGetGcpMetrics:
             result = await get_gcp_metrics()
 
             # Top-level keys
-            assert set(result.keys()) == {"status", "timestamp", "metrics", "gemini", "gemini_circuit", "costs", "active_alerts", "redis_connected"}
+            assert set(result.keys()) == {"status", "timestamp", "metrics", "gemini", "gemini_circuit", "gemini_breakers", "costs", "active_alerts", "redis_connected"}
 
             # Metrics keys
             expected_metric_keys = {
@@ -337,6 +361,28 @@ class TestGetGcpMetrics:
             assert args[0][0] == "gcp_metrics"
             assert args[0][1] == result
             assert args[0][2] == 60
+
+    @pytest.mark.asyncio
+    async def test_gemini_breakers_dict_exposed(self):
+        """V128bis: payload must expose per-phase breakers dict (chat/sql/pitch)."""
+        _LOCAL_CACHE.clear()
+        with (
+            patch("services.gcp_monitoring.cache_get", AsyncMock(return_value=None)),
+            patch("services.gcp_monitoring.cache_set", AsyncMock()),
+            patch("services.gcp_monitoring._fetch_cloud_run_metrics", AsyncMock(return_value={
+                "requests_per_second": 1, "error_rate_5xx": 0, "latency_p50_ms": 10,
+                "latency_p95_ms": 100, "latency_p99_ms": 200, "active_instances": 1,
+                "cpu_utilization": 0.1, "memory_utilization": 0.2,
+            })),
+            patch("services.gcp_monitoring._get_gemini_counters", AsyncMock(return_value={
+                "calls": 5, "errors": 0, "tokens_in": 1000, "tokens_out": 500, "total_ms": 5000,
+            })),
+        ):
+            result = await get_gcp_metrics()
+            assert "gemini_breakers" in result
+            assert set(result["gemini_breakers"].keys()) == {"chat", "sql", "pitch"}
+            for state in result["gemini_breakers"].values():
+                assert state in ("closed", "open", "half_open", "unknown")
 
 
 # ═══════════════════════════════════════════════════════════════════════

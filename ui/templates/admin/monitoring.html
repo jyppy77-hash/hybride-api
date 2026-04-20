@@ -614,12 +614,18 @@
         animateValue(document.getElementById('v-gem-tin'), fmt(g.tokens_in_today));
         animateValue(document.getElementById('v-gem-tout'), fmt(g.tokens_out_today));
 
-        // I16 V66: Circuit breaker status badge + reset button
+        // V128bis: Per-phase breaker badge (chat/sql/pitch)
         var cbBadge = document.getElementById('mon-circuit-badge');
         var cbBtn = document.getElementById('btn-circuit-reset');
-        if (data.status === 'down' || (data.gemini_circuit && data.gemini_circuit !== 'closed')) {
-            var cbState = data.gemini_circuit || 'open';
-            cbBadge.textContent = 'Circuit: ' + cbState;
+        var breakers = data.gemini_breakers || {};
+        var openBreakers = Object.keys(breakers).filter(function(k) {
+            return breakers[k] !== 'closed';
+        });
+        if (openBreakers.length > 0) {
+            var labels = openBreakers.map(function(k) {
+                return k + ':' + breakers[k];
+            }).join(' ');
+            cbBadge.textContent = 'Breaker ' + labels;
             cbBadge.style.display = '';
             cbBtn.style.display = '';
         } else {
