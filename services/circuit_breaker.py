@@ -8,6 +8,7 @@ Etats :
 """
 
 import asyncio
+import random
 import time
 import logging
 
@@ -18,6 +19,19 @@ logger = logging.getLogger(__name__)
 
 class CircuitOpenError(Exception):
     """Levee quand le circuit est ouvert — le caller doit faire fallback."""
+
+
+# V129.1 — Retry calibration (calibration post-mortem logs prod 21/04/2026).
+# Backoff exponential large (2/4/8s) au lieu de 200/400ms : Google 429 signale
+# un throttle per-second, retry 200ms plus tard garantit un nouveau rejet.
+# 2/4/8s laisse la fenêtre de throttle se réinitialiser côté Google.
+#
+# V129.1 refinement — jitter [0, 1.0] : sans jitter, 2 users en 429 simultanés
+# retry synchronisés à T+2s → collision garantie. random.uniform(0, 1.0) étale
+# les retries sur une fenêtre de 1s (pattern AWS/Google SRE "equal jitter").
+_V129_RETRY_BACKOFF_BASE = 2.0  # seconds (was 0.2 in V128)
+_V129_RETRY_CAP_TOTAL = 14.0    # seconds (was 3.0 in V128), défensif pour max_retries=3+
+_V129_RETRY_JITTER_MAX = 1.0    # seconds — uniform jitter added to backoff
 
 
 class GeminiCircuitBreaker:
@@ -77,10 +91,11 @@ class GeminiCircuitBreaker:
             if self.state == self.OPEN:
                 raise CircuitOpenError("Circuit ouvert — fallback immediat")
 
-            # Cap total wall time (only beyond attempt 0 — initial always allowed)
-            if attempt > 0 and time.monotonic() - start >= 3.0:
+            # V129.1: cap total wall time élargi 3s → 14s (défensif max_retries=3+).
+            if attempt > 0 and time.monotonic() - start >= _V129_RETRY_CAP_TOTAL:
                 logger.info(
-                    "[V128_RETRY] cap total=3s exhausted before attempt=%d", attempt,
+                    "[V129_1_RETRY] cap total=%.0fs exhausted before attempt=%d",
+                    _V129_RETRY_CAP_TOTAL, attempt,
                 )
                 break
 
@@ -93,25 +108,32 @@ class GeminiCircuitBreaker:
 
             last_response = response
 
-            # V128: retry on 429 if budget remaining
+            # V128→V129.1: retry on 429 if budget remaining. Backoff 2/4/8s
+            # (était 200/400/800ms) + jitter [0,1s]. Cap total 14s (était 3s).
             if response.status_code == 429 and attempt < max_retries:
                 retry_after_raw = response.headers.get("retry-after")
-                backoff = 0.2 * (2 ** attempt)  # default 200, 400, 800ms
+                # 2s, 4s, 8s + jitter uniform [0, 1.0s] → 2-3s, 4-5s, 8-9s.
+                # Jitter évite les retries synchronisés (thundering herd)
+                # quand plusieurs users tombent en 429 dans la même ms.
+                backoff = (
+                    _V129_RETRY_BACKOFF_BASE * (2 ** attempt)
+                    + random.uniform(0, _V129_RETRY_JITTER_MAX)
+                )
                 if retry_after_raw:
                     try:
                         backoff = float(retry_after_raw)
                     except (ValueError, TypeError):
                         pass  # non-numeric (HTTP-date) → keep exponential default
 
-                remaining = 3.0 - (time.monotonic() - start)
+                remaining = _V129_RETRY_CAP_TOTAL - (time.monotonic() - start)
                 if remaining <= 0:
-                    logger.info("[V128_RETRY] no budget left at attempt=%d", attempt)
+                    logger.info("[V129_1_RETRY] no budget left at attempt=%d", attempt)
                     break
                 backoff = min(backoff, remaining)
 
                 logger.info(
-                    "[V128_RETRY] attempt=%d/%d 429, backoff=%dms (retry_after=%r)",
-                    attempt + 1, max_retries, int(backoff * 1000), retry_after_raw,
+                    "[V129_1_RETRY] attempt=%d/%d 429, backoff=%.1fs (retry_after=%r)",
+                    attempt + 1, max_retries, backoff, retry_after_raw,
                 )
                 await asyncio.sleep(backoff)
                 continue  # next iteration
@@ -153,12 +175,14 @@ class GeminiCircuitBreaker:
 
 # V127 — Per-phase breakers (audit V126.1 : éviter qu'un 429 SQL tue chat+pitch)
 # Threshold différencié par criticité user-facing :
-#   chat=5  : tolérant (UX humain), 5 failures ≈ 5 req user avant fallback
-#   sql=3   : strict (défense DB, T=0)
-#   pitch=3 : strict (1 appel lourd 600 tokens, T=0.9)
+#   chat=5   : tolérant (UX humain), 5 failures ≈ 5 req user avant fallback
+#   sql=3    : strict (défense DB, T=0)
+#   pitch=10 : V129.1 — threshold élargi 3→10 après calibration post-mortem
+#             logs prod 21/04/2026. Avec backoff 2/4/8s, 3 failures cascade
+#             trop vite pendant fenêtres throttle adaptatif Google.
 gemini_breaker_chat = GeminiCircuitBreaker(failure_threshold=5, open_timeout=60.0)
 gemini_breaker_sql = GeminiCircuitBreaker(failure_threshold=3, open_timeout=60.0)
-gemini_breaker_pitch = GeminiCircuitBreaker(failure_threshold=3, open_timeout=60.0)
+gemini_breaker_pitch = GeminiCircuitBreaker(failure_threshold=10, open_timeout=60.0)
 
 # Alias rétrocompat V127 — `gemini_breaker` continue de pointer sur le chat
 # breaker pour ne pas casser les imports existants (gemini.py, gemini_shared.py,

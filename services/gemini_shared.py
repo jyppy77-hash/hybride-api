@@ -182,6 +182,8 @@ async def enrich_analysis_base(
                     "maxOutputTokens": 250,
                 },
             },
+            timeout=10.0,  # V129.1: strict 10s explicit (fix hang 15s observed
+                           # in half_open — was falling back to AsyncClient default 20s).
         ),
         fallback_fn=_fallback,
         log_prefix=log_prefix,

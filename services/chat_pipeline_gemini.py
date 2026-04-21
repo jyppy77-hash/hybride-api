@@ -655,7 +655,7 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
                 "contents": ctx["contents"],
                 "generationConfig": {"temperature": _get_temperature(ctx), "maxOutputTokens": 300},
             },
-            timeout=ctx.get("_timeout_gemini_chat", 15),
+            timeout=ctx.get("_timeout_gemini_chat", 10),  # V129.1: default 15→10
         ),
         fallback_fn=_fallback,
         log_prefix=log_prefix,
@@ -743,7 +743,7 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
         _buf = StreamBuffer()
         async for chunk in _stream(
             ctx["_http_client"], ctx["gem_api_key"], ctx["system_prompt"],
-            ctx["contents"], timeout=ctx.get("_timeout_gemini_stream", 15),
+            ctx["contents"], timeout=ctx.get("_timeout_gemini_stream", 10),  # V129.1
             call_type=call_type, lang=lang,
             temperature=_get_temperature(ctx),
         ):
@@ -872,7 +872,7 @@ async def handle_pitch_common(grilles_data, http_client, lang,
                               context_coro,
                               load_prompt_fn, prompt_name,
                               log_prefix, breaker=None,
-                              timeout_context=30, timeout_gemini=15,
+                              timeout_context=30, timeout_gemini=10,  # V129.1: 15→10
                               max_retries: int = 0):
     """
     Common pitch pipeline after validation.

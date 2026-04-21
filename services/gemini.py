@@ -51,10 +51,12 @@ async def enrich_analysis(analysis_local: str, window: str = "GLOBAL", *, http_c
     )
 
 
-async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, timeout=15.0,
+async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, timeout=10.0,
                              call_type="", lang="", temperature=None):
     """
     Async generator — stream text chunks from Gemini streaming API.
+
+    V129.1: default timeout 15.0 → 10.0s (strict user-facing).
     Yields str chunks. Manages circuit breaker state manually.
     Tracks Gemini usage (tokens, duration) via gcp_monitoring.
     """

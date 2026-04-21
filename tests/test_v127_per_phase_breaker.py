@@ -63,8 +63,9 @@ def test_sql_threshold_is_3():
     assert gemini_breaker_sql._failure_threshold == 3
 
 
-def test_pitch_threshold_is_3():
-    assert gemini_breaker_pitch._failure_threshold == 3
+def test_pitch_threshold_is_10_v129_1():
+    # V129.1: pitch threshold raised 3 → 10 (calibration post-mortem logs prod).
+    assert gemini_breaker_pitch._failure_threshold == 10
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -131,9 +132,10 @@ async def test_sql_3_failures_then_open():
 
 
 @pytest.mark.asyncio
-async def test_pitch_3_failures_then_open():
+async def test_pitch_10_failures_then_open_v129_1():
+    # V129.1: pitch threshold raised 3 → 10 (calibration post-mortem logs prod).
     fake = _FakeClient(429)
-    for _ in range(3):
+    for _ in range(10):
         await gemini_breaker_pitch.call(fake, "http://x")
     assert gemini_breaker_pitch.state == GeminiCircuitBreaker.OPEN
     with pytest.raises(CircuitOpenError):
