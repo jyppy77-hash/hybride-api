@@ -10,6 +10,7 @@ Cloud Run: no filesystem, everything in MySQL.
 # TODO: migrate to Cloud Armor for L7 DDoS protection
 """
 
+import asyncio
 import logging
 import time
 from collections import defaultdict
@@ -41,6 +42,28 @@ _SPAM_WINDOW = 1.0      # seconds
 _FLOOD_LIMIT = 200      # requests
 _FLOOD_WINDOW = 300.0   # seconds (5 min)
 _AUTO_BAN_HOURS = 1     # auto-ban duration
+
+# ── V129: Auto-ban rate limiting (defense in depth) ─────────────────────────
+# V129 — protège le pool DB des rafales scanner : 48 INSERT concurrents en 500ms
+# causaient une saturation du pool (couplé au bug double-yield fixé dans
+# db_cloudsql.get_connection). Le débounce + semaphore réduisent la pression
+# même si le root cause est désormais traité.
+
+_BAN_INSERT_TIMEOUT = 2.0         # seconds per INSERT (asyncio.wait_for)
+_BAN_DEBOUNCE_SECONDS = 2.0       # skip same IP within window (déduplication)
+_BAN_MAX_CONCURRENT = 5           # max concurrent INSERTs (Semaphore)
+_BAN_DEBOUNCE_MAX_ENTRIES = 1000  # cap memory for debounce map
+
+_last_ban_attempt: dict[str, float] = {}  # IP → monotonic timestamp
+_ban_semaphore: asyncio.Semaphore | None = None  # lazy init (no loop at import)
+
+
+def _get_ban_semaphore() -> asyncio.Semaphore:
+    """Lazy-init semaphore to avoid creating it before event loop exists."""
+    global _ban_semaphore
+    if _ban_semaphore is None:
+        _ban_semaphore = asyncio.Semaphore(_BAN_MAX_CONCURRENT)
+    return _ban_semaphore
 
 # ── Owner exclusion (never auto-ban) ────────────────────────────────────────
 # S07 V94: centralized in utils.py — single source of truth
@@ -148,27 +171,59 @@ def _check_auto_ban(ip: str) -> str | None:
 
 
 async def _auto_ban_ip(ip: str, source: str) -> None:
-    """Insert auto-ban into MySQL with 1h expiry."""
+    """Insert auto-ban into MySQL with 1h expiry.
+
+    V129 — best-effort, never raises. Protégé par :
+      - debounce 2s par IP (évite INSERT dupliqués sur rafale scanner)
+      - semaphore 5 concurrent max (évite saturation pool)
+      - asyncio.wait_for timeout 2s (borne dure, évite hang du pool)
+    Toute exception est swallowed (log warning) — le pool DB ne doit jamais
+    être corrompu par une erreur d'auto-ban.
+    """
+    # V129: debounce — skip si même IP bannie il y a <2s
+    now = time.monotonic()
+    if now - _last_ban_attempt.get(ip, 0.0) < _BAN_DEBOUNCE_SECONDS:
+        return
+    _last_ban_attempt[ip] = now
+
+    # V129: cleanup debounce map si trop gros
+    if len(_last_ban_attempt) > _BAN_DEBOUNCE_MAX_ENTRIES:
+        cutoff = now - _BAN_DEBOUNCE_SECONDS * 2
+        stale = [k for k, t in _last_ban_attempt.items() if t < cutoff]
+        for k in stale:
+            _last_ban_attempt.pop(k, None)
+
     reason = {
         "auto_spam": f"{_SPAM_LIMIT} req/{_SPAM_WINDOW:.0f}s — spam bot detected",
         "auto_flood": f"{_FLOOD_LIMIT} req/{_FLOOD_WINDOW:.0f}s — flood detected",
     }.get(source, "auto-ban")
-    try:
-        import db_cloudsql
-        await db_cloudsql.async_query(
-            "INSERT INTO banned_ips (ip, reason, source, banned_by, expires_at) "
-            "VALUES (%s, %s, %s, 'system', NOW() + INTERVAL %s HOUR) "
-            "ON DUPLICATE KEY UPDATE is_active=1, reason=%s, source=%s, "
-            "expires_at=NOW() + INTERVAL %s HOUR, banned_at=NOW()",
-            (ip, reason, source, _AUTO_BAN_HOURS,
-             reason, source, _AUTO_BAN_HOURS),
-        )
-        _banned_set.add(ip)
-        # Clear the request log for this IP to avoid re-triggering
-        _request_log.pop(ip, None)
-        logger.warning("[IP_BAN] auto-ban %s source=%s reason=%s", ip, source, reason)
-    except Exception as e:
-        logger.error("[IP_BAN] auto-ban insert failed: %s", e)
+
+    # V129: semaphore — max 5 INSERT concurrents
+    sem = _get_ban_semaphore()
+    async with sem:
+        try:
+            import db_cloudsql
+            await asyncio.wait_for(
+                db_cloudsql.async_query(
+                    "INSERT INTO banned_ips (ip, reason, source, banned_by, expires_at) "
+                    "VALUES (%s, %s, %s, 'system', NOW() + INTERVAL %s HOUR) "
+                    "ON DUPLICATE KEY UPDATE is_active=1, reason=%s, source=%s, "
+                    "expires_at=NOW() + INTERVAL %s HOUR, banned_at=NOW()",
+                    (ip, reason, source, _AUTO_BAN_HOURS,
+                     reason, source, _AUTO_BAN_HOURS),
+                ),
+                timeout=_BAN_INSERT_TIMEOUT,
+            )
+            _banned_set.add(ip)
+            # Clear the request log for this IP to avoid re-triggering
+            _request_log.pop(ip, None)
+            logger.warning("[IP_BAN] auto-ban %s source=%s reason=%s", ip, source, reason)
+        except asyncio.TimeoutError:
+            logger.warning("[IP_BAN] auto-ban timeout (%.1fs) for %s (swallowed)",
+                           _BAN_INSERT_TIMEOUT, ip)
+        except Exception as e:
+            logger.warning("[IP_BAN] auto-ban insert failed for %s: %s: %s (swallowed)",
+                           ip, type(e).__name__, e)
 
 
 # ── Middleware ───────────────────────────────────────────────────────────────

@@ -192,25 +192,19 @@ async def _recreate_pool():
 async def get_connection():
     """
     Async context manager qui retourne une connexion depuis le pool.
-    I01 V66: If acquire() fails, recreate pool once and retry.
+
+    V129: pas de retry ici. Un double-yield dans @asynccontextmanager viole
+    le contrat du protocole (RuntimeError "generator didn't stop after
+    athrow()") et provoque un leak de connexion → corruption du pool.
+    Le retry est géré en amont par `_execute_with_retry()` (legal car pas
+    de yield dans un wrapper classique).
+
     Usage: async with get_connection() as conn:
     """
     if _pool is None:
         raise RuntimeError("Pool not initialized — call init_pool() first")
-    try:
-        async with _pool.acquire() as conn:
-            yield conn
-    except Exception as first_err:
-        # Retry once after pool recreation
-        try:
-            await _recreate_pool()
-        except Exception as recreate_err:
-            logger.error("[DB] Pool recreation failed: %s", recreate_err)
-            raise first_err from recreate_err
-        if _pool is None:
-            raise first_err
-        async with _pool.acquire() as conn:
-            yield conn
+    async with _pool.acquire() as conn:
+        yield conn
 
 
 # ============================================================================
@@ -275,32 +269,15 @@ async def _recreate_pool_readonly():
 @asynccontextmanager
 async def get_connection_readonly():
     """Read-only connection for chatbot SQL. Falls back to main pool if not configured.
-    I01 V66: If acquire() fails on readonly pool, recreate once and retry.
-    Falls back to main pool via get_connection() if readonly pool cannot be recreated.
+
+    V129: pas de retry ici (double-yield illégal dans @asynccontextmanager).
+    Retry géré par `_execute_with_retry(op, readonly=True)` au niveau helper.
     """
     pool = _pool_readonly if _pool_readonly is not None else _pool
     if pool is None:
         raise RuntimeError("Pool not initialized — call init_pool() first")
-    try:
-        async with pool.acquire() as conn:
-            yield conn
-    except Exception as first_err:
-        # If using readonly pool, try to recreate it
-        if pool is _pool_readonly:
-            try:
-                await _recreate_pool_readonly()
-            except Exception as recreate_err:
-                logger.error("[DB] Readonly pool recreation failed: %s", recreate_err)
-                raise first_err from recreate_err
-            fallback_pool = _pool_readonly if _pool_readonly is not None else _pool
-            if fallback_pool is None:
-                raise first_err
-            async with fallback_pool.acquire() as conn:
-                yield conn
-        else:
-            # Using main pool — delegate to get_connection retry logic
-            async with get_connection() as conn:
-                yield conn
+    async with pool.acquire() as conn:
+        yield conn
 
 
 # ============================================================================
@@ -395,27 +372,57 @@ async def get_tirages_list(limit: int = 10, offset: int = 0) -> list:
         return results
 
 
+async def _execute_with_retry(op, *, readonly: bool = False):
+    """V129: retry-once au niveau helper (legal — pas de yield ici).
+
+    Remplace l'ancien retry dans `get_connection()` qui violait le contrat
+    @asynccontextmanager (double-yield → RuntimeError "generator didn't stop
+    after athrow()" + leak de connexion). Si la première tentative échoue,
+    recrée le pool approprié et retente une fois. Propage en cas de 2ᵉ échec.
+
+    Args:
+        op: coroutine `async def op(conn) -> T` exécutée avec une connexion.
+        readonly: True pour utiliser le pool read-only.
+    """
+    getter = get_connection_readonly if readonly else get_connection
+    recreator = _recreate_pool_readonly if readonly else _recreate_pool
+    try:
+        async with getter() as conn:
+            return await op(conn)
+    except Exception as first_err:
+        try:
+            await recreator()
+        except Exception as recreate_err:
+            logger.error("[DB] Pool recreation failed: %s", recreate_err)
+            raise first_err from recreate_err
+        async with getter() as conn:
+            return await op(conn)
+
+
 async def async_query(sql: str, params=None):
-    """Execute INSERT/UPDATE/DELETE and commit."""
-    async with get_connection() as conn:
+    """Execute INSERT/UPDATE/DELETE and commit. V129: retry-once on failure."""
+    async def _op(conn):
         cur = await conn.cursor()
         await cur.execute(sql, params)
+    await _execute_with_retry(_op)
 
 
 async def async_fetchone(sql: str, params=None) -> Optional[dict]:
-    """Execute SELECT and return a single row as dict (or None)."""
-    async with get_connection() as conn:
+    """Execute SELECT and return a single row as dict (or None). V129: retry-once."""
+    async def _op(conn):
         cur = await conn.cursor()
         await cur.execute(sql, params)
         return await cur.fetchone()
+    return await _execute_with_retry(_op)
 
 
 async def async_fetchall(sql: str, params=None) -> list[dict]:
-    """Execute SELECT and return all rows as list of dicts."""
-    async with get_connection() as conn:
+    """Execute SELECT and return all rows as list of dicts. V129: retry-once."""
+    async def _op(conn):
         cur = await conn.cursor()
         await cur.execute(sql, params)
         return await cur.fetchall()
+    return await _execute_with_retry(_op)
 
 
 # ============================================================================

@@ -1,11 +1,15 @@
 """
-Tests unitaires pour db_cloudsql.py — I01 V66: pool reconnection automatique.
+Tests unitaires pour db_cloudsql.py — I01 V66 + V129.
+
+V66: pool reconnection automatique.
+V129: retry déplacé de get_connection() (double-yield illégal) vers
+`_execute_with_retry()` utilisé par async_query/fetchone/fetchall.
+
 Mocker aiomysql — aucune connexion MySQL requise.
 """
 
-import asyncio
 from contextlib import asynccontextmanager
-from unittest.mock import patch, AsyncMock, MagicMock, PropertyMock
+from unittest.mock import patch, AsyncMock, MagicMock
 
 import pytest
 
@@ -54,12 +58,32 @@ class TestGetConnectionRetry:
             db_cloudsql._pool = original_pool
 
     @pytest.mark.asyncio
-    async def test_acquire_fails_then_recreate_succeeds(self):
-        """acquire() fails → pool recreated → retry succeeds."""
+    async def test_acquire_fails_propagates_directly_v129(self):
+        """V129: get_connection() ne retry plus. Exception propage directement
+        (le retry est désormais dans `_execute_with_retry`).
+        """
         import db_cloudsql
 
         dead_pool, _, _ = _make_pool(healthy=False)
-        healthy_pool, healthy_conn, _ = _make_pool(healthy=True)
+        original_pool = db_cloudsql._pool
+        db_cloudsql._pool = dead_pool
+
+        try:
+            with pytest.raises(Exception, match="Connection lost during query"):
+                async with db_cloudsql.get_connection():
+                    pass
+        finally:
+            db_cloudsql._pool = original_pool
+
+    @pytest.mark.asyncio
+    async def test_async_query_retry_via_helper_succeeds_v129(self):
+        """V129: async_query retry is handled by _execute_with_retry — first
+        attempt fails, pool recreated, second attempt succeeds.
+        """
+        import db_cloudsql
+
+        dead_pool, _, _ = _make_pool(healthy=False)
+        healthy_pool, _, _ = _make_pool(healthy=True)
 
         original_pool = db_cloudsql._pool
         db_cloudsql._pool = dead_pool
@@ -70,8 +94,8 @@ class TestGetConnectionRetry:
             mock_recreate.side_effect = _do_recreate
 
             try:
-                async with db_cloudsql.get_connection() as c:
-                    assert c is healthy_conn
+                # Should not raise — retry kicks in after pool recreation
+                await db_cloudsql.async_query("SELECT 1", None)
                 mock_recreate.assert_awaited_once()
             finally:
                 db_cloudsql._pool = original_pool
@@ -90,8 +114,9 @@ class TestGetConnectionRetry:
             db_cloudsql._pool = original_pool
 
     @pytest.mark.asyncio
-    async def test_double_failure_propagates_exception(self):
-        """acquire fails + recreation fails → original exception propagated."""
+    async def test_async_query_double_failure_propagates_v129(self):
+        """V129: async_query — first attempt fails, recreation fails,
+        original exception propagated."""
         import db_cloudsql
 
         dead_pool, _, _ = _make_pool(healthy=False)
@@ -102,8 +127,7 @@ class TestGetConnectionRetry:
             mock_recreate.side_effect = Exception("Cloud SQL unreachable")
             try:
                 with pytest.raises(Exception, match="Connection lost during query"):
-                    async with db_cloudsql.get_connection():
-                        pass
+                    await db_cloudsql.async_query("SELECT 1", None)
             finally:
                 db_cloudsql._pool = original_pool
 
@@ -131,12 +155,14 @@ class TestGetConnectionReadonlyRetry:
             db_cloudsql._pool = original_main
 
     @pytest.mark.asyncio
-    async def test_readonly_fails_then_recreate_succeeds(self):
-        """readonly acquire fails → pool recreated → retry succeeds."""
+    async def test_readonly_retry_via_helper_v129(self):
+        """V129: get_connection_readonly() ne retry plus. Retry désormais
+        dans `_execute_with_retry(readonly=True)`.
+        """
         import db_cloudsql
 
         dead_pool, _, _ = _make_pool(healthy=False)
-        healthy_pool, healthy_conn, _ = _make_pool(healthy=True)
+        healthy_pool, _, _ = _make_pool(healthy=True)
 
         original_ro = db_cloudsql._pool_readonly
         original_main = db_cloudsql._pool
@@ -149,8 +175,11 @@ class TestGetConnectionReadonlyRetry:
             mock_recreate.side_effect = _do_recreate
 
             try:
-                async with db_cloudsql.get_connection_readonly() as c:
-                    assert c is healthy_conn
+                # Use the retry helper directly with readonly=True
+                async def _op(conn):
+                    return "ok"
+                result = await db_cloudsql._execute_with_retry(_op, readonly=True)
+                assert result == "ok"
                 mock_recreate.assert_awaited_once()
             finally:
                 db_cloudsql._pool_readonly = original_ro
