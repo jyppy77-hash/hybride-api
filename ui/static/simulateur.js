@@ -844,8 +844,8 @@ async function fetchAndDisplaySimulateurPitch(nums, chance, scoreConformite, sev
     const anchor = document.getElementById('history-check');
     if (!anchor) return;
 
-    // Supprimer un pitch precedent
-    const existing = anchor.parentElement.querySelector('.grille-pitch');
+    // Supprimer un pitch precedent (pitch ou fallback)
+    const existing = anchor.parentElement.querySelector('.grille-pitch, .pitch-fallback');
     if (existing) existing.remove();
 
     // Placeholder loading
@@ -854,24 +854,73 @@ async function fetchAndDisplaySimulateurPitch(nums, chance, scoreConformite, sev
     pitchDiv.innerHTML = '<span class="pitch-icon">\u{1F916}</span> HYBRIDE analyse ta grille\u2026';
     anchor.insertAdjacentElement('afterend', pitchDiv);
 
-    try {
-        const response = await fetch('/api/pitch-grilles', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ grilles: [{ numeros: nums, chance: chance, score_conformite: scoreConformite ? parseInt(scoreConformite) : null, severity: severity || null }] })
-        });
-        const data = await response.json();
+    // V130: closure retry pattern
+    const LI = window.LotoIA_i18n || {};
+    let retryCount = 0;
 
-        if (data.success && data.data && data.data.pitchs && data.data.pitchs[0]) {
-            pitchDiv.innerHTML = '<span class="pitch-icon">\u{1F916}</span> ' + data.data.pitchs[0];
-            pitchDiv.classList.remove('grille-pitch-loading');
-        } else {
-            pitchDiv.remove();
+    async function doFetch() {
+        try {
+            const response = await fetch('/api/pitch-grilles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ grilles: [{
+                    numeros: nums, chance: chance,
+                    score_conformite: scoreConformite ? parseInt(scoreConformite) : null,
+                    severity: severity || null
+                }] })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data && data.data.pitchs && data.data.pitchs[0]) {
+                    pitchDiv.className = 'grille-pitch';
+                    pitchDiv.innerHTML = '<span class="pitch-icon">\u{1F916}</span> ' + data.data.pitchs[0];
+                    return;
+                }
+            }
+            _renderFallback();
+        } catch (e) {
+            console.warn('[PITCH SIMULATEUR] Erreur:', e);
+            _renderFallback();
         }
-    } catch (e) {
-        console.warn('[PITCH SIMULATEUR] Erreur:', e);
-        pitchDiv.remove();
     }
+
+    function _renderFallback() {
+        const isFinal = retryCount >= 3;
+        pitchDiv.className = 'pitch-fallback' + (isFinal ? ' pitch-fallback-final' : '');
+        pitchDiv.innerHTML = '';
+
+        const icon = document.createElement('div');
+        icon.className = 'pitch-fallback-icon';
+        icon.textContent = '\u{1F916}';
+        pitchDiv.appendChild(icon);
+
+        const msg = document.createElement('div');
+        msg.className = 'pitch-fallback-message';
+        if (isFinal) {
+            msg.innerHTML = `<p>${LI.pitch_fallback_final || "L'analyse IA reste indisponible. Votre grille est valide, réessayez plus tard."}</p>`;
+        } else {
+            msg.innerHTML =
+                `<strong>${LI.pitch_fallback_title || "Analyse Hybride momentanément indisponible"}</strong>` +
+                `<p>${LI.pitch_fallback_message || "Votre grille est validée et optimisée. L'IA est en cours de surcharge, vous pouvez réessayer."}</p>`;
+        }
+        pitchDiv.appendChild(msg);
+
+        if (!isFinal) {
+            const btn = document.createElement('button');
+            btn.className = 'pitch-fallback-retry';
+            btn.type = 'button';
+            btn.textContent = LI.pitch_fallback_retry || "Réessayer l'analyse IA";
+            btn.addEventListener('click', () => {
+                retryCount += 1;
+                pitchDiv.className = 'grille-pitch grille-pitch-loading';
+                pitchDiv.innerHTML = '<span class="pitch-icon">\u{1F916}</span> HYBRIDE analyse ta grille\u2026';
+                doFetch();
+            });
+            pitchDiv.appendChild(btn);
+        }
+    }
+
+    await doFetch();
 }
 
 /**

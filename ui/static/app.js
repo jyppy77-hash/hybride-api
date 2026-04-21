@@ -1636,36 +1636,100 @@ function clearLogs() {
  * @param {Array} grids - Tableau des grilles generees ({nums, chance})
  */
 async function fetchAndDisplayPitchs(grids) {
-    const payload = grids.map(g => ({
-        numeros: g.nums,
-        chance: g.chance
-    }));
+    // V130: closure retry pattern — payload capturé, retryCount limité à 3.
+    const payload = grids.map(g => ({ numeros: g.nums, chance: g.chance }));
+    const LI = window.LotoIA_i18n || {};
+    let retryCount = 0;
 
-    try {
-        const response = await fetch('/api/pitch-grilles', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ grilles: payload })
-        });
-        const data = await response.json();
-
-        if (data.success && data.data && data.data.pitchs) {
-            data.data.pitchs.forEach((pitch, index) => {
-                const el = document.querySelector(`.grille-pitch[data-pitch-index="${index}"]`);
-                if (el && pitch) {
-                    el.innerHTML = `<span class="pitch-icon">\u{1F916}</span> ${pitch}`;
-                    el.classList.remove('grille-pitch-loading');
-                }
+    async function doFetch() {
+        try {
+            const response = await fetch('/api/pitch-grilles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ grilles: payload })
             });
-            addLog(`${data.data.pitchs.length} pitch(s) HYBRIDE affiche(s)`, 'success');
-        } else {
-            // Pas de pitchs — retirer les placeholders
-            document.querySelectorAll('.grille-pitch-loading').forEach(el => el.remove());
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data && data.data.pitchs) {
+                    _removePitchFallbackGlobal();
+                    data.data.pitchs.forEach((pitch, index) => {
+                        const el = document.querySelector(`.grille-pitch[data-pitch-index="${index}"]`);
+                        if (el && pitch) {
+                            el.innerHTML = `<span class="pitch-icon">\u{1F916}</span> ${pitch}`;
+                            el.classList.remove('grille-pitch-loading');
+                        }
+                    });
+                    addLog(`${data.data.pitchs.length} pitch(s) HYBRIDE affiche(s)`, 'success');
+                    return;
+                }
+            }
+            // V130: 502/503/data.success=false → fallback global
+            _showPitchFallback();
+        } catch (e) {
+            console.warn('[PITCH] Erreur:', e);
+            _showPitchFallback();
         }
-    } catch (e) {
-        console.warn('[PITCH] Erreur:', e);
-        document.querySelectorAll('.grille-pitch-loading').forEach(el => el.remove());
     }
+
+    function _showPitchFallback() {
+        // Nettoyer les placeholders loading individuels
+        document.querySelectorAll('.grille-pitch-loading').forEach(el => {
+            el.classList.remove('grille-pitch-loading');
+            el.innerHTML = '';
+        });
+        _insertPitchFallbackGlobal(retryCount >= 3);
+    }
+
+    function _insertPitchFallbackGlobal(isFinal) {
+        _removePitchFallbackGlobal();
+        const container = document.getElementById('results-section') || document.body;
+        const block = document.createElement('div');
+        block.id = 'pitch-fallback-global';
+        block.className = 'pitch-fallback' + (isFinal ? ' pitch-fallback-final' : '');
+
+        const icon = document.createElement('div');
+        icon.className = 'pitch-fallback-icon';
+        icon.textContent = '\u{1F916}';
+        block.appendChild(icon);
+
+        const msg = document.createElement('div');
+        msg.className = 'pitch-fallback-message';
+        if (isFinal) {
+            msg.innerHTML = `<p>${LI.pitch_fallback_final || "L'analyse IA reste indisponible. Votre grille est valide, réessayez plus tard."}</p>`;
+        } else {
+            msg.innerHTML =
+                `<strong>${LI.pitch_fallback_title || "Analyse Hybride momentanément indisponible"}</strong>` +
+                `<p>${LI.pitch_fallback_message || "Votre grille est validée et optimisée. L'IA est en cours de surcharge, vous pouvez réessayer."}</p>`;
+        }
+        block.appendChild(msg);
+
+        if (!isFinal) {
+            const btn = document.createElement('button');
+            btn.className = 'pitch-fallback-retry';
+            btn.type = 'button';
+            btn.textContent = LI.pitch_fallback_retry || "Réessayer l'analyse IA";
+            btn.addEventListener('click', () => {
+                retryCount += 1;
+                _removePitchFallbackGlobal();
+                document.querySelectorAll('.grille-pitch[data-pitch-index]').forEach(el => {
+                    el.classList.add('grille-pitch-loading');
+                    el.innerHTML = '<span class="pitch-icon">\u{1F916}</span> HYBRIDE analyse ta grille\u2026';
+                });
+                doFetch();
+            });
+            block.appendChild(btn);
+        }
+
+        container.insertBefore(block, container.firstChild);
+    }
+
+    function _removePitchFallbackGlobal() {
+        const existing = document.getElementById('pitch-fallback-global');
+        if (existing) existing.remove();
+    }
+
+    await doFetch();
 }
 
 // ================================================================

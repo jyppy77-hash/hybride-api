@@ -661,8 +661,8 @@ async function fetchAndDisplaySimulateurPitchEM(nums, etoiles, scoreConformite, 
     var anchor = document.getElementById('history-check');
     if (!anchor) return;
 
-    // Supprimer un pitch precedent
-    var existing = anchor.parentElement.querySelector('.grille-pitch');
+    // Supprimer un pitch precedent (pitch ou fallback)
+    var existing = anchor.parentElement.querySelector('.grille-pitch, .pitch-fallback');
     if (existing) existing.remove();
 
     // Placeholder loading
@@ -671,32 +671,76 @@ async function fetchAndDisplaySimulateurPitchEM(nums, etoiles, scoreConformite, 
     pitchDiv.innerHTML = '<span class="pitch-icon">\u{1F916}</span> ' + LI.pitch_loading;
     anchor.insertAdjacentElement('afterend', pitchDiv);
 
-    try {
-        var response = await fetch('/api/euromillions/pitch-grilles', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                grilles: [{
-                    numeros: nums,
-                    etoiles: etoiles,
-                    score_conformite: scoreConformite ? parseInt(scoreConformite) : null,
-                    severity: severity || null
-                }],
-                lang: window.LotoIA_lang
-            })
-        });
-        var data = await response.json();
+    // V130: closure retry pattern
+    var retryCount = 0;
 
-        if (data.success && data.data && data.data.pitchs && data.data.pitchs[0]) {
-            pitchDiv.innerHTML = '<span class="pitch-icon">\u{1F916}</span> ' + data.data.pitchs[0];
-            pitchDiv.classList.remove('grille-pitch-loading');
-        } else {
-            pitchDiv.remove();
+    async function doFetch() {
+        try {
+            var response = await fetch('/api/euromillions/pitch-grilles', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    grilles: [{
+                        numeros: nums,
+                        etoiles: etoiles,
+                        score_conformite: scoreConformite ? parseInt(scoreConformite) : null,
+                        severity: severity || null
+                    }],
+                    lang: window.LotoIA_lang
+                })
+            });
+            if (response.ok) {
+                var data = await response.json();
+                if (data.success && data.data && data.data.pitchs && data.data.pitchs[0]) {
+                    pitchDiv.className = 'grille-pitch';
+                    pitchDiv.innerHTML = '<span class="pitch-icon">\u{1F916}</span> ' + data.data.pitchs[0];
+                    return;
+                }
+            }
+            _renderFallback();
+        } catch (e) {
+            console.warn('[PITCH SIMULATEUR EM] Erreur:', e);
+            _renderFallback();
         }
-    } catch (e) {
-        console.warn('[PITCH SIMULATEUR EM] Erreur:', e);
-        pitchDiv.remove();
     }
+
+    function _renderFallback() {
+        var isFinal = retryCount >= 3;
+        pitchDiv.className = 'pitch-fallback' + (isFinal ? ' pitch-fallback-final' : '');
+        pitchDiv.innerHTML = '';
+
+        var icon = document.createElement('div');
+        icon.className = 'pitch-fallback-icon';
+        icon.textContent = '\u{1F916}';
+        pitchDiv.appendChild(icon);
+
+        var msg = document.createElement('div');
+        msg.className = 'pitch-fallback-message';
+        if (isFinal) {
+            msg.innerHTML = '<p>' + (LI.pitch_fallback_final || "L'analyse IA reste indisponible. Votre grille est valide, réessayez plus tard.") + '</p>';
+        } else {
+            msg.innerHTML =
+                '<strong>' + (LI.pitch_fallback_title || "Analyse Hybride momentanément indisponible") + '</strong>' +
+                '<p>' + (LI.pitch_fallback_message || "Votre grille est validée et optimisée. L'IA est en cours de surcharge, vous pouvez réessayer.") + '</p>';
+        }
+        pitchDiv.appendChild(msg);
+
+        if (!isFinal) {
+            var btn = document.createElement('button');
+            btn.className = 'pitch-fallback-retry';
+            btn.type = 'button';
+            btn.textContent = LI.pitch_fallback_retry || "Réessayer l'analyse IA";
+            btn.addEventListener('click', function() {
+                retryCount += 1;
+                pitchDiv.className = 'grille-pitch grille-pitch-loading';
+                pitchDiv.innerHTML = '<span class="pitch-icon">\u{1F916}</span> ' + (LI.pitch_loading || 'HYBRIDE EM analyse ta grille\u2026');
+                doFetch();
+            });
+            pitchDiv.appendChild(btn);
+        }
+    }
+
+    await doFetch();
 }
 
 /**

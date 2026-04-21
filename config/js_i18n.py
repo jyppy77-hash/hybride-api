@@ -42,6 +42,12 @@ _LABELS: dict[str, dict[str, str]] = {
         "profile_label": "Profil",
         "pitch_loading": "HYBRIDE EM analyse ta grille\u2026",
 
+        # ── V130 — Pitch fallback (analyse IA momentan\u00e9ment indisponible) ──
+        "pitch_fallback_title": "Analyse Hybride momentan\u00e9ment indisponible",
+        "pitch_fallback_message": "Votre grille est valid\u00e9e et optimis\u00e9e. L'IA est en cours de surcharge, vous pouvez r\u00e9essayer.",
+        "pitch_fallback_retry": "R\u00e9essayer l'analyse IA",
+        "pitch_fallback_final": "L'analyse IA reste indisponible. Votre grille est valide, r\u00e9essayez plus tard.",
+
         # ── app-em — footer ──
         "reminder_title": "Rappel important :",
         "reminder_text": "Ces grilles sont g\u00e9n\u00e9r\u00e9es \u00e0 partir de statistiques historiques. L'EuroMillions est un jeu de hasard et aucune m\u00e9thode ne garantit de gains.",
@@ -259,6 +265,12 @@ _LABELS: dict[str, dict[str, str]] = {
         "grid_label": "Grid",
         "profile_label": "Profile",
         "pitch_loading": "HYBRIDE EM is analysing your grid\u2026",
+
+        # ── V130 — Pitch fallback ──
+        "pitch_fallback_title": "Hybride analysis temporarily unavailable",
+        "pitch_fallback_message": "Your grid is validated and optimized. The AI is currently overloaded, you can retry.",
+        "pitch_fallback_retry": "Retry AI analysis",
+        "pitch_fallback_final": "The AI analysis remains unavailable. Your grid is valid, retry later.",
 
         # ── app-em — footer ──
         "reminder_title": "Important reminder:",
@@ -478,6 +490,12 @@ _LABELS: dict[str, dict[str, str]] = {
         "profile_label": "Perfil",
         "pitch_loading": "HYBRIDE EM analiza tu combinación\u2026",
 
+        # ── V130 — Pitch fallback ──
+        "pitch_fallback_title": "An\u00e1lisis Hybride temporalmente no disponible",
+        "pitch_fallback_message": "Su boleto est\u00e1 validado y optimizado. La IA est\u00e1 sobrecargada, puede reintentar.",
+        "pitch_fallback_retry": "Reintentar an\u00e1lisis IA",
+        "pitch_fallback_final": "El an\u00e1lisis IA permanece no disponible. Su boleto es v\u00e1lido, reintente m\u00e1s tarde.",
+
         # ── app-em — footer ──
         "reminder_title": "Aviso importante:",
         "reminder_text": "Estas combinaciones se generan a partir de estadísticas históricas. EuroMillions es un juego de azar y ningún método garantiza ganancias.",
@@ -695,6 +713,12 @@ _LABELS: dict[str, dict[str, str]] = {
         "grid_label": "Combinação",
         "profile_label": "Perfil",
         "pitch_loading": "HYBRIDE EM analisa a tua combinação\u2026",
+
+        # ── V130 — Pitch fallback ──
+        "pitch_fallback_title": "An\u00e1lise Hybride temporariamente indispon\u00edvel",
+        "pitch_fallback_message": "Seu boletim est\u00e1 validado e otimizado. A IA est\u00e1 sobrecarregada, voc\u00ea pode tentar novamente.",
+        "pitch_fallback_retry": "Tentar novamente an\u00e1lise IA",
+        "pitch_fallback_final": "A an\u00e1lise IA permanece indispon\u00edvel. Seu boletim \u00e9 v\u00e1lido, tente novamente mais tarde.",
 
         # ── app-em — footer ──
         "reminder_title": "Aviso importante:",
@@ -914,6 +938,12 @@ _LABELS: dict[str, dict[str, str]] = {
         "profile_label": "Profil",
         "pitch_loading": "HYBRIDE EM analysiert deine Kombination\u2026",
 
+        # ── V130 — Pitch fallback ──
+        "pitch_fallback_title": "Hybride-Analyse vor\u00fcbergehend nicht verf\u00fcgbar",
+        "pitch_fallback_message": "Ihr Tippschein ist gepr\u00fcft und optimiert. Die KI ist \u00fcberlastet, Sie k\u00f6nnen es erneut versuchen.",
+        "pitch_fallback_retry": "KI-Analyse erneut versuchen",
+        "pitch_fallback_final": "Die KI-Analyse bleibt nicht verf\u00fcgbar. Ihr Tippschein ist g\u00fcltig, versuchen Sie es sp\u00e4ter erneut.",
+
         # ── app-em — footer ──
         "reminder_title": "Wichtiger Hinweis:",
         "reminder_text": "Diese Kombinationen werden aus historischen Statistiken generiert. EuroMillions ist ein Glücksspiel und keine Methode garantiert Gewinne.",
@@ -1131,6 +1161,12 @@ _LABELS: dict[str, dict[str, str]] = {
         "grid_label": "Combinatie",
         "profile_label": "Profiel",
         "pitch_loading": "HYBRIDE EM analyseert je combinatie\u2026",
+
+        # ── V130 — Pitch fallback ──
+        "pitch_fallback_title": "Hybride-analyse tijdelijk niet beschikbaar",
+        "pitch_fallback_message": "Uw formulier is gevalideerd en geoptimaliseerd. De AI is overbelast, u kunt het opnieuw proberen.",
+        "pitch_fallback_retry": "AI-analyse opnieuw proberen",
+        "pitch_fallback_final": "De AI-analyse blijft niet beschikbaar. Uw formulier is geldig, probeer het later opnieuw.",
 
         # ── app-em — footer ──
         "reminder_title": "Belangrijke herinnering:",
