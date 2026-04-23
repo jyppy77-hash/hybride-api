@@ -125,7 +125,11 @@ class TestHandleChatLoto:
         """Flow normal → appel Gemini → source=gemini."""
         mock_client = MagicMock()
 
+        # V131.C.2 — patch.dict GEM_API_KEY="fake" restauré : chat_pipeline_shared.py:611
+        # legacy guard V131.A conservé pour chat_sql* (V131.D backlog) → test mock doit
+        # fournir la var sinon fallback early en CI Docker clean env (vs local shell Jyppy).
         with mock_vertex_client() as vc, \
+             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline.load_prompt", return_value="sys"), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value=None), \
@@ -153,7 +157,13 @@ class TestHandleChatLoto:
         """Gemini ServerError (5xx) → fallback."""
         mock_client = MagicMock()
 
+        # V131.C.2 — patch.dict GEM_API_KEY="fake" restauré : chat_pipeline_shared.py:611
+        # legacy guard V131.A conservé pour chat_sql* (V131.D backlog) → test mock doit
+        # fournir la var sinon fallback early en CI Docker clean env (vs local shell Jyppy).
+        # Sans ce patch, fallback atteint mais pour la mauvaise raison (GEM_API_KEY vide
+        # au lieu du ServerError voulu) — sémantique cassée, anti-régression V131.D.
         with mock_vertex_client() as vc, \
+             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline.load_prompt", return_value="sys"), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value=None), \
@@ -187,7 +197,11 @@ class TestHandleChatLoto:
             _msg("assistant", "Le 7 est sorti 45 fois."),
         ]
 
+        # V131.C.2 — patch.dict GEM_API_KEY="fake" restauré : chat_pipeline_shared.py:611
+        # legacy guard V131.A conservé pour chat_sql* (V131.D backlog) → test mock doit
+        # fournir la var sinon fallback early en CI Docker clean env (vs local shell Jyppy).
         with mock_vertex_client() as vc, \
+             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline.load_prompt", return_value="sys"), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value=None), \
