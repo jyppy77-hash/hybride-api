@@ -966,16 +966,23 @@ async def handle_pitch_common(grilles_data, http_client, lang,
         return {"success": False, "data": None, "error": "Prompt pitch introuvable", "status_code": 500}
 
     _breaker = breaker or gemini_breaker
-    # V131.A.1 HOTFIX — max_output_tokens 600 → 1500 : gemini-2.5-flash est
-    # plus verbeux que gemini-2.0-flash, JSON pitch tronqué à 600 tokens en
-    # test local (2 tentatives, 2 échecs, troncature au milieu d'une string
-    # du premier élément "pitchs"). 1500 donne de la marge sans risque coût
-    # significatif (tarification par token identique Vertex AI, réponses
-    # facturées au token effectif pas à max_output_tokens).
+    # V131.A.2 HOTFIX — max_output_tokens 1500 → 8000 : bug prod déterministe
+    # confirmé 1h14 post-deploy V131 Release 1.6.017 (13:43 local / 11:43 UTC).
+    # Pitch-grilles 502 systématique n=1 ET n=3 grilles, JSON tronqué
+    # finish_reason=MAX_TOKENS. V131.A.1 (1500) validé en TEST LOCAL n=1
+    # uniquement — prompts prod EM + pattern multi-grilles non testés =
+    # bug latent découvert en prod.
+    # Nouveau budget : ~1500 tokens/grille × 5 grilles (max générateur EM)
+    # + ~500 tokens JSON header/footer = 8000 tokens cible.
+    # Plafond gemini-2.5-flash = 8192 → marge sécurité 192 tokens.
+    # Coût identique (Vertex AI facture au token effectif, pas à
+    # max_output_tokens). Couvre la totalité gamme n=1 à n=5 sans risque
+    # troncature. V131.D refactorera en calcul dynamique 1500 × nb_grilles
+    # si besoin d'aller au-delà de 5 grilles ou optimiser latence.
     config = types.GenerateContentConfig(
         system_instruction=system_prompt,
         temperature=0.9,
-        max_output_tokens=1500,
+        max_output_tokens=8000,
     )
 
     # V131.A — retry V129.1 inline : 2/4/8s backoff + jitter [0,1s] + cap 14s
