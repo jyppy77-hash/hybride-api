@@ -923,7 +923,12 @@ async def handle_pitch_common(grilles_data, http_client, lang,
                               context_coro,
                               load_prompt_fn, prompt_name,
                               log_prefix, breaker=None,
-                              timeout_context=30, timeout_gemini=10,  # V129.1: 15→10
+                              timeout_context=30,
+                              # V131.A.3 — default 10s conservé (test_v129_1_calibration.py:181).
+                              # Call sites pitch DOIVENT override à 45s (V131.A.2 max_output_tokens=8000
+                              # dépasse 10s avec gemini-2.5-flash → timeout Vertex → 503).
+                              # Cf. docs/DIAGNOSTIC_V131_A_2_503_PITCH.md
+                              timeout_gemini=10,  # V129.1: 15→10
                               max_retries: int = 0):
     """
     Common pitch pipeline after validation.

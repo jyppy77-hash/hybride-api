@@ -290,4 +290,8 @@ async def handle_pitch(grilles: list, http_client, lang: str = "fr") -> dict:
         load_prompt_fn=load_prompt, prompt_name="PITCH_GRILLE",
         log_prefix="[PITCH]", breaker=gemini_breaker_pitch,
         max_retries=2,  # V128: 3 total attempts (initial + 2 retries) on 429
+        # V131.A.3 HOTFIX — timeout_gemini 10s → 45s : 8000 tokens (V131.A.2)
+        # dépasse systématiquement 10s avec gemini-2.5-flash, timeout Vertex → 503.
+        # Cf. docs/DIAGNOSTIC_V131_A_2_503_PITCH.md
+        timeout_gemini=45,
     )
