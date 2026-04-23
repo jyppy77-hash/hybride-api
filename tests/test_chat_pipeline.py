@@ -10,6 +10,8 @@ from unittest.mock import AsyncMock, patch, MagicMock
 
 import pytest
 
+from google.genai import errors as genai_errors
+
 from services.chat_pipeline import handle_chat, handle_pitch
 from services.chat_utils import FALLBACK_RESPONSE
 
@@ -119,15 +121,12 @@ class TestHandleChatLoto:
         assert result["source"] == "hybride_oor"
 
     @pytest.mark.asyncio
-    async def test_gemini_ok(self):
+    async def test_gemini_ok(self, mock_vertex_client):
         """Flow normal → appel Gemini → source=gemini."""
         mock_client = MagicMock()
 
-        async def fake_call(*args, **kwargs):
-            return _make_gemini_response("Voici les stats Loto")
-
-        with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
+        with mock_vertex_client() as vc, \
+             patch("services.chat_pipeline.load_prompt", return_value="sys"), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value=None), \
              patch("services.chat_pipeline._detect_salutation", return_value=False), \
@@ -143,23 +142,19 @@ class TestHandleChatLoto:
              patch("services.chat_pipeline._detect_out_of_range", return_value=(None, None)), \
              patch("services.chat_pipeline._detect_numero", return_value=(None, None)), \
              patch("services.chat_pipeline._generate_sql", return_value=None), \
-             patch("services.chat_pipeline._build_session_context", return_value=""), \
-             patch("services.chat_pipeline.gemini_breaker") as mock_breaker:
-            mock_breaker.call = fake_call
+             patch("services.chat_pipeline._build_session_context", return_value=""):
+            vc.set_response(text="Voici les stats Loto")
             result = await handle_chat("bonjour", [], "loto", mock_client)
         assert result["source"] == "gemini"
         assert "stats Loto" in result["response"]
 
     @pytest.mark.asyncio
-    async def test_gemini_error_returns_fallback(self):
-        """Gemini HTTP 500 → fallback."""
+    async def test_gemini_error_returns_fallback(self, mock_vertex_client):
+        """Gemini ServerError (5xx) → fallback."""
         mock_client = MagicMock()
 
-        async def fake_call(*args, **kwargs):
-            return _make_gemini_response("", status=500)
-
-        with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
+        with mock_vertex_client() as vc, \
+             patch("services.chat_pipeline.load_prompt", return_value="sys"), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value=None), \
              patch("services.chat_pipeline._detect_salutation", return_value=False), \
@@ -175,27 +170,25 @@ class TestHandleChatLoto:
              patch("services.chat_pipeline._detect_out_of_range", return_value=(None, None)), \
              patch("services.chat_pipeline._detect_numero", return_value=(None, None)), \
              patch("services.chat_pipeline._generate_sql", return_value=None), \
-             patch("services.chat_pipeline._build_session_context", return_value=""), \
-             patch("services.chat_pipeline.gemini_breaker") as mock_breaker:
-            mock_breaker.call = fake_call
+             patch("services.chat_pipeline._build_session_context", return_value=""):
+            vc.set_error(genai_errors.ServerError(
+                500, {"error": {"code": 500, "message": "test", "status": "INTERNAL"}},
+            ))
             result = await handle_chat("bonjour", [], "loto", mock_client)
         assert result["source"] == "fallback"
 
     @pytest.mark.asyncio
-    async def test_continuation_oui(self):
+    async def test_continuation_oui(self, mock_vertex_client):
         """'oui' with history → continuation mode, still goes to Gemini."""
         mock_client = MagicMock()
-
-        async def fake_call(*args, **kwargs):
-            return _make_gemini_response("Suite de la reponse")
 
         history = [
             _msg("user", "le numéro 7 sort souvent ?"),
             _msg("assistant", "Le 7 est sorti 45 fois."),
         ]
 
-        with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
+        with mock_vertex_client() as vc, \
+             patch("services.chat_pipeline.load_prompt", return_value="sys"), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value=None), \
              patch("services.chat_pipeline._detect_salutation", return_value=False), \
@@ -206,9 +199,8 @@ class TestHandleChatLoto:
              patch("services.chat_pipeline._detect_out_of_range", return_value=(None, None)), \
              patch("services.chat_pipeline._detect_numero", return_value=(None, None)), \
              patch("services.chat_pipeline._generate_sql", return_value=None), \
-             patch("services.chat_pipeline._build_session_context", return_value=""), \
-             patch("services.chat_pipeline.gemini_breaker") as mock_breaker:
-            mock_breaker.call = fake_call
+             patch("services.chat_pipeline._build_session_context", return_value=""):
+            vc.set_response(text="Suite de la reponse")
             result = await handle_chat("oui", history, "loto", mock_client)
         assert result["source"] == "gemini"
 
@@ -312,23 +304,18 @@ class TestHandlePitchLoto:
         assert "entre 1 et 49" in result["error"]
 
     @pytest.mark.asyncio
-    async def test_pitch_ok(self):
+    async def test_pitch_ok(self, mock_vertex_client):
         """Pitch complet avec mock Gemini → success."""
         mock_client = MagicMock()
-        gemini_resp = _make_gemini_response('{"pitchs": ["Super grille !"]}')
 
-        async def fake_call(*args, **kwargs):
-            return gemini_resp
-
-        # V127 — pitch utilise gemini_breaker_pitch (pas l'alias chat)
-        with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
-             patch("services.chat_pipeline.prepare_grilles_pitch_context", new_callable=AsyncMock, return_value="ctx"), \
-             patch("services.chat_pipeline.gemini_breaker_pitch") as mock_breaker:
-            mock_breaker.call = fake_call
+        with mock_vertex_client() as vc, \
+             patch("services.chat_pipeline.load_prompt", return_value="sys"), \
+             patch("services.chat_pipeline.prepare_grilles_pitch_context",
+                   new_callable=AsyncMock, return_value="ctx"):
             # V127 — clear cache pour ne pas avoir un hit d'un test précédent
             from services.gemini_cache import pitch_cache
             pitch_cache.clear()
+            vc.set_response(text='{"pitchs": ["Super grille !"]}')
             result = await handle_pitch(
                 [_grille([5, 15, 25, 35, 45])],
                 mock_client,

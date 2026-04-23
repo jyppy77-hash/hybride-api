@@ -1,22 +1,71 @@
 """
-Shared Gemini enrichment logic — V71 R3c / V73 F03.
+Shared Gemini enrichment logic — V71 R3c / V73 F03 / V131.A google-genai SDK.
 
 Extracts the common Gemini call → parse → track → fallback flow
 from gemini.py and em_gemini.py. Both files delegate to
 _enrich_analysis_base() with game-specific parameters.
 
-F03: _gemini_call_with_fallback() extracts the shared try/except skeleton
-(CircuitOpen/Timeout/Exception → fallback) used by 3 call sites.
+V131.A — Migration AI Studio httpx → Google Gen AI SDK (`google-genai`) targeting
+Vertex AI. Authentication via ADC (Application Default Credentials) : SA Cloud Run
+en prod (`roles/aiplatform.user` attached), `gcloud auth application-default login`
+en local. `genai.Client(vertexai=True, project, location)` détecte automatiquement
+les credentials ambiants — aucune divergence code local/prod.
+
+Modèle cible : `gemini-2.5-flash` (région `europe-west1`). Le SDK A
+`vertexai.generative_models` est DEPRECATED par Google au 24/06/2026 — ce module
+utilise le SDK B `google-genai` qui est le successeur supporté.
 """
 
-import os
+import asyncio
 import logging
 import time
-import httpx
+
+import httpx  # V131.A: conservé pour rétrocompat signatures publiques (http_client param)
+
+from google import genai
+from google.genai import errors as genai_errors, types
 
 from services.circuit_breaker import gemini_breaker, CircuitOpenError
 
 logger = logging.getLogger(__name__)
+
+# V131.A — Config Vertex AI figée (projet unique LotoIA + modèle unique)
+_VERTEX_PROJECT = "gen-lang-client-0680927607"
+_VERTEX_LOCATION = "europe-west1"
+_VERTEX_MODEL_NAME = "gemini-2.5-flash"
+
+# V131.A — Client SDK B singleton lazy. Pas au module-load pour préserver
+# les tests offline (collect-only sans ADC). Pas de thread-safety stricte
+# nécessaire : race bénigne (double assignment idempotent + `genai.Client(...)`
+# stateless côté config, pas d'I/O au constructeur).
+_CLIENT: "genai.Client | None" = None
+
+
+def _get_client() -> "genai.Client":
+    """V131.A — Retourne le singleton `genai.Client` Vertex AI (lazy init).
+
+    Utilise ADC :
+      - Prod Cloud Run : Service Account attaché (810368514982-compute@...)
+        avec rôle `roles/aiplatform.user` (binding posé 22/04/2026).
+      - Local dev : `gcloud auth application-default login` + quota project
+        = `gen-lang-client-0680927607`.
+
+    Réutilisé par `gemini.py` (stream_gemini_chat) et `chat_pipeline_gemini.py`
+    (call_gemini_and_respond, handle_pitch_common).
+    """
+    global _CLIENT
+    if _CLIENT is None:
+        _CLIENT = genai.Client(
+            vertexai=True,
+            project=_VERTEX_PROJECT,
+            location=_VERTEX_LOCATION,
+        )
+        logger.info(
+            "[VERTEX] genai.Client init OK project=%s location=%s model=%s",
+            _VERTEX_PROJECT, _VERTEX_LOCATION, _VERTEX_MODEL_NAME,
+        )
+    return _CLIENT
+
 
 # F12: track fire-and-forget tasks for graceful shutdown
 _PENDING_TASKS: set = set()
@@ -30,10 +79,12 @@ def _track_task(task):
 
 async def await_pending_tasks(timeout: float = 5.0):
     """Await all pending fire-and-forget tasks (for graceful shutdown)."""
-    import asyncio
     if _PENDING_TASKS:
         await asyncio.wait(_PENDING_TASKS, timeout=timeout)
 
+
+# V131.A — DEPRECATED : URL AI Studio historique. Usage legacy par chat_sql*
+# (HORS SCOPE V131.A, migration prévue V131.D). Suppression définitive V131.D.
 GEMINI_MODEL_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 
 # Shared i18n system instructions for enrichment (6 languages).
@@ -81,47 +132,44 @@ ENRICHMENT_INSTRUCTIONS = {
 }
 
 
-async def _gemini_call_with_fallback(
-    coro,
-    *,
-    fallback_fn,
-    log_prefix: str = "[GEMINI]",
-    breaker=None,
-):
+# V131.A — `_gemini_call_with_fallback` supprimé. Ses 3 callers (enrich_analysis_base
+# dans ce fichier, call_gemini_and_respond + handle_pitch_common dans chat_pipeline_gemini.py)
+# migrent vers Google Gen AI SDK avec try/except inline. Raison : le wrapper mélangeait
+# la sémantique "appel Gemini httpx.post" avec un breaker state machine, alors qu'en SDK B
+# chaque call site a une logique de gestion exceptions spécifique (streaming vs pitch-retry
+# vs enrichment simple). Lisibilité > DRY sur 3 usages avec mapping exceptions simplifié
+# (3 classes SDK B vs 6 classes SDK A).
+
+
+def _is_rate_limit_error(e: Exception) -> bool:
+    """V131.A — détection 429 hybride : .code int (primary) + .status string (fallback).
+
+    `google.genai.errors.ClientError` expose `.code: int` (assigné dans APIError.__init__)
+    et `.status: str` (canonical gRPC status, ex "RESOURCE_EXHAUSTED" pour 429).
+    Stratégie défensive sur évolution future API.
     """
-    F03: shared try/except skeleton for Gemini calls.
+    if getattr(e, "code", None) == 429:
+        return True
+    status = getattr(e, "status", "")
+    return status == "RESOURCE_EXHAUSTED" or "429" in str(e)
 
-    Wraps a coroutine (the Gemini HTTP call) with CircuitOpen/Timeout/Exception
-    handling, returning a fallback on failure.
 
-    Args:
-        coro: awaitable — the Gemini breaker.call() coroutine
-        fallback_fn: callable(error_type: str) → fallback value
-            error_type is one of: "circuit_open", "timeout", "error"
-        log_prefix: for logging
-        breaker: unused (kept for API symmetry, caller passes breaker to coro)
-
-    Returns:
-        httpx.Response on success, or the result of fallback_fn(error_type) on failure.
-    """
+def _track_error(t0: float, call_type: str, lang: str) -> None:
+    """V131.A — helper tracking d'erreur Vertex (fire-and-forget)."""
+    _dur_ms = (time.monotonic() - t0) * 1000
     try:
-        return await coro
-    except CircuitOpenError:
-        logger.warning(f"{log_prefix} Circuit breaker ouvert — fallback")
-        return fallback_fn("circuit_open")
-    except httpx.TimeoutException:
-        logger.warning(f"{log_prefix} Timeout Gemini — fallback")
-        return fallback_fn("timeout")
-    except Exception as e:
-        logger.error(f"{log_prefix} Erreur Gemini: {e}")
-        return fallback_fn("error")
+        from services.gcp_monitoring import track_gemini_call
+        _track_task(asyncio.ensure_future(track_gemini_call(
+            _dur_ms, error=True, call_type=call_type, lang=lang)))
+    except Exception:
+        pass
 
 
 async def enrich_analysis_base(
     analysis_local: str,
     prompt: str,
     *,
-    http_client: httpx.AsyncClient,
+    http_client: httpx.AsyncClient | None = None,  # V131.A: DEPRECATED, ignoré. Cleanup V131.D.
     lang: str = "fr",
     instructions: dict | None = None,
     call_type: str = "enrichment",
@@ -131,10 +179,15 @@ async def enrich_analysis_base(
     """
     Shared Gemini enrichment: call → parse → track → fallback.
 
+    V131.A — Migration AI Studio httpx → google-genai SDK (Vertex AI). Auth ADC
+    (pas de clé). `http_client` param conservé rétrocompat mais ignoré.
+    `contents=str` (single-turn simple) — SDK B accepte str direct pour prompts
+    sans historique multi-turn.
+
     Args:
         analysis_local: raw analysis text (fallback value)
         prompt: full prompt to send to Gemini (template + analysis)
-        http_client: httpx async client
+        http_client: DEPRECATED V131.A — argument ignoré, cleanup V131.D
         lang: language code for system instruction
         instructions: i18n dict (defaults to ENRICHMENT_INSTRUCTIONS)
         call_type: tracking call type label
@@ -147,85 +200,96 @@ async def enrich_analysis_base(
     _instructions = instructions or ENRICHMENT_INSTRUCTIONS
     _breaker = breaker or gemini_breaker
 
-    gem_api_key = os.environ.get("GEM_API_KEY") or os.environ.get("GEMINI_API_KEY")
-    if not gem_api_key:
-        logger.warning(f"{log_prefix} GEM_API_KEY non configuree - fallback local")
-        return {"analysis_enriched": analysis_local, "source": "hybride_local"}
+    # V131.A — breaker state check manuel (ex-`_breaker.call` qui wrappait httpx.post)
+    if _breaker.state == _breaker.OPEN:
+        logger.warning(f"{log_prefix} Circuit breaker ouvert — fallback")
+        return {"analysis_enriched": analysis_local, "source": "fallback_circuit"}
 
     system_instruction_text = _instructions.get(lang, _instructions["fr"])
-
-    logger.debug(f"{log_prefix} Prompt construit ({len(prompt)} chars), appel Gemini...")
+    logger.debug(f"{log_prefix} Prompt construit ({len(prompt)} chars), appel Gemini Vertex...")
 
     _fallback_local = {"analysis_enriched": analysis_local, "source": "hybride_local"}
+    _t0 = time.monotonic()
 
-    def _fallback(error_type):
-        if error_type == "circuit_open":
-            return {"analysis_enriched": analysis_local, "source": "fallback_circuit"}
+    try:
+        client = _get_client()
+        config = types.GenerateContentConfig(
+            system_instruction=system_instruction_text,
+            temperature=0.7,
+            max_output_tokens=250,
+        )
+        # V131.A — timeout strict 10s (conservé V129.1) via asyncio.wait_for :
+        # SDK B n'a pas de param timeout natif sur generate_content.
+        response = await asyncio.wait_for(
+            client.aio.models.generate_content(
+                model=_VERTEX_MODEL_NAME,
+                contents=prompt,
+                config=config,
+            ),
+            timeout=10.0,
+        )
+    except CircuitOpenError:
+        # Race : state flipped entre check et appel — traiter comme circuit
+        logger.warning(f"{log_prefix} Circuit breaker ouvert (race) — fallback")
+        return {"analysis_enriched": analysis_local, "source": "fallback_circuit"}
+    except asyncio.TimeoutError:
+        logger.warning(f"{log_prefix} Timeout Gemini Vertex (10s) — fallback")
+        _breaker._record_failure()
+        _track_error(_t0, call_type, lang)
+        return _fallback_local
+    except genai_errors.ClientError as e:
+        if _is_rate_limit_error(e):
+            logger.warning(f"{log_prefix} Vertex 429 ResourceExhausted — fallback")
+        else:
+            logger.warning(f"{log_prefix} Vertex ClientError {getattr(e, 'code', '?')}: {e}")
+        _breaker._record_failure()
+        _track_error(_t0, call_type, lang)
+        return _fallback_local
+    except genai_errors.ServerError as e:
+        logger.warning(f"{log_prefix} Vertex ServerError {getattr(e, 'code', '?')}: {e}")
+        _breaker._record_failure()
+        _track_error(_t0, call_type, lang)
+        return _fallback_local
+    except genai_errors.APIError as e:
+        logger.error(f"{log_prefix} Vertex APIError SDK: {type(e).__name__}: {e}")
+        _breaker._record_failure()
+        _track_error(_t0, call_type, lang)
+        return _fallback_local
+    except Exception as e:
+        logger.error(f"{log_prefix} Exception inattendue Vertex: {type(e).__name__}: {e}")
+        _track_error(_t0, call_type, lang)
         return _fallback_local
 
-    _t0 = time.monotonic()
-    result = await _gemini_call_with_fallback(
-        _breaker.call(
-            http_client,
-            GEMINI_MODEL_URL,
-            headers={
-                "Content-Type": "application/json",
-                "x-goog-api-key": gem_api_key,
-            },
-            json={
-                "systemInstruction": {
-                    "parts": [{"text": system_instruction_text}]
-                },
-                "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {
-                    "temperature": 0.7,
-                    "maxOutputTokens": 250,
-                },
-            },
-            timeout=10.0,  # V129.1: strict 10s explicit (fix hang 15s observed
-                           # in half_open — was falling back to AsyncClient default 20s).
-        ),
-        fallback_fn=_fallback,
-        log_prefix=log_prefix,
-    )
-
-    # If fallback was returned (dict, not httpx.Response)
-    if isinstance(result, dict):
-        return result
-
-    response = result
+    # Parse réponse SDK B
     _dur_ms = (time.monotonic() - _t0) * 1000
-    if response.status_code == 200:
-        data = response.json()
-        _usage = data.get("usageMetadata", {})
-        _tin = _usage.get("promptTokenCount", 0)
-        _tout = _usage.get("candidatesTokenCount", 0)
-        try:
-            from services.gcp_monitoring import track_gemini_call
-            import asyncio
-            _track_task(asyncio.ensure_future(track_gemini_call(
-                _dur_ms, _tin, _tout, call_type=call_type, lang=lang)))
-        except Exception:
-            pass
-        candidates = data.get("candidates", [])
-        if candidates:
-            content = candidates[0].get("content", {})
-            parts = content.get("parts", [])
-            if parts:
-                enriched_text = parts[0].get("text", "").strip()
-                if enriched_text:
-                    logger.info(f"{log_prefix} Gemini OK")
-                    return {"analysis_enriched": enriched_text, "source": "gemini_enriched"}
+    try:
+        enriched_text = (response.text or "").strip()
+    except (ValueError, AttributeError):
+        # SAFETY/RECITATION block : .text lève ValueError
+        # SAFETY = pas un vrai succès métier, PAS de record_success
+        logger.warning(f"{log_prefix} Vertex response blocked (SAFETY/RECITATION) — fallback")
+        _track_error(_t0, call_type, lang)
+        return _fallback_local
 
-        logger.warning(f"{log_prefix} Reponse Gemini incomplete — fallback local")
-    else:
-        logger.warning(f"{log_prefix} Reponse Gemini HTTP {response.status_code}")
-        try:
-            from services.gcp_monitoring import track_gemini_call
-            import asyncio
-            _track_task(asyncio.ensure_future(track_gemini_call(
-                _dur_ms, error=True, call_type=call_type, lang=lang)))
-        except Exception:
-            pass
+    # V131.A FIX — record_success dès que round-trip OK (indépendant contenu).
+    # Correction Jyppy CC Max : un round-trip réussi n'est pas une failure
+    # infrastructure si le contenu est vide. Sémantique préservée vs AVANT.
+    _breaker._record_success()
 
+    # Tracking usage (attribute access SDK B vs dict AI Studio)
+    _usage = getattr(response, "usage_metadata", None)
+    _tin = getattr(_usage, "prompt_token_count", 0) if _usage else 0
+    _tout = getattr(_usage, "candidates_token_count", 0) if _usage else 0
+    try:
+        from services.gcp_monitoring import track_gemini_call
+        _track_task(asyncio.ensure_future(track_gemini_call(
+            _dur_ms, _tin, _tout, call_type=call_type, lang=lang)))
+    except Exception:
+        pass
+
+    if enriched_text:
+        logger.info(f"{log_prefix} Gemini Vertex OK")
+        return {"analysis_enriched": enriched_text, "source": "gemini_enriched"}
+
+    logger.warning(f"{log_prefix} Reponse Gemini vide — fallback local")
     return _fallback_local

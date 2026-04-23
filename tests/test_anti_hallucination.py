@@ -12,6 +12,8 @@ import pytest
 from datetime import date
 from unittest.mock import AsyncMock, patch, MagicMock
 
+from google.genai import errors as genai_errors
+
 # Ensure DB env vars for import safety
 os.environ.setdefault("DB_USER", "test")
 os.environ.setdefault("DB_PASS", "test")
@@ -481,21 +483,16 @@ from services.chat_pipeline_gemini import call_gemini_and_respond
 
 
 class TestR01NonStreamingCheck:
-    """V100 R01: _check_sql_number_hallucination is called in non-streaming path."""
+    """V100 R01 / V131.B refactorisé google-genai SDK : _check_sql_number_hallucination
+    is called in non-streaming path."""
 
     @pytest.mark.asyncio
-    async def test_check_called_on_success(self):
+    async def test_check_called_on_success(self, mock_vertex_client):
         """call_gemini_and_respond calls hallucination check after successful response."""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [{"content": {"parts": [{"text": "Le tirage : 10 - 22 - 23 - 25 - 46."}]}}],
-        }
-
         ctx = {
             "mode": "balanced",
             "_http_client": MagicMock(),
-            "gem_api_key": "fake",
+            "gem_api_key": "fake",  # V131.A DEPRECATED mais signature rétrocompat
             "system_prompt": "test",
             "contents": [],
             "insult_prefix": "",
@@ -508,8 +505,9 @@ class TestR01NonStreamingCheck:
             },
         }
 
-        with patch("services.chat_pipeline_gemini._gemini_call_with_fallback", return_value=mock_response), \
+        with mock_vertex_client() as vc, \
              patch("services.chat_pipeline_gemini._check_sql_number_hallucination") as mock_check:
+            vc.set_response(text="Le tirage : 10 - 22 - 23 - 25 - 46.")
             await call_gemini_and_respond(
                 ctx, "fallback", "[TEST]", "loto", "fr", "test", "home",
             )
@@ -520,8 +518,8 @@ class TestR01NonStreamingCheck:
             assert args[2] == "1"  # phase
 
     @pytest.mark.asyncio
-    async def test_check_not_called_on_fallback(self):
-        """call_gemini_and_respond does NOT call hallucination check on fallback."""
+    async def test_check_not_called_on_fallback(self, mock_vertex_client):
+        """Gemini ServerError → fallback path, hallucination check NOT called."""
         ctx = {
             "mode": "balanced",
             "_http_client": MagicMock(),
@@ -532,10 +530,13 @@ class TestR01NonStreamingCheck:
             "history": [],
             "_chat_meta": {"enrichment_context": "", "phase": "1", "t0": 0, "lang": "fr"},
         }
-        fallback_result = {"response": "fallback", "source": "fallback", "mode": "balanced"}
 
-        with patch("services.chat_pipeline_gemini._gemini_call_with_fallback", return_value=fallback_result), \
+        with mock_vertex_client() as vc, \
              patch("services.chat_pipeline_gemini._check_sql_number_hallucination") as mock_check:
+            # ServerError (500) déclenche fallback avant parse .text — check jamais atteint
+            vc.set_error(genai_errors.ServerError(
+                500, {"error": {"code": 500, "message": "test", "status": "INTERNAL"}},
+            ))
             result = await call_gemini_and_respond(
                 ctx, "fallback", "[TEST]", "loto", "fr", "test", "home",
             )
@@ -543,14 +544,8 @@ class TestR01NonStreamingCheck:
             assert result["source"] == "fallback"
 
     @pytest.mark.asyncio
-    async def test_check_no_crash_without_meta(self):
+    async def test_check_no_crash_without_meta(self, mock_vertex_client):
         """call_gemini_and_respond handles missing _chat_meta gracefully."""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [{"content": {"parts": [{"text": "OK"}]}}],
-        }
-
         ctx = {
             "mode": "balanced",
             "_http_client": MagicMock(),
@@ -561,8 +556,9 @@ class TestR01NonStreamingCheck:
             "history": [],
         }
 
-        with patch("services.chat_pipeline_gemini._gemini_call_with_fallback", return_value=mock_response), \
+        with mock_vertex_client() as vc, \
              patch("services.chat_pipeline_gemini._check_sql_number_hallucination") as mock_check:
+            vc.set_response(text="OK")
             result = await call_gemini_and_respond(
                 ctx, "fallback", "[TEST]", "loto", "fr", "test", "home",
             )
@@ -760,17 +756,11 @@ class TestV101StrictI18n:
 
 
 class TestV101NonStreamingIntegration:
-    """V101: non-streaming path replaces response on invented hallucination."""
+    """V101 / V131.B refactorisé : non-streaming path replaces response on invented hallucination."""
 
     @pytest.mark.asyncio
-    async def test_response_replaced_on_invented(self):
+    async def test_response_replaced_on_invented(self, mock_vertex_client):
         """call_gemini_and_respond replaces text when invented numbers detected."""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [{"content": {"parts": [{"text": "Le tirage : 12 - 14 - 22 - 31 - 44."}]}}],
-        }
-
         ctx = {
             "mode": "balanced",
             "_http_client": MagicMock(),
@@ -791,7 +781,8 @@ class TestV101NonStreamingIntegration:
             },
         }
 
-        with patch("services.chat_pipeline_gemini._gemini_call_with_fallback", return_value=mock_response):
+        with mock_vertex_client() as vc:
+            vc.set_response(text="Le tirage : 12 - 14 - 22 - 31 - 44.")
             result = await call_gemini_and_respond(
                 ctx, "fallback", "[TEST]", "loto", "fr", "test", "home",
             )
@@ -802,14 +793,8 @@ class TestV101NonStreamingIntegration:
             assert result["source"] == "gemini"
 
     @pytest.mark.asyncio
-    async def test_response_unchanged_when_no_hallucination(self):
+    async def test_response_unchanged_when_no_hallucination(self, mock_vertex_client):
         """call_gemini_and_respond keeps original text when no hallucination."""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [{"content": {"parts": [{"text": "Le tirage : 10 - 22 - 23 - 25 - 46."}]}}],
-        }
-
         ctx = {
             "mode": "balanced",
             "_http_client": MagicMock(),
@@ -830,7 +815,8 @@ class TestV101NonStreamingIntegration:
             },
         }
 
-        with patch("services.chat_pipeline_gemini._gemini_call_with_fallback", return_value=mock_response):
+        with mock_vertex_client() as vc:
+            vc.set_response(text="Le tirage : 10 - 22 - 23 - 25 - 46.")
             result = await call_gemini_and_respond(
                 ctx, "fallback", "[TEST]", "loto", "fr", "test", "home",
             )

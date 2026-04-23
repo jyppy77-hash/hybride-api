@@ -1,16 +1,16 @@
 # CLAUDE.md — LotoIA HYBRIDE-API
 
 > Auto-loaded by Claude Code at session start. Source of truth for project context.
-> Last updated: 20/04/2026 (V126.1)
+> Last updated: 23/04/2026 (V131.C)
 
 ---
 
 ## Project Identity
 
 - **Name**: LotoIA (lotoia.fr) — Statistical analysis platform for French Loto & EuroMillions
-- **Stack**: FastAPI / Python 3.13 / MariaDB (Cloud SQL) / Gemini 2.0 Flash / GCP Cloud Run (europe-west1)
-- **Version**: V126.1 — Release 1.6.010
-- **Tests**: 5171 (129 files, coverage 78%)
+- **Stack**: FastAPI / Python 3.13 / MariaDB (Cloud SQL) / Vertex AI Gemini 2.5 Flash (google-genai SDK) / GCP Cloud Run (europe-west1)
+- **Version**: V131.C — Release 1.6.017
+- **Tests**: 5236 (129 files, coverage 78%)
 - **Languages**: 6 (FR, EN, ES, PT, DE, NL) — all active
 - **EuroMillions**: LIVE since 15/03/2026 (EM_PUBLIC_ACCESS=true)
 - **Owner**: Jyppy (Jean-Philippe Godard), solo developer, auto-entrepreneur EmovisIA

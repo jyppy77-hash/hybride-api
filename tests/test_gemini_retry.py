@@ -1,16 +1,17 @@
 """
-Tests for stream_gemini_chat retry on timeout (F06 audit V71).
+Tests for stream_gemini_chat retry on timeout (F06 audit V71 / V131.B google-genai SDK).
+
+V131.B — mocks migrés de httpx.AsyncClient.stream vers
+client.aio.models.generate_content_stream via fixture mock_vertex_client.
+Retry pattern préservé : 2 attempts max + backoff 2s sur asyncio.TimeoutError.
 """
 
 import asyncio
-import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-import httpx
 
 from services.gemini import stream_gemini_chat
-from services.circuit_breaker import CircuitOpenError
 
 
 async def _collect(gen):
@@ -21,90 +22,60 @@ async def _collect(gen):
     return chunks
 
 
-def _make_mock_response(status_code=200, lines=None):
-    """Build a mock streaming response."""
-    if lines is None:
-        lines = [
-            'data: {"candidates":[{"content":{"parts":[{"text":"hello"}]}}]}',
-            'data: {"usageMetadata":{"promptTokenCount":10,"candidatesTokenCount":5}}',
-        ]
-    resp = MagicMock()
-    resp.status_code = status_code
-    resp.aiter_lines = lambda: AsyncIterator(lines)
-    return resp
-
-
-class AsyncIterator:
-    """Helper to make a list behave as an async iterator."""
-    def __init__(self, items):
-        self._items = iter(items)
-    def __aiter__(self):
-        return self
-    async def __anext__(self):
-        try:
-            return next(self._items)
-        except StopIteration:
-            raise StopAsyncIteration
+async def _gen_hello():
+    """Async generator yieldant un chunk 'hello' + usage_metadata."""
+    chunk = MagicMock()
+    chunk.text = "hello"
+    chunk.usage_metadata = MagicMock(prompt_token_count=10, candidates_token_count=5)
+    yield chunk
 
 
 @pytest.mark.asyncio
-async def test_retry_success_after_timeout():
-    """First attempt times out, second succeeds → chunks returned."""
-    call_count = 0
-
-    class FakeClient:
-        def stream(self, *args, **kwargs):
-            nonlocal call_count
-            call_count += 1
-            if call_count == 1:
-                raise httpx.TimeoutException("timeout")
-            return _AsyncCM(_make_mock_response())
-
-    with patch("services.gemini.gemini_breaker") as mock_breaker, \
+async def test_retry_success_after_timeout(mock_vertex_client):
+    """First attempt raises asyncio.TimeoutError, second succeeds → chunks returned."""
+    with mock_vertex_client() as vc, \
+         patch("services.gemini.gemini_breaker") as mock_breaker, \
          patch("services.gemini.asyncio.sleep", new_callable=AsyncMock) as mock_sleep:
+        # V131.B pattern validé empiriquement : side_effect=[exc, async_gen_instance]
+        # 1er await → TimeoutError, 2ème await → async_generator itérable
+        vc.client.aio.models.generate_content_stream = AsyncMock(
+            side_effect=[asyncio.TimeoutError(), _gen_hello()]
+        )
         mock_breaker.state = "closed"
         mock_breaker.OPEN = "open"
         mock_breaker._record_success = MagicMock()
         mock_breaker._record_failure = MagicMock()
 
         chunks = await _collect(stream_gemini_chat(
-            FakeClient(), "fake-key", "system", [{"role": "user", "parts": [{"text": "hi"}]}],
+            MagicMock(), "fake-key", "system",
+            [{"role": "user", "parts": [{"text": "hi"}]}],
             timeout=5.0,
         ))
 
-    assert call_count == 2
     assert chunks == ["hello"]
+    assert vc.client.aio.models.generate_content_stream.await_count == 2
     mock_sleep.assert_awaited_once_with(2)
     mock_breaker._record_success.assert_called_once()
 
 
 @pytest.mark.asyncio
-async def test_retry_both_timeout_raises():
-    """Both attempts time out → TimeoutException raised, failure recorded."""
-    class FakeClient:
-        def stream(self, *args, **kwargs):
-            raise httpx.TimeoutException("timeout")
-
-    with patch("services.gemini.gemini_breaker") as mock_breaker, \
+async def test_retry_both_timeout_raises(mock_vertex_client):
+    """Both attempts raise asyncio.TimeoutError → raises, failure recorded."""
+    with mock_vertex_client() as vc, \
+         patch("services.gemini.gemini_breaker") as mock_breaker, \
          patch("services.gemini.asyncio.sleep", new_callable=AsyncMock):
+        vc.client.aio.models.generate_content_stream = AsyncMock(
+            side_effect=asyncio.TimeoutError()
+        )
         mock_breaker.state = "closed"
         mock_breaker.OPEN = "open"
         mock_breaker._record_failure = MagicMock()
 
-        with pytest.raises(httpx.TimeoutException):
+        with pytest.raises(asyncio.TimeoutError):
             await _collect(stream_gemini_chat(
-                FakeClient(), "fake-key", "system", [{"role": "user", "parts": [{"text": "hi"}]}],
+                MagicMock(), "fake-key", "system",
+                [{"role": "user", "parts": [{"text": "hi"}]}],
                 timeout=5.0,
             ))
 
     mock_breaker._record_failure.assert_called_once()
-
-
-class _AsyncCM:
-    """Async context manager wrapper for mock responses."""
-    def __init__(self, resp):
-        self._resp = resp
-    async def __aenter__(self):
-        return self._resp
-    async def __aexit__(self, *args):
-        pass

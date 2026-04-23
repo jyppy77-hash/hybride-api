@@ -10,8 +10,11 @@ python-multipart==0.0.20
 aiomysql==0.3.2
 cryptography==43.0.3
 
-# HTTP client (Gemini API)
+# HTTP client (legacy : chat_sql* AI Studio path, migration V131.D)
 httpx==0.28.1
+
+# Google Gen AI SDK (Vertex AI — V131.A migration gemini-2.5-flash europe-west1)
+google-genai>=1.73.0,<2.0.0
 
 # Rate limiting
 slowapi==0.1.9

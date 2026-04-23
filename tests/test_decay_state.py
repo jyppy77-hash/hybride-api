@@ -388,8 +388,12 @@ class TestDecayChatbotPipelineIntegration:
             }),
         )
 
-    def _run_loto_generation(self, mock_decay, grids=None):
-        """ExitStack helper — enter all patches for Loto Phase G, return breaker mock."""
+    def _run_loto_generation(self, mock_decay, vc, grids=None):
+        """ExitStack helper — enter all patches for Loto Phase G.
+
+        V131.B : vc = VertexController de la fixture mock_vertex_client (SDK B mock).
+        Configure vc.set_response pour simuler réponse Gemini Phase G.
+        """
         from contextlib import ExitStack
         stack = ExitStack()
         for p in self._base_patches_loto():
@@ -400,12 +404,15 @@ class TestDecayChatbotPipelineIntegration:
         stack.enter_context(patch("services.chat_pipeline_shared.get_decay_state", mock_decay))
         stack.enter_context(patch("db_cloudsql.get_connection", return_value=AsyncMock()))
         stack.enter_context(patch("services.chat_pipeline._build_session_context", return_value=""))
-        mock_breaker = stack.enter_context(patch("services.chat_pipeline.gemini_breaker"))
-        mock_breaker.call = AsyncMock(return_value=self._gemini_response())
+        # V131.B — remplace mock gemini_breaker.call(httpx) par fixture SDK B
+        vc.set_response(text="Voici votre grille")
         return stack
 
-    def _run_em_generation(self, mock_decay, grids=None):
-        """ExitStack helper — enter all patches for EM Phase G, return breaker mock."""
+    def _run_em_generation(self, mock_decay, vc, grids=None):
+        """ExitStack helper — enter all patches for EM Phase G.
+
+        V131.B : vc = VertexController de la fixture mock_vertex_client (SDK B mock).
+        """
         from contextlib import ExitStack
         stack = ExitStack()
         for p in self._base_patches_em():
@@ -416,19 +423,20 @@ class TestDecayChatbotPipelineIntegration:
         stack.enter_context(patch("services.chat_pipeline_shared.get_decay_state", mock_decay))
         stack.enter_context(patch("db_cloudsql.get_connection", return_value=AsyncMock()))
         stack.enter_context(patch("services.chat_pipeline_em._build_session_context_em", return_value=""))
-        mock_breaker = stack.enter_context(patch("services.chat_pipeline_em.gemini_breaker"))
-        mock_breaker.call = AsyncMock(return_value=self._gemini_response())
+        # V131.B — remplace mock gemini_breaker.call(httpx) par fixture SDK B
+        vc.set_response(text="Voici votre grille")
         return stack
 
     @pytest.mark.asyncio
-    async def test_pipeline_generation_calls_get_decay_state(self):
+    async def test_pipeline_generation_calls_get_decay_state(self, mock_vertex_client):
         """Phase G generation → get_decay_state() called before grid generation."""
         from services.chat_pipeline import handle_chat
 
         mock_decay = AsyncMock(return_value={10: 5, 20: 3})
 
-        with self._run_loto_generation(mock_decay):
-            await handle_chat("genere une grille", [], "loto", MagicMock())
+        with mock_vertex_client() as vc:
+            with self._run_loto_generation(mock_decay, vc):
+                await handle_chat("genere une grille", [], "loto", MagicMock())
 
         mock_decay.assert_called_once()
         args = mock_decay.call_args
@@ -436,43 +444,46 @@ class TestDecayChatbotPipelineIntegration:
         assert args[0][2] == "ball"  # number_type
 
     @pytest.mark.asyncio
-    async def test_pipeline_generation_no_write_v94(self):
+    async def test_pipeline_generation_no_write_v94(self, mock_vertex_client):
         """V94 hotfix: Phase G generation does NOT write to decay_state (read-only)."""
         from services.chat_pipeline import handle_chat
 
         mock_decay = AsyncMock(return_value={})
         mock_conn = AsyncMock()
 
-        with self._run_loto_generation(mock_decay):
-            with patch("db_cloudsql.get_connection", return_value=mock_conn):
-                await handle_chat("genere une grille", [], "loto", MagicMock())
+        with mock_vertex_client() as vc:
+            with self._run_loto_generation(mock_decay, vc):
+                with patch("db_cloudsql.get_connection", return_value=mock_conn):
+                    await handle_chat("genere une grille", [], "loto", MagicMock())
 
         # Verify no UPDATE/INSERT was called on the connection for decay writes
         # The only DB calls should be get_decay_state (SELECT)
         # update_decay_after_generation no longer exists in the pipeline
 
     @pytest.mark.asyncio
-    async def test_pipeline_generation_continues_if_decay_fails(self):
+    async def test_pipeline_generation_continues_if_decay_fails(self, mock_vertex_client):
         """get_decay_state() raises → generation still works (graceful degradation)."""
         from services.chat_pipeline import handle_chat
 
         mock_decay = AsyncMock(side_effect=Exception("DB unavailable"))
 
-        with self._run_loto_generation(mock_decay):
-            result = await handle_chat("genere une grille", [], "loto", MagicMock())
+        with mock_vertex_client() as vc:
+            with self._run_loto_generation(mock_decay, vc):
+                result = await handle_chat("genere une grille", [], "loto", MagicMock())
 
         # Pipeline should NOT crash — Gemini still called
         assert result["source"] == "gemini"
 
     @pytest.mark.asyncio
-    async def test_pipeline_em_generation_reads_decay_only(self):
+    async def test_pipeline_em_generation_reads_decay_only(self, mock_vertex_client):
         """V94: Phase G EM → get_decay_state() called, NO write to decay_state."""
         from services.chat_pipeline_em import handle_chat_em
 
         mock_decay = AsyncMock(return_value={})
 
-        with self._run_em_generation(mock_decay):
-            await handle_chat_em("generate a grid", [], "euromillions", MagicMock(), lang="en")
+        with mock_vertex_client() as vc:
+            with self._run_em_generation(mock_decay, vc):
+                await handle_chat_em("generate a grid", [], "euromillions", MagicMock(), lang="en")
 
         mock_decay.assert_called_once()
         args = mock_decay.call_args

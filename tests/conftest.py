@@ -245,3 +245,141 @@ def _clear_cache():
     _mem_cache.clear()
     yield
     _mem_cache.clear()
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V131.B — Google Gen AI SDK mock fixture (Vertex AI migration)
+# ═══════════════════════════════════════════════════════════════════════
+
+import asyncio as _asyncio
+from contextlib import contextmanager as _contextmanager
+from unittest.mock import patch, PropertyMock
+
+from google.genai import errors as genai_errors
+
+
+def _make_client_error(code: int, status: str = None) -> "genai_errors.ClientError":
+    """V131.B — helper créer ClientError SDK B instance pour tests.
+
+    Réutilisé par test_v131_retry.py (5 tests) + test_chat_pipeline.py +
+    test_chat_pipeline_em.py + test_anti_hallucination.py via fixture
+    make_client_error (pattern pytest canonique, pas d'import direct).
+    """
+    status = status or ("RESOURCE_EXHAUSTED" if code == 429 else "INVALID_ARGUMENT")
+    response_json = {"error": {"code": code, "message": f"test {status}", "status": status}}
+    return genai_errors.ClientError(code, response_json)
+
+
+class _VertexController:
+    """V131.B — Controller mock exposé via fixture mock_vertex_client.
+
+    Expose .client (MagicMock) patché sur services.gemini_shared._CLIENT,
+    plus 6 helpers .set_*() pour configurer le comportement par test.
+    """
+
+    def __init__(self):
+        self.client = MagicMock()
+        self.client.aio = MagicMock()
+        self.client.aio.models = MagicMock()
+        self.client.aio.models.generate_content = AsyncMock()
+        self.client.aio.models.generate_content_stream = AsyncMock()
+
+    def set_response(self, text: str, tin: int = 10, tout: int = 5):
+        """Mock generate_content → response.text = `text` + usage_metadata."""
+        resp = MagicMock()
+        resp.text = text
+        resp.usage_metadata = MagicMock(
+            prompt_token_count=tin,
+            candidates_token_count=tout,
+        )
+        self.client.aio.models.generate_content = AsyncMock(return_value=resp)
+
+    def set_blocked_safety(self):
+        """Mock generate_content → response.text lève ValueError (SAFETY/RECITATION)."""
+        resp = MagicMock()
+        _prop = PropertyMock(side_effect=ValueError("SAFETY blocked"))
+        type(resp).text = _prop  # isolation OK : chaque MagicMock() = type anonyme
+        resp.usage_metadata = None
+        self.client.aio.models.generate_content = AsyncMock(return_value=resp)
+
+    def set_error(self, exc: Exception):
+        """Mock generate_content → lève exc (ClientError 429, ServerError, APIError...)."""
+        self.client.aio.models.generate_content = AsyncMock(side_effect=exc)
+
+    def set_timeout(self):
+        """Mock generate_content → lève asyncio.TimeoutError (via asyncio.wait_for)."""
+        self.client.aio.models.generate_content = AsyncMock(
+            side_effect=_asyncio.TimeoutError()
+        )
+
+    def set_stream_chunks(self, chunks: list):
+        """Mock generate_content_stream → async iterator yieldant chunks.
+
+        chunks = [{"text": str, "usage": dict|None}, ...]
+        Le dernier chunk contient typiquement {"usage": {"prompt_token_count": N, ...}}.
+        """
+        async def _async_gen():
+            for c in chunks:
+                chunk = MagicMock()
+                chunk.text = c.get("text", "")
+                usage = c.get("usage")
+                chunk.usage_metadata = MagicMock(**usage) if usage else None
+                yield chunk
+        self.client.aio.models.generate_content_stream = AsyncMock(
+            return_value=_async_gen()
+        )
+
+    def set_stream_error(self, exc: Exception):
+        """Mock await generate_content_stream → lève exc au démarrage du stream."""
+        self.client.aio.models.generate_content_stream = AsyncMock(side_effect=exc)
+
+
+@pytest.fixture
+def mock_vertex_client():
+    """V131.B — Context manager qui patch services.gemini_shared._CLIENT.
+
+    Couvre les 3 modules V131.A (gemini_shared, gemini, chat_pipeline_gemini)
+    via 1 seul patch — tous appellent _get_client() qui lit _CLIENT global.
+
+    Usage:
+        def test_xxx(mock_vertex_client):
+            with mock_vertex_client() as vc:
+                vc.set_response(text="mock reply", tin=10, tout=5)
+                result = await function_under_test(...)
+                assert result == expected
+    """
+    @_contextmanager
+    def _cm():
+        controller = _VertexController()
+        with patch("services.gemini_shared._CLIENT", controller.client):
+            yield controller
+    return _cm
+
+
+@pytest.fixture
+def make_client_error():
+    """V131.B — fixture exposant helper _make_client_error (pattern pytest canonique).
+
+    Évite l'anti-pattern `from tests.conftest import _make_client_error`
+    qui dépend de la config rootdir.
+
+    Usage:
+        def test_xxx(mock_vertex_client, make_client_error):
+            error = make_client_error(429)
+            with mock_vertex_client() as vc:
+                vc.set_error(error)
+    """
+    return _make_client_error
+
+
+@pytest.fixture(autouse=True)
+def _reset_vertex_client():
+    """V131.B — Reset _CLIENT global à None avant/après chaque test.
+
+    Défensif no-op si _CLIENT jamais initialisé (lazy via _get_client()).
+    Empêche pollution inter-tests si un test initialise le vrai client.
+    """
+    import services.gemini_shared as _gs
+    _gs._CLIENT = None
+    yield
+    _gs._CLIENT = None

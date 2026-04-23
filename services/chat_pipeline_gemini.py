@@ -6,21 +6,29 @@ Contains: SSE formatting, chat logging, Gemini contents building,
 non-streaming and streaming Gemini calls, pitch pipeline, JSON parsing.
 
 Direction: chat_pipeline_shared.py imports FROM this module (not the reverse).
+
+V131.A — Migration AI Studio httpx → Google Gen AI SDK (vertex AI target).
 """
 
-import os
 import re
 import json
+import random
 import asyncio
 import logging
 import time
 from datetime import date
 
-import httpx
+import httpx  # V131.A: conservé pour signature rétrocompat (ctx["_http_client"] typé)
+
+from google.genai import errors as genai_errors, types
 
 from services.circuit_breaker import gemini_breaker, CircuitOpenError
-from services.gemini import GEMINI_MODEL_URL, stream_gemini_chat, _GEMINI_CHAT_TEMPERATURE
-from services.gemini_shared import _gemini_call_with_fallback
+from services.gemini import stream_gemini_chat, _GEMINI_CHAT_TEMPERATURE
+from services.gemini_shared import (
+    _get_client,
+    _is_rate_limit_error,
+    _VERTEX_MODEL_NAME,
+)
 from services.gemini_cache import pitch_cache
 from services.chat_utils import (
     _clean_response, _strip_non_latin, _get_sponsor_if_due,
@@ -632,88 +640,122 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
     Gemini non-streaming call: send contents, extract text, handle errors.
     breaker: circuit breaker instance (pass module-level ref for test compat).
     Returns response dict.
+
+    V131.A — Migration AI Studio httpx → google-genai SDK. ADC auth (pas de key).
+    Try/except inline remplace _gemini_call_with_fallback (supprimé V131.A).
     """
     mode = ctx["mode"]
     _breaker = breaker or gemini_breaker
 
-    def _fallback(error_type):
+    def _fallback_dict(error_type):
         detail = {"circuit_open": "CircuitOpen", "timeout": "Timeout"}.get(error_type, error_type)
         log_from_meta(ctx.get("_chat_meta"), module, lang, message, is_error=True, error_detail=detail)
         source = "fallback_circuit" if error_type == "circuit_open" else "fallback"
         return {"response": fallback, "source": source, "mode": mode}
 
-    result = await _gemini_call_with_fallback(
-        _breaker.call(
-            ctx["_http_client"],
-            GEMINI_MODEL_URL,
-            headers={
-                "Content-Type": "application/json",
-                "x-goog-api-key": ctx["gem_api_key"],
-            },
-            json={
-                "system_instruction": {"parts": [{"text": ctx["system_prompt"]}]},
-                "contents": ctx["contents"],
-                "generationConfig": {"temperature": _get_temperature(ctx), "maxOutputTokens": 300},
-            },
-            timeout=ctx.get("_timeout_gemini_chat", 10),  # V129.1: default 15→10
-        ),
-        fallback_fn=_fallback,
-        log_prefix=log_prefix,
+    # V131.A — breaker state check avant appel (ex-_breaker.call wrappait httpx.post)
+    if _breaker.state == _breaker.OPEN:
+        logger.warning(f"{log_prefix} Circuit breaker ouvert — fallback")
+        return _fallback_dict("circuit_open")
+
+    timeout = ctx.get("_timeout_gemini_chat", 10)  # V129.1: default 15→10
+    config = types.GenerateContentConfig(
+        system_instruction=ctx["system_prompt"],
+        temperature=_get_temperature(ctx),
+        max_output_tokens=300,
     )
 
-    # If fallback was returned (dict with "response" key, not httpx.Response)
-    if isinstance(result, dict):
-        return result
+    try:
+        client = _get_client()
+        response = await asyncio.wait_for(
+            client.aio.models.generate_content(
+                model=_VERTEX_MODEL_NAME,
+                contents=ctx["contents"],
+                config=config,
+            ),
+            timeout=timeout,
+        )
+    except CircuitOpenError:
+        return _fallback_dict("circuit_open")
+    except asyncio.TimeoutError:
+        logger.warning(f"{log_prefix} Timeout Gemini Vertex ({timeout}s) — fallback")
+        _breaker._record_failure()
+        return _fallback_dict("timeout")
+    except genai_errors.ClientError as e:
+        if _is_rate_limit_error(e):
+            logger.warning(f"{log_prefix} Vertex 429 ResourceExhausted — fallback")
+        else:
+            logger.warning(f"{log_prefix} Vertex ClientError {getattr(e, 'code', '?')}: {e}")
+        _breaker._record_failure()
+        return _fallback_dict("error")
+    except genai_errors.ServerError as e:
+        logger.warning(f"{log_prefix} Vertex ServerError {getattr(e, 'code', '?')}: {e}")
+        _breaker._record_failure()
+        return _fallback_dict("error")
+    except genai_errors.APIError as e:
+        logger.error(f"{log_prefix} Vertex APIError SDK: {type(e).__name__}: {e}")
+        _breaker._record_failure()
+        return _fallback_dict("error")
+    except Exception as e:
+        logger.error(f"{log_prefix} Exception inattendue Vertex: {type(e).__name__}: {e}")
+        return _fallback_dict("error")
 
-    response = result
-    if response.status_code == 200:
-        data = response.json()
-        candidates = data.get("candidates", [])
-        if candidates:
-            parts = candidates[0].get("content", {}).get("parts", [])
-            if parts:
-                text = parts[0].get("text", "").strip()
-                if text:
-                    text = _clean_response(text)
-                    if ctx["insult_prefix"]:
-                        text = ctx["insult_prefix"] + "\n\n" + text
-                    s_kwargs = sponsor_kwargs or {}
-                    sponsor_line = _get_sponsor_if_due(ctx["history"], **s_kwargs)
-                    if sponsor_line:
-                        text += "\n\n" + sponsor_line
-                    logger.info(f"{log_prefix} OK (page={page}, mode={mode})")
-                    log_from_meta(ctx.get("_chat_meta"), module, lang, message, text)
-                    # V100 R01 + V101 strict + V125 A2/A3: Anti-hallucination check
-                    _meta = ctx.get("_chat_meta") or {}
-                    _safe_replacement = _check_sql_number_hallucination(
-                        _meta.get("enrichment_context", ""), text,
-                        _meta.get("phase", ""), log_prefix,
-                        lang=_meta.get("lang", lang),
-                        history=ctx.get("history"),
-                    )
-                    if _safe_replacement:
-                        text = _safe_replacement
-                    # V126 3.5-A + V126.1 F3: Phase 0 post-hoc draw-date verification
-                    # (remplacement effectif sur path non-streaming, étoiles EM si game=em)
-                    _phase0_replace = await _recheck_phase0_draw_accuracy(
-                        text, _meta.get("phase", ""),
-                        _meta.get("lang", lang), log_prefix,
-                        get_tirage_fn=ctx.get("_get_tirage_fn"),
-                        game=ctx.get("_game", "loto"),
-                    )
-                    if _phase0_replace:
-                        text = _phase0_replace
-                    # V126 4/5: Schema hallucination check — remplacement non-stream
-                    _schema_replace = _check_sql_schema_hallucination(
-                        text, log_prefix, lang=_meta.get("lang", lang),
-                    )
-                    if _schema_replace:
-                        text = _schema_replace
-                    return {"response": text, "source": "gemini", "mode": mode}
+    # Parse réponse SDK B
+    try:
+        text = (response.text or "").strip()
+    except (ValueError, AttributeError):
+        # SAFETY/RECITATION block : .text lève ValueError
+        # SAFETY = pas un vrai succès métier, PAS de record_success
+        logger.warning(f"{log_prefix} Vertex response blocked (SAFETY/RECITATION) — fallback")
+        return _fallback_dict("error")
 
-    logger.warning(f"{log_prefix} Reponse Gemini invalide: {response.status_code}")
-    log_from_meta(ctx.get("_chat_meta"), module, lang, message, is_error=True, error_detail=f"HTTP {response.status_code}")
-    return {"response": fallback, "source": "fallback", "mode": mode}
+    # V131.A FIX — record_success dès que round-trip OK (indépendant contenu).
+    # Correction Jyppy CC Max : un round-trip réussi n'est pas une failure
+    # infrastructure si le contenu est vide. Sémantique préservée vs AVANT.
+    _breaker._record_success()
+
+    if not text:
+        logger.warning(f"{log_prefix} Reponse Gemini vide — fallback")
+        log_from_meta(ctx.get("_chat_meta"), module, lang, message, is_error=True, error_detail="EmptyResponse")
+        return {"response": fallback, "source": "fallback", "mode": mode}
+
+    text = _clean_response(text)
+    if ctx["insult_prefix"]:
+        text = ctx["insult_prefix"] + "\n\n" + text
+    s_kwargs = sponsor_kwargs or {}
+    sponsor_line = _get_sponsor_if_due(ctx["history"], **s_kwargs)
+    if sponsor_line:
+        text += "\n\n" + sponsor_line
+    logger.info(f"{log_prefix} OK (page={page}, mode={mode})")
+    log_from_meta(ctx.get("_chat_meta"), module, lang, message, text)
+
+    # V100 R01 + V101 strict + V125 A2/A3: Anti-hallucination check
+    _meta = ctx.get("_chat_meta") or {}
+    _safe_replacement = _check_sql_number_hallucination(
+        _meta.get("enrichment_context", ""), text,
+        _meta.get("phase", ""), log_prefix,
+        lang=_meta.get("lang", lang),
+        history=ctx.get("history"),
+    )
+    if _safe_replacement:
+        text = _safe_replacement
+    # V126 3.5-A + V126.1 F3: Phase 0 post-hoc draw-date verification
+    # (remplacement effectif sur path non-streaming, étoiles EM si game=em)
+    _phase0_replace = await _recheck_phase0_draw_accuracy(
+        text, _meta.get("phase", ""),
+        _meta.get("lang", lang), log_prefix,
+        get_tirage_fn=ctx.get("_get_tirage_fn"),
+        game=ctx.get("_game", "loto"),
+    )
+    if _phase0_replace:
+        text = _phase0_replace
+    # V126 4/5: Schema hallucination check — remplacement non-stream
+    _schema_replace = _check_sql_schema_hallucination(
+        text, log_prefix, lang=_meta.get("lang", lang),
+    )
+    if _schema_replace:
+        text = _schema_replace
+    return {"response": text, "source": "gemini", "mode": mode}
 
 
 # ═══════════════════════════════════════════════════════
@@ -818,8 +860,10 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
             "chunk": fallback,
             "source": "fallback_circuit", "mode": mode, "is_done": True,
         })
-    except httpx.TimeoutException:
-        logger.warning(f"{log_prefix} Timeout Gemini (15s) — fallback")
+    except (asyncio.TimeoutError, httpx.TimeoutException):
+        # V131.A : stream_gemini_chat lève asyncio.TimeoutError (ex-httpx.TimeoutException).
+        # Catch les 2 pour defense-in-depth (httpx conservé si re-régression future).
+        logger.warning(f"{log_prefix} Timeout Gemini (stream) — fallback")
         log_from_meta(ctx.get("_chat_meta"), module, lang, message, is_error=True, error_detail="Timeout")
         yield sse_event({
             "chunk": fallback,
@@ -868,6 +912,13 @@ def parse_pitch_json(text):
 # handle_pitch — common pipeline
 # ═══════════════════════════════════════════════════════
 
+# V131.A — Retry calibration préservée V129.1 (réimplémentée inline car
+# circuit_breaker.call(max_retries) applicable uniquement sur httpx.post).
+_V129_PITCH_RETRY_BACKOFF_BASE = 2.0   # seconds (V129.1)
+_V129_PITCH_RETRY_CAP_TOTAL = 14.0     # seconds (V129.1)
+_V129_PITCH_RETRY_JITTER_MAX = 1.0     # seconds (V129.1 equal jitter)
+
+
 async def handle_pitch_common(grilles_data, http_client, lang,
                               context_coro,
                               load_prompt_fn, prompt_name,
@@ -877,14 +928,21 @@ async def handle_pitch_common(grilles_data, http_client, lang,
     """
     Common pitch pipeline after validation.
     context_coro: awaitable that returns the stats context string.
-    Calls context_coro → load_prompt → Gemini → parse JSON.
+    Calls context_coro → load_prompt → Gemini Vertex → parse JSON.
     Returns result dict.
 
     V127 — Cache hit short-circuit : si grilles_data + lang + prompt_name déjà
     vus dans les 24h, retourne le payload caché (skip context_coro + Gemini).
     Marqué `from_cache: True` pour observabilité admin/tests. Ne cache QUE
-    les succès (status_code=200 + pitchs OK).
+    les succès.
+
+    V131.A — Migration google-genai SDK + retry V129.1 inline (2/4/8s +
+    jitter [0,1s] + cap total 14s + CB check per-iter), remplace
+    circuit_breaker.call(max_retries). Le paramètre `http_client` est ignoré
+    (ADC auth).
     """
+    _ = http_client  # noqa: F841  # V131.A DEPRECATED — paramètre ignoré (signature rétrocompat)
+
     # V127 — Cache hit short-circuit
     _cached = pitch_cache.get(grilles_data, lang, prompt_name)
     if _cached:
@@ -907,50 +965,114 @@ async def handle_pitch_common(grilles_data, http_client, lang,
         logger.error(f"{log_prefix} Prompt pitch introuvable")
         return {"success": False, "data": None, "error": "Prompt pitch introuvable", "status_code": 500}
 
-    gem_api_key = os.environ.get("GEM_API_KEY") or os.environ.get("GEMINI_API_KEY")
-    if not gem_api_key:
-        return {"success": False, "data": None, "error": "API Gemini non configurée", "status_code": 500}
-
     _breaker = breaker or gemini_breaker
+    # V131.A.1 HOTFIX — max_output_tokens 600 → 1500 : gemini-2.5-flash est
+    # plus verbeux que gemini-2.0-flash, JSON pitch tronqué à 600 tokens en
+    # test local (2 tentatives, 2 échecs, troncature au milieu d'une string
+    # du premier élément "pitchs"). 1500 donne de la marge sans risque coût
+    # significatif (tarification par token identique Vertex AI, réponses
+    # facturées au token effectif pas à max_output_tokens).
+    config = types.GenerateContentConfig(
+        system_instruction=system_prompt,
+        temperature=0.9,
+        max_output_tokens=1500,
+    )
 
-    def _fallback(error_type):
-        if error_type == "circuit_open":
+    # V131.A — retry V129.1 inline : 2/4/8s backoff + jitter [0,1s] + cap 14s
+    # + CB check per-iter. Retry UNIQUEMENT sur ClientError 429. Autres
+    # erreurs = 1 attempt (timeout/5xx/APIError = différent failure mode).
+    _retry_start = time.monotonic()
+    response_vertex = None
+    last_error = "error"
+
+    for attempt in range(max_retries + 1):
+        # CB state check — respect OPEN set by concurrent failures
+        if _breaker.state == _breaker.OPEN:
+            logger.warning(f"{log_prefix} Circuit breaker ouvert — fallback")
             return {"success": False, "data": None, "error": "Service Gemini temporairement indisponible", "status_code": 503}
-        if error_type == "timeout":
+
+        # V129.1 cap total 14s
+        if attempt > 0 and time.monotonic() - _retry_start >= _V129_PITCH_RETRY_CAP_TOTAL:
+            logger.info(f"{log_prefix} [V129_1_RETRY] cap total=14s exhausted before attempt={attempt}")
+            break
+
+        try:
+            client = _get_client()
+            response_vertex = await asyncio.wait_for(
+                client.aio.models.generate_content(
+                    model=_VERTEX_MODEL_NAME,
+                    contents=[{"role": "user", "parts": [{"text": context}]}],
+                    config=config,
+                ),
+                timeout=timeout_gemini,
+            )
+            # Succès — sortie boucle
+            _breaker._record_success()
+            break
+        except CircuitOpenError:
+            return {"success": False, "data": None, "error": "Service Gemini temporairement indisponible", "status_code": 503}
+        except genai_errors.ClientError as e:
+            if _is_rate_limit_error(e) and attempt < max_retries:
+                # V128→V129.1 : retry on 429 if budget remaining. Backoff 2/4/8s + jitter.
+                backoff = (
+                    _V129_PITCH_RETRY_BACKOFF_BASE * (2 ** attempt)
+                    + random.uniform(0, _V129_PITCH_RETRY_JITTER_MAX)
+                )
+                remaining = _V129_PITCH_RETRY_CAP_TOTAL - (time.monotonic() - _retry_start)
+                if remaining <= 0:
+                    logger.info(f"{log_prefix} [V129_1_RETRY] no budget left at attempt={attempt}")
+                    _breaker._record_failure()
+                    last_error = "timeout"
+                    break
+                backoff = min(backoff, remaining)
+                logger.info(
+                    "%s [V129_1_RETRY] attempt=%d/%d 429, backoff=%.1fs",
+                    log_prefix, attempt + 1, max_retries, backoff,
+                )
+                await asyncio.sleep(backoff)
+                continue
+            # Non-429 ClientError OR 429 retry exhausted
+            if _is_rate_limit_error(e):
+                logger.warning(f"{log_prefix} Vertex 429 ResourceExhausted (retry exhausted) — fallback")
+                last_error = "timeout"
+            else:
+                logger.warning(f"{log_prefix} Vertex ClientError {getattr(e, 'code', '?')}: {e}")
+                last_error = "error"
+            _breaker._record_failure()
+            break
+        except asyncio.TimeoutError:
+            logger.warning(f"{log_prefix} Timeout Gemini Vertex ({timeout_gemini}s) — fallback")
+            _breaker._record_failure()
+            last_error = "timeout"
+            break
+        except genai_errors.ServerError as e:
+            logger.warning(f"{log_prefix} Vertex ServerError {getattr(e, 'code', '?')}: {e}")
+            _breaker._record_failure()
+            last_error = "error"
+            break
+        except genai_errors.APIError as e:
+            logger.error(f"{log_prefix} Vertex APIError SDK: {type(e).__name__}: {e}")
+            _breaker._record_failure()
+            last_error = "error"
+            break
+        except Exception as e:
+            logger.error(f"{log_prefix} Exception inattendue Vertex: {type(e).__name__}: {e}")
+            last_error = "error"
+            break
+
+    # Si pas de response (exception ou cap retry) → fallback mapping
+    if response_vertex is None:
+        if last_error == "timeout":
             return {"success": False, "data": None, "error": "Timeout Gemini", "status_code": 503}
         return {"success": False, "data": None, "error": "Erreur interne du serveur", "status_code": 500}
 
-    result = await _gemini_call_with_fallback(
-        _breaker.call(
-            http_client,
-            GEMINI_MODEL_URL,
-            headers={"Content-Type": "application/json", "x-goog-api-key": gem_api_key},
-            json={
-                "system_instruction": {"parts": [{"text": system_prompt}]},
-                "contents": [{"role": "user", "parts": [{"text": context}]}],
-                "generationConfig": {"temperature": 0.9, "maxOutputTokens": 600},
-            },
-            timeout=timeout_gemini,
-            max_retries=max_retries,  # V128: retry on 429 if caller opts in
-        ),
-        fallback_fn=_fallback,
-        log_prefix=log_prefix,
-    )
+    # Parse réponse SDK B
+    try:
+        text = (response_vertex.text or "").strip()
+    except (ValueError, AttributeError):
+        logger.warning(f"{log_prefix} Vertex response blocked (SAFETY/RECITATION)")
+        return {"success": False, "data": None, "error": "Gemini: réponse bloquée", "status_code": 502}
 
-    if isinstance(result, dict):
-        return result
-
-    response = result
-    if response.status_code != 200:
-        logger.warning(f"{log_prefix} Gemini HTTP {response.status_code}")
-        return {"success": False, "data": None, "error": f"Gemini erreur HTTP {response.status_code}", "status_code": 502}
-
-    data = response.json()
-    candidates = data.get("candidates", [])
-    if not candidates:
-        return {"success": False, "data": None, "error": "Gemini: aucune réponse", "status_code": 502}
-
-    text = candidates[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
     if not text:
         return {"success": False, "data": None, "error": "Gemini: réponse vide", "status_code": 502}
 

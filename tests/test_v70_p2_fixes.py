@@ -97,40 +97,35 @@ def em_patches(**overrides):
 # ═══════════════════════════════════════════════════════════
 
 class TestF03HandlePitchLang:
+    """V70 F03 / V131.B refactorisé google-genai SDK : handle_pitch accepts lang param."""
 
     @pytest.mark.asyncio
-    async def test_handle_pitch_accepts_lang_fr(self):
+    async def test_handle_pitch_accepts_lang_fr(self, mock_vertex_client):
         from services.chat_pipeline import handle_pitch
+        from services.gemini_cache import pitch_cache
+        pitch_cache.clear()  # V127 — éviter pollution from_cache
         grille = SimpleNamespace(numeros=[5, 15, 25, 35, 45], chance=None,
                                  score_conformite=None, severity=None)
-        resp = MagicMock(status_code=200)
-        resp.json.return_value = {
-            "candidates": [{"content": {"parts": [{"text": '{"pitchs": ["Bon"]}'}]}}]
-        }
-        with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
+        with mock_vertex_client() as vc, \
+             patch("services.chat_pipeline.load_prompt", return_value="sys"), \
              patch("services.chat_pipeline.prepare_grilles_pitch_context",
-                   new_callable=AsyncMock, return_value="ctx"), \
-             patch("services.chat_pipeline.gemini_breaker_pitch") as mb:
-            mb.call = AsyncMock(return_value=resp)
+                   new_callable=AsyncMock, return_value="ctx"):
+            vc.set_response(text='{"pitchs": ["Bon"]}')
             result = await handle_pitch([grille], MagicMock(), lang="fr")
         assert result["success"] is True
 
     @pytest.mark.asyncio
-    async def test_handle_pitch_accepts_lang_en(self):
+    async def test_handle_pitch_accepts_lang_en(self, mock_vertex_client):
         from services.chat_pipeline import handle_pitch
+        from services.gemini_cache import pitch_cache
+        pitch_cache.clear()
         grille = SimpleNamespace(numeros=[5, 15, 25, 35, 45], chance=None,
                                  score_conformite=None, severity=None)
-        resp = MagicMock(status_code=200)
-        resp.json.return_value = {
-            "candidates": [{"content": {"parts": [{"text": '{"pitchs": ["Good"]}'}]}}]
-        }
-        with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
+        with mock_vertex_client() as vc, \
+             patch("services.chat_pipeline.load_prompt", return_value="sys"), \
              patch("services.chat_pipeline.prepare_grilles_pitch_context",
-                   new_callable=AsyncMock, return_value="ctx"), \
-             patch("services.chat_pipeline.gemini_breaker_pitch") as mb:
-            mb.call = AsyncMock(return_value=resp)
+                   new_callable=AsyncMock, return_value="ctx"):
+            vc.set_response(text='{"pitchs": ["Good"]}')
             result = await handle_pitch([grille], MagicMock(), lang="en")
         assert result["success"] is True
 

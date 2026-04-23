@@ -1,15 +1,26 @@
-import json
 import logging
 import time
 import asyncio
-import httpx
+import httpx  # V131.A: conservé pour rétrocompat signature publique (http_client param)
+
+from google.genai import errors as genai_errors, types
 
 from services.prompt_loader import load_prompt
 from services.circuit_breaker import gemini_breaker, CircuitOpenError
-from services.gemini_shared import enrich_analysis_base, ENRICHMENT_INSTRUCTIONS, _track_task
+from services.gemini_shared import (
+    _get_client,
+    _is_rate_limit_error,
+    _track_task,
+    _VERTEX_MODEL_NAME,
+    enrich_analysis_base,
+    ENRICHMENT_INSTRUCTIONS,
+)
 
 logger = logging.getLogger(__name__)
 
+# V131.A — DEPRECATED : URLs AI Studio historiques. Usage legacy par chat_sql.py
+# et chat_sql_em.py (HORS SCOPE V131.A, migration prévue V131.D). Ne plus utiliser
+# dans tout nouveau code. Suppression définitive V131.D.
 GEMINI_MODEL_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 GEMINI_STREAM_URL = (
     "https://generativelanguage.googleapis.com/v1beta/models/"
@@ -54,12 +65,27 @@ async def enrich_analysis(analysis_local: str, window: str = "GLOBAL", *, http_c
 async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, timeout=10.0,
                              call_type="", lang="", temperature=None):
     """
-    Async generator — stream text chunks from Gemini streaming API.
+    Async generator — stream text chunks from Gemini Vertex AI (google-genai SDK).
 
-    V129.1: default timeout 15.0 → 10.0s (strict user-facing).
+    V131.A — Migration AI Studio httpx → google-genai SDK.
+    Les paramètres `http_client` et `gem_api_key` sont conservés pour rétrocompat
+    signature (appelants `chat_pipeline.py:262`, `chat_pipeline_em.py:252`, tests)
+    mais IGNORÉS côté implémentation. Cleanup V131.D.
+
+    V129.1 : default timeout 15.0 → 10.0s (strict user-facing).
     Yields str chunks. Manages circuit breaker state manually.
     Tracks Gemini usage (tokens, duration) via gcp_monitoring.
+
+    ⚠️ V131.A LIMITATION : asyncio.wait_for ne timeout que le démarrage du
+    stream (await client.aio.models.generate_content_stream(...)), PAS
+    l'itération inter-chunk via `async for chunk in stream`. Si Vertex bloque
+    entre 2 chunks après démarrage, stream hang indéfiniment côté consommateur.
+    À surveiller en prod (Cloud Run logs duration > 30s sur /chat streaming).
+    Hotfix V131.C ou V132 si observé : wrapper per-chunk
+    via asyncio.wait_for(iterator.__anext__(), timeout=N).
     """
+    _ = http_client, gem_api_key  # noqa: F841  # V131.A DEPRECATED — paramètres ignorés
+
     current = gemini_breaker.state
     if current == gemini_breaker.OPEN:
         raise CircuitOpenError("Circuit ouvert — fallback immediat")
@@ -69,66 +95,75 @@ async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, 
     _usage_tout = 0
     _max_attempts = 2  # 1 try + 1 retry on transient timeout
 
+    _temperature = temperature if temperature is not None else _GEMINI_CHAT_TEMPERATURE
+    config = types.GenerateContentConfig(
+        system_instruction=system_prompt,
+        temperature=_temperature,
+        max_output_tokens=300,
+    )
+
     for _attempt in range(_max_attempts):
         try:
-            async with http_client.stream(
-                "POST",
-                GEMINI_STREAM_URL,
-                headers={
-                    "Content-Type": "application/json",
-                    "x-goog-api-key": gem_api_key,
-                },
-                json={
-                    "system_instruction": {"parts": [{"text": system_prompt}]},
-                    "contents": contents,
-                    "generationConfig": {
-                        "temperature": temperature if temperature is not None else _GEMINI_CHAT_TEMPERATURE,
-                        "maxOutputTokens": 300,
-                    },
-                },
+            client = _get_client()
+            # V131.A — SDK B streaming : client.aio.models.generate_content_stream
+            # retourne un AsyncIterable[GenerateContentResponse]. Chaque chunk a .text
+            # (peut être vide) et .usage_metadata (présent sur dernier chunk).
+            # Timeout strict via asyncio.wait_for sur le get du stream (start only).
+            stream = await asyncio.wait_for(
+                client.aio.models.generate_content_stream(
+                    model=_VERTEX_MODEL_NAME,
+                    contents=contents,
+                    config=config,
+                ),
                 timeout=timeout,
-            ) as response:
-                if response.status_code >= 500 or response.status_code == 429:
-                    gemini_breaker._record_failure()
-                    return
+            )
 
-                if response.status_code != 200:
-                    logger.warning(f"[STREAM] Gemini HTTP {response.status_code}")
-                    return
-
-                async for line in response.aiter_lines():
-                    if not line.startswith("data: "):
-                        continue
-                    try:
-                        data = json.loads(line[6:])
-                        # Capture usage_metadata from last chunk
-                        _um = data.get("usageMetadata")
-                        if _um:
-                            _usage_tin = _um.get("promptTokenCount", _usage_tin)
-                            _usage_tout = _um.get("candidatesTokenCount", _usage_tout)
-                        candidates = data.get("candidates", [])
-                        if candidates:
-                            parts = candidates[0].get("content", {}).get("parts", [])
-                            if parts:
-                                text = parts[0].get("text", "")
-                                if text:
-                                    yield text
-                    except json.JSONDecodeError:
-                        continue
-
-                gemini_breaker._record_success()
-
-                # Track usage after stream completes
-                _dur_ms = (time.monotonic() - _t0) * 1000
+            async for chunk in stream:
+                # Capture usage_metadata — présent sur dernier chunk
+                _um = getattr(chunk, "usage_metadata", None)
+                if _um:
+                    _usage_tin = getattr(_um, "prompt_token_count", _usage_tin)
+                    _usage_tout = getattr(_um, "candidates_token_count", _usage_tout)
+                # .text peut lever ValueError si chunk SAFETY-blocked
                 try:
-                    from services.gcp_monitoring import track_gemini_call
-                    _track_task(asyncio.ensure_future(track_gemini_call(
-                        _dur_ms, _usage_tin, _usage_tout, call_type=call_type, lang=lang)))
-                except Exception:
-                    pass
-                return  # success — exit retry loop
+                    text = chunk.text or ""
+                except (ValueError, AttributeError):
+                    continue
+                if text:
+                    yield text
 
-        except (httpx.TimeoutException, httpx.ConnectError, OSError):
+            gemini_breaker._record_success()
+
+            # Track usage after stream completes
+            _dur_ms = (time.monotonic() - _t0) * 1000
+            try:
+                from services.gcp_monitoring import track_gemini_call
+                _track_task(asyncio.ensure_future(track_gemini_call(
+                    _dur_ms, _usage_tin, _usage_tout, call_type=call_type, lang=lang)))
+            except Exception:
+                pass
+            return  # success — exit retry loop
+
+        except (genai_errors.ClientError, genai_errors.ServerError) as e:
+            # Hard API failure (429/5xx/4xx) — record and return. Pas de retry ici :
+            # retry backoff V129.1 est dans handle_pitch_common uniquement (stream
+            # user-facing conserve son pattern V71 F06 : 1 retry transient timeout).
+            if _is_rate_limit_error(e):
+                logger.warning("[STREAM] Gemini 429 ResourceExhausted — fallback")
+            else:
+                logger.warning("[STREAM] Gemini SDK error %s: %s", type(e).__name__, e)
+            gemini_breaker._record_failure()
+            _dur_ms = (time.monotonic() - _t0) * 1000
+            try:
+                from services.gcp_monitoring import track_gemini_call
+                _track_task(asyncio.ensure_future(track_gemini_call(
+                    _dur_ms, error=True, call_type=call_type, lang=lang)))
+            except Exception:
+                pass
+            return
+
+        except (asyncio.TimeoutError, OSError):
+            # Transient timeout — retry 1× avec backoff 2s (V71 F06 préservé)
             if _attempt < _max_attempts - 1:
                 logger.warning("[STREAM] Gemini timeout, retry %d/%d (backoff 2s)",
                                _attempt + 1, _max_attempts)
