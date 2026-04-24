@@ -12,6 +12,7 @@ from services.gemini_shared import (
     _is_rate_limit_error,
     _track_task,
     _VERTEX_MODEL_NAME,
+    _V131_E_SAFETY_SETTINGS_RELAX,
     enrich_analysis_base,
     ENRICHMENT_INSTRUCTIONS,
 )
@@ -100,6 +101,13 @@ async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, 
         system_instruction=system_prompt,
         temperature=_temperature,
         max_output_tokens=300,
+        # V131.E HOTFIX — safety_settings BLOCK_ONLY_HIGH (réduit faux positifs SAFETY)
+        # Cf. docs/DIAGNOSTIC_CHATBOT_STREAMING_TRONQUE.md
+        safety_settings=_V131_E_SAFETY_SETTINGS_RELAX,
+        # V131.E HOTFIX — thinking_budget=0 désactive le raisonnement interne de gemini-2.5-flash
+        # qui consommait ~293 tokens sur 300 dispos, laissant ~7 tokens visibles → MAX_TOKENS.
+        # Root cause confirmée empiriquement 24/04 (logs [STREAM] finish_reason=MAX_TOKENS tout=7).
+        thinking_config=types.ThinkingConfig(thinking_budget=0),
     )
 
     for _attempt in range(_max_attempts):
@@ -118,19 +126,49 @@ async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, 
                 timeout=timeout,
             )
 
+            # V131.E HOTFIX — Inspect finish_reason pour détecter SAFETY/RECITATION/MAX_TOKENS
+            # Cf. docs/DIAGNOSTIC_CHATBOT_STREAMING_TRONQUE.md (50% users tronqués pré-fix)
+            _last_finish_reason = None
+
             async for chunk in stream:
+                # V131.E — Capture finish_reason du chunk final
+                _cands = getattr(chunk, "candidates", None) or []
+                if _cands:
+                    _fr = getattr(_cands[0], "finish_reason", None)
+                    if _fr is not None:
+                        _last_finish_reason = _fr
                 # Capture usage_metadata — présent sur dernier chunk
                 _um = getattr(chunk, "usage_metadata", None)
                 if _um:
                     _usage_tin = getattr(_um, "prompt_token_count", _usage_tin)
                     _usage_tout = getattr(_um, "candidates_token_count", _usage_tout)
-                # .text peut lever ValueError si chunk SAFETY-blocked
+                # .text peut lever ValueError si chunk SAFETY-blocked (finish_reason non-STOP)
                 try:
                     text = chunk.text or ""
                 except (ValueError, AttributeError):
                     continue
                 if text:
                     yield text
+
+            # V131.E HOTFIX — Détection arrêt prématuré du stream (SAFETY/RECITATION/MAX_TOKENS)
+            _fr_name = str(_last_finish_reason) if _last_finish_reason is not None else "STOP"
+            _fr_ok = any(ok in _fr_name for ok in ("STOP", "FinishReason.STOP"))
+            if not _fr_ok:
+                _lang_safe = lang or "fr"
+                logger.warning(
+                    "[STREAM] Gemini finish_reason=%s tout=%d tin=%d lang=%s (SAFETY/RECITATION/MAX_TOKENS suspected)",
+                    _fr_name, _usage_tout, _usage_tin, _lang_safe,
+                )
+                # Yield fallback suffix user-facing i18n 6 langues
+                _FALLBACK_SUFFIX = {
+                    "fr": "\n\n— Réponse interrompue, peux-tu reformuler ta question ? 🙏",
+                    "en": "\n\n— Response interrupted, could you rephrase your question? 🙏",
+                    "es": "\n\n— Respuesta interrumpida, ¿puedes reformular tu pregunta? 🙏",
+                    "pt": "\n\n— Resposta interrompida, podes reformular a tua pergunta? 🙏",
+                    "de": "\n\n— Antwort unterbrochen, kannst du bitte neu formulieren? 🙏",
+                    "nl": "\n\n— Antwoord onderbroken, kun je je vraag herformuleren? 🙏",
+                }
+                yield _FALLBACK_SUFFIX.get(_lang_safe, _FALLBACK_SUFFIX["fr"])
 
             gemini_breaker._record_success()
 

@@ -23,9 +23,14 @@ async def _collect(gen):
 
 
 async def _gen_hello():
-    """Async generator yieldant un chunk 'hello' + usage_metadata."""
+    """Async generator yieldant un chunk 'hello' + usage_metadata.
+
+    V131.E — `candidates=[]` force `_last_finish_reason` à rester None dans
+    stream_gemini_chat (= STOP implicite, pas de fallback suffix yield-é).
+    """
     chunk = MagicMock()
     chunk.text = "hello"
+    chunk.candidates = []
     chunk.usage_metadata = MagicMock(prompt_token_count=10, candidates_token_count=5)
     yield chunk
 

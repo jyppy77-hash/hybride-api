@@ -132,6 +132,31 @@ ENRICHMENT_INSTRUCTIONS = {
 }
 
 
+# V131.E HOTFIX — safety_settings relaxés pour contenu LotoIA (stats factuelles).
+# Réduit faux positifs SAFETY sur prompts lourds 10k-13k tokens (chat_loto/chat_em).
+# BLOCK_ONLY_HIGH choisi (pas BLOCK_NONE qui nécessite CSA externe non activée projet).
+# Appliqué sur les 4 call sites Gemini/Vertex : stream chat, non-stream chat, pitch,
+# enrich_analysis. Cf. docs/DIAGNOSTIC_CHATBOT_STREAMING_TRONQUE.md
+_V131_E_SAFETY_SETTINGS_RELAX = [
+    types.SafetySetting(
+        category=types.HarmCategory.HARM_CATEGORY_HARASSMENT,
+        threshold=types.HarmBlockThreshold.BLOCK_ONLY_HIGH,
+    ),
+    types.SafetySetting(
+        category=types.HarmCategory.HARM_CATEGORY_HATE_SPEECH,
+        threshold=types.HarmBlockThreshold.BLOCK_ONLY_HIGH,
+    ),
+    types.SafetySetting(
+        category=types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
+        threshold=types.HarmBlockThreshold.BLOCK_ONLY_HIGH,
+    ),
+    types.SafetySetting(
+        category=types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
+        threshold=types.HarmBlockThreshold.BLOCK_ONLY_HIGH,
+    ),
+]
+
+
 # V131.A — `_gemini_call_with_fallback` supprimé. Ses 3 callers (enrich_analysis_base
 # dans ce fichier, call_gemini_and_respond + handle_pitch_common dans chat_pipeline_gemini.py)
 # migrent vers Google Gen AI SDK avec try/except inline. Raison : le wrapper mélangeait
@@ -217,6 +242,12 @@ async def enrich_analysis_base(
             system_instruction=system_instruction_text,
             temperature=0.7,
             max_output_tokens=250,
+            # V131.E HOTFIX — safety_settings BLOCK_ONLY_HIGH (réduit faux positifs SAFETY)
+            # Cf. docs/DIAGNOSTIC_CHATBOT_STREAMING_TRONQUE.md
+            safety_settings=_V131_E_SAFETY_SETTINGS_RELAX,
+            # V131.E HOTFIX — thinking_budget=0 désactive le raisonnement interne gemini-2.5-flash
+            # (enrichment PDF = reformulation factuelle, pas besoin de raisonnement)
+            thinking_config=types.ThinkingConfig(thinking_budget=0),
         )
         # V131.A — timeout strict 10s (conservé V129.1) via asyncio.wait_for :
         # SDK B n'a pas de param timeout natif sur generate_content.

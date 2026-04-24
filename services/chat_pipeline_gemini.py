@@ -28,6 +28,7 @@ from services.gemini_shared import (
     _get_client,
     _is_rate_limit_error,
     _VERTEX_MODEL_NAME,
+    _V131_E_SAFETY_SETTINGS_RELAX,
 )
 from services.gemini_cache import pitch_cache
 from services.chat_utils import (
@@ -663,6 +664,12 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
         system_instruction=ctx["system_prompt"],
         temperature=_get_temperature(ctx),
         max_output_tokens=300,
+        # V131.E HOTFIX — safety_settings BLOCK_ONLY_HIGH (réduit faux positifs SAFETY)
+        # Cf. docs/DIAGNOSTIC_CHATBOT_STREAMING_TRONQUE.md
+        safety_settings=_V131_E_SAFETY_SETTINGS_RELAX,
+        # V131.E HOTFIX — thinking_budget=0 désactive le raisonnement interne gemini-2.5-flash
+        # (root cause confirmée empiriquement : MAX_TOKENS tout=7 sur prompts lourds 12k tokens)
+        thinking_config=types.ThinkingConfig(thinking_budget=0),
     )
 
     try:
@@ -988,6 +995,12 @@ async def handle_pitch_common(grilles_data, http_client, lang,
         system_instruction=system_prompt,
         temperature=0.9,
         max_output_tokens=8000,
+        # V131.E HOTFIX — safety_settings BLOCK_ONLY_HIGH (réduit faux positifs SAFETY)
+        # Cf. docs/DIAGNOSTIC_CHATBOT_STREAMING_TRONQUE.md
+        safety_settings=_V131_E_SAFETY_SETTINGS_RELAX,
+        # V131.E HOTFIX — thinking_budget=0 désactive le raisonnement interne gemini-2.5-flash
+        # (évite gaspillage tokens sur le budget 8000 + latence additionnelle inutile pour JSON pitch)
+        thinking_config=types.ThinkingConfig(thinking_budget=0),
     )
 
     # V131.A — retry V129.1 inline : 2/4/8s backoff + jitter [0,1s] + cap 14s
