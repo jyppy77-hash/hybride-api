@@ -904,9 +904,9 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.018 (V131.E — hotfix streaming tronqué + safety_settings BLOCK_ONLY_HIGH)."""
+        """APP_VERSION == 1.6.019 (V132.A — UX z-index unifié + Bug 2 timer .timer-circle + Bug 3 scroll-to-top /loto/statistiques)."""
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.018"
+        assert APP_VERSION == "1.6.019"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

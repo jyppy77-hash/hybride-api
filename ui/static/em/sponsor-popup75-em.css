@@ -212,7 +212,7 @@ body.em-page .sponsor-popup-overlay {
     width: 100vw !important;
     height: 100vh !important;
     background: rgba(0, 13, 38, 0.92) !important;
-    z-index: 9999 !important;
+    z-index: var(--z-sponsor-overlay) !important;
 }
 
 /* ============================================

@@ -6,7 +6,7 @@
 .contact-modal-overlay {
     position: fixed;
     inset: 0;
-    z-index: 10000;
+    z-index: var(--z-contact-overlay);
     display: flex;
     align-items: center;
     justify-content: center;

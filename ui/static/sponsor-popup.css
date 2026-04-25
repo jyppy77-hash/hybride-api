@@ -17,7 +17,7 @@
     background: var(--popup-overlay-bg, rgba(8, 12, 20, 0.85));
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
-    z-index: 9999;
+    z-index: var(--z-sponsor-overlay);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -801,7 +801,7 @@ body.theme-day .sponsor-popup-overlay {
         align-items: stretch !important;
         justify-content: stretch !important;
         overflow: hidden !important;
-        z-index: 999999 !important;
+        z-index: var(--z-sponsor-overlay) !important;
     }
 
     /* Modal = plein écran FORCÉ pendant TOUTE la durée */
@@ -1055,7 +1055,7 @@ body.loto-generating {
         padding: 0 !important;
         margin: 0 !important;
         border-radius: 0 !important;
-        z-index: 999999 !important;
+        z-index: var(--z-sponsor-overlay) !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;

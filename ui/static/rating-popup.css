@@ -9,7 +9,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 9990;
+    z-index: var(--z-rating-banner);
     display: flex;
     align-items: center;
     justify-content: center;

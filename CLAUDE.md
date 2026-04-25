@@ -9,7 +9,7 @@
 
 - **Name**: LotoIA (lotoia.fr) — Statistical analysis platform for French Loto & EuroMillions
 - **Stack**: FastAPI / Python 3.13 / MariaDB (Cloud SQL) / Vertex AI Gemini 2.5 Flash (google-genai SDK) / GCP Cloud Run (europe-west1)
-- **Version**: V131.C — Release 1.6.017
+- **Version**: V132.A — Release 1.6.019
 - **Tests**: 5236 (129 files, coverage 78%)
 - **Languages**: 6 (FR, EN, ES, PT, DE, NL) — all active
 - **EuroMillions**: LIVE since 15/03/2026 (EM_PUBLIC_ACCESS=true)

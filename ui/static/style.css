@@ -79,6 +79,24 @@
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
     --shadow-hover: var(--theme-shadow-hover);
+
+    /* =================================================================
+       V132.A — Hiérarchie z-index unifiée (UX05)
+       Centralise les empilements modaux/overlays.
+       Les valeurs basses (0-1000) restent locales par composant.
+       Les blocs mobile avec autres !important DOIVENT garder !important.
+       ================================================================= */
+    --z-base: 1;
+    --z-sticky: 100;
+    --z-scroll-top: 1000;
+    --z-rating-banner: 9990;
+    --z-chatbot-bubble: 9998;
+    --z-chatbot-window: 9999;
+    --z-sponsor-overlay: 10000;
+    --z-contact-overlay: 10001;
+    --z-meta-overlay: 10002;
+    --z-cookies: 10003;
+    --z-cookies-layer-2: 10004;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════

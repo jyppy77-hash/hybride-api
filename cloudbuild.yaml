@@ -74,7 +74,7 @@ steps:
           --cpu=1 \
           --concurrency=40 \
           --max-instances=15 \
-          --min-instances=2 \
+          --min-instances=1 \
           --timeout=120 \
           --cpu-boost \
           --no-traffic \
