@@ -41,6 +41,15 @@
       "@graph": [
         {
           "@type": "NewsArticle",
+          "headline": {{ _('Release 1.6.020 — Une expérience plus fluide et plus stable')|tojson }},
+          "datePublished": "2026-04-27", "dateModified": "2026-04-27",
+          "author": {"@type": "Person", "name": "Jean-Philippe Godard", "alternateName": "JyppY", "url": "{{ base_url }}/a-propos"},
+          "publisher": {"@type": "Organization", "name": "LotoIA", "url": "{{ base_url }}", "logo": {"@type": "ImageObject", "url": "{{ base_url }}/ui/static/og-image.jpg"}},
+          "image": "{{ base_url }}/ui/static/og-image.jpg",
+          "mainEntityOfPage": "{{ canonical_url }}"
+        },
+        {
+          "@type": "NewsArticle",
           "headline": {{ _('Moteur HYBRIDE v2.0 : analyse plus intelligente, grilles mieux construites')|tojson }},
           "datePublished": "2026-04-13", "dateModified": "2026-04-13",
           "author": {"@type": "Person", "name": "Jean-Philippe Godard", "alternateName": "JyppY", "url": "{{ base_url }}/a-propos"},
@@ -126,6 +135,30 @@
         <section class="news-section">
 
             <article class="news-post featured">
+                <div class="news-meta">
+                    <span class="news-date">{{ _('27 avril 2026') }}</span>
+                    <span class="news-tag news-tag-update">Release 1.6.020</span>
+                </div>
+                <h2 class="news-title"><span>&#128640;</span> {{ _('Release 1.6.020 — Une expérience plus fluide et plus stable') }}</h2>
+                <div class="news-content">
+                    <p>{{ _('Cette semaine, nous avons consacré du temps à une série d\'améliorations qui rendent votre navigation sur LotoIA plus agréable, plus rapide et plus fiable.') }}</p>
+
+                    <h3>&#128172; {{ _('Un chatbot HYBRIDE plus rapide et plus complet') }}</h3>
+                    <p>{{ _('Notre assistant HYBRIDE a été modernisé en profondeur. Il répond désormais plus rapidement à vos questions, et surtout, ses réponses vont toujours jusqu\'au bout — fini les phrases coupées en plein milieu. Quelle que soit votre langue, l\'expérience est plus stable.') }}</p>
+
+                    <h3>&#10024; {{ _('Une navigation plus propre') }}</h3>
+                    <p>{{ _('Vous avez peut-être remarqué que certains boutons (notamment le bouton « retour en haut ») clignotaient brièvement quand vous changiez de page. Nous avons éliminé ce défaut visuel. La navigation entre les pages Loto et EuroMillions est maintenant plus douce.') }}</p>
+
+                    <h3>&#127912; {{ _('Des dizaines de petits détails') }}</h3>
+                    <p>{{ _('Compteur du popup partenaires parfaitement aligné, empilement de la fenêtre du chatbot plus naturel, fenêtre de chat qui recouvre désormais la bulle quand elle est ouverte… Nous avons traqué chaque petite imperfection visuelle pour vous offrir un confort d\'utilisation quotidien.') }}</p>
+
+                    <p><em>{{ _('Notre engagement reste le même : un outil transparent, sans hallucination, et toujours plus agréable à utiliser. Merci à toute la communauté qui nous fait remonter ces petits détails — chacun de vos retours compte.') }} &#128591;</em></p>
+
+                    <p>&mdash; <strong>{{ _('L\'équipe LotoIA') }}</strong></p>
+                </div>
+            </article>
+
+            <article class="news-post">
                 <div class="news-meta">
                     <span class="news-date">{{ _('13 avril 2026') }}</span>
                     <span class="news-tag news-tag-update">Release 1.6.000</span>

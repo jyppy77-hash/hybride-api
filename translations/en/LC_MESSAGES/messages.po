@@ -5577,3 +5577,37 @@ msgstr "Try the new engine now in the Grid Generator."
 
 msgid "Testez le nouveau moteur dès maintenant"
 msgstr "Try the new engine now"
+
+# V133 — News Release 1.6.020 (2026-04-27)
+msgid "27 avril 2026"
+msgstr "April 27, 2026"
+
+msgid "Release 1.6.020 — Une expérience plus fluide et plus stable"
+msgstr "Release 1.6.020 — A smoother, more stable experience"
+
+msgid "Cette semaine, nous avons consacré du temps à une série d'améliorations qui rendent votre navigation sur LotoIA plus agréable, plus rapide et plus fiable."
+msgstr "This week, we focused on a series of improvements that make your navigation on LotoIA more pleasant, faster and more reliable."
+
+msgid "Un chatbot HYBRIDE plus rapide et plus complet"
+msgstr "A faster and more complete HYBRIDE chatbot"
+
+msgid "Notre assistant HYBRIDE a été modernisé en profondeur. Il répond désormais plus rapidement à vos questions, et surtout, ses réponses vont toujours jusqu'au bout — fini les phrases coupées en plein milieu. Quelle que soit votre langue, l'expérience est plus stable."
+msgstr "Our HYBRIDE assistant has been thoroughly modernized. It now answers your questions faster, and most importantly, its responses always go all the way through — no more sentences cut off mid-thought. Whatever your language, the experience is more stable."
+
+msgid "Une navigation plus propre"
+msgstr "Smoother navigation"
+
+msgid "Vous avez peut-être remarqué que certains boutons (notamment le bouton « retour en haut ») clignotaient brièvement quand vous changiez de page. Nous avons éliminé ce défaut visuel. La navigation entre les pages Loto et EuroMillions est maintenant plus douce."
+msgstr "You may have noticed that some buttons (notably the “back to top” button) briefly flickered when you changed pages. We've eliminated this visual glitch. Navigation between Loto and EuroMillions pages is now smoother."
+
+msgid "Des dizaines de petits détails"
+msgstr "Dozens of small details"
+
+msgid "Compteur du popup partenaires parfaitement aligné, empilement de la fenêtre du chatbot plus naturel, fenêtre de chat qui recouvre désormais la bulle quand elle est ouverte… Nous avons traqué chaque petite imperfection visuelle pour vous offrir un confort d'utilisation quotidien."
+msgstr "Perfectly aligned partner popup counter, more natural chatbot window stacking, chat window that now properly covers the bubble when open… We've tracked down every small visual imperfection to give you better day-to-day comfort."
+
+msgid "Notre engagement reste le même : un outil transparent, sans hallucination, et toujours plus agréable à utiliser. Merci à toute la communauté qui nous fait remonter ces petits détails — chacun de vos retours compte."
+msgstr "Our commitment remains the same: a transparent tool, without hallucinations, and ever more pleasant to use. Thank you to our entire community for reporting these small details — every piece of feedback counts."
+
+msgid "L'équipe LotoIA"
+msgstr "The LotoIA team"

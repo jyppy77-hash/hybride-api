@@ -4797,3 +4797,37 @@ msgstr ""
 #~ "tendances euromillions"
 #~ msgstr ""
 
+# V133 — News Release 1.6.020 (27/04/2026)
+msgid "27 avril 2026"
+msgstr ""
+
+msgid "Release 1.6.020 — Une expérience plus fluide et plus stable"
+msgstr ""
+
+msgid "Cette semaine, nous avons consacré du temps à une série d'améliorations qui rendent votre navigation sur LotoIA plus agréable, plus rapide et plus fiable."
+msgstr ""
+
+msgid "Un chatbot HYBRIDE plus rapide et plus complet"
+msgstr ""
+
+msgid "Notre assistant HYBRIDE a été modernisé en profondeur. Il répond désormais plus rapidement à vos questions, et surtout, ses réponses vont toujours jusqu'au bout — fini les phrases coupées en plein milieu. Quelle que soit votre langue, l'expérience est plus stable."
+msgstr ""
+
+msgid "Une navigation plus propre"
+msgstr ""
+
+msgid "Vous avez peut-être remarqué que certains boutons (notamment le bouton « retour en haut ») clignotaient brièvement quand vous changiez de page. Nous avons éliminé ce défaut visuel. La navigation entre les pages Loto et EuroMillions est maintenant plus douce."
+msgstr ""
+
+msgid "Des dizaines de petits détails"
+msgstr ""
+
+msgid "Compteur du popup partenaires parfaitement aligné, empilement de la fenêtre du chatbot plus naturel, fenêtre de chat qui recouvre désormais la bulle quand elle est ouverte… Nous avons traqué chaque petite imperfection visuelle pour vous offrir un confort d'utilisation quotidien."
+msgstr ""
+
+msgid "Notre engagement reste le même : un outil transparent, sans hallucination, et toujours plus agréable à utiliser. Merci à toute la communauté qui nous fait remonter ces petits détails — chacun de vos retours compte."
+msgstr ""
+
+msgid "L'équipe LotoIA"
+msgstr ""
+

@@ -5833,3 +5833,37 @@ msgstr "Test de nieuwe engine nu in de Speelformulier-generator."
 
 msgid "Testez le nouveau moteur dès maintenant"
 msgstr "Test de nieuwe engine nu"
+
+# V133 — News Release 1.6.020 (2026-04-27)
+msgid "27 avril 2026"
+msgstr "27 april 2026"
+
+msgid "Release 1.6.020 — Une expérience plus fluide et plus stable"
+msgstr "Release 1.6.020 — Een vlottere en stabielere ervaring"
+
+msgid "Cette semaine, nous avons consacré du temps à une série d'améliorations qui rendent votre navigation sur LotoIA plus agréable, plus rapide et plus fiable."
+msgstr "Deze week hebben we tijd besteed aan een reeks verbeteringen die uw navigatie op LotoIA aangenamer, sneller en betrouwbaarder maken."
+
+msgid "Un chatbot HYBRIDE plus rapide et plus complet"
+msgstr "Een snellere en completere HYBRIDE-chatbot"
+
+msgid "Notre assistant HYBRIDE a été modernisé en profondeur. Il répond désormais plus rapidement à vos questions, et surtout, ses réponses vont toujours jusqu'au bout — fini les phrases coupées en plein milieu. Quelle que soit votre langue, l'expérience est plus stable."
+msgstr "Onze HYBRIDE-assistent is grondig gemoderniseerd. Hij beantwoordt uw vragen nu sneller en vooral, zijn antwoorden gaan altijd helemaal door — geen zinnen meer die middenin worden afgekapt. Welke taal u ook spreekt, de ervaring is stabieler."
+
+msgid "Une navigation plus propre"
+msgstr "Een vlottere navigatie"
+
+msgid "Vous avez peut-être remarqué que certains boutons (notamment le bouton « retour en haut ») clignotaient brièvement quand vous changiez de page. Nous avons éliminé ce défaut visuel. La navigation entre les pages Loto et EuroMillions est maintenant plus douce."
+msgstr "U heeft misschien gemerkt dat sommige knoppen (met name de knop „terug naar boven“) even flikkerden bij het wisselen van pagina. We hebben dit visuele defect verholpen. De navigatie tussen de Loto- en EuroMillions-pagina's is nu soepeler."
+
+msgid "Des dizaines de petits détails"
+msgstr "Tientallen kleine details"
+
+msgid "Compteur du popup partenaires parfaitement aligné, empilement de la fenêtre du chatbot plus naturel, fenêtre de chat qui recouvre désormais la bulle quand elle est ouverte… Nous avons traqué chaque petite imperfection visuelle pour vous offrir un confort d'utilisation quotidien."
+msgstr "Perfect uitgelijnde teller van de partner-popup, natuurlijker gestapeld chatbot-venster, chatvenster dat de bubbel nu correct bedekt wanneer hij geopend is… We hebben elke kleine visuele onvolkomenheid opgespoord om u dagelijks meer comfort te bieden."
+
+msgid "Notre engagement reste le même : un outil transparent, sans hallucination, et toujours plus agréable à utiliser. Merci à toute la communauté qui nous fait remonter ces petits détails — chacun de vos retours compte."
+msgstr "Onze inzet blijft dezelfde: een transparant hulpmiddel, zonder hallucinaties, en steeds aangenamer in gebruik. Dank aan onze hele community die ons deze kleine details meldt — elke feedback telt."
+
+msgid "L'équipe LotoIA"
+msgstr "Het LotoIA-team"
