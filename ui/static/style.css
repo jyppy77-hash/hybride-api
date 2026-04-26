@@ -2226,6 +2226,7 @@ details summary:hover {
 .scroll-to-top.visible {
     opacity: 0.75;
     visibility: visible;
+    pointer-events: auto;
 }
 
 .scroll-to-top:hover {
