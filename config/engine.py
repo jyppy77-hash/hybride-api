@@ -1,4 +1,5 @@
 """Configuration moteur HYBRIDE — Loto et EuroMillions."""
+import os
 from dataclasses import dataclass, field
 
 
@@ -110,7 +111,7 @@ class EngineConfig:
     # Shadow rollout: enabled=False by default → activation via env var after 48h pre-fill.
     saturation_brake_persistent_t1: float = 0.20      # multiplier for T-1 canonical selections
     saturation_brake_persistent_t2: float = 0.50      # multiplier for T-2 canonical selections
-    saturation_persistent_enabled: bool = False       # master flag (read+write). ENV override: CONFIG_SATURATION_PERSISTENT_ENABLED
+    saturation_persistent_enabled: bool = False       # master flag (read+write). ENV controlled at instantiation: CONFIG_SATURATION_PERSISTENT_ENABLED (see _env_bool below + LOTO_CONFIG/EM_CONFIG)
     saturation_persistent_window: int = 2             # 1 = T-1 only, 2 = T-1 + T-2
 
     # V106: Unpopularity scoring — penalize over-played numbers (Gemini Deep Research R3)
@@ -152,6 +153,23 @@ PENALTY_COEFFICIENTS = (0.0, 0.65, 0.80, 0.90)
 PENALTY_WINDOW = 4
 
 _SUPERSTITIOUS = frozenset({3, 7, 9, 11, 13})
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    """Read boolean env var with strict truthy parsing.
+
+    Truthy values (case-insensitive, after .strip()): "true", "1", "yes", "on" → True.
+    Var absent (os.environ.get returns None) → default.
+    Any other value (empty, "false", "0", "no", "off", typo, whitespace) → False.
+    Fail-closed semantics: only explicit truthy strings activate; unknown/falsy
+    values return False even if default=True. Used to gate V110
+    (saturation_persistent_enabled) at module-load time so a Cloud Run env var
+    update can toggle the feature without rebuild.
+    """
+    raw = os.environ.get(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in ("true", "1", "yes", "on")
 
 
 LOTO_CONFIG = EngineConfig(
@@ -200,6 +218,8 @@ LOTO_CONFIG = EngineConfig(
     zones=LOTO_ZONES,
     # V107: ESI — Loto 5/49
     esi_max=750,
+    # V110: env-aware activation (CONFIG_SATURATION_PERSISTENT_ENABLED, default False)
+    saturation_persistent_enabled=_env_bool("CONFIG_SATURATION_PERSISTENT_ENABLED", False),
 )
 
 EM_CONFIG = EngineConfig(
@@ -248,4 +268,6 @@ EM_CONFIG = EngineConfig(
     noise_by_mode={"conservative": 0.0, "balanced": 0.10, "recent": 0.15},
     # V104: zone stratification
     zones=EM_ZONES,
+    # V110: env-aware activation (CONFIG_SATURATION_PERSISTENT_ENABLED, default False)
+    saturation_persistent_enabled=_env_bool("CONFIG_SATURATION_PERSISTENT_ENABLED", False),
 )
