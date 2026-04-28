@@ -277,7 +277,24 @@ class HybrideEngine:
                     f"SELECT {col}, COUNT(*) as freq FROM {self.cfg.table_name} GROUP BY {col}"
                 )
             for row in await cursor.fetchall():
-                freq[row[col]] = row['freq']
+                # V135: guard NULL/range — pipeline import 2 étapes peut laisser
+                # secondary NULL temporairement (diagnostic V2 hyp F, 28/04/2026).
+                val = row[col]
+                if val is None:
+                    logger.warning(
+                        "[HYBRIDE-SECONDARY] %s NULL détecté dans %s.%s — skipped "
+                        "(probable NULL transitoire pipeline import).",
+                        self.cfg.game, self.cfg.table_name, col,
+                    )
+                    continue
+                if not (self.cfg.secondary_min <= val <= self.cfg.secondary_max):
+                    logger.warning(
+                        "[HYBRIDE-SECONDARY] %s value %s out of range [%d,%d] in %s.%s — skipped.",
+                        self.cfg.game, val, self.cfg.secondary_min, self.cfg.secondary_max,
+                        self.cfg.table_name, col,
+                    )
+                    continue
+                freq[val] = row['freq']
         else:
             parts = []
             params = []
@@ -292,7 +309,21 @@ class HybrideEngine:
                 params
             )
             for row in await cursor.fetchall():
-                freq[row['num']] = row['freq']
+                # V135: guard NULL/range (idem branche single-col, pour EM stars).
+                val = row['num']
+                if val is None:
+                    logger.warning(
+                        "[HYBRIDE-SECONDARY] %s NULL détecté dans %s (UNION) — skipped.",
+                        self.cfg.game, self.cfg.table_name,
+                    )
+                    continue
+                if not (self.cfg.secondary_min <= val <= self.cfg.secondary_max):
+                    logger.warning(
+                        "[HYBRIDE-SECONDARY] %s value %s out of range [%d,%d] — skipped.",
+                        self.cfg.game, val, self.cfg.secondary_min, self.cfg.secondary_max,
+                    )
+                    continue
+                freq[val] = row['freq']
 
         # Normalize by draw count
         if date_limite:

@@ -291,13 +291,26 @@ async def unified_meta_analyse_local(
 
             # Secondary numbers (chance / etoiles)
             if is_loto:
+                # V135: filtres défensifs NULL/range — pipeline import 2 étapes
+                # peut laisser numero_chance NULL temporairement (V2 hyp F).
                 await cursor.execute(f"""
                     SELECT numero_chance AS num, COUNT(*) AS freq
                     FROM {cfg.table}
                     WHERE id IN ({ids_placeholder})
+                      AND numero_chance IS NOT NULL
+                      AND numero_chance BETWEEN 1 AND 10
                     GROUP BY numero_chance ORDER BY freq DESC
                 """, window_ids)
                 secondary_freq = {row['num']: row['freq'] for row in await cursor.fetchall()}
+                # V135: alerte si asymétrie (sum chance != nb tirages dans la fenêtre)
+                _total_chance = sum(secondary_freq.values())
+                if _total_chance != len(window_ids):
+                    logger.error(
+                        "[META-CHANCE] Asymétrie détectée Loto window=%s: "
+                        "%d chance comptabilisés vs %d tirages — "
+                        "probablement NULL transitoire pipeline import (V2 hyp F).",
+                        window_used, _total_chance, len(window_ids),
+                    )
                 secondary_top, penal_info_secondary = compute_penalized_ranking(
                     raw_freq=secondary_freq,
                     last_draw_numbers=set(),
@@ -309,14 +322,32 @@ async def unified_meta_analyse_local(
                     unpopularity=False,  # V106: chance universe too small
                 )
             else:
+                # V135: filtres défensifs NULL/range pour étoiles EM (idem Loto chance).
                 await cursor.execute(f"""
                     SELECT num, COUNT(*) as freq FROM (
-                        SELECT etoile_1 as num FROM {cfg.table} WHERE id IN ({ids_placeholder})
-                        UNION ALL SELECT etoile_2 FROM {cfg.table} WHERE id IN ({ids_placeholder})
+                        SELECT etoile_1 as num FROM {cfg.table}
+                        WHERE id IN ({ids_placeholder})
+                          AND etoile_1 IS NOT NULL
+                          AND etoile_1 BETWEEN 1 AND 12
+                        UNION ALL
+                        SELECT etoile_2 FROM {cfg.table}
+                        WHERE id IN ({ids_placeholder})
+                          AND etoile_2 IS NOT NULL
+                          AND etoile_2 BETWEEN 1 AND 12
                     ) t
                     GROUP BY num ORDER BY num
                 """, (*window_ids, *window_ids))
                 secondary_freq = {row['num']: row['freq'] for row in await cursor.fetchall()}
+                # V135: alerte si asymétrie EM (sum stars != 2 × nb tirages)
+                _total_stars = sum(secondary_freq.values())
+                _expected_stars = len(window_ids) * 2
+                if _total_stars != _expected_stars:
+                    logger.error(
+                        "[META-STARS] Asymétrie détectée EM window=%s: "
+                        "%d stars comptabilisées vs %d attendues — "
+                        "probablement NULL transitoire pipeline import (V2 hyp F).",
+                        window_used, _total_stars, _expected_stars,
+                    )
                 secondary_top, penal_info_secondary = compute_penalized_ranking(
                     raw_freq=secondary_freq,
                     last_draw_numbers=set(),
