@@ -13,8 +13,6 @@ from services.gemini_shared import enrich_analysis_base
 
 logger = logging.getLogger(__name__)
 
-GEMINI_MODEL_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
-
 
 async def enrich_analysis_em(analysis_local: str, window: str = "GLOBAL", *, http_client: httpx.AsyncClient, lang: str = "fr") -> dict:
     """Enrichit le texte d'analyse EM via Gemini (delegates to shared base)."""

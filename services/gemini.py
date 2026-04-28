@@ -19,15 +19,6 @@ from services.gemini_shared import (
 
 logger = logging.getLogger(__name__)
 
-# V131.A — DEPRECATED : URLs AI Studio historiques. Usage legacy par chat_sql.py
-# et chat_sql_em.py (HORS SCOPE V131.A, migration prévue V131.D). Ne plus utiliser
-# dans tout nouveau code. Suppression définitive V131.D.
-GEMINI_MODEL_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
-GEMINI_STREAM_URL = (
-    "https://generativelanguage.googleapis.com/v1beta/models/"
-    "gemini-2.0-flash:streamGenerateContent?alt=sse"
-)
-
 # F08 V83: 0.6 = balance factualité/naturel pour chatbot data-grounded
 _GEMINI_CHAT_TEMPERATURE = 0.6
 

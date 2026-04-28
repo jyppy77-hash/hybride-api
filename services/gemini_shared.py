@@ -83,10 +83,6 @@ async def await_pending_tasks(timeout: float = 5.0):
         await asyncio.wait(_PENDING_TASKS, timeout=timeout)
 
 
-# V131.A — DEPRECATED : URL AI Studio historique. Usage legacy par chat_sql*
-# (HORS SCOPE V131.A, migration prévue V131.D). Suppression définitive V131.D.
-GEMINI_MODEL_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
-
 # Shared i18n system instructions for enrichment (6 languages).
 # Used by both Loto and EM — identical content.
 ENRICHMENT_INSTRUCTIONS = {
