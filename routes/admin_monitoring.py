@@ -283,6 +283,65 @@ async def admin_circuit_breaker_reset(request: Request):
     })
 
 
+# V131.E — Per-breaker admin endpoints (panneau Chatbot Monitor)
+@router.get("/admin/api/breakers", include_in_schema=False)
+async def admin_api_breakers(request: Request):
+    """V131.E — Liste l'état actuel des 3 Gemini breakers (chat/sql/pitch).
+
+    Consommé par le panneau "Circuit Breakers" dans /admin/chatbot-monitor.
+    Retourne pour chaque breaker : nom, état, compteur de failures, seuil,
+    durée d'ouverture configurée.
+    """
+    err = _require_auth_json(request)
+    if err:
+        return err
+    from services.circuit_breaker import ALL_BREAKERS
+    items = []
+    for name, b in ALL_BREAKERS.items():
+        items.append({
+            "name": name,
+            "state": b.state,                    # "closed" | "half_open" | "open"
+            "failures": b._failure_count,
+            "threshold": b._failure_threshold,
+            "open_timeout": b._open_timeout,
+        })
+    return JSONResponse({"breakers": items})
+
+
+@router.post("/admin/api/breakers/{name}/reset", include_in_schema=False)
+async def admin_api_breaker_reset_individual(request: Request, name: str):
+    """V131.E — Reset individuel d'un breaker (force_close).
+
+    Args:
+        name: identifiant du breaker (chat/sql/pitch). 404 si inconnu.
+    """
+    err = _require_auth_json(request)
+    if err:
+        return err
+    from services.circuit_breaker import ALL_BREAKERS
+    breaker = ALL_BREAKERS.get(name)
+    if breaker is None:
+        return JSONResponse(
+            {"error": "unknown_breaker", "name": name,
+             "available": list(ALL_BREAKERS.keys())},
+            status_code=404,
+        )
+    from utils import get_client_ip
+    real_ip = get_client_ip(request)
+    previous_state = breaker.state
+    breaker.force_close()
+    logger.info(
+        "[ADMIN_AUDIT] action=breaker_reset_individual name=%s ip=%s previous_state=%s",
+        name, real_ip, previous_state,
+    )
+    return JSONResponse({
+        "name": name,
+        "state": breaker.state,                  # "closed"
+        "failures": breaker._failure_count,      # 0
+        "previous_state": previous_state,
+    })
+
+
 # V94 hotfix: Decay state admin update
 @router.post("/admin/api/decay/update", include_in_schema=False)
 async def admin_decay_update(request: Request):

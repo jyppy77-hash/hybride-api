@@ -1261,6 +1261,98 @@ var LotoAdmin = (function() {
         startCalPolling();
     }
 
+    // ════════════════════════════════════════════════════════════════
+    // V131.E — Panneau Circuit Breakers Gemini (Chatbot Monitor)
+    // ════════════════════════════════════════════════════════════════
+
+    var BREAKERS_API = '/admin/api/breakers';
+
+    function initBreakersPanel() {
+        var grid = document.getElementById('cm-breakers-grid');
+        if (!grid) return;  // pas sur cette page
+        loadBreakers();
+        var refreshBtn = document.getElementById('cm-breakers-refresh');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function() { loadBreakers(); });
+        }
+    }
+
+    function loadBreakers() {
+        var grid = document.getElementById('cm-breakers-grid');
+        if (!grid) return;
+        grid.innerHTML = '<div class="breakers-loading">Chargement...</div>';
+        fetch(BREAKERS_API, { credentials: 'same-origin' })
+            .then(function(r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
+            .then(function(d) { renderBreakers(d.breakers || []); })
+            .catch(function(e) {
+                grid.innerHTML = '<div class="breakers-error">Erreur de chargement : ' +
+                    (e && e.message ? e.message : 'inconnue') + '</div>';
+            });
+    }
+
+    function renderBreakers(list) {
+        var grid = document.getElementById('cm-breakers-grid');
+        if (!grid) return;
+        if (!list.length) {
+            grid.innerHTML = '<div class="breakers-loading">Aucun breaker disponible.</div>';
+            return;
+        }
+        grid.innerHTML = '';
+        list.forEach(function(b) {
+            var card = document.createElement('div');
+            card.className = 'breaker-card';
+            var stateClass = 'breaker-state-' + (b.state || 'closed');
+            var stateLabel = (b.state || 'closed').toUpperCase();
+            var failuresHigh = (b.failures >= b.threshold) ? ' high' : '';
+            var canReset = (b.state !== 'closed');
+            card.innerHTML =
+                '<div class="breaker-card-head">' +
+                    '<span class="breaker-name">' + escapeHtmlBreaker(b.name) + '</span>' +
+                    '<span class="breaker-state-badge ' + stateClass + '">' + escapeHtmlBreaker(stateLabel) + '</span>' +
+                '</div>' +
+                '<div class="breaker-failures">' +
+                    'Failures : <span class="' + (failuresHigh ? 'high' : '') + '">' +
+                    b.failures + ' / ' + b.threshold + '</span>' +
+                '</div>' +
+                '<button type="button" class="breaker-reset-btn" data-name="' + escapeHtmlBreaker(b.name) + '"' +
+                    (canReset ? '' : ' disabled') + '>Reset</button>';
+            var btn = card.querySelector('.breaker-reset-btn');
+            if (btn && canReset) {
+                btn.addEventListener('click', function() { resetBreaker(b.name); });
+            }
+            grid.appendChild(card);
+        });
+    }
+
+    function resetBreaker(name) {
+        if (!name) return;
+        if (!confirm('Confirmer le reset du breaker ' + name.toUpperCase() + ' ?')) return;
+        fetch('/admin/api/breakers/' + encodeURIComponent(name) + '/reset', {
+            method: 'POST', credentials: 'same-origin'
+        })
+            .then(function(r) {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
+            .then(function(d) {
+                alert('Breaker ' + name + ' reset OK (etait : ' + (d.previous_state || '?') + ')');
+                loadBreakers();
+            })
+            .catch(function(e) {
+                alert('Erreur reset breaker ' + name + ' : ' + (e && e.message ? e.message : 'inconnue'));
+            });
+    }
+
+    function escapeHtmlBreaker(s) {
+        if (s === null || s === undefined) return '';
+        return String(s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
     return {
         initImpressions: initImpressions,
         initVotes: initVotes,
@@ -1269,6 +1361,7 @@ var LotoAdmin = (function() {
         initMessages: initMessages,
         initChatbotMonitor: initChatbotMonitor,
         initDashboard: initDashboard,
-        initCalendar: initCalendar
+        initCalendar: initCalendar,
+        initBreakersPanel: initBreakersPanel
     };
 })();

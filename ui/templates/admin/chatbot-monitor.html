@@ -74,6 +74,71 @@
         <button id="cm-btn-reset" class="btn-secondary">Reset</button>
     </div>
 
+    <!-- V131.E — Panneau Circuit Breakers Gemini -->
+    <section class="breakers-panel" id="cm-breakers-panel">
+        <div class="breakers-header">
+            <h3 class="breakers-title">Circuit Breakers Gemini</h3>
+            <button id="cm-breakers-refresh" class="btn btn-ghost btn-sm" type="button">Rafraichir</button>
+        </div>
+        <div class="breakers-grid" id="cm-breakers-grid">
+            <div class="breakers-loading">Chargement...</div>
+        </div>
+    </section>
+
+    <style>
+    /* V131.E — Styles scoped panneau Circuit Breakers (zero touche a admin.css) */
+    .breakers-panel {
+        margin: .5rem 0 1rem 0;
+        padding: .9rem 1rem;
+        background: var(--admin-bg-card, #1e293b);
+        border: 1px solid rgba(255,255,255,.08);
+        border-radius: 8px;
+    }
+    .breakers-header {
+        display: flex; align-items: center; justify-content: space-between;
+        gap: .8rem; margin-bottom: .7rem;
+    }
+    .breakers-title {
+        margin: 0; font-size: .95rem; font-weight: 600; color: var(--text-muted, #94a3b8);
+        letter-spacing: .02em; text-transform: uppercase;
+    }
+    .breakers-grid {
+        display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: .7rem;
+    }
+    .breaker-card {
+        display: flex; flex-direction: column; gap: .35rem;
+        padding: .7rem .9rem; border-radius: 6px;
+        background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08);
+    }
+    .breaker-card-head { display: flex; align-items: center; justify-content: space-between; }
+    .breaker-name { font-weight: 700; font-size: .9rem; text-transform: uppercase; letter-spacing: .03em; }
+    .breaker-state-badge {
+        font-size: .7rem; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+        text-transform: uppercase; letter-spacing: .04em;
+    }
+    .breaker-state-closed   { background: rgba(16,185,129,.15); color: #10b981; }
+    .breaker-state-half_open{ background: rgba(245,158,11,.18); color: #f59e0b; }
+    .breaker-state-open     { background: rgba(239,68,68,.18); color: #ef4444; }
+    .breaker-failures { font-size: .78rem; color: var(--text-muted, #94a3b8); }
+    .breaker-failures .high { color: #ef4444; font-weight: 600; }
+    .breaker-reset-btn {
+        margin-top: .25rem; font-size: .78rem; padding: 4px 10px; border-radius: 4px;
+        border: 1px solid rgba(239,68,68,.4); background: rgba(239,68,68,.08);
+        color: #ef4444; cursor: pointer; align-self: flex-start;
+    }
+    .breaker-reset-btn:hover { background: rgba(239,68,68,.18); }
+    .breaker-reset-btn[disabled] {
+        opacity: .35; cursor: not-allowed; border-color: rgba(255,255,255,.1);
+        background: transparent; color: var(--text-muted, #94a3b8);
+    }
+    .breakers-loading, .breakers-error {
+        grid-column: 1 / -1; padding: .8rem; text-align: center;
+        font-size: .82rem; color: var(--text-muted, #94a3b8);
+    }
+    .breakers-error { color: #ef4444; }
+    </style>
+
     <div class="kpi-grid" id="cm-kpi">
         <div class="kpi-card" style="border-color:#4f8cff;">
             <span class="kpi-value" id="cm-kpi-total" style="color:#4f8cff;">-</span>
@@ -135,5 +200,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script>LotoAdmin.initChatbotMonitor();</script>
+<script>LotoAdmin.initChatbotMonitor(); LotoAdmin.initBreakersPanel();</script>
 {% endblock %}
