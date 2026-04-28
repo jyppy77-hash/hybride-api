@@ -403,51 +403,43 @@ class TestReadonlyPoolFallback:
 # ═══════════════════════════════════════════════════════════════════════
 
 class TestGenerateSqlNonSqlGuard:
-    """F04: _generate_sql must return NO_SQL when Gemini returns natural language."""
+    """F04: _generate_sql must return NO_SQL when Gemini returns natural language.
+
+    V131.D — Migré : mock httpx AI Studio (response.status_code/.json()) → fixture
+    mock_vertex_client (Vertex SDK B). Sémantique métier inchangée : on continue
+    de valider que _guard_non_sql() rejette le langage naturel et laisse passer
+    SELECT/NO_SQL. La signature publique `_generate_sql(question, client, api_key, history)`
+    est préservée — `client` et `api_key` sont ignorés (V131.D).
+    """
 
     @pytest.mark.asyncio
-    @patch("services.chat_sql.gemini_breaker_sql")
-    async def test_rejects_natural_language(self, mock_breaker):
+    async def test_rejects_natural_language(self, mock_vertex_client):
         """Gemini returning natural language gets rejected to NO_SQL."""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [{"content": {"parts": [{"text": "Je ne peux pas générer de SQL pour cette question."}]}}]
-        }
-        mock_breaker.call = AsyncMock(return_value=mock_response)
-
-        from services.chat_sql import _generate_sql
-        result = await _generate_sql("test question", MagicMock(), "fake-key")
+        with mock_vertex_client() as vc, \
+             patch("services.chat_sql.load_prompt", return_value="prompt"):
+            vc.set_response(text="Je ne peux pas générer de SQL pour cette question.")
+            from services.chat_sql import _generate_sql
+            result = await _generate_sql("test question", MagicMock(), "fake-key")
         assert result == "NO_SQL"
 
     @pytest.mark.asyncio
-    @patch("services.chat_sql.gemini_breaker_sql")
-    async def test_allows_valid_select(self, mock_breaker):
+    async def test_allows_valid_select(self, mock_vertex_client):
         """Gemini returning valid SELECT passes through."""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [{"content": {"parts": [{"text": "SELECT COUNT(*) FROM tirages"}]}}]
-        }
-        mock_breaker.call = AsyncMock(return_value=mock_response)
-
-        from services.chat_sql import _generate_sql
-        result = await _generate_sql("combien de tirages", MagicMock(), "fake-key")
+        with mock_vertex_client() as vc, \
+             patch("services.chat_sql.load_prompt", return_value="prompt"):
+            vc.set_response(text="SELECT COUNT(*) FROM tirages")
+            from services.chat_sql import _generate_sql
+            result = await _generate_sql("combien de tirages", MagicMock(), "fake-key")
         assert result == "SELECT COUNT(*) FROM tirages"
 
     @pytest.mark.asyncio
-    @patch("services.chat_sql.gemini_breaker_sql")
-    async def test_allows_no_sql(self, mock_breaker):
+    async def test_allows_no_sql(self, mock_vertex_client):
         """Gemini returning NO_SQL passes through."""
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "candidates": [{"content": {"parts": [{"text": "NO_SQL"}]}}]
-        }
-        mock_breaker.call = AsyncMock(return_value=mock_response)
-
-        from services.chat_sql import _generate_sql
-        result = await _generate_sql("bonjour", MagicMock(), "fake-key")
+        with mock_vertex_client() as vc, \
+             patch("services.chat_sql.load_prompt", return_value="prompt"):
+            vc.set_response(text="NO_SQL")
+            from services.chat_sql import _generate_sql
+            result = await _generate_sql("bonjour", MagicMock(), "fake-key")
         assert result == "NO_SQL"
 
 
