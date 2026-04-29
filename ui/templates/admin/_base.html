@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
     <title>LotoIA Admin — {% block title %}Dashboard{% endblock %}</title>
-    <link rel="stylesheet" href="/static/admin.css?v=12">
+    <link rel="stylesheet" href="/static/admin.css?v=13">
     <link rel="stylesheet" href="/static/admin-pool.css?v=2">
     <script>
     (function(){var c=document.cookie.match(/admin_theme=(\w+)/);if(c&&c[1]==='light')document.documentElement.style.background='#f5f5f5';})();
@@ -21,6 +21,7 @@
             <a href="/admin" class="topnav-brand"><span>Loto</span>IA Admin</a>
             <a href="/admin" class="topnav-link{% if active == 'dashboard' %} active{% endif %}">Dashboard</a>
             <a href="/admin/calendar" class="topnav-link{% if active == 'calendar' %} active{% endif %}">Calendrier</a>
+            <a href="/admin/calendar-perf" class="topnav-link{% if active == 'calendar-perf' %} active{% endif %}">Performance</a>
             <a href="/admin/impressions" class="topnav-link{% if active == 'impressions' %} active{% endif %}">Impressions</a>
             <a href="/admin/engagement" class="topnav-link{% if active == 'engagement' %} active{% endif %}">Engagement</a>
             <a href="/admin/votes" class="topnav-link{% if active == 'votes' %} active{% endif %}" id="nav-votes">Votes <span class="votes-badge" id="votes-badge" style="display:none;background:#22c55e;color:#fff;font-size:0.7rem;padding:1px 6px;border-radius:10px;margin-left:4px;"></span></a>
@@ -69,7 +70,7 @@
         }).catch(function(){});
     })();
     </script>
-    <script src="/static/admin.js?v=17"></script>
+    <script src="/static/admin.js?v=18"></script>
     {% block scripts %}{% endblock %}
 </body>
 </html>

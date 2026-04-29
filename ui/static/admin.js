@@ -1353,6 +1353,257 @@ var LotoAdmin = (function() {
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
+    // ────────────────────────────────────────────────────────────────────
+    // V136 — Performance calendar (admin /admin/calendar-perf)
+    // ────────────────────────────────────────────────────────────────────
+
+    var perfState = {
+        game: 'loto',
+        year: null,
+        month: null,
+        currentMonthData: null
+    };
+
+    var PERF_MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin',
+                          'Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    var PERF_DRAW_WEEKDAYS = { loto: [0,2,5], euromillions: [1,4] };
+
+    function perfBucketLevel(matches) {
+        if (matches === null || matches === undefined) return 'pre';
+        if (matches >= 5) return '5';
+        if (matches >= 4) return '4';
+        if (matches >= 3) return '3';
+        if (matches >= 2) return '2';
+        if (matches >= 1) return '1';
+        return '0';
+    }
+
+    function perfFormatNumbers(arr) {
+        if (!arr || !arr.length) return '—';
+        return arr.map(function(n){ return escapeHtmlBreaker(String(n)); }).join(' ');
+    }
+
+    function perfRenderMonth(data) {
+        perfState.currentMonthData = data;
+        var label = qs('#perf-month-label');
+        if (label) label.textContent = PERF_MONTHS_FR[data.month - 1] + ' ' + data.year;
+
+        var grid = qs('#perf-grid');
+        if (!grid) return;
+        // Clear all cells except headers
+        var existing = grid.querySelectorAll('.perf-cell, .perf-empty');
+        existing.forEach(function(el){ el.parentNode.removeChild(el); });
+
+        var first = new Date(data.year, data.month - 1, 1);
+        var firstDow = (first.getDay() + 6) % 7; // Monday = 0
+        var daysInMonth = new Date(data.year, data.month, 0).getDate();
+
+        // Empty leading cells
+        for (var i = 0; i < firstDow; i++) {
+            var emp = document.createElement('div');
+            emp.className = 'perf-empty';
+            grid.appendChild(emp);
+        }
+
+        // Build map by day
+        var byDate = {};
+        (data.draws || []).forEach(function(d){
+            var dt = d.date;
+            byDate[dt] = d;
+        });
+
+        var drawWeekdays = PERF_DRAW_WEEKDAYS[data.game] || [];
+
+        for (var day = 1; day <= daysInMonth; day++) {
+            var iso = data.year + '-' + String(data.month).padStart(2, '0') + '-' + String(day).padStart(2, '0');
+            var jsDow = (new Date(data.year, data.month - 1, day).getDay() + 6) % 7;
+            var cell = document.createElement('div');
+            cell.className = 'perf-cell';
+            var entry = byDate[iso];
+
+            if (drawWeekdays.indexOf(jsDow) === -1 || !entry) {
+                cell.classList.add('perf-no-draw');
+                cell.innerHTML = '<span class="perf-day-num">' + day + '</span>';
+                grid.appendChild(cell);
+                continue;
+            }
+
+            var bucket = perfBucketLevel(entry.fdj_drawn ? entry.best_match_count : null);
+            cell.classList.add('perf-match-' + bucket);
+            if (!entry.fdj_drawn) cell.classList.add('perf-pre');
+            cell.setAttribute('data-date', iso);
+            cell.setAttribute('role', 'button');
+            cell.setAttribute('tabindex', '0');
+
+            var inner = '<span class="perf-day-num">' + day + '</span>';
+            if (entry.fdj_drawn) {
+                inner += '<span class="perf-cell-fdj">FDJ ' + perfFormatNumbers(entry.fdj_balls) + '</span>';
+                if (entry.fdj_secondary && entry.fdj_secondary.length) {
+                    inner += '<span class="perf-cell-fdj-sec">+ ' + perfFormatNumbers(entry.fdj_secondary) + '</span>';
+                }
+                inner += '<span class="perf-cell-match">' + (entry.best_match_count || 0) + ' match</span>';
+            } else {
+                inner += '<span class="perf-cell-pre">à venir</span>';
+                var hasGen = entry.stats && entry.stats.generator;
+                if (hasGen) {
+                    inner += '<span class="perf-cell-gen">Gen ' + perfFormatNumbers(hasGen.balls) + '</span>';
+                }
+            }
+            cell.innerHTML = inner;
+            cell.addEventListener('click', function(d){
+                return function(){ perfOpenModal(d); };
+            }(iso));
+            cell.addEventListener('keydown', function(d){
+                return function(e){ if (e.key === 'Enter' || e.key === ' ') perfOpenModal(d); };
+            }(iso));
+            grid.appendChild(cell);
+        }
+
+        perfRenderKpi(data);
+    }
+
+    function perfRenderKpi(data) {
+        var played = 0, gte1 = 0, gte3 = 0, best = 0;
+        (data.draws || []).forEach(function(d){
+            if (!d.fdj_drawn) return;
+            played++;
+            var m = d.best_match_count || 0;
+            if (m >= 1) gte1++;
+            if (m >= 3) gte3++;
+            if (m > best) best = m;
+        });
+        var setText = function(id, v){ var el = qs('#' + id); if (el) el.textContent = v; };
+        setText('kpi-played', played);
+        setText('kpi-1ball', played > 0 ? gte1 + '/' + played : '—');
+        setText('kpi-3ball', played > 0 ? gte3 + '/' + played : '—');
+        setText('kpi-best', played > 0 ? best + ' boules' : '—');
+    }
+
+    function perfLoadMonth() {
+        var url = '/admin/api/calendar-perf/' + perfState.game + '/' + perfState.year + '/' + perfState.month;
+        fetchJSON(url).then(function(data){
+            if (!data) return;
+            if (data.error) {
+                alert('Erreur calendrier : ' + data.error);
+                return;
+            }
+            perfRenderMonth(data);
+        });
+    }
+
+    function perfOpenModal(dateStr) {
+        var backdrop = qs('#perf-modal-backdrop');
+        var body = qs('#perf-modal-body');
+        var title = qs('#perf-modal-title');
+        if (!backdrop || !body) return;
+        backdrop.style.display = 'flex';
+        if (title) title.textContent = 'Tirage ' + perfState.game.toUpperCase() + ' — ' + dateStr;
+        body.innerHTML = '<p>Chargement…</p>';
+        fetchJSON('/admin/api/calendar-perf/draw/' + perfState.game + '/' + dateStr).then(function(data){
+            if (!data) return;
+            body.innerHTML = perfRenderModalHtml(data);
+        });
+    }
+
+    function perfRenderModalHtml(data) {
+        var html = '';
+        if (data.fdj && data.fdj.drawn) {
+            html += '<div class="perf-modal-section perf-modal-fdj">';
+            html += '<h4>Tirage FDJ officiel</h4>';
+            html += '<p class="perf-balls-fdj">' + perfFormatNumbers(data.fdj.balls) + '</p>';
+            if (data.fdj.secondary && data.fdj.secondary.length) {
+                html += '<p class="perf-secondary-fdj">+ ' + perfFormatNumbers(data.fdj.secondary) + '</p>';
+            }
+            html += '</div>';
+        } else {
+            html += '<div class="perf-modal-section perf-modal-pre"><p><em>Tirage à venir — pas encore de résultat FDJ.</em></p></div>';
+        }
+
+        var labels = {
+            generator: 'Générateur HYBRIDE (V110)',
+            pdf_meta_global: 'PDF META — Fenêtre Global',
+            pdf_meta_5a: 'PDF META — Fenêtre 5 ans',
+            pdf_meta_2a: 'PDF META — Fenêtre 2 ans'
+        };
+        html += '<div class="perf-modal-section"><h4>Sélections HYBRIDE</h4>';
+        html += '<table class="perf-modal-table"><thead><tr><th>Source</th><th>Boules</th><th>Secondaire</th><th>Matchs</th></tr></thead><tbody>';
+        ['generator','pdf_meta_global','pdf_meta_5a','pdf_meta_2a'].forEach(function(src){
+            var entry = data.hybride && data.hybride[src];
+            if (!entry) {
+                html += '<tr class="perf-modal-row-empty"><td>' + labels[src] + '</td><td colspan="3"><em>aucune donnée</em></td></tr>';
+                return;
+            }
+            var matchCell = '—';
+            if (entry.matches_balls !== null && entry.matches_balls !== undefined) {
+                var sec = entry.matches_secondary ? ' + 1 sec ✓' : '';
+                matchCell = '<span class="perf-match-badge perf-match-' + perfBucketLevel(entry.matches_balls) + '">' + entry.matches_balls + ' boules' + sec + '</span>';
+            }
+            html += '<tr><td>' + labels[src] + '</td>';
+            html += '<td>' + perfFormatNumbers(entry.balls) + '</td>';
+            html += '<td>' + (entry.secondary !== null && entry.secondary !== undefined ? escapeHtmlBreaker(String(entry.secondary)) : '—') + '</td>';
+            html += '<td>' + matchCell + '</td></tr>';
+        });
+        html += '</tbody></table>';
+        if (data.summary && data.summary.best_match_count !== null && data.summary.best_match_source) {
+            html += '<p class="perf-modal-summary">Meilleur match : <strong>' + data.summary.best_match_count + ' boules</strong> via <em>' + escapeHtmlBreaker(labels[data.summary.best_match_source] || data.summary.best_match_source) + '</em></p>';
+        }
+        html += '</div>';
+        return html;
+    }
+
+    function perfCloseModal() {
+        var backdrop = qs('#perf-modal-backdrop');
+        if (backdrop) backdrop.style.display = 'none';
+    }
+
+    function initCalendarPerf() {
+        var now = new Date();
+        perfState.year = now.getFullYear();
+        perfState.month = now.getMonth() + 1;
+
+        // Tabs (game)
+        qsa('.perf-tab').forEach(function(btn){
+            btn.addEventListener('click', function(){
+                qsa('.perf-tab').forEach(function(b){ b.classList.remove('active'); b.setAttribute('aria-selected','false'); });
+                btn.classList.add('active');
+                btn.setAttribute('aria-selected','true');
+                perfState.game = btn.getAttribute('data-game');
+                perfLoadMonth();
+            });
+        });
+
+        // Month nav
+        var prev = qs('#perf-prev');
+        if (prev) prev.addEventListener('click', function(){
+            perfState.month--;
+            if (perfState.month < 1) { perfState.month = 12; perfState.year--; }
+            perfLoadMonth();
+        });
+        var next = qs('#perf-next');
+        if (next) next.addEventListener('click', function(){
+            perfState.month++;
+            if (perfState.month > 12) { perfState.month = 1; perfState.year++; }
+            perfLoadMonth();
+        });
+
+        // Refresh
+        var refresh = qs('#perf-refresh');
+        if (refresh) refresh.addEventListener('click', perfLoadMonth);
+
+        // Modal close
+        var closeBtn = qs('#perf-modal-close');
+        if (closeBtn) closeBtn.addEventListener('click', perfCloseModal);
+        var backdrop = qs('#perf-modal-backdrop');
+        if (backdrop) backdrop.addEventListener('click', function(e){
+            if (e.target === backdrop) perfCloseModal();
+        });
+        document.addEventListener('keydown', function(e){
+            if (e.key === 'Escape') perfCloseModal();
+        });
+
+        perfLoadMonth();
+    }
+
     return {
         initImpressions: initImpressions,
         initVotes: initVotes,
@@ -1362,6 +1613,7 @@ var LotoAdmin = (function() {
         initChatbotMonitor: initChatbotMonitor,
         initDashboard: initDashboard,
         initCalendar: initCalendar,
+        initCalendarPerf: initCalendarPerf,
         initBreakersPanel: initBreakersPanel
     };
 })();

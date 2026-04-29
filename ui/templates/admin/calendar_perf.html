@@ -1,0 +1,72 @@
+{% extends "admin/_base.html" %}
+{% block title %}Performance HYBRIDE vs FDJ{% endblock %}
+
+{% block content %}
+    <h2>Performance HYBRIDE vs FDJ <span class="rt-dot rt-dot-live" id="perf-live-dot" title="Auto-refresh manuel"></span></h2>
+    <p class="perf-help">Calendrier des tirages avec matchs HYBRIDE vs FDJ (générateur V110 + top fréquences PDF META Global / 5A / 2A).</p>
+
+    <!-- Controls -->
+    <div class="perf-controls">
+        <div class="perf-game-tabs" role="tablist" aria-label="Sélection du jeu">
+            <button class="perf-tab active" data-game="loto" role="tab" aria-selected="true">Loto</button>
+            <button class="perf-tab" data-game="euromillions" role="tab" aria-selected="false">EuroMillions</button>
+        </div>
+        <div class="perf-month-nav">
+            <button class="perf-nav-btn" id="perf-prev" title="Mois précédent">&#9664;</button>
+            <span class="perf-month-label" id="perf-month-label"></span>
+            <button class="perf-nav-btn" id="perf-next" title="Mois suivant">&#9654;</button>
+        </div>
+        <button class="perf-refresh-btn" id="perf-refresh" title="Recharger">&#x21BB;</button>
+    </div>
+
+    <!-- KPI mois -->
+    <div class="perf-kpi-grid" id="perf-kpi">
+        <div class="perf-kpi"><span class="perf-kpi-label">Tirages joués</span><span class="perf-kpi-value" id="kpi-played">—</span></div>
+        <div class="perf-kpi"><span class="perf-kpi-label">≥1 boule (best)</span><span class="perf-kpi-value" id="kpi-1ball">—</span></div>
+        <div class="perf-kpi"><span class="perf-kpi-label">≥3 boules (best)</span><span class="perf-kpi-value" id="kpi-3ball">—</span></div>
+        <div class="perf-kpi"><span class="perf-kpi-label">Meilleur tirage</span><span class="perf-kpi-value" id="kpi-best">—</span></div>
+    </div>
+
+    <!-- Calendar grid -->
+    <div class="perf-grid" id="perf-grid">
+        <div class="perf-header">Lun</div>
+        <div class="perf-header">Mar</div>
+        <div class="perf-header">Mer</div>
+        <div class="perf-header">Jeu</div>
+        <div class="perf-header">Ven</div>
+        <div class="perf-header">Sam</div>
+        <div class="perf-header">Dim</div>
+    </div>
+
+    <!-- Legend -->
+    <div class="perf-legend">
+        <span class="perf-legend-item"><span class="perf-legend-color perf-match-0"></span> 0 match</span>
+        <span class="perf-legend-item"><span class="perf-legend-color perf-match-1"></span> 1 boule</span>
+        <span class="perf-legend-item"><span class="perf-legend-color perf-match-2"></span> 2 boules</span>
+        <span class="perf-legend-item"><span class="perf-legend-color perf-match-3"></span> 3 boules</span>
+        <span class="perf-legend-item"><span class="perf-legend-color perf-match-4"></span> 4 boules</span>
+        <span class="perf-legend-item"><span class="perf-legend-color perf-match-5"></span> 5 boules</span>
+        <span class="perf-legend-item"><span class="perf-legend-color perf-pre"></span> à venir</span>
+    </div>
+
+    <!-- Modal détail -->
+    <div class="perf-modal-backdrop" id="perf-modal-backdrop" style="display:none;">
+        <div class="perf-modal" id="perf-modal" role="dialog" aria-modal="true" aria-labelledby="perf-modal-title">
+            <div class="perf-modal-header">
+                <h3 id="perf-modal-title">Détail tirage</h3>
+                <button class="perf-modal-close" id="perf-modal-close" aria-label="Fermer">&times;</button>
+            </div>
+            <div class="perf-modal-body" id="perf-modal-body">
+                <p>Chargement…</p>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    if (typeof LotoAdmin !== 'undefined' && LotoAdmin.initCalendarPerf) {
+        LotoAdmin.initCalendarPerf();
+    }
+</script>
+{% endblock %}

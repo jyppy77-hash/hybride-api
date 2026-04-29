@@ -904,9 +904,9 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.022 (V135 — Fix défensif NULL transitoire chance/stars + observabilité)."""
+        """APP_VERSION == 1.6.023 (V136 — Calendrier admin performance HYBRIDE vs FDJ)."""
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.022"
+        assert APP_VERSION == "1.6.023"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

@@ -373,6 +373,38 @@ async def unified_meta_analyse_local(
         secondary_labels = [str(n['number']) for n in secondary_top]
         secondary_values = [n['count'] for n in secondary_top]
 
+        # V136: Hook tracking PDF META top fréquences (calendrier admin /admin/calendar-perf).
+        # Tracker uniquement les 3 fenêtres canoniques utilisateur Global / 5A / 2A
+        # (modes "tirages" custom exclus). Idempotent via UNIQUE KEY étendue avec source.
+        # Best-effort, jamais bloquant.
+        _PDF_META_SOURCE_MAP = {
+            "GLOBAL": "pdf_meta_global",
+            "5A": "pdf_meta_5a",
+            "2A": "pdf_meta_2a",
+        }
+        if window_used in _PDF_META_SOURCE_MAP and top_numbers:
+            try:
+                from datetime import datetime as _dt
+                from services.selection_history import record_pdf_meta_top
+                _source = _PDF_META_SOURCE_MAP[window_used]
+                _balls_top5 = [int(n['number']) for n in top_numbers[:5]]
+                _sec_top1 = int(secondary_top[0]['number']) if secondary_top else None
+                _draw_target = get_next_draw_date(game, _dt.now())
+                async with db_cloudsql.get_connection() as _pdf_conn:
+                    await record_pdf_meta_top(
+                        _pdf_conn, game.value, _draw_target, _source,
+                        _balls_top5, _sec_top1,
+                    )
+                logger.info(
+                    "[CALENDAR] PDF META tracked game=%s source=%s draw_target=%s",
+                    game.value, _source, _draw_target,
+                )
+            except Exception:
+                logger.debug(
+                    "[CALENDAR] PDF META tracking failed — non-blocking",
+                    exc_info=True,
+                )
+
         avg_freq = sum(graph_values) / len(graph_values) if graph_values else 0
         max_freq = max(graph_values) if graph_values else 0
         min_freq = min(graph_values) if graph_values else 0
