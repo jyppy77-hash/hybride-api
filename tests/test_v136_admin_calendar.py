@@ -152,14 +152,13 @@ class TestCalendarPerfMonth:
     def test_month_aggregates_matches_when_fdj_drawn(self):
         """V136 — best_match_count is computed from history vs FDJ on draw days.
 
-        V136.A : SQL generator filtré par subquery JOIN MIN(selected_at) — le test
-        mock retourne directement la 1ère grille canonique (filtre fait côté SQL).
-        Le mois fait désormais 3 fetchall (FDJ + generator filtré + pdf_meta_*)
-        au lieu de 2 (FDJ + history agrégé).
+        V137 : SQL month = 1 query (toutes rows avec grid_id, pas de subquery JOIN).
+        best_match_count = MAX(matches) parmi toutes les grilles du jour.
+        Le mois fait désormais 2 fetchall (FDJ + history) au lieu de 3.
         """
         client = _authed_client()
         # Tirage FDJ Loto 2026-04-06 (lundi) : balls = {3, 12, 30, 36, 42}, chance = 7
-        # Generator (V110) avait sélectionné: balls=[3, 12, 25, 33, 47], chance=7
+        # Generator avait sélectionné: balls=[3, 12, 25, 33, 47], chance=7
         # → 2 matches balls + 1 secondary
         target_date = datetime.date(2026, 4, 6)
         cursor = AsyncMock()
@@ -172,17 +171,15 @@ class TestCalendarPerfMonth:
                 "boule_1": 3, "boule_2": 12, "boule_3": 30, "boule_4": 36, "boule_5": 42,
                 "numero_chance": 7,
             }],
-            # 2) V136.A generator filtré : 1ère grille canonique uniquement
+            # 2) V137 history : toutes rows avec grid_id + first_seen
             [
-                {"draw_date_target": target_date, "source": "generator", "number_value": 3, "number_type": "ball"},
-                {"draw_date_target": target_date, "source": "generator", "number_value": 12, "number_type": "ball"},
-                {"draw_date_target": target_date, "source": "generator", "number_value": 25, "number_type": "ball"},
-                {"draw_date_target": target_date, "source": "generator", "number_value": 33, "number_type": "ball"},
-                {"draw_date_target": target_date, "source": "generator", "number_value": 47, "number_type": "ball"},
-                {"draw_date_target": target_date, "source": "generator", "number_value": 7, "number_type": "chance"},
+                {"draw_date_target": target_date, "grid_id": "g1", "source": "generator", "number_value": 3, "number_type": "ball", "first_seen": "2026-04-05 14:00:00"},
+                {"draw_date_target": target_date, "grid_id": "g1", "source": "generator", "number_value": 12, "number_type": "ball", "first_seen": "2026-04-05 14:00:00"},
+                {"draw_date_target": target_date, "grid_id": "g1", "source": "generator", "number_value": 25, "number_type": "ball", "first_seen": "2026-04-05 14:00:00"},
+                {"draw_date_target": target_date, "grid_id": "g1", "source": "generator", "number_value": 33, "number_type": "ball", "first_seen": "2026-04-05 14:00:00"},
+                {"draw_date_target": target_date, "grid_id": "g1", "source": "generator", "number_value": 47, "number_type": "ball", "first_seen": "2026-04-05 14:00:00"},
+                {"draw_date_target": target_date, "grid_id": "g1", "source": "generator", "number_value": 7, "number_type": "chance", "first_seen": "2026-04-05 14:00:00"},
             ],
-            # 3) V136.A pdf_meta_* : aucun ici
-            [],
         ])
         with patch(
             "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
@@ -196,11 +193,9 @@ class TestCalendarPerfMonth:
         assert target["fdj_drawn"] is True
         assert target["fdj_balls"] == [3, 12, 30, 36, 42]
         assert target["fdj_secondary"] == [7]
+        # V137 : month n'expose plus stats par source — best_match_count + total_grids
         assert target["best_match_count"] == 2  # 3, 12 matchent
-        gen = target["stats"]["generator"]
-        assert gen is not None
-        assert gen["matches_balls"] == 2
-        assert gen["matches_secondary"] is True
+        assert target["total_grids"] == 1
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -218,26 +213,21 @@ class TestCalendarPerfDrawDetail:
     def test_pre_tirage_returns_no_fdj_data(self):
         """V136 — Pré-tirage : fdj.drawn=False, matches=null (à venir).
 
-        V136.A : SQL detail = 2 queries successives (MIN(selected_at) + rows
-        filtrés). Mock fournit donc 2 fetchone (FDJ + first_ts) + 1 fetchall.
+        V137 : contrat API change — `data.grids[]` (au lieu de `data.hybride{}`).
+        Mock = 1 fetchone (FDJ) + 1 fetchall (toutes rows avec grid_id).
         """
         client = _authed_client()
         cursor = AsyncMock()
         cursor.execute = AsyncMock()
-        target_date = datetime.date(2026, 4, 27)
-        first_ts = datetime.datetime(2026, 4, 26, 14, 30, 0)
-        cursor.fetchone = AsyncMock(side_effect=[
-            None,  # 1) FDJ row → pré-tirage
-            {"first_ts": first_ts},  # 2) V136.A MIN(selected_at) generator
-        ])
-        # 3) V136.A : rows filtrés (1ère grille canonique generator)
+        cursor.fetchone = AsyncMock(return_value=None)  # FDJ pré-tirage
+        # V137 : rows avec grid_id propre
         cursor.fetchall = AsyncMock(return_value=[
-            {"source": "generator", "number_value": 10, "number_type": "ball", "first_seen": "2026-04-26 14:30:00"},
-            {"source": "generator", "number_value": 19, "number_type": "ball", "first_seen": "2026-04-26 14:30:00"},
-            {"source": "generator", "number_value": 23, "number_type": "ball", "first_seen": "2026-04-26 14:30:00"},
-            {"source": "generator", "number_value": 31, "number_type": "ball", "first_seen": "2026-04-26 14:30:00"},
-            {"source": "generator", "number_value": 46, "number_type": "ball", "first_seen": "2026-04-26 14:30:00"},
-            {"source": "generator", "number_value": 9, "number_type": "chance", "first_seen": "2026-04-26 14:30:00"},
+            {"grid_id": "g1-uuid", "source": "generator", "number_value": 10, "number_type": "ball", "first_seen": "2026-04-26 14:30:00"},
+            {"grid_id": "g1-uuid", "source": "generator", "number_value": 19, "number_type": "ball", "first_seen": "2026-04-26 14:30:00"},
+            {"grid_id": "g1-uuid", "source": "generator", "number_value": 23, "number_type": "ball", "first_seen": "2026-04-26 14:30:00"},
+            {"grid_id": "g1-uuid", "source": "generator", "number_value": 31, "number_type": "ball", "first_seen": "2026-04-26 14:30:00"},
+            {"grid_id": "g1-uuid", "source": "generator", "number_value": 46, "number_type": "ball", "first_seen": "2026-04-26 14:30:00"},
+            {"grid_id": "g1-uuid", "source": "generator", "number_value": 9, "number_type": "chance", "first_seen": "2026-04-26 14:30:00"},
         ])
         with patch(
             "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
@@ -248,47 +238,46 @@ class TestCalendarPerfDrawDetail:
         data = resp.json()
         assert data["fdj"]["drawn"] is False
         assert data["fdj"]["balls"] is None
-        assert data["hybride"]["generator"] is not None
-        assert data["hybride"]["generator"]["balls"] == [10, 19, 23, 31, 46]
-        assert data["hybride"]["generator"]["secondary"] == 9
+        # V137 : data.grids[] au lieu de data.hybride{}
+        assert data["summary"]["total_grids"] == 1
+        gen_grid = data["grids"][0]
+        assert gen_grid["source"] == "generator"
+        assert gen_grid["balls"] == [10, 19, 23, 31, 46]
+        assert gen_grid["secondary"] == 9
         # Pré-tirage : matches = None
-        assert data["hybride"]["generator"]["matches_balls"] is None
+        assert gen_grid["matches_balls"] is None
         assert data["summary"]["best_match_count"] is None
 
     def test_post_tirage_calculates_matches(self):
-        """V136 — Post-tirage : matches calculés correctement, best_match_source identifié.
+        """V136 — Post-tirage : matches calculés correctement.
 
-        V136.A : SQL detail = 2 queries successives. Mock fournit 2 fetchone
-        (FDJ + first_ts) + 1 fetchall (generator filtré + pdf_meta_*).
+        V137 : contrat API change — `data.grids[]` avec `summary.best_match_grid_id`.
+        Mock = 1 fetchone (FDJ) + 1 fetchall (rows avec grid_id).
         """
         client = _authed_client()
         target_date = datetime.date(2026, 4, 25)
-        first_ts = datetime.datetime(2026, 4, 24, 12, 0, 0)
         cursor = AsyncMock()
         cursor.execute = AsyncMock()
-        cursor.fetchone = AsyncMock(side_effect=[
-            {  # 1) FDJ row
-                "date_de_tirage": target_date,
-                "boule_1": 5, "boule_2": 18, "boule_3": 22, "boule_4": 31, "boule_5": 49,
-                "numero_chance": 3,
-            },
-            {"first_ts": first_ts},  # 2) V136.A MIN(selected_at) generator
-        ])
+        cursor.fetchone = AsyncMock(return_value={  # FDJ row
+            "date_de_tirage": target_date,
+            "boule_1": 5, "boule_2": 18, "boule_3": 22, "boule_4": 31, "boule_5": 49,
+            "numero_chance": 3,
+        })
         cursor.fetchall = AsyncMock(return_value=[
-            # generator: 1 match (22)
-            {"source": "generator", "number_value": 7, "number_type": "ball", "first_seen": "2026-04-24 12:00:00"},
-            {"source": "generator", "number_value": 22, "number_type": "ball", "first_seen": "2026-04-24 12:00:00"},
-            {"source": "generator", "number_value": 27, "number_type": "ball", "first_seen": "2026-04-24 12:00:00"},
-            {"source": "generator", "number_value": 33, "number_type": "ball", "first_seen": "2026-04-24 12:00:00"},
-            {"source": "generator", "number_value": 41, "number_type": "ball", "first_seen": "2026-04-24 12:00:00"},
-            {"source": "generator", "number_value": 8, "number_type": "chance", "first_seen": "2026-04-24 12:00:00"},
-            # pdf_meta_global: 3 matches (5, 18, 31) + chance 3
-            {"source": "pdf_meta_global", "number_value": 5, "number_type": "ball", "first_seen": "2026-04-24 13:00:00"},
-            {"source": "pdf_meta_global", "number_value": 11, "number_type": "ball", "first_seen": "2026-04-24 13:00:00"},
-            {"source": "pdf_meta_global", "number_value": 18, "number_type": "ball", "first_seen": "2026-04-24 13:00:00"},
-            {"source": "pdf_meta_global", "number_value": 31, "number_type": "ball", "first_seen": "2026-04-24 13:00:00"},
-            {"source": "pdf_meta_global", "number_value": 44, "number_type": "ball", "first_seen": "2026-04-24 13:00:00"},
-            {"source": "pdf_meta_global", "number_value": 3, "number_type": "chance", "first_seen": "2026-04-24 13:00:00"},
+            # generator (gid=g1) : 1 match (22)
+            {"grid_id": "g1", "source": "generator", "number_value": 7, "number_type": "ball", "first_seen": "2026-04-24 12:00:00"},
+            {"grid_id": "g1", "source": "generator", "number_value": 22, "number_type": "ball", "first_seen": "2026-04-24 12:00:00"},
+            {"grid_id": "g1", "source": "generator", "number_value": 27, "number_type": "ball", "first_seen": "2026-04-24 12:00:00"},
+            {"grid_id": "g1", "source": "generator", "number_value": 33, "number_type": "ball", "first_seen": "2026-04-24 12:00:00"},
+            {"grid_id": "g1", "source": "generator", "number_value": 41, "number_type": "ball", "first_seen": "2026-04-24 12:00:00"},
+            {"grid_id": "g1", "source": "generator", "number_value": 8, "number_type": "chance", "first_seen": "2026-04-24 12:00:00"},
+            # pdf_meta_global (gid=p1) : 3 matches (5, 18, 31) + chance 3
+            {"grid_id": "p1", "source": "pdf_meta_global", "number_value": 5, "number_type": "ball", "first_seen": "2026-04-24 13:00:00"},
+            {"grid_id": "p1", "source": "pdf_meta_global", "number_value": 11, "number_type": "ball", "first_seen": "2026-04-24 13:00:00"},
+            {"grid_id": "p1", "source": "pdf_meta_global", "number_value": 18, "number_type": "ball", "first_seen": "2026-04-24 13:00:00"},
+            {"grid_id": "p1", "source": "pdf_meta_global", "number_value": 31, "number_type": "ball", "first_seen": "2026-04-24 13:00:00"},
+            {"grid_id": "p1", "source": "pdf_meta_global", "number_value": 44, "number_type": "ball", "first_seen": "2026-04-24 13:00:00"},
+            {"grid_id": "p1", "source": "pdf_meta_global", "number_value": 3, "number_type": "chance", "first_seen": "2026-04-24 13:00:00"},
         ])
         with patch(
             "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
@@ -299,15 +288,19 @@ class TestCalendarPerfDrawDetail:
         data = resp.json()
         assert data["fdj"]["drawn"] is True
         assert data["fdj"]["balls"] == [5, 18, 22, 31, 49]
-        # generator: 1 match
-        assert data["hybride"]["generator"]["matches_balls"] == 1
-        assert data["hybride"]["generator"]["matches_secondary"] is False
+        # V137 : data.grids[] au lieu de data.hybride{}
+        assert data["summary"]["total_grids"] == 2
+        gen_grid = next(g for g in data["grids"] if g["source"] == "generator")
+        pdf_grid = next(g for g in data["grids"] if g["source"] == "pdf_meta_global")
+        # generator: 1 match (22)
+        assert gen_grid["matches_balls"] == 1
+        assert gen_grid["matches_secondary"] is False
         # pdf_meta_global: 3 matches + secondary True
-        assert data["hybride"]["pdf_meta_global"]["matches_balls"] == 3
-        assert data["hybride"]["pdf_meta_global"]["matches_secondary"] is True
-        # best = pdf_meta_global avec 3 boules
+        assert pdf_grid["matches_balls"] == 3
+        assert pdf_grid["matches_secondary"] is True
+        # V137 : best_match_grid_id = grid_id de la meilleure grille
         assert data["summary"]["best_match_count"] == 3
-        assert data["summary"]["best_match_source"] == "pdf_meta_global"
+        assert data["summary"]["best_match_grid_id"] == "p1"
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -379,7 +372,10 @@ class TestRecordPdfMetaTop:
 
     @pytest.mark.asyncio
     async def test_em_uses_star_secondary_type(self):
-        """V136 — EuroMillions secondary inserted as number_type='star'."""
+        """V136 — EuroMillions secondary inserted as number_type='star'.
+
+        V137 : SQL secondary INSERT a 6 placeholders (grid_id ajouté en fin de tuple).
+        """
         from services.selection_history import record_pdf_meta_top
         conn, cursor = _mock_record_conn([1] * 6)
         result = await record_pdf_meta_top(
@@ -391,8 +387,8 @@ class TestRecordPdfMetaTop:
         last_call = cursor.execute.await_args_list[-1]
         sql = last_call.args[0]
         params = last_call.args[1]
-        assert "VALUES (%s, %s, %s, %s, %s)" in sql
-        # params order: (game, n_int, secondary_type, draw_date_target, source)
+        # V137 : 6 placeholders (game, s_int, secondary_type, draw_date_target, source, grid_id)
+        assert "VALUES (%s, %s, %s, %s, %s, %s)" in sql
         assert params[2] == "star"
 
 

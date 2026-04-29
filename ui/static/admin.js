@@ -1511,6 +1511,7 @@ var LotoAdmin = (function() {
     }
 
     function perfRenderModalHtml(data) {
+        // V137 — modal multi-grilles : data.grids[] (au lieu de data.hybride{})
         var html = '';
         if (data.fdj && data.fdj.drawn) {
             html += '<div class="perf-modal-section perf-modal-fdj">';
@@ -1524,33 +1525,58 @@ var LotoAdmin = (function() {
             html += '<div class="perf-modal-section perf-modal-pre"><p><em>Tirage à venir — pas encore de résultat FDJ.</em></p></div>';
         }
 
-        var labels = {
-            generator: 'Générateur HYBRIDE (V110)',
-            pdf_meta_global: 'PDF META — Fenêtre Global',
-            pdf_meta_5a: 'PDF META — Fenêtre 5 ans',
-            pdf_meta_2a: 'PDF META — Fenêtre 2 ans'
+        var sourceLabels = {
+            generator: 'Gén V110',
+            pdf_meta_global: 'PDF Global',
+            pdf_meta_5a: 'PDF 5 ans',
+            pdf_meta_2a: 'PDF 2 ans'
         };
-        html += '<div class="perf-modal-section"><h4>Sélections HYBRIDE</h4>';
-        html += '<table class="perf-modal-table"><thead><tr><th>Source</th><th>Boules</th><th>Secondaire</th><th>Matchs</th></tr></thead><tbody>';
-        ['generator','pdf_meta_global','pdf_meta_5a','pdf_meta_2a'].forEach(function(src){
-            var entry = data.hybride && data.hybride[src];
-            if (!entry) {
-                html += '<tr class="perf-modal-row-empty"><td>' + labels[src] + '</td><td colspan="3"><em>aucune donnée</em></td></tr>';
-                return;
-            }
-            var matchCell = '—';
-            if (entry.matches_balls !== null && entry.matches_balls !== undefined) {
-                var sec = entry.matches_secondary ? ' + 1 sec ✓' : '';
-                matchCell = '<span class="perf-match-badge perf-match-' + perfBucketLevel(entry.matches_balls) + '">' + entry.matches_balls + ' boules' + sec + '</span>';
-            }
-            html += '<tr><td>' + labels[src] + '</td>';
-            html += '<td>' + perfFormatNumbers(entry.balls) + '</td>';
-            html += '<td>' + (entry.secondary !== null && entry.secondary !== undefined ? escapeHtmlBreaker(String(entry.secondary)) : '—') + '</td>';
-            html += '<td>' + matchCell + '</td></tr>';
-        });
-        html += '</tbody></table>';
-        if (data.summary && data.summary.best_match_count !== null && data.summary.best_match_source) {
-            html += '<p class="perf-modal-summary">Meilleur match : <strong>' + data.summary.best_match_count + ' boules</strong> via <em>' + escapeHtmlBreaker(labels[data.summary.best_match_source] || data.summary.best_match_source) + '</em></p>';
+
+        var grids = (data.grids || []);
+        var totalGrids = (data.summary && data.summary.total_grids) || grids.length;
+        var bestGid = data.summary && data.summary.best_match_grid_id;
+
+        html += '<div class="perf-modal-section">';
+        html += '<h4>Sélections HYBRIDE — ' + totalGrids + ' grille' + (totalGrids > 1 ? 's' : '') + '</h4>';
+
+        if (totalGrids === 0) {
+            html += '<p><em>Aucune grille enregistrée pour ce tirage.</em></p>';
+        } else {
+            html += '<div class="perf-grids-table-wrapper">';
+            html += '<table class="perf-grids-table">';
+            html += '<thead><tr><th>#</th><th>Heure</th><th>Source</th><th>Boules</th><th>Sec</th><th>Matchs</th></tr></thead>';
+            html += '<tbody>';
+            grids.forEach(function(g, idx) {
+                var isBest = bestGid && (g.grid_id === bestGid);
+                var rowClass = isBest ? 'perf-grid-best' : '';
+                if (g.is_legacy) rowClass += ' perf-grid-legacy';
+                var matchCell = '—';
+                if (g.matches_balls !== null && g.matches_balls !== undefined) {
+                    var sec = g.matches_secondary ? ' +1' : '';
+                    matchCell = '<span class="perf-match-badge perf-match-' + perfBucketLevel(g.matches_balls) + '">' + g.matches_balls + ' b' + sec + '</span>';
+                }
+                var hour = '—';
+                if (g.first_seen) {
+                    var parts = g.first_seen.split(' ');
+                    if (parts.length >= 2) hour = parts[1].substring(0, 5);
+                }
+                var srcLabel = sourceLabels[g.source] || g.source;
+                if (g.is_legacy) srcLabel += ' <em>(legacy)</em>';
+                html += '<tr class="' + rowClass + '">';
+                html += '<td>#' + (idx + 1) + (isBest ? ' ⭐' : '') + '</td>';
+                html += '<td>' + escapeHtmlBreaker(hour) + '</td>';
+                html += '<td>' + srcLabel + '</td>';
+                html += '<td>' + perfFormatNumbers(g.balls) + '</td>';
+                html += '<td>' + (g.secondary !== null && g.secondary !== undefined ? escapeHtmlBreaker(String(g.secondary)) : '—') + '</td>';
+                html += '<td>' + matchCell + '</td>';
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            html += '</div>';
+        }
+
+        if (data.summary && data.summary.best_match_count !== null && data.summary.best_match_count !== undefined && bestGid) {
+            html += '<p class="perf-modal-summary">Meilleur match : <strong>' + data.summary.best_match_count + ' boules</strong> sur ' + totalGrids + ' grille' + (totalGrids > 1 ? 's' : '') + '</p>';
         }
         html += '</div>';
         return html;

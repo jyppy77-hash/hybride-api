@@ -1133,3 +1133,53 @@ body.light .perf-modal { background: #fff; color: #1f2937; }
 .perf-match-badge.perf-match-3 { background: rgba(34,197,94,.6); color: #fff; }
 .perf-match-badge.perf-match-4 { background: rgba(250,204,21,.7); color: #1a1a1a; }
 .perf-match-badge.perf-match-5 { background: rgba(244,114,22,.8); color: #1a1a1a; }
+
+/* V137 — Multi-grilles modal table (scrollable, sticky header) */
+.perf-grids-table-wrapper {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid rgba(255,255,255,.08);
+    border-radius: 6px;
+    margin: .5rem 0;
+}
+.perf-grids-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .82rem;
+}
+.perf-grids-table th {
+    position: sticky;
+    top: 0;
+    background: rgba(31,41,55,.95);
+    z-index: 1;
+    padding: .4rem .5rem;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.perf-grids-table td {
+    padding: .35rem .5rem;
+    border-bottom: 1px solid rgba(255,255,255,.05);
+    text-align: left;
+}
+.perf-grids-table tr:hover {
+    background: rgba(255,255,255,.03);
+}
+.perf-grid-best {
+    background: rgba(250,204,21,.10) !important;
+    font-weight: 600;
+}
+.perf-grid-best:hover {
+    background: rgba(250,204,21,.15) !important;
+}
+.perf-grid-legacy td {
+    color: var(--muted, #9ca3af);
+    font-style: italic;
+}
+body.light .perf-grids-table th {
+    background: rgba(243,244,246,.95);
+    color: #1f2937;
+}
+body.light .perf-grid-best { background: rgba(250,204,21,.20) !important; }
+body.light .perf-grid-best:hover { background: rgba(250,204,21,.30) !important; }
+body.light .perf-grid-legacy td { color: #9ca3af; }

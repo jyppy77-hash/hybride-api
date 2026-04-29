@@ -18,9 +18,17 @@ V136 — `source` column distinguishes generator (V110) vs PDF META top fréquen
 (pdf_meta_global / pdf_meta_5a / pdf_meta_2a) for the admin performance calendar.
 The persistent saturation brake reads only `source='generator'` rows: PDF META
 tracking does not influence the brake.
+
+V137 — `grid_id` UUID column allows multi-grids tracking (each call to
+record_canonical_selection / record_pdf_meta_top generates a new UUID v4 and
+propagates it to all 6 INSERTs of the grid). The admin calendar can then
+display each grid individually via GROUP BY grid_id. The V110 persistent brake
+is preserved by reading only the FIRST temporal grid per draw_date_target
+(subquery JOIN MIN(selected_at) INTERVAL 1 SECOND, symmetrical to V136.A).
 """
 
 import logging
+import uuid
 from datetime import date, timedelta
 
 logger = logging.getLogger(__name__)
@@ -52,11 +60,16 @@ async def record_canonical_selection(
                           Single-int values (legacy Loto chance) are wrapped to list.
 
     Returns:
-        {"game": str, "draw_date_target": str, "inserted": int,
-         "ignored": int, "error": bool (optional)}
+        {"game": str, "draw_date_target": str, "grid_id": str (V137),
+         "inserted": int, "ignored": int, "error": bool (optional)}
+
+    V137 — Génère 1 UUID v4 grid_id par appel et le propage aux 6 INSERTs
+    de la grille. Permet l'affichage multi-grilles dans /admin/calendar-perf
+    (chaque visiteur du jour a sa grille distincte identifiable).
 
     Graceful degradation: never raises — logs warning on DB error and returns error flag.
     """
+    grid_id = str(uuid.uuid4())  # V137 — 1 UUID v4 par grille canonique
     try:
         cursor = await conn.cursor()
         inserted = 0
@@ -81,9 +94,9 @@ async def record_canonical_selection(
                     continue
                 await cursor.execute(
                     "INSERT IGNORE INTO hybride_selection_history "
-                    "(game, number_value, number_type, draw_date_target, source) "
-                    "VALUES (%s, %s, %s, %s, 'generator')",
-                    (game, n_int, ntype, draw_date_target),
+                    "(game, number_value, number_type, draw_date_target, source, grid_id) "
+                    "VALUES (%s, %s, %s, %s, 'generator', %s)",
+                    (game, n_int, ntype, draw_date_target, grid_id),
                 )
                 if cursor.rowcount == 1:
                     inserted += 1
@@ -92,23 +105,26 @@ async def record_canonical_selection(
 
         await conn.commit()
         logger.info(
-            "record_canonical_selection OK for %s target=%s — %d inserted, %d ignored",
-            game, draw_date_target, inserted, ignored,
+            "[CALENDAR] record_canonical_selection OK game=%s target=%s grid_id=%s "
+            "— %d inserted, %d ignored",
+            game, draw_date_target, grid_id, inserted, ignored,
         )
         return {
             "game": game,
             "draw_date_target": str(draw_date_target),
+            "grid_id": grid_id,
             "inserted": inserted,
             "ignored": ignored,
         }
     except Exception:
         logger.warning(
-            "record_canonical_selection failed for %s target=%s — skipping",
-            game, draw_date_target, exc_info=True,
+            "record_canonical_selection failed for %s target=%s grid_id=%s — skipping",
+            game, draw_date_target, grid_id, exc_info=True,
         )
         return {
             "game": game,
             "draw_date_target": str(draw_date_target),
+            "grid_id": grid_id,
             "inserted": 0, "ignored": 0, "error": True,
         }
 
@@ -174,14 +190,31 @@ async def get_persistent_brake_map(
         target_dates = [row["draw_date_target"] for row in rows]
         # target_dates[0] = T-1 (most recent before current), target_dates[1] = T-2, ...
 
-        # Fetch all numbers for these target dates in one query
-        # V136: filtre source='generator' (idem ci-dessus).
+        # V137 — Fetch numbers for these target dates BUT ONLY from the FIRST
+        # temporal grid of each day (subquery JOIN MIN(selected_at) INTERVAL
+        # 1 SECOND, symmetrical to V136.A admin calendar pattern).
+        # Rationale : V137 stocke maintenant N grilles distinctes par
+        # draw_date_target (1 par visiteur du /generate). Sans ce filtre, le
+        # brake agrégerait toutes les grilles → ~60 numéros bloqués sur 12
+        # visiteurs au lieu de ~5 → moteur HYBRIDE dégénère. Le filtre 1ère
+        # grille temporelle préserve strictement la sémantique V110.
+        # NOTE rows legacy V136.A (grid_id=NULL) : compatibles car le filtre
+        # porte sur selected_at, pas sur grid_id.
         placeholders = ",".join(["%s"] * len(target_dates))
         await cursor.execute(
-            f"SELECT number_value, draw_date_target FROM hybride_selection_history "
-            f"WHERE game = %s AND number_type = %s AND source = 'generator' "
-            f"AND draw_date_target IN ({placeholders})",
-            (game, number_type, *target_dates),
+            f"SELECT h.number_value, h.draw_date_target "
+            f"FROM hybride_selection_history h "
+            f"INNER JOIN ("
+            f"    SELECT draw_date_target, MIN(selected_at) AS first_ts "
+            f"    FROM hybride_selection_history "
+            f"    WHERE game = %s AND number_type = %s AND source = 'generator' "
+            f"    AND draw_date_target IN ({placeholders}) "
+            f"    GROUP BY draw_date_target"
+            f") f ON h.draw_date_target = f.draw_date_target "
+            f"WHERE h.game = %s AND h.number_type = %s AND h.source = 'generator' "
+            f"AND h.selected_at >= f.first_ts "
+            f"AND h.selected_at < f.first_ts + INTERVAL 1 SECOND",
+            (game, number_type, *target_dates, game, number_type),
         )
         selections = await cursor.fetchall()
 
@@ -330,7 +363,11 @@ async def record_pdf_meta_top(
 
     Returns:
         {"game": str, "source": str, "draw_date_target": str,
-         "inserted": int, "ignored": int, "error": bool (optional)}
+         "grid_id": str (V137), "inserted": int, "ignored": int,
+         "error": bool (optional)}
+
+    V137 — Génère 1 UUID v4 grid_id par appel (= 1 fenêtre PDF consultée par
+    1 visiteur) et le propage aux 6 INSERTs.
 
     Graceful degradation: never raises — logs warning on DB error.
     """
@@ -339,8 +376,10 @@ async def record_pdf_meta_top(
         return {
             "game": game, "source": source,
             "draw_date_target": str(draw_date_target),
+            "grid_id": None,
             "inserted": 0, "ignored": 0, "error": True,
         }
+    grid_id = str(uuid.uuid4())  # V137 — 1 UUID v4 par fenêtre PDF consultée
     secondary_type = "chance" if game == "loto" else "star"
     try:
         cursor = await conn.cursor()
@@ -356,9 +395,9 @@ async def record_pdf_meta_top(
                 continue
             await cursor.execute(
                 "INSERT IGNORE INTO hybride_selection_history "
-                "(game, number_value, number_type, draw_date_target, source) "
-                "VALUES (%s, %s, 'ball', %s, %s)",
-                (game, n_int, draw_date_target, source),
+                "(game, number_value, number_type, draw_date_target, source, grid_id) "
+                "VALUES (%s, %s, 'ball', %s, %s, %s)",
+                (game, n_int, draw_date_target, source, grid_id),
             )
             if cursor.rowcount == 1:
                 inserted += 1
@@ -370,9 +409,9 @@ async def record_pdf_meta_top(
                 s_int = int(secondary_top1)
                 await cursor.execute(
                     "INSERT IGNORE INTO hybride_selection_history "
-                    "(game, number_value, number_type, draw_date_target, source) "
-                    "VALUES (%s, %s, %s, %s, %s)",
-                    (game, s_int, secondary_type, draw_date_target, source),
+                    "(game, number_value, number_type, draw_date_target, source, grid_id) "
+                    "VALUES (%s, %s, %s, %s, %s, %s)",
+                    (game, s_int, secondary_type, draw_date_target, source, grid_id),
                 )
                 if cursor.rowcount == 1:
                     inserted += 1
@@ -383,21 +422,23 @@ async def record_pdf_meta_top(
         await conn.commit()
         logger.info(
             "[CALENDAR] record_pdf_meta_top OK game=%s source=%s target=%s "
-            "%d inserted, %d ignored",
-            game, source, draw_date_target, inserted, ignored,
+            "grid_id=%s — %d inserted, %d ignored",
+            game, source, draw_date_target, grid_id, inserted, ignored,
         )
         return {
             "game": game, "source": source,
             "draw_date_target": str(draw_date_target),
+            "grid_id": grid_id,
             "inserted": inserted, "ignored": ignored,
         }
     except Exception:
         logger.warning(
-            "record_pdf_meta_top failed for %s/%s target=%s",
-            game, source, draw_date_target, exc_info=True,
+            "record_pdf_meta_top failed for %s/%s target=%s grid_id=%s",
+            game, source, draw_date_target, grid_id, exc_info=True,
         )
         return {
             "game": game, "source": source,
             "draw_date_target": str(draw_date_target),
+            "grid_id": grid_id,
             "inserted": 0, "ignored": 0, "error": True,
         }

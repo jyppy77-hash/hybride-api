@@ -904,12 +904,15 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.023 (V136 — Calendrier admin performance HYBRIDE vs FDJ).
+        """APP_VERSION == 1.6.024 (V137 — Multi-grilles avec grid_id UUID).
 
-        V136.A hotfix 29/04 PM — 1ère grille canonique uniquement (cas B sans bump).
+        V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
+        V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
+        V136.B hotfix (29/04 PM) — Rendu calendrier UX jours non-tirage (cas B sans bump).
+        V137 (29/04 PM) — Multi-grilles via grid_id UUID + V110 brake adapté.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.023"
+        assert APP_VERSION == "1.6.024"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

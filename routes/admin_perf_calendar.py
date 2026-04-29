@@ -1,6 +1,6 @@
 """
-Admin performance calendar — V136
-==================================
+Admin performance calendar — V136 / V136.A / V136.B / V137
+===========================================================
 Calendrier admin de tracking performance HYBRIDE vs FDJ.
 
 À chaque tirage Loto/EuroMillions, visualiser les numéros proposés par le
@@ -18,6 +18,13 @@ Sources trackées (col `source` dans hybride_selection_history, V136 migration 0
 - pdf_meta_global: top 5 boules + top 1 secondary fenêtre Global (PDF META)
 - pdf_meta_5a    : idem fenêtre 5 ans
 - pdf_meta_2a    : idem fenêtre 2 ans
+
+V137 — Multi-grilles via grid_id (UUID) :
+- Détail tirage : retourne `data.grids: list[]` (chaque grille individuelle
+  avec son grid_id, son timestamp, ses 5+1 numéros, ses matchs propres).
+- Mois : `best_match_count` du jour = MAX(matches) parmi toutes les grilles.
+- Rows legacy V136.A (grid_id=NULL) : agrégées par (date, source) en 1 grille
+  fictive `grid_id = "_legacy_<game>_<date>_<source>"` avec flag `is_legacy=true`.
 
 Auth: cookie session admin + IP whitelist (pattern V94 _require_auth*).
 """
@@ -164,64 +171,48 @@ async def calendar_perf_draw_detail(request: Request, game: str, date_str: str):
     fdj_balls_set = set(fdj["balls"] or [])
     fdj_sec_set = set(fdj["secondary"] or [])
 
-    # 2) HYBRIDE rows pour cette date — V136.A
-    # Hotfix : pour source='generator', ne récupérer que les numéros enregistrés
-    # à la même seconde que MIN(selected_at) — i.e. la 1ère grille canonique du
-    # jour-cible. Cela évite l'union trompeuse de toutes les grilles générées
-    # par tous les visiteurs (V136 affichait "42 boules cumulées EM" par exemple).
-    # Pour les sources pdf_meta_*, l'agrégat top fréquences (V136 inchangé) est
-    # sémantiquement correct car il s'agit déjà d'un top idempotent par jour.
-    hybride: dict = {src: None for src in _SOURCES}
-    rows: list = []
-    first_ts = None
+    # 2) HYBRIDE rows multi-grilles — V137
+    # Récupérer toutes les rows du jour-cible et grouper par grid_id pour
+    # reconstruire chaque grille individuelle.
+    # Rows legacy (grid_id=NULL, ~200 rows pre-V137) : agrégées par source
+    # avec grid_id virtuel "_legacy_<game>_<date>_<source>" + is_legacy=true.
+    grids_list: list = []
     try:
         async with db_cloudsql.get_connection_readonly() as conn:
             cur = await conn.cursor()
-            # V136.A query 1 — timestamp de la 1ère génération canonique generator
             await cur.execute(
-                "SELECT MIN(selected_at) AS first_ts "
+                "SELECT grid_id, source, number_value, number_type, "
+                "DATE_FORMAT(selected_at, '%%Y-%%m-%%d %%H:%%i:%%s') AS first_seen "
                 "FROM hybride_selection_history "
-                "WHERE game = %s AND draw_date_target = %s AND source = 'generator'",
+                "WHERE game = %s AND draw_date_target = %s "
+                "ORDER BY selected_at ASC, grid_id, number_type, number_value",
                 (game, target),
             )
-            first_row = await cur.fetchone()
-            first_ts = first_row["first_ts"] if first_row else None
-
-            # V136.A query 2 — rows filtrées
-            if first_ts is not None:
-                await cur.execute(
-                    "SELECT source, number_value, number_type, "
-                    "DATE_FORMAT(selected_at, '%%Y-%%m-%%d %%H:%%i:%%s') AS first_seen "
-                    "FROM hybride_selection_history "
-                    "WHERE game = %s AND draw_date_target = %s AND ("
-                    "    (source = 'generator' AND selected_at >= %s "
-                    "         AND selected_at < %s + INTERVAL 1 SECOND)"
-                    "    OR source IN ('pdf_meta_global', 'pdf_meta_5a', 'pdf_meta_2a')"
-                    ") "
-                    "ORDER BY source, number_type, number_value",
-                    (game, target, first_ts, first_ts),
-                )
-            else:
-                # Pas de génération generator pour ce jour — pdf_meta_* uniquement
-                await cur.execute(
-                    "SELECT source, number_value, number_type, "
-                    "DATE_FORMAT(selected_at, '%%Y-%%m-%%d %%H:%%i:%%s') AS first_seen "
-                    "FROM hybride_selection_history "
-                    "WHERE game = %s AND draw_date_target = %s "
-                    "AND source IN ('pdf_meta_global', 'pdf_meta_5a', 'pdf_meta_2a') "
-                    "ORDER BY source, number_type, number_value",
-                    (game, target),
-                )
             rows = await cur.fetchall()
+
         logger.info(
-            "[CALENDAR] draw_detail game=%s date=%s first_ts=%s rows=%d",
-            game, date_str, first_ts, len(rows),
+            "[CALENDAR] draw_detail game=%s date=%s rows=%d",
+            game, date_str, len(rows),
         )
 
+        # Pivot par (grid_id, source) — legacy rows fusionnées par (source) avec
+        # grid_id synthétique stable.
         buckets: dict = {}
         for r in rows:
+            gid = r["grid_id"]
             src = r["source"]
-            bucket = buckets.setdefault(src, {"balls": [], "secondary": None, "first_seen": r["first_seen"]})
+            is_legacy = gid is None
+            if is_legacy:
+                gid = f"_legacy_{game}_{date_str}_{src}"
+            key = (gid, src)
+            bucket = buckets.setdefault(key, {
+                "grid_id": gid,
+                "source": src,
+                "balls": [],
+                "secondary": None,
+                "first_seen": r["first_seen"],
+                "is_legacy": is_legacy,
+            })
             if r["number_type"] == "ball":
                 bucket["balls"].append(int(r["number_value"]))
             elif bucket["secondary"] is None:
@@ -229,41 +220,46 @@ async def calendar_perf_draw_detail(request: Request, game: str, date_str: str):
             # Conserver le first_seen le plus ancien
             if r["first_seen"] and (bucket["first_seen"] is None or r["first_seen"] < bucket["first_seen"]):
                 bucket["first_seen"] = r["first_seen"]
-        for src in _SOURCES:
-            if src not in buckets:
-                continue
-            b = buckets[src]
-            balls_sorted = sorted(b["balls"])
-            m = _calc_match(balls_sorted, b["secondary"], fdj_balls_set, fdj_sec_set)
-            hybride[src] = {
-                "balls": balls_sorted,
-                "secondary": b["secondary"],
-                "matches_balls": m["matches_balls"] if fdj["drawn"] else None,
-                "matches_secondary": m["matches_secondary"] if fdj["drawn"] else None,
-                "first_seen": b["first_seen"],
-            }
+
+        # Construire la liste finale : trier par (source generator first, first_seen ASC)
+        for b in buckets.values():
+            b["balls"] = sorted(b["balls"])
+            if fdj["drawn"]:
+                m = _calc_match(b["balls"], b["secondary"], fdj_balls_set, fdj_sec_set)
+                b["matches_balls"] = m["matches_balls"]
+                b["matches_secondary"] = m["matches_secondary"]
+            else:
+                b["matches_balls"] = None
+                b["matches_secondary"] = None
+            grids_list.append(b)
+
+        grids_list.sort(key=lambda x: (
+            x["source"] != "generator",
+            x["first_seen"] or "",
+            x["grid_id"] or "",
+        ))
     except Exception:
         logger.error("[CALENDAR] hybride detail fetch failed %s %s", game, date_str, exc_info=True)
 
     # 3) Best match summary
     best_match_count = 0
-    best_match_source = None
+    best_match_grid_id = None
     if fdj["drawn"]:
-        for src in _SOURCES:
-            entry = hybride.get(src)
-            if entry and entry["matches_balls"] is not None and entry["matches_balls"] > best_match_count:
-                best_match_count = entry["matches_balls"]
-                best_match_source = src
+        for g in grids_list:
+            if g["matches_balls"] is not None and g["matches_balls"] > best_match_count:
+                best_match_count = g["matches_balls"]
+                best_match_grid_id = g["grid_id"]
 
     return JSONResponse(
         {
             "game": game,
             "date": date_str,
             "fdj": fdj,
-            "hybride": hybride,
+            "grids": grids_list,
             "summary": {
+                "total_grids": len(grids_list),
                 "best_match_count": best_match_count if fdj["drawn"] else None,
-                "best_match_source": best_match_source,
+                "best_match_grid_id": best_match_grid_id,
             },
         },
         headers={"Cache-Control": "no-store"},
@@ -352,71 +348,58 @@ async def calendar_perf_month(request: Request, game: str, year: int, month: int
     except Exception:
         logger.error("[CALENDAR] FDJ fetch failed game=%s %s/%s", game, year, month, exc_info=True)
 
-    # 3) HYBRIDE : rows hybride_selection_history pour le mois — V136.A
-    # Hotfix : pour source='generator', filtrer par draw_date_target au timestamp
-    # MIN(selected_at) (1ère grille canonique). Pour pdf_meta_*, agrégat
-    # top fréquences inchangé (V136). Cf. calendar_perf_draw_detail pour la rationale.
-    hybride_raw: dict[tuple, dict] = {}  # (date, source) → {"ball": [...], "secondary": int|None}
-    rows_gen: list = []
-    rows_pdf: list = []
+    # 3) HYBRIDE : toutes les rows du mois — V137
+    # Pivot par (date, grid_id, source) puis calc match par grille → best_match_count
+    # du jour = MAX(matches) parmi toutes les grilles du jour. Les rows legacy
+    # (grid_id=NULL) sont agrégées par (date, source) sous un grid_id synthétique.
+    grids_by_day: dict = {}  # date → list of {"source", "balls": [], "secondary": int}
     try:
         async with db_cloudsql.get_connection_readonly() as conn:
             cur = await conn.cursor()
-            # V136.A query 1 — generator filtré par jour-cible au timestamp 1ère grille
-            # (subquery JOIN : 1 MIN(selected_at) par draw_date_target).
             await cur.execute(
-                "SELECT h.draw_date_target, h.source, h.number_value, h.number_type "
-                "FROM hybride_selection_history h "
-                "INNER JOIN ("
-                "    SELECT draw_date_target, MIN(selected_at) AS first_ts "
-                "    FROM hybride_selection_history "
-                "    WHERE game = %s AND source = 'generator' "
-                "    AND draw_date_target BETWEEN %s AND %s "
-                "    GROUP BY draw_date_target"
-                ") f ON h.draw_date_target = f.draw_date_target "
-                "WHERE h.game = %s AND h.source = 'generator' "
-                "AND h.selected_at >= f.first_ts "
-                "AND h.selected_at < f.first_ts + INTERVAL 1 SECOND",
-                (game, month_start, month_end, game),
-            )
-            rows_gen = await cur.fetchall()
-
-            # V136.A query 2 — pdf_meta_* agrégat top fréquences (V136 inchangé)
-            await cur.execute(
-                "SELECT draw_date_target, source, number_value, number_type "
+                "SELECT draw_date_target, grid_id, source, number_value, number_type, "
+                "DATE_FORMAT(selected_at, '%%Y-%%m-%%d %%H:%%i:%%s') AS first_seen "
                 "FROM hybride_selection_history "
-                "WHERE game = %s "
-                "AND source IN ('pdf_meta_global', 'pdf_meta_5a', 'pdf_meta_2a') "
-                "AND draw_date_target BETWEEN %s AND %s",
+                "WHERE game = %s AND draw_date_target BETWEEN %s AND %s "
+                "ORDER BY selected_at ASC",
                 (game, month_start, month_end),
             )
-            rows_pdf = await cur.fetchall()
+            rows = await cur.fetchall()
 
         logger.info(
-            "[CALENDAR] month_query game=%s month=%s rows_gen=%d rows_pdf=%d",
-            game, f"{year}-{month:02d}", len(rows_gen), len(rows_pdf),
+            "[CALENDAR] month_query game=%s month=%s rows=%d",
+            game, f"{year}-{month:02d}", len(rows),
         )
 
-        for r in list(rows_gen) + list(rows_pdf):
+        # Pivot : (date, grid_id, source) → grille
+        buckets: dict = {}
+        for r in rows:
             dt = r["draw_date_target"]
             if isinstance(dt, datetime):
                 dt = dt.date()
-            key = (dt, r["source"])
-            bucket = hybride_raw.setdefault(key, {"ball": [], "secondary": None})
+            gid = r["grid_id"]
+            src = r["source"]
+            if gid is None:
+                gid = f"_legacy_{game}_{dt.isoformat()}_{src}"
+            key = (dt, gid, src)
+            b = buckets.setdefault(key, {
+                "date": dt, "source": src,
+                "balls": [], "secondary": None,
+            })
             if r["number_type"] == "ball":
-                bucket["ball"].append(int(r["number_value"]))
-            else:
-                # 'chance' (Loto) ou 'star' (EM) — top1 unique pour pdf_meta_*
-                # ou single chance pour generator Loto / first star pour generator EM
-                if bucket["secondary"] is None:
-                    bucket["secondary"] = int(r["number_value"])
+                b["balls"].append(int(r["number_value"]))
+            elif b["secondary"] is None:
+                b["secondary"] = int(r["number_value"])
+
+        for b in buckets.values():
+            grids_by_day.setdefault(b["date"], []).append(b)
     except Exception:
         logger.error(
             "[CALENDAR] hybride history fetch failed game=%s %s/%s",
             game, year, month, exc_info=True,
         )
 
-    # 4) Construire la liste des draws
+    # 4) Construire la liste des draws — best_match_count = MAX(matches) du jour
     draws: list[dict] = []
     for d in candidate_days:
         fdj = fdj_map.get(d)
@@ -424,23 +407,13 @@ async def calendar_perf_month(request: Request, game: str, year: int, month: int
         fdj_balls = fdj["balls"] if fdj_drawn else set()
         fdj_secondary = fdj["secondary"] if fdj_drawn else set()
 
-        stats: dict = {}
+        day_grids = grids_by_day.get(d, [])
         best_match = 0
-        for src in _SOURCES:
-            sel = hybride_raw.get((d, src))
-            if not sel or not sel["ball"]:
-                stats[src] = None
-                continue
-            balls_sorted = sorted(sel["ball"])
-            m = _calc_match(balls_sorted, sel["secondary"], fdj_balls, fdj_secondary)
-            stats[src] = {
-                "balls": balls_sorted,
-                "secondary": sel["secondary"],
-                "matches_balls": m["matches_balls"] if fdj_drawn else None,
-                "matches_secondary": m["matches_secondary"] if fdj_drawn else None,
-            }
-            if fdj_drawn and m["matches_balls"] > best_match:
-                best_match = m["matches_balls"]
+        if fdj_drawn:
+            for g in day_grids:
+                m = _calc_match(sorted(g["balls"]), g["secondary"], fdj_balls, fdj_secondary)
+                if m["matches_balls"] > best_match:
+                    best_match = m["matches_balls"]
 
         draws.append({
             "date": d.isoformat(),
@@ -448,7 +421,7 @@ async def calendar_perf_month(request: Request, game: str, year: int, month: int
             "fdj_drawn": fdj_drawn,
             "fdj_balls": fdj["balls_list"] if fdj_drawn else None,
             "fdj_secondary": fdj["secondary_list"] if fdj_drawn else None,
-            "stats": stats,
+            "total_grids": len(day_grids),
             "best_match_count": best_match if fdj_drawn else None,
         })
 
