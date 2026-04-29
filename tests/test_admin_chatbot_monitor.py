@@ -75,7 +75,7 @@ class TestChatbotMonitorPage:
         assert "cm-period" in resp.text
         assert "cm-module" in resp.text
         assert "cm-phase" in resp.text
-        assert "admin.js?v=20" in resp.text  # F08 V117: v15 → v16 → V131.E: v17 → V136: v18 → V136.B: v19 → V137: v20 (multi-grilles modal)
+        assert "admin.js?v=21" in resp.text  # F08 V117: v15 → v16 → V131.E: v17 → V136: v18 → V136.B: v19 → V137: v20 → V137.B: v21 (UTC→Paris timezone)
 
     def test_nav_contains_chatbot_link(self):
         client = _authed_client()

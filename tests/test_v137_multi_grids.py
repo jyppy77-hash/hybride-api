@@ -387,6 +387,15 @@ class TestV110BrakeRegression:
         assert "source = 'generator'" in executed_sql, (
             "V136 préservé — filtre source='generator' obligatoire"
         )
+        # V137.B — MIN(grid_id) + clause legacy-safe IS NULL OR
+        assert "MIN(grid_id)" in executed_sql, (
+            f"V137.B régression V110 : MIN(grid_id) requis pour filtrer 1 grille "
+            f"déterministe parmi N grilles enregistrées même seconde. SQL = {executed_sql}"
+        )
+        assert "first_grid_id IS NULL" in executed_sql, (
+            f"V137.B régression V110 : clause `IS NULL OR =` requise pour fallback "
+            f"legacy V136.A. SQL = {executed_sql}"
+        )
 
     @pytest.mark.asyncio
     async def test_brake_value_unchanged_with_multi_grids_in_db(self):

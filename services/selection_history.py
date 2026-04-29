@@ -193,19 +193,24 @@ async def get_persistent_brake_map(
         # V137 — Fetch numbers for these target dates BUT ONLY from the FIRST
         # temporal grid of each day (subquery JOIN MIN(selected_at) INTERVAL
         # 1 SECOND, symmetrical to V136.A admin calendar pattern).
-        # Rationale : V137 stocke maintenant N grilles distinctes par
-        # draw_date_target (1 par visiteur du /generate). Sans ce filtre, le
-        # brake agrégerait toutes les grilles → ~60 numéros bloqués sur 12
-        # visiteurs au lieu de ~5 → moteur HYBRIDE dégénère. Le filtre 1ère
-        # grille temporelle préserve strictement la sémantique V110.
-        # NOTE rows legacy V136.A (grid_id=NULL) : compatibles car le filtre
-        # porte sur selected_at, pas sur grid_id.
+        # V137.B — Avec V137.B, /api/{game}/generate enregistre N grilles du
+        # batch (n=3 par défaut, max 10) en boucle ~50-200ms total → toutes les
+        # N grilles peuvent avoir le même selected_at à la seconde. Le filter
+        # INTERVAL 1 SECOND seul inclurait toutes les N → ~30 numéros bloqués
+        # au lieu de 5 → V110 dégénère. Solution : ajout MIN(grid_id) pour ne
+        # lire que la 1ère grille déterministe (1er UUID alphabétique) dans
+        # la 1ère seconde.
+        # Clause `f.first_grid_id IS NULL OR h.grid_id = f.first_grid_id` :
+        # si toutes les rows d'un draw_date_target sont legacy V136.A (grid_id
+        # NULL), MIN(grid_id) retourne NULL → fallback sur INTERVAL 1 SECOND
+        # seul (sémantique V137 préservée pour les rows historiques).
         placeholders = ",".join(["%s"] * len(target_dates))
         await cursor.execute(
             f"SELECT h.number_value, h.draw_date_target "
             f"FROM hybride_selection_history h "
             f"INNER JOIN ("
-            f"    SELECT draw_date_target, MIN(selected_at) AS first_ts "
+            f"    SELECT draw_date_target, MIN(selected_at) AS first_ts, "
+            f"           MIN(grid_id) AS first_grid_id "
             f"    FROM hybride_selection_history "
             f"    WHERE game = %s AND number_type = %s AND source = 'generator' "
             f"    AND draw_date_target IN ({placeholders}) "
@@ -213,7 +218,8 @@ async def get_persistent_brake_map(
             f") f ON h.draw_date_target = f.draw_date_target "
             f"WHERE h.game = %s AND h.number_type = %s AND h.source = 'generator' "
             f"AND h.selected_at >= f.first_ts "
-            f"AND h.selected_at < f.first_ts + INTERVAL 1 SECOND",
+            f"AND h.selected_at < f.first_ts + INTERVAL 1 SECOND "
+            f"AND (f.first_grid_id IS NULL OR h.grid_id = f.first_grid_id)",
             (game, number_type, *target_dates, game, number_type),
         )
         selections = await cursor.fetchall()

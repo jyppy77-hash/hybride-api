@@ -1555,10 +1555,19 @@ var LotoAdmin = (function() {
                     var sec = g.matches_secondary ? ' +1' : '';
                     matchCell = '<span class="perf-match-badge perf-match-' + perfBucketLevel(g.matches_balls) + '">' + g.matches_balls + ' b' + sec + '</span>';
                 }
+                // V137.B — conversion UTC → Europe/Paris.
+                // first_seen format BDD = "YYYY-MM-DD HH:MM:SS" UTC sans suffixe Z.
+                // On l'interprète comme UTC (ajout 'Z') puis affichage en heure
+                // locale Paris via toLocaleTimeString (gère DST automatiquement).
                 var hour = '—';
                 if (g.first_seen) {
-                    var parts = g.first_seen.split(' ');
-                    if (parts.length >= 2) hour = parts[1].substring(0, 5);
+                    var utcDate = new Date(g.first_seen.replace(' ', 'T') + 'Z');
+                    if (!isNaN(utcDate.getTime())) {
+                        hour = utcDate.toLocaleTimeString('fr-FR', {
+                            hour: '2-digit', minute: '2-digit',
+                            timeZone: 'Europe/Paris',
+                        });
+                    }
                 }
                 var srcLabel = sourceLabels[g.source] || g.source;
                 if (g.is_legacy) srcLabel += ' <em>(legacy)</em>';

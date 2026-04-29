@@ -89,29 +89,48 @@ async def unified_generate(
             persistent_brake_map_secondary=brake_secondary or None,
         )
 
-        # V110: record the canonical grid (best score after batch sort = grids[0])
-        # for the target draw date. Idempotent via UNIQUE KEY — first /generate
-        # call of the day wins. Chatbot NEVER calls this (V94 invariant extended).
+        # V110: record canonical grid for persistent saturation brake (T-1, T-2).
+        # V137.B: enregistrer TOUTES les grilles du batch (pas seulement grids[0])
+        # pour que /admin/calendar-perf affiche les N grilles vues par le visiteur.
+        # Chaque appel record_canonical_selection génère son propre grid_id UUID v4
+        # (V137 inchangé). Boucle graceful : si 1 grille fail, les autres continuent.
+        # NOTE V110 brake : avec 5+ grilles dans la même seconde, get_persistent_brake_map
+        # filtre via MIN(grid_id) (V137.B) pour ne lire que la 1ère grille déterministe.
+        # Chatbot NEVER calls this (V94 invariant extended).
         if engine.cfg.saturation_persistent_enabled and result.get('grids'):
+            recorded = 0
+            failed = 0
             try:
-                canonical = result['grids'][0]
-                sec_val = canonical.get(engine.cfg.secondary_name)
-                if isinstance(sec_val, list):
-                    sec_list = sec_val
-                elif sec_val is not None:
-                    sec_list = [sec_val]
-                else:
-                    sec_list = []
-                selected = {
-                    "ball": canonical.get("nums", []),
-                    secondary_type: sec_list,
-                }
                 async with db_cloudsql.get_connection() as dconn:
-                    await record_canonical_selection(
-                        dconn, game_name, next_draw_date, selected,
-                    )
+                    for grid in result['grids']:
+                        try:
+                            sec_val = grid.get(engine.cfg.secondary_name)
+                            if isinstance(sec_val, list):
+                                sec_list = sec_val
+                            elif sec_val is not None:
+                                sec_list = [sec_val]
+                            else:
+                                sec_list = []
+                            selected = {
+                                "ball": grid.get("nums", []),
+                                secondary_type: sec_list,
+                            }
+                            await record_canonical_selection(
+                                dconn, game_name, next_draw_date, selected,
+                            )
+                            recorded += 1
+                        except Exception:
+                            failed += 1
+                            logger.warning(
+                                "[CALENDAR] V137.B grid record failed — continuing batch",
+                                exc_info=True,
+                            )
+                logger.info(
+                    "[CALENDAR] V137.B batch recorded game=%s target=%s grids=%d failed=%d",
+                    game_name, next_draw_date, recorded, failed,
+                )
             except Exception:
-                logger.debug("record_canonical_selection failed — non-blocking")
+                logger.debug("record_canonical_selection batch failed — non-blocking")
 
         return {
             "success": True,
