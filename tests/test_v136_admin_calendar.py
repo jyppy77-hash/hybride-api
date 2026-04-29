@@ -150,7 +150,13 @@ class TestCalendarPerfMonth:
             assert draw["weekday"] in (1, 4)
 
     def test_month_aggregates_matches_when_fdj_drawn(self):
-        """V136 — best_match_count is computed from history vs FDJ on draw days."""
+        """V136 — best_match_count is computed from history vs FDJ on draw days.
+
+        V136.A : SQL generator filtré par subquery JOIN MIN(selected_at) — le test
+        mock retourne directement la 1ère grille canonique (filtre fait côté SQL).
+        Le mois fait désormais 3 fetchall (FDJ + generator filtré + pdf_meta_*)
+        au lieu de 2 (FDJ + history agrégé).
+        """
         client = _authed_client()
         # Tirage FDJ Loto 2026-04-06 (lundi) : balls = {3, 12, 30, 36, 42}, chance = 7
         # Generator (V110) avait sélectionné: balls=[3, 12, 25, 33, 47], chance=7
@@ -159,13 +165,14 @@ class TestCalendarPerfMonth:
         cursor = AsyncMock()
         cursor.execute = AsyncMock()
 
-        # FDJ rows then HYBRIDE history rows
         cursor.fetchall = AsyncMock(side_effect=[
+            # 1) FDJ rows
             [{
                 "date_de_tirage": target_date,
                 "boule_1": 3, "boule_2": 12, "boule_3": 30, "boule_4": 36, "boule_5": 42,
                 "numero_chance": 7,
             }],
+            # 2) V136.A generator filtré : 1ère grille canonique uniquement
             [
                 {"draw_date_target": target_date, "source": "generator", "number_value": 3, "number_type": "ball"},
                 {"draw_date_target": target_date, "source": "generator", "number_value": 12, "number_type": "ball"},
@@ -174,6 +181,8 @@ class TestCalendarPerfMonth:
                 {"draw_date_target": target_date, "source": "generator", "number_value": 47, "number_type": "ball"},
                 {"draw_date_target": target_date, "source": "generator", "number_value": 7, "number_type": "chance"},
             ],
+            # 3) V136.A pdf_meta_* : aucun ici
+            [],
         ])
         with patch(
             "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
@@ -207,13 +216,21 @@ class TestCalendarPerfDrawDetail:
         assert resp.status_code == 400
 
     def test_pre_tirage_returns_no_fdj_data(self):
-        """V136 — Pré-tirage : fdj.drawn=False, matches=null (à venir)."""
+        """V136 — Pré-tirage : fdj.drawn=False, matches=null (à venir).
+
+        V136.A : SQL detail = 2 queries successives (MIN(selected_at) + rows
+        filtrés). Mock fournit donc 2 fetchone (FDJ + first_ts) + 1 fetchall.
+        """
         client = _authed_client()
         cursor = AsyncMock()
         cursor.execute = AsyncMock()
-        cursor.fetchone = AsyncMock(return_value=None)
-        # 1ère query: FDJ → None ; 2ème query: history GROUP BY → liste pdf_meta + generator
         target_date = datetime.date(2026, 4, 27)
+        first_ts = datetime.datetime(2026, 4, 26, 14, 30, 0)
+        cursor.fetchone = AsyncMock(side_effect=[
+            None,  # 1) FDJ row → pré-tirage
+            {"first_ts": first_ts},  # 2) V136.A MIN(selected_at) generator
+        ])
+        # 3) V136.A : rows filtrés (1ère grille canonique generator)
         cursor.fetchall = AsyncMock(return_value=[
             {"source": "generator", "number_value": 10, "number_type": "ball", "first_seen": "2026-04-26 14:30:00"},
             {"source": "generator", "number_value": 19, "number_type": "ball", "first_seen": "2026-04-26 14:30:00"},
@@ -239,16 +256,24 @@ class TestCalendarPerfDrawDetail:
         assert data["summary"]["best_match_count"] is None
 
     def test_post_tirage_calculates_matches(self):
-        """V136 — Post-tirage : matches calculés correctement, best_match_source identifié."""
+        """V136 — Post-tirage : matches calculés correctement, best_match_source identifié.
+
+        V136.A : SQL detail = 2 queries successives. Mock fournit 2 fetchone
+        (FDJ + first_ts) + 1 fetchall (generator filtré + pdf_meta_*).
+        """
         client = _authed_client()
         target_date = datetime.date(2026, 4, 25)
+        first_ts = datetime.datetime(2026, 4, 24, 12, 0, 0)
         cursor = AsyncMock()
         cursor.execute = AsyncMock()
-        cursor.fetchone = AsyncMock(return_value={
-            "date_de_tirage": target_date,
-            "boule_1": 5, "boule_2": 18, "boule_3": 22, "boule_4": 31, "boule_5": 49,
-            "numero_chance": 3,
-        })
+        cursor.fetchone = AsyncMock(side_effect=[
+            {  # 1) FDJ row
+                "date_de_tirage": target_date,
+                "boule_1": 5, "boule_2": 18, "boule_3": 22, "boule_4": 31, "boule_5": 49,
+                "numero_chance": 3,
+            },
+            {"first_ts": first_ts},  # 2) V136.A MIN(selected_at) generator
+        ])
         cursor.fetchall = AsyncMock(return_value=[
             # generator: 1 match (22)
             {"source": "generator", "number_value": 7, "number_type": "ball", "first_seen": "2026-04-24 12:00:00"},

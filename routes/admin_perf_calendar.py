@@ -164,44 +164,84 @@ async def calendar_perf_draw_detail(request: Request, game: str, date_str: str):
     fdj_balls_set = set(fdj["balls"] or [])
     fdj_sec_set = set(fdj["secondary"] or [])
 
-    # 2) HYBRIDE rows pour cette date
+    # 2) HYBRIDE rows pour cette date — V136.A
+    # Hotfix : pour source='generator', ne récupérer que les numéros enregistrés
+    # à la même seconde que MIN(selected_at) — i.e. la 1ère grille canonique du
+    # jour-cible. Cela évite l'union trompeuse de toutes les grilles générées
+    # par tous les visiteurs (V136 affichait "42 boules cumulées EM" par exemple).
+    # Pour les sources pdf_meta_*, l'agrégat top fréquences (V136 inchangé) est
+    # sémantiquement correct car il s'agit déjà d'un top idempotent par jour.
     hybride: dict = {src: None for src in _SOURCES}
+    rows: list = []
+    first_ts = None
     try:
         async with db_cloudsql.get_connection_readonly() as conn:
             cur = await conn.cursor()
+            # V136.A query 1 — timestamp de la 1ère génération canonique generator
             await cur.execute(
-                "SELECT source, number_value, number_type, "
-                "DATE_FORMAT(MIN(selected_at), '%%Y-%%m-%%d %%H:%%i:%%s') AS first_seen "
+                "SELECT MIN(selected_at) AS first_ts "
                 "FROM hybride_selection_history "
-                "WHERE game = %s AND draw_date_target = %s "
-                "GROUP BY source, number_value, number_type",
+                "WHERE game = %s AND draw_date_target = %s AND source = 'generator'",
                 (game, target),
             )
+            first_row = await cur.fetchone()
+            first_ts = first_row["first_ts"] if first_row else None
+
+            # V136.A query 2 — rows filtrées
+            if first_ts is not None:
+                await cur.execute(
+                    "SELECT source, number_value, number_type, "
+                    "DATE_FORMAT(selected_at, '%%Y-%%m-%%d %%H:%%i:%%s') AS first_seen "
+                    "FROM hybride_selection_history "
+                    "WHERE game = %s AND draw_date_target = %s AND ("
+                    "    (source = 'generator' AND selected_at >= %s "
+                    "         AND selected_at < %s + INTERVAL 1 SECOND)"
+                    "    OR source IN ('pdf_meta_global', 'pdf_meta_5a', 'pdf_meta_2a')"
+                    ") "
+                    "ORDER BY source, number_type, number_value",
+                    (game, target, first_ts, first_ts),
+                )
+            else:
+                # Pas de génération generator pour ce jour — pdf_meta_* uniquement
+                await cur.execute(
+                    "SELECT source, number_value, number_type, "
+                    "DATE_FORMAT(selected_at, '%%Y-%%m-%%d %%H:%%i:%%s') AS first_seen "
+                    "FROM hybride_selection_history "
+                    "WHERE game = %s AND draw_date_target = %s "
+                    "AND source IN ('pdf_meta_global', 'pdf_meta_5a', 'pdf_meta_2a') "
+                    "ORDER BY source, number_type, number_value",
+                    (game, target),
+                )
             rows = await cur.fetchall()
-            buckets: dict = {}
-            for r in rows:
-                src = r["source"]
-                bucket = buckets.setdefault(src, {"balls": [], "secondary": None, "first_seen": r["first_seen"]})
-                if r["number_type"] == "ball":
-                    bucket["balls"].append(int(r["number_value"]))
-                elif bucket["secondary"] is None:
-                    bucket["secondary"] = int(r["number_value"])
-                # Conserver le first_seen le plus ancien
-                if r["first_seen"] and (bucket["first_seen"] is None or r["first_seen"] < bucket["first_seen"]):
-                    bucket["first_seen"] = r["first_seen"]
-            for src in _SOURCES:
-                if src not in buckets:
-                    continue
-                b = buckets[src]
-                balls_sorted = sorted(b["balls"])
-                m = _calc_match(balls_sorted, b["secondary"], fdj_balls_set, fdj_sec_set)
-                hybride[src] = {
-                    "balls": balls_sorted,
-                    "secondary": b["secondary"],
-                    "matches_balls": m["matches_balls"] if fdj["drawn"] else None,
-                    "matches_secondary": m["matches_secondary"] if fdj["drawn"] else None,
-                    "first_seen": b["first_seen"],
-                }
+        logger.info(
+            "[CALENDAR] draw_detail game=%s date=%s first_ts=%s rows=%d",
+            game, date_str, first_ts, len(rows),
+        )
+
+        buckets: dict = {}
+        for r in rows:
+            src = r["source"]
+            bucket = buckets.setdefault(src, {"balls": [], "secondary": None, "first_seen": r["first_seen"]})
+            if r["number_type"] == "ball":
+                bucket["balls"].append(int(r["number_value"]))
+            elif bucket["secondary"] is None:
+                bucket["secondary"] = int(r["number_value"])
+            # Conserver le first_seen le plus ancien
+            if r["first_seen"] and (bucket["first_seen"] is None or r["first_seen"] < bucket["first_seen"]):
+                bucket["first_seen"] = r["first_seen"]
+        for src in _SOURCES:
+            if src not in buckets:
+                continue
+            b = buckets[src]
+            balls_sorted = sorted(b["balls"])
+            m = _calc_match(balls_sorted, b["secondary"], fdj_balls_set, fdj_sec_set)
+            hybride[src] = {
+                "balls": balls_sorted,
+                "secondary": b["secondary"],
+                "matches_balls": m["matches_balls"] if fdj["drawn"] else None,
+                "matches_secondary": m["matches_secondary"] if fdj["drawn"] else None,
+                "first_seen": b["first_seen"],
+            }
     except Exception:
         logger.error("[CALENDAR] hybride detail fetch failed %s %s", game, date_str, exc_info=True)
 
@@ -312,31 +352,64 @@ async def calendar_perf_month(request: Request, game: str, year: int, month: int
     except Exception:
         logger.error("[CALENDAR] FDJ fetch failed game=%s %s/%s", game, year, month, exc_info=True)
 
-    # 3) HYBRIDE : toutes les rows hybride_selection_history pour le mois
+    # 3) HYBRIDE : rows hybride_selection_history pour le mois — V136.A
+    # Hotfix : pour source='generator', filtrer par draw_date_target au timestamp
+    # MIN(selected_at) (1ère grille canonique). Pour pdf_meta_*, agrégat
+    # top fréquences inchangé (V136). Cf. calendar_perf_draw_detail pour la rationale.
     hybride_raw: dict[tuple, dict] = {}  # (date, source) → {"ball": [...], "secondary": int|None}
+    rows_gen: list = []
+    rows_pdf: list = []
     try:
         async with db_cloudsql.get_connection_readonly() as conn:
             cur = await conn.cursor()
+            # V136.A query 1 — generator filtré par jour-cible au timestamp 1ère grille
+            # (subquery JOIN : 1 MIN(selected_at) par draw_date_target).
+            await cur.execute(
+                "SELECT h.draw_date_target, h.source, h.number_value, h.number_type "
+                "FROM hybride_selection_history h "
+                "INNER JOIN ("
+                "    SELECT draw_date_target, MIN(selected_at) AS first_ts "
+                "    FROM hybride_selection_history "
+                "    WHERE game = %s AND source = 'generator' "
+                "    AND draw_date_target BETWEEN %s AND %s "
+                "    GROUP BY draw_date_target"
+                ") f ON h.draw_date_target = f.draw_date_target "
+                "WHERE h.game = %s AND h.source = 'generator' "
+                "AND h.selected_at >= f.first_ts "
+                "AND h.selected_at < f.first_ts + INTERVAL 1 SECOND",
+                (game, month_start, month_end, game),
+            )
+            rows_gen = await cur.fetchall()
+
+            # V136.A query 2 — pdf_meta_* agrégat top fréquences (V136 inchangé)
             await cur.execute(
                 "SELECT draw_date_target, source, number_value, number_type "
                 "FROM hybride_selection_history "
-                "WHERE game = %s AND draw_date_target BETWEEN %s AND %s",
+                "WHERE game = %s "
+                "AND source IN ('pdf_meta_global', 'pdf_meta_5a', 'pdf_meta_2a') "
+                "AND draw_date_target BETWEEN %s AND %s",
                 (game, month_start, month_end),
             )
-            rows = await cur.fetchall()
-            for r in rows:
-                dt = r["draw_date_target"]
-                if isinstance(dt, datetime):
-                    dt = dt.date()
-                key = (dt, r["source"])
-                bucket = hybride_raw.setdefault(key, {"ball": [], "secondary": None})
-                if r["number_type"] == "ball":
-                    bucket["ball"].append(int(r["number_value"]))
-                else:
-                    # 'chance' (Loto) ou 'star' (EM) — top1 unique pour pdf_meta_*
-                    # ou single chance pour generator Loto / first star pour generator EM
-                    if bucket["secondary"] is None:
-                        bucket["secondary"] = int(r["number_value"])
+            rows_pdf = await cur.fetchall()
+
+        logger.info(
+            "[CALENDAR] month_query game=%s month=%s rows_gen=%d rows_pdf=%d",
+            game, f"{year}-{month:02d}", len(rows_gen), len(rows_pdf),
+        )
+
+        for r in list(rows_gen) + list(rows_pdf):
+            dt = r["draw_date_target"]
+            if isinstance(dt, datetime):
+                dt = dt.date()
+            key = (dt, r["source"])
+            bucket = hybride_raw.setdefault(key, {"ball": [], "secondary": None})
+            if r["number_type"] == "ball":
+                bucket["ball"].append(int(r["number_value"]))
+            else:
+                # 'chance' (Loto) ou 'star' (EM) — top1 unique pour pdf_meta_*
+                # ou single chance pour generator Loto / first star pour generator EM
+                if bucket["secondary"] is None:
+                    bucket["secondary"] = int(r["number_value"])
     except Exception:
         logger.error(
             "[CALENDAR] hybride history fetch failed game=%s %s/%s",

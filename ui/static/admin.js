@@ -1422,8 +1422,13 @@ var LotoAdmin = (function() {
             var entry = byDate[iso];
 
             if (drawWeekdays.indexOf(jsDow) === -1 || !entry) {
+                // V136.B : matérialiser le jour avec libellé '—' (pas de tirage) ;
+                // role/tabindex retirés defensivement (cellule non interactive).
                 cell.classList.add('perf-no-draw');
-                cell.innerHTML = '<span class="perf-day-num">' + day + '</span>';
+                cell.innerHTML = '<span class="perf-day-num">' + day + '</span>' +
+                                 '<span class="perf-no-draw-label">—</span>';
+                cell.removeAttribute('role');
+                cell.removeAttribute('tabindex');
                 grid.appendChild(cell);
                 continue;
             }

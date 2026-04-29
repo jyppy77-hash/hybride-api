@@ -1010,8 +1010,40 @@ body.light .cal-tooltip { background: rgba(255,255,255,0.95); color: #1f2937; bo
 .perf-cell:hover { transform: translateY(-1px); border-color: rgba(79,70,229,.5); }
 .perf-cell:focus { outline: 2px solid #4f46e5; outline-offset: 2px; }
 .perf-empty { min-height: 95px; }
-.perf-cell.perf-no-draw { cursor: default; opacity: .35; min-height: 95px; }
-.perf-cell.perf-no-draw:hover { transform: none; border-color: rgba(255,255,255,.06); }
+/* V136.B — jours non-tirage matérialisés visuellement (opacity .35 retirée
+   car effaçait fond+border déjà très transparents → cellules invisibles).
+   Convention : Loto FR=Lun/Mer/Sam, EM=Mar/Ven. */
+.perf-cell.perf-no-draw {
+    cursor: default;
+    min-height: 95px;
+    background: rgba(255,255,255,.02);
+    border: 1px dashed rgba(255,255,255,.07);
+    color: var(--muted, #6b7280);
+}
+.perf-cell.perf-no-draw .perf-day-num {
+    color: var(--muted, #6b7280);
+    font-weight: 400;
+}
+.perf-cell.perf-no-draw .perf-no-draw-label {
+    margin-top: auto;
+    font-size: 1rem;
+    color: var(--muted, #6b7280);
+    opacity: .5;
+    text-align: center;
+}
+.perf-cell.perf-no-draw:hover {
+    transform: none;
+    border-color: rgba(255,255,255,.07);
+}
+body.light .perf-cell.perf-no-draw {
+    background: rgba(0,0,0,.02);
+    border-color: rgba(0,0,0,.08);
+    color: #9ca3af;
+}
+body.light .perf-cell.perf-no-draw .perf-day-num,
+body.light .perf-cell.perf-no-draw .perf-no-draw-label {
+    color: #9ca3af;
+}
 
 .perf-day-num { font-weight: 700; font-size: .85rem; }
 .perf-cell-fdj { color: #f0f0f0; font-weight: 500; }
