@@ -8,7 +8,11 @@ pour les routes unifiees /api/{game}/...
 from dataclasses import dataclass, field
 from enum import Enum
 import importlib
+import logging
 from functools import lru_cache
+
+# V137.C: module-level logger — required for tests patching `config.games.logger`
+logger = logging.getLogger(__name__)
 
 
 class ValidGame(str, Enum):
@@ -154,3 +158,104 @@ def get_next_draw_date(game: ValidGame, reference=None):
             continue
         return candidate
     return today
+
+
+# ── V137.C: BDD-aware next draw date helper (production source of truth) ──
+#
+# Issue : `get_next_draw_date` (V110, sync) calcule la prochaine date à partir
+# du calendrier hebdomadaire + cutoff hour hardcodé (Loto 21h, EM 22h). Si le
+# pipeline d'import est retardé (résultat officiel pas encore inséré en BDD à
+# 22h), les visiteurs continuent à générer des grilles ciblant le tirage du
+# jour suivant alors que celui du jour n'a pas encore été acté → désaccord
+# logique stats/calendrier (cas observé 29/04/2026 : 55 grilles polluantes
+# 21h12-22h27 ciblant un tirage déjà tombé à 20h50 mais inséré ~21h30).
+#
+# V137.C : utiliser la présence du résultat officiel en BDD comme source de
+# vérité. Tant que le résultat du jour n'est pas inséré, on continue à
+# cibler ce tirage (cohérent même si pipeline lent). Dès que la row apparaît
+# en BDD, on avance vers le tirage suivant.
+
+# Mapping table + colonne date par jeu — symétrie V99 F09
+_GAME_DRAW_TABLE = {
+    ValidGame.loto: ("tirages", "date_de_tirage"),
+    ValidGame.euromillions: ("tirages_euromillions", "date_de_tirage"),
+}
+
+
+async def get_next_draw_date_db_aware(
+    game: ValidGame,
+    conn,
+    reference=None,
+):
+    """V137.C — BDD-aware version of get_next_draw_date.
+
+    Iterate calendar candidates and consult the official-results table. The
+    first candidate without a row in BDD is the *next* draw the system should
+    target. Falls back to the V110 sync helper if conn is unusable or if the
+    query raises (defense in depth, V135 lesson).
+
+    Args:
+        game: ValidGame.loto or ValidGame.euromillions
+        conn: aiomysql DictCursor connection. If None, falls back to sync.
+        reference: datetime.datetime / datetime.date / None (= now()).
+
+    Logic:
+        For offset i in 0..7:
+            candidate = today + i days
+            if candidate.weekday() not in cfg.draw_days: continue
+            row = SELECT 1 FROM <table> WHERE date_de_tirage = candidate LIMIT 1
+            if row is None: return candidate           # next draw to target
+            else: append candidate to skipped, continue
+        Si aucun candidat libre en 8 jours → log warning + fallback sync.
+        Log [NEXT_DRAW] auto-advance émis UNIQUEMENT si skipped non-vide.
+    """
+    from datetime import datetime as _dt
+
+    if conn is None:
+        return get_next_draw_date(game, reference=reference)
+
+    if reference is None:
+        reference = _dt.now()
+    today = reference.date() if isinstance(reference, _dt) else reference
+
+    cfg = get_config(game)
+    target_weekdays = {_WEEKDAY_FR[d] for d in cfg.draw_days if d in _WEEKDAY_FR}
+    table_info = _GAME_DRAW_TABLE.get(game)
+    if table_info is None:
+        return get_next_draw_date(game, reference=reference)
+    table, date_col = table_info
+
+    skipped: list = []
+    try:
+        from datetime import timedelta
+        cur = await conn.cursor()
+        for i in range(8):
+            candidate = today + timedelta(days=i)
+            if candidate.weekday() not in target_weekdays:
+                continue
+            sql = f"SELECT 1 AS found FROM {table} WHERE {date_col} = %s LIMIT 1"
+            await cur.execute(sql, (candidate,))
+            row = await cur.fetchone()
+            if row is None:
+                if skipped:
+                    logger.info(
+                        "[NEXT_DRAW] auto-advance game=%s skipped=%s next=%s "
+                        "reason=result_already_in_db",
+                        game.value, skipped, candidate.isoformat(),
+                    )
+                return candidate
+            skipped.append(candidate.isoformat())
+        # Aucun candidat libre dans 8 jours : ne devrait jamais arriver pour
+        # Loto (3 tirages/sem) ni EM (2 tirages/sem). Defense in depth → fallback.
+        logger.warning(
+            "[NEXT_DRAW] no candidate without DB row in 8 days game=%s skipped=%s "
+            "— falling back to sync helper",
+            game.value, skipped,
+        )
+        return get_next_draw_date(game, reference=reference)
+    except Exception:
+        logger.warning(
+            "[NEXT_DRAW] BDD-aware query failed game=%s — falling back to sync",
+            game.value, exc_info=True,
+        )
+        return get_next_draw_date(game, reference=reference)

@@ -706,10 +706,11 @@ async def _prepare_chat_context_base(
                             _engine_cfg = _gen_mod_for_cfg._engine.cfg
                             if getattr(_engine_cfg, "saturation_persistent_enabled", False):
                                 from services.selection_history import get_persistent_brake_map
-                                from config.games import get_next_draw_date, ValidGame
+                                from config.games import get_next_draw_date_db_aware, ValidGame
                                 _game_enum = (ValidGame.euromillions if _game_name == "euromillions"
                                               else ValidGame.loto)
-                                _next_date = get_next_draw_date(_game_enum)
+                                # V137.C: BDD-aware (utilise _dconn déjà ouverte L700)
+                                _next_date = await get_next_draw_date_db_aware(_game_enum, _dconn)
                                 _sec_type = "star" if _game_name == "euromillions" else "chance"
                                 _brake_balls = await get_persistent_brake_map(
                                     _dconn, _game_name, _next_date, "ball", _engine_cfg,

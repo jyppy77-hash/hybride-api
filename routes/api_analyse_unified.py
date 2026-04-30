@@ -10,7 +10,7 @@ import logging
 
 import db_cloudsql
 from rate_limit import limiter
-from config.games import ValidGame, get_config, get_engine, get_next_draw_date
+from config.games import ValidGame, get_config, get_engine, get_next_draw_date, get_next_draw_date_db_aware
 from config.i18n import _badges, _analysis_strings
 from services.penalization import compute_penalized_ranking
 from services.decay_state import get_decay_state, check_and_update_decay
@@ -58,9 +58,20 @@ async def unified_generate(
         game_name = "euromillions" if cfg.slug == "euromillions" else "loto"
         secondary_type = "star" if game_name == "euromillions" else "chance"
         # V110: compute target draw date ONCE for both read (brake map) and write (record canonical)
-        next_draw_date = get_next_draw_date(game)
+        # V137.C: BDD-aware — skip si résultat officiel déjà inséré (source de vérité = BDD)
+        # 2 try blocks séparés pour que next_draw_date ne soit JAMAIS None si
+        # check_and_update_decay plante (robustesse > overhead 1 connexion).
+        next_draw_date = None
         brake_balls: dict = {}
         brake_secondary: dict = {}
+
+        try:
+            async with db_cloudsql.get_connection() as dconn:
+                next_draw_date = await get_next_draw_date_db_aware(game, dconn)
+        except Exception:
+            logger.debug("get_next_draw_date_db_aware failed — fallback sync")
+        if next_draw_date is None:
+            next_draw_date = get_next_draw_date(game)
 
         try:
             async with db_cloudsql.get_connection() as dconn:
@@ -408,8 +419,12 @@ async def unified_meta_analyse_local(
                 _source = _PDF_META_SOURCE_MAP[window_used]
                 _balls_top5 = [int(n['number']) for n in top_numbers[:5]]
                 _sec_top1 = int(secondary_top[0]['number']) if secondary_top else None
-                _draw_target = get_next_draw_date(game, _dt.now())
                 async with db_cloudsql.get_connection() as _pdf_conn:
+                    # V137.C: BDD-aware (replaces V110 sync calendar+cutoff).
+                    # Utilise _pdf_conn déjà ouverte → zéro overhead.
+                    _draw_target = await get_next_draw_date_db_aware(
+                        game, _pdf_conn, _dt.now(),
+                    )
                     await record_pdf_meta_top(
                         _pdf_conn, game.value, _draw_target, _source,
                         _balls_top5, _sec_top1,
