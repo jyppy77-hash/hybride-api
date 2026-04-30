@@ -221,10 +221,11 @@ class TestCalendarDetailMultiGrids:
         # 3 grilles distinctes
         gids = sorted([g["grid_id"] for g in data["grids"]])
         assert len(set(gids)) == 3
-        # Chaque grille a ses 5 boules + 1 secondaire
+        # Chaque grille a ses 5 boules + N secondaires (V137.D : liste)
         for g in data["grids"]:
             assert len(g["balls"]) == 5
-            assert g["secondary"] is not None
+            assert g["secondary_balls"]  # V137.D : liste non-vide
+            assert g["secondary"] is not None  # V137.D : rétrocompat scalaire
 
     def test_calculates_match_per_grid(self):
         """V137 — Chaque grille a son matches_balls propre (pas un agrégat)."""

@@ -73,10 +73,16 @@ def _validate_game(game: str):
 def _calc_match(hybride_balls: list, hybride_secondary, fdj_balls: set, fdj_secondary: set) -> dict:
     """Compute matches between an HYBRIDE selection and the FDJ draw.
 
+    V137.D : `hybride_secondary` peut être :
+      - liste / tuple / set (Loto: [chance], EM: [s1, s2]) — source de vérité V137.D
+      - scalaire int (rétrocompat) — équivalent à [scalaire]
+      - None / vide → matches_secondary = False
+    matches_secondary = True si AU MOINS 1 secondaire HYBRIDE est dans le tirage
+    FDJ. Avant V137.D, EM ne testait que le 1er star → bug ~50% sous-évaluation.
+
     Args:
         hybride_balls: list[int] — top 5 balls (or canonical 5 balls)
-        hybride_secondary: int | None — chance (Loto) or star_top1 (EM) ; for EM
-                           this is a single number even though FDJ draws 2 stars
+        hybride_secondary: list[int] | int | None
         fdj_balls: set[int] — drawn balls
         fdj_secondary: set[int] — drawn chance/stars (Loto: {chance}, EM: {s1, s2})
 
@@ -87,8 +93,12 @@ def _calc_match(hybride_balls: list, hybride_secondary, fdj_balls: set, fdj_seco
         return {"matches_balls": 0, "matches_secondary": False}
     matches_balls = len(set(int(n) for n in (hybride_balls or [])) & fdj_balls)
     matches_secondary = False
-    if hybride_secondary is not None and fdj_secondary:
-        matches_secondary = int(hybride_secondary) in fdj_secondary
+    if hybride_secondary and fdj_secondary:
+        if isinstance(hybride_secondary, (list, tuple, set)):
+            sec_set = set(int(x) for x in hybride_secondary if x is not None)
+        else:
+            sec_set = {int(hybride_secondary)}
+        matches_secondary = bool(sec_set & fdj_secondary)
     return {"matches_balls": matches_balls, "matches_secondary": matches_secondary}
 
 
@@ -197,6 +207,10 @@ async def calendar_perf_draw_detail(request: Request, game: str, date_str: str):
 
         # Pivot par (grid_id, source) — legacy rows fusionnées par (source) avec
         # grid_id synthétique stable.
+        # V137.D Bug 3 : `secondary_balls` (liste) remplace `secondary` (scalaire).
+        # Loto = [chance] (1 élément) ; EM = [star_1, star_2] (2 éléments).
+        # `secondary` (scalaire = secondary_balls[0] ou None) conservé en
+        # rétrocompat pour anciens consommateurs ; frontend doit utiliser secondary_balls.
         buckets: dict = {}
         for r in rows:
             gid = r["grid_id"]
@@ -209,23 +223,27 @@ async def calendar_perf_draw_detail(request: Request, game: str, date_str: str):
                 "grid_id": gid,
                 "source": src,
                 "balls": [],
-                "secondary": None,
+                "secondary_balls": [],  # V137.D : liste (Loto 1 / EM 2)
                 "first_seen": r["first_seen"],
                 "is_legacy": is_legacy,
             })
             if r["number_type"] == "ball":
                 bucket["balls"].append(int(r["number_value"]))
-            elif bucket["secondary"] is None:
-                bucket["secondary"] = int(r["number_value"])
+            else:
+                # V137.D : star/chance accumulés dans secondary_balls (avant V137.D :
+                # 1er seul stocké dans `secondary` scalaire → 2ème star EM ignorée).
+                bucket["secondary_balls"].append(int(r["number_value"]))
             # Conserver le first_seen le plus ancien
             if r["first_seen"] and (bucket["first_seen"] is None or r["first_seen"] < bucket["first_seen"]):
                 bucket["first_seen"] = r["first_seen"]
 
-        # Construire la liste finale : trier par (source generator first, first_seen ASC)
         for b in buckets.values():
             b["balls"] = sorted(b["balls"])
+            b["secondary_balls"] = sorted(b["secondary_balls"])
+            # V137.D : `secondary` rétrocompat (scalaire = 1er secondaire ou None)
+            b["secondary"] = b["secondary_balls"][0] if b["secondary_balls"] else None
             if fdj["drawn"]:
-                m = _calc_match(b["balls"], b["secondary"], fdj_balls_set, fdj_sec_set)
+                m = _calc_match(b["balls"], b["secondary_balls"], fdj_balls_set, fdj_sec_set)
                 b["matches_balls"] = m["matches_balls"]
                 b["matches_secondary"] = m["matches_secondary"]
             else:
@@ -233,8 +251,11 @@ async def calendar_perf_draw_detail(request: Request, game: str, date_str: str):
                 b["matches_secondary"] = None
             grids_list.append(b)
 
+        # V137.D Bug 2 : tri purement chronologique ASC (ancien → récent).
+        # Avant V137.D : (source != generator, first_seen, grid_id) → priorité
+        # generator produisait un anti-chrono visible si pdf_meta inséré avant
+        # le 1er generator.
         grids_list.sort(key=lambda x: (
-            x["source"] != "generator",
             x["first_seen"] or "",
             x["grid_id"] or "",
         ))
@@ -384,12 +405,12 @@ async def calendar_perf_month(request: Request, game: str, year: int, month: int
             key = (dt, gid, src)
             b = buckets.setdefault(key, {
                 "date": dt, "source": src,
-                "balls": [], "secondary": None,
+                "balls": [], "secondary_balls": [],  # V137.D : liste (symétrie)
             })
             if r["number_type"] == "ball":
                 b["balls"].append(int(r["number_value"]))
-            elif b["secondary"] is None:
-                b["secondary"] = int(r["number_value"])
+            else:
+                b["secondary_balls"].append(int(r["number_value"]))
 
         for b in buckets.values():
             grids_by_day.setdefault(b["date"], []).append(b)
@@ -411,7 +432,8 @@ async def calendar_perf_month(request: Request, game: str, year: int, month: int
         best_match = 0
         if fdj_drawn:
             for g in day_grids:
-                m = _calc_match(sorted(g["balls"]), g["secondary"], fdj_balls, fdj_secondary)
+                # V137.D : passer secondary_balls (liste) au lieu de secondary (scalaire)
+                m = _calc_match(sorted(g["balls"]), g["secondary_balls"], fdj_balls, fdj_secondary)
                 if m["matches_balls"] > best_match:
                     best_match = m["matches_balls"]
 

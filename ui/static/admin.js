@@ -1544,7 +1544,8 @@ var LotoAdmin = (function() {
         } else {
             html += '<div class="perf-grids-table-wrapper">';
             html += '<table class="perf-grids-table">';
-            html += '<thead><tr><th>#</th><th>Heure</th><th>Source</th><th>Boules</th><th>Sec</th><th>Matchs</th></tr></thead>';
+            // V137.D Bug 1 : header "Date / Heure" (avant: "Heure" seule)
+            html += '<thead><tr><th>#</th><th>Date / Heure</th><th>Source</th><th>Boules</th><th>Sec</th><th>Matchs</th></tr></thead>';
             html += '<tbody>';
             grids.forEach(function(g, idx) {
                 var isBest = bestGid && (g.grid_id === bestGid);
@@ -1555,28 +1556,41 @@ var LotoAdmin = (function() {
                     var sec = g.matches_secondary ? ' +1' : '';
                     matchCell = '<span class="perf-match-badge perf-match-' + perfBucketLevel(g.matches_balls) + '">' + g.matches_balls + ' b' + sec + '</span>';
                 }
-                // V137.B — conversion UTC → Europe/Paris.
-                // first_seen format BDD = "YYYY-MM-DD HH:MM:SS" UTC sans suffixe Z.
-                // On l'interprète comme UTC (ajout 'Z') puis affichage en heure
-                // locale Paris via toLocaleTimeString (gère DST automatiquement).
-                var hour = '—';
+                // V137.D Bug 1 : format DD/MM HH:MM (ex: "30/04 06:16") en
+                // heure locale Paris. first_seen format BDD = "YYYY-MM-DD HH:MM:SS"
+                // UTC sans suffixe Z (V137.B). toLocaleString fr-FR retourne
+                // "30/04/2026 06:16" — strip /YYYY pour garder "DD/MM HH:MM".
+                // DST géré automatiquement par timeZone:'Europe/Paris'.
+                var dateHour = '—';
                 if (g.first_seen) {
                     var utcDate = new Date(g.first_seen.replace(' ', 'T') + 'Z');
                     if (!isNaN(utcDate.getTime())) {
-                        hour = utcDate.toLocaleTimeString('fr-FR', {
+                        var formatted = utcDate.toLocaleString('fr-FR', {
+                            day: '2-digit', month: '2-digit',
                             hour: '2-digit', minute: '2-digit',
                             timeZone: 'Europe/Paris',
                         });
+                        dateHour = formatted.replace(/\/\d{4}/, '');
                     }
+                }
+                // V137.D Bug 3 : afficher TOUS les secondaires (Loto 1 / EM 2).
+                // Préfère secondary_balls (liste) ; rétrocompat scalaire si absent.
+                // Avant V137.D : EM affichait seulement la 1ère étoile (bug backend
+                // qui ne stockait que le 1er number_type='star').
+                var secText = '—';
+                if (Array.isArray(g.secondary_balls) && g.secondary_balls.length > 0) {
+                    secText = g.secondary_balls.join(' - ');
+                } else if (g.secondary !== null && g.secondary !== undefined) {
+                    secText = String(g.secondary);
                 }
                 var srcLabel = sourceLabels[g.source] || g.source;
                 if (g.is_legacy) srcLabel += ' <em>(legacy)</em>';
                 html += '<tr class="' + rowClass + '">';
                 html += '<td>#' + (idx + 1) + (isBest ? ' ⭐' : '') + '</td>';
-                html += '<td>' + escapeHtmlBreaker(hour) + '</td>';
+                html += '<td>' + escapeHtmlBreaker(dateHour) + '</td>';
                 html += '<td>' + srcLabel + '</td>';
                 html += '<td>' + perfFormatNumbers(g.balls) + '</td>';
-                html += '<td>' + (g.secondary !== null && g.secondary !== undefined ? escapeHtmlBreaker(String(g.secondary)) : '—') + '</td>';
+                html += '<td>' + escapeHtmlBreaker(secText) + '</td>';
                 html += '<td>' + matchCell + '</td>';
                 html += '</tr>';
             });
