@@ -4,13 +4,14 @@ import time
 import uuid
 import asyncio
 import hashlib
+import secrets
 import contextvars
 from contextlib import asynccontextmanager
 from datetime import date, datetime
 from email.utils import formatdate
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, FileResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, FileResponse, Response
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,6 +27,8 @@ import db_cloudsql
 from rate_limit import limiter, APIGlobalRateLimitMiddleware
 from config.version import __version__, APP_VERSION, APP_NAME, VERSION_DATE, LAST_DEPLOY_DATE
 from services.circuit_breaker import gemini_breaker
+# V138: top-level imports for origin_auth_middleware (avoid re-import on every reject)
+from utils import get_client_ip as _get_client_ip, is_origin_authed as _is_origin_authed
 from routes.pages import router as pages_router
 from routes.api_data import router as data_router
 from routes.api_analyse import router as analyse_router
@@ -757,6 +760,58 @@ app.middleware("http")(em_access_middleware)
 # ── IP Ban middleware (blocks banned IPs → 403, cache 60s) ──
 from middleware.ip_ban import ip_ban_middleware
 app.middleware("http")(ip_ban_middleware)
+
+
+# =========================
+# V138 — Origin Auth middleware (anti-bypass Cloudflare → Cloud Run direct)
+# =========================
+# Position d'exécution : 2 (juste après AccessLog outermost).
+# Bloque le bypass *.run.app direct AVANT ip_ban + em_access + GZip + tous les
+# middlewares coûteux. Mode fail-open : si ORIGIN_AUTH_SECRET env var vide
+# → laisse passer (déploiement progressif Phase 1).
+# Cf. docs/AUDIT_360_SECURITY.md F03 P0.
+
+# Whitelist paths : Cloud Run probes + SEO crawlers + RFC files + statiques
+# (toujours laissés passer même si SECRET défini, car appelés par GFE/bots
+# qui ne passent pas par Cloudflare).
+_ORIGIN_AUTH_WHITELIST_PATHS = frozenset({
+    "/health",                          # Cloud Run liveness/startup probe (cloudbuild.yaml:81-82)
+    "/api/version",                     # Cloud Build smoke test post-deploy + endpoint public simple
+    "/robots.txt",                      # SEO crawlers + V123 AI bots Cat A
+    "/sitemap.xml",                     # SEO crawlers
+    "/favicon.ico",                     # browsers default
+    "/favicon.svg",
+    "/apple-touch-icon.png",
+    "/site.webmanifest",                # V77-ter
+    "/.well-known/security.txt",        # F01 P0 audit V137.D (RFC 9116)
+    "/.well-known/change-password",     # bonus
+    "/BingSiteAuth.xml",                # V77-ter Bing verification
+})
+
+
+@app.middleware("http")
+async def origin_auth_middleware(request: Request, call_next):
+    """V138 — Reject requests bypassing Cloudflare (direct *.run.app hits).
+
+    Pipeline:
+      1. If path in whitelist → pass (Cloud Run probes + SEO + RFC files)
+      2. Else: delegate to utils.is_origin_authed() (fail-open if no secret)
+      3. If unauthorized: 403 Forbidden + log [ORIGIN_AUTH] WARNING
+    """
+    if request.url.path in _ORIGIN_AUTH_WHITELIST_PATHS:
+        return await call_next(request)
+
+    if _is_origin_authed(request):
+        return await call_next(request)
+
+    # Rejet : log structuré + 403 minimal (pas de leak info, pas d'écho secret)
+    client_ip = _get_client_ip(request)
+    ua = request.headers.get("user-agent", "")[:200]
+    logger.warning(
+        "[ORIGIN_AUTH] rejected path=%s ip=%s ua=%s",
+        request.url.path, client_ip, ua,
+    )
+    return Response(content=b"Forbidden", status_code=403, media_type="text/plain")
 
 
 # ── I09 V66: Access log middleware (ASGI — outermost, measures total latency) ──

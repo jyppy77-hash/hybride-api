@@ -2,7 +2,9 @@
 Shared utilities — used across routes, middleware, and main.py.
 """
 
+import logging
 import os
+import secrets
 from ipaddress import ip_address, ip_network
 
 from fastapi import Request
@@ -125,3 +127,44 @@ def get_client_ip_from_scope(scope: dict) -> str:
         return forwarded.split(",")[0].strip()
     client_addr = scope.get("client")
     return client_addr[0] if client_addr else ""
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# V138 — Origin Auth (anti-bypass Cloudflare → Cloud Run direct)
+# ══════════════════════════════════════════════════════════════════════════════
+
+logger = logging.getLogger(__name__)
+
+# Lecture env var au module-load (= boot Cloud Run ou import test).
+# Pattern V134 _env_bool aligné — reload module obligatoire en tests pour
+# re-évaluer cette constante après monkeypatch.setenv.
+#
+# Si vide ou absente : helper retourne True (mode fail-open) → middleware
+# laisse passer (déploiement progressif Phase 1, audit V137.D F03 P0).
+# Si set : Cloudflare Transform Rule injecte X-Origin-Auth=<SECRET> sur tout
+# trafic origin → handler vérifie via secrets.compare_digest (timing-safe).
+_ORIGIN_AUTH_SECRET = os.environ.get("ORIGIN_AUTH_SECRET", "").strip()
+
+
+def is_origin_authed(request: Request) -> bool:
+    """V138 — Check if request carries the Cloudflare-injected X-Origin-Auth header.
+
+    Returns True (= laisse passer) dans les cas suivants :
+      - Pas de SECRET configuré (env var ORIGIN_AUTH_SECRET vide/absente) → fail-open
+      - Header X-Origin-Auth présent ET match secret via secrets.compare_digest
+
+    Returns False (= rejet 403 par le caller middleware) sinon.
+
+    Helper centralisé pattern V94 S07 (is_owner_ip) / V127 (em_access_control delegation).
+    Le caller middleware gère whitelist paths + logging + 403 response.
+    Lecture env var au module-load — reload module obligatoire en tests (pattern V134).
+    """
+    # Fail-open : pas de secret configuré → mode déploiement progressif Phase 1
+    if not _ORIGIN_AUTH_SECRET:
+        return True
+    # Lecture header (Starlette case-insensitive : .get() retourne "" si absent)
+    provided = request.headers.get("x-origin-auth", "")
+    if not provided:
+        return False
+    # secrets.compare_digest : timing-safe — empêche timing attack sur secret length
+    return secrets.compare_digest(provided, _ORIGIN_AUTH_SECRET)
