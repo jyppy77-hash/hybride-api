@@ -68,13 +68,12 @@ async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, 
     Yields str chunks. Manages circuit breaker state manually.
     Tracks Gemini usage (tokens, duration) via gcp_monitoring.
 
-    ⚠️ V131.A LIMITATION : asyncio.wait_for ne timeout que le démarrage du
-    stream (await client.aio.models.generate_content_stream(...)), PAS
-    l'itération inter-chunk via `async for chunk in stream`. Si Vertex bloque
-    entre 2 chunks après démarrage, stream hang indéfiniment côté consommateur.
-    À surveiller en prod (Cloud Run logs duration > 30s sur /chat streaming).
-    Hotfix V131.C ou V132 si observé : wrapper per-chunk
-    via asyncio.wait_for(iterator.__anext__(), timeout=N).
+    V131.F — Per-chunk inter-chunk timeout 8s (was: start-only timeout
+    laissait hang infini si Vertex bloquait entre 2 chunks après démarrage).
+    Cf audit READ-ONLY 2026-05-05 : 50/58 erreurs `NoChunks` + cas terrain
+    Cloud Run /api/hybride-chat duration=17379ms (4 mai). 8s = >40× la latence
+    inter-chunk normale (~50-200ms), couvre les ralentissements ponctuels
+    sans laisser hang infini.
     """
     _ = http_client, gem_api_key  # noqa: F841  # V131.A DEPRECATED — paramètres ignorés
 
@@ -91,7 +90,7 @@ async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, 
     config = types.GenerateContentConfig(
         system_instruction=system_prompt,
         temperature=_temperature,
-        max_output_tokens=300,
+        max_output_tokens=1500,  # V131.F : 300→1500 (élimine MAX_TOKENS chat sur prompts ~12-15k tokens input observés en prod 4-5 mai)
         # V131.E HOTFIX — safety_settings BLOCK_ONLY_HIGH (réduit faux positifs SAFETY)
         # Cf. docs/DIAGNOSTIC_CHATBOT_STREAMING_TRONQUE.md
         safety_settings=_V131_E_SAFETY_SETTINGS_RELAX,
@@ -121,7 +120,23 @@ async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, 
             # Cf. docs/DIAGNOSTIC_CHATBOT_STREAMING_TRONQUE.md (50% users tronqués pré-fix)
             _last_finish_reason = None
 
-            async for chunk in stream:
+            # V131.F — Per-chunk timeout 8s (résout hang inter-chunk Vertex,
+            # ex-LIMITATION V131.A). Latence inter-chunk normale ~50-200ms,
+            # 8s = >40× la valeur normale, couvre ralentissements sans hang infini.
+            _stream_iter = stream.__aiter__()
+            while True:
+                try:
+                    chunk = await asyncio.wait_for(_stream_iter.__anext__(), timeout=8.0)
+                except StopAsyncIteration:
+                    break
+                except asyncio.TimeoutError:
+                    logger.warning(
+                        "[STREAM] V131.F inter-chunk timeout (8s) — closing stream "
+                        "(call_type=%s lang=%s tout=%d)",
+                        call_type, lang, _usage_tout,
+                    )
+                    break
+
                 # V131.E — Capture finish_reason du chunk final
                 _cands = getattr(chunk, "candidates", None) or []
                 if _cands:

@@ -41,6 +41,13 @@ from services.chat_logger import log_chat_exchange
 logger = logging.getLogger(__name__)
 
 _MAX_HISTORY_MESSAGES = 20
+# V131.F — Truncation agressive en mode continuation Phase 0 / AFFIRMATION.
+# Réponses courtes ("oui", "ok") n'ont besoin que des derniers tours pour le
+# contexte. 8 msgs = 4 user + 4 assistant ≈ 2 tours complets. Réduit la
+# latence (~30-40% tokens input) sur cas pathologiques observés (32s "Oui je
+# veux bien" sur CSV 30j) sans toucher anti-reintro / sponsor rotation
+# (qui restent sur history complet, traités hors `build_gemini_contents`).
+_MAX_HISTORY_MESSAGES_CONTINUATION = 8
 
 # Timeout constants are defined in chat_pipeline_shared.py and passed as parameters.
 
@@ -593,16 +600,21 @@ def log_from_meta(meta, module, lang, message, response_preview="",
 # History processing — build Gemini contents array
 # ═══════════════════════════════════════════════════════
 
-def build_gemini_contents(history, message, detect_insulte_fn):
+def build_gemini_contents(history, message, detect_insulte_fn, max_messages: int | None = None):
     """
     Process chat history into Gemini contents array.
     Strips insult exchanges, maps roles, deduplicates consecutive same-role messages.
     Returns the processed contents list and the (possibly trimmed) history.
+
+    V131.F — `max_messages` (opt) override la troncature default
+    `_MAX_HISTORY_MESSAGES`. Utilisé par `_prepare_chat_context_base` pour
+    rebuilder `contents` avec 8 msgs en mode continuation Phase 0/AFFIRMATION.
     """
     history = history or []
-    if len(history) > _MAX_HISTORY_MESSAGES:
-        logger.info("Gemini history truncated: %d → %d messages", len(history), _MAX_HISTORY_MESSAGES)
-        history = history[-_MAX_HISTORY_MESSAGES:]
+    _cap = max_messages if max_messages is not None else _MAX_HISTORY_MESSAGES
+    if len(history) > _cap:
+        logger.info("Gemini history truncated: %d → %d messages", len(history), _cap)
+        history = history[-_cap:]
     if history and history[-1].role == "user" and history[-1].content == message:
         history = history[:-1]
 
@@ -663,7 +675,7 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
     config = types.GenerateContentConfig(
         system_instruction=ctx["system_prompt"],
         temperature=_get_temperature(ctx),
-        max_output_tokens=300,
+        max_output_tokens=1500,  # V131.F : 300→1500 (cohérence avec gemini.py:94 streaming, prompts ~12-15k tokens input)
         # V131.E HOTFIX — safety_settings BLOCK_ONLY_HIGH (réduit faux positifs SAFETY)
         # Cf. docs/DIAGNOSTIC_CHATBOT_STREAMING_TRONQUE.md
         safety_settings=_V131_E_SAFETY_SETTINGS_RELAX,
@@ -765,6 +777,20 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
     return {"response": text, "source": "gemini", "mode": mode}
 
 
+# V131.F — Fallback i18n standalone pour cas NoChunks (zéro chunk émis).
+# Sémantique distincte du _FALLBACK_SUFFIX V131.E (gemini.py:154) qui suppose
+# qu'on a déjà émis du texte ("Réponse interrompue"). Ici rien n'a été émis
+# → message neutre type "indisponible momentanément, réessaie".
+_NOCHUNKS_FALLBACK_I18N = {
+    "fr": "🤖 Réponse momentanément indisponible. Réessaie ta question dans quelques secondes.",
+    "en": "🤖 Response momentarily unavailable. Please retry your question in a few seconds.",
+    "es": "🤖 Respuesta momentáneamente no disponible. Vuelve a intentar tu pregunta en unos segundos.",
+    "pt": "🤖 Resposta momentaneamente indisponível. Tenta novamente a tua pergunta em alguns segundos.",
+    "de": "🤖 Antwort momentan nicht verfügbar. Bitte versuche deine Frage in ein paar Sekunden erneut.",
+    "nl": "🤖 Antwoord tijdelijk niet beschikbaar. Probeer je vraag over enkele seconden opnieuw.",
+}
+
+
 # ═══════════════════════════════════════════════════════
 # handle_chat_stream — SSE streaming loop
 # ═══════════════════════════════════════════════════════
@@ -814,9 +840,11 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
             })
 
         if not has_chunks:
-            log_from_meta(ctx.get("_chat_meta"), module, lang, message, fallback, is_error=True, error_detail="NoChunks")
+            # V131.F — yield fallback i18n lang-aware (était fallback FR hardcodé)
+            _i18n_fb = _NOCHUNKS_FALLBACK_I18N.get(lang, _NOCHUNKS_FALLBACK_I18N["fr"])
+            log_from_meta(ctx.get("_chat_meta"), module, lang, message, _i18n_fb, is_error=True, error_detail="NoChunks")
             yield sse_event({
-                "chunk": fallback,
+                "chunk": _i18n_fb,
                 "source": "fallback", "mode": mode, "is_done": True,
             })
             return

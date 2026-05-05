@@ -43,6 +43,7 @@ from services.chat_pipeline_gemini import (  # noqa: F401 — re-exported for ba
     sse_event, log_from_meta, build_gemini_contents,
     call_gemini_and_respond, stream_and_respond,
     parse_pitch_json, handle_pitch_common,
+    _MAX_HISTORY_MESSAGES_CONTINUATION,  # V131.F — truncation Phase 0/AFFIRMATION
 )
 
 logger = logging.getLogger(__name__)
@@ -858,6 +859,22 @@ async def _prepare_chat_context_base(
             logger.info(f"{_lp} AFFIRMATION_SANS_CONTEXTE \"{message}\" (lang={lang})")
             return _early(_resp, "hybride_affirmation")
 
+    # V131.F — Truncation agressive en mode continuation (Phase 0 OU
+    # AFFIRMATION enriched). Rebuild `contents` à partir des 8 derniers
+    # messages au lieu des 20 standards. Économie ~30-40% tokens input
+    # → réduit latence sur réponses courtes ("oui", "ok"). N'affecte pas
+    # les autres phases qui dépendent de `history` complet (anti-reintro,
+    # sponsor rotation, build_session_context — utilisent `history` direct).
+    if _continuation_mode:
+        contents, _ = build_gemini_contents(
+            history, message, cfg["detect_insulte"],
+            max_messages=_MAX_HISTORY_MESSAGES_CONTINUATION,
+        )
+        logger.info(
+            f"{_lp} V131.F continuation truncation: {len(history)} msgs → "
+            f"max {_MAX_HISTORY_MESSAGES_CONTINUATION}"
+        )
+
     # ── Phase GAME_KEYWORD : mot-clé jeu seul ──
     if not _continuation_mode and cfg["detect_game_keyword_alone"](message):
         _phase = "GAME_KEYWORD"
@@ -1172,6 +1189,17 @@ async def _prepare_chat_context_base(
         f"enrichment={bool(enrichment_context)} | generation={bool(_generation_context)} | "
         f"question=\"{message[:60]}\" | history_len={len(history or [])}"
     )
+
+    # V131.F — Log dédié fallthrough Gemini (catch-all : aucune phase n'a matché,
+    # _phase resté à default "Gemini"). Permet monitoring (`gcloud logging read
+    # '"[FALLTHROUGH_GEMINI]"'`) pour mesurer impact V131.H futur (guardrails
+    # hors-scope LotoIA). Cf. audit READ-ONLY 2026-05-05 : 17.6% trafic + 11.3%
+    # taux d'erreur sur cette catégorie.
+    if _phase == "Gemini":
+        logger.info(
+            "[FALLTHROUGH_GEMINI] game=%s lang=%s history_len=%d question=%r",
+            cfg.get("game", "loto"), lang, len(history or []), message[:80],
+        )
 
     _session_ctx = cfg["build_session_context"](history, message)
 
