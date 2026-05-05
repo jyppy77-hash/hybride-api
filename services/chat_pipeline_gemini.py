@@ -469,7 +469,7 @@ async def _recheck_phase0_draw_accuracy(
     get_tirage_fn,
     game: str = "loto",
 ) -> str | None:
-    """V126 3.5-A + V126.1 F3 : Phase 0 post-hoc — si la réponse Gemini cite
+    """V126 3.5-A + V126.1 F3 + V131.G : Post-hoc — si la réponse Gemini cite
     un tirage (date + séquence 5-numéros), vérifier que les numéros
     correspondent au vrai tirage en base.
 
@@ -477,9 +477,22 @@ async def _recheck_phase0_draw_accuracy(
     les 2 étoiles citées dans la réponse via `_EM_STARS_RE` et les comparer
     au vrai tirage. Mismatch sur boules OU étoiles → replacement.
 
+    V131.G — Phase coverage étendue de "0" → ("0", "1", "T") pour couvrir :
+      - Phase 0 (continuation enrichie) : cas V126 historique
+      - Phase 1 (single number stats) : cas terrain Jyppy 5/05/2026 12:04
+        (question méta-historique mal routée Phase 1, hallucination grille
+        HYBRIDE recyclée, V126 strict ne déclenchait pas)
+      - Phase T (tirage temporel explicite) : recheck pertinent par design
+
+    Note rétrocompat : les préfixes log "PHASE0_DATE_NOT_IN_DB" et
+    "PHASE0_DRAW_MISMATCH" sont conservés (non renommés) malgré l'extension
+    phase coverage, pour préserver les commandes `gcloud logging read` et les
+    tests V126 existants. Le champ `phase` dans le log ligne 552 indique la
+    vraie phase déclenchante (0/1/T).
+
     Args:
         response: texte Gemini post-clean
-        phase: phase détectée ("0" requis sinon early return)
+        phase: phase détectée — V131.G accepte ("0", "1", "T") sinon early return
         lang: code langue 6 langs (fr/en/es/pt/de/nl)
         log_prefix: préfixe pour warnings
         get_tirage_fn: async (date) -> dict|None game-specific
@@ -488,12 +501,14 @@ async def _recheck_phase0_draw_accuracy(
     Returns :
       - message safe (str) si mismatch détecté → utiliser côté non-stream
         pour remplacer la réponse. Sur stream : log-only (stream déjà émis).
-      - None si phase != "0", pas de séquence, pas de date, ou numéros OK.
+      - None si phase hors ("0", "1", "T"), pas de séquence, pas de date, ou numéros OK.
 
-    Budget DB : 1 appel `get_tirage_fn(date)` avec timeout 3s. Échec DB
+    Budget DB : 1 appel `get_tirage_fn(date)` avec timeout 1s (V127). Échec DB
     (timeout/erreur) → warning + return None, ne bloque jamais.
     """
-    if phase != "0" or not response:
+    # V131.G — extend phase coverage : Phase 1 + T en plus de Phase 0
+    # (cas terrain Jyppy 5/05 : question méta-historique → Phase 1 → halluci grille HYBRIDE)
+    if phase not in ("0", "1", "T") or not response:
         return None
     if not get_tirage_fn:
         return None
@@ -600,6 +615,41 @@ def log_from_meta(meta, module, lang, message, response_preview="",
 # History processing — build Gemini contents array
 # ═══════════════════════════════════════════════════════
 
+# V131.G — Strip tags techniques HYBRIDE des messages assistant historiques.
+# Cas terrain prod 5/05/2026 12:04 : Gemini a recyclé les chiffres
+# `[GRILLE GÉNÉRÉE PAR HYBRIDE]\nNuméros : [1, 10, 12, 29, 49]\nÉtoiles : [2, 10]`
+# d'un message assistant antérieur comme réponse à "10ème tirage de 2021"
+# (hallucination context-leak certifiée — cf. audit V131.G Q9).
+#
+# 3 tags strippés (option A2 chirurgicale + préventive) :
+#   [GRILLE GÉNÉRÉE PAR HYBRIDE]   — bloc Phase G generation context
+#   [BREAKDOWN — Critères de sélection]  — détails statistiques grille
+#   [CONTRAINTES UTILISATEUR]      — exclusions imposées Phase G
+#
+# Le strip s'arrête au double saut de ligne suivant (séparateur de bloc) ou EOF.
+# Préserve le texte conversationnel naturel autour des tags.
+# Regex non-greedy `.*?` avec re.DOTALL pour couvrir multi-ligne et bornage
+# par lookahead `\n\n` (séparateur de bloc) ou `\Z` (EOF). Pattern `.*?` (vs
+# `[^\[]*?`) car le contenu peut légitimement contenir des `[` internes
+# (ex: `Numéros : [1, 10, 12, 29, 49]`).
+_HYBRIDE_TAG_STRIP_RE = re.compile(
+    r'\[(?:GRILLE GÉNÉRÉE PAR HYBRIDE|BREAKDOWN[^\]]*|CONTRAINTES UTILISATEUR)\].*?(?=\n\n|\Z)',
+    re.DOTALL,
+)
+
+
+def _strip_hybride_tags(text: str) -> str:
+    """V131.G — Strip tags techniques HYBRIDE des messages assistant.
+
+    Préserve le texte conversationnel naturel. Symétrique à
+    `_strip_sponsor_from_text` (déjà appliqué L633). Idempotent : retourne
+    `text` inchangé si aucun tag présent.
+    """
+    if not text:
+        return text
+    return _HYBRIDE_TAG_STRIP_RE.sub("", text).strip()
+
+
 def build_gemini_contents(history, message, detect_insulte_fn, max_messages: int | None = None):
     """
     Process chat history into Gemini contents array.
@@ -630,7 +680,14 @@ def build_gemini_contents(history, message, detect_insulte_fn, max_messages: int
         _skip_insult_response = False
 
         role = "user" if msg.role == "user" else "model"
-        content = _strip_sponsor_from_text(msg.content) if role == "model" else msg.content
+        # V131.G — strip sponsor + tags techniques HYBRIDE des assistant messages
+        # (cas terrain context-leak Q9 audit V131.G : grille générée recyclée
+        # comme réponse à question méta-historique).
+        if role == "model":
+            content = _strip_sponsor_from_text(msg.content)
+            content = _strip_hybride_tags(content)
+        else:
+            content = msg.content
         if contents and contents[-1]["role"] == role:
             contents[-1]["parts"][0]["text"] += "\n" + content
         else:
@@ -791,6 +848,22 @@ _NOCHUNKS_FALLBACK_I18N = {
 }
 
 
+# V131.G — Fallback i18n strict mode : message user-facing quand le block
+# anti-hallucination intercepte une réponse Gemini hallucinée (séquence
+# draw-like inventée OU mismatch DB recheck OU schema halluciné).
+# Distinct de _NOCHUNKS_FALLBACK_I18N (V131.F, "indisponible momentanément")
+# et _FALLBACK_SUFFIX V131.E gemini.py:154 ("Réponse interrompue").
+# Sémantique : "données non fiables détectées, reformule ta question".
+_STRICT_BLOCK_FALLBACK_I18N = {
+    "fr": "🤖 Je ne peux pas répondre avec certitude à cette question. Peux-tu reformuler ou poser une question plus précise ?",
+    "en": "🤖 I cannot answer this question with certainty. Could you rephrase or ask a more specific question?",
+    "es": "🤖 No puedo responder con certeza a esta pregunta. ¿Puedes reformular o hacer una pregunta más específica?",
+    "pt": "🤖 Não posso responder com certeza a esta pergunta. Podes reformular ou fazer uma pergunta mais específica?",
+    "de": "🤖 Ich kann diese Frage nicht mit Sicherheit beantworten. Kannst du sie umformulieren oder eine konkretere Frage stellen?",
+    "nl": "🤖 Ik kan deze vraag niet met zekerheid beantwoorden. Kun je herformuleren of een specifiekere vraag stellen?",
+}
+
+
 # ═══════════════════════════════════════════════════════
 # handle_chat_stream — SSE streaming loop
 # ═══════════════════════════════════════════════════════
@@ -807,8 +880,18 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
     _stream_chunks = []
     _stream = stream_fn or stream_gemini_chat
 
+    # V131.G — Buffer mode opt-in via ctx flag (set par chat_pipeline_shared
+    # depuis env var STRICT_HALLUCINATION_BLOCK lue au module-load via
+    # _env_bool pattern V134). Quand activé, accumule tous chunks SANS yield,
+    # exécute les checks anti-hallucination, puis yield d'un coup (replacement
+    # si halluci détectée, contenu original sinon).
+    _strict_block = ctx.get("_strict_hallucination_block", False)
+
     try:
-        if ctx["insult_prefix"]:
+        if ctx["insult_prefix"] and not _strict_block:
+            # V131.G — En buffer mode, le insult_prefix est différé pour
+            # garantir que le check anti-hallucination s'exécute avant le
+            # premier yield user-facing. Compromis UX accepté pour le mode strict.
             yield sse_event({
                 "chunk": ctx["insult_prefix"] + "\n\n",
                 "source": "gemini", "mode": mode, "is_done": False,
@@ -816,6 +899,9 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
 
         has_chunks = False
         _buf = StreamBuffer()
+        # V131.G — accumule yields différés en buffer mode (vide en path normal)
+        _buffered_emissions = []
+
         async for chunk in _stream(
             ctx["_http_client"], ctx["gem_api_key"], ctx["system_prompt"],
             ctx["contents"], timeout=ctx.get("_timeout_gemini_stream", 10),  # V129.1
@@ -827,17 +913,25 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
                 continue
             has_chunks = True
             _stream_chunks.append(safe)
-            yield sse_event({
+            _evt = sse_event({
                 "chunk": safe, "source": "gemini", "mode": mode, "is_done": False,
             })
+            if _strict_block:
+                _buffered_emissions.append(_evt)  # V131.G — défer yield
+            else:
+                yield _evt  # comportement normal V131.F
 
         _remaining = _buf.flush()
         if _remaining:
             has_chunks = True
             _stream_chunks.append(_remaining)
-            yield sse_event({
+            _evt = sse_event({
                 "chunk": _remaining, "source": "gemini", "mode": mode, "is_done": False,
             })
+            if _strict_block:
+                _buffered_emissions.append(_evt)
+            else:
+                yield _evt
 
         if not has_chunks:
             # V131.F — yield fallback i18n lang-aware (était fallback FR hardcodé)
@@ -849,6 +943,79 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
             })
             return
 
+        _full_response = "".join(_stream_chunks)
+        _meta = ctx.get("_chat_meta") or {}
+
+        # V131.G — checks anti-hallucination AVANT yield en buffer mode.
+        # Sur path normal (V131.F préservé) : checks restent log-only après yield.
+        if _strict_block:
+            _block_replacement = None  # message safe à yield si hallucination détectée
+
+            # Check 1 : numéros inventés / context-leak (V99 + V125 A2/A3)
+            _safe_repl = _check_sql_number_hallucination(
+                _meta.get("enrichment_context", ""), _full_response,
+                _meta.get("phase", ""), log_prefix,
+                lang=_meta.get("lang", lang),
+                history=ctx.get("history"),
+            )
+            if _safe_repl:
+                _block_replacement = _safe_repl
+                logger.warning(
+                    "%s V131.G STRICT_BLOCK: HALLUCINATION_INVENTED detected, blocking stream",
+                    log_prefix,
+                )
+
+            # Check 2 : Phase 0/1/T post-hoc draw-date verification (V126 + V131.G)
+            if not _block_replacement:
+                try:
+                    _phase0_repl = await _recheck_phase0_draw_accuracy(
+                        _full_response, _meta.get("phase", ""),
+                        _meta.get("lang", lang), log_prefix,
+                        get_tirage_fn=ctx.get("_get_tirage_fn"),
+                        game=ctx.get("_game", "loto"),
+                    )
+                    if _phase0_repl:
+                        _block_replacement = _phase0_repl
+                        logger.warning(
+                            "%s V131.G STRICT_BLOCK: PHASE_DRAW_MISMATCH detected, blocking stream",
+                            log_prefix,
+                        )
+                except Exception as _e:
+                    logger.warning("%s V131.G strict_block recheck failed: %s", log_prefix, _e)
+
+            # Check 3 : schema hallucination (V126 4/5)
+            if not _block_replacement:
+                _schema_repl = _check_sql_schema_hallucination(
+                    _full_response, log_prefix, lang=_meta.get("lang", lang),
+                )
+                if _schema_repl:
+                    _block_replacement = _schema_repl
+                    logger.warning(
+                        "%s V131.G STRICT_BLOCK: SCHEMA_HALLUCINATION detected, blocking stream",
+                        log_prefix,
+                    )
+
+            if _block_replacement:
+                # Hallucination détectée — yield message i18n strict mode au lieu du buffer
+                _strict_msg = _STRICT_BLOCK_FALLBACK_I18N.get(lang, _STRICT_BLOCK_FALLBACK_I18N["fr"])
+                log_from_meta(
+                    ctx.get("_chat_meta"), module, lang, message, _strict_msg,
+                    is_error=True, error_detail="StrictHallucinationBlock",
+                )
+                yield sse_event({
+                    "chunk": _strict_msg, "source": "fallback", "mode": mode, "is_done": True,
+                })
+                return
+            # Pas d'hallucination — yield insult_prefix différé puis chunks bufferés
+            if ctx["insult_prefix"]:
+                yield sse_event({
+                    "chunk": ctx["insult_prefix"] + "\n\n",
+                    "source": "gemini", "mode": mode, "is_done": False,
+                })
+            for _evt in _buffered_emissions:
+                yield _evt
+
+        # ── Sponsor + done event (commun aux 2 paths) ──
         s_kwargs = sponsor_kwargs or {}
         sponsor_line = _get_sponsor_if_due(ctx["history"], **s_kwargs)
         if sponsor_line:
@@ -860,32 +1027,34 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
         yield sse_event({
             "chunk": "", "source": "gemini", "mode": mode, "is_done": True,
         })
-        _full_response = "".join(_stream_chunks)
         log_from_meta(ctx.get("_chat_meta"), module, lang, message, _full_response)
+
         # V96+V101+V125 A2/A3: Anti-hallucination check — log-only on streaming path
-        # (stream already sent to client, cannot be replaced)
-        _meta = ctx.get("_chat_meta") or {}
-        _check_sql_number_hallucination(
-            _meta.get("enrichment_context", ""), _full_response,
-            _meta.get("phase", ""), log_prefix,
-            lang=_meta.get("lang", lang),
-            history=ctx.get("history"),
-        )
-        # V126 3.5-A + V126.1 F3: Phase 0 post-hoc draw-date verification —
-        # LOG-ONLY on stream (stream déjà émis, cannot replace).
-        try:
-            await _recheck_phase0_draw_accuracy(
-                _full_response, _meta.get("phase", ""),
-                _meta.get("lang", lang), log_prefix,
-                get_tirage_fn=ctx.get("_get_tirage_fn"),
-                game=ctx.get("_game", "loto"),
+        # (stream already sent to client, cannot be replaced).
+        # V131.G : en strict mode, ces checks ont déjà été exécutés au-dessus
+        # avant yield → skip ici pour éviter double-log.
+        if not _strict_block:
+            _check_sql_number_hallucination(
+                _meta.get("enrichment_context", ""), _full_response,
+                _meta.get("phase", ""), log_prefix,
+                lang=_meta.get("lang", lang),
+                history=ctx.get("history"),
             )
-        except Exception as _e:
-            logger.warning("%s V126 3.5-A stream recheck failed: %s", log_prefix, _e)
-        # V126 4/5: Schema hallucination check — LOG-ONLY sur stream (déjà émis)
-        _check_sql_schema_hallucination(
-            _full_response, log_prefix, lang=_meta.get("lang", lang),
-        )
+            # V126 3.5-A + V126.1 F3: Phase 0 post-hoc draw-date verification —
+            # LOG-ONLY on stream (stream déjà émis, cannot replace).
+            try:
+                await _recheck_phase0_draw_accuracy(
+                    _full_response, _meta.get("phase", ""),
+                    _meta.get("lang", lang), log_prefix,
+                    get_tirage_fn=ctx.get("_get_tirage_fn"),
+                    game=ctx.get("_game", "loto"),
+                )
+            except Exception as _e:
+                logger.warning("%s V126 3.5-A stream recheck failed: %s", log_prefix, _e)
+            # V126 4/5: Schema hallucination check — LOG-ONLY sur stream (déjà émis)
+            _check_sql_schema_hallucination(
+                _full_response, log_prefix, lang=_meta.get("lang", lang),
+            )
         logger.info(f"{log_prefix} Stream OK (page={page}, mode={mode})")
 
     except CircuitOpenError:

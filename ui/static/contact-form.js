@@ -20,6 +20,23 @@
     var _minLabel = null;
     var _feedback = null;
 
+    // V139.B Bug #1 — body scroll lock : empêche la page derrière de scroller
+    // pendant que la modal est ouverte. Évite l'effet "modal flottante au-dessus
+    // d'une UI active" + chevauchement visuel avec les cartes Loto/EM.
+    // Pattern standard (Wikipedia/Le Monde/Apple modal mobile).
+    var _bodyScrollY = 0;
+
+    function lockBodyScroll() {
+        _bodyScrollY = window.scrollY || window.pageYOffset || 0;
+        document.body.style.overflow = 'hidden';
+    }
+
+    function unlockBodyScroll() {
+        document.body.style.overflow = '';
+        // Préserve la position de scroll user (sinon retour en haut au close)
+        if (_bodyScrollY > 0) window.scrollTo(0, _bodyScrollY);
+    }
+
     function openModal(pageSource) {
         if (modalEl) {
             // Reset state on re-open
@@ -28,14 +45,17 @@
             if (_counter) { _counter.textContent = (LI.contact_counter || '{n} / 2000').replace('{n}', '0'); _counter.className = 'contact-counter warn'; }
             if (_minLabel) { _minLabel.textContent = LI.contact_message_min || 'Minimum 10 caractères'; _minLabel.className = 'contact-min-label'; }
             modalEl.style.display = 'flex';
+            lockBodyScroll();  // V139.B Bug #1
             return;
         }
         createModal(pageSource || window.location.pathname);
+        lockBodyScroll();  // V139.B Bug #1
     }
 
     function closeModal() {
         if (modalEl) {
             modalEl.style.display = 'none';
+            unlockBodyScroll();  // V139.B Bug #1
         }
     }
 

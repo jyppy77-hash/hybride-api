@@ -6,16 +6,29 @@
 .contact-modal-overlay {
     position: fixed;
     inset: 0;
-    z-index: var(--z-contact-overlay);
+    /* V139.B Bug #1 — fallback explicite 10001 : sur le launcher, style.css
+       n'est pas chargé (seul legal.css + contact-form.css). Sans fallback,
+       var(--z-contact-overlay) = auto sur launcher → modal sans z-index garanti
+       → chevauchement visible avec cartes Loto/EM derrière. 10001 cohérent
+       avec V132.A scale (--z-contact-overlay: 10001 dans style.css :root). */
+    z-index: var(--z-contact-overlay, 10001);
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.6);
+    /* V139.B Bug #1 — backdrop renforcé 0.6 → 0.85 : sur mobile sans support
+       backdrop-filter (Chrome Android < 76, Safari iOS old), 60% transparence
+       laissait les cartes Loto/EM parfaitement visibles derrière → effet
+       "modal flottante" + chevauchement visuel boutons ACTIF. 85% noir +
+       backdrop-filter (si supporté) = backdrop solide. */
+    background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(4px);
     animation: contactFadeIn 0.2s ease;
 }
 
 .contact-modal {
+    /* V139.B Bug #1 — fallback opaque garanti : si --theme-bg-card non défini
+       (cas launcher où style.css n'est pas chargé), fallback #1e293b solide
+       100% opaque évite toute transparence visuelle de la modal. */
     background: var(--theme-bg-card, #1e293b);
     border: 1px solid var(--theme-border, rgba(255, 255, 255, 0.1));
     border-radius: 16px;

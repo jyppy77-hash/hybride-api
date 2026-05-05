@@ -904,15 +904,19 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.024 (V137 — Multi-grilles avec grid_id UUID).
+        """APP_VERSION == 1.6.025 (V131.G strict anti-hallucination + V139.A footer mobile fix).
 
         V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
         V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
         V136.B hotfix (29/04 PM) — Rendu calendrier UX jours non-tirage (cas B sans bump).
         V137 (29/04 PM) — Multi-grilles via grid_id UUID + V110 brake adapté.
+        V137.B/C/D + V138 (30/04 + 03/05) — hotpatches sans bump (cas B).
+        V131.F (5/05) — Per-chunk Vertex stream timeout 8s + max_output_tokens 1500.
+        V131.G + V139.A (5/05, Release 1.6.025) — Strict anti-hallucination block
+        (env var STRICT_HALLUCINATION_BLOCK opt-in) + Footer mobile launcher fix.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.024"
+        assert APP_VERSION == "1.6.025"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

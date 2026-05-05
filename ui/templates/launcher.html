@@ -109,6 +109,19 @@
             opacity: 0.5;
             transition: opacity 0.2s;
             text-decoration: none;
+            /* V139.B Bug #3 — hitbox cliquable agrandie (cursor desktop "il
+               faut forcer pour cliquer") : padding 8px tout autour du SVG
+               28×19 → zone cliquable ≥44×35px (cible WCAG 2.5.5 minimum
+               44×44 partiellement respectée). border-radius pour preserve
+               look + cursor pointer pour signaler interactif. */
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 6px;
+        }
+
+        .lang-selector .flag-link:focus-visible {
+            outline: 2px solid rgba(255, 255, 255, 0.5);
+            outline-offset: 2px;
         }
 
         .lang-selector .flag-link:hover {
@@ -385,11 +398,46 @@
         @media (max-width: 480px) {
             body {
                 padding-top: 25px;
+                /* V139.A — bascule footer en flow normal sur viewport ≤480px
+                   (cf .launcher-footer override ci-dessous). Forcer column pour
+                   empiler container + footer verticalement (le body desktop est
+                   en flex row default → footer fixed sortait du flow ; sans
+                   column, footer static tenterait de se placer à côté). */
+                flex-direction: column;
+                align-items: center;
+                /* V139.B Bug #2 — fix régression V139.A : avec flex-direction: column,
+                   le justify-content: center hérité du desktop (L51-52 global) devient
+                   l'axe principal vertical → centre verticalement le container → flags
+                   lang-selector du HAUT sortent du viewport (offscreen négatif) sur
+                   mobile portrait étroit. justify-content: flex-start aligne en haut
+                   comme @media ≤768px V133 (qui utilise flex-direction: row default
+                   + align-items: flex-start, équivalent visuel). */
+                justify-content: flex-start;
             }
 
             .launcher-container {
+                /* V139.A — padding-bottom 140px supprimé : footer désormais
+                   en flow normal après container (position: static) →
+                   plus besoin de marge compensatoire pour le footer fixed. */
                 padding: 15px;
-                padding-bottom: 140px;
+            }
+
+            /* V139.A — Footer en flow normal sur viewport ≤480px.
+               Bug 5/05/2026 (Jyppy 4G mobile sim 350×809) : footer
+               position: fixed wraps en multi-lignes, dépasse padding-bottom
+               140px et chevauche carte EM. Fix : passer en flow normal
+               (static) → footer naturellement après cartes, marge interne.
+               Solution S2 future-proof (pas de re-calibrage padding si
+               ajout link futur), cohérent UX mobile standard
+               (Wikipedia/Le Monde/Apple).
+               V139.B Bug #3 — padding-bottom 80px : marge sous footer pour
+               éviter chevauchement avec cookie-banner (bottom: 0, hauteur
+               variable selon wrap). Si banner visible, footer reste accessible
+               au scroll grâce à cette marge. */
+            .launcher-footer {
+                position: static;
+                margin-top: 30px;
+                padding: 20px 16px 80px;
             }
 
             .engine-card {
@@ -519,9 +567,9 @@
     </div>
 
     <script defer src="/ui/static/cookie-consent.js?v=7"></script>
-    <link rel="stylesheet" href="/ui/static/contact-form.css?v=3" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="/ui/static/contact-form.css?v=3"></noscript>
-    <script src="/ui/static/contact-form.js?v=3" defer></script>
+    <link rel="stylesheet" href="/ui/static/contact-form.css?v=4" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/ui/static/contact-form.css?v=4"></noscript>
+    <script src="/ui/static/contact-form.js?v=4" defer></script>
     <script>
     (function(){var a=document.querySelector('.seo-accordion'),f=document.querySelector('.launcher-footer');if(a&&f){a.addEventListener('toggle',function(){f.style.display=a.open?'none':'';});}})();
     </script>

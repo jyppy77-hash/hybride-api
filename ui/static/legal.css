@@ -574,7 +574,12 @@ body.theme-night .legal-page {
     background: #1a1a2e;
     color: #fff;
     padding: 1.25rem;
-    z-index: var(--z-cookies);
+    /* V139.B Bug #3 — fallback explicite 10003 : sur le launcher, style.css
+       n'est pas chargé (seul legal.css + contact-form.css). Sans fallback,
+       var(--z-cookies) = auto → cookie-banner peut chevaucher footer
+       launcher de manière incohérente. 10003 cohérent avec V132.A scale
+       (--z-cookies dans style.css :root). */
+    z-index: var(--z-cookies, 10003);
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
     transform: translateY(100%);
     transition: transform 0.3s ease;

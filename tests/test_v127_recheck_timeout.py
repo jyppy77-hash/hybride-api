@@ -77,8 +77,14 @@ async def test_recheck_timeout_uses_1s_not_3s():
 
 
 @pytest.mark.asyncio
-async def test_recheck_phase_other_than_0_short_circuit():
-    """Phase != "0" → pas de DB call (pas d'impact timeout)."""
+async def test_recheck_phase_outside_coverage_short_circuit():
+    """V131.G — Phase hors ("0", "1", "T") → pas de DB call (pas d'impact timeout).
+
+    Note V131.G : phase coverage étendue à ("0", "1", "T") pour couvrir cas
+    terrain Jyppy 5/05/2026 (Phase 1 hallucination grille HYBRIDE recyclée).
+    Test ajusté de "1" → "G" pour rester sémantiquement valide (Phase G/SQL/A
+    etc. restent court-circuitées).
+    """
     called = []
 
     async def _db(_d):
@@ -87,7 +93,7 @@ async def test_recheck_phase_other_than_0_short_circuit():
 
     resp = "Le tirage du 15 avril 2026 a donné 99 - 88 - 77 - 66 - 55"
     out = await _recheck_phase0_draw_accuracy(
-        resp, "1", "fr", "[TEST]",
+        resp, "G", "fr", "[TEST]",  # V131.G : "1" → "G" (Phase G hors coverage)
         get_tirage_fn=_db, game="loto",
     )
     assert out is None

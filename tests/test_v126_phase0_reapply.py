@@ -134,15 +134,22 @@ class TestPhase0ReapplyGraceful:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_phase_not_0_skipped(self):
-        """Phase != 0 → return None immédiatement (guard anti-loop)."""
+    async def test_phase_outside_coverage_skipped(self):
+        """V131.G — Phase hors ("0", "1", "T") → return None immédiatement.
+
+        Note V131.G : phase coverage étendue de "0" → ("0", "1", "T") pour
+        couvrir cas terrain Jyppy 5/05/2026 (question méta-historique mal
+        routée Phase 1, hallucination grille HYBRIDE recyclée). Les phases
+        Phase G/A/I/C/SQL/REFUS/AFFIRMATION/EVAL/2/3/3-bis/P/P+/OOR/SALUTATION
+        restent skippées (early return).
+        """
         response = "Le tirage du 28 mars 2026 : 1-2-3-4-5"
-        for phase in ("1", "T", "SQL", "AFFIRMATION", ""):
+        for phase in ("SQL", "AFFIRMATION", "G", "P", "A", "REFUS", "I", ""):
             result = await _recheck_phase0_draw_accuracy(
                 response, phase, "fr", "[TEST]",
                 get_tirage_fn=AsyncMock(),
             )
-            assert result is None, f"Phase {phase} should be skipped"
+            assert result is None, f"Phase {phase} should be skipped (hors V131.G coverage)"
 
     @pytest.mark.asyncio
     async def test_no_get_tirage_fn_graceful(self):

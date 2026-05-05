@@ -271,3 +271,25 @@ EM_CONFIG = EngineConfig(
     # V110: env-aware activation (CONFIG_SATURATION_PERSISTENT_ENABLED, default False)
     saturation_persistent_enabled=_env_bool("CONFIG_SATURATION_PERSISTENT_ENABLED", False),
 )
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# V131.G — Strict anti-hallucination block (env var Cloud Run, default OFF)
+# ═══════════════════════════════════════════════════════════════════════
+#
+# Pattern V134 : strict truthy parsing fail-closed via _env_bool.
+# Quand activé, le path streaming `stream_and_respond` bascule en buffer mode :
+#   - Accumule tous chunks Gemini SANS yield
+#   - Exécute les 3 checks anti-hallucination (V99 number / V126 phase0 / V126 schema)
+#   - Si hallucination détectée : yield message i18n "Je ne peux pas répondre"
+#   - Sinon : yield les chunks bufferés normalement
+#
+# Cas terrain motivant V131.G : prod 5/05/2026 12:04:30 — question EM FR
+# "10 eme tirage de 2021" → hallucination context-leak grille HYBRIDE
+# (audit V131.G READ-ONLY : Q1+Q9 confirmés). HALLUCINATION_RISK détecté
+# par V99 mais log-only sur path streaming → réponse hallucinée délivrée user.
+#
+# Activation prod : `gcloud run services update hybride-api-eu --region=europe-west1
+#                   --update-env-vars STRICT_HALLUCINATION_BLOCK=true`
+# Rollback en 30s : `--update-env-vars STRICT_HALLUCINATION_BLOCK=false`
+STRICT_HALLUCINATION_BLOCK_ENABLED: bool = _env_bool("STRICT_HALLUCINATION_BLOCK", False)

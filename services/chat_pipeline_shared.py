@@ -37,6 +37,7 @@ from services.chat_utils import _format_date_fr
 from services.base_chat_utils import _format_last_draw_context
 from services.stats_analysis import should_inject_pedagogical_context, PEDAGOGICAL_CONTEXT
 from services.decay_state import get_decay_state
+from config.engine import STRICT_HALLUCINATION_BLOCK_ENABLED  # V131.G
 
 # F15 V83: Gemini interaction helpers extracted to chat_pipeline_gemini.py
 from services.chat_pipeline_gemini import (  # noqa: F401 — re-exported for backward compat
@@ -1235,6 +1236,8 @@ async def _prepare_chat_context_base(
         "_get_tirage_fn": cfg["get_tirage_data"],
         # V126.1 F3: game identifier for EM stars check in _recheck_phase0_draw_accuracy
         "_game": cfg.get("game", "loto"),
+        # V131.G — flag strict mode lu depuis env var au module-load (config/engine.py)
+        "_strict_hallucination_block": STRICT_HALLUCINATION_BLOCK_ENABLED,
         "_chat_meta": {
             "phase": _phase, "t0": _t0, "lang": lang,
             "sql_query": _sql_query, "sql_status": _sql_status,
