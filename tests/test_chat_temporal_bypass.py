@@ -76,7 +76,6 @@ class TestPipelinePhase3SkippedWhenForceSql:
         mock_client = MagicMock()
 
         with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value=None), \
              patch("services.chat_pipeline._is_short_continuation", return_value=False), \
@@ -113,7 +112,6 @@ class TestPipelinePhase3SkippedWhenForceSql:
         mock_data = {"items": [{"numero": 7}], "total_tirages": 100, "periode": "tout"}
 
         with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value=None), \
              patch("services.chat_pipeline._is_short_continuation", return_value=False), \
@@ -144,7 +142,6 @@ class TestPipelinePhase3SkippedWhenForceSql:
         mock_client = MagicMock()
 
         with patch("services.chat_pipeline_em.load_prompt_em", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline_em._detect_insulte", return_value=None), \
              patch("services.chat_pipeline_em._detect_compliment", return_value=None), \
              patch("services.chat_pipeline_em._is_short_continuation", return_value=False), \
@@ -179,7 +176,6 @@ class TestPipelinePhase3SkippedWhenForceSql:
         mock_data = {"items": [{"numero": 7}], "total_tirages": 100, "periode": "tout"}
 
         with patch("services.chat_pipeline_em.load_prompt_em", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline_em._detect_insulte", return_value=None), \
              patch("services.chat_pipeline_em._detect_compliment", return_value=None), \
              patch("services.chat_pipeline_em._is_short_continuation", return_value=False), \
@@ -209,7 +205,6 @@ class TestPipelinePhase3SkippedWhenForceSql:
         mock_client = MagicMock()
 
         with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value=None), \
              patch("services.chat_pipeline._is_short_continuation", return_value=False), \
@@ -243,7 +238,6 @@ class TestPipelinePhase3SkippedWhenForceSql:
         mock_client = MagicMock()
 
         with patch("services.chat_pipeline_em.load_prompt_em", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline_em._detect_insulte", return_value=None), \
              patch("services.chat_pipeline_em._detect_compliment", return_value=None), \
              patch("services.chat_pipeline_em._is_short_continuation", return_value=False), \

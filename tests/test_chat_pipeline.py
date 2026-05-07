@@ -45,19 +45,15 @@ class TestHandleChatLoto:
         assert result["source"] == "fallback"
         assert result["response"] == FALLBACK_RESPONSE
 
-    @pytest.mark.asyncio
-    async def test_fallback_no_api_key(self):
-        """Si cle API manquante → fallback."""
-        with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
-             patch.dict("os.environ", {}, clear=True):
-            result = await handle_chat("bonjour", [], "loto", MagicMock())
-        assert result["source"] == "fallback"
+    # NOTE Sprint A 2026-05-07 : test_fallback_no_api_key supprimé — testait
+    # le gate GEM_API_KEY de chat_pipeline_shared.py:611 retiré (V131.A ADC
+    # Vertex rend le gate inutile). Comportement post-cleanup : pas de gate,
+    # Vertex SDK B utilise ADC, GEM_API_KEY ignoré.
 
     @pytest.mark.asyncio
     async def test_insult_pure_returns_insult(self):
         """Insulte pure → early return hybride_insult (Phase I)."""
         with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline._detect_insulte", return_value="insulte"):
             result = await handle_chat("t'es nul", [], "loto", MagicMock())
         assert result["source"] == "hybride_insult"
@@ -66,7 +62,6 @@ class TestHandleChatLoto:
     async def test_compliment_pure_returns_compliment(self):
         """Compliment sans question → early return hybride_compliment (Phase C)."""
         with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value="compliment"), \
              patch("services.chat_pipeline._count_compliment_streak", return_value=0):
@@ -77,7 +72,6 @@ class TestHandleChatLoto:
     async def test_salutation_returns_local(self):
         """Salutation 'bonjour' → early return hybride_salutation (Phase SALUTATION)."""
         with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value=None), \
              patch("services.chat_pipeline._detect_salutation", return_value=True):
@@ -88,7 +82,6 @@ class TestHandleChatLoto:
     async def test_argent_returns_pedagogique(self):
         """Question argent → early return hybride_argent (Phase A)."""
         with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value=None), \
              patch("services.chat_pipeline._detect_salutation", return_value=False), \
@@ -102,7 +95,6 @@ class TestHandleChatLoto:
     async def test_oor_returns_hybride_oor(self):
         """Numero hors range → hybride_oor (Phase OOR)."""
         with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value=None), \
              patch("services.chat_pipeline._detect_salutation", return_value=False), \
@@ -125,11 +117,7 @@ class TestHandleChatLoto:
         """Flow normal → appel Gemini → source=gemini."""
         mock_client = MagicMock()
 
-        # V131.C.2 — patch.dict GEM_API_KEY="fake" restauré : chat_pipeline_shared.py:611
-        # legacy guard V131.A conservé pour chat_sql* (V131.D backlog) → test mock doit
-        # fournir la var sinon fallback early en CI Docker clean env (vs local shell Jyppy).
         with mock_vertex_client() as vc, \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline.load_prompt", return_value="sys"), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value=None), \
@@ -157,13 +145,7 @@ class TestHandleChatLoto:
         """Gemini ServerError (5xx) → fallback."""
         mock_client = MagicMock()
 
-        # V131.C.2 — patch.dict GEM_API_KEY="fake" restauré : chat_pipeline_shared.py:611
-        # legacy guard V131.A conservé pour chat_sql* (V131.D backlog) → test mock doit
-        # fournir la var sinon fallback early en CI Docker clean env (vs local shell Jyppy).
-        # Sans ce patch, fallback atteint mais pour la mauvaise raison (GEM_API_KEY vide
-        # au lieu du ServerError voulu) — sémantique cassée, anti-régression V131.D.
         with mock_vertex_client() as vc, \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline.load_prompt", return_value="sys"), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value=None), \
@@ -197,11 +179,7 @@ class TestHandleChatLoto:
             _msg("assistant", "Le 7 est sorti 45 fois."),
         ]
 
-        # V131.C.2 — patch.dict GEM_API_KEY="fake" restauré : chat_pipeline_shared.py:611
-        # legacy guard V131.A conservé pour chat_sql* (V131.D backlog) → test mock doit
-        # fournir la var sinon fallback early en CI Docker clean env (vs local shell Jyppy).
         with mock_vertex_client() as vc, \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline.load_prompt", return_value="sys"), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value=None), \
@@ -247,7 +225,6 @@ class TestHandleChatLoto:
         }
 
         with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value=None), \
              patch("services.chat_pipeline._detect_salutation", return_value=False), \
@@ -402,7 +379,6 @@ def _loto_pipeline_patches(stack, **overrides):
         "_build_session_context": "",
     }
     defaults.update(overrides)
-    stack.enter_context(patch.dict("os.environ", {"GEM_API_KEY": "fake"}))
     mocks = {}
     for name, rv in defaults.items():
         m = stack.enter_context(patch(f"services.chat_pipeline.{name}", return_value=rv))
@@ -557,7 +533,6 @@ class TestPhasePPipelineIntegration:
 
         em = "services.chat_pipeline_em"
         with contextlib.ExitStack() as stack:
-            stack.enter_context(patch.dict("os.environ", {"GEM_API_KEY": "fake"}))
             for name, rv in [
                 ("load_prompt_em", "sys"),
                 ("_detect_insulte", None),

@@ -350,7 +350,6 @@ class TestDecayChatbotPipelineIntegration:
         """Common patches to reach Phase G in Loto pipeline."""
         return [
             patch("services.chat_pipeline.load_prompt", return_value="sys"),
-            patch.dict("os.environ", {"GEM_API_KEY": "fake"}),
             patch("services.chat_pipeline._detect_insulte", return_value=None),
             patch("services.chat_pipeline._detect_compliment", return_value=None),
             patch("services.chat_pipeline._detect_salutation", return_value=False),
@@ -367,7 +366,6 @@ class TestDecayChatbotPipelineIntegration:
         """Common patches to reach Phase G in EM pipeline."""
         return [
             patch("services.chat_pipeline_em.load_prompt_em", return_value="sys"),
-            patch.dict("os.environ", {"GEM_API_KEY": "fake"}),
             patch("services.chat_pipeline_em._detect_insulte", return_value=None),
             patch("services.chat_pipeline_em._detect_compliment", return_value=None),
             patch("services.chat_pipeline_em._detect_salutation", return_value=False),
@@ -497,7 +495,6 @@ class TestDecayChatbotPipelineIntegration:
         mock_decay = AsyncMock(return_value={})
 
         with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline._detect_insulte", return_value="insulte"), \
              patch("services.chat_pipeline_shared.get_decay_state", mock_decay):
             await handle_chat("t'es nul", [], "loto", MagicMock())

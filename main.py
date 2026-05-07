@@ -21,7 +21,7 @@ from slowapi.middleware import SlowAPIMiddleware
 import httpx
 import logging
 import sys
-from pythonjsonlogger import jsonlogger
+from pythonjsonlogger.json import JsonFormatter
 
 import db_cloudsql
 from rate_limit import limiter, APIGlobalRateLimitMiddleware
@@ -56,7 +56,7 @@ from routes.launcher import router as launcher_router                  # V53 —
 # ── JSON structured logging ──
 _log_handler = logging.StreamHandler(sys.stdout)
 _log_handler.setFormatter(
-    jsonlogger.JsonFormatter(
+    JsonFormatter(
         fmt="%(asctime)s %(levelname)s %(name)s %(message)s %(request_id)s",
         rename_fields={"asctime": "timestamp", "levelname": "severity"},
     )

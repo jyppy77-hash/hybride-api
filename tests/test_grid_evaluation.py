@@ -303,7 +303,6 @@ class TestPhaseEvalPipeline:
         }
 
         with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value=None), \
              patch("services.chat_pipeline._detect_salutation", return_value=False), \

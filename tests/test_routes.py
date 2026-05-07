@@ -201,7 +201,6 @@ def test_stats_number_invalid():
 
 @patch("services.chat_pipeline.stream_gemini_chat")
 @patch("services.chat_pipeline.load_prompt", return_value="Tu es un assistant.")
-@patch.dict(os.environ, {"GEM_API_KEY": "fake-key"})
 def test_hybride_chat(mock_prompt, mock_stream):
     """POST /api/hybride-chat retourne des events SSE (mock Gemini stream)."""
     async def fake_gen(*a, **kw):
@@ -244,7 +243,6 @@ def test_hybride_chat(mock_prompt, mock_stream):
 
 @patch("services.chat_pipeline.stream_gemini_chat")
 @patch("services.chat_pipeline.load_prompt", return_value="Tu es un assistant.")
-@patch.dict(os.environ, {"GEM_API_KEY": "fake-key"})
 def test_rate_limit_429(mock_prompt, mock_stream):
     """Envoyer 15 requetes rapides sur /api/hybride-chat → 429."""
     async def fake_gen(*a, **kw):

@@ -147,7 +147,6 @@ def _loto_salutation_patches(stack, **overrides):
         "_detect_salutation": True,
     }
     defaults.update(overrides)
-    stack.enter_context(patch.dict("os.environ", {"GEM_API_KEY": "fake"}))
     for name, rv in defaults.items():
         stack.enter_context(patch(f"services.chat_pipeline.{name}", return_value=rv))
 

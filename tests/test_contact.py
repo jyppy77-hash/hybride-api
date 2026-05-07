@@ -210,7 +210,8 @@ class TestAdminMessages:
         if admin_helpers_mod.ADMIN_TOKEN:
             cookies["lotoia_admin_token"] = admin_helpers_mod.ADMIN_TOKEN
 
-        resp = client.get("/admin/api/messages", cookies=cookies)
+        client.cookies.update(cookies)
+        resp = client.get("/admin/api/messages")
         if resp.status_code == 200:
             data = resp.json()
             assert "summary" in data
@@ -237,7 +238,8 @@ class TestAdminMessages:
         if admin_helpers_mod.ADMIN_TOKEN:
             cookies["lotoia_admin_token"] = admin_helpers_mod.ADMIN_TOKEN
 
-        resp = client.get("/admin/api/messages?sujet=bug", cookies=cookies)
+        client.cookies.update(cookies)
+        resp = client.get("/admin/api/messages?sujet=bug")
         if resp.status_code == 200:
             has_bug = any("bug" in str(p) for _, p in captured_params if p)
             assert has_bug
@@ -258,7 +260,8 @@ class TestAdminMessages:
         if admin_helpers_mod.ADMIN_TOKEN:
             cookies["lotoia_admin_token"] = admin_helpers_mod.ADMIN_TOKEN
 
-        resp = client.get("/admin/api/messages?lu=0", cookies=cookies)
+        client.cookies.update(cookies)
+        resp = client.get("/admin/api/messages?lu=0")
         assert resp.status_code in (200, 401, 403)
 
     def test_admin_mark_read(self):
@@ -276,7 +279,8 @@ class TestAdminMessages:
         if admin_helpers_mod.ADMIN_TOKEN:
             cookies["lotoia_admin_token"] = admin_helpers_mod.ADMIN_TOKEN
 
-        resp = client.post("/admin/api/messages/1/read", cookies=cookies)
+        client.cookies.update(cookies)
+        resp = client.post("/admin/api/messages/1/read")
         if resp.status_code == 200:
             assert any("lu = 1" in s for s in captured_sql)
 
@@ -292,6 +296,7 @@ class TestAdminMessages:
         if admin_helpers_mod.ADMIN_TOKEN:
             cookies["lotoia_admin_token"] = admin_helpers_mod.ADMIN_TOKEN
 
-        resp = client.get("/admin/api/messages/count-unread", cookies=cookies)
+        client.cookies.update(cookies)
+        resp = client.get("/admin/api/messages/count-unread")
         if resp.status_code == 200:
             assert resp.json()["unread"] == 3

@@ -40,7 +40,6 @@ _PIPELINE_PATCHES = {
 def _apply_pipeline_patches(stack, extra=None):
     """Apply all detector patches + extras via ExitStack."""
     stack.enter_context(patch("services.chat_pipeline.load_prompt", return_value="Prompt"))
-    stack.enter_context(patch.dict("os.environ", {"GEM_API_KEY": "fake"}))
     stack.enter_context(patch("services.chat_pipeline._generate_sql", new_callable=AsyncMock, return_value=None))
     stack.enter_context(patch("services.chat_pipeline._get_draw_count", new_callable=AsyncMock, return_value=500))
     for target, rv in _PIPELINE_PATCHES.items():

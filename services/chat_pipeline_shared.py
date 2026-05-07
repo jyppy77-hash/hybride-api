@@ -608,10 +608,13 @@ async def _prepare_chat_context_base(
     if should_inject_pedagogical_context(message):
         system_prompt += PEDAGOGICAL_CONTEXT
 
+    # V131.A migration ADC : Vertex AI utilise désormais Application Default
+    # Credentials (cf. gemini_shared._get_client). Le gate GEM_API_KEY legacy
+    # AI Studio a été retiré en Sprint A (2026-05-07). La variable est encore
+    # propagée à `ctx["gem_api_key"]` (consommée par stream_gemini_chat /
+    # _generate_sql / handle_pitch_common qui l'ignorent silencieusement
+    # via `# noqa: F841` post V131.A/D — cleanup signature publique = Sprint B).
     gem_api_key = os.environ.get("GEM_API_KEY") or os.environ.get("GEMINI_API_KEY")
-    if not gem_api_key:
-        logger.warning(f"{_lp} GEM_API_KEY non configuree — fallback")
-        return {"response": _fallback, "source": "fallback", "mode": mode}, None
 
     contents, history = build_gemini_contents(history, message, cfg["detect_insulte"])
 

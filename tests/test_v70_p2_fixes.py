@@ -35,7 +35,7 @@ def _loto_pipeline_patches(**overrides):
     }
     defaults.update(overrides)
 
-    patches = [patch.dict("os.environ", {"GEM_API_KEY": "fake"})]
+    patches = []
     for target, rv in defaults.items():
         patches.append(patch(target, return_value=rv))
     # Async mocks
@@ -82,7 +82,6 @@ def em_patches(**overrides):
 
     stack = contextlib.ExitStack()
     with stack as s:
-        s.enter_context(patch.dict("os.environ", {"GEM_API_KEY": "fake"}))
         for target, rv in defaults.items():
             s.enter_context(patch(target, return_value=rv))
         s.enter_context(patch("services.chat_pipeline_em._generate_sql_em",

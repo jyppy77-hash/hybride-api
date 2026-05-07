@@ -30,7 +30,6 @@ class TestAntiReIntroLoto:
     async def test_rappel_critique_first_message_empty_history(self):
         """Premier message, historique vide → [RAPPEL CRITIQUE] doit être présent."""
         with patch("services.chat_pipeline.load_prompt", return_value="Tu es HYBRIDE."), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value=None), \
              patch("services.chat_pipeline._detect_generation", return_value=False), \
@@ -65,7 +64,6 @@ class TestAntiReIntroLoto:
             _msg("assistant", "Bonjour ! Comment puis-je t'aider ?"),
         ]
         with patch("services.chat_pipeline.load_prompt", return_value="Tu es HYBRIDE."), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value=None), \
              patch("services.chat_pipeline._detect_generation", return_value=False), \
@@ -144,7 +142,6 @@ class TestAntiReIntroEM:
     async def test_rappel_critique_first_message_all_langs(self, lang, forbidden):
         """Premier message EM, historique vide → [RAPPEL CRITIQUE] présent pour chaque langue."""
         with patch("services.chat_pipeline_em.load_prompt_em", return_value="Tu es HYBRIDE."), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              _em_patches():
             # V65: use stats question (not "hello") to bypass Phase SALUTATION
             early, ctx = await _prepare_chat_context_em(
@@ -165,7 +162,6 @@ class TestAntiReIntroEM:
             _msg("assistant", "Hi! How can I help?"),
         ]
         with patch("services.chat_pipeline_em.load_prompt_em", return_value="Tu es HYBRIDE."), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              _em_patches():
             early, ctx = await _prepare_chat_context_em(
                 "what's the most frequent number?", history, "accueil-em", MagicMock(), lang="en"
@@ -177,7 +173,6 @@ class TestAntiReIntroEM:
     async def test_rappel_contains_all_lang_patterns(self):
         """Le rappel EM contient les patterns d'auto-présentation de toutes les langues."""
         with patch("services.chat_pipeline_em.load_prompt_em", return_value="sys"), \
-             patch.dict("os.environ", {"GEM_API_KEY": "fake"}), \
              _em_patches():
             _, ctx = await _prepare_chat_context_em(
                 "test", [], "accueil-em", MagicMock(), lang="fr"

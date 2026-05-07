@@ -18,6 +18,7 @@ utilise le SDK B `google-genai` qui est le successeur supporté.
 
 import asyncio
 import logging
+import os
 import time
 
 import httpx  # V131.A: conservé pour rétrocompat signatures publiques (http_client param)
@@ -29,8 +30,13 @@ from services.circuit_breaker import gemini_breaker, CircuitOpenError
 
 logger = logging.getLogger(__name__)
 
-# V131.A — Config Vertex AI figée (projet unique LotoIA + modèle unique)
-_VERTEX_PROJECT = "gen-lang-client-0680927607"
+# V131.A — Config Vertex AI (Sprint A 2026-05-07 : env override prod, fallback constant pour local/tests).
+# Pattern aligné sur gcp_monitoring._get_project_id() (GOOGLE_CLOUD_PROJECT auto-injecté Cloud Run).
+_VERTEX_PROJECT = (
+    os.getenv("GOOGLE_CLOUD_PROJECT")
+    or os.getenv("GCP_PROJECT")
+    or "gen-lang-client-0680927607"  # fallback prod par défaut
+)
 _VERTEX_LOCATION = "europe-west1"
 _VERTEX_MODEL_NAME = "gemini-2.5-flash"
 
