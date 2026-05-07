@@ -13,6 +13,7 @@ _db_env = patch.dict(os.environ, {
 })
 
 
+@pytest.mark.no_chat_logger_stub
 class TestChatLoggerInsert:
     """Test log_chat_exchange INSERT behavior."""
 
@@ -151,6 +152,7 @@ class TestChatLoggerInsert:
         await asyncio.sleep(0.05)
 
 
+@pytest.mark.no_chat_logger_stub
 class TestChatLoggerPhaseDetection:
     """Test that phase strings are valid."""
 

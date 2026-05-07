@@ -7,7 +7,7 @@ Exports (CSV/PDF), Sponsors CRUD, Factures CRUD, Config.
 import json
 import os
 import time
-from unittest.mock import patch, AsyncMock
+from unittest.mock import patch, AsyncMock, MagicMock
 
 import pytest
 from starlette.testclient import TestClient
@@ -990,6 +990,21 @@ class TestSponsors:
         with patch("routes.admin_sponsors.db_cloudsql") as mock_db:
             mock_db.async_query = AsyncMock()
             mock_db.async_fetchall = AsyncMock(return_value=[])
+            # Q+ Fix P1.1 site 3a — configure async context manager chain pour
+            # le bloc transactionnel pricing grid (admin_sponsors.py:171-184 fait
+            # `async with get_connection() as conn: async with conn.cursor() as cur:
+            # await cur.execute(...)`). Sans cela : RuntimeWarning 'coroutine
+            # _execute_mock_call never awaited' sur `async with conn.cursor()`.
+            # Note : AsyncMock.__aenter__ retourne par défaut un MagicMock NEUF,
+            # donc on force __aenter__ → self pour préserver la config sur cursor().
+            mock_cursor = AsyncMock()
+            mock_cursor.__aenter__ = AsyncMock(return_value=mock_cursor)
+            mock_cursor.__aexit__ = AsyncMock(return_value=None)
+            mock_conn = AsyncMock()
+            mock_conn.cursor = MagicMock(return_value=mock_cursor)
+            mock_conn.__aenter__ = AsyncMock(return_value=mock_conn)
+            mock_conn.__aexit__ = AsyncMock(return_value=None)
+            mock_db.get_connection = MagicMock(return_value=mock_conn)
             resp = client.post("/admin/sponsors/1/edit", data={
                 "nom": "Updated",
                 "actif": "1",

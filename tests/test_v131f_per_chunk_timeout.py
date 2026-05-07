@@ -81,30 +81,30 @@ class TestPerChunkTimeout:
         raise TimeoutError → loop break + log warning, pas de hang infini."""
         chunk1 = _make_chunk(text="part1")
 
-        # Async gen qui yield 1 chunk puis hang sur __anext__
-        async def _gen():
-            yield chunk1
-            await asyncio.sleep(60)  # hang infini
+        # Q+ Fix P1.1 sites 3c+3d — wait_for est mocké → side_effect dicte les
+        # valeurs sans awaiter les coroutines sources. Pas besoin d'AsyncMock ni
+        # de _gen() async generator (qui causaient 'coroutine never awaited' :
+        # instance #1 leakée parce que side_effect override return_value, et
+        # instance #2 via _stream_iter.__anext__() jamais consommée par wait_for mocké).
+        fake_stream = MagicMock()
+        fake_stream.__aiter__ = MagicMock(return_value=fake_stream)
+        fake_stream.__anext__ = MagicMock(return_value=MagicMock())  # input à wait_for mocké, jamais awaité
 
         with mock_vertex_client() as vc, \
              patch("services.gemini.gemini_breaker") as mock_breaker, \
              patch("services.gemini.asyncio.wait_for") as mock_wait_for:
-            vc.client.aio.models.generate_content_stream = AsyncMock(
-                return_value=_gen()
-            )
+            vc.client.aio.models.generate_content_stream = MagicMock(return_value=fake_stream)
             mock_breaker.state = "closed"
             mock_breaker.OPEN = "open"
             mock_breaker._record_success = MagicMock()
             mock_breaker._record_failure = MagicMock()
 
-            # Première wait_for = pour le start du stream → return l'iter
-            # Deuxième wait_for = pour le 1er __anext__ → return chunk1
-            # Troisième wait_for = pour le 2e __anext__ → raise TimeoutError
-            _start_iter = _gen()
+            # mock_wait_for.side_effect : 1er = start stream (objet fake_stream),
+            # 2e = 1er chunk OK, 3e = TimeoutError per-chunk V131.F
             mock_wait_for.side_effect = [
-                _start_iter,  # start du stream
-                chunk1,       # 1er chunk OK
-                asyncio.TimeoutError(),  # 2e chunk → timeout per-chunk V131.F
+                fake_stream,                # start du stream
+                chunk1,                     # 1er chunk OK
+                asyncio.TimeoutError(),     # 2e chunk → timeout per-chunk V131.F
             ]
 
             chunks = await _collect(stream_gemini_chat(

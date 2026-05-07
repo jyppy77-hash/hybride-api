@@ -383,3 +383,21 @@ def _reset_vertex_client():
     _gs._CLIENT = None
     yield
     _gs._CLIENT = None
+
+
+@pytest.fixture(autouse=True)
+def _stub_chat_logger_do_insert(request):
+    """Q+ Fix P1.1 site 3b — Neutralise asyncio.create_task(_do_insert(...))
+    fire-and-forget de services.chat_logger.log_chat_exchange pour éviter
+    les RuntimeWarning 'coroutine _do_insert never awaited' attribués
+    aléatoirement par GC pytest.
+
+    Opt-out via @pytest.mark.no_chat_logger_stub pour les tests qui
+    valident explicitement la chaîne log_chat_exchange → _do_insert → DB
+    (tests/test_chat_logger.py : TestChatLoggerInsert + TestChatLoggerPhaseDetection).
+    """
+    if request.node.get_closest_marker("no_chat_logger_stub"):
+        yield
+        return
+    with patch("services.chat_logger._do_insert", new_callable=AsyncMock):
+        yield

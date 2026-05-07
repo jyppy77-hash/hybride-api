@@ -337,6 +337,27 @@ class TestParsers:
 
 class TestRefresh:
 
+    @pytest.fixture(autouse=True)
+    def _patch_static_cidrs(self, request):
+        """Q+ Fix P1.2 — Patch les listes statiques `_STATIC_*_CIDRS` à []
+        pour les tests qui ne valident pas la fusion ou le static fallback
+        (gain ~17s/test sur `_collapse()` ipaddress CPU-bound).
+
+        Exclus :
+          - `test_refresh_merges_static_and_dynamic` : valide la fusion réelle
+          - `test_refresh_with_all_errors` : valide le static fallback en cas all-errors
+        """
+        excluded = {
+            "test_refresh_merges_static_and_dynamic",
+            "test_refresh_with_all_errors",
+        }
+        if any(name in request.node.nodeid for name in excluded):
+            yield
+            return
+        with patch("config.bot_ips._STATIC_WHITELIST_CIDRS", []), \
+             patch("config.bot_ips._STATIC_BLACKLIST_CIDRS", []):
+            yield
+
     @pytest.mark.asyncio
     async def test_refresh_with_all_errors(self):
         """Refresh with all sources failing still returns stats (static fallback)."""
