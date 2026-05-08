@@ -904,7 +904,7 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.025 (V131.G strict anti-hallucination + V139.A footer mobile fix).
+        """APP_VERSION == 1.6.026 (V141 A.1 Quick wins anti-hallucination).
 
         V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
         V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
@@ -914,9 +914,12 @@ class TestAppVersion:
         V131.F (5/05) — Per-chunk Vertex stream timeout 8s + max_output_tokens 1500.
         V131.G + V139.A (5/05, Release 1.6.025) — Strict anti-hallucination block
         (env var STRICT_HALLUCINATION_BLOCK opt-in) + Footer mobile launcher fix.
+        V141 A.1 (8/05, Release 1.6.026) — Quick wins anti-hallucination :
+        A2 fix _clean_response tags fermants [/...] + A3 extension _FACTUAL_TAGS
+        3 → 15 tags (HR6 audit V140 Phase 2.5) + A4 tag fermant Phase G Loto + EM.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.025"
+        assert APP_VERSION == "1.6.026"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

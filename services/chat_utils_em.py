@@ -110,7 +110,12 @@ def _format_triplets_context_em(triplets_data: dict) -> str:
 # ────────────────────────────────────────────
 
 def _format_generation_context_em(grid_data: dict) -> str:
-    """Formate une grille EuroMillions generee en contexte pour Gemini."""
+    """Formate une grille EuroMillions generee en contexte pour Gemini.
+
+    V141 A.1 : ajout tag fermant [/GRILLE GÉNÉRÉE PAR HYBRIDE] pour cohérence
+    avec _format_last_draw_context (V99 F01) et _format_tirage_context (V99 F06)
+    + facilite strip via _clean_response (cas H4 06/05/2026). Symétrie Loto.
+    """
     nums = grid_data['nums']
     lines = ["[GRILLE GÉNÉRÉE PAR HYBRIDE]"]
     lines.append(f"Numéros : {nums}")
@@ -185,4 +190,5 @@ def _format_generation_context_em(grid_data: dict) -> str:
         "et que chaque combinaison a exactement la même probabilité mathématique de sortir au tirage. "
         "Le score NE mesure PAS une probabilité de gain."
     )
+    lines.append("[/GRILLE GÉNÉRÉE PAR HYBRIDE]")  # V141 A.1 — fermeture cohérente V99 F06 (symétrie Loto)
     return "\n".join(lines)

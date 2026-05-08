@@ -222,6 +222,7 @@ def _clean_response(text: str, lang: str = "fr") -> str:
         r'\[RÉSULTAT TIRAGE[^\]]*\]',
         r'\[RESULTAT TIRAGE[^\]]*\]',
         r'\[ANALYSE DE GRILLE[^\]]*\]',
+        r'\[ÉVALUATION GRILLE UTILISATEUR[^\]]*\]',  # V141 A.1 — rebadgé Phase EVAL via shared.py
         r'\[CLASSEMENT[^\]]*\]',
         r'\[COMPARAISON[^\]]*\]',
         r'\[NUMÉROS? (?:CHAUDS?|FROIDS?)[^\]]*\]',
@@ -231,6 +232,7 @@ def _clean_response(text: str, lang: str = "fr") -> str:
         r'\[PROCHAIN TIRAGE[^\]]*\]',
         r'\[CORR[EÉ]LATIONS? DE PAIRES[^\]]*\]',
         r'\[CORRELATIONS? DE PAIRES[^\]]*\]',
+        r'\[CORR[EÉ]LATIONS? DE TRIPLETS[^\]]*\]',  # V141 A.1 — explicite triplets
         r'\[GRILLE G[EÉ]N[EÉ]R[EÉ]E PAR HYBRIDE[^\]]*\]',
         r'\[GRILLE GENEREE PAR HYBRIDE[^\]]*\]',
         r'\[Page:\s*[^\]]*\]',
@@ -242,7 +244,15 @@ def _clean_response(text: str, lang: str = "fr") -> str:
         r'\[R[EÉ]F[EÉ]RENCE[^\]]*\]',
         r'\[REFERENCE[^\]]*\]',
         r'\[BREAKDOWN[^\]]*\]',
+        r'\[CONTRAINTES UTILISATEUR[^\]]*\]',  # V141 A.1 — Phase G constraints
+        r'\[SESSION\]',                          # V141 A.1 — _build_session_context_base
+        r'\[CHIFFRES EXACTS[^\]]*\]',            # V141 A.1 — tag isolé (cas F7 audit Phase 2.5)
         r'\[MESSAGE A ADAPTER[^\]]*\]',
+        # V141 A.1 — BUG #3 (cas H4 06/05/2026) — pattern global tags fermants `[/...]`
+        # Couvre [/RÉSULTAT TIRAGE], [/GRILLE GÉNÉRÉE PAR HYBRIDE], [/DONNÉES TEMPS RÉEL],
+        # [/BREAKDOWN — Critères], etc. Caractères : lettres latines accentuées + chiffres
+        # + espaces + tirets + em-dash + points (cf. audit V140 Phase 2.5 § BUG #3).
+        r'\[/[A-ZÀ-Ü0-9 _\-—.À-ſ]+\]',
     ]
     for tag in internal_tags:
         text = re.sub(tag, '', text)

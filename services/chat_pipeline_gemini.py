@@ -51,8 +51,34 @@ _MAX_HISTORY_MESSAGES_CONTINUATION = 8
 
 # Timeout constants are defined in chat_pipeline_shared.py and passed as parameters.
 
-# V99 F05: Factual data tags — when present, lower temperature to reduce hallucination
-_FACTUAL_TAGS = ("[RÉSULTAT SQL", "[RÉSULTAT TIRAGE", "[DONNÉES TEMPS RÉEL")
+# V99 F05 + V141 A.1: Factual data tags — when present, lower temperature to reduce hallucination
+# V141 A.1 (HR6 confirmée empiriquement par audit V140 Phase 2.5 § BONUS 2) :
+# extension de 3 → 15 tags. Phases 2/3/3-bis/P/EVAL/0-bis/G tournaient à T=0.6
+# sur du contexte chiffré factuel. Substring match (any(tag in enrichment ...)).
+_FACTUAL_TAGS = (
+    # V99 originaux — Phase 1 / T / SQL
+    "[RÉSULTAT SQL",
+    "[RÉSULTAT TIRAGE",
+    "[DONNÉES TEMPS RÉEL",
+    # V141 A.1 — Phase 2 + EVAL (analyse grille)
+    "[ANALYSE DE GRILLE",
+    "[ÉVALUATION GRILLE UTILISATEUR",
+    # V141 A.1 — Phase 3 (classement / comparaison / catégorie)
+    "[CLASSEMENT",
+    "[COMPARAISON",
+    "[NUMÉROS",
+    # V141 A.1 — Phase 3-bis (comparaison période)
+    "[COMPARAISON SUR PÉRIODE",
+    "[FRÉQUENCE SUR LA PÉRIODE",
+    "[PROGRESSION",
+    # V141 A.1 — Phase P (paires / triplets)
+    "[CORRÉLATIONS DE PAIRES",
+    "[CORRÉLATIONS DE TRIPLETS",
+    # V141 A.1 — Phase 0-bis (prochain tirage)
+    "[PROCHAIN TIRAGE",
+    # V141 A.1 — Phase G (génération HYBRIDE)
+    "[GRILLE GÉNÉRÉE PAR HYBRIDE",
+)
 _TEMPERATURE_FACTUAL = 0.2
 _TEMPERATURE_CONVERSATIONAL = _GEMINI_CHAT_TEMPERATURE  # 0.6
 # V126 3/5 : température intermédiaire pour Phase 0 dont l'historique récent
