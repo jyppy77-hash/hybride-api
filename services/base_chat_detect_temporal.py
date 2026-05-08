@@ -86,6 +86,38 @@ _MOIS_NOM_RE = (
     r')'
 )
 
+# V141 A.2 — Suffixes ordinaux numériques pour Phase T (BUG #2 audit V140 Phase 2.5).
+# Multilingue (FR/ES/PT/NL/EN/DE) — utilisé sur pattern DMY ligne 211.
+# Ordre longest-first pour priorité regex first-match-wins (`ème` avant `er`/`e`).
+_ORDINAL_NUMERIC_FR_RE = r'(?:ème|er|st|nd|rd|th|do|°|º|ª|e)?'
+
+# V141 A.2 — Suffixes ordinaux EN strict pour pattern MDY EN ligne 227 (fix BUG #1).
+# Restreint à `st|nd|rd|th` car ligne 227 = format `Month D, YYYY` EN-only.
+_ORDINAL_NUMERIC_EN_RE = r'(?:st|nd|rd|th)?'
+
+# V141 A.2 — Liste mois EN strict pour pattern MDY ligne 227 (fix BUG #1 critique).
+# Sépare le multilang `_MOIS_NOM_RE` (utilisé L211 DMY) du EN seul (L227 MDY).
+# Préserve groupe CAPTURING `(...)` pour compat `m.group(1)` downstream L229.
+_MOIS_NOM_EN_RE = (
+    r'(january|february|march|april|may|june|july|'
+    r'august|september|october|november|december)'
+)
+
+# V141 A.2 — Mots ordinaux 1er en lettres 6 langs pour Phase T (BUG #5 audit V140).
+# Couvre `premier mai` / `first of May` / `primero de mayo` / `primeiro de maio` /
+# `ersten Mai` / `eerste mei`. Day=1 hardcoded car ces ordinaux signifient "1er".
+# Non-capturing — l'année est capturée séparément ; le mois via `_MOIS_NOM_RE`.
+_ORDINAL_WORD_RE = (
+    r'\b(?:'
+    r'premier|première|premiere|'     # FR
+    r'first|'                          # EN
+    r'primero|primer|'                 # ES
+    r'primeiro|primeira|'              # PT
+    r'ersten|erste|erster|erstes|'     # DE (déclinaisons)
+    r'eerste'                          # NL
+    r')\b'
+)
+
 
 _STAT_NEUTRALIZE_RE = re.compile(
     # FR — statistical / frequency indicators
@@ -208,7 +240,13 @@ def _detect_tirage(message: str) -> date | str | None:
             pass
 
     # Date textuelle : "9 février 2026", "15 January", "3 marzo 2025"
-    m = re.search(r'(\d{1,2})\s+' + _MOIS_NOM_RE + r'(?:\s+(\d{4}))?', lower)
+    # V141 A.2 — `+ _ORDINAL_NUMERIC_FR_RE` accepte ordinaux numériques
+    # (1er/1°/1ème/1st/etc.) pour fix BUG #2 audit V140 Phase 2.5.
+    m = re.search(
+        r'(\d{1,2})' + _ORDINAL_NUMERIC_FR_RE + r'\s+' + _MOIS_NOM_RE
+        + r'(?:\s+(\d{4}))?',
+        lower,
+    )
     if m and re.search(_TIRAGE_KW, lower):
         day = int(m.group(1))
         month_str = (m.group(2)
@@ -223,8 +261,37 @@ def _detect_tirage(message: str) -> date | str | None:
             except ValueError:
                 pass
 
-    # EN date format: "March 15 2026" / "March 15, 2026" (month before day)
-    m = re.search(_MOIS_NOM_RE + r'\s+(\d{1,2})(?:[,.]?\s+(\d{4}))?', lower)
+    # V141 A.2 — Ordinaux mots 6 langs : `premier mai 2026` / `first of May 2026`.
+    # Tenté entre A6.1 (numérique) et A6.2 (EN MDY) pour intercepter `first of May`
+    # AVANT que A6.2 ne capture `(May, "20", None)` faux-positif. Day=1 hardcoded.
+    m = re.search(
+        _ORDINAL_WORD_RE + r'\s+(?:de\s+|of\s+(?:the\s+)?)?' + _MOIS_NOM_RE
+        + r'(?:\s+(?:de\s+|of\s+)?(\d{4}))?',
+        lower,
+    )
+    if m and re.search(_TIRAGE_KW, lower):
+        month_str = (m.group(1)
+                     .replace('\xe9', 'e').replace('\xfb', 'u')
+                     .replace('\xe8', 'e').replace('\xe7', 'c')
+                     .replace('\xe4', 'a'))
+        month = _MOIS_TO_NUM.get(month_str)
+        year = int(m.group(2)) if m.group(2) else date.today().year
+        if month:
+            try:
+                return date(year, month, 1)  # Day=1 hardcoded (ordinal "1er")
+            except ValueError:
+                pass
+
+    # EN date format: "March 15 2026" / "May 1st 2026" / "January 15, 2026"
+    # V141 A.2 — `_MOIS_NOM_EN_RE` restreint EN-only (fix BUG #1 audit V140 :
+    # `_MOIS_NOM_RE` multilang attrapait FR/DE `mai 2026` comme MDY EN avec
+    # capture `("mai", "20", None)` → date(today.year, 5, 20) faux-positif).
+    # `+ _ORDINAL_NUMERIC_EN_RE` accepte `1st/2nd/3rd/4th` ordinaux EN.
+    m = re.search(
+        _MOIS_NOM_EN_RE + r'\s+(\d{1,2})' + _ORDINAL_NUMERIC_EN_RE
+        + r'(?:[,.]?\s+(\d{4}))?',
+        lower,
+    )
     if m and re.search(_TIRAGE_KW, lower):
         month_str = (m.group(1)
                      .replace('\xe9', 'e').replace('\xfb', 'u')

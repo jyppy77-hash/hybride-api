@@ -5,11 +5,12 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
-# V141 A.1 Quick wins anti-hallucination (Release 1.6.026, 8/05/2026)
-# A2 fix _clean_response regex tags fermants `[/...]` (BUG #3)
-# A3 extension _FACTUAL_TAGS 3 → 15 tags (HR6 confirmée Phase 2.5)
-# A4 tag fermant systematique _format_generation_context Loto + EM
-APP_VERSION = "1.6.026"
+# V141 A.2 Bugs Parser Phase T (Release 1.6.027, 8/05/2026)
+# A6.1 ordinaux numériques 1er/1st/1°/etc. ligne 211 _detect_tirage
+# A6.2 restriction _MOIS_NOM_EN_RE ligne 227 (fix BUG #1 critique)
+# A6.3 ordinaux lettres premier/first/primero/primeiro/ersten/eerste 6 langs
+# A9 fix _parse_draw_date_multilang DD/MM/YYYY + ordinaux + bug latent `may`
+APP_VERSION = "1.6.027"
 APP_NAME = "LotoIA"
 VERSION_DATE = "2026-05-08"
 

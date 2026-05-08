@@ -397,9 +397,14 @@ for _names, _n in (
     (("août", "aout"), 8), (("septembre",), 9), (("octobre",), 10),
     (("novembre",), 11), (("décembre", "decembre"), 12),
     # EN (short forms included for "Jan 28, 2026" style)
+    # V141 A.2 — `(("may",), 5)` ajouté : bug latent depuis V126.1 (oublié dans
+    # la liste EN, le mois 5 EN n'était pas indexé). Révélé par defense-in-depth
+    # A6.2 (restriction _MONTH_EN_RE explicite). Sans ce fix, `May 1st 2026`
+    # matchait _DATE_RE_MDY mais KeyError sur le dict → silent None.
     (("january", "jan"), 1), (("february", "feb"), 2), (("march", "mar"), 3),
-    (("april", "apr"), 4), (("june", "jun"), 6), (("july", "jul"), 7),
-    (("august", "aug"), 8), (("september", "sep", "sept"), 9),
+    (("april", "apr"), 4), (("may",), 5), (("june", "jun"), 6),
+    (("july", "jul"), 7), (("august", "aug"), 8),
+    (("september", "sep", "sept"), 9),
     (("october", "oct"), 10), (("november", "nov"), 11),
     (("december", "dec"), 12),
     # ES (duplicates with FR/EN ignored by dict update)
@@ -425,20 +430,69 @@ _MONTH_RE = "(?:" + "|".join(
     sorted(set(_MONTH_NAME_TO_NUM), key=len, reverse=True)
 ) + ")"
 
+# V141 A.2 — Mirroir des constantes `base_chat_detect_temporal.py` pour parser
+# Gemini réponse (BUG #5/#9 audit V140 Phase 2.5). Naming local pour autonomie.
+
+# Liste mois EN strict pour _DATE_RE_MDY restriction (defense-in-depth A6.2).
+_MONTH_EN_RE = (
+    r"(january|february|march|april|may|june|july|"
+    r"august|september|october|november|december)"
+)
+
+# Suffixes ordinaux numériques DMY (FR/ES/PT/NL/EN/DE) longest-first.
+_ORDINAL_NUMERIC_DMY_RE = r"(?:ème|er|st|nd|rd|th|do|°|º|ª|e)?"
+
+# Suffixes ordinaux EN strict pour _DATE_RE_MDY (`May 1st 2026`).
+_ORDINAL_NUMERIC_EN_RE_GEMINI = r"(?:st|nd|rd|th)?"
+
+# Mots ordinaux 1er en lettres 6 langs (cas X1bis "premier mai 2026").
+_ORDINAL_WORD_RE_GEMINI = (
+    r"\b(?:"
+    r"premier|première|premiere|"     # FR
+    r"first|"                          # EN
+    r"primero|primer|"                 # ES
+    r"primeiro|primeira|"              # PT
+    r"ersten|erste|erster|erstes|"     # DE
+    r"eerste"                          # NL
+    r")\b"
+)
+
 # Pattern D Month YYYY (FR/EN/DE/NL/PT/ES with optional "de") — the common form.
 # V126.1 F1-bis : `\.?` ajouté après le jour pour accepter le format allemand
 # `12. Dezember 2025` (point ordinal). Rétrocompat V126 `12 Dezember 2025` OK.
+# V141 A.2 BUG #5 — `+ _ORDINAL_NUMERIC_DMY_RE` accepte `1er/1°/1ème/1st`.
+# Capturing groups inchangés : group(1)=jour, group(2)=mois, group(3)=année.
 _DATE_RE_DMY = re.compile(
-    rf"\b(\d{{1,2}})\.?\s*(?:de\s+)?({_MONTH_RE})\s+(?:de\s+)?(\d{{4}})\b",
+    rf"\b(\d{{1,2}}){_ORDINAL_NUMERIC_DMY_RE}\.?\s*(?:de\s+)?"
+    rf"({_MONTH_RE})\s+(?:de\s+)?(\d{{4}})\b",
     re.IGNORECASE,
 )
 # Pattern Month D, YYYY (EN US style)
+# V141 A.2 BUG #5 + symétrie A6.2 — restriction `_MONTH_EN_RE` (defense-in-depth
+# contre faux-positif multilang sur `mai 2026` capturant 20 de l'année).
+# `+ _ORDINAL_NUMERIC_EN_RE_GEMINI` accepte `May 1st 2026`.
+# Capturing groups inchangés : group(1)=mois (via _MONTH_EN_RE),
+# group(2)=jour, group(3)=année.
 _DATE_RE_MDY = re.compile(
-    rf"\b({_MONTH_RE})\s+(\d{{1,2}}),?\s+(\d{{4}})\b",
+    rf"\b{_MONTH_EN_RE}\s+(\d{{1,2}}){_ORDINAL_NUMERIC_EN_RE_GEMINI},?\s+(\d{{4}})\b",
     re.IGNORECASE,
 )
 # Pattern ISO YYYY-MM-DD — universal, tried first
 _DATE_RE_ISO = re.compile(r"\b(\d{4})-(\d{1,2})-(\d{1,2})\b")
+
+# V141 A.2 BUG #9 — DD/MM/YYYY numérique européen (cas X3 audit V140).
+# Format français/UE majoritaire dans réponses Gemini (FR/ES/PT/DE/NL).
+# Capturing groups : group(1)=jour, group(2)=mois, group(3)=année.
+_DATE_RE_DMY_NUM = re.compile(r"\b(\d{1,2})/(\d{1,2})/(\d{4})\b")
+
+# V141 A.2 BUG #5 — Ordinaux mots 6 langs (cas X1bis "premier mai 2026").
+# Day=1 hardcoded en parsing (ces ordinaux signifient "1er").
+# Capturing groups : group(1)=mois (via _MONTH_RE enrobant), group(2)=année.
+_DATE_RE_DMY_WORD = re.compile(
+    rf"{_ORDINAL_WORD_RE_GEMINI}\s+(?:de\s+|of\s+(?:the\s+)?)?"
+    rf"({_MONTH_RE})\s+(?:de\s+|of\s+)?(\d{{4}})\b",
+    re.IGNORECASE,
+)
 
 # V126.1 F3 — Extraction des 2 étoiles EM (6 langs + Unicode ★/☆/⭐).
 # Formats observés prod / prompts Gemini :
@@ -457,16 +511,32 @@ _EM_STARS_RE = re.compile(
 
 
 def _parse_draw_date_multilang(text: str) -> date | None:
-    """V126 3.5-A : parse une date dans la réponse (6 langues + ISO).
+    """V126 3.5-A + V141 A.2 : parse une date dans la réponse (6 langues + ISO).
     Retourne un objet `date` ou None si aucun pattern ne match.
 
-    Ordre de tentative : ISO > D Month YYYY > Month D, YYYY.
+    Ordre de tentative (V141 A.2 étendu) :
+    - ISO `YYYY-MM-DD` (group 1=year, 2=month, 3=day)
+    - DD/MM/YYYY numérique européen (V141 A.2 BUG #9 ; group 1=day, 2=month, 3=year)
+    - D Month YYYY avec ordinal optionnel (V141 A.2 BUG #5 ; group 1=day, 2=month, 3=year)
+    - Mots ordinaux 1er + Month YYYY (V141 A.2 BUG #5 cas X1bis ; group 1=month, 2=year, day=1)
+    - Month D, YYYY EN strict avec ordinal optionnel (V141 A.2 symétrie A6.2 ; group 1=month, 2=day, 3=year)
+
+    DMY_WORD précède MDY pour intercepter `first of May 2026` avant que MDY EN
+    ne capture `(May, 20, ...)` faux-positif (équivalent BUG #1 dans le détecteur).
+
     Les erreurs ValueError (jour invalide) sont silencieuses → None.
     """
     m = _DATE_RE_ISO.search(text)
     if m:
         try:
             return date(int(m.group(1)), int(m.group(2)), int(m.group(3)))
+        except ValueError:
+            pass
+    # V141 A.2 BUG #9 — DD/MM/YYYY numérique avant DMY pour précédence.
+    m = _DATE_RE_DMY_NUM.search(text)
+    if m:
+        try:
+            return date(int(m.group(3)), int(m.group(2)), int(m.group(1)))
         except ValueError:
             pass
     m = _DATE_RE_DMY.search(text)
@@ -476,6 +546,16 @@ def _parse_draw_date_multilang(text: str) -> date | None:
             month = _MONTH_NAME_TO_NUM[m.group(2).lower()]
             year = int(m.group(3))
             return date(year, month, day)
+        except (ValueError, KeyError):
+            pass
+    # V141 A.2 BUG #5 cas X1bis — mots ordinaux avant MDY pour intercepter
+    # `first of May 2026` avant que MDY EN ne capture `(May, 20, ...)` faux-positif.
+    m = _DATE_RE_DMY_WORD.search(text)
+    if m:
+        try:
+            month = _MONTH_NAME_TO_NUM[m.group(1).lower()]
+            year = int(m.group(2))
+            return date(year, month, 1)  # Day=1 hardcoded
         except (ValueError, KeyError):
             pass
     m = _DATE_RE_MDY.search(text)

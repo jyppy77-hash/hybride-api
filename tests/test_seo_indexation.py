@@ -904,7 +904,7 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.026 (V141 A.1 Quick wins anti-hallucination).
+        """APP_VERSION == 1.6.027 (V141 A.2 Bugs Parser Phase T).
 
         V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
         V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
@@ -917,9 +917,15 @@ class TestAppVersion:
         V141 A.1 (8/05, Release 1.6.026) — Quick wins anti-hallucination :
         A2 fix _clean_response tags fermants [/...] + A3 extension _FACTUAL_TAGS
         3 → 15 tags (HR6 audit V140 Phase 2.5) + A4 tag fermant Phase G Loto + EM.
+        V141 A.2 (8/05, Release 1.6.027) — Bugs Parser Phase T :
+        A6.1 ordinaux numériques 1er/1st/1°/etc. ligne 211 _detect_tirage +
+        A6.2 restriction _MOIS_NOM_EN_RE ligne 227 (fix BUG #1 critique) +
+        A6.3 ordinaux lettres premier/first/primero/primeiro/ersten/eerste +
+        A9 fix _parse_draw_date_multilang DD/MM/YYYY + ordinaux +
+        bug latent `may` dans _MONTH_NAME_TO_NUM révélé par defense-in-depth.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.026"
+        assert APP_VERSION == "1.6.027"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""
