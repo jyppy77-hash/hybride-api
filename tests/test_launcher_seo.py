@@ -200,6 +200,6 @@ class TestVersion:
     """V53 version bump."""
 
     def test_app_version(self):
-        # V141 A.2 bump : 1.6.026 → 1.6.027 (8/05/2026 — Bugs Parser Phase T)
+        # V141 A.3 bump : 1.6.027 → 1.6.028 (9/05/2026 — Audit V140 Phase 2.5, 9 items)
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.027"
+        assert APP_VERSION == "1.6.028"

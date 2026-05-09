@@ -5,7 +5,6 @@ site rating detection. Split from base_chat_detectors.py (V70 F10).
 """
 
 import re
-import random
 
 _INSULTE_MOTS = {
     # FR

@@ -4,13 +4,19 @@ Couvre 2 catégories du rapport V140 Phase 2.5 :
 - Catégorie F (tag leak) : 7 tests F1-F7 — fix BUG #3 _clean_response regex
 - BONUS 2 (_FACTUAL_TAGS) : 6 tests — fix HR6 / BUG #8
 
+V141 A.3 ajouts :
+- L6-F01 : invariant fonctionnel — chaque _FACTUAL_TAGS strippé via _clean_response
+- L5-F02 : invariant structurel — cross-réf _FACTUAL_TAGS ↔ _INTERNAL_TAGS_PATTERNS
+
 Refs:
 - docs/AUDIT_V140_PHASE2_5_TESTS_ADVERSARIAL.md
 - docs/_v140_simulation.py (script reproductible)
 """
+import re
+
 import pytest
 
-from services.base_chat_utils import _clean_response
+from services.base_chat_utils import _INTERNAL_TAGS_PATTERNS, _clean_response
 from services.chat_pipeline_gemini import _FACTUAL_TAGS
 
 
@@ -78,6 +84,24 @@ class TestV141F_TagLeak:
         """F7 — Tag CHIFFRES EXACTS isolé strippé (V141 A.1 nouveau pattern)."""
         cleaned = _clean_response("Stats [CHIFFRES EXACTS] visible")
         assert "[CHIFFRES EXACTS" not in cleaned
+
+    def test_v141_f02a_tag_fermant_lowercase_ascii_strippe(self):
+        """F02a (V141 A.3) — Tag fermant lowercase ASCII pure strippé (BUG LATENT V141 A.1)."""
+        cleaned = _clean_response(
+            "Tirage [result tirage] 1-2-3-4-5 [/result tirage] OK"
+        )
+        assert "[/result" not in cleaned, (
+            "Pattern L255 V141 A.1 ne strippait pas tags lowercase ASCII (cf. fix V141 A.3)"
+        )
+
+    def test_v141_f02b_tag_fermant_mixed_case_strippe(self):
+        """F02b (V141 A.3) — Tag fermant mixed case strippé (BUG LATENT V141 A.1)."""
+        cleaned = _clean_response(
+            "Voici [Analyse Partielle] détails [/Analyse Partielle] fin"
+        )
+        assert "[/Analyse" not in cleaned, (
+            "Pattern L255 V141 A.1 ne strippait pas tags mixed case (cf. fix V141 A.3)"
+        )
 
 
 # ════════════════════════════════════════════════════════════════════
@@ -197,3 +221,109 @@ class TestV141A4_TagFermantPhaseG:
         assert "[/GRILLE" not in cleaned
         assert "[GRILLE GÉNÉRÉE" not in cleaned
         assert "C'est une bonne grille" in cleaned
+
+
+# ════════════════════════════════════════════════════════════════════
+# V141 A.3 — L6-F01 Invariant : tous les _FACTUAL_TAGS sont strippés
+# par _clean_response (defense-in-depth, régression coverage exhaustive)
+# ════════════════════════════════════════════════════════════════════
+
+
+def _build_factual_exemplar(tag_prefix: str) -> str:
+    """V141 A.3 — exemplar strippable pour un prefix _FACTUAL_TAGS.
+
+    `[NUMÉROS]` seul n'est PAS strippé (regex `internal_tags` exige
+    suffixe `CHAUDS?|FROIDS?` cf. base_chat_utils.py L228). Tous les
+    autres prefixes acceptent `]` direct via `[^\\]]*\\]`.
+    """
+    if tag_prefix == "[NUMÉROS":
+        return "[NUMÉROS CHAUDS]"
+    return f"{tag_prefix}]"
+
+
+class TestV141A3_InvariantFactualTagsStripped:
+    """V141 A.3 — Invariant L6-F01 : chaque tag de `_FACTUAL_TAGS`
+    doit être strippé par `_clean_response` (régression coverage).
+
+    Source unique de vérité = tuple `_FACTUAL_TAGS` exposée par
+    `services.chat_pipeline_gemini`. Si un tag est ajouté à
+    `_FACTUAL_TAGS` sans pattern correspondant dans `internal_tags`
+    de `_clean_response`, ce test parametric le détecte automatiquement.
+    """
+
+    @pytest.mark.parametrize(
+        "tag_prefix",
+        list(_FACTUAL_TAGS),
+        ids=lambda t: t.lstrip("[").replace(" ", "_"),
+    )
+    def test_v141_a3_invariant_factual_tag_is_stripped(self, tag_prefix):
+        """V141 A.3 — chaque _FACTUAL_TAGS prefix est strippé par _clean_response."""
+        exemplar = _build_factual_exemplar(tag_prefix)
+        text = f"Réponse utile {exemplar} contenu visible"
+        cleaned = _clean_response(text)
+        assert tag_prefix not in cleaned, (
+            f"Tag factuel {tag_prefix!r} doit être strippé via exemplar {exemplar!r}, "
+            f"mais reste dans : {cleaned!r}"
+        )
+        assert "contenu visible" in cleaned
+
+
+# ════════════════════════════════════════════════════════════════════
+# V141 A.3 — L5-F02 Invariant STRUCTUREL : cross-référence
+# `_FACTUAL_TAGS` ↔ `_INTERNAL_TAGS_PATTERNS` (sans `_clean_response`)
+# ════════════════════════════════════════════════════════════════════
+
+
+# Whitelist documentée des mismatches structurels intentionnels.
+# Toute entrée ici doit avoir une justification explicite + tracé audit.
+_KNOWN_STRUCTURAL_MISMATCHES = {
+    "[NUMÉROS": (
+        "Pattern internal_tags L228 exige suffixe `CHAUDS?|FROIDS?` "
+        "(cf. base_chat_utils.py). Exemplar minimal `[NUMÉROS]` ne "
+        "matche pas, comportement intentionnel pour éviter de stripper "
+        "des tags factuels malformés (ex: `[NUMÉROS]` seul = malformé)."
+    ),
+}
+
+
+class TestV141A3_StructuralFactualTagsCoverage:
+    """V141 A.3 — Invariant L5-F02 : chaque tag de `_FACTUAL_TAGS`
+    a un pattern miroir dans `_INTERNAL_TAGS_PATTERNS` (cross-référence
+    structurelle des 2 listes, SANS appel à `_clean_response`).
+
+    Distinct d'Item 3 (test fonctionnel via `_clean_response`) :
+    - Item 3 = behavior test (avec exemplar adapté)
+    - Item 4 = structural test (cross-réf brute des 2 listes)
+    """
+
+    @pytest.mark.parametrize(
+        "tag_prefix",
+        list(_FACTUAL_TAGS),
+        ids=lambda t: t.lstrip("[").replace(" ", "_"),
+    )
+    def test_v141_a3_structural_factual_tag_has_mirror_pattern(self, tag_prefix):
+        """V141 A.3 — chaque _FACTUAL_TAGS prefix a un pattern miroir
+        dans _INTERNAL_TAGS_PATTERNS (sauf mismatches whitelistés)."""
+        if tag_prefix in _KNOWN_STRUCTURAL_MISMATCHES:
+            pytest.skip(_KNOWN_STRUCTURAL_MISMATCHES[tag_prefix])
+        exemplar = f"{tag_prefix}]"
+        matched_patterns = [
+            p for p in _INTERNAL_TAGS_PATTERNS if re.search(p, exemplar)
+        ]
+        assert matched_patterns, (
+            f"_FACTUAL_TAGS contient {tag_prefix!r} mais aucun pattern "
+            f"dans _INTERNAL_TAGS_PATTERNS ne matche l'exemplar minimal "
+            f"{exemplar!r}. Ajouter un pattern à _INTERNAL_TAGS_PATTERNS, "
+            f"retirer de _FACTUAL_TAGS, ou whitelister dans "
+            f"_KNOWN_STRUCTURAL_MISMATCHES avec justification."
+        )
+
+    def test_v141_a3_structural_known_mismatches_documented(self):
+        """V141 A.3 — chaque mismatch whitelisté est dans `_FACTUAL_TAGS`
+        (anti-drift de la whitelist : si on retire un tag de _FACTUAL_TAGS,
+        on doit aussi retirer de la whitelist)."""
+        orphans = set(_KNOWN_STRUCTURAL_MISMATCHES.keys()) - set(_FACTUAL_TAGS)
+        assert not orphans, (
+            f"_KNOWN_STRUCTURAL_MISMATCHES contient des entrées orphelines "
+            f"(absentes de _FACTUAL_TAGS) : {orphans}. Retirer de la whitelist."
+        )

@@ -5,14 +5,18 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
-# V141 A.2 Bugs Parser Phase T (Release 1.6.027, 8/05/2026)
-# A6.1 ordinaux numériques 1er/1st/1°/etc. ligne 211 _detect_tirage
-# A6.2 restriction _MOIS_NOM_EN_RE ligne 227 (fix BUG #1 critique)
-# A6.3 ordinaux lettres premier/first/primero/primeiro/ersten/eerste 6 langs
-# A9 fix _parse_draw_date_multilang DD/MM/YYYY + ordinaux + bug latent `may`
-APP_VERSION = "1.6.027"
+# V141 A.3 Audit V140 Phase 2.5 — 9 items packagés (Release 1.6.028, 9/05/2026)
+# Item 2 : L5-F01 pattern lowercase ASCII + mixed case (BUG LATENT V141 A.1)
+# Item 3 : L6-F01 invariant fonctionnel _FACTUAL_TAGS strippé (15 tests parametric)
+# Item 4 : L5-F02 invariant structurel _FACTUAL_TAGS ↔ _INTERNAL_TAGS_PATTERNS + refactor
+# Item 5 : NEW BUG #10 CTA grille HYBRIDE Phase T future + jour de tirage (cas terrain #1)
+# Item 6 : BUG #7 orphan stat-single 1 num + N apparitions 6 langs (log-only)
+# Item 7 : Extension _recheck_phase0_draw_accuracy à Phase 2/3/3-bis
+# Item 8 : BUG #4 Phase G fallthrough silent failure fix (cas terrain #3 "Pru importe")
+# Item 9 : BUG #6 Phase AFFIRMATION transitive anti-hallucination (cas terrain #2 "Oui")
+APP_VERSION = "1.6.028"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-05-08"
+VERSION_DATE = "2026-05-09"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

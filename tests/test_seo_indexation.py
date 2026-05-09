@@ -904,7 +904,7 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.027 (V141 A.2 Bugs Parser Phase T).
+        """APP_VERSION == 1.6.028 (V141 A.3 Audit V140 Phase 2.5, 9 items).
 
         V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
         V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
@@ -923,9 +923,18 @@ class TestAppVersion:
         A6.3 ordinaux lettres premier/first/primero/primeiro/ersten/eerste +
         A9 fix _parse_draw_date_multilang DD/MM/YYYY + ordinaux +
         bug latent `may` dans _MONTH_NAME_TO_NUM révélé par defense-in-depth.
+        V141 A.3 (9/05, Release 1.6.028) — Audit V140 Phase 2.5, 9 items packagés :
+        Item 2 L5-F01 pattern lowercase + mixed case (BUG LATENT V141 A.1) +
+        Item 3 L6-F01 invariant fonctionnel _FACTUAL_TAGS (15 tests parametric) +
+        Item 4 L5-F02 invariant structurel + refactor _INTERNAL_TAGS_PATTERNS +
+        Item 5 BUG #10 CTA grille HYBRIDE Phase T future (cas terrain #1) +
+        Item 6 BUG #7 orphan stat-single 6 langs (log-only) +
+        Item 7 extension _recheck Phase 2/3/3-bis +
+        Item 8 BUG #4 Phase G fallthrough silent fix (cas terrain #3 "Pru importe") +
+        Item 9 BUG #6 Phase AFFIRMATION transitive anti-hallu (cas terrain #2 "Oui").
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.027"
+        assert APP_VERSION == "1.6.028"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

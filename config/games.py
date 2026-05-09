@@ -160,6 +160,54 @@ def get_next_draw_date(game: ValidGame, reference=None):
     return today
 
 
+# ── V141 A.3: Phase T draw-day helpers (CTA grille HYBRIDE pour dates futures) ──
+
+
+def _is_draw_day(game: ValidGame, target_date) -> bool:
+    """V141 A.3 — Vrai si target_date tombe sur un jour de tirage du jeu.
+
+    Args:
+        game: ValidGame.loto ou ValidGame.euromillions
+        target_date: datetime.date
+
+    Returns:
+        True si target_date.weekday() ∈ cfg.draw_days, False sinon.
+    """
+    cfg = get_config(game)
+    target_weekdays = {_WEEKDAY_FR[d] for d in cfg.draw_days if d in _WEEKDAY_FR}
+    return target_date.weekday() in target_weekdays
+
+
+def _is_target_in_future(game: ValidGame, target_date, reference=None) -> bool:
+    """V141 A.3 — Vrai si target_date est encore dans le futur (tirage à venir).
+
+    Critères :
+    - target_date > today → True
+    - target_date == today AND current_hour < cutoff_hour → True (tirage du soir à venir)
+    - sinon → False (date passée ou tirage du jour déjà tombé)
+
+    Args:
+        game: ValidGame.loto ou ValidGame.euromillions
+        target_date: datetime.date
+        reference: datetime.datetime ou None (= now()).
+    """
+    from datetime import datetime as _dt
+    if reference is None:
+        reference = _dt.now()
+    if isinstance(reference, _dt):
+        today = reference.date()
+        current_hour = reference.hour
+    else:
+        today = reference
+        current_hour = 0
+    if target_date > today:
+        return True
+    if target_date == today:
+        cutoff = _DRAW_CUTOFF_HOUR.get(get_config(game).slug, 21)
+        return current_hour < cutoff
+    return False
+
+
 # ── V137.C: BDD-aware next draw date helper (production source of truth) ──
 #
 # Issue : `get_next_draw_date` (V110, sync) calcule la prochaine date à partir

@@ -209,6 +209,50 @@ _CODE_FALLBACK = {
 # Response cleaning
 # ────────────────────────────────────────────
 
+# V141 A.3 — Tuple module-level exposé pour invariant test L5-F02
+# (cross-réf structurelle avec `_FACTUAL_TAGS` de chat_pipeline_gemini.py).
+# Construit une seule fois au load (anciennement liste locale rebuilt à chaque appel).
+_INTERNAL_TAGS_PATTERNS = (
+    r'\[RÉSULTAT SQL\]',
+    r'\[RESULTAT SQL\]',
+    r'\[RÉSULTAT TIRAGE[^\]]*\]',
+    r'\[RESULTAT TIRAGE[^\]]*\]',
+    r'\[ANALYSE DE GRILLE[^\]]*\]',
+    r'\[ÉVALUATION GRILLE UTILISATEUR[^\]]*\]',  # V141 A.1 — rebadgé Phase EVAL via shared.py
+    r'\[CLASSEMENT[^\]]*\]',
+    r'\[COMPARAISON[^\]]*\]',
+    r'\[NUMÉROS? (?:CHAUDS?|FROIDS?)[^\]]*\]',
+    r'\[NUMEROS? (?:CHAUDS?|FROIDS?)[^\]]*\]',
+    r'\[DONNÉES TEMPS RÉEL[^\]]*\]',
+    r'\[DONNEES TEMPS REEL[^\]]*\]',
+    r'\[PROCHAIN TIRAGE[^\]]*\]',
+    r'\[CORR[EÉ]LATIONS? DE PAIRES[^\]]*\]',
+    r'\[CORRELATIONS? DE PAIRES[^\]]*\]',
+    r'\[CORR[EÉ]LATIONS? DE TRIPLETS[^\]]*\]',  # V141 A.1 — explicite triplets
+    r'\[GRILLE G[EÉ]N[EÉ]R[EÉ]E PAR HYBRIDE[^\]]*\]',
+    r'\[GRILLE GENEREE PAR HYBRIDE[^\]]*\]',
+    r'\[Page:\s*[^\]]*\]',
+    r'\[Question utilisateur[^\]]*\]',
+    r'\[CONTEXTE CONTINUATION[^\]]*\]',
+    r'\[FR[EÉ]QUENCE SUR LA P[EÉ]RIODE[^\]]*\]',
+    r'\[FREQUENCE SUR LA PERIODE[^\]]*\]',
+    r'\[PROGRESSION[^\]]*\]',
+    r'\[R[EÉ]F[EÉ]RENCE[^\]]*\]',
+    r'\[REFERENCE[^\]]*\]',
+    r'\[BREAKDOWN[^\]]*\]',
+    r'\[CONTRAINTES UTILISATEUR[^\]]*\]',  # V141 A.1 — Phase G constraints
+    r'\[SESSION\]',                          # V141 A.1 — _build_session_context_base
+    r'\[CHIFFRES EXACTS[^\]]*\]',            # V141 A.1 — tag isolé (cas F7 audit Phase 2.5)
+    r'\[MESSAGE A ADAPTER[^\]]*\]',
+    # V141 A.1 — BUG #3 (cas H4 06/05/2026) — pattern global tags fermants `[/...]`
+    # Couvre [/RÉSULTAT TIRAGE], [/GRILLE GÉNÉRÉE PAR HYBRIDE], [/DONNÉES TEMPS RÉEL],
+    # [/BREAKDOWN — Critères], etc. Caractères : lettres latines accentuées + chiffres
+    # + espaces + tirets + em-dash + points (cf. audit V140 Phase 2.5 § BUG #3).
+    # V141 A.2 — ajout `a-z` + `à-ÿ` pour couvrir lowercase ASCII et mixed case.
+    r'\[/[A-Za-zÀ-Üà-ÿ0-9 _\-—.À-ſ]+\]',
+)
+
+
 def _clean_response(text: str, lang: str = "fr") -> str:
     """Supprime les tags internes et blocs de code qui ne doivent pas etre vus par l'utilisateur."""
     # F05 V86: supprimer les blocs ```tool_code / ```python hallucines par Gemini
@@ -216,45 +260,7 @@ def _clean_response(text: str, lang: str = "fr") -> str:
     if _had_code_block:
         logger.warning("Code block stripped: %s", _RE_CODE_BLOCK.search(text).group()[:120])
         text = _RE_CODE_BLOCK.sub('', text)
-    internal_tags = [
-        r'\[RÉSULTAT SQL\]',
-        r'\[RESULTAT SQL\]',
-        r'\[RÉSULTAT TIRAGE[^\]]*\]',
-        r'\[RESULTAT TIRAGE[^\]]*\]',
-        r'\[ANALYSE DE GRILLE[^\]]*\]',
-        r'\[ÉVALUATION GRILLE UTILISATEUR[^\]]*\]',  # V141 A.1 — rebadgé Phase EVAL via shared.py
-        r'\[CLASSEMENT[^\]]*\]',
-        r'\[COMPARAISON[^\]]*\]',
-        r'\[NUMÉROS? (?:CHAUDS?|FROIDS?)[^\]]*\]',
-        r'\[NUMEROS? (?:CHAUDS?|FROIDS?)[^\]]*\]',
-        r'\[DONNÉES TEMPS RÉEL[^\]]*\]',
-        r'\[DONNEES TEMPS REEL[^\]]*\]',
-        r'\[PROCHAIN TIRAGE[^\]]*\]',
-        r'\[CORR[EÉ]LATIONS? DE PAIRES[^\]]*\]',
-        r'\[CORRELATIONS? DE PAIRES[^\]]*\]',
-        r'\[CORR[EÉ]LATIONS? DE TRIPLETS[^\]]*\]',  # V141 A.1 — explicite triplets
-        r'\[GRILLE G[EÉ]N[EÉ]R[EÉ]E PAR HYBRIDE[^\]]*\]',
-        r'\[GRILLE GENEREE PAR HYBRIDE[^\]]*\]',
-        r'\[Page:\s*[^\]]*\]',
-        r'\[Question utilisateur[^\]]*\]',
-        r'\[CONTEXTE CONTINUATION[^\]]*\]',
-        r'\[FR[EÉ]QUENCE SUR LA P[EÉ]RIODE[^\]]*\]',
-        r'\[FREQUENCE SUR LA PERIODE[^\]]*\]',
-        r'\[PROGRESSION[^\]]*\]',
-        r'\[R[EÉ]F[EÉ]RENCE[^\]]*\]',
-        r'\[REFERENCE[^\]]*\]',
-        r'\[BREAKDOWN[^\]]*\]',
-        r'\[CONTRAINTES UTILISATEUR[^\]]*\]',  # V141 A.1 — Phase G constraints
-        r'\[SESSION\]',                          # V141 A.1 — _build_session_context_base
-        r'\[CHIFFRES EXACTS[^\]]*\]',            # V141 A.1 — tag isolé (cas F7 audit Phase 2.5)
-        r'\[MESSAGE A ADAPTER[^\]]*\]',
-        # V141 A.1 — BUG #3 (cas H4 06/05/2026) — pattern global tags fermants `[/...]`
-        # Couvre [/RÉSULTAT TIRAGE], [/GRILLE GÉNÉRÉE PAR HYBRIDE], [/DONNÉES TEMPS RÉEL],
-        # [/BREAKDOWN — Critères], etc. Caractères : lettres latines accentuées + chiffres
-        # + espaces + tirets + em-dash + points (cf. audit V140 Phase 2.5 § BUG #3).
-        r'\[/[A-ZÀ-Ü0-9 _\-—.À-ſ]+\]',
-    ]
-    for tag in internal_tags:
+    for tag in _INTERNAL_TAGS_PATTERNS:
         text = re.sub(tag, '', text)
     # Supprimer les caracteres CJK/non-latin injectes par Gemini
     text = _strip_non_latin(text)

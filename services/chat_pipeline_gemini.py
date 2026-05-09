@@ -144,6 +144,24 @@ _DRAW_SEQUENCE_RE = re.compile(
     rf'(\d{{1,2}}){_DRAW_SEP}(\d{{1,2}}){_DRAW_SEP}(\d{{1,2}}){_DRAW_SEP}(\d{{1,2}}){_DRAW_SEP}(\d{{1,2}})',
 )
 
+# V141 A.3 — BUG #7 : Orphan stat-single detection (e.g. "Le 42, 95 fois",
+# "42 - 95 apparitions", "Number 42 appeared 95 times"). Multilang keywords FR/EN/ES/PT/DE/NL.
+# Détecte 1 numéro + 1 count + keyword "apparitions/times/etc." sans tag factuel.
+_ORPHAN_STAT_KEYWORD = (
+    r'(?:'
+    r'fois|apparitions?|sorties?|tirages?|'    # FR
+    r'times|appearances|draws|occurrences|'    # EN
+    r'veces|apariciones|sorteos|'              # ES
+    r'vezes|aparições|sorteios|'               # PT
+    r'mal|erscheinungen|ziehungen|'            # DE
+    r'keer|verschijningen|trekkingen'          # NL
+    r')'
+)
+_ORPHAN_STAT_RE = re.compile(
+    rf'\b(\d{{1,2}})\b[^\d\n]{{1,30}}\b(\d{{1,3}})\b[^\d\n]{{0,15}}{_ORPHAN_STAT_KEYWORD}\b',
+    re.IGNORECASE,
+)
+
 
 _STRICT_HALLUCINATION_MESSAGES = {
     "fr": "Voici les données exactes issues de notre base :\n\n{data}",
@@ -193,6 +211,8 @@ def _check_sql_number_hallucination(
     contient un tag factuel (défense contre fuite résiduelle via history).
     V125 A3: détection orpheline inconditionnelle — log warning si séquence
     5-nums draw-like apparaît dans réponse sans aucun contexte factuel.
+    V141 A.3: BUG #7 — orphan stat-single detection (1 num + N apparitions
+    keywords FR/EN/ES/PT/DE/NL) sans tag factuel → log warning, log-only.
     """
     # V125 A3: orphan sequence detection (inconditional, log-only, any phase)
     if gemini_response:
@@ -204,8 +224,27 @@ def _check_sql_number_hallucination(
                 log_prefix, _seq_orphan.group(0), phase, gemini_response[:200],
             )
 
+    # V141 A.3 — BUG #7 : orphan stat-single (1 num + N apparitions) sans contexte factuel
+    if gemini_response:
+        _stat_orphan = _ORPHAN_STAT_RE.search(gemini_response)
+        if _stat_orphan and not _DATA_TAG_RE.search(enrichment_context or ""):
+            try:
+                _num_int = int(_stat_orphan.group(1))
+            except (ValueError, TypeError):
+                _num_int = 0
+            # Anti faux positifs : numéro plausible (1-50, range max Loto+EM)
+            if 1 <= _num_int <= 50:
+                logger.warning(
+                    "HALLUCINATION_ORPHAN_STAT_SINGLE: %s stat '%s' in response "
+                    "but NO factual context tag. Phase=%s | excerpt=%.200s",
+                    log_prefix, _stat_orphan.group(0), phase, gemini_response[:200],
+                )
+
     # V125 A2: Phase 0 transitif — active check si historique récent factuel
-    if phase == "0":
+    # V141 A.3.2 BUG #6: étendu à "AFFIRMATION" — cas terrain #2 8/05 21:06
+    # ("Oui" après assistant cite [RÉSULTAT TIRAGE] → leak chiffres bruts).
+    # Phase AFFIRMATION = continuation conversationnelle équivalent Phase 0.
+    if phase in ("0", "AFFIRMATION"):
         transitive = _extract_last_factual_context(history)
         if not transitive:
             return None
@@ -590,11 +629,19 @@ async def _recheck_phase0_draw_accuracy(
         HYBRIDE recyclée, V126 strict ne déclenchait pas)
       - Phase T (tirage temporel explicite) : recheck pertinent par design
 
+    V141 A.3 — Phase coverage étendue à ("0", "1", "T", "2", "3", "3-bis") :
+      - Phase 2 (analyse grille utilisateur soumise) : Gemini peut citer un
+        tirage de comparaison statistiques → recheck pertinent
+      - Phase 3 (requête complexe — classement / comparaison / catégorie) :
+        peut citer tirages historiques → recheck pertinent
+      - Phase 3-bis (comparaison sur période avec progression %) : peut citer
+        tirages témoins → recheck pertinent
+
     Note rétrocompat : les préfixes log "PHASE0_DATE_NOT_IN_DB" et
     "PHASE0_DRAW_MISMATCH" sont conservés (non renommés) malgré l'extension
     phase coverage, pour préserver les commandes `gcloud logging read` et les
     tests V126 existants. Le champ `phase` dans le log ligne 552 indique la
-    vraie phase déclenchante (0/1/T).
+    vraie phase déclenchante (0/1/T/2/3/3-bis).
 
     Args:
         response: texte Gemini post-clean
@@ -614,7 +661,8 @@ async def _recheck_phase0_draw_accuracy(
     """
     # V131.G — extend phase coverage : Phase 1 + T en plus de Phase 0
     # (cas terrain Jyppy 5/05 : question méta-historique → Phase 1 → halluci grille HYBRIDE)
-    if phase not in ("0", "1", "T") or not response:
+    # V141 A.3 — extend phase coverage : Phase 2 + 3 + 3-bis en plus de 0/1/T
+    if phase not in ("0", "1", "T", "2", "3", "3-bis") or not response:
         return None
     if not get_tirage_fn:
         return None

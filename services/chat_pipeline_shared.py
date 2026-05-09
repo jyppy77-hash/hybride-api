@@ -206,6 +206,206 @@ _TIRAGE_NOT_FOUND_EM = {
     ),
 }
 
+# V141 A.3 — CTA Phase T : tirage future tombant SUR un jour de tirage du jeu.
+# Encourage la génération de grille HYBRIDE plutôt que "tirage introuvable".
+_DRAW_PENDING_CTA_LOTO = {
+    "fr": (
+        "[CONTEXTE TIRAGE À VENIR]\n"
+        "Le tirage du Loto du {date} n'a pas encore eu lieu. "
+        "Tu peux proposer à l'utilisateur de générer une grille HYBRIDE "
+        "en lui rappelant que le moteur HYBRIDE optimise les statistiques "
+        "des tirages passés (jamais une garantie de gain)."
+    ),
+    "en": (
+        "[UPCOMING DRAW CONTEXT]\n"
+        "The Loto draw on {date} has not taken place yet. "
+        "You may suggest the user to generate a HYBRIDE grid, "
+        "reminding them that the HYBRIDE engine optimises statistics "
+        "from past draws (never a guarantee of winning)."
+    ),
+    "es": (
+        "[CONTEXTO SORTEO PRÓXIMO]\n"
+        "El sorteo del Loto del {date} aún no se ha celebrado. "
+        "Puedes proponer al usuario generar una cuadrícula HYBRIDE, "
+        "recordándole que el motor HYBRIDE optimiza las estadísticas "
+        "de sorteos pasados (nunca una garantía de ganar)."
+    ),
+    "pt": (
+        "[CONTEXTO SORTEIO PRÓXIMO]\n"
+        "O sorteio do Loto do {date} ainda não se realizou. "
+        "Podes propor ao utilizador gerar uma grelha HYBRIDE, "
+        "lembrando-lhe que o motor HYBRIDE otimiza as estatísticas "
+        "dos sorteios passados (nunca uma garantia de ganho)."
+    ),
+    "de": (
+        "[KONTEXT BEVORSTEHENDE ZIEHUNG]\n"
+        "Die Loto-Ziehung vom {date} hat noch nicht stattgefunden. "
+        "Du kannst dem Benutzer vorschlagen, einen HYBRIDE-Tipp zu erstellen, "
+        "und ihn daran erinnern, dass die HYBRIDE-Engine Statistiken "
+        "vergangener Ziehungen optimiert (niemals eine Gewinngarantie)."
+    ),
+    "nl": (
+        "[CONTEXT AANSTAANDE TREKKING]\n"
+        "De Loto-trekking van {date} heeft nog niet plaatsgevonden. "
+        "Je kunt de gebruiker voorstellen een HYBRIDE-rooster te genereren "
+        "en hem eraan herinneren dat de HYBRIDE-engine statistieken "
+        "van vorige trekkingen optimaliseert (nooit een winstgarantie)."
+    ),
+}
+
+_DRAW_PENDING_CTA_EM = {
+    "fr": (
+        "[CONTEXTE TIRAGE À VENIR]\n"
+        "Le tirage EuroMillions du {date} n'a pas encore eu lieu. "
+        "Tu peux proposer à l'utilisateur de générer une grille HYBRIDE "
+        "(5 numéros + 2 étoiles), en lui rappelant que le moteur HYBRIDE "
+        "optimise les statistiques des tirages passés (jamais une garantie de gain)."
+    ),
+    "en": (
+        "[UPCOMING DRAW CONTEXT]\n"
+        "The EuroMillions draw on {date} has not taken place yet. "
+        "You may suggest the user to generate a HYBRIDE grid "
+        "(5 numbers + 2 stars), reminding them that the HYBRIDE engine "
+        "optimises statistics from past draws (never a guarantee of winning)."
+    ),
+    "es": (
+        "[CONTEXTO SORTEO PRÓXIMO]\n"
+        "El sorteo de EuroMillions del {date} aún no se ha celebrado. "
+        "Puedes proponer al usuario generar una cuadrícula HYBRIDE "
+        "(5 números + 2 estrellas), recordándole que el motor HYBRIDE "
+        "optimiza las estadísticas de sorteos pasados (nunca una garantía de ganar)."
+    ),
+    "pt": (
+        "[CONTEXTO SORTEIO PRÓXIMO]\n"
+        "O sorteio do EuroMillions do {date} ainda não se realizou. "
+        "Podes propor ao utilizador gerar uma grelha HYBRIDE "
+        "(5 números + 2 estrelas), lembrando-lhe que o motor HYBRIDE "
+        "otimiza as estatísticas dos sorteios passados (nunca uma garantia de ganho)."
+    ),
+    "de": (
+        "[KONTEXT BEVORSTEHENDE ZIEHUNG]\n"
+        "Die EuroMillions-Ziehung vom {date} hat noch nicht stattgefunden. "
+        "Du kannst dem Benutzer vorschlagen, einen HYBRIDE-Tipp zu erstellen "
+        "(5 Zahlen + 2 Sterne), und ihn daran erinnern, dass die HYBRIDE-Engine "
+        "Statistiken vergangener Ziehungen optimiert (niemals eine Gewinngarantie)."
+    ),
+    "nl": (
+        "[CONTEXT AANSTAANDE TREKKING]\n"
+        "De EuroMillions-trekking van {date} heeft nog niet plaatsgevonden. "
+        "Je kunt de gebruiker voorstellen een HYBRIDE-rooster te genereren "
+        "(5 nummers + 2 sterren), en hem eraan herinneren dat de HYBRIDE-engine "
+        "statistieken van vorige trekkingen optimaliseert (nooit een winstgarantie)."
+    ),
+}
+
+# V141 A.3 — CTA Phase T : tirage future tombant SUR un jour SANS tirage de ce jeu.
+# Ex : utilisateur demande "jeudi 14 mai 2026" pour Loto (Loto = lun/mer/sam).
+_NO_DRAW_THIS_DAY_LOTO = {
+    "fr": (
+        "[CONTEXTE PAS DE TIRAGE CE JOUR]\n"
+        "Le {date} n'est pas un jour de tirage du Loto (lundi, mercredi, samedi). "
+        "Aucun tirage ne sera effectué à cette date. "
+        "Tu peux proposer à l'utilisateur de générer une grille HYBRIDE pour le "
+        "prochain tirage en date, en lui rappelant que le moteur HYBRIDE optimise "
+        "les statistiques des tirages passés (jamais une garantie de gain)."
+    ),
+    "en": (
+        "[NO DRAW THIS DAY CONTEXT]\n"
+        "{date} is not a Loto draw day (Monday, Wednesday, Saturday). "
+        "No draw will be held on this date. "
+        "You may suggest the user to generate a HYBRIDE grid for the next "
+        "scheduled draw, reminding them that the HYBRIDE engine optimises "
+        "statistics from past draws (never a guarantee of winning)."
+    ),
+    "es": (
+        "[CONTEXTO SIN SORTEO ESE DÍA]\n"
+        "El {date} no es un día de sorteo del Loto (lunes, miércoles, sábado). "
+        "No se celebrará ningún sorteo en esa fecha. "
+        "Puedes proponer al usuario generar una cuadrícula HYBRIDE para el "
+        "próximo sorteo previsto, recordándole que el motor HYBRIDE optimiza "
+        "las estadísticas de sorteos pasados (nunca una garantía de ganar)."
+    ),
+    "pt": (
+        "[CONTEXTO SEM SORTEIO NESTE DIA]\n"
+        "O {date} não é um dia de sorteio do Loto (segunda, quarta, sábado). "
+        "Não será realizado nenhum sorteio nessa data. "
+        "Podes propor ao utilizador gerar uma grelha HYBRIDE para o próximo "
+        "sorteio agendado, lembrando-lhe que o motor HYBRIDE otimiza as "
+        "estatísticas dos sorteios passados (nunca uma garantia de ganho)."
+    ),
+    "de": (
+        "[KONTEXT KEINE ZIEHUNG AN DIESEM TAG]\n"
+        "Der {date} ist kein Loto-Ziehungstag (Montag, Mittwoch, Samstag). "
+        "An diesem Datum findet keine Ziehung statt. "
+        "Du kannst dem Benutzer vorschlagen, einen HYBRIDE-Tipp für die nächste "
+        "anstehende Ziehung zu erstellen, und ihn daran erinnern, dass die "
+        "HYBRIDE-Engine Statistiken vergangener Ziehungen optimiert "
+        "(niemals eine Gewinngarantie)."
+    ),
+    "nl": (
+        "[CONTEXT GEEN TREKKING OP DEZE DAG]\n"
+        "{date} is geen Loto-trekkingsdag (maandag, woensdag, zaterdag). "
+        "Op deze datum zal geen trekking plaatsvinden. "
+        "Je kunt de gebruiker voorstellen een HYBRIDE-rooster te genereren "
+        "voor de volgende geplande trekking, en hem eraan herinneren dat de "
+        "HYBRIDE-engine statistieken van vorige trekkingen optimaliseert "
+        "(nooit een winstgarantie)."
+    ),
+}
+
+_NO_DRAW_THIS_DAY_EM = {
+    "fr": (
+        "[CONTEXTE PAS DE TIRAGE CE JOUR]\n"
+        "Le {date} n'est pas un jour de tirage EuroMillions (mardi, vendredi). "
+        "Aucun tirage ne sera effectué à cette date. "
+        "Tu peux proposer à l'utilisateur de générer une grille HYBRIDE pour le "
+        "prochain tirage en date, en lui rappelant que le moteur HYBRIDE optimise "
+        "les statistiques des tirages passés (jamais une garantie de gain)."
+    ),
+    "en": (
+        "[NO DRAW THIS DAY CONTEXT]\n"
+        "{date} is not a EuroMillions draw day (Tuesday, Friday). "
+        "No draw will be held on this date. "
+        "You may suggest the user to generate a HYBRIDE grid for the next "
+        "scheduled draw, reminding them that the HYBRIDE engine optimises "
+        "statistics from past draws (never a guarantee of winning)."
+    ),
+    "es": (
+        "[CONTEXTO SIN SORTEO ESE DÍA]\n"
+        "El {date} no es un día de sorteo de EuroMillions (martes, viernes). "
+        "No se celebrará ningún sorteo en esa fecha. "
+        "Puedes proponer al usuario generar una cuadrícula HYBRIDE para el "
+        "próximo sorteo previsto, recordándole que el motor HYBRIDE optimiza "
+        "las estadísticas de sorteos pasados (nunca una garantía de ganar)."
+    ),
+    "pt": (
+        "[CONTEXTO SEM SORTEIO NESTE DIA]\n"
+        "O {date} não é um dia de sorteio do EuroMillions (terça, sexta). "
+        "Não será realizado nenhum sorteio nessa data. "
+        "Podes propor ao utilizador gerar uma grelha HYBRIDE para o próximo "
+        "sorteio agendado, lembrando-lhe que o motor HYBRIDE otimiza as "
+        "estatísticas dos sorteios passados (nunca uma garantia de ganho)."
+    ),
+    "de": (
+        "[KONTEXT KEINE ZIEHUNG AN DIESEM TAG]\n"
+        "Der {date} ist kein EuroMillions-Ziehungstag (Dienstag, Freitag). "
+        "An diesem Datum findet keine Ziehung statt. "
+        "Du kannst dem Benutzer vorschlagen, einen HYBRIDE-Tipp für die nächste "
+        "anstehende Ziehung zu erstellen, und ihn daran erinnern, dass die "
+        "HYBRIDE-Engine Statistiken vergangener Ziehungen optimiert "
+        "(niemals eine Gewinngarantie)."
+    ),
+    "nl": (
+        "[CONTEXT GEEN TREKKING OP DEZE DAG]\n"
+        "{date} is geen EuroMillions-trekkingsdag (dinsdag, vrijdag). "
+        "Op deze datum zal geen trekking plaatsvinden. "
+        "Je kunt de gebruiker voorstellen een HYBRIDE-rooster te genereren "
+        "voor de volgende geplande trekking, en hem eraan herinneren dat de "
+        "HYBRIDE-engine statistieken van vorige trekkingen optimaliseert "
+        "(nooit een winstgarantie)."
+    ),
+}
+
 # V96: Guard — Phase T found data for ONE date, warn Gemini not to invent others
 _TIRAGE_SINGLE_DATE_GUARD = {
     "fr": (
@@ -291,6 +491,69 @@ _TIRAGE_ERROR_GUARD = {
         "technische fout het ophalen van deze trekking momenteel verhindert."
     ),
 }
+
+# V141 A.3.1 BUG #4 — Phase G fallthrough silent failure (cas terrain #3 "Pru importe"
+# 9/05 05:24 : msg ambigu détecté generation, Phase G fail silencieuse, leak Gemini).
+# Injection contexte safe i18n quand Phase G attempted mais _generation_context vide.
+_PHASE_G_FALLTHROUGH_CONTEXT = {
+    "fr": (
+        "[ERREUR GÉNÉRATION HYBRIDE]\n"
+        "Le moteur HYBRIDE n'a pas pu générer de grille pour cette demande.\n"
+        "IMPORTANT : Ne PAS inventer de numéros. Indique simplement qu'une "
+        "erreur technique empêche la génération pour l'instant et propose à "
+        "l'utilisateur de reformuler sa demande."
+    ),
+    "en": (
+        "[HYBRIDE GENERATION ERROR]\n"
+        "The HYBRIDE engine could not generate a grid for this request.\n"
+        "IMPORTANT: Do NOT invent numbers. Simply state that a technical "
+        "error prevents generation for now and suggest the user rephrase."
+    ),
+    "es": (
+        "[ERROR GENERACIÓN HYBRIDE]\n"
+        "El motor HYBRIDE no pudo generar una cuadrícula para esta solicitud.\n"
+        "IMPORTANTE: NO inventes números. Indica simplemente que un error "
+        "técnico impide la generación por ahora y propón al usuario reformular."
+    ),
+    "pt": (
+        "[ERRO GERAÇÃO HYBRIDE]\n"
+        "O motor HYBRIDE não conseguiu gerar uma grelha para este pedido.\n"
+        "IMPORTANTE: NÃO inventes números. Indica simplesmente que um erro "
+        "técnico impede a geração por enquanto e propõe ao utilizador reformular."
+    ),
+    "de": (
+        "[FEHLER HYBRIDE-GENERIERUNG]\n"
+        "Die HYBRIDE-Engine konnte für diese Anfrage keinen Tipp erstellen.\n"
+        "WICHTIG: Erfinde KEINE Zahlen. Gib einfach an, dass ein technischer "
+        "Fehler die Generierung derzeit verhindert, und schlage dem Benutzer "
+        "vor, seine Anfrage anders zu formulieren."
+    ),
+    "nl": (
+        "[FOUT HYBRIDE-GENERATIE]\n"
+        "De HYBRIDE-engine kon geen rooster genereren voor dit verzoek.\n"
+        "BELANGRIJK: Verzin GEEN nummers. Geef gewoon aan dat een technische "
+        "fout de generatie momenteel verhindert en stel de gebruiker voor "
+        "zijn verzoek te herformuleren."
+    ),
+}
+
+
+def _phase_g_get_safe_fallthrough_context(
+    generation_context: str, lang: str = "fr"
+) -> str | None:
+    """V141 A.3.1 BUG #4 — return safe i18n context if Phase G fell through silently.
+
+    Args:
+        generation_context: current `_generation_context` after Phase G try/except.
+        lang: 6 langs i18n.
+
+    Returns:
+        Safe i18n context string if `generation_context` is empty (Phase G failed).
+        None if `generation_context` is truthy (Phase G success — caller continues).
+    """
+    if generation_context:
+        return None
+    return _PHASE_G_FALLTHROUGH_CONTEXT.get(lang, _PHASE_G_FALLTHROUGH_CONTEXT["fr"])
 
 
 # ═══════════════════════════════════════════════════════
@@ -681,7 +944,10 @@ async def _prepare_chat_context_base(
 
     # ── Phase G : Détection génération de grille ──
     _generation_context = ""
+    _phase_g_attempted = False        # V141 A.3.1 BUG #4 — observability flag
+    _phase_g_error_label = ""         # V141 A.3.1 BUG #4 — telemetry label
     if cfg["detect_generation"](message):
+        _phase_g_attempted = True
         _phase = "G"
         try:
             _gen_mod = importlib.import_module(cfg["gen_engine_module"])
@@ -769,8 +1035,28 @@ async def _prepare_chat_context_base(
                     # V94 hotfix: decay write removed from chatbot pipeline.
                     # Decay state is now updated ONLY when a new real draw is imported
                     # (via check_and_update_decay or admin route). Chatbot is READ-ONLY.
+                else:
+                    # V141 A.3.1 BUG #4 — engine retourne None ou grids vides (cas 4)
+                    _phase_g_error_label = "no_grids"
+        except asyncio.TimeoutError:
+            # V141 A.3.1 BUG #4 — timeout sur _gen_fn (cas 3)
+            _phase_g_error_label = "engine_timeout"
+            logger.warning(f"{_lp} Phase G timeout")
         except Exception as e:
+            # V141 A.3.1 BUG #4 — import/extract error ou engine exception (cas 1+2)
+            _phase_g_error_label = "engine_error"
             logger.warning(f"{_lp} Phase G erreur: {e}")
+
+        # V141 A.3.1 BUG #4 — safe fallback if Phase G attempted but failed silently
+        _safe_fallthrough = _phase_g_get_safe_fallthrough_context(_generation_context, lang)
+        if _safe_fallthrough:
+            _generation_context = _safe_fallthrough
+            if not _phase_g_error_label:
+                _phase_g_error_label = "unknown"
+            logger.warning(
+                f"{_lp} [V141 A.3.1] Phase G fallthrough: error={_phase_g_error_label} | "
+                f'question="{message[:80]}"'
+            )
 
     # ── Phase A : Détection argent / gains / paris ──
     # F02 V84: skip Phase A if message contains a user grid — Phase EVAL handles it
@@ -947,9 +1233,28 @@ async def _prepare_chat_context_base(
                     logger.info(f"{_lp} Tirage injecte: {tirage_data['date']}")
                 elif tirage_target != "latest":
                     date_fr = _format_date_fr(str(tirage_target))
-                    _tpl = cfg["tirage_not_found"].get(lang, cfg["tirage_not_found"]["fr"])
-                    enrichment_context = _tpl.format(date=date_fr)
-                    logger.info(f"{_lp} Tirage introuvable pour: {tirage_target}")
+                    # V141 A.3 — Distinguish future draw vs past missing data.
+                    # Defense in depth : si game_enum absent (cfg legacy), tombe en `else`
+                    # → comportement V99 préservé (tirage_not_found inchangé).
+                    _game_enum = cfg.get("game_enum")
+                    _is_future = False
+                    _is_draw = False
+                    if _game_enum is not None and isinstance(tirage_target, _date_cls):
+                        from config.games import _is_draw_day, _is_target_in_future
+                        _is_future = _is_target_in_future(_game_enum, tirage_target)
+                        _is_draw = _is_draw_day(_game_enum, tirage_target)
+                    if _is_future and _is_draw:
+                        _tpl = cfg["draw_pending_cta"].get(lang, cfg["draw_pending_cta"]["fr"])
+                        enrichment_context = _tpl.format(date=date_fr)
+                        logger.info(f"{_lp} V141 A.3 Phase T future+draw_day, CTA pending: {tirage_target}")
+                    elif _is_future:
+                        _tpl = cfg["no_draw_this_day"].get(lang, cfg["no_draw_this_day"]["fr"])
+                        enrichment_context = _tpl.format(date=date_fr)
+                        logger.info(f"{_lp} V141 A.3 Phase T future+no_draw_day, CTA: {tirage_target}")
+                    else:
+                        _tpl = cfg["tirage_not_found"].get(lang, cfg["tirage_not_found"]["fr"])
+                        enrichment_context = _tpl.format(date=date_fr)
+                        logger.info(f"{_lp} Tirage introuvable pour: {tirage_target}")
             except Exception as e:
                 logger.warning(f"{_lp} Erreur tirage: {e}")
                 # V96: Inject error guard to prevent Gemini from inventing numbers
@@ -1171,8 +1476,9 @@ async def _prepare_chat_context_base(
         continuation_mode=_continuation_mode, enrichment_context=enrichment_context,
         lang=lang, **_sql_kw,
     )
-    if _sql_query or _sql_status != "N/A":
+    if (_sql_query or _sql_status != "N/A") and not _phase_g_error_label:
         _phase = "SQL"
+    # V141 A.3.1 BUG #4 — `_phase = "G"` préservé si Phase G failed (observability)
 
     if force_sql and not enrichment_context:
         logger.warning(

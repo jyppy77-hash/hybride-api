@@ -73,7 +73,10 @@ from services.chat_pipeline_shared import (
     _prepare_chat_context_base,
     _build_config_base,  # F03 V74
     _TIRAGE_NOT_FOUND_EM,
+    _DRAW_PENDING_CTA_EM,  # V141 A.3
+    _NO_DRAW_THIS_DAY_EM,  # V141 A.3
 )
+from config.games import ValidGame  # V141 A.3 — Phase T draw_day routing
 
 logger = logging.getLogger(__name__)
 
@@ -165,6 +168,10 @@ def _build_em_config():
         "get_tirage_data": _get_tirage_data_em,
         "format_tirage_context": _format_tirage_context_em,
         "tirage_not_found": _TIRAGE_NOT_FOUND_EM,
+        # V141 A.3 — CTA Phase T pour dates futures (jour de tirage / pas jour de tirage)
+        "draw_pending_cta": _DRAW_PENDING_CTA_EM,
+        "no_draw_this_day": _NO_DRAW_THIS_DAY_EM,
+        "game_enum": ValidGame.euromillions,
         # Phase 2
         "detect_grille": _detect_grille_em,
         # Phase 3
