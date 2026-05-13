@@ -380,6 +380,7 @@
         }
 
         function submitChatRatingEmEn(rating) {
+            // V141 A.4 UX Fix 1 — 3 tiers : low (1-2) mandatory 20 chars, mid (3) / high (4-5) optional
             var stars = document.querySelectorAll('#hybride-rating-stars-em-en .rating-star');
             for (var i = 0; i < stars.length; i++) {
                 if (i < rating) {
@@ -390,25 +391,180 @@
                     stars[i].classList.remove('active');
                 }
             }
+            showRatingCommentSectionEmEn(rating);
+        }
 
+        function showRatingCommentSectionEmEn(rating) {
+            var widget = document.getElementById('hybride-rating-widget-em-en');
+            if (!widget) return;
+            if (document.getElementById('hybride-rating-comment-section')) return;
+
+            var tier = rating <= 2 ? 'low' : (rating === 3 ? 'mid' : 'high');
+            var isMandatory = (tier === 'low');
+            var MIN_CHARS = 20;
+
+            var section = document.createElement('div');
+            section.id = 'hybride-rating-comment-section';
+            section.className = 'hybride-rating-comment-section hybride-rating-tier-' + tier;
+
+            if (isMandatory) {
+                var dismissBtn = document.createElement('button');
+                dismissBtn.className = 'hybride-rating-comment-dismiss';
+                dismissBtn.setAttribute('aria-label', 'Close');
+                dismissBtn.textContent = '✕';
+                dismissBtn.addEventListener('click', function () { dismissRatingCommentEmEn(); });
+                section.appendChild(dismissBtn);
+            }
+
+            var prompt = document.createElement('div');
+            prompt.className = 'hybride-rating-comment-prompt';
+            if (tier === 'low') {
+                prompt.textContent = 'What didn\'t work?';
+            } else if (tier === 'mid') {
+                prompt.textContent = 'Any suggestion to improve? (optional)';
+            } else {
+                prompt.textContent = 'A word to make us smile? (optional) 🤩';
+            }
+            section.appendChild(prompt);
+
+            var textarea = document.createElement('textarea');
+            textarea.id = 'hybride-rating-comment-input';
+            textarea.className = 'hybride-rating-comment-input';
+            textarea.maxLength = 500;
+            textarea.rows = 3;
+            section.appendChild(textarea);
+
+            var errorMsg = null;
+            if (isMandatory) {
+                errorMsg = document.createElement('div');
+                errorMsg.className = 'hybride-rating-comment-error';
+                errorMsg.textContent = 'Min. 20 characters please 😊';
+                section.appendChild(errorMsg);
+            }
+
+            var footer = document.createElement('div');
+            footer.className = 'hybride-rating-comment-footer';
+
+            var counter = document.createElement('span');
+            counter.className = 'hybride-rating-comment-counter';
+            if (isMandatory) counter.classList.add('too-short');
+            counter.textContent = '0 / 500';
+
+            var submitted = false;
+            var btnGroup = document.createElement('span');
+            btnGroup.className = 'hybride-rating-comment-buttons';
+
+            if (!isMandatory) {
+                var skipBtn = document.createElement('button');
+                skipBtn.className = 'hybride-rating-comment-skip';
+                skipBtn.textContent = 'Skip';
+                skipBtn.addEventListener('click', function () {
+                    if (submitted) return;
+                    submitted = true;
+                    skipBtn.disabled = true;
+                    _sendRatingPayloadEmEn(rating, '');
+                });
+                btnGroup.appendChild(skipBtn);
+            }
+
+            var submitBtn = document.createElement('button');
+            submitBtn.className = 'hybride-rating-comment-submit';
+            submitBtn.textContent = 'Send';
+            if (isMandatory) submitBtn.disabled = true;
+            submitBtn.addEventListener('click', function () {
+                if (submitted) return;
+                var comment = textarea.value.trim();
+                if (isMandatory && comment.length < MIN_CHARS) {
+                    if (errorMsg) errorMsg.classList.add('visible');
+                    textarea.classList.add('has-error');
+                    try { textarea.focus(); } catch (e) { /* ignore */ }
+                    return;
+                }
+                submitted = true;
+                submitBtn.disabled = true;
+                _sendRatingPayloadEmEn(rating, comment.substring(0, 500));
+            });
+            btnGroup.appendChild(submitBtn);
+
+            footer.appendChild(counter);
+            footer.appendChild(btnGroup);
+            section.appendChild(footer);
+
+            textarea.addEventListener('input', function () {
+                var n = textarea.value.length;
+                counter.textContent = n + ' / 500';
+                if (isMandatory) {
+                    counter.classList.remove('too-short', 'near-limit', 'valid');
+                    if (n < 20) {
+                        counter.classList.add('too-short');
+                        submitBtn.disabled = true;
+                    } else if (n < 30) {
+                        counter.classList.add('near-limit');
+                        submitBtn.disabled = false;
+                        if (errorMsg) errorMsg.classList.remove('visible');
+                        textarea.classList.remove('has-error');
+                    } else {
+                        counter.classList.add('valid');
+                        submitBtn.disabled = false;
+                        if (errorMsg) errorMsg.classList.remove('visible');
+                        textarea.classList.remove('has-error');
+                    }
+                }
+            });
+
+            textarea.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' || e.keyCode === 27) {
+                    e.preventDefault();
+                    if (isMandatory) {
+                        dismissRatingCommentEmEn();
+                    } else if (!submitted) {
+                        submitted = true;
+                        _sendRatingPayloadEmEn(rating, '');
+                    }
+                }
+            });
+
+            widget.appendChild(section);
+            try { textarea.focus(); } catch (e) { /* ignore */ }
+            scrollToBottom();
+        }
+
+        function dismissRatingCommentEmEn() {
+            var section = document.getElementById('hybride-rating-comment-section');
+            if (section) section.remove();
+            var stars = document.querySelectorAll('#hybride-rating-stars-em-en .rating-star');
+            for (var i = 0; i < stars.length; i++) {
+                stars[i].classList.remove('selected');
+                stars[i].classList.remove('active');
+            }
+            if (window.LotoIA_track) LotoIA_track('rating-dismissed-popup', {module: 'euromillions-en'});
+        }
+
+        function _sendRatingPayloadEmEn(rating, comment) {
             var sessionId = sessionStorage.getItem('hybride_session_id')
                 || ('sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
             sessionStorage.setItem('hybride_session_id', sessionId);
 
+            var hasComment = !!(comment && comment.length > 0);
+            var payload = {
+                source: RATING_SOURCE,
+                rating: rating,
+                session_id: sessionId,
+                page: window.location.pathname
+            };
+            if (hasComment) payload.comment = comment.substring(0, 500);
+
             fetch('/api/rating', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    source: RATING_SOURCE,
-                    rating: rating,
-                    session_id: sessionId,
-                    page: window.location.pathname
-                })
+                body: JSON.stringify(payload)
             })
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 if (data.success) {
                     sessionStorage.setItem(RATING_STORAGE_KEY, 'true');
+                    var commentSection = document.getElementById('hybride-rating-comment-section');
+                    if (commentSection) commentSection.style.display = 'none';
                     var feedback = document.getElementById('hybride-rating-feedback-em-en');
                     var messages = {
                         5: 'Thanks! You\'re a legend!',
@@ -432,9 +588,10 @@
             trackEvent('hybride_em_en_chat_rating', {
                 page: detectPage(),
                 rating: rating,
-                message_count: messageCount
+                message_count: messageCount,
+                has_comment: hasComment
             });
-            if (window.LotoIA_track) LotoIA_track('rating-submitted', {rating: rating, module: 'euromillions-en'});
+            if (window.LotoIA_track) LotoIA_track('rating-submitted', {rating: rating, module: 'euromillions-en', has_comment: hasComment});
         }
 
         /* ══════════════════════════════════

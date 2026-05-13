@@ -904,7 +904,7 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.028 (V141 A.3 Audit V140 Phase 2.5, 9 items).
+        """APP_VERSION == 1.6.029 (V141 A.4 UX Fixes — rating popup 3 tiers + loteries étrangères).
 
         V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
         V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
@@ -932,9 +932,16 @@ class TestAppVersion:
         Item 7 extension _recheck Phase 2/3/3-bis +
         Item 8 BUG #4 Phase G fallthrough silent fix (cas terrain #3 "Pru importe") +
         Item 9 BUG #6 Phase AFFIRMATION transitive anti-hallu (cas terrain #2 "Oui").
+        V141 A.4 (13/05, Release 1.6.029) — UX Fixes :
+        Fix 1 rating popup 3 tiers (low 1-2 obligatoire 20 chars / mid 3 / high 4-5 optionnels)
+        sur 7 widgets chatbot + banner rating-popup.js (8 surfaces, +1462 net lines) +
+        Fix 2 Phase OUT_OF_SCOPE_LOTTERY pre-empt Phase A argent — 25 patterns
+        loteries étrangères (senloto/lonase/powerball/...) + cross-sell module-aware EM↔Loto +
+        defense-in-depth Phase A skip si real foreign détecté (cas terrain user sénégalais
+        12/05/2026 22:33-22:35, +57 tests adversarial test_v141_a4_ux_foreign_lottery).
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.028"
+        assert APP_VERSION == "1.6.029"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

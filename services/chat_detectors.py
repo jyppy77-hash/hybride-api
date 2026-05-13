@@ -665,6 +665,249 @@ def _detect_score_question(message: str) -> bool:
     return False
 
 
+# ═══════════════════════════════════════════════════════
+# V141 A.4 UX Fix 2 — Phase OUT_OF_SCOPE_LOTTERY (loteries étrangères)
+# Pre-empt Phase A pour éviter faux positifs "L'argent c'est pas mon rayon"
+# sur questions légitimes type "Connaissais tu senloto jackpot lonase Sénégal"
+# (cas terrain 12/05/2026 22:33-22:35, user sénégalais frustré, vote 1*).
+# Cross-sell module-aware : Loto↔EM redirige vers module dédié LotoIA.
+# ═══════════════════════════════════════════════════════
+
+_FOREIGN_LOTTERY_RE = re.compile(
+    r'\b('
+    # Afrique francophone (LONASE Sénégal, LONACI Côte d'Ivoire, PMUC Cameroun, MDJS Maroc)
+    r'senloto|lonase|lonaci|pmuc|mdjs|'
+    # US / UK / Australie
+    r'powerball|mega[\s-]*millions?|uk\s+lott(?:o|ery)|oz\s+lotto|'
+    # Europe (hors France) : Italie / Espagne / Suisse / Belgique / Portugal
+    r'lotto\s+italia|superenalotto|bonoloto|el\s+gordo|la\s+primitiva|'
+    r'swiss\s*lotto|loto\s+belgique|loto\s+suisse|loteria\s+nacional|'
+    # Canada / Amérique latine
+    r'lotto\s+max|lotto\s+6[/\-]?49|mega[\s-]*sena|'
+    # Cross-sell EuroMillions (matché ici, branché vers CROSS_SELL si module = loto)
+    r'euromillions?|euro\s*millions?|'
+    # V141 A.4 patch — "british/english/etc. + lotto/lottery" (variants EN)
+    r'british\s+lott(?:o|ery)|english\s+lott(?:o|ery)|american\s+lott(?:o|ery)|'
+    r'irish\s+lott(?:o|ery)|spanish\s+lott(?:o|ery)|italian\s+lott(?:o|ery)|'
+    r'german\s+lott(?:o|ery)|australian\s+lott(?:o|ery)|'
+    # Pattern catch-all "loto/loterie + pays/adjectif étranger"
+    r'lot(?:o|erie)\s+(?:maroc|tunisie|alg[eé]rie|cameroun|s[eé]n[eé]gal|'
+    r'belgique|suisse|canada|br[eé]sil|espagne|portugal|italie|allemagne|'
+    r'royaume[\s\-]uni|c[oô]te\s*d[\'’]?ivoire|'
+    # V141 A.4 patch — adjectifs nationalité FR (anglais/britannique/etc.)
+    r'anglais|britannique|am[eé]ricain|allemand|espagnol|italien|portugais|'
+    r'belge|canadien|br[eé]silien|australien|irlandais|hongrois|polonais|'
+    r'n[eé]erlandais|hollandais|japonais|chinois|russe|argentin|mexicain|'
+    r'turc|grec|tch[eè]que|finlandais|su[eé]dois|norv[eé]gien|danois)|'
+    # Loto FR cross-sell patterns (matché ici, branché vers CROSS_SELL si module = em)
+    r'loto\s+(?:fran[çc]ais|fdj|de\s+france|de\s+la\s+fdj)|french\s+lott(?:o|ery)'
+    r')\b',
+    re.IGNORECASE,
+)
+
+_FOREIGN_LOTTERY_RESPONSES: dict[str, str] = {
+    "fr": (
+        "🇫🇷 Je suis HYBRIDE, l'assistant IA spécialisé dans le **Loto français** et l'**EuroMillions**. "
+        "Pour {lottery}, je ne peux pas t'aider, désolé !\n\n"
+        "Mais si tu veux, je peux te parler du Loto FR : fréquences, écarts, "
+        "numéros chauds/froids, pairs/impairs… Pose-moi ta question ! 🎲"
+    ),
+    "en": (
+        "🇫🇷 I'm HYBRIDE, the AI assistant specialized in **French Loto** and **EuroMillions**. "
+        "I can't help with {lottery}, sorry!\n\n"
+        "But if you want, I can give you French Loto stats: frequencies, gaps, "
+        "hot/cold numbers, odd/even ratios… Ask me anything! 🎲"
+    ),
+    "es": (
+        "🇫🇷 Soy HYBRIDE, el asistente IA especializado en **Loto francés** y **EuroMillones**. "
+        "Para {lottery}, no puedo ayudarte, ¡lo siento!\n\n"
+        "Pero si quieres, puedo hablarte del Loto francés: frecuencias, retrasos, "
+        "números calientes/fríos, pares/impares… ¡Pregúntame! 🎲"
+    ),
+    "pt": (
+        "🇫🇷 Sou o HYBRIDE, o assistente IA especializado no **Loto francês** e no **EuroMilhões**. "
+        "Para {lottery}, não posso ajudar-te, desculpa!\n\n"
+        "Mas se quiseres, posso falar-te sobre o Loto francês: frequências, atrasos, "
+        "números quentes/frios, pares/ímpares… Pergunta-me! 🎲"
+    ),
+    "de": (
+        "🇫🇷 Ich bin HYBRIDE, der KI-Assistent für **französisches Loto** und **EuroMillionen**. "
+        "Für {lottery} kann ich dir leider nicht helfen!\n\n"
+        "Aber wenn du willst, kann ich dir Statistiken zum französischen Loto erklären: "
+        "Häufigkeiten, Lücken, heiße/kalte Zahlen, gerade/ungerade… Frag mich! 🎲"
+    ),
+    "nl": (
+        "🇫🇷 Ik ben HYBRIDE, de AI-assistent gespecialiseerd in **Franse Loto** en **EuroMillions**. "
+        "Voor {lottery} kan ik je niet helpen, sorry!\n\n"
+        "Maar als je wilt, kan ik je vertellen over de Franse Loto: frequenties, achterstanden, "
+        "hete/koude nummers, even/oneven… Vraag me wat je wilt! 🎲"
+    ),
+}
+
+_CROSS_SELL_EM_FROM_LOTO: dict[str, str] = {
+    "fr": (
+        "🎰 Pour l'**EuroMillions**, j'ai un module dédié sur la page "
+        "[EuroMillions de LotoIA](/euromillions) ! Tu veux y aller ?\n\n"
+        "Tu y trouveras les stats complètes, fréquences des étoiles, écarts, "
+        "et un assistant HYBRIDE EuroMillions dédié 🌟"
+    ),
+    "en": (
+        "🎰 For **EuroMillions**, I have a dedicated module on the "
+        "[EuroMillions page of LotoIA](/euromillions)! Want to go there?\n\n"
+        "You'll find full stats, star frequencies, gaps, "
+        "and a dedicated HYBRIDE EuroMillions assistant 🌟"
+    ),
+    "es": (
+        "🎰 Para **EuroMillones**, tengo un módulo dedicado en la "
+        "[página EuroMillones de LotoIA](/euromillions) ! ¿Quieres ir?\n\n"
+        "Encontrarás estadísticas completas, frecuencias de estrellas, retrasos, "
+        "y un asistente HYBRIDE EuroMillones dedicado 🌟"
+    ),
+    "pt": (
+        "🎰 Para o **EuroMilhões**, tenho um módulo dedicado na "
+        "[página EuroMilhões do LotoIA](/euromillions) ! Queres ir?\n\n"
+        "Encontrarás estatísticas completas, frequências das estrelas, atrasos, "
+        "e um assistente HYBRIDE EuroMilhões dedicado 🌟"
+    ),
+    "de": (
+        "🎰 Für **EuroMillionen** habe ich ein dediziertes Modul auf der "
+        "[EuroMillionen-Seite von LotoIA](/euromillions) ! Möchtest du dorthin?\n\n"
+        "Du findest vollständige Statistiken, Sternenhäufigkeiten, Lücken, "
+        "und einen dedizierten HYBRIDE EuroMillionen-Assistenten 🌟"
+    ),
+    "nl": (
+        "🎰 Voor **EuroMillions** heb ik een dedicated module op de "
+        "[EuroMillions-pagina van LotoIA](/euromillions) ! Wil je daarheen?\n\n"
+        "Je vindt er volledige stats, sterfrequenties, achterstanden, "
+        "en een dedicated HYBRIDE EuroMillions-assistent 🌟"
+    ),
+}
+
+_CROSS_SELL_LOTO_FROM_EM: dict[str, str] = {
+    "fr": (
+        "🎰 Pour le **Loto français** (FDJ), j'ai un module dédié sur la page "
+        "[Loto de LotoIA](/loto) ! Tu veux y aller ?\n\n"
+        "Stats complètes, fréquences des numéros et du numéro chance, écarts, "
+        "et un assistant HYBRIDE Loto dédié 🎲"
+    ),
+    "en": (
+        "🎰 For **French Loto** (FDJ), I have a dedicated module on the "
+        "[Loto page of LotoIA](/loto)! Want to go there?\n\n"
+        "Full stats, number and chance frequencies, gaps, "
+        "and a dedicated HYBRIDE Loto assistant 🎲"
+    ),
+    "es": (
+        "🎰 Para el **Loto francés** (FDJ), tengo un módulo dedicado en la "
+        "[página Loto de LotoIA](/loto) ! ¿Quieres ir?\n\n"
+        "Estadísticas completas, frecuencias de números y chance, retrasos, "
+        "y un asistente HYBRIDE Loto dedicado 🎲"
+    ),
+    "pt": (
+        "🎰 Para o **Loto francês** (FDJ), tenho um módulo dedicado na "
+        "[página Loto do LotoIA](/loto) ! Queres ir?\n\n"
+        "Estatísticas completas, frequências dos números e chance, atrasos, "
+        "e um assistente HYBRIDE Loto dedicado 🎲"
+    ),
+    "de": (
+        "🎰 Für **französisches Loto** (FDJ) habe ich ein dediziertes Modul auf der "
+        "[Loto-Seite von LotoIA](/loto) ! Möchtest du dorthin?\n\n"
+        "Vollständige Statistiken, Zahlen- und Chance-Häufigkeiten, Lücken, "
+        "und einen dedizierten HYBRIDE Loto-Assistenten 🎲"
+    ),
+    "nl": (
+        "🎰 Voor de **Franse Loto** (FDJ), heb ik een dedicated module op de "
+        "[Loto-pagina van LotoIA](/loto) ! Wil je daarheen?\n\n"
+        "Volledige stats, nummer- en chance-frequenties, achterstanden, "
+        "en een dedicated HYBRIDE Loto-assistent 🎲"
+    ),
+}
+
+
+# V141 A.4 UX Fix 2 — Tokens identifiant les jeux LotoIA (vs vraies loteries étrangères).
+# Utilisé pour prioriser "real foreign" sur "own game" dans la détection.
+_OWN_GAME_TOKENS: tuple[str, ...] = (
+    "euromillion", "euro million",
+    "loto français", "loto francais", "french lott",
+    "loto fdj", "loto de france", "loto de la fdj",
+)
+
+
+def _detect_foreign_lottery(message: str) -> str | None:
+    """V141 A.4 UX Fix 2 — Détecte mention d'une loterie étrangère/hors LotoIA.
+
+    Retourne le nom de la loterie matchée (lowercased) ou None.
+    Inclut EuroMillions + Loto FR cross-sell patterns (différenciés via
+    `_get_foreign_lottery_response` selon le module courant).
+
+    V141 A.4 prioritise "real foreign" (senloto/powerball/...) sur "own game"
+    (euromillions/loto français). Cas terrain : message multi-loteries
+    "loto français mais senloto/lonase" → retourne 'senloto' (real foreign)
+    plutôt que 'loto français' (own game).
+
+    Args:
+        message: user message (any language)
+
+    Returns:
+        matched lottery name (lowercased, stripped) or None
+    """
+    if not message:
+        return None
+    matches = _FOREIGN_LOTTERY_RE.findall(message)
+    if not matches:
+        return None
+    # Prioriser real foreign sur own game (EM / Loto FR sont cross-sell, pas out-of-scope)
+    for m in matches:
+        norm = m.lower()
+        if not any(token in norm for token in _OWN_GAME_TOKENS):
+            return norm.strip()
+    # Aucun real foreign trouvé → retourne premier own game (cross-sell ou same-module)
+    return matches[0].strip().lower()
+
+
+def _get_foreign_lottery_response(
+    lottery: str,
+    lang: str = "fr",
+    current_module: str = "loto",
+) -> str | None:
+    """V141 A.4 UX Fix 2 — Réponse cross-sell ou out-of-scope module-aware.
+
+    Args:
+        lottery: nom de loterie matchée (lowercase, depuis `_detect_foreign_lottery`)
+        lang: code langue (fr/en/es/pt/de/nl)
+        current_module: "loto" ou "em" — décide cross-sell EM↔Loto vs out-of-scope
+
+    Returns:
+        Réponse formatée i18n, OU `None` si match = jeu courant (same-module).
+        4 cas :
+        - Same module (Loto+loto FR ou EM+euromillions) → None (fall through pipeline)
+        - EM matché + module=loto → cross-sell vers /euromillions
+        - Loto FR matché + module=em → cross-sell vers /loto
+        - Autre loterie étrangère → out-of-scope avec template générique
+    """
+    norm = (lottery or "").lower().strip()
+    norm_compact = norm.replace(" ", "").replace("-", "")
+    is_em_match = "euromillion" in norm_compact or "euro million" in norm
+    is_loto_fr_match = any(
+        t in norm for t in (
+            "loto français", "loto francais", "french lott",
+            "loto fdj", "loto de france", "loto de la fdj",
+        )
+    )
+    # Same module → pas de routage OUT_OF_SCOPE (pipeline normal continue)
+    if (current_module == "loto" and is_loto_fr_match) or (current_module == "em" and is_em_match):
+        return None
+    # Cross-sell EuroMillions quand sur module Loto
+    if current_module == "loto" and is_em_match:
+        return _CROSS_SELL_EM_FROM_LOTO.get(lang, _CROSS_SELL_EM_FROM_LOTO["fr"])
+    # Cross-sell Loto FR quand sur module EM
+    if current_module == "em" and is_loto_fr_match:
+        return _CROSS_SELL_LOTO_FROM_EM.get(lang, _CROSS_SELL_LOTO_FROM_EM["fr"])
+    # Loterie étrangère générique → out-of-scope
+    tpl = _FOREIGN_LOTTERY_RESPONSES.get(lang, _FOREIGN_LOTTERY_RESPONSES["fr"])
+    display_name = lottery.strip().title() if lottery else "this lottery"
+    return tpl.format(lottery=display_name)
+
+
 def _detect_argent(message: str, lang: str = "fr") -> bool:
     """Detecte si le message concerne l'argent, les gains ou les paris (multilingue).
 
@@ -681,6 +924,14 @@ def _detect_argent(message: str, lang: str = "fr") -> bool:
     # V126 L12 : vocabulaire technique (SQL, requête, JSON, API…) → skip Phase A.
     # Couvre le cas log 19/04/2026 "fais une requete sql" (FP guardrail).
     if _TECHNICAL_VOCAB_RE.search(message):
+        return False
+    # V141 A.4 UX Fix 2 : defense-in-depth — skip Phase A si REAL foreign détectée.
+    # Couvre le cas terrain 12/05/2026 user sénégalais ("senloto jackpot lonase Sénégal")
+    # qui matchait Phase A via "jackpot" → réponse inadaptée.
+    # NB: own games (euromillions/loto français) n'activent PAS le skip — Phase A reste
+    # légitime sur "j'ai gagné 100 euros à l'euromillions" par exemple.
+    _foreign = _detect_foreign_lottery(message)
+    if _foreign and not any(token in _foreign for token in _OWN_GAME_TOKENS):
         return False
     lower = message.lower()
     phrases = _ARGENT_PHRASES.get(lang, _ARGENT_PHRASES["fr"])

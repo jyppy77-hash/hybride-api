@@ -32,6 +32,7 @@ from services.chat_detectors import (
     _is_refusal, _get_refusal_response,  # V98c
     _sql_continuation_reroute,  # V125 Sous-phase 2 Volet B
     _is_user_sql_request,  # V126 L13 Volet B'
+    _detect_foreign_lottery, _get_foreign_lottery_response,  # V141 A.4 UX Fix 2
 )
 from services.chat_detectors_em import (
     _detect_mode_em, _detect_prochain_tirage_em,
@@ -149,6 +150,9 @@ def _build_em_config():
         # Phase A
         "detect_argent": _detect_argent_em,
         "get_argent_response": lambda msg, lang: _get_argent_response_em(msg, lang),
+        # V141 A.4 UX Fix 2 — Phase OUT_OF_SCOPE_LOTTERY (pre-empt Phase A)
+        "detect_foreign_lottery": _detect_foreign_lottery,
+        "get_foreign_lottery_response": _get_foreign_lottery_response,
         # Phase GEO
         "detect_country": _detect_country_em,
         "get_country_context": _get_country_context_em,

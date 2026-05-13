@@ -130,6 +130,7 @@
     }
 
     function selectRating(rating) {
+        // V141 A.4 UX Fix 1 \u2014 3 tiers : low (1-2) obligatoire 20 chars, mid (3) / high (4-5) optionnel
         selectedRating = rating;
 
         // Highlight selected stars
@@ -147,64 +148,145 @@
         var banner = document.getElementById('rating-banner');
         if (!banner) return;
 
-        // Create comment section once (lazy init)
-        var section = document.getElementById('rating-comment-section');
-        if (!section) {
-            section = document.createElement('div');
-            section.id = 'rating-comment-section';
-            section.className = 'rating-comment-section';
+        // V141 A.4 UX Fix 1 \u2014 recr\u00e9er la section pour adapter au tier
+        var oldSection = document.getElementById('rating-comment-section');
+        if (oldSection) oldSection.remove();
 
-            var textarea = document.createElement('textarea');
-            textarea.id = 'rating-comment-input';
-            textarea.className = 'rating-comment-input';
-            textarea.maxLength = 500;
-            textarea.rows = 2;
+        buildCommentSection(rating);
+    }
 
-            var counterRow = document.createElement('div');
-            counterRow.className = 'rating-comment-footer';
+    function buildCommentSection(rating) {
+        // V141 A.4 UX Fix 1 \u2014 popup 3 tiers (low 1-2 obligatoire / mid 3 / high 4-5 optionnel)
+        var banner = document.getElementById('rating-banner');
+        if (!banner) return;
 
-            var counter = document.createElement('span');
-            counter.className = 'rating-comment-counter';
-            counter.textContent = (LI.rating_comment_counter || '{n} / 500').replace('{n}', '0');
+        var tier = rating <= 2 ? 'low' : (rating === 3 ? 'mid' : 'high');
+        var isMandatory = (tier === 'low');
+        var MIN_CHARS = 20;
 
-            var submitBtn = document.createElement('button');
-            submitBtn.className = 'rating-comment-submit';
-            submitBtn.textContent = LI.rating_submit || 'Envoyer';
+        var section = document.createElement('div');
+        section.id = 'rating-comment-section';
+        section.className = 'rating-comment-section rating-comment-tier-' + tier;
 
-            textarea.addEventListener('input', function () {
-                var n = textarea.value.length;
-                counter.textContent = (LI.rating_comment_counter || '{n} / 500').replace('{n}', String(n));
-            });
-
-            submitBtn.addEventListener('click', function () {
-                submitBannerRating(selectedRating, textarea.value.trim());
-            });
-
-            counterRow.appendChild(counter);
-            counterRow.appendChild(submitBtn);
-            section.appendChild(textarea);
-            section.appendChild(counterRow);
-
-            // Insert before the close button
-            var closeBtn = banner.querySelector('.rating-banner-close');
-            banner.insertBefore(section, closeBtn);
-        }
-
-        // Feedback text only for low ratings (1-2 stars)
-        var textarea = document.getElementById('rating-comment-input');
-        if (rating <= 2) {
-            section.style.display = '';
-            if (textarea) {
-                textarea.placeholder = LI.rating_comment_negative || "Qu'est-ce qu'on pourrait am\u00e9liorer ? (optionnel)";
-            }
+        // Prompt par tier
+        var prompt = document.createElement('div');
+        prompt.className = 'rating-comment-prompt';
+        if (tier === 'low') {
+            prompt.textContent = LI.rating_prompt_low || 'Qu\'est-ce qui n\'a pas march\u00e9 ?';
+        } else if (tier === 'mid') {
+            prompt.textContent = LI.rating_prompt_mid || 'Une suggestion pour qu\'on s\'am\u00e9liore ? (optionnel)';
         } else {
-            section.style.display = 'none';
-            if (textarea) {
-                textarea.value = '';
-            }
-            // Submit directly for 3-5 stars (no comment needed)
-            submitBannerRating(rating, '');
+            prompt.textContent = LI.rating_prompt_high || 'Un mot pour nous faire plaisir ? (optionnel) \ud83e\udd29';
         }
+        section.appendChild(prompt);
+
+        var textarea = document.createElement('textarea');
+        textarea.id = 'rating-comment-input';
+        textarea.className = 'rating-comment-input';
+        textarea.maxLength = 500;
+        textarea.rows = 2;
+        section.appendChild(textarea);
+
+        // Erreur inline (LOW only)
+        var errorMsg = null;
+        if (isMandatory) {
+            errorMsg = document.createElement('div');
+            errorMsg.className = 'rating-comment-error';
+            errorMsg.textContent = LI.rating_min_chars || 'Min. 20 caract\u00e8res s\'il te pla\u00eet \ud83d\ude0a';
+            section.appendChild(errorMsg);
+        }
+
+        var footer = document.createElement('div');
+        footer.className = 'rating-comment-footer';
+
+        var counter = document.createElement('span');
+        counter.className = 'rating-comment-counter';
+        if (isMandatory) counter.classList.add('too-short');
+        counter.textContent = (LI.rating_comment_counter || '{n} / 500').replace('{n}', '0');
+
+        var submitted = false;
+        var btnGroup = document.createElement('span');
+        btnGroup.className = 'rating-comment-buttons';
+
+        // Passer button (MID/HIGH only \u2014 envoie sans commentaire)
+        if (!isMandatory) {
+            var skipBtn = document.createElement('button');
+            skipBtn.className = 'rating-comment-skip';
+            skipBtn.textContent = LI.rating_skip || 'Passer';
+            skipBtn.addEventListener('click', function () {
+                if (submitted) return;
+                submitted = true;
+                skipBtn.disabled = true;
+                submitBannerRating(rating, '');
+            });
+            btnGroup.appendChild(skipBtn);
+        }
+
+        var submitBtn = document.createElement('button');
+        submitBtn.className = 'rating-comment-submit';
+        submitBtn.textContent = LI.rating_submit || 'Envoyer';
+        if (isMandatory) submitBtn.disabled = true;
+        submitBtn.addEventListener('click', function () {
+            if (submitted) return;
+            var comment = textarea.value.trim();
+            if (isMandatory && comment.length < MIN_CHARS) {
+                if (errorMsg) errorMsg.classList.add('visible');
+                textarea.classList.add('has-error');
+                try { textarea.focus(); } catch (e) { /* ignore */ }
+                return;
+            }
+            submitted = true;
+            submitBtn.disabled = true;
+            submitBannerRating(rating, comment.substring(0, 500));
+        });
+        btnGroup.appendChild(submitBtn);
+
+        footer.appendChild(counter);
+        footer.appendChild(btnGroup);
+        section.appendChild(footer);
+
+        // Textarea input \u2014 compteur \u00e9volutif
+        textarea.addEventListener('input', function () {
+            var n = textarea.value.length;
+            counter.textContent = (LI.rating_comment_counter || '{n} / 500').replace('{n}', String(n));
+            if (isMandatory) {
+                counter.classList.remove('too-short', 'near-limit', 'valid');
+                if (n < 20) {
+                    counter.classList.add('too-short');
+                    submitBtn.disabled = true;
+                } else if (n < 30) {
+                    counter.classList.add('near-limit');
+                    submitBtn.disabled = false;
+                    if (errorMsg) errorMsg.classList.remove('visible');
+                    textarea.classList.remove('has-error');
+                } else {
+                    counter.classList.add('valid');
+                    submitBtn.disabled = false;
+                    if (errorMsg) errorMsg.classList.remove('visible');
+                    textarea.classList.remove('has-error');
+                }
+            }
+        });
+
+        // Esc key \u2014 LOW = X close banner, MID/HIGH = Passer
+        textarea.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' || e.keyCode === 27) {
+                e.preventDefault();
+                if (isMandatory) {
+                    // LOW Esc = dismiss banner entier (X close behavior)
+                    var closeBtn = banner.querySelector('.rating-banner-close');
+                    if (closeBtn) closeBtn.click();
+                } else if (!submitted) {
+                    submitted = true;
+                    submitBannerRating(rating, '');
+                }
+            }
+        });
+
+        // Insert section before the close button
+        var closeBtn = banner.querySelector('.rating-banner-close');
+        banner.insertBefore(section, closeBtn);
+        try { textarea.focus(); } catch (e) { /* ignore */ }
     }
 
     function submitBannerRating(rating, comment) {

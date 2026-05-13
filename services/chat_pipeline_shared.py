@@ -1058,6 +1058,31 @@ async def _prepare_chat_context_base(
                 f'question="{message[:80]}"'
             )
 
+    # ── V141 A.4 UX Fix 2 : Phase OUT_OF_SCOPE_LOTTERY (loteries étrangères) ──
+    # Pre-empt Phase A pour éviter faux positifs argent sur questions de
+    # loteries étrangères (senloto/lonase/powerball/...). Cas terrain
+    # 12/05/2026 22:33-22:35 user sénégalais "senloto jackpot lonase Sénégal"
+    # matchait Phase A via "jackpot" → réponse inadaptée "argent c'est pas mon rayon".
+    # Cross-sell module-aware : EM↔Loto redirige vers le module dédié LotoIA.
+    # Response = None signifie "match = jeu courant" (own game same-module) → fall through.
+    _foreign_lottery_fn = cfg.get("detect_foreign_lottery")
+    if _foreign_lottery_fn:
+        _foreign_lottery_match = _foreign_lottery_fn(message)
+        if _foreign_lottery_match:
+            _current_module = "em" if cfg.get("game") == "em" else "loto"
+            _ol_resp_fn = cfg.get("get_foreign_lottery_response")
+            if _ol_resp_fn:
+                _ol_resp = _ol_resp_fn(_foreign_lottery_match, lang, _current_module)
+                if _ol_resp:  # None = same-module match (own game) → fall through pipeline
+                    _phase = "OUT_OF_SCOPE_LOTTERY"
+                    if _insult_prefix:
+                        _ol_resp = _insult_prefix + "\n\n" + _ol_resp
+                    logger.info(
+                        f"{_lp} V141 A.4 OUT_OF_SCOPE_LOTTERY: \"{_foreign_lottery_match}\" "
+                        f"(lang={lang}, module={_current_module})"
+                    )
+                    return _early(_ol_resp, "hybride_foreign_lottery")
+
     # ── Phase A : Détection argent / gains / paris ──
     # F02 V84: skip Phase A if message contains a user grid — Phase EVAL handles it
     _has_grid_eval = cfg["detect_grid_evaluation"](message, game=cfg["eval_game"])

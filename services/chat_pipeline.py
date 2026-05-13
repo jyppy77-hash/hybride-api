@@ -31,6 +31,7 @@ from services.chat_detectors import (
     _is_refusal, _get_refusal_response,  # V98c
     _sql_continuation_reroute,  # V125 Sous-phase 2 Volet B
     _is_user_sql_request,  # V126 L13 Volet B'
+    _detect_foreign_lottery, _get_foreign_lottery_response,  # V141 A.4 UX Fix 2
 )
 from services.chat_sql import (
     _get_prochain_tirage, _get_tirage_data, _generate_sql, _validate_sql,
@@ -161,6 +162,9 @@ def _build_loto_config():
         # Phase A
         "detect_argent": _detect_argent,
         "get_argent_response": lambda msg, lang: _get_argent_response(msg, lang),
+        # V141 A.4 UX Fix 2 — Phase OUT_OF_SCOPE_LOTTERY (pre-empt Phase A)
+        "detect_foreign_lottery": _detect_foreign_lottery,
+        "get_foreign_lottery_response": _get_foreign_lottery_response,
         # Phase GEO — intentionnellement absente côté Loto.
         # Le Loto est géré par la FDJ et disponible uniquement en France métropolitaine + DOM-TOM.
         # Contrairement à EuroMillions (9 pays × 6 langues), aucune détection géographique nécessaire.

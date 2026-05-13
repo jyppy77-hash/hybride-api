@@ -465,6 +465,7 @@
         }
 
         function submitChatRating(rating) {
+            // V141 A.4 UX Fix 1 — 3 tiers : low (1-2) obligatoire 20 chars, mid (3) / high (4-5) optionnel
             var stars = document.querySelectorAll('#hybride-rating-stars .rating-star');
             for (var i = 0; i < stars.length; i++) {
                 if (i < rating) {
@@ -475,25 +476,191 @@
                     stars[i].classList.remove('active');
                 }
             }
+            showRatingCommentSection(rating);
+        }
 
+        function showRatingCommentSection(rating) {
+            // V141 A.4 UX Fix 1 — popup 3 tiers (low 1-2 obligatoire / mid 3 / high 4-5 optionnel)
+            var widget = document.getElementById('hybride-rating-widget');
+            if (!widget) return;
+            if (document.getElementById('hybride-rating-comment-section')) return;
+
+            var tier = rating <= 2 ? 'low' : (rating === 3 ? 'mid' : 'high');
+            var isMandatory = (tier === 'low');
+            var MIN_CHARS = 20;
+
+            var section = document.createElement('div');
+            section.id = 'hybride-rating-comment-section';
+            section.className = 'hybride-rating-comment-section hybride-rating-tier-' + tier;
+
+            // X dismiss button (LOW only — vote annulé)
+            if (isMandatory) {
+                var dismissBtn = document.createElement('button');
+                dismissBtn.className = 'hybride-rating-comment-dismiss';
+                dismissBtn.setAttribute('aria-label', LI.rating_close || 'Fermer');
+                dismissBtn.textContent = '✕';
+                dismissBtn.addEventListener('click', function () { dismissRatingComment(); });
+                section.appendChild(dismissBtn);
+            }
+
+            // Prompt par tier
+            var prompt = document.createElement('div');
+            prompt.className = 'hybride-rating-comment-prompt';
+            if (tier === 'low') {
+                prompt.textContent = LI.chatbot_rating_prompt_low || 'Qu\'est-ce qui n\'a pas marché ?';
+            } else if (tier === 'mid') {
+                prompt.textContent = LI.chatbot_rating_prompt_mid || 'Une suggestion pour qu\'on s\'améliore ? (optionnel)';
+            } else {
+                prompt.textContent = LI.chatbot_rating_prompt_high || 'Un mot pour nous faire plaisir ? (optionnel) 🤩';
+            }
+            section.appendChild(prompt);
+
+            var textarea = document.createElement('textarea');
+            textarea.id = 'hybride-rating-comment-input';
+            textarea.className = 'hybride-rating-comment-input';
+            textarea.maxLength = 500;
+            textarea.rows = 3;
+            section.appendChild(textarea);
+
+            // Inline error (LOW only)
+            var errorMsg = null;
+            if (isMandatory) {
+                errorMsg = document.createElement('div');
+                errorMsg.className = 'hybride-rating-comment-error';
+                errorMsg.textContent = LI.chatbot_rating_min_chars || 'Min. 20 caractères s\'il te plaît 😊';
+                section.appendChild(errorMsg);
+            }
+
+            // Footer : counter + boutons
+            var footer = document.createElement('div');
+            footer.className = 'hybride-rating-comment-footer';
+
+            var counter = document.createElement('span');
+            counter.className = 'hybride-rating-comment-counter';
+            if (isMandatory) counter.classList.add('too-short');
+            counter.textContent = '0 / 500';
+
+            var submitted = false;
+            var btnGroup = document.createElement('span');
+            btnGroup.className = 'hybride-rating-comment-buttons';
+
+            // Passer button (MID/HIGH only — envoie sans commentaire)
+            if (!isMandatory) {
+                var skipBtn = document.createElement('button');
+                skipBtn.className = 'hybride-rating-comment-skip';
+                skipBtn.textContent = LI.chatbot_rating_skip || 'Passer';
+                skipBtn.addEventListener('click', function () {
+                    if (submitted) return;
+                    submitted = true;
+                    skipBtn.disabled = true;
+                    _sendRatingPayload(rating, '');
+                });
+                btnGroup.appendChild(skipBtn);
+            }
+
+            // Send button
+            var submitBtn = document.createElement('button');
+            submitBtn.className = 'hybride-rating-comment-submit';
+            submitBtn.textContent = LI.chatbot_rating_send || 'Envoyer';
+            if (isMandatory) submitBtn.disabled = true;
+            submitBtn.addEventListener('click', function () {
+                if (submitted) return;
+                var comment = textarea.value.trim();
+                if (isMandatory && comment.length < MIN_CHARS) {
+                    if (errorMsg) errorMsg.classList.add('visible');
+                    textarea.classList.add('has-error');
+                    try { textarea.focus(); } catch (e) { /* ignore */ }
+                    return;
+                }
+                submitted = true;
+                submitBtn.disabled = true;
+                _sendRatingPayload(rating, comment.substring(0, 500));
+            });
+            btnGroup.appendChild(submitBtn);
+
+            footer.appendChild(counter);
+            footer.appendChild(btnGroup);
+            section.appendChild(footer);
+
+            // Textarea events
+            textarea.addEventListener('input', function () {
+                var n = textarea.value.length;
+                counter.textContent = n + ' / 500';
+                if (isMandatory) {
+                    counter.classList.remove('too-short', 'near-limit', 'valid');
+                    if (n < 20) {
+                        counter.classList.add('too-short');
+                        submitBtn.disabled = true;
+                    } else if (n < 30) {
+                        counter.classList.add('near-limit');
+                        submitBtn.disabled = false;
+                        if (errorMsg) errorMsg.classList.remove('visible');
+                        textarea.classList.remove('has-error');
+                    } else {
+                        counter.classList.add('valid');
+                        submitBtn.disabled = false;
+                        if (errorMsg) errorMsg.classList.remove('visible');
+                        textarea.classList.remove('has-error');
+                    }
+                }
+            });
+
+            textarea.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' || e.keyCode === 27) {
+                    e.preventDefault();
+                    if (isMandatory) {
+                        dismissRatingComment();
+                    } else if (!submitted) {
+                        // MID/HIGH Esc = same as Passer
+                        submitted = true;
+                        _sendRatingPayload(rating, '');
+                    }
+                }
+            });
+
+            widget.appendChild(section);
+            try { textarea.focus(); } catch (e) { /* ignore */ }
+            scrollToBottom();
+        }
+
+        function dismissRatingComment() {
+            // V141 A.4 UX Fix 1 — dismiss popup LOW = vote ANNULE (rien envoye backend)
+            var section = document.getElementById('hybride-rating-comment-section');
+            if (section) section.remove();
+            var stars = document.querySelectorAll('#hybride-rating-stars .rating-star');
+            for (var i = 0; i < stars.length; i++) {
+                stars[i].classList.remove('selected');
+                stars[i].classList.remove('active');
+            }
+            if (window.LotoIA_track) LotoIA_track('rating-dismissed-popup', {module: 'loto'});
+        }
+
+        function _sendRatingPayload(rating, comment) {
+            // V141 A.4 UX Fix 1 — helper extracted, supporte comment optionnel
             var sessionId = sessionStorage.getItem('hybride_session_id')
                 || ('sess_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
             sessionStorage.setItem('hybride_session_id', sessionId);
 
+            var hasComment = !!(comment && comment.length > 0);
+            var payload = {
+                source: RATING_SOURCE,
+                rating: rating,
+                session_id: sessionId,
+                page: window.location.pathname
+            };
+            if (hasComment) payload.comment = comment.substring(0, 500);
+
             fetch('/api/rating', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    source: RATING_SOURCE,
-                    rating: rating,
-                    session_id: sessionId,
-                    page: window.location.pathname
-                })
+                body: JSON.stringify(payload)
             })
             .then(function (res) { return res.json(); })
             .then(function (data) {
                 if (data.success) {
                     sessionStorage.setItem(RATING_STORAGE_KEY, 'true');
+                    var commentSection = document.getElementById('hybride-rating-comment-section');
+                    if (commentSection) commentSection.style.display = 'none';
                     var feedback = document.getElementById('hybride-rating-feedback');
                     var messages = {
                         5: LI.chatbot_rating_5 || 'Merci ! Tu es un vrai !',
@@ -517,9 +684,10 @@
             trackEvent('hybride_chat_rating', {
                 page: detectPage(),
                 rating: rating,
-                message_count: messageCount
+                message_count: messageCount,
+                has_comment: hasComment
             });
-            if (window.LotoIA_track) LotoIA_track('rating-submitted', {rating: rating, module: 'loto'});
+            if (window.LotoIA_track) LotoIA_track('rating-submitted', {rating: rating, module: 'loto', has_comment: hasComment});
         }
 
         /* ══════════════════════════════════
