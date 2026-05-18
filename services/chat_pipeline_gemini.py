@@ -1033,11 +1033,16 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
         text = _safe_replacement
     # V126 3.5-A + V126.1 F3: Phase 0 post-hoc draw-date verification
     # (remplacement effectif sur path non-streaming, étoiles EM si game=em)
+    # V141 A.4 Patch V131.G-bis Fix Hyp 3 — propage `enrichment_context` au call
+    # site non-stream (gap dormant identifié au diag READ-ONLY 18/05 — Fix 1
+    # `_DATA_TAG_RE` skip Phase 2/3/3-bis + Fix 3 future draw context tag skip
+    # étaient inactifs ici car non passés depuis V141 A.4 Patch V131.G initial).
     _phase0_replace = await _recheck_phase0_draw_accuracy(
         text, _meta.get("phase", ""),
         _meta.get("lang", lang), log_prefix,
         get_tirage_fn=ctx.get("_get_tirage_fn"),
         game=ctx.get("_game", "loto"),
+        enrichment_context=_meta.get("enrichment_context", ""),
     )
     if _phase0_replace:
         text = _phase0_replace

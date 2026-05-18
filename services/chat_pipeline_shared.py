@@ -33,6 +33,7 @@ from collections.abc import AsyncGenerator
 from datetime import date as _date_cls
 
 from services.base_chat_sql import _SQL_LIMIT_MESSAGES, _MAX_SQL_INPUT_LENGTH
+from services.base_chat_detect_temporal import _is_relative_weekday  # V141 A.4 Patch V131.G-bis
 from services.chat_utils import _format_date_fr
 from services.base_chat_utils import _format_last_draw_context
 from services.stats_analysis import should_inject_pedagogical_context, PEDAGOGICAL_CONTEXT
@@ -1240,8 +1241,24 @@ async def _prepare_chat_context_base(
         except Exception as e:
             logger.warning(f"{_lp} Erreur prochain tirage: {e}")
 
+    # V141 A.4 Patch V131.G-bis Fix B-bis — court-circuit Phase T quand Phase G
+    # a déjà détecté un intent de génération + le message contient un weekday relatif.
+    # Cause racine cas terrain prod 18/05 11:34 (revision hybride-api-eu-00867-cpd) :
+    # combo Phase G + Phase T weekday-relatif PASSÉ (`_detect_tirage` résout
+    # "mercredi" → 13/05 passé) → `[TIRAGE passé]` injecté + V131.G strip
+    # `[GRILLE GÉNÉRÉE]` → Gemini ne voit que tirage passé + question gen →
+    # hallucine prédiction fraîche → Check 1 `HALLUCINATION_INVENTED` bloque.
+    # Solution : si Phase G attempted + weekday relatif → Phase G porte seule
+    # la réponse (pas de `[TIRAGE passé]` injecté). Cas legitime "résultats du
+    # tirage de mercredi dernier" préservé car `detect_generation` ne match pas.
+    _skip_phase_t_for_gen_intent = _phase_g_attempted and _is_relative_weekday(message, lang)
+    if _skip_phase_t_for_gen_intent:
+        logger.info(
+            f"{_lp} [V131.G-bis] Skip Phase T (weekday relatif + intent generation, lang={lang})"
+        )
+
     # Phase T — Tirage spécifique / requête temporelle complexe
-    if not _continuation_mode and not enrichment_context:
+    if not _continuation_mode and not enrichment_context and not _skip_phase_t_for_gen_intent:
         tirage_target = cfg["detect_tirage"](message)
         if tirage_target is not None:
             _phase = "T"

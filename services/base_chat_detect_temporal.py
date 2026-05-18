@@ -355,6 +355,38 @@ def _detect_tirage(message: str) -> date | str | None:
 
 
 # ────────────────────────────────────────────
+# V141 A.4 Patch V131.G-bis — Détection weekday relatif (6 langues)
+# ────────────────────────────────────────────
+# Utilisé par chat_pipeline_shared.py Phase T pour court-circuiter Phase T
+# quand Phase G a déjà détecté un intent de génération + le message contient
+# un jour de semaine sans année explicite (cf cas terrain prod 18/05 11:34).
+# Cause racine : combo Phase G + Phase T weekday-relatif PASSÉ → V131.G strip
+# `[GRILLE GÉNÉRÉE]` → Gemini ne voit que `[TIRAGE passé]` + question gen
+# → hallucine prédiction → Check 1 HALLUCINATION_INVENTED bloque.
+_RELATIVE_WEEKDAY_RE = {
+    "fr": re.compile(r"\b(?:lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche)\b", re.IGNORECASE),
+    "en": re.compile(r"\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b", re.IGNORECASE),
+    "es": re.compile(r"\b(?:lunes|martes|mi[eé]rcoles|jueves|viernes|s[aá]bado|domingo)\b", re.IGNORECASE),
+    "pt": re.compile(r"\b(?:segunda|ter[çc]a|quarta|quinta|sexta|s[aá]bado|domingo)\b", re.IGNORECASE),
+    "de": re.compile(r"\b(?:montag|dienstag|mittwoch|donnerstag|freitag|samstag|sonntag)\b", re.IGNORECASE),
+    "nl": re.compile(r"\b(?:maandag|dinsdag|woensdag|donderdag|vrijdag|zaterdag|zondag)\b", re.IGNORECASE),
+}
+
+
+def _is_relative_weekday(message: str, lang: str = "fr") -> bool:
+    """V141 A.4 Patch V131.G-bis — détecte un jour de semaine relatif sans date absolue.
+
+    Utilisé par chat_pipeline_shared.py pour décider si Phase G doit court-circuiter
+    Phase T (anti-combo qui cause faux positif Check 1 sur grille HYBRIDE pour
+    weekday futur perçu user vs weekday passé résolu par _detect_tirage).
+
+    Fallback langue inconnue → regex FR (cohérent avec defaults pipeline).
+    """
+    pattern = _RELATIVE_WEEKDAY_RE.get(lang, _RELATIVE_WEEKDAY_RE["fr"])
+    return bool(pattern.search(message or ""))
+
+
+# ────────────────────────────────────────────
 # Detection filtre temporel → court-circuite les phases regex
 # ────────────────────────────────────────────
 

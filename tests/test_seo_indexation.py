@@ -904,7 +904,7 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.030 (V141 A.4 Patch V131.G — 3 fixes Option B + re-toggle STRICT).
+        """APP_VERSION == 1.6.031 (V141 A.4 Patch V131.G-bis — Fix B-bis Phase G court-circuite Phase T weekday relatif + Fix Hyp 3 enrichment_context call site non-stream).
 
         V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
         V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
@@ -946,9 +946,17 @@ class TestAppVersion:
         tags) + Fix 3 skip Check 2 si `[CONTEXTE TIRAGE À VENIR]` ou
         `[CONTEXTE PAS DE TIRAGE CE JOUR]` présent (anti-`PHASE0_DATE_NOT_IN_DB` sur dates
         futures). Re-toggle prod `STRICT_HALLUCINATION_BLOCK=true` post-push (Jyppy manuel).
+        V141 A.4 Patch V131.G-bis (18/05, Release 1.6.031) — cas terrain prod 11:34 :
+        Fix B-bis Phase G court-circuite Phase T si `_phase_g_attempted` ET
+        `_is_relative_weekday(message, lang)` (combo "donne-moi une grille pour mercredi"
+        → Phase T résout "mercredi" → 13/05 PASSÉ → Gemini hallucine prédiction → Check 1
+        bloque, faux positif UX). Helper `_is_relative_weekday` créé 6 langs.
+        Fix Hyp 3 propagation `enrichment_context` call site non-stream
+        `chat_pipeline_gemini.py:1036` (gap dormant Fix 1+3 V131.G inactifs non-stream).
+        +22 tests `test_v141_a4_patch_v131g_bis_phase_t_skip.py`.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.030"
+        assert APP_VERSION == "1.6.031"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""
