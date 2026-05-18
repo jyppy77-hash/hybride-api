@@ -904,7 +904,7 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.031 (V141 A.4 Patch V131.G-bis — Fix B-bis Phase G court-circuite Phase T weekday relatif + Fix Hyp 3 enrichment_context call site non-stream).
+        """APP_VERSION == 1.6.032 (V141 A.5 — Fix stats unified endpoint Option 3).
 
         V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
         V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
@@ -954,9 +954,17 @@ class TestAppVersion:
         Fix Hyp 3 propagation `enrichment_context` call site non-stream
         `chat_pipeline_gemini.py:1036` (gap dormant Fix 1+3 V131.G inactifs non-stream).
         +22 tests `test_v141_a4_patch_v131g_bis_phase_t_skip.py`.
+        V141 A.5 (18/05, Release 1.6.032) — Fix stats unified endpoint Option 3 :
+        SQL inline `unified_stats_number` PRESERVÉ (rétrocompat 8 clés legacy) +
+        délégation partielle `BaseStatsService.get_numero_stats()` pour 4 nouvelles
+        clés (`pourcentage` float pur, `ecart_moyen`, `classement`, `classement_sur`).
+        Anti-hallu try/except → fallback 0.0/0/num_range[1] (jamais None). Parité
+        Loto FR 4 → 7 cards. Bug chronique 3/6 cards "-" sur /euromillions/statistiques
+        résolu universellement (50 numéros + 12 étoiles + 6 langs). +53 tests
+        parametric `test_v141_a5_stats_unified_endpoint.py`.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.031"
+        assert APP_VERSION == "1.6.032"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

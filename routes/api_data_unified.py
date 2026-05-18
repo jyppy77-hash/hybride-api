@@ -18,6 +18,30 @@ router = APIRouter(prefix="/api/{game}", tags=["Unified - Data"])
 
 
 # =========================
+# Helpers V141 A.5
+# =========================
+
+def _strip_pct_to_float(pct_value) -> float:
+    """
+    V141 A.5 — Convertit pourcentage formaté '11.34%' (string par base_stats)
+    en float pur 11.34 pour exposition côté endpoint /stats/number/.
+
+    Frontend concatène '%' à l'affichage. Endpoint /hybride-stats inchangé.
+    Anti-hallu : retourne 0.0 si valeur invalide (jamais None).
+    """
+    if pct_value is None:
+        return 0.0
+    if isinstance(pct_value, (int, float)):
+        return float(pct_value)
+    if isinstance(pct_value, str):
+        try:
+            return float(pct_value.strip().rstrip("%").strip())
+        except (ValueError, AttributeError):
+            return 0.0
+    return 0.0
+
+
+# =========================
 # Tirages count / latest / list
 # =========================
 
@@ -481,17 +505,45 @@ async def unified_stats_number(request: Request, game: ValidGame, number: int):
                 gap_result = await cursor.fetchone()
                 current_gap = gap_result['gap'] if gap_result else 0
 
+        # === V141 A.5 — Délégation partielle pour 3 nouvelles metrics ===
+        # SQL inline ci-dessus PRESERVÉ (rétrocompat 8 clés legacy).
+        # Ajout pourcentage / ecart_moyen / classement / classement_sur
+        # via get_numero_stats(). Anti-hallu : try/except → fallback 0.0/0.
+        try:
+            svc = get_stats_service(cfg)
+            full_stats = await svc.get_numero_stats(number)  # type_num=None → default principal
+            if full_stats is None:
+                raise ValueError("get_numero_stats returned None")
+            pourcentage = _strip_pct_to_float(full_stats.get("pourcentage_apparition"))
+            ecart_moyen = float(full_stats.get("ecart_moyen") or 0.0)
+            classement = int(full_stats.get("classement") or 0)
+            classement_sur = int(full_stats.get("classement_sur") or cfg.num_range[1])
+        except Exception as e:
+            logger.warning(
+                "[V141 A.5] get_numero_stats failed for %s/%d: %s — fallback 0.0/0",
+                cfg.slug, number, e,
+            )
+            pourcentage = 0.0
+            ecart_moyen = 0.0
+            classement = 0
+            classement_sur = cfg.num_range[1]
+
         resp = {
             "success": True,
             "number": number,
+            # V141 A.5: expose `type` aussi côté Loto pour parité EM (extension non-breaking)
+            "type": "principal" if game == ValidGame.loto else "boule",
             "total_appearances": total_appearances,
             "first_appearance": first_appearance,
             "last_appearance": last_appearance,
             "current_gap": current_gap,
             "appearance_dates": appearance_dates,
+            # === NEW V141 A.5 (4 clés) ===
+            "pourcentage": pourcentage,
+            "ecart_moyen": ecart_moyen,
+            "classement": classement,
+            "classement_sur": classement_sur,
         }
-        if game == ValidGame.euromillions:
-            resp["type"] = "boule"
         return resp
 
     except Exception as e:
@@ -540,6 +592,26 @@ async def unified_stats_etoile(request: Request, game: ValidGame, number: int):
                 gap_result = await cursor.fetchone()
                 current_gap = gap_result['gap'] if gap_result else 0
 
+        # === V141 A.5 — Délégation partielle (étoile EM, type_num="etoile") ===
+        try:
+            svc = get_stats_service(cfg)
+            full_stats = await svc.get_numero_stats(number, type_num="etoile")
+            if full_stats is None:
+                raise ValueError("get_numero_stats returned None")
+            pourcentage = _strip_pct_to_float(full_stats.get("pourcentage_apparition"))
+            ecart_moyen = float(full_stats.get("ecart_moyen") or 0.0)
+            classement = int(full_stats.get("classement") or 0)
+            classement_sur = int(full_stats.get("classement_sur") or 12)
+        except Exception as e:
+            logger.warning(
+                "[V141 A.5] get_numero_stats etoile failed for %d: %s — fallback 0.0/0",
+                number, e,
+            )
+            pourcentage = 0.0
+            ecart_moyen = 0.0
+            classement = 0
+            classement_sur = 12
+
         return {
             "success": True,
             "number": number,
@@ -549,6 +621,11 @@ async def unified_stats_etoile(request: Request, game: ValidGame, number: int):
             "last_appearance": last_appearance,
             "current_gap": current_gap,
             "appearance_dates": appearance_dates,
+            # === NEW V141 A.5 ===
+            "pourcentage": pourcentage,
+            "ecart_moyen": ecart_moyen,
+            "classement": classement,
+            "classement_sur": classement_sur,
         }
 
     except Exception as e:

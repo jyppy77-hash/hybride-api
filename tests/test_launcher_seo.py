@@ -200,6 +200,6 @@ class TestVersion:
     """V53 version bump."""
 
     def test_app_version(self):
-        # V141 A.4 Patch V131.G-bis bump : 1.6.030 → 1.6.031 (18/05/2026 — Fix B-bis Phase G court-circuite Phase T weekday relatif + Fix Hyp 3 enrichment_context call site non-stream)
+        # V141 A.5 bump : 1.6.031 → 1.6.032 (18/05/2026 — Fix stats unified endpoint Option 3 : SQL inline preserved + délégation partielle get_numero_stats pour pourcentage/ecart_moyen/classement)
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.031"
+        assert APP_VERSION == "1.6.032"

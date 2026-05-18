@@ -784,6 +784,11 @@
                             <div class="stat-label">Nombre de sorties</div>
                             <div class="stat-value" id="stat-appearances">-</div>
                         </div>
+                        <!-- V141 A.5: ajout parité EM -->
+                        <div class="stat-card">
+                            <div class="stat-label">Pourcentage</div>
+                            <div class="stat-value" id="stat-percentage">-</div>
+                        </div>
                         <div class="stat-card">
                             <div class="stat-label">Première apparition</div>
                             <div class="stat-value" id="stat-first" style="font-size: 1.3rem;">-</div>
@@ -795,6 +800,15 @@
                         <div class="stat-card">
                             <div class="stat-label">Écart actuel</div>
                             <div class="stat-value" id="stat-gap">-</div>
+                        </div>
+                        <!-- V141 A.5: ajout parité EM -->
+                        <div class="stat-card">
+                            <div class="stat-label">Écart moyen</div>
+                            <div class="stat-value" id="stat-avg-gap">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Classement</div>
+                            <div class="stat-value" id="stat-ranking">-</div>
                         </div>
                     </div>
 
@@ -1099,9 +1113,14 @@
 
                         // Remplir les statistiques
                         document.getElementById('stat-appearances').textContent = data.total_appearances;
+                        // V141 A.5: nouvelles cards parité EM
+                        document.getElementById('stat-percentage').textContent = (data.pourcentage !== undefined && data.pourcentage !== null) ? data.pourcentage + '%' : '-';
                         document.getElementById('stat-first').textContent = data.first_appearance ? formatDate(data.first_appearance) : 'N/A';
                         document.getElementById('stat-last').textContent = data.last_appearance ? formatDate(data.last_appearance) : 'N/A';
                         document.getElementById('stat-gap').textContent = data.current_gap + ' tirages';
+                        // V141 A.5: nouvelles cards parité EM
+                        document.getElementById('stat-avg-gap').textContent = (data.ecart_moyen !== undefined && data.ecart_moyen !== null) ? data.ecart_moyen : '-';
+                        document.getElementById('stat-ranking').textContent = (data.classement && data.classement_sur) ? data.classement + '/' + data.classement_sur : '-';
 
                         // Stocker toutes les dates
                         allDates = data.appearance_dates;

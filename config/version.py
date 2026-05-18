@@ -5,6 +5,18 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# V141 A.5 — Fix stats unified endpoint (Release 1.6.032, 18/05/2026, Option 3 hybride).
+# Cause racine bug chronique 3/6 cards "-" page /euromillions/statistiques onglet
+# "Analyse par numéro" (POURCENTAGE / ÉCART MOYEN / CLASSEMENT) tous numéros 1-50 +
+# étoiles 1-12, 6 langues EM. Endpoint `unified_stats_number()` SQL inline minimal
+# n'exposait pas ces 3 metrics dérivées que frontend lit sans fallback. Bug introduit
+# avec refactor base class stats `dc9219e` (V45), silencieux (0 log warning/error 24h).
+# Fix Option 3 : SQL inline PRESERVÉ (rétrocompat 100% 8 clés legacy) + délégation partielle
+# `BaseStatsService.get_numero_stats()` pour 4 nouvelles clés (`pourcentage` float,
+# `ecart_moyen`, `classement`, `classement_sur`). Anti-hallu strict : try/except → fallback
+# 0.0/0/cfg.max_number (jamais None/'-'). Parité Loto FR : `ui/statistiques.html` 4→6 cards.
+# +31 tests parametric. Voir diag : `docs/DIAG_STATS_FREQUENCE_AFFICHAGE_2026-05-18.md`.
+#
 # V141 A.4 Patch V131.G-bis — Fix B-bis Phase G court-circuite Phase T sur weekday relatif
 # + Fix Hyp 3 propagation enrichment_context call site non-stream (Release 1.6.031, 18/05/2026).
 # Cause racine cas terrain prod 18/05 11:34 (revision hybride-api-eu-00867-cpd) :
@@ -27,7 +39,7 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.031"
+APP_VERSION = "1.6.032"
 APP_NAME = "LotoIA"
 VERSION_DATE = "2026-05-18"
 

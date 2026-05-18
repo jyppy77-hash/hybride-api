@@ -805,11 +805,14 @@
                     var html = '<h4 style="margin: 16px 0; color: var(--primary);">Numéro ' + String(number).padStart(2,'0') + '</h4>';
                     html += '<div class="stats-cards">';
                     html += buildStatCard('Fréquence', s.frequence || s.total_appearances || '-', '');
-                    html += buildStatCard('Pourcentage', s.pourcentage !== undefined ? s.pourcentage + '%' : '-', '');
+                    // V141 A.5: backend renvoie pourcentage float pur, null-check anti-hallu, frontend ajoute '%'
+                    html += buildStatCard('Pourcentage', (s.pourcentage !== undefined && s.pourcentage !== null) ? s.pourcentage + '%' : '-', '');
                     html += buildStatCard('Dernière sortie', s.derniere_sortie || s.last_appearance || '-', 'small');
                     html += buildStatCard('Écart actuel', s.ecart_actuel !== undefined ? s.ecart_actuel + ' tirages' : (s.current_gap !== undefined ? s.current_gap + ' tirages' : '-'), '');
-                    html += buildStatCard('Écart moyen', s.ecart_moyen !== undefined ? s.ecart_moyen : '-', '');
-                    html += buildStatCard('Classement', s.classement || '-', '');
+                    // V141 A.5: null-check anti-hallu
+                    html += buildStatCard('Écart moyen', (s.ecart_moyen !== undefined && s.ecart_moyen !== null) ? s.ecart_moyen : '-', '');
+                    // V141 A.5: afficher rang sur total (ex "6/50")
+                    html += buildStatCard('Classement', (s.classement && s.classement_sur) ? s.classement + '/' + s.classement_sur : '-', '');
                     html += '</div>';
                     if (s.categorie) {
                         html += '<p style="margin-top: 8px;"><strong>Catégorie :</strong> ' + s.categorie + '</p>';
@@ -844,11 +847,14 @@
                     var html = '<h4 style="margin: 16px 0; color: #F57C00;">Étoile ' + String(star).padStart(2,'0') + '</h4>';
                     html += '<div class="stats-cards">';
                     html += buildStatCard('Fréquence', s.frequence || s.total_appearances || '-', 'star-accent');
-                    html += buildStatCard('Pourcentage', s.pourcentage !== undefined ? s.pourcentage + '%' : '-', 'star-accent');
+                    // V141 A.5: backend renvoie pourcentage float pur, null-check anti-hallu, frontend ajoute '%'
+                    html += buildStatCard('Pourcentage', (s.pourcentage !== undefined && s.pourcentage !== null) ? s.pourcentage + '%' : '-', 'star-accent');
                     html += buildStatCard('Dernière sortie', s.derniere_sortie || s.last_appearance || '-', 'star-accent small');
                     html += buildStatCard('Écart actuel', s.ecart_actuel !== undefined ? s.ecart_actuel + ' tirages' : (s.current_gap !== undefined ? s.current_gap + ' tirages' : '-'), 'star-accent');
-                    html += buildStatCard('Écart moyen', s.ecart_moyen !== undefined ? s.ecart_moyen : '-', 'star-accent');
-                    html += buildStatCard('Classement', s.classement || '-', 'star-accent');
+                    // V141 A.5: null-check anti-hallu
+                    html += buildStatCard('Écart moyen', (s.ecart_moyen !== undefined && s.ecart_moyen !== null) ? s.ecart_moyen : '-', 'star-accent');
+                    // V141 A.5: afficher rang sur total (ex "6/50")
+                    html += buildStatCard('Classement', (s.classement && s.classement_sur) ? s.classement + '/' + s.classement_sur : '-', 'star-accent');
                     html += '</div>';
                     if (s.categorie) {
                         html += '<p style="margin-top: 8px;"><strong>Catégorie :</strong> ' + s.categorie + '</p>';
