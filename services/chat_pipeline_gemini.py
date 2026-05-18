@@ -132,8 +132,16 @@ def _get_temperature(ctx: dict) -> float:
 
 # V96+V99: Anti-hallucination — extract numbers from context and verify Gemini response
 # V99 F03: broadened to match [RÉSULTAT TIRAGE] and [DONNÉES TEMPS RÉEL] in addition to [RÉSULTAT SQL]
+# V141 A.4 PATCH V131.G Fix 2 : symétrie complète avec `_FACTUAL_TAGS` (15 tags V141 A.1).
+# Avant ce patch, seuls 3 tags V99 étaient reconnus ici — asymétrie qui causait du
+# bruit log `HALLUCINATION_ORPHAN_SEQUENCE` / `HALLUCINATION_ORPHAN_STAT_SINGLE`
+# en Phase 2/3/3-bis/P/EVAL/0-bis/G (cas ID 2762 audit 11/05 où `[ANALYSE DE GRILLE]`
+# n'était pas reconnu comme contexte factuel). Pattern construit dynamiquement
+# depuis `_FACTUAL_TAGS` pour garantir la symétrie de manière permanente (toute
+# évolution future de `_FACTUAL_TAGS` se reflète automatiquement ici).
+_DATA_TAG_ALTERNATION = "|".join(re.escape(tag.lstrip("[")) for tag in _FACTUAL_TAGS)
 _DATA_TAG_RE = re.compile(
-    r'\[(?:RÉSULTAT SQL|RÉSULTAT TIRAGE|DONNÉES TEMPS RÉEL)[^\]]*\](.*?)(?:\[/(?:RÉSULTAT SQL|RÉSULTAT TIRAGE)\]|$)',
+    rf'\[(?:{_DATA_TAG_ALTERNATION})[^\]]*\](.*?)(?:\[/(?:RÉSULTAT SQL|RÉSULTAT TIRAGE)\]|$)',
     re.DOTALL,
 )
 
@@ -613,6 +621,8 @@ async def _recheck_phase0_draw_accuracy(
     response: str, phase: str, lang: str, log_prefix: str,
     get_tirage_fn,
     game: str = "loto",
+    *,
+    enrichment_context: str = "",
 ) -> str | None:
     """V126 3.5-A + V126.1 F3 + V131.G : Post-hoc — si la réponse Gemini cite
     un tirage (date + séquence 5-numéros), vérifier que les numéros
@@ -637,6 +647,24 @@ async def _recheck_phase0_draw_accuracy(
       - Phase 3-bis (comparaison sur période avec progression %) : peut citer
         tirages témoins → recheck pertinent
 
+    V141 A.4 PATCH V131.G — 2 nouveaux guards défensifs sur `enrichment_context` :
+      - Fix 1 : skip Check 2 si phase ∈ ("2", "3", "3-bis") ET aucun `_DATA_TAG_RE`
+        n'est présent dans le contexte. Ces phases utilisent `[ANALYSE DE GRILLE]`
+        / `[CLASSEMENT]` / `[COMPARAISON]` comme source primaire statistique
+        (pas un tirage individuel). Quand Gemini cite un tirage DB de comparaison
+        secondaire, `_DRAW_SEQUENCE_RE` capture mal la séquence cible (cas ID 2762
+        11/05 : grille USER `1-18-20-28-32` capturée vs tirage DB de comparaison
+        cité `1-12-28-31-32` du 18/06/2022) → faux positif structurel. Fix 2
+        rend ces tags reconnus par `_DATA_TAG_RE` → Fix 1 active la garde sur
+        absence du tag (signal "pas de contexte factuel exploitable").
+      - Fix 3 : skip Check 2 si `[CONTEXTE TIRAGE À VENIR]` ou
+        `[CONTEXTE PAS DE TIRAGE CE JOUR]` présent (tags Item 5 V141 A.3).
+        Gemini peut hériter de la date future dans sa réponse + générer une
+        grille HYBRIDE → parser capture la date → DB lookup → date pas en DB
+        → faux positif `PHASE0_DATE_NOT_IN_DB`. Cas non reproduit dimanche
+        10/05 mais structurellement à risque dès qu'un user demandera une
+        grille pour une vraie date future.
+
     Note rétrocompat : les préfixes log "PHASE0_DATE_NOT_IN_DB" et
     "PHASE0_DRAW_MISMATCH" sont conservés (non renommés) malgré l'extension
     phase coverage, pour préserver les commandes `gcloud logging read` et les
@@ -650,6 +678,11 @@ async def _recheck_phase0_draw_accuracy(
         log_prefix: préfixe pour warnings
         get_tirage_fn: async (date) -> dict|None game-specific
         game: "loto" (défaut rétrocompat V126) ou "em"
+        enrichment_context: contexte enrichi injecté (V141 A.4 PATCH V131.G,
+            kwarg-only, défaut "" pour rétrocompat appels existants). Utilisé
+            par Fix 1 (skip Phase 2/3/3-bis sans `_DATA_TAG_RE`) et Fix 3
+            (skip si tag `[CONTEXTE TIRAGE À VENIR]` / `[CONTEXTE PAS DE TIRAGE
+            CE JOUR]` présent).
 
     Returns :
       - message safe (str) si mismatch détecté → utiliser côté non-stream
@@ -664,6 +697,35 @@ async def _recheck_phase0_draw_accuracy(
     # V141 A.3 — extend phase coverage : Phase 2 + 3 + 3-bis en plus de 0/1/T
     if phase not in ("0", "1", "T", "2", "3", "3-bis") or not response:
         return None
+
+    # V141 A.4 PATCH V131.G Fix 1 — Skip Check 2 sur Phase 2/3/3-bis quand le
+    # contexte enrichi ne contient AUCUN tag `_DATA_TAG_RE` (15 tags symétriques
+    # V141 A.4 Fix 2). Sans contexte factuel exploitable, le parser
+    # `_DRAW_SEQUENCE_RE` capture mal la séquence cible (cf cas ID 2762 11/05
+    # grille USER vs tirage DB de comparaison) → faux positif structurel garanti.
+    if phase in ("2", "3", "3-bis"):
+        if not _DATA_TAG_RE.search(enrichment_context or ""):
+            logger.info(
+                "%s [V131.G PATCH] Skip Check 2 (phase=%s) — no _DATA_TAG_RE in context",
+                log_prefix, phase,
+            )
+            return None
+
+    # V141 A.4 PATCH V131.G Fix 3 — Skip Check 2 si le contexte signale un
+    # tirage à venir ou un jour sans tirage (Item 5 V141 A.3). Gemini peut
+    # hériter de la date future dans sa réponse + générer une grille HYBRIDE
+    # → parser `_parse_draw_date_multilang` capture la date → DB lookup →
+    # date absente (future) → faux positif `PHASE0_DATE_NOT_IN_DB`.
+    if enrichment_context and (
+        "[CONTEXTE TIRAGE À VENIR]" in enrichment_context
+        or "[CONTEXTE PAS DE TIRAGE CE JOUR]" in enrichment_context
+    ):
+        logger.info(
+            "%s [V131.G PATCH] Skip Check 2 (phase=%s) — future draw context tag present",
+            log_prefix, phase,
+        )
+        return None
+
     if not get_tirage_fn:
         return None
     seq_match = _DRAW_SEQUENCE_RE.search(response)
@@ -1120,6 +1182,7 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
                 )
 
             # Check 2 : Phase 0/1/T post-hoc draw-date verification (V126 + V131.G)
+            # V141 A.4 PATCH V131.G : `enrichment_context` propagé pour Fix 1 + Fix 3.
             if not _block_replacement:
                 try:
                     _phase0_repl = await _recheck_phase0_draw_accuracy(
@@ -1127,6 +1190,7 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
                         _meta.get("lang", lang), log_prefix,
                         get_tirage_fn=ctx.get("_get_tirage_fn"),
                         game=ctx.get("_game", "loto"),
+                        enrichment_context=_meta.get("enrichment_context", ""),
                     )
                     if _phase0_repl:
                         _block_replacement = _phase0_repl
@@ -1196,12 +1260,14 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
             )
             # V126 3.5-A + V126.1 F3: Phase 0 post-hoc draw-date verification —
             # LOG-ONLY on stream (stream déjà émis, cannot replace).
+            # V141 A.4 PATCH V131.G : `enrichment_context` propagé pour Fix 1 + Fix 3.
             try:
                 await _recheck_phase0_draw_accuracy(
                     _full_response, _meta.get("phase", ""),
                     _meta.get("lang", lang), log_prefix,
                     get_tirage_fn=ctx.get("_get_tirage_fn"),
                     game=ctx.get("_game", "loto"),
+                    enrichment_context=_meta.get("enrichment_context", ""),
                 )
             except Exception as _e:
                 logger.warning("%s V126 3.5-A stream recheck failed: %s", log_prefix, _e)

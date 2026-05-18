@@ -904,7 +904,7 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.029 (V141 A.4 UX Fixes — rating popup 3 tiers + loteries étrangères).
+        """APP_VERSION == 1.6.030 (V141 A.4 Patch V131.G — 3 fixes Option B + re-toggle STRICT).
 
         V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
         V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
@@ -939,9 +939,16 @@ class TestAppVersion:
         loteries étrangères (senloto/lonase/powerball/...) + cross-sell module-aware EM↔Loto +
         defense-in-depth Phase A skip si real foreign détecté (cas terrain user sénégalais
         12/05/2026 22:33-22:35, +57 tests adversarial test_v141_a4_ux_foreign_lottery).
+        V141 A.4 Patch V131.G (18/05, Release 1.6.030) — 3 fixes Option B chirurgicaux :
+        Fix 1 skip Check 2 `_recheck_phase0_draw_accuracy` sur Phase 2/3/3-bis si aucun
+        `_DATA_TAG_RE` dans `enrichment_context` (cas ID 2762 11/05 grille USER vs tirage
+        DB de comparaison) + Fix 2 symétrisation `_DATA_TAG_RE` ↔ `_FACTUAL_TAGS` (3 → 15
+        tags) + Fix 3 skip Check 2 si `[CONTEXTE TIRAGE À VENIR]` ou
+        `[CONTEXTE PAS DE TIRAGE CE JOUR]` présent (anti-`PHASE0_DATE_NOT_IN_DB` sur dates
+        futures). Re-toggle prod `STRICT_HALLUCINATION_BLOCK=true` post-push (Jyppy manuel).
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.029"
+        assert APP_VERSION == "1.6.030"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

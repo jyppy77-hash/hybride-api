@@ -173,6 +173,13 @@ class TestV141A3_OrphanStatSingle:
 class TestV141A3_RecheckPhasesExtended:
     """V141 A.3 — _recheck_phase0_draw_accuracy étendue Phase 2 + 3 + 3-bis."""
 
+    # V141 A.4 PATCH V131.G Fix 1 : Check 2 ne s'active sur Phase 2/3/3-bis
+    # QUE si `enrichment_context` contient un tag `_DATA_TAG_RE` (15 tags
+    # symétriques V141 A.4 Fix 2). Les tests ci-dessous passent désormais un
+    # contexte factuel explicite (`[ANALYSE DE GRILLE]` ou `[CLASSEMENT]`)
+    # pour préserver leur intent originel V141 A.3 (vérifier que Phase 2/3/3-bis
+    # détecte les mismatches DB quand le contexte factuel est légitime).
+
     @pytest.mark.asyncio
     async def test_phase_2_now_covered(self):
         """V141 A.3 — Phase 2 + mismatch → safe_replacement."""
@@ -182,6 +189,7 @@ class TestV141A3_RecheckPhasesExtended:
         result = await _recheck_phase0_draw_accuracy(
             response, "2", "fr", "[TEST]",
             get_tirage_fn=get_tirage_fn, game="loto",
+            enrichment_context="[ANALYSE DE GRILLE] 1-10-12-29-49 chance=7",
         )
         assert result is not None
         assert "donn" in result.lower() or "data" in result.lower()
@@ -195,6 +203,7 @@ class TestV141A3_RecheckPhasesExtended:
         result = await _recheck_phase0_draw_accuracy(
             response, "3", "fr", "[TEST]",
             get_tirage_fn=get_tirage_fn, game="loto",
+            enrichment_context="[CLASSEMENT] top 5 numéros sortis",
         )
         assert result is not None
 
@@ -207,6 +216,7 @@ class TestV141A3_RecheckPhasesExtended:
         result = await _recheck_phase0_draw_accuracy(
             response, "3-bis", "fr", "[TEST]",
             get_tirage_fn=get_tirage_fn, game="loto",
+            enrichment_context="[COMPARAISON SUR PÉRIODE] mars vs avril 2026",
         )
         assert result is not None
 
@@ -219,6 +229,7 @@ class TestV141A3_RecheckPhasesExtended:
         result = await _recheck_phase0_draw_accuracy(
             response, "2", "fr", "[TEST]",
             get_tirage_fn=get_tirage_fn, game="loto",
+            enrichment_context="[ANALYSE DE GRILLE] 18-20-35-38-48 chance=5",
         )
         assert result is None
 
@@ -231,6 +242,7 @@ class TestV141A3_RecheckPhasesExtended:
         result = await _recheck_phase0_draw_accuracy(
             response, "3", "fr", "[TEST]",
             get_tirage_fn=get_tirage_fn, game="loto",
+            enrichment_context="[CLASSEMENT] top 5 mars-avril 2026",
         )
         assert result is None
 
