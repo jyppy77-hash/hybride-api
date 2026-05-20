@@ -418,7 +418,11 @@ async def unified_meta_analyse_local(
                 from services.selection_history import record_pdf_meta_top
                 _source = _PDF_META_SOURCE_MAP[window_used]
                 _balls_top5 = [int(n['number']) for n in top_numbers[:5]]
-                _sec_top1 = int(secondary_top[0]['number']) if secondary_top else None
+                # V142.E: Loto 1 chance, EM 2 stars (audit 2026-05-20 §Axe 5).
+                # Avant V142.E : secondary_top[0] singleton → EM enregistrait 1 étoile
+                # au lieu de 2 dans hybride_selection_history (source='pdf_meta_*').
+                _sec_count = 2 if game == ValidGame.euromillions else 1
+                _sec_tops = [int(n['number']) for n in (secondary_top or [])[:_sec_count]]
                 async with db_cloudsql.get_connection() as _pdf_conn:
                     # V137.C: BDD-aware (replaces V110 sync calendar+cutoff).
                     # Utilise _pdf_conn déjà ouverte → zéro overhead.
@@ -427,7 +431,7 @@ async def unified_meta_analyse_local(
                     )
                     await record_pdf_meta_top(
                         _pdf_conn, game.value, _draw_target, _source,
-                        _balls_top5, _sec_top1,
+                        _balls_top5, _sec_tops,
                     )
                 logger.info(
                     "[CALENDAR] PDF META tracked game=%s source=%s draw_target=%s",

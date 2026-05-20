@@ -904,7 +904,7 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.032 (V141 A.5 — Fix stats unified endpoint Option 3).
+        """APP_VERSION == 1.6.033 (V142.E — Fix patch PDF EM 2 étoiles tracking calendar admin).
 
         V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
         V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
@@ -962,9 +962,21 @@ class TestAppVersion:
         Loto FR 4 → 7 cards. Bug chronique 3/6 cards "-" sur /euromillions/statistiques
         résolu universellement (50 numéros + 12 étoiles + 6 langs). +53 tests
         parametric `test_v141_a5_stats_unified_endpoint.py`.
+        V142.E (20/05, Release 1.6.033) — Fix patch PDF EM 2 étoiles tracking calendar
+        admin. Anomalie identifiée audit READ-ONLY 2026-05-20 §Axe 5
+        (docs/AUDIT_ENGINE_HYBRIDE_PRE_V142_2026-05-20.md) : call site
+        routes/api_analyse_unified.py:421 passait `secondary_top[0]` singleton à
+        record_pdf_meta_top → EM enregistrait 1 étoile au lieu de 2 dans
+        hybride_selection_history (source='pdf_meta_*'). Impact : calendar admin
+        sous-évaluait matches EM ~50% (_calc_match V137.D accepte déjà liste 2 stars).
+        PDF visuel utilisateur NON impacté. Fix : signature record_pdf_meta_top
+        `secondary_top: int | list[int] | None` rétrocompat singleton + call site
+        `_sec_count = 2 if EM else 1` + slice. Isolation marinade V131.G-bis
+        confirmée empiriquement (grep services/chat_*, engine/ → 0 match).
+        +7 tests `test_v142e_pdf_em_2stars.py`.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.032"
+        assert APP_VERSION == "1.6.033"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

@@ -346,7 +346,7 @@ async def record_pdf_meta_top(
     draw_date_target,
     source: str,
     balls_top5: list,
-    secondary_top1=None,
+    secondary_top=None,
 ) -> dict:
     """V136 — Record top frequencies from PDF META analysis (admin perf calendar).
 
@@ -365,7 +365,10 @@ async def record_pdf_meta_top(
         draw_date_target: datetime.date — the date of the upcoming DRAW
         source: one of "pdf_meta_global", "pdf_meta_5a", "pdf_meta_2a"
         balls_top5: list[int] — top 5 ball numbers (highest frequency)
-        secondary_top1: int | None — top 1 chance/star number
+        secondary_top: int | list[int] | None — top secondary number(s).
+            - Loto: 1 chance (int OR [chance], both accepted).
+            - EM:   2 stars [s1, s2] (V142.E fix anomalie 1 étoile audit 2026-05-20).
+            - Singleton int wrapped to [int] for rétrocompat (V136 callers).
 
     Returns:
         {"game": str, "source": str, "draw_date_target": str,
@@ -409,10 +412,21 @@ async def record_pdf_meta_top(
                 inserted += 1
             else:
                 ignored += 1
-        # Top 1 secondary (chance for Loto, star for EM)
-        if secondary_top1 is not None:
-            try:
-                s_int = int(secondary_top1)
+        # Top secondary numbers — V142.E: Loto 1 chance, EM 2 stars.
+        # Rétrocompat singleton (int) → wrap to [int]. None / empty → skip.
+        # _calc_match V137.D downstream accepte déjà liste 2 stars EM.
+        if secondary_top is not None:
+            if isinstance(secondary_top, (list, tuple, set)):
+                _sec_iter = list(secondary_top)
+            else:
+                _sec_iter = [secondary_top]
+            for _s in _sec_iter:
+                if _s is None:
+                    continue
+                try:
+                    s_int = int(_s)
+                except (TypeError, ValueError):
+                    continue
                 await cursor.execute(
                     "INSERT IGNORE INTO hybride_selection_history "
                     "(game, number_value, number_type, draw_date_target, source, grid_id) "
@@ -423,8 +437,6 @@ async def record_pdf_meta_top(
                     inserted += 1
                 else:
                     ignored += 1
-            except (TypeError, ValueError):
-                pass
         await conn.commit()
         logger.info(
             "[CALENDAR] record_pdf_meta_top OK game=%s source=%s target=%s "

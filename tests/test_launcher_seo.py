@@ -200,6 +200,6 @@ class TestVersion:
     """V53 version bump."""
 
     def test_app_version(self):
-        # V141 A.5 bump : 1.6.031 → 1.6.032 (18/05/2026 — Fix stats unified endpoint Option 3 : SQL inline preserved + délégation partielle get_numero_stats pour pourcentage/ecart_moyen/classement)
+        # V142.E bump : 1.6.032 → 1.6.033 (20/05/2026 — Fix patch PDF EM 2 étoiles tracking calendar admin : signature record_pdf_meta_top accepte list[int] + call site _sec_count=2 if EM else 1)
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.032"
+        assert APP_VERSION == "1.6.033"
