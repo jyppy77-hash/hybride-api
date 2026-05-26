@@ -343,10 +343,10 @@ def render_template(
             # JS paths — chatbot per language (S01: full E4 coverage)
             "chatbot_js": {
                 "en": "/ui/en/euromillions/static/hybride-chatbot-em-en.js?v=1.3",
-                "es": "/ui/static/hybride-chatbot-em-es.js?v=1.2",
-                "pt": "/ui/static/hybride-chatbot-em-pt.js?v=1.2",
-                "de": "/ui/static/hybride-chatbot-em-de.js?v=1.2",
-                "nl": "/ui/static/hybride-chatbot-em-nl.js?v=1.2",
+                "es": "/ui/static/hybride-chatbot-em-es.js?v=1.3",
+                "pt": "/ui/static/hybride-chatbot-em-pt.js?v=1.3",
+                "de": "/ui/static/hybride-chatbot-em-de.js?v=1.3",
+                "nl": "/ui/static/hybride-chatbot-em-nl.js?v=1.3",
             }.get(lang, "/ui/static/hybride-chatbot-em.js?v=1.4"),
             "rating_js": "/ui/static/rating-popup.js?v=9",
 
