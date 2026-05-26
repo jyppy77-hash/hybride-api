@@ -904,7 +904,7 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.033 (V142.E — Fix patch PDF EM 2 étoiles tracking calendar admin).
+        """APP_VERSION == 1.6.034 (V142.F — Fix bug ancrage temporel chatbot).
 
         V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
         V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
@@ -974,9 +974,16 @@ class TestAppVersion:
         `_sec_count = 2 if EM else 1` + slice. Isolation marinade V131.G-bis
         confirmée empiriquement (grep services/chat_*, engine/ → 0 match).
         +7 tests `test_v142e_pdf_em_2stars.py`.
+        V142.F (26/05, Release 1.6.034) — Fix bug ancrage temporel chatbot.
+        Diagnostic READ-ONLY 2026-05-26. Cause A (Loto + EM) : chemin Gemini
+        générique n'injectait aucune date courante → hallucination date
+        (« 9 février 2026 », « 10 mai 2026 », bloc « Date:/Jour: » fabriqué).
+        Fix helper _build_temporal_anchor() injecte date réelle dynamique dans
+        system_prompt (bloc NE JAMAIS AFFICHER). Cause B (Loto) : dates en dur
+        exemples prompt_hybride.txt → placeholders descriptifs.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.033"
+        assert APP_VERSION == "1.6.034"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

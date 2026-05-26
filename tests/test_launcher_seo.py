@@ -200,6 +200,6 @@ class TestVersion:
     """V53 version bump."""
 
     def test_app_version(self):
-        # V142.E bump : 1.6.032 → 1.6.033 (20/05/2026 — Fix patch PDF EM 2 étoiles tracking calendar admin : signature record_pdf_meta_top accepte list[int] + call site _sec_count=2 if EM else 1)
+        # V142.F bump : 1.6.033 → 1.6.034 (26/05/2026 — Fix bug ancrage temporel chatbot : helper _build_temporal_anchor injecte date réelle dans system_prompt + purge dates en dur prompt_hybride.txt)
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.033"
+        assert APP_VERSION == "1.6.034"

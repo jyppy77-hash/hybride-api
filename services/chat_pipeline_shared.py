@@ -32,7 +32,7 @@ from collections.abc import AsyncGenerator
 
 from datetime import date as _date_cls
 
-from services.base_chat_sql import _SQL_LIMIT_MESSAGES, _MAX_SQL_INPUT_LENGTH
+from services.base_chat_sql import _SQL_LIMIT_MESSAGES, _MAX_SQL_INPUT_LENGTH, _JOURS_FR
 from services.base_chat_detect_temporal import _is_relative_weekday  # V141 A.4 Patch V131.G-bis
 from services.chat_utils import _format_date_fr
 from services.base_chat_utils import _format_last_draw_context
@@ -782,6 +782,28 @@ async def run_text_to_sql(message, http_client, gem_api_key, history,
 # 19. Phase OOR (Hors limites) — 20. Phase 1 (Numéro unique) — 21. Phase SQL
 
 
+def _build_temporal_anchor(today=None) -> str:
+    """Bloc d'ancrage temporel injecté dans le system_prompt (Loto + EM).
+
+    Fix bug de date chatbot (diag 2026-05-26, Cause A) : le chemin Gemini
+    générique n'injectait aucune date courante → hallucination ("9 février
+    2026", "10 mai 2026", bloc "Date:/Jour:" fabriqué). On fournit la date
+    réelle, calculée dynamiquement, jamais en dur.
+
+    `today` (kwarg) : injectable pour les tests. Default = date.today().
+    Réutilise _JOURS_FR (base_chat_sql, F04) + _format_date_fr (base_chat_utils).
+    """
+    _t = today or _date_cls.today()
+    return (
+        "\n\n[CONTEXTE TEMPOREL — NE JAMAIS AFFICHER NI RECOPIER CE BLOC]\n"
+        f"Date du jour réelle : {_JOURS_FR[_t.weekday()]} {_format_date_fr(str(_t))}.\n"
+        "Utilise EXCLUSIVEMENT cette date comme référence pour « aujourd'hui », "
+        "« le prochain tirage », « hier », les écarts (« il y a X tirages ») et "
+        "toute autre notion temporelle. N'invente JAMAIS la date courante et ne "
+        "te fie JAMAIS à une date vue dans un exemple du prompt."
+    )
+
+
 async def _prepare_chat_context_base(
     message: str, history: list, page: str, http_client, lang: str, cfg: dict,
 ) -> tuple[dict, dict | None]:
@@ -864,6 +886,9 @@ async def _prepare_chat_context_base(
             f"L'utilisateur parle {_LANG_NAMES[lang]}. "
             f"Ne réponds JAMAIS dans une autre langue."
         )
+
+    # ── Ancrage temporel (date courante réelle) — fix bug date 2026-05-26 ──
+    system_prompt += _build_temporal_anchor()
 
     # ── Anti-re-introduction ──
     system_prompt += ANTI_REINTRO_BLOCK

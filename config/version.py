@@ -5,6 +5,17 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# V142.F (Release 1.6.034, 26/05/2026) — Fix bug d'ancrage temporel du chatbot.
+# Diagnostic READ-ONLY 2026-05-26. Cause A (Loto + EM) : le chemin Gemini
+# générique n'injectait aucune date courante dans le system_prompt → le modèle
+# hallucinait la date (« 9 février 2026 », « 10 mai 2026 », bloc « Date:/Jour: »
+# fabriqué, jour↔date incohérent). Fix : helper _build_temporal_anchor()
+# (services/chat_pipeline_shared.py) injecte la date réelle dynamique
+# (date.today() + _JOURS_FR + _format_date_fr) dans le system_prompt, bloc balisé
+# "NE JAMAIS AFFICHER" (anti-fuite). Cause B (Loto) : dates en dur des exemples
+# prompts/chatbot/prompt_hybride.txt (L309/333/447/619) → placeholders descriptifs.
+# Prompts EM (mêmes dates) = backlog i18n séparé (Cause A les neutralise).
+#
 # V142.E (Release 1.6.033, 20/05/2026) — Fix patch PDF EM 2 étoiles tracking calendar admin.
 # Anomalie identifiée audit READ-ONLY 2026-05-20 §Axe 5
 # (docs/AUDIT_ENGINE_HYBRIDE_PRE_V142_2026-05-20.md) : routes/api_analyse_unified.py:421
@@ -51,9 +62,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.033"
+APP_VERSION = "1.6.034"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-05-20"
+VERSION_DATE = "2026-05-26"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.
