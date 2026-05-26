@@ -866,6 +866,91 @@ def _strip_hybride_tags(text: str) -> str:
     return _HYBRIDE_TAG_STRIP_RE.sub("", text).strip()
 
 
+# ─────────────────────────────────────────────────────────────────────
+# V142.F-bis — Filtre déterministe anti-fuite du bloc d'ancrage temporel
+# ─────────────────────────────────────────────────────────────────────
+# Le bloc [CONTEXTE TEMPOREL …] injecté par _build_temporal_anchor() dans le
+# system_prompt (chat_pipeline_shared.py) fuit par intermittence côté user
+# malgré l'instruction "NE JAMAIS AFFICHER NI RECOPIER CE BLOC" — une
+# instruction réduit le risque mais ne le supprime pas. Prod 26/05 (Loto FR) :
+# "Date : 26 mai 2026 Jour : mardi---On est mardi 26 mai 2026 ! …". Ceinture +
+# bretelles : l'instruction prompt reste (elle aide), ce filtre garantit le zéro
+# fuite. Tout est ancré en TÊTE de réponse et borné à 1 ligne (anti sur-filtrage).
+
+# (a) Balise interne exacte — strippée PARTOUT (comme les autres tags internes).
+_TEMPORAL_ANCHOR_TAG_RE = re.compile(r'\[CONTEXTE TEMPOREL[^\]]*\]', re.IGNORECASE)
+# (b) Ligne data du bloc exact, en TÊTE : "Date du jour réelle : …" (1 ligne).
+_TEMPORAL_ANCHOR_EXACT_LINE_RE = re.compile(
+    r'^\s*Date du jour réelle\s*:[^\n]*', re.IGNORECASE)
+# (c) Phrase d'instruction du bloc exact, en TÊTE (1 ligne).
+_TEMPORAL_ANCHOR_INSTRUCTION_RE = re.compile(
+    r'^\s*Utilise EXCLUSIVEMENT cette date[^\n]*', re.IGNORECASE)
+# (d) Reformulation "Date : <date> Jour : <jour>" en TÊTE. Le jour fuité est
+#     TOUJOURS un nom de jour FR (le bloc émet _JOURS_FR quelle que soit la
+#     langue) → borne de fin déterministe sur ce token unique, puis absorption
+#     d'un éventuel séparateur "---". Couvre les 3 cas : "…mardi---texte",
+#     "…mardi texte" (sans terminateur), "…mardi"<fin>. Fallback terminateur
+#     "---"/"\n" si jour traduit/inconnu. Le couple "Date :" + "Jour :" + jour
+#     FR est requis → une date dite naturellement n'est jamais touchée.
+_FR_JOURS = r'lundi|mardi|mercredi|jeudi|vendredi|samedi|dimanche'
+_TEMPORAL_ANCHOR_REFORMULATED_RE = re.compile(
+    r'^\s*\[?\s*Date\s*:[^\n]*?Jour\s*:\s*'
+    r'(?:(?:' + _FR_JOURS + r')\b\s*-*|[^\n]*?(?:-{2,}|\n))',
+    re.IGNORECASE,
+)
+
+
+def _strip_temporal_anchor_leak(text: str) -> str:
+    """V142.F-bis — retire toute fuite du bloc d'ancrage temporel en TÊTE de réponse.
+
+    Filtre DÉTERMINISTE (ceinture + bretelles vs l'instruction prompt). Retire QUE :
+      - la balise interne [CONTEXTE TEMPOREL …] (partout) ;
+      - en TÊTE : la ligne "Date du jour réelle : …", la phrase "Utilise
+        EXCLUSIVEMENT cette date …", et la reformulation "Date : <date>
+        Jour : <jour FR>[---]".
+    NE touche PAS une date dite naturellement ("On est mardi 26 mai 2026 !").
+    Jamais d'exception ; si rien ne matche, retourne `text` inchangé (byte-identique,
+    le lstrip n'est appliqué que si un strip a effectivement eu lieu).
+    """
+    if not text:
+        return text
+    try:
+        out = _TEMPORAL_ANCHOR_TAG_RE.sub('', text)
+        out = _TEMPORAL_ANCHOR_EXACT_LINE_RE.sub('', out, count=1)
+        out = _TEMPORAL_ANCHOR_INSTRUCTION_RE.sub('', out, count=1)
+        out = _TEMPORAL_ANCHOR_REFORMULATED_RE.sub('', out, count=1)
+        return out.lstrip('\n\r ') if out != text else out
+    except Exception as _e:  # pragma: no cover — défensif, jamais de réponse cassée
+        logger.warning("_strip_temporal_anchor_leak failed: %s", _e)
+        return text
+
+
+# V142.F-bis — borne dure du tampon de tête en streaming : le bloc/ligne fuité
+# tient largement en < 200 chars. Au-delà, on flushe (anti-latence).
+_ANCHOR_HEAD_CAP = 200
+
+
+def _anchor_head_should_flush(head: str) -> bool:
+    """V142.F-bis — True = on peut flusher la tête du stream ; False = continuer
+    à bufferiser. Flush IMMÉDIAT (zéro latence) si la tête ne ressemble pas à une
+    fuite : seules les réponses commençant par "Date" sont retenues le temps de
+    vérifier/retirer la fuite, donc 0 impact UX sur les autres réponses."""
+    h = head.lstrip()
+    if not h:
+        return False                                  # encore que du blanc → attendre
+    if len(head) >= _ANCHOR_HEAD_CAP:
+        return True                                   # cap atteint → flush
+    low = h.lower()
+    if not (low.startswith("date") or "date".startswith(low)):
+        return True                                   # réponse normale → flush immédiat
+    if ("\n" in h) or ("---" in h):
+        return True                                   # terminateur explicite vu
+    # Cas sans terminateur : la fuite est-elle déjà entièrement capturée (jour FR
+    # reconnu) AVEC du vrai texte derrière ? Si oui, on flushe (strip retire la fuite).
+    stripped = _strip_temporal_anchor_leak(head)
+    return len(stripped) < len(head) and bool(stripped.strip())
+
+
 def build_gemini_contents(history, message, detect_insulte_fn, max_messages: int | None = None):
     """
     Process chat history into Gemini contents array.
@@ -1012,6 +1097,7 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
         return {"response": fallback, "source": "fallback", "mode": mode}
 
     text = _clean_response(text)
+    text = _strip_temporal_anchor_leak(text)  # V142.F-bis — anti-fuite bloc ancrage
     if ctx["insult_prefix"]:
         text = ctx["insult_prefix"] + "\n\n" + text
     s_kwargs = sponsor_kwargs or {}
@@ -1120,8 +1206,10 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
 
         has_chunks = False
         _buf = StreamBuffer()
-        # V131.G — accumule yields différés en buffer mode (vide en path normal)
-        _buffered_emissions = []
+        # V142.F-bis — tampon de tête anti-fuite ancrage (mode normal uniquement).
+        # En buffer mode (V131.G strict), tout passe par _stream_chunks/_full_response.
+        _head_buf = ""
+        _head_flushed = False
 
         async for chunk in _stream(
             ctx["_http_client"], ctx["gem_api_key"], ctx["system_prompt"],
@@ -1134,25 +1222,44 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
                 continue
             has_chunks = True
             _stream_chunks.append(safe)
-            _evt = sse_event({
+            if _strict_block:
+                continue  # V131.G — buffer mode : aucun yield avant checks anti-hallu
+            # ── V142.F-bis — head-guard anti-fuite ancrage (mode normal) ──
+            if not _head_flushed:
+                _head_buf += safe
+                if not _anchor_head_should_flush(_head_buf):
+                    continue
+                _head_flushed = True
+                _clean_head = _strip_temporal_anchor_leak(_head_buf)
+                if _clean_head:
+                    yield sse_event({
+                        "chunk": _clean_head, "source": "gemini", "mode": mode, "is_done": False,
+                    })
+                continue
+            yield sse_event({
                 "chunk": safe, "source": "gemini", "mode": mode, "is_done": False,
             })
-            if _strict_block:
-                _buffered_emissions.append(_evt)  # V131.G — défer yield
-            else:
-                yield _evt  # comportement normal V131.F
 
         _remaining = _buf.flush()
         if _remaining:
             has_chunks = True
             _stream_chunks.append(_remaining)
-            _evt = sse_event({
-                "chunk": _remaining, "source": "gemini", "mode": mode, "is_done": False,
-            })
-            if _strict_block:
-                _buffered_emissions.append(_evt)
-            else:
-                yield _evt
+            if not _strict_block:
+                if not _head_flushed:
+                    _head_buf += _remaining  # V142.F-bis — encore en tête → ajoute au tampon
+                else:
+                    yield sse_event({
+                        "chunk": _remaining, "source": "gemini", "mode": mode, "is_done": False,
+                    })
+
+        # V142.F-bis — flush final de la tête si jamais émise (réponse < cap, pas de terminateur)
+        if not _strict_block and not _head_flushed and has_chunks:
+            _head_flushed = True
+            _clean_head = _strip_temporal_anchor_leak(_head_buf)
+            if _clean_head:
+                yield sse_event({
+                    "chunk": _clean_head, "source": "gemini", "mode": mode, "is_done": False,
+                })
 
         if not has_chunks:
             # V131.F — yield fallback i18n lang-aware (était fallback FR hardcodé)
@@ -1164,7 +1271,8 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
             })
             return
 
-        _full_response = "".join(_stream_chunks)
+        # V142.F-bis — strip fuite ancrage : cohérence logs + checks strict + replay strict
+        _full_response = _strip_temporal_anchor_leak("".join(_stream_chunks))
         _meta = ctx.get("_chat_meta") or {}
 
         # V131.G — checks anti-hallucination AVANT yield en buffer mode.
@@ -1229,14 +1337,17 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
                     "chunk": _strict_msg, "source": "fallback", "mode": mode, "is_done": True,
                 })
                 return
-            # Pas d'hallucination — yield insult_prefix différé puis chunks bufferés
+            # Pas d'hallucination — yield insult_prefix différé puis réponse nettoyée.
+            # V142.F-bis : _full_response est déjà strippé (anti-fuite ancrage) ci-dessus ;
+            # en buffer mode tout est dispo → un seul yield du texte complet nettoyé.
             if ctx["insult_prefix"]:
                 yield sse_event({
                     "chunk": ctx["insult_prefix"] + "\n\n",
                     "source": "gemini", "mode": mode, "is_done": False,
                 })
-            for _evt in _buffered_emissions:
-                yield _evt
+            yield sse_event({
+                "chunk": _full_response, "source": "gemini", "mode": mode, "is_done": False,
+            })
 
         # ── Sponsor + done event (commun aux 2 paths) ──
         s_kwargs = sponsor_kwargs or {}
