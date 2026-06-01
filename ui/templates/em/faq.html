@@ -280,7 +280,7 @@
           "name": {{ _('Ou trouver de l\'aide en cas d\'addiction ?')|tojson }},
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": {{ (_('Si vous ou un proche rencontrez des difficultés avec le jeu :') ~ ' ' ~ _('Téléphone : <strong>09 74 75 13 13</strong> (appel non surtaxé)') ~ ' ' ~ (_('Site web : <a href="%(url)s" target="_blank" rel="noopener">%(name)s</a>')|format(url=gambling_help_url, name=gambling_help_name)) ~ ' ' ~ _('Chat en ligne disponible') ~ ' ' ~ _('Service gratuit, anonyme et confidentiel') ~ ' ' ~ _('Horaires : 7j/7 de 8h à 2h du matin'))|striptags|tojson }}
+            "text": {{ (_('Si vous ou un proche rencontrez des difficultés avec le jeu :') ~ ' ' ~ (_('Téléphone :') ~ ' ' ~ gambling_help_phone ~ ' (' ~ gambling_help_phone_note ~ ')') ~ ' ' ~ (_('Site web : <a href="%(url)s" target="_blank" rel="noopener">%(name)s</a>')|format(url=gambling_help_url, name=gambling_help_name)) ~ ' ' ~ _('Chat en ligne disponible') ~ ' ' ~ _('Service gratuit, anonyme et confidentiel') ~ ' ' ~ _('Horaires : 7j/7 de 8h à 2h du matin'))|striptags|tojson }}
           }
         },
         {
@@ -830,7 +830,7 @@
                             <p>{{ _('Si vous ou un proche rencontrez des difficultés avec le jeu :') }}</p>
                             <p><strong>{{ gambling_help_name }}</strong></p>
                             <ul>
-                                <li>{{ _('Téléphone : <strong>09 74 75 13 13</strong> (appel non surtaxé)')|safe }}</li>
+                                <li>{{ _('Téléphone :') }} <strong>{{ gambling_help_phone }}</strong> ({{ gambling_help_phone_note }})</li>
                                 <li>{{ _('Site web : <a href="%(url)s" target="_blank" rel="noopener">%(name)s</a>')|format(url=gambling_help_url, name=gambling_help_name)|safe }}</li>
                                 <li>{{ _('Chat en ligne disponible') }}</li>
                                 <li>{{ _('Service gratuit, anonyme et confidentiel') }}</li>

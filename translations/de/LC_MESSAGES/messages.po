@@ -6008,3 +6008,7 @@ msgstr "Was ist der Abstand (oder Rückstand) einer Zahl oder eines Sterns?"
 #: ui/templates/em/faq.html
 msgid "L'écart est le nombre de tirages écoulés depuis la dernière apparition d'un numéro ou d'une étoile. C'est un indicateur statistique descriptif qui mesure le temps depuis la dernière sortie ; il ne donne aucune indication sur les tirages à venir."
 msgstr "Der Abstand ist die Anzahl der Ziehungen seit dem letzten Erscheinen einer Zahl oder eines Sterns. Es ist ein beschreibender statistischer Indikator, der die Zeit seit dem letzten Erscheinen misst; er gibt keinen Hinweis auf kommende Ziehungen."
+
+#: ui/templates/em/faq.html
+msgid "Téléphone :"
+msgstr "Telefon:"

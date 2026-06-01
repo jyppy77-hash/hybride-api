@@ -248,13 +248,13 @@ def test_gambling_urls_match_lang():
     es = get_js_labels("es")
     pt = get_js_labels("pt")
     assert "joueurs-info-service.fr" in fr["gambling_url"]
-    assert "begambleaware.org" in en["gambling_url"]
-    assert "jugarbien.es" in es["gambling_url"]
-    assert "jogoresponsavel.pt" in pt["gambling_url"]
+    assert "gamcare.org.uk" in en["gambling_url"]
+    assert "fejar.org" in es["gambling_url"]
+    assert "sicad.pt" in pt["gambling_url"]
     de = get_js_labels("de")
-    assert "spielerschutz.de" in de["gambling_url"]
+    assert "check-dein-spiel.de" in de["gambling_url"]
     nl = get_js_labels("nl")
-    assert "gokkliniek.be" in nl["gambling_url"]
+    assert "openovergokken.nl" in nl["gambling_url"]
 
 
 def test_http_error_has_trailing_space():

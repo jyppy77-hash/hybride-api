@@ -4953,3 +4953,7 @@ msgstr ""
 #: ui/templates/em/faq.html
 msgid "L'écart est le nombre de tirages écoulés depuis la dernière apparition d'un numéro ou d'une étoile. C'est un indicateur statistique descriptif qui mesure le temps depuis la dernière sortie ; il ne donne aucune indication sur les tirages à venir."
 msgstr ""
+
+#: ui/templates/em/faq.html
+msgid "Téléphone :"
+msgstr ""

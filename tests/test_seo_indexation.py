@@ -904,7 +904,7 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.038 (Sprint SEO P1c — FAQ EM étoffée ~30 Q, parité Loto).
+        """APP_VERSION == 1.6.039 (Fix i18n numéros d'aide Jeu Responsable, hors sprint SEO).
 
         V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
         V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
@@ -997,9 +997,13 @@ class TestAppVersion:
         Sprint SEO P1c (01/06, Release 1.6.038) — FAQ EM 13/15 désync -> 33 Q cohérentes
         visible == JSON-LD : +16 nouvelles Q + fusion chaud/froid + resync (paires->visible,
         5 visible-only -> JSON-LD striptags-reuse). 34 msgid traduits 6 langues, wording ANJ.
+        Fix i18n numéros d'aide Jeu Responsable (01/06, Release 1.6.039) — hors sprint SEO :
+        phone+phone_note centralisés dans _GAMBLING_HELP[lang] (FAQ lit le dict) + correction
+        msgstr footer/disclaimer (EN gamcare, PT 1414/Linha Vida, NL Open Over Gokken) + chatbot
+        js_i18n org/url alignés 5 langs. Backlog : templates légaux multi-pays (commit séparé).
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.038"
+        assert APP_VERSION == "1.6.039"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

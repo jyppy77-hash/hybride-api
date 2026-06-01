@@ -301,12 +301,8 @@ msgid "Générateur Loto"
 msgstr "Generator Loto"
 
 #: ui/templates/em/_footer.html:52
-msgid ""
-"Jouer comporte des risques : endettement, isolement, dépendance. Appelez "
-"le 09 74 75 13 13 (appel non surtaxé)."
-msgstr ""
-"Spelen brengt risico's met zich mee: schulden, isolement, verslaving. "
-"Gokkliniek: www.gokkliniek.be (gratis hulplijn)."
+msgid "Jouer comporte des risques : endettement, isolement, dépendance. Appelez le 09 74 75 13 13 (appel non surtaxé)."
+msgstr "Spelen brengt risico's met zich mee: schulden, isolement, verslaving. Open Over Gokken: 0800 24 000 22 (gratis hulplijn, www.openovergokken.nl)."
 
 #: ui/templates/em/_footer.html:53 ui/templates/em/euromillions-ia.html:247
 #: ui/templates/em/hybride.html:444
@@ -856,15 +852,8 @@ msgstr ""
 "om resultaten te voorspellen."
 
 #: ui/templates/em/accueil.html:853
-msgid ""
-"Les données fournies sont à titre informatif et pédagogique. Jouer "
-"comporte des risques : endettement, isolement, dépendance. Appelez le 09 "
-"74 75 13 13 (appel non surtaxé)."
-msgstr ""
-"De verstrekte gegevens zijn louter informatief en educatief. Spelen "
-"brengt risico's met zich mee: schulden, isolement, verslaving. "
-"Gokkliniek: www.gokkliniek.be (gratis hulplijn). In Nederland: Loket "
-"Kansspel (www.loketkansspel.nl)."
+msgid "Les données fournies sont à titre informatif et pédagogique. Jouer comporte des risques : endettement, isolement, dépendance. Appelez le 09 74 75 13 13 (appel non surtaxé)."
+msgstr "De verstrekte gegevens zijn louter informatief en educatief. Spelen brengt risico's met zich mee: schulden, isolement, verslaving. Open Over Gokken: 0800 24 000 22 (gratis hulplijn, www.openovergokken.nl)."
 
 #: ui/templates/em/euromillions-ia.html:4
 msgid "EuroMillions et IA — Analyse des Tirages | LotoIA"
@@ -5979,3 +5968,7 @@ msgstr "Wat is de afwijking (of achterstand) van een nummer of ster?"
 #: ui/templates/em/faq.html
 msgid "L'écart est le nombre de tirages écoulés depuis la dernière apparition d'un numéro ou d'une étoile. C'est un indicateur statistique descriptif qui mesure le temps depuis la dernière sortie ; il ne donne aucune indication sur les tirages à venir."
 msgstr "De afwijking is het aantal trekkingen sinds een nummer of ster voor het laatst verscheen. Het is een beschrijvende statistische indicator die de tijd sinds de laatste verschijning meet; hij geeft geen aanwijzing over komende trekkingen."
+
+#: ui/templates/em/faq.html
+msgid "Téléphone :"
+msgstr "Telefoon:"

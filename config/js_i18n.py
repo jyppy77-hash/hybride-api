@@ -276,8 +276,8 @@ _LABELS: dict[str, dict[str, str]] = {
         "reminder_title": "Important reminder:",
         "reminder_text": "These grids are generated from historical statistics. EuroMillions is a game of chance and no method guarantees winnings.",
         "play_responsible": "Play responsibly: ",
-        "gambling_url": "https://www.begambleaware.org",
-        "gambling_name": "BeGambleAware.org",
+        "gambling_url": "https://www.gamcare.org.uk",
+        "gambling_name": "GamCare",
 
         # ── app-em — popup title template ──
         "popup_gen_title": "Simulating {n} optimised EM grid{s}",
@@ -500,8 +500,8 @@ _LABELS: dict[str, dict[str, str]] = {
         "reminder_title": "Aviso importante:",
         "reminder_text": "Estas combinaciones se generan a partir de estadísticas históricas. EuroMillions es un juego de azar y ningún método garantiza ganancias.",
         "play_responsible": "Juega con responsabilidad: ",
-        "gambling_url": "https://www.jugarbien.es",
-        "gambling_name": "Jugar Bien",
+        "gambling_url": "https://fejar.org",
+        "gambling_name": "FEJAR",
 
         # ── app-em — popup title template ──
         "popup_gen_title": "Simulación de {n} combinaciones optimizada{s} EM",
@@ -724,8 +724,8 @@ _LABELS: dict[str, dict[str, str]] = {
         "reminder_title": "Aviso importante:",
         "reminder_text": "Estas combinações são geradas a partir de estatísticas históricas. O EuroMillions é um jogo de sorte e nenhum método garante ganhos.",
         "play_responsible": "Joga com responsabilidade: ",
-        "gambling_url": "https://www.jogoresponsavel.pt",
-        "gambling_name": "Jogo Responsável",
+        "gambling_url": "https://www.sicad.pt",
+        "gambling_name": "Linha Vida (SICAD)",
 
         # ── app-em — popup title template ──
         "popup_gen_title": "Simulação de {n} combinações otimizada{s} EM",
@@ -948,8 +948,8 @@ _LABELS: dict[str, dict[str, str]] = {
         "reminder_title": "Wichtiger Hinweis:",
         "reminder_text": "Diese Kombinationen werden aus historischen Statistiken generiert. EuroMillions ist ein Glücksspiel und keine Methode garantiert Gewinne.",
         "play_responsible": "Spielen Sie verantwortungsvoll: ",
-        "gambling_url": "https://www.spielerschutz.de",
-        "gambling_name": "Spielerschutz",
+        "gambling_url": "https://www.check-dein-spiel.de",
+        "gambling_name": "BIÖG",
 
         # ── app-em — popup title template ──
         "popup_gen_title": "Simulation von {n} optimierten EM-Kombination{s}",
@@ -1172,8 +1172,8 @@ _LABELS: dict[str, dict[str, str]] = {
         "reminder_title": "Belangrijke herinnering:",
         "reminder_text": "Deze combinaties zijn gegenereerd op basis van historische statistieken. EuroMillions is een kansspel en geen enkele methode garandeert winst.",
         "play_responsible": "Speel verantwoord: ",
-        "gambling_url": "https://www.gokkliniek.be",
-        "gambling_name": "Gokkliniek",
+        "gambling_url": "https://openovergokken.nl",
+        "gambling_name": "Open Over Gokken",
 
         # ── app-em — popup title template ──
         "popup_gen_title": "Simulatie van {n} geoptimaliseerde EM-combinatie{s}",

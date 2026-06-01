@@ -305,7 +305,7 @@ msgid ""
 "le 09 74 75 13 13 (appel non surtaxé)."
 msgstr ""
 "Jogar comporta riscos: endividamento, isolamento, dependência. Ligue para"
-" a Linha Vida SOS Jogo: 808 200 204 (chamada local)."
+" a Linha Vida: 1414 (chamada gratuita)."
 
 #: ui/templates/em/_footer.html:53 ui/templates/em/euromillions-ia.html:247
 #: ui/templates/em/hybride.html:444
@@ -859,7 +859,7 @@ msgid ""
 msgstr ""
 "Os dados fornecidos são meramente informativos e pedagógicos. Jogar "
 "comporta riscos: endividamento, isolamento, dependência. Ligue para a "
-"Linha Vida SOS Jogo: 808 200 204 (chamada local)."
+"Linha Vida: 1414 (chamada gratuita)."
 
 #: ui/templates/em/euromillions-ia.html:4
 msgid "EuroMillions et IA — Analyse des Tirages | LotoIA"
@@ -1917,7 +1917,7 @@ msgstr "Se o utilizador ou alguém próximo tiver dificuldades com o jogo:"
 #: ui/templates/em/faq.html:403
 msgid "Téléphone : <strong>09 74 75 13 13</strong> (appel non surtaxé)"
 msgstr ""
-"Telefone: <strong>808 200 204</strong> (Linha Vida SOS Jogo — chamada "
+"Telefone: <strong>1414</strong> (Linha Vida — chamada "
 "local)"
 
 #: ui/templates/em/faq.html:404
@@ -5935,3 +5935,7 @@ msgstr "O que é o desvio (ou atraso) de um número ou estrela?"
 #: ui/templates/em/faq.html
 msgid "L'écart est le nombre de tirages écoulés depuis la dernière apparition d'un numéro ou d'une étoile. C'est un indicateur statistique descriptif qui mesure le temps depuis la dernière sortie ; il ne donne aucune indication sur les tirages à venir."
 msgstr "O desvio é o número de sorteios decorridos desde a última aparição de um número ou estrela. É um indicador estatístico descritivo que mede o tempo desde a última saída; não dá qualquer indicação sobre os sorteios futuros."
+
+#: ui/templates/em/faq.html
+msgid "Téléphone :"
+msgstr "Telefone:"

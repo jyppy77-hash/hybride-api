@@ -250,29 +250,43 @@ def hreflang_tags(page_key: str) -> list[dict]:
 # ── Gambling help per language ───────────────────────────────────────────
 
 _GAMBLING_HELP = {
+    # Organisme + URL + numéro d'aide jeu responsable, par langue (sources officielles
+    # vérifiées 01/06/2026). Le numéro est centralisé ici (plus de hard-code dans les msgid).
     "fr": {
         "url":  "https://www.joueurs-info-service.fr",
         "name": "Joueurs Info Service",
+        "phone": "09 74 75 13 13",
+        "phone_note": "appel non surtaxé",
     },
     "en": {
-        "url":  "https://www.begambleaware.org",
-        "name": "BeGambleAware",
+        "url":  "https://www.gamcare.org.uk",
+        "name": "GamCare",
+        "phone": "0808 8020 133",
+        "phone_note": "freephone",
     },
     "pt": {
-        "url":  "https://www.jogoresponsavel.pt",
-        "name": "Jogo Responsavel",
+        "url":  "https://www.sicad.pt",
+        "name": "Linha Vida (SICAD)",
+        "phone": "1414",
+        "phone_note": "chamada gratuita",
     },
     "es": {
-        "url":  "https://www.jugarbien.es",
-        "name": "Jugar Bien",
+        "url":  "https://fejar.org",
+        "name": "FEJAR",
+        "phone": "900 200 225",
+        "phone_note": "llamada gratuita",
     },
     "de": {
-        "url":  "https://www.spielen-mit-verantwortung.de",
-        "name": "Spielen mit Verantwortung",
+        "url":  "https://www.check-dein-spiel.de",
+        "name": "BIÖG",
+        "phone": "0800 1 372 700",
+        "phone_note": "kostenlos",
     },
     "nl": {
-        "url":  "https://www.agog.nl",
-        "name": "AGOG",
+        "url":  "https://openovergokken.nl",
+        "name": "Open Over Gokken",
+        "phone": "0800 24 000 22",
+        "phone_note": "gratis",
     },
 }
 
@@ -353,6 +367,8 @@ def render_template(
             # Gambling help
             "gambling_help_url": help_info["url"],
             "gambling_help_name": help_info["name"],
+            "gambling_help_phone": help_info["phone"],
+            "gambling_help_phone_note": help_info["phone_note"],
 
             # Nav scroll (off by default, pages override)
             "include_nav_scroll": False,

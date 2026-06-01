@@ -5,6 +5,20 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# Fix i18n numéros d'aide Jeu Responsable (Release 1.6.039, 01/06/2026) — hors sprint SEO.
+# Bug pré-existant : le numéro/organisme d'aide au jeu était dupliqué et désynchronisé sur
+# plusieurs sources (FAQ EM EN affichait le n° FR sous BeGambleAware ; PT/NL n° obsolètes).
+# Numéros vérifiés double source officielle. Approche : (1) ROBUSTE — ajout de phone+phone_note
+# à config/templates.py::_GAMBLING_HELP[lang] (numéro centralisé, fini le hard-code dans les
+# msgid) + FAQ « Aide » (visible + JSON-LD) lit le dict ; (2) PRAGMATIQUE — correction des
+# msgstr footer/disclaimer (.po) : EN url→gamcare, PT 808→1414 + Linha Vida + chamada gratuita,
+# NL → Open Over Gokken 0800 24 000 22 ; (3) chatbot config/js_i18n.py org/url alignés (5 langs).
+# Valeurs : FR Joueurs Info Service · EN GamCare/gamcare.org.uk/0808 8020 133 · ES FEJAR/fejar.org/
+# 900 200 225 · PT Linha Vida (SICAD)/sicad.pt/1414 · DE BIÖG/check-dein-spiel.de/0800 1 372 700 ·
+# NL Open Over Gokken/openovergokken.nl/0800 24 000 22. Vérif rendu 6 langues (FAQ+home+chatbot).
+# BACKLOG : (1) templates légaux mentions-legales.html + disclaimer.html (annuaire multi-pays,
+# audit contenu IE/BE/LU/AT/CH à valider) ; (2) centraliser js_i18n + légaux sur _GAMBLING_HELP.
+#
 # Sprint SEO P1c (Release 1.6.038, 01/06/2026) — FAQ EM étoffée (QW12, parité Loto ~30 Q).
 # Source : docs/AUDIT_SEO_360_2026-05-30.md. FAQ EuroMillions (ui/templates/em/faq.html)
 # passée de 13 (JSON-LD) / 15 (visible) désynchronisées à 33 Q cohérentes visible == JSON-LD.
@@ -109,7 +123,7 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.038"
+APP_VERSION = "1.6.039"
 APP_NAME = "LotoIA"
 VERSION_DATE = "2026-06-01"
 

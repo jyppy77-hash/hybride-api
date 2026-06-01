@@ -199,12 +199,12 @@ def test_gambling_help_fr():
 
 
 def test_gambling_help_en():
-    """EN pages include BeGambleAware."""
+    """EN pages include GamCare (National Gambling Helpline)."""
     from config.templates import render_template
     request = _make_request()
     resp = render_template("em/historique.html", request, lang="en", page_key="historique")
     html = resp.body.decode("utf-8")
-    assert "begambleaware.org" in html
+    assert "gamcare.org.uk" in html
 
 
 # ═══════════════════════════════════════════════

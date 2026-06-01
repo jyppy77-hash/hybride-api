@@ -297,7 +297,7 @@ msgid ""
 "le 09 74 75 13 13 (appel non surtaxé)."
 msgstr ""
 "Gambling carries risks: debt, isolation, addiction. Visit "
-"www.begambleaware.org or call 0808 8020 133."
+"www.gamcare.org.uk or call 0808 8020 133."
 
 #: ui/templates/em/_footer.html:53 ui/templates/em/euromillions-ia.html:247
 #: ui/templates/em/hybride.html:444
@@ -843,7 +843,7 @@ msgid ""
 msgstr ""
 "The data provided is for informational and educational purposes only. "
 "Gambling carries risks: debt, isolation, addiction. If you need help, "
-"visit www.begambleaware.org or call 0808 8020 133."
+"visit www.gamcare.org.uk or call 0808 8020 133."
 
 #: ui/templates/em/euromillions-ia.html:4
 msgid "EuroMillions et IA — Analyse des Tirages | LotoIA"
@@ -5719,3 +5719,7 @@ msgstr "What is the gap (or delay) of a number or star?"
 #: ui/templates/em/faq.html
 msgid "L'écart est le nombre de tirages écoulés depuis la dernière apparition d'un numéro ou d'une étoile. C'est un indicateur statistique descriptif qui mesure le temps depuis la dernière sortie ; il ne donne aucune indication sur les tirages à venir."
 msgstr "The gap is the number of draws elapsed since a number or star last appeared. It is a descriptive statistical indicator that measures the time since the last appearance; it gives no indication about upcoming draws."
+
+#: ui/templates/em/faq.html
+msgid "Téléphone :"
+msgstr "Telephone:"

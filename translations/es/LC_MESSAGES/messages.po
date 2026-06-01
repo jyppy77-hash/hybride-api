@@ -5997,3 +5997,7 @@ msgstr "¿Qué es la desviación (o retraso) de un número o una estrella?"
 #: ui/templates/em/faq.html
 msgid "L'écart est le nombre de tirages écoulés depuis la dernière apparition d'un numéro ou d'une étoile. C'est un indicateur statistique descriptif qui mesure le temps depuis la dernière sortie ; il ne donne aucune indication sur les tirages à venir."
 msgstr "La desviación es el número de sorteos transcurridos desde la última aparición de un número o una estrella. Es un indicador estadístico descriptivo que mide el tiempo desde la última salida; no da ninguna indicación sobre los sorteos venideros."
+
+#: ui/templates/em/faq.html
+msgid "Téléphone :"
+msgstr "Teléfono:"
