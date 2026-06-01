@@ -45,14 +45,6 @@
         },
         {
           "@type": "Question",
-          "name": {{ _('Que signifient numéros chauds et froids ?')|tojson }},
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": {{ _('Un numéro chaud est sorti fréquemment sur les 2 dernières années. Un numéro froid est rarement sorti. L\'analyse porte sur les 50 numéros principaux ET les 12 étoiles.')|tojson }}
-          }
-        },
-        {
-          "@type": "Question",
           "name": {{ _('Comment sont calculées les étoiles ?')|tojson }},
           "acceptedAnswer": {
             "@type": "Answer",
@@ -65,30 +57,6 @@
           "acceptedAnswer": {
             "@type": "Answer",
             "text": {{ _('Les données proviennent des tirages officiels de l\'EuroMillions. La base contient plusieurs années d\'historique, mise à jour après chaque tirage officiel (mardi et vendredi).')|tojson }}
-          }
-        },
-        {
-          "@type": "Question",
-          "name": {{ _('Qu\'est-ce qu\'une paire de numéros à l\'EuroMillions ?')|tojson }},
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": {{ _('Une paire correspond à deux numéros (boules ou étoiles) tirés ensemble lors d\'un même tirage EuroMillions. LotoIA analyse les co-occurrences sur l\'historique complet : 1 225 paires de boules possibles et 66 paires d\'étoiles possibles.')|tojson }}
-          }
-        },
-        {
-          "@type": "Question",
-          "name": {{ _('Comment consulter les paires les plus fréquentes à l\'EuroMillions ?')|tojson }},
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": {{ _('Rendez-vous sur la page Paires EuroMillions pour accéder au classement des paires de boules et d\'étoiles (chaudes et froides), ainsi qu\'à deux outils de recherche interactifs : une grille de 50 boules et une grille de 12 étoiles.')|tojson }}
-          }
-        },
-        {
-          "@type": "Question",
-          "name": {{ _('Les paires de numéros permettent-elles de prédire l\'EuroMillions ?')|tojson }},
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": {{ _('Non. L\'analyse des paires est un outil statistique basé sur l\'historique des tirages. Chaque tirage est indépendant et les résultats passés n\'influencent pas les tirages futurs. LotoIA fournit des données factuelles, pas des prédictions.')|tojson }}
           }
         },
         {
@@ -117,18 +85,210 @@
         },
         {
           "@type": "Question",
-          "name": {{ _('Quelle est la différence entre numéros chauds et froids ?')|tojson }},
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": {{ _('Les numéros chauds sont ceux tirés le plus fréquemment sur la période historique. Les numéros froids sont ceux tirés le moins fréquemment. LotoIA affiche les deux classements sur la page Statistiques. C\'est purement descriptif — la fréquence passée ne prédit pas les tirages futurs.')|tojson }}
-          }
-        },
-        {
-          "@type": "Question",
           "name": {{ _('LotoIA est-il gratuit ?')|tojson }},
           "acceptedAnswer": {
             "@type": "Answer",
             "text": {{ _('Oui, LotoIA est entièrement gratuit. Tous les outils statistiques, le chatbot HYBRIDE, le générateur de grilles et le simulateur sont accessibles sans inscription ni paiement.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Qu\'est-ce qu\'une paire de numéros à l\'EuroMillions ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Une paire correspond à deux numéros (boules ou étoiles) tirés ensemble lors d\'un même tirage EuroMillions. LotoIA analyse les co-occurrences sur l\'historique complet : 1 225 paires de boules possibles et 66 paires d\'étoiles possibles.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Comment consulter les paires les plus fréquentes à l\'EuroMillions ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Rendez-vous sur la page Paires EuroMillions pour accéder au classement des paires de boules et d\'étoiles (chaudes et froides), ainsi qu\'à deux outils de recherche interactifs : une grille de 50 boules et une grille de 12 étoiles.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Les paires de numéros permettent-elles de prédire l\'EuroMillions ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Non. L\'analyse des paires est un outil statistique basé sur l\'historique des tirages. Chaque tirage est indépendant et les résultats passés n\'influencent pas les tirages futurs. LotoIA fournit des données factuelles, pas des prédictions.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Que signifient les numéros et étoiles « chauds » et « froids » ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Un numéro ou une étoile « chaud » est sorti fréquemment sur la période analysée ; un numéro « froid » est sorti rarement. LotoIA calcule ces fréquences sur les 50 numéros et les 12 étoiles à partir des tirages officiels. C\'est purement descriptif : une fréquence passée n\'augmente ni ne diminue la probabilité d\'un tirage futur, chaque tirage étant indépendant.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Qu\'est-ce que la technologie « IA Grounded » de LotoIA ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('« Grounded » signifie que les réponses de LotoIA sont ancrées sur des données réelles : le chatbot HYBRIDE et les analyses s\'appuient exclusivement sur l\'historique des tirages officiels EuroMillions, et non sur des suppositions. L\'objectif est d\'éviter les approximations et de ne fournir que des faits statistiques vérifiables.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('L\'intelligence artificielle peut-elle prédire l\'EuroMillions ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Non. Aucune intelligence artificielle ne peut prédire un tirage de l\'EuroMillions, qui repose sur le pur hasard. Chaque tirage est indépendant des précédents. LotoIA n\'anticipe aucun résultat : l\'outil se limite à analyser et présenter les fréquences observées dans l\'historique, à titre informatif et pédagogique.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Comment fonctionne le moteur HYBRIDE pour l\'EuroMillions ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Le moteur HYBRIDE analyse l\'historique des tirages selon plusieurs axes : fréquences de long terme, tendances récentes et écarts. Il est adapté au format EuroMillions (5 numéros de 1 à 50 et 2 étoiles de 1 à 12), les étoiles étant traitées comme un espace statistique distinct des numéros principaux.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Que signifient les modes Conservateur, Équilibré et Récent ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Ces trois modes pondèrent différemment l\'historique : le mode Conservateur s\'appuie surtout sur les fréquences de long terme, le mode Récent accentue les tendances des derniers tirages, et le mode Équilibré combine les deux. Ils modifient la façon dont les grilles sont composées, sans rien changer au caractère aléatoire du tirage.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Comment est calculé l\'indice de convergence d\'une grille ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('L\'indice de convergence évalue dans quelle mesure une grille respecte certains équilibres statistiques observés dans l\'historique : répartition pair/impair, étalement des numéros, mélange de numéros chauds et froids. C\'est un indicateur descriptif de cohérence statistique, pas une mesure de probabilité de gain.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Combien de tirages EuroMillions sont analysés ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('LotoIA analyse l\'intégralité des tirages officiels EuroMillions disponibles dans sa base, soit plusieurs années d\'historique mises à jour après chaque tirage (mardi et vendredi). Le nombre exact de tirages pris en compte est affiché sur les pages d\'analyse.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Que peut faire le chatbot HYBRIDE sur l\'EuroMillions ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Le chatbot HYBRIDE répond à vos questions sur les statistiques EuroMillions : fréquence d\'un numéro ou d\'une étoile, écarts, paires, ou résultats d\'un tirage passé. Ses réponses sont ancrées sur les tirages officiels ; il fournit des informations factuelles et ne donne aucune prédiction.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('En quoi LotoIA est-il différent d\'un assistant IA généraliste ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('LotoIA est dédié à l\'analyse de l\'EuroMillions et connecté à l\'historique des tirages officiels : ses réponses sont ancrées sur ces données (« grounding »), ce qui vise une fiabilité statistique sans approximation. Des assistants généralistes comme ChatGPT, Gemini ou Claude ne sont pas connectés en temps réel à cet historique officiel des tirages : ils ne sont pas conçus pour fournir des statistiques EuroMillions vérifiées et à jour de la même manière.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Comment mes données personnelles sont-elles protégées ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('LotoIA ne demande aucune inscription ni donnée personnelle pour utiliser ses outils. La navigation est anonyme et le service est conforme au RGPD. Les détails figurent dans notre politique de confidentialité.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('LotoIA est-il un site de jeu d\'argent ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Non. LotoIA ne permet ni de jouer, ni de miser, ni d\'acheter une grille. C\'est un outil gratuit d\'analyse statistique et de pédagogie autour de l\'EuroMillions. Pour jouer, il faut passer par un opérateur officiel agréé dans votre pays.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Les numéros ou étoiles « en retard » ont-ils plus de chances de sortir ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Non, c\'est une idée reçue. Un numéro qui n\'est pas sorti depuis longtemps n\'a pas davantage de chances d\'apparaître au tirage suivant : chaque tirage est indépendant et tous les numéros ont la même probabilité à chaque fois. L\'écart est un indicateur descriptif, pas un signal de prédiction.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Quels sont les numéros les plus tirés à l\'EuroMillions ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('LotoIA publie le classement des numéros par fréquence de sortie sur l\'historique des tirages, consultable sur la page Statistiques. Ces fréquences sont purement observationnelles : elles décrivent le passé et ne permettent pas d\'anticiper les prochains tirages, qui restent aléatoires.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Quelles sont les étoiles les plus fréquentes à l\'EuroMillions ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Les 12 étoiles (1 à 12) font l\'objet d\'un classement de fréquence distinct des numéros principaux, disponible sur la page Statistiques. Comme pour les numéros, il s\'agit d\'une analyse descriptive de l\'historique, sans valeur prédictive.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Comment consulter l\'historique des tirages EuroMillions ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('La page Historique permet de rechercher un tirage EuroMillions par date et d\'afficher les 5 numéros et 2 étoiles sortis. L\'ensemble des résultats officiels y est consultable et mis à jour après chaque tirage.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Les statistiques EuroMillions sont-elles les mêmes dans les 9 pays ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('Oui. L\'EuroMillions est un tirage européen commun : les mêmes 5 numéros et 2 étoiles sont valables dans les 9 pays participants (France, Royaume-Uni, Espagne, Portugal, Belgique, Luxembourg, Irlande, Autriche et Suisse). Les statistiques de LotoIA s\'appliquent donc à tous ces pays.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Qu\'est-ce que l\'écart (ou retard) d\'un numéro ou d\'une étoile ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ _('L\'écart est le nombre de tirages écoulés depuis la dernière apparition d\'un numéro ou d\'une étoile. C\'est un indicateur statistique descriptif qui mesure le temps depuis la dernière sortie ; il ne donne aucune indication sur les tirages à venir.')|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Quelle est la différence avec le Loto ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ (_('L\'EuroMillions utilise <strong>5 numéros de 1 à 50 + 2 étoiles de 1 à 12</strong>, contre 5 numéros de 1 à 49 + 1 chance de 1 à 10 pour le Loto.') ~ ' ' ~ _('Les tirages EuroMillions ont lieu les <strong>mardis et vendredis</strong>, tandis que le Loto se joue les lundis, mercredis et samedis.') ~ ' ' ~ _('Le moteur utilisé est <strong>HYBRIDE</strong>, une adaptation spécifique du moteur HYBRIDE pour les règles EuroMillions.'))|striptags|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('À quelle fréquence la base est-elle mise à jour ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ (_('La base est mise à jour <strong>régulièrement après chaque tirage officiel</strong> (mardi et vendredi).') ~ ' ' ~ _('Les grilles sont générées en temps réel à chaque utilisation selon les dernières données disponibles.'))|striptags|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Quels sont les risques du jeu ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ (_('Les jeux d\'argent et de hasard, dont l\'EuroMillions, comportent des risques :') ~ ' ' ~ _('<strong>Pertes financières</strong> : Vous pouvez perdre l\'argent misé') ~ ' ' ~ _('<strong>Addiction</strong> : Le jeu peut devenir pathologique') ~ ' ' ~ _('<strong>Impact psychologique</strong> : Stress, anxiété, frustration') ~ ' ' ~ _('<strong>Conséquences familiales</strong> : Endettement, conflits') ~ ' ' ~ _('<strong>Règles d\'or</strong> :') ~ ' ' ~ _('Ne jouez jamais plus que ce que vous pouvez vous permettre de perdre') ~ ' ' ~ _('L\'EuroMillions doit rester un divertissement occasionnel') ~ ' ' ~ _('N\'essayez jamais de "vous refaire" après une perte'))|striptags|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Ou trouver de l\'aide en cas d\'addiction ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ (_('Si vous ou un proche rencontrez des difficultés avec le jeu :') ~ ' ' ~ _('Téléphone : <strong>09 74 75 13 13</strong> (appel non surtaxé)') ~ ' ' ~ (_('Site web : <a href="%(url)s" target="_blank" rel="noopener">%(name)s</a>')|format(url=gambling_help_url, name=gambling_help_name)) ~ ' ' ~ _('Chat en ligne disponible') ~ ' ' ~ _('Service gratuit, anonyme et confidentiel') ~ ' ' ~ _('Horaires : 7j/7 de 8h à 2h du matin'))|striptags|tojson }}
+          }
+        },
+        {
+          "@type": "Question",
+          "name": {{ _('Le jeu est-il interdit aux mineurs ?')|tojson }},
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": {{ (_('<strong>OUI, absolument.</strong>') ~ ' ' ~ _('En France, les jeux d\'argent et de hasard sont <strong>strictement interdits aux moins de 18 ans</strong>.') ~ ' ' ~ _('Cette règle s\'applique à l\'EuroMillions, au Loto, PMU, casinos, paris sportifs, etc.') ~ ' ' ~ _('Les parents sont responsables de l\'utilisation d\'Internet par leurs enfants.'))|striptags|tojson }}
           }
         }
       ]
@@ -293,6 +453,7 @@
             <ul>
                 <li><a href="#fonctionnement">{{ _('Fonctionnement') }}</a></li>
                 <li><a href="#numeros-etoiles">{{ _('Numéros et Étoiles') }}</a></li>
+                <li><a href="#paires">{{ _('Paires') }}</a></li>
                 <li><a href="#donnees">{{ _('Données') }}</a></li>
                 <li><a href="#euromillions-general">EuroMillions</a></li>
                 <li><a href="#jeu-responsable">{{ _('Jeu Responsable') }}</a></li>
@@ -303,13 +464,10 @@
         <section class="faq-section faq-page">
             <div class="faq-container">
 
-                <!-- ===================================================================
-                     Catégorie : Fonctionnement
-                     =================================================================== -->
                 <div class="faq-category" id="fonctionnement">
                     <h2 class="faq-category-title">{{ _('Fonctionnement') }}</h2>
 
-                    <div class="faq-item">
+<div class="faq-item">
                         <button class="faq-question">
                             <span>{{ _('Comment fonctionne le simulateur de grilles EuroMillions ?') }}</span>
                             <span class="faq-icon">+</span>
@@ -320,7 +478,7 @@
                         </div>
                     </div>
 
-                    <div class="faq-item">
+<div class="faq-item">
                         <button class="faq-question">
                             <span>{{ _('Le EuroMillions est-il prévisible ?') }}</span>
                             <span class="faq-icon">+</span>
@@ -332,7 +490,7 @@
                         </div>
                     </div>
 
-                    <div class="faq-item">
+<div class="faq-item">
                         <button class="faq-question">
                             <span>{{ _('Quelle est la différence avec le Loto ?') }}</span>
                             <span class="faq-icon">+</span>
@@ -343,27 +501,72 @@
                             <p>{{ _('Le moteur utilisé est <strong>HYBRIDE</strong>, une adaptation spécifique du moteur HYBRIDE pour les règles EuroMillions.')|safe }}</p>
                         </div>
                     </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Qu\'est-ce que la technologie « IA Grounded » de LotoIA ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('« Grounded » signifie que les réponses de LotoIA sont ancrées sur des données réelles : le chatbot HYBRIDE et les analyses s\'appuient exclusivement sur l\'historique des tirages officiels EuroMillions, et non sur des suppositions. L\'objectif est d\'éviter les approximations et de ne fournir que des faits statistiques vérifiables.') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Comment fonctionne le moteur HYBRIDE pour l\'EuroMillions ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('Le moteur HYBRIDE analyse l\'historique des tirages selon plusieurs axes : fréquences de long terme, tendances récentes et écarts. Il est adapté au format EuroMillions (5 numéros de 1 à 50 et 2 étoiles de 1 à 12), les étoiles étant traitées comme un espace statistique distinct des numéros principaux.') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Que signifient les modes Conservateur, Équilibré et Récent ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('Ces trois modes pondèrent différemment l\'historique : le mode Conservateur s\'appuie surtout sur les fréquences de long terme, le mode Récent accentue les tendances des derniers tirages, et le mode Équilibré combine les deux. Ils modifient la façon dont les grilles sont composées, sans rien changer au caractère aléatoire du tirage.') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('L\'intelligence artificielle peut-elle prédire l\'EuroMillions ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('Non. Aucune intelligence artificielle ne peut prédire un tirage de l\'EuroMillions, qui repose sur le pur hasard. Chaque tirage est indépendant des précédents. LotoIA n\'anticipe aucun résultat : l\'outil se limite à analyser et présenter les fréquences observées dans l\'historique, à titre informatif et pédagogique.') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('En quoi LotoIA est-il différent d\'un assistant IA généraliste ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('LotoIA est dédié à l\'analyse de l\'EuroMillions et connecté à l\'historique des tirages officiels : ses réponses sont ancrées sur ces données (« grounding »), ce qui vise une fiabilité statistique sans approximation. Des assistants généralistes comme ChatGPT, Gemini ou Claude ne sont pas connectés en temps réel à cet historique officiel des tirages : ils ne sont pas conçus pour fournir des statistiques EuroMillions vérifiées et à jour de la même manière.') }}</p>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- ===================================================================
-                     Catégorie : Numéros et Étoiles
-                     =================================================================== -->
                 <div class="faq-category" id="numeros-etoiles">
                     <h2 class="faq-category-title">{{ _('Numéros et Étoiles') }}</h2>
 
                     <div class="faq-item">
                         <button class="faq-question">
-                            <span>{{ _('Que signifient numéros chauds et froids ?') }}</span>
+                            <span>{{ _('Que signifient les numéros et étoiles « chauds » et « froids » ?') }}</span>
                             <span class="faq-icon">+</span>
                         </button>
                         <div class="faq-answer">
-                            <p>{{ _('Un <strong>numéro chaud</strong> est sorti fréquemment sur les 2 dernières années de tirages.')|safe }}</p>
-                            <p>{{ _('Un <strong>numéro froid</strong> est rarement sorti sur cette même période. Ces numéros ont un retard important.')|safe }}</p>
-                            <p>{{ _('L\'analyse porte sur les <strong>50 numéros principaux</strong> ET les <strong>12 étoiles</strong>.')|safe }}</p>
+                            <p>{{ _('Un numéro ou une étoile « chaud » est sorti fréquemment sur la période analysée ; un numéro « froid » est sorti rarement. LotoIA calcule ces fréquences sur les 50 numéros et les 12 étoiles à partir des tirages officiels. C\'est purement descriptif : une fréquence passée n\'augmente ni ne diminue la probabilité d\'un tirage futur, chaque tirage étant indépendant.') }}</p>
                         </div>
                     </div>
 
-                    <div class="faq-item">
+<div class="faq-item">
                         <button class="faq-question">
                             <span>{{ _('Comment sont calculées les étoiles ?') }}</span>
                             <span class="faq-icon">+</span>
@@ -373,15 +576,96 @@
                             <p>{{ _('Le moteur HYBRIDE traite les étoiles comme un espace combinatoire distinct des numéros principaux.') }}</p>
                         </div>
                     </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Comment est calculé l\'indice de convergence d\'une grille ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('L\'indice de convergence évalue dans quelle mesure une grille respecte certains équilibres statistiques observés dans l\'historique : répartition pair/impair, étalement des numéros, mélange de numéros chauds et froids. C\'est un indicateur descriptif de cohérence statistique, pas une mesure de probabilité de gain.') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Les numéros ou étoiles « en retard » ont-ils plus de chances de sortir ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('Non, c\'est une idée reçue. Un numéro qui n\'est pas sorti depuis longtemps n\'a pas davantage de chances d\'apparaître au tirage suivant : chaque tirage est indépendant et tous les numéros ont la même probabilité à chaque fois. L\'écart est un indicateur descriptif, pas un signal de prédiction.') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Qu\'est-ce que l\'écart (ou retard) d\'un numéro ou d\'une étoile ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('L\'écart est le nombre de tirages écoulés depuis la dernière apparition d\'un numéro ou d\'une étoile. C\'est un indicateur statistique descriptif qui mesure le temps depuis la dernière sortie ; il ne donne aucune indication sur les tirages à venir.') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Quels sont les numéros les plus tirés à l\'EuroMillions ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('LotoIA publie le classement des numéros par fréquence de sortie sur l\'historique des tirages, consultable sur la page Statistiques. Ces fréquences sont purement observationnelles : elles décrivent le passé et ne permettent pas d\'anticiper les prochains tirages, qui restent aléatoires.') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Quelles sont les étoiles les plus fréquentes à l\'EuroMillions ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('Les 12 étoiles (1 à 12) font l\'objet d\'un classement de fréquence distinct des numéros principaux, disponible sur la page Statistiques. Comme pour les numéros, il s\'agit d\'une analyse descriptive de l\'historique, sans valeur prédictive.') }}</p>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- ===================================================================
-                     Catégorie : Données
-                     =================================================================== -->
+                <div class="faq-category" id="paires">
+                    <h2 class="faq-category-title">{{ _('Paires') }}</h2>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Qu\'est-ce qu\'une paire de numéros à l\'EuroMillions ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('Une paire correspond à deux numéros (boules ou étoiles) tirés ensemble lors d\'un même tirage EuroMillions. LotoIA analyse les co-occurrences sur l\'historique complet : 1 225 paires de boules possibles et 66 paires d\'étoiles possibles.') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Comment consulter les paires les plus fréquentes à l\'EuroMillions ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('Rendez-vous sur la page Paires EuroMillions pour accéder au classement des paires de boules et d\'étoiles (chaudes et froides), ainsi qu\'à deux outils de recherche interactifs : une grille de 50 boules et une grille de 12 étoiles.') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Les paires de numéros permettent-elles de prédire l\'EuroMillions ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('Non. L\'analyse des paires est un outil statistique basé sur l\'historique des tirages. Chaque tirage est indépendant et les résultats passés n\'influencent pas les tirages futurs. LotoIA fournit des données factuelles, pas des prédictions.') }}</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="faq-category" id="donnees">
                     <h2 class="faq-category-title">{{ _('Données') }}</h2>
 
-                    <div class="faq-item">
+<div class="faq-item">
                         <button class="faq-question">
                             <span>{{ _('D\'où viennent les données ?') }}</span>
                             <span class="faq-icon">+</span>
@@ -392,7 +676,7 @@
                         </div>
                     </div>
 
-                    <div class="faq-item">
+<div class="faq-item">
                         <button class="faq-question">
                             <span>{{ _('À quelle fréquence la base est-elle mise à jour ?') }}</span>
                             <span class="faq-icon">+</span>
@@ -402,15 +686,22 @@
                             <p>{{ _('Les grilles sont générées en temps réel à chaque utilisation selon les dernières données disponibles.') }}</p>
                         </div>
                     </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Combien de tirages EuroMillions sont analysés ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('LotoIA analyse l\'intégralité des tirages officiels EuroMillions disponibles dans sa base, soit plusieurs années d\'historique mises à jour après chaque tirage (mardi et vendredi). Le nombre exact de tirages pris en compte est affiché sur les pages d\'analyse.') }}</p>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- ===================================================================
-                     Catégorie : EuroMillions
-                     =================================================================== -->
                 <div class="faq-category" id="euromillions-general">
                     <h2 class="faq-category-title">EuroMillions</h2>
 
-                    <div class="faq-item">
+<div class="faq-item">
                         <button class="faq-question">
                             <span>{{ _('À quelle fréquence ont lieu les tirages EuroMillions ?') }}</span>
                             <span class="faq-icon">+</span>
@@ -421,7 +712,7 @@
                         </div>
                     </div>
 
-                    <div class="faq-item">
+<div class="faq-item">
                         <button class="faq-question">
                             <span>{{ _('Combien de numéros faut-il trouver pour gagner à l\'EuroMillions ?') }}</span>
                             <span class="faq-icon">+</span>
@@ -432,7 +723,7 @@
                         </div>
                     </div>
 
-                    <div class="faq-item">
+<div class="faq-item">
                         <button class="faq-question">
                             <span>{{ _('Dans quels pays peut-on jouer à l\'EuroMillions ?') }}</span>
                             <span class="faq-icon">+</span>
@@ -443,18 +734,7 @@
                         </div>
                     </div>
 
-                    <div class="faq-item">
-                        <button class="faq-question">
-                            <span>{{ _('Quelle est la différence entre numéros chauds et froids ?') }}</span>
-                            <span class="faq-icon">+</span>
-                        </button>
-                        <div class="faq-answer">
-                            <p>{{ _('Les <strong>numéros chauds</strong> sont ceux tirés le plus fréquemment sur la période historique. Les <strong>numéros froids</strong> sont ceux tirés le moins fréquemment.')|safe }}</p>
-                            <p>{{ _('LotoIA affiche les deux classements sur la page Statistiques. C\'est purement descriptif — la fréquence passée ne prédit pas les tirages futurs.') }}</p>
-                        </div>
-                    </div>
-
-                    <div class="faq-item">
+<div class="faq-item">
                         <button class="faq-question">
                             <span>{{ _('LotoIA est-il gratuit ?') }}</span>
                             <span class="faq-icon">+</span>
@@ -464,15 +744,62 @@
                             <p>{{ _('Tous les outils statistiques, le chatbot HYBRIDE, le générateur de grilles et le simulateur sont accessibles <strong>sans inscription ni paiement</strong>.')|safe }}</p>
                         </div>
                     </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Les statistiques EuroMillions sont-elles les mêmes dans les 9 pays ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('Oui. L\'EuroMillions est un tirage européen commun : les mêmes 5 numéros et 2 étoiles sont valables dans les 9 pays participants (France, Royaume-Uni, Espagne, Portugal, Belgique, Luxembourg, Irlande, Autriche et Suisse). Les statistiques de LotoIA s\'appliquent donc à tous ces pays.') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Comment consulter l\'historique des tirages EuroMillions ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('La page Historique permet de rechercher un tirage EuroMillions par date et d\'afficher les 5 numéros et 2 étoiles sortis. L\'ensemble des résultats officiels y est consultable et mis à jour après chaque tirage.') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Que peut faire le chatbot HYBRIDE sur l\'EuroMillions ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('Le chatbot HYBRIDE répond à vos questions sur les statistiques EuroMillions : fréquence d\'un numéro ou d\'une étoile, écarts, paires, ou résultats d\'un tirage passé. Ses réponses sont ancrées sur les tirages officiels ; il fournit des informations factuelles et ne donne aucune prédiction.') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('Comment mes données personnelles sont-elles protégées ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('LotoIA ne demande aucune inscription ni donnée personnelle pour utiliser ses outils. La navigation est anonyme et le service est conforme au RGPD. Les détails figurent dans notre politique de confidentialité.') }}</p>
+                        </div>
+                    </div>
+
+                    <div class="faq-item">
+                        <button class="faq-question">
+                            <span>{{ _('LotoIA est-il un site de jeu d\'argent ?') }}</span>
+                            <span class="faq-icon">+</span>
+                        </button>
+                        <div class="faq-answer">
+                            <p>{{ _('Non. LotoIA ne permet ni de jouer, ni de miser, ni d\'acheter une grille. C\'est un outil gratuit d\'analyse statistique et de pédagogie autour de l\'EuroMillions. Pour jouer, il faut passer par un opérateur officiel agréé dans votre pays.') }}</p>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- ===================================================================
-                     Catégorie : Jeu Responsable
-                     =================================================================== -->
                 <div class="faq-category" id="jeu-responsable">
                     <h2 class="faq-category-title">{{ _('Jeu Responsable') }}</h2>
 
-                    <div class="faq-item">
+<div class="faq-item">
                         <button class="faq-question">
                             <span>{{ _('Quels sont les risques du jeu ?') }}</span>
                             <span class="faq-icon">+</span>
@@ -494,7 +821,7 @@
                         </div>
                     </div>
 
-                    <div class="faq-item">
+<div class="faq-item">
                         <button class="faq-question">
                             <span>{{ _('Ou trouver de l\'aide en cas d\'addiction ?') }}</span>
                             <span class="faq-icon">+</span>
@@ -512,7 +839,7 @@
                         </div>
                     </div>
 
-                    <div class="faq-item">
+<div class="faq-item">
                         <button class="faq-question">
                             <span>{{ _('Le jeu est-il interdit aux mineurs ?') }}</span>
                             <span class="faq-icon">+</span>

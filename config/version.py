@@ -5,6 +5,19 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# Sprint SEO P1c (Release 1.6.038, 01/06/2026) — FAQ EM étoffée (QW12, parité Loto ~30 Q).
+# Source : docs/AUDIT_SEO_360_2026-05-30.md. FAQ EuroMillions (ui/templates/em/faq.html)
+# passée de 13 (JSON-LD) / 15 (visible) désynchronisées à 33 Q cohérentes visible == JSON-LD.
+# +16 nouvelles Q (équivalents Loto adaptés EM + longue traîne SEO : IA Grounded, IA prédire,
+# moteur HYBRIDE 5+2, modes, indice convergence, combien tirages, chatbot, vs assistant
+# généraliste, RGPD, site de jeu, en retard, numéros/étoiles les plus tirés, historique,
+# multi-pays, écart) + fusion du doublon chaud/froid. Resync : 3 Q paires → visible (réutil.
+# msgid), 5 Q visible-only → JSON-LD via striptags-reuse (zéro nouvelle traduction). 34 nouveaux
+# msgid (17 Q + 17 R) traduits 6 langues (qualité éditoriale, style maison, wording ANJ strict :
+# recadrage prédiction/site de jeu/en retard/numéros tirés, zéro promesse de gain). Édition .po
+# ciblée par bloc + recompile 6 .mo. Rendu vérifié TestClient 6 langues (visible == JSON-LD == 33,
+# zéro fuite FR). Aucun backend Python/JS.
+#
 # Sprint SEO P1b (Release 1.6.037, 01/06/2026) — Meta descriptions EM hors plage (QW3 volet EM).
 # Source : docs/AUDIT_SEO_360_2026-05-30.md. Recalage des descriptions EM live (templates
 # Jinja gettext) dans la plage SEO 120-160 codepoints. 5 pages hors-plage en FR (l'audit
@@ -96,7 +109,7 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.037"
+APP_VERSION = "1.6.038"
 APP_NAME = "LotoIA"
 VERSION_DATE = "2026-06-01"
 

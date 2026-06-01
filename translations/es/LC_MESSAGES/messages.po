@@ -5861,3 +5861,139 @@ msgstr "El equipo LotoIA"
 #: ui/templates/em/_base.html
 msgid "Fil d'Ariane"
 msgstr "Ruta de navegación"
+
+#: ui/templates/em/faq.html
+msgid "Que signifient les numéros et étoiles « chauds » et « froids » ?"
+msgstr "¿Qué significan los números y estrellas \"calientes\" y \"fríos\"?"
+
+#: ui/templates/em/faq.html
+msgid "Un numéro ou une étoile « chaud » est sorti fréquemment sur la période analysée ; un numéro « froid » est sorti rarement. LotoIA calcule ces fréquences sur les 50 numéros et les 12 étoiles à partir des tirages officiels. C'est purement descriptif : une fréquence passée n'augmente ni ne diminue la probabilité d'un tirage futur, chaque tirage étant indépendant."
+msgstr "Un número o estrella \"caliente\" ha salido con frecuencia en el período analizado; uno \"frío\" ha salido pocas veces. LotoIA calcula estas frecuencias sobre los 50 números y las 12 estrellas a partir de los sorteos oficiales. Es puramente descriptivo: una frecuencia pasada no aumenta ni disminuye la probabilidad de un sorteo futuro, ya que cada sorteo es independiente."
+
+#: ui/templates/em/faq.html
+msgid "Qu'est-ce que la technologie « IA Grounded » de LotoIA ?"
+msgstr "¿Qué es la tecnología \"IA Grounded\" de LotoIA?"
+
+#: ui/templates/em/faq.html
+msgid "« Grounded » signifie que les réponses de LotoIA sont ancrées sur des données réelles : le chatbot HYBRIDE et les analyses s'appuient exclusivement sur l'historique des tirages officiels EuroMillions, et non sur des suppositions. L'objectif est d'éviter les approximations et de ne fournir que des faits statistiques vérifiables."
+msgstr "\"Grounded\" significa que las respuestas de LotoIA están ancladas en datos reales: el chatbot HYBRIDE y los análisis se basan exclusivamente en el historial de los sorteos oficiales de EuroMillions, no en suposiciones. El objetivo es evitar las aproximaciones y proporcionar únicamente hechos estadísticos verificables."
+
+#: ui/templates/em/faq.html
+msgid "L'intelligence artificielle peut-elle prédire l'EuroMillions ?"
+msgstr "¿Puede la inteligencia artificial predecir EuroMillions?"
+
+#: ui/templates/em/faq.html
+msgid "Non. Aucune intelligence artificielle ne peut prédire un tirage de l'EuroMillions, qui repose sur le pur hasard. Chaque tirage est indépendant des précédents. LotoIA n'anticipe aucun résultat : l'outil se limite à analyser et présenter les fréquences observées dans l'historique, à titre informatif et pédagogique."
+msgstr "No. Ninguna inteligencia artificial puede predecir un sorteo de EuroMillions, que se basa en el puro azar. Cada sorteo es independiente de los anteriores. LotoIA no anticipa ningún resultado: la herramienta se limita a analizar y presentar las frecuencias observadas en el historial, a título informativo y pedagógico."
+
+#: ui/templates/em/faq.html
+msgid "Comment fonctionne le moteur HYBRIDE pour l'EuroMillions ?"
+msgstr "¿Cómo funciona el motor HYBRIDE para EuroMillions?"
+
+#: ui/templates/em/faq.html
+msgid "Le moteur HYBRIDE analyse l'historique des tirages selon plusieurs axes : fréquences de long terme, tendances récentes et écarts. Il est adapté au format EuroMillions (5 numéros de 1 à 50 et 2 étoiles de 1 à 12), les étoiles étant traitées comme un espace statistique distinct des numéros principaux."
+msgstr "El motor HYBRIDE analiza el historial de sorteos según varios ejes: frecuencias a largo plazo, tendencias recientes y desviaciones. Está adaptado al formato EuroMillions (5 números del 1 al 50 y 2 estrellas del 1 al 12), tratando las estrellas como un espacio estadístico distinto de los números principales."
+
+#: ui/templates/em/faq.html
+msgid "Que signifient les modes Conservateur, Équilibré et Récent ?"
+msgstr "¿Qué significan los modos Conservador, Equilibrado y Reciente?"
+
+#: ui/templates/em/faq.html
+msgid "Ces trois modes pondèrent différemment l'historique : le mode Conservateur s'appuie surtout sur les fréquences de long terme, le mode Récent accentue les tendances des derniers tirages, et le mode Équilibré combine les deux. Ils modifient la façon dont les grilles sont composées, sans rien changer au caractère aléatoire du tirage."
+msgstr "Estos tres modos ponderan el historial de forma diferente: el modo Conservador se basa sobre todo en las frecuencias a largo plazo, el modo Reciente acentúa las tendencias de los últimos sorteos, y el modo Equilibrado combina ambos. Modifican la forma en que se componen las combinaciones, sin cambiar nada del carácter aleatorio del sorteo."
+
+#: ui/templates/em/faq.html
+msgid "Comment est calculé l'indice de convergence d'une grille ?"
+msgstr "¿Cómo se calcula el índice de convergencia de una combinación?"
+
+#: ui/templates/em/faq.html
+msgid "L'indice de convergence évalue dans quelle mesure une grille respecte certains équilibres statistiques observés dans l'historique : répartition pair/impair, étalement des numéros, mélange de numéros chauds et froids. C'est un indicateur descriptif de cohérence statistique, pas une mesure de probabilité de gain."
+msgstr "El índice de convergencia evalúa en qué medida una combinación respeta ciertos equilibrios estadísticos observados en el historial: reparto par/impar, dispersión de los números, mezcla de números calientes y fríos. Es un indicador descriptivo de coherencia estadística, no una medida de probabilidad de ganar."
+
+#: ui/templates/em/faq.html
+msgid "Combien de tirages EuroMillions sont analysés ?"
+msgstr "¿Cuántos sorteos de EuroMillions se analizan?"
+
+#: ui/templates/em/faq.html
+msgid "LotoIA analyse l'intégralité des tirages officiels EuroMillions disponibles dans sa base, soit plusieurs années d'historique mises à jour après chaque tirage (mardi et vendredi). Le nombre exact de tirages pris en compte est affiché sur les pages d'analyse."
+msgstr "LotoIA analiza la totalidad de los sorteos oficiales de EuroMillions disponibles en su base de datos, es decir, varios años de historial actualizados después de cada sorteo (martes y viernes). El número exacto de sorteos considerados se muestra en las páginas de análisis."
+
+#: ui/templates/em/faq.html
+msgid "Que peut faire le chatbot HYBRIDE sur l'EuroMillions ?"
+msgstr "¿Qué puede hacer el chatbot HYBRIDE sobre EuroMillions?"
+
+#: ui/templates/em/faq.html
+msgid "Le chatbot HYBRIDE répond à vos questions sur les statistiques EuroMillions : fréquence d'un numéro ou d'une étoile, écarts, paires, ou résultats d'un tirage passé. Ses réponses sont ancrées sur les tirages officiels ; il fournit des informations factuelles et ne donne aucune prédiction."
+msgstr "El chatbot HYBRIDE responde a tus preguntas sobre las estadísticas de EuroMillions: frecuencia de un número o una estrella, desviaciones, pares o resultados de un sorteo pasado. Sus respuestas están ancladas en los sorteos oficiales; proporciona información factual y no da ninguna predicción."
+
+#: ui/templates/em/faq.html
+msgid "En quoi LotoIA est-il différent d'un assistant IA généraliste ?"
+msgstr "¿En qué se diferencia LotoIA de un asistente de IA generalista?"
+
+#: ui/templates/em/faq.html
+msgid "LotoIA est dédié à l'analyse de l'EuroMillions et connecté à l'historique des tirages officiels : ses réponses sont ancrées sur ces données (« grounding »), ce qui vise une fiabilité statistique sans approximation. Des assistants généralistes comme ChatGPT, Gemini ou Claude ne sont pas connectés en temps réel à cet historique officiel des tirages : ils ne sont pas conçus pour fournir des statistiques EuroMillions vérifiées et à jour de la même manière."
+msgstr "LotoIA está dedicado al análisis de EuroMillions y conectado al historial de los sorteos oficiales: sus respuestas están ancladas en estos datos (\"grounding\"), buscando una fiabilidad estadística sin aproximaciones. Los asistentes generalistas como ChatGPT, Gemini o Claude no están conectados en tiempo real a este historial oficial de los sorteos: no están diseñados para proporcionar estadísticas de EuroMillions verificadas y actualizadas de la misma manera."
+
+#: ui/templates/em/faq.html
+msgid "Comment mes données personnelles sont-elles protégées ?"
+msgstr "¿Cómo se protegen mis datos personales?"
+
+#: ui/templates/em/faq.html
+msgid "LotoIA ne demande aucune inscription ni donnée personnelle pour utiliser ses outils. La navigation est anonyme et le service est conforme au RGPD. Les détails figurent dans notre politique de confidentialité."
+msgstr "LotoIA no requiere ningún registro ni dato personal para usar sus herramientas. La navegación es anónima y el servicio cumple con el RGPD. Los detalles figuran en nuestra política de privacidad."
+
+#: ui/templates/em/faq.html
+msgid "LotoIA est-il un site de jeu d'argent ?"
+msgstr "¿Es LotoIA un sitio de juego de azar?"
+
+#: ui/templates/em/faq.html
+msgid "Non. LotoIA ne permet ni de jouer, ni de miser, ni d'acheter une grille. C'est un outil gratuit d'analyse statistique et de pédagogie autour de l'EuroMillions. Pour jouer, il faut passer par un opérateur officiel agréé dans votre pays."
+msgstr "No. LotoIA no permite jugar, apostar ni comprar una combinación. Es una herramienta gratuita de análisis estadístico y pedagogía en torno a EuroMillions. Para jugar, hay que recurrir a un operador oficial autorizado en tu país."
+
+#: ui/templates/em/faq.html
+msgid "Les numéros ou étoiles « en retard » ont-ils plus de chances de sortir ?"
+msgstr "¿Tienen más probabilidades de salir los números o estrellas \"atrasados\"?"
+
+#: ui/templates/em/faq.html
+msgid "Non, c'est une idée reçue. Un numéro qui n'est pas sorti depuis longtemps n'a pas davantage de chances d'apparaître au tirage suivant : chaque tirage est indépendant et tous les numéros ont la même probabilité à chaque fois. L'écart est un indicateur descriptif, pas un signal de prédiction."
+msgstr "No, es una idea equivocada. Un número que no ha salido desde hace mucho tiempo no tiene más probabilidades de aparecer en el sorteo siguiente: cada sorteo es independiente y todos los números tienen la misma probabilidad cada vez. La desviación es un indicador descriptivo, no una señal de predicción."
+
+#: ui/templates/em/faq.html
+msgid "Quels sont les numéros les plus tirés à l'EuroMillions ?"
+msgstr "¿Cuáles son los números más sorteados en EuroMillions?"
+
+#: ui/templates/em/faq.html
+msgid "LotoIA publie le classement des numéros par fréquence de sortie sur l'historique des tirages, consultable sur la page Statistiques. Ces fréquences sont purement observationnelles : elles décrivent le passé et ne permettent pas d'anticiper les prochains tirages, qui restent aléatoires."
+msgstr "LotoIA publica la clasificación de los números por frecuencia de salida en el historial de sorteos, disponible en la página de Estadísticas. Estas frecuencias son puramente observacionales: describen el pasado y no permiten anticipar los próximos sorteos, que siguen siendo aleatorios."
+
+#: ui/templates/em/faq.html
+msgid "Quelles sont les étoiles les plus fréquentes à l'EuroMillions ?"
+msgstr "¿Cuáles son las estrellas más frecuentes en EuroMillions?"
+
+#: ui/templates/em/faq.html
+msgid "Les 12 étoiles (1 à 12) font l'objet d'un classement de fréquence distinct des numéros principaux, disponible sur la page Statistiques. Comme pour les numéros, il s'agit d'une analyse descriptive de l'historique, sans valeur prédictive."
+msgstr "Las 12 estrellas (1 a 12) son objeto de una clasificación de frecuencia distinta de los números principales, disponible en la página de Estadísticas. Como ocurre con los números, se trata de un análisis descriptivo del historial, sin valor predictivo."
+
+#: ui/templates/em/faq.html
+msgid "Comment consulter l'historique des tirages EuroMillions ?"
+msgstr "¿Cómo consultar el historial de sorteos de EuroMillions?"
+
+#: ui/templates/em/faq.html
+msgid "La page Historique permet de rechercher un tirage EuroMillions par date et d'afficher les 5 numéros et 2 étoiles sortis. L'ensemble des résultats officiels y est consultable et mis à jour après chaque tirage."
+msgstr "La página Historial permite buscar un sorteo de EuroMillions por fecha y mostrar los 5 números y 2 estrellas salidos. Todos los resultados oficiales se pueden consultar allí y se actualizan después de cada sorteo."
+
+#: ui/templates/em/faq.html
+msgid "Les statistiques EuroMillions sont-elles les mêmes dans les 9 pays ?"
+msgstr "¿Son las estadísticas de EuroMillions las mismas en los 9 países?"
+
+#: ui/templates/em/faq.html
+msgid "Oui. L'EuroMillions est un tirage européen commun : les mêmes 5 numéros et 2 étoiles sont valables dans les 9 pays participants (France, Royaume-Uni, Espagne, Portugal, Belgique, Luxembourg, Irlande, Autriche et Suisse). Les statistiques de LotoIA s'appliquent donc à tous ces pays."
+msgstr "Sí. EuroMillions es un sorteo europeo común: los mismos 5 números y 2 estrellas son válidos en los 9 países participantes (Francia, Reino Unido, España, Portugal, Bélgica, Luxemburgo, Irlanda, Austria y Suiza). Por tanto, las estadísticas de LotoIA se aplican a todos estos países."
+
+#: ui/templates/em/faq.html
+msgid "Qu'est-ce que l'écart (ou retard) d'un numéro ou d'une étoile ?"
+msgstr "¿Qué es la desviación (o retraso) de un número o una estrella?"
+
+#: ui/templates/em/faq.html
+msgid "L'écart est le nombre de tirages écoulés depuis la dernière apparition d'un numéro ou d'une étoile. C'est un indicateur statistique descriptif qui mesure le temps depuis la dernière sortie ; il ne donne aucune indication sur les tirages à venir."
+msgstr "La desviación es el número de sorteos transcurridos desde la última aparición de un número o una estrella. Es un indicador estadístico descriptivo que mide el tiempo desde la última salida; no da ninguna indicación sobre los sorteos venideros."

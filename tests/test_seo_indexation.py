@@ -904,7 +904,7 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.037 (Sprint SEO P1b — meta descriptions EM 120-160).
+        """APP_VERSION == 1.6.038 (Sprint SEO P1c — FAQ EM étoffée ~30 Q, parité Loto).
 
         V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
         V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
@@ -994,9 +994,12 @@ class TestAppVersion:
         Sprint SEO P1b (01/06, Release 1.6.037) — Meta descriptions EM recalées 120-160 :
         5 msgid réécrits (accueil, news, historique, paires, hybride) + 6 traductions
         chacun + statistiques EN (106->128). Vérif rendu 36 cellules toutes en plage.
+        Sprint SEO P1c (01/06, Release 1.6.038) — FAQ EM 13/15 désync -> 33 Q cohérentes
+        visible == JSON-LD : +16 nouvelles Q + fusion chaud/froid + resync (paires->visible,
+        5 visible-only -> JSON-LD striptags-reuse). 34 msgid traduits 6 langues, wording ANJ.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.037"
+        assert APP_VERSION == "1.6.038"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

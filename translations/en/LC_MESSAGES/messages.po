@@ -5583,3 +5583,139 @@ msgstr "The LotoIA team"
 #: ui/templates/em/_base.html
 msgid "Fil d'Ariane"
 msgstr "Breadcrumb"
+
+#: ui/templates/em/faq.html
+msgid "Que signifient les numéros et étoiles « chauds » et « froids » ?"
+msgstr "What do \"hot\" and \"cold\" numbers and stars mean?"
+
+#: ui/templates/em/faq.html
+msgid "Un numéro ou une étoile « chaud » est sorti fréquemment sur la période analysée ; un numéro « froid » est sorti rarement. LotoIA calcule ces fréquences sur les 50 numéros et les 12 étoiles à partir des tirages officiels. C'est purement descriptif : une fréquence passée n'augmente ni ne diminue la probabilité d'un tirage futur, chaque tirage étant indépendant."
+msgstr "A \"hot\" number or star is one drawn frequently over the period analysed; a \"cold\" one is rarely drawn. LotoIA computes these frequencies over the 50 numbers and 12 stars from the official draws. This is purely descriptive: a past frequency neither increases nor decreases the probability of a future draw, as each draw is independent."
+
+#: ui/templates/em/faq.html
+msgid "Qu'est-ce que la technologie « IA Grounded » de LotoIA ?"
+msgstr "What is LotoIA's \"Grounded AI\" technology?"
+
+#: ui/templates/em/faq.html
+msgid "« Grounded » signifie que les réponses de LotoIA sont ancrées sur des données réelles : le chatbot HYBRIDE et les analyses s'appuient exclusivement sur l'historique des tirages officiels EuroMillions, et non sur des suppositions. L'objectif est d'éviter les approximations et de ne fournir que des faits statistiques vérifiables."
+msgstr "\"Grounded\" means LotoIA's answers are anchored in real data: the HYBRIDE chatbot and the analyses rely exclusively on the history of official EuroMillions draws, not on guesswork. The goal is to avoid approximations and to provide only verifiable statistical facts."
+
+#: ui/templates/em/faq.html
+msgid "L'intelligence artificielle peut-elle prédire l'EuroMillions ?"
+msgstr "Can artificial intelligence predict EuroMillions?"
+
+#: ui/templates/em/faq.html
+msgid "Non. Aucune intelligence artificielle ne peut prédire un tirage de l'EuroMillions, qui repose sur le pur hasard. Chaque tirage est indépendant des précédents. LotoIA n'anticipe aucun résultat : l'outil se limite à analyser et présenter les fréquences observées dans l'historique, à titre informatif et pédagogique."
+msgstr "No. No artificial intelligence can predict a EuroMillions draw, which is based on pure chance. Each draw is independent of the previous ones. LotoIA does not anticipate any result: the tool only analyses and presents the frequencies observed in the history, for informational and educational purposes."
+
+#: ui/templates/em/faq.html
+msgid "Comment fonctionne le moteur HYBRIDE pour l'EuroMillions ?"
+msgstr "How does the HYBRIDE engine work for EuroMillions?"
+
+#: ui/templates/em/faq.html
+msgid "Le moteur HYBRIDE analyse l'historique des tirages selon plusieurs axes : fréquences de long terme, tendances récentes et écarts. Il est adapté au format EuroMillions (5 numéros de 1 à 50 et 2 étoiles de 1 à 12), les étoiles étant traitées comme un espace statistique distinct des numéros principaux."
+msgstr "The HYBRIDE engine analyses the draw history along several axes: long-term frequencies, recent trends, and gaps. It is adapted to the EuroMillions format (5 numbers from 1 to 50 and 2 stars from 1 to 12), with the stars treated as a statistical space distinct from the main numbers."
+
+#: ui/templates/em/faq.html
+msgid "Que signifient les modes Conservateur, Équilibré et Récent ?"
+msgstr "What do the Conservative, Balanced, and Recent modes mean?"
+
+#: ui/templates/em/faq.html
+msgid "Ces trois modes pondèrent différemment l'historique : le mode Conservateur s'appuie surtout sur les fréquences de long terme, le mode Récent accentue les tendances des derniers tirages, et le mode Équilibré combine les deux. Ils modifient la façon dont les grilles sont composées, sans rien changer au caractère aléatoire du tirage."
+msgstr "These three modes weight the history differently: the Conservative mode relies mainly on long-term frequencies, the Recent mode emphasises the trends of the latest draws, and the Balanced mode combines both. They change the way grids are composed, without altering the random nature of the draw."
+
+#: ui/templates/em/faq.html
+msgid "Comment est calculé l'indice de convergence d'une grille ?"
+msgstr "How is a grid's convergence index calculated?"
+
+#: ui/templates/em/faq.html
+msgid "L'indice de convergence évalue dans quelle mesure une grille respecte certains équilibres statistiques observés dans l'historique : répartition pair/impair, étalement des numéros, mélange de numéros chauds et froids. C'est un indicateur descriptif de cohérence statistique, pas une mesure de probabilité de gain."
+msgstr "The convergence index assesses how well a grid respects certain statistical balances observed in the history: odd/even split, spread of the numbers, mix of hot and cold numbers. It is a descriptive indicator of statistical consistency, not a measure of the probability of winning."
+
+#: ui/templates/em/faq.html
+msgid "Combien de tirages EuroMillions sont analysés ?"
+msgstr "How many EuroMillions draws are analysed?"
+
+#: ui/templates/em/faq.html
+msgid "LotoIA analyse l'intégralité des tirages officiels EuroMillions disponibles dans sa base, soit plusieurs années d'historique mises à jour après chaque tirage (mardi et vendredi). Le nombre exact de tirages pris en compte est affiché sur les pages d'analyse."
+msgstr "LotoIA analyses all the official EuroMillions draws available in its database, i.e. several years of history updated after each draw (Tuesday and Friday). The exact number of draws taken into account is shown on the analysis pages."
+
+#: ui/templates/em/faq.html
+msgid "Que peut faire le chatbot HYBRIDE sur l'EuroMillions ?"
+msgstr "What can the HYBRIDE chatbot do for EuroMillions?"
+
+#: ui/templates/em/faq.html
+msgid "Le chatbot HYBRIDE répond à vos questions sur les statistiques EuroMillions : fréquence d'un numéro ou d'une étoile, écarts, paires, ou résultats d'un tirage passé. Ses réponses sont ancrées sur les tirages officiels ; il fournit des informations factuelles et ne donne aucune prédiction."
+msgstr "The HYBRIDE chatbot answers your questions about EuroMillions statistics: the frequency of a number or star, gaps, pairs, or the results of a past draw. Its answers are anchored in the official draws; it provides factual information and gives no predictions."
+
+#: ui/templates/em/faq.html
+msgid "En quoi LotoIA est-il différent d'un assistant IA généraliste ?"
+msgstr "How is LotoIA different from a general-purpose AI assistant?"
+
+#: ui/templates/em/faq.html
+msgid "LotoIA est dédié à l'analyse de l'EuroMillions et connecté à l'historique des tirages officiels : ses réponses sont ancrées sur ces données (« grounding »), ce qui vise une fiabilité statistique sans approximation. Des assistants généralistes comme ChatGPT, Gemini ou Claude ne sont pas connectés en temps réel à cet historique officiel des tirages : ils ne sont pas conçus pour fournir des statistiques EuroMillions vérifiées et à jour de la même manière."
+msgstr "LotoIA is dedicated to EuroMillions analysis and connected to the history of the official draws: its answers are anchored in this data (\"grounding\"), aiming for statistical reliability without approximation. General-purpose assistants such as ChatGPT, Gemini, or Claude are not connected in real time to this official draw history: they are not designed to provide verified, up-to-date EuroMillions statistics in the same way."
+
+#: ui/templates/em/faq.html
+msgid "Comment mes données personnelles sont-elles protégées ?"
+msgstr "How is my personal data protected?"
+
+#: ui/templates/em/faq.html
+msgid "LotoIA ne demande aucune inscription ni donnée personnelle pour utiliser ses outils. La navigation est anonyme et le service est conforme au RGPD. Les détails figurent dans notre politique de confidentialité."
+msgstr "LotoIA requires no registration or personal data to use its tools. Browsing is anonymous and the service complies with the GDPR. Details are provided in our privacy policy."
+
+#: ui/templates/em/faq.html
+msgid "LotoIA est-il un site de jeu d'argent ?"
+msgstr "Is LotoIA a gambling site?"
+
+#: ui/templates/em/faq.html
+msgid "Non. LotoIA ne permet ni de jouer, ni de miser, ni d'acheter une grille. C'est un outil gratuit d'analyse statistique et de pédagogie autour de l'EuroMillions. Pour jouer, il faut passer par un opérateur officiel agréé dans votre pays."
+msgstr "No. LotoIA does not let you play, bet, or buy a grid. It is a free tool for statistical analysis and education about EuroMillions. To play, you must use an official licensed operator in your country."
+
+#: ui/templates/em/faq.html
+msgid "Les numéros ou étoiles « en retard » ont-ils plus de chances de sortir ?"
+msgstr "Are \"overdue\" numbers or stars more likely to be drawn?"
+
+#: ui/templates/em/faq.html
+msgid "Non, c'est une idée reçue. Un numéro qui n'est pas sorti depuis longtemps n'a pas davantage de chances d'apparaître au tirage suivant : chaque tirage est indépendant et tous les numéros ont la même probabilité à chaque fois. L'écart est un indicateur descriptif, pas un signal de prédiction."
+msgstr "No, this is a misconception. A number that has not come up for a long time is no more likely to appear in the next draw: each draw is independent and all numbers have the same probability every time. The gap is a descriptive indicator, not a prediction signal."
+
+#: ui/templates/em/faq.html
+msgid "Quels sont les numéros les plus tirés à l'EuroMillions ?"
+msgstr "What are the most frequently drawn numbers in EuroMillions?"
+
+#: ui/templates/em/faq.html
+msgid "LotoIA publie le classement des numéros par fréquence de sortie sur l'historique des tirages, consultable sur la page Statistiques. Ces fréquences sont purement observationnelles : elles décrivent le passé et ne permettent pas d'anticiper les prochains tirages, qui restent aléatoires."
+msgstr "LotoIA publishes the ranking of numbers by draw frequency over the draw history, available on the Statistics page. These frequencies are purely observational: they describe the past and cannot be used to anticipate the next draws, which remain random."
+
+#: ui/templates/em/faq.html
+msgid "Quelles sont les étoiles les plus fréquentes à l'EuroMillions ?"
+msgstr "What are the most frequent stars in EuroMillions?"
+
+#: ui/templates/em/faq.html
+msgid "Les 12 étoiles (1 à 12) font l'objet d'un classement de fréquence distinct des numéros principaux, disponible sur la page Statistiques. Comme pour les numéros, il s'agit d'une analyse descriptive de l'historique, sans valeur prédictive."
+msgstr "The 12 stars (1 to 12) have their own frequency ranking, separate from the main numbers, available on the Statistics page. As with the numbers, this is a descriptive analysis of the history, with no predictive value."
+
+#: ui/templates/em/faq.html
+msgid "Comment consulter l'historique des tirages EuroMillions ?"
+msgstr "How can I view the EuroMillions draw history?"
+
+#: ui/templates/em/faq.html
+msgid "La page Historique permet de rechercher un tirage EuroMillions par date et d'afficher les 5 numéros et 2 étoiles sortis. L'ensemble des résultats officiels y est consultable et mis à jour après chaque tirage."
+msgstr "The History page lets you search for a EuroMillions draw by date and display the 5 numbers and 2 stars drawn. All official results can be viewed there and are updated after each draw."
+
+#: ui/templates/em/faq.html
+msgid "Les statistiques EuroMillions sont-elles les mêmes dans les 9 pays ?"
+msgstr "Are EuroMillions statistics the same in all 9 countries?"
+
+#: ui/templates/em/faq.html
+msgid "Oui. L'EuroMillions est un tirage européen commun : les mêmes 5 numéros et 2 étoiles sont valables dans les 9 pays participants (France, Royaume-Uni, Espagne, Portugal, Belgique, Luxembourg, Irlande, Autriche et Suisse). Les statistiques de LotoIA s'appliquent donc à tous ces pays."
+msgstr "Yes. EuroMillions is a single European draw: the same 5 numbers and 2 stars apply in all 9 participating countries (France, UK, Spain, Portugal, Belgium, Luxembourg, Ireland, Austria, and Switzerland). LotoIA's statistics therefore apply to all of these countries."
+
+#: ui/templates/em/faq.html
+msgid "Qu'est-ce que l'écart (ou retard) d'un numéro ou d'une étoile ?"
+msgstr "What is the gap (or delay) of a number or star?"
+
+#: ui/templates/em/faq.html
+msgid "L'écart est le nombre de tirages écoulés depuis la dernière apparition d'un numéro ou d'une étoile. C'est un indicateur statistique descriptif qui mesure le temps depuis la dernière sortie ; il ne donne aucune indication sur les tirages à venir."
+msgstr "The gap is the number of draws elapsed since a number or star last appeared. It is a descriptive statistical indicator that measures the time since the last appearance; it gives no indication about upcoming draws."
