@@ -5885,3 +5885,7 @@ msgstr "Nuestro compromiso sigue siendo el mismo: una herramienta transparente, 
 
 msgid "L'équipe LotoIA"
 msgstr "El equipo LotoIA"
+
+#: ui/templates/em/_base.html
+msgid "Fil d'Ariane"
+msgstr "Ruta de navegación"

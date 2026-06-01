@@ -95,6 +95,16 @@
     <!-- Analytics (charge apres consentement RGPD) -->
     <script src="/ui/static/analytics.js?v=3" defer></script>
     <script src="/ui/static/tracker.js?v=5" defer></script>
+    <style>
+    /* Fil d'Ariane visible (breadcrumb) — SEO QW4 ; barre couleur nav, contraste 2 themes */
+    .breadcrumb-trail{background:var(--theme-bg-nav)}
+    .breadcrumb-list{max-width:var(--app-max-width,1140px);margin:0 auto;padding:8px var(--app-padding-x,24px);list-style:none;display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:.82rem}
+    .breadcrumb-item{display:inline-flex;align-items:center;color:var(--theme-text-on-dark,rgba(255,255,255,.95))}
+    .breadcrumb-item:not(:last-child)::after{content:"\203A";margin-left:6px;opacity:.45}
+    .breadcrumb-item a{color:inherit;opacity:.78;text-decoration:none}
+    .breadcrumb-item a:hover{opacity:1;text-decoration:underline}
+    .breadcrumb-item[aria-current="page"]{font-weight:600;opacity:1}
+    </style>
 </head>
 <body class="subpage">
     <!-- Navigation -->
@@ -111,6 +121,14 @@
             </button>
         </div>
     </nav>
+
+    <nav class="breadcrumb-trail" aria-label="Fil d'Ariane">
+        <ol class="breadcrumb-list">
+            <li class="breadcrumb-item"><a href="/accueil">Accueil</a></li>
+            <li class="breadcrumb-item" aria-current="page">Méthodologie</li>
+        </ol>
+    </nav>
+
 
     <!-- Header -->
     <header class="page-header">

@@ -5867,3 +5867,7 @@ msgstr "Onze inzet blijft dezelfde: een transparant hulpmiddel, zonder hallucina
 
 msgid "L'équipe LotoIA"
 msgstr "Het LotoIA-team"
+
+#: ui/templates/em/_base.html
+msgid "Fil d'Ariane"
+msgstr "Kruimelpad"

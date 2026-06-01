@@ -5611,3 +5611,7 @@ msgstr "Our commitment remains the same: a transparent tool, without hallucinati
 
 msgid "L'équipe LotoIA"
 msgstr "The LotoIA team"
+
+#: ui/templates/em/_base.html
+msgid "Fil d'Ariane"
+msgstr "Breadcrumb"

@@ -170,3 +170,13 @@
     <script src="{{ sponsor_js }}"></script>
     <script src="{{ simulateur_js }}"></script>
 {% endblock %}
+
+
+{% block breadcrumb %}
+<nav class="breadcrumb-trail" aria-label="{{ _("Fil d'Ariane") }}">
+    <ol class="breadcrumb-list">
+        <li class="breadcrumb-item"><a href="{{ urls.home }}">{{ _('Accueil EuroMillions') }}</a></li>
+        <li class="breadcrumb-item" aria-current="page">{{ _('Analyse de grille') }}</li>
+    </ol>
+</nav>
+{% endblock %}

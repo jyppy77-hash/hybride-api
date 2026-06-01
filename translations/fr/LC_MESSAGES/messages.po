@@ -4831,3 +4831,6 @@ msgstr ""
 msgid "L'équipe LotoIA"
 msgstr ""
 
+#: ui/templates/em/_base.html
+msgid "Fil d'Ariane"
+msgstr ""

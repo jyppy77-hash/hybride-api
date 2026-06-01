@@ -904,7 +904,7 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.035 (Sprint SEO Commit 1 — quick wins SEO Loto FR).
+        """APP_VERSION == 1.6.036 (Sprint SEO P1a — breadcrumb visible QW4 + QW9).
 
         V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
         V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
@@ -986,9 +986,14 @@ class TestAppVersion:
         (18 pages) + QW2 6 titres <title> <=60 car. + QW3 desc paires.html 120-160 +
         QW5 2 <img> accueil (mascotte + héros) en <picture>/<source webp>. QW8 rayé
         (faux positif legacy). Zéro i18n, zéro backend Python/JS.
+        Sprint SEO P1a (01/06, Release 1.6.036) — Breadcrumb visible (QW4 + QW9) :
+        fil d'Ariane HTML aligné sur BreadcrumbList JSON-LD, 12 pages Loto FR + 12
+        templates EM (bloc breadcrumb sur em/_base.html, labels gettext réutilisés),
+        msgid "Fil d'Ariane" traduit 6 langues. Pas de breadcrumb sur les homes (QW9).
+        paires JSON-LD normalisé Loto->Loto France. historique.html (legacy) exclu.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.035"
+        assert APP_VERSION == "1.6.036"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""
@@ -1061,3 +1066,53 @@ class TestStaticHreflangCompleteness:
         html = resp.text
         assert 'hreflang="fr"' in html, "Missing hreflang=fr on /accueil"
         assert 'hreflang="x-default"' in html, "Missing hreflang=x-default on /accueil"
+
+
+# ═══════════════════════════════════════════════
+# 22. Breadcrumb visible (P1a — QW4 + QW9)
+# ═══════════════════════════════════════════════
+
+class TestBreadcrumbVisible:
+    """Fil d'Ariane HTML visible, aligné sur le BreadcrumbList JSON-LD."""
+
+    def _get(self, path):
+        cursor = _make_cursor()
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            return client.get(path)
+
+    def test_loto_statistiques_breadcrumb_visible(self):
+        """Loto FR : nav visible + items alignés JSON-LD (3 niveaux)."""
+        resp = self._get("/loto/statistiques")
+        assert resp.status_code == 200
+        html = resp.text
+        assert '<nav class="breadcrumb-trail" aria-label="Fil d\'Ariane">' in html
+        assert '<a href="/accueil">Accueil</a>' in html
+        assert '<a href="/loto">Loto France</a>' in html
+        assert 'aria-current="page">Statistiques</li>' in html
+
+    def test_loto_home_has_no_breadcrumb(self):
+        """QW9 : pas de fil d'Ariane sur la home Loto (racine)."""
+        resp = self._get("/accueil")
+        assert resp.status_code == 200
+        assert 'class="breadcrumb-trail"' not in resp.text
+
+    @pytest.mark.parametrize("path,aria,current", [
+        ("/euromillions/paires", "Fil d&#39;Ariane", "Paires"),
+        ("/en/euromillions/pairs", "Breadcrumb", "Pairs"),
+        ("/de/euromillions/paare", "Brotkrümelnavigation", "Paare"),
+    ])
+    def test_em_breadcrumb_visible_translated(self, path, aria, current):
+        """EM : nav visible + aria-label et label courant traduits (zéro FR sur non-FR)."""
+        resp = self._get(path)
+        assert resp.status_code == 200
+        html = resp.text
+        assert 'class="breadcrumb-trail"' in html
+        assert ('aria-label="%s"' % aria) in html
+        assert ('aria-current="page">%s</li>' % current) in html
+
+    def test_em_home_has_no_breadcrumb(self):
+        """QW9 : pas de fil d'Ariane sur la home EM (racine de section)."""
+        resp = self._get("/euromillions")
+        assert resp.status_code == 200
+        assert 'class="breadcrumb-trail"' not in resp.text

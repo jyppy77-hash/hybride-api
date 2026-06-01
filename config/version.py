@@ -5,6 +5,17 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# Sprint SEO P1a (Release 1.6.036, 01/06/2026) — Breadcrumb visible (QW4 + QW9).
+# Source : docs/AUDIT_SEO_360_2026-05-30.md. Fil d'Ariane HTML visible aligné sur le
+# BreadcrumbList JSON-LD existant. 12 pages Loto FR statiques (insertion <nav breadcrumb>
+# après engine-nav + CSS inline avant </head>) + 12 templates EM Jinja (bloc {% block
+# breadcrumb %} surchargeant em/_base.html, labels réutilisant les msgid gettext déjà
+# traduits) + CSS inline dans em/_base.html. Style : barre couleur nav (sombre 2 thèmes).
+# QW9 : pas de breadcrumb sur les 2 homes (Loto /accueil + EM home) = racines. paires.html
+# JSON-LD normalisé « Loto » → « Loto France ». 1 seul msgid i18n nouveau : "Fil d'Ariane"
+# (aria-label) traduit 6 langues + .mo recompilés. historique.html (Loto statique, legacy
+# light sans design system) EXCLU → chantier réalignement séparé. Aucun backend Python/JS.
+#
 # Sprint SEO Commit 1 (Release 1.6.035, 01/06/2026) — Quick wins SEO Loto FR statique.
 # Source : docs/AUDIT_SEO_360_2026-05-30.md. Périmètre 100% frontend, zéro i18n :
 # QW1 lien "Paires" (/loto/paires) ajouté au footer Loto partagé (18 pages statiques).
@@ -74,7 +85,7 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.035"
+APP_VERSION = "1.6.036"
 APP_NAME = "LotoIA"
 VERSION_DATE = "2026-06-01"
 
