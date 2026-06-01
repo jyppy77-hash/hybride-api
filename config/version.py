@@ -5,6 +5,17 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# Sprint SEO P1b (Release 1.6.037, 01/06/2026) — Meta descriptions EM hors plage (QW3 volet EM).
+# Source : docs/AUDIT_SEO_360_2026-05-30.md. Recalage des descriptions EM live (templates
+# Jinja gettext) dans la plage SEO 120-160 codepoints. 5 pages hors-plage en FR (l'audit
+# n'en citait que 3 : accueil 200, news 186, historique 105 ; détectés en plus : paires 180,
+# hybride 184) → réécriture du msgid source + 6 traductions de qualité (FR/EN/ES/PT/DE/NL,
+# style maison, zéro promesse de gain ANJ). + Tier2 statistiques EN (106→128, msgstr seul).
+# 3 outliers DE marginaux (a-propos/euromillions-ia/simulateur >160) → backlog. Édition .po
+# ciblée par bloc (diff propre, msgid/msgstr en ligne unique) + recompile 6 .mo. Rendu vérifié
+# TestClient 36 cellules (6 pages × 6 langues) toutes ∈[120-160], zéro fuite FR. 18 fichiers
+# (5 templates + 6 .po + 5 .mo + version). Aucun backend Python/JS.
+#
 # Sprint SEO P1a (Release 1.6.036, 01/06/2026) — Breadcrumb visible (QW4 + QW9).
 # Source : docs/AUDIT_SEO_360_2026-05-30.md. Fil d'Ariane HTML visible aligné sur le
 # BreadcrumbList JSON-LD existant. 12 pages Loto FR statiques (insertion <nav breadcrumb>
@@ -85,7 +96,7 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.036"
+APP_VERSION = "1.6.037"
 APP_NAME = "LotoIA"
 VERSION_DATE = "2026-06-01"
 

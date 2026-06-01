@@ -663,14 +663,8 @@ msgid "Analyse EuroMillions IA — Moteur HYBRIDE | LotoIA"
 msgstr "Analyse EuroMillions AI — HYBRIDE-engine | LotoIA"
 
 #: ui/templates/em/accueil.html:5
-msgid ""
-"LotoIA EuroMillions : plateforme gratuite d'analyse statistique de "
-"l'EuroMillions par IA. Analysez vos grilles, explorez des combinaisons et"
-" comprenez les tendances historiques avec le moteur HYBRIDE."
-msgstr ""
-"LotoIA EuroMillions: gratis AI-gestuurd platform voor statistische "
-"analyse van de EuroMillions. Analyseer uw roosters, verken combinaties en"
-" begrijp de historische trends met de HYBRIDE-engine."
+msgid "Plateforme gratuite d'analyse statistique de l'EuroMillions par IA : explorez les tendances des tirages et analysez vos grilles avec le moteur HYBRIDE."
+msgstr "Gratis AI-platform voor statistische EuroMillions-analyse: ontdek trekkingstrends en analyseer je roosters met de HYBRIDE-engine."
 
 #: ui/templates/em/accueil.html:13 ui/templates/em/accueil.html:24
 msgid ""
@@ -2356,12 +2350,8 @@ msgid "Historique des Tirages EuroMillions | LotoIA"
 msgstr "Trekkingsgeschiedenis EuroMillions | LotoIA"
 
 #: ui/templates/em/historique.html:5
-msgid ""
-"Recherchez un tirage EuroMillions par date. Consultez les numéros et "
-"étoiles de chaque tirage historique."
-msgstr ""
-"Zoek een EuroMillions-trekking op datum. Bekijk de nummers en sterren van"
-" elke historische trekking."
+msgid "Recherchez un tirage EuroMillions par date et consultez les numéros et étoiles de chaque tirage. Historique complet des résultats officiels analysés."
+msgstr "Zoek een EuroMillions-trekking op datum en bekijk de nummers en sterren van elke trekking. Volledige geschiedenis van de officiële resultaten."
 
 #: ui/templates/em/historique.html:10 ui/templates/em/historique.html:19
 msgid "Historique EuroMillions | LotoIA"
@@ -2426,14 +2416,8 @@ msgstr "HYBRIDE — Grounded AI-chatbot voor de EuroMillions | LotoIA"
 
 #: ui/templates/em/hybride.html:5
 #, python-format
-msgid ""
-"HYBRIDE est l'assistant IA de LotoIA, connecté en temps réel aux "
-"%(total)s+ tirages officiels EuroMillions. Posez vos questions sur les "
-"numéros, les étoiles, les tirages et les statistiques."
-msgstr ""
-"HYBRIDE is de AI-assistent van LotoIA, in realtime verbonden met de "
-"%(total)s+ officiële EuroMillions-trekkingen. Stel uw vragen over "
-"nummers, sterren, trekkingen en statistieken."
+msgid "HYBRIDE, l'assistant IA de LotoIA connecté aux %(total)s+ tirages officiels EuroMillions. Posez vos questions sur les numéros, étoiles et statistiques."
+msgstr "HYBRIDE, de AI-assistent van LotoIA, verbonden met %(total)s+ officiële EuroMillions-trekkingen. Stel je vragen over nummers, sterren en statistieken."
 
 #: ui/templates/em/hybride.html:11 ui/templates/em/hybride.html:21
 msgid "HYBRIDE — Chatbot IA Grounded EuroMillions | LotoIA"
@@ -3773,14 +3757,8 @@ msgid "Actualités EuroMillions | LotoIA"
 msgstr "Nieuws EuroMillions | LotoIA"
 
 #: ui/templates/em/news.html:5
-msgid ""
-"Suivez les actualités du module EuroMillions de LotoIA : moteur HYBRIDE "
-"adapté 5+2, analyse statistique des tirages européens, chatbot IA dédié "
-"et infrastructure Cloud Run de production."
-msgstr ""
-"Volg het nieuws van de EuroMillions-module van LotoIA: aangepaste "
-"HYBRIDE-engine 5+2, statistische analyse van Europese trekkingen, "
-"toegewijde AI-chatbot en Cloud Run-productie-infrastructuur."
+msgid "Actualités du module EuroMillions de LotoIA : moteur HYBRIDE adapté au format 5+2, analyse statistique des tirages européens et chatbot IA dédié."
+msgstr "Nieuws over de EuroMillions-module van LotoIA: HYBRIDE-engine voor het 5+2-formaat, statistische analyse van Europese trekkingen en AI-chatbot."
 
 #: ui/templates/em/news.html:11
 #, python-format
@@ -4809,14 +4787,8 @@ msgid "Paires EuroMillions — Co-occurrences et Classement | LotoIA"
 msgstr "EuroMillions Paren — Co-voorkomens en Ranglijst | LotoIA"
 
 #: ui/templates/em/paires.html:5
-msgid ""
-"Découvrez les paires de numéros et d'étoiles les plus fréquentes à "
-"l'EuroMillions. Classement hot/cold, recherche interactive et analyse de "
-"co-occurrences sur l'historique complet."
-msgstr ""
-"Ontdek de meest voorkomende nummer- en sterrenparen bij EuroMillions. Hot"
-"/cold-ranglijst, interactief zoeken en co-voorkomensanalyse over de "
-"volledige trekkingsgeschiedenis."
+msgid "Les paires de numéros et d'étoiles les plus fréquentes à l'EuroMillions : classement hot/cold, recherche interactive et analyse de co-occurrences."
+msgstr "De meest voorkomende EuroMillions-paren van nummers en sterren: hot/cold-klassement, interactief zoeken en analyse van co-occurrenties."
 
 #: ui/templates/em/paires.html:12
 msgid ""

@@ -201,5 +201,6 @@ class TestVersion:
 
     def test_app_version(self):
         # Sprint SEO P1a bump : 1.6.035 → 1.6.036 (01/06/2026 — breadcrumb visible QW4+QW9 : fil d'Ariane HTML aligné JSON-LD sur 12 pages Loto FR + 12 templates EM, msgid "Fil d'Ariane" 6 langues, pas de breadcrumb sur homes, paires JSON-LD Loto->Loto France, historique.html legacy exclu)
+        # Sprint SEO P1b bump : 1.6.036 → 1.6.037 (01/06/2026 — meta descriptions EM recalées 120-160 codepoints : 5 msgid réécrits accueil/news/historique/paires/hybride + 6 traductions + statistiques EN ; édition .po ciblée + recompile .mo ; rendu vérifié 36 cellules)
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.036"
+        assert APP_VERSION == "1.6.037"

@@ -660,14 +660,8 @@ msgid "Analyse EuroMillions IA — Moteur HYBRIDE | LotoIA"
 msgstr "Análise EuroMillions IA — Motor HYBRIDE | LotoIA"
 
 #: ui/templates/em/accueil.html:5
-msgid ""
-"LotoIA EuroMillions : plateforme gratuite d'analyse statistique de "
-"l'EuroMillions par IA. Analysez vos grilles, explorez des combinaisons et"
-" comprenez les tendances historiques avec le moteur HYBRIDE."
-msgstr ""
-"LotoIA EuroMillions: plataforma gratuita de análise estatística do "
-"EuroMillions com IA. Analise as suas grelhas, explore combinações e "
-"compreenda as tendências históricas com o motor HYBRIDE."
+msgid "Plateforme gratuite d'analyse statistique de l'EuroMillions par IA : explorez les tendances des tirages et analysez vos grilles avec le moteur HYBRIDE."
+msgstr "Plataforma gratuita de análise estatística do EuroMillions por IA: explore as tendências dos sorteios e analise as suas combinações com o motor HYBRIDE."
 
 #: ui/templates/em/accueil.html:13 ui/templates/em/accueil.html:24
 msgid ""
@@ -2339,12 +2333,8 @@ msgid "Historique des Tirages EuroMillions | LotoIA"
 msgstr "Histórico dos Sorteios EuroMillions | LotoIA"
 
 #: ui/templates/em/historique.html:5
-msgid ""
-"Recherchez un tirage EuroMillions par date. Consultez les numéros et "
-"étoiles de chaque tirage historique."
-msgstr ""
-"Pesquise um sorteio EuroMillions por data. Consulte os números e estrelas"
-" de cada sorteio histórico."
+msgid "Recherchez un tirage EuroMillions par date et consultez les numéros et étoiles de chaque tirage. Historique complet des résultats officiels analysés."
+msgstr "Procure um sorteio do EuroMillions por data e consulte os números e estrelas de cada sorteio. Histórico completo dos resultados oficiais analisados."
 
 #: ui/templates/em/historique.html:10 ui/templates/em/historique.html:19
 msgid "Historique EuroMillions | LotoIA"
@@ -2409,14 +2399,8 @@ msgstr "HYBRIDE — Chatbot IA Grounded para o EuroMillions | LotoIA"
 
 #: ui/templates/em/hybride.html:5
 #, python-format
-msgid ""
-"HYBRIDE est l'assistant IA de LotoIA, connecté en temps réel aux "
-"%(total)s+ tirages officiels EuroMillions. Posez vos questions sur les "
-"numéros, les étoiles, les tirages et les statistiques."
-msgstr ""
-"HYBRIDE é o assistente IA do LotoIA, conectado em tempo real aos "
-"%(total)s+ sorteios oficiais EuroMillions. Coloque as suas questões sobre"
-" os números, as estrelas, os sorteios e as estatísticas."
+msgid "HYBRIDE, l'assistant IA de LotoIA connecté aux %(total)s+ tirages officiels EuroMillions. Posez vos questions sur les numéros, étoiles et statistiques."
+msgstr "HYBRIDE, o assistente IA da LotoIA ligado a %(total)s+ sorteios oficiais do EuroMillions. Coloque as suas questões sobre números, estrelas e estatísticas."
 
 #: ui/templates/em/hybride.html:11 ui/templates/em/hybride.html:21
 msgid "HYBRIDE — Chatbot IA Grounded EuroMillions | LotoIA"
@@ -3744,14 +3728,8 @@ msgid "Actualités EuroMillions | LotoIA"
 msgstr "Novidades EuroMillions | LotoIA"
 
 #: ui/templates/em/news.html:5
-msgid ""
-"Suivez les actualités du module EuroMillions de LotoIA : moteur HYBRIDE "
-"adapté 5+2, analyse statistique des tirages européens, chatbot IA dédié "
-"et infrastructure Cloud Run de production."
-msgstr ""
-"Acompanhe as novidades do módulo EuroMillions do LotoIA: motor HYBRIDE "
-"adaptado 5+2, análise estatística dos sorteios europeus, chatbot IA "
-"dedicado e infraestrutura Cloud Run de produção."
+msgid "Actualités du module EuroMillions de LotoIA : moteur HYBRIDE adapté au format 5+2, analyse statistique des tirages européens et chatbot IA dédié."
+msgstr "Novidades do módulo EuroMillions da LotoIA: motor HYBRIDE adaptado ao formato 5+2, análise estatística dos sorteios europeus e chatbot IA dedicado."
 
 #: ui/templates/em/news.html:11
 #, python-format
@@ -4777,14 +4755,8 @@ msgid "Paires EuroMillions — Co-occurrences et Classement | LotoIA"
 msgstr "Pares EuroMillions — Co-ocorrências e Classificação | LotoIA"
 
 #: ui/templates/em/paires.html:5
-msgid ""
-"Découvrez les paires de numéros et d'étoiles les plus fréquentes à "
-"l'EuroMillions. Classement hot/cold, recherche interactive et analyse de "
-"co-occurrences sur l'historique complet."
-msgstr ""
-"Descubra os pares de números e estrelas mais frequentes no EuroMillions. "
-"Classificação hot/cold, pesquisa interativa e análise de co-ocorrências "
-"no histórico completo."
+msgid "Les paires de numéros et d'étoiles les plus fréquentes à l'EuroMillions : classement hot/cold, recherche interactive et analyse de co-occurrences."
+msgstr "Os pares de números e estrelas mais frequentes do EuroMillions: classificação hot/cold, pesquisa interativa e análise de coocorrências."
 
 #: ui/templates/em/paires.html:12
 msgid ""

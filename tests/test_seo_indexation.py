@@ -904,7 +904,7 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.036 (Sprint SEO P1a — breadcrumb visible QW4 + QW9).
+        """APP_VERSION == 1.6.037 (Sprint SEO P1b — meta descriptions EM 120-160).
 
         V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
         V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
@@ -991,9 +991,12 @@ class TestAppVersion:
         templates EM (bloc breadcrumb sur em/_base.html, labels gettext réutilisés),
         msgid "Fil d'Ariane" traduit 6 langues. Pas de breadcrumb sur les homes (QW9).
         paires JSON-LD normalisé Loto->Loto France. historique.html (legacy) exclu.
+        Sprint SEO P1b (01/06, Release 1.6.037) — Meta descriptions EM recalées 120-160 :
+        5 msgid réécrits (accueil, news, historique, paires, hybride) + 6 traductions
+        chacun + statistiques EN (106->128). Vérif rendu 36 cellules toutes en plage.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.036"
+        assert APP_VERSION == "1.6.037"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""
