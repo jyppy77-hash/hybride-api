@@ -904,7 +904,7 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.034 (V142.F — Fix bug ancrage temporel chatbot).
+        """APP_VERSION == 1.6.035 (Sprint SEO Commit 1 — quick wins SEO Loto FR).
 
         V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
         V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
@@ -981,9 +981,14 @@ class TestAppVersion:
         Fix helper _build_temporal_anchor() injecte date réelle dynamique dans
         system_prompt (bloc NE JAMAIS AFFICHER). Cause B (Loto) : dates en dur
         exemples prompt_hybride.txt → placeholders descriptifs.
+        Sprint SEO Commit 1 (01/06, Release 1.6.035) — Quick wins SEO Loto FR
+        statique (audit docs/AUDIT_SEO_360_2026-05-30.md) : QW1 lien Paires footer
+        (18 pages) + QW2 6 titres <title> <=60 car. + QW3 desc paires.html 120-160 +
+        QW5 2 <img> accueil (mascotte + héros) en <picture>/<source webp>. QW8 rayé
+        (faux positif legacy). Zéro i18n, zéro backend Python/JS.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.034"
+        assert APP_VERSION == "1.6.035"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

@@ -200,6 +200,6 @@ class TestVersion:
     """V53 version bump."""
 
     def test_app_version(self):
-        # V142.F bump : 1.6.033 → 1.6.034 (26/05/2026 — Fix bug ancrage temporel chatbot : helper _build_temporal_anchor injecte date réelle dans system_prompt + purge dates en dur prompt_hybride.txt)
+        # Sprint SEO Commit 1 bump : 1.6.034 → 1.6.035 (01/06/2026 — quick wins SEO Loto FR statique : QW1 footer Paires 18 pages + QW2 6 titres <=60 + QW3 desc paires + QW5 2 img accueil en picture/webp ; QW8 rayé faux positif)
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.034"
+        assert APP_VERSION == "1.6.035"

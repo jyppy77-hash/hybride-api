@@ -5,6 +5,18 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# Sprint SEO Commit 1 (Release 1.6.035, 01/06/2026) — Quick wins SEO Loto FR statique.
+# Source : docs/AUDIT_SEO_360_2026-05-30.md. Périmètre 100% frontend, zéro i18n :
+# QW1 lien "Paires" (/loto/paires) ajouté au footer Loto partagé (18 pages statiques).
+# QW2 6 titres <title> Loto FR ramenés <=60 car. (numeros-les-plus-sortis, news, loto-ia,
+# historique, paires, simulateur) en préservant les mots-clés. QW3 meta description paires.html
+# recalée 120-160 (170→136 car.). QW5 2 <img> accueil (mascotte PNG + héros JPG) passées en
+# <picture> + <source webp> (og-image.webp / hybride-chatbot-lotoia.webp déjà sur disque,
+# gain LCP, anti-CLS width/height préservés). Balises meta og:image NON touchées (restent JPG
+# pour crawlers sociaux). QW8 rayé = faux positif (résidus "Analyse" uniquement dans fichiers
+# legacy non servis ; pages EN live via gettext OK). Descriptions EM live (templates/em) =
+# backlog commit i18n dédié (impact 6 langues). Aucun changement Python/JS backend.
+#
 # V142.F (Release 1.6.034, 26/05/2026) — Fix bug d'ancrage temporel du chatbot.
 # Diagnostic READ-ONLY 2026-05-26. Cause A (Loto + EM) : le chemin Gemini
 # générique n'injectait aucune date courante dans le system_prompt → le modèle
@@ -62,9 +74,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.034"
+APP_VERSION = "1.6.035"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-05-26"
+VERSION_DATE = "2026-06-01"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.
