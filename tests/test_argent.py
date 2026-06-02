@@ -259,7 +259,7 @@ class TestArgentResponseLevel:
     def test_l3_gambling_en(self):
         resp = _get_argent_response_em_en("I like gambling")
         assert resp in _ARGENT_L3_EM_EN
-        assert "begambleaware.org" in resp
+        assert "gamcare.org.uk" in resp
 
     # --- FR EM ---
     def test_l1_default_em_fr(self):
@@ -315,19 +315,19 @@ class TestArgentResponseLanguage:
 
     def test_es_l3_spanish_help(self):
         resp = _get_argent_response_em("quiero apostar", "es")
-        assert "jugarbien.es" in resp
+        assert "fejar.org" in resp
 
     def test_pt_l3_portuguese_help(self):
         resp = _get_argent_response_em("quero apostar", "pt")
-        assert "jogoresponsavel.pt" in resp
+        assert "sicad.pt" in resp
 
     def test_de_l3_german_help(self):
         resp = _get_argent_response_em("ich will wetten", "de")
-        assert "bzga.de" in resp
+        assert "check-dein-spiel.de" in resp
 
     def test_nl_l3_dutch_help(self):
         resp = _get_argent_response_em("ik wil gokken", "nl")
-        assert "agog.nl" in resp
+        assert "openovergokken.nl" in resp
 
     def test_fr_l3_french_help(self):
         resp = _get_argent_response_em("je veux parier", "fr")
@@ -335,7 +335,7 @@ class TestArgentResponseLanguage:
 
     def test_en_l3_english_help(self):
         resp = _get_argent_response_em_en("I like gambling")
-        assert "begambleaware.org" in resp
+        assert "gamcare.org.uk" in resp
 
 
 # ═══════════════════════════════════════════════════════

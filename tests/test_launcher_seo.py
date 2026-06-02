@@ -204,5 +204,6 @@ class TestVersion:
         # Sprint SEO P1b bump : 1.6.036 → 1.6.037 (01/06/2026 — meta descriptions EM recalées 120-160 codepoints : 5 msgid réécrits accueil/news/historique/paires/hybride + 6 traductions + statistiques EN ; édition .po ciblée + recompile .mo ; rendu vérifié 36 cellules)
         # Sprint SEO P1c bump : 1.6.037 → 1.6.038 (01/06/2026 — FAQ EM étoffée QW12 : 13/15 Q désync -> 33 Q cohérentes visible == JSON-LD, +16 nouvelles Q + fusion chaud/froid + resync, 34 msgid traduits 6 langues wording ANJ strict, striptags-reuse pour 5 visible-only)
         # Fix i18n numéros d'aide Jeu Responsable bump : 1.6.038 → 1.6.039 (01/06/2026, hors sprint SEO — phone+phone_note dans _GAMBLING_HELP, FAQ lit le dict, msgstr footer/disclaimer EN/PT/NL corrigés, chatbot js_i18n org/url alignés ; valeurs vérifiées GamCare/FEJAR/Linha Vida-SICAD/BIÖG/Open Over Gokken ; templates légaux multi-pays = backlog)
+        # Fix i18n numéros d'aide CHATBOT bump : 1.6.039 → 1.6.040 (02/06/2026, complément — smoke staging 1.6.039 a révélé 2 sources chatbot non couvertes : prompts Gemini EM prompts/em/{en,es,pt,de,nl}/prompt_hybride_em.txt + Phase A L3 déterministe chat_detectors_em_guardrails.py/chat_responses_em_en.py ; valeurs alignées _GAMBLING_HELP ; legacy EN GambleAware->GamCare ; FR intact)
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.039"
+        assert APP_VERSION == "1.6.040"

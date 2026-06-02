@@ -122,7 +122,7 @@ _ARGENT_L2_EM_EN = [
 
 # Niveau 3 — Redirection aide (paris/addiction)
 _ARGENT_L3_EM_EN = [
-    "🛑 Gambling involves risks. If you need help: www.begambleaware.org (UK) or www.ncpgambling.org (US). I'm here for stats, not for bets.",
+    "🛑 Gambling involves risks. If you need help: www.gamcare.org.uk or call 0808 8020 133 (UK). I'm here for stats, not for bets.",
 ]
 
 # Mots forts EN → L2

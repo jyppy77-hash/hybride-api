@@ -904,7 +904,7 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.039 (Fix i18n numéros d'aide Jeu Responsable, hors sprint SEO).
+        """APP_VERSION == 1.6.040 (Fix i18n numéros d'aide CHATBOT, complément 1.6.039).
 
         V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
         V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
@@ -1001,9 +1001,15 @@ class TestAppVersion:
         phone+phone_note centralisés dans _GAMBLING_HELP[lang] (FAQ lit le dict) + correction
         msgstr footer/disclaimer (EN gamcare, PT 1414/Linha Vida, NL Open Over Gokken) + chatbot
         js_i18n org/url alignés 5 langs. Backlog : templates légaux multi-pays (commit séparé).
+        Fix i18n numéros d'aide CHATBOT (02/06, Release 1.6.040) — complément 1.6.039 :
+        smoke staging a révélé 2 sources chatbot non couvertes — (6) prompts Gemini EM
+        prompts/em/{en,es,pt,de,nl}/prompt_hybride_em.txt (bloc [RESPONSIBLE GAMBLING] + FAQ)
+        + (7) Phase A L3 déterministe chat_detectors_em_guardrails.py (ES/PT/DE/NL) +
+        chat_responses_em_en.py (EN, retrait ncpgambling US). Valeurs alignées _GAMBLING_HELP,
+        FR intact, legacy EN GambleAware->GamCare. test_argent.py 6 assertions MAJ.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.039"
+        assert APP_VERSION == "1.6.040"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

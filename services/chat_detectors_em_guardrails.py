@@ -507,7 +507,7 @@ _ARGENT_L2_EM_ES = [
 ]
 
 _ARGENT_L3_EM_ES = [
-    "🛑 El juego conlleva riesgos. Si necesitas ayuda: www.jugarbien.es o llama al 900 200 225. Estoy aquí para las estadísticas, no para las apuestas.",
+    "🛑 El juego conlleva riesgos. Si necesitas ayuda: fejar.org o llama al 900 200 225. Estoy aquí para las estadísticas, no para las apuestas.",
 ]
 
 # --- Response pools EM PT (argent) ---
@@ -526,7 +526,7 @@ _ARGENT_L2_EM_PT = [
 ]
 
 _ARGENT_L3_EM_PT = [
-    "🛑 O jogo envolve riscos. Se precisas de ajuda: www.jogoresponsavel.pt ou liga para o 808 200 204. Estou aqui para estatísticas, não para apostas.",
+    "🛑 O jogo envolve riscos. Se precisas de ajuda: www.sicad.pt ou liga 1414. Estou aqui para estatísticas, não para apostas.",
 ]
 
 # --- Response pools EM DE (argent) ---
@@ -545,7 +545,7 @@ _ARGENT_L2_EM_DE = [
 ]
 
 _ARGENT_L3_EM_DE = [
-    "🛑 Glücksspiel birgt Risiken. Wenn du Hilfe brauchst: www.bzga.de oder 0800-1372700. Ich bin für Statistiken da, nicht für Wetten.",
+    "🛑 Glücksspiel birgt Risiken. Wenn du Hilfe brauchst: www.check-dein-spiel.de oder 0800 1 372 700. Ich bin für Statistiken da, nicht für Wetten.",
 ]
 
 # --- Response pools EM NL (argent) ---
@@ -564,7 +564,7 @@ _ARGENT_L2_EM_NL = [
 ]
 
 _ARGENT_L3_EM_NL = [
-    "🛑 Gokken brengt risico's met zich mee. Als je hulp nodig hebt: www.agog.nl of 0900-2177. Ik ben er voor statistieken, niet voor wedden.",
+    "🛑 Gokken brengt risico's met zich mee. Als je hulp nodig hebt: www.openovergokken.nl of 0800 24 000 22. Ik ben er voor statistieken, niet voor wedden.",
 ]
 
 # --- Pool dispatch par langue ---

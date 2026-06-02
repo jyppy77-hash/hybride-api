@@ -5,6 +5,22 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# Fix i18n numéros d'aide CHATBOT — complément 1.6.039 (Release 1.6.040, 02/06/2026).
+# Le smoke staging 1.6.039 a révélé que le CHATBOT servait encore les ANCIENS organismes/
+# numéros (PT « Linha Vida SOS Jogo 808 200 204 », NL « Gokkliniek 0800 35 777 »…) : 2 sources
+# non couvertes par 1.6.039 (qui avait traité _GAMBLING_HELP, FAQ, footer/disclaimer .po, js_i18n).
+# Source 6 — prompts Gemini chatbot EM `prompts/em/{en,es,pt,de,nl}/prompt_hybride_em.txt`
+# (bloc [RESPONSIBLE GAMBLING] + FAQ « où trouver de l'aide », 2 lignes/langue, hard-codé,
+# chargé brut par load_prompt_em → PAS lang-aware via dict). Source 7 — Phase A L3 (réponses
+# DÉTERMINISTES avant Gemini, canal « j'ai besoin d'aide ») : `chat_detectors_em_guardrails.py`
+# (ES/PT/DE/NL _ARGENT_L3_EM_*) + `chat_responses_em_en.py` (EN, retrait ncpgambling US non
+# vérifié + ajout 0808 8020 133). FR (prompt + L3) déjà conforme, intact. Legacy EN aligné
+# (prompts/chatbot/prompt_hybride_em_en.txt GambleAware→GamCare, mort-code runtime). Valeurs
+# identiques au dict _GAMBLING_HELP. test_argent.py MAJ 6 assertions (begambleaware→gamcare,
+# jugarbien→fejar, jogoresponsavel→sicad, bzga.de→check-dein-spiel.de, agog.nl→openovergokken).
+# Approche : correction en dur (pas de centralisation prompts/L3 sur _GAMBLING_HELP = trop
+# invasif pour hotfix → BACKLOG). 5779 tests passed. Re-smoke chatbot PT/NL à faire post-staging.
+#
 # Fix i18n numéros d'aide Jeu Responsable (Release 1.6.039, 01/06/2026) — hors sprint SEO.
 # Bug pré-existant : le numéro/organisme d'aide au jeu était dupliqué et désynchronisé sur
 # plusieurs sources (FAQ EM EN affichait le n° FR sous BeGambleAware ; PT/NL n° obsolètes).
@@ -123,9 +139,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.039"
+APP_VERSION = "1.6.040"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-06-01"
+VERSION_DATE = "2026-06-02"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

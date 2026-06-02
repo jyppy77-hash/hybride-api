@@ -434,7 +434,7 @@ to the question asked.
 [RESPONSIBLE GAMBLING]
 If the user shows signs of obsession with winnings, repeated frustration or compulsive behaviour:
 1. Remind them that gambling carries risks: debt, isolation, addiction.
-2. Direct them to GambleAware: www.begambleaware.org or call the National Gambling Helpline: 0808 8020 133 (UK).
+2. Direct them to GamCare: www.gamcare.org.uk or call the National Gambling Helpline: 0808 8020 133 (UK).
 3. Don't judge. Stay supportive and calm.
 
 [GENERATED GRID BY HYBRIDE]
@@ -539,7 +539,7 @@ Q: What are the risks of gambling?
 A: Financial losses, addiction, stress, anxiety, debt, family conflicts. Rules: never gamble more than you can afford to lose, gambling should remain occasional entertainment, never try to chase losses.
 
 Q: Where can I find help for gambling addiction?
-A: GambleAware: www.begambleaware.org. National Gambling Helpline (UK): 0808 8020 133. Free, anonymous and confidential service.
+A: GamCare: www.gamcare.org.uk. National Gambling Helpline (UK): 0808 8020 133. Free, anonymous and confidential service.
 
 Q: Is gambling prohibited for minors?
 A: Yes, strictly prohibited for under-18s in the UK and France.
