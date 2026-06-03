@@ -58,7 +58,7 @@ def mocked_harness(monkeypatch):
         h._tirages_cache = list(_FAKE_TIRAGES_LOTO)
         return h._tirages_cache
 
-    async def fake_generate(engine, brake_balls, brake_secondary):
+    async def fake_generate(engine, brake_balls, brake_secondary, recent_draws=None):
         # 5 grilles fictives identiques par tirage (suffisant pour smoke)
         return [dict(g) for g in _FAKE_GRILLES_LOTO]
 
@@ -444,7 +444,7 @@ class TestSmokeE2E:
         rng = _stdlib_random.Random(2026)
         zones = [(1, 10), (11, 20), (21, 30), (31, 40), (41, 49)]
 
-        async def fake_generate(engine, brake_balls, brake_secondary):
+        async def fake_generate(engine, brake_balls, brake_secondary, recent_draws=None):
             # 20 grilles synthétiques 1-par-zone
             return [
                 {"nums": [rng.randint(lo, hi) for lo, hi in zones],

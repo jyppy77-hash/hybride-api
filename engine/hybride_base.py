@@ -717,8 +717,16 @@ class HybrideEngine:
         decay_state_secondary: dict[int, int] | None = None,
         saturated_secondary: set[int] | None = None,
         persistent_brake_map_secondary: dict[int, float] | None = None,
+        precomputed_scores: dict[int, float] | None = None,
     ) -> list[int]:
-        scores = await self.calculer_scores_hybrides_secondary(conn, mode=mode)
+        # Levier B (perf) : précomputed_scores=None (prod / appelants actuels) → recompute
+        # inchangé. Fourni (generate_grids, 1×/tirage) → réutilisé tel quel. Les transforms
+        # ci-dessous copient leur entrée (non-mutants) → base partagée non corrompue ;
+        # saturation V105 + sampling restent per-grille (bit-identique, audit B).
+        if precomputed_scores is not None:
+            scores = dict(precomputed_scores)
+        else:
+            scores = await self.calculer_scores_hybrides_secondary(conn, mode=mode)
         scores = self.apply_secondary_penalties(scores, recent_draws or [])
         # V92: decay for secondary numbers (stars/chance) with dedicated rate
         if decay_state_secondary:
@@ -807,6 +815,7 @@ class HybrideEngine:
         saturated_secondary: set[int] | None = None,
         persistent_brake_map: dict[int, float] | None = None,
         persistent_brake_map_secondary: dict[int, float] | None = None,
+        scores_secondary: dict[int, float] | None = None,
     ) -> dict:
         if forced_nums is None:
             forced_nums = []
@@ -941,6 +950,7 @@ class HybrideEngine:
                 decay_state_secondary=decay_state_secondary,
                 saturated_secondary=saturated_secondary,
                 persistent_brake_map_secondary=persistent_brake_map_secondary,
+                precomputed_scores=scores_secondary,
             )
             secondary = list(forced_secondary)
             for s in all_sec:
@@ -953,6 +963,7 @@ class HybrideEngine:
                 decay_state_secondary=decay_state_secondary,
                 saturated_secondary=saturated_secondary,
                 persistent_brake_map_secondary=persistent_brake_map_secondary,
+                precomputed_scores=scores_secondary,
             )
 
         score_final = self._calculer_score_final(score_conformite, self.cfg.star_to_legacy_score)
@@ -1065,6 +1076,7 @@ class HybrideEngine:
         persistent_brake_map: dict[int, float] | None = None,
         persistent_brake_map_secondary: dict[int, float] | None = None,
         _get_connection=None,
+        recent_draws: list[dict] | None = None,
     ) -> dict:
         if _get_connection is None:
             from .db import get_connection as _get_connection
@@ -1074,7 +1086,11 @@ class HybrideEngine:
 
         async with _get_connection() as conn:
             scores_hybrides = await self.calculer_scores_hybrides(conn, mode=mode)
-            recent_draws = await self.get_recent_draws(conn)
+            # recent_draws=None (prod / tous appelants actuels) → fetch DB inchangé.
+            # recent_draws fourni (harness backtest, T-1 relatif) → utilisé tel quel
+            # (évite le future-leak get_recent_draws absolu qui ignore date_max).
+            if recent_draws is None:
+                recent_draws = await self.get_recent_draws(conn)
 
             # V92: load secondary decay state (stars/chance) for rotation
             decay_state_secondary = None
@@ -1085,6 +1101,13 @@ class HybrideEngine:
                     decay_state_secondary = await get_decay_state(conn, game_name, ntype)
                 except Exception:
                     logger.debug("decay_state_secondary unavailable — generating without secondary decay")
+
+            # Levier B (perf) : scoring secondaire de base calculé 1× / tirage et
+            # réutilisé pour les n grilles (miroir de scores_hybrides boules ci-dessus).
+            # calculer_scores_hybrides_secondary est une fonction pure SQL de (conn, mode),
+            # sans RNG ni mutation → invariant entre les n grilles → bit-identique (audit B).
+            # saturation V105 + penalties + sampling restent per-grille dans generer_secondary.
+            scores_secondary_base = await self.calculer_scores_hybrides_secondary(conn, mode=mode)
 
             grilles = []
             # V105: Saturation Brake — accumulate selected numbers across batch
@@ -1098,6 +1121,7 @@ class HybrideEngine:
                     exclusions=exclusions, recent_draws=recent_draws, lang=lang,
                     decay_state=decay_state,
                     decay_state_secondary=decay_state_secondary,
+                    scores_secondary=scores_secondary_base,
                     saturated_balls=_saturated_balls if _saturated_balls else None,
                     saturated_secondary=_saturated_secondary if _saturated_secondary else None,
                     persistent_brake_map=persistent_brake_map,

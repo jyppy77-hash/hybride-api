@@ -396,17 +396,36 @@ class BacktestHarness:
 
     # ── Engine invocation ─────────────────────────────────────────────
 
+    def _tirage_to_recent_draw_dict(self, tirage: TirageRecord) -> dict:
+        """Mappe un TirageRecord vers le format dict attendu par les pénalisations.
+
+        Format identique à `HybrideEngine.get_recent_draws` (consommé par
+        `apply_boule_penalties` via `boule_1..5` et `apply_secondary_penalties`
+        via `secondary_columns`). Sert à injecter le T-1 RELATIF au target rejoué
+        (fix future-leak) à la place du fetch absolu `get_recent_draws`.
+        """
+        d: dict = {f"boule_{i}": b for i, b in enumerate(tirage.balls, 1)}
+        for col, val in zip(self.base_config.secondary_columns, tirage.secondary):
+            d[col] = val
+        d["date_de_tirage"] = str(tirage.draw_date)
+        return d
+
     async def _generate_grilles(
         self,
         engine: HybrideEngine,
         brake_map_balls: dict[int, float],
         brake_map_secondary: dict[int, float],
+        recent_draws: list[dict] | None = None,
     ) -> list[dict]:
         """Génère N grilles via engine.generate_grids().
 
         Bypass `services.selection_history.get_persistent_brake_map` en passant
         directement nos brake_maps virtuels en kwargs. `decay_state=None` par
         choix MVP (cf. docstring module).
+
+        `recent_draws` : T-1 RELATIF au target rejoué (fix future-leak). Toujours
+        une liste (jamais None) côté run_config — [] à idx=0. Passé tel quel à
+        generate_grids qui court-circuite alors le fetch absolu get_recent_draws.
         """
         result = await engine.generate_grids(
             n=self.n_grilles_per_tirage,
@@ -420,6 +439,7 @@ class BacktestHarness:
             persistent_brake_map=brake_map_balls if brake_map_balls else None,
             persistent_brake_map_secondary=brake_map_secondary if brake_map_secondary else None,
             _get_connection=get_connection,
+            recent_draws=recent_draws,
         )
         return result.get("grids", [])
 
@@ -529,8 +549,19 @@ class BacktestHarness:
                 attr="secondary",
             )
 
+            # Fix future-leak : recent_draws RELATIFS au target rejoué (T-1, T-2, …)
+            # construits depuis la fenêtre chronologique STRICTEMENT antérieure.
+            # ⚠️ INVARIANT : toujours une liste, jamais None — [] à idx=0 (aucun T-1)
+            # évite le re-fallback get_recent_draws absolu (re-leak). reversed →
+            # T-1 en position 0 (aligné format DESC de get_recent_draws).
+            _start = max(0, idx - engine_cfg.penalty_window)
+            _window_asc = tirages[_start:idx]  # exclut le target tirages[idx]
+            recent = [self._tirage_to_recent_draw_dict(t) for t in reversed(_window_asc)]
+
             try:
-                grilles = await self._generate_grilles(engine, brake_balls, brake_secondary)
+                grilles = await self._generate_grilles(
+                    engine, brake_balls, brake_secondary, recent_draws=recent,
+                )
             except Exception as exc:
                 logger.warning("Tirage %s skipped — generate_grids error: %s", tirage.draw_date, exc)
                 continue
@@ -833,6 +864,59 @@ class BacktestHarness:
                 ),
                 "delta_per_palier": delta_per_palier,
                 "delta_stratification": delta_strat,
+            },
+        }
+
+    async def run_oos(self, cfg: BacktestConfig) -> dict:
+        """OOS mono-config — exécute run_config UNE seule fois (≈ ÷2 vs compare).
+
+        Levier A (perf, offline) : pour un OOS de référence où config_test ==
+        config_actuelle, le second run de compare() est redondant. run_oos n'en
+        fait qu'UN.
+
+        Format de sortie IDENTIQUE à compare() — `results_config_actuelle` ET
+        `results_config_test` pointent sur le MÊME run (diff nul) — pour que les
+        exports JSON/PNG existants fonctionnent sans aucun changement.
+        """
+        t0 = time.monotonic()
+        tirages = await self.load_tirages()
+
+        logger.info("Run OOS mono-config (no-compare) ...")
+        results = await self.run_config(cfg)
+
+        strat_real = self._stratification_empirique_real(tirages)
+        hasard_pct = _hasard_theorique_min_palier_pct(self.game)
+
+        elapsed = round(time.monotonic() - t0, 2)
+        return {
+            "metadata": {
+                "harness_version": HARNESS_VERSION,
+                "run_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                "game": self.game,
+                "n_tirages": self.n_tirages,
+                "n_grilles_per_tirage": self.n_grilles_per_tirage,
+                "mode": self.mode,
+                "run_mode": "single_no_compare",
+                "tirages_replayed_range": {
+                    "first": str(tirages[0].draw_date) if tirages else None,
+                    "last": str(tirages[-1].draw_date) if tirages else None,
+                },
+                "elapsed_seconds": elapsed,
+                "limitations_mvp": [
+                    "future_leak_calculer_scores_hybrides_accepted",
+                    "decay_state_disabled",
+                ],
+            },
+            "config_actuelle": asdict(cfg),
+            "config_test": asdict(cfg),
+            "hasard_theorique_min_palier_pct": hasard_pct,
+            "results_config_actuelle": results,
+            "results_config_test": results,  # même run réutilisé → plots OK, diff nul
+            "stratification_distribution_real_empirical": strat_real,
+            "diff": {
+                "delta_gagnantes_pct_global": 0.0,
+                "delta_per_palier": {name: 0 for name, _, _ in self.paliers},
+                "delta_stratification": {b: 0.0 for b in STRATIFICATION_BUCKETS},
             },
         }
 
@@ -1196,6 +1280,9 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="Cutoff YYYY-MM-DD (OOS) : N tirages se terminant <= cette date. Défaut: N plus récents.")
     p.add_argument("--config-test", type=str, default=None,
                    help="Path JSON params overrides pour config_test (default: identique à config_actuelle).")
+    p.add_argument("--no-compare", action="store_true",
+                   help="OOS mono-config : exécute run_config 1× (≈÷2 runtime). Ignore --config-test. "
+                        "Sortie JSON/PNG identique (diff nul).")
     p.add_argument("--output-dir", type=str, default=_default_output_dir(),
                    help="Dossier de sortie JSON + PNG.")
     return p.parse_args(argv)
@@ -1229,7 +1316,10 @@ async def _main_async(args: argparse.Namespace) -> int:
     # owns the pool, but here we run from CLI so we init/close ourselves).
     await init_pool()
     try:
-        results = await harness.compare(cfg_actuel, cfg_test)
+        if args.no_compare:
+            results = await harness.run_oos(cfg_actuel)
+        else:
+            results = await harness.compare(cfg_actuel, cfg_test)
     finally:
         await close_pool()
     elapsed = time.monotonic() - t0
