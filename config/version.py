@@ -5,6 +5,12 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# Backtest fidélité + perf (Release 1.6.041, 04/06/2026) — behavior-preserving, rien de
+# visible users (patch). T-1 hard-exclude relatif (anti future-leak recent_draws) + leviers
+# runtime A+B sur le backtest signature statistique. Golden test bit-identique + smoke local
+# vert + perf ~81x. Outillage offline tools/ (backtest_hybride.py, ab_futureleak.py,
+# cmp_oos_vectors.py) + engine/hybride_base.py. Commit base 9ca87ce.
+#
 # Fix i18n numéros d'aide CHATBOT — complément 1.6.039 (Release 1.6.040, 02/06/2026).
 # Le smoke staging 1.6.039 a révélé que le CHATBOT servait encore les ANCIENS organismes/
 # numéros (PT « Linha Vida SOS Jogo 808 200 204 », NL « Gokkliniek 0800 35 777 »…) : 2 sources
@@ -139,9 +145,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.040"
+APP_VERSION = "1.6.041"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-06-02"
+VERSION_DATE = "2026-06-04"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

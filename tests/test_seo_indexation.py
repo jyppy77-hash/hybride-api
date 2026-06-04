@@ -904,7 +904,7 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.040 (Fix i18n numéros d'aide CHATBOT, complément 1.6.039).
+        """APP_VERSION == 1.6.041 (Backtest fidélité + perf, behavior-preserving).
 
         V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
         V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
@@ -1007,9 +1007,13 @@ class TestAppVersion:
         + (7) Phase A L3 déterministe chat_detectors_em_guardrails.py (ES/PT/DE/NL) +
         chat_responses_em_en.py (EN, retrait ncpgambling US). Valeurs alignées _GAMBLING_HELP,
         FR intact, legacy EN GambleAware->GamCare. test_argent.py 6 assertions MAJ.
+        Backtest fidélité + perf (04/06, Release 1.6.041) — patch behavior-preserving :
+        T-1 hard-exclude relatif (anti future-leak recent_draws) + leviers runtime A+B sur
+        le backtest signature statistique. Golden test bit-identique + smoke local vert +
+        perf ~81x. Outillage offline tools/ + engine/hybride_base.py. Rien de visible users.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.040"
+        assert APP_VERSION == "1.6.041"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""
