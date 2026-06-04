@@ -127,6 +127,13 @@ from tools.signature_features import (
     extract_features,
     generate_random_baseline,
 )
+# LOT S1 — briques secondaire (feature reine `*_in_T1`), additives
+from tools.signature_features import (
+    SECONDARY_FEATURE_NAMES,
+    build_secondary_bins,
+    extract_secondary_in_t1,
+    generate_secondary_in_t1_baseline,
+)
 
 # Matplotlib in Agg backend (headless / Windows-safe)
 import matplotlib
@@ -501,7 +508,7 @@ class BacktestHarness:
 
     # ── Pipeline principal ────────────────────────────────────────────
 
-    async def run_config(self, cfg: BacktestConfig) -> dict:
+    async def run_config(self, cfg: BacktestConfig, *, include_secondary: bool = False) -> dict:
         """Pipeline cascade chronologique pour 1 config.
 
         Pour chaque tirage T historique (ordonné ASC) :
@@ -509,6 +516,11 @@ class BacktestHarness:
           2. Génère N grilles via engine.generate_grids
           3. Ajoute la 1ère grille générée (sorted by score DESC) à virtual_history
           4. Compare les N grilles aux numéros réels de T, agrège par palier
+
+        LOT S1 — `include_secondary` (kwarg-only, défaut False) : si True, accumule
+        EN BOUCLE la feature reine `*_in_T1` (overlap secondaire grille ∩ T-1
+        relatif, skip idx=0) dans un dict parallèle, exposé sous tier2["secondary"].
+        Défaut False = comportement strictement inchangé (clé absente).
 
         Returns:
             {
@@ -529,6 +541,9 @@ class BacktestHarness:
         n_gagnantes = 0
         # V_X.F LOT 2 — Accumulation valeurs brutes par feature (histos en fin de run)
         feature_values: dict[str, list[float]] = {fname: [] for fname in FEATURE_NAMES}
+        # LOT S1 — accumulateur SECONDAIRE parallèle (rempli IN-LOOP, idx>0 only —
+        # la feature *_in_T1 dépend du contexte temporel, cf. audit vigilance #1/#6)
+        secondary_feature_values: dict[str, list[float]] = {}
 
         virtual_history: list[VirtualGrid] = []
         t_start = time.monotonic()
@@ -586,6 +601,13 @@ class BacktestHarness:
                 if len(virtual_history) > _max_window:
                     virtual_history = virtual_history[-_max_window:]
 
+            # LOT S1 — T-1 RELATIF pour la feature reine *_in_T1. None si flag off
+            # ou idx=0 (pas de T-1 → on SKIP, pas de faux 0 — audit vigilance #6).
+            prev_secondary = (
+                tirages[idx - 1].secondary
+                if (include_secondary and idx > 0) else None
+            )
+
             # Aggregate metrics for ALL N grilles
             for grille in grilles:
                 total_grilles += 1
@@ -600,6 +622,13 @@ class BacktestHarness:
                 feat = extract_features(grille, num_max=self.base_config.num_max)
                 for fname, fval in feat.items():
                     feature_values[fname].append(fval)
+                # LOT S1 — feature reine secondaire *_in_T1 (accumulée in-loop)
+                if prev_secondary is not None:
+                    sec_feat = extract_secondary_in_t1(
+                        grille.get(self.base_config.secondary_name), prev_secondary,
+                    )
+                    for sfname, sfval in sec_feat.items():
+                        secondary_feature_values.setdefault(sfname, []).append(sfval)
 
             if (idx + 1) % 25 == 0:
                 elapsed = time.monotonic() - t_start
@@ -625,6 +654,13 @@ class BacktestHarness:
         tier2 = self._compute_tier2_signature(
             feature_values, total_grilles, tirages=tirages,
         )
+        # LOT S1 — bloc secondaire ADDITIF, uniquement si --include-secondary.
+        # Clé tier2["secondary"] côte à côte de tier2["feature_jsd"] boules
+        # (jamais touché). Absente si flag off → contrat boules strictement inchangé.
+        if include_secondary:
+            tier2["secondary"] = self._compute_tier2_secondary(
+                secondary_feature_values, tirages=tirages,
+            )
         by_construction = {
             "stratification": (
                 "1_per_zone forcée via _draw_stratified "
@@ -801,19 +837,116 @@ class BacktestHarness:
             "n_hybride_samples": n_hybride_samples,
         }
 
+    def _compute_tier2_secondary(
+        self,
+        secondary_feature_values: dict[str, list[float]],
+        *,
+        tirages: list[TirageRecord] | None = None,
+    ) -> dict:
+        """LOT S1 — Tier 2 SECONDAIRE : JSD `*_in_T1` HYBRIDE vs baseline appariée.
+
+        Feature reine seule (chance_in_T1 Loto / etoiles_in_T1 EM). Boucle SÉPARÉE
+        de la boucle boules FEATURE_NAMES (audit vigilance #2). Structure histograms
+        mirroir de _compute_tier2_signature (vigilance #8).
+
+        Baseline = SIMULATION APPARIÉE (generate_secondary_in_t1_baseline) : overlap
+        d'un secondaire random vs un T-1 random indépendant = distribution nulle du
+        recouvrement T-1 par pur hasard (arbitrage Jyppy #1, audit Q9).
+
+        Overlay `real_tirages` = appariement SÉQUENTIEL des vrais tirages
+        (|tirages[i].secondary ∩ tirages[i-1].secondary|), boucle dédiée car la
+        feature est temporelle (audit vigilance #7) — distinct de l'extract_features
+        non-temporel des boules.
+
+        Args:
+            secondary_feature_values: dict[str, list[float]] accumulé in-loop (idx>0).
+            tirages: vrais tirages pour l'overlay narratif réel (None → real_tirages None).
+
+        Returns:
+            dict {feature_jsd, histograms, baseline, base, n_hybride_samples,
+            anj_disclaimer}.
+        """
+        cfg = self.base_config
+        sec_min, sec_max, count = cfg.secondary_min, cfg.secondary_max, cfg.secondary_count
+        feature_names = SECONDARY_FEATURE_NAMES.get(self.game, ())
+
+        baseline = generate_secondary_in_t1_baseline(
+            n=_SIGNATURE_BASELINE_N,
+            sec_min=sec_min,
+            sec_max=sec_max,
+            count=count,
+            seed=_SIGNATURE_BASELINE_SEED,
+        )
+
+        # Overlay vrais tirages : appariement séquentiel réel (T_i vs T_{i-1}).
+        real_secondary_values: dict[str, list[float]] = {}
+        if tirages:
+            for i in range(1, len(tirages)):
+                sec_feat = extract_secondary_in_t1(
+                    tirages[i].secondary, tirages[i - 1].secondary,
+                )
+                for fn, fv in sec_feat.items():
+                    real_secondary_values.setdefault(fn, []).append(fv)
+
+        feature_jsd: dict[str, float] = {}
+        histograms: dict[str, dict] = {}
+        for fname in feature_names:
+            hybride_vals = secondary_feature_values.get(fname, [])
+            baseline_vals = [b[fname] for b in baseline if fname in b]
+            real_vals = real_secondary_values.get(fname, [])
+            bins = build_secondary_bins(fname)
+            feature_jsd[fname] = round(
+                compute_feature_jsd(hybride_vals, baseline_vals, bins),
+                6,
+            )
+            histograms[fname] = {
+                "bins": bins.tolist(),
+                "hybride": _density_histogram(hybride_vals, bins),
+                "random": _density_histogram(baseline_vals, bins),
+                "real_tirages": _density_histogram(real_vals, bins) if real_vals else None,
+            }
+
+        n_hybride_samples = sum(len(v) for v in secondary_feature_values.values())
+        return {
+            "feature_jsd": feature_jsd,
+            "histograms": histograms,
+            "baseline": {
+                "n": _SIGNATURE_BASELINE_N,
+                "seed": _SIGNATURE_BASELINE_SEED,
+                "source": "paired random overlap (secondary random vs T-1 random)",
+                "sec_min": sec_min,
+                "sec_max": sec_max,
+                "count": count,
+            },
+            "base": "e",
+            "n_hybride_samples": n_hybride_samples,
+            # Garde-fou ANJ : le recouvrement T-1 est un ARTEFACT DE CONSTRUCTION
+            # du moteur (hard-exclude / brake des numéros récents), PAS un biais du
+            # jeu ni une probabilité de gain. Un creux sous le hasard = signature de
+            # la rotation anti-répétition — neutre, jamais une promesse de gain.
+            "anj_disclaimer": (
+                "Le recouvrement avec le tirage T-1 mesure un artefact de "
+                "construction du moteur (hard-exclude/brake des numeros recents), "
+                "PAS un biais du jeu ni une probabilite de gain. Un creux sous le "
+                "hasard = signature de la rotation anti-repetition, neutre."
+            ),
+        }
+
     async def compare(
         self,
         cfg_actuel: BacktestConfig,
         cfg_test: BacktestConfig,
+        *,
+        include_secondary: bool = False,
     ) -> dict:
         """Run cfg_actuel + cfg_test en cascade, retourne dict complet avec diff."""
         t0 = time.monotonic()
         tirages = await self.load_tirages()
 
         logger.info("Run config_actuelle ...")
-        results_A = await self.run_config(cfg_actuel)
+        results_A = await self.run_config(cfg_actuel, include_secondary=include_secondary)
         logger.info("Run config_test ...")
-        results_B = await self.run_config(cfg_test)
+        results_B = await self.run_config(cfg_test, include_secondary=include_secondary)
 
         strat_real = self._stratification_empirique_real(tirages)
         hasard_pct = _hasard_theorique_min_palier_pct(self.game)
@@ -841,6 +974,7 @@ class BacktestHarness:
                 "n_tirages": self.n_tirages,
                 "n_grilles_per_tirage": self.n_grilles_per_tirage,
                 "mode": self.mode,
+                "include_secondary": include_secondary,
                 "tirages_replayed_range": {
                     "first": str(tirages[0].draw_date) if tirages else None,
                     "last": str(tirages[-1].draw_date) if tirages else None,
@@ -867,7 +1001,7 @@ class BacktestHarness:
             },
         }
 
-    async def run_oos(self, cfg: BacktestConfig) -> dict:
+    async def run_oos(self, cfg: BacktestConfig, *, include_secondary: bool = False) -> dict:
         """OOS mono-config — exécute run_config UNE seule fois (≈ ÷2 vs compare).
 
         Levier A (perf, offline) : pour un OOS de référence où config_test ==
@@ -882,7 +1016,7 @@ class BacktestHarness:
         tirages = await self.load_tirages()
 
         logger.info("Run OOS mono-config (no-compare) ...")
-        results = await self.run_config(cfg)
+        results = await self.run_config(cfg, include_secondary=include_secondary)
 
         strat_real = self._stratification_empirique_real(tirages)
         hasard_pct = _hasard_theorique_min_palier_pct(self.game)
@@ -897,6 +1031,7 @@ class BacktestHarness:
                 "n_grilles_per_tirage": self.n_grilles_per_tirage,
                 "mode": self.mode,
                 "run_mode": "single_no_compare",
+                "include_secondary": include_secondary,
                 "tirages_replayed_range": {
                     "first": str(tirages[0].draw_date) if tirages else None,
                     "last": str(tirages[-1].draw_date) if tirages else None,
@@ -1283,6 +1418,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     p.add_argument("--no-compare", action="store_true",
                    help="OOS mono-config : exécute run_config 1× (≈÷2 runtime). Ignore --config-test. "
                         "Sortie JSON/PNG identique (diff nul).")
+    p.add_argument("--include-secondary", action="store_true",
+                   help="LOT S1 : mesure la signature secondaire `*_in_T1` (overlap grille ∩ T-1 : "
+                        "chance Loto / etoiles EM). Défaut off. Expose tier2['secondary']. "
+                        "Offline pur, aucun impact engine/prod.")
     p.add_argument("--output-dir", type=str, default=_default_output_dir(),
                    help="Dossier de sortie JSON + PNG.")
     return p.parse_args(argv)
@@ -1317,9 +1456,11 @@ async def _main_async(args: argparse.Namespace) -> int:
     await init_pool()
     try:
         if args.no_compare:
-            results = await harness.run_oos(cfg_actuel)
+            results = await harness.run_oos(cfg_actuel, include_secondary=args.include_secondary)
         else:
-            results = await harness.compare(cfg_actuel, cfg_test)
+            results = await harness.compare(
+                cfg_actuel, cfg_test, include_secondary=args.include_secondary,
+            )
     finally:
         await close_pool()
     elapsed = time.monotonic() - t0

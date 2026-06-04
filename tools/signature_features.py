@@ -22,6 +22,26 @@ Conception figée V_X.F (validée Jyppy 2026-05-28) :
 
 Périmètre LOT 1 : ZÉRO touche au harness ni à la prod. Fonctions pures,
 testables unitairement.
+
+────────────────────────────────────────────────────────────────────────
+EXTENSION SECONDAIRE — LOT S1 (feature reine `*_in_T1` seule)
+────────────────────────────────────────────────────────────────────────
+
+Briques secondaire ADDITIVES, strictement séparées des briques boules
+(registre / extraction / bins / baseline distincts — cf. audit Q7,
+vigilance #2). Aucune des briques boules ci-dessus n'est touchée.
+
+    - SECONDARY_FEATURE_NAMES (registre par jeu : loto/em)
+    - extract_secondary_in_t1(grille_secondary, prev_secondary)
+        Overlap secondaire grille ∩ T-1 (chance_in_T1 / etoiles_in_T1).
+    - build_secondary_bins(feature_name)
+        Bins entiers petit-univers (NE touche pas build_bins boules).
+    - generate_secondary_in_t1_baseline(n, sec_min, sec_max, count, seed)
+        Baseline SIMULATION APPARIÉE : overlap d'un secondaire random vs
+        un T-1 random indépendant → distribution nulle empirique du
+        recouvrement T-1 par pur hasard (arbitrage Jyppy #1).
+
+compute_feature_jsd est réutilisé tel quel (universe-agnostique, audit Q8).
 """
 
 from __future__ import annotations
@@ -54,6 +74,15 @@ DEFAULT_RANDOM_SEED: int = 42
 # Cap supérieur partagé Loto+EM pour le binning ESI logarithmique.
 # Max théorique 5/49 = 44² = 1936 ; max 5/50 = 45² = 2025.
 _ESI_MAX_THEORIQUE: int = 2025
+
+# ── Extension secondaire LOT S1 — registre séparé (ne PAS fusionner avec
+# FEATURE_NAMES boules). Dict par jeu pour permettre l'enrichissement futur
+# (features positionnelles basse/haute/value) sans refactor de cette structure.
+# Pour CE lot : la feature reine `*_in_T1` seule.
+SECONDARY_FEATURE_NAMES: dict[str, tuple[str, ...]] = {
+    "loto": ("chance_in_T1",),
+    "em": ("etoiles_in_T1",),
+}
 
 
 # ════════════════════════════════════════════════════════════════════════
@@ -266,3 +295,144 @@ def build_bins(feature_name: str, num_max: int = 49) -> np.ndarray:
         f"build_bins: feature_name {feature_name!r} not in FEATURE_NAMES "
         f"{FEATURE_NAMES}"
     )
+
+
+# ════════════════════════════════════════════════════════════════════════
+# EXTENSION SECONDAIRE — LOT S1 : feature reine `*_in_T1` (chance / etoiles)
+# ════════════════════════════════════════════════════════════════════════
+
+# Noms de features secondaire connus de ce lot (ensemble plat dérivé du
+# registre par jeu) — utilisé pour les gardes de validation des bins.
+_SECONDARY_IN_T1_NAMES: frozenset[str] = frozenset(
+    name for names in SECONDARY_FEATURE_NAMES.values() for name in names
+)
+
+
+def _coerce_secondary_set(secondary) -> set[int]:
+    """Normalise un secondaire en set[int], quelle que soit sa forme.
+
+    Gère l'asymétrie Loto/EM (cf. backtest_hybride._compute_matches:456-463) :
+        - int               → {int}            (Loto chance)
+        - list/tuple/set     → set(...)         (EM étoiles, ou liste Loto)
+        - None / autre       → set()            (défense)
+    """
+    if isinstance(secondary, bool):
+        # bool est sous-classe de int — exclu explicitement (défense).
+        return set()
+    if isinstance(secondary, int):
+        return {secondary}
+    if isinstance(secondary, (list, tuple, set, frozenset)):
+        return {int(x) for x in secondary}
+    return set()
+
+
+def extract_secondary_in_t1(grille_secondary, prev_secondary) -> dict[str, float]:
+    """Calcule l'overlap secondaire de la grille avec le tirage T-1.
+
+    Feature reine `*_in_T1` : nombre de numéros secondaire de la grille
+    présents dans le secondaire du tirage chronologiquement précédent (T-1).
+
+    Le NOM de la feature est dérivé de la cardinalité du secondaire de la
+    GRILLE (invariant par jeu : Loto = 1 chance, EM = 2 étoiles) :
+        - 1 élément  → "chance_in_T1"   (Loto)   ∈ {0, 1}
+        - 2 éléments → "etoiles_in_T1"  (EM)     ∈ {0, 1, 2}
+
+    Args:
+        grille_secondary: secondaire de la grille générée — int (Loto) ou
+                          list/tuple/set (EM). Normalisé en set.
+        prev_secondary: secondaire du tirage T-1 (list[int] triée, cf. audit
+                        Q4/Q6 — TirageRecord.secondary). Normalisé en set.
+
+    Returns:
+        dict 1-clé {feature_name: overlap_float}. Le caller (harness) accumule
+        dans un dict parallèle indexé par feature_name.
+
+    Note:
+        Aucun garde sur idx=0 ici (responsabilité du caller — skip si pas de
+        T-1, cf. audit vigilance #6). Si prev_secondary vide → overlap 0.0.
+    """
+    grille_set = _coerce_secondary_set(grille_secondary)
+    prev_set = _coerce_secondary_set(prev_secondary)
+    overlap = float(len(grille_set & prev_set))
+    feature_name = "chance_in_T1" if len(grille_set) <= 1 else "etoiles_in_T1"
+    return {feature_name: overlap}
+
+
+def build_secondary_bins(feature_name: str) -> np.ndarray:
+    """Edges de bins entiers petit-univers pour les features secondaire.
+
+    Distinct de build_bins (boules) — ne le touche pas, ne fusionne pas les
+    registres (audit vigilance #2/#3). build_bins boules lève toujours
+    ValueError sur un nom secondaire, et réciproquement.
+
+    Choix figés LOT S1 :
+        chance_in_T1   : edges [0, 1, 2]      → 2 bins (valeurs 0/1)
+        etoiles_in_T1  : edges [0, 1, 2, 3]   → 3 bins (valeurs 0/1/2)
+
+    np.histogram place value v dans le bin [edge_i, edge_{i+1}) ; le dernier
+    bin est fermé à droite. Avec ces edges entiers, chaque valeur tombe dans
+    son propre bin (0→bin0, 1→bin1, 2→bin2).
+
+    Args:
+        feature_name: "chance_in_T1" ou "etoiles_in_T1".
+
+    Returns:
+        np.ndarray des edges (len = n_bins + 1).
+
+    Raises:
+        ValueError si feature_name inconnu du registre secondaire.
+    """
+    if feature_name == "chance_in_T1":
+        return np.array([0.0, 1.0, 2.0], dtype=np.float64)
+    if feature_name == "etoiles_in_T1":
+        return np.array([0.0, 1.0, 2.0, 3.0], dtype=np.float64)
+    raise ValueError(
+        f"build_secondary_bins: feature_name {feature_name!r} not in "
+        f"secondary registry {sorted(_SECONDARY_IN_T1_NAMES)}"
+    )
+
+
+@functools.lru_cache(maxsize=8)
+def generate_secondary_in_t1_baseline(
+    n: int = 100_000,
+    sec_min: int = 1,
+    sec_max: int = 10,
+    count: int = 1,
+    seed: int = DEFAULT_RANDOM_SEED,
+) -> tuple[dict[str, float], ...]:
+    """Baseline `*_in_T1` par SIMULATION APPARIÉE (arbitrage Jyppy #1).
+
+    Modèle nul du recouvrement T-1 par PUR HASARD : pour chaque échantillon,
+    on tire un secondaire random ET un T-1 random INDÉPENDANT, puis on calcule
+    leur overlap. La distribution des overlaps est la baseline à laquelle
+    HYBRIDE est comparé (JSD). Ce n'est PAS « secondaire random seul » — le
+    T-1 random apparié est essentiel (cf. audit Q9, vigilance #4).
+
+        Loto : 1 chance random ∈ [sec_min, sec_max] vs 1 T-1 chance random
+               → overlap ∈ {0, 1}.
+        EM   : 2 étoiles random distinctes vs 2 T-1 étoiles random distinctes
+               → overlap ∈ {0, 1, 2}.
+
+    Reproductible (random.Random(seed) LOCAL — pas de pollution du global).
+    Cachée via lru_cache (clé = n, sec_min, sec_max, count, seed). Tuple
+    immuable retourné — même pattern que generate_random_baseline.
+
+    Args:
+        n: nombre d'échantillons (default 100_000).
+        sec_min/sec_max: bornes univers secondaire, inclus (Loto 1-10 / EM 1-12).
+        count: nb de numéros secondaire (Loto 1 / EM 2).
+        seed: graine reproductibilité (default 42).
+
+    Returns:
+        tuple[dict, ...] de n dicts {feature_name: overlap_float}.
+    """
+    rng = random.Random(seed)
+    universe = list(range(sec_min, sec_max + 1))
+    feature_name = "chance_in_T1" if count <= 1 else "etoiles_in_T1"
+    out: list[dict[str, float]] = []
+    for _ in range(n):
+        grille_sec = rng.sample(universe, count)
+        prev_sec = rng.sample(universe, count)
+        overlap = float(len(set(grille_sec) & set(prev_sec)))
+        out.append({feature_name: overlap})
+    return tuple(out)
