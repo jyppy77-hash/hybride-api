@@ -436,3 +436,204 @@ def generate_secondary_in_t1_baseline(
         overlap = float(len(set(grille_sec) & set(prev_sec)))
         out.append({feature_name: overlap})
     return tuple(out)
+
+
+# ════════════════════════════════════════════════════════════════════════
+# MONTE CARLO NOISE FLOOR — plancher de bruit générique (LOT V_X.F)
+# ════════════════════════════════════════════════════════════════════════
+#
+# Qualifie un JSD observé de « matériel » (significatif) vs « bruit
+# d'échantillonnage ». Brique GÉNÉRIQUE pilotée par (values, bins) — donc
+# réutilisable telle quelle pour les boules, le secondaire `*_in_T1` et toute
+# feature future (positionnelle…) sans dispatch par feature_name.
+#
+# Modèle nul = OPTION B (audit 2026-06-05, double cross-review confirmée) :
+#   - on rééchantillonne n_samples valeurs AVEC REMISE dans la baseline 100k
+#     FIXE (= la même référence que le statistique observé),
+#   - on calcule le JSD du rééchantillon vs cette MÊME réf 100k fixe,
+#   - répété K fois → loi nulle empirique du JSD « aucune vraie différence ».
+# Cela reproduit fidèlement l'asymétrie ~20k (HYBRIDE) / 100k (réf) du JSD
+# réellement mesuré, en conditionnant sur la réf R fixe.
+
+
+def _jsd_from_normalized(p: np.ndarray, q: np.ndarray, base: str = "e") -> float:
+    """JSD entre 2 distributions DÉJÀ normalisées (somment à 1, smoothing > 0).
+
+    Variante interne de compute_feature_jsd qui NE re-normalise PAS : dans la
+    boucle Monte Carlo, q (la référence 100k) est normalisée une seule fois
+    en amont (audit Q4 — ne pas re-histogrammer la réf K fois). Réutilise
+    _kl_divergence et la même convention de base que compute_feature_jsd.
+    """
+    m = 0.5 * (p + q)
+    jsd_nat = 0.5 * _kl_divergence(p, m) + 0.5 * _kl_divergence(q, m)
+    # Floor numérique : roundoff KL peut produire ε négatif (idem compute_feature_jsd).
+    jsd_nat = max(0.0, jsd_nat)
+    if base == "2":
+        return jsd_nat / float(np.log(2))
+    return float(jsd_nat)
+
+
+def compute_noise_floor(
+    reference_values,
+    bins,
+    n_samples: int,
+    observed_jsd: float,
+    *,
+    k: int = 1000,
+    seed: int = DEFAULT_RANDOM_SEED,
+    quantile: float = 0.95,
+    base: str = "e",
+) -> dict:
+    """Plancher de bruit Monte Carlo (modèle nul Option B) pour 1 feature.
+
+    Fonction PURE, générique (pilotée par values + bins), dash-ready (dict
+    structuré, zéro print). Offline pur — aucune dépendance prod.
+
+    Args:
+        reference_values: population de référence = les valeurs de feature de
+            la baseline 100k (ex. [b[fname] for b in generate_random_baseline()]).
+            C'est dans CETTE population qu'on rééchantillonne (bootstrap).
+        bins: edges des bins — DOIVENT être les MÊMES que ceux du JSD observé
+            (build_bins / build_secondary_bins). Règle dure V_X.F.
+        n_samples: taille réelle du run HYBRIDE pour CETTE feature
+            (= len(hybride_vals)). Le plancher reflète le bruit À CETTE taille.
+        observed_jsd: le JSD HYBRIDE vs baseline déjà calculé (feature_jsd[fname]) —
+            sert à dériver la p-value (proportion de répliques nulles ≥ observé).
+
+    Keyword Args:
+        k: nombre de répliques Monte Carlo (1000 boules / 10000 secondaire).
+        seed: graine reproductibilité. RNG LOCAL np.random.default_rng(seed) —
+            JAMAIS le RNG global (ne pollue pas le lru_cache des baselines).
+        quantile: niveau du plancher (0.95 → seuil 5%).
+        base: "e" (default, aligné feature_jsd) ou "2".
+
+    Returns:
+        dict structuré (dash-ready) :
+            noise_floor : quantile demandé de la loi nulle = LE plancher
+            p99_null    : quantile 99% (seuil 1% optionnel, gratuit)
+            mean_null   : moyenne des JSD nuls
+            std_null    : écart-type échantillon des JSD nuls
+            p_value     : proportion des JSD nuls ≥ observed_jsd (pour la FDR)
+            k, n_samples, n_reference, quantile, base : métadonnées
+
+    Raises:
+        ValueError si base invalide, reference_values vide, n_samples ≤ 0, k ≤ 0.
+    """
+    if base not in ("e", "2"):
+        raise ValueError(f"base must be 'e' or '2', got {base!r}")
+    ref = np.asarray(reference_values, dtype=np.float64)
+    n_ref = int(ref.shape[0]) if ref.ndim else 0
+    if n_ref == 0:
+        raise ValueError("compute_noise_floor: reference_values is empty")
+    if n_samples <= 0:
+        raise ValueError(
+            f"compute_noise_floor: n_samples must be > 0, got {n_samples}"
+        )
+    if k <= 0:
+        raise ValueError(f"compute_noise_floor: k must be > 0, got {k}")
+
+    # Référence fixe q — normalisée UNE SEULE FOIS (Option B : on conditionne
+    # sur la même réf que le statistique observé). PAS dans la boucle K.
+    q = _histogram_normalize(ref, bins)
+
+    # RNG LOCAL — pas de pollution du global ni du lru_cache des baselines.
+    rng = np.random.default_rng(seed)
+    jsd_null = np.empty(k, dtype=np.float64)
+    for i in range(k):
+        # Bootstrap : n_samples indices AVEC REMISE dans la réf 100k.
+        idx = rng.integers(0, n_ref, n_samples)
+        p = _histogram_normalize(ref[idx], bins)
+        jsd_null[i] = _jsd_from_normalized(p, q, base=base)
+
+    noise_floor = float(np.quantile(jsd_null, quantile))
+    p99_null = float(np.quantile(jsd_null, 0.99))
+    # p-value Monte Carlo avec convention ADD-ONE : (1 + #{nul ≥ observé}) / (K+1).
+    # Une p-value MC de 0.0 strict est incorrecte (avec K répliques finies on ne
+    # peut conclure que p < 1/K, jamais p=0) → l'add-one la borne à 1/(K+1).
+    # Convention standard des tests Monte Carlo (Davison & Hinkley, North et al.).
+    n_ge = int(np.count_nonzero(jsd_null >= observed_jsd))
+    p_value = (1 + n_ge) / (k + 1)
+
+    return {
+        "noise_floor": round(noise_floor, 6),
+        "p99_null": round(p99_null, 6),
+        "mean_null": round(float(np.mean(jsd_null)), 6),
+        "std_null": round(float(np.std(jsd_null, ddof=1)), 6) if k >= 2 else 0.0,
+        "p_value": round(p_value, 6),
+        "k": k,
+        "n_samples": n_samples,
+        "n_reference": n_ref,
+        "quantile": quantile,
+        "base": base,
+    }
+
+
+# ════════════════════════════════════════════════════════════════════════
+# CORRECTION MULTI-FEATURES — Benjamini-Hochberg FDR (LOT V_X.F)
+# ════════════════════════════════════════════════════════════════════════
+#
+# Tester K features simultanément gonfle les faux positifs (~30% sur 7 tests
+# au seuil 5% sans correction — confirmé par les 2 cross-reviews). BH contrôle
+# le False Discovery Rate (taux attendu de faux positifs PARMI les rejets) au
+# niveau alpha, moins conservateur que Bonferroni (qui contrôle le FWER).
+#
+# Procédure BH standard :
+#   1. trier les m p-values croissantes : p_(1) ≤ ... ≤ p_(m)
+#   2. trouver le plus grand rang i tel que p_(i) ≤ (i/m)·alpha
+#   3. rejeter H0 (= matériel) pour TOUS les rangs ≤ i (step-up), même si
+#      certains p_(j<i) dépassent leur propre seuil (i/m)·alpha.
+# Le "bh_threshold" rapporté par feature est son seuil de rang (i/m)·alpha.
+
+
+def apply_fdr_correction(p_values: dict, alpha: float = 0.05) -> dict:
+    """Correction Benjamini-Hochberg sur un ensemble de p-values multi-features.
+
+    Fonction PURE, sans dépendance externe (pas de statsmodels). Contrôle le
+    FDR au niveau alpha sur l'ensemble des features testées simultanément.
+
+    Args:
+        p_values: dict[str, float] — feature_name → p-value (typiquement la
+            clé "p_value" retournée par compute_noise_floor).
+        alpha: niveau FDR cible (default 0.05).
+
+    Returns:
+        dict[str, dict] — 1 entrée par feature :
+            {
+              "p_value": <p-value d'entrée>,
+              "is_material_fdr": <bool : H0 rejetée par BH = signal matériel>,
+              "bh_threshold": <seuil de rang (rank/m)·alpha pour cette feature>,
+            }
+        Cas dégénérés :
+            - m = 0 (dict vide)  → {} (rien à corriger).
+            - m = 1              → BH ≡ test simple : matériel si p ≤ alpha.
+
+    Raises:
+        ValueError si alpha ∉ ]0, 1].
+    """
+    if not (0.0 < alpha <= 1.0):
+        raise ValueError(f"alpha must be in ]0, 1], got {alpha}")
+
+    m = len(p_values)
+    if m == 0:
+        return {}
+
+    # Tri croissant par p-value (stable sur le nom pour déterminisme des ex-aequo).
+    items = sorted(p_values.items(), key=lambda kv: (kv[1], kv[0]))
+
+    # Step-up : plus grand rang i (1-indexé) tel que p_(i) ≤ (i/m)·alpha.
+    # Tout rang ≤ i_max est rejeté (matériel), y compris les p_(j<i_max) qui
+    # ne satisfont pas individuellement leur seuil.
+    max_rejected_rank = 0
+    for rank, (_, p) in enumerate(items, start=1):
+        if p <= (rank / m) * alpha:
+            max_rejected_rank = rank
+
+    out: dict[str, dict] = {}
+    for rank, (name, p) in enumerate(items, start=1):
+        bh_threshold = (rank / m) * alpha
+        out[name] = {
+            "p_value": round(float(p), 6),
+            "is_material_fdr": rank <= max_rejected_rank,
+            "bh_threshold": round(bh_threshold, 6),
+        }
+    return out

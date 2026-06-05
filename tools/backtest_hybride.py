@@ -122,8 +122,10 @@ from db_cloudsql import get_connection, init_pool, close_pool
 # V_X.F LOT 2 — Briques signature statistique (LOT 1, livré)
 from tools.signature_features import (
     FEATURE_NAMES,
+    apply_fdr_correction,
     build_bins,
     compute_feature_jsd,
+    compute_noise_floor,
     extract_features,
     generate_random_baseline,
 )
@@ -161,6 +163,14 @@ _SIGNATURE_BASELINE_SEED: int = 42
 # freq_1_31 et nb_pairs exclus (pas de bornes hard dans engine config —
 # uniquement reportés via Tier 2 JSD).
 _TIER1_FEATURES: tuple[str, ...] = ("somme", "dispersion", "std", "nb_consecutifs", "esi")
+
+# LOT noise-floor — plancher de bruit Monte Carlo + correction FDR (opt-in).
+# K différencié : boules ≥10 bins (1000 suffit) / secondaire 2-3 bins (10000
+# pour lisser le quantile 95% sur petit univers, coût négligeable).
+_NOISE_FLOOR_K_BALLS: int = 1000
+_NOISE_FLOOR_K_SECONDARY: int = 10_000
+_NOISE_FLOOR_QUANTILE: float = 0.95
+_NOISE_FLOOR_FDR_ALPHA: float = 0.05
 
 # 7 paliers Loto (descending). Key = (n_balls_match, n_secondary_match).
 LOTO_PALIERS: list[tuple[str, int, int]] = [
@@ -508,7 +518,13 @@ class BacktestHarness:
 
     # ── Pipeline principal ────────────────────────────────────────────
 
-    async def run_config(self, cfg: BacktestConfig, *, include_secondary: bool = False) -> dict:
+    async def run_config(
+        self,
+        cfg: BacktestConfig,
+        *,
+        include_secondary: bool = False,
+        noise_floor: bool = False,
+    ) -> dict:
         """Pipeline cascade chronologique pour 1 config.
 
         Pour chaque tirage T historique (ordonné ASC) :
@@ -661,6 +677,11 @@ class BacktestHarness:
             tier2["secondary"] = self._compute_tier2_secondary(
                 secondary_feature_values, tirages=tirages,
             )
+        # LOT noise-floor — plancher Monte Carlo + verdict FDR GLOBAL (ADDITIF,
+        # opt-in). Ne touche AUCUNE clé existante de tier2 ; ajoute 3 clés au
+        # niveau tier2. FDR global sur boules + secondaire (si présent).
+        if noise_floor:
+            self._attach_noise_floor(tier2, feature_values, secondary_feature_values)
         by_construction = {
             "stratification": (
                 "1_per_zone forcée via _draw_stratified "
@@ -932,21 +953,122 @@ class BacktestHarness:
             ),
         }
 
+    def _attach_noise_floor(
+        self,
+        tier2: dict,
+        feature_values: dict[str, list[float]],
+        secondary_feature_values: dict[str, list[float]],
+    ) -> None:
+        """LOT noise-floor — attache plancher Monte Carlo + verdict FDR GLOBAL au tier2.
+
+        100% ADDITIF : ne touche AUCUNE clé existante (feature_jsd / histograms /
+        baseline, boules ET secondary — les deux méthodes _compute_tier2_* restent
+        intactes). Ajoute 3 clés au niveau tier2 :
+            tier2["noise_floor"]      : dict[feature -> compute_noise_floor(...)]
+            tier2["is_material"]      : dict[feature -> bool] (verdict FDR B-H)
+            tier2["noise_floor_meta"] : params (k_boules, k_secondary, quantile, ...)
+
+        Modèle nul = Option B (bootstrap de n valeurs avec remise dans la baseline
+        100k FIXE, JSD vs cette même réf). Les baselines sont réutilisées via leur
+        lru_cache (mêmes args que dans _compute_tier2_* → cache hit, ~instantané).
+
+        Correction FDR GLOBALE : appliquée sur l'ensemble des p-values (boules +
+        secondaire si présent) car les tests sont SIMULTANÉS — sans elle, ~30% de
+        faux positifs sur 7+ tests (audit + double cross-review).
+        """
+        num_max = self.base_config.num_max
+        baseline = generate_random_baseline(
+            n=_SIGNATURE_BASELINE_N,
+            num_max=num_max,
+            k=self.base_config.num_count,
+            seed=_SIGNATURE_BASELINE_SEED,
+        )
+
+        noise_floor_out: dict[str, dict] = {}
+        p_values: dict[str, float] = {}
+
+        feature_jsd = tier2["feature_jsd"]
+        for fname in FEATURE_NAMES:
+            hybride_vals = feature_values.get(fname, [])
+            if len(hybride_vals) == 0:
+                continue  # run dégénéré — pas de plancher calculable
+            baseline_vals = [b[fname] for b in baseline]
+            bins = build_bins(fname, num_max=num_max)
+            nf = compute_noise_floor(
+                baseline_vals,
+                bins,
+                n_samples=len(hybride_vals),
+                observed_jsd=feature_jsd[fname],
+                k=_NOISE_FLOOR_K_BALLS,
+                seed=_SIGNATURE_BASELINE_SEED,
+                quantile=_NOISE_FLOOR_QUANTILE,
+            )
+            noise_floor_out[fname] = nf
+            p_values[fname] = nf["p_value"]
+
+        # Secondaire : uniquement si le bloc existe (--include-secondary actif).
+        if "secondary" in tier2:
+            cfg = self.base_config
+            sec_baseline = generate_secondary_in_t1_baseline(
+                n=_SIGNATURE_BASELINE_N,
+                sec_min=cfg.secondary_min,
+                sec_max=cfg.secondary_max,
+                count=cfg.secondary_count,
+                seed=_SIGNATURE_BASELINE_SEED,
+            )
+            sec_jsd = tier2["secondary"]["feature_jsd"]
+            for fname in SECONDARY_FEATURE_NAMES.get(self.game, ()):
+                hybride_vals = secondary_feature_values.get(fname, [])
+                if fname not in sec_jsd or len(hybride_vals) == 0:
+                    continue
+                baseline_vals = [b[fname] for b in sec_baseline if fname in b]
+                bins = build_secondary_bins(fname)
+                nf = compute_noise_floor(
+                    baseline_vals,
+                    bins,
+                    n_samples=len(hybride_vals),
+                    observed_jsd=sec_jsd[fname],
+                    k=_NOISE_FLOOR_K_SECONDARY,
+                    seed=_SIGNATURE_BASELINE_SEED,
+                    quantile=_NOISE_FLOOR_QUANTILE,
+                )
+                noise_floor_out[fname] = nf
+                p_values[fname] = nf["p_value"]
+
+        # FDR GLOBALE Benjamini-Hochberg sur toutes les features testées.
+        fdr = apply_fdr_correction(p_values, alpha=_NOISE_FLOOR_FDR_ALPHA)
+        tier2["noise_floor"] = noise_floor_out
+        tier2["is_material"] = {fn: fdr[fn]["is_material_fdr"] for fn in fdr}
+        tier2["noise_floor_meta"] = {
+            "k_boules": _NOISE_FLOOR_K_BALLS,
+            "k_secondary": _NOISE_FLOOR_K_SECONDARY,
+            "quantile": _NOISE_FLOOR_QUANTILE,
+            "null_model": "bootstrap_vs_fixed_reference",
+            "fdr_alpha": _NOISE_FLOOR_FDR_ALPHA,
+            "fdr_method": "benjamini_hochberg",
+            "seed": _SIGNATURE_BASELINE_SEED,
+        }
+
     async def compare(
         self,
         cfg_actuel: BacktestConfig,
         cfg_test: BacktestConfig,
         *,
         include_secondary: bool = False,
+        noise_floor: bool = False,
     ) -> dict:
         """Run cfg_actuel + cfg_test en cascade, retourne dict complet avec diff."""
         t0 = time.monotonic()
         tirages = await self.load_tirages()
 
         logger.info("Run config_actuelle ...")
-        results_A = await self.run_config(cfg_actuel, include_secondary=include_secondary)
+        results_A = await self.run_config(
+            cfg_actuel, include_secondary=include_secondary, noise_floor=noise_floor,
+        )
         logger.info("Run config_test ...")
-        results_B = await self.run_config(cfg_test, include_secondary=include_secondary)
+        results_B = await self.run_config(
+            cfg_test, include_secondary=include_secondary, noise_floor=noise_floor,
+        )
 
         strat_real = self._stratification_empirique_real(tirages)
         hasard_pct = _hasard_theorique_min_palier_pct(self.game)
@@ -975,6 +1097,7 @@ class BacktestHarness:
                 "n_grilles_per_tirage": self.n_grilles_per_tirage,
                 "mode": self.mode,
                 "include_secondary": include_secondary,
+                "noise_floor": noise_floor,
                 "tirages_replayed_range": {
                     "first": str(tirages[0].draw_date) if tirages else None,
                     "last": str(tirages[-1].draw_date) if tirages else None,
@@ -1001,7 +1124,13 @@ class BacktestHarness:
             },
         }
 
-    async def run_oos(self, cfg: BacktestConfig, *, include_secondary: bool = False) -> dict:
+    async def run_oos(
+        self,
+        cfg: BacktestConfig,
+        *,
+        include_secondary: bool = False,
+        noise_floor: bool = False,
+    ) -> dict:
         """OOS mono-config — exécute run_config UNE seule fois (≈ ÷2 vs compare).
 
         Levier A (perf, offline) : pour un OOS de référence où config_test ==
@@ -1016,7 +1145,9 @@ class BacktestHarness:
         tirages = await self.load_tirages()
 
         logger.info("Run OOS mono-config (no-compare) ...")
-        results = await self.run_config(cfg, include_secondary=include_secondary)
+        results = await self.run_config(
+            cfg, include_secondary=include_secondary, noise_floor=noise_floor,
+        )
 
         strat_real = self._stratification_empirique_real(tirages)
         hasard_pct = _hasard_theorique_min_palier_pct(self.game)
@@ -1032,6 +1163,7 @@ class BacktestHarness:
                 "mode": self.mode,
                 "run_mode": "single_no_compare",
                 "include_secondary": include_secondary,
+                "noise_floor": noise_floor,
                 "tirages_replayed_range": {
                     "first": str(tirages[0].draw_date) if tirages else None,
                     "last": str(tirages[-1].draw_date) if tirages else None,
@@ -1422,6 +1554,10 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                    help="LOT S1 : mesure la signature secondaire `*_in_T1` (overlap grille ∩ T-1 : "
                         "chance Loto / etoiles EM). Défaut off. Expose tier2['secondary']. "
                         "Offline pur, aucun impact engine/prod.")
+    p.add_argument("--noise-floor", action="store_true",
+                   help="Plancher de bruit Monte Carlo (modèle nul Option B) + correction "
+                        "FDR Benjamini-Hochberg sur toutes les features. Défaut off. Expose "
+                        "tier2['noise_floor'/'is_material'/'noise_floor_meta']. Offline pur.")
     p.add_argument("--output-dir", type=str, default=_default_output_dir(),
                    help="Dossier de sortie JSON + PNG.")
     return p.parse_args(argv)
@@ -1456,10 +1592,16 @@ async def _main_async(args: argparse.Namespace) -> int:
     await init_pool()
     try:
         if args.no_compare:
-            results = await harness.run_oos(cfg_actuel, include_secondary=args.include_secondary)
+            results = await harness.run_oos(
+                cfg_actuel,
+                include_secondary=args.include_secondary,
+                noise_floor=args.noise_floor,
+            )
         else:
             results = await harness.compare(
-                cfg_actuel, cfg_test, include_secondary=args.include_secondary,
+                cfg_actuel, cfg_test,
+                include_secondary=args.include_secondary,
+                noise_floor=args.noise_floor,
             )
     finally:
         await close_pool()
