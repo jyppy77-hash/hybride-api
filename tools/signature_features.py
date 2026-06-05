@@ -84,6 +84,17 @@ SECONDARY_FEATURE_NAMES: dict[str, tuple[str, ...]] = {
     "em": ("etoiles_in_T1",),
 }
 
+# ── Extension secondaire LOT S2 — features POSITIONNELLES (non-temporelles) :
+# décrivent la grille seule (PAS d'overlap T-1) → baseline SIMPLE non appariée.
+# Registre SÉPARÉ de SECONDARY_FEATURE_NAMES (*_in_T1) : c'est l'appartenance au
+# registre qui pilote le routage de baseline (simple vs appariée) côté harness.
+# Loto : chance_value seule (1 nombre, pas de basse/haute/écart).
+# EM   : basse / haute / écart des 2 étoiles.
+SECONDARY_POSITIONAL_NAMES: dict[str, tuple[str, ...]] = {
+    "loto": ("chance_value",),
+    "em": ("etoiles_basse", "etoiles_haute", "etoiles_ecart"),
+}
+
 
 # ════════════════════════════════════════════════════════════════════════
 # Brique 1 — extract_features
@@ -307,6 +318,11 @@ _SECONDARY_IN_T1_NAMES: frozenset[str] = frozenset(
     name for names in SECONDARY_FEATURE_NAMES.values() for name in names
 )
 
+# LOT S2 — ensemble plat des noms positionnels (gardes / messages d'erreur).
+_SECONDARY_POSITIONAL_NAMES: frozenset[str] = frozenset(
+    name for names in SECONDARY_POSITIONAL_NAMES.values() for name in names
+)
+
 
 def _coerce_secondary_set(secondary) -> set[int]:
     """Normalise un secondaire en set[int], quelle que soit sa forme.
@@ -358,6 +374,43 @@ def extract_secondary_in_t1(grille_secondary, prev_secondary) -> dict[str, float
     return {feature_name: overlap}
 
 
+def extract_secondary_positional(grille_secondary, game: str) -> dict[str, float]:
+    """Features POSITIONNELLES (non-temporelles) du secondaire d'une grille.
+
+    Décrivent la grille SEULE — aucun overlap T-1 (≠ extract_secondary_in_t1).
+    Le jeu courant pilote l'ensemble des features (arbitrage Jyppy #2 : param
+    `game` explicite, PAS d'inférence par cardinalité).
+
+        game="loto" → {"chance_value": <valeur de la chance>}          ∈ [1, 10]
+        game="em"   → {"etoiles_basse": min, "etoiles_haute": max,
+                       "etoiles_ecart": max - min}    basse∈[1,11] haute∈[2,12]
+                                                       ecart∈[1,11] (jamais 0)
+
+    Args:
+        grille_secondary: secondaire de la grille — int (Loto) / list/tuple/set
+                          (EM). Normalisé via _coerce_secondary_set.
+        game: "loto" ou "em".
+
+    Returns:
+        dict des features positionnelles. Dict VIDE en défense si le secondaire
+        est mal formé (Loto vide / EM < 2 étoiles) — le caller l'ignore alors.
+    """
+    s = _coerce_secondary_set(grille_secondary)
+    if game == "loto":
+        if not s:
+            return {}  # défense — chance manquante
+        return {"chance_value": float(next(iter(s)))}
+    # EM : besoin de 2 étoiles distinctes
+    if len(s) < 2:
+        return {}  # défense — étoiles manquantes/incomplètes
+    basse, haute = float(min(s)), float(max(s))
+    return {
+        "etoiles_basse": basse,
+        "etoiles_haute": haute,
+        "etoiles_ecart": haute - basse,
+    }
+
+
 def build_secondary_bins(feature_name: str) -> np.ndarray:
     """Edges de bins entiers petit-univers pour les features secondaire.
 
@@ -365,30 +418,47 @@ def build_secondary_bins(feature_name: str) -> np.ndarray:
     registres (audit vigilance #2/#3). build_bins boules lève toujours
     ValueError sur un nom secondaire, et réciproquement.
 
-    Choix figés LOT S1 :
+    Choix figés LOT S1 (`*_in_T1`, temporelles) :
         chance_in_T1   : edges [0, 1, 2]      → 2 bins (valeurs 0/1)
         etoiles_in_T1  : edges [0, 1, 2, 3]   → 3 bins (valeurs 0/1/2)
 
+    Choix figés LOT S2 (positionnelles, non-temporelles) :
+        chance_value   : edges [1..11]        → 10 bins (valeurs 1..10)
+        etoiles_basse  : edges [1..12]        → 11 bins (valeurs 1..11)
+        etoiles_haute  : edges [2..13]        → 11 bins (valeurs 2..12)
+        etoiles_ecart  : edges [1..12]        → 11 bins (valeurs 1..11, écart≥1)
+
     np.histogram place value v dans le bin [edge_i, edge_{i+1}) ; le dernier
     bin est fermé à droite. Avec ces edges entiers, chaque valeur tombe dans
-    son propre bin (0→bin0, 1→bin1, 2→bin2).
+    son propre bin. Les edges positionnelles sont calés sur le SUPPORT RÉEL
+    (pas de bin 0 pour l'écart : 2 étoiles distinctes → écart ≥ 1).
 
     Args:
-        feature_name: "chance_in_T1" ou "etoiles_in_T1".
+        feature_name: nom secondaire (`*_in_T1` LOT S1 ou positionnelle LOT S2).
 
     Returns:
         np.ndarray des edges (len = n_bins + 1).
 
     Raises:
-        ValueError si feature_name inconnu du registre secondaire.
+        ValueError si feature_name inconnu des registres secondaire.
     """
+    # ── LOT S1 — `*_in_T1` (intact) ──────────────────────────────────
     if feature_name == "chance_in_T1":
         return np.array([0.0, 1.0, 2.0], dtype=np.float64)
     if feature_name == "etoiles_in_T1":
         return np.array([0.0, 1.0, 2.0, 3.0], dtype=np.float64)
+    # ── LOT S2 — positionnelles (additif) ────────────────────────────
+    if feature_name == "chance_value":
+        return np.arange(1, 12, 1, dtype=np.float64)   # [1..11] → valeurs 1..10
+    if feature_name == "etoiles_basse":
+        return np.arange(1, 13, 1, dtype=np.float64)   # [1..12] → valeurs 1..11
+    if feature_name == "etoiles_haute":
+        return np.arange(2, 14, 1, dtype=np.float64)   # [2..13] → valeurs 2..12
+    if feature_name == "etoiles_ecart":
+        return np.arange(1, 13, 1, dtype=np.float64)   # [1..12] → valeurs 1..11
     raise ValueError(
         f"build_secondary_bins: feature_name {feature_name!r} not in "
-        f"secondary registry {sorted(_SECONDARY_IN_T1_NAMES)}"
+        f"secondary registries {sorted(_SECONDARY_IN_T1_NAMES | _SECONDARY_POSITIONAL_NAMES)}"
     )
 
 
@@ -435,6 +505,58 @@ def generate_secondary_in_t1_baseline(
         prev_sec = rng.sample(universe, count)
         overlap = float(len(set(grille_sec) & set(prev_sec)))
         out.append({feature_name: overlap})
+    return tuple(out)
+
+
+@functools.lru_cache(maxsize=8)
+def generate_secondary_positional_baseline(
+    n: int = 100_000,
+    sec_min: int = 1,
+    sec_max: int = 12,
+    count: int = 2,
+    seed: int = DEFAULT_RANDOM_SEED,
+    game: str | None = None,
+) -> tuple[dict[str, float], ...]:
+    """Baseline SIMPLE NON appariée pour les features positionnelles (LOT S2).
+
+    Modèle nul = tirage random uniforme du secondaire SEUL (PAS de T-1, PAS
+    d'appariement — ≠ generate_secondary_in_t1_baseline). Pour chaque échantillon
+    on tire `count` numéros secondaire DISTINCTS et on en extrait les features
+    positionnelles via extract_secondary_positional (source unique de vérité, DRY).
+
+        Loto : 1 chance random ∈ [sec_min, sec_max]      → {chance_value}
+        EM   : 2 étoiles random distinctes ∈ [...]        → {basse, haute, ecart}
+
+    Reproductible (random.Random(seed) LOCAL — pas de pollution du global).
+    Cachée via lru_cache (clé = n, sec_min, sec_max, count, seed, game). Tuple
+    immuable retourné — même pattern que les deux autres baselines.
+
+    Args:
+        n: nombre d'échantillons (default 100_000).
+        sec_min/sec_max: bornes univers secondaire, inclus (Loto 1-10 / EM 1-12).
+        count: nb de numéros secondaire (Loto 1 / EM 2).
+        seed: graine reproductibilité (default 42).
+        game: "loto" ou "em" — pilote les features extraites (arbitrage #2).
+              OBLIGATOIRE (pas de défaut silencieux : un défaut produirait des
+              features EM sur un run Loto = bug masqué → on plante clair).
+
+    Returns:
+        tuple[dict, ...] de n dicts de features positionnelles.
+
+    Raises:
+        ValueError si game non fourni / inconnu.
+    """
+    if game not in ("loto", "em"):
+        raise ValueError(
+            f"generate_secondary_positional_baseline: game must be 'loto' or 'em', "
+            f"got {game!r} (defaut silencieux interdit — cf. revue Jyppy)"
+        )
+    rng = random.Random(seed)
+    universe = list(range(sec_min, sec_max + 1))
+    out: list[dict[str, float]] = []
+    for _ in range(n):
+        sample = rng.sample(universe, count)
+        out.append(extract_secondary_positional(sample, game))
     return tuple(out)
 
 

@@ -136,6 +136,12 @@ from tools.signature_features import (
     extract_secondary_in_t1,
     generate_secondary_in_t1_baseline,
 )
+# LOT S2 — briques secondaire POSITIONNELLES (non-temporelles), additives
+from tools.signature_features import (
+    SECONDARY_POSITIONAL_NAMES,
+    extract_secondary_positional,
+    generate_secondary_positional_baseline,
+)
 
 # Matplotlib in Agg backend (headless / Windows-safe)
 import matplotlib
@@ -560,6 +566,10 @@ class BacktestHarness:
         # LOT S1 — accumulateur SECONDAIRE parallèle (rempli IN-LOOP, idx>0 only —
         # la feature *_in_T1 dépend du contexte temporel, cf. audit vigilance #1/#6)
         secondary_feature_values: dict[str, list[float]] = {}
+        # LOT S2 — accumulateur POSITIONNEL parallèle (rempli IN-LOOP mais SANS
+        # garde idx>0 : non-temporel, toutes les grilles comptent y compris idx=0).
+        # Séparé de secondary_feature_values (n≈20000 vs n≈19900 pour *_in_T1).
+        positional_feature_values: dict[str, list[float]] = {}
 
         virtual_history: list[VirtualGrid] = []
         t_start = time.monotonic()
@@ -645,6 +655,14 @@ class BacktestHarness:
                     )
                     for sfname, sfval in sec_feat.items():
                         secondary_feature_values.setdefault(sfname, []).append(sfval)
+                # LOT S2 — features POSITIONNELLES (non-temporelles : PAS de garde
+                # idx>0, toutes les grilles comptent). Gardé par include_secondary.
+                if include_secondary:
+                    pos_feat = extract_secondary_positional(
+                        grille.get(self.base_config.secondary_name), self.game,
+                    )
+                    for pfname, pfval in pos_feat.items():
+                        positional_feature_values.setdefault(pfname, []).append(pfval)
 
             if (idx + 1) % 25 == 0:
                 elapsed = time.monotonic() - t_start
@@ -674,14 +692,18 @@ class BacktestHarness:
         # Clé tier2["secondary"] côte à côte de tier2["feature_jsd"] boules
         # (jamais touché). Absente si flag off → contrat boules strictement inchangé.
         if include_secondary:
+            # LOT S2 — positionnelles passées EN PLUS (non-temporelles, baseline
+            # simple). Le même flag --include-secondary active reine + positionnelles.
             tier2["secondary"] = self._compute_tier2_secondary(
-                secondary_feature_values, tirages=tirages,
+                secondary_feature_values, positional_feature_values, tirages=tirages,
             )
         # LOT noise-floor — plancher Monte Carlo + verdict FDR GLOBAL (ADDITIF,
         # opt-in). Ne touche AUCUNE clé existante de tier2 ; ajoute 3 clés au
-        # niveau tier2. FDR global sur boules + secondaire (si présent).
+        # niveau tier2. FDR global sur boules + *_in_T1 + positionnelles (si présent).
         if noise_floor:
-            self._attach_noise_floor(tier2, feature_values, secondary_feature_values)
+            self._attach_noise_floor(
+                tier2, feature_values, secondary_feature_values, positional_feature_values,
+            )
         by_construction = {
             "stratification": (
                 "1_per_zone forcée via _draw_stratified "
@@ -861,32 +883,40 @@ class BacktestHarness:
     def _compute_tier2_secondary(
         self,
         secondary_feature_values: dict[str, list[float]],
+        positional_feature_values: dict[str, list[float]] | None = None,
         *,
         tirages: list[TirageRecord] | None = None,
     ) -> dict:
-        """LOT S1 — Tier 2 SECONDAIRE : JSD `*_in_T1` HYBRIDE vs baseline appariée.
+        """LOT S1+S2 — Tier 2 SECONDAIRE : JSD `*_in_T1` (temporel) + positionnelles.
 
-        Feature reine seule (chance_in_T1 Loto / etoiles_in_T1 EM). Boucle SÉPARÉE
-        de la boucle boules FEATURE_NAMES (audit vigilance #2). Structure histograms
-        mirroir de _compute_tier2_signature (vigilance #8).
+        Feature reine `*_in_T1` (chance_in_T1 Loto / etoiles_in_T1 EM) vs baseline
+        APPARIÉE (LOT S1) + features POSITIONNELLES (chance_value / etoiles_basse,
+        haute, ecart) vs baseline SIMPLE non appariée (LOT S2). Boucles SÉPARÉES de
+        la boucle boules FEATURE_NAMES (audit vigilance #2), fusionnées dans les
+        MÊMES dicts feature_jsd / histograms (additif).
 
-        Baseline = SIMULATION APPARIÉE (generate_secondary_in_t1_baseline) : overlap
-        d'un secondaire random vs un T-1 random indépendant = distribution nulle du
-        recouvrement T-1 par pur hasard (arbitrage Jyppy #1, audit Q9).
+        Baseline `*_in_T1` = SIMULATION APPARIÉE (generate_secondary_in_t1_baseline) :
+        overlap secondaire random vs T-1 random indépendant (arbitrage Jyppy #1).
+        Baseline positionnelle = SIMPLE (generate_secondary_positional_baseline) :
+        tirage random uniforme du secondaire seul, PAS de T-1 (LOT S2).
 
-        Overlay `real_tirages` = appariement SÉQUENTIEL des vrais tirages
-        (|tirages[i].secondary ∩ tirages[i-1].secondary|), boucle dédiée car la
-        feature est temporelle (audit vigilance #7) — distinct de l'extract_features
-        non-temporel des boules.
+        Overlay `real_tirages` :
+            - `*_in_T1` : appariement SÉQUENTIEL (|T_i ∩ T_{i-1}|), feature temporelle.
+            - positionnelles : extraction NON-temporelle de chaque tirage (pas
+              d'appariement T_i/T_{i-1} — audit LOT S2 vigilance #5, piège copier-coller).
 
         Args:
-            secondary_feature_values: dict[str, list[float]] accumulé in-loop (idx>0).
-            tirages: vrais tirages pour l'overlay narratif réel (None → real_tirages None).
+            secondary_feature_values: dict accumulé in-loop (`*_in_T1`, idx>0).
+            positional_feature_values: dict accumulé in-loop (positionnelles, tous idx).
+                None/absent → bloc positionnel non calculé (rétrocompat S1).
+            tirages: vrais tirages pour l'overlay narratif réel.
 
         Returns:
             dict {feature_jsd, histograms, baseline, base, n_hybride_samples,
-            anj_disclaimer}.
+            anj_disclaimer}. feature_jsd/histograms contiennent `*_in_T1` ET
+            positionnelles côte à côte.
         """
+        positional_feature_values = positional_feature_values or {}
         cfg = self.base_config
         sec_min, sec_max, count = cfg.secondary_min, cfg.secondary_max, cfg.secondary_count
         feature_names = SECONDARY_FEATURE_NAMES.get(self.game, ())
@@ -927,6 +957,42 @@ class BacktestHarness:
                 "real_tirages": _density_histogram(real_vals, bins) if real_vals else None,
             }
 
+        # ── LOT S2 — features POSITIONNELLES (non-temporelles, baseline SIMPLE) ──
+        positional_names = SECONDARY_POSITIONAL_NAMES.get(self.game, ())
+        if positional_names:
+            pos_baseline = generate_secondary_positional_baseline(
+                n=_SIGNATURE_BASELINE_N,
+                sec_min=sec_min,
+                sec_max=sec_max,
+                count=count,
+                seed=_SIGNATURE_BASELINE_SEED,
+                game=self.game,
+            )
+            # Overlay vrais tirages : extraction NON-temporelle (PAS d'appariement
+            # T_i/T_{i-1} — c'est le piège copier-coller du bloc *_in_T1 ci-dessus).
+            real_positional_values: dict[str, list[float]] = {}
+            if tirages:
+                for t in tirages:
+                    pos_feat = extract_secondary_positional(t.secondary, self.game)
+                    for fn, fv in pos_feat.items():
+                        real_positional_values.setdefault(fn, []).append(fv)
+
+            for fname in positional_names:
+                hybride_vals = positional_feature_values.get(fname, [])
+                baseline_vals = [b[fname] for b in pos_baseline if fname in b]
+                real_vals = real_positional_values.get(fname, [])
+                bins = build_secondary_bins(fname)
+                feature_jsd[fname] = round(
+                    compute_feature_jsd(hybride_vals, baseline_vals, bins),
+                    6,
+                )
+                histograms[fname] = {
+                    "bins": bins.tolist(),
+                    "hybride": _density_histogram(hybride_vals, bins),
+                    "random": _density_histogram(baseline_vals, bins),
+                    "real_tirages": _density_histogram(real_vals, bins) if real_vals else None,
+                }
+
         n_hybride_samples = sum(len(v) for v in secondary_feature_values.values())
         return {
             "feature_jsd": feature_jsd,
@@ -958,11 +1024,12 @@ class BacktestHarness:
         tier2: dict,
         feature_values: dict[str, list[float]],
         secondary_feature_values: dict[str, list[float]],
+        positional_feature_values: dict[str, list[float]] | None = None,
     ) -> None:
         """LOT noise-floor — attache plancher Monte Carlo + verdict FDR GLOBAL au tier2.
 
         100% ADDITIF : ne touche AUCUNE clé existante (feature_jsd / histograms /
-        baseline, boules ET secondary — les deux méthodes _compute_tier2_* restent
+        baseline, boules ET secondary — les méthodes _compute_tier2_* restent
         intactes). Ajoute 3 clés au niveau tier2 :
             tier2["noise_floor"]      : dict[feature -> compute_noise_floor(...)]
             tier2["is_material"]      : dict[feature -> bool] (verdict FDR B-H)
@@ -972,10 +1039,16 @@ class BacktestHarness:
         100k FIXE, JSD vs cette même réf). Les baselines sont réutilisées via leur
         lru_cache (mêmes args que dans _compute_tier2_* → cache hit, ~instantané).
 
-        Correction FDR GLOBALE : appliquée sur l'ensemble des p-values (boules +
-        secondaire si présent) car les tests sont SIMULTANÉS — sans elle, ~30% de
-        faux positifs sur 7+ tests (audit + double cross-review).
+        ROUTAGE BASELINE (LOT S2) : la baseline du plancher DOIT être celle utilisée
+        pour le JSD observé. On aiguille par appartenance au registre :
+            - feature ∈ SECONDARY_FEATURE_NAMES    → baseline APPARIÉE (`*_in_T1`)
+            - feature ∈ SECONDARY_POSITIONAL_NAMES → baseline SIMPLE (positionnelles)
+
+        Correction FDR GLOBALE : sur l'ensemble des p-values (boules + `*_in_T1` +
+        positionnelles) car les tests sont SIMULTANÉS — sans elle, ~30% de faux
+        positifs sur 7+ tests (audit + double cross-review).
         """
+        positional_feature_values = positional_feature_values or {}
         num_max = self.base_config.num_max
         baseline = generate_random_baseline(
             n=_SIGNATURE_BASELINE_N,
@@ -1017,6 +1090,7 @@ class BacktestHarness:
                 seed=_SIGNATURE_BASELINE_SEED,
             )
             sec_jsd = tier2["secondary"]["feature_jsd"]
+            # ── *_in_T1 : baseline APPARIÉE ──────────────────────────────
             for fname in SECONDARY_FEATURE_NAMES.get(self.game, ()):
                 hybride_vals = secondary_feature_values.get(fname, [])
                 if fname not in sec_jsd or len(hybride_vals) == 0:
@@ -1034,6 +1108,35 @@ class BacktestHarness:
                 )
                 noise_floor_out[fname] = nf
                 p_values[fname] = nf["p_value"]
+
+            # ── LOT S2 — positionnelles : baseline SIMPLE non appariée ────
+            positional_names = SECONDARY_POSITIONAL_NAMES.get(self.game, ())
+            if positional_names:
+                pos_baseline = generate_secondary_positional_baseline(
+                    n=_SIGNATURE_BASELINE_N,
+                    sec_min=cfg.secondary_min,
+                    sec_max=cfg.secondary_max,
+                    count=cfg.secondary_count,
+                    seed=_SIGNATURE_BASELINE_SEED,
+                    game=self.game,
+                )
+                for fname in positional_names:
+                    hybride_vals = positional_feature_values.get(fname, [])
+                    if fname not in sec_jsd or len(hybride_vals) == 0:
+                        continue
+                    baseline_vals = [b[fname] for b in pos_baseline if fname in b]
+                    bins = build_secondary_bins(fname)
+                    nf = compute_noise_floor(
+                        baseline_vals,
+                        bins,
+                        n_samples=len(hybride_vals),
+                        observed_jsd=sec_jsd[fname],
+                        k=_NOISE_FLOOR_K_SECONDARY,
+                        seed=_SIGNATURE_BASELINE_SEED,
+                        quantile=_NOISE_FLOOR_QUANTILE,
+                    )
+                    noise_floor_out[fname] = nf
+                    p_values[fname] = nf["p_value"]
 
         # FDR GLOBALE Benjamini-Hochberg sur toutes les features testées.
         fdr = apply_fdr_correction(p_values, alpha=_NOISE_FLOOR_FDR_ALPHA)

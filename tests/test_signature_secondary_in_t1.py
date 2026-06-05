@@ -228,8 +228,10 @@ class TestHarnessSecondaryIntegration:
         assert "histograms" in sec
         assert "baseline" in sec
         assert "anj_disclaimer" in sec
-        # Loto → feature reine chance_in_T1 uniquement
-        assert set(sec["feature_jsd"].keys()) == {"chance_in_T1"}
+        # Loto → feature reine chance_in_T1 (S1) + positionnelle chance_value (S2).
+        # Le même flag --include-secondary active désormais les deux familles.
+        assert "chance_in_T1" in sec["feature_jsd"]
+        assert set(sec["feature_jsd"].keys()) == {"chance_in_T1", "chance_value"}
 
     @pytest.mark.asyncio
     async def test_boules_feature_jsd_unchanged_by_flag(self, mocked_harness):
