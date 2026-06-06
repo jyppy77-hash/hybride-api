@@ -261,13 +261,16 @@ class TestEffectTierAdditivity:
 
     @pytest.mark.asyncio
     async def test_pipeline_sans_secondary_boules_only(self, mocked_harness):
-        """Sans include_secondary : effect_tier ne contient que les boules."""
+        """Sans include_secondary : effect_tier = boules (+ stratification V_X.B)."""
         cfg = BacktestConfig()
         result = await mocked_harness.run_config(cfg, noise_floor=True)
         tier2 = result["tier2"]
         assert "secondary" not in tier2
-        assert set(tier2["effect_tier"].keys()) <= set(FEATURE_NAMES)
-        # aucune feature secondaire ne fuite
+        # V_X.B : la stratification (signature des boules) s'ajoute sous --noise-floor,
+        # indépendamment du secondaire. Ensemble autorisé = boules + "stratification".
+        allowed = set(FEATURE_NAMES) | {"stratification"}
+        assert set(tier2["effect_tier"].keys()) <= allowed
+        # aucune feature SECONDAIRE ne fuite
         assert "chance_in_T1" not in tier2["effect_tier"]
         assert "chance_value" not in tier2["effect_tier"]
 

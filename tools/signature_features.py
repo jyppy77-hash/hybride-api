@@ -561,6 +561,105 @@ def generate_secondary_positional_baseline(
 
 
 # ════════════════════════════════════════════════════════════════════════
+# EXTENSION STRATIFICATION — V_X.B (variable CATÉGORIELLE 4 modalités)
+# ════════════════════════════════════════════════════════════════════════
+#
+# La stratification (répartition des 5 boules dans les 5 zones) est la signature
+# la plus forte d'HYBRIDE (100% `1_per_zone` forcé vs ~3% dans le hasard). C'est
+# une variable CATÉGORIELLE à 4 modalités nominales, intégrée via l'approche (a)
+# (audit V_X.B) : les catégories sont encodées en INDICES entiers 0-3 et binnées
+# sur STRATIFICATION_BINS [0,1,2,3,4] → compute_feature_jsd ET compute_noise_floor
+# s'appliquent TELS QUELS (précédent `chance_in_T1`, bins entiers). Zéro nouvelle
+# fonction JSD/plancher.
+
+
+def classify_stratification_index(balls, zones) -> int:
+    """Classe une grille en index de stratification (0-3).
+
+    0 = 1_per_zone, 1 = 2_in_one_zone, 2 = 3_in_one_zone, 3 = libre.
+
+    Fonction PURE : ne dépend QUE de `balls` + `zones` (découplée de tout `self`).
+    Logique identique à BacktestHarness._compute_stratification : on compte les
+    boules par zone, puis on mappe `max_count` -> index. 1->0, 2->1, 3->2, et
+    TOUT le reste (4, 5, ainsi que 0 = grille vide dégénérée) -> 3 = libre,
+    exactement comme le `else` de la méthode d'origine.
+
+    Args:
+        balls: itérable des numéros de la grille (5 boules).
+        zones: tuple de tuples (lo, hi) inclusifs (LOTO_ZONES / EM_ZONES).
+
+    Returns:
+        int dans [0, 3] = index dans STRATIFICATION_BUCKETS (ordre harness).
+    """
+    counts = [0] * len(zones)
+    for n in balls:
+        for i, (lo, hi) in enumerate(zones):
+            if lo <= n <= hi:
+                counts[i] += 1
+                break
+    max_count = max(counts) if counts else 0
+    if max_count in (1, 2, 3):
+        return max_count - 1
+    return 3  # 4, 5, ou 0 (vide) -> libre, comme le `else` d'origine
+
+
+# Bins figés pour la stratification catégorielle : 4 modalités encodées en
+# indices 0-3. np.histogram place v dans [edge_i, edge_{i+1}) (dernier fermé) →
+# chaque indice tombe dans son bin propre. MÊMES bins observé + plancher (règle
+# dure V_X.F). Centralisé ici pour éviter toute divergence entre les call sites.
+STRATIFICATION_BINS: np.ndarray = np.array([0.0, 1.0, 2.0, 3.0, 4.0], dtype=np.float64)
+
+
+@functools.lru_cache(maxsize=8)
+def generate_stratification_baseline(
+    n: int = 100_000,
+    num_max: int = 49,
+    k: int = 5,
+    seed: int = DEFAULT_RANDOM_SEED,
+    zones: tuple[tuple[int, int], ...] | None = None,
+) -> tuple[int, ...]:
+    """Baseline HASARD de stratification : n grilles uniformes -> index strat (0-3).
+
+    Modèle nul = tirage random uniforme de `k` numéros distincts dans [1, num_max],
+    classé en index de stratification via classify_stratification_index (source
+    unique de vérité, DRY). Donne la distribution nulle empirique de la
+    stratification « par pur hasard » (≈3% de 1_per_zone, le reste étalé).
+
+    Reproductible (random.Random(seed) LOCAL — pas de pollution du global).
+    Cachée via lru_cache (clé = n, num_max, k, seed, zones). Tuple immuable
+    d'INDICES retourné — directement consommable par compute_feature_jsd et
+    compute_noise_floor (bins = STRATIFICATION_BINS), sans transformation.
+
+    Args:
+        n: nombre de grilles (default 100_000).
+        num_max: borne sup univers, inclus (49 Loto / 50 EM).
+        k: taille de chaque grille (default 5).
+        seed: graine reproductibilité (default 42).
+        zones: tuple de tuples (lo, hi) inclusifs (LOTO_ZONES / EM_ZONES).
+            OBLIGATOIRE (pas de défaut silencieux : un défaut produirait une
+            classification incohérente avec le jeu → on plante clair). Doit être
+            un tuple (hashable) pour le lru_cache.
+
+    Returns:
+        tuple[int, ...] de n indices de stratification (0-3).
+
+    Raises:
+        ValueError si zones non fourni.
+    """
+    if zones is None:
+        raise ValueError(
+            "generate_stratification_baseline: zones obligatoire (defaut "
+            "silencieux interdit — cf. revue Jyppy)"
+        )
+    rng = random.Random(seed)
+    universe = list(range(1, num_max + 1))
+    return tuple(
+        classify_stratification_index(rng.sample(universe, k), zones)
+        for _ in range(n)
+    )
+
+
+# ════════════════════════════════════════════════════════════════════════
 # MONTE CARLO NOISE FLOOR — plancher de bruit générique (LOT V_X.F)
 # ════════════════════════════════════════════════════════════════════════
 #

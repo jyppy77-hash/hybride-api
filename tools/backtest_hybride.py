@@ -142,6 +142,12 @@ from tools.signature_features import (
     extract_secondary_positional,
     generate_secondary_positional_baseline,
 )
+# V_X.B — briques stratification CATÉGORIELLE (additives)
+from tools.signature_features import (
+    STRATIFICATION_BINS,
+    classify_stratification_index,
+    generate_stratification_baseline,
+)
 
 # Matplotlib in Agg backend (headless / Windows-safe)
 import matplotlib
@@ -512,21 +518,11 @@ class BacktestHarness:
         - "3_in_one_zone"   : max(count par zone) == 3
         - "libre"           : max ≥ 4 (4 ou 5 dans une zone)
         """
-        counts = [0] * len(self.zones)
-        for n in balls:
-            for i, (lo, hi) in enumerate(self.zones):
-                if lo <= n <= hi:
-                    counts[i] += 1
-                    break
-        max_count = max(counts) if counts else 0
-        if max_count == 1:
-            return "1_per_zone"
-        elif max_count == 2:
-            return "2_in_one_zone"
-        elif max_count == 3:
-            return "3_in_one_zone"
-        else:
-            return "libre"
+        # V_X.B — délègue à la fonction pure (source unique de vérité), puis
+        # mappe l'index -> nom de bucket. Comportement strictement inchangé.
+        return STRATIFICATION_BUCKETS[
+            classify_stratification_index(balls, self.zones)
+        ]
 
     # ── Pipeline principal ────────────────────────────────────────────
 
@@ -702,6 +698,14 @@ class BacktestHarness:
             # simple). Le même flag --include-secondary active reine + positionnelles.
             tier2["secondary"] = self._compute_tier2_secondary(
                 secondary_feature_values, positional_feature_values, tirages=tirages,
+            )
+        # V_X.B — bloc signature STRATIFICATION (catégorielle, baseline hasard),
+        # gated sous --noise-floor (signature des boules ; pas de flag dédié).
+        # Rangé sous tier2["stratification"] AVANT _attach_noise_floor (qui lit son
+        # JSD pour le plancher + l'englobe dans FDR/is_material/effect_tier).
+        if noise_floor:
+            tier2["stratification"] = self._compute_tier2_stratification(
+                strat_counts, total_grilles, tirages=tirages,
             )
         # LOT noise-floor — plancher Monte Carlo + verdict FDR GLOBAL (ADDITIF,
         # opt-in). Ne touche AUCUNE clé existante de tier2 ; ajoute 3 clés au
@@ -1025,6 +1029,88 @@ class BacktestHarness:
             ),
         }
 
+    def _compute_tier2_stratification(
+        self,
+        strat_counts: dict[str, int],
+        total_grilles: int,
+        *,
+        tirages: list[TirageRecord] | None = None,
+    ) -> dict:
+        """V_X.B — Tier 2 STRATIFICATION : JSD de la signature catégorielle vs hasard.
+
+        La stratification (répartition des 5 boules dans les 5 zones) est une
+        variable CATÉGORIELLE à 4 modalités. Approche (a) : catégories encodées en
+        INDICES 0-3, bins STRATIFICATION_BINS [0,1,2,3,4] → compute_feature_jsd
+        s'applique TEL QUEL (zéro fonction JSD dédiée).
+
+        HYBRIDE : indices reconstruits depuis strat_counts (déjà comptés in-loop —
+        gratuit, exact ; l'ordre est indifférent à l'histogramme).
+        Baseline : HASARD uniforme (generate_stratification_baseline, lru_cache).
+        Overlay réel : _stratification_empirique_real sur les vrais tirages.
+
+        Bloc dédié rangé sous tier2["stratification"] (miroir de tier2["secondary"])
+        — JAMAIS dans tier2["feature_jsd"] boules (régression plots/build_bins).
+
+        Args:
+            strat_counts: comptes HYBRIDE par bucket (dict bucket -> int).
+            total_grilles: nombre total de grilles générées (sanity + n_samples).
+            tirages: vrais tirages pour l'overlay narratif réel.
+
+        Returns:
+            dict {feature_jsd, hybride_distribution, baseline_distribution,
+            real_distribution, base, n_hybride_samples}.
+        """
+        cfg = self.base_config
+        # HYBRIDE : reconstruction du tableau d'indices depuis les comptes.
+        hybride_values: list[int] = []
+        for idx, bucket in enumerate(STRATIFICATION_BUCKETS):
+            hybride_values.extend([idx] * strat_counts[bucket])
+        # Sanity : la somme des comptes doit égaler le total de grilles.
+        if len(hybride_values) != total_grilles:
+            logger.warning(
+                "[STRATIFICATION] somme counts %d != total_grilles %d",
+                len(hybride_values), total_grilles,
+            )
+
+        baseline_values = generate_stratification_baseline(
+            n=_SIGNATURE_BASELINE_N,
+            num_max=cfg.num_max,
+            k=cfg.num_count,
+            seed=_SIGNATURE_BASELINE_SEED,
+            zones=self.zones,
+        )
+
+        jsd = round(
+            compute_feature_jsd(hybride_values, baseline_values, STRATIFICATION_BINS),
+            6,
+        )
+
+        # Distributions (proportions) pour la restitution narrative.
+        hybride_distribution = {
+            b: round(strat_counts[b] / total_grilles, 4) if total_grilles else 0.0
+            for b in STRATIFICATION_BUCKETS
+        }
+        n_base = len(baseline_values)
+        baseline_counts = [0, 0, 0, 0]
+        for v in baseline_values:
+            baseline_counts[v] += 1
+        baseline_distribution = {
+            b: round(baseline_counts[i] / n_base, 4) if n_base else 0.0
+            for i, b in enumerate(STRATIFICATION_BUCKETS)
+        }
+        real_distribution = (
+            self._stratification_empirique_real(tirages) if tirages else None
+        )
+
+        return {
+            "feature_jsd": {"stratification": jsd},
+            "hybride_distribution": hybride_distribution,
+            "baseline_distribution": baseline_distribution,
+            "real_distribution": real_distribution,
+            "base": "e",
+            "n_hybride_samples": total_grilles,
+        }
+
     def _attach_noise_floor(
         self,
         tier2: dict,
@@ -1149,6 +1235,32 @@ class BacktestHarness:
                     noise_floor_out[fname] = nf
                     p_values[fname] = nf["p_value"]
 
+        # ── V_X.B — plancher STRATIFICATION (catégorielle, baseline hasard) ──
+        # Baseline rappelée via lru_cache (mêmes args qu'en _compute_tier2_
+        # stratification → cache hit instantané). bins = STRATIFICATION_BINS.
+        if "stratification" in tier2:
+            strat_jsd = tier2["stratification"]["feature_jsd"]["stratification"]
+            strat_baseline = generate_stratification_baseline(
+                n=_SIGNATURE_BASELINE_N,
+                num_max=self.base_config.num_max,
+                k=self.base_config.num_count,
+                seed=_SIGNATURE_BASELINE_SEED,
+                zones=self.zones,
+            )
+            n_strat = tier2["stratification"]["n_hybride_samples"]
+            if n_strat > 0:
+                nf = compute_noise_floor(
+                    strat_baseline,
+                    STRATIFICATION_BINS,
+                    n_samples=n_strat,
+                    observed_jsd=strat_jsd,
+                    k=_NOISE_FLOOR_K_SECONDARY,
+                    seed=_SIGNATURE_BASELINE_SEED,
+                    quantile=_NOISE_FLOOR_QUANTILE,
+                )
+                noise_floor_out["stratification"] = nf
+                p_values["stratification"] = nf["p_value"]
+
         # FDR GLOBALE Benjamini-Hochberg sur toutes les features testées.
         fdr = apply_fdr_correction(p_values, alpha=_NOISE_FLOOR_FDR_ALPHA)
         tier2["noise_floor"] = noise_floor_out
@@ -1159,6 +1271,7 @@ class BacktestHarness:
         jsd_unifie = {
             **tier2["feature_jsd"],
             **tier2.get("secondary", {}).get("feature_jsd", {}),
+            **tier2.get("stratification", {}).get("feature_jsd", {}),  # V_X.B
         }
         effect_tier: dict[str, str] = {}
         for fname, materiel in tier2["is_material"].items():
