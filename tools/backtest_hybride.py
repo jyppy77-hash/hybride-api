@@ -178,6 +178,12 @@ _NOISE_FLOOR_K_SECONDARY: int = 10_000
 _NOISE_FLOOR_QUANTILE: float = 0.95
 _NOISE_FLOOR_FDR_ALPHA: float = 0.05
 
+# LOT 3 — seuil d'effet pratique (taille d'effet JSD). Distingue un signal
+# MATÉRIEL FORT d'un matériel NÉGLIGEABLE. Calé sur l'échelle empirique des runs :
+# signatures fortes boules 0.15-0.30 / *_in_T1 0.04-0.13 ; micro-biais positionnelles
+# 0.0002-0.01. Le trou naturel ~0.01-0.04 -> 0.02 sépare proprement. Paramétrable.
+_EFFECT_SIZE_THRESHOLD: float = 0.02
+
 # 7 paliers Loto (descending). Key = (n_balls_match, n_secondary_match).
 LOTO_PALIERS: list[tuple[str, int, int]] = [
     ("5_boules_chance", 5, 1),
@@ -1025,15 +1031,20 @@ class BacktestHarness:
         feature_values: dict[str, list[float]],
         secondary_feature_values: dict[str, list[float]],
         positional_feature_values: dict[str, list[float]] | None = None,
+        *,
+        effect_threshold: float = _EFFECT_SIZE_THRESHOLD,
     ) -> None:
         """LOT noise-floor — attache plancher Monte Carlo + verdict FDR GLOBAL au tier2.
 
         100% ADDITIF : ne touche AUCUNE clé existante (feature_jsd / histograms /
         baseline, boules ET secondary — les méthodes _compute_tier2_* restent
-        intactes). Ajoute 3 clés au niveau tier2 :
+        intactes). Ajoute 4 clés au niveau tier2 :
             tier2["noise_floor"]      : dict[feature -> compute_noise_floor(...)]
             tier2["is_material"]      : dict[feature -> bool] (verdict FDR B-H)
-            tier2["noise_floor_meta"] : params (k_boules, k_secondary, quantile, ...)
+            tier2["effect_tier"]      : dict[feature -> "bruit"|"materiel_negligeable"|
+                                        "materiel_fort"] (LOT 3, taille d'effet JSD)
+            tier2["noise_floor_meta"] : params (k_boules, k_secondary, quantile, ...,
+                                        effect_size_threshold)
 
         Modèle nul = Option B (bootstrap de n valeurs avec remise dans la baseline
         100k FIXE, JSD vs cette même réf). Les baselines sont réutilisées via leur
@@ -1142,6 +1153,28 @@ class BacktestHarness:
         fdr = apply_fdr_correction(p_values, alpha=_NOISE_FLOOR_FDR_ALPHA)
         tier2["noise_floor"] = noise_floor_out
         tier2["is_material"] = {fn: fdr[fn]["is_material_fdr"] for fn in fdr}
+
+        # LOT 3 — verdict 3 niveaux (taille d'effet). Additif : ne touche PAS is_material.
+        # bruit = non-materiel (FDR) ; sinon subdivise par le seuil JSD.
+        jsd_unifie = {
+            **tier2["feature_jsd"],
+            **tier2.get("secondary", {}).get("feature_jsd", {}),
+        }
+        effect_tier: dict[str, str] = {}
+        for fname, materiel in tier2["is_material"].items():
+            if not materiel:
+                effect_tier[fname] = "bruit"
+                continue
+            jsd = jsd_unifie.get(fname)
+            if jsd is None:
+                # défense : feature materielle sans JSD source (ne devrait pas arriver).
+                # Conservateur : ne pas sur-classer en fort sans preuve de taille d'effet.
+                logger.warning("[EFFECT-TIER] JSD manquant pour %s -> materiel_negligeable", fname)
+                effect_tier[fname] = "materiel_negligeable"
+                continue
+            effect_tier[fname] = "materiel_fort" if jsd >= effect_threshold else "materiel_negligeable"
+        tier2["effect_tier"] = effect_tier
+
         tier2["noise_floor_meta"] = {
             "k_boules": _NOISE_FLOOR_K_BALLS,
             "k_secondary": _NOISE_FLOOR_K_SECONDARY,
@@ -1149,6 +1182,7 @@ class BacktestHarness:
             "null_model": "bootstrap_vs_fixed_reference",
             "fdr_alpha": _NOISE_FLOOR_FDR_ALPHA,
             "fdr_method": "benjamini_hochberg",
+            "effect_size_threshold": effect_threshold,
             "seed": _SIGNATURE_BASELINE_SEED,
         }
 
@@ -1208,7 +1242,6 @@ class BacktestHarness:
                 "elapsed_seconds": elapsed,
                 "limitations_mvp": [
                     "future_leak_calculer_scores_hybrides_accepted",
-                    "recent_draws_absolute_not_relative",
                     "decay_state_disabled",
                 ],
             },
