@@ -175,6 +175,17 @@ class TestMiddlewarePipeline:
         assert resp.headers["x-content-type-options"] == "nosniff"
         assert "strict-transport-security" in resp.headers
         assert "x-frame-options" in resp.headers
+        # Umami collecte: nouvel endpoint gateway.umami.is doit etre dans connect-src
+        # (Umami a bascule son POST /api/send sur gateway.umami.is — anciens
+        # cloud.umami.is / api-gateway.umami.dev conserves par securite)
+        csp = resp.headers["content-security-policy"]
+        connect_src = next(
+            (d.strip() for d in csp.split(";") if d.strip().startswith("connect-src")),
+            "",
+        )
+        assert "https://gateway.umami.is" in connect_src
+        assert "https://cloud.umami.is" in connect_src
+        assert "https://api-gateway.umami.dev" in connect_src
 
 
 # ═══════════════════════════════════════════════════════════════════════

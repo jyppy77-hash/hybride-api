@@ -5,6 +5,15 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# Fix CSP connect-src gateway.umami.is (Release 1.6.042, 07/06/2026) — Umami a basculé son
+# endpoint de collecte POST /api/send sur gateway.umami.is ; notre connect-src ne whitelistait
+# que cloud.umami.is + api-gateway.umami.dev (anciens) → collecte cassée silencieusement
+# ~05/06 SANS push (falaise trafic jour record). Fix : ajout gateway.umami.is dans connect-src
+# (main.py), anciens domaines conservés. Push GROUPÉ : ce bump embarque aussi les 5 commits R&D
+# offline V_X.F (signature secondaire *_in_T1, plancher Monte Carlo + FDR, positionnelles
+# secondaire, verdict effect_tier 3 niveaux, stratification dimension de signature) — outillage
+# tools/ pur, AUCUN import depuis main.py/routes/services/engine (inertes pour le runtime web).
+#
 # Backtest fidélité + perf (Release 1.6.041, 04/06/2026) — behavior-preserving, rien de
 # visible users (patch). T-1 hard-exclude relatif (anti future-leak recent_draws) + leviers
 # runtime A+B sur le backtest signature statistique. Golden test bit-identique + smoke local
@@ -145,9 +154,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.041"
+APP_VERSION = "1.6.042"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-06-04"
+VERSION_DATE = "2026-06-07"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

@@ -904,7 +904,7 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.041 (Backtest fidélité + perf, behavior-preserving).
+        """APP_VERSION == 1.6.042 (Fix CSP connect-src gateway.umami.is).
 
         V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
         V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
@@ -1011,9 +1011,13 @@ class TestAppVersion:
         T-1 hard-exclude relatif (anti future-leak recent_draws) + leviers runtime A+B sur
         le backtest signature statistique. Golden test bit-identique + smoke local vert +
         perf ~81x. Outillage offline tools/ + engine/hybride_base.py. Rien de visible users.
+        Fix CSP connect-src gateway.umami.is (07/06, Release 1.6.042) — Umami a basculé son
+        POST /api/send sur gateway.umami.is, absent de notre connect-src → collecte cassée
+        silencieusement ~05/06 sans push. Fix main.py connect-src (anciens domaines conservés).
+        Push GROUPÉ avec les 5 commits R&D offline V_X.F (outillage tools/, inertes runtime web).
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.041"
+        assert APP_VERSION == "1.6.042"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

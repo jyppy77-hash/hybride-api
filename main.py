@@ -316,7 +316,7 @@ _CSP = (
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
     "img-src 'self' data: https://*.google-analytics.com https://*.googletagmanager.com https://*.google.com; "
     "font-src 'self' https://fonts.gstatic.com; "
-    "connect-src 'self' https://www.googletagmanager.com https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://cloud.umami.is https://api-gateway.umami.dev; "
+    "connect-src 'self' https://www.googletagmanager.com https://*.google-analytics.com https://analytics.google.com https://*.analytics.google.com https://cloud.umami.is https://api-gateway.umami.dev https://gateway.umami.is; "
     "frame-ancestors 'none'; "
     "object-src 'none'; "
     "base-uri 'self'; "
