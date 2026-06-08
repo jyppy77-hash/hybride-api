@@ -5,6 +5,18 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# Export PDF cockpit + lien nav (Release 1.6.044, 08/06/2026) — lot UI.
+# (a) Bouton « Exporter en PDF » sur /admin/cockpit : re-POST du JSON brut → POST /admin/cockpit/pdf
+# (owner-only, gardes 25 Mo dupliquées de /analyze qui reste byte-identique) → normalize_run →
+# services/cockpit_pdf_generator.py::generate_cockpit_pdf (Platypus A4, FR-only). PDF diffusion-grade :
+# 4 étages (signature triée JSD / conformité Tier 1 / histogramme stratification 3 séries matplotlib
+# Agg → io.BytesIO SANS temp file disque → platypus.Image / secondaire), framing neutre strict,
+# disclaimer ANJ de repli TOUJOURS en pied + disclaimer secondaire verbatim si présent, limitations
+# du run affichées. Run dégradé (error) → 400, jamais de PDF vide. Stateless/RAM, rien sur disque/DB.
+# MUR ÉTANCHE : cockpit_pdf_generator ne consomme que le view-model, 0 import tools.* (scan AST
+# test_cockpit_wall.py couvre services/**). (b) Lien « Cockpit » ajouté à la topnav admin (_base.html).
+# Zéro nouvelle dépendance (matplotlib 3.9.2 + reportlab 4.1.0 déjà présents).
+#
 # Cockpit Métrique V_X.F (Release 1.6.043, 08/06/2026) — page admin read-only /admin/cockpit.
 # Lit un JSON de run OOS V_X.F uploadé (drag-drop), le normalise en view-model stateless
 # (services/cockpit_parser.py::normalize_run, pur, sans I/O, sans DB), affiche 4 étages
@@ -162,7 +174,7 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.043"
+APP_VERSION = "1.6.044"
 APP_NAME = "LotoIA"
 VERSION_DATE = "2026-06-08"
 

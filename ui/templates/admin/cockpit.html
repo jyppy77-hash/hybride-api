@@ -53,6 +53,14 @@
         background: rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.30); color:#bae6fd;
     }
     .ck-disclaimer b { display:block; margin-bottom:4px; }
+    .ck-toolbar { display:flex; justify-content:flex-end; margin-bottom:18px; }
+    .ck-btn {
+        background: rgba(56,189,248,0.14); border:1px solid rgba(56,189,248,0.45);
+        color:#bae6fd; padding:9px 18px; border-radius:10px; font-size:0.86rem; font-weight:600;
+        cursor:pointer; transition: background .15s, border-color .15s;
+    }
+    .ck-btn:hover { background: rgba(56,189,248,0.22); border-color: rgba(56,189,248,0.7); }
+    .ck-btn:disabled { opacity:.5; cursor:default; }
 </style>
 {% endblock %}
 
@@ -73,6 +81,11 @@
     <div class="ck-error" id="cockpit-error"></div>
 
     <div class="ck-results" id="cockpit-results">
+
+        <!-- Barre d'actions -->
+        <div class="ck-toolbar">
+            <button type="button" id="ck-export-pdf" class="ck-btn">⬇ Exporter en PDF</button>
+        </div>
 
         <!-- Header meta + limitations -->
         <div class="ck-card">
@@ -148,7 +161,9 @@
     var fileInput = document.getElementById('cockpit-file');
     var errBox = document.getElementById('cockpit-error');
     var results = document.getElementById('cockpit-results');
+    var exportBtn = document.getElementById('ck-export-pdf');
     var stratChart = null;
+    var lastFile = null;
 
     function showError(msg){ errBox.textContent = msg; errBox.style.display = 'block'; results.style.display = 'none'; }
     function clearError(){ errBox.style.display = 'none'; errBox.textContent = ''; }
@@ -311,6 +326,7 @@
 
     function upload(file){
         if (!file) return;
+        lastFile = file;
         clearError();
         var fd = new FormData();
         fd.append('file', file);
@@ -336,6 +352,35 @@
     });
     dz.addEventListener('drop', function(e){
         if (e.dataTransfer && e.dataTransfer.files.length) upload(e.dataTransfer.files[0]);
+    });
+
+    // Export PDF : re-POST du JSON brut déjà uploadé vers /admin/cockpit/pdf.
+    exportBtn.addEventListener('click', function(){
+        if (!lastFile) { showError('Dépose d’abord un run avant d’exporter.'); return; }
+        var original = exportBtn.textContent;
+        exportBtn.disabled = true;
+        exportBtn.textContent = 'Génération…';
+        var fd = new FormData();
+        fd.append('file', lastFile);
+        fetch('/admin/cockpit/pdf', { method: 'POST', body: fd })
+            .then(function(r){
+                if (!r.ok){
+                    return r.json().then(function(j){
+                        throw new Error((j && j.error) ? j.error : ('Erreur ' + r.status));
+                    }, function(){ throw new Error('Erreur ' + r.status); });
+                }
+                return r.blob();
+            })
+            .then(function(blob){
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url; a.download = 'cockpit-run.pdf';
+                document.body.appendChild(a); a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            })
+            .catch(function(e){ showError('Export PDF impossible : ' + e.message); })
+            .finally(function(){ exportBtn.disabled = false; exportBtn.textContent = original; });
     });
 })();
 </script>

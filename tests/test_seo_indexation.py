@@ -904,7 +904,7 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.043 (Cockpit Métrique V_X.F admin read-only).
+        """APP_VERSION == 1.6.044 (Export PDF cockpit + lien nav admin).
 
         V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
         V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
@@ -1017,9 +1017,13 @@ class TestAppVersion:
         Push GROUPÉ avec les 5 commits R&D offline V_X.F (outillage tools/, inertes runtime web).
         Cockpit Métrique V_X.F (08/06, Release 1.6.043) — page admin /admin/cockpit read-only :
         upload JSON run OOS → normalize_run stateless → 4 étages. Mur étanche tools/ <-> runtime.
+        Export PDF cockpit + lien nav (08/06, Release 1.6.044) — lot UI : bouton « Exporter en
+        PDF » → POST /admin/cockpit/pdf owner-only → generate_cockpit_pdf (Platypus FR-only,
+        histogramme strato matplotlib Agg → io.BytesIO sans temp file, disclaimer ANJ toujours
+        présent, framing neutre). Lien « Cockpit » topnav _base.html. /analyze byte-identique.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.043"
+        assert APP_VERSION == "1.6.044"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""
