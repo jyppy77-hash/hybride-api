@@ -904,7 +904,7 @@ class TestAppVersion:
     """APP_VERSION must match current release."""
 
     def test_app_version_is_current(self):
-        """APP_VERSION == 1.6.042 (Fix CSP connect-src gateway.umami.is).
+        """APP_VERSION == 1.6.043 (Cockpit Métrique V_X.F admin read-only).
 
         V136 (29/04 AM) — Calendrier admin performance HYBRIDE vs FDJ.
         V136.A hotfix (29/04 PM) — 1ère grille canonique uniquement (cas B sans bump).
@@ -1015,9 +1015,11 @@ class TestAppVersion:
         POST /api/send sur gateway.umami.is, absent de notre connect-src → collecte cassée
         silencieusement ~05/06 sans push. Fix main.py connect-src (anciens domaines conservés).
         Push GROUPÉ avec les 5 commits R&D offline V_X.F (outillage tools/, inertes runtime web).
+        Cockpit Métrique V_X.F (08/06, Release 1.6.043) — page admin /admin/cockpit read-only :
+        upload JSON run OOS → normalize_run stateless → 4 étages. Mur étanche tools/ <-> runtime.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.042"
+        assert APP_VERSION == "1.6.043"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

@@ -38,6 +38,7 @@ from routes.admin_sponsors import router as _sponsors_router
 from routes.admin_monitoring import router as _monitoring_router
 from routes.admin_calendar import router as _calendar_router
 from routes.admin_perf_calendar import router as _perf_calendar_router
+from routes.admin_cockpit import router as _cockpit_router
 
 router.include_router(_dashboard_router)
 router.include_router(_impressions_router)
@@ -45,6 +46,7 @@ router.include_router(_sponsors_router)
 router.include_router(_monitoring_router)
 router.include_router(_calendar_router)
 router.include_router(_perf_calendar_router)
+router.include_router(_cockpit_router)
 
 
 # ══════════════════════════════════════════════════════════════════════════════

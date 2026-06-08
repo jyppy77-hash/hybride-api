@@ -5,6 +5,14 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# Cockpit Métrique V_X.F (Release 1.6.043, 08/06/2026) — page admin read-only /admin/cockpit.
+# Lit un JSON de run OOS V_X.F uploadé (drag-drop), le normalise en view-model stateless
+# (services/cockpit_parser.py::normalize_run, pur, sans I/O, sans DB), affiche 4 étages
+# (signature triée JSD / conformité Tier 1 / histogramme stratification 3 séries / secondaire +
+# disclaimer ANJ verbatim). MUR ÉTANCHE : aucun fichier runtime (main/routes/services/engine/
+# middleware/config) n'importe tools.* — test AST tests/test_cockpit_wall.py casse le build sinon.
+# Aucune écriture disque/DB. Owner-only (OWNER_IP), noindex. Outillage tools/ inchangé.
+#
 # Fix CSP connect-src gateway.umami.is (Release 1.6.042, 07/06/2026) — Umami a basculé son
 # endpoint de collecte POST /api/send sur gateway.umami.is ; notre connect-src ne whitelistait
 # que cloud.umami.is + api-gateway.umami.dev (anciens) → collecte cassée silencieusement
@@ -154,9 +162,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.042"
+APP_VERSION = "1.6.043"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-06-07"
+VERSION_DATE = "2026-06-08"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

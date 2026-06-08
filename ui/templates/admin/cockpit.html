@@ -1,0 +1,342 @@
+{% extends "admin/_base.html" %}
+{% block title %}Cockpit V_X.F{% endblock %}
+
+{% block head %}
+<style>
+    .ck-intro { color: var(--muted, #9aa3b2); margin: 0 0 18px; font-size: 0.92rem; }
+    .ck-dropzone {
+        border: 2px dashed rgba(120,140,180,0.45); border-radius: 14px;
+        padding: 38px 20px; text-align: center; cursor: pointer;
+        transition: border-color .15s, background .15s; margin-bottom: 22px;
+        background: rgba(255,255,255,0.02);
+    }
+    .ck-dropzone.dragover { border-color: #22c55e; background: rgba(34,197,94,0.08); }
+    .ck-dropzone strong { display:block; font-size:1.05rem; margin-bottom:6px; }
+    .ck-dropzone span { color: var(--muted,#9aa3b2); font-size:0.85rem; }
+    .ck-error {
+        display:none; background: rgba(239,68,68,0.12); border:1px solid rgba(239,68,68,0.5);
+        color:#fca5a5; padding:12px 16px; border-radius:10px; margin-bottom:18px; font-size:0.9rem;
+    }
+    .ck-results { display:none; }
+    .ck-card {
+        background: rgba(255,255,255,0.03); border:1px solid rgba(120,140,180,0.18);
+        border-radius:14px; padding:18px 20px; margin-bottom:20px;
+    }
+    .ck-card h3 { margin:0 0 14px; font-size:1.05rem; }
+    .ck-meta-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px 22px; }
+    .ck-meta-grid div { font-size:0.86rem; }
+    .ck-meta-grid b { display:block; color:var(--muted,#9aa3b2); font-weight:500; font-size:0.74rem;
+        text-transform:uppercase; letter-spacing:.04em; margin-bottom:2px; }
+    .ck-limitations {
+        margin-top:14px; padding:10px 14px; border-radius:10px; font-size:0.82rem;
+        background: rgba(234,179,8,0.10); border:1px solid rgba(234,179,8,0.35); color:#fde68a;
+    }
+    .ck-limitations b { display:block; margin-bottom:4px; }
+    .ck-limitations ul { margin:0; padding-left:18px; }
+    table.ck-table { width:100%; border-collapse:collapse; font-size:0.84rem; }
+    table.ck-table th, table.ck-table td { padding:7px 10px; text-align:right; border-bottom:1px solid rgba(120,140,180,0.14); }
+    table.ck-table th:first-child, table.ck-table td:first-child { text-align:left; }
+    table.ck-table th { color:var(--muted,#9aa3b2); font-weight:600; font-size:0.74rem;
+        text-transform:uppercase; letter-spacing:.03em; }
+    table.ck-table tbody tr:hover { background: rgba(255,255,255,0.025); }
+    .ct-badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:0.72rem; font-weight:600; }
+    .ct-fort { background: rgba(34,197,94,0.18); color:#4ade80; }
+    .ct-att  { background: rgba(234,179,8,0.18); color:#fbbf24; }
+    .ct-bruit{ background: rgba(148,163,184,0.18); color:#cbd5e1; }
+    .ct-none { background: rgba(148,163,184,0.10); color:#94a3b8; }
+    .fam-tag { font-size:0.74rem; color:var(--muted,#9aa3b2); }
+    .ck-strat-title { font-size:0.9rem; color:var(--muted,#9aa3b2); margin:0 0 12px; }
+    .ck-strat-title b { color:#e2e8f0; }
+    .ck-chart-wrap { position:relative; height:320px; }
+    .ck-disclaimer {
+        margin-top:12px; padding:10px 14px; border-radius:10px; font-size:0.8rem; line-height:1.45;
+        background: rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.30); color:#bae6fd;
+    }
+    .ck-disclaimer b { display:block; margin-bottom:4px; }
+</style>
+{% endblock %}
+
+{% block content %}
+    <h2>Cockpit Métrique V_X.F</h2>
+    <p class="ck-intro">
+        Outil read-only : dépose un JSON de run OOS (produit hors-ligne par le backtest).
+        Affichage neutre de la signature statistique, de la qualité de construction et de la
+        divergence de forme. Aucune donnée n'est stockée — analyse en mémoire uniquement.
+    </p>
+
+    <div class="ck-dropzone" id="cockpit-dropzone">
+        <strong>Glisse un fichier JSON ici</strong>
+        <span>ou clique pour choisir un fichier (run OOS, ≤ 25 Mo)</span>
+        <input type="file" id="cockpit-file" accept="application/json,.json" style="display:none">
+    </div>
+
+    <div class="ck-error" id="cockpit-error"></div>
+
+    <div class="ck-results" id="cockpit-results">
+
+        <!-- Header meta + limitations -->
+        <div class="ck-card">
+            <h3>Run</h3>
+            <div class="ck-meta-grid" id="ck-meta"></div>
+            <div class="ck-limitations" id="ck-limitations" style="display:none">
+                <b>Note honnête — limitations du run</b>
+                <ul id="ck-limitations-list"></ul>
+            </div>
+        </div>
+
+        <!-- Étage 1 — Signature -->
+        <div class="ck-card" id="ck-signature-card">
+            <h3>Étage 1 — Signature statistique</h3>
+            <table class="ck-table">
+                <thead><tr>
+                    <th>Feature</th><th>JSD</th><th>effect_tier</th><th>noise_floor</th>
+                    <th>p_value</th><th>matériel</th><th>famille</th>
+                </tr></thead>
+                <tbody id="ck-signature-body"></tbody>
+            </table>
+        </div>
+
+        <!-- Étage 2 — Conformité Tier 1 -->
+        <div class="ck-card" id="ck-conformity-card">
+            <h3>Étage 2 — Conformité (Tier 1)</h3>
+            <table class="ck-table">
+                <thead><tr>
+                    <th>Feature</th><th>moyenne</th><th>médiane</th><th>écart-type</th>
+                    <th>min</th><th>max</th><th>% hors bornes</th>
+                </tr></thead>
+                <tbody id="ck-conformity-body"></tbody>
+            </table>
+        </div>
+
+        <!-- Étage 4a — Stratification -->
+        <div class="ck-card" id="ck-strat-card">
+            <h3>Étage 4 — Stratification</h3>
+            <p class="ck-strat-title" id="ck-strat-jsd"></p>
+            <div class="ck-chart-wrap"><canvas id="ck-strat-chart"></canvas></div>
+        </div>
+
+        <!-- Étage 4b — Secondaire -->
+        <div class="ck-card" id="ck-secondary-card">
+            <h3>Étage 4 — Secondaire</h3>
+            <table class="ck-table">
+                <thead><tr>
+                    <th>Feature</th><th>JSD</th><th>effect_tier</th><th>matériel</th>
+                </tr></thead>
+                <tbody id="ck-secondary-body"></tbody>
+            </table>
+            <div class="ck-disclaimer" id="ck-disclaimer" style="display:none">
+                <b>Avertissement</b>
+                <span id="ck-disclaimer-text"></span>
+            </div>
+        </div>
+
+        <!-- Diff A/B (masqué sauf run comparatif) -->
+        <div class="ck-card" id="ck-diff-card" style="display:none">
+            <h3>Diff A/B (run comparatif)</h3>
+            <div class="ck-meta-grid" id="ck-diff"></div>
+        </div>
+
+    </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+(function(){
+    "use strict";
+    var dz = document.getElementById('cockpit-dropzone');
+    var fileInput = document.getElementById('cockpit-file');
+    var errBox = document.getElementById('cockpit-error');
+    var results = document.getElementById('cockpit-results');
+    var stratChart = null;
+
+    function showError(msg){ errBox.textContent = msg; errBox.style.display = 'block'; results.style.display = 'none'; }
+    function clearError(){ errBox.style.display = 'none'; errBox.textContent = ''; }
+
+    function esc(s){ var d = document.createElement('div'); d.textContent = (s == null ? '' : String(s)); return d.innerHTML; }
+    function num(v, digits){
+        if (v === null || v === undefined) return '—';
+        if (typeof v === 'number') return digits != null ? v.toFixed(digits) : String(v);
+        return esc(v);
+    }
+    function pval(v){
+        if (v === null || v === undefined) return '—';
+        if (typeof v === 'number') return (v > 0 && v < 0.001) ? v.toExponential(2) : v.toFixed(4);
+        return esc(v);
+    }
+    function boolMark(v){ if (v === true) return '✓'; if (v === false) return '✗'; return '—'; }
+    function tierBadge(t){
+        var map = { materiel_fort:'ct-fort', materiel_negligeable:'ct-att', bruit:'ct-bruit' };
+        if (!t) return '<span class="ct-badge ct-none">—</span>';
+        return '<span class="ct-badge ' + (map[t] || 'ct-none') + '">' + esc(t) + '</span>';
+    }
+    function famLabel(f){
+        var map = { primary:'forme', secondary:'secondaire', stratification:'stratification' };
+        return '<span class="fam-tag">' + (map[f] || esc(f)) + '</span>';
+    }
+
+    function renderHeader(m){
+        var g = document.getElementById('ck-meta');
+        if (!m || !m.present){ g.innerHTML = '<div>Métadonnées absentes</div>'; }
+        else {
+            var rng = m.tirages_range || {};
+            var range = (rng.first || '?') + ' → ' + (rng.last || '?');
+            var cells = [
+                ['Jeu', m.game], ['Tirages rejoués', m.n_tirages],
+                ['Grilles / tirage', m.n_grilles_per_tirage], ['Mode', m.mode],
+                ['Run mode', m.run_mode], ['Harness', m.harness_version],
+                ['Plage', range], ['Durée (s)', num(m.elapsed_seconds, 1)]
+            ];
+            g.innerHTML = cells.map(function(c){
+                return '<div><b>' + esc(c[0]) + '</b>' + (c[1] == null ? '—' : esc(c[1])) + '</div>';
+            }).join('');
+        }
+        var limBox = document.getElementById('ck-limitations');
+        var limList = document.getElementById('ck-limitations-list');
+        var lims = (m && m.limitations_mvp) || [];
+        if (lims.length){
+            limList.innerHTML = lims.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('');
+            limBox.style.display = 'block';
+        } else { limBox.style.display = 'none'; }
+    }
+
+    function renderSignature(s){
+        var card = document.getElementById('ck-signature-card');
+        var body = document.getElementById('ck-signature-body');
+        if (!s || !s.present){ card.style.display = 'none'; return; }
+        card.style.display = 'block';
+        body.innerHTML = s.rows.map(function(r){
+            return '<tr>' +
+                '<td>' + esc(r.feature) + '</td>' +
+                '<td>' + num(r.jsd, 4) + '</td>' +
+                '<td style="text-align:center">' + tierBadge(r.effect_tier) + '</td>' +
+                '<td>' + pval(r.noise_floor) + '</td>' +
+                '<td>' + pval(r.p_value) + '</td>' +
+                '<td>' + boolMark(r.is_material) + '</td>' +
+                '<td>' + famLabel(r.family) + '</td>' +
+            '</tr>';
+        }).join('');
+    }
+
+    function renderConformity(c){
+        var card = document.getElementById('ck-conformity-card');
+        var body = document.getElementById('ck-conformity-body');
+        if (!c || !c.present){ card.style.display = 'none'; return; }
+        card.style.display = 'block';
+        body.innerHTML = c.rows.map(function(r){
+            return '<tr>' +
+                '<td>' + esc(r.feature) + '</td>' +
+                '<td>' + num(r.mean, 3) + '</td>' +
+                '<td>' + num(r.median, 3) + '</td>' +
+                '<td>' + num(r.std, 3) + '</td>' +
+                '<td>' + num(r.min, 2) + '</td>' +
+                '<td>' + num(r.max, 2) + '</td>' +
+                '<td>' + (r.pct_out_of_bounds == null ? '—' : num(r.pct_out_of_bounds, 3) + ' %') + '</td>' +
+            '</tr>';
+        }).join('');
+    }
+
+    var STRAT_CATS = ['1_per_zone', '2_in_one_zone', '3_in_one_zone', 'libre'];
+    function pct(distrib, key){ var v = distrib && distrib[key]; return typeof v === 'number' ? v * 100 : 0; }
+
+    function renderStratification(st){
+        var card = document.getElementById('ck-strat-card');
+        if (!st || !st.present){ card.style.display = 'none'; return; }
+        card.style.display = 'block';
+        document.getElementById('ck-strat-jsd').innerHTML =
+            'Divergence de forme (JSD) : <b>' + num(st.jsd, 4) + '</b>';
+        var ctx = document.getElementById('ck-strat-chart').getContext('2d');
+        if (stratChart) stratChart.destroy();
+        stratChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: STRAT_CATS,
+                datasets: [
+                    { label: 'HYBRIDE', backgroundColor: 'rgba(34,197,94,0.75)',
+                      data: STRAT_CATS.map(function(k){ return pct(st.hybride, k); }) },
+                    { label: 'hasard', backgroundColor: 'rgba(148,163,184,0.65)',
+                      data: STRAT_CATS.map(function(k){ return pct(st.baseline, k); }) },
+                    { label: 'tirages réels', backgroundColor: 'rgba(56,189,248,0.70)',
+                      data: STRAT_CATS.map(function(k){ return pct(st.real, k); }) }
+                ]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, max: 100, ticks: { callback: function(v){ return v + ' %'; } } } },
+                plugins: { legend: { position: 'top' } }
+            }
+        });
+    }
+
+    function renderSecondary(sec){
+        var card = document.getElementById('ck-secondary-card');
+        var body = document.getElementById('ck-secondary-body');
+        if (!sec || !sec.present){ card.style.display = 'none'; return; }
+        card.style.display = 'block';
+        body.innerHTML = sec.rows.map(function(r){
+            return '<tr>' +
+                '<td>' + esc(r.feature) + '</td>' +
+                '<td>' + num(r.jsd, 4) + '</td>' +
+                '<td style="text-align:center">' + tierBadge(r.effect_tier) + '</td>' +
+                '<td>' + boolMark(r.is_material) + '</td>' +
+            '</tr>';
+        }).join('');
+        var disc = document.getElementById('ck-disclaimer');
+        if (sec.anj_disclaimer){
+            document.getElementById('ck-disclaimer-text').textContent = sec.anj_disclaimer;
+            disc.style.display = 'block';
+        } else { disc.style.display = 'none'; }
+    }
+
+    function renderDiff(diff, isComparative){
+        var card = document.getElementById('ck-diff-card');
+        if (!isComparative || !diff || !diff.present){ card.style.display = 'none'; return; }
+        card.style.display = 'block';
+        document.getElementById('ck-diff').innerHTML =
+            '<div><b>Δ gagnantes % global</b>' + num(diff.delta_gagnantes_pct_global, 3) + '</div>';
+    }
+
+    function render(d){
+        if (!d){ showError('Réponse vide'); return; }
+        if (d.error){ showError('Run non exploitable : ' + d.error); return; }
+        clearError();
+        results.style.display = 'block';
+        renderHeader(d.meta);
+        renderSignature(d.signature);
+        renderConformity(d.conformity);
+        renderStratification(d.stratification);
+        renderSecondary(d.secondary);
+        renderDiff(d.diff, d.is_comparative);
+    }
+
+    function upload(file){
+        if (!file) return;
+        clearError();
+        var fd = new FormData();
+        fd.append('file', file);
+        fetch('/admin/cockpit/analyze', { method: 'POST', body: fd })
+            .then(function(r){ return r.json().then(function(j){ return { status: r.status, body: j }; }); })
+            .then(function(res){
+                if (!res.body || res.body.ok !== true){
+                    showError((res.body && res.body.error) ? res.body.error : 'Erreur de traitement');
+                    return;
+                }
+                render(res.body.data);
+            })
+            .catch(function(e){ showError('Erreur réseau : ' + e); });
+    }
+
+    dz.addEventListener('click', function(){ fileInput.click(); });
+    fileInput.addEventListener('change', function(){ if (fileInput.files.length) upload(fileInput.files[0]); });
+    ['dragenter', 'dragover'].forEach(function(ev){
+        dz.addEventListener(ev, function(e){ e.preventDefault(); dz.classList.add('dragover'); });
+    });
+    ['dragleave', 'drop'].forEach(function(ev){
+        dz.addEventListener(ev, function(e){ e.preventDefault(); dz.classList.remove('dragover'); });
+    });
+    dz.addEventListener('drop', function(e){
+        if (e.dataTransfer && e.dataTransfer.files.length) upload(e.dataTransfer.files[0]);
+    });
+})();
+</script>
+{% endblock %}
