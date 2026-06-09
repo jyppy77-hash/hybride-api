@@ -7,7 +7,7 @@ HYBRIDE avec 2 configs (actuelle vs test), mesure :
   - Distribution stratification empirique
   - Ratio observé / hasard théorique
 
-Outputs : 1 JSON structuré + 3 PNG matplotlib dans `--output-dir`.
+Outputs : 1 JSON structuré + 6 PNG matplotlib dans `--output-dir`.
 
 ────────────────────────────────────────────────────────────────────────
 USAGE CLI
@@ -101,6 +101,7 @@ import statistics
 import sys
 import tempfile
 import time
+from collections import Counter
 from dataclasses import dataclass, field, asdict
 from datetime import date, datetime, timezone
 from math import comb
@@ -118,6 +119,7 @@ if str(_PROJECT_ROOT) not in sys.path:
 # ════════════════════════════════════════════════════════════════════════
 from config.engine import LOTO_CONFIG, EM_CONFIG, EngineConfig, LOTO_ZONES, EM_ZONES
 from engine.hybride_base import HybrideEngine
+from services.penalization import get_unpopularity_multiplier
 from db_cloudsql import get_connection, init_pool, close_pool
 # V_X.F LOT 2 — Briques signature statistique (LOT 1, livré)
 from tools.signature_features import (
@@ -154,6 +156,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402 — transitif via matplotlib, utilisé par LOT 3 plots
+from matplotlib.patches import Patch  # noqa: E402 — légende zones plot explicabilité
 
 logger = logging.getLogger("backtest_hybride")
 logging.basicConfig(
@@ -572,6 +575,13 @@ class BacktestHarness:
         # garde idx>0 : non-temporel, toutes les grilles comptent y compris idx=0).
         # Séparé de secondary_feature_values (n≈20000 vs n≈19900 pour *_in_T1).
         positional_feature_values: dict[str, list[float]] = {}
+        # PALIER 1 — explicabilité moteur : fréquence de génération par numéro
+        # + leviers internes par contexte (offline owner-only, zéro touche moteur).
+        freq_by_number: Counter = Counter()
+        freq_by_secondary: Counter = Counter()
+        hard_exclude_ctx: Counter = Counter()   # boules T-1 hard-exclude, par contexte
+        brake_ctx: Counter = Counter()          # boules sous brake V110, par contexte
+        n_contexts_with_history = 0             # contextes idx>0 (dénominateur fractions)
 
         virtual_history: list[VirtualGrid] = []
         t_start = time.monotonic()
@@ -609,6 +619,17 @@ class BacktestHarness:
                 logger.warning("Tirage %s skipped — generate_grids error: %s", tirage.draw_date, exc)
                 continue
 
+            # PALIER 1 — leviers internes PAR CONTEXTE (1×/tirage, succès only).
+            # recent[0] == T-1 (coeff pénalité 0.0 = hard-exclude) ; brake_balls =
+            # numéros sous brake V110. idx>0 garantit l'existence d'un T-1.
+            if idx > 0:
+                n_contexts_with_history += 1
+                if recent:
+                    for _i in range(1, 6):
+                        hard_exclude_ctx[recent[0][f"boule_{_i}"]] += 1
+                for _n in brake_balls:
+                    brake_ctx[_n] += 1
+
             # Determine the canonical grid (highest score, mirrors prod V137.B sort)
             canonical = grilles[0] if grilles else None
             if canonical is not None:
@@ -639,6 +660,13 @@ class BacktestHarness:
             # Aggregate metrics for ALL N grilles
             for grille in grilles:
                 total_grilles += 1
+                # PALIER 1 — fréquence de génération par numéro (boules + secondaire)
+                freq_by_number.update(grille.get("nums", []))
+                _sec = grille.get(self.base_config.secondary_name)
+                if isinstance(_sec, int):
+                    freq_by_secondary[_sec] += 1
+                elif isinstance(_sec, (list, tuple, set)):
+                    freq_by_secondary.update(_sec)
                 n_balls, n_secondary = self._compute_matches(grille, tirage)
                 palier = self._palier_atteint(n_balls, n_secondary)
                 if palier:
@@ -714,6 +742,11 @@ class BacktestHarness:
             self._attach_noise_floor(
                 tier2, feature_values, secondary_feature_values, positional_feature_values,
             )
+        # PALIER 1 — synthèse explicabilité moteur (fréquence + déviation + corrélations)
+        engine_explainability = self._compute_engine_explainability(
+            freq_by_number, freq_by_secondary,
+            hard_exclude_ctx, brake_ctx, n_contexts_with_history, total_grilles,
+        )
         by_construction = {
             "stratification": (
                 "1_per_zone forcée via _draw_stratified "
@@ -736,6 +769,165 @@ class BacktestHarness:
             "tier1": tier1,
             "tier2": tier2,
             "by_construction": by_construction,
+            # PALIER 1 — explicabilité moteur (fréquence par numéro, offline owner-only)
+            "engine_explainability": engine_explainability,
+        }
+
+    # ── PALIER 1 — Explicabilité moteur (fréquence par numéro) ────────────
+
+    def _zone_of(self, n: int) -> tuple[int, int] | None:
+        """Retourne la zone (lo, hi) contenant n, ou None si hors zones."""
+        for lo, hi in self.zones:
+            if lo <= n <= hi:
+                return (lo, hi)
+        return None
+
+    def _compute_engine_explainability(
+        self,
+        freq_by_number: Counter,
+        freq_by_secondary: Counter,
+        hard_exclude_ctx: Counter,
+        brake_ctx: Counter,
+        n_contexts_with_history: int,
+        total_grilles: int,
+    ) -> dict:
+        """PALIER 1 — Synthèse d'explicabilité moteur (offline owner-only).
+
+        Fréquence de GÉNÉRATION par numéro sur l'ensemble des grilles du run,
+        écart à l'uniforme (global + INTRA-ZONE pour les boules), top numéros,
+        et 4 corrélations descriptives avec des propriétés INTERNES du moteur
+        (zone, V106 impopularité, hard-exclude T-1, persistent brake V110).
+
+        ⚠️ GARDE-FOU ANJ : introspection PURE. Aucune donnée n'est rapprochée
+        d'un tirage réel/historique/futur. `correlation_with_*` = toujours une
+        propriété interne du moteur. Les fractions hard_exclude/persistent_brake
+        sont RELATIVES aux contextes de CE run, PAS des constantes du moteur.
+
+        Note sélection : le score d'un numéro pilote son POIDS de tirage ; le
+        choix final est stochastique (bruit + température + tirage stratifié).
+        La fréquence reflète la pondération intégrée, pas un choix déterministe.
+        """
+        cfg = self.base_config
+        num_range = range(cfg.num_min, cfg.num_max + 1)
+        n_balls_total = cfg.num_max - cfg.num_min + 1
+
+        def _dev(freq: int, exp: float) -> float:
+            return round((freq - exp) / exp, 6) if exp > 0 else 0.0
+
+        # ── Fréquence boules (toute la plage, zéros compris) ──
+        frequency_by_number = {str(n): int(freq_by_number.get(n, 0)) for n in num_range}
+
+        # Attendu uniforme GLOBAL : total_grilles × num_count / |plage|
+        uniform_exp = (
+            total_grilles * cfg.num_count / n_balls_total if n_balls_total else 0.0
+        )
+        deviation_from_uniform = {
+            str(n): _dev(freq_by_number.get(n, 0), uniform_exp) for n in num_range
+        }
+
+        # ── ⭐ Déviation INTRA-ZONE (signal réel boules) + zone ──
+        # _draw_stratified place exactement 1 numéro/zone/grille → chaque zone
+        # reçoit total_grilles sélections. Attendu intra-zone = total_grilles / |zone|.
+        deviation_from_uniform_intra_zone: dict[str, float] = {}
+        correlation_with_zone: dict[str, str] = {}
+        for n in num_range:
+            zone = self._zone_of(n)
+            if zone is None:
+                correlation_with_zone[str(n)] = "none"
+                deviation_from_uniform_intra_zone[str(n)] = 0.0
+                continue
+            lo, hi = zone
+            correlation_with_zone[str(n)] = f"{lo}-{hi}"
+            zone_size = hi - lo + 1
+            exp_zone = total_grilles / zone_size if zone_size else 0.0
+            deviation_from_uniform_intra_zone[str(n)] = _dev(
+                freq_by_number.get(n, 0), exp_zone,
+            )
+
+        top_numbers = [
+            {
+                "number": int(n),
+                "frequency": int(c),
+                "deviation_from_uniform": deviation_from_uniform[str(n)],
+                "deviation_from_uniform_intra_zone": deviation_from_uniform_intra_zone[str(n)],
+            }
+            for n, c in freq_by_number.most_common(5)
+        ]
+
+        # ── Corrélations internes boules ──
+        # V106 impopularité (boules only) — multiplicateur statique du moteur.
+        correlation_with_unpopularity = {
+            str(n): round(get_unpopularity_multiplier(n), 4) for n in num_range
+        }
+        # Fractions RELATIVES aux contextes de CE run (pas des constantes moteur).
+        denom = n_contexts_with_history
+        correlation_with_hard_exclude = {
+            str(n): round(hard_exclude_ctx.get(n, 0) / denom, 6) if denom else 0.0
+            for n in num_range
+        }
+        correlation_with_persistent_brake = {
+            str(n): round(brake_ctx.get(n, 0) / denom, 6) if denom else 0.0
+            for n in num_range
+        }
+
+        # ── Secondaire (étoiles EM / chance Loto) — PAS de stratification ──
+        sec_label = "star" if self.game == "em" else "chance"
+        freq_sec_key = f"frequency_by_{sec_label}"      # frequency_by_star / frequency_by_chance
+        top_sec_key = "top_stars" if self.game == "em" else "top_chance"
+        sec_range = range(cfg.secondary_min, cfg.secondary_max + 1)
+        n_sec_total = cfg.secondary_max - cfg.secondary_min + 1
+        frequency_by_secondary = {
+            str(s): int(freq_by_secondary.get(s, 0)) for s in sec_range
+        }
+        uniform_exp_sec = (
+            total_grilles * cfg.secondary_count / n_sec_total if n_sec_total else 0.0
+        )
+        deviation_from_uniform_secondary = {
+            str(s): _dev(freq_by_secondary.get(s, 0), uniform_exp_sec) for s in sec_range
+        }
+        top_sec_n = 2 if self.game == "em" else 3
+        top_secondary = [
+            {
+                "number": int(s),
+                "frequency": int(c),
+                "deviation_from_uniform": deviation_from_uniform_secondary[str(s)],
+            }
+            for s, c in freq_by_secondary.most_common(top_sec_n)
+        ]
+
+        return {
+            "total_grids": int(total_grilles),
+            "uniform_expectation_per_number": round(uniform_exp, 4),
+            "frequency_by_number": frequency_by_number,
+            "deviation_from_uniform": deviation_from_uniform,
+            "deviation_from_uniform_intra_zone": deviation_from_uniform_intra_zone,
+            "top_numbers": top_numbers,
+            freq_sec_key: frequency_by_secondary,
+            "uniform_expectation_per_secondary": round(uniform_exp_sec, 4),
+            "deviation_from_uniform_secondary": deviation_from_uniform_secondary,
+            top_sec_key: top_secondary,
+            "correlation_with_zone": correlation_with_zone,
+            "correlation_with_unpopularity": correlation_with_unpopularity,
+            "correlation_with_hard_exclude": correlation_with_hard_exclude,
+            "correlation_with_persistent_brake": correlation_with_persistent_brake,
+            "n_contexts_with_history": int(n_contexts_with_history),
+            "notes": {
+                "selection_is_stochastic": (
+                    "Le score d'un numéro pilote son POIDS de tirage ; le choix final "
+                    "est stochastique (bruit + température + tirage stratifié). La fréquence "
+                    "reflète la pondération intégrée, pas un choix déterministe."
+                ),
+                "decay_disabled_in_backtest": True,
+                "aggregates_200_contexts": (
+                    f"Les {int(total_grilles)} grilles = cascade de {self.n_tirages} tirages × "
+                    f"{self.n_grilles_per_tirage} grilles, chaque contexte ayant son brake/recent "
+                    "propre (pas un snapshot unique). correlation_with_hard_exclude et "
+                    "correlation_with_persistent_brake sont des FRACTIONS relatives aux "
+                    f"{int(n_contexts_with_history)} contextes de CE run, PAS des constantes du "
+                    "moteur — ne pas sur-interpréter en relecture."
+                ),
+                "unpopularity_boules_only": True,
+            },
         }
 
     def _stratification_empirique_real(self, tirages: list[TirageRecord]) -> dict[str, float]:
@@ -1769,6 +1961,101 @@ class BacktestHarness:
         plt.close(fig)
         logger.info("PNG exported : %s", path)
 
+    # ── PALIER 1 — Plot explicabilité moteur (déviation par numéro) ──────
+
+    def plot_engine_explainability(self, results: dict, path: str) -> None:
+        """PNG explicabilité moteur — déviation de génération par numéro.
+
+        2 panneaux : HAUT = déviation INTRA-ZONE par numéro (boules), barres +/-
+        colorées par zone, ligne à 0, annotation BILATÉRALE des extrêmes (3 sur-
+        générés + 3 sous-générés) — PAS de hit-list (forme de distribution, pas
+        « à jouer »). BAS = déviation globale secondaire (étoiles/chance).
+
+        ⚠️ ANJ : introspection moteur, titres/axes NEUTRES, aucun rapprochement
+        tirage réel. Lit engine_explainability (palier 1), ne recalcule rien.
+        Skip gracieux si la clé est absente (vieux JSON).
+        """
+        expl = results["results_config_actuelle"].get("engine_explainability")
+        if not expl:
+            logger.warning("plot_engine_explainability: engine_explainability absent — skipped")
+            return
+        meta, cfg = results["metadata"], self.base_config
+
+        # Boules : déviation intra-zone, couleur par zone
+        nums = list(range(cfg.num_min, cfg.num_max + 1))
+        dev_iz = expl["deviation_from_uniform_intra_zone"]
+        zone_of = expl["correlation_with_zone"]
+        devs = [dev_iz.get(str(n), 0.0) for n in nums]
+        zone_palette = ["#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd"]
+        zone_labels = [f"{lo}-{hi}" for lo, hi in self.zones]
+        zone_color = {lbl: zone_palette[i % len(zone_palette)] for i, lbl in enumerate(zone_labels)}
+        bar_colors = [zone_color.get(zone_of.get(str(n), "none"), "#999999") for n in nums]
+
+        # Secondaire : déviation globale
+        sec_label = "étoiles" if self.game == "em" else "chance"
+        sec_map = expl.get("deviation_from_uniform_secondary", {})
+        sec_nums = sorted(int(k) for k in sec_map)
+        sec_devs = [sec_map[str(s)] for s in sec_nums]
+
+        fig, (ax_top, ax_bot) = plt.subplots(
+            2, 1, figsize=(16, 9), dpi=120, gridspec_kw={"height_ratios": [3, 1]},
+        )
+        # Haut — boules
+        ax_top.bar(nums, devs, color=bar_colors, width=0.8)
+        ax_top.axhline(0, color="#333", linewidth=0.8)
+        ax_top.set_xlabel("Numéro")
+        ax_top.set_ylabel("Déviation vs uniforme dans la zone")
+        ax_top.set_title(
+            f"Fréquence de génération HYBRIDE — déviation intra-zone par numéro — "
+            f"{meta['game'].upper()}",
+            fontsize=13,
+        )
+        ax_top.set_xlim(cfg.num_min - 1, cfg.num_max + 1)
+        # Marge Y : dégage la légende (haut) et les annotations (bas) des barres,
+        # sans déplacer la légende. Plancher 0.12 pour les runs très plats.
+        ymin, ymax = min(devs + [0.0]), max(devs + [0.0])
+        pad = max(0.12, (ymax - ymin) * 0.18)
+        ax_top.set_ylim(ymin - pad, ymax + pad)
+        ax_top.legend(
+            handles=[Patch(color=zone_color[lbl], label=f"zone {lbl}") for lbl in zone_labels],
+            fontsize=8, ncol=len(zone_labels), loc="upper right",
+        )
+        # Annotation BILATÉRALE des extrêmes (3 hauts + 3 bas) — pas de hit-list
+        order = sorted(nums, key=lambda n: dev_iz.get(str(n), 0.0))
+        for n in set(order[:3]) | set(order[-3:]):
+            d = dev_iz.get(str(n), 0.0)
+            ax_top.annotate(
+                f"{n} ({d:+.2f})", xy=(n, d),
+                xytext=(0, 6 if d >= 0 else -12), textcoords="offset points",
+                ha="center", fontsize=7, color="#222",
+            )
+        # Bas — secondaire
+        if sec_nums:
+            ax_bot.bar(
+                sec_nums, sec_devs,
+                color=["#2ca02c" if v >= 0 else "#d62728" for v in sec_devs], width=0.7,
+            )
+            ax_bot.axhline(0, color="#333", linewidth=0.8)
+            ax_bot.set_xticks(sec_nums)
+        ax_bot.set_xlabel(f"Numéro {sec_label}")
+        ax_bot.set_ylabel("Déviation vs uniforme global")
+        ax_bot.set_title(
+            f"Déviation de génération — {sec_label} ({meta['game'].upper()})", fontsize=11,
+        )
+
+        fig.text(
+            0.5, 0.005,
+            f"Harness {meta['harness_version']}  |  {meta['run_at']}  |  "
+            f"{expl.get('total_grids', 0):,} grilles générées — introspection moteur "
+            "(génération HYBRIDE), sans rapport avec un tirage réel",
+            ha="center", fontsize=8, color="#666",
+        )
+        fig.tight_layout(rect=(0, 0.02, 1, 1))
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(path, bbox_inches="tight")
+        plt.close(fig)
+        logger.info("PNG exported : %s", path)
+
 
 # ════════════════════════════════════════════════════════════════════════
 # CLI entrypoint
@@ -1864,6 +2151,8 @@ async def _main_async(args: argparse.Namespace) -> int:
     # V_X.F LOT 3 — restitution signature statistique (config_actuelle uniquement)
     signature_dist_png = output_dir / f"{args.game}_signature_distributions.png"
     signature_summary_png = output_dir / f"{args.game}_signature_summary.png"
+    # PALIER 1 — PNG explicabilité moteur (déviation de génération par numéro)
+    explainability_png = output_dir / f"{args.game}_explainability.png"
 
     harness.export_json(results, str(json_path))
     harness.plot_palier_distribution(results, str(palier_png))
@@ -1872,8 +2161,10 @@ async def _main_async(args: argparse.Namespace) -> int:
     # V_X.F LOT 3 — 2 nouveaux plots additifs
     harness.plot_signature_distributions(results, str(signature_dist_png))
     harness.plot_signature_summary(results, str(signature_summary_png))
+    # PALIER 1 — plot explicabilité additif
+    harness.plot_engine_explainability(results, str(explainability_png))
 
-    logger.info("Outputs : %s + 5 PNG dans %s", json_path.name, output_dir)
+    logger.info("Outputs : %s + 6 PNG dans %s", json_path.name, output_dir)
     return 0
 
 
