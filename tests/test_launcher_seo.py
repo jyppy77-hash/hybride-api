@@ -209,5 +209,6 @@ class TestVersion:
         # Fix CSP connect-src gateway.umami.is bump : 1.6.041 → 1.6.042 (07/06/2026 — Umami a basculé son POST /api/send sur gateway.umami.is, absent de connect-src → collecte cassée silencieusement ~05/06 sans push ; fix main.py connect-src, anciens cloud.umami.is/api-gateway.umami.dev conservés ; push GROUPÉ avec 5 commits R&D offline V_X.F outillage tools/ inertes runtime web)
         # Cockpit Métrique V_X.F bump : 1.6.042 → 1.6.043 (08/06/2026 — page admin /admin/cockpit read-only, parser stateless normalize_run, mur étanche tools/ <-> runtime web, aucun import tools.* runtime)
         # Export PDF cockpit + lien nav bump : 1.6.043 → 1.6.044 (08/06/2026 — bouton « Exporter en PDF » sur /admin/cockpit, POST /admin/cockpit/pdf owner-only re-POST JSON brut → generate_cockpit_pdf Platypus FR-only diffusion-grade, histogramme strato matplotlib Agg → io.BytesIO sans temp file disque, disclaimer ANJ toujours présent + framing neutre ; lien « Cockpit » topnav _base.html ; /analyze byte-identique ; mur étanche cockpit_pdf_generator 0 import tools.*)
+        # Panneau Empreinte de génération HYBRIDE bump : 1.6.044 → 1.6.045 (09/06/2026 — étage explicabilité moteur ÉCRAN admin /admin/cockpit lisant engine_explainability, encadré « Lecture rapide » structurel zéro chiffre ANJ, confinement PDF prouvé inchangé, mur étanche cockpit_parser 0 import tools.*)
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.044"
+        assert APP_VERSION == "1.6.045"

@@ -14,8 +14,14 @@ GARDE-FOU ABSOLU — MUR ÉTANCHE tools/ <-> runtime :
     build si un fichier runtime importe tools).
 
 Principe défensif : les vieux runs ont un schéma réduit (pas de secondary, pas
-de stratification, pas de effect_tier, pas de noise_floor). Chaque étage porte
-un flag `present: bool`. Tout est lu via .get(...) — jamais de KeyError.
+de stratification, pas de effect_tier, pas de noise_floor, pas d'explicabilité
+moteur). Chaque étage porte un flag `present: bool`. Tout est lu via .get(...) —
+jamais de KeyError.
+
+CONFINEMENT PDF : l'étage `explainability` (empreinte de génération par numéro)
+est ajouté au view-model mais N'EST JAMAIS rendu par cockpit_pdf_generator.py
+(liste blanche de clés explicite, comme `diff` déjà présent et non rendu). Le
+panneau explicabilité reste donc ÉCRAN admin uniquement.
 
 Read-only / stateless : aucune écriture, aucun état module, aucun I/O.
 """
@@ -53,6 +59,7 @@ def _degraded(error: str = _DEGRADED_ERROR) -> dict:
         "stratification": {"present": False, "jsd": None,
                            "hybride": {}, "baseline": {}, "real": {}},
         "secondary": {"present": False, "rows": [], "anj_disclaimer": None},
+        "explainability": {"present": False},
         "diff": {"present": False, "delta_gagnantes_pct_global": None,
                  "delta_stratification": None, "config_actuelle": {}, "config_test": {}},
         "error": error,
@@ -182,6 +189,190 @@ def _build_secondary(t2: dict) -> dict:
     }
 
 
+# ── ÉTAGE Empreinte — explicabilité moteur (palier 1, ÉCRAN admin uniquement) ──
+
+def _int_keys(d: dict) -> list:
+    """Clés '12' → 12, triées croissant. Ignore les clés non entières."""
+    out = []
+    for k in d or {}:
+        try:
+            out.append(int(k))
+        except (TypeError, ValueError):
+            continue
+    return sorted(out)
+
+
+def _zone_position_label(zone_str, ordered_zones) -> str:
+    """Position QUALITATIVE d'une zone, SANS chiffre (garde-fou ANJ encadré).
+
+    L'encadré « Lecture rapide » ne doit jamais nommer un numéro ni contenir de
+    chiffre — on décrit donc la zone par sa position relative dans la grille.
+    """
+    if zone_str not in ordered_zones:
+        return "l'ensemble de la grille"
+    k = len(ordered_zones)
+    if k <= 1:
+        return "l'ensemble de la grille"
+    frac = ordered_zones.index(zone_str) / (k - 1)
+    if frac < 0.34:
+        return "le bas de la grille"
+    if frac < 0.67:
+        return "le centre de la grille"
+    return "le haut de la grille"
+
+
+def _qual_level(x, lo: float, hi: float):
+    """Niveau qualitatif sans chiffre : faible / modéré / fort. None si non num."""
+    if not isinstance(x, (int, float)) or isinstance(x, bool):
+        return None
+    if x < lo:
+        return "faible"
+    if x < hi:
+        return "modéré"
+    return "fort"
+
+
+def _build_lecture_rapide(expl, ordered_zones, dev_iz, corr_hx, corr_brake) -> list:
+    """Synthèse STRUCTURELLE — JAMAIS un numéro, JAMAIS un chiffre (ANJ §0.3).
+
+    Décrit zones / leviers / dispersion en mots. Chaque ligne satisfait
+    `not any(c.isdigit())` (testé). Réutilisable plus tard pour un PDF diffusable
+    (mais hors de ce lot : écran admin uniquement).
+    """
+    zone_by = expl.get("correlation_with_zone") or {}
+    lines = []
+
+    # 1) Zone concentrant la surpondération (somme des déviations intra-zone > 0)
+    zone_pos = {}
+    for n_str, dev in (dev_iz or {}).items():
+        z = zone_by.get(n_str)
+        if (z and z != "none" and isinstance(dev, (int, float))
+                and not isinstance(dev, bool) and dev > 0):
+            zone_pos[z] = zone_pos.get(z, 0.0) + dev
+    if zone_pos:
+        top_zone = max(zone_pos, key=zone_pos.get)
+        lines.append("La surpondération de génération se concentre vers "
+                     + _zone_position_label(top_zone, ordered_zones) + ".")
+
+    # 2) Dispersion intra-zone (amplitude max - min)
+    vals = [v for v in (dev_iz or {}).values()
+            if isinstance(v, (int, float)) and not isinstance(v, bool)]
+    if vals:
+        lvl = _qual_level(max(vals) - min(vals), 0.15, 0.40)
+        if lvl == "fort":
+            lines.append("Dispersion intra-zone marquée : préférences structurelles nettes "
+                         "au-delà de la contrainte d'un numéro par zone.")
+        elif lvl == "modéré":
+            lines.append("Dispersion intra-zone modérée au-delà de la contrainte "
+                         "d'un numéro par zone.")
+        elif lvl == "faible":
+            lines.append("Dispersion intra-zone faible : génération proche de l'uniforme "
+                         "intra-zone.")
+
+    # 3) Levier d'exclusion du tirage précédent (hard-exclude T-1)
+    hx = [v for v in (corr_hx or {}).values()
+          if isinstance(v, (int, float)) and not isinstance(v, bool)]
+    if hx:
+        lvl = _qual_level(sum(hx) / len(hx), 0.05, 0.20)
+        if lvl:
+            lines.append("Levier d'exclusion du tirage précédent actif à un niveau "
+                         + lvl + ".")
+
+    # 4) Frein persistant inter-tirages (V110)
+    bk = [v for v in (corr_brake or {}).values()
+          if isinstance(v, (int, float)) and not isinstance(v, bool)]
+    if bk and any(v > 0 for v in bk):
+        lvl = _qual_level(sum(bk) / len(bk), 0.05, 0.20)
+        if lvl:
+            lines.append("Frein persistant inter-tirages actif à un niveau " + lvl + ".")
+    elif bk:
+        lines.append("Frein persistant inter-tirages inactif sur ce run.")
+
+    return lines
+
+
+def _build_explainability(rca: dict) -> dict:
+    """ÉTAGE Empreinte — lit rca['engine_explainability'] (palier 1, offline).
+
+    Frère de tier1/tier2 (PAS sous tier2). Game-agnostique : le secondaire EM
+    (étoiles) / Loto (chance) est normalisé en clés neutres (secondary_label +
+    secondary_rows fusionnées numéro|fréquence|déviation). Défensif : vieux run
+    sans la clé → present=False (carte masquée, zéro crash).
+
+    Aucun import tools.* : lit uniquement le dict déjà parsé (mur étanche).
+    """
+    expl = rca.get("engine_explainability") or {}
+    if not expl:
+        return {"present": False}
+
+    dev_iz = expl.get("deviation_from_uniform_intra_zone") or {}
+    dev_g = expl.get("deviation_from_uniform") or {}
+    freq = expl.get("frequency_by_number") or {}
+    zone_by = expl.get("correlation_with_zone") or {}
+
+    numbers = _int_keys(dev_iz) or _int_keys(freq)
+
+    # Ordre canonique des zones (tri par borne basse) — pour la position qualitative
+    uniq = {z for z in zone_by.values() if z and z != "none"}
+
+    def _zlo(z):
+        try:
+            return int(str(z).split("-")[0])
+        except (ValueError, IndexError):
+            return 1 << 30
+
+    ordered_zones = sorted(uniq, key=_zlo)
+
+    # Bloc B — top boules enrichi de la zone
+    top_numbers = []
+    for r in expl.get("top_numbers") or []:
+        if not isinstance(r, dict):
+            continue
+        n = r.get("number")
+        top_numbers.append({
+            "number": n,
+            "frequency": r.get("frequency"),
+            "deviation_from_uniform": _f(r.get("deviation_from_uniform")),
+            "deviation_from_uniform_intra_zone": _f(r.get("deviation_from_uniform_intra_zone")),
+            "zone": zone_by.get(str(n)),
+        })
+
+    # Secondaire game-agnostique — UNE seule mini-table (numéro|fréquence|déviation)
+    secondary_label = "star" if ("top_stars" in expl or "frequency_by_star" in expl) else "chance"
+    freq_sec = expl.get("frequency_by_star" if secondary_label == "star" else "frequency_by_chance") or {}
+    dev_sec = expl.get("deviation_from_uniform_secondary") or {}
+    secondary_rows = [
+        {
+            "number": s,
+            "frequency": freq_sec.get(str(s)),
+            "deviation_from_uniform": _f(dev_sec.get(str(s))),
+        }
+        for s in (_int_keys(dev_sec) or _int_keys(freq_sec))
+    ]
+
+    lecture_rapide = _build_lecture_rapide(
+        expl, ordered_zones, dev_iz,
+        expl.get("correlation_with_hard_exclude"),
+        expl.get("correlation_with_persistent_brake"),
+    )
+
+    return {
+        "present": True,
+        "total_grids": _f(expl.get("total_grids")),
+        "uniform_expectation_per_number": _f(expl.get("uniform_expectation_per_number")),
+        "ordered_zones": ordered_zones,
+        "chart_numbers": numbers,
+        "chart_deviation_intra_zone": [_f(dev_iz.get(str(n))) for n in numbers],
+        "chart_deviation_global": [_f(dev_g.get(str(n))) for n in numbers],
+        "chart_zones": [zone_by.get(str(n)) for n in numbers],
+        "top_numbers": top_numbers,
+        "secondary_label": secondary_label,
+        "secondary_rows": secondary_rows,
+        "notes": expl.get("notes") or {},
+        "lecture_rapide": lecture_rapide,
+    }
+
+
 def normalize_run(raw: dict) -> dict:
     """Normalise un JSON de run OOS V_X.F en view-model stable, défensif aux
     schémas partiels.
@@ -216,6 +407,7 @@ def normalize_run(raw: dict) -> dict:
         "conformity": _build_conformity(rca),
         "stratification": _build_stratification(t2, raw),
         "secondary": _build_secondary(t2),
+        "explainability": _build_explainability(rca),
         "diff": diff,
         "error": None,
     }

@@ -25,6 +25,7 @@ from starlette.testclient import TestClient
 from services.cockpit_pdf_generator import (
     generate_cockpit_pdf,
     _render_stratification_histogram,
+    _render_explainability_chart,
     _build_blocks,
     _blocks_text,
     _ANJ_FALLBACK,
@@ -39,8 +40,10 @@ _db_env = patch.dict(os.environ, {
     "ADMIN_TOKEN": _TEST_TOKEN, "ADMIN_PASSWORD": "testpw",
 })
 
-# Mots bannis hors disclaimer (framing ANJ strict).
+# Mots bannis hors disclaimer/banner (framing ANJ strict).
 _FORBIDDEN = ("performance", "prédiction", "gain", "avantage")
+# Vocabulaire « hit-list » banni partout hors disclaimer/banner (section explicabilité).
+_FORBIDDEN_HITLIST = ("à jouer", "probable", "gagnant", "sélection", "favorable")
 
 
 # ── Fixtures inline ──────────────────────────────────────────────────────────
@@ -95,8 +98,42 @@ def _full_run():
                     "stratification": {"noise_floor": 4.8e-05, "p_value": 0.0001},
                 },
             },
+            "engine_explainability": {
+                "total_grids": 20000,
+                "uniform_expectation_per_number": 2040.0,
+                "frequency_by_number": {"1": 1000, "2": 3000, "3": 2040},
+                "deviation_from_uniform": {"1": -0.5, "2": 0.47, "3": 0.0},
+                "deviation_from_uniform_intra_zone": {"1": -0.4, "2": 0.5, "3": 0.0},
+                "top_numbers": [
+                    {"number": 2, "frequency": 3000, "deviation_from_uniform": 0.47,
+                     "deviation_from_uniform_intra_zone": 0.5},
+                    {"number": 3, "frequency": 2040, "deviation_from_uniform": 0.0,
+                     "deviation_from_uniform_intra_zone": 0.0},
+                ],
+                "frequency_by_chance": {"1": 1900, "2": 2100, "3": 2000},
+                "uniform_expectation_per_secondary": 2000.0,
+                "deviation_from_uniform_secondary": {"1": -0.05, "2": 0.05, "3": 0.0},
+                "top_chance": [{"number": 2, "frequency": 2100, "deviation_from_uniform": 0.05}],
+                "correlation_with_zone": {"1": "1-10", "2": "1-10", "3": "11-20"},
+                "correlation_with_unpopularity": {"1": 1.0, "2": 1.1, "3": 1.0},
+                "correlation_with_hard_exclude": {"1": 0.30, "2": 0.25, "3": 0.10},
+                "correlation_with_persistent_brake": {"1": 0.10, "2": 0.0, "3": 0.05},
+                "n_contexts_with_history": 198,
+                "notes": {
+                    "selection_is_stochastic": "Le score pilote le POIDS de tirage ; choix stochastique.",
+                    "decay_disabled_in_backtest": True,
+                    "aggregates_200_contexts": "Cascade de 200 tirages x 100 grilles.",
+                    "unpopularity_boules_only": True,
+                },
+            },
         },
     }
+
+
+def _run_no_explainability():
+    run = _full_run()
+    run["results_config_actuelle"].pop("engine_explainability", None)
+    return run
 
 
 def _run_no_secondary():
@@ -182,13 +219,13 @@ class TestContentAndFraming:
         assert any("artefact de construction" in t for t in disc)
 
     def test_neutral_framing_outside_disclaimers(self):
-        # Les mots bannis n'apparaissent QUE dans les blocs 'disclaimer'
+        # Les mots bannis n'apparaissent QUE dans les blocs 'disclaimer'/'banner'
         # (cadre légal, employés en négation). Partout ailleurs : 0 occurrence.
         blocks = _build_blocks(_normalize(_full_run()))
-        non_disc = [t.lower() for k, t in _blocks_text(blocks) if k != "disclaimer"]
+        non_disc = [t.lower() for k, t in _blocks_text(blocks) if k not in ("disclaimer", "banner")]
         joined = " ".join(non_disc)
         for word in _FORBIDDEN:
-            assert word not in joined, f"mot interdit hors disclaimer : {word!r}"
+            assert word not in joined, f"mot interdit hors disclaimer/banner : {word!r}"
 
     def test_effect_tier_labels_neutralized(self):
         blocks = _build_blocks(_normalize(_full_run()))
@@ -197,6 +234,69 @@ class TestContentAndFraming:
         # Le code interne effect_tier ne fuit pas tel quel dans une cellule.
         cells = [t for k, t in _blocks_text(blocks) if k == "table"]
         assert "materiel_fort" not in cells
+
+
+# ── Section Empreinte de génération (explicabilité moteur, archivage interne) ──
+
+class TestExplainabilitySection:
+
+    def test_section_present_with_banner_and_neutral_title(self):
+        blocks = _build_blocks(_normalize(_full_run()))
+        texts = _blocks_text(blocks)
+        banners = [t for k, t in texts if k == "banner"]
+        assert any("DOCUMENT INTERNE" in t for t in banners)
+        assert any("Ne pas diffuser" in t for t in banners)
+        joined = " ".join(t for _, t in texts)
+        assert "Empreinte de génération HYBRIDE — signature de construction" in joined
+        assert "Déviation intra-zone par numéro" in joined
+
+    def test_lecture_rapide_box_present_before_tables(self):
+        # L'encadré structurel (note_box) précède la 1re table de la section.
+        blocks = _build_blocks(_normalize(_full_run()))
+        kinds = [k for k, _ in _blocks_text(blocks)]
+        assert "note_box" in kinds
+        assert "banner" in kinds
+        assert kinds.index("banner") < kinds.index("note_box")
+
+    def test_section_skipped_when_explainability_absent(self):
+        vm = _normalize(_run_no_explainability())
+        assert vm["explainability"]["present"] is False
+        blocks = _build_blocks(vm)
+        joined = " ".join(t for _, t in _blocks_text(blocks))
+        assert "DOCUMENT INTERNE" not in joined
+        buf = generate_cockpit_pdf(vm)
+        assert buf.getvalue()[:4] == b"%PDF"
+
+    def test_full_run_with_explainability_renders_pdf(self):
+        buf = generate_cockpit_pdf(_normalize(_full_run()))
+        assert buf.getvalue()[:4] == b"%PDF"
+
+    def test_no_hitlist_vocab_outside_disclaimers(self):
+        blocks = _build_blocks(_normalize(_full_run()))
+        non_disc = [t.lower() for k, t in _blocks_text(blocks) if k not in ("disclaimer", "banner")]
+        joined = " ".join(non_disc)
+        for word in _FORBIDDEN_HITLIST:
+            assert word not in joined, f"vocabulaire hit-list interdit : {word!r}"
+
+
+class TestExplainabilityChart:
+
+    def test_returns_png_bytesio(self):
+        vm = _normalize(_full_run())
+        buf = _render_explainability_chart(vm["explainability"])
+        data = buf.getvalue()
+        assert data[:8] == b"\x89PNG\r\n\x1a\n"
+        assert len(data) > 1000
+
+    def test_no_tempfile_written(self):
+        vm = _normalize(_full_run())
+        with patch("tempfile.NamedTemporaryFile") as ntf:
+            _render_explainability_chart(vm["explainability"])
+            ntf.assert_not_called()
+
+    def test_empty_explainability_no_crash(self):
+        buf = _render_explainability_chart({})
+        assert buf.getvalue()[:8] == b"\x89PNG\r\n\x1a\n"
 
 
 # ── Endpoint POST /admin/cockpit/pdf ──────────────────────────────────────────

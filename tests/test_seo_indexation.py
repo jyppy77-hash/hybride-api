@@ -1021,9 +1021,13 @@ class TestAppVersion:
         PDF » → POST /admin/cockpit/pdf owner-only → generate_cockpit_pdf (Platypus FR-only,
         histogramme strato matplotlib Agg → io.BytesIO sans temp file, disclaimer ANJ toujours
         présent, framing neutre). Lien « Cockpit » topnav _base.html. /analyze byte-identique.
+        Panneau Empreinte de génération HYBRIDE (09/06, Release 1.6.045) — étage explicabilité
+        moteur ÉCRAN admin /admin/cockpit lisant engine_explainability (bar chart déviation
+        intra-zone, table top, mini-table secondaire, notes, encadré « Lecture rapide »
+        structurel zéro chiffre ANJ). Confinement PDF prouvé : cockpit_pdf_generator inchangé.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.044"
+        assert APP_VERSION == "1.6.045"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

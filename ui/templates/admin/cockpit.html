@@ -53,6 +53,7 @@
         background: rgba(56,189,248,0.08); border:1px solid rgba(56,189,248,0.30); color:#bae6fd;
     }
     .ck-disclaimer b { display:block; margin-bottom:4px; }
+    .ck-disclaimer p { margin:0 0 6px; }
     .ck-toolbar { display:flex; justify-content:flex-end; margin-bottom:18px; }
     .ck-btn {
         background: rgba(56,189,248,0.14); border:1px solid rgba(56,189,248,0.45);
@@ -143,6 +144,45 @@
             </div>
         </div>
 
+        <!-- Étage Empreinte — Explicabilité moteur (ÉCRAN admin uniquement, hors PDF) -->
+        <div class="ck-card" id="ck-expl-card" style="display:none">
+            <h3>Empreinte de génération HYBRIDE — signature de construction</h3>
+
+            <!-- Encadré Lecture rapide (STRUCTURE, jamais de numéro) -->
+            <div class="ck-disclaimer" id="ck-expl-lecture" style="display:none">
+                <b>Lecture rapide (structure)</b>
+                <ul id="ck-expl-lecture-list" style="margin:6px 0 0; padding-left:18px"></ul>
+            </div>
+
+            <!-- Bloc A — déviation intra-zone par numéro -->
+            <p class="ck-strat-title" style="margin-top:14px">Déviation intra-zone de génération par numéro
+                <b id="ck-expl-grids"></b></p>
+            <div class="ck-chart-wrap"><canvas id="ck-expl-chart"></canvas></div>
+
+            <!-- Bloc B — numéros les plus générés -->
+            <p class="ck-strat-title" style="margin-top:20px">Numéros les plus générés</p>
+            <table class="ck-table">
+                <thead><tr>
+                    <th>Numéro</th><th>Fréquence</th><th>Déviation globale</th>
+                    <th>Déviation intra-zone</th><th>Zone</th>
+                </tr></thead>
+                <tbody id="ck-expl-top-body"></tbody>
+            </table>
+
+            <!-- Bloc C — déviation de génération du secondaire (mini-table fusionnée) -->
+            <p class="ck-strat-title" style="margin-top:20px" id="ck-expl-sec-title"></p>
+            <table class="ck-table">
+                <thead><tr><th>Numéro</th><th>Fréquence</th><th>Déviation</th></tr></thead>
+                <tbody id="ck-expl-secdev-body"></tbody>
+            </table>
+
+            <!-- Bloc D — notes d'honnêteté (non masquable si présentes) -->
+            <div class="ck-disclaimer" id="ck-expl-notes" style="display:none; margin-top:14px">
+                <b>Notes d'honnêteté</b>
+                <div id="ck-expl-notes-body"></div>
+            </div>
+        </div>
+
         <!-- Diff A/B (masqué sauf run comparatif) -->
         <div class="ck-card" id="ck-diff-card" style="display:none">
             <h3>Diff A/B (run comparatif)</h3>
@@ -163,6 +203,7 @@
     var results = document.getElementById('cockpit-results');
     var exportBtn = document.getElementById('ck-export-pdf');
     var stratChart = null;
+    var explChart = null;
     var lastFile = null;
 
     function showError(msg){ errBox.textContent = msg; errBox.style.display = 'block'; results.style.display = 'none'; }
@@ -303,6 +344,89 @@
         } else { disc.style.display = 'none'; }
     }
 
+    // Palette de zones (bloc A) — coloration des barres par zone de la grille.
+    var ZONE_PALETTE = ['#22c55e','#38bdf8','#f59e0b','#a78bfa','#ef4444','#14b8a6','#eab308'];
+
+    function renderExplainability(e){
+        var card = document.getElementById('ck-expl-card');
+        if (!e || !e.present){ card.style.display = 'none'; return; }
+        card.style.display = 'block';
+
+        // Encadré Lecture rapide (structure, jamais un numéro)
+        var lr = document.getElementById('ck-expl-lecture');
+        var lines = e.lecture_rapide || [];
+        if (lines.length){
+            document.getElementById('ck-expl-lecture-list').innerHTML =
+                lines.map(function(s){ return '<li>' + esc(s) + '</li>'; }).join('');
+            lr.style.display = 'block';
+        } else { lr.style.display = 'none'; }
+
+        document.getElementById('ck-expl-grids').textContent =
+            e.total_grids != null ? '(' + num(e.total_grids) + ' grilles)' : '';
+
+        // Bloc A — bar chart déviation intra-zone, coloré par zone
+        var cmap = {};
+        (e.ordered_zones || []).forEach(function(z, i){ cmap[z] = ZONE_PALETTE[i % ZONE_PALETTE.length]; });
+        var colors = (e.chart_zones || []).map(function(z){ return cmap[z] || '#64748b'; });
+        var ctx = document.getElementById('ck-expl-chart').getContext('2d');
+        if (explChart) explChart.destroy();
+        explChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: e.chart_numbers || [],
+                datasets: [{
+                    label: 'déviation intra-zone',
+                    backgroundColor: colors,
+                    data: e.chart_deviation_intra_zone || []
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { title: { display: true, text: 'déviation au modèle uniforme intra-zone' } } }
+            }
+        });
+
+        // Bloc B — numéros les plus générés
+        document.getElementById('ck-expl-top-body').innerHTML = (e.top_numbers || []).map(function(r){
+            return '<tr>' +
+                '<td>' + esc(r.number) + '</td>' +
+                '<td>' + num(r.frequency) + '</td>' +
+                '<td>' + num(r.deviation_from_uniform, 4) + '</td>' +
+                '<td>' + num(r.deviation_from_uniform_intra_zone, 4) + '</td>' +
+                '<td>' + (r.zone ? esc(r.zone) : '—') + '</td>' +
+            '</tr>';
+        }).join('');
+
+        // Bloc C — déviation secondaire (mini-table fusionnée numéro|fréquence|déviation)
+        var secName = e.secondary_label === 'star' ? 'étoiles' : 'chance';
+        document.getElementById('ck-expl-sec-title').textContent =
+            'Déviation de génération du secondaire (' + secName + ')';
+        document.getElementById('ck-expl-secdev-body').innerHTML = (e.secondary_rows || []).map(function(r){
+            return '<tr>' +
+                '<td>' + esc(r.number) + '</td>' +
+                '<td>' + num(r.frequency) + '</td>' +
+                '<td>' + num(r.deviation_from_uniform, 4) + '</td>' +
+            '</tr>';
+        }).join('');
+
+        // Bloc D — notes d'honnêteté
+        var n = e.notes || {};
+        var parts = [];
+        if (n.selection_is_stochastic) parts.push('<p>' + esc(n.selection_is_stochastic) + '</p>');
+        if (n.aggregates_200_contexts) parts.push('<p>' + esc(n.aggregates_200_contexts) + '</p>');
+        var bullets = [];
+        if (n.decay_disabled_in_backtest === true) bullets.push('Decay désactivé en backtest.');
+        if (n.unpopularity_boules_only === true) bullets.push('Impopularité appliquée aux boules uniquement.');
+        if (bullets.length) parts.push('<ul style="margin:6px 0 0; padding-left:18px">' +
+            bullets.map(function(b){ return '<li>' + esc(b) + '</li>'; }).join('') + '</ul>');
+        var notesBox = document.getElementById('ck-expl-notes');
+        if (parts.length){
+            document.getElementById('ck-expl-notes-body').innerHTML = parts.join('');
+            notesBox.style.display = 'block';
+        } else { notesBox.style.display = 'none'; }
+    }
+
     function renderDiff(diff, isComparative){
         var card = document.getElementById('ck-diff-card');
         if (!isComparative || !diff || !diff.present){ card.style.display = 'none'; return; }
@@ -321,6 +445,7 @@
         renderConformity(d.conformity);
         renderStratification(d.stratification);
         renderSecondary(d.secondary);
+        renderExplainability(d.explainability);
         renderDiff(d.diff, d.is_comparative);
     }
 

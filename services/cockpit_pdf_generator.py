@@ -100,6 +100,15 @@ _FAMILY_FR = {"primary": "forme", "secondary": "secondaire", "stratification": "
 _ZONES = ["1_per_zone", "2_in_one_zone", "3_in_one_zone", "libre"]
 _ZONE_LABELS_FR = ["1 par zone", "2 dans une zone", "3 dans une zone", "libre"]
 
+# Bandeau gravé — section explicabilité (ARCHIVAGE TECHNIQUE INTERNE). Affiché EN
+# TÊTE de la section, fond ambre contrasté. Contient « prédiction » (en négation,
+# cadre ANJ) → classé kind 'banner', exclu du framing comme les disclaimers.
+_EXPL_BANNER = (
+    "DOCUMENT INTERNE — ARCHIVAGE TECHNIQUE · Empreinte de génération du moteur "
+    "(introspection), sans rapport avec un tirage réel ou une quelconque prédiction. "
+    "Ne pas diffuser."
+)
+
 
 # ── Couleurs & styles ────────────────────────────────────────────────────────
 
@@ -127,6 +136,15 @@ _CELL = ParagraphStyle('CkCell', fontName='DejaVuSans', fontSize=8, textColor=_D
 _CELL_R = ParagraphStyle('CkCellR', parent=_CELL, alignment=TA_RIGHT)
 _CELL_H = ParagraphStyle('CkCellH', fontName='DejaVuSans-Bold', fontSize=8, textColor=_NAVY, leading=10)
 _CELL_HR = ParagraphStyle('CkCellHR', parent=_CELL_H, alignment=TA_RIGHT)
+
+# Bandeau gravé (ambre contrasté) + encadré informatif (bleu clair : lecture rapide / notes).
+_BANNER = ParagraphStyle('CkBanner', fontName='DejaVuSans-Bold', fontSize=9,
+                         textColor=HexColor("#7c2d12"), leading=13,
+                         backColor=HexColor("#fef3c7"), borderColor=HexColor("#f59e0b"),
+                         borderWidth=1, borderPadding=8, spaceBefore=2 * mm, spaceAfter=3 * mm)
+_NOTEBOX = ParagraphStyle('CkNoteBox', fontName='DejaVuSans', fontSize=8, textColor=_DARK,
+                          leading=12, backColor=HexColor("#eff6ff"), borderColor=HexColor("#bfdbfe"),
+                          borderWidth=0.5, borderPadding=7, spaceBefore=2 * mm, spaceAfter=2 * mm)
 
 
 def _wrap_data_rows(rows) -> list:
@@ -189,6 +207,8 @@ _KV_COLW = [34 * mm, 53 * mm, 34 * mm, 53 * mm]
 _SIG_COLW = [34 * mm, 24 * mm, 20 * mm, 32 * mm, 22 * mm, 22 * mm, 20 * mm]
 _CONF_COLW = [32 * mm, 24 * mm, 24 * mm, 24 * mm, 20 * mm, 20 * mm, 30 * mm]
 _SEC_COLW = [62 * mm, 30 * mm, 50 * mm, 32 * mm]
+_EXPL_TOP_COLW = [22 * mm, 28 * mm, 42 * mm, 44 * mm, 38 * mm]   # = 174 mm (zone utile A4)
+_EXPL_SEC_COLW = [40 * mm, 44 * mm, 44 * mm]
 
 
 # ── Formatters défensifs ─────────────────────────────────────────────────────
@@ -270,6 +290,66 @@ def _render_stratification_histogram(strat: dict) -> io.BytesIO:
     plt.close(fig)
     buf.seek(0)
     return buf
+
+
+def _render_explainability_chart(expl: dict) -> io.BytesIO:
+    """Empreinte de génération — déviation intra-zone par numéro, barres par zone.
+
+    Rendu io.BytesIO (PNG), AUCUN fichier disque (pattern strato). Lecture
+    défensive du view-model (None → 0.0). Légende = zones. Pas de hit-list :
+    l'axe X porte les numéros (corps du graphe), aucune annotation « à jouer »."""
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Patch
+
+    numbers = expl.get("chart_numbers") or []
+    zones = expl.get("chart_zones") or []
+    ordered = expl.get("ordered_zones") or []
+    devs = [float(d) if isinstance(d, (int, float)) and not isinstance(d, bool) else 0.0
+            for d in (expl.get("chart_deviation_intra_zone") or [])]
+
+    palette = ["#22c55e", "#38bdf8", "#f59e0b", "#a78bfa", "#ef4444", "#14b8a6", "#eab308"]
+    cmap = {z: palette[i % len(palette)] for i, z in enumerate(ordered)}
+    colors = [cmap.get(z, "#64748b") for z in zones]
+
+    fig, ax = plt.subplots(figsize=(9, 4))
+    x = list(range(len(numbers)))
+    ax.bar(x, devs, color=colors)
+    ax.axhline(0, color="#334155", linewidth=0.8)
+    ax.set_xticks(x)
+    ax.set_xticklabels([str(n) for n in numbers], fontsize=6, rotation=90)
+    ax.set_ylabel("déviation au modèle uniforme intra-zone", fontsize=9)
+    ax.set_title("Empreinte de génération HYBRIDE — déviation intra-zone par numéro",
+                 fontsize=11, fontweight="bold")
+    ax.grid(axis="y", alpha=0.15)
+    if ordered:
+        handles = [Patch(facecolor=cmap[z], label=z) for z in ordered]
+        ax.legend(handles=handles, fontsize=7, title="zones",
+                  ncol=min(len(ordered), 5), loc="upper right")
+    plt.tight_layout()
+
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", dpi=200, facecolor="white", bbox_inches="tight")
+    plt.close(fig)
+    buf.seek(0)
+    return buf
+
+
+def _build_notes_html(notes: dict) -> str:
+    """Notes d'honnêteté → HTML mini (gras titre + lignes échappées). '' si vide."""
+    if not notes:
+        return ""
+    parts = ["<b>Notes d'honnêteté</b>"]
+    if notes.get("selection_is_stochastic"):
+        parts.append(_x(notes["selection_is_stochastic"]))
+    if notes.get("aggregates_200_contexts"):
+        parts.append(_x(notes["aggregates_200_contexts"]))
+    if notes.get("decay_disabled_in_backtest") is True:
+        parts.append("• Decay désactivé en backtest.")
+    if notes.get("unpopularity_boules_only") is True:
+        parts.append("• Impopularité appliquée aux boules uniquement.")
+    return "<br/>".join(parts)
 
 
 # ── Plan du document (pure, sans I/O ni matplotlib) ───────────────────────────
@@ -381,6 +461,57 @@ def _build_blocks(view_model: dict) -> list:
             blocks.append(("small", "Avertissement (indicateur secondaire) :"))
             blocks.append(("disclaimer", disc))
 
+    # — Étage Empreinte — Explicabilité moteur (ARCHIVAGE TECHNIQUE INTERNE) —
+    # Décision Jyppy 09/06 : l'explicabilité par numéro entre dans le PDF, assumée
+    # comme outil d'archivage interne, AVEC garde-fous gravés (bandeau + lecture
+    # rapide structurelle en tête, vocabulaire neutre). PageBreak conditionnel →
+    # zéro page blanche sur un vieux run sans la clé.
+    expl = vm.get("explainability") or {}
+    if expl.get("present"):
+        blocks.append(("pagebreak",))
+        blocks.append(("section", "Empreinte de génération HYBRIDE — signature de construction"))
+        # §0.1 — bandeau gravé EN TÊTE de section
+        blocks.append(("banner", _EXPL_BANNER))
+        # §0.2 — Lecture rapide STRUCTURELLE en PREMIER (zéro chiffre, view-model)
+        lr = expl.get("lecture_rapide") or []
+        if lr:
+            blocks.append(("note_box", "<b>Lecture rapide (structure)</b><br/>"
+                           + "<br/>".join("• " + _x(s) for s in lr)))
+        # Graphe déviation intra-zone par numéro
+        total = expl.get("total_grids")
+        cap = "Déviation intra-zone par numéro"
+        if total is not None:
+            cap += " (%s grilles)" % _fmt(total, 0)
+        blocks.append(("para", cap))
+        blocks.append(("expl_image", expl))
+        # Table — numéros les plus générés (5 lignes, cohérent écran)
+        tn = expl.get("top_numbers") or []
+        if tn:
+            rows = [["Numéro", "Fréquence", "Déviation globale", "Déviation intra-zone", "Zone"]]
+            for r in tn:
+                rows.append([
+                    _cell(r.get("number")), _cell(r.get("frequency")),
+                    _fmt(r.get("deviation_from_uniform"), 4),
+                    _fmt(r.get("deviation_from_uniform_intra_zone"), 4),
+                    _cell(r.get("zone")),
+                ])
+            blocks.append(("para", "Numéros les plus générés"))
+            blocks.append(("table", rows, _EXPL_TOP_COLW))
+        # Mini-table secondaire (numéro | fréquence | déviation, plage complète)
+        sr = expl.get("secondary_rows") or []
+        if sr:
+            sec_name = "étoiles" if expl.get("secondary_label") == "star" else "chance"
+            rows = [["Numéro", "Fréquence", "Déviation"]]
+            for r in sr:
+                rows.append([_cell(r.get("number")), _cell(r.get("frequency")),
+                             _fmt(r.get("deviation_from_uniform"), 4)])
+            blocks.append(("para", "Déviation de génération du secondaire (%s)" % sec_name))
+            blocks.append(("table", rows, _EXPL_SEC_COLW))
+        # Notes d'honnêteté
+        notes_html = _build_notes_html(expl.get("notes") or {})
+        if notes_html:
+            blocks.append(("note_box", notes_html))
+
     # — Limitations du run (honnêteté) —
     lims = meta.get("limitations_mvp") or []
     if lims:
@@ -404,7 +535,8 @@ def _blocks_text(blocks) -> list:
     out = []
     for b in blocks:
         kind = b[0]
-        if kind in ("title", "subtitle", "section", "para", "small", "disclaimer"):
+        if kind in ("title", "subtitle", "section", "para", "small", "disclaimer",
+                    "banner", "note_box"):
             out.append((kind, b[1]))
         elif kind in ("kvtable", "table"):
             for row in b[1]:
@@ -457,6 +589,17 @@ def _blocks_to_flowables(blocks) -> list:
             except Exception as e:  # pragma: no cover - défensif (matplotlib runtime)
                 logger.warning("[COCKPIT-PDF] histogramme stratification indisponible: %s", e)
                 flow.append(Paragraph("Histogramme indisponible.", _SMALL))
+        elif kind == "banner":
+            flow.append(Paragraph(b[1], _BANNER))
+        elif kind == "note_box":
+            flow.append(Paragraph(b[1], _NOTEBOX))
+        elif kind == "expl_image":
+            try:
+                img_buf = _render_explainability_chart(b[1])
+                flow.append(Image(img_buf, width=165 * mm, height=73 * mm))
+            except Exception as e:  # pragma: no cover - défensif (matplotlib runtime)
+                logger.warning("[COCKPIT-PDF] graphe explicabilité indisponible: %s", e)
+                flow.append(Paragraph("Graphe indisponible.", _SMALL))
     return flow
 
 

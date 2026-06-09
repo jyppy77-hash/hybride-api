@@ -5,6 +5,23 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# Panneau Empreinte de génération HYBRIDE — cockpit ÉCRAN admin (Release 1.6.045, 09/06/2026).
+# Nouvel étage read-only « Empreinte de génération HYBRIDE » dans /admin/cockpit : lit la clé
+# engine_explainability du JSON de run OOS (palier 1, produite hors-ligne par tools/, commit
+# a032ef0) et l'affiche à l'ÉCRAN admin owner-only. (A) bar chart Chart.js déviation intra-zone
+# par numéro, coloré par zone ; (B) table numéros les plus générés (numéro|fréquence|déviation
+# globale|déviation intra-zone|zone) ; (C) mini-table secondaire fusionnée (numéro|fréquence|
+# déviation, plage complète) ; (D) notes d'honnêteté (sélection stochastique, decay off, agrégat
+# contextes) ; encadré « Lecture rapide » généré côté parser, STRUCTUREL et ZÉRO CHIFFRE (zones
+# en positions bas/centre/haut, leviers en niveaux faible/modéré/fort) — garde-fou ANJ : aucun
+# numéro lisible comme un pick. CONFINEMENT PDF : la clé entre dans le view-model partagé mais
+# cockpit_pdf_generator.py ne la rend JAMAIS (liste blanche de clés explicite, comme diff déjà
+# présent et non rendu) → explicabilité ÉCRAN uniquement, PDF inchangé. MUR ÉTANCHE intact :
+# services/cockpit_parser.py n'importe aucun tools.* (scan AST test_cockpit_wall.py reste vert).
+# 2 fichiers principaux (services/cockpit_parser.py + ui/templates/admin/cockpit.html) +
+# tests/test_explainability_cockpit_parser.py (nouveau). routes/admin_cockpit.py passe-plat
+# inchangé, cockpit_pdf_generator.py inchangé. Pas de cache-buster (JS inline dans le template).
+#
 # Export PDF cockpit + lien nav (Release 1.6.044, 08/06/2026) — lot UI.
 # (a) Bouton « Exporter en PDF » sur /admin/cockpit : re-POST du JSON brut → POST /admin/cockpit/pdf
 # (owner-only, gardes 25 Mo dupliquées de /analyze qui reste byte-identique) → normalize_run →
@@ -174,9 +191,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.044"
+APP_VERSION = "1.6.045"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-06-08"
+VERSION_DATE = "2026-06-09"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.
