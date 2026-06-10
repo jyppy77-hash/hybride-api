@@ -90,7 +90,7 @@ from config.templates import EM_URLS as _EM_URLS
 from config import killswitch
 _EM_LANG_PREFIXES = tuple(f"/{lc}/" for lc in killswitch.ENABLED_LANGS if lc != "fr")
 _SEO_ROUTES = {
-    "/", "/accueil", "/loto", "/loto/analyse", "/loto/exploration",
+    "/", "/accueil", "/loto", "/loto/analyse",
     "/loto/statistiques", "/loto/paires", "/faq", "/news",
     "/historique", "/methodologie", "/moteur", "/disclaimer",
     "/mentions-legales", "/politique-confidentialite", "/politique-cookies",
@@ -1042,6 +1042,12 @@ async def redirect_simulateur():
 
 @app.get("/exploration", include_in_schema=False)
 async def redirect_exploration():
+    return RedirectResponse(url="/loto", status_code=301)
+
+
+# /loto/exploration servait loto.html en 200 (canonical /loto) → 301 (audit SEO 2026-06-10 #9)
+@app.get("/loto/exploration", include_in_schema=False)
+async def redirect_loto_exploration():
     return RedirectResponse(url="/loto", status_code=301)
 
 

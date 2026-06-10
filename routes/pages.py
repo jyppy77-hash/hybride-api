@@ -17,7 +17,6 @@ SEO_PAGES = {
     "/accueil": "accueil.html",
     "/loto": "loto.html",
     "/loto/analyse": "simulateur.html",
-    "/loto/exploration": "loto.html",
     "/loto/statistiques": "statistiques.html",
     "/loto/intelligence-artificielle": "loto-ia.html",
     "/loto/numeros-les-plus-sortis": "numeros-les-plus-sortis.html",
@@ -145,10 +144,7 @@ async def page_loto_analyse():
     return serve_page_with_canonical("simulateur.html", "https://lotoia.fr/loto/analyse")
 
 
-@router.get("/loto/exploration")
-async def page_loto_exploration():
-    """Loto France — Exploration de grilles (generateur)."""
-    return serve_page_with_canonical("loto.html", "https://lotoia.fr/loto")
+## /loto/exploration supprimé — 301 vers /loto (main.py, dedup SEO audit 2026-06-10 #9)
 
 
 @router.get("/loto/statistiques")

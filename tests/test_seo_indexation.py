@@ -1030,9 +1030,15 @@ class TestAppVersion:
         de ui/news.html (featured + JSON-LD NewsArticle). PDF lexique copié vers
         ui/static/lexique-lotoia-fr.pdf (tracké git, servi /ui/static/). Wording ANJ-safe,
         encadré jeu responsable aligné footer. Volet EM reporté post-i18n. Zéro Python runtime.
+        Lot SEO générateur (10/06, Release 1.6.047) — audit SEO on-page findings #8+#9 :
+        /loto désambiguïsé Simulateur→Générateur (title, H1, og:title, twitter:title, JSON-LD
+        WebApplication name+description, mini-FAQ), « loto IA » préservé (#1 Google).
+        /loto/exploration 200+canonical → 301 vers /loto (main.py, pattern alias), route et
+        mapping SEO_PAGES retirés de pages.py, Allow robots.txt retiré, _SEO_ROUTES nettoyé.
+        /loto/analyse (vrai simulateur) intact.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.046"
+        assert APP_VERSION == "1.6.047"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""
@@ -1155,3 +1161,48 @@ class TestBreadcrumbVisible:
         resp = self._get("/euromillions")
         assert resp.status_code == 200
         assert 'class="breadcrumb-trail"' not in resp.text
+
+
+# ═══════════════════════════════════════════════
+# Lot SEO générateur (1.6.047) — /loto désambiguïsé + 301 /loto/exploration
+# ═══════════════════════════════════════════════
+
+class TestLotoGenerateurSEO:
+    """Audit SEO 2026-06-10 findings #8+#9 : /loto = Générateur, /loto/exploration = 301."""
+
+    def _get(self, path, **kwargs):
+        cursor = _make_cursor()
+        with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
+            client = _get_client()
+            return client.get(path, **kwargs)
+
+    def test_loto_exploration_redirects_301_to_loto(self):
+        """GET /loto/exploration → 301 Location /loto (plus de 200 dupliqué)."""
+        resp = self._get("/loto/exploration", follow_redirects=False)
+        assert resp.status_code == 301
+        assert resp.headers["location"] == "/loto"
+
+    def test_loto_title_is_generateur(self):
+        """Title /loto : « Générateur », mot-clé « Loto IA » préservé, plus de « Simulateur »."""
+        resp = self._get("/loto")
+        assert resp.status_code == 200
+        m = re.search(r"<title>(.*?)</title>", resp.text, re.DOTALL)
+        assert m, "No <title> on /loto"
+        title = m.group(1)
+        assert "Générateur de Grilles Loto IA" in title
+        assert "Loto IA" in title
+        assert "Simulateur" not in title
+
+    def test_loto_h1_is_generateur(self):
+        """H1 /loto aligné sur le title : « Générateur de Grilles Loto IA »."""
+        resp = self._get("/loto")
+        assert resp.status_code == 200
+        assert "Générateur de Grilles Loto IA</h1>" in resp.text
+        assert "Exploration de Grilles Loto IA</h1>" not in resp.text
+
+    def test_loto_og_and_twitter_titles_aligned(self):
+        """og:title et twitter:title alignés « Générateur » (partage social cohérent)."""
+        resp = self._get("/loto")
+        assert resp.status_code == 200
+        assert 'property="og:title" content="Générateur de Grilles Loto IA | LotoIA"' in resp.text
+        assert 'name="twitter:title" content="Générateur de Grilles Loto IA | LotoIA"' in resp.text

@@ -9,7 +9,6 @@ Allow: /
 Allow: /accueil
 Allow: /loto
 Allow: /loto/analyse
-Allow: /loto/exploration
 Allow: /loto/statistiques
 Allow: /loto/intelligence-artificielle
 Allow: /loto/numeros-les-plus-sortis
