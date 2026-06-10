@@ -5,6 +5,18 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# News transparence + lexique PDF public (Release 1.6.046, 10/06/2026).
+# Article « LotoIA renforce sa transparence : nouveaux outils d'analyse et lexique pédagogique »
+# publié en tête de ui/news.html : article HTML featured (le 1.6.020 redevient news-post simple)
+# + bloc JSON-LD NewsArticle (datePublished 2026-06-10) en tête du @graph. Wording ANJ-safe
+# strict (analyse/transparence/pédagogie, zéro chiffre, zéro numéro, zéro promesse de gain),
+# encadré jeu responsable aligné mot à mot sur le footer (09 74 75 13 13 + interdiction mineurs
+# + lien Joueurs Info Service). Lexique : COPIE docs/LEXIQUE_LOTOIA.pdf (gitignored) →
+# ui/static/lexique-lotoia-fr.pdf (tracké git, servi /ui/static/, convention -fr scalable i18n
+# future -en/-es/...), lié depuis l'article. Volet EM reporté post-traduction 6 langues (règle
+# ZERO FR string visible). Aucun changement Python runtime, sitemap inchangé (/news déjà
+# indexé weekly), title/meta de page inchangés.
+#
 # Panneau Empreinte de génération HYBRIDE — cockpit ÉCRAN admin (Release 1.6.045, 09/06/2026).
 # Nouvel étage read-only « Empreinte de génération HYBRIDE » dans /admin/cockpit : lit la clé
 # engine_explainability du JSON de run OOS (palier 1, produite hors-ligne par tools/, commit
@@ -191,9 +203,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.045"
+APP_VERSION = "1.6.046"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-06-09"
+VERSION_DATE = "2026-06-10"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

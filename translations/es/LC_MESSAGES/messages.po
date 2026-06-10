@@ -6001,3 +6001,63 @@ msgstr "La desviación es el número de sorteos transcurridos desde la última a
 #: ui/templates/em/faq.html
 msgid "Téléphone :"
 msgstr "Teléfono:"
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "10 juin 2026"
+msgstr "10 de junio de 2026"
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "Transparence"
+msgstr "Transparencia"
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "LotoIA renforce sa transparence : nouveaux outils d'analyse et lexique pédagogique"
+msgstr "LotoIA refuerza su transparencia: nuevas herramientas de análisis y glosario pedagógico"
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "Chez LotoIA, nous croyons qu'un outil d'analyse statistique doit être <strong>compréhensible et transparent</strong>. C'est pourquoi nous publions aujourd'hui un lexique pédagogique et renforçons les instruments qui mesurent comment notre moteur construit ses grilles."
+msgstr "En LotoIA creemos que una herramienta de análisis estadístico debe ser <strong>comprensible y transparente</strong>. Por eso publicamos hoy un glosario pedagógico y reforzamos los instrumentos que miden cómo nuestro motor construye sus cuadrículas."
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "Comprendre, pas prédire"
+msgstr "Comprender, no predecir"
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "LotoIA est un outil d'<strong>analyse statistique</strong>, pas un outil de prédiction. Le résultat d'un tirage de loterie reste totalement aléatoire : aucune méthode ne permet de le prévoir ni d'augmenter les chances de gain. Ce que nous faisons, c'est analyser la <strong>forme</strong> et la <strong>construction</strong> des grilles générées — leur répartition, leur équilibre, leurs caractéristiques statistiques. Et nous pensons que cette analyse doit être <strong>lisible par tous</strong>, pas réservée aux initiés."
+msgstr "LotoIA es una herramienta de <strong>análisis estadístico</strong>, no una herramienta de predicción. El resultado de un sorteo de lotería sigue siendo totalmente aleatorio: ningún método permite preverlo ni aumentar las probabilidades de ganar. Lo que hacemos es analizar la <strong>forma</strong> y la <strong>construcción</strong> de las cuadrículas generadas: su distribución, su equilibrio, sus características estadísticas. Y creemos que este análisis debe ser <strong>legible para todos</strong>, no reservado a los expertos."
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "Un lexique pour tout comprendre"
+msgstr "Un glosario para entenderlo todo"
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "Nos rapports utilisent un vocabulaire technique : signature statistique, divergence de forme, stratification, déviation, plancher de bruit… Pour que chacun puisse suivre, nous publions un <strong>lexique pédagogique</strong> qui définit clairement chaque terme, avec un principe constant : expliquer la <strong>méthode</strong>, jamais promettre un résultat. Chaque définition rappelle que LotoIA décrit la construction du moteur — pas une probabilité de tirage."
+msgstr "Nuestros informes utilizan un vocabulario técnico: firma estadística, divergencia de forma, estratificación, desviación, suelo de ruido… Para que todos puedan seguirlo, publicamos un <strong>glosario pedagógico</strong> que define claramente cada término, con un principio constante: explicar el <strong>método</strong>, nunca prometer un resultado. Cada definición recuerda que LotoIA describe la construcción del motor, no una probabilidad de sorteo."
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "Consulter le lexique LotoIA (PDF)"
+msgstr "Consultar el glosario LotoIA (PDF)"
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "Des outils d'analyse renforcés"
+msgstr "Herramientas de análisis reforzadas"
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "En coulisses, nous avons développé des instruments internes pour <strong>mesurer la qualité de construction</strong> de notre moteur statistique : à quel point ses grilles diffèrent d'un tirage purement aléatoire, comment elles se répartissent par zones, quelle est leur signature statistique. Ces outils nous permettent de <strong>vérifier, documenter et améliorer la rigueur</strong> de notre méthode — toujours dans une logique d'analyse, jamais de prédiction. C'est notre engagement de <strong>transparence totale</strong> : montrer comment ça marche, sans jamais survendre."
+msgstr "Entre bastidores, hemos desarrollado instrumentos internos para <strong>medir la calidad de construcción</strong> de nuestro motor estadístico: hasta qué punto sus cuadrículas difieren de un sorteo puramente aleatorio, cómo se reparten por zonas, cuál es su firma estadística. Estas herramientas nos permiten <strong>verificar, documentar y mejorar el rigor</strong> de nuestro método, siempre desde la lógica del análisis, nunca de la predicción. Es nuestro compromiso de <strong>transparencia total</strong>: mostrar cómo funciona, sin sobrevender nunca."
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "Loto et EuroMillions"
+msgstr "Loto y EuroMillions"
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "Cette démarche s'applique à nos deux univers d'analyse : le <strong>Loto</strong> et l'<strong>EuroMillions</strong>. Les mêmes principes de rigueur, de transparence et de pédagogie guident l'analyse statistique sur chacun."
+msgstr "Este enfoque se aplica a nuestros dos universos de análisis: el <strong>Loto francés</strong> y el <strong>EuroMillions</strong>. Los mismos principios de rigor, transparencia y pedagogía guían el análisis estadístico de cada uno."
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "Rappel — jeu responsable"
+msgstr "Recordatorio — juego responsable"
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "LotoIA est un outil d'analyse statistique à vocation pédagogique. Il ne constitue en aucun cas une prédiction, une probabilité de gain ou un avantage sur le tirage. Le hasard d'un tirage de loterie est irréductible."
+msgstr "LotoIA es una herramienta de análisis estadístico con vocación pedagógica. En ningún caso constituye una predicción, una probabilidad de ganar ni una ventaja sobre el sorteo. El azar de un sorteo de lotería es irreductible."

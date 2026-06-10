@@ -1025,9 +1025,14 @@ class TestAppVersion:
         moteur ÉCRAN admin /admin/cockpit lisant engine_explainability (bar chart déviation
         intra-zone, table top, mini-table secondaire, notes, encadré « Lecture rapide »
         structurel zéro chiffre ANJ). Confinement PDF prouvé : cockpit_pdf_generator inchangé.
+        News transparence + lexique (10/06, Release 1.6.046) — article news Loto FR « LotoIA
+        renforce sa transparence : nouveaux outils d'analyse et lexique pédagogique » en tête
+        de ui/news.html (featured + JSON-LD NewsArticle). PDF lexique copié vers
+        ui/static/lexique-lotoia-fr.pdf (tracké git, servi /ui/static/). Wording ANJ-safe,
+        encadré jeu responsable aligné footer. Volet EM reporté post-i18n. Zéro Python runtime.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.045"
+        assert APP_VERSION == "1.6.046"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

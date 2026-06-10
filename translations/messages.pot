@@ -4563,3 +4563,63 @@ msgid ""
 "sans inscription ni paiement."
 msgstr ""
 
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "10 juin 2026"
+msgstr ""
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "Transparence"
+msgstr ""
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "LotoIA renforce sa transparence : nouveaux outils d'analyse et lexique pédagogique"
+msgstr ""
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "Chez LotoIA, nous croyons qu'un outil d'analyse statistique doit être <strong>compréhensible et transparent</strong>. C'est pourquoi nous publions aujourd'hui un lexique pédagogique et renforçons les instruments qui mesurent comment notre moteur construit ses grilles."
+msgstr ""
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "Comprendre, pas prédire"
+msgstr ""
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "LotoIA est un outil d'<strong>analyse statistique</strong>, pas un outil de prédiction. Le résultat d'un tirage de loterie reste totalement aléatoire : aucune méthode ne permet de le prévoir ni d'augmenter les chances de gain. Ce que nous faisons, c'est analyser la <strong>forme</strong> et la <strong>construction</strong> des grilles générées — leur répartition, leur équilibre, leurs caractéristiques statistiques. Et nous pensons que cette analyse doit être <strong>lisible par tous</strong>, pas réservée aux initiés."
+msgstr ""
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "Un lexique pour tout comprendre"
+msgstr ""
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "Nos rapports utilisent un vocabulaire technique : signature statistique, divergence de forme, stratification, déviation, plancher de bruit… Pour que chacun puisse suivre, nous publions un <strong>lexique pédagogique</strong> qui définit clairement chaque terme, avec un principe constant : expliquer la <strong>méthode</strong>, jamais promettre un résultat. Chaque définition rappelle que LotoIA décrit la construction du moteur — pas une probabilité de tirage."
+msgstr ""
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "Consulter le lexique LotoIA (PDF)"
+msgstr ""
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "Des outils d'analyse renforcés"
+msgstr ""
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "En coulisses, nous avons développé des instruments internes pour <strong>mesurer la qualité de construction</strong> de notre moteur statistique : à quel point ses grilles diffèrent d'un tirage purement aléatoire, comment elles se répartissent par zones, quelle est leur signature statistique. Ces outils nous permettent de <strong>vérifier, documenter et améliorer la rigueur</strong> de notre méthode — toujours dans une logique d'analyse, jamais de prédiction. C'est notre engagement de <strong>transparence totale</strong> : montrer comment ça marche, sans jamais survendre."
+msgstr ""
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "Loto et EuroMillions"
+msgstr ""
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "Cette démarche s'applique à nos deux univers d'analyse : le <strong>Loto</strong> et l'<strong>EuroMillions</strong>. Les mêmes principes de rigueur, de transparence et de pédagogie guident l'analyse statistique sur chacun."
+msgstr ""
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "Rappel — jeu responsable"
+msgstr ""
+
+#. News transparence + lexique (Release 1.6.046, 10/06/2026)
+msgid "LotoIA est un outil d'analyse statistique à vocation pédagogique. Il ne constitue en aucun cas une prédiction, une probabilité de gain ou un avantage sur le tirage. Le hasard d'un tirage de loterie est irréductible."
+msgstr ""

@@ -290,6 +290,20 @@ _GAMBLING_HELP = {
     },
 }
 
+# ── Lexique PDF per language ─────────────────────────────────────────────
+
+_LEXIQUE_PDF = {
+    # Nom du fichier lexique/glossaire servi sous /ui/static/, par langue.
+    # Les noms diffèrent par langue (lexique/glossary/glosario/...) — mapping
+    # explicite obligatoire, pas de f-string lexique-{lang}.pdf.
+    "fr": "lexique-lotoia-fr.pdf",
+    "en": "glossary-lotoia-en.pdf",
+    "es": "glosario-lotoia-es.pdf",
+    "pt": "glossario-lotoia-pt.pdf",
+    "de": "glossar-lotoia-de.pdf",
+    "nl": "glossarium-lotoia-nl.pdf",
+}
+
 # ── OG locale per language ───────────────────────────────────────────────
 
 _OG_LOCALE = {
@@ -369,6 +383,9 @@ def render_template(
             "gambling_help_name": help_info["name"],
             "gambling_help_phone": help_info["phone"],
             "gambling_help_phone_note": help_info["phone_note"],
+
+            # Lexique PDF (per-language file, see _LEXIQUE_PDF)
+            "lexique_pdf_url": f"/ui/static/{_LEXIQUE_PDF.get(lang, _LEXIQUE_PDF['fr'])}",
 
             # Nav scroll (off by default, pages override)
             "include_nav_scroll": False,
