@@ -6,8 +6,10 @@ Replaces the old static ui/sitemap.xml.
 from fastapi import APIRouter, Response
 
 from config.templates import EM_URLS, BASE_URL
-from config.version import LAST_DEPLOY_DATE
+from config.version import LAST_DEPLOY_DATE, LAST_NEWS_DATE
 from config import killswitch
+from routes.api_pdf import _fetch_last_draw_date_loto
+from routes.em_analyse import _fetch_last_draw_date_em
 
 router = APIRouter()
 
@@ -63,6 +65,43 @@ _MULTILANG_PRIORITY_FACTORS = {
 }
 _MULTILANG_PRIORITY_DEFAULT = 0.7
 
+# ── Lastmod par catégorie (lot SEO #5, 1.6.048) ─────────────────────────
+# - Pages dynamiques  → date du dernier tirage (Loto ou EM) en base
+# - Pages news        → LAST_NEWS_DATE (config/version.py, bump manuel par article)
+# - Pages éditoriales → _EDITORIAL_LASTMOD ci-dessous (bump manuel quand un lot touche la page)
+# - Fallback toute catégorie → LAST_DEPLOY_DATE (DB down / clé absente du dict)
+
+_LOTO_DYNAMIC_PATHS = frozenset({
+    "/accueil", "/loto", "/loto/analyse", "/loto/statistiques",
+    "/historique", "/loto/numeros-les-plus-sortis", "/loto/paires",
+})
+
+_EM_DYNAMIC_KEYS = frozenset({
+    "home", "generateur", "simulateur", "statistiques", "historique", "paires",
+})
+
+# Clés : "launcher" | path Loto FR ("/moteur") | page_key EM ("moteur").
+# Une page EM partage sa date entre les 6 langues (template unique).
+# Dates = dernière modif réelle du fichier (git), pas le JSON-LD obsolète
+# (décision Jyppy 11/06). ⚠️ À bumper À LA MAIN quand un lot modifie le contenu.
+_EDITORIAL_LASTMOD = {
+    "launcher":                         "2026-03-22",  # git edc4acd V53 launcher multilang
+    # — Loto FR —
+    "/moteur":                          "2026-06-01",  # git a64407f Sprint SEO P1a breadcrumb
+    "/methodologie":                    "2026-06-01",  # git a64407f
+    "/loto/intelligence-artificielle":  "2026-06-01",  # git a64407f
+    "/hybride":                         "2026-06-01",  # git a64407f
+    "/a-propos":                        "2026-06-01",  # git a64407f
+    "/faq":                             "2026-06-01",  # git a64407f
+    # — EuroMillions (clé partagée 6 langues) —
+    "faq":                              "2026-06-01",  # git e8f2279 (1.6.039 numéros d'aide)
+    "a_propos":                         "2026-06-01",  # git a64407f Sprint SEO P1a breadcrumb
+    "moteur":                           "2026-06-01",  # git a64407f
+    "methodologie":                     "2026-06-01",  # git a64407f
+    "ia":                               "2026-06-01",  # git a64407f
+    "hybride_page":                     "2026-06-01",  # git e305ff5 (1.6.037 meta descriptions)
+}
+
 
 def _url_block(loc: str, lastmod: str, freq: str, priority: float,
                alternates: list[tuple[str, str]] | None = None) -> str:
@@ -101,7 +140,13 @@ def _hreflang_alternates(page_key: str) -> list[tuple[str, str]]:
 @router.get("/sitemap.xml", include_in_schema=False)
 async def sitemap():
     """Dynamic XML sitemap — Launcher multilang + Loto FR + EuroMillions multilang."""
-    last_modified = LAST_DEPLOY_DATE
+    # Lastmod dynamiques — date du dernier tirage en base.
+    # Les fetchs ne lèvent JAMAIS (try/except → None interne) ; le fallback
+    # LAST_DEPLOY_DATE garantit que le sitemap répond toujours 200.
+    # [:10] : format W3C YYYY-MM-DD même si la colonne devenait DATETIME.
+    loto_draw_lastmod = (await _fetch_last_draw_date_loto() or LAST_DEPLOY_DATE)[:10]
+    em_draw_lastmod = (await _fetch_last_draw_date_em() or LAST_DEPLOY_DATE)[:10]
+    launcher_lastmod = _EDITORIAL_LASTMOD.get("launcher", LAST_DEPLOY_DATE)
     blocks = []
 
     # Launcher pages (6 languages) — site entry points, highest priority
@@ -114,15 +159,21 @@ async def sitemap():
     for lc in killswitch.ENABLED_LANGS:
         prio = _launcher_priorities.get(lc, 0.8)
         blocks.append(_url_block(
-            f"{BASE_URL}/{lc}", last_modified, "weekly", prio,
+            f"{BASE_URL}/{lc}", launcher_lastmod, "weekly", prio,
             alternates=_launcher_alternates,
         ))
 
     # Loto pages (always FR) — hreflang auto-référentiel fr + x-default
     for path, priority, freq in _LOTO_PAGES:
         loto_url = f"{BASE_URL}{path}"
+        if path in _LOTO_DYNAMIC_PATHS:
+            lastmod = loto_draw_lastmod
+        elif path == "/news":
+            lastmod = LAST_NEWS_DATE
+        else:
+            lastmod = _EDITORIAL_LASTMOD.get(path, LAST_DEPLOY_DATE)
         blocks.append(_url_block(
-            loto_url, last_modified, freq, priority,
+            loto_url, lastmod, freq, priority,
             alternates=[("fr", loto_url), ("x-default", loto_url)],
         ))
 
@@ -139,8 +190,14 @@ async def sitemap():
                 effective_priority = priority if lang == "fr" else round(
                     priority * _MULTILANG_PRIORITY_FACTORS.get(page_key, _MULTILANG_PRIORITY_DEFAULT), 2
                 )
+                if page_key in _EM_DYNAMIC_KEYS:
+                    lastmod = em_draw_lastmod
+                elif page_key == "news":
+                    lastmod = LAST_NEWS_DATE
+                else:
+                    lastmod = _EDITORIAL_LASTMOD.get(page_key, LAST_DEPLOY_DATE)
                 blocks.append(_url_block(
-                    f"{BASE_URL}{page_url}", last_modified, freq,
+                    f"{BASE_URL}{page_url}", lastmod, freq,
                     effective_priority,
                     alternates=alternates,
                 ))

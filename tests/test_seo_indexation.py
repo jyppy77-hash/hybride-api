@@ -111,20 +111,28 @@ class TestSitemapContainsEMUrls:
         for url in _ALL_9_EM_URLS:
             assert url in locs, f"Missing in sitemap: {url}"
 
-    def test_sitemap_lastmod_is_fixed_deploy_date(self):
-        """Sitemap <lastmod> should be LAST_DEPLOY_DATE (not dynamic today)."""
+    def test_sitemap_lastmod_db_down_fallback(self):
+        """DB down → 200 + chaque <lastmod> est une constante connue (jamais 500).
+
+        Lot SEO #5 (1.6.048) : lastmod par catégorie. En harnais de test la DB
+        échoue → pages dynamiques retombent sur LAST_DEPLOY_DATE ; pages news =
+        LAST_NEWS_DATE ; pages éditoriales + launcher = _EDITORIAL_LASTMOD.
+        """
         cursor = _make_cursor()
         with patch("db_cloudsql.get_connection", _async_cm_conn(cursor)):
             client = _get_client()
             resp = client.get("/sitemap.xml")
 
-        from config.version import LAST_DEPLOY_DATE
+        assert resp.status_code == 200
+        from config.version import LAST_DEPLOY_DATE, LAST_NEWS_DATE
+        from routes.sitemap import _EDITORIAL_LASTMOD
+        allowed = {LAST_DEPLOY_DATE, LAST_NEWS_DATE} | set(_EDITORIAL_LASTMOD.values())
         root = ElementTree.fromstring(resp.text)
         lastmods = {el.text for el in root.findall(".//sm:url/sm:lastmod", _NS)}
 
         for lm in lastmods:
-            assert lm == LAST_DEPLOY_DATE, \
-                f"lastmod should be {LAST_DEPLOY_DATE}, got {lm}"
+            assert lm in allowed, \
+                f"lastmod {lm} hors des constantes autorisées {sorted(allowed)}"
 
 
 # ═══════════════════════════════════════════════
@@ -1036,9 +1044,13 @@ class TestAppVersion:
         /loto/exploration 200+canonical → 301 vers /loto (main.py, pattern alias), route et
         mapping SEO_PAGES retirés de pages.py, Allow robots.txt retiré, _SEO_ROUTES nettoyé.
         /loto/analyse (vrai simulateur) intact.
+        Lot SEO #5 lastmod sitemap (11/06, Release 1.6.048) — finding #5 audit SEO
+        on-page : <lastmod> par catégorie (dynamiques = date dernier tirage Loto/EM,
+        news = LAST_NEWS_DATE, éditoriales + launcher = _EDITORIAL_LASTMOD dates git,
+        fallback LAST_DEPLOY_DATE si DB down). Structure URLs/hreflang inchangée.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.047"
+        assert APP_VERSION == "1.6.048"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

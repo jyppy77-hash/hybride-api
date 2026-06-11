@@ -5,6 +5,22 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# Lot SEO #5 — lastmod sitemap par catégorie (Release 1.6.048, 11/06/2026).
+# Finding 🟠 #5 audit SEO on-page 10/06 : <lastmod> identique (= LAST_DEPLOY_DATE =
+# date.today() à l'import) pour les ~98 URLs → signal de fraîcheur ignoré par Google.
+# Fix routes/sitemap.py : lastmod par catégorie — pages dynamiques Loto (7) = date du
+# dernier tirage Loto (réutilise routes/api_pdf.py::_fetch_last_draw_date_loto), pages
+# dynamiques EM (~36, 6 langues) = date du dernier tirage EM (routes/em_analyse.py::
+# _fetch_last_draw_date_em), pages news FR+EM (7) = LAST_NEWS_DATE (nouvelle constante
+# ci-dessous, bump MANUEL à chaque article), pages éditoriales + launcher (~48) = dict
+# _EDITORIAL_LASTMOD (routes/sitemap.py, dates git harmonisées — décision Jyppy 11/06 :
+# git = dernière modif réelle du fichier, pas le JSON-LD obsolète —, bump MANUEL quand
+# un lot touche une page). Robustesse : les 2 fetchs ne lèvent jamais (try/except →
+# None interne) → fallback LAST_DEPLOY_DATE, le sitemap répond toujours 200 même DB
+# down. Structure URLs/hreflang/priorités/dédup inchangée. Hors scope (backlog) :
+# header HTTP Last-Modified HTML (main.py), placeholder __DATE_MODIFIED__ JSON-LD
+# (pages.py), dérive date.today() à l'import / DEPLOY_DATE au build (lot infra).
+#
 # News transparence + lexique PDF public (Release 1.6.046, 10/06/2026).
 # Article « LotoIA renforce sa transparence : nouveaux outils d'analyse et lexique pédagogique »
 # publié en tête de ui/news.html : article HTML featured (le 1.6.020 redevient news-post simple)
@@ -203,13 +219,19 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.047"
+APP_VERSION = "1.6.048"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-06-10"
+VERSION_DATE = "2026-06-11"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.
+# Depuis 1.6.048 : FALLBACK uniquement (DB down / page absente du dict éditorial).
 LAST_DEPLOY_DATE = os.getenv("DEPLOY_DATE", date.today().isoformat())
+
+# Date du dernier article news publié (FR + EM partagent le même rythme éditorial).
+# ⚠️ À bumper À LA MAIN à chaque nouvel article (sitemap <lastmod> des pages news).
+# Dernier article : « LotoIA renforce sa transparence » (1.6.046, 10/06/2026).
+LAST_NEWS_DATE = "2026-06-10"
 
 # Alias pour compatibilité avec engine/version.py
 __version__ = APP_VERSION
