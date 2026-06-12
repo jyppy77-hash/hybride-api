@@ -189,7 +189,7 @@ async def _generate_sql_em(question: str, client, api_key: str, history: list = 
         return None
     except genai_errors.ClientError as e:
         if _is_rate_limit_error(e):
-            logger.warning("[EM TEXT-TO-SQL] Vertex 429 ResourceExhausted — fallback")
+            logger.warning("[EM TEXT-TO-SQL] Vertex 429 ResourceExhausted — fallback: %s", e)  # V143 #3
         else:
             logger.warning("[EM TEXT-TO-SQL] Vertex ClientError %s: %s", getattr(e, 'code', '?'), e)
         gemini_breaker_sql._record_failure()

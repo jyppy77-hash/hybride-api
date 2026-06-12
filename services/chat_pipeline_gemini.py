@@ -1171,6 +1171,13 @@ _STRICT_BLOCK_FALLBACK_I18N = {
 }
 
 
+# V143 — Retries 429 du stream chat (pattern V129.1, cf. services/gemini.py :
+# backoff 2·2^n + jitter, cap 12s, garde anti-double-émission _yielded_any).
+# Appliqué UNIQUEMENT au vrai stream_gemini_chat (identity gate dans
+# stream_and_respond) — les stream_fn de test gardent la signature historique.
+_STREAM_MAX_RETRIES_429 = 2
+
+
 # ═══════════════════════════════════════════════════════
 # handle_chat_stream — SSE streaming loop
 # ═══════════════════════════════════════════════════════
@@ -1186,6 +1193,15 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
     mode = ctx["mode"]
     _stream_chunks = []
     _stream = stream_fn or stream_gemini_chat
+
+    # V143 — retry 429 + error_detail différencié : kwargs passés UNIQUEMENT au
+    # vrai stream_gemini_chat (identity gate) → les stream_fn de test (signature
+    # historique, tests V131.G/V142.F-bis) restent intacts, zéro TypeError.
+    _failure_box = {}
+    _stream_extra_kwargs = {}
+    if _stream is stream_gemini_chat:
+        _stream_extra_kwargs["max_retries"] = _STREAM_MAX_RETRIES_429
+        _stream_extra_kwargs["failure_box"] = _failure_box
 
     # V131.G — Buffer mode opt-in via ctx flag (set par chat_pipeline_shared
     # depuis env var STRICT_HALLUCINATION_BLOCK lue au module-load via
@@ -1216,6 +1232,7 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
             ctx["contents"], timeout=ctx.get("_timeout_gemini_stream", 10),  # V129.1
             call_type=call_type, lang=lang,
             temperature=_get_temperature(ctx),
+            **_stream_extra_kwargs,  # V143 — retry 429 + failure_box (identity gate)
         ):
             safe = _buf.add_chunk(chunk)
             if not safe:
@@ -1264,7 +1281,11 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
         if not has_chunks:
             # V131.F — yield fallback i18n lang-aware (était fallback FR hardcodé)
             _i18n_fb = _NOCHUNKS_FALLBACK_I18N.get(lang, _NOCHUNKS_FALLBACK_I18N["fr"])
-            log_from_meta(ctx.get("_chat_meta"), module, lang, message, _i18n_fb, is_error=True, error_detail="NoChunks")
+            # V143 #3 — error_detail différencié : Vertex429 (DSQ rate limit) /
+            # InterChunkTimeout (1er-token ou inter-chunk, zéro émis) / VertexError
+            # (4xx-5xx zéro émis) / NoChunks (vrai zéro-token sans erreur).
+            _err_detail = _failure_box.get("cause", "NoChunks")
+            log_from_meta(ctx.get("_chat_meta"), module, lang, message, _i18n_fb, is_error=True, error_detail=_err_detail)
             yield sse_event({
                 "chunk": _i18n_fb,
                 "source": "fallback", "mode": mode, "is_done": True,
@@ -1591,7 +1612,7 @@ async def handle_pitch_common(grilles_data, http_client, lang,
                 continue
             # Non-429 ClientError OR 429 retry exhausted
             if _is_rate_limit_error(e):
-                logger.warning(f"{log_prefix} Vertex 429 ResourceExhausted (retry exhausted) — fallback")
+                logger.warning(f"{log_prefix} Vertex 429 ResourceExhausted (retry exhausted) — fallback: {e}")  # V143 #3
                 last_error = "timeout"
             else:
                 logger.warning(f"{log_prefix} Vertex ClientError {getattr(e, 'code', '?')}: {e}")

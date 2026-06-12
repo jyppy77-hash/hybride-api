@@ -272,7 +272,7 @@ async def enrich_analysis_base(
         return _fallback_local
     except genai_errors.ClientError as e:
         if _is_rate_limit_error(e):
-            logger.warning(f"{log_prefix} Vertex 429 ResourceExhausted — fallback")
+            logger.warning(f"{log_prefix} Vertex 429 ResourceExhausted — fallback: {e}")  # V143 #3
         else:
             logger.warning(f"{log_prefix} Vertex ClientError {getattr(e, 'code', '?')}: {e}")
         _breaker._record_failure()

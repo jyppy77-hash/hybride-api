@@ -5,6 +5,26 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# V143 — Retry 429 chat streaming + observabilité 429 + timeout 1er-token (Release 1.6.049,
+# 11/06/2026). Diagnostic 3 audits READ-ONLY 11/06 : NoChunks 52%/24h chatbot = 429
+# RESOURCE_EXHAUSTED du Dynamic Shared Quota régional Vertex (gemini-2.5-flash europe-west1 :
+# AUCUN quota RPM par projet — vérifié API Service Usage —, capacité partagée régionale,
+# dégradation externe 08→11/06 : taux 0,6%→31% pendant que le volume baisse, couche Vertex
+# intouchée depuis V142.F-bis 26/05, 1er 429 du retour sur révision 00880 SANS rebuild →
+# cause Google, pas le code). Fix 3 volets : (#2) retry 429 pattern V129.1 porté à
+# stream_gemini_chat (services/gemini.py) — opt-in kwarg max_retries (défaut 0, chat passe 2
+# via _STREAM_MAX_RETRIES_429 + identity gate `_stream is stream_gemini_chat`), backoff
+# 2·2^n + jitter [0,1s], cap 12s calibré chat (≠14s pitch, borné start-timeout 10s), garde
+# anti-double-émission SSE _yielded_any (retry interdit après le 1er chunk émis), check
+# breaker OPEN per-itération, max 1 _record_failure/requête (retries silencieux). (#3) corps
+# de l'exception loggé sur les 5 handlers 429 (gemini.py + gemini_shared.py + pitch
+# chat_pipeline_gemini.py + chat_sql.py + chat_sql_em.py) + error_detail différencié
+# Vertex429 / InterChunkTimeout / VertexError / NoChunks via out-param failure_box (additif
+# strict, sémantique exceptions/breaker inchangée). (#5) timeout 1er-token 15s distinct de
+# l'inter-chunk 8s V131.F (8 cas/24h slow-start DSQ tués à tort). Hors scope acté : bug
+# breaker #4 (timeout→record_success, gemini.py), endpoint global (tradeoff ANJ/RGPD),
+# retry SQL/enrichment (lot ultérieur si dégradation DSQ persiste).
+#
 # Lot SEO #5 — lastmod sitemap par catégorie (Release 1.6.048, 11/06/2026).
 # Finding 🟠 #5 audit SEO on-page 10/06 : <lastmod> identique (= LAST_DEPLOY_DATE =
 # date.today() à l'import) pour les ~98 URLs → signal de fraîcheur ignoré par Google.
@@ -219,7 +239,7 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.048"
+APP_VERSION = "1.6.049"
 APP_NAME = "LotoIA"
 VERSION_DATE = "2026-06-11"
 

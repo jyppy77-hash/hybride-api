@@ -1048,9 +1048,14 @@ class TestAppVersion:
         on-page : <lastmod> par catégorie (dynamiques = date dernier tirage Loto/EM,
         news = LAST_NEWS_DATE, éditoriales + launcher = _EDITORIAL_LASTMOD dates git,
         fallback LAST_DEPLOY_DATE si DB down). Structure URLs/hreflang inchangée.
+        V143 (11/06, Release 1.6.049) — retry 429 chat streaming pattern V129.1
+        (opt-in max_retries, cap 12s, garde anti-double-émission _yielded_any),
+        timeout 1er-token 15s distinct inter-chunk 8s, error_detail différencié
+        Vertex429/InterChunkTimeout/VertexError/NoChunks, str(e) sur 5 handlers 429.
+        Cause : NoChunks 52%/24h = 429 DSQ régional Vertex (audits READ-ONLY 11/06).
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.048"
+        assert APP_VERSION == "1.6.049"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""
