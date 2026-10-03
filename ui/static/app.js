@@ -182,7 +182,7 @@ function updateStatsDisplay() {
         .then(data => {
             if (data.exists) {
                 // Nombre de tirages - mise à jour de TOUS les éléments
-                const totalDraws = data.total_draws || 967; // Fallback sur 967
+                const totalDraws = data.total_draws || 1000; // Fallback arrondi (valeur réelle via /database-info)
 
                 // Element stat-tirages (bandeau trust)
                 const tiragesElement = document.getElementById('stat-tirages');

@@ -19,7 +19,7 @@ TABLE tirages_euromillions (
   nb_gagnants_rang1 INT          -- aantal jackpotwinnaars
 )
 
-EuroMillions-trekkingen sinds 2004. Trekkingen op dinsdag en vrijdag.
+EuroMillions-trekkingen van alleen de afgelopen 7 jaar (doorlopende geschiedenis). Trekkingen op dinsdag en vrijdag.
 
 KRITIEKE REGEL — De 5 hoofdnummers staan in 5 aparte kolommen.
 Om te controleren of een nummer N in een trekking voorkomt:

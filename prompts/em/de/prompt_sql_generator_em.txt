@@ -19,7 +19,7 @@ TABLE tirages_euromillions (
   nb_gagnants_rang1 INT          -- Anzahl der Jackpot-Gewinner
 )
 
-EuroMillions-Ziehungen seit 2004. Ziehungen am Dienstag und Freitag.
+EuroMillions-Ziehungen nur der letzten 7 Jahre (rollierende Historie). Ziehungen am Dienstag und Freitag.
 
 KRITISCHE REGEL — Die 5 Hauptzahlen befinden sich in 5 separaten Spalten.
 Um zu prüfen, ob eine Zahl N in einer Ziehung vorkommt:

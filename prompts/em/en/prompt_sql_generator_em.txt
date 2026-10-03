@@ -19,7 +19,7 @@ TABLE tirages_euromillions (
   nb_gagnants_rang1 INT          -- number of jackpot winners
 )
 
-EuroMillions draws since 2004. Draws on Tuesday and Friday.
+EuroMillions draws from the last 7 years only (rolling history). Draws on Tuesday and Friday.
 
 CRITICAL RULE — The 5 main numbers are in 5 separate columns.
 To check if a number N appears in a draw:

@@ -19,7 +19,7 @@ TABLE tirages_euromillions (
   nb_gagnants_rang1 INT          -- número de vencedores do jackpot
 )
 
-Sorteios do EuroMillions desde 2004. Sorteios às terças e sextas-feiras.
+Sorteios do EuroMillions dos últimos 7 anos apenas (histórico móvel). Sorteios às terças e sextas-feiras.
 
 REGRA CRÍTICA — Os 5 números principais estão em 5 colunas separadas.
 Para verificar se um número N aparece num sorteio:

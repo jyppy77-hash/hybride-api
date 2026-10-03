@@ -508,12 +508,13 @@ msgstr "EuroMillions"
 
 #: ui/templates/em/a-propos.html:154
 msgid ""
-"Notre base couvre <strong>729+ tirages officiels EuroMillions</strong> "
-"depuis 2019. L'EuroMillions se joue dans 9 pays européens avec 5 numéros "
-"(1-50) et 2 étoiles (1-12). Les tirages ont lieu les mardis et vendredis."
+"Notre base couvre <strong>plus de 700 tirages officiels EuroMillions</strong> "
+"sur les 7 dernières années. L'EuroMillions se joue dans 9 pays européens "
+"avec 5 numéros (1-50) et 2 étoiles (1-12). Les tirages ont lieu les mardis "
+"et vendredis."
 msgstr ""
-"Onze database omvat <strong>729+ officiële EuroMillions-"
-"trekkingen</strong> sinds 2019. EuroMillions wordt gespeeld in 9 Europese"
+"Onze database omvat <strong>meer dan 700 officiële EuroMillions-"
+"trekkingen</strong> van de afgelopen 7 jaar. EuroMillions wordt gespeeld in 9 Europese"
 " landen met 5 nummers (1-50) en 2 sterren (1-12). De trekkingen vinden "
 "plaats op dinsdag en vrijdag."
 
@@ -523,12 +524,12 @@ msgstr "Loto France"
 
 #: ui/templates/em/a-propos.html:157
 msgid ""
-"Notre base couvre <strong>986+ tirages officiels du Loto "
+"Notre base couvre <strong>plus de 1 000 tirages officiels du Loto "
 "français</strong> depuis novembre 2019. Le Loto se joue avec 5 numéros "
 "(1-49) et 1 numéro Chance (1-10). Les tirages ont lieu les lundis, "
 "mercredis et samedis."
 msgstr ""
-"Onze database omvat <strong>986+ officiële trekkingen van de Franse "
+"Onze database omvat <strong>meer dan 1.000 officiële trekkingen van de Franse "
 "Loto</strong> sinds november 2019. De Loto wordt gespeeld met 5 nummers "
 "(1-49) en 1 kansnummer (1-10). De trekkingen vinden plaats op maandag, "
 "woensdag en zaterdag."
@@ -2010,10 +2011,10 @@ msgstr ""
 #: ui/templates/em/generateur.html:12 ui/templates/em/generateur.html:22
 msgid ""
 "Générez des grilles EuroMillions optimisées avec le moteur HYBRIDE. "
-"Analyse de tirages historiques depuis 2019."
+"Analyse des tirages historiques des 7 dernières années."
 msgstr ""
 "Genereer geoptimaliseerde EuroMillions-roosters met de HYBRIDE-engine. "
-"Analyse van historische trekkingen sinds 2019."
+"Analyse van historische trekkingen van de afgelopen 7 jaar."
 
 #: ui/templates/em/generateur.html:29
 msgid "LotoIA - Simulateur de Grilles EuroMillions"
@@ -2058,8 +2059,8 @@ msgid "tirages officiels EuroMillions"
 msgstr "officiële EuroMillions-trekkingen"
 
 #: ui/templates/em/generateur.html:96
-msgid "depuis 2019"
-msgstr "sinds 2019"
+msgid "sur les 7 dernières années"
+msgstr "van de afgelopen 7 jaar"
 
 #: ui/templates/em/generateur.html:97
 msgid "Mascotte HYBRIDE - Moteur d'analyse statistique EuroMillions"
@@ -2227,10 +2228,10 @@ msgstr "Hoe werkt de EuroMillions-simulator?"
 #: ui/templates/em/generateur.html:301
 msgid ""
 "Notre simulateur utilise le <strong>moteur HYBRIDE</strong> qui analyse "
-"les tirages historiques EuroMillions depuis 2019."
+"les tirages historiques EuroMillions des 7 dernières années."
 msgstr ""
 "Onze simulator gebruikt de <strong>HYBRIDE-engine</strong> die de "
-"historische EuroMillions-trekkingen sinds 2019 analyseert."
+"historische EuroMillions-trekkingen van de afgelopen 7 jaar analyseert."
 
 #: ui/templates/em/generateur.html:302
 msgid ""
@@ -2349,11 +2350,11 @@ msgstr "EuroMillions-geschiedenis | LotoIA"
 #: ui/templates/em/historique.html:11 ui/templates/em/historique.html:20
 msgid ""
 "Consultez l'historique complet des tirages EuroMillions. Recherchez un "
-"tirage par date et retrouvez les numéros gagnants et les étoiles depuis "
-"2004."
+"tirage par date et retrouvez les numéros gagnants et les étoiles des 7 "
+"dernières années."
 msgstr ""
 "Bekijk de volledige EuroMillions-trekkingsgeschiedenis. Zoek een trekking "
-"op datum en vind de winnende nummers en sterren sinds 2004."
+"op datum en vind de winnende nummers en sterren van de afgelopen 7 jaar."
 
 #: ui/templates/em/historique.html:27
 msgid "Historique des tirages EuroMillions"
@@ -2362,10 +2363,10 @@ msgstr "Geschiedenis van de EuroMillions-trekkingen"
 #: ui/templates/em/historique.html:28
 msgid ""
 "Recherchez un tirage EuroMillions par date. Consultez les numéros "
-"gagnants (5 boules + 2 étoiles) de chaque tirage officiel depuis 2019."
+"gagnants (5 boules + 2 étoiles) de chaque tirage officiel des 7 dernières années."
 msgstr ""
 "Zoek een EuroMillions-trekking op datum. Bekijk de getrokken nummers (5 "
-"ballen + 2 sterren) van elke officiële trekking sinds 2019."
+"ballen + 2 sterren) van elke officiële trekking van de afgelopen 7 jaar."
 
 #: ui/templates/em/historique.html:46 ui/templates/em/methodologie.html:87
 msgid "Historique"
@@ -3243,8 +3244,8 @@ msgid "hébergée sur Google Cloud"
 msgstr "gehost op Google Cloud"
 
 #: ui/templates/em/methodologie.html:87
-msgid "729+ tirages officiels EuroMillions depuis février 2004"
-msgstr "729+ officiële EuroMillions-trekkingen sinds februari 2004"
+msgid "plus de 700 tirages officiels EuroMillions (7 dernières années)"
+msgstr "meer dan 700 officiële EuroMillions-trekkingen (afgelopen 7 jaar)"
 
 #: ui/templates/em/methodologie.html:88
 msgid "Tirages les mardis et vendredis"

@@ -17,7 +17,7 @@ _INSULT_L1_EM_EN = [
     "🧊 That slides off me like a star on a losing grid. Wanna talk stats or keep your monologue going?",
     "😎 I see you're frustrated. I'm an AI — frustration isn't in my code. EuroMillions statistics, however, very much are. Shall we?",
     "📊 Fun fact: while you were insulting me, I analysed 50 numbers and 12 stars across 3 time windows. One of us is using their time better. Hint: it's not you.",
-    "🎯 You know I don't remember insults but I remember EVERY EuroMillions draw since 2004? It's about priorities. Go on, give me a number.",
+    "🎯 You know I don't remember insults but I remember EVERY EuroMillions draw from the last 7 years? It's about priorities. Go on, give me a number.",
     "💡 Quick reminder: I'm the only chatbot connected in real time to EuroMillions draws with a proprietary statistical engine. But sure, tell me again I'm rubbish 😉",
 ]
 

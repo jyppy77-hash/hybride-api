@@ -117,7 +117,7 @@ function getConsoleLogsEM(gridCount, duration, options) {
         return fixedPhaseSec + (i - fixedSteps) * variableStepSec;
     };
 
-    var rowsCount = options.rowsToAnalyze || window.TOTAL_TIRAGES_EM || 729;
+    var rowsCount = options.rowsToAnalyze || window.TOTAL_TIRAGES_EM || 700;
     var rowsFormatted = rowsCount.toLocaleString(LI.locale);
     var tiragesText = options.isGlobal
         ? '\u2713 ' + rowsFormatted + LI.log75_draws_full
@@ -1029,7 +1029,7 @@ async function showMetaAnalysePopupEM() {
     }
 
     var currentMode = (typeof metaCurrentModeEM !== 'undefined') ? metaCurrentModeEM : 'tirages';
-    var totalTirages = window.TOTAL_TIRAGES_EM || 729;
+    var totalTirages = window.TOTAL_TIRAGES_EM || 700;
     var rowsToAnalyze = totalTirages;
     var isGlobal = true;
 

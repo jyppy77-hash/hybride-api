@@ -137,7 +137,7 @@ function getConsoleLogsSimulateurEM(gridCount, duration) {
         return fixedPhaseSec + (i - fixedSteps) * variableStepSec;
     };
 
-    var rowsCount = window.TOTAL_TIRAGES_EM || 729;
+    var rowsCount = window.TOTAL_TIRAGES_EM || 700;
     var rowsFormatted = rowsCount.toLocaleString(LI.locale);
 
     return [

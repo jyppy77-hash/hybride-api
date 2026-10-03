@@ -76,7 +76,7 @@ function getConsoleLogs(gridCount, duration) {
         { time: t(0), text: "> Initialisation HYBRIDE...", type: "info" },
         { time: t(1), text: "✓ Connexion moteur OK (127ms)", type: "success" },
         { time: t(2), text: "> Chargement base de données FDJ...", type: "info" },
-        { time: t(3), text: `✓ ${(window.TOTAL_TIRAGES || 967).toLocaleString('fr-FR')} tirages chargés (342ms)`, type: "success" },
+        { time: t(3), text: `✓ ${(window.TOTAL_TIRAGES || 1000).toLocaleString('fr-FR')} tirages chargés (342ms)`, type: "success" },
         { time: t(4), text: `> GET /api/analyze?grids=${gridCount}&mode=balanced`, type: "request" },
         { time: t(5), text: "⏳ Calcul fréquences historiques... 18%", type: "progress" },
         { time: t(6), text: "⏳ Détection patterns chauds... 34%", type: "progress" },

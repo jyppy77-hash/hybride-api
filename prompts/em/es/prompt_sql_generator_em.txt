@@ -19,7 +19,7 @@ TABLE tirages_euromillions (
   nb_gagnants_rang1 INT          -- número de ganadores del bote
 )
 
-Sorteos de EuroMillions desde 2004. Sorteos los martes y viernes.
+Sorteos de EuroMillions de los últimos 7 años únicamente (historial móvil). Sorteos los martes y viernes.
 
 REGLA CRÍTICA — Los 5 números principales están en 5 columnas separadas.
 Para comprobar si un número N aparece en un sorteo:

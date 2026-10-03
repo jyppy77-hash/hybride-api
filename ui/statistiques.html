@@ -50,7 +50,7 @@
         "name": "LotoIA",
         "url": "https://lotoia.fr"
       },
-      "temporalCoverage": "2019-11-04/..",
+      "temporalCoverage": "2019-11-06/..",
       "spatialCoverage": "FR",
       "measurementTechnique": "Algorithme statistique HYBRIDE",
       "variableMeasured": [
@@ -951,7 +951,7 @@
         <!-- Texte éditorial SEO (déplacé sous le contenu interactif) -->
         <section class="editorial-intro">
             <h2>Statistiques du Loto : analyse complète des tirages officiels</h2>
-            <p>Cette page centralise l'ensemble des <strong>données officielles</strong> issues des tirages du Loto français depuis novembre 2019, soit plus de <strong class="dynamic-tirages">986</strong> tirages analysés par notre moteur d'intelligence artificielle.</p>
+            <p>Cette page centralise l'ensemble des <strong>données officielles</strong> issues des tirages du Loto français depuis novembre 2019, soit plus de <strong class="dynamic-tirages">1&nbsp;000</strong> tirages analysés par notre moteur d'intelligence artificielle.</p>
             <p>Explorez l'<strong>historique complet des tirages</strong>, consultez la <strong>fréquence de sortie</strong> de chaque numéro (1-49) et numéro Chance (1-10), identifiez les numéros les plus sortis et les plus en retard. Notre <strong>analyse statistique</strong> s'appuie sur des méthodes éprouvées : calcul fréquentiel, pondération temporelle et scoring multicritère via le <a href="/moteur">moteur HYBRIDE</a>.</p>
             <p><strong>Rappel important :</strong> le Loto est un jeu de hasard pur. Ces statistiques sont purement descriptives et n'impliquent aucune prédiction sur les tirages futurs. Aucun algorithme, aussi sophistiqué soit-il, ne peut prédire les résultats d'un tirage aléatoire.</p>
         </section>
@@ -1517,7 +1517,7 @@
     <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc" data-before-send="umamiBeforeSend"></script>
     <script>
     fetch('/database-info').then(function(r){return r.json()}).then(function(d){
-        if(!d.exists)return;var n=d.total_draws||967;
+        if(!d.exists)return;var n=d.total_draws||1000;
         document.querySelectorAll('.dynamic-tirages').forEach(function(el){el.textContent=n.toLocaleString('fr-FR')});
     }).catch(function(){});
     </script>

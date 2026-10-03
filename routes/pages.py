@@ -185,7 +185,7 @@ async def page_faq():
     try:
         total = await db_cloudsql.get_tirages_count()
     except Exception:
-        total = 967  # fallback
+        total = 1000  # fallback arrondi
     with open("ui/faq.html", "r", encoding="utf-8") as f:
         html = f.read()
     html = html.replace("__DB_TOTAL__", str(total))

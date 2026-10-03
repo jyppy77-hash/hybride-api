@@ -64,7 +64,7 @@ function getConsoleLogs(gridCount, duration, options = {}) {
     };
 
     // Texte pour le nombre de tirages analysés
-    const rowsCount = options.rowsToAnalyze || window.TOTAL_TIRAGES || 967;
+    const rowsCount = options.rowsToAnalyze || window.TOTAL_TIRAGES || 1000;
     const rowsFormatted = rowsCount.toLocaleString('fr-FR');
     const tiragesText = options.isGlobal
         ? `✓ ${rowsFormatted} tirages analysés (base complète)`
@@ -1149,7 +1149,7 @@ async function showMetaAnalysePopup() {
 
     // Déterminer le nombre de tirages à analyser selon le mode sélectionné
     const currentMode = (typeof metaCurrentMode !== 'undefined') ? metaCurrentMode : 'tirages';
-    const totalTirages = window.TOTAL_TIRAGES || 967;
+    const totalTirages = window.TOTAL_TIRAGES || 1000;
     let rowsToAnalyze = totalTirages;
     let isGlobal = true;
 

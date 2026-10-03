@@ -515,12 +515,13 @@ msgstr "EuroMillions"
 
 #: ui/templates/em/a-propos.html:154
 msgid ""
-"Notre base couvre <strong>729+ tirages officiels EuroMillions</strong> "
-"depuis 2019. L'EuroMillions se joue dans 9 pays européens avec 5 numéros "
-"(1-50) et 2 étoiles (1-12). Les tirages ont lieu les mardis et vendredis."
+"Notre base couvre <strong>plus de 700 tirages officiels EuroMillions</strong> "
+"sur les 7 dernières années. L'EuroMillions se joue dans 9 pays européens "
+"avec 5 numéros (1-50) et 2 étoiles (1-12). Les tirages ont lieu les mardis "
+"et vendredis."
 msgstr ""
-"Nuestra base cubre <strong>más de 729 sorteos oficiales de "
-"EuroMillions</strong> desde 2019. EuroMillions se juega en 9 países "
+"Nuestra base cubre <strong>más de 700 sorteos oficiales de "
+"EuroMillions</strong> de los últimos 7 años. EuroMillions se juega en 9 países "
 "europeos con 5 números (1-50) y 2 estrellas (1-12). Los sorteos tienen "
 "lugar los martes y viernes."
 
@@ -530,12 +531,12 @@ msgstr "Loto France"
 
 #: ui/templates/em/a-propos.html:157
 msgid ""
-"Notre base couvre <strong>986+ tirages officiels du Loto "
+"Notre base couvre <strong>plus de 1 000 tirages officiels du Loto "
 "français</strong> depuis novembre 2019. Le Loto se joue avec 5 numéros "
 "(1-49) et 1 numéro Chance (1-10). Les tirages ont lieu les lundis, "
 "mercredis et samedis."
 msgstr ""
-"Nuestra base cubre <strong>más de 986 sorteos oficiales del Loto "
+"Nuestra base cubre <strong>más de 1.000 sorteos oficiales del Loto "
 "francés</strong> desde noviembre de 2019. El Loto se juega con 5 números "
 "(1-49) y 1 número de la Suerte (1-10). Los sorteos tienen lugar los "
 "lunes, miércoles y sábados."
@@ -2031,10 +2032,10 @@ msgstr ""
 #: ui/templates/em/generateur.html:12 ui/templates/em/generateur.html:22
 msgid ""
 "Générez des grilles EuroMillions optimisées avec le moteur HYBRIDE. "
-"Analyse de tirages historiques depuis 2019."
+"Analyse des tirages historiques des 7 dernières années."
 msgstr ""
 "Genere combinaciones EuroMillions optimizadas con el motor HYBRIDE. "
-"Análisis de sorteos históricos desde 2019."
+"Análisis de los sorteos históricos de los últimos 7 años."
 
 #: ui/templates/em/generateur.html:29
 msgid "LotoIA - Simulateur de Grilles EuroMillions"
@@ -2081,8 +2082,8 @@ msgid "tirages officiels EuroMillions"
 msgstr "sorteos oficiales de EuroMillions"
 
 #: ui/templates/em/generateur.html:96
-msgid "depuis 2019"
-msgstr "desde 2019"
+msgid "sur les 7 dernières années"
+msgstr "en los últimos 7 años"
 
 #: ui/templates/em/generateur.html:97
 msgid "Mascotte HYBRIDE - Moteur d'analyse statistique EuroMillions"
@@ -2250,10 +2251,10 @@ msgstr "¿Cómo funciona el simulador EuroMillions?"
 #: ui/templates/em/generateur.html:301
 msgid ""
 "Notre simulateur utilise le <strong>moteur HYBRIDE</strong> qui analyse "
-"les tirages historiques EuroMillions depuis 2019."
+"les tirages historiques EuroMillions des 7 dernières années."
 msgstr ""
 "Nuestro simulador utiliza el <strong>motor HYBRIDE</strong> que analiza "
-"los sorteos históricos de EuroMillions desde 2019."
+"los sorteos históricos de EuroMillions de los últimos 7 años."
 
 #: ui/templates/em/generateur.html:302
 msgid ""
@@ -2372,11 +2373,12 @@ msgstr "Historial EuroMillions | LotoIA"
 #: ui/templates/em/historique.html:11 ui/templates/em/historique.html:20
 msgid ""
 "Consultez l'historique complet des tirages EuroMillions. Recherchez un "
-"tirage par date et retrouvez les numéros gagnants et les étoiles depuis "
-"2004."
+"tirage par date et retrouvez les numéros gagnants et les étoiles des 7 "
+"dernières années."
 msgstr ""
 "Consulte el historial completo de sorteos EuroMillions. Busque un sorteo "
-"por fecha y encuentre los números ganadores y las estrellas desde 2004."
+"por fecha y encuentre los números ganadores y las estrellas de los últimos "
+"7 años."
 
 #: ui/templates/em/historique.html:27
 msgid "Historique des tirages EuroMillions"
@@ -2385,10 +2387,10 @@ msgstr "Historial de sorteos EuroMillions"
 #: ui/templates/em/historique.html:28
 msgid ""
 "Recherchez un tirage EuroMillions par date. Consultez les numéros "
-"gagnants (5 boules + 2 étoiles) de chaque tirage officiel depuis 2019."
+"gagnants (5 boules + 2 étoiles) de chaque tirage officiel des 7 dernières années."
 msgstr ""
 "Busque un sorteo EuroMillions por fecha. Consulte los números extraídos "
-"(5 bolas + 2 estrellas) de cada sorteo oficial desde 2019."
+"(5 bolas + 2 estrellas) de cada sorteo oficial de los últimos 7 años."
 
 #: ui/templates/em/historique.html:46 ui/templates/em/methodologie.html:87
 msgid "Historique"
@@ -3265,8 +3267,8 @@ msgid "hébergée sur Google Cloud"
 msgstr "alojada en Google Cloud"
 
 #: ui/templates/em/methodologie.html:87
-msgid "729+ tirages officiels EuroMillions depuis février 2004"
-msgstr "729+ sorteos oficiales de EuroMillions desde febrero de 2004"
+msgid "plus de 700 tirages officiels EuroMillions (7 dernières années)"
+msgstr "más de 700 sorteos oficiales de EuroMillions (últimos 7 años)"
 
 #: ui/templates/em/methodologie.html:88
 msgid "Tirages les mardis et vendredis"

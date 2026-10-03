@@ -19,7 +19,7 @@ TABLE tirages_euromillions (
   nb_gagnants_rang1 INT          -- nombre de gagnants du jackpot
 )
 
-Tirages EuroMillions depuis 2004. Tirages le mardi et le vendredi.
+Tirages EuroMillions des 7 dernières années uniquement (historique glissant). Tirages le mardi et le vendredi.
 
 RÈGLE CRITIQUE — Les 5 numéros principaux sont dans 5 colonnes séparées.
 Pour chercher si un numéro N apparaît dans un tirage :

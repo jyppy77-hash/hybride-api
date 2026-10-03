@@ -1053,9 +1053,14 @@ class TestAppVersion:
         timeout 1er-token 15s distinct inter-chunk 8s, error_detail différencié
         Vertex429/InterChunkTimeout/VertexError/NoChunks, str(e) sur 5 handlers 429.
         Cause : NoChunks 52%/24h = 429 DSQ régional Vertex (audits READ-ONLY 11/06).
+        Chantier A (03/10, Release 1.6.050) — chiffres de tirages périmés remplacés
+        par formulations arrondies (« plus de 1 000 » Loto, « plus de 700 » EM),
+        contre-vérités de dates corrigées (« depuis novembre 2019 » Loto, « sur les
+        7 dernières années » EM), date début Loto 4 → 6/11/2019, curseurs générateur
+        100% API, prompts Gemini EM alignés, i18n 6 langues.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.049"
+        assert APP_VERSION == "1.6.050"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

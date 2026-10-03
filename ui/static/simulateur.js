@@ -263,7 +263,7 @@ function getCustomGridAnalysisLogs() {
         { time: step * 3, text: "✓ 5 numéros + 1 chance validés", type: "success" },
         { time: step * 4, text: "> POST /api/analyze-custom-grid", type: "request" },
         { time: step * 5, text: "⏳ Calcul fréquences historiques... 22%", type: "progress" },
-        { time: step * 6, text: `⏳ Comparaison avec ${(window.TOTAL_TIRAGES || 967).toLocaleString('fr-FR')} tirages... 45%`, type: "progress" },
+        { time: step * 6, text: `⏳ Comparaison avec ${(window.TOTAL_TIRAGES || 1000).toLocaleString('fr-FR')} tirages... 45%`, type: "progress" },
         { time: step * 7, text: "⏳ Détection patterns similaires... 63%", type: "progress" },
         { time: step * 8, text: "⏳ Calcul profil statistique... 81%", type: "progress" },
         { time: step * 9, text: "⏳ Génération recommandations... 93%", type: "progress" },

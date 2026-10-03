@@ -5,6 +5,15 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# Chantier A — Chiffres périmés + contre-vérités de dates (Release 1.6.050, 03/10/2026).
+# Compteurs de tirages codés en dur (986/967/981/729/730/979/980/982/990/1800) remplacés par
+# des formulations arrondies non-périssables (« plus de 1 000 » Loto, « plus de 700 » EM) sur
+# pages HTML, templates EM, réponses chatbot, prompts Gemini et .po 6 langues. Contre-vérités
+# de dates corrigées (« depuis 1976 », « depuis 2004 », « plus de 20 ans » → « depuis novembre
+# 2019 » Loto, « sur les 7 dernières années » EM) ; date de début Loto 4 → 6 novembre 2019.
+# Curseurs du générateur (Loto + EM) : fenêtres d'analyse en chargement 100% API, fin des
+# valeurs de secours périmées ("---" tant que l'API n'a pas répondu). Cache-busters JS bumpés.
+#
 # V143 — Retry 429 chat streaming + observabilité 429 + timeout 1er-token (Release 1.6.049,
 # 11/06/2026). Diagnostic 3 audits READ-ONLY 11/06 : NoChunks 52%/24h chatbot = 429
 # RESOURCE_EXHAUSTED du Dynamic Shared Quota régional Vertex (gemini-2.5-flash europe-west1 :
@@ -239,9 +248,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.049"
+APP_VERSION = "1.6.050"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-06-11"
+VERSION_DATE = "2026-10-03"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

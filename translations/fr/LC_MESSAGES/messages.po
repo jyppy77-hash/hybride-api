@@ -432,9 +432,10 @@ msgstr ""
 
 #: ui/templates/em/a-propos.html:154
 msgid ""
-"Notre base couvre <strong>729+ tirages officiels EuroMillions</strong> "
-"depuis 2019. L'EuroMillions se joue dans 9 pays européens avec 5 numéros "
-"(1-50) et 2 étoiles (1-12). Les tirages ont lieu les mardis et vendredis."
+"Notre base couvre <strong>plus de 700 tirages officiels EuroMillions</strong> "
+"sur les 7 dernières années. L'EuroMillions se joue dans 9 pays européens "
+"avec 5 numéros (1-50) et 2 étoiles (1-12). Les tirages ont lieu les mardis "
+"et vendredis."
 msgstr ""
 
 #: ui/templates/em/a-propos.html:156
@@ -443,7 +444,7 @@ msgstr ""
 
 #: ui/templates/em/a-propos.html:157
 msgid ""
-"Notre base couvre <strong>986+ tirages officiels du Loto "
+"Notre base couvre <strong>plus de 1 000 tirages officiels du Loto "
 "français</strong> depuis novembre 2019. Le Loto se joue avec 5 numéros "
 "(1-49) et 1 numéro Chance (1-10). Les tirages ont lieu les lundis, "
 "mercredis et samedis."
@@ -1628,7 +1629,7 @@ msgstr ""
 #: ui/templates/em/generateur.html:12 ui/templates/em/generateur.html:22
 msgid ""
 "Générez des grilles EuroMillions optimisées avec le moteur HYBRIDE. "
-"Analyse de tirages historiques depuis 2019."
+"Analyse des tirages historiques des 7 dernières années."
 msgstr ""
 
 #: ui/templates/em/generateur.html:29
@@ -1674,7 +1675,7 @@ msgid "tirages officiels EuroMillions"
 msgstr ""
 
 #: ui/templates/em/generateur.html:96
-msgid "depuis 2019"
+msgid "sur les 7 dernières années"
 msgstr ""
 
 #: ui/templates/em/generateur.html:97
@@ -1844,7 +1845,7 @@ msgstr ""
 #: ui/templates/em/generateur.html:301
 msgid ""
 "Notre simulateur utilise le <strong>moteur HYBRIDE</strong> qui analyse "
-"les tirages historiques EuroMillions depuis 2019."
+"les tirages historiques EuroMillions des 7 dernières années."
 msgstr ""
 
 #: ui/templates/em/generateur.html:302
@@ -1953,8 +1954,8 @@ msgstr ""
 #: ui/templates/em/historique.html:11 ui/templates/em/historique.html:20
 msgid ""
 "Consultez l'historique complet des tirages EuroMillions. Recherchez un "
-"tirage par date et retrouvez les numéros gagnants et les étoiles depuis "
-"2004."
+"tirage par date et retrouvez les numéros gagnants et les étoiles des 7 "
+"dernières années."
 msgstr ""
 
 #: ui/templates/em/historique.html:27
@@ -1964,7 +1965,7 @@ msgstr ""
 #: ui/templates/em/historique.html:28
 msgid ""
 "Recherchez un tirage EuroMillions par date. Consultez les numéros "
-"gagnants (5 boules + 2 étoiles) de chaque tirage officiel depuis 2019."
+"gagnants (5 boules + 2 étoiles) de chaque tirage officiel des 7 dernières années."
 msgstr ""
 
 #: ui/templates/em/historique.html:46 ui/templates/em/methodologie.html:87
@@ -2691,7 +2692,7 @@ msgid "hébergée sur Google Cloud"
 msgstr ""
 
 #: ui/templates/em/methodologie.html:87
-msgid "729+ tirages officiels EuroMillions depuis février 2004"
+msgid "plus de 700 tirages officiels EuroMillions (7 dernières années)"
 msgstr ""
 
 #: ui/templates/em/methodologie.html:88

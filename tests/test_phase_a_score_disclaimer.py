@@ -251,10 +251,12 @@ class TestDataSourceInPrompts:
             content = f.read()
         assert "[DONNÉES SOURCE" in content
 
-    def test_em_fr_prompt_since_2004(self):
+    def test_em_fr_prompt_rolling_window(self):
+        # Base EM = fenêtre glissante 7 ans (pas de date fixe qui reperimerait)
         with open("prompts/em/fr/prompt_hybride_em.txt", encoding="utf-8") as f:
             content = f.read()
-        assert "depuis 2004" in content
+        assert "des 7 dernières années (historique glissant" in content
+        assert "2004" not in content
         assert "{DRAW_COUNT} tirages" in content  # F02: dynamic placeholder
 
     def test_em_fr_prompt_data_source_section(self):
@@ -262,38 +264,43 @@ class TestDataSourceInPrompts:
             content = f.read()
         assert "[DONNÉES SOURCE" in content
 
-    def test_em_en_prompt_since_2004(self):
+    def test_em_en_prompt_rolling_window(self):
         with open("prompts/em/en/prompt_hybride_em.txt", encoding="utf-8") as f:
             content = f.read()
-        assert "since 2004" in content
+        assert "from the last 7 years (rolling history" in content
+        assert "2004" not in content
         assert "{DRAW_COUNT} draws" in content  # F02: dynamic placeholder
         assert "[DATA SOURCE" in content
 
-    def test_em_es_prompt_since_2004(self):
+    def test_em_es_prompt_rolling_window(self):
         with open("prompts/em/es/prompt_hybride_em.txt", encoding="utf-8") as f:
             content = f.read()
-        assert "desde 2004" in content
+        assert "de los últimos 7 años (historial móvil" in content
+        assert "2004" not in content
         assert "{DRAW_COUNT} sorteos" in content  # F02: dynamic placeholder
         assert "[FUENTE DE DATOS" in content
 
-    def test_em_pt_prompt_since_2004(self):
+    def test_em_pt_prompt_rolling_window(self):
         with open("prompts/em/pt/prompt_hybride_em.txt", encoding="utf-8") as f:
             content = f.read()
-        assert "desde 2004" in content
+        assert "dos últimos 7 anos (histórico móvel" in content
+        assert "2004" not in content
         assert "{DRAW_COUNT} sorteios" in content  # F02: dynamic placeholder
         assert "[FONTE DE DADOS" in content
 
-    def test_em_de_prompt_since_2004(self):
+    def test_em_de_prompt_rolling_window(self):
         with open("prompts/em/de/prompt_hybride_em.txt", encoding="utf-8") as f:
             content = f.read()
-        assert "seit 2004" in content
+        assert "der letzten 7 Jahre (rollierende Historie" in content
+        assert "2004" not in content
         assert "{DRAW_COUNT}" in content  # F02: dynamic placeholder
         assert "[DATENQUELLE" in content
 
-    def test_em_nl_prompt_since_2004(self):
+    def test_em_nl_prompt_rolling_window(self):
         with open("prompts/em/nl/prompt_hybride_em.txt", encoding="utf-8") as f:
             content = f.read()
-        assert "sinds 2004" in content
+        assert "van de afgelopen 7 jaar (doorlopende geschiedenis" in content
+        assert "2004" not in content
         assert "{DRAW_COUNT}" in content  # F02: dynamic placeholder
         assert "[GEGEVENSBRON" in content
 
