@@ -5,6 +5,12 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# Cycle 2A SEO Phase 1A — cluster « statistiques loto » (Release 1.6.051, 05/10/2026).
+# /loto/statistiques : title/H1/meta re-ciblés « statistiques loto » + FAQ éditoriale 4 <details>
+# (texte statique, pas de JSON-LD FAQPage). /accueil : H1 + corps allégés, title/meta/JSON-LD
+# strictement inchangés. Maillage : ancre footer « Statistiques » → « Statistiques Loto » (18 pages).
+# Bump nécessaire : ETag HTML = md5(APP_VERSION:path) → sans bump, 304 sur l'ancien HTML.
+#
 # Chantier A — Chiffres périmés + contre-vérités de dates (Release 1.6.050, 03/10/2026).
 # Compteurs de tirages codés en dur (986/967/981/729/730/979/980/982/990/1800) remplacés par
 # des formulations arrondies non-périssables (« plus de 1 000 » Loto, « plus de 700 » EM) sur
@@ -248,9 +254,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.050"
+APP_VERSION = "1.6.051"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-10-03"
+VERSION_DATE = "2026-10-05"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

@@ -1058,9 +1058,13 @@ class TestAppVersion:
         contre-vérités de dates corrigées (« depuis novembre 2019 » Loto, « sur les
         7 dernières années » EM), date début Loto 4 → 6/11/2019, curseurs générateur
         100% API, prompts Gemini EM alignés, i18n 6 langues.
+        Cycle 2A SEO Phase 1A (05/10, Release 1.6.051) — cluster « statistiques
+        loto » : /loto/statistiques title/H1/meta + FAQ 4 <details> (sans JSON-LD),
+        /accueil H1 + corps allégés (title/meta/JSON-LD inchangés), ancre footer
+        « Statistiques Loto » sur 18 pages. Bump requis : ETag HTML lié à APP_VERSION.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.050"
+        assert APP_VERSION == "1.6.051"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

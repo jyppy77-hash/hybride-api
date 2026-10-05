@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content">
-    <title>Statistiques Loto France - Fréquences et Tendances | LotoIA</title>
-    <meta name="description" content="Statistiques complètes du Loto français : fréquences des numéros, tendances, numéros chauds et froids, historique des tirages depuis 2019.">
+    <title>Statistiques Loto : fréquences, écarts et historique des tirages | LotoIA</title>
+    <meta name="description" content="Statistiques du Loto mises à jour après chaque tirage : fréquences des 49 numéros et du Chance, écarts, paires et historique depuis 2019.">
     <link rel="canonical" href="https://lotoia.fr/loto/statistiques">
     <link rel="alternate" hreflang="fr" href="https://lotoia.fr/loto/statistiques">
     <link rel="alternate" hreflang="x-default" href="https://lotoia.fr/loto/statistiques">
@@ -702,6 +702,9 @@
     .breadcrumb-item a{color:inherit;opacity:.78;text-decoration:none}
     .breadcrumb-item a:hover{opacity:1;text-decoration:underline}
     .breadcrumb-item[aria-current="page"]{font-weight:600;opacity:1}
+    /* FAQ statistiques (Cycle 2A Phase 1A) */
+    .stats-faq details{padding-top:12px;margin-top:12px}
+    .stats-faq summary{cursor:pointer}
     </style>
 </head>
 <body class="stats-page">
@@ -732,7 +735,7 @@
     <!-- Header Premium — pattern aligné Analyse / Exploration -->
     <header class="page-header loto-hero-header">
         <div class="header-content">
-            <h1><span>📊</span> Statistiques du Loto France</h1>
+            <h1><span>📊</span> Statistiques du Loto : fréquences et historique des tirages</h1>
             <p class="subtitle">Explorez l'historique complet et analysez les données des tirages.</p>
             <div class="loto-hero-actions">
                 <a href="/loto/analyse" class="loto-hero-btn">
@@ -956,6 +959,31 @@
             <p><strong>Rappel important :</strong> le Loto est un jeu de hasard pur. Ces statistiques sont purement descriptives et n'impliquent aucune prédiction sur les tirages futurs. Aucun algorithme, aussi sophistiqué soit-il, ne peut prédire les résultats d'un tirage aléatoire.</p>
         </section>
 
+        <!-- FAQ statistiques (Cycle 2A Phase 1A — texte statique, pas de JSON-LD FAQPage) -->
+        <section class="editorial-intro stats-faq">
+            <h2>Questions fréquentes sur les statistiques du Loto</h2>
+
+            <details>
+                <summary><strong>Quel numéro sort le plus au Loto ?</strong></summary>
+                <p>Le classement évolue après chaque tirage. Il est consultable en temps réel dans l'onglet <strong>Top / Flop</strong> de cette page, ainsi que sur la page <a href="/loto/numeros-les-plus-sortis">numéros les plus sortis</a>. Les écarts entre le numéro le plus fréquent et le moins fréquent restent faibles : sur un grand nombre de tirages, chaque numéro tend vers la même fréquence théorique.</p>
+            </details>
+
+            <details>
+                <summary><strong>Comment lire la fréquence de sortie d'un numéro ?</strong></summary>
+                <p>À chaque tirage, 5 boules sont tirées parmi 49 : un numéro donné a donc environ <strong>10,2 %</strong> de chances de sortir (5/49). Pour le numéro Chance, tiré parmi 10, la probabilité est de <strong>10 %</strong>. La fréquence observée d'un numéro se compare à cette valeur théorique : un écart à la moyenne décrit le passé, il ne modifie pas la probabilité du tirage suivant.</p>
+            </details>
+
+            <details>
+                <summary><strong>Que signifient l'écart actuel et l'écart moyen ?</strong></summary>
+                <p>L'<strong>écart actuel</strong> est le nombre de tirages écoulés depuis la dernière sortie d'un numéro. L'<strong>écart moyen</strong> est le nombre moyen de tirages entre deux sorties consécutives de ce numéro sur tout l'historique. Ces deux indicateurs sont disponibles dans l'onglet <strong>Analyse par numéro</strong>.</p>
+            </details>
+
+            <details>
+                <summary><strong>Quels tirages sont pris en compte dans ces statistiques ?</strong></summary>
+                <p>Les statistiques portent sur les tirages officiels du Loto FDJ depuis le 6 novembre 2019 (lundi, mercredi et samedi), <strong>premier tirage uniquement</strong> : 5 numéros de 1 à 49 et le numéro Chance de 1 à 10. Les données sont mises à jour après chaque tirage.</p>
+            </details>
+        </section>
+
         <!-- CTA HYBRIDE -->
         <section class="cta-hybride">
             <h3>Découvrez le moteur HYBRIDE</h3>
@@ -974,7 +1002,7 @@
                 <span class="footer-sep">&bull;</span>
                 <a href="/loto/analyse">Analyse</a>
                 <span class="footer-sep">&bull;</span>
-                <a href="/loto/statistiques">Statistiques</a>
+                <a href="/loto/statistiques">Statistiques Loto</a>
                 <span class="footer-sep">&bull;</span>
                 <a href="/historique">Historique</a>
                 <span class="footer-sep">&bull;</span>
