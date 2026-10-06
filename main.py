@@ -425,6 +425,12 @@ async def strip_trailing_slash(request: Request, call_next):
     return await call_next(request)
 
 
+# Cycle 2A 1B : routes dont ETag / Last-Modified / 304 sont gérés par la route elle-même
+# (liés à la date du dernier tirage). Condition sur le CHEMIN uniquement : les FileResponse
+# (serve_page) posent leurs propres etag/last-modified, que le middleware doit continuer d'écraser.
+_DATA_DATED_ROUTES = frozenset({"/loto/statistiques"})
+
+
 # Middleware cache headers SEO + ETag
 @app.middleware("http")
 async def add_cache_headers(request: Request, call_next):
@@ -432,7 +438,8 @@ async def add_cache_headers(request: Request, call_next):
 
     # S13: ETag — check If-None-Match BEFORE processing (HTML pages only, not /api/ or /static/)
     _is_html_route = not path.startswith(("/api/", "/static/", "/ui/static/"))
-    if _is_html_route and request.method == "GET":
+    _route_dated = path in _DATA_DATED_ROUTES
+    if _is_html_route and request.method == "GET" and not _route_dated:
         etag = f'"{hashlib.md5(f"{APP_VERSION}:{path}".encode()).hexdigest()}"'
         if_none_match = request.headers.get("if-none-match", "")
         if if_none_match == etag:
@@ -443,7 +450,7 @@ async def add_cache_headers(request: Request, call_next):
 
     # S13: ETag — add on HTML responses (skip streaming/SSE)
     content_type = response.headers.get("content-type", "")
-    if _is_html_route and "text/html" in content_type and response.status_code < 300:
+    if _is_html_route and not _route_dated and "text/html" in content_type and response.status_code < 300:
         etag = f'"{hashlib.md5(f"{APP_VERSION}:{path}".encode()).hexdigest()}"'
         response.headers["ETag"] = etag
 
@@ -464,7 +471,7 @@ async def add_cache_headers(request: Request, call_next):
 
     # Last-Modified sur les pages HTML uniquement — date fixe = LAST_DEPLOY_DATE
     content_type = response.headers.get("content-type", "")
-    if "text/html" in content_type:
+    if "text/html" in content_type and not _route_dated:
         deploy_dt = datetime.strptime(LAST_DEPLOY_DATE, "%Y-%m-%d")
         stamp = time.mktime(deploy_dt.timetuple())
         response.headers["Last-Modified"] = formatdate(
@@ -625,6 +632,8 @@ _OWNER_INJECT = b'<script>window.__OWNER__=true;</script>\n</head>'
 _OWNER_BODY_ATTR = (b' data-owner="1"', b"<body")
 # V123 Phase 2.5 Extension A — AI bot marker for analytics guards
 _AI_BOT_INJECT = b'<script>window.__IS_AI_BOT__=true;</script>\n</head>'
+# Politique Cache-Control unique : 200 HTML injecté (owner / bots IA) + 304 des routes datées (1B)
+_INJECTED_CACHE_CONTROL = b"private, no-cache"
 
 
 def _extract_ua_from_scope(scope) -> str:
@@ -690,6 +699,14 @@ class UmamiOwnerFilterMiddleware:
             nonlocal is_html, body_chunks
 
             if message["type"] == "http.response.start":
+                # Cycle 2A 1B : le 304 de la route datée (sans content-type, donc non injecté)
+                # doit porter la même politique que son 200 injecté (owner / bots IA dont Googlebot).
+                if message.get("status") == 304 and path in _DATA_DATED_ROUTES:
+                    headers_304 = [(k, v) for k, v in message.get("headers", [])
+                                   if k.lower() != b"cache-control"]
+                    headers_304.append((b"cache-control", _INJECTED_CACHE_CONTROL))
+                    await send({**message, "headers": headers_304})
+                    return
                 hdrs = dict(message.get("headers", []))
                 ct = hdrs.get(b"content-type", b"").decode().lower()
                 is_html = "text/html" in ct
@@ -733,7 +750,7 @@ class UmamiOwnerFilterMiddleware:
                     # Injected responses must NOT be cached by intermediaries
                     # (Google Frontend would serve flags to all visitors)
                     new_headers.append(
-                        (b"cache-control", b"private, no-cache")
+                        (b"cache-control", _INJECTED_CACHE_CONTROL)
                     )
                     await send({**start_msg, "headers": new_headers})
                     await send({

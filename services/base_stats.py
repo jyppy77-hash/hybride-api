@@ -12,6 +12,10 @@ from config.i18n import _badges
 
 logger = logging.getLogger(__name__)
 
+# Cycle 2A Phase 1B — snapshot fréquences (source unique page serveur + API top-flop)
+SNAPSHOT_META_TTL = 300              # (dernier tirage, nb tirages) : relu toutes les 5 min max
+SNAPSHOT_TTL = 7 * 24 * 3600         # snapshot indexé sur le dernier tirage → rotation naturelle
+
 
 @dataclass
 class GameConfig:
@@ -90,11 +94,12 @@ class BaseStatsService:
     # Helpers BDD (avec cache)
     # ──────────────────────────────────────
 
-    async def _get_all_frequencies(self, cursor, type_num=None, date_from=None):
+    async def _get_all_frequencies(self, cursor, type_num=None, date_from=None, *, bypass_cache: bool = False):
         """
         Calcule la frequence de TOUS les numeros en UNE seule requete SQL.
         Retourne un dict {numero: frequence}.
         Resultat mis en cache 1 h (sauf si date_from est fourni).
+        bypass_cache=True : ignore la lecture du cache (recalcul SQL), le resultat est re-ecrit.
         """
         if type_num is None:
             type_num = self.cfg.type_principal
@@ -102,9 +107,10 @@ class BaseStatsService:
             raise ValueError(f"type_num invalide: {type_num}")
 
         cache_key = f"{self.cfg.cache_prefix}freq:{type_num}:{date_from}"
-        cached = await cache_get(cache_key)
-        if cached is not None:
-            return cached
+        if not bypass_cache:
+            cached = await cache_get(cache_key)
+            if cached is not None:
+                return cached
 
         if type_num == self.cfg.type_principal:
             if date_from:
@@ -162,6 +168,63 @@ class BaseStatsService:
         result = {row['num']: row['freq'] for row in await cursor.fetchall()}
         await cache_set(cache_key, result)
         return result
+
+    async def _fetch_snapshot_meta(self, cursor) -> dict:
+        """(premier tirage ISO, dernier tirage ISO, nb tirages) de la table. Leve LookupError si vide."""
+        await cursor.execute(
+            f"SELECT COUNT(*) AS total, MIN(date_de_tirage) AS first_draw, "
+            f"MAX(date_de_tirage) AS last_draw FROM {self.cfg.table}"
+        )
+        row = await cursor.fetchone()
+        if not row or not row.get("total") or not row.get("first_draw") or not row.get("last_draw"):
+            raise LookupError(f"table {self.cfg.table} vide")
+        return {
+            "first_draw": str(row["first_draw"])[:10],
+            "last_draw": str(row["last_draw"])[:10],
+            "total_draws": int(row["total"]),
+        }
+
+    def _snapshot_key(self, meta: dict) -> str:
+        return (f"{self.cfg.cache_prefix}snapshot:freq:"
+                f"{meta['first_draw']}:{meta['last_draw']}:{meta['total_draws']}")
+
+    async def get_frequency_snapshot(self) -> dict:
+        """
+        Source unique top/flop des boules principales (page serveur + API top-flop).
+
+        Retourne {"first_draw": "YYYY-MM-DD", "last_draw": "YYYY-MM-DD", "total_draws": int,
+                  "top": [{"number", "count"}...], "flop": [...]} sur toute la base.
+        Tri : top (count DESC, number ASC), flop (count ASC, number ASC).
+        Cle de cache indexee sur (premier tirage, dernier tirage, nb tirages) : un nouveau
+        tirage ou un glissement de fenetre change la cle → recalcul automatique, sans hook
+        post-import. Meta relue toutes les 5 min.
+        Leve en cas d'erreur DB : l'appelant decide du fallback.
+        """
+        meta_key = f"{self.cfg.cache_prefix}snapshot:meta"
+        meta = await cache_get(meta_key)
+        if meta is not None:
+            snap = await cache_get(self._snapshot_key(meta))
+            if snap is not None:
+                return snap
+
+        async with self._get_connection() as conn:
+            cursor = await conn.cursor()
+            meta = await self._fetch_snapshot_meta(cursor)
+            await cache_set(meta_key, meta, ttl=SNAPSHOT_META_TTL)
+            snap = await cache_get(self._snapshot_key(meta))
+            if snap is not None:
+                return snap
+            freq = await self._get_all_frequencies(cursor, self.cfg.type_principal, bypass_cache=True)
+
+        lo, hi = self.cfg.range_principal
+        counts = [{"number": n, "count": int(freq.get(n, 0))} for n in range(lo, hi + 1)]
+        snap = {
+            **meta,
+            "top": sorted(counts, key=lambda x: (-x["count"], x["number"])),
+            "flop": sorted(counts, key=lambda x: (x["count"], x["number"])),
+        }
+        await cache_set(self._snapshot_key(meta), snap, ttl=SNAPSHOT_TTL)
+        return snap
 
     async def _get_all_ecarts(self, cursor, type_num=None):
         """

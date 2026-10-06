@@ -645,9 +645,15 @@ async def unified_stats_top_flop(request: Request, game: ValidGame):
     cfg = get_config(game)
     svc = get_stats_service(cfg)
     try:
+        if game == ValidGame.loto:
+            # Cycle 2A 1B : source unique partagée avec le bloc serveur de /loto/statistiques
+            snap = await svc.get_frequency_snapshot()
+            return {"success": True, "top": snap["top"], "flop": snap["flop"],
+                    "last_draw": snap["last_draw"]}
+
         async with db_cloudsql.get_connection() as conn:
             cursor = await conn.cursor()
-            type_principal = "principal" if game == ValidGame.loto else "boule"
+            type_principal = "boule"
             num_max = cfg.num_range[1] + 1
 
             freq_map = await svc._get_all_frequencies(cursor, type_principal)
@@ -655,9 +661,6 @@ async def unified_stats_top_flop(request: Request, game: ValidGame):
 
             top = sorted(numbers_freq, key=lambda x: (-x['count'], x['number']))
             flop = sorted(numbers_freq, key=lambda x: (x['count'], x['number']))
-
-            if game == ValidGame.loto:
-                return {"success": True, "top": top, "flop": flop}
 
             # EM: also compute etoiles
             freq_etoiles = await svc._get_all_frequencies(cursor, "etoile")

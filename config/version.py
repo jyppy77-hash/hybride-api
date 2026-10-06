@@ -5,6 +5,15 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# Cycle 2A SEO Phase 1B — chiffres clés rendus serveur sur /loto/statistiques (Release 1.6.052).
+# Bloc « Statistiques du Loto : les chiffres clés » (intro dynamique, top 5 / flop 5, total,
+# période first_draw→last_draw, mention d'égalité à la 5e place) + JSON-LD Dataset dateModified
+# (= dernier tirage, jamais now()) et temporalCoverage dynamiques. Source unique :
+# BaseStatsService.get_frequency_snapshot, partagée avec /api/stats/top-flop (Loto) — cache
+# indexé sur (first_draw, last_draw, total) → invalidation naturelle après chaque tirage, sans
+# hook post-import. Fallback DB/cache/timeout → page 200 sans bloc. ETag / Last-Modified / 304
+# gérés par la route (main._DATA_DATED_ROUTES, condition sur le CHEMIN : FileResponse intactes).
+#
 # Cycle 2A SEO Phase 1A — cluster « statistiques loto » (Release 1.6.051, 05/10/2026).
 # /loto/statistiques : title/H1/meta re-ciblés « statistiques loto » + FAQ éditoriale 4 <details>
 # (texte statique, pas de JSON-LD FAQPage). /accueil : H1 + corps allégés, title/meta/JSON-LD
@@ -254,9 +263,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.051"
+APP_VERSION = "1.6.052"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-10-05"
+VERSION_DATE = "2026-10-08"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

@@ -1,10 +1,14 @@
 import re
 
-from fastapi import APIRouter
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from fastapi import APIRouter, Request
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 import db_cloudsql
 from config.templates import MIN_REVIEWS_FOR_RATING
 from config.version import LAST_DEPLOY_DATE
+from services.loto_key_figures import (
+    CACHE_CONTROL, get_key_figures_snapshot, if_none_match_hit,
+    page_etag, page_last_modified, render_key_figures,
+)
 
 router = APIRouter()
 
@@ -40,17 +44,21 @@ def serve_page(filename: str):
     return FileResponse(f"ui/{filename}", media_type="text/html")
 
 
-def serve_page_with_canonical(filename: str, canonical_url: str):
-    """Sert une page HTML en remplaçant la balise canonical (SEO dedup)."""
+def _read_with_canonical(filename: str, canonical_url: str) -> str:
+    """Lit une page HTML de ui/ en remplaçant la balise canonical (SEO dedup)."""
     with open(f"ui/{filename}", "r", encoding="utf-8") as f:
         html = f.read()
-    html = re.sub(
+    return re.sub(
         r'<link\s+rel="canonical"\s+href="[^"]*"',
         f'<link rel="canonical" href="{canonical_url}"',
         html,
         count=1,
     )
-    return HTMLResponse(content=html)
+
+
+def serve_page_with_canonical(filename: str, canonical_url: str):
+    """Sert une page HTML en remplaçant la balise canonical (SEO dedup)."""
+    return HTMLResponse(content=_read_with_canonical(filename, canonical_url))
 
 
 # =========================
@@ -148,9 +156,22 @@ async def page_loto_analyse():
 
 
 @router.get("/loto/statistiques")
-async def page_loto_statistiques():
-    """Loto France — Statistiques et historique."""
-    return serve_page_with_canonical("statistiques.html", "https://lotoia.fr/loto/statistiques")
+async def page_loto_statistiques(request: Request):
+    """Loto France — Statistiques : bloc « chiffres clés » rendu serveur (Cycle 2A 1B).
+
+    ETag / Last-Modified / 304 gérés ici (main._DATA_DATED_ROUTES) : liés au dernier tirage,
+    ou identiques au middleware en fallback (snapshot indisponible). Jamais de 500.
+    """
+    snap = await get_key_figures_snapshot()
+    headers = {
+        "ETag": page_etag(snap),
+        "Last-Modified": page_last_modified(snap),
+        "Cache-Control": CACHE_CONTROL,
+    }
+    if request.method == "GET" and if_none_match_hit(request.headers.get("if-none-match"), headers["ETag"]):
+        return Response(status_code=304, headers=headers)
+    html = _read_with_canonical("statistiques.html", "https://lotoia.fr/loto/statistiques")
+    return HTMLResponse(content=render_key_figures(html, snap), headers=headers)
 
 
 @router.get("/loto/intelligence-artificielle")

@@ -40,6 +40,7 @@
       "identifier": "lotoia-loto-tirages",
       "license": "https://creativecommons.org/licenses/by-nc-nd/4.0/",
       "isAccessibleForFree": true,
+      "dateModified": "__DATA_DATE_MODIFIED__",
       "creator": {
         "@type": "Organization",
         "name": "LotoIA",
@@ -705,6 +706,28 @@
     /* FAQ statistiques (Cycle 2A Phase 1A) */
     .stats-faq details{padding-top:12px;margin-top:12px}
     .stats-faq summary{cursor:pointer}
+    /* Chiffres clés (Cycle 2A Phase 1B — .freq-table repris de numeros-les-plus-sortis.html) */
+    .key-figures{background:var(--theme-bg-card);border:1px solid var(--theme-border);border-radius:16px;padding:28px 32px;margin-bottom:24px;box-shadow:0 10px 40px rgba(0,0,0,.1);color:var(--theme-text-primary)}
+    .key-figures h2{font-size:1.35rem;margin-bottom:12px;color:var(--theme-text-primary)}
+    .key-figures-intro{margin-bottom:16px;line-height:1.7}
+    .key-figures-meta{display:flex;flex-wrap:wrap;gap:12px 32px;margin:0 0 8px}
+    .key-figures-meta div{display:flex;gap:6px;align-items:baseline}
+    .key-figures-meta dt{color:var(--theme-text-secondary);font-size:.9rem}
+    .key-figures-meta dd{margin:0;font-weight:700}
+    .key-figures-tables{display:grid;grid-template-columns:1fr 1fr;gap:0 32px}
+    .key-figures-tie{font-size:.9rem;color:var(--theme-text-secondary);margin:-8px 0 16px}
+    .key-figures-note{font-size:.9rem;color:var(--theme-text-secondary);margin-top:8px}
+    .key-figures .freq-table{width:100%;border-collapse:collapse;margin:20px 0;font-size:.95rem}
+    .key-figures .freq-table caption{text-align:left;font-weight:700;margin-bottom:8px;color:var(--theme-text-primary)}
+    .key-figures .freq-table thead th{background:var(--theme-bg-header,#0f172a);color:#fff;padding:12px 16px;text-align:left;font-weight:600}
+    .key-figures .freq-table tbody td,.key-figures .freq-table tbody th{padding:10px 16px;border-bottom:1px solid var(--theme-border,#e2e8f0);color:var(--theme-text-primary,#1e293b);text-align:left}
+    .key-figures .freq-table tbody tr:nth-child(even){background:rgba(0,0,0,.02)}
+    body.theme-night .key-figures .freq-table tbody tr:nth-child(even){background:rgba(255,255,255,.03)}
+    .key-figures .freq-table .rank{font-weight:700;color:var(--primary,#667eea);width:50px}
+    .key-figures .freq-table .num{font-weight:700;font-size:1.1rem}
+    .key-figures .freq-table .num.hot{color:#ef4444}
+    .key-figures .freq-table .num.cold{color:#3b82f6}
+    @media (max-width:768px){.key-figures{padding:20px 16px}.key-figures-tables{grid-template-columns:1fr}.key-figures .freq-table thead th,.key-figures .freq-table tbody td,.key-figures .freq-table tbody th{padding:8px 10px}}
     </style>
 </head>
 <body class="stats-page">
@@ -761,6 +784,9 @@
 
     <!-- Contenu principal -->
     <div class="stats-container">
+        <!-- Chiffres clés (Cycle 2A Phase 1B — rendu serveur, retiré si données indisponibles) -->
+        <!--__KEY_FIGURES__-->
+
         <div class="tabs-card">
             <div class="tabs">
                 <button class="tab active" onclick="switchTab('historique')">📅 Historique des tirages</button>

@@ -1062,9 +1062,11 @@ class TestAppVersion:
         loto » : /loto/statistiques title/H1/meta + FAQ 4 <details> (sans JSON-LD),
         /accueil H1 + corps allégés (title/meta/JSON-LD inchangés), ancre footer
         « Statistiques Loto » sur 18 pages. Bump requis : ETag HTML lié à APP_VERSION.
+        Cycle 2A SEO Phase 1B (06/10, Release 1.6.052) — chiffres clés rendus serveur
+        sur /loto/statistiques (top/flop 5, dateModified = dernier tirage, ETag daté).
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.051"
+        assert APP_VERSION == "1.6.052"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""
