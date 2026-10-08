@@ -1064,9 +1064,11 @@ class TestAppVersion:
         « Statistiques Loto » sur 18 pages. Bump requis : ETag HTML lié à APP_VERSION.
         Cycle 2A SEO Phase 1B (06/10, Release 1.6.052) — chiffres clés rendus serveur
         sur /loto/statistiques (top/flop 5, dateModified = dernier tirage, ETag daté).
+        Cycle 2A SEO lot (b) (10/10, Release 1.6.053) — /loto/numeros-les-plus-sortis
+        rendu serveur (valeurs seules, squelette DOM identique, Chance pending V135).
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.052"
+        assert APP_VERSION == "1.6.053"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

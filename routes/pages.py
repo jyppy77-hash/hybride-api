@@ -9,6 +9,10 @@ from services.loto_key_figures import (
     CACHE_CONTROL, get_key_figures_snapshot, if_none_match_hit,
     page_etag, page_last_modified, render_key_figures,
 )
+from services.loto_top_numbers import (
+    get_top_numbers_data, render_top_numbers,
+    page_etag as top_numbers_etag, page_last_modified_for as top_numbers_last_modified,
+)
 
 router = APIRouter()
 
@@ -184,12 +188,23 @@ async def page_loto_ia():
 
 
 @router.get("/loto/numeros-les-plus-sortis")
-async def page_loto_numeros():
-    """Loto France — Numéros les plus sortis (classement fréquences)."""
+async def page_loto_numeros(request: Request):
+    """Loto France — Numéros les plus sortis : valeurs rendues serveur (Cycle 2A lot (b)).
+
+    ETag / Last-Modified / 304 gérés ici (main._DATA_DATED_ROUTES), liés aux données servies.
+    Fallback : dernier snapshot valide (< 7 j) puis valeurs neutres. Jamais de 500.
+    """
+    data = await get_top_numbers_data()
+    headers = {
+        "ETag": top_numbers_etag(data),
+        "Last-Modified": top_numbers_last_modified(data),
+        "Cache-Control": CACHE_CONTROL,
+    }
+    if request.method == "GET" and if_none_match_hit(request.headers.get("if-none-match"), headers["ETag"]):
+        return Response(status_code=304, headers=headers)
     with open("ui/numeros-les-plus-sortis.html", "r", encoding="utf-8") as f:
         html = f.read()
-    html = html.replace("__DATE_MODIFIED__", LAST_DEPLOY_DATE)
-    return HTMLResponse(content=html)
+    return HTMLResponse(content=render_top_numbers(html, data), headers=headers)
 
 
 @router.get("/loto/paires")

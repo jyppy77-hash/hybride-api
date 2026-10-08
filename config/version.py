@@ -5,6 +5,17 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# Cycle 2A SEO lot (b) — /loto/numeros-les-plus-sortis rendu serveur (Release 1.6.053).
+# Les 25 lignes codées en dur (top 10 / flop 10 / Chance) étaient FAUSSES : créées le 22/02
+# (132ae4c) avec mention [À VÉRIFIER], mention retirée le 06/03 (c7e6c97) sans vérification ;
+# chiffres repris par Copilot. Structure HTML strictement intacte (squelette DOM identique) :
+# seules les valeurs deviennent des marqueurs __NPS_*__ rendus par services/loto_top_numbers.py.
+# Boules = get_frequency_snapshot (source unique 1B, même tri / départage) ; Chance =
+# get_secondary_snapshot (tirages au Chance NULL exclus, fenêtre d'import V135 → `pending` dans
+# la clé de cache et l'ETag). Égalité à la dernière place = texte dans le <p> existant.
+# dateModified = dernier tirage. Fallback : dernier snapshot valide (< 7 j) sinon « — ».
+# ETag / Last-Modified / 304 par la route (main._DATA_DATED_ROUTES).
+#
 # Cycle 2A SEO Phase 1B — chiffres clés rendus serveur sur /loto/statistiques (Release 1.6.052).
 # Bloc « Statistiques du Loto : les chiffres clés » (intro dynamique, top 5 / flop 5, total,
 # période first_draw→last_draw, mention d'égalité à la 5e place) + JSON-LD Dataset dateModified
@@ -263,9 +274,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.052"
+APP_VERSION = "1.6.053"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-10-08"
+VERSION_DATE = "2026-10-10"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

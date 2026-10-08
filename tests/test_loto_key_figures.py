@@ -552,7 +552,8 @@ class TestMiddlewareHeadersNonRegression:
 
     def test_data_dated_routes_scope(self):
         import main as main_mod
-        assert main_mod._DATA_DATED_ROUTES == frozenset({"/loto/statistiques"})
+        # Cycle 2A lot (b) (1.6.053) : + /loto/numeros-les-plus-sortis
+        assert main_mod._DATA_DATED_ROUTES == frozenset({"/loto/statistiques", "/loto/numeros-les-plus-sortis"})
 
 
 # ═══════════════════════════════════════════════

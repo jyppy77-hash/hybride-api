@@ -428,7 +428,8 @@ async def strip_trailing_slash(request: Request, call_next):
 # Cycle 2A 1B : routes dont ETag / Last-Modified / 304 sont gérés par la route elle-même
 # (liés à la date du dernier tirage). Condition sur le CHEMIN uniquement : les FileResponse
 # (serve_page) posent leurs propres etag/last-modified, que le middleware doit continuer d'écraser.
-_DATA_DATED_ROUTES = frozenset({"/loto/statistiques"})
+# Cycle 2A lot (b) : + /loto/numeros-les-plus-sortis (valeurs rendues serveur, 1.6.053).
+_DATA_DATED_ROUTES = frozenset({"/loto/statistiques", "/loto/numeros-les-plus-sortis"})
 
 
 # Middleware cache headers SEO + ETag

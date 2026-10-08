@@ -226,6 +226,80 @@ class BaseStatsService:
         await cache_set(self._snapshot_key(meta), snap, ttl=SNAPSHOT_TTL)
         return snap
 
+    def _secondary_valid_sql(self) -> str:
+        """Condition SQL : tous les numéros secondaires du tirage sont renseignés et dans la plage."""
+        lo, hi = self.cfg.range_secondary
+        return " AND ".join(f"{col} BETWEEN {int(lo)} AND {int(hi)}" for col in self.cfg.secondary_columns)
+
+    async def get_secondary_snapshot(self) -> dict:
+        """
+        Cycle 2A lot (b) — classement des numéros secondaires (Chance Loto) sur toute la base.
+
+        Retourne {"first_draw", "last_draw", "total_draws", "pending", "draws",
+                  "ranking": [{"number", "count"}...]}, tri (count DESC, number ASC).
+        V135 : un tirage est importé en 2 temps (INSERT boules, UPDATE numéro secondaire différé).
+        Les tirages dont un numéro secondaire est NULL / hors plage sont EXCLUS (`pending`) ;
+        `draws` = total_draws - pending = dénominateur des fréquences. `pending` entre dans la
+        clé de cache : dès l'UPDATE, la clé change (méta relue toutes les 5 min) → recalcul.
+        Leve en cas d'erreur DB : l'appelant decide du fallback.
+        """
+        meta_key = f"{self.cfg.cache_prefix}snapshot:secmeta"
+        meta = await cache_get(meta_key)
+        if meta is not None:
+            snap = await cache_get(self._secondary_snapshot_key(meta))
+            if snap is not None:
+                return snap
+
+        valid = self._secondary_valid_sql()
+        async with self._get_connection() as conn:
+            cursor = await conn.cursor()
+            await cursor.execute(
+                f"SELECT COUNT(*) AS total, MIN(date_de_tirage) AS first_draw, "
+                f"MAX(date_de_tirage) AS last_draw, "
+                f"SUM(CASE WHEN {valid} THEN 0 ELSE 1 END) AS pending FROM {self.cfg.table}"
+            )
+            row = await cursor.fetchone()
+            if not row or not row.get("total") or not row.get("first_draw") or not row.get("last_draw"):
+                raise LookupError(f"table {self.cfg.table} vide")
+            meta = {
+                "first_draw": str(row["first_draw"])[:10],
+                "last_draw": str(row["last_draw"])[:10],
+                "total_draws": int(row["total"]),
+                "pending": int(row.get("pending") or 0),
+            }
+            await cache_set(meta_key, meta, ttl=SNAPSHOT_META_TTL)
+            snap = await cache_get(self._secondary_snapshot_key(meta))
+            if snap is not None:
+                return snap
+            unions = " UNION ALL ".join(
+                f"SELECT {col} AS num FROM {self.cfg.table} WHERE {valid}"
+                for col in self.cfg.secondary_columns
+            )
+            await cursor.execute(
+                f"SELECT num, COUNT(*) AS freq FROM ({unions}) t GROUP BY num ORDER BY num"
+            )
+            freq = {r["num"]: r["freq"] for r in await cursor.fetchall()}
+
+        if meta["pending"]:
+            logger.warning(
+                "[SECONDARY-SNAPSHOT]%s %d tirage(s) sans numéro secondaire valide exclu(s) "
+                "(probable NULL transitoire import V135) — total=%d, dernier=%s",
+                self.cfg.log_label, meta["pending"], meta["total_draws"], meta["last_draw"],
+            )
+        lo, hi = self.cfg.range_secondary
+        counts = [{"number": n, "count": int(freq.get(n, 0))} for n in range(lo, hi + 1)]
+        snap = {
+            **meta,
+            "draws": meta["total_draws"] - meta["pending"],
+            "ranking": sorted(counts, key=lambda x: (-x["count"], x["number"])),
+        }
+        await cache_set(self._secondary_snapshot_key(meta), snap, ttl=SNAPSHOT_TTL)
+        return snap
+
+    def _secondary_snapshot_key(self, meta: dict) -> str:
+        return (f"{self.cfg.cache_prefix}snapshot:sec:"
+                f"{meta['first_draw']}:{meta['last_draw']}:{meta['total_draws']}:{meta['pending']}")
+
     async def _get_all_ecarts(self, cursor, type_num=None):
         """
         Calcule l'ecart actuel de TOUS les numeros via SQL COUNT.

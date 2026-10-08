@@ -109,6 +109,7 @@ _svc = LotoStats(LOTO_CONFIG)
 
 _get_all_frequencies = _svc._get_all_frequencies
 get_frequency_snapshot = _svc.get_frequency_snapshot
+get_secondary_snapshot = _svc.get_secondary_snapshot
 _get_all_ecarts = _svc._get_all_ecarts
 get_numero_stats = _svc.get_numero_stats
 get_classement_numeros = _svc.get_classement_numeros
