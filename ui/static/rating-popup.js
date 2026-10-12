@@ -37,12 +37,24 @@
 
     if (remaining <= 0) {
         // Deja 1m30+ de session : afficher au prochain idle
-        onReady(showBanner);
+        onReady(function () { whenVisible(showBanner); });
     } else {
         // Attendre le temps restant
         setTimeout(function () {
-            if (!hasAlreadyRated()) showBanner();
+            if (!hasAlreadyRated()) whenVisible(showBanner);
         }, remaining);
+    }
+
+    // 1.6.054 : le minuteur peut expirer onglet masqué → bandeau (et rating_popup_shown)
+    // différé au retour en visible ; jamais affiché ni compté sur une page non vue.
+    function whenVisible(fn) {
+        if (document.visibilityState === 'visible') { fn(); return; }
+        function onVisible() {
+            if (document.visibilityState !== 'visible') return;
+            document.removeEventListener('visibilitychange', onVisible);
+            fn();
+        }
+        document.addEventListener('visibilitychange', onVisible);
     }
 
     function onReady(fn) {

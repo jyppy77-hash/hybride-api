@@ -251,6 +251,9 @@ function trackSponsorClickEM(sponsorId) {
 }
 
 function trackImpressionEM(sponsorIds) {
+    // 1.6.054 : impression comptée uniquement si la page est réellement visible
+    if (document.visibilityState !== 'visible') return;
+
     if (window.LotoIAAnalytics && window.LotoIAAnalytics.business) {
         sponsorIds.forEach(function(sponsorId) {
             window.LotoIAAnalytics.business.sponsorImpression({
@@ -261,6 +264,21 @@ function trackImpressionEM(sponsorIds) {
         });
     }
     console.log('[Sponsor EM] Impressions tracked: ' + sponsorIds.join(', '));
+}
+
+/**
+ * 1.6.054 : exécute fn quand la page est visible (immédiatement, ou au retour en visible).
+ * Comptage sponsor strictement réel : jamais sur un écran affiché onglet masqué.
+ * @param {Function} fn
+ */
+function runWhenVisible75EM(fn) {
+    if (document.visibilityState === 'visible') { fn(); return; }
+    function onVisible() {
+        if (document.visibilityState !== 'visible') return;
+        document.removeEventListener('visibilitychange', onVisible);
+        fn();
+    }
+    document.addEventListener('visibilitychange', onVisible);
 }
 
 // ============================================
@@ -690,8 +708,12 @@ function openMetaResultPopupEM(data) {
     }
 
     // EVENT 3b - V92 S05: PDF mention sponsor (E3 — branding passif, distinct de E6 download)
-    fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ event_type: 'sponsor-pdf-mention', sponsor_id: SPONSOR_VIDEO_75_EM.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
-    if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-pdf-mention', { sponsor_id: SPONSOR_VIDEO_75_EM.id, product_code: SPONSOR_VIDEO_75_EM.id });
+    // 1.6.054 : fin du minuteur 30 s + Promise Gemini possible onglet masqué → comptage différé
+    // au retour en visible (chiffres sponsor strictement réels).
+    runWhenVisible75EM(function() {
+        fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ event_type: 'sponsor-pdf-mention', sponsor_id: SPONSOR_VIDEO_75_EM.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+        if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-pdf-mention', { sponsor_id: SPONSOR_VIDEO_75_EM.id, product_code: SPONSOR_VIDEO_75_EM.id });
+    });
 
     var graphBarsBoules = generateGraphBarsHTMLEM(data.graph_boules, 'N\u00b0');
     var graphBarsEtoiles = generateGraphBarsHTMLEM(data.graph_etoiles, '\u2605');
@@ -755,8 +777,11 @@ function openMetaResultPopupEM(data) {
     document.body.style.overflow = 'hidden';
 
     // Tracking couche 1+2 — result-shown (bannière PARTENAIRE visible sur écran résultat)
-    fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ event_type: 'sponsor-result-shown', sponsor_id: SPONSOR_VIDEO_75_EM.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
-    if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-result-shown', { sponsor_id: SPONSOR_VIDEO_75_EM.id, product_code: SPONSOR_VIDEO_75_EM.id });
+    // 1.6.054 : compté seulement quand l'écran résultat est réellement vu
+    runWhenVisible75EM(function() {
+        fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ event_type: 'sponsor-result-shown', sponsor_id: SPONSOR_VIDEO_75_EM.id, page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+        if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-result-shown', { sponsor_id: SPONSOR_VIDEO_75_EM.id, product_code: SPONSOR_VIDEO_75_EM.id });
+    });
 
     var closeBtn = overlay.querySelector('#meta-result-close-em');
     var pdfBtn = overlay.querySelector('#meta-result-pdf-em');

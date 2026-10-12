@@ -227,6 +227,9 @@ function trackSponsorClick(sponsorId) {
  * @param {Array} sponsorIds - IDs des sponsors affiches
  */
 function trackImpression(sponsorIds) {
+    // 1.6.054 : impression comptée uniquement si la page est réellement visible
+    if (document.visibilityState !== 'visible') return;
+
     // GA4 Analytics - Track sponsor impressions
     if (window.LotoIAAnalytics && window.LotoIAAnalytics.business) {
         sponsorIds.forEach(sponsorId => {

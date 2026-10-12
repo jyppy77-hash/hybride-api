@@ -282,6 +282,9 @@ function trackSponsorClickSimulateurEM(sponsorId) {
  * @param {Array} sponsorIds - IDs des sponsors affiches
  */
 function trackImpressionSimulateurEM(sponsorIds) {
+    // 1.6.054 : impression comptée uniquement si la page est réellement visible
+    if (document.visibilityState !== 'visible') return;
+
     if (window.LotoIAAnalytics && window.LotoIAAnalytics.business) {
         sponsorIds.forEach(function(sponsorId) {
             window.LotoIAAnalytics.business.sponsorImpression({

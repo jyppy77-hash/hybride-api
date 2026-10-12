@@ -72,7 +72,9 @@ EXPECTED_FLOP10 = [43, 1, 33, 11, 14, 2, 20, 40, 27, 37]
 EXPECTED_CHANCE5 = [2, 9, 7, 4, 3]
 
 # Golden capturés AVANT modification (fichier ui/numeros-les-plus-sortis.html de acd5e40, 1.6.052)
-GOLDEN_SKELETON_MD5 = "068ffbb3e851fffa830002b9dbcd4dab"
+# 1.6.054 : squelette recalculé sur ce MÊME fichier acd5e40 avec cache-busters ?v=N neutralisés
+# (_norm_attrs) — l'ancien golden 068ffbb3… hashait les ?v= et cassait à chaque bump de JS.
+GOLDEN_SKELETON_MD5 = "78d9654a1462fda096ae2e5ae2a20818"
 GOLDEN_SKELETON_LEN = 686
 GOLDEN_HEAD_SEGMENT_MD5 = "58d81a3338fd9e1ab066f79ebbc8bfc5"
 GOLDEN_TITLE = "<title>Numéros Loto les Plus Sortis depuis 2019 | LotoIA</title>"
@@ -178,6 +180,14 @@ def _main_snapshot(cursor=None):
         return _run(stats_service.get_frequency_snapshot())
 
 
+_CACHE_BUSTER_RE = re.compile(r"\?v=[0-9.]+$")
+
+
+def _norm_attrs(attrs):
+    """1.6.054 : cache-busters ?v=N neutralisés (un bump de version JS n'est pas un changement de structure)."""
+    return tuple(sorted((k, _CACHE_BUSTER_RE.sub("?v=*", v) if v else v) for k, v in attrs))
+
+
 class _Skeleton(HTMLParser):
     """Séquence (balise, attributs triés) sans le texte — preuve de structure DOM identique."""
 
@@ -186,10 +196,10 @@ class _Skeleton(HTMLParser):
         self.out = []
 
     def handle_starttag(self, tag, attrs):
-        self.out.append(("<", tag, tuple(sorted(attrs))))
+        self.out.append(("<", tag, _norm_attrs(attrs)))
 
     def handle_startendtag(self, tag, attrs):
-        self.out.append(("<>", tag, tuple(sorted(attrs))))
+        self.out.append(("<>", tag, _norm_attrs(attrs)))
 
     def handle_endtag(self, tag):
         self.out.append((">", tag, ()))

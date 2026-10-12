@@ -108,6 +108,8 @@
         pageLoadTime: Date.now(),
         scrollTracked: {},
         eventsQueue: [],
+        consentAtBoot: false,         // 1.6.054 : consentement analytics stocké lu au boot
+        consentPageViewSent: false,   // 1.6.054 : page_view unique après acceptation en cours de page
 
         // Product Analytics (v2.5+)
         productContext: {
@@ -238,6 +240,31 @@
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
+    // MARQUEUR APPAREIL OWNER + CONSENTEMENT STOCKÉ (1.6.054)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    // 1.6.054 — Marqueur d'appareil owner (posé au 1er passage avec __OWNER__)
+    const INTERNAL_DEVICE_KEY = 'lotoia_internal';
+
+    function isInternalDevice() {
+        try { return localStorage.getItem(INTERNAL_DEVICE_KEY) === '1'; } catch (e) { return false; }
+    }
+
+    // 1.6.054 — Consentement analytics stocké (même règle d'expiration que cookie-consent.js).
+    // Lu au boot : cookie-consent.js (defer) n'est pas encore chargé à ce stade.
+    function readStoredAnalyticsConsent() {
+        try {
+            const stored = localStorage.getItem('lotoia_cookie_consent');
+            if (!stored) return false;
+            const data = JSON.parse(stored);
+            if (data.expires && new Date(data.expires) < new Date()) return false;
+            return !!(data.choices && data.choices.analytics === true);
+        } catch (e) {
+            return false;
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
     // BOOT GTAG IMMÉDIAT (INDÉPENDANT DU CONSENTEMENT)
     // ═══════════════════════════════════════════════════════════════════════════
 
@@ -248,7 +275,7 @@
      *
      * Étapes:
      * 1. Initialise dataLayer + window.gtag
-     * 2. Applique Consent Mode v2 par défaut (tous denied)
+     * 2. Applique Consent Mode v2 par défaut (depuis le choix stocké, sinon denied)
      * 3. Injecte le script gtag.js (fire-and-forget)
      */
     function bootGtagImmediately() {
@@ -257,7 +284,12 @@
 
         // Owner IP filter (window.__OWNER__) + V123 AI bot filter (window.__IS_AI_BOT__)
         // Injected by OwnerFilterMiddleware in main.py (Extension A anti-pollution)
-        if (window.__OWNER__ || window.__IS_AI_BOT__) {
+        // 1.6.054 : marqueur d'appareil persistant → GA4 jamais chargé ensuite sur cet appareil,
+        // quel que soit le réseau (4G, IP inconnue). Pas de script, pas de dataLayer, aucun hit.
+        if (window.__OWNER__) {
+            try { localStorage.setItem(INTERNAL_DEVICE_KEY, '1'); } catch (e) { /* ignore */ }
+        }
+        if (window.__OWNER__ || window.__IS_AI_BOT__ || isInternalDevice()) {
             state.gtagBooted = true;
             state.gtagLoadFailed = true;
             state.gtagScriptReady = true;
@@ -271,11 +303,14 @@
                 dataLayer.push(arguments);
             };
 
-            // 2. Consent Mode v2 - DEFAULT DENIED (CNIL/RGPD)
+            // 2. Consent Mode v2 - DEFAULT depuis le choix stocké (CNIL/RGPD)
             // CRITIQUE: Doit être appelé AVANT l'injection du script
+            // 1.6.054 : un visiteur ayant déjà accepté part en 'granted' dès le page_view baseline
+            // (avant : page_view cookieless puis update granted → session non rattachable).
+            state.consentAtBoot = readStoredAnalyticsConsent();
             gtag('consent', 'default', {
                 'ad_storage': 'denied',
-                'analytics_storage': 'denied',
+                'analytics_storage': state.consentAtBoot ? 'granted' : 'denied',
                 'ad_user_data': 'denied',
                 'ad_personalization': 'denied'
             });
@@ -416,10 +451,24 @@
     }
 
     /**
+     * Envoie un page_view GA4 (1.6.054 : baseline, acceptation en cours de page, retour bfcache)
+     * @param {string} category - baseline | consent_granted | bfcache_restore
+     */
+    function sendPageView(category) {
+        gtag('event', 'page_view', {
+            'page_title': document.title,
+            'page_location': window.location.href,
+            'page_path': window.location.pathname,
+            'event_category': category,
+            'non_interaction': true
+        });
+    }
+
+    /**
      * ═══════════════════════════════════════════════════════════════════════════
      * BASELINE INIT - Consent Mode v2 (CNIL/RGPD)
      * ═══════════════════════════════════════════════════════════════════════════
-     * Configure GA4 et envoie 1 page_view baseline cookieless.
+     * Configure GA4 et envoie 1 page_view baseline (consent default = choix stocké).
      * ATTEND que gtag.js soit chargé pour garantir le traitement correct.
      *
      * @returns {Promise<boolean>} true si baseline OK, false si bloqué
@@ -474,16 +523,16 @@
             });
 
             // 3. Marquer baseline ready AVANT d'envoyer le page_view (anti-double)
+            // 1.6.054 : DOIT précéder processEventsQueue() / flushProductBuffer() ci-dessous
+            // (gardes !baselineReady dans sendGA4Event et flushProductBuffer)
             state.baselineReady = true;
 
-            // 4. Envoyer UN SEUL page_view baseline (cookieless, Consent Mode v2)
-            gtag('event', 'page_view', {
-                'page_title': document.title,
-                'page_location': window.location.href,
-                'page_path': window.location.pathname,
-                'event_category': 'baseline',
-                'non_interaction': true
-            });
+            // 4. Envoyer UN SEUL page_view baseline (Consent Mode v2)
+            sendPageView('baseline');
+
+            // 5. 1.6.054 : vider dans l'ordre les events mis en file avant config + page_view
+            processEventsQueue();
+            flushProductBuffer();
 
             // Log explicite du statut pour diagnostic
             const consentStatus = hasAnalyticsConsent() ? 'granted' : 'denied';
@@ -503,7 +552,8 @@
      * ═══════════════════════════════════════════════════════════════════════════
      * Active le mode enrichi après consentement utilisateur.
      * Met à jour le Consent Mode v2 avec analytics_storage:granted.
-     * N'ENVOIE PAS de 2e page_view (déjà envoyé en baseline).
+     * 1.6.054 : consentement déjà stocké au boot → aucun page_view (le baseline est déjà 'granted').
+     * Acceptation EN COURS de page → 1 seul page_view, maintenant (le baseline est parti cookieless).
      *
      * @returns {boolean} true si enhanced activé, false sinon
      */
@@ -540,7 +590,13 @@
         state.consentGiven = true;
         state.initialized = true; // Compatibilité avec l'ancien état
 
-        // 3. Envoyer event consent_granted (PAS de page_view!)
+        // 2b. 1.6.054 : page_view unique si acceptation en cours de page (anti-doublon par flag)
+        if (!state.consentAtBoot && !state.consentPageViewSent && state.baselineReady) {
+            state.consentPageViewSent = true;
+            sendPageView('consent_granted');
+        }
+
+        // 3. Envoyer event consent_granted
         gtag('event', 'consent_granted', {
             'event_category': 'consent',
             'analytics_storage': 'granted',
@@ -552,7 +608,6 @@
 
         // 5. Activer le tracking avancé
         setupScrollTracking();
-        setupSessionTracking();
 
         log('Enhanced mode enabled (consent granted)', 'success');
         return true;
@@ -620,8 +675,11 @@
             return false;
         }
 
-        if (!window.gtag) {
-            log(`Event queued (gtag not ready): ${eventName}`, 'warning', params, 2);
+        // 1.6.054 : file d'attente tant que config + page_view baseline ne sont pas partis
+        // (aucun event avant gtag('config') ni avant le page_view → pas de session sans page d'entrée)
+        if (!state.baselineReady || !window.gtag) {
+            log(`Event queued (baseline not ready): ${eventName}`, 'warning', params, 2);
+            if (state.eventsQueue.length >= 50) state.eventsQueue.shift();
             state.eventsQueue.push({ eventName, params, timestamp: Date.now() });
             return false;
         }
@@ -646,6 +704,12 @@
      */
     function processEventsQueue() {
         if (state.eventsQueue.length === 0) return;
+
+        // 1.6.054 : gtag bloqué (owner, appareil marqué, bot IA, bloqueur) → vider sans envoyer
+        if (state.gtagLoadFailed) {
+            state.eventsQueue = [];
+            return;
+        }
 
         log(`Processing ${state.eventsQueue.length} queued events`, 'info');
 
@@ -880,22 +944,11 @@
         },
 
         /**
-         * Track fin de session (beforeunload)
+         * 1.6.054 : no-op conservé pour compat API publique (LotoIAAnalytics.ux.sessionEnd).
+         * L'event de fin de session, émis sur visibilitychange/beforeunload sans contrôle
+         * d'ancienneté, ouvrait des sessions GA4 orphelines (Unassigned) — supprimé.
          */
-        sessionEnd: function() {
-            updateEngagementState('exit');
-            const sessionDuration = Math.round((Date.now() - state.pageLoadTime) / 1000);
-
-            // Utiliser sendBeacon pour garantir l'envoi
-            if (navigator.sendBeacon && window.gtag) {
-                sendGA4Event('session_end_lotoia', {
-                    event_category: 'session',
-                    session_id: getSessionId(),
-                    session_duration_seconds: sessionDuration,
-                    exit_page: getCurrentPage()
-                });
-            }
-        },
+        sessionEnd: function() {},
 
         /**
          * Track changement de theme
@@ -1113,18 +1166,34 @@
         return true;
     }
 
+    // 1.6.054 : âge max d'un event produit au vidage (= timeout de session GA4)
+    const PRODUCT_EVENT_MAX_AGE_MS = 30 * 60 * 1000;
+
     /**
      * Flush le buffer d'events produit
      */
     function flushProductBuffer() {
         if (state.productBuffer.length === 0) return;
 
+        // 1.6.054 : gtag bloqué (owner, appareil marqué, bot IA, bloqueur) → vider sans envoyer
+        if (state.gtagLoadFailed) {
+            state.productBuffer = [];
+            return;
+        }
+
+        // 1.6.054 : rien avant config + page_view baseline (les events restent en tampon)
+        if (!state.baselineReady) return;
+
         const events = [...state.productBuffer];
         state.productBuffer = [];
 
-        log(`Flushing ${events.length} product events`, 'info', null, 2);
+        // 1.6.054 : jeter les events > 30 min (onglet gelé en arrière-plan puis repris ou fermé)
+        const now = Date.now();
+        const fresh = events.filter(item => now - item.ts <= PRODUCT_EVENT_MAX_AGE_MS);
 
-        events.forEach(item => {
+        log(`Flushing ${fresh.length} product events (${events.length - fresh.length} stale dropped)`, 'info', null, 2);
+
+        fresh.forEach(item => {
             sendProductEvent(item.name, item.payload);
         });
     }
@@ -1289,6 +1358,15 @@
         window.addEventListener('beforeunload', safeFlush);
     })();
 
+    // 1.6.054 : retour arrière depuis le bfcache → la page restaurée ne rejoue pas son page_view ;
+    // sans lui, les events suivants ouvrent une session sans page d'entrée (Unassigned).
+    window.addEventListener('pageshow', function(event) {
+        if (!event.persisted) return;
+        if (!state.baselineReady || state.gtagLoadFailed || typeof window.gtag !== 'function') return;
+        if (window.__OWNER__ || isInternalDevice() || !hasAnalyticsConsent()) return;
+        sendPageView('bfcache_restore');
+    });
+
     // ═══════════════════════════════════════════════════════════════════════════
     // TRACKING AUTOMATIQUE
     // ═══════════════════════════════════════════════════════════════════════════
@@ -1330,25 +1408,6 @@
         log('Scroll tracking enabled', 'info');
     }
 
-    /**
-     * Configure le tracking de fin de session
-     */
-    function setupSessionTracking() {
-        // Track session end on page unload
-        window.addEventListener('beforeunload', function() {
-            UXEvents.sessionEnd();
-        });
-
-        // Track visibility change (tab switch)
-        document.addEventListener('visibilitychange', function() {
-            if (document.visibilityState === 'hidden') {
-                UXEvents.sessionEnd();
-            }
-        });
-
-        log('Session tracking enabled', 'info');
-    }
-
     // ═══════════════════════════════════════════════════════════════════════════
     // INTEGRATION COOKIE CONSENT
     // ═══════════════════════════════════════════════════════════════════════════
@@ -1384,18 +1443,8 @@
             log('CookieConsent.isAccepted() error', 'warning', e.message, 2);
         }
 
-        // Fallback: verifier le localStorage (consentement sauvegardé)
-        try {
-            const stored = localStorage.getItem('lotoia_cookie_consent');
-            if (stored) {
-                const data = JSON.parse(stored);
-                return data.choices && data.choices.analytics === true;
-            }
-        } catch (e) {
-            // Ignore localStorage errors
-        }
-
-        return false;
+        // Fallback: consentement sauvegardé (1.6.054 : expiration 13 mois respectée)
+        return readStoredAnalyticsConsent();
     }
 
     /**

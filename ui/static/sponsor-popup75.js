@@ -231,6 +231,9 @@ function trackSponsorClick(sponsorId) {
  * @param {Array} sponsorIds - IDs des sponsors affiches
  */
 function trackImpression(sponsorIds) {
+    // 1.6.054 : impression comptée uniquement si la page est réellement visible
+    if (document.visibilityState !== 'visible') return;
+
     // GA4 Analytics - Track sponsor impressions
     if (window.LotoIAAnalytics && window.LotoIAAnalytics.business) {
         sponsorIds.forEach(sponsorId => {
@@ -243,6 +246,21 @@ function trackImpression(sponsorIds) {
     }
 
     console.log(`[Sponsor] Impressions tracked: ${sponsorIds.join(', ')}`);
+}
+
+/**
+ * 1.6.054 : exécute fn quand la page est visible (immédiatement, ou au retour en visible).
+ * Comptage sponsor strictement réel : jamais sur un écran affiché onglet masqué.
+ * @param {Function} fn
+ */
+function runWhenVisible75(fn) {
+    if (document.visibilityState === 'visible') { fn(); return; }
+    function onVisible() {
+        if (document.visibilityState !== 'visible') return;
+        document.removeEventListener('visibilitychange', onVisible);
+        fn();
+    }
+    document.addEventListener('visibilitychange', onVisible);
 }
 
 // ============================================
@@ -770,8 +788,12 @@ function openMetaResultPopup(data) {
     }
 
     // EVENT 3b - V92 S05: PDF mention sponsor (E3 — branding passif, distinct de E6 download)
-    fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ event_type: 'sponsor-pdf-mention', sponsor_id: 'LOTO_FR_A', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
-    if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-pdf-mention', { sponsor_id: 'LOTO_FR_A', product_code: 'LOTO_FR_A' });
+    // 1.6.054 : fin du minuteur 30 s + Promise Gemini possible onglet masqué → comptage différé
+    // au retour en visible (chiffres sponsor strictement réels).
+    runWhenVisible75(function() {
+        fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ event_type: 'sponsor-pdf-mention', sponsor_id: 'LOTO_FR_A', page: window.location.pathname, lang: document.documentElement.lang || 'fr', device: /Mobi/.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+        if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-pdf-mention', { sponsor_id: 'LOTO_FR_A', product_code: 'LOTO_FR_A' });
+    });
 
     const graphBars = generateGraphBarsHTML(data.graph);
     const analysisText = finalAnalysisText;
@@ -833,8 +855,11 @@ function openMetaResultPopup(data) {
     document.body.style.overflow = 'hidden';
 
     // Tracking couche 1+2 — result-shown (bannière PARTENAIRE visible sur écran résultat)
-    fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ event_type: 'sponsor-result-shown', sponsor_id: 'LOTO_FR_A', page: window.location.pathname, lang: 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
-    if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-result-shown', { sponsor_id: 'LOTO_FR_A', product_code: 'LOTO_FR_A' });
+    // 1.6.054 : compté seulement quand l'écran résultat est réellement vu
+    runWhenVisible75(function() {
+        fetch('/api/sponsor/track', { method: 'POST', headers: { 'Content-Type': 'application/json' }, keepalive: true, body: JSON.stringify({ event_type: 'sponsor-result-shown', sponsor_id: 'LOTO_FR_A', page: window.location.pathname, lang: 'fr', device: /Mobi|Android/i.test(navigator.userAgent) ? 'mobile' : 'desktop' }) }).catch(function() {});
+        if (typeof LotoIA_track === 'function') LotoIA_track('sponsor-result-shown', { sponsor_id: 'LOTO_FR_A', product_code: 'LOTO_FR_A' });
+    });
 
     // Event listeners
     const closeBtn = overlay.querySelector('#meta-result-close');

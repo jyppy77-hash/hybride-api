@@ -1066,9 +1066,11 @@ class TestAppVersion:
         sur /loto/statistiques (top/flop 5, dateModified = dernier tirage, ETag daté).
         Cycle 2A SEO lot (b) (10/10, Release 1.6.053) — /loto/numeros-les-plus-sortis
         rendu serveur (valeurs seules, squelette DOM identique, Chance pending V135).
+        LOT GA4 (14/10, Release 1.6.054) — sessions GA4 orphelines : session_end_lotoia
+        supprimé, cache-buster analytics.js v=4 ; title/meta/JSON-LD /accueil inchangés.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.053"
+        assert APP_VERSION == "1.6.054"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

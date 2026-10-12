@@ -5,6 +5,30 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# LOT GA4 — sessions orphelines « Unassigned » (Release 1.6.054, 14/10/2026). RUPTURE DE SÉRIE GA4
+# (annotation GA4 le jour du déploiement). Cause principale : session_end_lotoia émis sur
+# visibilitychange / beforeunload sans contrôle d'ancienneté → onglet repris > 30 min puis masqué =
+# session sans page_view ni source. Correctifs, tous dans ce lot (ui/static/analytics.js sauf G/H) :
+# A. session_end_lotoia + setupSessionTracking supprimés ; LotoIAAnalytics.ux.sessionEnd = no-op
+#    (compat API publique) ; vidage pagehide/beforeunload du tampon lotoia_* conservé.
+# B. Marqueur d'appareil owner : au 1er passage avec window.__OWNER__, localStorage
+#    lotoia_internal = « 1 » → ensuite GA4 n'est JAMAIS chargé sur cet appareil (pas de script, pas
+#    de dataLayer, aucun hit), quel que soit le réseau. Marqueur PERMANENT sur l'appareil ; pour le
+#    retirer : console du navigateur → localStorage.removeItem('lotoia_internal'). Umami inchangé
+#    (umamiBeforeSend ne lit que __OWNER__ / __IS_AI_BOT__ — filtrage Umami = lot séparé).
+# C. Consent default lu depuis le choix stocké (lotoia_cookie_consent, expiration 13 mois respectée,
+#    aussi dans le fallback de hasAnalyticsConsent) ; acceptation en cours de page = 1 seul page_view.
+# D. File d'attente sendGA4Event + tampon produit tant que baselineReady est faux (config + page_view
+#    pas encore partis), vidés dans l'ordre après le page_view ; gtag bloqué → vidés sans envoi.
+# E. Vidage du tampon produit : events > 30 min jetés (timeout de session GA4).
+# F. pageshow persisted (retour bfcache) + consentement + gtag chargé + pas owner → 1 page_view.
+# G. rating-popup.js : bandeau + rating_popup_shown différés au retour en visible.
+# H. sponsor-popup*.js : sponsorImpression seulement page visible ; écran résultat META 75
+#    (sponsor-result-shown / sponsor-pdf-mention → /api/sponsor/track) compté au retour en visible.
+# I. Cache-busters : analytics.js v=4, rating-popup.js v=10, sponsor-popup.js v=11,
+#    sponsor-popup75.js v=19, em/sponsor-popup-em.js v=11, sponsor-popup75-em.js v=14 (pages
+#    servies ; legacy ui/em, ui/en/euromillions, ui/index.html en 301 non touchés).
+#
 # Cycle 2A SEO lot (b) — /loto/numeros-les-plus-sortis rendu serveur (Release 1.6.053).
 # Les 25 lignes codées en dur (top 10 / flop 10 / Chance) étaient FAUSSES : créées le 22/02
 # (132ae4c) avec mention [À VÉRIFIER], mention retirée le 06/03 (c7e6c97) sans vérification ;
@@ -274,9 +298,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.053"
+APP_VERSION = "1.6.054"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-10-10"
+VERSION_DATE = "2026-10-14"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.
