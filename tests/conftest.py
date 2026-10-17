@@ -4,6 +4,7 @@ Fournit un SmartMockCursor qui dispatche les reponses
 en fonction du contenu SQL, sans connexion MySQL reelle.
 """
 
+import os
 import random as _random
 from contextlib import asynccontextmanager
 from datetime import date, timedelta
@@ -401,3 +402,94 @@ def _stub_chat_logger_do_insert(request):
         return
     with patch("services.chat_logger._do_insert", new_callable=AsyncMock):
         yield
+
+
+# ════════════════════════════════════════════════════════════════════
+# 1.6.055 — Garde-fou : aucun appel réel Vertex / DB pendant pytest
+# ════════════════════════════════════════════════════════════════════
+
+class RealExternalCallInTest(RuntimeError):
+    """1.6.055 — appel réel Vertex/DB tenté pendant pytest."""
+
+
+_REAL_CALL_ATTEMPTS: list[str] = []
+
+
+_REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_REAL_CALL_ORIGINS: list[str] = []
+
+
+def _repo_origin() -> str:
+    """Point d'appel (db_cloudsql / gemini_shared) + 3 appelants du repo, pour le message d'échec."""
+    import traceback
+    frames = [
+        fr for fr in traceback.extract_stack()[:-2]
+        if fr.filename.startswith(_REPO_ROOT) and not fr.filename.endswith("conftest.py")
+    ]
+    if not frames:
+        return "?"
+    callers = [
+        fr for fr in frames
+        if not fr.filename.endswith(("db_cloudsql.py", "gemini_shared.py"))
+    ][-3:]
+    return " <- ".join(
+        f"{os.path.relpath(fr.filename, _REPO_ROOT)}:{fr.lineno}"
+        for fr in [frames[-1], *reversed(callers)]
+    )
+
+
+def _forbid(name: str):
+    def _raiser(*args, **kwargs):
+        _REAL_CALL_ATTEMPTS.append(name)
+        _REAL_CALL_ORIGINS.append(f"{name} @ {_repo_origin()}")
+        raise RealExternalCallInTest(
+            f"{name} réel interdit pendant pytest — utiliser mock_vertex_client / smart_mock_db")
+    return _raiser
+
+
+@pytest.fixture(autouse=True)
+def _forbid_real_vertex_and_db():
+    """1.6.055 — échec explicite sur tout appel réel Vertex ou DB, même si l'exception est avalée.
+
+    La tentative est enregistrée puis le test échoue en teardown : le code de prod
+    avale souvent Exception, un simple raise passerait inaperçu.
+    Les patch posés à l'intérieur d'un test (test_db_pool) restent prioritaires.
+    """
+    _REAL_CALL_ATTEMPTS.clear()
+    _REAL_CALL_ORIGINS.clear()
+    with patch("google.genai.Client", side_effect=_forbid("google.genai.Client")), \
+         patch("aiomysql.create_pool", side_effect=_forbid("aiomysql.create_pool")), \
+         patch("aiomysql.connect", side_effect=_forbid("aiomysql.connect")):
+        yield
+    if _REAL_CALL_ATTEMPTS:
+        origins = list(_REAL_CALL_ORIGINS) or list(_REAL_CALL_ATTEMPTS)
+        _REAL_CALL_ATTEMPTS.clear()
+        _REAL_CALL_ORIGINS.clear()
+        pytest.fail("Appel réel externe tenté : " + " | ".join(origins))
+
+
+@pytest.fixture
+def db_unavailable():
+    """1.6.055 — simule une base indisponible pour les helpers async_query / async_fetch*.
+
+    Hors lifespan, _pool vaut None : get_connection() lève, puis _execute_with_retry
+    appelle _recreate_pool() qui tentait un vrai aiomysql.create_pool (proxy local).
+    Ici la recréation échoue sans réseau : même comportement observable (erreur
+    loguée puis propagée), aucune connexion.
+    Usage : pytestmark = pytest.mark.usefixtures("db_unavailable")
+    """
+    import db_cloudsql
+    err = ConnectionError("db_unavailable (mock pytest) — aucune connexion réelle")
+    with patch.object(db_cloudsql, "_recreate_pool", AsyncMock(side_effect=err)), \
+         patch.object(db_cloudsql, "_recreate_pool_readonly", AsyncMock(side_effect=err)):
+        yield
+
+
+@pytest.fixture
+def real_call_attempts():
+    """1.6.055 — accès à la liste des tentatives (tests du garde-fou uniquement).
+
+    Un test qui provoque volontairement une tentative doit vider la liste
+    avant la fin, sinon le teardown du garde-fou le fait échouer.
+    """
+    return _REAL_CALL_ATTEMPTS

@@ -10,6 +10,8 @@ from unittest.mock import patch, AsyncMock
 import pytest
 from starlette.testclient import TestClient
 
+# 1.6.055 — helpers DB non mockés : base indisponible simulée (garde-fou conftest)
+pytestmark = pytest.mark.usefixtures("db_unavailable")
 
 _TEST_TOKEN = "test_admin_token_1234567890"
 _TEST_PASSWORD = "test_admin_password"

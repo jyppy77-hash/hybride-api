@@ -43,6 +43,11 @@ _V143_RETRY_CAP_TOTAL = 12.0     # seconds (calibré chat)
 _V143_RETRY_JITTER_MAX = 1.0     # seconds (V129.1 equal jitter)
 
 
+def _as_int(value, default: int) -> int:
+    """1.6.055 — compteur de tokens fiable : int (hors bool) sinon default (None, MagicMock de test...)."""
+    return value if isinstance(value, int) and not isinstance(value, bool) else default
+
+
 # V70 F04: i18n system instructions — now shared in gemini_shared.py
 _ENRICHMENT_INSTRUCTIONS = ENRICHMENT_INSTRUCTIONS  # backward compat alias
 
@@ -76,7 +81,7 @@ async def enrich_analysis(analysis_local: str, window: str = "GLOBAL", *, http_c
 
 async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, timeout=10.0,
                              call_type="", lang="", temperature=None,
-                             max_retries=0, failure_box=None):
+                             max_retries=0, failure_box=None, usage_box=None):
     """
     Async generator — stream text chunks from Gemini Vertex AI (google-genai SDK).
 
@@ -107,6 +112,10 @@ async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, 
         stream_and_respond pour différencier `error_detail` (ex-fourre-tout
         NoChunks). Additif strict : sémantique exceptions/breaker inchangée.
       - Timeout 1er-token 15s distinct de l'inter-chunk 8s (slow-start DSQ).
+
+    1.6.055 — `usage_box` (opt-in) : out-param dict rempli en fin de flux réussi
+    avec {"tokens_in", "tokens_out"} (tentative réussie uniquement) — remonté
+    jusqu'à chat_log via log_from_meta.
     """
     _ = http_client, gem_api_key  # noqa: F841  # V131.A DEPRECATED — paramètres ignorés
 
@@ -192,8 +201,8 @@ async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, 
                 # Capture usage_metadata — présent sur dernier chunk
                 _um = getattr(chunk, "usage_metadata", None)
                 if _um:
-                    _usage_tin = getattr(_um, "prompt_token_count", _usage_tin)
-                    _usage_tout = getattr(_um, "candidates_token_count", _usage_tout)
+                    _usage_tin = _as_int(getattr(_um, "prompt_token_count", None), _usage_tin)
+                    _usage_tout = _as_int(getattr(_um, "candidates_token_count", None), _usage_tout)
                 # .text peut lever ValueError si chunk SAFETY-blocked (finish_reason non-STOP)
                 try:
                     text = chunk.text or ""
@@ -226,6 +235,8 @@ async def stream_gemini_chat(http_client, gem_api_key, system_prompt, contents, 
             # ⚠️ Bug connu #4 (hors scope V143, signalé audits 11/06) : un timeout
             # 1er-token/inter-chunk aboutit ici → record_success — sémantique
             # V131.F préservée à l'identique, à arbitrer dans un lot dédié.
+            if usage_box is not None:  # 1.6.055 — tokens remontés jusqu'à chat_log
+                usage_box["tokens_in"], usage_box["tokens_out"] = _usage_tin, _usage_tout
             gemini_breaker._record_success()
 
             # Track usage after stream completes

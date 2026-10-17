@@ -219,6 +219,36 @@ class TestGetConnectionReadonlyRetry:
 
 
 # ═══════════════════════════════════════════════════════════════════════
+# 1.6.055 — get_connection_chatbot_sql : pool lecture seule strict
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestChatbotSqlStrictPool:
+
+    @pytest.mark.asyncio
+    async def test_chatbot_sql_uses_readonly_pool(self):
+        import db_cloudsql
+        ro_pool, ro_conn, _ = _make_pool(healthy=True)
+        main_pool, _, _ = _make_pool(healthy=True)
+        with patch.object(db_cloudsql, "_pool_readonly", ro_pool), \
+             patch.object(db_cloudsql, "_pool", main_pool):
+            async with db_cloudsql.get_connection_chatbot_sql() as c:
+                assert c is ro_conn
+
+    @pytest.mark.asyncio
+    async def test_recreate_window_refuses(self):
+        """_pool_readonly None (absent ou fenêtre de recréation) + pool principal OK → refus, aucun repli."""
+        import db_cloudsql
+        main_pool = MagicMock()
+        main_pool.acquire = MagicMock(side_effect=AssertionError("repli sur le pool principal interdit"))
+        with patch.object(db_cloudsql, "_pool_readonly", None), \
+             patch.object(db_cloudsql, "_pool", main_pool):
+            with pytest.raises(db_cloudsql.ReadonlyPoolUnavailable):
+                async with db_cloudsql.get_connection_chatbot_sql():
+                    pass
+        main_pool.acquire.assert_not_called()
+
+
+# ═══════════════════════════════════════════════════════════════════════
 # _recreate_pool — lock + double-check
 # ═══════════════════════════════════════════════════════════════════════
 

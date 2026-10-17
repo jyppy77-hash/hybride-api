@@ -19,6 +19,8 @@ from config.templates import (
     _OG_LOCALE, _DATE_LOCALE, BASE_URL,
 )
 
+# 1.6.055 — helpers DB non mockés : base indisponible simulée (garde-fou conftest)
+pytestmark = pytest.mark.usefixtures("db_unavailable")
 
 # ═══════════════════════════════════════════════
 # 1. Kill switch defaults

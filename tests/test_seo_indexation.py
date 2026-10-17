@@ -1068,9 +1068,11 @@ class TestAppVersion:
         rendu serveur (valeurs seules, squelette DOM identique, Chance pending V135).
         LOT GA4 (14/10, Release 1.6.054) — sessions GA4 orphelines : session_end_lotoia
         supprimé, cache-buster analytics.js v=4 ; title/meta/JSON-LD /accueil inchangés.
+        LOT 1.6.055 (17/10, Release 1.6.055) — robustesse chatbot + défense SQL, aucun
+        changement SEO ni cache-buster ; bump requis : ETag HTML lié à APP_VERSION.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.054"
+        assert APP_VERSION == "1.6.055"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

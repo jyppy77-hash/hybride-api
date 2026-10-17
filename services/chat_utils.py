@@ -9,6 +9,7 @@ import logging
 from pathlib import Path
 from datetime import date
 
+from config.engine import CHAT_SPONSOR_INLINE_ENABLED
 from services.chat_detectors import _detect_numero, _detect_tirage
 
 # Re-export shared functions (consumers import from here)
@@ -51,6 +52,8 @@ def _load_sponsors_config() -> dict:
 
 def _get_sponsor_if_due(history: list, lang: str = "fr", module: str = "loto") -> str | None:
     """Retourne le texte sponsor si c'est le moment, None sinon."""
+    if not CHAT_SPONSOR_INLINE_ENABLED:  # 1.6.055 — gel sponsoring (flag env, défaut OFF)
+        return None
     config = _load_sponsors_config()
     if not config.get("enabled"):
         return None

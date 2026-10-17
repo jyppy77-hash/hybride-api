@@ -48,7 +48,7 @@ def _authed_client():
 
 
 def _make_async_conn(cursor):
-    """Build a mock conn usable via `async with db_cloudsql.get_connection_readonly() as conn`."""
+    """Build a mock conn usable via `async with db_cloudsql.get_connection() as conn`."""
     conn = MagicMock()
     conn.cursor = AsyncMock(return_value=cursor)
     cm = MagicMock()
@@ -114,7 +114,7 @@ class TestCalendarPerfMonth:
         cursor.execute = AsyncMock()
         cursor.fetchall = AsyncMock(return_value=[])
         with patch(
-            "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
+            "routes.admin_perf_calendar.db_cloudsql.get_connection",
             return_value=_make_async_conn(cursor),
         ):
             resp = client.get("/admin/api/calendar-perf/loto/2026/4")
@@ -137,7 +137,7 @@ class TestCalendarPerfMonth:
         cursor.execute = AsyncMock()
         cursor.fetchall = AsyncMock(return_value=[])
         with patch(
-            "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
+            "routes.admin_perf_calendar.db_cloudsql.get_connection",
             return_value=_make_async_conn(cursor),
         ):
             resp = client.get("/admin/api/calendar-perf/euromillions/2026/4")
@@ -182,7 +182,7 @@ class TestCalendarPerfMonth:
             ],
         ])
         with patch(
-            "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
+            "routes.admin_perf_calendar.db_cloudsql.get_connection",
             return_value=_make_async_conn(cursor),
         ):
             resp = client.get("/admin/api/calendar-perf/loto/2026/4")
@@ -230,7 +230,7 @@ class TestCalendarPerfDrawDetail:
             {"grid_id": "g1-uuid", "source": "generator", "number_value": 9, "number_type": "chance", "first_seen": "2026-04-26 14:30:00"},
         ])
         with patch(
-            "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
+            "routes.admin_perf_calendar.db_cloudsql.get_connection",
             return_value=_make_async_conn(cursor),
         ):
             resp = client.get("/admin/api/calendar-perf/draw/loto/2026-04-27")
@@ -280,7 +280,7 @@ class TestCalendarPerfDrawDetail:
             {"grid_id": "p1", "source": "pdf_meta_global", "number_value": 3, "number_type": "chance", "first_seen": "2026-04-24 13:00:00"},
         ])
         with patch(
-            "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
+            "routes.admin_perf_calendar.db_cloudsql.get_connection",
             return_value=_make_async_conn(cursor),
         ):
             resp = client.get("/admin/api/calendar-perf/draw/loto/2026-04-25")

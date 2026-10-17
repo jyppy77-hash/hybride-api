@@ -293,3 +293,11 @@ EM_CONFIG = EngineConfig(
 #                   --update-env-vars STRICT_HALLUCINATION_BLOCK=true`
 # Rollback en 30s : `--update-env-vars STRICT_HALLUCINATION_BLOCK=false`
 STRICT_HALLUCINATION_BLOCK_ENABLED: bool = _env_bool("STRICT_HALLUCINATION_BLOCK", False)
+
+
+# 1.6.055 — Encadré sponsor dans les réponses du chatbot (Loto + EM, 6 langues).
+# Désactivé par défaut pendant le gel du sponsoring (arbitrage Jyppy 16/10/2026).
+# Pattern V134 : _env_bool fail-closed, lu au module-load.
+# Réactivation sans rebuild : --update-env-vars CHAT_SPONSOR_INLINE=true
+# Popups / encadrés des pages et PDF non concernés (config/sponsors.json inchangé).
+CHAT_SPONSOR_INLINE_ENABLED: bool = _env_bool("CHAT_SPONSOR_INLINE", False)

@@ -11,6 +11,13 @@ import pytest
 from services.chat_utils import _get_sponsor_if_due
 
 
+@pytest.fixture(autouse=True)
+def _chat_sponsor_inline_on():
+    """1.6.055 — ces tests valident l'encadré sponsor du chat : flag CHAT_SPONSOR_INLINE forcé à True."""
+    with patch("services.chat_utils.CHAT_SPONSOR_INLINE_ENABLED", True):
+        yield
+
+
 def _history(n_bot: int):
     """Build a fake history with n_bot assistant messages."""
     msgs = []

@@ -6,6 +6,8 @@ Fonctions de formatage, nettoyage, enrichissement contextuel.
 import json
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from services.chat_utils import (
     _enrich_with_context, _clean_response, _strip_sponsor_from_text,
     _get_sponsor_if_due, _format_date_fr, _format_complex_context,
@@ -175,6 +177,53 @@ class TestFormatDateFr:
     def test_none_returns_inconnue(self):
         assert _format_date_fr(None) == "inconnue"
 
+    # 1.6.055 — 2b : objets date/datetime et chaînes avec heure
+    def test_date_object(self):
+        from datetime import date
+        assert _format_date_fr(date(2026, 9, 29)) == "29 septembre 2026"
+
+    def test_datetime_object(self):
+        from datetime import datetime
+        assert _format_date_fr(datetime(2026, 9, 29, 20, 45)) == "29 septembre 2026"
+
+    def test_string_with_time(self):
+        assert _format_date_fr("2026-09-29 20:45:00") == "29 septembre 2026"
+
+    def test_string_iso_t_with_time(self):
+        assert _format_date_fr("2026-09-29T20:45:00") == "29 septembre 2026"
+
+    def test_string_with_microseconds(self):
+        assert _format_date_fr("2026-09-29 20:45:00.123456") == "29 septembre 2026"
+
+    def test_invalid_month_returned_raw(self):
+        assert _format_date_fr("2026-13-01") == "2026-13-01"
+
+    def test_empty_string_returns_inconnue(self):
+        assert _format_date_fr("") == "inconnue"
+
+    def test_stats_context_with_datetime_string(self):
+        from services.base_chat_utils import _format_stats_context_base
+        stats = {
+            "numero": 7, "type": "principal", "frequence_totale": 98, "pourcentage_apparition": "10.1%",
+            "derniere_sortie": "2026-09-29 00:00:00", "ecart_actuel": 12, "ecart_moyen": 9.8,
+            "classement": 23, "classement_sur": 49, "categorie": "neutre",
+            "total_tirages": 967, "periode": "2019-11-04 au 2026-10-14",
+        }
+        ctx = _format_stats_context_base(stats, {"principal": "principal"}, 49)
+        assert "29 septembre 2026" in ctx
+        assert "00:00:00" not in ctx
+        assert "4 novembre 2019 au 14 octobre 2026" in ctx
+
+    def test_periode_with_times(self):
+        from services.base_chat_utils import _format_periode_fr
+        assert _format_periode_fr("2019-11-04 00:00:00 au 2026-10-14 00:00:00") == \
+            "4 novembre 2019 au 14 octobre 2026"
+
+    def test_sql_result_datetime_string_formatted(self):
+        from services.base_chat_sql import _format_sql_result
+        out = _format_sql_result([{"date_de_tirage": "2026-09-29 20:45:00"}])
+        assert "29 septembre 2026" in out
+
 
 # ═══════════════════════════════════════════════════════════════════════
 # _format_complex_context — 3 branches
@@ -294,6 +343,12 @@ def _reset_sponsor_cache():
 
 
 class TestGetSponsorIfDue:
+
+    @pytest.fixture(autouse=True)
+    def _chat_sponsor_inline_on(self):
+        """1.6.055 — classe dédiée à l'encadré sponsor du chat : flag CHAT_SPONSOR_INLINE forcé à True."""
+        with patch("services.chat_utils.CHAT_SPONSOR_INLINE_ENABLED", True):
+            yield
 
     def setup_method(self):
         _reset_sponsor_cache()

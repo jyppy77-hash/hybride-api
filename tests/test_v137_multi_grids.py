@@ -58,7 +58,7 @@ def _authed_client():
 
 
 def _make_async_conn(cursor):
-    """Build a mock conn usable via `async with db_cloudsql.get_connection_readonly() as conn`."""
+    """Build a mock conn usable via `async with db_cloudsql.get_connection() as conn`."""
     conn = MagicMock()
     conn.cursor = AsyncMock(return_value=cursor)
     cm = MagicMock()
@@ -209,7 +209,7 @@ class TestCalendarDetailMultiGrids:
             {"grid_id": "g3-uuid-aaaa-bbbb-cccc-333333333333", "source": "generator", "number_value": 2, "number_type": "chance", "first_seen": "2026-04-27 11:20:00"},
         ])
         with patch(
-            "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
+            "routes.admin_perf_calendar.db_cloudsql.get_connection",
             return_value=_make_async_conn(cursor),
         ):
             resp = client.get(f"/admin/api/calendar-perf/draw/loto/{target_date.isoformat()}")
@@ -257,7 +257,7 @@ class TestCalendarDetailMultiGrids:
             {"grid_id": "g2", "source": "generator", "number_value": 3, "number_type": "chance", "first_seen": "2026-04-24 14:00:00"},
         ])
         with patch(
-            "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
+            "routes.admin_perf_calendar.db_cloudsql.get_connection",
             return_value=_make_async_conn(cursor),
         ):
             resp = client.get(f"/admin/api/calendar-perf/draw/loto/{target_date.isoformat()}")
@@ -298,7 +298,7 @@ class TestCalendarDetailMultiGrids:
             {"grid_id": "g2", "source": "generator", "number_value": 3, "number_type": "chance", "first_seen": "2026-04-24 14:00:00"},
         ])
         with patch(
-            "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
+            "routes.admin_perf_calendar.db_cloudsql.get_connection",
             return_value=_make_async_conn(cursor),
         ):
             resp = client.get(f"/admin/api/calendar-perf/draw/loto/{target_date.isoformat()}")
@@ -324,7 +324,7 @@ class TestCalendarDetailMultiGrids:
             {"grid_id": None, "source": "generator", "number_value": 9, "number_type": "chance", "first_seen": "2026-04-26 14:30:00"},
         ])
         with patch(
-            "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
+            "routes.admin_perf_calendar.db_cloudsql.get_connection",
             return_value=_make_async_conn(cursor),
         ):
             resp = client.get(f"/admin/api/calendar-perf/draw/loto/{target_date.isoformat()}")

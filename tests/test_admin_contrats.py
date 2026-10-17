@@ -11,6 +11,8 @@ from pathlib import Path
 import pytest
 from starlette.testclient import TestClient
 
+# 1.6.055 — helpers DB non mockés : base indisponible simulée (garde-fou conftest)
+pytestmark = pytest.mark.usefixtures("db_unavailable")
 
 _TEST_TOKEN = "test-token-contrats-123"
 _TEST_PASSWORD = "test-password-contrats"

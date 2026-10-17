@@ -56,7 +56,7 @@ def _authed_client():
 
 
 def _make_async_conn(cursor):
-    """Build a mock conn usable via async with db.get_connection_readonly() as conn."""
+    """Build a mock conn usable via async with db.get_connection() as conn."""
     conn = MagicMock()
     conn.cursor = AsyncMock(return_value=cursor)
     cm = MagicMock()
@@ -96,7 +96,7 @@ class TestModalSecondaryBallsBackend:
             {"grid_id": "em-grid-1", "source": "generator", "number_value": 11, "number_type": "star", "first_seen": "2026-04-30 06:16:00"},
         ])
         with patch(
-            "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
+            "routes.admin_perf_calendar.db_cloudsql.get_connection",
             return_value=_make_async_conn(cursor),
         ):
             resp = client.get(f"/admin/api/calendar-perf/draw/euromillions/{target_date.isoformat()}")
@@ -128,7 +128,7 @@ class TestModalSecondaryBallsBackend:
             {"grid_id": "loto-grid-1", "source": "generator", "number_value": 7, "number_type": "chance", "first_seen": "2026-05-01 10:00:00"},
         ])
         with patch(
-            "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
+            "routes.admin_perf_calendar.db_cloudsql.get_connection",
             return_value=_make_async_conn(cursor),
         ):
             resp = client.get(f"/admin/api/calendar-perf/draw/loto/{target_date.isoformat()}")
@@ -190,7 +190,7 @@ class TestModalChronologicalSort:
             {"grid_id": "gen-grid-2", "source": "generator", "number_value": 3, "number_type": "chance", "first_seen": "2026-05-01 07:00:00"},
         ])
         with patch(
-            "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
+            "routes.admin_perf_calendar.db_cloudsql.get_connection",
             return_value=_make_async_conn(cursor),
         ):
             resp = client.get(f"/admin/api/calendar-perf/draw/loto/{target_date.isoformat()}")

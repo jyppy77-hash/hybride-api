@@ -17,6 +17,8 @@ from config.bot_ips import (
     refresh_from_remote,
 )
 
+# 1.6.055 — helpers DB non mockés : base indisponible simulée (garde-fou conftest)
+pytestmark = pytest.mark.usefixtures("db_unavailable")
 
 # ═══════════════════════════════════════════════════════════════════════
 # Whitelist tests

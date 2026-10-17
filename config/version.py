@@ -5,6 +5,25 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# LOT 1.6.055 — robustesse chatbot + défense SQL (Release 1.6.055, 17/10/2026). Aucun cache-buster
+# ?v= touché (aucun JS/CSS/template modifié). Correctifs :
+# 0. Routes admin calendrier (admin_calendar.py, admin_perf_calendar.py) sur get_connection() :
+#    le compte lecture seule chatbot_ro n'a SELECT que sur tirages / tirages_euromillions.
+# 1. Garde-fou pytest (tests/conftest.py) : tout appel réel Vertex (google.genai.Client) ou DB
+#    (aiomysql.create_pool/connect) fait échouer le test, même si l'exception est avalée.
+# 2. Flux SSE : StreamBuffer ne perd plus les \n en bord de morceau (strip unique de la réponse,
+#    pas de collage « Jene ») ; _format_date_fr accepte date/datetime/« AAAA-MM-JJ HH:MM:SS ».
+# 3. Défense SQL fail-closed : extraction complète des tables (virgules, JOIN, parenthèses,
+#    schema.table, instruction TABLE rejetés) ; SQL généré exécuté via get_connection_chatbot_sql()
+#    (pool lecture seule ou rien, jamais de repli sur le pool principal) → statut ERROR +
+#    log RO_UNAVAILABLE + message 6 langues. get_connection_readonly() inchangé.
+# 4. EuroMillions tolérant (_EM_NAME : fautes + 6 langues) aligné détection / own game / cross-sell ;
+#    prompt Loto : EuroMillions jamais refusé, orienté vers /euromillions.
+# 5. Exemple « Marco » supprimé des 3 prompts FR (+ test anti-prénom sur prompts/**/*.txt).
+# 6. Tokens Gemini de la réponse finale jusqu'à chat_log (gemini_tokens_in/out ; pas la génération SQL).
+# 7. Encadré sponsor du chat derrière CHAT_SPONSOR_INLINE (défaut OFF) : sponsor-inline-shown et
+#    GA4 *_chat_sponsor_view tombent à 0 ; popups/encadrés des pages et PDF non concernés.
+
 # LOT GA4 — sessions orphelines « Unassigned » (Release 1.6.054, 14/10/2026). RUPTURE DE SÉRIE GA4
 # (annotation GA4 le jour du déploiement). Cause principale : session_end_lotoia émis sur
 # visibilitychange / beforeunload sans contrôle d'ancienneté → onglet repris > 30 min puis masqué =
@@ -298,9 +317,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.054"
+APP_VERSION = "1.6.055"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-10-14"
+VERSION_DATE = "2026-10-17"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

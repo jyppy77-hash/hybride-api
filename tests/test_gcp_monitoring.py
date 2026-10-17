@@ -19,6 +19,8 @@ from services.gcp_monitoring import (
     _local_cache_set,
 )
 
+# 1.6.055 — helpers DB non mockés : base indisponible simulée (garde-fou conftest)
+pytestmark = pytest.mark.usefixtures("db_unavailable")
 
 # ═══════════════════════════════════════════════════════════════════════
 # Status determination

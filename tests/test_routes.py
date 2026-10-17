@@ -201,14 +201,16 @@ def test_stats_number_invalid():
 
 @patch("services.chat_pipeline.stream_gemini_chat")
 @patch("services.chat_pipeline.load_prompt", return_value="Tu es un assistant.")
-def test_hybride_chat(mock_prompt, mock_stream):
+def test_hybride_chat(mock_prompt, mock_stream, mock_vertex_client, db_unavailable):
     """POST /api/hybride-chat retourne des events SSE (mock Gemini stream)."""
     async def fake_gen(*a, **kw):
         yield "Voici ma reponse test."
 
     mock_stream.side_effect = lambda *a, **kw: fake_gen()
 
-    with _db_module_patch, _static_patch, _static_call:
+    # 1.6.055 — génération SQL Vertex mockée (NO_SQL), aucun appel réel
+    with _db_module_patch, _static_patch, _static_call, mock_vertex_client() as vc:
+        vc.set_response(text="NO_SQL")
         import importlib, main as main_mod
         importlib.reload(main_mod)
         client = TestClient(main_mod.app, raise_server_exceptions=False)
@@ -243,14 +245,16 @@ def test_hybride_chat(mock_prompt, mock_stream):
 
 @patch("services.chat_pipeline.stream_gemini_chat")
 @patch("services.chat_pipeline.load_prompt", return_value="Tu es un assistant.")
-def test_rate_limit_429(mock_prompt, mock_stream):
+def test_rate_limit_429(mock_prompt, mock_stream, mock_vertex_client, db_unavailable):
     """Envoyer 15 requetes rapides sur /api/hybride-chat → 429."""
     async def fake_gen(*a, **kw):
         yield "Reponse."
 
     mock_stream.side_effect = lambda *a, **kw: fake_gen()
 
-    with _db_module_patch, _static_patch, _static_call:
+    # 1.6.055 — génération SQL Vertex mockée (NO_SQL), aucun appel réel
+    with _db_module_patch, _static_patch, _static_call, mock_vertex_client() as vc:
+        vc.set_response(text="NO_SQL")
         import importlib, main as main_mod
         importlib.reload(main_mod)
         client = TestClient(main_mod.app, raise_server_exceptions=False)

@@ -104,14 +104,16 @@ class TestPipelinePhase3SkippedWhenForceSql:
             mock_sql.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_loto_no_temporal_phase3_works(self):
+    async def test_loto_no_temporal_phase3_works(self, mock_vertex_client):
         """Loto: 'top 10' without temporal → force_sql=False → Phase 3 runs normally."""
         from services.chat_pipeline import _prepare_chat_context
 
         mock_client = MagicMock()
         mock_data = {"items": [{"numero": 7}], "total_tirages": 100, "periode": "tout"}
 
-        with patch("services.chat_pipeline.load_prompt", return_value="sys"), \
+        # 1.6.055 — la Phase SQL suit la Phase 3 : génération SQL Vertex mockée (NO_SQL)
+        with mock_vertex_client() as vc, \
+             patch("services.chat_pipeline.load_prompt", return_value="sys"), \
              patch("services.chat_pipeline._detect_insulte", return_value=None), \
              patch("services.chat_pipeline._detect_compliment", return_value=None), \
              patch("services.chat_pipeline._is_short_continuation", return_value=False), \
@@ -125,6 +127,7 @@ class TestPipelinePhase3SkippedWhenForceSql:
              patch("services.chat_pipeline._detect_generation", return_value=False), \
              patch("services.chat_pipeline.get_classement_numeros", new_callable=AsyncMock, return_value=mock_data) as mock_classement, \
              patch("services.chat_pipeline._build_session_context", return_value=""):
+            vc.set_response(text="NO_SQL")
 
             _, ctx = await _prepare_chat_context(
                 "top 10 des numéros les plus fréquents",
@@ -168,14 +171,16 @@ class TestPipelinePhase3SkippedWhenForceSql:
             mock_sql.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_em_no_temporal_phase3_works(self):
+    async def test_em_no_temporal_phase3_works(self, mock_vertex_client):
         """EM: 'top 5' without temporal → force_sql=False → Phase 3 runs."""
         from services.chat_pipeline_em import _prepare_chat_context_em
 
         mock_client = MagicMock()
         mock_data = {"items": [{"numero": 7}], "total_tirages": 100, "periode": "tout"}
 
-        with patch("services.chat_pipeline_em.load_prompt_em", return_value="sys"), \
+        # 1.6.055 — la Phase SQL suit la Phase 3 : génération SQL Vertex mockée (NO_SQL)
+        with mock_vertex_client() as vc, \
+             patch("services.chat_pipeline_em.load_prompt_em", return_value="sys"), \
              patch("services.chat_pipeline_em._detect_insulte", return_value=None), \
              patch("services.chat_pipeline_em._detect_compliment", return_value=None), \
              patch("services.chat_pipeline_em._is_short_continuation", return_value=False), \
@@ -189,6 +194,7 @@ class TestPipelinePhase3SkippedWhenForceSql:
              patch("services.chat_pipeline_em._detect_generation", return_value=False), \
              patch("services.chat_pipeline_em.get_classement_numeros", new_callable=AsyncMock, return_value=mock_data) as mock_classement, \
              patch("services.chat_pipeline_em._build_session_context_em", return_value=""):
+            vc.set_response(text="NO_SQL")
 
             _, ctx = await _prepare_chat_context_em(
                 "top 5 most drawn numbers",

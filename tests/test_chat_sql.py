@@ -324,7 +324,7 @@ class TestExecuteSafeSql:
     @patch("services.base_chat_sql.db_cloudsql")
     async def test_returns_rows(self, mock_db):
         cursor = AsyncMock()
-        mock_db.get_connection_readonly = lambda: _async_conn(cursor)
+        mock_db.get_connection_chatbot_sql = lambda: _async_conn(cursor)
         cursor.fetchall = AsyncMock(return_value=[{"num": 7, "freq": 120}])
 
         result = await _execute_safe_sql("SELECT num, freq FROM tirages", allowed_tables=ALLOWED_TABLES_LOTO)
@@ -334,7 +334,7 @@ class TestExecuteSafeSql:
     @patch("services.base_chat_sql.db_cloudsql")
     async def test_returns_none_on_error(self, mock_db):
         cursor = AsyncMock()
-        mock_db.get_connection_readonly = lambda: _async_conn(cursor)
+        mock_db.get_connection_chatbot_sql = lambda: _async_conn(cursor)
         cursor.execute = AsyncMock(side_effect=Exception("DB error"))
 
         assert await _execute_safe_sql("SELECT 1 FROM tirages", allowed_tables=ALLOWED_TABLES_LOTO) is None
@@ -355,10 +355,12 @@ class TestExecuteSafeSql:
     @pytest.mark.asyncio
     @patch("services.base_chat_sql.db_cloudsql")
     async def test_uses_readonly_pool(self, mock_db):
-        """S04: _execute_safe_sql must use get_connection_readonly (not get_connection)."""
+        """S04 + 1.6.055: _execute_safe_sql must use get_connection_chatbot_sql (strict, no main pool)."""
         cursor = AsyncMock()
-        mock_db.get_connection_readonly = lambda: _async_conn(cursor)
+        mock_db.get_connection_chatbot_sql = lambda: _async_conn(cursor)
         mock_db.get_connection = MagicMock(side_effect=AssertionError("Must not use main pool"))
+        mock_db.get_connection_readonly = MagicMock(
+            side_effect=AssertionError("Must not use readonly-with-fallback pool"))
         cursor.fetchall = AsyncMock(return_value=[{"n": 1}])
 
         result = await _execute_safe_sql("SELECT 1 FROM tirages", allowed_tables=ALLOWED_TABLES_LOTO)
@@ -924,3 +926,140 @@ class TestSQLHallucinationCheck:
             _check_sql_number_hallucination(sql, response, "SQL", "[LOTO]")
         assert "HALLUCINATION_RISK" in caplog.text
         assert "42" in caplog.text
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 1.6.055 — 3a : extraction complète des tables, fail-closed
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestTableExtraction155:
+
+    @pytest.mark.parametrize("sql", [
+        # virgules
+        "SELECT * FROM tirages, chat_log",
+        "SELECT * FROM tirages t, chat_log c",
+        "SELECT * FROM chat_log, tirages",
+        "SELECT * FROM `tirages`, `chat_log`",
+        "SELECT * FROM tirages, (SELECT * FROM chat_log) x",
+        # table entre parenthèses (contournait (?!\())
+        "SELECT boule_1 FROM tirages UNION ALL SELECT * FROM (chat_log)",
+        "SELECT * FROM ((chat_log))",
+        # références schema.table
+        "SELECT * FROM lotofrance.chat_log",
+        "SELECT * FROM `lotofrance`.`chat_log`",
+        "SELECT * FROM lotofrance_staging.tirages",
+        "SELECT * FROM tirages, mysql.user",
+        # JOIN variés
+        "SELECT * FROM tirages t STRAIGHT_JOIN chat_log c",
+        "SELECT * FROM tirages LEFT JOIN chat_log USING(id)",
+        "SELECT * FROM tirages t LEFT OUTER JOIN chat_log c ON c.id = t.id",
+        "SELECT * FROM tirages NATURAL JOIN chat_log",
+        # instruction TABLE (MySQL 8) : lit une table sans FROM
+        "SELECT boule_1 FROM tirages UNION ALL TABLE chat_log",
+        # formes non reconnues → rejet
+        "SELECT * FROM tirages USE INDEX (idx_date)",
+        "SELECT (SELECT 1 FROM chat_log) FROM tirages",
+    ])
+    def test_rejects_hidden_or_unparseable_tables(self, sql):
+        assert _validate_sql(sql, allowed_tables=ALLOWED_TABLES_LOTO) is False
+
+    @pytest.mark.parametrize("sql", [
+        "SELECT a.boule_1 FROM tirages t1, tirages t2 LIMIT 5",
+        "SELECT num, COUNT(*) AS freq FROM (SELECT boule_1 AS num FROM tirages "
+        "UNION ALL SELECT boule_2 FROM tirages) t GROUP BY num",
+        "SELECT * FROM tirages WHERE jour_de_tirage = 'FROM chat_log'",
+        "SELECT * FROM tirages WHERE YEAR(date_de_tirage) = EXTRACT(YEAR FROM CURDATE())",
+        "SELECT * FROM tirages t JOIN tirages u ON u.date_de_tirage = t.date_de_tirage",
+    ])
+    def test_accepts_legitimate_forms(self, sql):
+        assert _validate_sql(sql, allowed_tables=ALLOWED_TABLES_LOTO) is True
+
+    def test_em_rejects_loto_table_hidden_after_comma(self):
+        sql = "SELECT * FROM tirages_euromillions, tirages"
+        assert _validate_sql(sql, allowed_tables=ALLOWED_TABLES_EM) is False
+
+
+def _prompt_sql_corpus():
+    """Exemples SELECT des 9 fichiers prompt_sql_generator*.txt (lignes + blocs multi-lignes indentés)."""
+    from pathlib import Path
+    root = Path(__file__).resolve().parent.parent / "prompts"
+    cases = []
+    for path in sorted(root.rglob("prompt_sql_generator*.txt")):
+        allowed = ALLOWED_TABLES_EM if "_em" in path.name else ALLOWED_TABLES_LOTO
+        lines = path.read_text(encoding="utf-8").splitlines()
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            if line.startswith("SELECT"):
+                cases.append((f"{path.relative_to(root)}:{i + 1}", line.strip(), allowed))
+            elif line.lstrip().startswith("SELECT") and line[:1].isspace():
+                start, block = i, [line.strip()]
+                while i + 1 < len(lines) and lines[i + 1][:1].isspace() and lines[i + 1].strip():
+                    i += 1
+                    block.append(lines[i].strip())
+                cases.append((f"{path.relative_to(root)}:{start + 1}", "\n".join(block), allowed))
+            i += 1
+    return cases
+
+
+_CORPUS = _prompt_sql_corpus()
+
+
+class TestPromptSqlCorpus155:
+
+    def test_corpus_loaded(self):
+        assert len({c[0].split(":")[0] for c in _CORPUS}) == 9
+        assert len(_CORPUS) >= 280
+
+    @pytest.mark.parametrize("where,sql,allowed", _CORPUS, ids=[c[0] for c in _CORPUS])
+    def test_prompt_example_still_accepted(self, where, sql, allowed):
+        assert _validate_sql(sql, allowed_tables=allowed) is True, where
+
+
+# ═══════════════════════════════════════════════════════════════════════
+# 1.6.055 — 3b : SQL généré refusé si pool lecture seule absent
+# ═══════════════════════════════════════════════════════════════════════
+
+class TestChatbotSqlNoFallback155:
+
+    @pytest.mark.asyncio
+    async def test_chatbot_sql_no_fallback_when_ro_missing(self):
+        """_pool défini, _pool_readonly None → ReadonlyPoolUnavailable, pool principal jamais acquis."""
+        import db_cloudsql
+        main_pool = MagicMock()
+        main_pool.acquire = MagicMock(side_effect=AssertionError("repli sur le pool principal interdit"))
+        with patch.object(db_cloudsql, "_pool", main_pool), \
+             patch.object(db_cloudsql, "_pool_readonly", None):
+            with pytest.raises(db_cloudsql.ReadonlyPoolUnavailable):
+                await _execute_safe_sql("SELECT 1 FROM tirages", allowed_tables=ALLOWED_TABLES_LOTO)
+        main_pool.acquire.assert_not_called()
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("lang", ["fr", "en", "es", "pt", "de", "nl"])
+    async def test_run_text_to_sql_ro_unavailable_6_langs(self, lang, caplog):
+        import logging
+        import db_cloudsql
+        from services.base_chat_sql import _SQL_UNAVAILABLE_MESSAGES
+        from services.chat_pipeline_shared import run_text_to_sql
+
+        execute = AsyncMock(side_effect=db_cloudsql.ReadonlyPoolUnavailable("readonly pool unavailable"))
+        with caplog.at_level(logging.ERROR):
+            enrichment, sql_query, sql_status = await run_text_to_sql(
+                message="combien de fois le 7 est sorti",
+                http_client=MagicMock(), gem_api_key="fake", history=[],
+                generate_sql_fn=AsyncMock(return_value="SELECT COUNT(*) FROM tirages"),
+                validate_sql_fn=lambda s: True, ensure_limit_fn=lambda s: s,
+                execute_sql_fn=execute, format_result_fn=MagicMock(),
+                max_per_session=10, log_prefix="[TEST]", force_sql=True,
+                has_data_signal_fn=lambda m: True,
+                continuation_mode=False, enrichment_context=None, lang=lang,
+            )
+        assert sql_status == "ERROR"
+        assert enrichment.endswith(_SQL_UNAVAILABLE_MESSAGES[lang])
+        assert "AUCUN chiffre" in enrichment
+        assert "RO_UNAVAILABLE" in caplog.text
+
+    def test_unavailable_messages_6_langs_distinct(self):
+        from services.base_chat_sql import _SQL_UNAVAILABLE_MESSAGES
+        assert set(_SQL_UNAVAILABLE_MESSAGES) == {"fr", "en", "es", "pt", "de", "nl"}
+        assert len(set(_SQL_UNAVAILABLE_MESSAGES.values())) == 6

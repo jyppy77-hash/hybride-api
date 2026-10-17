@@ -421,3 +421,56 @@ class TestV141A4_PipelineCfgWiring:
         from services.chat_pipeline_em import _build_em_config
         cfg = _build_em_config()
         assert cfg.get("game") == "em"
+
+
+# ════════════════════════════════════════════════════════════════════
+# 1.6.055 — Point I : nom EuroMillions tolérant (fautes + 6 langues)
+# ════════════════════════════════════════════════════════════════════
+
+_EM_VARIANTS = [
+    "Grille euromilion", "euro milion", "euromillion", "Euro-Millions",
+    "EuroMillones", "EuroMilhões", "euromilhoes", "EuroMillionen", "euromilllions",
+]
+_LANGS = ["fr", "en", "es", "pt", "de", "nl"]
+
+
+class TestEuroMillionsTolerant155:
+
+    @pytest.mark.parametrize("message", _EM_VARIANTS)
+    def test_variant_detected(self, message):
+        assert _detect_foreign_lottery(message) is not None
+
+    @pytest.mark.parametrize("message", _EM_VARIANTS)
+    @pytest.mark.parametrize("lang", _LANGS)
+    def test_loto_module_redirects_to_em(self, message, lang):
+        resp = _get_foreign_lottery_response(_detect_foreign_lottery(message), lang, "loto")
+        assert resp is not None
+        assert "/euromillions" in resp
+
+    @pytest.mark.parametrize("message", _EM_VARIANTS)
+    def test_em_module_same_game_returns_none(self, message):
+        assert _get_foreign_lottery_response(_detect_foreign_lottery(message), "fr", "em") is None
+
+    @pytest.mark.parametrize("message", [
+        "euro", "europe", "un million d'euros", "mil euros", "euromillionnaire",
+        "Euromaster", "loto",
+    ])
+    def test_false_positives_not_detected(self, message):
+        assert _detect_foreign_lottery(message) is None
+
+    def test_real_foreign_still_prioritised_over_em_variant(self):
+        assert _detect_foreign_lottery("euromilion ou senloto lonase ?") == "senloto"
+
+    def test_senloto_lonase_non_regression(self):
+        assert _detect_foreign_lottery("Connaissais tu senloto jackpot lonase Sénégal") == "senloto"
+
+    def test_argent_not_skipped_for_em_variant(self):
+        """Own game (même mal orthographié) n'active pas le skip Phase A défense-en-profondeur."""
+        assert _detect_argent("j'ai gagné 100 euros à l'euromilion") is True
+
+    def test_loto_prompt_mentions_euromillions_module(self):
+        from pathlib import Path
+        prompt = (Path(__file__).resolve().parent.parent / "prompts" / "chatbot" / "prompt_hybride.txt") \
+            .read_text(encoding="utf-8")
+        assert "/euromillions" in prompt
+        assert "l'EuroMillions n'est PAS hors-sujet" in prompt

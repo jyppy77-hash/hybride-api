@@ -12,6 +12,11 @@ import os
 import importlib
 from unittest.mock import patch, AsyncMock, MagicMock
 
+import pytest
+
+# 1.6.055 — helpers DB non mockés : base indisponible simulée (garde-fou conftest)
+pytestmark = pytest.mark.usefixtures("db_unavailable")
+
 _static_patch = patch("fastapi.staticfiles.StaticFiles.__init__", return_value=None)
 _static_call = patch("fastapi.staticfiles.StaticFiles.__call__", return_value=None)
 

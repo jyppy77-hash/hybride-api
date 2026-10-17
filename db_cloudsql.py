@@ -280,6 +280,24 @@ async def get_connection_readonly():
         yield conn
 
 
+class ReadonlyPoolUnavailable(RuntimeError):
+    """1.6.055 — pool lecture seule absent ou en recréation : SQL généré refusé."""
+
+
+@asynccontextmanager
+async def get_connection_chatbot_sql():
+    """1.6.055 — connexion STRICTE pour le SQL généré par Gemini : pool lecture seule ou rien.
+
+    Jamais de repli sur le pool principal (droits d'écriture), contrairement à
+    get_connection_readonly() qui reste utilisé par les requêtes fixes du chat.
+    """
+    pool = _pool_readonly
+    if pool is None:
+        raise ReadonlyPoolUnavailable("readonly pool unavailable")
+    async with pool.acquire() as conn:
+        yield conn
+
+
 # ============================================================================
 # FONCTIONS UTILITAIRES (async)
 # ============================================================================

@@ -673,6 +673,13 @@ def _detect_score_question(message: str) -> bool:
 # Cross-sell module-aware : Loto↔EM redirige vers module dédié LotoIA.
 # ═══════════════════════════════════════════════════════
 
+# 1.6.055 — nom EuroMillions tolérant (fautes + 6 langues) : euromillion(s), euromilion(s),
+# euro millions, euro-millions, euromilllions, EuroMillones (ES), EuroMilhões/Euromilhoes (PT),
+# EuroMillionen (DE). Pas "euromillionnaire" (\b final). Source unique pour les 4 usages :
+# _FOREIGN_LOTTERY_RE, _is_own_game (x2 via _detect_foreign_lottery / _detect_argent), is_em_match.
+_EM_NAME = r"euro[\s\-]*mil(?:l{1,2}|h)?i?(?:on|ón|õ|o(?=es\b))(?:e?s|en|nes)?"
+_EM_NAME_RE = re.compile(r"\b" + _EM_NAME + r"\b", re.IGNORECASE)
+
 _FOREIGN_LOTTERY_RE = re.compile(
     r'\b('
     # Afrique francophone (LONASE Sénégal, LONACI Côte d'Ivoire, PMUC Cameroun, MDJS Maroc)
@@ -685,7 +692,7 @@ _FOREIGN_LOTTERY_RE = re.compile(
     # Canada / Amérique latine
     r'lotto\s+max|lotto\s+6[/\-]?49|mega[\s-]*sena|'
     # Cross-sell EuroMillions (matché ici, branché vers CROSS_SELL si module = loto)
-    r'euromillions?|euro\s*millions?|'
+    + _EM_NAME + r'|'  # 1.6.055 — était euromillions?|euro\s*millions?
     # V141 A.4 patch — "british/english/etc. + lotto/lottery" (variants EN)
     r'british\s+lott(?:o|ery)|english\s+lott(?:o|ery)|american\s+lott(?:o|ery)|'
     r'irish\s+lott(?:o|ery)|spanish\s+lott(?:o|ery)|italian\s+lott(?:o|ery)|'
@@ -832,6 +839,12 @@ _OWN_GAME_TOKENS: tuple[str, ...] = (
 )
 
 
+def _is_own_game(name: str) -> bool:
+    """1.6.055 — jeu LotoIA (EuroMillions tolérant via _EM_NAME_RE, ou Loto FR) vs loterie étrangère."""
+    norm = (name or "").lower()
+    return bool(_EM_NAME_RE.search(norm)) or any(token in norm for token in _OWN_GAME_TOKENS)
+
+
 def _detect_foreign_lottery(message: str) -> str | None:
     """V141 A.4 UX Fix 2 — Détecte mention d'une loterie étrangère/hors LotoIA.
 
@@ -858,7 +871,7 @@ def _detect_foreign_lottery(message: str) -> str | None:
     # Prioriser real foreign sur own game (EM / Loto FR sont cross-sell, pas out-of-scope)
     for m in matches:
         norm = m.lower()
-        if not any(token in norm for token in _OWN_GAME_TOKENS):
+        if not _is_own_game(norm):
             return norm.strip()
     # Aucun real foreign trouvé → retourne premier own game (cross-sell ou same-module)
     return matches[0].strip().lower()
@@ -885,8 +898,7 @@ def _get_foreign_lottery_response(
         - Autre loterie étrangère → out-of-scope avec template générique
     """
     norm = (lottery or "").lower().strip()
-    norm_compact = norm.replace(" ", "").replace("-", "")
-    is_em_match = "euromillion" in norm_compact or "euro million" in norm
+    is_em_match = bool(_EM_NAME_RE.search(norm))  # 1.6.055 — même motif que _FOREIGN_LOTTERY_RE
     is_loto_fr_match = any(
         t in norm for t in (
             "loto français", "loto francais", "french lott",
@@ -931,7 +943,7 @@ def _detect_argent(message: str, lang: str = "fr") -> bool:
     # NB: own games (euromillions/loto français) n'activent PAS le skip — Phase A reste
     # légitime sur "j'ai gagné 100 euros à l'euromillions" par exemple.
     _foreign = _detect_foreign_lottery(message)
-    if _foreign and not any(token in _foreign for token in _OWN_GAME_TOKENS):
+    if _foreign and not _is_own_game(_foreign):
         return False
     lower = message.lower()
     phrases = _ARGENT_PHRASES.get(lang, _ARGENT_PHRASES["fr"])

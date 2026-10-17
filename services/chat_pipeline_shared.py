@@ -33,6 +33,8 @@ from collections.abc import AsyncGenerator
 from datetime import date as _date_cls
 
 from services.base_chat_sql import _SQL_LIMIT_MESSAGES, _MAX_SQL_INPUT_LENGTH, _JOURS_FR
+from services.base_chat_sql import _SQL_UNAVAILABLE_GUARD, _SQL_UNAVAILABLE_MESSAGES
+from db_cloudsql import ReadonlyPoolUnavailable
 from services.base_chat_detect_temporal import _is_relative_weekday  # V141 A.4 Patch V131.G-bis
 from services.chat_utils import _format_date_fr
 from services.base_chat_utils import _format_last_draw_context
@@ -749,6 +751,17 @@ async def run_text_to_sql(message, http_client, gem_api_key, history,
                 f'status=GEN_ERROR | '
                 f'time={int((time.monotonic() - t0) * 1000)}ms'
             )
+    except ReadonlyPoolUnavailable:
+        # 1.6.055: pool lecture seule absent → SQL genere refuse (jamais de repli en ecriture).
+        # ENUM chat_log.sql_status : pas de nouvelle valeur sans migration → ERROR + marqueur log.
+        _sql_status = "ERROR"
+        enrichment_context = _SQL_UNAVAILABLE_GUARD + _SQL_UNAVAILABLE_MESSAGES.get(
+            lang, _SQL_UNAVAILABLE_MESSAGES["en"])
+        logger.error(
+            f'{log_prefix} question="{message[:80]}" | '
+            f'status=RO_UNAVAILABLE — SQL généré refusé (pool lecture seule absent) | '
+            f'time={int((time.monotonic() - t0) * 1000)}ms'
+        )
     except asyncio.TimeoutError:
         _sql_status = "ERROR"
         logger.warning(

@@ -22,6 +22,8 @@ from unittest.mock import patch
 import pytest
 from starlette.testclient import TestClient
 
+# 1.6.055 — helpers DB non mockés : base indisponible simulée (garde-fou conftest)
+pytestmark = pytest.mark.usefixtures("db_unavailable")
 
 _TEST_SECRET = "test_origin_secret_64_chars_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 

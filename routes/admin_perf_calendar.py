@@ -27,6 +27,9 @@ V137 — Multi-grilles via grid_id (UUID) :
   fictive `grid_id = "_legacy_<game>_<date>_<source>"` avec flag `is_legacy=true`.
 
 Auth: cookie session admin + IP whitelist (pattern V94 _require_auth*).
+
+1.6.055 — pool principal get_connection() : le compte lecture seule chatbot_ro
+n'a SELECT que sur tirages / tirages_euromillions (pas hybride_selection_history).
 """
 
 import calendar
@@ -144,7 +147,7 @@ async def calendar_perf_draw_detail(request: Request, game: str, date_str: str):
     # 1) FDJ
     fdj: dict = {"drawn": False, "balls": None, "secondary": None}
     try:
-        async with db_cloudsql.get_connection_readonly() as conn:
+        async with db_cloudsql.get_connection() as conn:
             cur = await conn.cursor()
             if game == "loto":
                 await cur.execute(
@@ -188,7 +191,7 @@ async def calendar_perf_draw_detail(request: Request, game: str, date_str: str):
     # avec grid_id virtuel "_legacy_<game>_<date>_<source>" + is_legacy=true.
     grids_list: list = []
     try:
-        async with db_cloudsql.get_connection_readonly() as conn:
+        async with db_cloudsql.get_connection() as conn:
             cur = await conn.cursor()
             await cur.execute(
                 "SELECT grid_id, source, number_value, number_type, "
@@ -327,7 +330,7 @@ async def calendar_perf_month(request: Request, game: str, year: int, month: int
     fdj_map: dict[date, dict] = {}
     table = _GAME_TABLE[game]
     try:
-        async with db_cloudsql.get_connection_readonly() as conn:
+        async with db_cloudsql.get_connection() as conn:
             cur = await conn.cursor()
             if game == "loto":
                 await cur.execute(
@@ -375,7 +378,7 @@ async def calendar_perf_month(request: Request, game: str, year: int, month: int
     # (grid_id=NULL) sont agrégées par (date, source) sous un grid_id synthétique.
     grids_by_day: dict = {}  # date → list of {"source", "balls": [], "secondary": int}
     try:
-        async with db_cloudsql.get_connection_readonly() as conn:
+        async with db_cloudsql.get_connection() as conn:
             cur = await conn.cursor()
             await cur.execute(
                 "SELECT draw_date_target, grid_id, source, number_value, number_type, "

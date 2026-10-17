@@ -54,10 +54,10 @@ def _authed_client():
     return client
 
 
-# ── Helper: build async context manager mock for get_connection_readonly ──
+# ── Helper: build async context manager mock for get_connection ──
 
 def _make_conn_mock(rows_sequence):
-    """Create a mock for db_cloudsql.get_connection_readonly().
+    """Create a mock for db_cloudsql.get_connection().
 
     rows_sequence: list of lists — each entry is the fetchall() result
     for successive cursor.execute() calls.
@@ -169,7 +169,7 @@ class TestCalendarData:
 
         client = _authed_client()
         with patch("routes.admin_calendar.db_cloudsql") as mock_db:
-            mock_db.get_connection_readonly.return_value = FakeCtx()
+            mock_db.get_connection.return_value = FakeCtx()
             resp = client.get("/admin/api/calendar-data?year=2026&month=4")
 
         assert resp.status_code == 200
@@ -207,7 +207,7 @@ class TestCalendarData:
 
         client = _authed_client()
         with patch("routes.admin_calendar.db_cloudsql") as mock_db:
-            mock_db.get_connection_readonly.return_value = mock_ctx
+            mock_db.get_connection.return_value = mock_ctx
 
             # Need fresh mock for each call
             class FakeCtx:
@@ -226,7 +226,7 @@ class TestCalendarData:
                 async def __aexit__(self, *args):
                     pass
 
-            mock_db.get_connection_readonly.return_value = FakeCtx()
+            mock_db.get_connection.return_value = FakeCtx()
             resp = client.get("/admin/api/calendar-data")
 
         assert resp.status_code == 200
@@ -255,7 +255,7 @@ class TestCalendarData:
                 async def __aexit__(self, *args):
                     pass
 
-            mock_db.get_connection_readonly.return_value = FakeCtx()
+            mock_db.get_connection.return_value = FakeCtx()
             resp = client.get("/admin/api/calendar-data?year=2026&month=3")
 
         assert resp.status_code == 200
@@ -286,7 +286,7 @@ class TestCalendarData:
                 async def __aexit__(self, *args):
                     pass
 
-            mock_db.get_connection_readonly.return_value = FakeCtx()
+            mock_db.get_connection.return_value = FakeCtx()
             resp = client.get("/admin/api/calendar-data?year=2028&month=2")
 
         assert resp.status_code == 200
@@ -315,7 +315,7 @@ class TestCalendarData:
                 async def __aexit__(self, *args):
                     pass
 
-            mock_db.get_connection_readonly.return_value = FakeCtx()
+            mock_db.get_connection.return_value = FakeCtx()
             resp = client.get("/admin/api/calendar-data?year=2026&month=2")
 
         assert resp.status_code == 200
@@ -335,7 +335,7 @@ class TestCalendarData:
                 async def __aexit__(self, *args):
                     pass
 
-            mock_db.get_connection_readonly.return_value = FakeCtx()
+            mock_db.get_connection.return_value = FakeCtx()
             resp = client.get("/admin/api/calendar-data?year=2026&month=4")
 
         assert resp.status_code == 200
@@ -385,7 +385,7 @@ class TestCalendarData:
 
         client = _authed_client()
         with patch("routes.admin_calendar.db_cloudsql") as mock_db:
-            mock_db.get_connection_readonly.return_value = FakeCtx()
+            mock_db.get_connection.return_value = FakeCtx()
             resp = client.get("/admin/api/calendar-data?year=2026&month=1")
 
         assert resp.status_code == 200
@@ -438,7 +438,7 @@ class TestCalendarData:
 
         client = _authed_client()
         with patch("routes.admin_calendar.db_cloudsql") as mock_db:
-            mock_db.get_connection_readonly.return_value = FakeCtx()
+            mock_db.get_connection.return_value = FakeCtx()
             resp = client.get("/admin/api/calendar-data?year=2026&month=3")
 
         assert resp.status_code == 200
@@ -484,7 +484,7 @@ class TestCalendarV121:
 
         client = _authed_client()
         with patch("routes.admin_calendar.db_cloudsql") as mock_db:
-            mock_db.get_connection_readonly.return_value = FakeCtx()
+            mock_db.get_connection.return_value = FakeCtx()
             resp = client.get("/admin/api/calendar-data?year=2026&month=4")
 
         assert resp.status_code == 200
@@ -544,7 +544,7 @@ class TestCalendarV121:
 
         client = _authed_client()
         with patch("routes.admin_calendar.db_cloudsql") as mock_db:
-            mock_db.get_connection_readonly.return_value = FakeCtx()
+            mock_db.get_connection.return_value = FakeCtx()
             resp = client.get("/admin/api/calendar-data?year=2026&month=4")
 
         assert resp.status_code == 200
@@ -602,7 +602,7 @@ class TestCalendarPage:
                 async def __aexit__(self, *args):
                     pass
 
-            mock_db.get_connection_readonly.return_value = FakeCtx()
+            mock_db.get_connection.return_value = FakeCtx()
             resp = client.get("/admin/api/calendar-data?year=2026&month=4")
 
         assert resp.status_code == 200

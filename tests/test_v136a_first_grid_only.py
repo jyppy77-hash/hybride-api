@@ -51,7 +51,7 @@ def _authed_client():
 
 
 def _make_async_conn(cursor):
-    """Build a mock conn usable via `async with db_cloudsql.get_connection_readonly() as conn`."""
+    """Build a mock conn usable via `async with db_cloudsql.get_connection() as conn`."""
     conn = MagicMock()
     conn.cursor = AsyncMock(return_value=cursor)
     cm = MagicMock()
@@ -85,7 +85,7 @@ class TestDrawDetailFirstGridOnly:
             {"grid_id": "g1", "source": "generator", "number_value": 9, "number_type": "chance", "first_seen": "2026-04-27 08:00:00"},
         ])
         with patch(
-            "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
+            "routes.admin_perf_calendar.db_cloudsql.get_connection",
             return_value=_make_async_conn(cursor),
         ):
             resp = client.get(f"/admin/api/calendar-perf/draw/loto/{target_date.isoformat()}")
@@ -117,7 +117,7 @@ class TestDrawDetailFirstGridOnly:
             {"grid_id": "g1", "source": "generator", "number_value": 4, "number_type": "chance", "first_seen": "2026-04-27 08:00:00"},
         ])
         with patch(
-            "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
+            "routes.admin_perf_calendar.db_cloudsql.get_connection",
             return_value=_make_async_conn(cursor),
         ):
             resp = client.get(f"/admin/api/calendar-perf/draw/loto/{target_date.isoformat()}")
@@ -157,7 +157,7 @@ class TestDrawDetailFirstGridOnly:
             {"grid_id": "g2", "source": "generator", "number_value": 9, "number_type": "chance", "first_seen": "2026-04-27 08:00:01"},
         ])
         with patch(
-            "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
+            "routes.admin_perf_calendar.db_cloudsql.get_connection",
             return_value=_make_async_conn(cursor),
         ):
             resp = client.get(f"/admin/api/calendar-perf/draw/loto/{target_date.isoformat()}")
@@ -203,7 +203,7 @@ class TestDrawDetailFirstGridOnly:
             {"grid_id": "p2", "source": "pdf_meta_5a", "number_value": 7, "number_type": "chance", "first_seen": "2026-04-27 09:01:00"},
         ])
         with patch(
-            "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
+            "routes.admin_perf_calendar.db_cloudsql.get_connection",
             return_value=_make_async_conn(cursor),
         ):
             resp = client.get(f"/admin/api/calendar-perf/draw/loto/{target_date.isoformat()}")
@@ -237,7 +237,7 @@ class TestDrawDetailFirstGridOnly:
             {"grid_id": "p1", "source": "pdf_meta_global", "number_value": 9, "number_type": "chance", "first_seen": "2026-04-29 11:00:00"},
         ])
         with patch(
-            "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
+            "routes.admin_perf_calendar.db_cloudsql.get_connection",
             return_value=_make_async_conn(cursor),
         ):
             resp = client.get(f"/admin/api/calendar-perf/draw/loto/{target_date.isoformat()}")
@@ -286,7 +286,7 @@ class TestCalendarMonthFirstGridOnly:
             ],
         ])
         with patch(
-            "routes.admin_perf_calendar.db_cloudsql.get_connection_readonly",
+            "routes.admin_perf_calendar.db_cloudsql.get_connection",
             return_value=_make_async_conn(cursor),
         ):
             resp = client.get("/admin/api/calendar-perf/loto/2026/4")

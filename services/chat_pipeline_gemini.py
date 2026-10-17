@@ -23,7 +23,7 @@ import httpx  # V131.A: conservé pour signature rétrocompat (ctx["_http_client
 from google.genai import errors as genai_errors, types
 
 from services.circuit_breaker import gemini_breaker, CircuitOpenError
-from services.gemini import stream_gemini_chat, _GEMINI_CHAT_TEMPERATURE
+from services.gemini import stream_gemini_chat, _GEMINI_CHAT_TEMPERATURE, _as_int
 from services.gemini_shared import (
     _get_client,
     _is_rate_limit_error,
@@ -810,8 +810,11 @@ def sse_event(data: dict) -> str:
 # ═══════════════════════════════════════════════════════
 
 def log_from_meta(meta, module, lang, message, response_preview="",
-                  is_error=False, error_detail=None):
-    """Call log_chat_exchange from _chat_meta dict."""
+                  is_error=False, error_detail=None, tokens_in=0, tokens_out=0):
+    """Call log_chat_exchange from _chat_meta dict.
+
+    1.6.055 — tokens_in/out : tokens Gemini de la réponse finale (pas la génération SQL).
+    """
     if not meta:
         return
     log_chat_exchange(
@@ -824,6 +827,7 @@ def log_from_meta(meta, module, lang, message, response_preview="",
         grid_count=meta.get("grid_count", 0),
         has_exclusions=meta.get("has_exclusions", False),
         is_error=is_error, error_detail=error_detail,
+        gemini_tokens_in=tokens_in, gemini_tokens_out=tokens_out,
     )
 
 
@@ -1105,7 +1109,10 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
     if sponsor_line:
         text += "\n\n" + sponsor_line
     logger.info(f"{log_prefix} OK (page={page}, mode={mode})")
-    log_from_meta(ctx.get("_chat_meta"), module, lang, message, text)
+    _um = getattr(response, "usage_metadata", None)  # 1.6.055 — tokens jusqu'à chat_log
+    _tin = _as_int(getattr(_um, "prompt_token_count", None), 0)
+    _tout = _as_int(getattr(_um, "candidates_token_count", None), 0)
+    log_from_meta(ctx.get("_chat_meta"), module, lang, message, text, tokens_in=_tin, tokens_out=_tout)
 
     # V100 R01 + V101 strict + V125 A2/A3: Anti-hallucination check
     _meta = ctx.get("_chat_meta") or {}
@@ -1198,10 +1205,12 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
     # vrai stream_gemini_chat (identity gate) → les stream_fn de test (signature
     # historique, tests V131.G/V142.F-bis) restent intacts, zéro TypeError.
     _failure_box = {}
+    _usage_box = {}  # 1.6.055 — tokens de la réponse finale, remontés jusqu'à chat_log
     _stream_extra_kwargs = {}
     if _stream is stream_gemini_chat:
         _stream_extra_kwargs["max_retries"] = _STREAM_MAX_RETRIES_429
         _stream_extra_kwargs["failure_box"] = _failure_box
+        _stream_extra_kwargs["usage_box"] = _usage_box
 
     # V131.G — Buffer mode opt-in via ctx flag (set par chat_pipeline_shared
     # depuis env var STRICT_HALLUCINATION_BLOCK lue au module-load via
@@ -1353,6 +1362,7 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
                 log_from_meta(
                     ctx.get("_chat_meta"), module, lang, message, _strict_msg,
                     is_error=True, error_detail="StrictHallucinationBlock",
+                    tokens_in=_usage_box.get("tokens_in", 0), tokens_out=_usage_box.get("tokens_out", 0),
                 )
                 yield sse_event({
                     "chunk": _strict_msg, "source": "fallback", "mode": mode, "is_done": True,
@@ -1382,7 +1392,8 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
         yield sse_event({
             "chunk": "", "source": "gemini", "mode": mode, "is_done": True,
         })
-        log_from_meta(ctx.get("_chat_meta"), module, lang, message, _full_response)
+        log_from_meta(ctx.get("_chat_meta"), module, lang, message, _full_response,
+                      tokens_in=_usage_box.get("tokens_in", 0), tokens_out=_usage_box.get("tokens_out", 0))
 
         # V96+V101+V125 A2/A3: Anti-hallucination check — log-only on streaming path
         # (stream already sent to client, cannot be replaced).

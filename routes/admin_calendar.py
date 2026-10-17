@@ -4,6 +4,9 @@ Admin calendar heatmap — monthly stats API.
 Aggregates daily visitors, impressions, sessions, chatbot counts
 from existing tables (event_log, sponsor_impressions, chat_log).
 No pre-aggregated table — queries run on-the-fly with GROUP BY day.
+
+1.6.055 — pool principal get_connection() (route admin authentifiée) : le compte
+lecture seule chatbot_ro n'a SELECT que sur tirages / tirages_euromillions.
 """
 
 import calendar
@@ -101,7 +104,7 @@ async def admin_api_calendar_data(
     # dédupliquent nativement par client_id/session.
     # ──────────────────────────────────────────────────────────────────
     try:
-        async with db_cloudsql.get_connection_readonly() as conn:
+        async with db_cloudsql.get_connection() as conn:
             cur = await conn.cursor()
             await cur.execute(
                 f"SELECT day, COUNT(DISTINCT visitor_id) AS visitors FROM ("
@@ -126,7 +129,7 @@ async def admin_api_calendar_data(
 
     # --- Query 2: sessions from event_log ---
     try:
-        async with db_cloudsql.get_connection_readonly() as conn:
+        async with db_cloudsql.get_connection() as conn:
             cur = await conn.cursor()
             await cur.execute(
                 f"SELECT DAY({_TZ}) AS day, "
@@ -145,7 +148,7 @@ async def admin_api_calendar_data(
 
     # --- Query 3: impressions from sponsor_impressions ---
     try:
-        async with db_cloudsql.get_connection_readonly() as conn:
+        async with db_cloudsql.get_connection() as conn:
             cur = await conn.cursor()
             # V121 — filtre 4 types impression (exclut click/video/pdf-dl)
             await cur.execute(
@@ -169,7 +172,7 @@ async def admin_api_calendar_data(
 
     # --- Query 4: chatbot from chat_log ---
     try:
-        async with db_cloudsql.get_connection_readonly() as conn:
+        async with db_cloudsql.get_connection() as conn:
             cur = await conn.cursor()
             await cur.execute(
                 f"SELECT DAY({_TZ}) AS day, "

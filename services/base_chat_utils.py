@@ -5,7 +5,7 @@ Game-specific formatting stays in wrappers (chat_utils.py / chat_utils_em.py).
 
 import re
 import logging
-from datetime import datetime
+from datetime import date, datetime
 
 logger = logging.getLogger(__name__)
 
@@ -254,8 +254,12 @@ _INTERNAL_TAGS_PATTERNS = (
 )
 
 
-def _clean_response(text: str, lang: str = "fr") -> str:
-    """Supprime les tags internes et blocs de code qui ne doivent pas etre vus par l'utilisateur."""
+def _clean_response(text: str, lang: str = "fr", *, strip_edges: bool = True) -> str:
+    """Supprime les tags internes et blocs de code qui ne doivent pas etre vus par l'utilisateur.
+
+    strip_edges=False (1.6.055) : garde les \\n de bord — en flux, StreamBuffer fait le
+    strip une seule fois pour toute la reponse (sinon les \\n entre morceaux sont perdus).
+    """
     # F05 V86: supprimer les blocs ```tool_code / ```python hallucines par Gemini
     _had_code_block = bool(_RE_CODE_BLOCK.search(text))
     if _had_code_block:
@@ -275,7 +279,8 @@ def _clean_response(text: str, lang: str = "fr") -> str:
     text = re.sub(r'  +', ' ', text)
     # strip(\n\r) only — preserver les espaces aux bords des chunks SSE
     # pour eviter le collage de mots ("Jene peux pas") lors de la concatenation JS
-    text = text.strip('\n\r')
+    if strip_edges:  # 1.6.055 — en flux, le strip des bords est fait UNE fois par StreamBuffer
+        text = text.strip('\n\r')
     # F05: si un bloc de code a ete supprime et que la reponse est vide, fallback
     if _had_code_block and (not text or len(text.strip()) < 10):
         return _CODE_FALLBACK.get(lang, _CODE_FALLBACK["en"])
@@ -297,6 +302,34 @@ class StreamBuffer:
 
     def __init__(self):
         self.buffer = ""
+        self._pending_nl = ""   # 1.6.055 — \n de fin de morceau retenus jusqu'au texte suivant
+        self._started = False   # 1.6.055 — debut de reponse deja emis ?
+        self._last_char = ""    # 1.6.055 — dernier caractere emis (dedoublonnage espace de bord)
+
+    def _emit(self, raw: str) -> str:
+        """1.6.055 — Nettoie un morceau sans perdre les \\n de bord.
+
+        Equivalent a un nettoyage unique de la reponse complete : \\n de tete jetes,
+        \\n de fin retenus (emis devant le texte suivant, jetes au flush), runs de
+        \\n et d'espaces a cheval sur deux morceaux reduits comme dans _clean_response.
+        Les espaces de bord sont conserves (pas de collage "Jene").
+        """
+        cleaned = _clean_response(raw, strip_edges=False)
+        body = cleaned.rstrip("\n\r")
+        tail = cleaned[len(body):]
+        if not self._started:
+            body = body.lstrip("\n\r")
+        elif not self._pending_nl and self._last_char == " ":
+            body = body.lstrip(" ")  # "a " + " b" → "a b" (≡ re.sub('  +', ' ') du texte complet)
+        if not body:
+            if self._started:
+                self._pending_nl += tail
+            return ""
+        out = re.sub(r"\n{3,}", "\n\n", self._pending_nl + body)
+        self._pending_nl = tail
+        self._started = True
+        self._last_char = out[-1]
+        return out
 
     def add_chunk(self, chunk: str) -> str:
         """Ajoute un chunk. Retourne le texte safe a envoyer (peut etre vide)."""
@@ -309,20 +342,19 @@ class StreamBuffer:
             safe = self.buffer[:last_open]
             self.buffer = self.buffer[last_open:]
             if safe:
-                return _clean_response(safe)
+                return self._emit(safe)
             return ""
 
         # Pas de '[' pendant ou tout est ferme — nettoyer et envoyer
-        cleaned = _clean_response(self.buffer)
+        cleaned = self._emit(self.buffer)
         self.buffer = ""
         return cleaned
 
     def flush(self) -> str:
-        """Flush le reste du buffer a la fin du stream."""
-        if not self.buffer:
-            return ""
-        cleaned = _clean_response(self.buffer)
+        """Flush le reste du buffer a la fin du stream (\\n finaux jetes ≡ strip de fin)."""
+        cleaned = self._emit(self.buffer) if self.buffer else ""
         self.buffer = ""
+        self._pending_nl = ""
         return cleaned
 
 
@@ -336,13 +368,28 @@ _MOIS_FR = [
 ]
 
 
-def _format_date_fr(date_str: str) -> str:
-    """Convertit une date ISO (2026-02-09) en format francais (9 fevrier 2026)."""
-    try:
-        d = datetime.strptime(str(date_str), "%Y-%m-%d")
-        return f"{d.day} {_MOIS_FR[d.month]} {d.year}"
-    except (ValueError, TypeError):
-        return str(date_str) if date_str else "inconnue"
+# 1.6.055 — 'AAAA-MM-JJ', 'AAAA-MM-JJ HH:MM[:SS[.ffffff]]' ou 'AAAA-MM-JJTHH:MM...'
+_ISO_DATE_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})(?:[ T]\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?)?$")
+
+
+def _format_date_fr(value) -> str:
+    """date / datetime / 'AAAA-MM-JJ' / 'AAAA-MM-JJ HH:MM:SS' → '9 février 2026' (1.6.055).
+
+    L'heure est ignoree. Valeur non reconnue → renvoyee telle quelle ; vide → 'inconnue'.
+    """
+    if not value:
+        return "inconnue"
+    if isinstance(value, date):  # datetime est une sous-classe de date
+        d = value
+    else:
+        m = _ISO_DATE_RE.match(str(value).strip())
+        try:
+            d = datetime.strptime(m.group(1), "%Y-%m-%d") if m else None
+        except ValueError:
+            d = None
+        if d is None:
+            return str(value)
+    return f"{d.day} {_MOIS_FR[d.month]} {d.year}"
 
 
 def _format_periode_fr(periode: str) -> str:
