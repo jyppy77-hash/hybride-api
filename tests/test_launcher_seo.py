@@ -220,5 +220,6 @@ class TestVersion:
         # Cycle 2A SEO lot (b) bump : 1.6.052 → 1.6.053 (10/10/2026 — /loto/numeros-les-plus-sortis rendu serveur : top 10 / flop 10 / Chance faux remplacés par marqueurs __NPS_*__, squelette DOM identique, get_frequency_snapshot + get_secondary_snapshot (pending V135), dateModified = dernier tirage, ETag/304 via _DATA_DATED_ROUTES)
         # LOT GA4 bump : 1.6.053 → 1.6.054 (14/10/2026 — sessions GA4 orphelines « Unassigned » : session_end_lotoia supprimé (sessionEnd no-op), marqueur appareil owner lotoia_internal, consent default depuis le choix stocké + page_view unique après acceptation, file d'attente avant config/page_view, tampon produit > 30 min jeté, page_view bfcache, rating/sponsor comptés page visible seulement ; rupture de série GA4)
         # LOT 1.6.055 bump : 1.6.054 → 1.6.055 (17/10/2026 — routes admin calendrier sur pool principal, garde-fou pytest Vertex/DB, défense SQL fail-closed + pool lecture seule strict, sauts de ligne du flux SSE + dates avec heure, EuroMillions tolérant, exemple « Marco » supprimé, tokens Gemini dans chat_log, encadré sponsor du chat derrière CHAT_SPONSOR_INLINE défaut OFF ; aucun cache-buster touché)
+        # LOT 1.6.056 bump : 1.6.055 → 1.6.056 (20/10/2026 — P0-1 anti-hallucination : contrôle 2 Phase 2, appariement date ↔ suite par ligne, grille soumise écartée si date du bloc [ANALYSE DE GRILLE], log PHASE2_GRID_PAIR_SKIPPED ; aucun cache-buster touché)
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.055"
+        assert APP_VERSION == "1.6.056"

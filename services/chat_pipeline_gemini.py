@@ -556,6 +556,23 @@ _EM_STARS_RE = re.compile(
     re.IGNORECASE,
 )
 
+# 1.6.056 P0-1 — Phase 2 : appariement date ↔ suite par ligne (cas chat_log 8011).
+# En-tête du bloc d'analyse : `[ANALYSE DE GRILLE - 14 24 25 39 45 (chance: 3)]`
+# (base_chat_utils._format_grille_context_base : boules triées, séparateur espace).
+_GRID_HEADER_RE = re.compile(r'\[ANALYSE DE GRILLE - (\d{1,2}(?: \d{1,2}){4})\b')
+
+# Mêmes motifs et même priorité que `_parse_draw_date_multilang` (inchangée pour les
+# phases 0/1/T/3/3-bis), chaque motif avec sa conversion en `date`.
+_DATE_PATTERNS_ORDERED = (
+    (_DATE_RE_ISO, lambda m: date(int(m.group(1)), int(m.group(2)), int(m.group(3)))),
+    (_DATE_RE_DMY_NUM, lambda m: date(int(m.group(3)), int(m.group(2)), int(m.group(1)))),
+    (_DATE_RE_DMY, lambda m: date(
+        int(m.group(3)), _MONTH_NAME_TO_NUM[m.group(2).lower()], int(m.group(1)))),
+    (_DATE_RE_DMY_WORD, lambda m: date(int(m.group(2)), _MONTH_NAME_TO_NUM[m.group(1).lower()], 1)),
+    (_DATE_RE_MDY, lambda m: date(
+        int(m.group(3)), _MONTH_NAME_TO_NUM[m.group(1).lower()], int(m.group(2)))),
+)
+
 
 def _parse_draw_date_multilang(text: str) -> date | None:
     """V126 3.5-A + V141 A.2 : parse une date dans la réponse (6 langues + ISO).
@@ -617,6 +634,204 @@ def _parse_draw_date_multilang(text: str) -> date | None:
     return None
 
 
+def _find_draw_dates(text: str) -> list[tuple[int, int, date]]:
+    """1.6.056 P0-1 : toutes les dates de tirage citées dans `text`, triées par position.
+
+    Triplets (début, fin, date). Un motif de rang inférieur ne réutilise pas un passage
+    déjà reconnu (« first of May 2026 » pris par DMY_WORD n'est pas relu par MDY).
+    Dates invalides (31/02…) ignorées silencieusement.
+    """
+    found: list[tuple[int, int, date]] = []
+    for regex, convert in _DATE_PATTERNS_ORDERED:
+        for m in regex.finditer(text):
+            if any(m.start() < end and start < m.end() for start, end, _ in found):
+                continue
+            try:
+                found.append((m.start(), m.end(), convert(m)))
+            except (ValueError, KeyError):
+                pass
+    return sorted(found)
+
+
+def _pair_phase2_draw_citations(
+    response: str, enrichment_context: str, log_prefix: str = "",
+) -> list[tuple[date, re.Match, str]]:
+    """1.6.056 P0-1 : couples (date, suite citée, texte étoiles) à vérifier en Phase 2.
+
+    Cas chat_log 8011 (29/29 blocages Phase 2 sur 30 j = faux positifs) : Gemini rappelle
+    la grille soumise puis cite la date de « meilleure correspondance » du bloc
+    `[ANALYSE DE GRILLE]` ; l'ancien croisement (1re suite × 1re date du texte entier)
+    comparait la grille utilisateur au tirage de cette date.
+
+    Règles :
+      - une date n'est appariée qu'à une suite de SA ligne, la plus proche (à égalité,
+        celle qui suit la date) ;
+      - ligne titre « … date : » sans suite → 1re suite de la ligne non vide suivante,
+        si celle-ci ne contient pas de date ;
+      - la grille soumise (ensemble des 5 boules, ordre et séparateur indifférents) n'est
+        écartée que pour une date présente dans le bloc d'analyse (meilleure
+        correspondance / déjà sortie) : « ta grille est sortie le X » hors bloc reste vérifié ;
+      - date sans suite, suite sans date : rien à vérifier.
+    Étoiles EM : lues entre la fin de la suite retenue et la suite suivante de la ligne.
+
+    Risque accepté (arbitrage Jyppy 19/10) : « ta grille est sortie le <date du bloc> »
+    passe sans contrôle → log-only `PHASE2_GRID_PAIR_SKIPPED` pour le mesurer en prod.
+    Couverture : toute date restée sans suite appariée (et non écartée comme grille) alors
+    que la réponse contient une suite → log-only `PHASE2_DATE_UNPAIRED`, une fois par date.
+    """
+    header = _GRID_HEADER_RE.search(enrichment_context or "")
+    grid: frozenset[int] | None = None
+    block_dates: set[date] = set()
+    if header:
+        grid = frozenset(int(n) for n in header.group(1).split())
+        block = enrichment_context[header.start():].split("\n\n", 1)[0]
+        block_dates = {d for _, _, d in _find_draw_dates(block)}
+
+    pairs: list[tuple[date, re.Match, str]] = []
+    seen: set[tuple[date, frozenset[int]]] = set()
+    handled: set[date] = set()           # dates appariées ou écartées comme grille soumise
+    unpaired: dict[date, str] = {}       # date non appariée → 1re ligne où elle apparaît
+    lines = response.splitlines()
+    for i, line in enumerate(lines):
+        dates = _find_draw_dates(line)
+        if not dates:
+            continue
+        host, from_next_line = line, False
+        seqs = list(_DRAW_SEQUENCE_RE.finditer(line))
+        if not seqs:
+            if not line.strip().rstrip("*_ ").endswith(":"):
+                for _, _, d in dates:
+                    unpaired.setdefault(d, line)
+                continue
+            nxt = next((j for j in range(i + 1, len(lines)) if lines[j].strip()), None)
+            if nxt is None or _find_draw_dates(lines[nxt]):
+                for _, _, d in dates:
+                    unpaired.setdefault(d, line)
+                continue
+            host, from_next_line = lines[nxt], True
+            seqs = list(_DRAW_SEQUENCE_RE.finditer(host))[:1]
+        for d_start, d_end, cited_date in dates:
+            candidates = []
+            grid_skipped = False
+            for s in seqs:
+                if cited_date in block_dates and frozenset(int(n) for n in s.groups()) == grid:
+                    logger.info(
+                        "%s PHASE2_GRID_PAIR_SKIPPED: date=%s grid=%s | line=%.200s",
+                        log_prefix, cited_date, sorted(grid),
+                        " ".join(host.split()),
+                    )
+                    grid_skipped = True
+                    continue
+                candidates.append(s)
+            if not candidates:
+                if grid_skipped:
+                    handled.add(cited_date)
+                else:
+                    unpaired.setdefault(cited_date, line)
+                continue
+            handled.add(cited_date)
+            if from_next_line:
+                seq = candidates[0]
+            else:
+                seq = min(candidates, key=lambda s, ds=d_start, de=d_end: (
+                    max(ds - s.end(), s.start() - de, 0), s.start() < ds,
+                ))
+            key = (cited_date, frozenset(int(n) for n in seq.groups()))
+            if key in seen:
+                continue
+            seen.add(key)
+            next_start = next((s.start() for s in seqs if s.start() >= seq.end()), len(host))
+            pairs.append((cited_date, seq, host[seq.end():next_start]))
+    # 1.6.056 P0-1 — mesure de couverture (log-only, aucun effet sur les couples renvoyés).
+    response_seqs = list(_DRAW_SEQUENCE_RE.finditer(response)) if unpaired else []
+    if response_seqs:
+        grid_in_response = grid is not None and any(
+            frozenset(int(n) for n in s.groups()) == grid for s in response_seqs
+        )
+        for cited_date, date_line in unpaired.items():
+            if cited_date in handled:
+                continue
+            logger.info(
+                "%s PHASE2_DATE_UNPAIRED: date=%s in_block=%s grid_in_response=%s | line=%.200s",
+                log_prefix, cited_date, cited_date in block_dates, grid_in_response,
+                " ".join(date_line.split()),
+            )
+    return pairs
+
+
+async def _verify_cited_draw(
+    parsed_date: date, seq_match: re.Match, stars_text: str,
+    lang: str, log_prefix: str, get_tirage_fn, game: str,
+) -> str | None:
+    """Compare un tirage cité (date + 5 boules, + étoiles EM) au vrai tirage en base.
+
+    1.6.056 P0-1 : corps extrait tel quel de `_recheck_phase0_draw_accuracy` (timeout 1s
+    V127, logs et messages inchangés) pour servir aussi l'appariement Phase 2.
+    `stars_text` : texte où chercher les étoiles EM (réponse entière hors Phase 2,
+    segment qui suit la suite retenue en Phase 2).
+    """
+    # V127 — timeout réduit 3s → 1s (audit V126.1 décision 4 Option C).
+    # Garde le bloquant pour préserver la défense anti-hallucination V126,
+    # mais limite l'impact latence non-streaming à +1s pire cas (vs +3s avant).
+    # DB readonly p95 < 100ms en charge normale → 0 dégradation observable.
+    try:
+        tirage = await asyncio.wait_for(get_tirage_fn(parsed_date), timeout=1.0)
+    except asyncio.TimeoutError:
+        logger.warning(
+            "%s V127 reapply TIMEOUT (1s) on DB lookup for %s — log-only fallback",
+            log_prefix, parsed_date,
+        )
+        return None
+    except Exception as e:
+        logger.warning(
+            "%s V126 3.5-A reapply DB lookup error for %s: %s",
+            log_prefix, parsed_date, e,
+        )
+        return None
+    if not tirage:
+        logger.warning(
+            "%s V126 3.5-A PHASE0_DATE_NOT_IN_DB: date=%s cited but absent | "
+            "cited_seq=%s",
+            log_prefix, parsed_date, seq_match.group(0),
+        )
+        return _STRICT_HALLUCINATION_MESSAGES.get(
+            lang, _STRICT_HALLUCINATION_MESSAGES["fr"],
+        ).format(data=f"(aucune donnée disponible pour le {parsed_date})")
+    real_nums = set(str(n) for n in tirage["boules"])
+    cited_nums = set(seq_match.groups())
+    boules_mismatch = cited_nums != real_nums
+
+    # V126.1 F3 : check étoiles EM (5 boules correctes mais étoiles fausses
+    # possible → défense-en-profondeur).
+    stars_mismatch = False
+    cited_stars: set[str] = set()
+    real_stars: set[str] = set()
+    if game == "em" and tirage.get("etoiles"):
+        stars_match = _EM_STARS_RE.search(stars_text)
+        if stars_match:
+            cited_stars = {stars_match.group(1), stars_match.group(2)}
+            real_stars = {str(s) for s in tirage["etoiles"]}
+            if cited_stars != real_stars:
+                stars_mismatch = True
+
+    if boules_mismatch or stars_mismatch:
+        logger.warning(
+            "%s V126.1 PHASE0_DRAW_MISMATCH: date=%s boules_real=%s boules_cited=%s "
+            "stars_mismatch=%s stars_real=%s stars_cited=%s",
+            log_prefix, parsed_date,
+            sorted(real_nums, key=int),
+            sorted(cited_nums, key=int),
+            stars_mismatch,
+            sorted(real_stars, key=int) if real_stars else [],
+            sorted(cited_stars, key=int) if cited_stars else [],
+        )
+        safe_data = _format_last_draw_context(tirage)
+        return _STRICT_HALLUCINATION_MESSAGES.get(
+            lang, _STRICT_HALLUCINATION_MESSAGES["fr"],
+        ).format(data=safe_data)
+    return None
+
+
 async def _recheck_phase0_draw_accuracy(
     response: str, phase: str, lang: str, log_prefix: str,
     get_tirage_fn,
@@ -664,6 +879,11 @@ async def _recheck_phase0_draw_accuracy(
         → faux positif `PHASE0_DATE_NOT_IN_DB`. Cas non reproduit dimanche
         10/05 mais structurellement à risque dès qu'un user demandera une
         grille pour une vraie date future.
+
+    1.6.056 P0-1 — Phase 2 : appariement date ↔ suite par ligne et grille soumise
+    écartée quand sa date vient du bloc `[ANALYSE DE GRILLE]` (cf.
+    `_pair_phase2_draw_citations`). Fix 1 conservé (skip si aucun tag). Phases
+    0/1/T/3/3-bis : croisement historique 1re suite × 1re date inchangé.
 
     Note rétrocompat : les préfixes log "PHASE0_DATE_NOT_IN_DB" et
     "PHASE0_DRAW_MISMATCH" sont conservés (non renommés) malgré l'extension
@@ -728,72 +948,27 @@ async def _recheck_phase0_draw_accuracy(
 
     if not get_tirage_fn:
         return None
+    # 1.6.056 P0-1 — Phase 2 : chaque date vérifiée contre la suite de sa ligne,
+    # grille soumise écartée si la date vient du bloc d'analyse (cas 8011).
+    if phase == "2":
+        for parsed_date, seq_match, stars_text in _pair_phase2_draw_citations(
+            response, enrichment_context, log_prefix,
+        ):
+            replacement = await _verify_cited_draw(
+                parsed_date, seq_match, stars_text, lang, log_prefix, get_tirage_fn, game,
+            )
+            if replacement:
+                return replacement
+        return None
     seq_match = _DRAW_SEQUENCE_RE.search(response)
     if not seq_match:
         return None
     parsed_date = _parse_draw_date_multilang(response)
     if not parsed_date:
         return None
-    # V127 — timeout réduit 3s → 1s (audit V126.1 décision 4 Option C).
-    # Garde le bloquant pour préserver la défense anti-hallucination V126,
-    # mais limite l'impact latence non-streaming à +1s pire cas (vs +3s avant).
-    # DB readonly p95 < 100ms en charge normale → 0 dégradation observable.
-    try:
-        tirage = await asyncio.wait_for(get_tirage_fn(parsed_date), timeout=1.0)
-    except asyncio.TimeoutError:
-        logger.warning(
-            "%s V127 reapply TIMEOUT (1s) on DB lookup for %s — log-only fallback",
-            log_prefix, parsed_date,
-        )
-        return None
-    except Exception as e:
-        logger.warning(
-            "%s V126 3.5-A reapply DB lookup error for %s: %s",
-            log_prefix, parsed_date, e,
-        )
-        return None
-    if not tirage:
-        logger.warning(
-            "%s V126 3.5-A PHASE0_DATE_NOT_IN_DB: date=%s cited but absent | "
-            "cited_seq=%s",
-            log_prefix, parsed_date, seq_match.group(0),
-        )
-        return _STRICT_HALLUCINATION_MESSAGES.get(
-            lang, _STRICT_HALLUCINATION_MESSAGES["fr"],
-        ).format(data=f"(aucune donnée disponible pour le {parsed_date})")
-    real_nums = set(str(n) for n in tirage["boules"])
-    cited_nums = set(seq_match.groups())
-    boules_mismatch = cited_nums != real_nums
-
-    # V126.1 F3 : check étoiles EM (5 boules correctes mais étoiles fausses
-    # possible → défense-en-profondeur).
-    stars_mismatch = False
-    cited_stars: set[str] = set()
-    real_stars: set[str] = set()
-    if game == "em" and tirage.get("etoiles"):
-        stars_match = _EM_STARS_RE.search(response)
-        if stars_match:
-            cited_stars = {stars_match.group(1), stars_match.group(2)}
-            real_stars = {str(s) for s in tirage["etoiles"]}
-            if cited_stars != real_stars:
-                stars_mismatch = True
-
-    if boules_mismatch or stars_mismatch:
-        logger.warning(
-            "%s V126.1 PHASE0_DRAW_MISMATCH: date=%s boules_real=%s boules_cited=%s "
-            "stars_mismatch=%s stars_real=%s stars_cited=%s",
-            log_prefix, parsed_date,
-            sorted(real_nums, key=int),
-            sorted(cited_nums, key=int),
-            stars_mismatch,
-            sorted(real_stars, key=int) if real_stars else [],
-            sorted(cited_stars, key=int) if cited_stars else [],
-        )
-        safe_data = _format_last_draw_context(tirage)
-        return _STRICT_HALLUCINATION_MESSAGES.get(
-            lang, _STRICT_HALLUCINATION_MESSAGES["fr"],
-        ).format(data=safe_data)
-    return None
+    return await _verify_cited_draw(
+        parsed_date, seq_match, response, lang, log_prefix, get_tirage_fn, game,
+    )
 
 
 # ═══════════════════════════════════════════════════════

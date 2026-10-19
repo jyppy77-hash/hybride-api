@@ -1070,9 +1070,11 @@ class TestAppVersion:
         supprimé, cache-buster analytics.js v=4 ; title/meta/JSON-LD /accueil inchangés.
         LOT 1.6.055 (17/10, Release 1.6.055) — robustesse chatbot + défense SQL, aucun
         changement SEO ni cache-buster ; bump requis : ETag HTML lié à APP_VERSION.
+        LOT 1.6.056 (20/10, Release 1.6.056) — P0-1 contrôle 2 Phase 2, aucun changement
+        SEO ni cache-buster ; bump requis : ETag HTML lié à APP_VERSION.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.055"
+        assert APP_VERSION == "1.6.056"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

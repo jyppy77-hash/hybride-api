@@ -5,6 +5,17 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# LOT 1.6.056 — P0-1 anti-hallucination : faux positifs du contrôle 2 en Phase 2 (Release 1.6.056,
+# 20/10/2026). Aucun cache-buster ?v= touché (aucun JS/CSS/template modifié).
+# Cause : V141 A.4 Fix 2 a rendu [ANALYSE DE GRILLE] factuel → la garde Fix 1 ne saute plus la
+# Phase 2 ; le contrôle 2 croisait 1re suite (grille soumise) × 1re date (meilleure correspondance
+# du bloc) → 29/41 analyses de grille bloquées sur 30 j (cas chat_log 8011), 29/29 faux positifs.
+# Correctif (chat_pipeline_gemini.py, Phase 2 seulement) : appariement date ↔ suite par ligne
+# (_pair_phase2_draw_citations / _find_draw_dates) ; grille soumise écartée seulement si la date
+# figure dans le bloc d'analyse (log-only PHASE2_GRID_PAIR_SKIPPED : risque accepté, mesurable ;
+# log-only PHASE2_DATE_UNPAIRED : dates de Phase 2 non appariées, mesure de couverture) ;
+# _verify_cited_draw extrait tel quel (logs PHASE0_* inchangés). Phases 0/1/T/3/3-bis inchangées.
+
 # LOT 1.6.055 — robustesse chatbot + défense SQL (Release 1.6.055, 17/10/2026). Aucun cache-buster
 # ?v= touché (aucun JS/CSS/template modifié). Correctifs :
 # 0. Routes admin calendrier (admin_calendar.py, admin_perf_calendar.py) sur get_connection() :
@@ -317,9 +328,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.055"
+APP_VERSION = "1.6.056"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-10-17"
+VERSION_DATE = "2026-10-20"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.
