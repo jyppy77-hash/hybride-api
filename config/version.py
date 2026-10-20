@@ -5,6 +5,17 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# LOT 1.6.057 — Lot B étape 1 : diagnostic CLIENT_IP_DIAG, AUCUN changement de comportement (Release
+# 1.6.057, 21/10/2026). Aucun cache-buster ?v= touché (aucun JS/CSS/template modifié).
+# Faille (19/10) : get_client_ip / get_client_ip_from_scope prennent XFF[0], falsifiable (admin, owner,
+# rate limit, ip_ban, BOT_IPS, access log). Infra : Cloudflare DNS seul + domain mapping Cloud Run.
+# 1.6.057 mesure le nombre d'entrées XFF ajoutées par Google (_GOOGLE_XFF_HOPS, figé en 1.6.058) :
+# utils.log_client_ip_diag appelé une fois par requête dans AccessLogMiddleware, ligne [CLIENT_IP_DIAG]
+# sans IP ni valeur d'en-tête (host, probe, xff_lines, xff_len, hop_kinds, cand_n1/n2,
+# same_as_current_n1/n2, peer). Actif par défaut, CLIENT_IP_DIAG=0 le coupe ; plafond 80 + 20 par
+# processus, soit 200 par instance ; quota de 20 réservé aux mesures /api/version?cidiag=1 (le marqueur
+# ne choisit que le quota). get_client_ip inchangée (XFF[0]).
+
 # LOT 1.6.056 — P0-1 anti-hallucination : faux positifs du contrôle 2 en Phase 2 (Release 1.6.056,
 # 20/10/2026). Aucun cache-buster ?v= touché (aucun JS/CSS/template modifié).
 # Cause : V141 A.4 Fix 2 a rendu [ANALYSE DE GRILLE] factuel → la garde Fix 1 ne saute plus la
@@ -328,9 +339,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.056"
+APP_VERSION = "1.6.057"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-10-20"
+VERSION_DATE = "2026-10-21"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

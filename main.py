@@ -873,8 +873,9 @@ class AccessLogMiddleware:
             await self.app(scope, receive, send_wrapper)
         finally:
             duration_ms = round((time.perf_counter() - start) * 1000, 1)
-            from utils import get_client_ip_from_scope
+            from utils import get_client_ip_from_scope, log_client_ip_diag
             client_ip = get_client_ip_from_scope(scope)
+            log_client_ip_diag(scope)
             request_id = _request_id_ctx.get("")
 
             if status_code >= 500:

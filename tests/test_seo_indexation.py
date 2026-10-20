@@ -1072,9 +1072,11 @@ class TestAppVersion:
         changement SEO ni cache-buster ; bump requis : ETag HTML lié à APP_VERSION.
         LOT 1.6.056 (20/10, Release 1.6.056) — P0-1 contrôle 2 Phase 2, aucun changement
         SEO ni cache-buster ; bump requis : ETag HTML lié à APP_VERSION.
+        LOT 1.6.057 (21/10, Release 1.6.057) — diagnostic CLIENT_IP_DIAG, aucun changement
+        SEO ni cache-buster ; bump requis : ETag HTML lié à APP_VERSION.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.056"
+        assert APP_VERSION == "1.6.057"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

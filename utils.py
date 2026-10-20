@@ -168,3 +168,156 @@ def is_origin_authed(request: Request) -> bool:
         return False
     # secrets.compare_digest : timing-safe — empêche timing attack sur secret length
     return secrets.compare_digest(provided, _ORIGIN_AUTH_SECRET)
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# LOT 1.6.057 — Diagnostic CLIENT_IP_DIAG (mesure de _GOOGLE_XFF_HOPS, aucun effet)
+# ══════════════════════════════════════════════════════════════════════════════
+# get_client_ip / get_client_ip_from_scope restent sur XFF[0] dans cette version. Ce bloc ne fait
+# que comparer, dans un log sans aucune IP ni valeur d'en-tête, XFF[0] à la règle candidate.
+
+
+def _diag_enabled_from_env(raw: str | None) -> bool:
+    """Actif par défaut en 1.6.057 ; CLIENT_IP_DIAG=0/false/no/off le coupe sans rebuild."""
+    return (raw or "1").strip().lower() not in ("0", "false", "no", "off")
+
+
+_CLIENT_IP_DIAG = _diag_enabled_from_env(os.environ.get("CLIENT_IP_DIAG"))
+
+# Plafond PAR PROCESSUS : uvicorn --workers 2 (Dockerfile:59) → au plus 200 lignes par instance.
+# Quota réservé aux requêtes de mesure (/api/version?cidiag=1) : le trafic réel de /api/version
+# (appelé à chaque page vue par version-inject.js) passe dans le quota général.
+_DIAG_MAX_GENERAL = 80
+_DIAG_MAX_PROBE = 20
+_DIAG_PROBE_PATH = "/api/version"
+_DIAG_PROBE_PARAM = b"cidiag=1"
+_diag_counts = {"general": 0, "probe": 0}
+_DIAG_HOP_KINDS_MAX = 6  # entrées de fin seulement : celles de Google sont à la fin
+
+
+def _parse_ip(raw: str) -> str:
+    """Normalise une entrée XFF (espaces, [IPv6]:port, IPv4:port, IPv4 mappée). "" si invalide."""
+    s = raw.strip()
+    if s.startswith("["):
+        end = s.find("]")
+        if end == -1:
+            return ""
+        s = s[1:end]
+    elif s.count(":") == 1:
+        s = s.split(":", 1)[0]
+    try:
+        addr = ip_address(s)
+    except ValueError:
+        return ""
+    if addr.version == 6 and addr.ipv4_mapped:
+        return str(addr.ipv4_mapped)
+    return str(addr)
+
+
+def _ip_kind(ip: str) -> str:
+    """Classement pour le diagnostic : empty / invalid / private / public."""
+    if not ip:
+        return "empty"
+    try:
+        addr = ip_address(ip)
+    except ValueError:
+        return "invalid"
+    return "private" if (addr.is_private or addr.is_loopback or addr.is_link_local) else "public"
+
+
+def _entry_kind(raw: str) -> str:
+    """Classement d'une entrée brute (XFF ou pair) : vide → empty, non parsable → invalid."""
+    if not raw.strip():
+        return "empty"
+    ip = _parse_ip(raw)
+    return _ip_kind(ip) if ip else "invalid"
+
+
+def _host_kind(host: str) -> str:
+    """Classement de l'en-tête Host : apex / www / run_app / other / none."""
+    host = host.split(":")[0].strip().lower()
+    if not host:
+        return "none"
+    if host.endswith(".run.app"):
+        return "run_app"
+    return {"lotoia.fr": "apex", "www.lotoia.fr": "www"}.get(host, "other")
+
+
+def _xff_from_scope(scope: dict) -> tuple[str, int]:
+    """Lignes X-Forwarded-For du scope ASGI jointes dans l'ordre (RFC 9110 §5.3), et leur nombre."""
+    values = [v.decode("latin-1") for k, v in scope.get("headers", []) if k == b"x-forwarded-for"]
+    return ", ".join(values), len(values)
+
+
+# Infra au 20/10/2026 : DNS seul chez Cloudflare (aucun proxy) + domain mapping Cloud Run.
+# _GOOGLE_XFF_HOPS sera fixé d'après CE chemin (diagnostic 1.6.057). CF-Connecting-IP n'est jamais fiable ici.
+# Tout changement d'infrastructure (load balancer HTTPS : +2 entrées XFF ; proxy Cloudflare : IP Cloudflare)
+# impose de revoir dans le MÊME lot : _GOOGLE_XFF_HOPS, cette fonction, la V138 et CF-IPCountry.
+def _select_client_ip_candidate(xff: str, fallback: str, hops: int) -> str:
+    """Règle cible du lot B, utilisée par le diagnostic seulement. Aucun autre en-tête n'est lu.
+
+    Pas de XFF (dev local, TestClient) → fallback (pair TCP).
+    Sinon → entrée ajoutée par Google, hops[-hops], normalisée ; XFF trop court ou invalide → "".
+    """
+    if not xff.strip():
+        return fallback
+    entries = xff.split(",")
+    if hops < 1 or len(entries) < hops:
+        return ""
+    return _parse_ip(entries[-hops])
+
+
+def _same_ip(candidate: str, current: str) -> bool:
+    """La candidate désigne-t-elle la même IP que XFF[0] actuelle (forme normalisée) ?"""
+    return candidate == current or (candidate != "" and candidate == _parse_ip(current))
+
+
+def _is_diag_probe(scope: dict) -> bool:
+    """Requête de mesure = /api/version avec le paramètre exact cidiag=1 dans la query string.
+
+    Le marqueur sert UNIQUEMENT à choisir le quota du diagnostic : il n'a aucun effet sur l'IP
+    retenue, l'accès ni la réponse.
+    """
+    if scope.get("path", "") != _DIAG_PROBE_PATH:
+        return False
+    return _DIAG_PROBE_PARAM in scope.get("query_string", b"").split(b"&")
+
+
+def _diag_slot_available(probe: bool) -> bool:
+    """Réserve une ligne de quota. Aucun await entre le test et l'incrément : atomique dans la boucle asyncio."""
+    key = "probe" if probe else "general"
+    limit = _DIAG_MAX_PROBE if probe else _DIAG_MAX_GENERAL
+    if _diag_counts[key] >= limit:
+        return False
+    _diag_counts[key] += 1
+    return True
+
+
+def log_client_ip_diag(scope: dict) -> None:
+    """[CLIENT_IP_DIAG] : une ligne par requête jusqu'au plafond. Aucune IP ni valeur d'en-tête loguée."""
+    if not _CLIENT_IP_DIAG:
+        return
+    probe = _is_diag_probe(scope)
+    if not _diag_slot_available(probe):
+        return
+    try:
+        xff, xff_lines = _xff_from_scope(scope)
+        entries = xff.split(",") if xff.strip() else []
+        kinds = [_entry_kind(e) for e in entries[-_DIAG_HOP_KINDS_MAX:]]
+        if len(entries) > _DIAG_HOP_KINDS_MAX:
+            kinds.insert(0, "...")
+        host = next((v.decode("latin-1") for k, v in scope.get("headers", []) if k == b"host"), "")
+        client_addr = scope.get("client")
+        peer = client_addr[0] if client_addr else ""
+        current = get_client_ip_from_scope(scope)
+        cand_n1 = _select_client_ip_candidate(xff, peer, 1)
+        cand_n2 = _select_client_ip_candidate(xff, peer, 2)
+        logger.info(
+            "[CLIENT_IP_DIAG] host=%s probe=%s xff_lines=%d xff_len=%d hop_kinds=%s cand_n1=%s cand_n2=%s "
+            "same_as_current_n1=%s same_as_current_n2=%s peer=%s",
+            _host_kind(host), probe, xff_lines, len(entries), ",".join(kinds) or "-",
+            _ip_kind(cand_n1), _ip_kind(cand_n2),
+            _same_ip(cand_n1, current), _same_ip(cand_n2, current), _entry_kind(peer),
+        )
+    except Exception as e:
+        logger.warning("[CLIENT_IP_DIAG] diag_error=%s", type(e).__name__)
