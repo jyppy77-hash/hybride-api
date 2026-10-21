@@ -78,9 +78,10 @@ _CACHE_TTL = 60  # seconds
 
 
 def _extract_client_ip(request: Request) -> str:
-    """Extract real client IP from Cloud Run X-Forwarded-For header.
+    """IP du client via utils.get_client_ip : hops[-_GOOGLE_XFF_HOPS] de X-Forwarded-For (LOT 1.6.058).
 
-    Takes the FIRST IP (real client on Cloud Run without CDN).
+    L'entrée retenue est celle ajoutée par le Google Front End (N = 1) ; les entrées de gauche,
+    fournies par le client, sont ignorées. XFF inexploitable → "" (contrôle de ban sauté).
     Returns empty string for TestClient (skip ban checks in tests).
     """
     from utils import get_client_ip

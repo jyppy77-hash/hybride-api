@@ -1,8 +1,8 @@
 """
 Tests — LOT 1.6.057 : diagnostic CLIENT_IP_DIAG (mesure de _GOOGLE_XFF_HOPS).
 
-Aucun changement de comportement : get_client_ip / get_client_ip_from_scope restent sur XFF[0]
-(tests/test_utils.py et tests/test_rate_limit_ip.py inchangés).
+LOT 1.6.058 : get_client_ip / get_client_ip_from_scope appliquent hops[-_GOOGLE_XFF_HOPS] (N = 1,
+tests/test_client_ip_selection.py) ; le diagnostic est conservé, désactivé par défaut (CLIENT_IP_DIAG=1).
 """
 
 import re
@@ -87,8 +87,8 @@ class TestKinds:
         assert _host_kind(host) == kind
 
     @pytest.mark.parametrize("raw,enabled", [
-        (None, True), ("", True), ("1", True), ("true", True),
-        ("0", False), ("false", False), ("NO", False), (" off ", False),
+        (None, False), ("", False), ("1", True), ("true", True), (" ON ", True), ("yes", True),
+        ("0", False), ("false", False), ("NO", False), (" off ", False), ("2", False),
     ])
     def test_env_parsing(self, raw, enabled):
         assert _diag_enabled_from_env(raw) is enabled
@@ -124,18 +124,17 @@ class TestSelectClientIpCandidate:
         assert _select_client_ip_candidate("8.8.8.8", "x", 0) == ""
 
 
-class TestCurrentBehaviourUnchanged:
-    """get_client_ip_from_scope n'est PAS modifiée en 1.6.057 : XFF[0], dernière ligne si plusieurs."""
+class TestScopeSelection:
+    """LOT 1.6.058 : get_client_ip_from_scope = hops[-1], toutes les lignes XFF jointes dans l'ordre."""
 
-    def test_single_line_returns_first_entry(self):
-        assert get_client_ip_from_scope(_scope(xff="86.212.92.243, 8.8.8.8")) == "86.212.92.243"
+    def test_single_line_returns_last_entry(self):
+        assert get_client_ip_from_scope(_scope(xff="86.212.92.243, 8.8.8.8")) == "8.8.8.8"
 
     def test_single_entry(self):
         assert get_client_ip_from_scope(_scope(xff="8.8.8.8")) == "8.8.8.8"
 
-    def test_several_lines_uses_last_line(self):
-        # Comportement actuel : dict(scope["headers"]) garde la DERNIÈRE ligne X-Forwarded-For.
-        assert get_client_ip_from_scope(_scope(xff=["1.1.1.1", "2.2.2.2, 8.8.8.8"])) == "2.2.2.2"
+    def test_several_lines_joined_in_order(self):
+        assert get_client_ip_from_scope(_scope(xff=["1.1.1.1", "2.2.2.2, 8.8.8.8"])) == "8.8.8.8"
 
     def test_no_xff_returns_peer(self):
         assert get_client_ip_from_scope(_scope(xff=None, client=("9.9.9.9", 1234))) == "9.9.9.9"
@@ -205,7 +204,8 @@ class TestDiagLog:
         assert _field(line, "hop_kinds") == "public,public,private"
         assert _field(line, "cand_n1") == "private"
         assert _field(line, "cand_n2") == "public"
-        assert _field(line, "same_as_current_n1") == "False"
+        # 1.6.058 : l'IP retenue est hops[-1] = candidate N = 1.
+        assert _field(line, "same_as_current_n1") == "True"
         assert _field(line, "same_as_current_n2") == "False"
         assert _field(line, "peer") == "public"
 

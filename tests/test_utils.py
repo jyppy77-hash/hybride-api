@@ -6,18 +6,21 @@ import importlib
 import os
 from unittest.mock import MagicMock
 
+from starlette.datastructures import Headers
+
 from utils import get_client_ip, get_client_ip_from_scope, detect_country
 
 
 class TestGetClientIp:
+    """LOT 1.6.058 : entrée de DROITE de X-Forwarded-For (ajoutée par le Google Front End, N = 1)."""
 
     def _make_request(self, forwarded_for=None, client_host="127.0.0.1"):
-        """Create a mock FastAPI Request with optional X-Forwarded-For."""
+        """Create a mock FastAPI Request with optional X-Forwarded-For (vrais Headers Starlette)."""
         req = MagicMock()
-        headers = {}
+        raw = []
         if forwarded_for is not None:
-            headers["x-forwarded-for"] = forwarded_for
-        req.headers = headers
+            raw.append((b"x-forwarded-for", forwarded_for.encode("latin-1")))
+        req.headers = Headers(raw=raw)
         req.client = MagicMock()
         req.client.host = client_host
         return req
@@ -28,19 +31,19 @@ class TestGetClientIp:
         assert get_client_ip(req) == "1.2.3.4"
 
     def test_multiple_ips(self):
-        """Multiple IPs → returns FIRST (client real IP on Cloud Run)."""
+        """Multiple IPs → returns LAST (ajoutée par Google ; les autres viennent du client)."""
         req = self._make_request(forwarded_for="1.2.3.4, 10.0.0.1")
-        assert get_client_ip(req) == "1.2.3.4"
+        assert get_client_ip(req) == "10.0.0.1"
 
     def test_multiple_ips_three(self):
-        """Three IPs → still returns first."""
+        """Three IPs → still returns last."""
         req = self._make_request(forwarded_for="203.0.113.50, 10.0.0.1, 35.191.0.1")
-        assert get_client_ip(req) == "203.0.113.50"
+        assert get_client_ip(req) == "35.191.0.1"
 
     def test_with_spaces(self):
         """IPs with extra spaces → strips correctly."""
         req = self._make_request(forwarded_for=" 1.2.3.4 , 10.0.0.1 ")
-        assert get_client_ip(req) == "1.2.3.4"
+        assert get_client_ip(req) == "10.0.0.1"
 
     def test_no_header(self):
         """No X-Forwarded-For → fallback to request.client.host."""
@@ -58,14 +61,14 @@ class TestGetClientIp:
         assert get_client_ip(req) == "testclient"
 
     def test_ipv6(self):
-        """IPv6 address in X-Forwarded-For → returns it."""
-        req = self._make_request(forwarded_for="2001:db8::1, 10.0.0.1")
+        """IPv6 address in X-Forwarded-For (last entry) → returns it."""
+        req = self._make_request(forwarded_for="10.0.0.1, 2001:db8::1")
         assert get_client_ip(req) == "2001:db8::1"
 
     def test_no_header_no_client_returns_empty(self):
         """S07: No X-Forwarded-For + no client → returns '' (not 'unknown')."""
         req = MagicMock()
-        req.headers = {}
+        req.headers = Headers()
         req.client = None
         assert get_client_ip(req) == ""
 
@@ -73,12 +76,12 @@ class TestGetClientIp:
 class TestGetClientIpFromScope:
 
     def test_with_forwarded_for(self):
-        """Scope with X-Forwarded-For → returns first IP."""
+        """Scope with X-Forwarded-For → returns last IP (ajoutée par Google)."""
         scope = {
             "headers": [(b"x-forwarded-for", b"203.0.113.50, 10.0.0.1")],
             "client": ("127.0.0.1", 8000),
         }
-        assert get_client_ip_from_scope(scope) == "203.0.113.50"
+        assert get_client_ip_from_scope(scope) == "10.0.0.1"
 
     def test_without_forwarded_for(self):
         """Scope without X-Forwarded-For → returns client tuple IP."""

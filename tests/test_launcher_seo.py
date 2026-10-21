@@ -222,5 +222,6 @@ class TestVersion:
         # LOT 1.6.055 bump : 1.6.054 → 1.6.055 (17/10/2026 — routes admin calendrier sur pool principal, garde-fou pytest Vertex/DB, défense SQL fail-closed + pool lecture seule strict, sauts de ligne du flux SSE + dates avec heure, EuroMillions tolérant, exemple « Marco » supprimé, tokens Gemini dans chat_log, encadré sponsor du chat derrière CHAT_SPONSOR_INLINE défaut OFF ; aucun cache-buster touché)
         # LOT 1.6.056 bump : 1.6.055 → 1.6.056 (20/10/2026 — P0-1 anti-hallucination : contrôle 2 Phase 2, appariement date ↔ suite par ligne, grille soumise écartée si date du bloc [ANALYSE DE GRILLE], log PHASE2_GRID_PAIR_SKIPPED ; aucun cache-buster touché)
         # LOT 1.6.057 bump : 1.6.056 → 1.6.057 (21/10/2026 — lot B étape 1 : diagnostic CLIENT_IP_DIAG sans IP, mesure de _GOOGLE_XFF_HOPS, quota de mesure /api/version?cidiag=1, get_client_ip inchangée ; aucun cache-buster touché)
+        # LOT 1.6.058 bump : 1.6.057 → 1.6.058 (22/10/2026 — lot B étape 2 : get_client_ip / get_client_ip_from_scope sur hops[-1] de X-Forwarded-For (entrée ajoutée par Google), CF-Connecting-IP jamais lu, diagnostic CLIENT_IP_DIAG désactivé par défaut ; aucun cache-buster touché)
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.057"
+        assert APP_VERSION == "1.6.058"

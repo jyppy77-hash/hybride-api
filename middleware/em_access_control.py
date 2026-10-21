@@ -54,10 +54,10 @@ _EM_PROTECTED = [
 # ── Utility functions ─────────────────────────────────────────────────────────
 
 def get_client_ip(request: Request) -> str:
-    """Extract real client IP from Cloud Run X-Forwarded-For header.
+    """IP du client : délègue à utils.get_client_ip(), règle hops[-_GOOGLE_XFF_HOPS] (LOT 1.6.058).
 
-    Takes the FIRST IP (real client on Cloud Run without CDN).
-    Delegates to shared utils.get_client_ip().
+    L'entrée retenue est celle de X-Forwarded-For ajoutée par le Google Front End (N = 1) ;
+    les entrées de gauche, fournies par le client, sont ignorées.
     """
     from utils import get_client_ip as _shared
     return _shared(request)

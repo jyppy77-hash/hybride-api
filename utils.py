@@ -80,21 +80,97 @@ def is_owner_ip(ip: str) -> bool:
     return False
 
 
-def get_client_ip(request: Request) -> str:
-    """Extract real client IP from Cloud Run X-Forwarded-For header.
+# ══════════════════════════════════════════════════════════════════════════════
+# LOT 1.6.058 — IP du client = entrée de X-Forwarded-For ajoutée par le Google Front End
+# ══════════════════════════════════════════════════════════════════════════════
+# Le Google Front End ajoute l'IP du client à DROITE de X-Forwarded-For et fusionne plusieurs lignes en
+# une : les entrées de gauche viennent du client et sont falsifiables. Quand X-Forwarded-For est présent,
+# request.client / scope["client"] ne sont jamais retenus : uvicorn --proxy-headers
+# --forwarded-allow-ips='*' (Dockerfile:59) les remplace par XFF[0], la valeur falsifiable.
 
-    On Cloud Run (no CDN), X-Forwarded-For = "client_ip, gfe_proxy_ip".
-    The FIRST element is the real client IP.
-    The LAST is the Google Front End proxy IP (shared across all visitors
-    on the same PoP — useless for rate limiting).
+_XFF_UNUSABLE_LOG_MAX = 50  # plafond PAR PROCESSUS du journal [CLIENT_IP] xff_unusable
+_xff_unusable_count = 0
 
-    Falls back to request.client.host when header is absent (local dev).
+
+def _parse_ip(raw: str) -> str:
+    """Normalise une entrée XFF (espaces, [IPv6]:port, IPv4:port, IPv4 mappée). "" si invalide."""
+    s = raw.strip()
+    if s.startswith("["):
+        end = s.find("]")
+        if end == -1:
+            return ""
+        s = s[1:end]
+    elif s.count(":") == 1:
+        s = s.split(":", 1)[0]
+    try:
+        addr = ip_address(s)
+    except ValueError:
+        return ""
+    if addr.version == 6 and addr.ipv4_mapped:
+        return str(addr.ipv4_mapped)
+    return str(addr)
+
+
+def _xff_from_scope(scope: dict) -> tuple[str, int]:
+    """Lignes X-Forwarded-For du scope ASGI jointes dans l'ordre (RFC 9110 §5.3), et leur nombre."""
+    values = [v.decode("latin-1") for k, v in scope.get("headers", []) if k == b"x-forwarded-for"]
+    return ", ".join(values), len(values)
+
+
+def _log_xff_unusable(reason: str, xff_len: int) -> None:
+    """[CLIENT_IP] xff_unusable : X-Forwarded-For présent mais inexploitable. Aucune IP ni valeur d'en-tête."""
+    global _xff_unusable_count
+    if _xff_unusable_count >= _XFF_UNUSABLE_LOG_MAX:
+        return
+    _xff_unusable_count += 1
+    logger.warning("[CLIENT_IP] xff_unusable reason=%s xff_len=%d hops=%d", reason, xff_len, _GOOGLE_XFF_HOPS)
+
+
+# Infra au 20/10/2026 : DNS seul chez Cloudflare (aucun proxy) + domain mapping Cloud Run.
+# _GOOGLE_XFF_HOPS a été mesuré sur CE chemin (diagnostic 1.6.057, staging 20/10 et prod 21/10 : N = 1,
+# identique sur lotoia.fr et run.app).
+# Tout changement d'infrastructure (load balancer HTTPS : +2 entrées XFF ; proxy Cloudflare : IP Cloudflare)
+# impose de revoir dans le MÊME lot : _GOOGLE_XFF_HOPS, cette fonction, la V138 et CF-IPCountry.
+_GOOGLE_XFF_HOPS = 1
+
+
+def _select_client_ip_candidate(xff: str, fallback: str, hops: int) -> str:
+    """Règle du lot B à N variable (_select_client_ip en prod, N = 1 et N = 2 dans le diagnostic).
+
+    Aucun autre en-tête n'est lu. Pas de XFF (dev local, TestClient) → fallback (pair TCP).
+    Sinon → entrée ajoutée par Google, hops[-hops], normalisée ; XFF trop court ou invalide → "".
     """
-    forwarded = request.headers.get("x-forwarded-for", "")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
+    if not xff.strip():
+        return fallback
+    entries = xff.split(",")
+    if hops < 1 or len(entries) < hops:
+        return ""
+    return _parse_ip(entries[-hops])
+
+
+def _select_client_ip(xff: str, peer: str) -> str:
+    """Règle unique de get_client_ip et get_client_ip_from_scope : hops[-_GOOGLE_XFF_HOPS].
+
+    XFF absent ou vide → peer (pair TCP : uvicorn ne le réécrit que si XFF est non vide).
+    XFF présent mais trop court, entrée vide ou non parsable → "" (jamais une valeur fournie par le
+    client), journalisé sans IP. CF-Connecting-IP et X-Origin-Auth ne sont jamais lus.
+    """
+    ip = _select_client_ip_candidate(xff, peer, _GOOGLE_XFF_HOPS)
+    if not ip and xff.strip():
+        n = len(xff.split(","))
+        _log_xff_unusable("too_short" if n < _GOOGLE_XFF_HOPS else "invalid", n)
+    return ip
+
+
+def get_client_ip(request: Request) -> str:
+    """IP du client : entrée de X-Forwarded-For ajoutée par Google (règle : _select_client_ip).
+
+    Toutes les lignes X-Forwarded-For sont jointes dans l'ordre (RFC 9110 §5.3).
+    Sans X-Forwarded-For (dev local, TestClient) → request.client.host.
+    """
+    xff = ", ".join(request.headers.getlist("x-forwarded-for"))
     client_host = request.client.host if request.client else ""
-    return client_host or ""
+    return _select_client_ip(xff, client_host or "")
 
 
 def detect_country(request: Request) -> str | None:
@@ -116,17 +192,10 @@ def detect_country(request: Request) -> str | None:
 
 
 def get_client_ip_from_scope(scope: dict) -> str:
-    """Extract real client IP from raw ASGI scope headers.
-
-    Same logic as get_client_ip() but operates on raw ASGI scope
-    (for pure ASGI middleware that doesn't have a Request object).
-    """
-    headers_raw = dict(scope.get("headers", []))
-    forwarded = headers_raw.get(b"x-forwarded-for", b"").decode()
-    if forwarded:
-        return forwarded.split(",")[0].strip()
+    """Même règle que get_client_ip() sur le scope ASGI brut (middlewares ASGI purs, sans Request)."""
+    xff, _ = _xff_from_scope(scope)
     client_addr = scope.get("client")
-    return client_addr[0] if client_addr else ""
+    return _select_client_ip(xff, client_addr[0] if client_addr else "")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -173,13 +242,14 @@ def is_origin_authed(request: Request) -> bool:
 # ══════════════════════════════════════════════════════════════════════════════
 # LOT 1.6.057 — Diagnostic CLIENT_IP_DIAG (mesure de _GOOGLE_XFF_HOPS, aucun effet)
 # ══════════════════════════════════════════════════════════════════════════════
-# get_client_ip / get_client_ip_from_scope restent sur XFF[0] dans cette version. Ce bloc ne fait
-# que comparer, dans un log sans aucune IP ni valeur d'en-tête, XFF[0] à la règle candidate.
+# Depuis 1.6.058, get_client_ip / get_client_ip_from_scope appliquent hops[-_GOOGLE_XFF_HOPS]. Ce bloc,
+# désactivé par défaut, sert à remesurer N lors d'un changement d'infrastructure : il compare, dans un
+# log sans aucune IP ni valeur d'en-tête, l'IP retenue aux candidates N = 1 et N = 2.
 
 
 def _diag_enabled_from_env(raw: str | None) -> bool:
-    """Actif par défaut en 1.6.057 ; CLIENT_IP_DIAG=0/false/no/off le coupe sans rebuild."""
-    return (raw or "1").strip().lower() not in ("0", "false", "no", "off")
+    """Désactivé par défaut depuis 1.6.058 ; CLIENT_IP_DIAG=1/true/yes/on l'active sans rebuild."""
+    return (raw or "").strip().lower() in ("1", "true", "yes", "on")
 
 
 _CLIENT_IP_DIAG = _diag_enabled_from_env(os.environ.get("CLIENT_IP_DIAG"))
@@ -193,25 +263,6 @@ _DIAG_PROBE_PATH = "/api/version"
 _DIAG_PROBE_PARAM = b"cidiag=1"
 _diag_counts = {"general": 0, "probe": 0}
 _DIAG_HOP_KINDS_MAX = 6  # entrées de fin seulement : celles de Google sont à la fin
-
-
-def _parse_ip(raw: str) -> str:
-    """Normalise une entrée XFF (espaces, [IPv6]:port, IPv4:port, IPv4 mappée). "" si invalide."""
-    s = raw.strip()
-    if s.startswith("["):
-        end = s.find("]")
-        if end == -1:
-            return ""
-        s = s[1:end]
-    elif s.count(":") == 1:
-        s = s.split(":", 1)[0]
-    try:
-        addr = ip_address(s)
-    except ValueError:
-        return ""
-    if addr.version == 6 and addr.ipv4_mapped:
-        return str(addr.ipv4_mapped)
-    return str(addr)
 
 
 def _ip_kind(ip: str) -> str:
@@ -243,32 +294,8 @@ def _host_kind(host: str) -> str:
     return {"lotoia.fr": "apex", "www.lotoia.fr": "www"}.get(host, "other")
 
 
-def _xff_from_scope(scope: dict) -> tuple[str, int]:
-    """Lignes X-Forwarded-For du scope ASGI jointes dans l'ordre (RFC 9110 §5.3), et leur nombre."""
-    values = [v.decode("latin-1") for k, v in scope.get("headers", []) if k == b"x-forwarded-for"]
-    return ", ".join(values), len(values)
-
-
-# Infra au 20/10/2026 : DNS seul chez Cloudflare (aucun proxy) + domain mapping Cloud Run.
-# _GOOGLE_XFF_HOPS sera fixé d'après CE chemin (diagnostic 1.6.057). CF-Connecting-IP n'est jamais fiable ici.
-# Tout changement d'infrastructure (load balancer HTTPS : +2 entrées XFF ; proxy Cloudflare : IP Cloudflare)
-# impose de revoir dans le MÊME lot : _GOOGLE_XFF_HOPS, cette fonction, la V138 et CF-IPCountry.
-def _select_client_ip_candidate(xff: str, fallback: str, hops: int) -> str:
-    """Règle cible du lot B, utilisée par le diagnostic seulement. Aucun autre en-tête n'est lu.
-
-    Pas de XFF (dev local, TestClient) → fallback (pair TCP).
-    Sinon → entrée ajoutée par Google, hops[-hops], normalisée ; XFF trop court ou invalide → "".
-    """
-    if not xff.strip():
-        return fallback
-    entries = xff.split(",")
-    if hops < 1 or len(entries) < hops:
-        return ""
-    return _parse_ip(entries[-hops])
-
-
 def _same_ip(candidate: str, current: str) -> bool:
-    """La candidate désigne-t-elle la même IP que XFF[0] actuelle (forme normalisée) ?"""
+    """La candidate désigne-t-elle la même IP que celle retenue par get_client_ip_from_scope ?"""
     return candidate == current or (candidate != "" and candidate == _parse_ip(current))
 
 

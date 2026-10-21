@@ -13,7 +13,7 @@ os.environ["OWNER_IPV6"] = _TEST_OWNER_IPV6
 
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from starlette.datastructures import URL, QueryParams
+from starlette.datastructures import URL, Headers, QueryParams
 
 # Reload to pick up the env var we just set (module may have been imported
 # earlier with a different/truncated value from .env).
@@ -37,9 +37,10 @@ from middleware.em_access_control import (
 class TestGetClientIp:
     def _make_request(self, forwarded=None, host="10.0.0.1"):
         req = MagicMock()
-        req.headers = {}
+        raw = []
         if forwarded is not None:
-            req.headers["x-forwarded-for"] = forwarded
+            raw.append((b"x-forwarded-for", forwarded.encode("latin-1")))
+        req.headers = Headers(raw=raw)
         req.client = MagicMock()
         req.client.host = host
         return req
@@ -48,15 +49,15 @@ class TestGetClientIp:
         req = self._make_request(forwarded="203.0.113.50")
         assert get_client_ip(req) == "203.0.113.50"
 
-    def test_xff_multiple_ips_takes_first(self):
-        """First IP is the real client on Cloud Run (no CDN)."""
+    def test_xff_multiple_ips_takes_last(self):
+        """Last IP is the one appended by the Google Front End (LOT 1.6.058, N = 1)."""
         req = self._make_request(forwarded="203.0.113.50, 10.0.0.1, 10.0.0.2")
-        assert get_client_ip(req) == "203.0.113.50"
+        assert get_client_ip(req) == "10.0.0.2"
 
-    def test_xff_first_ip_is_client(self):
-        """First IP in XFF is the client IP on Cloud Run."""
+    def test_xff_forged_first_ip_ignored(self):
+        """First IP in XFF comes from the client (forgeable) → ignored."""
         req = self._make_request(forwarded="198.51.100.99, 10.0.0.1")
-        assert get_client_ip(req) == "198.51.100.99"
+        assert get_client_ip(req) == "10.0.0.1"
 
     def test_xff_ipv6(self):
         req = self._make_request(forwarded="2a01:cb05:8700:5900:aaaa:bbbb:cccc:dddd")
@@ -64,7 +65,7 @@ class TestGetClientIp:
 
     def test_xff_strips_whitespace(self):
         req = self._make_request(forwarded="  203.0.113.50 , 10.0.0.1")
-        assert get_client_ip(req) == "203.0.113.50"
+        assert get_client_ip(req) == "10.0.0.1"
 
     def test_fallback_to_client_host(self):
         req = self._make_request(forwarded=None, host="192.168.1.1")
@@ -72,7 +73,7 @@ class TestGetClientIp:
 
     def test_no_client(self):
         req = MagicMock()
-        req.headers = {}
+        req.headers = Headers()
         req.client = None
         assert get_client_ip(req) == ""
 
@@ -285,9 +286,7 @@ class TestEmAccessMiddleware:
         qs = "&".join(f"{k}={v}" for k, v in (query_params or {}).items())
         full = f"http://testserver{path}?{qs}" if qs else f"http://testserver{path}"
         req.url = URL(full)
-        req.headers = {}
-        if forwarded:
-            req.headers["x-forwarded-for"] = forwarded
+        req.headers = Headers(raw=[(b"x-forwarded-for", forwarded.encode("latin-1"))] if forwarded else [])
         req.client = MagicMock()
         req.client.host = host
         req.query_params = QueryParams(query_params or {})

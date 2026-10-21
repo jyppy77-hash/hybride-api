@@ -5,6 +5,15 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# LOT 1.6.058 — Lot B étape 2 : bascule de l'IP client (Release 1.6.058, 22/10/2026). Aucun
+# cache-buster ?v= touché (aucun JS/CSS/template modifié).
+# utils.get_client_ip / get_client_ip_from_scope : entrée de X-Forwarded-For ajoutée par le Google Front
+# End, hops[-_GOOGLE_XFF_HOPS] avec _GOOGLE_XFF_HOPS = 1 (constante du code, mesurée en 1.6.057 :
+# staging 20/10 et prod 21/10, identique sur lotoia.fr et run.app), toutes les lignes XFF jointes dans
+# l'ordre, normalisée par ipaddress ; CF-Connecting-IP et X-Origin-Auth jamais lus. XFF absent → pair
+# TCP (dev local, TestClient) ; XFF inexploitable → "" + log [CLIENT_IP] xff_unusable sans IP (plafond
+# 50 par processus). Diagnostic CLIENT_IP_DIAG conservé, désactivé par défaut (CLIENT_IP_DIAG=1).
+
 # LOT 1.6.057 — Lot B étape 1 : diagnostic CLIENT_IP_DIAG, AUCUN changement de comportement (Release
 # 1.6.057, 21/10/2026). Aucun cache-buster ?v= touché (aucun JS/CSS/template modifié).
 # Faille (19/10) : get_client_ip / get_client_ip_from_scope prennent XFF[0], falsifiable (admin, owner,
@@ -339,9 +348,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.057"
+APP_VERSION = "1.6.058"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-10-21"
+VERSION_DATE = "2026-10-22"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.
