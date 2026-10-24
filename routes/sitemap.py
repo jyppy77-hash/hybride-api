@@ -10,6 +10,7 @@ from config.version import LAST_DEPLOY_DATE, LAST_NEWS_DATE
 from config import killswitch
 from routes.api_pdf import _fetch_last_draw_date_loto
 from routes.em_analyse import _fetch_last_draw_date_em
+from routes.launcher import LAUNCHER_X_DEFAULT_URL
 
 router = APIRouter()
 
@@ -153,9 +154,9 @@ async def sitemap():
     _launcher_priorities = {"fr": 1.0, "en": 0.9}
     _launcher_alternates = [
         (lc, f"{BASE_URL}/{lc}") for lc in killswitch.ENABLED_LANGS
-    # x-default → EN pour le launcher (entrée internationale, public non-FR)
+    # x-default → /fr pour le launcher : même constante que la page (routes/launcher.py)
     # Voir aussi config/templates.py pour la stratégie EM (x-default → FR)
-    ] + [("x-default", f"{BASE_URL}/en")]
+    ] + [("x-default", LAUNCHER_X_DEFAULT_URL)]
     for lc in killswitch.ENABLED_LANGS:
         prio = _launcher_priorities.get(lc, 0.8)
         blocks.append(_url_block(

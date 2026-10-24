@@ -5,6 +5,15 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# LOT 1.6.059 — Lot redirection + correctif formule du chatbot (Release 1.6.059, 24/10/2026). Aucun
+# cache-buster ?v= touché (aucun JS/CSS/template modifié).
+# Redirection : GET / et les 11 redirections legacy de main.py conservent la query string (UTM) ;
+# repli de / en FR si Accept-Language absent ou vide, EN s'il est présent sans langue supportée ;
+# x-default du launcher → /fr via LAUNCHER_X_DEFAULT_URL (page + sitemap) ; 302 de / en
+# Cache-Control private, no-cache + Vary: Accept-Language. /accueil, /loto, /euromillions/generateur
+# inchangés (golden T9). Chatbot : les 7 prompts chargés (Loto FR + EM × 6) ne donnent plus aucune
+# formule, aucun poids ni pourcentage de pondération ; texte qualitatif figé à la place.
+
 # LOT 1.6.058 — Lot B étape 2 : bascule de l'IP client (Release 1.6.058, 22/10/2026). Aucun
 # cache-buster ?v= touché (aucun JS/CSS/template modifié).
 # utils.get_client_ip / get_client_ip_from_scope : entrée de X-Forwarded-For ajoutée par le Google Front
@@ -348,9 +357,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.058"
+APP_VERSION = "1.6.059"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-10-22"
+VERSION_DATE = "2026-10-24"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

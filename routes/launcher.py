@@ -1,6 +1,6 @@
 """
 Routes — Launcher multilingue (V53).
-GET / → 302 redirect vers /{lang} selon CF-IPCountry.
+GET / → 302 redirect vers /{lang} selon CF-IPCountry, puis Accept-Language, puis repli.
 GET /{lang} → launcher dans la langue fixe.
 """
 from fastapi import APIRouter, Request
@@ -34,7 +34,14 @@ COUNTRY_TO_LANG = {
     "GB": "en", "IE": "en", "US": "en", "CA": "en",
     "AU": "en", "NZ": "en", "ZA": "en",
 }
-DEFAULT_LANG = "en"
+
+# ── Repli de langue de GET / + x-default du launcher (lot redirection) ──
+# Accept-Language absent, vide ou espaces seuls (Googlebot, curl…) → FR.
+ROOT_LANG_NO_ACCEPT_LANGUAGE = "fr"
+# Accept-Language présent mais sans langue supportée (it, zh, ja…) → EN.
+ROOT_LANG_UNSUPPORTED_ACCEPT_LANGUAGE = "en"
+# x-default du cluster launcher : source unique, lue par la page ET par routes/sitemap.py.
+LAUNCHER_X_DEFAULT_URL = f"{BASE_URL}/fr"
 
 # ── EM home URL per language ────────────────────────────────────────────
 
@@ -159,9 +166,9 @@ def _render_launcher(lang: str, request: Request) -> HTMLResponse:
             {"lang": lc, "url": f"{BASE_URL}/{lc}"}
             for lc in killswitch.ENABLED_LANGS
         ]
-        # x-default → EN pour le launcher (entrée internationale, public non-FR)
+        # x-default → /fr pour le launcher (marché principal) — même constante que le sitemap
         # Voir config/templates.py pour la stratégie globale x-default
-        hreflang_tags.append({"lang": "x-default", "url": f"{BASE_URL}/{DEFAULT_LANG}"})
+        hreflang_tags.append({"lang": "x-default", "url": LAUNCHER_X_DEFAULT_URL})
 
         ctx = {
             "lang": lang,
@@ -197,24 +204,26 @@ async def launcher_redirect(request: Request):
     lang = COUNTRY_TO_LANG.get(country)
 
     # 2. Fallback: Accept-Language header (browser preference)
+    accept = request.headers.get("accept-language", "")
     if not lang:
-        accept = request.headers.get("accept-language", "")
         for part in accept.split(","):
             short = part.split(";")[0].strip().lower()[:2]
             if short in killswitch.ENABLED_LANGS:
                 lang = short
                 break
 
-    # 3. Fallback final
+    # 3. Fallback final — en-tête absent ou vide → FR ; présent sans langue supportée → EN
     if not lang or lang not in killswitch.ENABLED_LANGS:
-        lang = DEFAULT_LANG
+        lang = ROOT_LANG_UNSUPPORTED_ACCEPT_LANGUAGE if accept.strip() else ROOT_LANG_NO_ACCEPT_LANGUAGE
 
     # 302 intentionnel — redirection GeoIP dynamique (destination varie selon le visiteur)
     # Google recommande 302 pour les redirections basées sur la localisation
     # Ref: https://developers.google.com/search/docs/specialty/international/managing-multi-regional-sites
+    # Query string conservée (UTM, gclid…) ; cible = chemin interne fixe, pas d'open redirect.
+    query = f"?{request.url.query}" if request.url.query else ""
     return RedirectResponse(
-        url=f"/{lang}", status_code=302,
-        headers={"Vary": "Accept-Language"},
+        url=f"/{lang}{query}", status_code=302,
+        headers={"Vary": "Accept-Language", "Cache-Control": "private, no-cache"},
     )
 
 

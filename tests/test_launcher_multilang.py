@@ -50,7 +50,7 @@ class TestLauncherRedirect:
         ("NL", "nl"),
         ("US", "en"),
         ("GB", "en"),
-        ("JP", "en"),   # non-mapped → fallback EN
+        ("JP", "fr"),   # non-mapped, sans Accept-Language → repli FR (lot redirection B2)
         ("AT", "de"),
         ("AR", "es"),
         ("BE", "fr"),
@@ -62,10 +62,10 @@ class TestLauncherRedirect:
         assert resp.headers["location"] == f"/{expected_lang}"
 
     def test_redirect_no_header(self, client):
-        """No CF-IPCountry header → fallback to /en."""
+        """No CF-IPCountry, no Accept-Language → fallback to /fr (lot redirection B2)."""
         resp = client.get("/", follow_redirects=False)
         assert resp.status_code == 302
-        assert resp.headers["location"] == "/en"
+        assert resp.headers["location"] == "/fr"
 
 
 # =========================================================================
@@ -172,7 +172,8 @@ class TestAcceptLanguageFallback:
         ("nl-NL,nl;q=0.9", "nl"),
         ("zh-CN,zh;q=0.9,en;q=0.8", "en"),  # zh unsupported, fallback to en
         ("ja", "en"),                          # ja unsupported, no en → fallback
-        ("", "en"),                            # empty → fallback
+        ("", "fr"),                            # empty → repli FR (lot redirection B2)
+        ("   ", "fr"),                         # espaces seuls → repli FR (lot redirection B2)
     ])
     def test_accept_language_redirect(self, client, accept_lang, expected):
         resp = client.get("/", headers={"accept-language": accept_lang}, follow_redirects=False)
@@ -180,10 +181,10 @@ class TestAcceptLanguageFallback:
         assert resp.headers["location"] == f"/{expected}"
 
     def test_no_headers_at_all(self, client):
-        """No CF-IPCountry, no Accept-Language → fallback /en."""
+        """No CF-IPCountry, no Accept-Language → fallback /fr (lot redirection B2)."""
         resp = client.get("/", follow_redirects=False)
         assert resp.status_code == 302
-        assert resp.headers["location"] == "/en"
+        assert resp.headers["location"] == "/fr"
 
 
 # =========================================================================

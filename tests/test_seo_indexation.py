@@ -1076,9 +1076,11 @@ class TestAppVersion:
         SEO ni cache-buster ; bump requis : ETag HTML lié à APP_VERSION.
         LOT 1.6.058 (22/10, Release 1.6.058) — IP client sur l'entrée XFF ajoutée par Google,
         aucun changement SEO ni cache-buster ; bump requis : ETag HTML lié à APP_VERSION.
+        LOT 1.6.059 (24/10, Release 1.6.059) — lot redirection (query conservée, repli FR,
+        x-default launcher → /fr) + prompts chatbot sans formule ; /accueil inchangé (golden T9).
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.058"
+        assert APP_VERSION == "1.6.059"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

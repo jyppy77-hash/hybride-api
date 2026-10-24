@@ -237,7 +237,7 @@ def hreflang_tags(page_key: str) -> list[dict]:
             tags.append({"lang": lc, "url": f"{BASE_URL}{url}"})
     # STRATÉGIE x-default (documentée — ne pas modifier sans analyse SEO) :
     # - Pages EM : x-default → FR (marché principal, contenu de référence)
-    # - Launcher : x-default → EN (entrée internationale, cf. routes/launcher.py)
+    # - Launcher : x-default → /fr (constante LAUNCHER_X_DEFAULT_URL, routes/launcher.py)
     # - Pages Loto : x-default → FR (FR-only, auto-référentiel dans les HTML)
     # Cohérent avec la recommandation Google : x-default = version "catch-all"
     # pour les users dont la langue n'est pas dans la liste hreflang.

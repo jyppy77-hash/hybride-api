@@ -1043,31 +1043,37 @@ async def health():
 # SEO Redirections 301
 # =========================
 
+def _redirect_301_keep_query(request: Request, url: str) -> RedirectResponse:
+    """301 vers une cible interne fixe, query string conservée (UTM, gclid…) — lot redirection."""
+    query = f"?{request.url.query}" if request.url.query else ""
+    return RedirectResponse(url=f"{url}{query}", status_code=301)
+
+
 @app.get("/analyse", include_in_schema=False)
-async def redirect_analyse():
-    return RedirectResponse(url="/loto/analyse", status_code=301)
+async def redirect_analyse(request: Request):
+    return _redirect_301_keep_query(request, "/loto/analyse")
 
 
 # Doublons de contenu → 301 vers la version canonique /loto/*
 @app.get("/statistiques", include_in_schema=False)
-async def redirect_statistiques():
-    return RedirectResponse(url="/loto/statistiques", status_code=301)
+async def redirect_statistiques(request: Request):
+    return _redirect_301_keep_query(request, "/loto/statistiques")
 
 
 @app.get("/simulateur", include_in_schema=False)
-async def redirect_simulateur():
-    return RedirectResponse(url="/loto/analyse", status_code=301)
+async def redirect_simulateur(request: Request):
+    return _redirect_301_keep_query(request, "/loto/analyse")
 
 
 @app.get("/exploration", include_in_schema=False)
-async def redirect_exploration():
-    return RedirectResponse(url="/loto", status_code=301)
+async def redirect_exploration(request: Request):
+    return _redirect_301_keep_query(request, "/loto")
 
 
 # /loto/exploration servait loto.html en 200 (canonical /loto) → 301 (audit SEO 2026-06-10 #9)
 @app.get("/loto/exploration", include_in_schema=False)
-async def redirect_loto_exploration():
-    return RedirectResponse(url="/loto", status_code=301)
+async def redirect_loto_exploration(request: Request):
+    return _redirect_301_keep_query(request, "/loto")
 
 
 # Anciennes URLs /ui/*.html → routes propres
@@ -1093,30 +1099,30 @@ async def redirect_ui_statistiques():
 
 # Anciennes URLs internes → redirections 301 (SEO: éviter les 404)
 @app.get("/loto/accueil", include_in_schema=False)
-async def redirect_loto_accueil():
-    return RedirectResponse(url="/accueil", status_code=301)
+async def redirect_loto_accueil(request: Request):
+    return _redirect_301_keep_query(request, "/accueil")
 
 
 @app.get("/loto/historique", include_in_schema=False)
-async def redirect_loto_historique():
-    return RedirectResponse(url="/historique", status_code=301)
+async def redirect_loto_historique(request: Request):
+    return _redirect_301_keep_query(request, "/historique")
 
 
 @app.get("/loto/chatbot", include_in_schema=False)
-async def redirect_loto_chatbot():
-    return RedirectResponse(url="/loto", status_code=301)
+async def redirect_loto_chatbot(request: Request):
+    return _redirect_301_keep_query(request, "/loto")
 
 
 @app.get("/loto/pronostics", include_in_schema=False)
-async def redirect_loto_pronostics():
-    return RedirectResponse(url="/loto", status_code=301)
+async def redirect_loto_pronostics(request: Request):
+    return _redirect_301_keep_query(request, "/loto")
 
 
 @app.get("/euromillions/accueil", include_in_schema=False)
-async def redirect_em_accueil():
-    return RedirectResponse(url="/euromillions", status_code=301)
+async def redirect_em_accueil(request: Request):
+    return _redirect_301_keep_query(request, "/euromillions")
 
 
 @app.get("/euromillions/chatbot", include_in_schema=False)
-async def redirect_em_chatbot():
-    return RedirectResponse(url="/euromillions", status_code=301)
+async def redirect_em_chatbot(request: Request):
+    return _redirect_301_keep_query(request, "/euromillions")
