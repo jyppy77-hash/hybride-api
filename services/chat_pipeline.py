@@ -9,6 +9,7 @@ from services.stats_service import (
     get_classement_numeros, get_comparaison_numeros, get_comparaison_with_period,
     get_numeros_par_categorie,
     prepare_grilles_pitch_context, get_pair_correlations, get_triplet_correlations,
+    get_single_pair,  # Lot phase P
 )
 
 from services.chat_detectors import (
@@ -44,6 +45,10 @@ from services.chat_utils import (
     _format_complex_context, _format_pairs_context, _format_triplets_context,
     _build_session_context, _format_generation_context,
 )
+from services.base_chat_detect_correlation import (  # Lot phase P
+    _detect_combo_count, _detect_combo_with_secondary, _extract_combo_numbers,
+)
+from services.base_chat_utils import _format_single_pair_context_base  # Lot phase P
 from services.chat_responses_loto import (
     _AFFIRMATION_INVITATION_LOTO, _GAME_KEYWORD_INVITATION_LOTO,
 )
@@ -205,6 +210,15 @@ def _build_loto_config():
         "detect_paires": _detect_paires,
         "format_pairs_context": _format_pairs_context,
         "get_pair_correlations": get_pair_correlations,
+        # Lot phase P — combinaison précise : paire calculée, sinon SQL encadré
+        "detect_combo_count": _detect_combo_count,
+        "detect_combo_secondary": lambda msg: _detect_combo_with_secondary(msg, game="loto"),
+        "extract_combo_numbers": lambda msg: _extract_combo_numbers(msg, game="loto"),
+        "get_single_pair": get_single_pair,
+        "format_single_pair_context": lambda pair: _format_single_pair_context_base(
+            pair, "PAIRE DEMANDÉE (Numéros principaux)",
+            "les 5 boules principales de chaque tirage, numéro chance non compté",
+        ),
         # Phase OOR
         "detect_oor": _detect_out_of_range,
         "count_oor_streak": _count_oor_streak,

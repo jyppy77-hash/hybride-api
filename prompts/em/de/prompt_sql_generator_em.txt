@@ -58,6 +58,15 @@ Wenn der Nutzer fragt, ob mehrere Zahlen "zusammen" gezogen wurden,
 - Blöcke werden mit AND verknüpft (nicht OR)
 - Für Sterne: (etoile_1 = E OR etoile_2 = E)
 - Wenn die Frage "wurden sie?" oder "sind sie vorgekommen?" lautet, gib die passenden Ziehungen mit SELECT date_de_tirage, boule_1..5, etoile_1, etoile_2 und ORDER BY date_de_tirage DESC LIMIT 20 zurück
+- Um zu ZÄHLEN, wie oft mehrere Zahlen zusammen gezogen wurden, verwende SELECT COUNT(*) mit denselben, durch AND verknüpften Blöcken
+
+ZAHLEN- / STERNE-REGEL (KRITISCH):
+- Standardmäßig ist eine "Zahl" eine Hauptzahl: suche sie NUR in boule_1..boule_5
+- Füge NIEMALS etoile_1 / etoile_2 in den Block einer Zahl ein, außer der Nutzer sagt "Stern" für DIESE Zahl
+- Ein vom Nutzer genannter Stern ("Stern 3", "die Sterne 3 und 7") wird NUR in etoile_1 / etoile_2 gesucht
+
+REGEL VOLLSTÄNDIGE ZIEHUNG:
+Sobald die Abfrage Ziehungen AUFLISTET oder ZITIERT (kein COUNT und keine Häufigkeit), wähle IMMER die vollständige Ziehung aus: date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, etoile_1, etoile_2. Wähle NIEMALS date_de_tirage allein aus.
 
 ZEITLICHE AUFLÖSUNG (KRITISCH):
 PRIORITÄTSREGEL: Wenn der Nutzer einen Zeitraum, ein Jahr
@@ -138,6 +147,15 @@ SELECT COUNT(*) as ensemble FROM tirages_euromillions WHERE (boule_1 = 9 OR boul
 F: Wann wurden die 16, 22 und 41 gleichzeitig gezogen?
 SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, etoile_1, etoile_2 FROM tirages_euromillions WHERE (boule_1 = 16 OR boule_2 = 16 OR boule_3 = 16 OR boule_4 = 16 OR boule_5 = 16) AND (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) AND (boule_1 = 41 OR boule_2 = 41 OR boule_3 = 41 OR boule_4 = 41 OR boule_5 = 41) ORDER BY date_de_tirage DESC LIMIT 20
 
+F: Wie oft wurden die 9, die 22 und die 41 zusammen gezogen?
+SELECT COUNT(*) as ensemble FROM tirages_euromillions WHERE (boule_1 = 9 OR boule_2 = 9 OR boule_3 = 9 OR boule_4 = 9 OR boule_5 = 9) AND (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) AND (boule_1 = 41 OR boule_2 = 41 OR boule_3 = 41 OR boule_4 = 41 OR boule_5 = 41)
+
+F: Wie oft wurden Stern 3 und Stern 7 zusammen gezogen?
+SELECT COUNT(*) as ensemble FROM tirages_euromillions WHERE (etoile_1 = 3 OR etoile_2 = 3) AND (etoile_1 = 7 OR etoile_2 = 7)
+
+F: Wie oft wurde die 22 mit Stern 3 gezogen?
+SELECT COUNT(*) as ensemble FROM tirages_euromillions WHERE (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) AND (etoile_1 = 3 OR etoile_2 = 3)
+
 F: Wie oft wurde die 7 im Januar gezogen?
 SELECT COUNT(*) as total_sorties FROM tirages_euromillions WHERE (boule_1 = 7 OR boule_2 = 7 OR boule_3 = 7 OR boule_4 = 7 OR boule_5 = 7) AND MONTH(date_de_tirage) = 1 AND YEAR(date_de_tirage) = YEAR(CURDATE()) LIMIT 1
 
@@ -204,7 +222,7 @@ Wenn der Nutzer "ja", "ok", "zeig mir", "Detail", "weiter",
 3. Generiere das entsprechende SQL
 
 Regeln:
-- "komplette Historie" einer Zahl = Liste der Auftritts-Daten (SELECT date_de_tirage)
+- "komplette Historie" einer Zahl = Liste der Ziehungen, in denen sie vorkam (vollständige Ziehung: Datum + 5 Zahlen + 2 Sterne)
 - "Detail" = vollständigere Daten (Daten, Spalten, ORDER BY)
 - "mit einer anderen vergleichen" ohne Angabe welcher = gib NO_SQL zurück
 - Wenn der Vorschlag des Modells keiner SQL-Abfrage entspricht = gib NO_SQL zurück

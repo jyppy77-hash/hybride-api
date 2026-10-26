@@ -5,6 +5,8 @@ Split from base_chat_detect_intent.py (F05 V84)."""
 import re
 import random
 
+from services.base_chat_detect_temporal import _mask_dates  # Lot phase P
+
 
 # ────────────────────────────────────────────
 # Phase 3 : Detection requete complexe
@@ -201,6 +203,130 @@ _TRIPLETS_PATTERN = re.compile(
 def _detect_triplets(message: str) -> bool:
     """Detecte si l'utilisateur demande les correlations de triplets (6 langues)."""
     return bool(_TRIPLETS_PATTERN.search(message))
+
+
+# ═══════════════════════════════════════════════════════
+# Lot phase P — Combinaison précise (paire / triplet / boule + chance)
+# Extraction des numéros cités : la phase P calcule (paire) ou cède au SQL.
+# N'utilise PAS _NUM_EXTRACT_RE (message assistant, bug P1-2 « 95/100 »).
+# ═══════════════════════════════════════════════════════
+
+# « combien de fois le 22 et le 10 ? » sans mot de paire → paire (décision Jyppy Q1)
+_COMBO_COUNT_RE = re.compile(
+    r'combien\s+de\s+fois|how\s+many\s+times|how\s+often|'
+    r'cu[aá]ntas\s+veces|quantas\s+vezes|wie\s+oft|hoe\s+vaak|hoeveel\s+keer',
+    re.IGNORECASE
+)
+
+# Nombres qui ne sont pas des numéros : score, %, top N, ordinaux, quantités
+_COMBO_NOISE_RE = re.compile(
+    r'\b\d+\s*/\s*100\b|'
+    r'\b\d+(?:[.,]\d+)?\s*%|'
+    r'\btop\s*\d+\b|'
+    r'\b\d{1,2}(?:[eè]re|[eè]me|er|re|e|st|nd|rd|th|º|ª|°)\b|'
+    r'\b\d+\s+(?:derni|premi|meilleur|last\b|first\b|best\b|'
+    r'[uú]ltim|primer|mejor|melhor|letzt|erst|beste|laatst|eerst)\w*|'
+    r'\b\d+\s+(?:num[eé]ros?|numbers?|n[uú]meros?|zahlen|nummers?|boules?|balls?|bolas?|kugeln?|ballen|'
+    r'[eé]toiles?|stars?|estrellas?|estrelas?|sterne?|sterren|'
+    r'grilles?|grids?|grelhas?|tirages?|draws?|sorteos?|sorteios?|ziehungen|trekkingen|'
+    r'fois|times|veces|vezes|mal|keer|'
+    r'ans?|years?|a[nñ]os|anos|jahren?|jaar|mois|months?|meses|monaten?|maanden?|'
+    r'semaines?|weeks?|semanas|wochen|weken|paires?|pairs?|triplets?)\b',
+    re.IGNORECASE
+)
+
+_COMBO_CHANCE_KW = (
+    r'(?:chance|compl[eé]mentaire|bonus|sp[eé]cial|lucky(?:\s+number)?|'
+    r'suerte|sorte|gl[üu]ckszahl|geluksnummer)'
+)
+_COMBO_STAR_KW = (
+    r'(?:[eé]toiles?|lucky\s+stars?|stars?|estrellas?|estrelas?|sterne?|sterren|ster)'
+)
+_COMBO_CONJ = r'\s*(?:,|&|\+|-|et|and|y|e|und|en)\s*'
+
+# game → (max boule, max secondaire, nb max de secondaires, mot-clé secondaire)
+_COMBO_GAME_SPECS = {
+    "loto": (49, 10, 1, _COMBO_CHANCE_KW),
+    "em": (50, 12, 2, _COMBO_STAR_KW),
+}
+
+
+def _detect_combo_count(message: str) -> bool:
+    """Detecte « combien de fois … » (6 langues) — paire si 2 numéros cités."""
+    return bool(_COMBO_COUNT_RE.search(message))
+
+
+def _detect_combo_with_secondary(message: str, game: str = "loto") -> bool:
+    """Detecte « le 22 avec le chance 10 » / « le 22 avec l'étoile 3 » (6 langues, Q2).
+
+    Connecteur (avec|with|con|com|mit|met) + mot chance/étoile + numéro. Le numéro
+    principal exigé est vérifié au routage (au moins 2 numéros extraits).
+    """
+    kw = _COMBO_GAME_SPECS[game][3]
+    return bool(re.search(
+        r'\b(?:avec|with|con|com|mit|met)\b[^\d?!.]{0,30}?\b' + kw + r'\s*[:=]?\s*\d{1,2}\b',
+        message, re.IGNORECASE,
+    ))
+
+
+def _dedupe(nums: list[int]) -> list[int]:
+    """Elimine les doublons en preservant l'ordre."""
+    seen = set()
+    unique = []
+    for n in nums:
+        if n not in seen:
+            seen.add(n)
+            unique.append(n)
+    return unique
+
+
+def _extract_combo_numbers(message: str, game: str = "loto") -> dict:
+    """Extrait les numéros d'une combinaison demandée (dates et quantités exclues).
+
+    Returns: dict(main=list[int], secondary=list[int], out_of_range=bool)
+      main      : boules (ordre du message, sans doublon)
+      secondary : numéro chance (Loto, 1 max) ou étoiles (EM, 2 max), si le mot est cité
+      out_of_range : un numéro hors plage du jeu (0, > 49/50, chance > 10, étoile > 12)
+    """
+    max_main, max_sec, max_sec_count, kw = _COMBO_GAME_SPECS[game]
+    text = _COMBO_NOISE_RE.sub(" ", _mask_dates(message.lower()))
+    secondary = []
+
+    # « le 10 en numéro chance », « 3 als Stern »
+    before_kw = re.compile(
+        r'\b(\d{1,2})\s+(?:en|as|como|als)\s+(?:(?:le|la|the|el|o|der|de)\s+)?'
+        r'(?:(?:num[eé]ro|number|n[uú]mero|nummer)\s+)?' + kw + r'\b',
+        re.IGNORECASE,
+    )
+    # « chance 10 », « les étoiles 3 et 7 », « numéro chance : 10 »
+    after_kw = re.compile(
+        r'\b' + kw + r'\s*(?:n[°o]\s*)?[:=]?\s*(\d{1,2})\b(?:' + _COMBO_CONJ + r'(\d{1,2})\b)?',
+        re.IGNORECASE,
+    )
+
+    def _take_before(m: re.Match) -> str:
+        secondary.append(int(m.group(1)))
+        return " "
+
+    def _take_after(m: re.Match) -> str:
+        secondary.append(int(m.group(1)))
+        if m.group(2) and max_sec_count > 1:
+            secondary.append(int(m.group(2)))
+            return " "
+        # Loto : 1 seul numéro chance — le nombre suivant reste une boule
+        return " " + (m.group(2) or "") + " "
+
+    text = before_kw.sub(_take_before, text)
+    text = after_kw.sub(_take_after, text)
+
+    main = _dedupe([int(x) for x in re.findall(r'\b(\d{1,2})\b', text)])
+    secondary = _dedupe(secondary)
+    out_of_range = (
+        any(not 1 <= n <= max_main for n in main)
+        or any(not 1 <= n <= max_sec for n in secondary)
+        or len(secondary) > max_sec_count
+    )
+    return {"main": main, "secondary": secondary, "out_of_range": out_of_range}
 
 
 # ═══════════════════════════════════════════════════════

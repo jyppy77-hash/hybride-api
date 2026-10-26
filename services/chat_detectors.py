@@ -60,6 +60,7 @@ from services.base_chat_detectors import (  # noqa: F401
     # V126 — L13 Volet B' : détection USER direct avec SQL-keyword
     _is_user_sql_request,
 )
+from services.base_chat_detect_temporal import _mask_dates  # Lot phase P
 
 
 # ────────────────────────────────────────────
@@ -136,7 +137,8 @@ def _detect_numero(message: str):
     Detecte si l'utilisateur pose une question sur un numero specifique.
     Returns: (numero: int, type_num: str) ou (None, None)
     """
-    lower = message.lower()
+    # Lot phase P : le jour d'une date n'est pas un numéro (cas 8697)
+    lower = _mask_dates(message.lower())
 
     # Pattern chance : "numero chance X", "chance X", "complémentaire X", "bonus X"...
     m = re.search(r'(?:num[eé]ro\s+)?' + _CHANCE_RE + r'\s+(\d{1,2})', lower)

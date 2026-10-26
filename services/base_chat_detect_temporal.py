@@ -387,6 +387,59 @@ def _is_relative_weekday(message: str, lang: str = "fr") -> bool:
 
 
 # ────────────────────────────────────────────
+# Lot phase P — Masquage des dates avant extraction de numéros
+# ────────────────────────────────────────────
+# Le jour d'une date n'est pas un numéro : « l'euro million du 23 octobre 2026 »
+# donnait le 23 en Phase 1 et en numéro forcé Phase G (cas 8546), « Le loto du
+# 26 octobre 2026 » le 26 en Phase 1 (cas 8697). Chaque date est remplacée par
+# un espace. N'est PAS utilisé par _detect_tirage (routage Phase T inchangé).
+
+# « may » (EN) est aussi un verbe : masqué seulement avec ordinal, « of » ou année.
+_MASK_MOIS_RE = _MOIS_NOM_RE.replace('|may|', '|')
+
+_MASK_DATE_NUMERIC_RE = re.compile(r'\b(\d{1,2})([/.\-])(\d{1,2})(?:\2(\d{4}|\d{2}))?\b')
+
+_MASK_DATE_DMY_RE = re.compile(
+    # « 26 octobre 2026 », « 1er mai », « 26th of October », « 26 de octubre de 2026 »,
+    # « 26. Oktober 2026 », « 26 oktober 2026 »
+    r'\b\d{1,2}' + _ORDINAL_NUMERIC_FR_RE + r'\.?\s+(?:de\s+|of\s+(?:the\s+)?)?'
+    + _MASK_MOIS_RE + r'\b(?:,?\s+(?:de\s+)?\d{4}\b)?'
+    r'|\b\d{1,2}(?:(?:st|nd|rd|th)\s+(?:of\s+)?may\b|\s+of\s+may\b|\s+may\s+\d{4}\b)',
+    re.IGNORECASE,
+)
+
+_MASK_DATE_MDY_RE = re.compile(
+    # « October 26, 2026 », « March 1st » (EN), « May 22, 2026 » seulement avec année
+    r'\b' + _MOIS_NOM_EN_RE.replace('|may|', '|') + r'\s+\d{1,2}' + _ORDINAL_NUMERIC_EN_RE
+    + r'\b(?:,?\s+\d{4}\b)?'
+    r'|\bmay\s+\d{1,2}' + _ORDINAL_NUMERIC_EN_RE + r',?\s+\d{4}\b',
+    re.IGNORECASE,
+)
+
+
+def _mask_numeric_date(m: re.Match) -> str:
+    """JJ/MM, JJ/MM/AA(AA), JJ-MM-AAAA, JJ.MM.AAAA → espace si jour/mois valides.
+
+    Tiret et point exigent une année à 4 chiffres (« 5-12-23 » = grille, « 2.5 » = décimal).
+    """
+    day, sep, month, year = int(m.group(1)), m.group(2), int(m.group(3)), m.group(4)
+    if not (1 <= day <= 31 and 1 <= month <= 12):
+        return m.group(0)
+    if sep in ".-" and (year is None or len(year) != 4):
+        return m.group(0)
+    return " "
+
+
+def _mask_dates(text: str) -> str:
+    """Remplace les dates (numériques ou textuelles, 6 langues) par un espace."""
+    if not text:
+        return text
+    text = _MASK_DATE_NUMERIC_RE.sub(_mask_numeric_date, text)
+    text = _MASK_DATE_DMY_RE.sub(" ", text)
+    return _MASK_DATE_MDY_RE.sub(" ", text)
+
+
+# ────────────────────────────────────────────
 # Detection filtre temporel → court-circuite les phases regex
 # ────────────────────────────────────────────
 

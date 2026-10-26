@@ -15,6 +15,7 @@ from services.em_stats_service import (
     get_numeros_par_categorie,
     prepare_grilles_pitch_context, get_pair_correlations, get_triplet_correlations,
     get_star_pair_correlations,
+    get_single_pair, get_single_star_pair,  # Lot phase P
 )
 
 from services.chat_detectors import (
@@ -64,6 +65,10 @@ from services.chat_utils_em import (
     _build_session_context_em,
     _format_generation_context_em,
 )
+from services.base_chat_detect_correlation import (  # Lot phase P
+    _detect_combo_count, _detect_combo_with_secondary, _extract_combo_numbers,
+)
+from services.base_chat_utils import _format_single_pair_context_base  # Lot phase P
 from services.chat_pipeline_shared import (
     sse_event as _sse_event_shared,
     log_from_meta as _log_from_meta_shared,
@@ -195,6 +200,20 @@ def _build_em_config():
         "get_pair_correlations": get_pair_correlations,
         "get_star_pair_correlations": get_star_pair_correlations,
         "format_star_pairs_context": _format_star_pairs_context_em,
+        # Lot phase P — combinaison précise : paire calculée, sinon SQL encadré
+        "detect_combo_count": _detect_combo_count,
+        "detect_combo_secondary": lambda msg: _detect_combo_with_secondary(msg, game="em"),
+        "extract_combo_numbers": lambda msg: _extract_combo_numbers(msg, game="em"),
+        "get_single_pair": get_single_pair,
+        "format_single_pair_context": lambda pair: _format_single_pair_context_base(
+            pair, "PAIRE DEMANDÉE (Numéros principaux)",
+            "les 5 boules principales de chaque tirage, étoiles non comptées",
+        ),
+        "get_single_star_pair": get_single_star_pair,
+        "format_single_star_pair_context": lambda pair: _format_single_pair_context_base(
+            pair, "PAIRE D'ÉTOILES DEMANDÉE",
+            "les 2 étoiles de chaque tirage, numéros principaux non comptés",
+        ),
         # Phase OOR
         "detect_oor": _detect_out_of_range_em,
         "count_oor_streak": _count_oor_streak_em,

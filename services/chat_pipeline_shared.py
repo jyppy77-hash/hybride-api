@@ -495,6 +495,38 @@ _TIRAGE_ERROR_GUARD = {
     ),
 }
 
+# Lot phase P — combinaison précise non calculable (paire en erreur, SQL en
+# échec : 429, disjoncteur, timeout, rejet). Consigne interne en FR (code-matched),
+# message transmis dans la langue de l'utilisateur. Jamais de top 5 en repli (Q9).
+_COMBO_UNAVAILABLE_PAIR_GUARD = (
+    "[CORRÉLATIONS DE PAIRES — INDISPONIBLE]\nCalcul momentanément impossible : ne cite AUCUN "
+    "chiffre, date ni numéro de tirage. Transmets ce message : "
+)
+_COMBO_UNAVAILABLE_SQL_GUARD = (
+    "[RÉSULTAT SQL — INDISPONIBLE]\nCalcul momentanément impossible : ne cite AUCUN "
+    "chiffre, date ni numéro de tirage. Transmets ce message : "
+)
+_COMBO_UNAVAILABLE_MESSAGES = {
+    "fr": "Je ne peux pas calculer cette combinaison pour le moment. Réessaie dans quelques minutes : "
+          "je préfère ne donner aucun chiffre plutôt qu'un chiffre inexact.",
+    "en": "I can't calculate this combination right now. Please try again in a few minutes: "
+          "I'd rather give no figure than an inaccurate one.",
+    "es": "No puedo calcular esta combinación en este momento. Vuelve a intentarlo en unos minutos: "
+          "prefiero no dar ninguna cifra antes que una cifra inexacta.",
+    "pt": "Não consigo calcular esta combinação neste momento. Tenta novamente daqui a alguns minutos: "
+          "prefiro não dar nenhum número a dar um número inexato.",
+    "de": "Ich kann diese Kombination gerade nicht berechnen. Versuche es in ein paar Minuten erneut: "
+          "Ich nenne lieber keine Zahl als eine ungenaue.",
+    "nl": "Ik kan deze combinatie nu niet berekenen. Probeer het over een paar minuten opnieuw: "
+          "ik geef liever geen cijfer dan een onjuist cijfer.",
+}
+
+# Lot phase P — Q15 : la phase P générale ne gère pas les périodes
+_P_GENERAL_PERIOD_NOTE = (
+    "\nPériode demandée non prise en charge : ces chiffres portent sur tout l'historique. "
+    "Dis-le clairement à l'utilisateur."
+)
+
 # V141 A.3.1 BUG #4 — Phase G fallthrough silent failure (cas terrain #3 "Pru importe"
 # 9/05 05:24 : msg ambigu détecté generation, Phase G fail silencieuse, leak Gemini).
 # Injection contexte safe i18n quand Phase G attempted mais _generation_context vide.
@@ -1451,8 +1483,59 @@ async def _prepare_chat_context_base(
             logger.info(f"{_lp} Co-occurrence N>3 — redirection paires/triplets (lang={lang})")
             return _early(_high_n_resp, "hybride_cooccurrence")
 
+    # Lot phase P — P-exact : combinaison précise demandée. HYBRIDE calcule
+    # (paire de boules / d'étoiles, même chiffre que la page Statistiques) ou cède au SQL
+    # encadré (triplet, boule + chance/étoile, période). Jamais de top 5 à la place d'un
+    # chiffre demandé. Q4 : numéro hors plage → Phase OOR.
+    # Demande de génération (Phase G) : les numéros cités sont des numéros imposés,
+    # pas une combinaison à compter → ni P-exact ni Phase P générale à côté de la grille.
+    _p_exact_sql = False
+    _p_exact_handled = _phase_g_attempted
+    _extract_combo = cfg.get("extract_combo_numbers")
+    if not _continuation_mode and not enrichment_context and not _phase_g_attempted and _extract_combo and (
+        cfg["detect_paires"](message) or cfg["detect_triplets"](message)
+        or cfg["detect_combo_count"](message) or cfg["detect_combo_secondary"](message)
+    ):
+        _combo = _extract_combo(message)
+        _main, _sec = _combo["main"], _combo["secondary"]
+        if _combo["out_of_range"]:
+            _p_exact_handled = True
+            logger.info(f"{_lp} P-exact hors plage: main={_main} sec={_sec} → Phase OOR")
+        elif len(_main) + len(_sec) >= 2:
+            _p_exact_handled = True
+            _phase = "P"
+            _with_period = force_sql or cfg["has_temporal_filter"](message)
+            _pair_fn = _pair_fmt = _pair_kw = None
+            if len(_main) == 2 and not _sec:
+                _pair_fn, _pair_fmt = cfg["get_single_pair"], cfg["format_single_pair_context"]
+                _pair_kw = {"n1": _main[0], "n2": _main[1]}
+            elif len(_sec) == 2 and not _main and cfg.get("get_single_star_pair"):
+                _pair_fn, _pair_fmt = cfg["get_single_star_pair"], cfg["format_single_star_pair_context"]
+                _pair_kw = {"s1": _sec[0], "s2": _sec[1]}
+            if _pair_fn and not _with_period:
+                _pair = None
+                try:
+                    _pair = await asyncio.wait_for(_pair_fn(**_pair_kw), timeout=_TIMEOUTS["stats_analysis"])
+                except Exception as e:
+                    logger.warning(f"{_lp} Erreur P-exact paire {_pair_kw}: {e}")
+                if _pair:
+                    enrichment_context = _pair_fmt(_pair)
+                    logger.info(f"{_lp} P-exact paire injectee: {_pair_kw}")
+                else:
+                    enrichment_context = _COMBO_UNAVAILABLE_PAIR_GUARD + _COMBO_UNAVAILABLE_MESSAGES.get(
+                        lang, _COMBO_UNAVAILABLE_MESSAGES["en"])
+                    logger.warning(f"{_lp} P-exact paire indisponible: {_pair_kw}")
+            else:
+                # Q2/Q3/Q7 : triplet, boule + chance/étoile, paire sur période → SQL encadré
+                # (force_sql saute OOR et Phase 1, run_text_to_sql s'exécute)
+                _p_exact_sql = True
+                force_sql = True
+                logger.info(
+                    f"{_lp} P-exact → SQL encadré: main={_main} sec={_sec} periode={_with_period}"
+                )
+
     # Phase P : triplets
-    if not _continuation_mode and not enrichment_context:
+    if not _continuation_mode and not enrichment_context and not _p_exact_handled:
         if cfg["detect_triplets"](message):
             _phase = "P"
             try:
@@ -1461,12 +1544,14 @@ async def _prepare_chat_context_base(
                 )
                 if triplets_data:
                     enrichment_context = cfg["format_triplets_context"](triplets_data)
+                    if cfg["has_temporal_filter"](message):  # Lot phase P Q15
+                        enrichment_context += _P_GENERAL_PERIOD_NOTE
                     logger.info(f"{_lp} Triplets injectes")
             except Exception as e:
                 logger.warning(f"{_lp} Erreur triplets: {e}")
 
     # Phase P : paires
-    if not _continuation_mode and not enrichment_context:
+    if not _continuation_mode and not enrichment_context and not _p_exact_handled:
         if cfg["detect_paires"](message):
             _phase = "P"
             try:
@@ -1481,6 +1566,8 @@ async def _prepare_chat_context_base(
                         star_data = await asyncio.wait_for(_get_star_pairs(top_n=5), timeout=_TIMEOUTS["stats_analysis"])
                         if star_data:
                             enrichment_context += "\n\n" + cfg["format_star_pairs_context"](star_data)
+                    if cfg["has_temporal_filter"](message):  # Lot phase P Q15
+                        enrichment_context += _P_GENERAL_PERIOD_NOTE
                     logger.info(f"{_lp} Paires injectees")
             except Exception as e:
                 logger.warning(f"{_lp} Erreur paires: {e}")
@@ -1558,6 +1645,13 @@ async def _prepare_chat_context_base(
     )
     if (_sql_query or _sql_status != "N/A") and not _phase_g_error_label:
         _phase = "SQL"
+    # Lot phase P — SQL encadré en échec (429, disjoncteur, timeout, NO_SQL, rejet,
+    # erreur d'exécution, plafond de session LIMIT) : HYBRIDE le dit, il n'invente pas.
+    # « Aucun résultat » réservé à EMPTY. LIMIT : garde + message de plafond (recharger la page).
+    if _p_exact_sql and _sql_status not in ("OK", "EMPTY"):
+        _combo_msgs = _SQL_LIMIT_MESSAGES if _sql_status == "LIMIT" else _COMBO_UNAVAILABLE_MESSAGES
+        enrichment_context = _COMBO_UNAVAILABLE_SQL_GUARD + _combo_msgs.get(lang, _combo_msgs["en"])
+        logger.warning(f"{_lp} P-exact SQL indisponible (status={_sql_status})")
     # V141 A.3.1 BUG #4 — `_phase = "G"` préservé si Phase G failed (observability)
 
     if force_sql and not enrichment_context:

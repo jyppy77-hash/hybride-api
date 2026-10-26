@@ -425,6 +425,34 @@ def _format_pairs_context_base(pairs_data: dict, header: str) -> str:
     return "\n".join(lines)
 
 
+def _format_single_pair_context_base(pair: dict, header: str, scope: str) -> str:
+    """Lot phase P — bloc d'une paire précise (get_single_pair / get_single_star_pair).
+
+    Même chiffre que la page Statistiques. Rang = 1 + paires de compte strictement
+    supérieur (ex aequo au même rang, leur nombre n'est pas connu).
+    """
+    a = pair.get("n1", pair.get("s1"))
+    b = pair.get("n2", pair.get("s2"))
+    lines = [f"[CORRÉLATIONS DE PAIRES — {header}]"]
+    lines.append(f"Périmètre : {scope}, tous les tirages en base")
+    if pair["count"] > 0:
+        lines.append(
+            f"Paire {a} + {b} → {pair['count']} fois sur {pair['total_draws']} tirages "
+            f"({pair['percentage']}%)"
+        )
+        lines.append(
+            f"Rang : {pair['rank']} sur {pair['total_pairs']} paires observées "
+            "(les paires de même compte partagent le même rang)"
+        )
+    else:
+        lines.append(f"Paire {a} + {b} → jamais sortie ensemble sur {pair['total_draws']} tirages")
+    lines.append(
+        "IMPORTANT : chiffre exact calculé par HYBRIDE. "
+        "N'utilise aucun autre chiffre pour cette paire."
+    )
+    return "\n".join(lines)
+
+
 def _format_triplets_context_base(triplets_data: dict, header: str) -> str:
     """Formate les correlations de triplets en contexte pour Gemini."""
     lines = [f"[CORRÉLATIONS DE TRIPLETS — {header}]"]

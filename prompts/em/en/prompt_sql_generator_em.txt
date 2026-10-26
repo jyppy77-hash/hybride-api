@@ -58,6 +58,15 @@ When the user asks if several numbers came out "together",
 - Blocks are linked by AND (not OR)
 - For stars: (etoile_1 = E OR etoile_2 = E)
 - If the question asks "did they" or "have they come out", return matching draws with SELECT date_de_tirage, boule_1..5, etoile_1, etoile_2 and ORDER BY date_de_tirage DESC LIMIT 20
+- To COUNT how many times several numbers came out together, use SELECT COUNT(*) with the same blocks linked by AND
+
+NUMBERS / STARS RULE (CRITICAL):
+- By default, a "number" is a main number: look for it ONLY in boule_1..boule_5
+- NEVER add etoile_1 / etoile_2 to the block of a number, unless the user says "star" for THAT number
+- A star mentioned by the user ("star 3", "the stars 3 and 7") is looked for ONLY in etoile_1 / etoile_2
+
+FULL DRAW RULE:
+As soon as the query LISTS or QUOTES draws (not a COUNT or a frequency), ALWAYS select the full draw: date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, etoile_1, etoile_2. NEVER select date_de_tirage alone.
 
 TEMPORAL RESOLUTION (CRITICAL):
 PRIORITY RULE: if the user mentions a period, a year
@@ -138,6 +147,15 @@ SELECT COUNT(*) as ensemble FROM tirages_euromillions WHERE (boule_1 = 9 OR boul
 Q: when did 16 22 and 41 come out at the same time?
 SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, etoile_1, etoile_2 FROM tirages_euromillions WHERE (boule_1 = 16 OR boule_2 = 16 OR boule_3 = 16 OR boule_4 = 16 OR boule_5 = 16) AND (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) AND (boule_1 = 41 OR boule_2 = 41 OR boule_3 = 41 OR boule_4 = 41 OR boule_5 = 41) ORDER BY date_de_tirage DESC LIMIT 20
 
+Q: how many times have 9, 22 and 41 come out together?
+SELECT COUNT(*) as ensemble FROM tirages_euromillions WHERE (boule_1 = 9 OR boule_2 = 9 OR boule_3 = 9 OR boule_4 = 9 OR boule_5 = 9) AND (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) AND (boule_1 = 41 OR boule_2 = 41 OR boule_3 = 41 OR boule_4 = 41 OR boule_5 = 41)
+
+Q: how many times have star 3 and star 7 come out together?
+SELECT COUNT(*) as ensemble FROM tirages_euromillions WHERE (etoile_1 = 3 OR etoile_2 = 3) AND (etoile_1 = 7 OR etoile_2 = 7)
+
+Q: how many times has 22 come out with star 3?
+SELECT COUNT(*) as ensemble FROM tirages_euromillions WHERE (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) AND (etoile_1 = 3 OR etoile_2 = 3)
+
 Q: how many times has 7 come out in January?
 SELECT COUNT(*) as total_sorties FROM tirages_euromillions WHERE (boule_1 = 7 OR boule_2 = 7 OR boule_3 = 7 OR boule_4 = 7 OR boule_5 = 7) AND MONTH(date_de_tirage) = 1 AND YEAR(date_de_tirage) = YEAR(CURDATE()) LIMIT 1
 
@@ -204,7 +222,7 @@ If the user responds "yes", "ok", "show me", "detail", "go ahead", "go",
 3. Generate the corresponding SQL
 
 Rules:
-- "full history" of a number = list appearance dates (SELECT date_de_tirage)
+- "full history" of a number = list the draws where it came out (full draw: date + 5 numbers + 2 stars)
 - "detail" = more complete data (dates, columns, ORDER BY)
 - "compare with another" without specifying which = return NO_SQL
 - If the model's proposal doesn't correspond to any SQL query = return NO_SQL

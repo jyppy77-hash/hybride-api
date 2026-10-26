@@ -6,6 +6,8 @@ Split from base_chat_detect_intent.py (F05 V84).
 
 import re
 
+from services.base_chat_detect_temporal import _mask_dates  # Lot phase P
+
 
 # ═══════════════════════════════════════════════════════
 # Phase G — Détection génération de grilles (6 langues)
@@ -433,7 +435,9 @@ def _extract_forced_numbers(message: str, game: str = "loto") -> dict:
     if not _WITH_PATTERN.search(message):
         return result
 
-    lower = message.lower()
+    # Lot phase P S6b : le jour d'une date n'est pas un numéro forcé
+    # (cas 8546 : « … pour l'euro million du 23 octobre 2026 » → forced=[23])
+    lower = _mask_dates(message.lower())
 
     # ── Step 1: Extract chance number (Loto) ──
     if game == "loto":

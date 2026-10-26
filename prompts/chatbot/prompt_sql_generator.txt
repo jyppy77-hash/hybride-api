@@ -48,6 +48,15 @@ Quand l'utilisateur demande si plusieurs numéros sont sortis "ensemble",
 - Les blocs sont reliés par AND (pas OR)
 - Cela s'applique pour 2, 3, 4 ou 5 numéros
 - Si la question demande "est-ce que" ou "sont déjà sortis", retourne les tirages correspondants avec SELECT date_de_tirage, boule_1..5, numero_chance et ORDER BY date_de_tirage DESC LIMIT 20
+- Pour COMPTER combien de fois plusieurs numéros sont sortis ensemble, utilise SELECT COUNT(*) avec les mêmes blocs reliés par AND
+
+RÈGLE NUMÉRO CHANCE (CRITIQUE) :
+- Par défaut, un "numéro" est un numéro principal : cherche-le UNIQUEMENT dans boule_1..boule_5
+- N'ajoute JAMAIS numero_chance dans le bloc d'un numéro, même si ce numéro est entre 1 et 10, sauf si l'utilisateur dit "chance" ou "numéro chance" pour CE numéro
+- Un numéro chance cité par l'utilisateur ("le chance 10", "le 10 en numéro chance") se cherche UNIQUEMENT dans numero_chance
+
+RÈGLE TIRAGE COMPLET :
+Dès que la requête LISTE ou CITE des tirages (pas un COUNT ni une fréquence), sélectionne TOUJOURS le tirage complet : date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chance. Ne sélectionne JAMAIS date_de_tirage seule.
 
 RÉSOLUTION TEMPORELLE (CRITIQUE) :
 RÈGLE PRIORITAIRE : si l'utilisateur mentionne une période, une année
@@ -136,6 +145,15 @@ SELECT COUNT(*) as jackpots FROM tirages WHERE nombre_de_gagnant_au_rang1 > 0 AN
 Q: le 9 et le 22 sont sortis ensemble combien de fois ?
 SELECT COUNT(*) as ensemble FROM tirages WHERE (boule_1 = 9 OR boule_2 = 9 OR boule_3 = 9 OR boule_4 = 9 OR boule_5 = 9) AND (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22)
 
+Q: combien de fois le 9, le 22 et le 41 sont sortis ensemble ?
+SELECT COUNT(*) as ensemble FROM tirages WHERE (boule_1 = 9 OR boule_2 = 9 OR boule_3 = 9 OR boule_4 = 9 OR boule_5 = 9) AND (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) AND (boule_1 = 41 OR boule_2 = 41 OR boule_3 = 41 OR boule_4 = 41 OR boule_5 = 41)
+
+Q: le 22 est sorti combien de fois avec le numéro chance 10 ?
+SELECT COUNT(*) as ensemble FROM tirages WHERE (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) AND numero_chance = 10
+
+Q: combien de fois le 10 est sorti en numéro chance ?
+SELECT COUNT(*) as total_sorties FROM tirages WHERE numero_chance = 10
+
 Q: quand le 16 22 et 41 sont tombés en même temps ?
 SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chance FROM tirages WHERE (boule_1 = 16 OR boule_2 = 16 OR boule_3 = 16 OR boule_4 = 16 OR boule_5 = 16) AND (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) AND (boule_1 = 41 OR boule_2 = 41 OR boule_3 = 41 OR boule_4 = 41 OR boule_5 = 41) ORDER BY date_de_tirage DESC LIMIT 20
 
@@ -223,7 +241,7 @@ Si l'utilisateur répond "oui", "ok", "montre", "détaille", "vas-y", "go",
 3. Génère le SQL correspondant à cette proposition
 
 Règles :
-- "historique complet" d'un numéro = lister les dates de sortie (SELECT date_de_tirage)
+- "historique complet" d'un numéro = lister les tirages où il est sorti (tirage complet : date + 5 boules + numero_chance)
 - "détailler" = données plus complètes (dates, colonnes, ORDER BY)
 - "comparer avec un autre" sans préciser lequel = retourne NO_SQL
 - Si la proposition du model ne correspond à aucune requête SQL = retourne NO_SQL
@@ -244,7 +262,7 @@ SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chanc
 
 Historique: user="le 22 sort souvent ?" / model="104 fois depuis novembre 2019. Tu veux que je détaille ?"
 Q: oui
-SELECT date_de_tirage FROM tirages WHERE (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) ORDER BY date_de_tirage DESC LIMIT 20
+SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, numero_chance FROM tirages WHERE (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) ORDER BY date_de_tirage DESC LIMIT 20
 
 Historique: user="stats du 8 en 2023" / model="sorti 15 fois..."
 Q: et en 2024 ?

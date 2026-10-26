@@ -17,6 +17,7 @@ from services.base_chat_detectors import (
     _detect_grid_evaluation,  # V70
     _detect_requete_complexe_base,  # F06 V83
 )
+from services.base_chat_detect_temporal import _mask_dates  # Lot phase P
 
 
 # ────────────────────────────────────────────
@@ -242,7 +243,8 @@ def _detect_numero_em(message: str):
     Returns: (numero: int, type_num: str) ou (None, None)
     type_num: "boule" ou "etoile"
     """
-    lower = message.lower()
+    # Lot phase P : le jour d'une date n'est pas un numéro (cas 8546)
+    lower = _mask_dates(message.lower())
 
     # Pattern etoile : "etoile X", "étoile X", "star X", "complémentaire X"...
     m = re.search(r'(?:num[eé]ro\s+)?' + _STAR_RE + r'\s+(\d{1,2})', lower)

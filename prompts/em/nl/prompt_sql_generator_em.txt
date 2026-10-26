@@ -58,6 +58,15 @@ Wanneer de gebruiker vraagt of meerdere nummers "samen" zijn getrokken,
 - Blokken worden gekoppeld met AND (niet OR)
 - Voor sterren: (etoile_1 = E OR etoile_2 = E)
 - Als de vraag "zijn ze?" of "zijn ze voorgekomen?" luidt, geef de overeenkomende trekkingen met SELECT date_de_tirage, boule_1..5, etoile_1, etoile_2 en ORDER BY date_de_tirage DESC LIMIT 20
+- Om te TELLEN hoe vaak meerdere nummers samen zijn getrokken, gebruik SELECT COUNT(*) met dezelfde blokken gekoppeld met AND
+
+REGEL NUMMERS / STERREN (KRITIEK):
+- Standaard is een "nummer" een hoofdnummer: zoek het ALLEEN in boule_1..boule_5
+- Voeg NOOIT etoile_1 / etoile_2 toe aan het blok van een nummer, behalve als de gebruiker "ster" zegt voor DAT nummer
+- Een door de gebruiker genoemde ster ("ster 3", "de sterren 3 en 7") zoek je ALLEEN in etoile_1 / etoile_2
+
+REGEL VOLLEDIGE TREKKING:
+Zodra de query trekkingen OPSOMT of CITEERT (geen COUNT en geen frequentie), selecteer ALTIJD de volledige trekking: date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, etoile_1, etoile_2. Selecteer NOOIT alleen date_de_tirage.
 
 TIJDSRESOLUTIE (KRITIEK):
 PRIORITEITSREGEL: als de gebruiker een periode, een jaar
@@ -138,6 +147,15 @@ SELECT COUNT(*) as ensemble FROM tirages_euromillions WHERE (boule_1 = 9 OR boul
 V: Wanneer zijn de 16, 22 en 41 tegelijkertijd getrokken?
 SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, etoile_1, etoile_2 FROM tirages_euromillions WHERE (boule_1 = 16 OR boule_2 = 16 OR boule_3 = 16 OR boule_4 = 16 OR boule_5 = 16) AND (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) AND (boule_1 = 41 OR boule_2 = 41 OR boule_3 = 41 OR boule_4 = 41 OR boule_5 = 41) ORDER BY date_de_tirage DESC LIMIT 20
 
+V: Hoe vaak zijn de 9, de 22 en de 41 samen getrokken?
+SELECT COUNT(*) as ensemble FROM tirages_euromillions WHERE (boule_1 = 9 OR boule_2 = 9 OR boule_3 = 9 OR boule_4 = 9 OR boule_5 = 9) AND (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) AND (boule_1 = 41 OR boule_2 = 41 OR boule_3 = 41 OR boule_4 = 41 OR boule_5 = 41)
+
+V: Hoe vaak zijn ster 3 en ster 7 samen getrokken?
+SELECT COUNT(*) as ensemble FROM tirages_euromillions WHERE (etoile_1 = 3 OR etoile_2 = 3) AND (etoile_1 = 7 OR etoile_2 = 7)
+
+V: Hoe vaak is de 22 met ster 3 getrokken?
+SELECT COUNT(*) as ensemble FROM tirages_euromillions WHERE (boule_1 = 22 OR boule_2 = 22 OR boule_3 = 22 OR boule_4 = 22 OR boule_5 = 22) AND (etoile_1 = 3 OR etoile_2 = 3)
+
 V: Hoe vaak is de 7 getrokken in januari?
 SELECT COUNT(*) as total_sorties FROM tirages_euromillions WHERE (boule_1 = 7 OR boule_2 = 7 OR boule_3 = 7 OR boule_4 = 7 OR boule_5 = 7) AND MONTH(date_de_tirage) = 1 AND YEAR(date_de_tirage) = YEAR(CURDATE()) LIMIT 1
 
@@ -204,7 +222,7 @@ Als de gebruiker antwoordt met "ja", "ok", "laat zien", "detail", "ga je gang",
 3. Genereer de bijbehorende SQL
 
 Regels:
-- "volledige historie" van een nummer = lijst van verschijningsdata (SELECT date_de_tirage)
+- "volledige historie" van een nummer = lijst van de trekkingen waarin het voorkwam (volledige trekking: datum + 5 nummers + 2 sterren)
 - "detail" = completere gegevens (data, kolommen, ORDER BY)
 - "vergelijken met een ander" zonder te specificeren welk = geef NO_SQL terug
 - Als het voorstel van het model niet overeenkomt met een SQL-query = geef NO_SQL terug
