@@ -898,3 +898,115 @@ def test_prompt_sql_no_partial_draw_select(path):
     lines = _read(*path).splitlines()
     assert not any(line.startswith("SELECT date_de_tirage FROM") for line in lines)
     assert not any("(SELECT date_de_tirage)" in line for line in lines)
+
+
+# ═══════════════════════════════════════════════════════
+# S7 — grille avec numéros imposés : la grille porte seule la réponse
+# (régression staging 28/10 : Phase 1 sur le 22 à côté de la grille → contrôle 1 bloquait)
+# ═══════════════════════════════════════════════════════
+
+_GRID_REPLY = "Voici ta grille : 3 - 10 - 22 - 30 - 41, bonne chance !"
+GEN_FORCED_FR_LOTO = [
+    GEN_FORCED_MSGS["fr"],
+    "génère une grille avec le 7",
+    "fais-moi une grille avec le 22 et le chance 4",
+]
+GEN_FORCED_FR_EM = ["génère une grille avec le 22 et le 10", "une grille avec l'étoile 3"]
+STATS_AND_GRID_MSG = "donne-moi les stats du 22 et fais-moi une grille"
+
+
+def _check_1(ctx):
+    from services.chat_pipeline_gemini import _check_sql_number_hallucination
+    meta = ctx["_chat_meta"]
+    return _check_sql_number_hallucination(meta["enrichment_context"], _GRID_REPLY, meta["phase"], "test")
+
+
+class TestGenerationForcedNumbers:
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("msg", list(GEN_FORCED_MSGS.values()) + GEN_FORCED_FR_LOTO[1:])
+    async def test_loto_forced_grid_alone(self, msg):
+        with contextlib.ExitStack() as stack:
+            _loto_patches(stack)
+            stack.enter_context(patch("services.chat_pipeline._detect_numero", side_effect=_detect_numero))
+            gen = _gen_patches(stack, "loto")
+            stats = stack.enter_context(patch(
+                "services.chat_pipeline.get_numero_stats", new_callable=AsyncMock))
+            stack.enter_context(patch(
+                "services.chat_pipeline_shared.run_text_to_sql", new_callable=AsyncMock,
+                side_effect=lambda *a, **kw: (kw["enrichment_context"], None, "N/A")))
+            _, ctx = await _loto_ctx(msg)
+        enr = ctx["_chat_meta"]["enrichment_context"]
+        gen.assert_awaited_once()
+        stats.assert_not_called()
+        assert enr.startswith("[GRILLE GÉNÉRÉE PAR HYBRIDE]")
+        assert "[DONNÉES TEMPS RÉEL" not in enr
+        assert ctx["_chat_meta"]["phase"] == "G"
+        assert _check_1(ctx) is None
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("msg", GEN_FORCED_FR_LOTO)
+    async def test_loto_forced_fr_skips_phase_1_and_sql(self, msg):
+        with contextlib.ExitStack() as stack:
+            _loto_patches(stack)
+            stack.enter_context(patch("services.chat_pipeline._detect_numero", side_effect=_detect_numero))
+            _gen_patches(stack, "loto")
+            stats = stack.enter_context(patch(
+                "services.chat_pipeline.get_numero_stats", new_callable=AsyncMock))
+            rts = stack.enter_context(patch(
+                "services.chat_pipeline_shared.run_text_to_sql", new_callable=AsyncMock))
+            _, ctx = await _loto_ctx(msg)
+        stats.assert_not_called()
+        rts.assert_not_called()
+        assert ctx["_chat_meta"]["sql_status"] == "N/A"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("msg", list(GEN_FORCED_MSGS.values()) + GEN_FORCED_FR_EM)
+    async def test_em_forced_grid_alone(self, msg):
+        with contextlib.ExitStack() as stack:
+            _em_patches(stack)
+            stack.enter_context(patch(
+                "services.chat_pipeline_em._detect_numero_em", side_effect=_detect_numero_em))
+            gen = _gen_patches(stack, "em")
+            stats = stack.enter_context(patch(
+                "services.chat_pipeline_em.get_numero_stats", new_callable=AsyncMock))
+            stack.enter_context(patch(
+                "services.chat_pipeline_shared.run_text_to_sql", new_callable=AsyncMock,
+                side_effect=lambda *a, **kw: (kw["enrichment_context"], None, "N/A")))
+            _, ctx = await _em_ctx(msg)
+        enr = ctx["_chat_meta"]["enrichment_context"]
+        gen.assert_awaited_once()
+        stats.assert_not_called()
+        assert enr.startswith("[GRILLE GÉNÉRÉE PAR HYBRIDE]")
+        assert "[DONNÉES TEMPS RÉEL" not in enr
+        assert ctx["_chat_meta"]["phase"] == "G"
+        assert _check_1(ctx) is None
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("game", ["loto", "em"])
+    async def test_stats_and_grid_multi_action_unchanged(self, game):
+        """Vraie multi-action : les stats du 22 restent injectées avant la grille."""
+        mod = "services.chat_pipeline" if game == "loto" else "services.chat_pipeline_em"
+        type_num = "principal" if game == "loto" else "boule"
+        with contextlib.ExitStack() as stack:
+            if game == "loto":
+                _loto_patches(stack)
+                stack.enter_context(patch(f"{mod}._detect_numero", side_effect=_detect_numero))
+            else:
+                _em_patches(stack)
+                stack.enter_context(patch(f"{mod}._detect_numero_em", side_effect=_detect_numero_em))
+            _gen_patches(stack, game)
+            stats = stack.enter_context(patch(
+                f"{mod}.get_numero_stats", new_callable=AsyncMock,
+                return_value={"numero": 22, "type": type_num}))
+            stack.enter_context(patch(
+                f"{mod}.{'_format_stats_context' if game == 'loto' else '_format_stats_context_em'}",
+                return_value="[DONNÉES TEMPS RÉEL — CHIFFRES EXACTS - Numéro 22]\nstats\n[/DONNÉES TEMPS RÉEL]"))
+            stack.enter_context(patch(
+                "services.chat_pipeline_shared.run_text_to_sql", new_callable=AsyncMock,
+                side_effect=lambda *a, **kw: (kw["enrichment_context"], None, "N/A")))
+            _, ctx = await (_loto_ctx(STATS_AND_GRID_MSG) if game == "loto" else _em_ctx(STATS_AND_GRID_MSG))
+        enr = ctx["_chat_meta"]["enrichment_context"]
+        stats.assert_awaited_once_with(22, type_num)
+        assert ctx["_chat_meta"]["phase"] == "1"
+        assert enr.index("[DONNÉES TEMPS RÉEL") < enr.index("[GRILLE GÉNÉRÉE PAR HYBRIDE]")

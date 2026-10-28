@@ -1587,8 +1587,25 @@ async def _prepare_chat_context_base(
             )
             return _early(_oor_resp, "hybride_oor")
 
+    # Lot phase P — grille avec numéros imposés (« une grille avec le 22 et le 10 ») :
+    # le numéro cité est une contrainte de Phase G, pas une demande de stats. Ni Phase 1
+    # ni text-to-SQL à côté de la grille : la grille porte seule la réponse.
+    # Vraie multi-action (« les stats du 22 et une grille ») inchangée : sans « avec »,
+    # aucun numéro imposé n'est extrait.
+    _g_forced_only = False
+    if _phase_g_attempted and not _continuation_mode and not force_sql and not enrichment_context:
+        _num_g, _type_g = cfg["detect_numero"](message)
+        if _num_g is not None:
+            _forced_g = cfg["extract_forced_numbers"](message, game=cfg["game"])
+            _sec_g = _forced_g.get(cfg["forced_secondary_key"])
+            _sec_g = _sec_g if isinstance(_sec_g, list) else ([] if _sec_g is None else [_sec_g])
+            _pool_g = _sec_g if _type_g in ("chance", "etoile") else _forced_g["forced_nums"]
+            _g_forced_only = _num_g in _pool_g
+            if _g_forced_only:
+                logger.info(f"{_lp} Phase G numero impose {_type_g}={_num_g} → ni Phase 1 ni SQL")
+
     # Phase 1 : detection de numero simple
-    if not _continuation_mode and not force_sql and not enrichment_context:
+    if not _continuation_mode and not force_sql and not enrichment_context and not _g_forced_only:
         numero, type_num = cfg["detect_numero"](message)
         if numero is not None:
             _phase = "1"
@@ -1633,16 +1650,19 @@ async def _prepare_chat_context_base(
     _sql_kw = {}
     if _sql_gen_kwargs_fn:
         _sql_kw["sql_gen_kwargs"] = _sql_gen_kwargs_fn(lang)
-    enrichment_context, _sql_query, _sql_status = await run_text_to_sql(
-        message, http_client, gem_api_key, history,
-        generate_sql_fn=cfg["generate_sql"], validate_sql_fn=cfg["validate_sql"],
-        ensure_limit_fn=cfg["ensure_limit"], execute_sql_fn=cfg["execute_safe_sql"],
-        format_result_fn=cfg["format_sql_result"], max_per_session=cfg["max_sql_per_session"],
-        log_prefix=cfg["sql_log_prefix"], force_sql=force_sql,
-        has_data_signal_fn=cfg["has_data_signal"],
-        continuation_mode=_continuation_mode, enrichment_context=enrichment_context,
-        lang=lang, **_sql_kw,
-    )
+    if _g_forced_only:
+        _sql_query, _sql_status = None, "N/A"
+    else:
+        enrichment_context, _sql_query, _sql_status = await run_text_to_sql(
+            message, http_client, gem_api_key, history,
+            generate_sql_fn=cfg["generate_sql"], validate_sql_fn=cfg["validate_sql"],
+            ensure_limit_fn=cfg["ensure_limit"], execute_sql_fn=cfg["execute_safe_sql"],
+            format_result_fn=cfg["format_sql_result"], max_per_session=cfg["max_sql_per_session"],
+            log_prefix=cfg["sql_log_prefix"], force_sql=force_sql,
+            has_data_signal_fn=cfg["has_data_signal"],
+            continuation_mode=_continuation_mode, enrichment_context=enrichment_context,
+            lang=lang, **_sql_kw,
+        )
     if (_sql_query or _sql_status != "N/A") and not _phase_g_error_label:
         _phase = "SQL"
     # Lot phase P — SQL encadré en échec (429, disjoncteur, timeout, NO_SQL, rejet,
