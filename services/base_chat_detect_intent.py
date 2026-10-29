@@ -48,6 +48,7 @@ from services.base_chat_detect_correlation import (  # noqa: F401
     _COOCCURRENCE_HIGH_N_PATTERN, _RANKING_EXCLUSION_PATTERN,
     _COOCCURRENCE_EXPLICIT_PATTERN, _COOCCURRENCE_HIGH_N_RESPONSES,
     _detect_cooccurrence_high_n, _get_cooccurrence_high_n_response,
+    _is_combo_question,  # Lot Gemini 1 G8
 )
 
 
@@ -413,7 +414,22 @@ _GRID_EVAL_PATTERN = re.compile(
     r'|wat\s+(?:vind|denk)\s+(?:je|jij|u)\s+(?:van|over|ervan)'
     r'|(?:deze|mijn)\s+nummers?\s+analy[sz]'
     r'|(?:mijn|deze)\s+(?:combinatie|nummers?)\s+(?:beoordel|check|controleer)'
-    r'|(?:zijn|is)\s+(?:deze|mijn)\s+(?:nummers?|combinatie)\s+(?:goed|correct|ok)',
+    r'|(?:zijn|is)\s+(?:deze|mijn)\s+(?:nummers?|combinatie)\s+(?:goed|correct|ok)'
+    # Lot Gemini 1 G8 — audit, « analyse ma grille », « qu'en penses-tu » (6 langues)
+    r'|\baudit\w*'
+    r'|analy(?:ser?|se)\s+(?:ma|cette|la|mes)\s+(?:grille|combinaison)'
+    r'|qu[\'ʼ\s]?\s*en\s+pens\w*'
+    r'|t[\'ʼ\s]?\s*en\s+penses?\s+quoi'
+    r'|analy[sz]e\s+(?:my|this|the)\s+(?:grid|combination)'
+    r'|\bwhat\s+do\s+you\s+think\b'
+    r'|anali[zs]a(?:r)?\s+(?:mi|esta|la)\s+(?:combinaci[oó]n|cuadr[ií]cula|grilla)'
+    r'|qu[eé]\s+(?:te\s+parece|opinas)\b'
+    r'|analisa(?:r)?\s+(?:a\s+minha|esta|a)\s+(?:grelha|combina[cç][aã]o)'
+    r'|o\s+que\s+acha(?:s|m)?\b'
+    r'|(?:analysier|pr[uü]f)\w*\s+(?:meine|diese)\s+(?:Kombination|Zahlen|Tippreihe)'
+    r'|was\s+(?:h[aä]ltst|denkst|meinst)\s+du\b'
+    r'|analyseer\s+(?:mijn|deze)\s+(?:combinatie|nummers?)'
+    r'|wat\s+(?:vind|denk)\s+(?:je|jij|u)\b',
     re.IGNORECASE,
 )
 
@@ -435,6 +451,9 @@ def _detect_grid_evaluation(message: str, game: str = "loto") -> dict | None:
     """
     if not _GRID_EVAL_PATTERN.search(message):
         return None
+    # Lot Gemini 1 G8 — question de combinaison : la phase P garde la priorité
+    if _is_combo_question(message):
+        return None
 
     # Extract all numbers from the message
     text = message.lower()
@@ -449,12 +468,13 @@ def _detect_grid_evaluation(message: str, game: str = "loto") -> dict | None:
     if game == "loto":
         # Detect chance number patterns
         chance_re = re.compile(
-            r'(?:chance|compl[eé]mentaire|bonus|sp[eé]cial|n[°o]?\s*chance)\s*[:\s-]*(\d{1,2})'
-            r'|(?:et\s+le\s+|le\s+)(\d{1,2})\s+en\s+chance',
+            r'(?:chance|compl[eé]mentaire|bonus|sp[eé]cial|n[°o]?\s*chance|[eé]toiles?)\s*[:\s-]*(\d{1,2})'
+            r'|(?:et\s+le\s+|le\s+)(\d{1,2})\s+en\s+chance'
+            r'|(\d{1,2})\s*[eé]toiles?\b',  # Lot Gemini 1 G8 — « étoile » = chance en Loto
             re.IGNORECASE,
         )
         for m in chance_re.finditer(text):
-            val = int(m.group(1) or m.group(2))
+            val = int(m.group(1) or m.group(2) or m.group(3))
             if 1 <= val <= max_secondary:
                 chance = val
                 text = text[:m.start()] + " " + text[m.end():]
@@ -493,6 +513,14 @@ def _detect_grid_evaluation(message: str, game: str = "loto") -> dict | None:
 
     if len(unique_nums) < _GRID_EVAL_MIN_NUMS:
         return None
+
+    # Lot Gemini 1 G8 — numéros nus en fin de suite : 6e = chance (Loto), 6e + 7e = étoiles (EM)
+    if game == "loto" and chance is None and len(unique_nums) == 6 and 1 <= unique_nums[5] <= max_secondary \
+            and valid_nums[-1] == unique_nums[5]:
+        chance = unique_nums[5]
+    elif game != "loto" and etoiles is None and len(unique_nums) == 7 \
+            and all(1 <= e <= max_secondary for e in unique_nums[5:]) and valid_nums[-2:] == unique_nums[5:]:
+        etoiles = sorted(unique_nums[5:])
 
     result = {"numeros": unique_nums[:5]}
     if game == "loto":

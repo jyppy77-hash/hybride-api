@@ -269,6 +269,14 @@ def _detect_combo_with_secondary(message: str, game: str = "loto") -> bool:
     ))
 
 
+def _is_combo_question(message: str) -> bool:
+    """Lot Gemini 1 G8 — question de combinaison (paire, triplet, « combien de fois »).
+
+    La phase P garde la priorité : « le 10, 12, 29, 34, 46 et 8 ensemble ? » n'est pas une grille.
+    """
+    return _detect_paires(message) or _detect_triplets(message) or _detect_combo_count(message)
+
+
 def _dedupe(nums: list[int]) -> list[int]:
     """Elimine les doublons en preservant l'ordre."""
     seen = set()

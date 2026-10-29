@@ -36,6 +36,7 @@ from services.base_chat_sql import _SQL_LIMIT_MESSAGES, _MAX_SQL_INPUT_LENGTH, _
 from services.base_chat_sql import _SQL_UNAVAILABLE_GUARD, _SQL_UNAVAILABLE_MESSAGES
 from db_cloudsql import ReadonlyPoolUnavailable
 from services.base_chat_detect_temporal import _is_relative_weekday  # V141 A.4 Patch V131.G-bis
+from services.base_chat_detect_temporal import _has_tirage_keyword  # Lot Gemini 1 G12a
 from services.chat_utils import _format_date_fr
 from services.base_chat_utils import _format_last_draw_context
 from services.stats_analysis import should_inject_pedagogical_context, PEDAGOGICAL_CONTEXT
@@ -521,6 +522,38 @@ _COMBO_UNAVAILABLE_MESSAGES = {
           "ik geef liever geen cijfer dan een onjuist cijfer.",
 }
 
+# Lot Gemini 1 G5 — repli grille : si Gemini échoue (429, zéro chunk, disjoncteur,
+# exception, blocage strict), l'utilisateur reçoit quand même la grille du moteur,
+# écrite par HYBRIDE (jamais réécrite par Gemini).
+_GRID_FALLBACK_I18N = {
+    "fr": ("🎲 Grille HYBRIDE", " : ", "Chance", "Étoiles", "(commentaire IA momentanément indisponible)"),
+    "en": ("🎲 HYBRIDE grid", ": ", "Lucky number", "Stars", "(AI commentary temporarily unavailable)"),
+    "es": ("🎲 Combinación HYBRIDE", ": ", "Número de la suerte", "Estrellas",
+           "(comentario de la IA momentáneamente no disponible)"),
+    "pt": ("🎲 Grelha HYBRIDE", ": ", "Número da sorte", "Estrelas",
+           "(comentário da IA momentaneamente indisponível)"),
+    "de": ("🎲 HYBRIDE-Kombination", ": ", "Glückszahl", "Sterne", "(KI-Kommentar vorübergehend nicht verfügbar)"),
+    "nl": ("🎲 HYBRIDE-combinatie", ": ", "Geluksnummer", "Sterren", "(AI-commentaar tijdelijk niet beschikbaar)"),
+}
+
+
+def _format_grid_fallback(grids: list, game: str, lang: str) -> str:
+    """Grille(s) du moteur en texte déterministe 6 langues (Loto : chance ; EM : 2 étoiles)."""
+    label, sep, chance_lbl, stars_lbl, note = _GRID_FALLBACK_I18N.get(lang, _GRID_FALLBACK_I18N["fr"])
+    lines = []
+    for idx, grid in enumerate(grids, 1):
+        line = " - ".join(str(n) for n in grid.get("nums", []))
+        if game == "em" and grid.get("etoiles"):
+            line += f" · {stars_lbl} " + " - ".join(str(s) for s in grid["etoiles"])
+        elif game != "em" and grid.get("chance") is not None:
+            line += f" · {chance_lbl} {grid['chance']}"
+        head = label if len(grids) == 1 else f"{label} {idx}"
+        lines.append(f"{head}{sep}{line}")
+    if len(lines) == 1:
+        return f"{lines[0]} {note}"
+    return "\n".join(lines) + f"\n{note}"
+
+
 # Lot phase P — Q15 : la phase P générale ne gère pas les périodes
 _P_GENERAL_PERIOD_NOTE = (
     "\nPériode demandée non prise en charge : ces chiffres portent sur tout l'historique. "
@@ -722,6 +755,11 @@ async def run_text_to_sql(message, http_client, gem_api_key, history,
         enrichment_context = _SQL_LIMIT_MESSAGES.get(lang, _SQL_LIMIT_MESSAGES["en"])
         return enrichment_context, _sql_query, "LIMIT"
 
+    # Lot Gemini 1 G16 — SQL tenté (signal de données ou force_sql) puis en échec
+    # (GEN_ERROR dont 429, TIMEOUT, EXEC_ERROR) : HYBRIDE le dit, aucun chiffre libre
+    # (cas 8321, 8335, 8346). NO_SQL et REJECTED inchangés.
+    _sql_unavailable = _SQL_UNAVAILABLE_GUARD + _SQL_UNAVAILABLE_MESSAGES.get(
+        lang, _SQL_UNAVAILABLE_MESSAGES["en"])
     t0 = time.monotonic()
     try:
         kwargs = {"history": history}
@@ -755,7 +793,7 @@ async def run_text_to_sql(message, http_client, gem_api_key, history,
                 )
             else:
                 _sql_status = "ERROR"
-                enrichment_context = "[RÉSULTAT SQL]\nAucun résultat trouvé pour cette requête."
+                enrichment_context = _sql_unavailable  # Lot Gemini 1 G16 (était « Aucun résultat »)
                 logger.warning(
                     f'{log_prefix} question="{message[:80]}" | '
                     f'sql="{sql[:120]}" | status=EXEC_ERROR | '
@@ -778,6 +816,7 @@ async def run_text_to_sql(message, http_client, gem_api_key, history,
             )
         else:
             _sql_status = "ERROR"
+            enrichment_context = _sql_unavailable  # Lot Gemini 1 G16
             logger.warning(
                 f'{log_prefix} question="{message[:80]}" | '
                 f'status=GEN_ERROR | '
@@ -796,6 +835,7 @@ async def run_text_to_sql(message, http_client, gem_api_key, history,
         )
     except asyncio.TimeoutError:
         _sql_status = "ERROR"
+        enrichment_context = _sql_unavailable  # Lot Gemini 1 G16
         logger.warning(
             f'{log_prefix} question="{message[:80]}" | '
             f'status=TIMEOUT | '
@@ -803,6 +843,7 @@ async def run_text_to_sql(message, http_client, gem_api_key, history,
         )
     except Exception as e:
         _sql_status = "ERROR"
+        enrichment_context = _sql_unavailable  # Lot Gemini 1 G16
         logger.warning(
             f'{log_prefix} question="{message[:80]}" | '
             f'status=ERROR | error="{e}" | '
@@ -950,7 +991,8 @@ async def _prepare_chat_context_base(
     # via `# noqa: F841` post V131.A/D — cleanup signature publique = Sprint B).
     gem_api_key = os.environ.get("GEM_API_KEY") or os.environ.get("GEMINI_API_KEY")
 
-    contents, history = build_gemini_contents(history, message, cfg["detect_insulte"])
+    contents, history = build_gemini_contents(
+        history, message, cfg["detect_insulte"], fallback_texts=(_fallback,))
 
     def _meta(**extra):
         return {"phase": _phase, "t0": _t0, "lang": lang, **extra}
@@ -1015,6 +1057,7 @@ async def _prepare_chat_context_base(
 
     # ── Phase G : Détection génération de grille ──
     _generation_context = ""
+    _grid_fallback = ""               # Lot Gemini 1 G5 — repli déterministe si Gemini échoue
     _phase_g_attempted = False        # V141 A.3.1 BUG #4 — observability flag
     _phase_g_error_label = ""         # V141 A.3.1 BUG #4 — telemetry label
     if cfg["detect_generation"](message):
@@ -1098,6 +1141,7 @@ async def _prepare_chat_context_base(
                                 _grid["exclusions"] = _active_excl
                             _parts.append(f"--- Grille {idx}/{len(_grids)} ---\n" + cfg["format_generation_context"](_grid))
                         _generation_context = "\n\n".join(_parts)
+                    _grid_fallback = _format_grid_fallback(_grids, cfg.get("game", "loto"), lang)
                     _sec_val = _forced[cfg["forced_secondary_key"]]
                     logger.info(
                         f"{_lp} Phase G — {len(_grids)} grille(s) generee(s) mode={_gen_mode} "
@@ -1255,6 +1299,7 @@ async def _prepare_chat_context_base(
         contents, _ = build_gemini_contents(
             history, message, cfg["detect_insulte"],
             max_messages=_MAX_HISTORY_MESSAGES_CONTINUATION,
+            fallback_texts=(_fallback,),
         )
         logger.info(
             f"{_lp} V131.F continuation truncation: {len(history)} msgs → "
@@ -1321,7 +1366,11 @@ async def _prepare_chat_context_base(
     # Solution : si Phase G attempted + weekday relatif → Phase G porte seule
     # la réponse (pas de `[TIRAGE passé]` injecté). Cas legitime "résultats du
     # tirage de mercredi dernier" préservé car `detect_generation` ne match pas.
-    _skip_phase_t_for_gen_intent = _phase_g_attempted and _is_relative_weekday(message, lang)
+    # Lot Gemini 1 G12a — idem pour une génération datée sans mot-clé de tirage
+    # (« 5 grilles … du 23 octobre 2026 » : la date complète suffit désormais à la Phase T)
+    _skip_phase_t_for_gen_intent = _phase_g_attempted and (
+        _is_relative_weekday(message, lang) or not _has_tirage_keyword(message)
+    )
     if _skip_phase_t_for_gen_intent:
         logger.info(
             f"{_lp} [V131.G-bis] Skip Phase T (weekday relatif + intent generation, lang={lang})"
@@ -1672,6 +1721,11 @@ async def _prepare_chat_context_base(
         _combo_msgs = _SQL_LIMIT_MESSAGES if _sql_status == "LIMIT" else _COMBO_UNAVAILABLE_MESSAGES
         enrichment_context = _COMBO_UNAVAILABLE_SQL_GUARD + _combo_msgs.get(lang, _combo_msgs["en"])
         logger.warning(f"{_lp} P-exact SQL indisponible (status={_sql_status})")
+    # Lot Gemini 1 G16 — grille générée : la garde « indisponible » (aucun chiffre) contredirait
+    # la grille, qui porte alors seule la réponse
+    if _generation_context and enrichment_context.startswith(_SQL_UNAVAILABLE_GUARD):
+        enrichment_context = ""
+        logger.info(f"{_lp} SQL indisponible a cote d'une grille : garde retiree, la grille porte la reponse")
     # V141 A.3.1 BUG #4 — `_phase = "G"` préservé si Phase G failed (observability)
 
     if force_sql and not enrichment_context:
@@ -1741,6 +1795,8 @@ async def _prepare_chat_context_base(
         "_game": cfg.get("game", "loto"),
         # V131.G — flag strict mode lu depuis env var au module-load (config/engine.py)
         "_strict_hallucination_block": STRICT_HALLUCINATION_BLOCK_ENABLED,
+        # Lot Gemini 1 G5 — grille du moteur en clair, utilisée par tous les replis du chat
+        "_grid_fallback": _grid_fallback,
         "_chat_meta": {
             "phase": _phase, "t0": _t0, "lang": lang,
             "sql_query": _sql_query, "sql_status": _sql_status,

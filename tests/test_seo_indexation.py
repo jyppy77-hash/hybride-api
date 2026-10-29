@@ -1080,7 +1080,7 @@ class TestAppVersion:
         x-default launcher → /fr) + prompts chatbot sans formule ; /accueil inchangé (golden T9).
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.060"
+        assert APP_VERSION == "1.6.061"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

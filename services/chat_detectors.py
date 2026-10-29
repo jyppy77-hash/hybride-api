@@ -61,6 +61,7 @@ from services.base_chat_detectors import (  # noqa: F401
     _is_user_sql_request,
 )
 from services.base_chat_detect_temporal import _mask_dates  # Lot phase P
+from services.base_chat_detect_correlation import _is_combo_question  # Lot Gemini 1 G8
 
 
 # ────────────────────────────────────────────
@@ -188,6 +189,9 @@ def _detect_grille(message: str):
         _CHANCE_RE + r'\s*[:\s]*(\d{1,2})',
         r'n[°o]?\s*' + _CHANCE_RE + r'\s*[:\s]*(\d{1,2})',
         r'\+\s*(\d{1,2})\s*$',
+        # Lot Gemini 1 G8 — « étoile » = numéro chance en Loto (« … et 8 etoile au loto »)
+        r'[eé]toiles?\s*[:\s]*(\d{1,2})',
+        r'(\d{1,2})\s*[eé]toiles?\b',
     ]
     for pat in chance_patterns:
         m = re.search(pat, text)
@@ -208,10 +212,21 @@ def _detect_grille(message: str):
             seen.add(n)
             unique_nums.append(n)
 
-    if len(unique_nums) != 5:
-        return None, None
+    if len(unique_nums) == 5:
+        return unique_nums, chance
 
-    return unique_nums, chance
+    # Lot Gemini 1 G8 — 6e numéro final = chance, avec ou sans connecteur
+    # (« 10 12 29 34 46 et le 8 », « 5 11 25 33 49 7 »). Dates masquées ; une question
+    # de combinaison (« … ensemble ? ») reste en phase P ; une demande de génération
+    # (« fais-moi une grille avec 3 7 12 25 33 et 8 ») reste à la Phase G seule.
+    if chance is None and not _is_combo_question(message) and not _detect_generation(message):
+        masked = [int(x) for x in re.findall(r'\b(\d{1,2})\b', _mask_dates(text))]
+        masked = [n for n in masked if 1 <= n <= 49]
+        uniq = list(dict.fromkeys(masked))
+        if len(uniq) == 6 and 1 <= uniq[5] <= 10 and masked[-1] == uniq[5]:
+            return uniq[:5], uniq[5]
+
+    return None, None
 
 
 # ────────────────────────────────────────────

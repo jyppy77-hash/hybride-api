@@ -205,7 +205,7 @@ def _extract_last_factual_context(history: list | None) -> str | None:
 
 def _check_sql_number_hallucination(
     enrichment_context: str, gemini_response: str, phase: str, log_prefix: str,
-    lang: str = "fr", history: list | None = None,
+    lang: str = "fr", history: list | None = None, user_message: str = "",
 ) -> str | None:
     """Check Gemini response for hallucinated draw numbers.
 
@@ -259,18 +259,26 @@ def _check_sql_number_hallucination(
         enrichment_context = transitive
     elif phase not in ("1", "T", "SQL"):
         return None
-    m = _DATA_TAG_RE.search(enrichment_context or "")
-    if not m:
+    # Lot Gemini 1 G7 (a) : union de TOUS les blocs factuels (stats, tirage, SQL, grille
+    # générée…), et plus seulement le 1er. Un bloc « aucun résultat » n'apporte aucun numéro.
+    bodies = [
+        m.group(1) for m in _DATA_TAG_RE.finditer(enrichment_context or "")
+        if "aucun résultat" not in m.group(1).lower()
+    ]
+    if not bodies:
         return None
-    data_body = m.group(1)
-    if "aucun résultat" in data_body.lower():
-        return None
-    context_numbers = set(re.findall(r'\b(\d{1,2})\b', data_body))
+    data_body = bodies[0]
+    context_numbers = set()
+    for _body in bodies:
+        context_numbers |= set(re.findall(r'\b(\d{1,2})\b', _body))
     if not context_numbers:
         return None
+    # Lot Gemini 1 G7 (b) : les numéros cités par l'utilisateur ne sont pas inventés
+    # (cas 8452 : grille de l'utilisateur recopiée dans la réponse)
+    user_numbers = set(re.findall(r'\b(\d{1,2})\b', user_message or ""))
     response_numbers = set(re.findall(r'\b(\d{1,2})\b', gemini_response))
     # Check 1: numbers from context missing in response — log-only (incomplete ≠ false)
-    missing = context_numbers - response_numbers
+    missing = set(re.findall(r'\b(\d{1,2})\b', data_body)) - response_numbers
     if missing:
         logger.warning(
             "HALLUCINATION_RISK: %s context numbers %s missing from Gemini response. "
@@ -278,10 +286,19 @@ def _check_sql_number_hallucination(
             log_prefix, sorted(missing, key=int), phase, data_body.strip(),
         )
     # V99 F08 + V101 strict: invented numbers in draw-like sequences → BLOCK
-    seq_match = _DRAW_SEQUENCE_RE.search(gemini_response)
-    if seq_match:
-        seq_nums = set(seq_match.groups())
-        invented = seq_nums - context_numbers
+    sequences = list(_DRAW_SEQUENCE_RE.finditer(gemini_response))
+    if sequences:
+        seq_match = sequences[0]
+        invented = set(seq_match.groups()) - context_numbers - user_numbers
+        # Lot Gemini 1 G7 (c) : séquences suivantes comparées en journal seul (aucun blocage)
+        for _extra in sequences[1:]:
+            _extra_invented = set(_extra.groups()) - context_numbers - user_numbers
+            if _extra_invented:
+                logger.warning(
+                    "HALLUCINATION_INVENTED_EXTRA: %s numbers %s in response draw sequence "
+                    "but ABSENT from context (log-only). Phase=%s | sequence=%s",
+                    log_prefix, sorted(_extra_invented, key=int), phase, _extra.group(0),
+                )
         if invented:
             logger.warning(
                 "HALLUCINATION_INVENTED: %s numbers %s in response draw sequence "
@@ -1130,7 +1147,8 @@ def _anchor_head_should_flush(head: str) -> bool:
     return len(stripped) < len(head) and bool(stripped.strip())
 
 
-def build_gemini_contents(history, message, detect_insulte_fn, max_messages: int | None = None):
+def build_gemini_contents(history, message, detect_insulte_fn, max_messages: int | None = None,
+                          fallback_texts=()):
     """
     Process chat history into Gemini contents array.
     Strips insult exchanges, maps roles, deduplicates consecutive same-role messages.
@@ -1139,6 +1157,9 @@ def build_gemini_contents(history, message, detect_insulte_fn, max_messages: int
     V131.F — `max_messages` (opt) override la troncature default
     `_MAX_HISTORY_MESSAGES`. Utilisé par `_prepare_chat_context_base` pour
     rebuilder `contents` avec 8 msgs en mode continuation Phase 0/AFFIRMATION.
+
+    Lot Gemini 1 G10 — les messages assistant de repli (strict, sans chunk,
+    `fallback_texts` du jeu) ne sont pas transmis à Gemini.
     """
     history = history or []
     _cap = max_messages if max_messages is not None else _MAX_HISTORY_MESSAGES
@@ -1158,6 +1179,8 @@ def build_gemini_contents(history, message, detect_insulte_fn, max_messages: int
             _skip_insult_response = False
             continue
         _skip_insult_response = False
+        if msg.role == "assistant" and _is_known_fallback(msg.content, fallback_texts):
+            continue  # Lot Gemini 1 G10
 
         role = "user" if msg.role == "user" else "model"
         # V131.G — strip sponsor + tags techniques HYBRIDE des assistant messages
@@ -1201,7 +1224,7 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
         detail = {"circuit_open": "CircuitOpen", "timeout": "Timeout"}.get(error_type, error_type)
         log_from_meta(ctx.get("_chat_meta"), module, lang, message, is_error=True, error_detail=detail)
         source = "fallback_circuit" if error_type == "circuit_open" else "fallback"
-        return {"response": fallback, "source": source, "mode": mode}
+        return {"response": _pick_fallback(ctx, fallback), "source": source, "mode": mode}
 
     # V131.A — breaker state check avant appel (ex-_breaker.call wrappait httpx.post)
     if _breaker.state == _breaker.OPEN:
@@ -1273,7 +1296,7 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
     if not text:
         logger.warning(f"{log_prefix} Reponse Gemini vide — fallback")
         log_from_meta(ctx.get("_chat_meta"), module, lang, message, is_error=True, error_detail="EmptyResponse")
-        return {"response": fallback, "source": "fallback", "mode": mode}
+        return {"response": _pick_fallback(ctx, fallback), "source": "fallback", "mode": mode}
 
     text = _clean_response(text)
     text = _strip_temporal_anchor_leak(text)  # V142.F-bis — anti-fuite bloc ancrage
@@ -1287,7 +1310,9 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
     _um = getattr(response, "usage_metadata", None)  # 1.6.055 — tokens jusqu'à chat_log
     _tin = _as_int(getattr(_um, "prompt_token_count", None), 0)
     _tout = _as_int(getattr(_um, "candidates_token_count", None), 0)
-    log_from_meta(ctx.get("_chat_meta"), module, lang, message, text, tokens_in=_tin, tokens_out=_tout)
+    _echoed = _is_known_fallback(text, (fallback,))  # Lot Gemini 1 G10
+    log_from_meta(ctx.get("_chat_meta"), module, lang, message, text, tokens_in=_tin, tokens_out=_tout,
+                  is_error=_echoed, error_detail="EchoedFallback" if _echoed else None)
 
     # V100 R01 + V101 strict + V125 A2/A3: Anti-hallucination check
     _meta = ctx.get("_chat_meta") or {}
@@ -1296,6 +1321,7 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
         _meta.get("phase", ""), log_prefix,
         lang=_meta.get("lang", lang),
         history=ctx.get("history"),
+        user_message=message,
     )
     if _safe_replacement:
         text = _safe_replacement
@@ -1351,6 +1377,25 @@ _STRICT_BLOCK_FALLBACK_I18N = {
     "de": "🤖 Ich kann diese Frage nicht mit Sicherheit beantworten. Kannst du sie umformulieren oder eine konkretere Frage stellen?",
     "nl": "🤖 Ik kan deze vraag niet met zekerheid beantwoorden. Kun je herformuleren of een specifiekere vraag stellen?",
 }
+
+
+# Lot Gemini 1 G10 — replis connus. Jamais renvoyés à Gemini dans l'historique, et une
+# réponse Gemini qui en recopie un compte comme une erreur (cas 8453 : message strict
+# recopié, réponse journalisée « réussie »).
+_KNOWN_FALLBACK_TEXTS = tuple(_NOCHUNKS_FALLBACK_I18N.values()) + tuple(_STRICT_BLOCK_FALLBACK_I18N.values())
+
+
+def _is_known_fallback(text: str, extra=()) -> bool:
+    """Vrai si `text` commence par un message de repli connu (ou par l'un de `extra`)."""
+    t = (text or "").strip()
+    if not t:
+        return False
+    return any(t.startswith(fb) for fb in _KNOWN_FALLBACK_TEXTS + tuple(f for f in extra if f))
+
+
+def _pick_fallback(ctx: dict, fallback: str) -> str:
+    """Lot Gemini 1 G5 — la grille du moteur survit à un échec Gemini (repli grille si présent)."""
+    return ctx.get("_grid_fallback") or fallback
 
 
 # V143 — Retries 429 du stream chat (pattern V129.1, cf. services/gemini.py :
@@ -1464,7 +1509,8 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
 
         if not has_chunks:
             # V131.F — yield fallback i18n lang-aware (était fallback FR hardcodé)
-            _i18n_fb = _NOCHUNKS_FALLBACK_I18N.get(lang, _NOCHUNKS_FALLBACK_I18N["fr"])
+            # Lot Gemini 1 G5 — repli grille en priorité si la phase G a produit une grille
+            _i18n_fb = _pick_fallback(ctx, _NOCHUNKS_FALLBACK_I18N.get(lang, _NOCHUNKS_FALLBACK_I18N["fr"]))
             # V143 #3 — error_detail différencié : Vertex429 (DSQ rate limit) /
             # InterChunkTimeout (1er-token ou inter-chunk, zéro émis) / VertexError
             # (4xx-5xx zéro émis) / NoChunks (vrai zéro-token sans erreur).
@@ -1491,6 +1537,7 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
                 _meta.get("phase", ""), log_prefix,
                 lang=_meta.get("lang", lang),
                 history=ctx.get("history"),
+                user_message=message,
             )
             if _safe_repl:
                 _block_replacement = _safe_repl
@@ -1533,7 +1580,9 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
 
             if _block_replacement:
                 # Hallucination détectée — yield message i18n strict mode au lieu du buffer
-                _strict_msg = _STRICT_BLOCK_FALLBACK_I18N.get(lang, _STRICT_BLOCK_FALLBACK_I18N["fr"])
+                # Lot Gemini 1 G5 (Q4) — grille générée : repli grille à la place du message strict
+                _strict_msg = _pick_fallback(
+                    ctx, _STRICT_BLOCK_FALLBACK_I18N.get(lang, _STRICT_BLOCK_FALLBACK_I18N["fr"]))
                 log_from_meta(
                     ctx.get("_chat_meta"), module, lang, message, _strict_msg,
                     is_error=True, error_detail="StrictHallucinationBlock",
@@ -1567,8 +1616,10 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
         yield sse_event({
             "chunk": "", "source": "gemini", "mode": mode, "is_done": True,
         })
+        _echoed = _is_known_fallback(_full_response, (fallback,))  # Lot Gemini 1 G10
         log_from_meta(ctx.get("_chat_meta"), module, lang, message, _full_response,
-                      tokens_in=_usage_box.get("tokens_in", 0), tokens_out=_usage_box.get("tokens_out", 0))
+                      tokens_in=_usage_box.get("tokens_in", 0), tokens_out=_usage_box.get("tokens_out", 0),
+                      is_error=_echoed, error_detail="EchoedFallback" if _echoed else None)
 
         # V96+V101+V125 A2/A3: Anti-hallucination check — log-only on streaming path
         # (stream already sent to client, cannot be replaced).
@@ -1580,6 +1631,7 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
                 _meta.get("phase", ""), log_prefix,
                 lang=_meta.get("lang", lang),
                 history=ctx.get("history"),
+                user_message=message,
             )
             # V126 3.5-A + V126.1 F3: Phase 0 post-hoc draw-date verification —
             # LOG-ONLY on stream (stream déjà émis, cannot replace).
@@ -1604,7 +1656,7 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
         logger.warning(f"{log_prefix} Circuit breaker ouvert — fallback")
         log_from_meta(ctx.get("_chat_meta"), module, lang, message, is_error=True, error_detail="CircuitOpen")
         yield sse_event({
-            "chunk": fallback,
+            "chunk": _pick_fallback(ctx, fallback),
             "source": "fallback_circuit", "mode": mode, "is_done": True,
         })
     except (asyncio.TimeoutError, httpx.TimeoutException):
@@ -1613,14 +1665,14 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
         logger.warning(f"{log_prefix} Timeout Gemini (stream) — fallback")
         log_from_meta(ctx.get("_chat_meta"), module, lang, message, is_error=True, error_detail="Timeout")
         yield sse_event({
-            "chunk": fallback,
+            "chunk": _pick_fallback(ctx, fallback),
             "source": "fallback", "mode": mode, "is_done": True,
         })
     except Exception as e:
         logger.error(f"{log_prefix} Erreur streaming: {e}")
         log_from_meta(ctx.get("_chat_meta"), module, lang, message, is_error=True, error_detail=str(e)[:255])
         yield sse_event({
-            "chunk": fallback,
+            "chunk": _pick_fallback(ctx, fallback),
             "source": "fallback", "mode": mode, "is_done": True,
         })
 

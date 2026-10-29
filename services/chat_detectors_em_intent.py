@@ -18,6 +18,7 @@ from services.base_chat_detectors import (
     _detect_requete_complexe_base,  # F06 V83
 )
 from services.base_chat_detect_temporal import _mask_dates  # Lot phase P
+from services.base_chat_detect_correlation import _is_combo_question  # Lot Gemini 1 G8
 
 
 # ────────────────────────────────────────────
@@ -331,10 +332,22 @@ def _detect_grille_em(message: str):
             seen.add(n)
             unique_nums.append(n)
 
-    if len(unique_nums) != 5:
-        return None, None
+    if len(unique_nums) == 5:
+        return unique_nums, etoiles
 
-    return unique_nums, etoiles
+    # Lot Gemini 1 G8 — 2 derniers numéros = étoiles, avec ou sans connecteur
+    # (« 3 15 22 41 48 et 2 et 9 », « 19-23-25-30-29-3-5 »). Dates masquées ; une question
+    # de combinaison (« … ensemble ? ») reste en phase P ; une demande de génération
+    # (« génère une grille avec 3 15 22 41 48 et 2 et 9 ») reste à la Phase G seule.
+    if etoiles is None and not _is_combo_question(message) and not _detect_generation(message):
+        masked = [int(x) for x in re.findall(r'\b(\d{1,2})\b', _mask_dates(text))]
+        masked = [n for n in masked if 1 <= n <= 50]
+        uniq = list(dict.fromkeys(masked))
+        if (len(uniq) == 7 and all(1 <= e <= 12 for e in uniq[5:])
+                and masked[-2:] == uniq[5:]):
+            return uniq[:5], uniq[5:]
+
+    return None, None
 
 
 # ════════════════════════════════════════════════════════════

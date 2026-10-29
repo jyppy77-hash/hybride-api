@@ -213,6 +213,19 @@ _DE_DATE_RE = re.compile(
 )
 
 
+# Lot Gemini 1 G12a — marqueurs de période (6 langues) : une date qu'ils introduisent
+# borne une statistique, elle ne désigne pas un tirage.
+_PERIOD_MARKER_RE = re.compile(
+    r'\b(?:depuis|entre|avant|apr[eè]s|[àa]\s+partir\s+d(?:e|u|es)?|jusqu|d[eè]s\s+le'   # FR
+    r'|since|between|before|after|from|until|till|up\s+to'                               # EN
+    r'|desde|antes|despu[eé]s|hasta'                                                     # ES
+    r'|depois|at[eé]'                                                                    # PT
+    r'|seit|zwischen|vor|nach|ab|bis'                                                    # DE
+    r'|sinds|tussen|voor|na|vanaf|tot)\b',                                               # NL
+    re.IGNORECASE,
+)
+
+
 def _detect_tirage(message: str) -> date | str | None:
     """
     Detecte si l'utilisateur demande les resultats d'un tirage (6 langues).
@@ -229,9 +242,18 @@ def _detect_tirage(message: str) -> date | str | None:
     if _STAT_NEUTRALIZE_RE.search(lower):
         return None
 
+    # Lot Gemini 1 G12a — une date complète AVEC année suffit, sans mot-clé de tirage
+    # (« Le loto du 26 octobre 2026 », cas 8697). Sans année, le mot-clé reste exigé.
+    # Jamais pour une date de période (« depuis le 1er janvier 2024 », « entre … et … ») :
+    # c'est un filtre statistique, pas un tirage.
+    _kw = bool(re.search(_TIRAGE_KW, lower))
+    _year_ok = not _PERIOD_MARKER_RE.search(lower)
+
     # Date explicite DD/MM/YYYY ou DD/MM ou DD-MM-YYYY
-    m = re.search(r'(\d{1,2})[/\-](\d{1,2})(?:[/\-](\d{4}))?', lower)
-    if m and re.search(_TIRAGE_KW, lower):
+    # Lot Gemini 1 G12a — DD.MM.YYYY (point : année à 4 chiffres, comme _mask_dates)
+    m = (re.search(r'\b(\d{1,2})\.(\d{1,2})\.(\d{4})\b', lower)
+         or re.search(r'(\d{1,2})[/\-](\d{1,2})(?:[/\-](\d{4}))?', lower))
+    if m and (_kw or (_year_ok and m.group(3))):
         day, month = int(m.group(1)), int(m.group(2))
         year = int(m.group(3)) if m.group(3) else date.today().year
         try:
@@ -242,12 +264,13 @@ def _detect_tirage(message: str) -> date | str | None:
     # Date textuelle : "9 février 2026", "15 January", "3 marzo 2025"
     # V141 A.2 — `+ _ORDINAL_NUMERIC_FR_RE` accepte ordinaux numériques
     # (1er/1°/1ème/1st/etc.) pour fix BUG #2 audit V140 Phase 2.5.
+    # Lot Gemini 1 G12a — « de » ES/PT : « 26 de octubre de 2026 »
     m = re.search(
-        r'(\d{1,2})' + _ORDINAL_NUMERIC_FR_RE + r'\s+' + _MOIS_NOM_RE
-        + r'(?:\s+(\d{4}))?',
+        r'(\d{1,2})' + _ORDINAL_NUMERIC_FR_RE + r'\s+(?:de\s+)?' + _MOIS_NOM_RE
+        + r'(?:\s+(?:de\s+)?(\d{4}))?',
         lower,
     )
-    if m and re.search(_TIRAGE_KW, lower):
+    if m and (_kw or (_year_ok and m.group(3))):
         day = int(m.group(1))
         month_str = (m.group(2)
                      .replace('\xe9', 'e').replace('\xfb', 'u')
@@ -269,7 +292,7 @@ def _detect_tirage(message: str) -> date | str | None:
         + r'(?:\s+(?:de\s+|of\s+)?(\d{4}))?',
         lower,
     )
-    if m and re.search(_TIRAGE_KW, lower):
+    if m and (_kw or (_year_ok and m.group(2))):
         month_str = (m.group(1)
                      .replace('\xe9', 'e').replace('\xfb', 'u')
                      .replace('\xe8', 'e').replace('\xe7', 'c')
@@ -292,7 +315,7 @@ def _detect_tirage(message: str) -> date | str | None:
         + r'(?:[,.]?\s+(\d{4}))?',
         lower,
     )
-    if m and re.search(_TIRAGE_KW, lower):
+    if m and (_kw or (_year_ok and m.group(3))):
         month_str = (m.group(1)
                      .replace('\xe9', 'e').replace('\xfb', 'u')
                      .replace('\xe8', 'e').replace('\xe7', 'c')
@@ -308,7 +331,7 @@ def _detect_tirage(message: str) -> date | str | None:
 
     # DE date format: "15. März 2026"
     m = _DE_DATE_RE.search(lower)
-    if m and re.search(_TIRAGE_KW, lower):
+    if m and (_kw or (_year_ok and m.group(3))):
         day = int(m.group(1))
         month_str = m.group(2).replace('\xe4', 'a')
         month = _MOIS_TO_NUM.get(month_str)
@@ -384,6 +407,15 @@ def _is_relative_weekday(message: str, lang: str = "fr") -> bool:
     """
     pattern = _RELATIVE_WEEKDAY_RE.get(lang, _RELATIVE_WEEKDAY_RE["fr"])
     return bool(pattern.search(message or ""))
+
+
+def _has_tirage_keyword(message: str) -> bool:
+    """Lot Gemini 1 G12a — le message contient un mot-clé de tirage (6 langues).
+
+    Une demande de génération datée sans mot-clé (« 5 grilles pour l'euro million du
+    23 octobre 2026 ») ne doit pas passer en Phase T à côté de la grille.
+    """
+    return bool(re.search(_TIRAGE_KW, (message or "").lower()))
 
 
 # ────────────────────────────────────────────
