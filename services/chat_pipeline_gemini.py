@@ -578,6 +578,19 @@ _EM_STARS_RE = re.compile(
 # (base_chat_utils._format_grille_context_base : boules triées, séparateur espace).
 _GRID_HEADER_RE = re.compile(r'\[ANALYSE DE GRILLE - (\d{1,2}(?: \d{1,2}){4})\b')
 
+# Lot Gemini 1 — grilles générées par HYBRIDE (`[GRILLE GÉNÉRÉE PAR HYBRIDE]` puis
+# `Numéros : [4, 18, 27, 37, 44]`). Une grille générée n'est pas un tirage : le contrôle 2
+# ne la compare jamais au tirage d'une date citée (multi-action stats + grille, staging 29/10).
+_GEN_GRID_NUMS_RE = re.compile(r'\[GRILLE GÉNÉRÉE PAR HYBRIDE\]\s*\nNuméros : \[([\d,\s]+)\]')
+
+
+def _generated_grids(enrichment_context: str) -> set[frozenset[int]]:
+    """Boules (ensembles) des grilles générées présentes dans le contexte."""
+    return {
+        frozenset(int(n) for n in m.group(1).split(","))
+        for m in _GEN_GRID_NUMS_RE.finditer(enrichment_context or "")
+    }
+
 # Mêmes motifs et même priorité que `_parse_draw_date_multilang` (inchangée pour les
 # phases 0/1/T/3/3-bis), chaque motif avec sa conversion en `date`.
 _DATE_PATTERNS_ORDERED = (
@@ -672,6 +685,7 @@ def _find_draw_dates(text: str) -> list[tuple[int, int, date]]:
 
 def _pair_phase2_draw_citations(
     response: str, enrichment_context: str, log_prefix: str = "",
+    generated: set[frozenset[int]] | frozenset = frozenset(),
 ) -> list[tuple[date, re.Match, str]]:
     """1.6.056 P0-1 : couples (date, suite citée, texte étoiles) à vérifier en Phase 2.
 
@@ -731,6 +745,8 @@ def _pair_phase2_draw_citations(
             candidates = []
             grid_skipped = False
             for s in seqs:
+                if frozenset(int(n) for n in s.groups()) in generated:
+                    continue  # Lot Gemini 1 — grille générée, pas un tirage
                 if cited_date in block_dates and frozenset(int(n) for n in s.groups()) == grid:
                     logger.info(
                         "%s PHASE2_GRID_PAIR_SKIPPED: date=%s grid=%s | line=%.200s",
@@ -965,11 +981,13 @@ async def _recheck_phase0_draw_accuracy(
 
     if not get_tirage_fn:
         return None
+    # Lot Gemini 1 — les grilles générées citées dans la réponse ne sont pas des tirages
+    generated = _generated_grids(enrichment_context)
     # 1.6.056 P0-1 — Phase 2 : chaque date vérifiée contre la suite de sa ligne,
     # grille soumise écartée si la date vient du bloc d'analyse (cas 8011).
     if phase == "2":
         for parsed_date, seq_match, stars_text in _pair_phase2_draw_citations(
-            response, enrichment_context, log_prefix,
+            response, enrichment_context, log_prefix, generated=generated,
         ):
             replacement = await _verify_cited_draw(
                 parsed_date, seq_match, stars_text, lang, log_prefix, get_tirage_fn, game,
@@ -977,7 +995,15 @@ async def _recheck_phase0_draw_accuracy(
             if replacement:
                 return replacement
         return None
-    seq_match = _DRAW_SEQUENCE_RE.search(response)
+    # Lot Gemini 1 — 1re suite qui n'est pas une grille générée (au lieu de la 1re suite)
+    sequences = list(_DRAW_SEQUENCE_RE.finditer(response))
+    seq_match = next(
+        (s for s in sequences if frozenset(int(n) for n in s.groups()) not in generated), None)
+    if generated and sequences and seq_match is not sequences[0]:
+        logger.info(
+            "%s PHASE_GEN_GRID_SKIPPED: grille générée écartée du contrôle 2 | sequence=%s",
+            log_prefix, sequences[0].group(0),
+        )
     if not seq_match:
         return None
     parsed_date = _parse_draw_date_multilang(response)

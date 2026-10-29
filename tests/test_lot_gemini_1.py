@@ -754,3 +754,98 @@ class TestPipeline:
             _, ctx = await _loto_ctx("donne moi 5 grilles pour le loto du 26 octobre 2026")
         tirage.assert_not_called()
         assert "[GRILLE GÉNÉRÉE PAR HYBRIDE]" in ctx["_chat_meta"]["enrichment_context"]
+
+
+# ═══════════════════════════════════════════════════════
+# Contrôle 2 (PHASE_DRAW_MISMATCH) — la grille générée n'est pas un tirage
+# (smoke staging 1.6.061, 29/10 : « donne-moi les stats du 22 et fais-moi une grille »)
+# ═══════════════════════════════════════════════════════
+
+MULTI_ACTION_CTX = (
+    "[DONNÉES TEMPS RÉEL — CHIFFRES EXACTS - Numéro principal 22]\n"
+    "Fréquence totale : 122 apparitions sur 1094 tirages (11.15%)\n"
+    "Dernière sortie : 28 octobre 2026\n[/DONNÉES TEMPS RÉEL]\n\n"
+    "[RÉSULTAT TIRAGE — CHIFFRES EXACTS, NE PAS MODIFIER]\n"
+    "Tirage du 28 octobre 2026 : 1 - 14 - 22 - 28 - 29 | Numéro Chance : 3\n[/RÉSULTAT TIRAGE]\n\n"
+    "[GRILLE GÉNÉRÉE PAR HYBRIDE]\nNuméros : [4, 18, 27, 37, 44]\nNuméro Chance : 4\n"
+    "Score de conformité : 82/100\n[/GRILLE GÉNÉRÉE PAR HYBRIDE]"
+)
+REAL_LOTO_DRAW = {"date": "2026-10-28", "boules": [1, 14, 22, 28, 29], "chance": 3}
+
+
+async def _tirage_28_10(d):
+    return REAL_LOTO_DRAW if d == date(2026, 10, 28) else None
+
+
+class TestDrawRecheckGeneratedGrid:
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("resp", [
+        # stats avec le vrai tirage, puis la grille
+        "Dernière sortie du 22 le 28 octobre 2026 : 1 - 14 - 22 - 28 - 29, Chance 3.\n\n"
+        "🎲 Ta grille : 4 - 18 - 27 - 37 - 44, Chance 4.",
+        # stats sans le tirage, puis la grille (cas staging probable)
+        "Le 22 : 122 sorties, dernière le 28 octobre 2026.\n\n🎲 Ta grille : 4 - 18 - 27 - 37 - 44 + Chance 4.",
+        # grille d'abord, puis les stats avec le vrai tirage
+        "🎲 Ta grille : 4 - 18 - 27 - 37 - 44, Chance 4.\n\n"
+        "Le 22 : dernière sortie le 28 octobre 2026 (1 - 14 - 22 - 28 - 29).",
+        # date et grille dans la même phrase
+        "Le 22 est sorti le 28/10/2026 ; je te propose 4 - 18 - 27 - 37 - 44, Chance 4.",
+        # grille citée dans un autre ordre
+        "Sorti le 28 octobre 2026. Grille : 44, 37, 27, 18 et 4.",
+    ], ids=["stats_tirage_grille", "stats_sans_tirage_grille", "grille_puis_tirage",
+            "meme_phrase", "grille_ordre_libre"])
+    async def test_generated_grid_not_checked_as_draw(self, resp):
+        from services.chat_pipeline_gemini import _recheck_phase0_draw_accuracy
+        assert await _recheck_phase0_draw_accuracy(
+            resp, "1", "fr", "t", _tirage_28_10, "loto", enrichment_context=MULTI_ACTION_CTX) is None
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("resp", [
+        "Dernier tirage, le 28 octobre 2026 : 2 - 9 - 22 - 31 - 40.\n\n🎲 Ta grille : 4 - 18 - 27 - 37 - 44.",
+        "🎲 Ta grille : 4 - 18 - 27 - 37 - 44.\n\nLe 28 octobre 2026 sont sortis 5 - 12 - 22 - 33 - 41.",
+    ], ids=["invention_avant_grille", "invention_apres_grille"])
+    async def test_real_draw_invention_still_blocked(self, resp):
+        from services.chat_pipeline_gemini import _recheck_phase0_draw_accuracy
+        repl = await _recheck_phase0_draw_accuracy(
+            resp, "1", "fr", "t", _tirage_28_10, "loto", enrichment_context=MULTI_ACTION_CTX)
+        assert repl is not None
+        assert "1 - 14 - 22 - 28 - 29" in repl
+
+    @pytest.mark.asyncio
+    async def test_without_generated_grid_unchanged(self):
+        """Sans grille générée dans le contexte, la 1re suite reste vérifiée comme avant."""
+        from services.chat_pipeline_gemini import _recheck_phase0_draw_accuracy
+        ctx = MULTI_ACTION_CTX.split("\n\n[GRILLE")[0]
+        repl = await _recheck_phase0_draw_accuracy(
+            "Le 28 octobre 2026 : 4 - 18 - 27 - 37 - 44.", "1", "fr", "t", _tirage_28_10, "loto",
+            enrichment_context=ctx)
+        assert repl is not None
+
+    @pytest.mark.asyncio
+    async def test_em_generated_grid_with_stars(self):
+        from services.chat_pipeline_gemini import _recheck_phase0_draw_accuracy
+        ctx = (
+            "[DONNÉES TEMPS RÉEL — CHIFFRES EXACTS - Numéro boule 22]\nDernière sortie : 27 octobre 2026\n"
+            "[/DONNÉES TEMPS RÉEL]\n\n[GRILLE GÉNÉRÉE PAR HYBRIDE]\nNuméros : [3, 15, 22, 41, 48]\n"
+            "Étoiles : [2, 9]\n[/GRILLE GÉNÉRÉE PAR HYBRIDE]"
+        )
+
+        async def _em(d):
+            return {"date": "2026-10-27", "boules": [5, 11, 22, 30, 47], "etoiles": [1, 8]}
+        resp = "Le 22 est sorti le 27 octobre 2026.\n\nTa grille : 3 - 15 - 22 - 41 - 48, étoiles 2 et 9."
+        assert await _recheck_phase0_draw_accuracy(resp, "1", "fr", "t", _em, "em", enrichment_context=ctx) is None
+
+    @pytest.mark.asyncio
+    async def test_phase_2_generated_grid_on_date_line_skipped(self):
+        """Phase 2 + grille générée (« fais-moi une grille avec 3 7 12 25 33 ») : appariement par ligne."""
+        from services.chat_pipeline_gemini import _recheck_phase0_draw_accuracy
+        ctx = (
+            "[ANALYSE DE GRILLE - 3 7 12 25 33]\nMeilleure correspondance : 4 numéros le 28 octobre 2026\n\n"
+            "[GRILLE GÉNÉRÉE PAR HYBRIDE]\nNuméros : [3, 7, 12, 25, 44]\nNuméro Chance : 4\n"
+            "[/GRILLE GÉNÉRÉE PAR HYBRIDE]"
+        )
+        ok = "Le 28 octobre 2026, je te propose 3 - 7 - 12 - 25 - 44, Chance 4."
+        bad = "Le 28 octobre 2026 sont sortis 2 - 9 - 22 - 31 - 40."
+        assert await _recheck_phase0_draw_accuracy(ok, "2", "fr", "t", _tirage_28_10, "loto", enrichment_context=ctx) is None
+        assert await _recheck_phase0_draw_accuracy(bad, "2", "fr", "t", _tirage_28_10, "loto", enrichment_context=ctx) is not None
