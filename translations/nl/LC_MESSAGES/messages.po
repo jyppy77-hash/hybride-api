@@ -769,13 +769,15 @@ msgstr "De HYBRIDE-engine in een oogopslag"
 msgid ""
 "HYBRIDE analyse les données historiques des tirages européens de "
 "l'EuroMillions (5 numéros de 1 à 50 + 2 étoiles de 1 à 12). Il combine "
-"une pondération long terme (60%) et court terme (40%) pour produire des "
-"indicateurs statistiques fiables."
+"trois fenêtres d'analyse (5 dernières années, 2 dernières années et "
+"ensemble de l'historique disponible) pour produire des indicateurs "
+"statistiques fiables."
 msgstr ""
 "HYBRIDE analyseert de historische gegevens van de Europese EuroMillions-"
 "trekkingen (5 nummers van 1 tot 50 + 2 sterren van 1 tot 12). Het "
-"combineert een langetermijnweging (60%) en een kortetermijnweging (40%) "
-"om betrouwbare statistische indicatoren te produceren."
+"combineert drie analysevensters (laatste 5 jaar, laatste 2 jaar en de "
+"volledige beschikbare geschiedenis) om betrouwbare statistische "
+"indicatoren te produceren."
 
 #: ui/templates/em/accueil.html:778
 msgid "Analyse des fréquences d'apparition de chaque numéro"
@@ -2235,13 +2237,14 @@ msgstr ""
 
 #: ui/templates/em/generateur.html:302
 msgid ""
-"Il combine analyse long terme (60%) et tendances récentes (40%) pour "
-"générer des grilles de 5 numéros + 2 étoiles statistiquement équilibrées "
-"avec un indice de convergence."
+"Il combine trois fenêtres d'analyse (5 dernières années, 2 dernières "
+"années et ensemble de l'historique disponible) pour générer des grilles "
+"de 5 numéros + 2 étoiles statistiquement équilibrées avec un indice de "
+"convergence."
 msgstr ""
-"Het combineert langetermijnanalyse (60%) en recente trends (40%) om "
-"statistisch evenwichtige roosters van 5 nummers + 2 sterren met een "
-"convergentie-index te genereren."
+"Het combineert drie analysevensters (laatste 5 jaar, laatste 2 jaar en de"
+" volledige beschikbare geschiedenis) om statistisch evenwichtige roosters"
+" van 5 nummers + 2 sterren met een convergentie-index te genereren."
 
 #: ui/templates/em/generateur.html:309
 msgid "L'EuroMillions est-il prévisible ?"
@@ -3217,23 +3220,29 @@ msgstr "Fundamenteel principe"
 #: ui/templates/em/methodologie.html:74
 msgid ""
 "La méthodologie <strong>« 5 ans + 2 »</strong> est le cœur du moteur "
-"HYBRIDE appliqué à l'EuroMillions. Elle combine deux horizons temporels "
-"pour équilibrer stabilité statistique et réactivité aux tendances."
+"HYBRIDE appliqué à l'EuroMillions. Elle combine trois fenêtres d'analyse "
+"— les 5 dernières années, les 2 dernières années et l'ensemble de "
+"l'historique disponible — pour équilibrer stabilité statistique et "
+"réactivité aux tendances."
 msgstr ""
 "De methodologie <strong>« 5 jaar + 2 »</strong> is het hart van de "
-"HYBRIDE-engine toegepast op EuroMillions. Het combineert twee "
-"tijdshorizonten om statistische stabiliteit en reactievermogen op trends "
-"in evenwicht te brengen."
+"HYBRIDE-engine toegepast op EuroMillions. Het combineert drie "
+"analysevensters — de laatste 5 jaar, de laatste 2 jaar en de volledige "
+"beschikbare geschiedenis — om statistische stabiliteit en reactievermogen"
+" op trends in evenwicht te brengen."
 
 #: ui/templates/em/methodologie.html:77
-msgid "Analyse de fréquence sur l'ensemble de l'historique disponible (2019-2026)"
-msgstr "Frequentieanalyse over de volledige beschikbare geschiedenis (2019-2026)"
+msgid "Analyse de fréquence sur les 5 dernières années de tirages"
+msgstr "Frequentieanalyse over de trekkingen van de laatste 5 jaar"
 
 #: ui/templates/em/methodologie.html:78
 msgid ""
-"Pondération renforcée sur les 2 dernières années pour capter les "
-"tendances récentes"
-msgstr "Versterkte weging op de laatste 2 jaar om recente trends te vangen"
+"Analyse des 2 dernières années pour capter les tendances récentes ; comme"
+" ces tirages comptent aussi dans les autres fenêtres, ils pèsent "
+"davantage"
+msgstr ""
+"Analyse van de laatste 2 jaar om recente trends te vangen; omdat deze "
+"trekkingen ook in de andere vensters meetellen, wegen ze zwaarder"
 
 #: ui/templates/em/methodologie.html:84
 msgid "Sources de données"
@@ -3312,8 +3321,8 @@ msgid "Dispersion (écart entre min et max)"
 msgstr "Spreiding (verschil tussen min en max)"
 
 #: ui/templates/em/methodologie.html:110
-msgid "Somme totale (plage optimale : ~125)"
-msgstr "Totale som (optimaal bereik: ~125)"
+msgid "Somme totale (plage de référence : 94 à 161 ; en dehors, la grille est pénalisée, pas exclue)"
+msgstr "Totale som (referentiebereik: 94 tot 161; daarbuiten wordt de combinatie bestraft, niet uitgesloten)"
 
 #: ui/templates/em/methodologie.html:111
 msgid "Détection de suites consécutives"
@@ -3328,8 +3337,8 @@ msgid "Pondération temporelle"
 msgstr "Tijdelijke weging"
 
 #: ui/templates/em/methodologie.html:119
-msgid "Le moteur HYBRIDE applique un système de pondération en deux couches :"
-msgstr "De HYBRIDE-engine past een wegingssysteem in twee lagen toe:"
+msgid "Le moteur HYBRIDE combine trois fenêtres d'analyse, regroupées en deux couches :"
+msgstr "De HYBRIDE-engine combineert drie analysevensters, gegroepeerd in twee lagen:"
 
 #: ui/templates/em/methodologie.html:121
 msgid "Couche 1 — Base long terme"
@@ -3337,13 +3346,15 @@ msgstr "Laag 1 — Langetermijnbasis"
 
 #: ui/templates/em/methodologie.html:122
 msgid ""
-"L'historique complet des tirages EuroMillions est analysé pour établir "
-"les fréquences de référence. Cette base assure la stabilité statistique "
-"et identifie les tendances profondes."
+"Les 5 dernières années et l'ensemble de l'historique disponible des "
+"tirages EuroMillions sont analysés pour établir les fréquences et les "
+"retards de référence. Cette base assure la stabilité statistique et "
+"identifie les tendances profondes."
 msgstr ""
-"De volledige EuroMillions-trekkingsgeschiedenis wordt geanalyseerd om de "
-"referentiefrequenties vast te stellen. Deze basis verzekert de "
-"statistische stabiliteit en identificeert de diepe trends."
+"De laatste 5 jaar en de volledige beschikbare EuroMillions-"
+"trekkingsgeschiedenis worden geanalyseerd om de referentiefrequenties en "
+"-achterstanden vast te stellen. Deze basis verzekert de statistische "
+"stabiliteit en identificeert de diepe trends."
 
 #: ui/templates/em/methodologie.html:124
 msgid "Couche 2 — Boost récent"
@@ -3351,23 +3362,25 @@ msgstr "Laag 2 — Recente boost"
 
 #: ui/templates/em/methodologie.html:125
 msgid ""
-"Les tirages des 2 dernières années reçoivent un coefficient de "
-"pondération plus élevé. Cela permet de capter les éventuelles inflexions "
-"de tendance sans perdre la perspective historique."
+"Les 2 dernières années sont analysées à part. Comme les fenêtres se "
+"recouvrent, un tirage récent compte dans les trois et pèse donc "
+"davantage. Cela permet de capter les éventuelles inflexions de tendance "
+"sans perdre la perspective historique."
 msgstr ""
-"De trekkingen van de laatste 2 jaar krijgen een hogere "
-"wegingscoëfficiënt. Dit maakt het mogelijk om eventuele trendwijzigingen "
-"op te vangen zonder het historische perspectief te verliezen."
+"De laatste 2 jaar worden apart geanalyseerd. Omdat de vensters elkaar "
+"overlappen, telt een recente trekking in alle drie mee en weegt ze dus "
+"zwaarder. Dit maakt het mogelijk om eventuele trendwijzigingen op te "
+"vangen zonder het historische perspectief te verliezen."
 
 #: ui/templates/em/methodologie.html:128
 msgid ""
-"Ce double horizon est la raison du nom <strong>« 5 ans + 2 »</strong> : 5"
-" ans de profondeur historique, avec un poids renforcé sur les 2 dernières"
-" années."
+"Le nom <strong>« 5 ans + 2 »</strong> désigne les fenêtres des 5 et des 2"
+" dernières années ; le moteur y ajoute l'ensemble de l'historique "
+"disponible."
 msgstr ""
-"Deze dubbele horizon is de reden voor de naam <strong>« 5 jaar + 2 "
-"»</strong>: 5 jaar historische diepgang, met een versterkt gewicht op de "
-"laatste 2 jaar."
+"De naam <strong>« 5 jaar + 2 »</strong> verwijst naar de vensters van de "
+"laatste 5 en de laatste 2 jaar; de engine voegt daar de volledige "
+"beschikbare geschiedenis aan toe."
 
 #: ui/templates/em/methodologie.html:134
 msgid "Processus de génération"
@@ -5871,8 +5884,8 @@ msgid "Que signifient les modes Conservateur, Équilibré et Récent ?"
 msgstr "Wat betekenen de modi Conservatief, Gebalanceerd en Recent?"
 
 #: ui/templates/em/faq.html
-msgid "Ces trois modes pondèrent différemment l'historique : le mode Conservateur s'appuie surtout sur les fréquences de long terme, le mode Récent accentue les tendances des derniers tirages, et le mode Équilibré combine les deux. Ils modifient la façon dont les grilles sont composées, sans rien changer au caractère aléatoire du tirage."
-msgstr "Deze drie modi wegen de geschiedenis verschillend: de modus Conservatief steunt vooral op langetermijnfrequenties, de modus Recent legt de nadruk op de trends van de laatste trekkingen, en de modus Gebalanceerd combineert beide. Ze veranderen de manier waarop rijen worden samengesteld, zonder iets te wijzigen aan het willekeurige karakter van de trekking."
+msgid "Ces trois modes pondèrent différemment l'historique : le mode Conservateur s'appuie surtout sur les fréquences de long terme, le mode Équilibré répartit l'analyse entre les trois périodes, et le mode Récent produit des combinaisons plus variées. Ils modifient la façon dont les grilles sont composées, sans rien changer au caractère aléatoire du tirage. Le générateur du site utilise le mode Équilibré ; les modes Conservateur et Récent peuvent être demandés au chatbot HYBRIDE."
+msgstr "Deze drie modi wegen de geschiedenis verschillend: de modus Conservatief steunt vooral op langetermijnfrequenties, de modus Gebalanceerd verdeelt de analyse over de drie periodes, en de modus Recent levert meer gevarieerde combinaties op. Ze veranderen de manier waarop rijen worden samengesteld, zonder iets te wijzigen aan het willekeurige karakter van de trekking. De generator van de site gebruikt de modus Gebalanceerd; de modi Conservatief en Recent kunnen aan de HYBRIDE-chatbot worden gevraagd."
 
 #: ui/templates/em/faq.html
 msgid "Comment est calculé l'indice de convergence d'une grille ?"

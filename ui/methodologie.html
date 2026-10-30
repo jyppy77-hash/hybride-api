@@ -144,11 +144,11 @@
             <!-- Introduction -->
             <section class="legal-section">
                 <h2>Principe fondamental</h2>
-                <p>La méthodologie <strong>"5 ans + 2"</strong> est le cœur du moteur HYBRIDE. Elle combine deux horizons temporels pour équilibrer stabilité statistique et réactivité aux tendances.</p>
+                <p>La méthodologie <strong>"5 ans + 2"</strong> est le cœur du moteur HYBRIDE. Elle combine trois fenêtres d'analyse — les 5 dernières années, les 2 dernières années et l'ensemble de l'historique disponible — pour équilibrer stabilité statistique et réactivité aux tendances.</p>
 
                 <div class="info-box" style="background: var(--theme-bg-card); padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #3b82f6;">
                     <p><strong>5 ans</strong> : Analyse de fréquence sur les 5 dernières années de tirages</p>
-                    <p><strong>+ 2</strong> : Pondération renforcée sur les 2 dernières années pour capter les tendances récentes</p>
+                    <p><strong>+ 2</strong> : Analyse des 2 dernières années pour capter les tendances récentes ; comme ces tirages comptent aussi dans les autres fenêtres, ils pèsent davantage</p>
                 </div>
             </section>
 
@@ -179,7 +179,7 @@
                     <li>Équilibre pair/impair (ratio optimal : 2-3 pairs)</li>
                     <li>Répartition bas/haut (numéros 1-24 vs 25-49)</li>
                     <li>Dispersion (écart entre min et max)</li>
-                    <li>Somme totale (plage optimale : 100-150)</li>
+                    <li>Somme totale (plage de référence : 93 à 157 ; en dehors, la grille est pénalisée, pas exclue)</li>
                     <li>Détection de suites consécutives</li>
                 </ul>
             </section>
@@ -276,6 +276,7 @@
     <link rel="stylesheet" href="/ui/static/rating-popup.css?v=14">
     <script src="/ui/static/rating-popup.js?v=10" defer></script>
     <script src="/ui/static/cookie-consent.js?v=7" defer></script>
+    <script src="/ui/static/version-inject.js" defer></script>
     <script>function umamiBeforeSend(type,payload){if(window.__OWNER__||window.__IS_AI_BOT__)return false;return payload;}</script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc" data-before-send="umamiBeforeSend"></script>
     <!-- Contact form modal -->

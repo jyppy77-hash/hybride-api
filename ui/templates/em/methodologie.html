@@ -89,11 +89,11 @@
             {# ── Principe fondamental ── #}
             <section class="legal-section">
                 <h2>{{ _('Principe fondamental') }}</h2>
-                <p>{{ _('La méthodologie <strong>« 5 ans + 2 »</strong> est le cœur du moteur HYBRIDE appliqué à l\'EuroMillions. Elle combine deux horizons temporels pour équilibrer stabilité statistique et réactivité aux tendances.')|safe }}</p>
+                <p>{{ _('La méthodologie <strong>« 5 ans + 2 »</strong> est le cœur du moteur HYBRIDE appliqué à l\'EuroMillions. Elle combine trois fenêtres d\'analyse — les 5 dernières années, les 2 dernières années et l\'ensemble de l\'historique disponible — pour équilibrer stabilité statistique et réactivité aux tendances.')|safe }}</p>
 
                 <div class="info-box" style="background: var(--theme-bg-card); padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #3b82f6;">
-                    <p><strong>5 {{ _('ans') }}</strong> : {{ _('Analyse de fréquence sur l\'ensemble de l\'historique disponible (2019-2026)') }}</p>
-                    <p><strong>+ 2</strong> : {{ _('Pondération renforcée sur les 2 dernières années pour capter les tendances récentes') }}</p>
+                    <p><strong>5 {{ _('ans') }}</strong> : {{ _('Analyse de fréquence sur les 5 dernières années de tirages') }}</p>
+                    <p><strong>+ 2</strong> : {{ _('Analyse des 2 dernières années pour capter les tendances récentes ; comme ces tirages comptent aussi dans les autres fenêtres, ils pèsent davantage') }}</p>
                 </div>
             </section>
 
@@ -125,7 +125,7 @@
                     <li>{{ _('Équilibre pair/impair (ratio optimal : 2-3 pairs)') }}</li>
                     <li>{{ _('Répartition bas/haut (numéros 1-25 vs 26-50)') }}</li>
                     <li>{{ _('Dispersion (écart entre min et max)') }}</li>
-                    <li>{{ _('Somme totale (plage optimale : ~125)') }}</li>
+                    <li>{{ _('Somme totale (plage de référence : 94 à 161 ; en dehors, la grille est pénalisée, pas exclue)') }}</li>
                     <li>{{ _('Détection de suites consécutives') }}</li>
                     <li>{{ _('Étoiles évaluées séparément (1-12)') }}</li>
                 </ul>
@@ -134,16 +134,16 @@
             {# ── Pondération temporelle ── #}
             <section class="legal-section">
                 <h2>{{ _('Pondération temporelle') }}</h2>
-                <p>{{ _('Le moteur HYBRIDE applique un système de pondération en deux couches :') }}</p>
+                <p>{{ _('Le moteur HYBRIDE combine trois fenêtres d\'analyse, regroupées en deux couches :') }}</p>
 
                 <h3>{{ _('Couche 1 — Base long terme') }}</h3>
-                <p>{{ _('L\'historique complet des tirages EuroMillions est analysé pour établir les fréquences de référence. Cette base assure la stabilité statistique et identifie les tendances profondes.') }}</p>
+                <p>{{ _('Les 5 dernières années et l\'ensemble de l\'historique disponible des tirages EuroMillions sont analysés pour établir les fréquences et les retards de référence. Cette base assure la stabilité statistique et identifie les tendances profondes.') }}</p>
 
                 <h3>{{ _('Couche 2 — Boost récent') }}</h3>
-                <p>{{ _('Les tirages des 2 dernières années reçoivent un coefficient de pondération plus élevé. Cela permet de capter les éventuelles inflexions de tendance sans perdre la perspective historique.') }}</p>
+                <p>{{ _('Les 2 dernières années sont analysées à part. Comme les fenêtres se recouvrent, un tirage récent compte dans les trois et pèse donc davantage. Cela permet de capter les éventuelles inflexions de tendance sans perdre la perspective historique.') }}</p>
 
                 <div class="info-box" style="background: var(--theme-bg-card); padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #8b5cf6;">
-                    <p>{{ _('Ce double horizon est la raison du nom <strong>« 5 ans + 2 »</strong> : 5 ans de profondeur historique, avec un poids renforcé sur les 2 dernières années.')|safe }}</p>
+                    <p>{{ _('Le nom <strong>« 5 ans + 2 »</strong> désigne les fenêtres des 5 et des 2 dernières années ; le moteur y ajoute l\'ensemble de l\'historique disponible.')|safe }}</p>
                 </div>
             </section>
 

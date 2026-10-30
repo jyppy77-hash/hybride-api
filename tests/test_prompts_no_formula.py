@@ -6,6 +6,11 @@ chatbot. Les 7 prompts chargés en prod (Loto FR + EuroMillions × 6 langues) :
   TF1 — ne contiennent plus de pondération chiffrée ni d'invitation à donner une formule ;
   TF2 — contiennent la consigne anti-formule et le texte figé, dans leur langue ;
   TF3 — se chargent toujours via le loader de prod.
+Lot cohérence réduit (1.6.062) — consigne séparée « renvoi méthodologie » après le bloc anti-formule :
+  TR1 — en-tête présent ; TR2 — URL de la page méthodologie de la langue ;
+  TR3 — interdiction « secret / recette » ; TR3 bis — « méthode statistique » ;
+  TR4 — mots « secret / recette » absents hors de la ligne d'interdiction ;
+  TR5 — consigne placée après le texte figé (texte figé inchangé).
 Hors périmètre : prompts/chatbot/prompt_hybride_em*.txt (non chargés).
 """
 import re
@@ -140,3 +145,102 @@ class TestPromptsStillLoad:
         from services.prompt_loader import load_prompt_em
         text = load_prompt_em("prompt_hybride_em", lang)
         assert text and _FIXED_TEXT[lang] in text
+
+
+# Lot cohérence réduit — consigne « renvoi méthodologie », par prompt
+_REFERRAL = {
+    "loto_fr": ("[RENVOI MÉTHODOLOGIE]", "/methodologie"),
+    "em_fr": ("[RENVOI MÉTHODOLOGIE]", "/euromillions/methodologie"),
+    "em_en": ("[METHODOLOGY REFERRAL]", "/en/euromillions/methodology"),
+    "em_es": ("[REMISIÓN A LA METODOLOGÍA]", "/es/euromillions/metodologia"),
+    "em_pt": ("[REMISSÃO PARA A METODOLOGIA]", "/pt/euromillions/metodologia"),
+    "em_de": ("[VERWEIS AUF DIE METHODIK]", "/de/euromillions/methodik"),
+    "em_nl": ("[VERWIJZING NAAR DE METHODOLOGIE]", "/nl/euromillions/methodologie"),
+}
+
+# Mots interdits (cités uniquement dans la ligne d'interdiction), par langue
+_SECRET_WORDS = {
+    "fr": ["secret", "recette secrète"],
+    "en": ["secret", "secret recipe"],
+    "es": ["secreto", "receta secreta"],
+    "pt": ["segredo", "receita secreta"],
+    "de": ["Geheimnis", "Geheimrezept"],
+    "nl": ["geheim", "geheim recept"],
+}
+_SECRET_PATTERN = {
+    "fr": r"\bsecr[eè]t|\brecette",
+    "en": r"\bsecret|\brecipe|\bsauce",
+    "es": r"\bsecret[oa]|\breceta",
+    "pt": r"\bsegredo|\breceita",
+    "de": r"geheim|rezept",
+    "nl": r"\bgeheim|\brecept",
+}
+
+# Ligne « méthode statistique », par langue
+_METHOD_LINE = {
+    "fr": "- Présente-la comme une méthode statistique dont les grands principes sont décrits sur la page méthodologie.",
+    "en": "- Present it as a statistical method whose main principles are described on the methodology page.",
+    "es": "- Preséntalo como un método estadístico cuyos principios generales se describen en la página de metodología.",
+    "pt": "- Apresenta-o como um método estatístico cujos princípios gerais estão descritos na página de metodologia.",
+    "de": "- Stelle sie als statistische Methode dar, deren Grundprinzipien auf der Methodik-Seite beschrieben sind.",
+    "nl": "- Presenteer ze als een statistische methode waarvan de hoofdprincipes op de methodologiepagina "
+          "worden beschreven.",
+}
+
+
+def _referral_block(text: str, header: str) -> list[str]:
+    lines = text.splitlines()
+    start = lines.index(header)
+    block = []
+    for line in lines[start + 1:]:
+        if not line.strip():
+            break
+        block.append(line)
+    return block
+
+
+@pytest.mark.parametrize("key", list(_ACTIVE_PROMPTS))
+class TestMethodologyReferral:
+
+    def test_referral_block_present(self, key):
+        """TR1 — en-tête de la consigne présent, sur sa propre ligne."""
+        header, _ = _REFERRAL[key]
+        assert header in _read(_ACTIVE_PROMPTS[key]).splitlines(), f"{key}: en-tête {header} absent"
+
+    def test_referral_url_per_lang(self, key):
+        """TR2 — la dernière ligne de la consigne se termine par l'URL méthodologie de la langue."""
+        header, url = _REFERRAL[key]
+        block = _referral_block(_read(_ACTIVE_PROMPTS[key]), header)
+        assert block[-1].rstrip().endswith(" " + url), f"{key}: URL attendue {url}, ligne « {block[-1]} »"
+
+    def test_secret_prohibition_present(self, key):
+        """TR3 — la ligne d'interdiction cite les mots interdits de la langue."""
+        header, _ = _REFERRAL[key]
+        block = _referral_block(_read(_ACTIVE_PROMPTS[key]), header)
+        lang = _lang(key)
+        prohibition = [line for line in block if _SECRET_WORDS[lang][0].lower() in line.lower()]
+        assert len(prohibition) == 1, f"{key}: ligne d'interdiction introuvable ou multiple"
+        for word in _SECRET_WORDS[lang]:
+            assert word.lower() in prohibition[0].lower(), f"{key}: « {word} » absent de l'interdiction"
+
+    def test_statistical_method_line_present(self, key):
+        """TR3 bis — ligne « méthode statistique » dans la consigne."""
+        header, _ = _REFERRAL[key]
+        block = _referral_block(_read(_ACTIVE_PROMPTS[key]), header)
+        assert _METHOD_LINE[_lang(key)] in block, f"{key}: ligne « méthode statistique » absente"
+
+    def test_secret_words_only_in_prohibition(self, key):
+        """TR4 — hors de la ligne d'interdiction, aucun mot « secret / recette » dans le prompt."""
+        text = _read(_ACTIVE_PROMPTS[key])
+        lang = _lang(key)
+        others = [line for line in text.splitlines() if _SECRET_WORDS[lang][1].lower() not in line.lower()]
+        hits = [line for line in others if re.search(_SECRET_PATTERN[lang], line, re.IGNORECASE)]
+        assert not hits, f"{key}: mot interdit hors interdiction : {hits[:3]}"
+
+    def test_referral_after_fixed_text(self, key):
+        """TR5 — consigne placée après le texte figé, lui-même inchangé."""
+        text = _read(_ACTIVE_PROMPTS[key])
+        header, _ = _REFERRAL[key]
+        fixed = _FIXED_TEXT[_lang(key)]
+        assert fixed in text
+        assert text.index(header) > text.index(fixed)

@@ -468,8 +468,7 @@ async def unified_meta_analyse_local(
                 f"Analyse locale HYBRIDE sur {window_label} "
                 f"({date_min} → {date_max}). "
                 f"Top 5 numéros : {', '.join(graph_labels)} avec fréquence moyenne {avg_freq:.1f}. "
-                f"Écart max-min : {spread} ({dispersion_text}). "
-                f"Aucun biais algorithmique détecté."
+                f"Écart max-min : {spread} ({dispersion_text})."
             )
             return {
                 "success": True,
@@ -507,8 +506,7 @@ async def unified_meta_analyse_local(
                 f"Analyse locale HYBRIDE EM sur {window_label} "
                 f"({date_min} -> {date_max}). "
                 f"Top 5 boules : {', '.join(graph_labels)} (freq moy {avg_freq:.1f}). "
-                f"Top 3 etoiles : {', '.join(secondary_labels)} (freq moy {avg_freq_e:.1f}). "
-                f"Aucun biais algorithmique détecté."
+                f"Top 3 etoiles : {', '.join(secondary_labels)} (freq moy {avg_freq_e:.1f})."
             )
             return {
                 "success": True,

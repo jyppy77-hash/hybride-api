@@ -645,8 +645,9 @@ msgstr ""
 msgid ""
 "HYBRIDE analyse les données historiques des tirages européens de "
 "l'EuroMillions (5 numéros de 1 à 50 + 2 étoiles de 1 à 12). Il combine "
-"une pondération long terme (60%) et court terme (40%) pour produire des "
-"indicateurs statistiques fiables."
+"trois fenêtres d'analyse (5 dernières années, 2 dernières années et "
+"ensemble de l'historique disponible) pour produire des indicateurs "
+"statistiques fiables."
 msgstr ""
 
 #: ui/templates/em/accueil.html:778
@@ -1850,9 +1851,10 @@ msgstr ""
 
 #: ui/templates/em/generateur.html:302
 msgid ""
-"Il combine analyse long terme (60%) et tendances récentes (40%) pour "
-"générer des grilles de 5 numéros + 2 étoiles statistiquement équilibrées "
-"avec un indice de convergence."
+"Il combine trois fenêtres d'analyse (5 dernières années, 2 dernières "
+"années et ensemble de l'historique disponible) pour générer des grilles "
+"de 5 numéros + 2 étoiles statistiquement équilibrées avec un indice de "
+"convergence."
 msgstr ""
 
 #: ui/templates/em/generateur.html:309
@@ -2669,18 +2671,21 @@ msgstr ""
 #: ui/templates/em/methodologie.html:74
 msgid ""
 "La méthodologie <strong>« 5 ans + 2 »</strong> est le cœur du moteur "
-"HYBRIDE appliqué à l'EuroMillions. Elle combine deux horizons temporels "
-"pour équilibrer stabilité statistique et réactivité aux tendances."
+"HYBRIDE appliqué à l'EuroMillions. Elle combine trois fenêtres d'analyse "
+"— les 5 dernières années, les 2 dernières années et l'ensemble de "
+"l'historique disponible — pour équilibrer stabilité statistique et "
+"réactivité aux tendances."
 msgstr ""
 
 #: ui/templates/em/methodologie.html:77
-msgid "Analyse de fréquence sur l'ensemble de l'historique disponible (2019-2026)"
+msgid "Analyse de fréquence sur les 5 dernières années de tirages"
 msgstr ""
 
 #: ui/templates/em/methodologie.html:78
 msgid ""
-"Pondération renforcée sur les 2 dernières années pour capter les "
-"tendances récentes"
+"Analyse des 2 dernières années pour capter les tendances récentes ; comme"
+" ces tirages comptent aussi dans les autres fenêtres, ils pèsent "
+"davantage"
 msgstr ""
 
 #: ui/templates/em/methodologie.html:84
@@ -2756,7 +2761,7 @@ msgid "Dispersion (écart entre min et max)"
 msgstr ""
 
 #: ui/templates/em/methodologie.html:110
-msgid "Somme totale (plage optimale : ~125)"
+msgid "Somme totale (plage de référence : 94 à 161 ; en dehors, la grille est pénalisée, pas exclue)"
 msgstr ""
 
 #: ui/templates/em/methodologie.html:111
@@ -2772,7 +2777,7 @@ msgid "Pondération temporelle"
 msgstr ""
 
 #: ui/templates/em/methodologie.html:119
-msgid "Le moteur HYBRIDE applique un système de pondération en deux couches :"
+msgid "Le moteur HYBRIDE combine trois fenêtres d'analyse, regroupées en deux couches :"
 msgstr ""
 
 #: ui/templates/em/methodologie.html:121
@@ -2781,9 +2786,10 @@ msgstr ""
 
 #: ui/templates/em/methodologie.html:122
 msgid ""
-"L'historique complet des tirages EuroMillions est analysé pour établir "
-"les fréquences de référence. Cette base assure la stabilité statistique "
-"et identifie les tendances profondes."
+"Les 5 dernières années et l'ensemble de l'historique disponible des "
+"tirages EuroMillions sont analysés pour établir les fréquences et les "
+"retards de référence. Cette base assure la stabilité statistique et "
+"identifie les tendances profondes."
 msgstr ""
 
 #: ui/templates/em/methodologie.html:124
@@ -2792,16 +2798,17 @@ msgstr ""
 
 #: ui/templates/em/methodologie.html:125
 msgid ""
-"Les tirages des 2 dernières années reçoivent un coefficient de "
-"pondération plus élevé. Cela permet de capter les éventuelles inflexions "
-"de tendance sans perdre la perspective historique."
+"Les 2 dernières années sont analysées à part. Comme les fenêtres se "
+"recouvrent, un tirage récent compte dans les trois et pèse donc "
+"davantage. Cela permet de capter les éventuelles inflexions de tendance "
+"sans perdre la perspective historique."
 msgstr ""
 
 #: ui/templates/em/methodologie.html:128
 msgid ""
-"Ce double horizon est la raison du nom <strong>« 5 ans + 2 »</strong> : 5"
-" ans de profondeur historique, avec un poids renforcé sur les 2 dernières"
-" années."
+"Le nom <strong>« 5 ans + 2 »</strong> désigne les fenêtres des 5 et des 2"
+" dernières années ; le moteur y ajoute l'ensemble de l'historique "
+"disponible."
 msgstr ""
 
 #: ui/templates/em/methodologie.html:134
@@ -4856,7 +4863,7 @@ msgid "Que signifient les modes Conservateur, Équilibré et Récent ?"
 msgstr ""
 
 #: ui/templates/em/faq.html
-msgid "Ces trois modes pondèrent différemment l'historique : le mode Conservateur s'appuie surtout sur les fréquences de long terme, le mode Récent accentue les tendances des derniers tirages, et le mode Équilibré combine les deux. Ils modifient la façon dont les grilles sont composées, sans rien changer au caractère aléatoire du tirage."
+msgid "Ces trois modes pondèrent différemment l'historique : le mode Conservateur s'appuie surtout sur les fréquences de long terme, le mode Équilibré répartit l'analyse entre les trois périodes, et le mode Récent produit des combinaisons plus variées. Ils modifient la façon dont les grilles sont composées, sans rien changer au caractère aléatoire du tirage. Le générateur du site utilise le mode Équilibré ; les modes Conservateur et Récent peuvent être demandés au chatbot HYBRIDE."
 msgstr ""
 
 #: ui/templates/em/faq.html

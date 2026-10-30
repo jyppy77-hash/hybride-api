@@ -136,7 +136,7 @@
           "name": "Comment composer une grille équilibrée ?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Une grille équilibrée respecte plusieurs critères : 2-3 numéros pairs et 2-3 impairs, 2-3 numéros bas (1-24) et 2-3 hauts (25-49), une somme entre 100 et 140, et peu de numéros consécutifs. Le simulateur LotoIA évalue automatiquement ces critères."
+            "text": "Une grille équilibrée respecte plusieurs critères : 2-3 numéros pairs et 2-3 impairs, 2-3 numéros bas (1-24) et 2-3 hauts (25-49), une somme entre 93 et 157 (plage de référence du moteur HYBRIDE), et peu de numéros consécutifs. Le simulateur LotoIA évalue automatiquement ces critères."
           }
         },
         {
@@ -144,7 +144,7 @@
           "name": "Comment fonctionne le moteur HYBRIDE en détail ?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Le moteur HYBRIDE analyse chaque numéro selon sa fréquence d'apparition (70% du score) et son retard (30%). L'analyse se fait sur 3 périodes simultanées : 5 ans, 2 ans et l'historique complet depuis novembre 2019. Les résultats sont combinés selon le mode choisi. Le retard est un outil de diversification, pas un indicateur prédictif."
+            "text": "Le moteur HYBRIDE analyse chaque numéro selon sa fréquence d'apparition et son retard. L'analyse se fait sur 3 périodes simultanées : 5 ans, 2 ans et l'historique complet depuis novembre 2019. Les résultats sont combinés selon un mode : le générateur du site utilise le mode équilibré ; les modes conservateur et récent peuvent être demandés au chatbot HYBRIDE. Le retard est un outil de diversification, pas un indicateur prédictif."
           }
         },
         {
@@ -152,7 +152,7 @@
           "name": "Que signifient les modes Conservateur, Équilibré et Récent ?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Chaque mode donne un poids différent aux 3 périodes d'analyse. Conservateur : 50% long terme, 30% récente, 20% globale. Équilibré : 40/35/25. Récent : 25/35/40. Le mode récent produit des combinaisons plus variées, le conservateur reste fidèle aux tendances de fond."
+            "text": "Chaque mode combine différemment les 3 périodes d'analyse. Conservateur : privilégie l'historique long terme. Équilibré : répartition harmonieuse entre les 3 périodes, mode par défaut utilisé par le générateur du site ; les deux autres modes peuvent être demandés au chatbot HYBRIDE. Récent : davantage de diversité dans les grilles proposées. Le mode récent produit des combinaisons plus variées, le conservateur reste fidèle aux tendances de fond."
           }
         },
         {
@@ -160,7 +160,7 @@
           "name": "Comment le score de qualité des grilles est-il calculé ?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Chaque grille reçoit un score sur 5 étoiles basé sur 5 critères : équilibre pair/impair, bas/haut, somme entre 70 et 150, dispersion minimum de 15, et maximum 2 consécutifs. Le moteur effectue jusqu'à 20 tentatives pour optimiser chaque grille."
+            "text": "Chaque grille reçoit un score sur 5 étoiles basé sur 5 critères : équilibre pair/impair, bas/haut, somme entre 93 et 157 (pénalisée en dehors, pas exclue), dispersion minimum de 15, et maximum 2 consécutifs. Le moteur effectue jusqu'à 20 tentatives pour optimiser chaque grille."
           }
         },
         {
@@ -442,13 +442,7 @@
                             <span class="faq-icon">+</span>
                         </button>
                         <div class="faq-answer">
-                            <p>Une grille <strong>équilibrée</strong> respecte plusieurs critères de répartition :</p>
-                            <ul>
-                                <li><strong>Pair/Impair</strong> : 2 ou 3 de chaque (exemple : 3 pairs + 2 impairs)</li>
-                                <li><strong>Bas/Haut</strong> : 2 ou 3 numéros bas (1-24) et 2 ou 3 numéros hauts (25-49)</li>
-                                <li><strong>Somme</strong> : Entre 100 et 140 (moyenne historique)</li>
-                                <li><strong>Suites</strong> : Peu ou pas de numéros consécutifs (01-02-03)</li>
-                            </ul>
+                            <p>Ce badge indique que les numéros de la grille ont, en moyenne, un score proche de celui de l'ensemble des numéros : la grille n'est concentrée ni sur les numéros les plus favorisés par le moteur, ni sur les moins favorisés. Il ne dépend ni de la somme ni de la parité.</p>
                         </div>
                     </div>
 
@@ -473,10 +467,10 @@
                             <p><strong>Hybride V1</strong> désigne la version 1 de notre moteur d'analyse hybride.</p>
                             <p>Ce badge garantit que la grille a été générée avec notre algorithme HYBRIDE qui combine :</p>
                             <ul>
-                                <li>60% de pondération sur l'historique long terme (5 ans)</li>
-                                <li>40% de pondération sur les tendances récentes (2 ans)</li>
+                                <li>l'analyse de 3 fenêtres : les 5 dernières années, les 2 dernières années et l'ensemble de l'historique disponible</li>
+                                <li>pour chaque numéro, sa fréquence d'apparition et son retard</li>
                             </ul>
-                            <p>Modes disponibles : <strong>Conservative (70/30)</strong>, <strong>Balanced (60/40)</strong>, <strong>Recent (40/60)</strong></p>
+                            <p>Modes : le générateur du site utilise le mode <strong>Équilibré</strong> ; les modes <strong>Conservateur</strong> et <strong>Récent</strong> peuvent être demandés au chatbot HYBRIDE.</p>
                         </div>
                     </div>
 
@@ -650,7 +644,7 @@
                             <ul>
                                 <li><strong>Pair/Impair</strong> : 2 ou 3 de chaque</li>
                                 <li><strong>Bas/Haut</strong> : 2-3 numéros bas (1-24) et 2-3 hauts (25-49)</li>
-                                <li><strong>Somme</strong> : entre 100 et 140</li>
+                                <li><strong>Somme</strong> : entre 93 et 157 (plage de référence du moteur HYBRIDE)</li>
                                 <li><strong>Dispersion</strong> : écart de 20 à 45 entre le plus petit et le plus grand</li>
                                 <li><strong>Suites</strong> : peu ou pas de numéros consécutifs</li>
                             </ul>
@@ -804,14 +798,14 @@
                             <span class="faq-icon">+</span>
                         </button>
                         <div class="faq-answer">
-                            <p>Le moteur HYBRIDE analyse chaque numéro selon deux critères : sa <strong>fréquence d'apparition</strong> (combien de fois il est sorti) et son <strong>retard</strong> (depuis combien de tirages il n'est plus sorti). Ces deux mesures sont combinées : la fréquence compte pour 70% du score et le retard pour 30%.</p>
+                            <p>Le moteur HYBRIDE analyse chaque numéro selon deux critères : sa <strong>fréquence d'apparition</strong> (combien de fois il est sorti) et son <strong>retard</strong> (depuis combien de tirages il n'est plus sorti). Ces deux mesures sont combinées dans le score de chaque numéro.</p>
                             <p>L'analyse se fait sur <strong>3 périodes simultanées</strong> :</p>
                             <ul>
                                 <li><strong>Période longue</strong> : les 5 dernières années (~780 tirages)</li>
                                 <li><strong>Période récente</strong> : les 2 dernières années (~310 tirages)</li>
                                 <li><strong>Période globale</strong> : tout l'historique depuis novembre 2019 (plus de 1&nbsp;000 tirages)</li>
                             </ul>
-                            <p>Les résultats de ces 3 périodes sont ensuite combinés selon le mode choisi (conservateur, équilibré ou récent), ce qui permet d'obtenir des suggestions adaptées à votre préférence.</p>
+                            <p>Les résultats de ces 3 périodes sont ensuite combinés selon un mode : le générateur du site utilise le mode équilibré ; les modes conservateur et récent peuvent être demandés au chatbot HYBRIDE.</p>
                             <p><strong>Important</strong> : le retard d'un numéro est utilisé comme outil de <strong>diversification</strong>, pas comme indicateur prédictif. Chaque tirage est un événement aléatoire indépendant — aucun numéro n'est "dû" pour sortir.</p>
                         </div>
                     </div>
@@ -822,11 +816,11 @@
                             <span class="faq-icon">+</span>
                         </button>
                         <div class="faq-answer">
-                            <p>Chaque mode donne un poids différent aux 3 périodes d'analyse :</p>
+                            <p>Chaque mode combine différemment les 3 périodes d'analyse :</p>
                             <ul>
-                                <li><strong>Conservateur</strong> : privilégie l'historique long terme (50% période 5 ans, 30% récente, 20% globale). Idéal si vous préférez des numéros qui ont fait leurs preuves sur la durée.</li>
-                                <li><strong>Équilibré</strong> : répartition harmonieuse (40% / 35% / 25%). C'est le mode recommandé par défaut.</li>
-                                <li><strong>Récent</strong> : met l'accent sur les tendances actuelles (25% / 35% / 40%). Pour ceux qui veulent suivre les dynamiques récentes.</li>
+                                <li><strong>Conservateur</strong> : privilégie l'historique long terme. Idéal si vous préférez des numéros qui ont fait leurs preuves sur la durée.</li>
+                                <li><strong>Équilibré</strong> : répartition harmonieuse entre les 3 périodes. C'est le mode par défaut, utilisé par le générateur du site ; les deux autres modes peuvent être demandés au chatbot HYBRIDE.</li>
+                                <li><strong>Récent</strong> : pour ceux qui veulent davantage de diversité dans les grilles proposées.</li>
                             </ul>
                             <p>De plus, chaque mode ajuste le niveau de diversité des grilles : le mode récent produit des combinaisons plus variées, tandis que le mode conservateur reste plus fidèle aux tendances de fond.</p>
                         </div>
@@ -842,7 +836,7 @@
                             <ul>
                                 <li><strong>Équilibre pair/impair</strong> : idéalement entre 1 et 4 numéros pairs</li>
                                 <li><strong>Équilibre bas/haut</strong> : entre 1 et 4 numéros en dessous de 25</li>
-                                <li><strong>Somme des numéros</strong> : idéalement entre 70 et 150</li>
+                                <li><strong>Somme des numéros</strong> : plage de référence de 93 à 157 ; en dehors, la grille est pénalisée, pas exclue</li>
                                 <li><strong>Dispersion</strong> : les numéros doivent être suffisamment espacés (écart minimum de 15)</li>
                                 <li><strong>Consécutifs</strong> : maximum 2 numéros qui se suivent</li>
                             </ul>
