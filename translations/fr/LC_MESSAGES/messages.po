@@ -1273,8 +1273,9 @@ msgstr ""
 msgid ""
 "Notre simulateur utilise le moteur HYBRIDE, un algorithme qui analyse "
 "%(total)s+ tirages historiques de l'EuroMillions. Le système combine "
-"analyse long terme et tendances récentes pour générer des grilles de 5 "
-"numéros (1-50) et 2 étoiles (1-12)."
+"analyse long terme, tendances récentes et ensemble de l'historique "
+"disponible pour générer des grilles de 5 numéros (1-50) et 2 étoiles "
+"(1-12)."
 msgstr ""
 
 #: ui/templates/em/faq.html:40 ui/templates/em/faq.html:284
@@ -1398,9 +1399,9 @@ msgstr ""
 
 #: ui/templates/em/faq.html:278
 msgid ""
-"Le système combine analyse long terme et tendances récentes pour générer "
-"des grilles de <strong>5 numéros (1-50)</strong> et <strong>2 étoiles "
-"(1-12)</strong>."
+"Le système combine analyse long terme, tendances récentes et ensemble de "
+"l'historique disponible pour générer des grilles de <strong>5 numéros "
+"(1-50)</strong> et <strong>2 étoiles (1-12)</strong>."
 msgstr ""
 
 #: ui/templates/em/faq.html:288

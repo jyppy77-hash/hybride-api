@@ -32,7 +32,7 @@
           "name": {{ _('Comment fonctionne le simulateur de grilles EuroMillions ?')|tojson }},
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": {{ _('Notre simulateur utilise le moteur HYBRIDE, un algorithme qui analyse %(total)s+ tirages historiques de l\'EuroMillions. Le système combine analyse long terme et tendances récentes pour générer des grilles de 5 numéros (1-50) et 2 étoiles (1-12).')|format(total=em_db_total)|tojson }}
+            "text": {{ _('Notre simulateur utilise le moteur HYBRIDE, un algorithme qui analyse %(total)s+ tirages historiques de l\'EuroMillions. Le système combine analyse long terme, tendances récentes et ensemble de l\'historique disponible pour générer des grilles de 5 numéros (1-50) et 2 étoiles (1-12).')|format(total=em_db_total)|tojson }}
           }
         },
         {
@@ -474,7 +474,7 @@
                         </button>
                         <div class="faq-answer">
                             <p>{{ _('Notre simulateur utilise le <strong>moteur HYBRIDE</strong>, un algorithme qui analyse <strong>%(total)s+ tirages historiques</strong> de l\'EuroMillions.')|format(total=em_db_total)|safe }}</p>
-                            <p>{{ _('Le système combine analyse long terme et tendances récentes pour générer des grilles de <strong>5 numéros (1-50)</strong> et <strong>2 étoiles (1-12)</strong>.')|safe }}</p>
+                            <p>{{ _('Le système combine analyse long terme, tendances récentes et ensemble de l\'historique disponible pour générer des grilles de <strong>5 numéros (1-50)</strong> et <strong>2 étoiles (1-12)</strong>.')|safe }}</p>
                         </div>
                     </div>
 

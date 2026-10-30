@@ -15,6 +15,7 @@ Pages, FAQ et méthodologie alignées sur le moteur (config/engine.py) sans aucu
 Le test golden des pages intouchables (tests/test_seo_golden_intouchables.py) n'est pas modifié.
 """
 import html
+import json
 import os
 import re
 from contextlib import asynccontextmanager
@@ -66,6 +67,9 @@ _NEW_MSGIDS = {
     "B9": ("faq", "le mode Équilibré répartit l'analyse entre les trois périodes"),
     "B10": ("accueil", "Il combine trois fenêtres d'analyse (5 dernières années, 2 dernières années et ensemble"),
     "C3": ("generateur", "pour générer des grilles de 5 numéros + 2 étoiles statistiquement"),
+    "F1": ("faq", "%(total)s+ tirages historiques de l'EuroMillions. Le système combine analyse long terme, "),
+    "F2": ("faq", "Le système combine analyse long terme, tendances récentes et ensemble de l'historique disponible "
+                  "pour générer des grilles de <strong>"),
 }
 _OLD_MSGID_FRAGMENTS = [
     "Elle combine deux horizons temporels",
@@ -79,6 +83,7 @@ _OLD_MSGID_FRAGMENTS = [
     "le mode Récent accentue les tendances des derniers tirages",
     "Il combine une pondération long terme (60%)",
     "Il combine analyse long terme (60%)",
+    "Le système combine analyse long terme et tendances récentes",
 ]
 
 # D1-D6 — disclaimer EM, ligne « pondération temporelle » par langue
@@ -270,6 +275,24 @@ def test_three_windows_described(rel):
     assert "ensemble de l'historique disponible" in text
 
 
+def test_three_windows_faq_simulateur_answer():
+    """G10 — 1re réponse « Fonctionnement Général » de /faq (visible + JSON-LD) : 3ᵉ fenêtre présente."""
+    text = _read("ui/faq.html")
+    start = text.index("<span>Comment fonctionne le simulateur de grilles Loto ?</span>")
+    visible = text[start:text.index('<div class="faq-item">', start)]
+    assert "<li><strong>Historique complet</strong> : Analyse de l'ensemble de l'historique disponible</li>" in visible
+    m = re.search(r'"name": "Comment fonctionne le simulateur de grilles Loto \?",.*?"text": "([^"]*)"', text, re.S)
+    assert m and "ensemble de l'historique disponible" in m.group(1)
+
+
+@pytest.mark.parametrize("key", ["F1", "F2"])
+def test_three_windows_em_faq_simulateur_answer(key):
+    """G10 — FAQ EM « simulateur » (JSON-LD F1 + visible F2) : 3ᵉ fenêtre, en FR et dans les 5 .po."""
+    assert "analyse long terme, tendances récentes et ensemble de l'historique disponible" in _new_msgid(key)
+    for lang in _FOREIGN:
+        assert _expected_text(key, lang) != _new_msgid(key)
+
+
 # ═══════════════════════════════════════════════════════════════════════
 # G11 — msgid EM traduits, anciens msgid absents
 # ═══════════════════════════════════════════════════════════════════════
@@ -355,7 +378,7 @@ def test_methodologie_loads_version_inject():
 
 _PAGE_KEYS = {
     "methodologie": ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8"],
-    "faq": ["B9"],
+    "faq": ["B9", "F2"],
     "accueil": ["B10"],
     "generateur": ["C3"],
     "disclaimer": [],
@@ -380,6 +403,31 @@ def test_em_page_rendered(client, page, lang):
             assert _new_msgid(key) not in body, f"{path}: msgid FR {key} visible en {lang}"
         if page == "disclaimer":
             assert _DISCLAIMER["fr"] not in body
+
+
+def _jsonld_answers(body: str) -> list[str]:
+    """Textes des réponses FAQPage des blocs JSON-LD d'une page rendue."""
+    answers = []
+    for raw in re.findall(r'<script type="application/ld\+json">(.*?)</script>', body, re.S):
+        data = json.loads(raw)
+        for item in data.get("mainEntity", []) if isinstance(data, dict) else []:
+            text = item.get("acceptedAnswer", {}).get("text") if isinstance(item, dict) else None
+            if text:
+                answers.append(text)
+    return answers
+
+
+@pytest.mark.parametrize("lang", _LANGS)
+def test_em_faq_jsonld_simulator_answer(client, lang):
+    """G15 — JSON-LD FAQ EM (F1, |format|tojson) : texte traduit présent, aucun texte FR hors FR."""
+    resp = _get(client, EM_URLS[lang]["faq"])
+    assert resp.status_code == 200
+    answers = _jsonld_answers(resp.text)
+    head, tail = _expected_text("F1", lang).split("%(total)s")
+    assert any(a.startswith(head) and a.endswith(tail) for a in answers), f"{lang}: réponse F1 absente du JSON-LD"
+    if lang != "fr":
+        fr_tail = _new_msgid("F1").split("%(total)s")[1]
+        assert not any(fr_tail in a for a in answers), f"{lang}: texte FR F1 dans le JSON-LD"
 
 
 @pytest.mark.parametrize("path", ["/faq", "/methodologie", "/loto", "/accueil"])

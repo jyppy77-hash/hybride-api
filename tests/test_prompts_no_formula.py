@@ -187,6 +187,26 @@ _METHOD_LINE = {
           "worden beschreven.",
 }
 
+# TR6 — interdiction maintenue même si l'utilisateur emploie le mot, par langue
+_EVEN_IF_USER = {
+    "fr": "même si l'utilisateur les emploie",
+    "en": "even if the user uses them",
+    "es": "aunque el usuario las use",
+    "pt": "mesmo que o utilizador as use",
+    "de": "auch wenn der Nutzer sie",
+    "nl": "ook niet als de gebruiker ze",
+}
+
+# TR7 — renvoi : phrase affirmative, pas une question, par langue
+_AFFIRMATIVE = {
+    "fr": "phrase affirmative (pas une question)",
+    "en": "affirmative sentence (not a question)",
+    "es": "frase afirmativa (no una pregunta)",
+    "pt": "frase afirmativa (não uma pergunta)",
+    "de": "Aussagesatz (keiner Frage)",
+    "nl": "bevestigende zin (geen vraag)",
+}
+
 
 def _referral_block(text: str, header: str) -> list[str]:
     lines = text.splitlines()
@@ -244,3 +264,20 @@ class TestMethodologyReferral:
         fixed = _FIXED_TEXT[_lang(key)]
         assert fixed in text
         assert text.index(header) > text.index(fixed)
+
+    def test_prohibition_even_if_user_uses_word(self, key):
+        """TR6 — la ligne d'interdiction vaut même si l'utilisateur emploie le mot."""
+        header, _ = _REFERRAL[key]
+        lang = _lang(key)
+        block = _referral_block(_read(_ACTIVE_PROMPTS[key]), header)
+        prohibition = [line for line in block if _SECRET_WORDS[lang][0].lower() in line.lower()]
+        assert len(prohibition) == 1
+        assert _EVEN_IF_USER[lang] in prohibition[0], f"{key}: mention « {_EVEN_IF_USER[lang]} » absente"
+
+    def test_referral_affirmative_with_url(self, key):
+        """TR7 — la ligne de renvoi exige une phrase affirmative et se termine par l'URL."""
+        header, url = _REFERRAL[key]
+        block = _referral_block(_read(_ACTIVE_PROMPTS[key]), header)
+        last = block[-1].rstrip()
+        assert _AFFIRMATIVE[_lang(key)] in last, f"{key}: consigne « {_AFFIRMATIVE[_lang(key)]} » absente"
+        assert last.endswith(" " + url), f"{key}: la ligne de renvoi ne se termine pas par {url}"
