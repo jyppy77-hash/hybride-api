@@ -226,4 +226,4 @@ class TestVersion:
         # LOT 1.6.058 bump : 1.6.057 → 1.6.058 (22/10/2026 — lot B étape 2 : get_client_ip / get_client_ip_from_scope sur hops[-1] de X-Forwarded-For (entrée ajoutée par Google), CF-Connecting-IP jamais lu, diagnostic CLIENT_IP_DIAG désactivé par défaut ; aucun cache-buster touché)
         # LOT 1.6.059 bump : 1.6.058 → 1.6.059 (24/10/2026 — lot redirection : query conservée sur / et 11 redirections legacy, repli FR sans Accept-Language, x-default launcher → /fr, 302 private no-cache ; prompts chatbot sans formule ni poids ; aucun cache-buster touché)
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.062"
+        assert APP_VERSION == "1.6.063"
