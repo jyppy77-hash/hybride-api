@@ -18,8 +18,8 @@ _HERO_TEXTS = {
     "pt": {
         "generateur": ("Explorador de Grelhas EuroMillions",
                        "Analise estatistica baseada nos sorteios oficiais EuroMillions"),
-        "simulateur": ("Analise de Grelha EuroMillions",
-                       "Componha a sua grelha e obtenha uma auditoria estatistica descritiva"),
+        "simulateur": ("Análise de Grelha EuroMillions",
+                       "Componha a sua grelha e obtenha uma auditoria estatística descritiva"),
         "statistiques": ("Estatisticas EuroMillions",
                          "Frequencias, tendencias e analise dos numeros e estrelas"),
         "historique": ("Histórico de Sorteios EuroMillions",
@@ -44,8 +44,8 @@ _HERO_TEXTS = {
     "es": {
         "generateur": ("Explorador de Cuadriculas EuroMillions",
                        "Analisis estadistico basado en los sorteos oficiales EuroMillions"),
-        "simulateur": ("Analisis de Cuadricula EuroMillions",
-                       "Componga su cuadricula y obtenga una auditoria estadistica descriptiva"),
+        "simulateur": ("Análisis de Cuadrícula EuroMillions",
+                       "Componga su cuadrícula y obtenga una auditoría estadística descriptiva"),
         "statistiques": ("Estadisticas EuroMillions",
                          "Frecuencias, tendencias y analisis de numeros y estrellas"),
         "historique": ("Historial de Sorteos EuroMillions",

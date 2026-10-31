@@ -774,7 +774,7 @@ msgid "Comment fonctionne le moteur ?"
 msgstr "Wie funktioniert die Engine?"
 
 #: ui/templates/em/accueil.html:768
-msgid "Le moteur HYBRIDE en un coup d'oeil"
+msgid "Le moteur HYBRIDE en un coup d'œil"
 msgstr "Die HYBRIDE-Engine auf einen Blick"
 
 #: ui/templates/em/accueil.html:775
@@ -1947,7 +1947,7 @@ msgid "N'essayez jamais de \"vous refaire\" après une perte"
 msgstr "Versuchen Sie niemals, Verluste durch weiteres Spielen auszugleichen"
 
 #: ui/templates/em/faq.html:396
-msgid "Ou trouver de l'aide en cas d'addiction ?"
+msgid "Où trouver de l'aide en cas d'addiction ?"
 msgstr "Wo finden Sie Hilfe bei Spielsucht?"
 
 #: ui/templates/em/faq.html:400
@@ -3018,7 +3018,7 @@ msgstr "Spezialisiert auf EuroMillions"
 #: ui/templates/em/hybride.html:372
 #, python-format
 msgid "100%% dédié"
-msgstr "100%% spezialisiert"
+msgstr "100% spezialisiert"
 
 #: ui/templates/em/hybride.html:373
 msgid "Généraliste"
@@ -3031,7 +3031,7 @@ msgstr "Kostenlos"
 #: ui/templates/em/hybride.html:377
 #, python-format
 msgid "100%% gratuit — sans inscription"
-msgstr "100%% kostenlos — ohne Registrierung"
+msgstr "100% kostenlos — ohne Registrierung"
 
 #: ui/templates/em/hybride.html:378
 msgid "Freemium"
@@ -4140,9 +4140,8 @@ msgid "11 mars 2026"
 msgstr "11. März 2026"
 
 #: ui/templates/em/news.html:161
-#, fuzzy
 msgid "Release 1.5.0 — La plateforme passe au niveau supérieur"
-msgstr "Release 1.4.001 — Die Plattform erreicht das nächste Level"
+msgstr "Release 1.5.0 — Die Plattform erreicht das nächste Level"
 
 #: ui/templates/em/news.html:163
 msgid ""
@@ -4175,7 +4174,7 @@ msgstr ""
 #: ui/templates/em/news.html:168
 #, python-format
 msgid "Des déploiements 100%% sécurisés"
-msgstr "100%% sichere Deployments"
+msgstr "100% sichere Deployments"
 
 #: ui/templates/em/news.html:169
 msgid ""
@@ -5109,7 +5108,7 @@ msgid "LotoIA - Analyse statistique EuroMillions"
 msgstr "LotoIA - Statistische Analyse EuroMillions"
 
 #: ui/templates/em/simulateur.html:31
-msgid "Outil d analyse statistique descriptive pour grilles EuroMillions"
+msgid "Outil d'analyse statistique descriptive pour grilles EuroMillions"
 msgstr ""
 "Werkzeug für deskriptive statistische Analyse von EuroMillions-"
 "Tippscheinen"

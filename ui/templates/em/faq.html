@@ -277,7 +277,7 @@
         },
         {
           "@type": "Question",
-          "name": {{ _('Ou trouver de l\'aide en cas d\'addiction ?')|tojson }},
+          "name": {{ _('Où trouver de l\'aide en cas d\'addiction ?')|tojson }},
           "acceptedAnswer": {
             "@type": "Answer",
             "text": {{ (_('Si vous ou un proche rencontrez des difficultés avec le jeu :') ~ ' ' ~ (_('Téléphone :') ~ ' ' ~ gambling_help_phone ~ ' (' ~ gambling_help_phone_note ~ ')') ~ ' ' ~ (_('Site web : <a href="%(url)s" target="_blank" rel="noopener">%(name)s</a>')|format(url=gambling_help_url, name=gambling_help_name)) ~ ' ' ~ _('Chat en ligne disponible') ~ ' ' ~ _('Service gratuit, anonyme et confidentiel') ~ ' ' ~ _('Horaires : 7j/7 de 8h à 2h du matin'))|striptags|tojson }}
@@ -823,7 +823,7 @@
 
 <div class="faq-item">
                         <button class="faq-question">
-                            <span>{{ _('Ou trouver de l\'aide en cas d\'addiction ?') }}</span>
+                            <span>{{ _('Où trouver de l\'aide en cas d\'addiction ?') }}</span>
                             <span class="faq-icon">+</span>
                         </button>
                         <div class="faq-answer">

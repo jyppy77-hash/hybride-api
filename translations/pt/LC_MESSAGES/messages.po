@@ -763,7 +763,7 @@ msgid "Comment fonctionne le moteur ?"
 msgstr "Como funciona o motor?"
 
 #: ui/templates/em/accueil.html:768
-msgid "Le moteur HYBRIDE en un coup d'oeil"
+msgid "Le moteur HYBRIDE en un coup d'œil"
 msgstr "O motor HYBRIDE numa vista de olhos"
 
 #: ui/templates/em/accueil.html:775
@@ -1910,7 +1910,7 @@ msgid "N'essayez jamais de \"vous refaire\" après une perte"
 msgstr "Nunca tente \"recuperar\" após uma perda"
 
 #: ui/templates/em/faq.html:396
-msgid "Ou trouver de l'aide en cas d'addiction ?"
+msgid "Où trouver de l'aide en cas d'addiction ?"
 msgstr "Onde encontrar ajuda em caso de dependência?"
 
 #: ui/templates/em/faq.html:400
@@ -2970,7 +2970,7 @@ msgstr "Especializado EuroMillions"
 #: ui/templates/em/hybride.html:372
 #, python-format
 msgid "100%% dédié"
-msgstr "100%% dedicado"
+msgstr "100% dedicado"
 
 #: ui/templates/em/hybride.html:373
 msgid "Généraliste"
@@ -2983,7 +2983,7 @@ msgstr "Gratuito"
 #: ui/templates/em/hybride.html:377
 #, python-format
 msgid "100%% gratuit — sans inscription"
-msgstr "100%% gratuito — sem registo"
+msgstr "100% gratuito — sem registo"
 
 #: ui/templates/em/hybride.html:378
 msgid "Freemium"
@@ -4079,9 +4079,8 @@ msgid "11 mars 2026"
 msgstr "11 de março de 2026"
 
 #: ui/templates/em/news.html:161
-#, fuzzy
 msgid "Release 1.5.0 — La plateforme passe au niveau supérieur"
-msgstr "Release 1.4.001 — A plataforma sobe de nível"
+msgstr "Release 1.5.0 — A plataforma sobe de nível"
 
 #: ui/templates/em/news.html:163
 msgid ""
@@ -4114,7 +4113,7 @@ msgstr ""
 #: ui/templates/em/news.html:168
 #, python-format
 msgid "Des déploiements 100%% sécurisés"
-msgstr "Implementações 100%% seguras"
+msgstr "Implementações 100% seguras"
 
 #: ui/templates/em/news.html:169
 msgid ""
@@ -5038,7 +5037,7 @@ msgid "LotoIA - Analyse statistique EuroMillions"
 msgstr "LotoIA - Análise estatística EuroMillions"
 
 #: ui/templates/em/simulateur.html:31
-msgid "Outil d analyse statistique descriptive pour grilles EuroMillions"
+msgid "Outil d'analyse statistique descriptive pour grilles EuroMillions"
 msgstr "Ferramenta de análise estatística descritiva para grelhas EuroMillions"
 
 #: ui/templates/em/simulateur.html:43

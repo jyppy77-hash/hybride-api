@@ -638,7 +638,7 @@ msgid "Comment fonctionne le moteur ?"
 msgstr ""
 
 #: ui/templates/em/accueil.html:768
-msgid "Le moteur HYBRIDE en un coup d'oeil"
+msgid "Le moteur HYBRIDE en un coup d'œil"
 msgstr ""
 
 #: ui/templates/em/accueil.html:775
@@ -1546,7 +1546,7 @@ msgid "N'essayez jamais de \"vous refaire\" après une perte"
 msgstr ""
 
 #: ui/templates/em/faq.html:396
-msgid "Ou trouver de l'aide en cas d'addiction ?"
+msgid "Où trouver de l'aide en cas d'addiction ?"
 msgstr ""
 
 #: ui/templates/em/faq.html:400
@@ -2485,7 +2485,7 @@ msgstr ""
 #: ui/templates/em/hybride.html:372
 #, python-format
 msgid "100%% dédié"
-msgstr ""
+msgstr "100% dédié"
 
 #: ui/templates/em/hybride.html:373
 msgid "Généraliste"
@@ -2498,7 +2498,7 @@ msgstr ""
 #: ui/templates/em/hybride.html:377
 #, python-format
 msgid "100%% gratuit — sans inscription"
-msgstr ""
+msgstr "100% gratuit — sans inscription"
 
 #: ui/templates/em/hybride.html:378
 msgid "Freemium"
@@ -3449,7 +3449,7 @@ msgstr ""
 #: ui/templates/em/news.html:168
 #, python-format
 msgid "Des déploiements 100%% sécurisés"
-msgstr ""
+msgstr "Des déploiements 100% sécurisés"
 
 #: ui/templates/em/news.html:169
 msgid ""
@@ -4225,7 +4225,7 @@ msgid "LotoIA - Analyse statistique EuroMillions"
 msgstr ""
 
 #: ui/templates/em/simulateur.html:31
-msgid "Outil d analyse statistique descriptive pour grilles EuroMillions"
+msgid "Outil d'analyse statistique descriptive pour grilles EuroMillions"
 msgstr ""
 
 #: ui/templates/em/simulateur.html:43

@@ -762,7 +762,7 @@ msgid "Comment fonctionne le moteur ?"
 msgstr "Hoe werkt de engine?"
 
 #: ui/templates/em/accueil.html:768
-msgid "Le moteur HYBRIDE en un coup d'oeil"
+msgid "Le moteur HYBRIDE en un coup d'œil"
 msgstr "De HYBRIDE-engine in een oogopslag"
 
 #: ui/templates/em/accueil.html:775
@@ -1917,7 +1917,7 @@ msgid "N'essayez jamais de \"vous refaire\" après une perte"
 msgstr "Probeer nooit om verlies goed te maken door verder te spelen"
 
 #: ui/templates/em/faq.html:396
-msgid "Ou trouver de l'aide en cas d'addiction ?"
+msgid "Où trouver de l'aide en cas d'addiction ?"
 msgstr "Waar vindt u hulp bij verslaving?"
 
 #: ui/templates/em/faq.html:400
@@ -2983,7 +2983,7 @@ msgstr "Gespecialiseerd in EuroMillions"
 #: ui/templates/em/hybride.html:372
 #, python-format
 msgid "100%% dédié"
-msgstr "100%% toegewijd"
+msgstr "100% toegewijd"
 
 #: ui/templates/em/hybride.html:373
 msgid "Généraliste"
@@ -2996,7 +2996,7 @@ msgstr "Gratis"
 #: ui/templates/em/hybride.html:377
 #, python-format
 msgid "100%% gratuit — sans inscription"
-msgstr "100%% gratis — zonder registratie"
+msgstr "100% gratis — zonder registratie"
 
 #: ui/templates/em/hybride.html:378
 msgid "Freemium"
@@ -4097,9 +4097,8 @@ msgid "11 mars 2026"
 msgstr "11 maart 2026"
 
 #: ui/templates/em/news.html:161
-#, fuzzy
 msgid "Release 1.5.0 — La plateforme passe au niveau supérieur"
-msgstr "Release 1.4.001 — Het platform bereikt het volgende niveau"
+msgstr "Release 1.5.0 — Het platform bereikt het volgende niveau"
 
 #: ui/templates/em/news.html:163
 msgid ""
@@ -4132,7 +4131,7 @@ msgstr ""
 #: ui/templates/em/news.html:168
 #, python-format
 msgid "Des déploiements 100%% sécurisés"
-msgstr "100%% veilige deployments"
+msgstr "100% veilige deployments"
 
 #: ui/templates/em/news.html:169
 msgid ""
@@ -5061,7 +5060,7 @@ msgid "LotoIA - Analyse statistique EuroMillions"
 msgstr "LotoIA - Statistische analyse EuroMillions"
 
 #: ui/templates/em/simulateur.html:31
-msgid "Outil d analyse statistique descriptive pour grilles EuroMillions"
+msgid "Outil d'analyse statistique descriptive pour grilles EuroMillions"
 msgstr ""
 "Hulpmiddel voor beschrijvende statistische analyse van EuroMillions-"
 "roosters"

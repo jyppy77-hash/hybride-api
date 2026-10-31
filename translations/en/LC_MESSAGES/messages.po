@@ -748,7 +748,7 @@ msgid "Comment fonctionne le moteur ?"
 msgstr "How does the engine work?"
 
 #: ui/templates/em/accueil.html:768
-msgid "Le moteur HYBRIDE en un coup d'oeil"
+msgid "Le moteur HYBRIDE en un coup d'œil"
 msgstr "The HYBRIDE engine at a glance"
 
 #: ui/templates/em/accueil.html:775
@@ -1847,7 +1847,7 @@ msgid "N'essayez jamais de \"vous refaire\" après une perte"
 msgstr "Never try to \"chase your losses\" after a loss"
 
 #: ui/templates/em/faq.html:396
-msgid "Ou trouver de l'aide en cas d'addiction ?"
+msgid "Où trouver de l'aide en cas d'addiction ?"
 msgstr "Where can I find help for gambling addiction?"
 
 #: ui/templates/em/faq.html:400
@@ -2892,7 +2892,7 @@ msgstr "EuroMillions specialist"
 #: ui/templates/em/hybride.html:372
 #, python-format
 msgid "100%% dédié"
-msgstr "100%% dedicated"
+msgstr "100% dedicated"
 
 #: ui/templates/em/hybride.html:373
 msgid "Généraliste"
@@ -3984,9 +3984,8 @@ msgid "11 mars 2026"
 msgstr "11 March 2026"
 
 #: ui/templates/em/news.html:161
-#, fuzzy
 msgid "Release 1.5.0 — La plateforme passe au niveau supérieur"
-msgstr "Release 1.4.001 — The platform levels up"
+msgstr "Release 1.5.0 — The platform levels up"
 
 #: ui/templates/em/news.html:163
 msgid ""
@@ -4019,7 +4018,7 @@ msgstr ""
 #: ui/templates/em/news.html:168
 #, python-format
 msgid "Des déploiements 100%% sécurisés"
-msgstr "100%% secure deployments"
+msgstr "100% secure deployments"
 
 #: ui/templates/em/news.html:169
 msgid ""
@@ -4935,7 +4934,7 @@ msgid "LotoIA - Analyse statistique EuroMillions"
 msgstr "LotoIA - EuroMillions Statistical Analysis"
 
 #: ui/templates/em/simulateur.html:31
-msgid "Outil d analyse statistique descriptive pour grilles EuroMillions"
+msgid "Outil d'analyse statistique descriptive pour grilles EuroMillions"
 msgstr "Descriptive statistical analysis tool for EuroMillions grids"
 
 #: ui/templates/em/simulateur.html:43

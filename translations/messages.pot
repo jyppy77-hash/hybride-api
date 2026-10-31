@@ -640,7 +640,7 @@ msgid "Comment fonctionne le moteur ?"
 msgstr ""
 
 #: ui/templates/em/accueil.html:768
-msgid "Le moteur HYBRIDE en un coup d'oeil"
+msgid "Le moteur HYBRIDE en un coup d'œil"
 msgstr ""
 
 #: ui/templates/em/accueil.html:775
@@ -1534,7 +1534,7 @@ msgid "N'essayez jamais de \"vous refaire\" après une perte"
 msgstr ""
 
 #: ui/templates/em/faq.html:396
-msgid "Ou trouver de l'aide en cas d'addiction ?"
+msgid "Où trouver de l'aide en cas d'addiction ?"
 msgstr ""
 
 #: ui/templates/em/faq.html:400
@@ -4177,7 +4177,7 @@ msgid "LotoIA - Analyse statistique EuroMillions"
 msgstr ""
 
 #: ui/templates/em/simulateur.html:31
-msgid "Outil d analyse statistique descriptive pour grilles EuroMillions"
+msgid "Outil d'analyse statistique descriptive pour grilles EuroMillions"
 msgstr ""
 
 #: ui/templates/em/simulateur.html:43

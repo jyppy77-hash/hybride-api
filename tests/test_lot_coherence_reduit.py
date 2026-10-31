@@ -88,7 +88,7 @@ _OLD_MSGID_FRAGMENTS = [
 
 # D1-D6 — disclaimer EM, ligne « pondération temporelle » par langue
 _DISCLAIMER = {
-    "fr": "Combinaison de trois fenetres d'analyse : 5 dernieres annees, 2 dernieres annees et ensemble de "
+    "fr": "Combinaison de trois fenêtres d'analyse : 5 dernières années, 2 dernières années et ensemble de "
           "l'historique disponible",
     "en": "Combination of three analysis windows: last 5 years, last 2 years and the entire available history",
     "es": "Combinacion de tres ventanas de analisis: ultimos 5 años, ultimos 2 años y el conjunto del "

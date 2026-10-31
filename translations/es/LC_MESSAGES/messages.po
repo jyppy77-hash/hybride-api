@@ -771,7 +771,7 @@ msgid "Comment fonctionne le moteur ?"
 msgstr "¿Cómo funciona el motor?"
 
 #: ui/templates/em/accueil.html:768
-msgid "Le moteur HYBRIDE en un coup d'oeil"
+msgid "Le moteur HYBRIDE en un coup d'œil"
 msgstr "El motor HYBRIDE de un vistazo"
 
 #: ui/templates/em/accueil.html:775
@@ -1939,7 +1939,7 @@ msgid "N'essayez jamais de \"vous refaire\" après une perte"
 msgstr "No intente nunca \"recuperarse\" después de una pérdida"
 
 #: ui/templates/em/faq.html:396
-msgid "Ou trouver de l'aide en cas d'addiction ?"
+msgid "Où trouver de l'aide en cas d'addiction ?"
 msgstr "¿Dónde encontrar ayuda en caso de adicción?"
 
 #: ui/templates/em/faq.html:400
@@ -3002,7 +3002,7 @@ msgstr "Especializado en EuroMillions"
 #: ui/templates/em/hybride.html:372
 #, python-format
 msgid "100%% dédié"
-msgstr "100%% dedicado"
+msgstr "100% dedicado"
 
 #: ui/templates/em/hybride.html:373
 msgid "Généraliste"
@@ -3015,7 +3015,7 @@ msgstr "Gratuito"
 #: ui/templates/em/hybride.html:377
 #, python-format
 msgid "100%% gratuit — sans inscription"
-msgstr "100%% gratuito — sin registro"
+msgstr "100% gratuito — sin registro"
 
 #: ui/templates/em/hybride.html:378
 msgid "Freemium"
@@ -4128,9 +4128,8 @@ msgid "11 mars 2026"
 msgstr "11 de marzo de 2026"
 
 #: ui/templates/em/news.html:161
-#, fuzzy
 msgid "Release 1.5.0 — La plateforme passe au niveau supérieur"
-msgstr "Release 1.4.001 — La plataforma sube de nivel"
+msgstr "Release 1.5.0 — La plataforma sube de nivel"
 
 #: ui/templates/em/news.html:163
 msgid ""
@@ -4163,7 +4162,7 @@ msgstr ""
 #: ui/templates/em/news.html:168
 #, python-format
 msgid "Des déploiements 100%% sécurisés"
-msgstr "Despliegues 100%% seguros"
+msgstr "Despliegues 100% seguros"
 
 #: ui/templates/em/news.html:169
 msgid ""
@@ -5092,7 +5091,7 @@ msgid "LotoIA - Analyse statistique EuroMillions"
 msgstr "LotoIA - Análisis estadístico EuroMillions"
 
 #: ui/templates/em/simulateur.html:31
-msgid "Outil d analyse statistique descriptive pour grilles EuroMillions"
+msgid "Outil d'analyse statistique descriptive pour grilles EuroMillions"
 msgstr ""
 "Herramienta de análisis estadístico descriptivo para combinaciones "
 "EuroMillions"
