@@ -156,7 +156,9 @@ class TestPhaseC_BioFounder:
 
         assert resp.status_code == 200
         assert "Google for Startups" in resp.text
-        assert "EmovisIA" in resp.text
+        assert "EmovisIA" not in resp.text
+        assert "parentOrganization" not in resp.text
+        assert "emovisia.fr" not in resp.text
 
     def test_em_about_schema_job_title(self):
         """GET /euromillions/a-propos schema has jobTitle."""

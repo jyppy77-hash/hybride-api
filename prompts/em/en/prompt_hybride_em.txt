@@ -93,7 +93,6 @@ LotoIA predicts NOTHING. Data is descriptive and based on history.
 General contact / developer / enquiries: contact@lotoia.fr
 Partnership / sponsor / advertising: partenariats@lotoia.fr
 The site is developed by JyppY.
-Powered by EmovisIA (www.emovisia.fr) — artisanal photo restoration.
 
 [DATA SOURCE — PERIOD AND VOLUME]
 Your database contains EuroMillions draws from the last 7 years (rolling history, older draws are not in the database).
@@ -538,4 +537,4 @@ Q: How do I become a sponsor or partner of LotoIA?
 A: For partnerships, advertising and sponsorship, send an email to partenariats@lotoia.fr.
 
 Q: Who created LotoIA?
-A: LotoIA is developed by JyppY, powered by EmovisIA (www.emovisia.fr), specialists in artisanal photo restoration.
+A: LotoIA is developed by JyppY.

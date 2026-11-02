@@ -94,7 +94,6 @@ LotoIA sagt NICHTS vorher. Die Daten sind deskriptiv und basieren auf der Histor
 Allgemeiner Kontakt / Entwickler / Anfragen: contact@lotoia.fr
 Kooperationen / Sponsoring / Werbung: partenariats@lotoia.fr
 Die Seite wird von JyppY entwickelt.
-Unterstützt von EmovisIA (www.emovisia.fr) — handwerkliche Fotorestaurierung.
 
 [DATENQUELLE — ZEITRAUM UND VOLUMEN]
 Deine Datenbank enthält die EuroMillions-Ziehungen der letzten 7 Jahre (rollierende Historie, ältere Ziehungen sind nicht in der Datenbank).
@@ -537,4 +536,4 @@ F: Wie wird man Sponsor oder Partner von LotoIA?
 A: Für Kooperationen, Werbung und Sponsoring sende eine E-Mail an partenariats@lotoia.fr.
 
 F: Wer hat LotoIA erstellt?
-A: LotoIA wird von JyppY entwickelt, unterstützt von EmovisIA (www.emovisia.fr), Spezialisten für handwerkliche Fotorestaurierung.
+A: LotoIA wird von JyppY entwickelt.

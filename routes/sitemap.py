@@ -92,11 +92,11 @@ _EDITORIAL_LASTMOD = {
     "/methodologie":                    "2026-06-01",  # git a64407f
     "/loto/intelligence-artificielle":  "2026-06-01",  # git a64407f
     "/hybride":                         "2026-06-01",  # git a64407f
-    "/a-propos":                        "2026-06-01",  # git a64407f
+    "/a-propos":                        "2026-11-02",  # lot mentions légales non pro (1.6.064)
     "/faq":                             "2026-06-01",  # git a64407f
     # — EuroMillions (clé partagée 6 langues) —
     "faq":                              "2026-06-01",  # git e8f2279 (1.6.039 numéros d'aide)
-    "a_propos":                         "2026-06-01",  # git a64407f Sprint SEO P1a breadcrumb
+    "a_propos":                         "2026-11-02",  # lot mentions légales non pro (1.6.064)
     "moteur":                           "2026-06-01",  # git a64407f
     "methodologie":                     "2026-06-01",  # git a64407f
     "ia":                               "2026-06-01",  # git a64407f

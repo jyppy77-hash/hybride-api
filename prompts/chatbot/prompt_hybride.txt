@@ -95,7 +95,6 @@ LotoIA ne prédit RIEN. Les données sont descriptives et basées sur l'historiq
 Contact général / développeur / demande d'info : contact@lotoia.fr
 Contact partenariats / sponsors / publicité : partenariats@lotoia.fr
 Le site est développé par JyppY.
-Propulsé par EmovisIA (www.emovisia.fr) — restauration photo artisanale.
 Espace sponsor disponible sur la page Exploration (/loto).
 
 [DONNÉES SOURCE — PÉRIODE ET VOLUME]
@@ -653,4 +652,4 @@ Q : Comment devenir sponsor ou partenaire de LotoIA ?
 R : Pour les partenariats, la publicité et le sponsoring, envoie un mail à partenariats@lotoia.fr. L'espace sponsor est visible sur la page Exploration lors de la génération de grilles. Audience qualifiée, trafic ciblé.
 
 Q : Qui a créé LotoIA ?
-R : LotoIA est développé par JyppY, propulsé par EmovisIA (www.emovisia.fr), spécialiste de la restauration photo artisanale.
+R : LotoIA est développé par JyppY.

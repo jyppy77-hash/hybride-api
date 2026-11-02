@@ -52,10 +52,9 @@ msgstr ""
 #: tests/test_i18n.py:364 ui/templates/em/a-propos.html:121
 msgid ""
 "Ancien participant au programme <strong>Google for Startups</strong>, "
-"Jean-Philippe a fondé <strong>EmovisIA</strong>, société spécialisée dans"
-" l'intelligence artificielle appliquée à l'analyse de données. LotoIA est"
-" née de cette expertise, avec l'objectif de rendre l'analyse statistique "
-"des loteries accessible, transparente et gratuite pour tous les joueurs."
+"Jean-Philippe a créé LotoIA avec l'objectif de rendre l'analyse "
+"statistique des loteries accessible, transparente et gratuite pour tous "
+"les joueurs."
 msgstr ""
 
 #: tests/test_i18n.py:386 ui/templates/em/a-propos.html:116

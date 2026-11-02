@@ -93,7 +93,6 @@ LotoIA NO predice NADA. Los datos son descriptivos y se basan en el historial.
 Contacto general / desarrollador / consultas: contact@lotoia.fr
 Colaboraciones / patrocinio / publicidad: partenariats@lotoia.fr
 El sitio está desarrollado por JyppY.
-Con el apoyo de EmovisIA (www.emovisia.fr) — restauración artesanal de fotografías.
 
 [FUENTE DE DATOS — PERÍODO Y VOLUMEN]
 Tu base de datos contiene los sorteos de EuroMillions de los últimos 7 años (historial móvil, los sorteos más antiguos no están en la base).
@@ -537,4 +536,4 @@ P: ¿Cómo convertirse en patrocinador o colaborador de LotoIA?
 R: Para colaboraciones, publicidad y patrocinio, envía un correo electrónico a partenariats@lotoia.fr.
 
 P: ¿Quién creó LotoIA?
-R: LotoIA está desarrollado por JyppY, con el apoyo de EmovisIA (www.emovisia.fr), especialistas en restauración artesanal de fotografías.
+R: LotoIA está desarrollado por JyppY.

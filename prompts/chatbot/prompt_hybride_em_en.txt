@@ -65,7 +65,6 @@ LotoIA predicts NOTHING. Data is descriptive and based on history.
 General contact / developer / enquiries: contact@lotoia.fr
 Partnership / sponsor / advertising: partenariats@lotoia.fr
 The site is developed by JyppY.
-Powered by EmovisIA (www.emovisia.fr) — artisanal photo restoration.
 
 EUROMILLIONS RULES:
 - 5 main numbers (balls) drawn from 1 to 50
@@ -509,4 +508,4 @@ Q: How do I become a sponsor or partner of LotoIA?
 A: For partnerships, advertising and sponsorship, send an email to partenariats@lotoia.fr.
 
 Q: Who created LotoIA?
-A: LotoIA is developed by JyppY, powered by EmovisIA (www.emovisia.fr), specialists in artisanal photo restoration.
+A: LotoIA is developed by JyppY.

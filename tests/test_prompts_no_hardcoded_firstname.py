@@ -3,7 +3,7 @@
 Cas terrain : l'exemple « je m'appelle Marco » du prompt FR faisait appeler
 l'utilisateur « Marco ». Pas de liste de prénoms : on bloque la forme
 « je m'appelle <Mot capitalisé> » (6 langues) et le prénom fautif. Les prompts
-citent légitimement l'éditeur (Jean-Philippe Godard / EmovisIA), non concerné.
+citent légitimement l'éditeur (Jean-Philippe Godard), non concerné.
 """
 
 import re

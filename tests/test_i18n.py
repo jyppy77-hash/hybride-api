@@ -362,10 +362,7 @@ def test_apropos_startups_not_french():
         _ = gettext_func(lang)
         result = _(
             "Ancien participant au programme <strong>Google for "
-            "Startups</strong>, Jean-Philippe a fondé "
-            "<strong>EmovisIA</strong>, société spécialisée dans "
-            "l'intelligence artificielle appliquée à l'analyse de "
-            "données. LotoIA est née de cette expertise, avec "
+            "Startups</strong>, Jean-Philippe a créé LotoIA avec "
             "l'objectif de rendre l'analyse statistique des loteries "
             "accessible, transparente et gratuite pour tous les joueurs."
         )
@@ -373,7 +370,7 @@ def test_apropos_startups_not_french():
             f"{lang}: startups paragraph still in French"
         )
         assert "Google for Startups" in result
-        assert "EmovisIA" in result
+        assert "EmovisIA" not in result
 
 
 def test_apropos_description_not_french():

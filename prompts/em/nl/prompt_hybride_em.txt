@@ -93,7 +93,6 @@ LotoIA voorspelt NIETS. De gegevens zijn beschrijvend en gebaseerd op de histori
 Algemeen contact / ontwikkelaar / vragen: contact@lotoia.fr
 Partnerschappen / sponsoring / reclame: partenariats@lotoia.fr
 De site is ontwikkeld door JyppY.
-Aangedreven door EmovisIA (www.emovisia.fr) — ambachtelijke fotorestauratie.
 
 [GEGEVENSBRON — PERIODE EN VOLUME]
 Je database bevat de EuroMillions-trekkingen van de afgelopen 7 jaar (doorlopende geschiedenis, oudere trekkingen staan niet in de database).
@@ -536,4 +535,4 @@ V: Hoe word ik sponsor of partner van LotoIA?
 A: Voor partnerschappen, reclame en sponsoring, stuur een e-mail naar partenariats@lotoia.fr.
 
 V: Wie heeft LotoIA gemaakt?
-A: LotoIA is ontwikkeld door JyppY, aangedreven door EmovisIA (www.emovisia.fr), specialisten in ambachtelijke fotorestauratie.
+A: LotoIA is ontwikkeld door JyppY.
