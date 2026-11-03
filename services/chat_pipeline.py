@@ -10,6 +10,7 @@ from services.stats_service import (
     get_numeros_par_categorie,
     prepare_grilles_pitch_context, get_pair_correlations, get_triplet_correlations,
     get_single_pair,  # Lot phase P
+    get_grid_numbers_stats,  # Lot 1.6.065
 )
 
 from services.chat_detectors import (
@@ -44,6 +45,7 @@ from services.chat_utils import (
     _format_tirage_context, _format_stats_context, _format_grille_context,
     _format_complex_context, _format_pairs_context, _format_triplets_context,
     _build_session_context, _format_generation_context,
+    _format_numbers_stats_context, _extract_grids_from_text_loto,  # Lot 1.6.065
 )
 from services.base_chat_detect_correlation import (  # Lot phase P
     _detect_combo_count, _detect_combo_with_secondary, _extract_combo_numbers,
@@ -183,6 +185,10 @@ def _build_loto_config():
         "format_grille_context": _format_grille_context,
         "analyze_grille_for_chat": analyze_grille_for_chat,
         "analyze_passes_lang": False,
+        # Lot 1.6.065 A / D2 — stats par numéro + grille citée dans l'historique
+        "get_grid_numbers_stats": get_grid_numbers_stats,
+        "format_numbers_stats_context": _format_numbers_stats_context,
+        "extract_grids_from_text": _extract_grids_from_text_loto,
         # Phase 0-bis
         "detect_prochain_tirage": _detect_prochain_tirage,
         "get_prochain_tirage": _get_prochain_tirage,

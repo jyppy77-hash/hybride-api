@@ -93,3 +93,8 @@ get_star_pair_draws = _svc.get_star_pair_draws
 async def analyze_grille_for_chat(nums: list, etoiles: list = None, lang: str = "fr") -> dict:
     """Wrapper preservant la signature originale (etoiles: list)."""
     return await _svc.analyze_grille_for_chat(nums, sorted(etoiles or []), lang=lang)
+
+
+async def get_grid_numbers_stats(nums: list, etoiles: list = None) -> dict | None:
+    """Lot 1.6.065 — stats par numéro d'une grille EuroMillions (5 boules + étoiles)."""
+    return await _svc.get_grid_numbers_stats(nums, sorted(etoiles or []) or None)

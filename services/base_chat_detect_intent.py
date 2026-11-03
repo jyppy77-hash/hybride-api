@@ -95,12 +95,12 @@ _REFUSAL_RE = re.compile(
     r"^(?:"
     # FR — refus + indifférence
     r"non(?:\s+merci)?|pas\s+(?:intéressé|besoin|la\s+peine|envie)|"
-    r"c['']?est\s+bon|[çc]a\s+(?:ira|va)|"
-    r"non\s+(?:c['']?est\s+bon|[çc]a\s+va|pas\s+la\s+peine)|"
-    r"je\s+m['']?en\s+fiche|rien\s+[àa]\s+faire|osef|"
+    r"c['’]?est\s+bon|[çc]a\s+(?:ira|va)|"
+    r"non\s+(?:c['’]?est\s+bon|[çc]a\s+va|pas\s+la\s+peine)|"
+    r"je\s+m['’]?en\s+fiche|rien\s+[àa]\s+faire|osef|"
     # EN — refusal + indifference
-    r"no(?:\s+thanks?)?|not?\s+interested|i['']?m\s+(?:good|fine|ok)|"
-    r"no\s+(?:need|thank\s+you)|nah|nope|don['']?t\s+care|whatever|"
+    r"no(?:\s+thanks?)?|not?\s+interested|i['’]?m\s+(?:good|fine|ok)|"
+    r"no\s+(?:need|thank\s+you)|nah|nope|don['’]?t\s+care|whatever|"
     # ES — rechazo + indiferencia
     r"no(?:\s+gracias)?|no\s+me\s+interesa|estoy\s+bien|no\s+hace\s+falta|"
     r"me\s+da\s+igual|paso|"
@@ -206,8 +206,8 @@ def _is_short_continuation(message: str) -> bool:
 _AFFIRMATION_PATTERNS = re.compile(
     r'^('
     # FR
-    r'oui|ouais|ouep|yep|ok|okay|d\'accord|bien s[uû]r|bien sur|'
-    r'[çc]a marche|c\'est bon|entendu|parfait|super|'
+    r'oui|ouais|ouep|yep|ok|okay|d[\'’]accord|bien s[uû]r|bien sur|'
+    r'[çc]a marche|c[\'’]est bon|entendu|parfait|super|'
     r'avec plaisir|volontiers|carr[eé]ment|'
     r'non|nan|pas vraiment|bof|'
     # EN
@@ -379,7 +379,7 @@ def _get_salutation_response(module: str, lang: str) -> str:
 
 _GRID_EVAL_PATTERN = re.compile(
     # FR
-    r'que?\s+(?:pensez|penses|pense[sz]?[\s-](?:tu|vous))\s+(?:de|d[\'ʼ])'
+    r'que?\s+(?:pensez|penses|pense[sz]?[\s-](?:tu|vous))\s+(?:de|d[\'ʼ’])'
     r'|(?:votre|ton)\s+avis\s+(?:sur|pour)'
     r'|analy(?:ser?|se)\s+(?:ces|mes|les)\s+num[eé]ro'
     r'|[eé]valu(?:er?|e)\s+(?:ma|cette|la|mes)\s+(?:grille|combinaison)'
@@ -387,7 +387,7 @@ _GRID_EVAL_PATTERN = re.compile(
     r'|que?\s+(?:vaut|valent)\s+(?:cette|ma|ces|mes)\s+(?:grille|combinaison|num[eé]ro)'
     r'|v[eé]rifi(?:er?|e)\s+(?:ma|mes|cette)\s+(?:grille|combinaison|num[eé]ro)'
     r'|(?:donne|donner?|donnez?)\s+(?:(?:moi|nous)\s+)?(?:votre|ton|un)\s+avis'
-    r'|(?:comment\s+(?:est|sont)|c[\'ʼ]est\s+(?:bien|bon|correct))\s.*?\b(?:grille|num[eé]ro|combinaison)'
+    r'|(?:comment\s+(?:est|sont)|c[\'ʼ’]est\s+(?:bien|bon|correct))\s.*?\b(?:grille|num[eé]ro|combinaison)'
     # EN
     r'|what\s+do\s+you\s+think\s+(?:of|about)'
     r'|(?:your|an?)\s+opinion\s+(?:on|about)'
@@ -418,8 +418,8 @@ _GRID_EVAL_PATTERN = re.compile(
     # Lot Gemini 1 G8 — audit, « analyse ma grille », « qu'en penses-tu » (6 langues)
     r'|\baudit\w*'
     r'|analy(?:ser?|se)\s+(?:ma|cette|la|mes)\s+(?:grille|combinaison)'
-    r'|qu[\'ʼ\s]?\s*en\s+pens\w*'
-    r'|t[\'ʼ\s]?\s*en\s+penses?\s+quoi'
+    r'|qu[\'ʼ’\s]?\s*en\s+pens\w*'
+    r'|t[\'ʼ’\s]?\s*en\s+penses?\s+quoi'
     r'|analy[sz]e\s+(?:my|this|the)\s+(?:grid|combination)'
     r'|\bwhat\s+do\s+you\s+think\b'
     r'|anali[zs]a(?:r)?\s+(?:mi|esta|la)\s+(?:combinaci[oó]n|cuadr[ií]cula|grilla)'
@@ -529,6 +529,60 @@ def _detect_grid_evaluation(message: str, game: str = "loto") -> dict | None:
         result["etoiles"] = etoiles
 
     return result
+
+
+# ════════════════════════════════════════════════════════════════════
+# Lot 1.6.065 D2 — Question d'avis SANS numéros sur la grille du dernier échange
+# (« c'est bien ? », « tu en penses quoi ? », « is it good? »…, 6 langues).
+# G8 (`_detect_grid_evaluation`) exige ≥ 3 numéros dans le message : cette question
+# partait en repli Gemini (cas 9405, 8015). Le pipeline cherche alors la grille dans
+# l'historique (EVAL_H). « ça vaut le coup ? » reste en Phase A (évaluée avant).
+# ════════════════════════════════════════════════════════════════════
+
+_OPINION_FOLLOWUP_RE = re.compile(
+    r"^(?:"
+    # FR
+    r"(?:et\s+)?(?:c'est|elle\s+est|il\s+est|[çc]a\s+(?:te\s+)?(?:va|semble|para[iî]t))\s+"
+    r"(?:bien|bon(?:ne)?|correcte?|top|pas\s+mal|valable|jouable)(?:\s+comme\s+(?:grille|combinaison))?|"
+    r"(?:tu\s+)?en\s+penses\s+quoi|qu'en\s+penses[\s-]*tu|t'en\s+penses\s+quoi|"
+    r"qu'est[\s-]*ce\s+que\s+tu\s+en\s+penses|(?:et\s+)?ton\s+avis|votre\s+avis|"
+    r"(?:analyse|d[eé]taille|[eé]value|v[eé]rifie)[\s-]*(?:la|le|les|moi\s+[çc]a)|"
+    r"et\s+celle[\s-]*(?:l[àa]|ci)|elle\s+vaut\s+quoi|elle\s+te\s+pla[iî]t|verdict|"
+    # Phase 1-bis : Loto → Phase A passe avant (décision c) ; EM (Phase A ne le capte pas) → EVAL_H
+    r"(?:est[\s-]*ce\s+que\s+)?[çc]a\s+vaut\s+le\s+coup|"
+    # EN
+    r"is\s+(?:it|this|that)\s+(?:a\s+)?(?:good(?:\s+one)?|ok(?:ay)?|any\s+good|decent|worth\s+it)|"
+    r"any\s+good|worth\s+it|(?:so\s+)?what\s+do\s+you\s+think(?:\s+(?:of|about)\s+(?:it|this|that))?|"
+    r"(?:your\s+)?(?:opinion|thoughts|verdict)|analy[sz]e\s+(?:it|this|that)|how\s+is\s+(?:it|this)|"
+    # ES
+    r"(?:¿\s*)?(?:est[áa]|es)\s+(?:bien|buena|correcta)|(?:qu[eé]\s+)?te\s+parece|qu[eé]\s+opinas|"
+    r"vale\s+la\s+pena|anal[ií]zala|y\s+esta|tu\s+opini[oó]n|"
+    # PT
+    r"(?:est[áa]|[ée])\s+(?:bem|boa|correta)|o\s+que\s+achas(?:\s+dela|\s+disto)?|vale\s+a\s+pena|"
+    r"analisa[\s-]*a|e\s+esta|a\s+tua\s+opini[ãa]o|"
+    # DE
+    r"ist\s+(?:das|sie|die|es)\s+(?:gut|ok|in\s+ordnung)|was\s+h[äa]ltst\s+du\s+davon|lohnt\s+sich\s+das|"
+    r"analysiere\s+(?:sie|das|die)|deine\s+meinung|"
+    # NL
+    r"is\s+(?:het|die|dat|deze)\s+(?:goed|ok[eé]?)|wat\s+vind\s+je\s+(?:ervan|daarvan)|"
+    r"is\s+het\s+de\s+moeite\s+waard|analyseer\s+(?:hem|haar|het|deze)|jouw\s+mening"
+    r")$",
+    re.IGNORECASE,
+)
+
+
+def _detect_opinion_followup(message: str) -> bool:
+    """Lot 1.6.065 D2 — question d'avis courte, sans aucun chiffre, sur « la » grille.
+
+    Normalisation : minuscules, apostrophes ’ / ʼ → ', ponctuation et emojis de fin retirés,
+    ¿ / ¡ de tête retirés. Au plus 60 caractères.
+    """
+    if not message or len(message.strip()) > 60 or any(c.isdigit() for c in message):
+        return False
+    text = message.strip().lower().replace("’", "'").replace("ʼ", "'")
+    text = re.sub(r"[\s!?.…,;:)(\U0001F300-\U0001FAFF☀-➿️]+$", "", text)
+    text = re.sub(r"^[¡¿\s]+", "", text)
+    return bool(_OPINION_FOLLOWUP_RE.match(text))
 
 
 # ════════════════════════════════════════════════════════════════════

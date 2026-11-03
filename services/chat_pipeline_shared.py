@@ -42,6 +42,12 @@ from services.base_chat_utils import _format_last_draw_context
 from services.stats_analysis import should_inject_pedagogical_context, PEDAGOGICAL_CONTEXT
 from services.decay_state import get_decay_state
 from config.engine import STRICT_HALLUCINATION_BLOCK_ENABLED  # V131.G
+from config.engine import STRICT_STAT_CHECK_ENABLED  # Lot 1.6.065 — contrôle 4
+from services.base_chat_detect_generation import (  # Lot 1.6.065 D1
+    _detect_generation_followup, _is_generation_followup_text, _followup_grid_count,
+)
+from services.base_chat_detect_intent import _detect_opinion_followup  # Lot 1.6.065 D2
+from services.chat_stat_check import ENGINE_SCORES  # Lot 1.6.065 — scores possibles du moteur
 
 # F15 V83: Gemini interaction helpers extracted to chat_pipeline_gemini.py
 from services.chat_pipeline_gemini import (  # noqa: F401 — re-exported for backward compat
@@ -646,6 +652,113 @@ _TIMEOUTS = {
 # F03 V74: shared config base — DRY for _build_loto_config / _build_em_config
 # ═══════════════════════════════════════════════════════
 
+# ═══════════════════════════════════════════════════════
+# Lot 1.6.065 — grille de l'historique (EVAL_H) et stats par numéro (bloc A)
+# ═══════════════════════════════════════════════════════
+#
+# Blocs moteur côté serveur : ils n'existent que PENDANT le tour qui les pose
+# (`_generation_context`, `_grid_fallback`, `enrichment_context`, `_chat_meta`).
+# Rien n'est conservé d'un tour à l'autre : `history` est le texte renvoyé par le client
+# (schemas.ChatMessage = role + content), nettoyé des tags ; chat_log ne garde qu'un
+# aperçu de 500 caractères ; pas de Redis en prod (cache en mémoire par processus) ; le
+# chatbot n'écrit jamais dans hybride_selection_history (Phase G, plus bas). Un « tour de
+# génération » passé est donc RECONSTRUIT en rejouant la détection sur son message
+# utilisateur (`_detect_generation` ou suite de génération).
+
+_HISTORY_SCORE_RE = re.compile(r"(?<![\d.,])(\d{1,3})\s*/\s*100\b")
+
+
+def _history_items(history) -> list[tuple[str, str]]:
+    """(role, content) de l'historique (objets ChatMessage ou dicts)."""
+    items = []
+    for msg in history or []:
+        role = getattr(msg, "role", None)
+        content = getattr(msg, "content", None)
+        if role is None and isinstance(msg, dict):
+            role, content = msg.get("role"), msg.get("content")
+        items.append((role, content or ""))
+    return items
+
+
+def _is_generation_turn(user_msg: str, cfg: dict) -> bool:
+    """Le message utilisateur d'un tour passé a-t-il déclenché (ou prolongé) une génération ?"""
+    return bool(cfg["detect_generation"](user_msg) or _is_generation_followup_text(user_msg))
+
+
+def _find_last_exchange_grid(history, cfg: dict) -> dict | None:
+    """Lot 1.6.065 D2 / A — grille du DERNIER échange, par priorité de source.
+
+    (1) bloc posé par le code au tour courant : sans objet ici (aucune phase n'a tourné) ;
+    (2) message UTILISATEUR du dernier échange contenant une grille → source « user » ;
+    (3) message assistant d'un tour de génération reconstruit → source « engine_turn » ;
+    (4) en dernier recours, texte libre du bot (peut être inventé, cf. 9403) → « bot_text ».
+    Limité au dernier échange : « c'est bien ? » porte sur la grille qui vient d'être montrée.
+    Retourne {numeros, secondary, source} ou None.
+    """
+    items = _history_items(history)
+    i = len(items) - 1
+    while i >= 0 and items[i][0] != "assistant":
+        i -= 1
+    if i < 0:
+        return None
+    j = i - 1
+    while j >= 0 and items[j][0] != "user":
+        j -= 1
+    user_msg = items[j][1] if j >= 0 else ""
+    if user_msg:
+        nums, sec = cfg["detect_grille"](user_msg)
+        if nums:
+            return {"numeros": list(nums), "secondary": sec, "source": "user"}
+    extract = cfg.get("extract_grids_from_text")
+    grids = extract(items[i][1]) if extract else []
+    if not grids:
+        return None
+    nums, sec = grids[-1]
+    # Tour de génération reconstruit ET score cité possible pour le moteur (95/85/75/60/50) ;
+    # un score impossible (82, 88… cas 9402 / 9403) trahit une grille inventée → « bot_text ».
+    score_m = _HISTORY_SCORE_RE.search(items[i][1])
+    score_ok = score_m is None or int(score_m.group(1)) in ENGINE_SCORES
+    source = "engine_turn" if (user_msg and _is_generation_turn(user_msg, cfg) and score_ok) else "bot_text"
+    return {"numeros": list(nums), "secondary": sec, "source": source}
+
+
+def _engine_turn_grids(history, cfg: dict) -> list[tuple[frozenset, int | None]]:
+    """Lot 1.6.065 C′ — grilles (et score cité) des tours de génération reconstruits.
+
+    Sert à l'exception « rappel légitime » du contrôle 4. Fiabilité limitée : la grille vient
+    du texte du bot de ce tour (aucun bloc moteur conservé côté serveur) ; le contrôle exige en
+    plus un score possible pour le moteur (95/85/75/60/50).
+    """
+    extract = cfg.get("extract_grids_from_text")
+    if not extract:
+        return []
+    out = []
+    items = _history_items(history)
+    for k, (role, content) in enumerate(items):
+        if role != "assistant" or k == 0 or items[k - 1][0] != "user":
+            continue
+        if not _is_generation_turn(items[k - 1][1], cfg):
+            continue
+        score_m = _HISTORY_SCORE_RE.search(content)
+        for nums, _sec in extract(content):
+            out.append((frozenset(nums), int(score_m.group(1)) if score_m else None))
+    return out
+
+
+async def _grid_numbers_stats_context(cfg: dict, nums, secondary, lp: str) -> str:
+    """Lot 1.6.065 A — bloc [STATS PAR NUMÉRO] d'une grille ('' si indisponible)."""
+    fn = cfg.get("get_grid_numbers_stats")
+    fmt = cfg.get("format_numbers_stats_context")
+    if not fn or not fmt:
+        return ""
+    try:
+        stats = await asyncio.wait_for(fn(nums, secondary), timeout=_TIMEOUTS["stats_analysis"])
+    except Exception as e:
+        logger.warning(f"{lp} STATS PAR NUMÉRO indisponibles: {e}")
+        return ""
+    return fmt(stats) if stats else ""
+
+
 def _build_config_base(overrides: dict) -> dict:
     """Build config from game-specific overrides.
 
@@ -1060,16 +1173,33 @@ async def _prepare_chat_context_base(
     _grid_fallback = ""               # Lot Gemini 1 G5 — repli déterministe si Gemini échoue
     _phase_g_attempted = False        # V141 A.3.1 BUG #4 — observability flag
     _phase_g_error_label = ""         # V141 A.3.1 BUG #4 — telemetry label
-    if cfg["detect_generation"](message):
+    # Lot 1.6.065 D1 — « encore une grille », « une autre »… après un tour de génération :
+    # Phase G avec le mode, le nombre de grilles et les contraintes de la demande d'origine
+    # (un mode ou un nombre explicites dans le message courant priment).
+    _gen_source = message if cfg["detect_generation"](message) else None
+    if _gen_source is None:
+        _followup_fn = cfg.get("detect_generation_followup", _detect_generation_followup)
+        _gen_source = _followup_fn(message, history, game=cfg.get("game", "loto"))
+        if _gen_source:
+            logger.info(
+                f"{_lp} GEN_FOLLOWUP: \"{message[:60]}\" → demande d'origine \"{_gen_source[:60]}\""
+            )
+    if _gen_source:
         _phase_g_attempted = True
         _phase = "G"
         try:
             _gen_mod = importlib.import_module(cfg["gen_engine_module"])
             _gen_fn = _gen_mod.generate_grids
             _gen_mode = cfg["detect_generation_mode"](message)
-            _grid_count = cfg["extract_grid_count"](message)
-            _forced = cfg["extract_forced_numbers"](message, game=cfg["game"])
-            _exclusions = cfg["extract_exclusions"](message)
+            if _gen_source is not message and _gen_mode == "balanced":
+                _gen_mode = cfg["detect_generation_mode"](_gen_source)
+            if _gen_source is message:
+                _grid_count = cfg["extract_grid_count"](message)
+            else:
+                # Phase 1-bis : singulier → 1 ; répétition nue → nombre d'origine ; nombre explicite → ce nombre
+                _grid_count = _followup_grid_count(message, cfg["extract_grid_count"](_gen_source))
+            _forced = cfg["extract_forced_numbers"](_gen_source, game=cfg["game"])
+            _exclusions = cfg["extract_exclusions"](_gen_source)
             _has_exclusions = bool(_exclusions and any(_exclusions.values()))
             if _forced.get("error"):
                 _generation_context = f"[ERREUR GÉNÉRATION] {_forced['error']}"
@@ -1318,10 +1448,20 @@ async def _prepare_chat_context_base(
     enrichment_context = ""
 
     # ── Phase EVAL : Évaluation grille soumise ──
+    # Lot 1.6.065 D2 — EVAL_H : question d'avis SANS numéros (« c'est bien ? ») → grille du
+    # dernier échange (`_find_last_exchange_grid`), même analyse + bloc [STATS PAR NUMÉRO].
     if not _generation_context:
         _eval_result = cfg["detect_grid_evaluation"](message, game=cfg["eval_game"])
+        _eval_source = "message"
+        _opinion_fn = cfg.get("detect_opinion_followup", _detect_opinion_followup)
+        if not _eval_result and not _continuation_mode and _opinion_fn(message):
+            _hist_grid = _find_last_exchange_grid(history, cfg)
+            if _hist_grid:
+                _eval_result = {"numeros": _hist_grid["numeros"],
+                                cfg["secondary_field"]: _hist_grid["secondary"]}
+                _eval_source = _hist_grid["source"]
         if _eval_result:
-            _phase = "EVAL"
+            _phase = "EVAL" if _eval_source == "message" else "EVAL_H"
             try:
                 _eval_nums = _eval_result["numeros"]
                 _eval_secondary = _eval_result.get(cfg["secondary_field"])
@@ -1334,16 +1474,26 @@ async def _prepare_chat_context_base(
                 )
                 if grille_analysis:
                     enrichment_context = cfg["format_grille_context"](grille_analysis)
-                    enrichment_context = enrichment_context.replace(
-                        "[ANALYSE DE GRILLE",
-                        "[ÉVALUATION GRILLE UTILISATEUR",
-                    )
-                    logger.info(
-                        f"{_lp} Phase EVAL — grille utilisateur evaluee: "
-                        f"{_eval_nums} {cfg['secondary_field']}={_eval_secondary}"
-                    )
+                    if _eval_source == "message":
+                        enrichment_context = enrichment_context.replace(
+                            "[ANALYSE DE GRILLE",
+                            "[ÉVALUATION GRILLE UTILISATEUR",
+                        )
+                        logger.info(
+                            f"{_lp} Phase EVAL — grille utilisateur evaluee: "
+                            f"{_eval_nums} {cfg['secondary_field']}={_eval_secondary}"
+                        )
+                    else:
+                        logger.info(
+                            f"{_lp} EVAL_FROM_HISTORY: source={_eval_source} "
+                            f"grille={_eval_nums} {cfg['secondary_field']}={_eval_secondary} "
+                            f"question=\"{message[:60]}\""
+                        )
+                    _stats_ctx = await _grid_numbers_stats_context(cfg, _eval_nums, _eval_secondary, _lp)
+                    if _stats_ctx:
+                        enrichment_context = f"{enrichment_context}\n\n{_stats_ctx}"
             except Exception as e:
-                logger.warning(f"{_lp} Phase EVAL erreur: {e}")
+                logger.warning(f"{_lp} Phase {_phase} erreur: {e}")
 
     # Phase 0-bis : prochain tirage
     if not _continuation_mode and cfg["detect_prochain_tirage"](message):
@@ -1448,6 +1598,10 @@ async def _prepare_chat_context_base(
             if grille_result:
                 enrichment_context = cfg["format_grille_context"](grille_result)
                 logger.info(f"{_lp} Grille analysee: {grille_nums} {cfg['secondary_field']}={grille_secondary}")
+                # Lot 1.6.065 A — stats par numéro de la grille saisie
+                _stats_ctx = await _grid_numbers_stats_context(cfg, grille_nums, grille_secondary, _lp)
+                if _stats_ctx:
+                    enrichment_context = f"{enrichment_context}\n\n{_stats_ctx}"
         except Exception as e:
             logger.warning(f"{_lp} Erreur analyse grille: {e}")
 
@@ -1795,6 +1949,10 @@ async def _prepare_chat_context_base(
         "_game": cfg.get("game", "loto"),
         # V131.G — flag strict mode lu depuis env var au module-load (config/engine.py)
         "_strict_hallucination_block": STRICT_HALLUCINATION_BLOCK_ENABLED,
+        # Lot 1.6.065 — contrôle 4 : flag, nombre de tirages, grilles des tours de génération
+        "_strict_stat_check": STRICT_STAT_CHECK_ENABLED,
+        "_draw_count": draw_count,
+        "_engine_turn_grids": _engine_turn_grids(history, cfg),
         # Lot Gemini 1 G5 — grille du moteur en clair, utilisée par tous les replis du chat
         "_grid_fallback": _grid_fallback,
         "_chat_meta": {

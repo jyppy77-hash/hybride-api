@@ -16,6 +16,30 @@ logger = logging.getLogger(__name__)
 SNAPSHOT_META_TTL = 300              # (dernier tirage, nb tirages) : relu toutes les 5 min max
 SNAPSHOT_TTL = 7 * 24 * 3600         # snapshot indexé sur le dernier tirage → rotation naturelle
 
+# Lot 1.6.065 — meilleure correspondance : tirages à égalité listés (au plus 10)
+BEST_MATCH_TIES_MAX = 10
+
+
+def _tercile_thresholds(freq_values) -> tuple[int, int]:
+    """Lot 1.6.065 — seuils chaud / froid par terciles de fréquence (ensemble de l'historique).
+
+    Définition unique de [ANALYSE DE GRILLE] et de [STATS PAR NUMÉRO] (décision Jyppy a) :
+    chaud si fréquence >= seuil_chaud, froid si <= seuil_froid, sinon neutre.
+    """
+    ordered = sorted(freq_values, reverse=True)
+    if not ordered:
+        return 0, 0
+    return ordered[len(ordered) // 3], ordered[2 * len(ordered) // 3]
+
+
+def _tercile_category(freq: int, seuil_chaud: int, seuil_froid: int) -> str:
+    """Lot 1.6.065 — catégorie d'un numéro selon `_tercile_thresholds` (même ordre de test)."""
+    if freq >= seuil_chaud:
+        return "chaud"
+    if freq <= seuil_froid:
+        return "froid"
+    return "neutre"
+
 
 @dataclass
 class GameConfig:
@@ -89,6 +113,57 @@ class BaseStatsService:
     def _extract_secondary_match(self, best_match, secondary):
         """Extract secondary number match from best_match row. Default: False."""
         return False
+
+    async def _query_best_match_ties(self, cursor, nums, match_count, limit=BEST_MATCH_TIES_MAX + 1):
+        """Lot 1.6.065 — tous les tirages qui atteignent `match_count` numéros communs (récents d'abord).
+
+        Requête générique (boules + colonnes secondaires du jeu). `limit` = plafond + 1
+        pour savoir s'il reste des tirages au-delà du plafond affiché.
+        """
+        sec_cols = ", ".join(self.cfg.secondary_columns)
+        await cursor.execute(f"""
+            SELECT * FROM (
+                SELECT date_de_tirage, boule_1, boule_2, boule_3, boule_4, boule_5, {sec_cols},
+                    (
+                        (boule_1 IN (%s, %s, %s, %s, %s)) +
+                        (boule_2 IN (%s, %s, %s, %s, %s)) +
+                        (boule_3 IN (%s, %s, %s, %s, %s)) +
+                        (boule_4 IN (%s, %s, %s, %s, %s)) +
+                        (boule_5 IN (%s, %s, %s, %s, %s))
+                    ) AS match_count
+                FROM {self.cfg.table}
+            ) t
+            WHERE match_count = %s
+            ORDER BY date_de_tirage DESC
+            LIMIT %s
+        """, (*nums, *nums, *nums, *nums, *nums, int(match_count), int(limit)))
+        return await cursor.fetchall()
+
+    async def _count_best_match_ties(self, cursor, nums, match_count) -> int:
+        """Lot 1.6.065 — nombre total de tirages à égalité (affiché quand le plafond est dépassé)."""
+        await cursor.execute(f"""
+            SELECT COUNT(*) AS n FROM (
+                SELECT (
+                    (boule_1 IN (%s, %s, %s, %s, %s)) +
+                    (boule_2 IN (%s, %s, %s, %s, %s)) +
+                    (boule_3 IN (%s, %s, %s, %s, %s)) +
+                    (boule_4 IN (%s, %s, %s, %s, %s)) +
+                    (boule_5 IN (%s, %s, %s, %s, %s))
+                ) AS match_count
+                FROM {self.cfg.table}
+            ) t
+            WHERE match_count = %s
+        """, (*nums, *nums, *nums, *nums, *nums, int(match_count)))
+        row = await cursor.fetchone()
+        return int(row["n"]) if row else 0
+
+    def _tie_secondary_match(self, row, secondary) -> bool:
+        """Lot 1.6.065 — numéro(s) secondaire(s) en commun pour une ligne d'égalité."""
+        if secondary is None:
+            return False
+        wanted = set(secondary) if isinstance(secondary, (list, tuple, set)) else {secondary}
+        drawn = {int(row[c]) for c in self.cfg.secondary_columns if row.get(c) is not None}
+        return bool(wanted & drawn)
 
     # ──────────────────────────────────────
     # Helpers BDD (avec cache)
@@ -523,9 +598,9 @@ class BaseStatsService:
             freq_map = await self._get_all_frequencies(cursor, self.cfg.type_principal)
             frequencies = [freq_map.get(num, 0) for num in nums]
 
-            all_freq_sorted = sorted(freq_map.values(), reverse=True)
-            seuil_chaud = all_freq_sorted[len(all_freq_sorted) // 3]
-            seuil_froid = all_freq_sorted[2 * len(all_freq_sorted) // 3]
+            # Lot 1.6.065 — terciles sur l'ensemble de l'historique (helper partagé avec
+            # get_grid_numbers_stats : une seule définition chaud / froid pour les 2 blocs)
+            seuil_chaud, seuil_froid = _tercile_thresholds(freq_map.values())
 
             numeros_chauds = [n for n in nums if freq_map.get(n, 0) >= seuil_chaud]
             numeros_froids = [n for n in nums if freq_map.get(n, 0) <= seuil_froid]
@@ -548,6 +623,27 @@ class BaseStatsService:
                 best_match_count = len(best_match_numbers)
                 best_match_date = str(best_match['date_de_tirage'])
                 best_match_secondary = self._extract_secondary_match(best_match, secondary)
+
+            # Lot 1.6.065 — tous les tirages à égalité (plafond BEST_MATCH_TIES_MAX, récents
+            # d'abord). Échec isolé : l'analyse reste valide, la liste est simplement vide.
+            ties = []
+            ties_total = 0
+            if best_match_count > 0:
+                try:
+                    rows = await self._query_best_match_ties(cursor, nums, best_match_count)
+                    for row in rows[:BEST_MATCH_TIES_MAX]:
+                        drawn = {int(row[f'boule_{i}']) for i in range(1, 6)}
+                        ties.append({
+                            "date": str(row['date_de_tirage']),
+                            "numeros_communs": sorted(n for n in nums if n in drawn),
+                            self.cfg.secondary_match_key: self._tie_secondary_match(row, secondary),
+                        })
+                    ties_total = len(ties)
+                    if len(rows) > BEST_MATCH_TIES_MAX:
+                        ties_total = await self._count_best_match_ties(cursor, nums, best_match_count)
+                except Exception as e:
+                    logger.warning(f"analyze_grille_for_chat{self.cfg.log_label} égalités indisponibles: {e}")
+                    ties, ties_total = [], 0
 
           except Exception as e:
             logger.error(f"Erreur analyze_grille_for_chat{self.cfg.log_label} ({nums}): {e}")
@@ -628,10 +724,95 @@ class BaseStatsService:
                     "date": best_match_date,
                     "numeros_communs": best_match_numbers,
                     self.cfg.secondary_match_key: best_match_secondary,
+                    # Lot 1.6.065 — tous les tirages à égalité (récents d'abord, plafonnés)
+                    "egalites": ties,
+                    "nb_egalites": ties_total,
                 }
-            }
+            },
+            # Lot 1.6.065 — période nommée dans le bloc (décision Jyppy a)
+            "total_tirages": total_tirages,
         }
         return result
+
+    async def get_grid_numbers_stats(self, nums: list, secondary=None) -> dict | None:
+        """Lot 1.6.065 — statistiques par numéro d'une grille, pour le bloc [STATS PAR NUMÉRO].
+
+        Une seule requête sur les tirages (dates + boules + secondaires) ; les fréquences
+        viennent de `_get_all_frequencies` (même source et même cache que
+        `analyze_grille_for_chat`), la catégorie de `_tercile_thresholds` (terciles sur
+        l'ensemble de l'historique, définition de [ANALYSE DE GRILLE]).
+
+        Args:
+            nums: 5 numéros principaux
+            secondary: numéro chance (int) ou étoiles (list), ou None
+
+        Returns:
+            {"total_tirages", "date_min", "date_max", "principaux": [...], "secondaires": [...]}
+            chaque entrée : numero, frequence, ecart_actuel, derniere_sortie, rang, rang_sur,
+            categorie ; ou None si erreur.
+        """
+        nums = sorted(int(n) for n in nums)
+        if secondary is None:
+            sec_list = []
+        elif isinstance(secondary, (list, tuple, set)):
+            sec_list = sorted(int(s) for s in secondary)
+        else:
+            sec_list = [int(secondary)]
+
+        main_cols = [f"boule_{i}" for i in range(1, 6)]
+        sec_cols = list(self.cfg.secondary_columns)
+
+        async with self._get_connection() as conn:
+          try:
+            cursor = await conn.cursor()
+            freq_main = await self._get_all_frequencies(cursor, self.cfg.type_principal)
+            freq_sec = await self._get_all_frequencies(cursor, self.cfg.type_secondary) if sec_list else {}
+            await cursor.execute(
+                f"SELECT date_de_tirage, {', '.join(main_cols + sec_cols)} "
+                f"FROM {self.cfg.table} ORDER BY date_de_tirage ASC"
+            )
+            rows = await cursor.fetchall()
+          except Exception as e:
+            logger.error(f"Erreur get_grid_numbers_stats{self.cfg.log_label} ({nums}): {e}")
+            return None
+
+        if not rows:
+            return None
+        total = len(rows)
+        last_main: dict[int, int] = {}
+        last_sec: dict[int, int] = {}
+        for idx, row in enumerate(rows):
+            for c in main_cols:
+                if row.get(c) is not None:
+                    last_main[int(row[c])] = idx
+            for c in sec_cols:
+                if row.get(c) is not None:
+                    last_sec[int(row[c])] = idx
+
+        def _entries(values, freq_map, last_idx, r_max):
+            seuil_chaud, seuil_froid = _tercile_thresholds(freq_map.values())
+            out = []
+            for n in values:
+                f = int(freq_map.get(n, 0))
+                li = last_idx.get(n)
+                out.append({
+                    "numero": n,
+                    "frequence": f,
+                    "ecart_actuel": (total - 1 - li) if li is not None else None,
+                    "derniere_sortie": str(rows[li]['date_de_tirage']) if li is not None else None,
+                    "rang": 1 + sum(1 for m, fm in freq_map.items() if m != n and fm > f),
+                    "rang_sur": r_max,
+                    "categorie": _tercile_category(f, seuil_chaud, seuil_froid),
+                })
+            return out
+
+        return {
+            "total_tirages": total,
+            "date_min": str(rows[0]['date_de_tirage']),
+            "date_max": str(rows[-1]['date_de_tirage']),
+            "principaux": _entries(nums, freq_main, last_main, self.cfg.range_principal[1]),
+            "secondaires": _entries(sec_list, freq_sec, last_sec, self.cfg.range_secondary[1]),
+        }
 
     async def get_classement_numeros(self, type_num=None, tri="frequence_desc", limit=5):
         """

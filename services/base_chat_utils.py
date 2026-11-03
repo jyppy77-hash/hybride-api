@@ -245,6 +245,7 @@ _INTERNAL_TAGS_PATTERNS = (
     r'\[CHIFFRES EXACTS[^\]]*\]',            # V141 A.1 — tag isolé (cas F7 audit Phase 2.5)
     r'\[MESSAGE A ADAPTER[^\]]*\]',
     r'\[CONTEXTE TEMPOREL[^\]]*\]',          # V142.F-bis — anti-fuite bloc ancrage temporel
+    r'\[STATS PAR NUM[EÉ]RO[^\]]*\]',        # Lot 1.6.065 — bloc stats par numéro (A)
     # V141 A.1 — BUG #3 (cas H4 06/05/2026) — pattern global tags fermants `[/...]`
     # Couvre [/RÉSULTAT TIRAGE], [/GRILLE GÉNÉRÉE PAR HYBRIDE], [/DONNÉES TEMPS RÉEL],
     # [/BREAKDOWN — Critères], etc. Caractères : lettres latines accentuées + chiffres
@@ -554,12 +555,17 @@ def _format_grille_context_base(result: dict, secondary_key: str, secondary_labe
     lines.append(f"Dispersion : {a['dispersion']} (idéal : >= 15) {ok(a['dispersion_ok'])}")
     lines.append(f"Consécutifs : {a['consecutifs']} {ok(a['consecutifs'] <= 2)}")
 
+    # Lot 1.6.065 — période nommée (décision Jyppy a : terciles sur l'ensemble de l'historique)
+    _total = result.get("total_tirages")
+    _periode = "sur l'ensemble de l'historique"
+    if _total:
+        lines.append(f"Période : ensemble de l'historique ({_total} tirages)")
     if a['numeros_chauds']:
-        lines.append(f"Numéros chauds : {', '.join(str(n) for n in a['numeros_chauds'])}")
+        lines.append(f"Numéros chauds ({_periode}) : {', '.join(str(n) for n in a['numeros_chauds'])}")
     if a['numeros_froids']:
-        lines.append(f"Numéros froids : {', '.join(str(n) for n in a['numeros_froids'])}")
+        lines.append(f"Numéros froids ({_periode}) : {', '.join(str(n) for n in a['numeros_froids'])}")
     if a['numeros_neutres']:
-        lines.append(f"Numéros neutres : {', '.join(str(n) for n in a['numeros_neutres'])}")
+        lines.append(f"Numéros neutres ({_periode}) : {', '.join(str(n) for n in a['numeros_neutres'])}")
 
     lines.append(f"Conformité : {a['conformite_pct']}%")
     lines.append(f"Badges : {', '.join(a['badges'])}")
@@ -575,10 +581,114 @@ def _format_grille_context_base(result: dict, secondary_key: str, secondary_labe
                 f"Historique : jamais sortie. Meilleure correspondance : "
                 f"{mc['nb_numeros_communs']} numéros communs{sec_txt} le {mc['date']} ({communs})"
             )
+            # Lot 1.6.065 — tous les tirages à égalité (récents d'abord), numéros communs de chacun
+            ties = mc.get('egalites') or []
+            if ties:
+                total_ties = mc.get('nb_egalites') or len(ties)
+                parts = []
+                for t in ties:
+                    t_sec = match_label if t.get(match_key) else ""
+                    parts.append(f"le {t['date']} ({', '.join(str(n) for n in t['numeros_communs'])}{t_sec})")
+                head = (f"Tirages à égalité ({mc['nb_numeros_communs']} numéros communs) : "
+                        f"{total_ties} au total")
+                if total_ties > len(ties):
+                    head += f", les {len(ties)} plus récents"
+                lines.append(f"{head} — " + " ; ".join(parts))
         else:
             lines.append("Historique : combinaison jamais sortie")
 
     return "\n".join(lines)
+
+
+# ────────────────────────────────────────────
+# Lot 1.6.065 — Bloc [STATS PAR NUMÉRO] (fréquence, écart, rang, catégorie par numéro)
+# ────────────────────────────────────────────
+
+STATS_PAR_NUMERO_TAG = "[STATS PAR NUMÉRO — CHIFFRES EXACTS"
+STATS_PAR_NUMERO_END = "[/STATS PAR NUMÉRO]"
+
+
+def _format_numbers_stats_context_base(stats: dict, secondary_label: str, principal_label: str = "Numéro") -> str:
+    """Formate `get_grid_numbers_stats` en bloc [STATS PAR NUMÉRO] (tags internes en français).
+
+    secondary_label : "Chance" (Loto) ou "Étoile" (EM).
+    Une ligne par numéro, format fixe (relu par le contrôle 4 de chat_pipeline_gemini).
+    """
+    if not stats or not stats.get("principaux"):
+        return ""
+    nums = " ".join(str(e["numero"]) for e in stats["principaux"])
+    secs = stats.get("secondaires") or []
+    sec_txt = f" + {secondary_label} {' '.join(str(e['numero']) for e in secs)}" if secs else ""
+    lines = [
+        f"{STATS_PAR_NUMERO_TAG} — grille {nums}{sec_txt}]",
+        f"Période : ensemble de l'historique, {stats['total_tirages']} tirages "
+        f"du {stats['date_min']} au {stats['date_max']}",
+        "Catégorie : terciles de fréquence sur l'ensemble de l'historique "
+        "(même définition que [ANALYSE DE GRILLE])",
+    ]
+
+    def _line(label, e):
+        ecart = e["ecart_actuel"]
+        ecart_txt = (f"écart actuel {ecart} tirages (dernière sortie {e['derniere_sortie']})"
+                     if ecart is not None else "jamais sorti")
+        return (f"{label} {e['numero']} : {e['frequence']} sorties — {ecart_txt} — "
+                f"rang {e['rang']}/{e['rang_sur']} — {e['categorie'].upper()}")
+
+    for e in stats["principaux"]:
+        lines.append(_line(principal_label, e))
+    for e in secs:
+        lines.append(_line(secondary_label, e))
+    lines.append(
+        "Consigne : cite UNIQUEMENT ces chiffres pour ces numéros ; ils priment sur tout chiffre "
+        "de l'historique, y compris tes propres réponses précédentes."
+    )
+    lines.append(STATS_PAR_NUMERO_END)
+    return "\n".join(lines)
+
+
+# ────────────────────────────────────────────
+# Lot 1.6.065 — Grille citée dans un texte libre (message assistant de l'historique)
+# ────────────────────────────────────────────
+
+_TEXT_GRID_SEP = r'(?:\s*[-–—,/]\s*|\s+(?:et|and|y|und|en|e)\s+)'
+_TEXT_GRID_RE = re.compile(
+    rf'(?<!\d)(\d{{1,2}}){_TEXT_GRID_SEP}(\d{{1,2}}){_TEXT_GRID_SEP}(\d{{1,2}})'
+    rf'{_TEXT_GRID_SEP}(\d{{1,2}}){_TEXT_GRID_SEP}(\d{{1,2}})(?!\d)'
+)
+_TEXT_CHANCE_RE = re.compile(r'chance\D{0,15}?(\d{1,2})(?!\d)', re.IGNORECASE)
+_TEXT_STARS_RE = re.compile(
+    r'(?:[eé]toiles?|stars?|estrellas?|estrelas?|sterne?n?|ster(?:ren)?)\D{0,15}?(\d{1,2})'
+    r'(?:\s*[-–—,/]\s*|\s+(?:et|and|y|und|en|e)\s+)(\d{1,2})(?!\d)',
+    re.IGNORECASE,
+)
+
+
+def _extract_grids_from_text(text: str, game: str = "loto") -> list[tuple[list[int], object]]:
+    """Grilles (5 boules distinctes dans la plage + secondaire éventuel) citées dans un texte.
+
+    Secondaire : « chance N » (Loto) ou « étoiles A et B » (EM) dans les 80 caractères qui
+    suivent la suite. Retourne [(boules triées, chance:int|None ou étoiles:list|None), ...].
+    """
+    if not text:
+        return []
+    max_b, max_s = (49, 10) if game == "loto" else (50, 12)
+    grids = []
+    for m in _TEXT_GRID_RE.finditer(text):
+        nums = [int(g) for g in m.groups()]
+        if len(set(nums)) != 5 or not all(1 <= n <= max_b for n in nums):
+            continue
+        tail = text[m.end():m.end() + 80]
+        sec = None
+        if game == "loto":
+            c = _TEXT_CHANCE_RE.search(tail)
+            if c and 1 <= int(c.group(1)) <= max_s:
+                sec = int(c.group(1))
+        else:
+            s = _TEXT_STARS_RE.search(tail)
+            if s and all(1 <= int(x) <= max_s for x in s.groups()) and s.group(1) != s.group(2):
+                sec = sorted(int(x) for x in s.groups())
+        grids.append((sorted(nums), sec))
+    return grids
 
 
 def _build_session_context_base(history, current_message: str,

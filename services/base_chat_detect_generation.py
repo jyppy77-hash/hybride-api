@@ -193,6 +193,143 @@ def _detect_generation(message: str) -> bool:
     return True
 
 
+# ═══════════════════════════════════════════════════════
+# Lot 1.6.065 D1 — Demande de grille supplémentaire (« encore une », « une autre »…)
+# Le message seul n'est pas une demande de génération ; il l'est quand le dernier
+# échange est un tour de génération (grille présentée, demande de génération en amont).
+# ═══════════════════════════════════════════════════════
+
+_FOLLOWUP_POLITE = r"(?:\s+(?:stp|svp|s'il\s+te\s+pla[iî]t|s'il\s+vous\s+pla[iî]t|please|pls|por\s+favor|porfa|bitte|alsjeblieft|aub))?"
+_FOLLOWUP_GRID_WORD = (
+    r"(?:\s+(?:grilles?|combinaisons?|grids?|combinations?|ones?|combinaci[oó]n(?:es)?|grelhas?|"
+    r"combina[cç](?:[aã]o|[oõ]es)|kombination(?:en)?|reihen?|tipps?|combinaties?|rij(?:en)?))?"
+)
+_GENERATION_FOLLOWUP_RE = re.compile(
+    r"^(?:"
+    # FR
+    r"encore(?:\s+(?:une?|\d+|deux|trois|quatre|cinq))?(?:\s+(?:autres?|nouvelles?))?" + _FOLLOWUP_GRID_WORD + r"|"
+    r"encore\s+mieux|encore\s+une\s+fois|"
+    r"une?\s+autre" + _FOLLOWUP_GRID_WORD + r"|une\s+nouvelle" + _FOLLOWUP_GRID_WORD + r"|"
+    r"une?\s+de\s+plus|refais(?:[\s-]*(?:en|moi|nous))?(?:[\s-]+une?)?" + _FOLLOWUP_GRID_WORD + r"|"
+    # EN
+    r"(?:give\s+me\s+)?another(?:\s+one)?" + _FOLLOWUP_GRID_WORD + r"|one\s+more" + _FOLLOWUP_GRID_WORD + r"|"
+    r"again|even\s+better|(?:a\s+)?new\s+one|"
+    # ES
+    r"otra(?:\s+m[aá]s)?" + _FOLLOWUP_GRID_WORD + r"|una\s+m[aá]s|otra\s+vez|de\s+nuevo|"
+    # PT
+    r"outra" + _FOLLOWUP_GRID_WORD + r"|mais\s+uma" + _FOLLOWUP_GRID_WORD + r"|de\s+novo|"
+    # DE
+    r"noch\s+(?:eine|einen|ein)(?:\s+andere)?" + _FOLLOWUP_GRID_WORD + r"|noch\s*mal|eine\s+andere" + _FOLLOWUP_GRID_WORD + r"|"
+    # NL
+    r"nog\s+(?:een|één|eentje)" + _FOLLOWUP_GRID_WORD + r"|nog\s+eens|een\s+andere" + _FOLLOWUP_GRID_WORD +
+    r")" + _FOLLOWUP_POLITE + r"$",
+    re.IGNORECASE,
+)
+_FOLLOWUP_MAX_HOPS = 5
+
+
+def _normalize_followup(message: str) -> str:
+    """Minuscules, apostrophe typographique → ASCII, ponctuation / emojis de fin retirés."""
+    text = (message or "").strip().lower().replace("’", "'").replace("ʼ", "'")
+    text = re.sub(r"[\s!?.…,;:)(\U0001F300-\U0001FAFF☀-➿️]+$", "", text)
+    return re.sub(r"^[¡¿\s]+", "", text)
+
+
+def _is_generation_followup_text(message: str) -> bool:
+    """Le message, seul, a la forme d'une demande de grille supplémentaire (6 langues)."""
+    if not message or len(message.strip()) > 60:
+        return False
+    return bool(_GENERATION_FOLLOWUP_RE.match(_normalize_followup(message)))
+
+
+def _msg_role_content(msg):
+    role = getattr(msg, "role", None)
+    content = getattr(msg, "content", None)
+    if role is None and isinstance(msg, dict):
+        role, content = msg.get("role"), msg.get("content")
+    return role, content or ""
+
+
+def _detect_generation_followup(message: str, history, game: str = "loto") -> str | None:
+    """Lot 1.6.065 D1 — demande de grille supplémentaire après un tour de génération.
+
+    Retourne le message utilisateur de génération d'origine (pour reprendre mode, nombre
+    de grilles et contraintes), ou None. Conditions :
+      - le message a la forme d'une suite (« encore une grille », « une autre », « another one »…) ;
+      - le dernier message assistant présente une grille (5 boules) ;
+      - le message utilisateur qui l'a précédé est une demande de génération, ou lui-même
+        une suite de génération (chaîne remontée sur au plus 5 échanges).
+    Le serveur ne garde aucune trace des blocs moteur d'un tour à l'autre (historique =
+    texte client) : « tour de génération » est reconstruit en rejouant `_detect_generation`
+    sur le message utilisateur de ce tour.
+    Cas 8300 (« Un autre » après la stat d'un numéro) : pas de grille → None.
+    Phase 1-bis : une question d'avis (`_detect_opinion_followup`, tour EVAL_H) est un maillon
+    transparent de la chaîne (sa réponse peut ne pas recopier la grille) ; elle compte dans la
+    limite de 5 échanges. Grille saisie par l'utilisateur → avis → « une autre » : pas de
+    génération en amont → None.
+    """
+    if not history or not _is_generation_followup_text(message):
+        return None
+    from services.base_chat_utils import _extract_grids_from_text
+    from services.base_chat_detect_intent import _detect_opinion_followup  # import local : cycle de modules
+
+    items = [_msg_role_content(m) for m in history]
+    if items and items[-1][0] == "user" and items[-1][1].strip() == message.strip():
+        items = items[:-1]
+    i = len(items) - 1
+    hops = 0
+    while i >= 0 and hops < _FOLLOWUP_MAX_HOPS:
+        while i >= 0 and items[i][0] != "assistant":
+            i -= 1
+        if i < 0:
+            return None
+        j = i - 1
+        while j >= 0 and items[j][0] != "user":
+            j -= 1
+        if j < 0:
+            return None
+        user_msg = items[j][1]
+        if _detect_opinion_followup(user_msg):
+            pass  # maillon transparent : sa réponse n'a pas à présenter la grille
+        elif not _extract_grids_from_text(items[i][1], game=game):
+            return None  # un tour de génération (ou de suite) présente toujours sa grille
+        elif _detect_generation(user_msg):
+            return user_msg
+        elif not _is_generation_followup_text(user_msg):
+            return None
+        i = j - 1
+        hops += 1
+    return None
+
+
+# Phase 1-bis — nombre de grilles d'une suite : forme au singulier → 1 ; répétition nue →
+# nombre de la demande d'origine ; nombre explicite (chiffre ou mot) → ce nombre (plafond 5).
+_FOLLOWUP_REPEAT_RE = re.compile(
+    r"^(?:encore|encore\s+une\s+fois|encore\s+mieux|again|even\s+better|otra\s+vez|de\s+nuevo|"
+    r"de\s+novo|noch\s*mal|nog\s+eens)" + _FOLLOWUP_POLITE + r"$",
+    re.IGNORECASE,
+)
+_FOLLOWUP_NUMBER_WORDS = {
+    "deux": 2, "trois": 3, "quatre": 4, "cinq": 5, "two": 2, "three": 3, "four": 4, "five": 5,
+    "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5, "duas": 2, "dois": 2, "três": 3, "quatro": 4,
+    "zwei": 2, "drei": 3, "vier": 4, "fünf": 5, "twee": 2, "drie": 3, "vijf": 5,
+}
+
+
+def _followup_grid_count(message: str, origin_count: int) -> int:
+    """Nombre de grilles d'une suite de génération (phase 1-bis, point 2)."""
+    text = _normalize_followup(message)
+    digits = re.search(r"\b(\d+)\b", text)
+    if digits:
+        return max(1, min(int(digits.group(1)), 5))
+    for word in re.findall(r"[a-zà-ÿ]+", text):
+        if word in _FOLLOWUP_NUMBER_WORDS:
+            return _FOLLOWUP_NUMBER_WORDS[word]
+    if _FOLLOWUP_REPEAT_RE.match(text):
+        return max(1, min(int(origin_count or 1), 5))
+    return 1
+
+
 _MODE_PATTERN_CONSERVATIVE = re.compile(
     r'\bconservat\w+|\bprudent\w*|\bs[ûü]re?\b|\bsafe\b|\bseguro\b|\bsicher\b|\bveilig\b|\bconservador\b',
     re.IGNORECASE

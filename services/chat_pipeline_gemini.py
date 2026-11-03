@@ -37,6 +37,7 @@ from services.chat_utils import (
 )
 from services.base_chat_utils import _format_last_draw_context
 from services.chat_logger import log_chat_exchange
+from services.chat_stat_check import check_number_stats  # Lot 1.6.065 — contrôle 4
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +79,8 @@ _FACTUAL_TAGS = (
     "[PROCHAIN TIRAGE",
     # V141 A.1 — Phase G (génération HYBRIDE)
     "[GRILLE GÉNÉRÉE PAR HYBRIDE",
+    # Lot 1.6.065 — stats par numéro d'une grille (Phase 2, EVAL, EVAL_H)
+    "[STATS PAR NUMÉRO",
 )
 _TEMPERATURE_FACTUAL = 0.2
 _TEMPERATURE_CONVERSATIONAL = _GEMINI_CHAT_TEMPERATURE  # 0.6
@@ -169,6 +172,15 @@ _ORPHAN_STAT_RE = re.compile(
     rf'\b(\d{{1,2}})\b[^\d\n]{{1,30}}\b(\d{{1,3}})\b[^\d\n]{{0,15}}{_ORPHAN_STAT_KEYWORD}\b',
     re.IGNORECASE,
 )
+# Lot 1.6.065 (annexe) — forme « mot-clé puis compte » : « Numéro 2 : Fréquence observée 125 »
+# (cas 9405, non reconnue par _ORPHAN_STAT_RE). Journal seul, comme _ORPHAN_STAT_RE.
+_ORPHAN_STAT_FREQ_FIRST_RE = re.compile(
+    r'\b(\d{1,2})\b[^\d\n]{1,30}?'
+    r'(?:fr[ée]quence|frequency|frecuencia|frequ[êe]ncia|h[äa]ufigkeit|frequentie)'
+    r'(?:\s+(?:observ[ée]e|totale|observed|total|observada|gesamt|totaal))?'
+    r'\s*(?:de\s+|of\s+|:)?\s*(\d{1,3})\b(?!\s*%)',
+    re.IGNORECASE,
+)
 
 
 _STRICT_HALLUCINATION_MESSAGES = {
@@ -234,7 +246,8 @@ def _check_sql_number_hallucination(
 
     # V141 A.3 — BUG #7 : orphan stat-single (1 num + N apparitions) sans contexte factuel
     if gemini_response:
-        _stat_orphan = _ORPHAN_STAT_RE.search(gemini_response)
+        _stat_orphan = (_ORPHAN_STAT_RE.search(gemini_response)
+                        or _ORPHAN_STAT_FREQ_FIRST_RE.search(gemini_response))  # Lot 1.6.065
         if _stat_orphan and not _DATA_TAG_RE.search(enrichment_context or ""):
             try:
                 _num_int = int(_stat_orphan.group(1))
@@ -1424,6 +1437,25 @@ def _pick_fallback(ctx: dict, fallback: str) -> str:
     return ctx.get("_grid_fallback") or fallback
 
 
+def _run_check4(response: str, meta: dict, ctx: dict, lang: str, message: str, log_prefix: str) -> list:
+    """Lot 1.6.065 — contrôle 4 (journal ; jamais d'exception vers le flux).
+
+    Ne lit que les blocs du TOUR COURANT (`_chat_meta["enrichment_context"]`, posés par le
+    code), jamais l'historique ni les tags écrits dans la réponse.
+    """
+    try:
+        return check_number_stats(
+            response, meta.get("enrichment_context", ""),
+            phase=meta.get("phase", ""), lang=meta.get("lang", lang),
+            game=ctx.get("_game", "loto"), user_message=message,
+            draw_count=ctx.get("_draw_count"), engine_turn_grids=ctx.get("_engine_turn_grids"),
+            log_prefix=log_prefix,
+        )
+    except Exception as e:  # le contrôle ne doit jamais casser la réponse
+        logger.warning("%s CHECK4 failed: %s", log_prefix, e)
+        return []
+
+
 # V143 — Retries 429 du stream chat (pattern V129.1, cf. services/gemini.py :
 # backoff 2·2^n + jitter, cap 12s, garde anti-double-émission _yielded_any).
 # Appliqué UNIQUEMENT au vrai stream_gemini_chat (identity gate dans
@@ -1604,6 +1636,16 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
                         log_prefix,
                     )
 
+            # Lot 1.6.065 — Contrôle 4 : toujours journalisé ; bloquant seulement si
+            # STRICT_STAT_CHECK=true (flag OFF : la réponse n'est modifiée en rien).
+            _check4 = _run_check4(_full_response, _meta, ctx, lang, message, log_prefix)
+            if _check4 and ctx.get("_strict_stat_check") and not _block_replacement:
+                _block_replacement = _check4[0].get("check", "CHECK4")
+                logger.warning(
+                    "%s STRICT_STAT_CHECK: %d écart(s) (%s), blocking stream",
+                    log_prefix, len(_check4), _block_replacement,
+                )
+
             if _block_replacement:
                 # Hallucination détectée — yield message i18n strict mode au lieu du buffer
                 # Lot Gemini 1 G5 (Q4) — grille générée : repli grille à la place du message strict
@@ -1676,6 +1718,8 @@ async def stream_and_respond(ctx, fallback, log_prefix, module, lang,
             _check_sql_schema_hallucination(
                 _full_response, log_prefix, lang=_meta.get("lang", lang),
             )
+            # Lot 1.6.065 — Contrôle 4 : LOG-ONLY (flux déjà émis, buffer strict inactif)
+            _run_check4(_full_response, _meta, ctx, lang, message, log_prefix)
         logger.info(f"{log_prefix} Stream OK (page={page}, mode={mode})")
 
     except CircuitOpenError:

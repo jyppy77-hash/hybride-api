@@ -294,6 +294,15 @@ EM_CONFIG = EngineConfig(
 # Rollback en 30s : `--update-env-vars STRICT_HALLUCINATION_BLOCK=false`
 STRICT_HALLUCINATION_BLOCK_ENABLED: bool = _env_bool("STRICT_HALLUCINATION_BLOCK", False)
 
+# Lot 1.6.065 — Contrôle 4 (services/chat_stat_check.py) : statistiques par numéro,
+# correspondances partielles, grilles + score sans bloc moteur.
+#   - OFF (défaut) : journal seul (STAT_MISMATCH / PARTIAL_MATCH_MISMATCH / GRID_SCORE_ORPHAN),
+#     la réponse n'est jamais modifiée.
+#   - ON : blocage (message strict existant), effectif seulement dans le buffer strict,
+#     donc avec STRICT_HALLUCINATION_BLOCK=true. Activation prévue au lot suivant (≈ 11/11).
+# Même lecture que STRICT_HALLUCINATION_BLOCK (_env_bool : true/1/yes/on, insensible à la casse).
+STRICT_STAT_CHECK_ENABLED: bool = _env_bool("STRICT_STAT_CHECK", False)
+
 
 # 1.6.055 — Encadré sponsor dans les réponses du chatbot (Loto + EM, 6 langues).
 # Désactivé par défaut pendant le gel du sponsoring (arbitrage Jyppy 16/10/2026).

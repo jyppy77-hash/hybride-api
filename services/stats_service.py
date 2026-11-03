@@ -126,3 +126,8 @@ get_triplet_correlations = _svc.get_triplet_correlations
 async def analyze_grille_for_chat(nums: list, chance: int = None) -> dict:
     """Wrapper preservant la signature originale (chance: int)."""
     return await _svc.analyze_grille_for_chat(nums, chance)
+
+
+async def get_grid_numbers_stats(nums: list, chance: int = None) -> dict | None:
+    """Lot 1.6.065 — stats par numéro d'une grille Loto (5 boules + chance)."""
+    return await _svc.get_grid_numbers_stats(nums, chance)

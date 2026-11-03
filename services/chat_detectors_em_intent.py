@@ -282,6 +282,10 @@ def _detect_numero_em(message: str):
 # Detect grille EM (5 boules 1-50 + 2 etoiles 1-12)
 # ════════════════════════════════════════════════════════════
 
+# Lot 1.6.065 D3 — uniquement chiffres et séparateurs : aucune date possible à masquer
+_PURE_NUMERIC_GRID_RE = re.compile(r'^[\s\d/.,;:+*\-–—]+$')
+
+
 def _detect_grille_em(message: str):
     """
     Detecte si l'utilisateur fournit une grille EuroMillions
@@ -295,7 +299,7 @@ def _detect_grille_em(message: str):
 
     etoile_patterns_double = [
         _STAR_RE + r's?\s*[:\s]*(\d{1,2})\s+(?:et\s+|and\s+|y\s+|e\s+|und\s+|en\s+)?(\d{1,2})',
-        _STAR_RE + r's?\s*[:\s]*(\d{1,2})[-–]\s*(\d{1,2})',  # "étoiles 11-12" (V51 FIX 3)
+        _STAR_RE + r's?\s*[:\s]*(\d{1,2})\s*[-–/]\s*(\d{1,2})',  # "étoiles 11-12" (V51 FIX 3), « 2/9 » (1.6.065 D3)
         r'[☆★⭐]\s*(\d{1,2})[-–\s]+(\d{1,2})\s*[☆★⭐]?',  # Unicode stars "☆11-12☆" (V51 FIX 3)
         r'\*\s*(\d{1,2})\s+(\d{1,2})',
         r'\+\s*(\d{1,2})\s+(\d{1,2})\s*$',
@@ -340,7 +344,10 @@ def _detect_grille_em(message: str):
     # de combinaison (« … ensemble ? ») reste en phase P ; une demande de génération
     # (« génère une grille avec 3 15 22 41 48 et 2 et 9 ») reste à la Phase G seule.
     if etoiles is None and not _is_combo_question(message) and not _detect_generation(message):
-        masked = [int(x) for x in re.findall(r'\b(\d{1,2})\b', _mask_dates(text))]
+        # Lot 1.6.065 D3 — message purement numérique (« 22/15/16/29/30    3/4 », cas 7398 / 7400) :
+        # « 3/4 » ou « 3/12 » sont des étoiles, pas des dates → pas de masquage.
+        _source = text if _PURE_NUMERIC_GRID_RE.match(text) else _mask_dates(text)
+        masked = [int(x) for x in re.findall(r'\b(\d{1,2})\b', _source)]
         masked = [n for n in masked if 1 <= n <= 50]
         uniq = list(dict.fromkeys(masked))
         if (len(uniq) == 7 and all(1 <= e <= 12 for e in uniq[5:])

@@ -22,6 +22,7 @@ from services.base_chat_utils import (  # noqa: F401
     _format_complex_context_base,
     _format_stats_context_base, _format_grille_context_base,
     _build_session_context_base,
+    _format_numbers_stats_context_base, _extract_grids_from_text,  # Lot 1.6.065
 )
 
 logger = logging.getLogger(__name__)
@@ -240,7 +241,9 @@ def _format_generation_context(grid_data: dict) -> str:
     lines.append("")
     lines.append(
         "IMPORTANT : Présente cette grille de manière engageante. "
-        "Explique les critères (équilibre pair/impair, bas/haut, fréquences, retards). "
+        "Explique les critères présents dans ce bloc (équilibre pair/impair, bas/haut, somme, dispersion). "
+        "Ce bloc ne contient AUCUNE fréquence ni AUCUN retard par numéro : n'en cite pas, "
+        "sauf si un bloc [STATS PAR NUMÉRO] est présent dans ce même message (cite alors ses chiffres). "
         "Si l'utilisateur demande pourquoi ces numéros, utilise le [BREAKDOWN] ci-dessus. "
         "Si des numéros ont été imposés, mentionne-le clairement. "
         "Rappelle que le Loto reste un jeu de pur hasard et qu'aucune grille ne garantit de gain."
@@ -253,3 +256,16 @@ def _format_generation_context(grid_data: dict) -> str:
     )
     lines.append("[/GRILLE GÉNÉRÉE PAR HYBRIDE]")  # V141 A.1 — fermeture cohérente V99 F06
     return "\n".join(lines)
+
+# ────────────────────────────────────────────
+# Lot 1.6.065 — bloc [STATS PAR NUMÉRO] + grille citée dans un texte — LOTO
+# ────────────────────────────────────────────
+
+def _format_numbers_stats_context(stats: dict) -> str:
+    """Formate les stats par numéro d'une grille LOTO en bloc [STATS PAR NUMÉRO]."""
+    return _format_numbers_stats_context_base(stats, "Chance")
+
+
+def _extract_grids_from_text_loto(text: str) -> list:
+    """Grilles LOTO citées dans un texte libre (historique assistant)."""
+    return _extract_grids_from_text(text, game="loto")
