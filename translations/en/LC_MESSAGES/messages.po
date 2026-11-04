@@ -1874,7 +1874,7 @@ msgstr "Free, anonymous and confidential service"
 
 #: ui/templates/em/faq.html:408
 msgid "Horaires : 7j/7 de 8h à 2h du matin"
-msgstr "Available 7 days a week, 8am to 2am"
+msgstr "Available 7 days a week, 08:00 to 02:00"
 
 #: ui/templates/em/faq.html:414
 msgid "Le jeu est-il interdit aux mineurs ?"
@@ -2683,11 +2683,11 @@ msgstr ""
 
 #: ui/templates/em/hybride.html:289
 msgid "\"Combien de fois le 22 est sorti en 2024 ?\""
-msgstr ""
+msgstr "\"How many times has 22 been drawn in 2024?\""
 
 #: ui/templates/em/hybride.html:290
 msgid "\"Quel est le numéro le plus sorti depuis 2019 ?\""
-msgstr ""
+msgstr "\"What is the most drawn number since 2019?\""
 
 #: ui/templates/em/hybride.html:291
 msgid "\"Quelle étoile sort le plus souvent ?\""
@@ -2695,7 +2695,7 @@ msgstr "\"Which star is drawn most often?\""
 
 #: ui/templates/em/hybride.html:292
 msgid "\"Quels numéros ne sont pas sortis depuis plus de 20 tirages ?\""
-msgstr ""
+msgstr "\"Which numbers haven't been drawn for over 20 draws?\""
 
 #: ui/templates/em/hybride.html:295
 msgid "Questions sur les tirages"
@@ -2707,19 +2707,19 @@ msgstr "Find any draw by date or explore the complete history."
 
 #: ui/templates/em/hybride.html:298
 msgid "\"Quel était le résultat du tirage du 14 janvier 2025 ?\""
-msgstr ""
+msgstr "\"What was the result of the draw on 14 January 2025?\""
 
 #: ui/templates/em/hybride.html:299
 msgid "\"Combien de tirages ont eu lieu en 2024 ?\""
-msgstr ""
+msgstr "\"How many draws took place in 2024?\""
 
 #: ui/templates/em/hybride.html:300
 msgid "\"Quel tirage a eu la somme la plus élevée ?\""
-msgstr ""
+msgstr "\"Which draw had the highest sum?\""
 
 #: ui/templates/em/hybride.html:301
 msgid "\"Montre-moi les 5 derniers tirages.\""
-msgstr ""
+msgstr "\"Show me the last 5 draws.\""
 
 #: ui/templates/em/hybride.html:304
 msgid "Questions sur les statistiques"
@@ -2761,7 +2761,7 @@ msgstr "\"How does the HYBRIDE engine work?\""
 
 #: ui/templates/em/hybride.html:317
 msgid "\"C'est quoi un numéro chaud ?\""
-msgstr ""
+msgstr "\"What is a hot number?\""
 
 #: ui/templates/em/hybride.html:318
 msgid "\"L'EuroMillions est-il vraiment aléatoire ?\""
@@ -2769,7 +2769,7 @@ msgstr "\"Is EuroMillions truly random?\""
 
 #: ui/templates/em/hybride.html:319
 msgid "\"Dans quels pays peut-on jouer à l'EuroMillions ?\""
-msgstr ""
+msgstr "\"In which countries can you play EuroMillions?\""
 
 #: ui/templates/em/hybride.html:325
 msgid "Ce que HYBRIDE ne fait PAS"
@@ -3698,7 +3698,7 @@ msgstr ""
 
 #: ui/templates/em/news.html:83
 msgid "30 mars 2026"
-msgstr "March 30, 2026"
+msgstr "30 March 2026"
 
 #: ui/templates/em/news.html:84 ui/templates/em/news.html:182
 msgid "NOUVEAU"
@@ -3803,7 +3803,7 @@ msgid ""
 "travaillé sans relâche pour améliorer votre expérience. Voici un résumé "
 "des nouveautés."
 msgstr ""
-"Since the EuroMillions launch on March 15, our team has been working non-"
+"Since the EuroMillions launch on 15 March, our team has been working non-"
 "stop to improve your experience. Here's a summary of what's new."
 
 #: ui/templates/em/news.html:115
@@ -3992,7 +3992,7 @@ msgid ""
 "release technique solide. LotoIA n'a jamais été aussi stable."
 msgstr ""
 "The public EuroMillions launch is just around the corner — see you on "
-"<strong>15 March at 3:00 PM</strong>! As we count down to the big day, "
+"<strong>15 March at 15:00</strong>! As we count down to the big day, "
 "the team is putting the finishing touches on a rock-solid technical "
 "release. LotoIA has never been more stable."
 
@@ -4042,7 +4042,7 @@ msgstr ""
 
 #: ui/templates/em/news.html:174
 msgid "Rendez-vous le 15 mars à 15h00"
-msgstr "See you on 15 March at 3:00 PM"
+msgstr "See you on 15 March at 15:00"
 
 #: ui/templates/em/news.html:175
 msgid ""
@@ -4069,7 +4069,7 @@ msgid ""
 "statistique, construite avec la même rigueur que le module Loto France."
 msgstr ""
 "<strong>LotoIA is expanding!</strong> The EuroMillions module launches on"
-" <strong>15 March at 3:00 PM</strong>. A new dimension of statistical "
+" <strong>15 March at 15:00</strong>. A new dimension of statistical "
 "analysis, built with the same rigour as the Loto France module."
 
 #: ui/templates/em/news.html:189
@@ -5558,7 +5558,7 @@ msgstr "Try the new engine now"
 
 # V133 — News Release 1.6.020 (2026-04-27)
 msgid "27 avril 2026"
-msgstr "April 27, 2026"
+msgstr "27 April 2026"
 
 msgid "Release 1.6.020 — Une expérience plus fluide et plus stable"
 msgstr "Release 1.6.020 — A smoother, more stable experience"

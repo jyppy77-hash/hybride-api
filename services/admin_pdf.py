@@ -7,7 +7,8 @@ UTF-8 font support via DejaVuSans (fallback Vera from ReportLab).
 import io
 import os
 import logging
-from datetime import date, datetime
+import re
+from datetime import date
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.units import mm
 from reportlab.lib.colors import HexColor
@@ -16,6 +17,8 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, HRFlowable
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+
+from services.date_format import format_date_num, format_datetime_num
 
 logger = logging.getLogger(__name__)
 
@@ -84,14 +87,19 @@ def _format_euros(montant):
 
 
 def _format_date_fr(d):
-    if isinstance(d, (date, datetime)):
-        return d.strftime("%d/%m/%Y")
-    if isinstance(d, str) and len(d) >= 10:
-        try:
-            return datetime.strptime(d[:10], "%Y-%m-%d").strftime("%d/%m/%Y")
-        except ValueError:
-            pass
-    return str(d) if d else ""
+    """JJ/MM/AAAA — nom historique conservé (factures, contrats, test_admin_pdf_legal).
+
+    1.6.066 : délègue à services.date_format.format_date_num (≠ base_chat_utils._format_date_fr).
+    """
+    return format_date_num(d)
+
+
+_ISO_DATE_IN_TEXT_RE = re.compile(r"\b\d{4}-\d{2}-\d{2}\b")
+
+
+def _dates_num_in_text(text) -> str:
+    """1.6.066 — 'AAAA-MM-JJ' contenus dans un libellé (période personnalisée) → 'JJ/MM/AAAA'."""
+    return _ISO_DATE_IN_TEXT_RE.sub(lambda m: format_date_num(m.group(0)), str(text or ""))
 
 
 def _detail_table_style(num_rows):
@@ -137,7 +145,7 @@ def generate_sponsor_report_pdf(kpi: dict, table_data: list, period_label: str) 
     elements.append(header)
     elements.append(Spacer(1, 4*mm))
 
-    elements.append(Paragraph(f"Période : {period_label} | Généré le {_format_date_fr(date.today())}", _PETIT))
+    elements.append(Paragraph(f"Période : {_dates_num_in_text(period_label)} | Généré le {_format_date_fr(date.today())}", _PETIT))
     elements.append(Spacer(1, 8*mm))
 
     # KPI block
@@ -164,7 +172,7 @@ def generate_sponsor_report_pdf(kpi: dict, table_data: list, period_label: str) 
         rows = [headers]
         for r in table_data[:200]:
             rows.append([
-                r.get("day", ""), r.get("event_type", ""), r.get("page", ""),
+                format_date_num(r.get("day", "")), r.get("event_type", ""), r.get("page", ""),
                 r.get("lang", ""), r.get("device", ""), r.get("country", ""),
                 str(r.get("cnt", 0)),
             ])
@@ -438,7 +446,7 @@ def generate_realtime_report_pdf(kpi: dict, by_type: dict, table_data: list, per
         rows = [headers]
         for r in table_data[:200]:
             rows.append([
-                r.get("created_at", ""), r.get("event_type", ""), r.get("page", ""),
+                format_datetime_num(r.get("created_at", "")), r.get("event_type", ""), r.get("page", ""),
                 r.get("lang", ""), r.get("device", ""), r.get("country", ""),
             ])
         t = Table(rows, colWidths=[32*mm, 35*mm, 38*mm, 14*mm, 18*mm, 18*mm])

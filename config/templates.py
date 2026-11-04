@@ -13,6 +13,7 @@ from starlette.requests import Request
 from config.i18n import ctx_lang, get_translations, SUPPORTED_LANGS, DEFAULT_LANG
 from config.js_i18n import get_js_labels
 from config import killswitch
+from services.date_format import format_date_num, format_datetime_num
 
 # ── Paths ────────────────────────────────────────────────────────────────
 _ROOT = os.path.dirname(os.path.dirname(__file__))
@@ -43,6 +44,9 @@ env = Environment(
 )
 env.install_gettext_callables(_gettext, _ngettext, newstyle=False)
 env.globals["MIN_REVIEWS_FOR_RATING"] = MIN_REVIEWS_FOR_RATING
+# 1.6.066 — dates numériques JJ/MM/AAAA (gabarits admin). Jamais sur un value= d'<input type="date"> (ISO requis).
+env.filters["date_num"] = format_date_num
+env.filters["datetime_num"] = format_datetime_num
 
 # ── URL maps per language ────────────────────────────────────────────────
 
@@ -394,8 +398,8 @@ def render_template(
             "js_labels": get_js_labels(lang),
 
             # Default JS paths (pages may override via **extra)
-            "app_js": "/ui/static/app-em.js?v=10",
-            "simulateur_js": "/ui/static/simulateur-em.js?v=8",
+            "app_js": "/ui/static/app-em.js?v=11",
+            "simulateur_js": "/ui/static/simulateur-em.js?v=9",
             "sponsor_js": "/ui/static/em/sponsor-popup-em.js?v=11",
             "sponsor75_js": "/ui/static/sponsor-popup75-em.js?v=14",
             "faq_js": "/ui/static/faq-em.js?v=7",

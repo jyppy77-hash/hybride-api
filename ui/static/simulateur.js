@@ -117,7 +117,7 @@ function initMainGrid() {
         const heat = state.numbersHeat[i];
         if (heat) {
             btn.classList.add(heat.category);
-            btn.title = `Fréquence: ${heat.frequency} | Dernier: ${heat.last_draw || 'N/A'}`;
+            btn.title = `Fréquence: ${heat.frequency} | Dernier: ${heat.last_draw ? formatDateNum(heat.last_draw) : 'N/A'}`;
         } else {
             btn.classList.add('neutral');
         }
@@ -680,6 +680,16 @@ function formatDateFR(isoDate) {
     } catch (e) {
         return isoDate;
     }
+}
+
+/**
+ * 1.6.066 — Date ISO (AAAA-MM-JJ) → JJ/MM/AAAA, par découpage de chaîne (aucun fuseau)
+ * Ex: "2025-11-02" → "02/11/2025" ; valeur non ISO renvoyée telle quelle
+ */
+function formatDateNum(isoDate) {
+    if (!isoDate) return '';
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(isoDate));
+    return m ? `${m[3]}/${m[2]}/${m[1]}` : String(isoDate);
 }
 
 /**

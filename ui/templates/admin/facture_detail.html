@@ -10,11 +10,11 @@
             <span class="kpi-label">Sponsor</span>
         </div>
         <div class="kpi-card">
-            <span class="kpi-value">{{ facture.date_emission }}</span>
+            <span class="kpi-value">{{ facture.date_emission|date_num }}</span>
             <span class="kpi-label">Date emission</span>
         </div>
         <div class="kpi-card">
-            <span class="kpi-value">{{ facture.date_echeance }}</span>
+            <span class="kpi-value">{{ facture.date_echeance|date_num }}</span>
             <span class="kpi-label">Echeance</span>
         </div>
         <div class="kpi-card">
@@ -24,7 +24,7 @@
     </div>
 
     <div class="kpi-bar">
-        <span>Periode : <b>{{ facture.periode_debut }}</b> au <b>{{ facture.periode_fin }}</b></span>
+        <span>Periode : <b>{{ facture.periode_debut|date_num }}</b> au <b>{{ facture.periode_fin|date_num }}</b></span>
     </div>
 
     <h2>Lignes</h2>

@@ -542,6 +542,12 @@
         if (n == null) return '—';
         return n.toFixed(1) + ' €';
     }
+    // 1.6.066 — 'AAAA-MM-JJ HH:MM' → '04/11 06h' ; 'AAAA-MM-JJ' → '04/11' (string split, no timezone)
+    function fmtDayHour(t) {
+        var m = /^(\d{4})-(\d{2})-(\d{2})(?: (\d{2}):\d{2})?$/.exec(String(t || ''));
+        if (!m) return t || '';
+        return m[3] + '/' + m[2] + (m[4] !== undefined ? ' ' + m[4] + 'h' : '');
+    }
 
     function setCard(id, cls) {
         var el = document.getElementById(id);
@@ -794,9 +800,9 @@
 
         var labels = pts.map(function(p) {
             var t = p.ts_label || '';
-            // Show HH:MM for 24h, MM-DD HH for longer
+            // Show HH:MM for 24h, 'JJ/MM HHh' for longer (1.6.066, D7: was MM-DD HH)
             if (currentPeriod === '24h') return t.slice(11, 16);
-            return t.slice(5, 13);
+            return fmtDayHour(t);
         });
 
         // Req & Err
@@ -1006,7 +1012,7 @@
         if (!charts.botsTimeline) return;
         var buckets = (data && data.buckets) || [];
         var series = (data && data.series) || [];
-        charts.botsTimeline.data.labels = buckets;
+        charts.botsTimeline.data.labels = buckets.map(fmtDayHour);  // 1.6.066 (D7) : '04/11 06h' / '04/11'
         charts.botsTimeline.data.datasets = series.map(function(s, i) {
             return {
                 label: s.name,

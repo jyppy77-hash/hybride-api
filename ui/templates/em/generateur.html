@@ -373,18 +373,12 @@
     var META_WINDOW_MAP_EM = [100, 200, 300, 400, 500, 600, 700, "GLOBAL"];
     var META_YEARS_MAP_EM = [1, 2, 3, 4, 5, 6, "GLOBAL"];
 
+    // 1.6.066 (D2) — JJ/MM/AAAA dans les 6 langues : découpage de chaîne, plus de toLocale* (DE donnait
+    // 04.11.2026, NL 04-11-2026) ni de new Date('AAAA-MM-JJ') (lu en UTC).
     function formatDateFREM(dateStr) {
         if (!dateStr || dateStr === '---') return '---';
-        try {
-            var d = new Date(dateStr);
-            return d.toLocaleDateString({{ date_locale|default('fr-FR')|tojson }}, {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric'
-            });
-        } catch (e) {
-            return dateStr;
-        }
+        var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(dateStr));
+        return m ? m[3] + '/' + m[2] + '/' + m[1] : dateStr;
     }
 
     (function() {

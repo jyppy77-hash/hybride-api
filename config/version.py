@@ -5,6 +5,21 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# LOT 1.6.066 — Formats de date : JJ/MM/AAAA pour toute date numérique affichée (Release 1.6.066,
+# 05/11/2026). Cache-busters ?v= touchés : admin.js v=23, simulateur.js v=8, app.js v=14,
+# simulateur-em.js v=9 et app-em.js v=11 (défauts config/templates.py ET surcharges FR de
+# routes/em_pages.py alignés). Nouveau module services/date_format.py (format_date_num /
+# format_datetime_num, aucune conversion de fuseau ; ≠ base_chat_utils._format_date_fr, texte chatbot)
+# + filtres Jinja date_num / datetime_num. Admin : factures / contrats (liste + détail), Impressions /
+# Engagement (tableaux + graphiques), titre de la modale Performance, Monitoring 7 j / 30 j « 04/11 06h »
+# (était MM-JJ HH) + timeline des bots ; PDF sponsor (jour + période perso), realtime, cockpit ; e-mail
+# d'alerte « JJ/MM/AAAA HH:MM:SS UTC ». Public : « Dernière sortie » des statistiques EM, infobulles des
+# simulateurs Loto + EM, fenêtres méta du générateur EM (6 langues, plus de toLocale*), PDF méta Loto + EM
+# (formaté au point d'appel ; _fetch_last_draw_date_* restent ISO pour le sitemap). H1 : getNextDrawDate
+# (app.js, app-em.js) en date locale (plus de veille entre 0 h et 1-2 h). en.po : 16 msgstr (dates
+# britanniques, heures 24 h, 9 exemples /en/euromillions/hybride traduits). Chatbot, CSV, tables de
+# locale inchangés.
+
 # LOT 1.6.059 — Lot redirection + correctif formule du chatbot (Release 1.6.059, 24/10/2026). Aucun
 # cache-buster ?v= touché (aucun JS/CSS/template modifié).
 # Redirection : GET / et les 11 redirections legacy de main.py conservent la query string (UTM) ;
@@ -357,9 +372,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.065"
+APP_VERSION = "1.6.066"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-11-04"
+VERSION_DATE = "2026-11-05"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

@@ -25,6 +25,16 @@ function formatDateLocale(isoDate) {
     }
 }
 
+/**
+ * 1.6.066 — Date ISO (AAAA-MM-JJ) → JJ/MM/AAAA dans les 6 langues (découpage de chaîne, aucun fuseau)
+ * Ex: "2025-11-02" → "02/11/2025" ; valeur non ISO renvoyée telle quelle
+ */
+function formatDateNum(isoDate) {
+    if (!isoDate) return '';
+    var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(isoDate));
+    return m ? m[3] + '/' + m[2] + '/' + m[1] : String(isoDate);
+}
+
 // State
 const state = {
     selectedNumbers: new Set(),
@@ -125,7 +135,7 @@ function initMainGrid() {
         const heat = state.numbersHeat[i] || state.numbersHeat[String(i)];
         if (heat) {
             btn.classList.add(heat.category);
-            btn.title = LI.heat_title_freq + heat.frequency + LI.heat_title_last + (heat.last_draw || 'N/A');
+            btn.title = LI.heat_title_freq + heat.frequency + LI.heat_title_last + (heat.last_draw ? formatDateNum(heat.last_draw) : 'N/A');
         } else {
             btn.classList.add('neutral');
         }

@@ -1078,9 +1078,11 @@ class TestAppVersion:
         aucun changement SEO ni cache-buster ; bump requis : ETag HTML lié à APP_VERSION.
         LOT 1.6.059 (24/10, Release 1.6.059) — lot redirection (query conservée, repli FR,
         x-default launcher → /fr) + prompts chatbot sans formule ; /accueil inchangé (golden T9).
+        LOT 1.6.066 (05/11, Release 1.6.066) — formats de date JJ/MM/AAAA ; aucun changement SEO,
+        JSON-LD / sitemap restent en ISO ; bump requis : ETag HTML lié à APP_VERSION.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.065"
+        assert APP_VERSION == "1.6.066"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

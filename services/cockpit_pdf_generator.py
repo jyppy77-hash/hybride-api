@@ -40,6 +40,8 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 from xml.sax.saxutils import escape as _xml_escape
 
+from services.date_format import format_date_num
+
 logger = logging.getLogger(__name__)
 
 
@@ -611,7 +613,7 @@ def _footer(canvas_obj, doc_obj):
     canvas_obj.drawString(18 * mm, 12 * mm,
                           "LotoIA — Rapport généré automatiquement · usage analytique neutre")
     canvas_obj.drawRightString(A4[0] - 18 * mm, 12 * mm,
-                               "%s · p. %d" % (date.today().isoformat(), doc_obj.page))
+                               "%s · p. %d" % (format_date_num(date.today()), doc_obj.page))
     canvas_obj.restoreState()
 
 

@@ -352,7 +352,11 @@ function getNextDrawDate() {
     const nextDate = new Date(today);
     nextDate.setDate(nextDate.getDate() + daysToAdd);
 
-    return nextDate.toISOString().split('T')[0];
+    // 1.6.066 (H1) : date LOCALE. toISOString() repassait en UTC → la veille entre 0 h et 1 h (2 h en été).
+    const y = nextDate.getFullYear();
+    const m = String(nextDate.getMonth() + 1).padStart(2, '0');
+    const d = String(nextDate.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
 }
 
 /**

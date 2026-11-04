@@ -225,5 +225,6 @@ class TestVersion:
         # LOT 1.6.057 bump : 1.6.056 → 1.6.057 (21/10/2026 — lot B étape 1 : diagnostic CLIENT_IP_DIAG sans IP, mesure de _GOOGLE_XFF_HOPS, quota de mesure /api/version?cidiag=1, get_client_ip inchangée ; aucun cache-buster touché)
         # LOT 1.6.058 bump : 1.6.057 → 1.6.058 (22/10/2026 — lot B étape 2 : get_client_ip / get_client_ip_from_scope sur hops[-1] de X-Forwarded-For (entrée ajoutée par Google), CF-Connecting-IP jamais lu, diagnostic CLIENT_IP_DIAG désactivé par défaut ; aucun cache-buster touché)
         # LOT 1.6.059 bump : 1.6.058 → 1.6.059 (24/10/2026 — lot redirection : query conservée sur / et 11 redirections legacy, repli FR sans Accept-Language, x-default launcher → /fr, 302 private no-cache ; prompts chatbot sans formule ni poids ; aucun cache-buster touché)
+        # LOT 1.6.066 bump : 1.6.065 → 1.6.066 (05/11/2026 — formats de date JJ/MM/AAAA admin + public, H1 prochain tirage, en.po 16 msgstr ; cache-busters admin.js v=23, simulateur.js v=8, app.js v=14, simulateur-em.js v=9, app-em.js v=11)
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.065"
+        assert APP_VERSION == "1.6.066"

@@ -5,6 +5,7 @@ from fastapi.responses import Response
 import logging
 
 from schemas import MetaPdfPayload
+from services.date_format import format_date_num
 from services.pdf_generator import generate_meta_pdf
 from rate_limit import limiter
 
@@ -46,8 +47,9 @@ async def api_meta_pdf(request: Request, payload: MetaPdfPayload):
         else:
             logger.info(f"[META-PDF ROUTE] graph_data ABSENT ou invalide — raw: {type(payload.graph_data)}")
 
-        # Fetch last draw date from DB (F07 timestamp)
-        last_draw_date = await _fetch_last_draw_date_loto()
+        # Fetch last draw date from DB (F07 timestamp) — 1.6.066 : JJ/MM/AAAA pour le PDF ;
+        # _fetch_last_draw_date_loto reste ISO (réutilisée par routes/sitemap.py pour <lastmod>)
+        last_draw_date = format_date_num(await _fetch_last_draw_date_loto()) or None
 
         buf = await asyncio.to_thread(
             generate_meta_pdf,

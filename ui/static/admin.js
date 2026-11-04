@@ -58,6 +58,13 @@ var LotoAdmin = (function() {
         } catch (e) { return escHtml(s); }
     }
 
+    /** 1.6.066 — Day 'AAAA-MM-JJ' → 'JJ/MM/AAAA' (string split, no timezone). Otherwise unchanged. */
+    function fmtDay(s) {
+        if (!s) return '';
+        var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s));
+        return m ? m[3] + '/' + m[2] + '/' + m[1] : String(s);
+    }
+
     // ── Period helpers ──
 
     function toggleCustomDates() {
@@ -223,7 +230,7 @@ var LotoAdmin = (function() {
         var legendColor = cs.getPropertyValue('--chart-legend').trim() || '#e0e0e0';
         chart = new Chart(ctx, {
             type: 'bar',
-            data: { labels: labels, datasets: datasets },
+            data: { labels: labels.map(fmtDay), datasets: datasets },
             options: {
                 responsive: true,
                 scales: { y: { beginAtZero: true, ticks: { color: tickColor }, grid: { color: gridColor } }, x: { ticks: { color: tickColor }, grid: { color: gridColor } } },
@@ -237,7 +244,7 @@ var LotoAdmin = (function() {
         var start = page * PAGE_SIZE;
         var slice = rows.slice(start, start + PAGE_SIZE);
         tbody.innerHTML = slice.map(function(r) {
-            return '<tr><td>' + escHtml(r.day) + '</td><td style="font-weight:600;color:var(--accent)">' + escHtml(r.sponsor_id || '\u2014') + '</td><td>' + escHtml(r.event_type) + '</td><td>' + escHtml(r.page) + '</td><td>' + escHtml(r.lang) + '</td><td>' + escHtml(r.device) + '</td><td>' + escHtml(r.country) + '</td><td>' + r.cnt + '</td></tr>';
+            return '<tr><td>' + escHtml(fmtDay(r.day)) + '</td><td style="font-weight:600;color:var(--accent)">' + escHtml(r.sponsor_id || '\u2014') + '</td><td>' + escHtml(r.event_type) + '</td><td>' + escHtml(r.page) + '</td><td>' + escHtml(r.lang) + '</td><td>' + escHtml(r.device) + '</td><td>' + escHtml(r.country) + '</td><td>' + r.cnt + '</td></tr>';
         }).join('');
         renderPagination(rows.length, page, renderImpTable, rows);
     }
@@ -647,7 +654,7 @@ var LotoAdmin = (function() {
         var ctx = qs('#engagement-chart');
         if (!ctx) return;
 
-        var labels = chartData.map(function(r) { return r.day; });
+        var labels = chartData.map(function(r) { return fmtDay(r.day); });
         var cats = ['chatbot', 'rating', 'simulateur', 'sponsor'];
         var catLabels = { chatbot: 'Chatbot', rating: 'Rating', simulateur: 'Simulateur', sponsor: 'Sponsor' };
         var datasets = cats.map(function(cat) {
@@ -684,7 +691,7 @@ var LotoAdmin = (function() {
         var start = page * PAGE_SIZE;
         var slice = rows.slice(start, start + PAGE_SIZE);
         tbody.innerHTML = slice.map(function(r) {
-            return '<tr><td>' + escHtml(r.day) + '</td><td>' + escHtml(r.event_type) + '</td><td>' + escHtml(r.page) + '</td><td>' + escHtml(r.module) + '</td><td>' + escHtml(r.lang) + '</td><td>' + escHtml(r.device) + '</td><td>' + escHtml(r.country) + '</td><td>' + escHtml(r.product_code || '') + '</td><td>' + escHtml(r.sponsor_name || '') + '</td><td>' + r.cnt + '</td></tr>';
+            return '<tr><td>' + escHtml(fmtDay(r.day)) + '</td><td>' + escHtml(r.event_type) + '</td><td>' + escHtml(r.page) + '</td><td>' + escHtml(r.module) + '</td><td>' + escHtml(r.lang) + '</td><td>' + escHtml(r.device) + '</td><td>' + escHtml(r.country) + '</td><td>' + escHtml(r.product_code || '') + '</td><td>' + escHtml(r.sponsor_name || '') + '</td><td>' + r.cnt + '</td></tr>';
         }).join('');
         renderPagination(rows.length, page, renderEngTable, rows);
     }
@@ -1502,7 +1509,7 @@ var LotoAdmin = (function() {
         var title = qs('#perf-modal-title');
         if (!backdrop || !body) return;
         backdrop.style.display = 'flex';
-        if (title) title.textContent = 'Tirage ' + perfState.game.toUpperCase() + ' — ' + dateStr;
+        if (title) title.textContent = 'Tirage ' + perfState.game.toUpperCase() + ' — ' + fmtDay(dateStr);
         body.innerHTML = '<p>Chargement…</p>';
         fetchJSON('/admin/api/calendar-perf/draw/' + perfState.game + '/' + dateStr).then(function(data){
             if (!data) return;

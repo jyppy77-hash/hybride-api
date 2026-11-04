@@ -30,8 +30,8 @@
                     <td>{{ c.numero }}</td>
                     <td>{{ c.sponsor_nom or c.sponsor_id }}</td>
                     <td>{{ c.product_codes or '—' }}</td>
-                    <td>{{ c.date_debut }}</td>
-                    <td>{{ c.date_fin }}</td>
+                    <td>{{ c.date_debut|date_num }}</td>
+                    <td>{{ c.date_fin|date_num }}</td>
                     <td>{{ "%.2f"|format(c.montant_mensuel_ht) }} EUR</td>
                     <td>{{ c.mode_depassement or 'CPC' }}</td>
                     <td>

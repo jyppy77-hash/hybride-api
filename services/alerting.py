@@ -223,7 +223,7 @@ def _send_email_sync(alert: Alert) -> None:
     # S10 V94: sanitize metric_name to prevent email header injection (CRLF)
     safe_name = alert.metric_name.replace('\r', ' ').replace('\n', ' ')
     subject = f"[LotoIA ALERTE] {safe_name} critique"
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    ts = datetime.now(timezone.utc).strftime("%d/%m/%Y %H:%M:%S UTC")  # 1.6.066 (D12) : UTC explicite
 
     body = f"""ALERTE CRITIQUE — LotoIA Monitoring
 

@@ -14,6 +14,7 @@ import logging
 from em_schemas import EMMetaAnalyseTextePayload, EMMetaPdfPayload
 from rate_limit import limiter
 from config.games import ValidGame
+from services.date_format import format_date_num
 from routes.api_analyse_unified import (
     unified_generate,
     unified_meta_analyse_local,
@@ -106,8 +107,9 @@ async def em_meta_pdf(request: Request, payload: EMMetaPdfPayload):
         logger.info(f"[META-PDF-EM ROUTE] graph_data_boules: {type(payload.graph_data_boules).__name__}, "
                      f"graph_data_etoiles: {type(payload.graph_data_etoiles).__name__}")
 
-        # Fetch last draw date from DB (F07 timestamp)
-        last_draw_date = await _fetch_last_draw_date_em()
+        # Fetch last draw date from DB (F07 timestamp) — 1.6.066 : JJ/MM/AAAA pour le PDF ;
+        # _fetch_last_draw_date_em reste ISO (réutilisée par routes/sitemap.py pour <lastmod>)
+        last_draw_date = format_date_num(await _fetch_last_draw_date_em()) or None
 
         buf = await asyncio.to_thread(
             generate_em_meta_pdf,

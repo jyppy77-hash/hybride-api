@@ -61,7 +61,7 @@ async def em_generateur(request: Request):
         hero_subtitle="Analyse statistique basée sur les tirages officiels EuroMillions",
         sponsor75_js="/ui/static/sponsor-popup75-em.js?v=14",
         sponsor_js="/ui/static/em/sponsor-popup-em.js?v=11",
-        app_js="/ui/static/app-em.js?v=9",
+        app_js="/ui/static/app-em.js?v=11",
     )
 
 
@@ -77,7 +77,7 @@ async def em_simulateur(request: Request):
         hero_icon="⭐",
         hero_title="Analyse de grille EuroMillions",
         hero_subtitle="Composez votre grille et obtenez un audit statistique descriptif",
-        simulateur_js="/ui/static/simulateur-em.js?v=1",
+        simulateur_js="/ui/static/simulateur-em.js?v=9",
         sponsor_js="/ui/static/em/sponsor-popup-em.js?v=11",
     )
 

@@ -26,8 +26,8 @@
                 <tr>
                     <td>{{ f.numero }}</td>
                     <td>{{ f.sponsor_nom or f.sponsor_id }}</td>
-                    <td>{{ f.date_emission }}</td>
-                    <td>{{ f.periode_debut }} — {{ f.periode_fin }}</td>
+                    <td>{{ f.date_emission|date_num }}</td>
+                    <td>{{ f.periode_debut|date_num }} — {{ f.periode_fin|date_num }}</td>
                     <td>{{ "%.2f"|format(f.montant_ttc) }} EUR</td>
                     <td><span class="badge-status badge-{{ f.statut }}">{{ f.statut }}</span></td>
                     <td>
