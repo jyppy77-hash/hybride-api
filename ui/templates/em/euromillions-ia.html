@@ -82,7 +82,7 @@
           "name": {{ _('Quelle est la différence entre LotoIA et ChatGPT pour l\'EuroMillions ?')|tojson }},
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": {{ _('ChatGPT est un modèle de langage génératif qui n\'a pas accès aux données réelles des tirages. Il invente des numéros sans fondement statistique. LotoIA utilise une IA Grounded connectée aux %(total)s+ tirages officiels EuroMillions, sans hallucination.')|format(total=em_db_total)|tojson }}
+            "text": {{ _('ChatGPT est un modèle de langage génératif qui n\'a pas accès aux données réelles des tirages. Il invente des numéros sans fondement statistique. LotoIA utilise une IA Grounded connectée aux %(total)s+ tirages officiels EuroMillions : ses réponses s\'appuient sur ces données réelles.')|format(total=em_db_total)|tojson }}
           }
         },
         {
@@ -170,18 +170,18 @@
 
                 <h3>{{ _('Les 5 algorithmes du moteur') }}</h3>
                 <ol>
-                    <li>{{ _('<strong>Analyse fréquentielle</strong> — Calcul des fréquences d\'apparition de chaque numéro (1-50) et de chaque étoile (1-12) sur l\'historique complet des tirages.')|safe }}</li>
+                    <li>{{ _('<strong>Analyse fréquentielle</strong> — Calcul des fréquences d\'apparition de chaque numéro (1-50) et de chaque étoile (1-12) sur trois fenêtres : les 5 dernières années, les 2 dernières années et l\'ensemble de l\'historique disponible.')|safe }}</li>
                     <li>{{ _('<strong>Calcul des retards</strong> — Nombre de tirages depuis la dernière apparition de chaque numéro et de chaque étoile.')|safe }}</li>
-                    <li>{{ _('<strong>Pondération temporelle</strong> — Application de coefficients privilégiant les 2 dernières années (<a href="%(methodo_url)s">méthodologie « 5 ans + 2 »</a>).')|format(methodo_url=urls.methodologie)|safe }}</li>
+                    <li>{{ _('<strong>Pondération temporelle</strong> — Combinaison des trois fenêtres : les tirages récents, présents dans les trois, pèsent davantage (<a href="%(methodo_url)s">méthodologie « 5 ans + 2 »</a>).')|format(methodo_url=urls.methodologie)|safe }}</li>
                     <li>{{ _('<strong>Scoring multicritère</strong> — Évaluation de chaque grille selon l\'équilibre pair/impair, la répartition bas/haut, la dispersion, la somme totale et la détection de patterns. Les étoiles sont évaluées séparément.')|safe }}</li>
                     <li>{{ _('<strong>Sélection optimale</strong> — Classement des grilles par niveau de convergence statistique décroissant.')|safe }}</li>
                 </ol>
 
                 <h3>{{ _('La méthodologie « 5 ans + 2 »') }}</h3>
-                <p>{{ _('Le moteur combine deux horizons temporels : <strong>5 ans</strong> d\'historique pour la stabilité statistique, avec une <strong>pondération renforcée sur les 2 dernières années</strong> pour capter les tendances récentes. Cette approche équilibre profondeur et réactivité.')|safe }}</p>
+                <p>{{ _('Le moteur combine trois fenêtres d\'analyse : <strong>les 5 dernières années</strong>, <strong>les 2 dernières années</strong> et <strong>l\'ensemble de l\'historique disponible</strong>. Les tirages récents, présents dans les trois fenêtres, pèsent davantage : la méthode équilibre stabilité statistique et réactivité.')|safe }}</p>
 
                 <h3>{{ _('L\'assistant IA conversationnel') }}</h3>
-                <p>{{ _('LotoIA intègre un chatbot alimenté par <strong>Gemini</strong> (Google DeepMind) en mode « Grounded » : l\'IA est connectée en temps réel à la base de données des tirages. Chaque réponse est ancrée sur des données vérifiées, sans hallucination. Vous pouvez lui poser des questions sur les statistiques, les fréquences ou demander une analyse personnalisée.')|safe }}</p>
+                <p>{{ _('LotoIA intègre un chatbot alimenté par <strong>Gemini</strong> (Google DeepMind) en mode « Grounded » : l\'IA est connectée en temps réel à la base de données des tirages. Chaque réponse est ancrée sur des données vérifiées. Vous pouvez lui poser des questions sur les statistiques, les fréquences ou demander une analyse personnalisée.')|safe }}</p>
             </section>
 
             {# ── 4. État de la recherche ── #}
@@ -226,7 +226,7 @@
                 <p>{{ _('Le moteur HYBRIDE combine 5 algorithmes (analyse fréquentielle, retards, pondération temporelle, scoring multicritère et sélection optimale) appliqués aux %(total)s+ tirages officiels EuroMillions. Découvrez les détails sur la page <a href="%(moteur_url)s">Moteur HYBRIDE</a>.')|format(total=em_db_total, moteur_url=urls.moteur)|safe }}</p>
 
                 <h3>{{ _('Quelle est la différence entre LotoIA et ChatGPT pour l\'EuroMillions ?') }}</h3>
-                <p>{{ _('ChatGPT invente des numéros sans accès aux données réelles. LotoIA utilise une IA « Grounded » connectée aux tirages officiels EuroMillions : zéro hallucination, uniquement des analyses factuelles.')|safe }}</p>
+                <p>{{ _('ChatGPT invente des numéros sans accès aux données réelles. LotoIA utilise une IA « Grounded » connectée aux tirages officiels EuroMillions : ses réponses s\'appuient sur les données réelles, pas sur des connaissances générales.')|safe }}</p>
 
                 <h3>{{ _('Les « systèmes gagnants » EuroMillions fonctionnent-ils ?') }}</h3>
                 <p>{{ _('Non. Tout système prétendant garantir des gains à l\'EuroMillions est une arnaque. La probabilité de gagner le jackpot est de 1 sur 139 838 160, identique pour chaque combinaison.')|safe }}</p>

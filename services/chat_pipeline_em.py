@@ -327,4 +327,5 @@ async def handle_pitch_em(grilles: list, http_client, lang: str = "fr") -> dict:
         # dépasse systématiquement 10s avec gemini-2.5-flash, timeout Vertex → 503.
         # Cf. docs/DIAGNOSTIC_V131_A_2_503_PITCH.md
         timeout_gemini=45,
+        call_type="pitch_em",  # 1.6.067 — gemini_tracking
     )

@@ -1080,9 +1080,12 @@ class TestAppVersion:
         x-default launcher → /fr) + prompts chatbot sans formule ; /accueil inchangé (golden T9).
         LOT 1.6.066 (05/11, Release 1.6.066) — formats de date JJ/MM/AAAA ; aucun changement SEO,
         JSON-LD / sitemap restent en ISO ; bump requis : ETag HTML lié à APP_VERSION.
+        LOT 1.6.067 (09/11, Release 1.6.067) — vérité HYBRIDE : textes /moteur, /hybride, IA, FAQ, news,
+        lastmod éditoriaux + LAST_NEWS_DATE au 09/11, dateModified des NewsArticle corrigés ;
+        /accueil inchangé (golden T9) ; bump requis : ETag HTML lié à APP_VERSION.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.066"
+        assert APP_VERSION == "1.6.067"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

@@ -27,7 +27,7 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="HYBRIDE — Chatbot IA Grounded pour le Loto | LotoIA">
-    <meta name="twitter:description" content="Assistant IA connecté aux tirages officiels FDJ. Zéro hallucination, uniquement des analyses factuelles.">
+    <meta name="twitter:description" content="Assistant IA connecté aux tirages officiels FDJ. Analyses factuelles, avec contrôles automatiques des chiffres cités.">
     <meta name="twitter:image" content="https://lotoia.fr/static/og-image.jpg">
     <!-- JSON-LD SoftwareApplication -->
     <script type="application/ld+json">
@@ -38,7 +38,7 @@
       "applicationCategory": "ChatbotApplication",
       "operatingSystem": "Web Browser",
       "url": "https://lotoia.fr/hybride",
-      "description": "Assistant IA conversationnel connecté en temps réel aux tirages officiels du Loto FDJ. Analyse factuelle, zéro hallucination.",
+      "description": "Assistant IA conversationnel connecté en temps réel aux tirages officiels du Loto FDJ. Analyse factuelle fondée sur les tirages officiels.",
       "isAccessibleForFree": true,
       "offers": {
         "@type": "Offer",
@@ -50,7 +50,7 @@
         "Analyse de fréquences par numéro",
         "Recherche de tirages par date",
         "Statistiques numéros chauds et froids",
-        "Anti-hallucination par vérification systématique"
+        "Contrôles automatiques des chiffres cités"
       ],
       "publisher": {
         "@type": "Organization",
@@ -89,7 +89,7 @@
           "name": "Les réponses de HYBRIDE sont-elles fiables ?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Oui. Chaque réponse est calculée à partir de plus de 1 000 tirages officiels de la Française des Jeux stockés dans notre base Cloud SQL. L'architecture Grounded vérifie systématiquement les données avant de formuler une réponse."
+            "text": "Oui. Chaque réponse est calculée à partir de plus de 1 000 tirages officiels de la Française des Jeux stockés dans notre base Cloud SQL. Les chiffres viennent de la base de tirages ; des contrôles automatiques comparent ensuite la réponse aux données."
           }
         },
         {
@@ -312,7 +312,7 @@
                     <p><strong>HYBRIDE</strong> = un bibliothécaire qui va chercher dans les archives avant de répondre. Plus lent d'une seconde, mais toujours factuel.</p>
                 </div>
 
-                <p>En termes techniques, HYBRIDE utilise une architecture appelée <strong>RAG</strong> (Retrieval-Augmented Generation) : le modèle "récupère" d'abord les données pertinentes dans la base, puis "augmente" sa réponse avec ces données vérifiées. Le résultat : <strong>zéro hallucination</strong> sur les questions Loto.</p>
+                <p>En termes techniques, HYBRIDE utilise une architecture appelée <strong>RAG</strong> (Retrieval-Augmented Generation) : le modèle "récupère" d'abord les données pertinentes dans la base, puis "augmente" sa réponse avec ces données vérifiées. Le résultat : des réponses ancrées sur les données réelles des tirages. Aucune IA n'est infaillible : en cas de doute, vérifiez sur l'historique officiel.</p>
             </section>
 
             <!-- Comment HYBRIDE accède aux données -->
@@ -333,7 +333,7 @@
                     <li><strong>HYBRIDE analyse votre intention</strong> et identifie les données nécessaires</li>
                     <li><strong>Il interroge la base de données</strong> Cloud SQL en temps réel</li>
                     <li><strong>Gemini (Google DeepMind)</strong> formule une réponse claire à partir des données récupérées</li>
-                    <li><strong>Vérification anti-hallucination</strong> : la réponse est ancrée exclusivement sur les données FDJ</li>
+                    <li><strong>Contrôles anti-hallucination</strong> : les chiffres cités sont comparés aux données FDJ</li>
                     <li><strong>Vous recevez une réponse factuelle</strong>, généralement en moins de 3 secondes</li>
                 </ol>
 
@@ -425,7 +425,7 @@
                         </tr>
                         <tr>
                             <td class="criteria">Anti-hallucination</td>
-                            <td>Vérification systématique</td>
+                            <td>Contrôles automatiques</td>
                             <td>Peut inventer des données</td>
                         </tr>
                         <tr>
@@ -486,7 +486,7 @@
                 <p><strong>Non.</strong> Le Loto est un jeu de hasard pur et <strong>personne</strong> — aucune IA, aucun algorithme, aucun "système" — ne peut prédire les résultats. HYBRIDE analyse les données passées pour vous donner des statistiques factuelles. Il ne prédit pas l'avenir, et il le dit clairement.</p>
 
                 <h3>Les réponses de HYBRIDE sont-elles fiables ?</h3>
-                <p><strong>Oui.</strong> Chaque réponse est calculée à partir de plus de 1&nbsp;000 tirages officiels de la Française des Jeux stockés dans notre base Cloud SQL. L'architecture Grounded vérifie systématiquement les données avant de formuler une réponse. Si HYBRIDE ne trouve pas l'information dans la base, il le dit — plutôt que d'inventer.</p>
+                <p><strong>Oui.</strong> Chaque réponse est calculée à partir de plus de 1&nbsp;000 tirages officiels de la Française des Jeux stockés dans notre base Cloud SQL. Les chiffres viennent de la base de tirages ; des contrôles automatiques comparent ensuite la réponse aux données. Si HYBRIDE ne trouve pas l'information dans la base, il le dit — plutôt que d'inventer.</p>
 
                 <h3>HYBRIDE fonctionne-t-il pour l'EuroMillions ?</h3>
                 <p><strong>Oui.</strong> HYBRIDE est connecté aux deux bases de données (Loto et <a href="/euromillions">EuroMillions</a>) pour répondre à vos questions sur les deux jeux. Le module EuroMillions répond en 6 langues.</p>

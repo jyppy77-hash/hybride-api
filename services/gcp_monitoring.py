@@ -31,20 +31,19 @@ _GCP_PROJECT = None  # resolved lazily
 CACHE_KEY = "gcp_metrics"
 CACHE_TTL = 60  # seconds
 
-# Gemini Flash 2.0 pricing (USD per 1M tokens)
+# 1.6.067 — Modèle de coûts : défauts calibrés sur la facture d'octobre 2026 (31 j), surchargés par
+# admin_config (clé = "cost_" + nom ci-dessous, page /admin/config). Cloud Run = forfait (plus de
+# modèle instances × 24 h), Cloud SQL = coût journalier du tier (à changer au passage db-g1-small),
+# "other" = Artifact Registry + divers (inclus dans le total, pas de colonne metrics_history).
 COST_CONFIG = {
-    "gemini_input_per_1m_usd": 0.075,
-    "gemini_output_per_1m_usd": 0.30,
-    # Cloud Run: 1 vCPU allocated, price per vCPU-second
-    "cloud_run_vcpu_per_sec_usd": 0.000024,
-    "cloud_run_mem_gib_per_sec_usd": 0.0000025,
-    "cloud_run_vcpu_count": 1,
-    "cloud_run_mem_gib": 0.5,
-    # Cloud SQL: flat daily estimate (micro instance)
-    "cloud_sql_daily_eur": 0.85,
-    # USD → EUR conversion
+    "gemini_input_per_1m_usd": 0.30,    # gemini-2.5-flash, grille publique Vertex AI
+    "gemini_output_per_1m_usd": 2.50,
+    "cloud_run_daily_eur": 0.88,        # 27,36 € / 31 j
+    "cloud_sql_daily_eur": 2.97,        # 92,13 € / 31 j
+    "other_daily_eur": 0.33,            # (9,84 + 0,34) € / 31 j
     "usd_to_eur": 0.92,
 }
+COST_CALIBRATION_LABEL = "facture octobre 2026"
 
 # ── Local cache for Gemini DB queries (60s TTL) ──────────────────────────────
 
@@ -67,6 +66,45 @@ def _local_cache_set(key: str, value):
         _LOCAL_CACHE.clear()
         logger.warning("[GCP_MON] Local cache cleared — reached %d entries", _LOCAL_CACHE_MAXSIZE)
     _LOCAL_CACHE[key] = (time.monotonic(), value)
+
+
+async def get_cost_config() -> dict:
+    """1.6.067 — Tarifs effectifs : COST_CONFIG surchargé par admin_config `cost_*` (cache local 60 s).
+
+    Valeur absente, non numérique ou négative → défaut. Base indisponible → défauts.
+    Clé texte `cost_calibration_label` (≤ 100 caractères) → `calibration_label`.
+    """
+    cached = _local_cache_get("cost_config")
+    if cached is not None:
+        return cached
+    cfg = dict(COST_CONFIG)
+    cfg["calibration_label"] = COST_CALIBRATION_LABEL
+    try:
+        rows = await db_cloudsql.async_fetchall(
+            "SELECT config_key, config_value FROM admin_config WHERE LEFT(config_key, 5) = 'cost_'"
+        )
+        for r in rows or []:
+            name = str(r["config_key"])[5:]
+            if name == "calibration_label":
+                label = str(r["config_value"] or "").strip()[:100]
+                if label:
+                    cfg[name] = label
+            elif name in COST_CONFIG:
+                try:
+                    val = float(r["config_value"])
+                except (TypeError, ValueError):
+                    continue
+                if val >= 0:
+                    cfg[name] = val
+    except Exception as e:
+        logger.debug("[COST_CONFIG] DB read: %s", e)
+    _local_cache_set("cost_config", cfg)
+    return cfg
+
+
+def invalidate_cost_config() -> None:
+    """1.6.067 — purge le cache local des tarifs (appelé après enregistrement dans /admin/config)."""
+    _LOCAL_CACHE.pop("cost_config", None)
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -166,14 +204,19 @@ async def _get_gemini_counters() -> dict:
     cached = _local_cache_get("gemini_counters")
     if cached is not None:
         return cached
-    defaults = {"calls": 0, "errors": 0, "tokens_in": 0, "tokens_out": 0, "total_ms": 0}
+    defaults = {"calls": 0, "errors": 0, "tokens_in": 0, "tokens_out": 0, "total_ms": 0,
+                "chat_calls": 0, "chat_ms": 0}
     try:
+        # 1.6.067 — chat_calls / chat_ms : latence moyenne Gemini sur les appels chat_* seulement
+        # (chat_loto, chat_em, chat_*_sync) ; pitch, SQL et enrichissement exclus.
         row = await db_cloudsql.async_fetchone(
             "SELECT COUNT(*) AS calls, "
             "COALESCE(SUM(is_error), 0) AS errors, "
             "COALESCE(SUM(tokens_in), 0) AS tokens_in, "
             "COALESCE(SUM(tokens_out), 0) AS tokens_out, "
-            "COALESCE(SUM(duration_ms), 0) AS total_ms "
+            "COALESCE(SUM(duration_ms), 0) AS total_ms, "
+            "COALESCE(SUM(LEFT(call_type, 5) = 'chat_'), 0) AS chat_calls, "
+            "COALESCE(SUM(CASE WHEN LEFT(call_type, 5) = 'chat_' THEN duration_ms ELSE 0 END), 0) AS chat_ms "
             "FROM gemini_tracking WHERE ts >= NOW() - INTERVAL 24 HOUR"
         )
         if row:
@@ -183,6 +226,8 @@ async def _get_gemini_counters() -> dict:
                 "tokens_in": int(row["tokens_in"]),
                 "tokens_out": int(row["tokens_out"]),
                 "total_ms": int(row["total_ms"]),
+                "chat_calls": int(row.get("chat_calls") or 0),
+                "chat_ms": int(row.get("chat_ms") or 0),
             }
         else:
             result = defaults
@@ -364,9 +409,12 @@ def _fetch_utilization(client, project_name, base_filter, interval, metrics, met
 
 # ── Cost estimation ──────────────────────────────────────────────────────────
 
-def _estimate_costs(metrics: dict, gemini: dict) -> dict:
-    """Estimate daily costs from metrics and Gemini counters."""
-    cfg = COST_CONFIG
+def _estimate_costs(metrics: dict, gemini: dict, cfg: dict | None = None) -> dict:
+    """1.6.067 — Coûts du jour : forfaits Cloud Run / Cloud SQL / autres + Gemini (tokens 24 h glissantes).
+
+    `metrics` n'est plus utilisé (signature conservée) ; cfg=None → COST_CONFIG (défauts).
+    """
+    cfg = cfg or COST_CONFIG
     usd_to_eur = cfg["usd_to_eur"]
 
     # Gemini cost (from real token counts)
@@ -378,28 +426,20 @@ def _estimate_costs(metrics: dict, gemini: dict) -> dict:
     )
     gemini_eur = round(gemini_usd * usd_to_eur, 4)
 
-    # Cloud Run cost estimate (based on active instances × 24h)
-    instances = metrics.get("active_instances", 1)
-    # Estimate: assume instances have been running for proportional day time
-    # Use a simple model: instances × seconds_in_day × per-second cost
-    seconds_in_day = 86400
-    cloud_run_usd = instances * seconds_in_day * (
-        cfg["cloud_run_vcpu_count"] * cfg["cloud_run_vcpu_per_sec_usd"]
-        + cfg["cloud_run_mem_gib"] * cfg["cloud_run_mem_gib_per_sec_usd"]
-    )
-    cloud_run_eur = round(cloud_run_usd * usd_to_eur, 2)
+    cloud_run_eur = round(cfg["cloud_run_daily_eur"], 2)
+    cloud_sql_eur = round(cfg["cloud_sql_daily_eur"], 2)
+    other_eur = round(cfg["other_daily_eur"], 2)
 
-    # Cloud SQL flat estimate
-    cloud_sql_eur = cfg["cloud_sql_daily_eur"]
-
-    total_eur = round(cloud_run_eur + cloud_sql_eur + gemini_eur, 2)
+    total_eur = round(cloud_run_eur + cloud_sql_eur + gemini_eur + other_eur, 2)
 
     return {
         "cloud_run_today_eur": cloud_run_eur,
         "cloud_sql_today_eur": cloud_sql_eur,
         "gemini_today_eur": gemini_eur,
+        "other_today_eur": other_eur,
         "total_today_eur": total_eur,
         "estimated_month_eur": round(total_eur * 30, 1),
+        "calibration_label": cfg.get("calibration_label", COST_CALIBRATION_LABEL),
     }
 
 
@@ -435,12 +475,23 @@ async def get_gcp_metrics() -> dict:
 
     # Gemini section
     calls = gem_counters["calls"]
-    total_ms = gem_counters["total_ms"]
+    # 1.6.067 — latence moyenne sur les appels chat_* seulement (décision 9)
+    chat_calls = gem_counters.get("chat_calls", 0)
+    chat_ms = gem_counters.get("chat_ms", 0)
     # Cost estimation
-    costs = _estimate_costs(m, gem_counters)
+    costs = _estimate_costs(m, gem_counters, await get_cost_config())
+    try:  # 1.6.067 — seuils de la carte « coût mensuel » (plus de 90/120 en dur dans le JS)
+        from services.alerting import DEFAULT_THRESHOLDS, get_alert_thresholds
+        _th = await get_alert_thresholds()
+        costs["thresholds"] = {
+            "warn": float(_th.get("alert_cost_month_warn", DEFAULT_THRESHOLDS["alert_cost_month_warn"])),
+            "crit": float(_th.get("alert_cost_month_crit", DEFAULT_THRESHOLDS["alert_cost_month_crit"])),
+        }
+    except Exception:
+        costs["thresholds"] = {"warn": 165.0, "crit": 200.0}
 
     gemini_section = {
-        "avg_response_time_ms": round(total_ms / calls) if calls else 0,
+        "avg_response_time_ms": round(chat_ms / chat_calls) if chat_calls else 0,
         "errors_today": gem_counters["errors"],
         "calls_today": calls,
         "tokens_in_today": gem_counters["tokens_in"],
@@ -630,7 +681,12 @@ async def get_metrics_history(period: str = "24h") -> list[dict]:
 
 # ── Gemini breakdown (per type / per lang) ────────────────────────────────────
 
-_CALL_TYPES = ["chat_loto", "chat_em", "enrichment_loto", "enrichment_em", "meta_analyse"]
+# 1.6.067 — 4 sites Vertex tracés (chat_*_sync, pitch_*, sql_*) ; meta_analyse retiré (jamais émis).
+_CALL_TYPES = [
+    "chat_loto", "chat_em", "chat_loto_sync", "chat_em_sync",
+    "pitch_loto", "pitch_em", "sql_loto", "sql_em",
+    "enrichment_loto", "enrichment_em",
+]
 _LANGS = ["fr", "en", "es", "pt", "de", "nl"]
 
 async def get_gemini_breakdown() -> dict:

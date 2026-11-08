@@ -9,7 +9,7 @@
     <meta property="og:site_name" content="LotoIA">
     <meta property="og:locale" content="{{ og_locale }}">
     <meta property="og:title" content="{{ _('HYBRIDE — Chatbot IA Grounded EuroMillions | LotoIA') }}">
-    <meta property="og:description" content="{{ _('Assistant IA connecté en temps réel aux %(total)s+ tirages officiels EuroMillions. Zéro hallucination, uniquement des analyses factuelles.')|format(total=em_db_total) }}">
+    <meta property="og:description" content="{{ _('Assistant IA connecté en temps réel aux %(total)s+ tirages officiels EuroMillions. Analyses factuelles, avec contrôles automatiques des chiffres cités.')|format(total=em_db_total) }}">
     <meta property="og:url" content="{{ canonical_url }}">
     <meta property="og:image" content="{{ base_url }}/static/og-image.jpg">
     <meta property="og:image:secure_url" content="{{ base_url }}/static/og-image.jpg">
@@ -19,7 +19,7 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ _('HYBRIDE — Chatbot IA Grounded EuroMillions | LotoIA') }}">
-    <meta name="twitter:description" content="{{ _('Assistant IA connecté aux tirages officiels EuroMillions. Zéro hallucination, uniquement des analyses factuelles.') }}">
+    <meta name="twitter:description" content="{{ _('Assistant IA connecté aux tirages officiels EuroMillions. Analyses factuelles, avec contrôles automatiques des chiffres cités.') }}">
     <meta name="twitter:image" content="{{ base_url }}/static/og-image.jpg">
     <!-- JSON-LD SoftwareApplication -->
     <script type="application/ld+json">
@@ -30,7 +30,7 @@
       "applicationCategory": "ChatbotApplication",
       "operatingSystem": "Web Browser",
       "url": {{ canonical_url|tojson }},
-      "description": {{ _('Assistant IA conversationnel connecté en temps réel aux tirages officiels EuroMillions. Analyse factuelle, zéro hallucination.')|tojson }},
+      "description": {{ _('Assistant IA conversationnel connecté en temps réel aux tirages officiels EuroMillions. Analyse factuelle fondée sur les tirages officiels.')|tojson }},
       "isAccessibleForFree": true,
       "offers": {
         "@type": "Offer",
@@ -42,7 +42,7 @@
         {{ _('Analyse de fréquences par numéro (1-50) et par étoile (1-12)')|tojson }},
         {{ _('Recherche de tirages par date')|tojson }},
         {{ _('Statistiques numéros et étoiles chauds et froids')|tojson }},
-        {{ _('Anti-hallucination par vérification systématique')|tojson }}
+        {{ _('Contrôles automatiques des chiffres cités')|tojson }}
       ],
       "publisher": {
         "@type": "Organization",
@@ -73,7 +73,7 @@
           "name": {{ _('Comment fonctionne le chatbot HYBRIDE pour l\'EuroMillions ?')|tojson }},
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": {{ _('HYBRIDE utilise une architecture Grounded (RAG) : il interroge la base de données des %(total)s+ tirages officiels EuroMillions en temps réel, puis Gemini (Google DeepMind) formule une réponse factuelle à partir des données récupérées. Zéro hallucination.')|format(total=em_db_total)|tojson }}
+            "text": {{ _('HYBRIDE utilise une architecture Grounded (RAG) : il interroge la base de données des %(total)s+ tirages officiels EuroMillions en temps réel, puis Gemini (Google DeepMind) formule une réponse factuelle à partir des données récupérées. Des contrôles automatiques comparent ensuite la réponse aux données.')|format(total=em_db_total)|tojson }}
           }
         },
         {
@@ -251,7 +251,7 @@
                     <p><strong>HYBRIDE</strong> = {{ _('un bibliothécaire qui va chercher dans les archives avant de répondre. Plus lent d\'une seconde, mais toujours factuel.') }}</p>
                 </div>
 
-                <p>{{ _('En termes techniques, HYBRIDE utilise une architecture appelée <strong>RAG</strong> (Retrieval-Augmented Generation) : le modèle « récupère » d\'abord les données pertinentes dans la base, puis « augmente » sa réponse avec ces données vérifiées. Le résultat : <strong>zéro hallucination</strong> sur les questions EuroMillions.')|safe }}</p>
+                <p>{{ _('En termes techniques, HYBRIDE utilise une architecture appelée <strong>RAG</strong> (Retrieval-Augmented Generation) : le modèle « récupère » d\'abord les données pertinentes dans la base, puis « augmente » sa réponse avec ces données vérifiées. Le résultat : des réponses ancrées sur les données réelles des tirages. Aucune IA n\'est infaillible : en cas de doute, vérifiez sur l\'historique officiel.')|safe }}</p>
             </section>
 
             {# ── Comment HYBRIDE accède aux données ── #}
@@ -272,7 +272,7 @@
                     <li>{{ _('<strong>HYBRIDE analyse votre intention</strong> et identifie les données nécessaires')|safe }}</li>
                     <li>{{ _('<strong>Il interroge la base de données</strong> Cloud SQL en temps réel')|safe }}</li>
                     <li>{{ _('<strong>Gemini (Google DeepMind)</strong> formule une réponse claire à partir des données récupérées')|safe }}</li>
-                    <li>{{ _('<strong>Vérification anti-hallucination</strong> : la réponse est ancrée exclusivement sur les données EuroMillions')|safe }}</li>
+                    <li>{{ _('<strong>Contrôles anti-hallucination</strong> : les chiffres cités sont comparés aux données EuroMillions')|safe }}</li>
                     <li>{{ _('<strong>Vous recevez une réponse factuelle</strong>, généralement en moins de 3 secondes')|safe }}</li>
                 </ol>
 
@@ -364,7 +364,7 @@
                         </tr>
                         <tr>
                             <td class="criteria">{{ _('Anti-hallucination') }}</td>
-                            <td>{{ _('Vérification systématique') }}</td>
+                            <td>{{ _('Contrôles automatiques') }}</td>
                             <td>{{ _('Peut inventer des données') }}</td>
                         </tr>
                         <tr>

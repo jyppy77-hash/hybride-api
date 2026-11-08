@@ -163,7 +163,7 @@ class TestGeminiBreakdown:
             ])
             result = await get_gemini_breakdown()
 
-            assert len(result["by_type"]) == 5
+            assert len(result["by_type"]) == 10  # 1.6.067 : 10 types (était 5)
             chat_loto = next(e for e in result["by_type"] if e["type"] == "chat_loto")
             assert chat_loto["calls"] == 10
             assert chat_loto["tokens_in"] == 5000
@@ -581,7 +581,10 @@ class TestConstants:
         assert "chat_em" in _CALL_TYPES
         assert "enrichment_loto" in _CALL_TYPES
         assert "enrichment_em" in _CALL_TYPES
-        assert "meta_analyse" in _CALL_TYPES
+        # 1.6.067 : 4 sites Vertex tracés, meta_analyse retiré (jamais émis)
+        for ct in ("chat_loto_sync", "chat_em_sync", "pitch_loto", "pitch_em", "sql_loto", "sql_em"):
+            assert ct in _CALL_TYPES
+        assert "meta_analyse" not in _CALL_TYPES
 
     def test_langs_list(self):
         assert set(_LANGS) == {"fr", "en", "es", "pt", "de", "nl"}

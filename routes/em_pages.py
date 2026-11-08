@@ -8,6 +8,7 @@ import db_cloudsql
 
 from config import killswitch
 from config.templates import render_template
+from services.em_rating import fetch_em_rating
 
 _KS_HEADERS = {"Cache-Control": "no-cache, no-store"}
 
@@ -23,18 +24,8 @@ async def em_accueil(request: Request):
     """EuroMillions — Accueil (hub) + AggregateRating dynamique."""
     if "fr" not in killswitch.ENABLED_LANGS:
         return RedirectResponse(url="/accueil", status_code=302, headers=_KS_HEADERS)
-    # Fetch EM ratings for AggregateRating schema (smart: hide if < 5)
-    em_rating_value, em_rating_count = 0, 0
-    try:
-        result = await db_cloudsql.async_fetchone(
-            "SELECT review_count, avg_rating FROM ratings_aggregate WHERE source = %s",
-            ("popup_em",),
-        )
-        if result and result.get("review_count"):
-            em_rating_count = int(result["review_count"])
-            em_rating_value = round(float(result["avg_rating"]), 1)
-    except Exception:
-        pass
+    # AggregateRating (masqué si < 5 votes) — 1.6.067 : toutes les sources EM (services/em_rating.py)
+    em_rating_value, em_rating_count = await fetch_em_rating(db_cloudsql)
 
     return render_template(
         "em/accueil.html", request, lang="fr", page_key="accueil",

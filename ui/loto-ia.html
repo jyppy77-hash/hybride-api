@@ -106,7 +106,7 @@
           "name": "Peut-on utiliser ChatGPT pour gagner au Loto ?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Non. ChatGPT est un modèle de langage génératif qui n'a pas accès aux données réelles des tirages. Il invente des numéros sans fondement statistique. LotoIA utilise une IA Grounded connectée à plus de 1 000 tirages officiels FDJ, sans hallucination."
+            "text": "Non. ChatGPT est un modèle de langage génératif qui n'a pas accès aux données réelles des tirages. Il invente des numéros sans fondement statistique. LotoIA utilise une IA Grounded connectée à plus de 1 000 tirages officiels FDJ : ses réponses s'appuient sur ces données réelles."
           }
         },
         {
@@ -230,18 +230,18 @@
 
                 <h3>Les 5 algorithmes du moteur</h3>
                 <ol>
-                    <li><strong>Analyse fréquentielle</strong> — Calcul des fréquences d'apparition de chaque numéro (1-49) sur l'historique complet des tirages.</li>
+                    <li><strong>Analyse fréquentielle</strong> — Calcul des fréquences d'apparition de chaque numéro (1-49) sur trois fenêtres : les 5 dernières années, les 2 dernières années et l'ensemble de l'historique disponible.</li>
                     <li><strong>Calcul des retards</strong> — Nombre de tirages depuis la dernière apparition de chaque numéro.</li>
-                    <li><strong>Pondération temporelle</strong> — Application de coefficients privilégiant les 2 dernières années (<a href="/methodologie">méthodologie "5 ans + 2"</a>).</li>
+                    <li><strong>Pondération temporelle</strong> — Combinaison des trois fenêtres : les tirages récents, présents dans les trois, pèsent davantage (<a href="/methodologie">méthodologie "5 ans + 2"</a>).</li>
                     <li><strong>Scoring multicritère</strong> — Évaluation de chaque grille selon l'équilibre pair/impair, la répartition bas/haut, la dispersion, la somme totale et la détection de patterns.</li>
                     <li><strong>Sélection optimale</strong> — Classement des grilles par niveau de convergence statistique décroissant.</li>
                 </ol>
 
                 <h3>La méthodologie "5 ans + 2"</h3>
-                <p>Le moteur combine deux horizons temporels : <strong>5 ans</strong> d'historique pour la stabilité statistique, avec une <strong>pondération renforcée sur les 2 dernières années</strong> pour capter les tendances récentes. Cette approche équilibre profondeur et réactivité.</p>
+                <p>Le moteur combine trois fenêtres d'analyse : <strong>les 5 dernières années</strong>, <strong>les 2 dernières années</strong> et <strong>l'ensemble de l'historique disponible</strong>. Les tirages récents, présents dans les trois fenêtres, pèsent davantage : la méthode équilibre stabilité statistique et réactivité.</p>
 
                 <h3>L'assistant IA conversationnel</h3>
-                <p>LotoIA intègre <a href="/hybride">HYBRIDE</a>, un chatbot alimenté par <strong>Gemini</strong> (Google DeepMind) en mode "Grounded" : l'IA est connectée en temps réel à la base de données des tirages. Chaque réponse est ancrée sur des données vérifiées, sans hallucination. Vous pouvez lui poser des questions sur les statistiques, les fréquences ou demander une analyse personnalisée. <a href="/hybride">Découvrez tout ce que HYBRIDE peut faire</a>.</p>
+                <p>LotoIA intègre <a href="/hybride">HYBRIDE</a>, un chatbot alimenté par <strong>Gemini</strong> (Google DeepMind) en mode "Grounded" : l'IA est connectée en temps réel à la base de données des tirages. Chaque réponse est ancrée sur des données vérifiées. Vous pouvez lui poser des questions sur les statistiques, les fréquences ou demander une analyse personnalisée. <a href="/hybride">Découvrez tout ce que HYBRIDE peut faire</a>.</p>
             </section>
 
             <!-- Section 4 -->
@@ -292,7 +292,7 @@
                 <p>Non. Tout système prétendant garantir des gains au Loto est une arnaque. La probabilité de gagner le jackpot est de 1 sur 19 068 840, identique pour chaque combinaison.</p>
 
                 <h3>Peut-on utiliser ChatGPT pour le Loto ?</h3>
-                <p>ChatGPT invente des numéros sans accès aux données réelles. LotoIA utilise une IA "Grounded" connectée aux tirages officiels FDJ : zéro hallucination, uniquement des analyses factuelles.</p>
+                <p>ChatGPT invente des numéros sans accès aux données réelles. LotoIA utilise une IA "Grounded" connectée aux tirages officiels FDJ : ses réponses s'appuient sur les données réelles, pas sur des connaissances générales.</p>
 
                 <h3>LotoIA est-il gratuit ?</h3>
                 <p>Oui, 100% gratuit, sans inscription. Toutes les fonctionnalités sont accessibles : <a href="/loto">exploration de grilles</a>, <a href="/loto/analyse">analyse de grille</a>, <a href="/loto/statistiques">statistiques</a> et chatbot IA.</p>

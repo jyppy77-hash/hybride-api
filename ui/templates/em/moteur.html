@@ -44,7 +44,7 @@
         "availability": "https://schema.org/InStock"
       },
       "featureList": [
-        {{ _('Analyse fréquentielle sur 5 ans')|tojson }},
+        {{ _('Analyse fréquentielle sur trois fenêtres (5 ans, 2 ans, historique complet)')|tojson }},
         {{ _('Pondération tendances récentes')|tojson }},
         {{ _('Analyse de conformité multicritère')|tojson }},
         {{ _('Génération de grilles optimisées (5+2)')|tojson }},
@@ -137,13 +137,13 @@
                 <h2>{{ _('Algorithmes') }}</h2>
 
                 <h3>{{ _('1. Analyse fréquentielle') }}</h3>
-                <p>{{ _('Calcul des fréquences d\'apparition de chaque numéro (1-50) et de chaque étoile (1-12) sur l\'historique complet des tirages EuroMillions.') }}</p>
+                <p>{{ _('Calcul des fréquences d\'apparition de chaque numéro (1-50) et de chaque étoile (1-12) sur trois fenêtres : les 5 dernières années, les 2 dernières années et l\'ensemble de l\'historique disponible.') }}</p>
 
                 <h3>{{ _('2. Calcul des retards') }}</h3>
                 <p>{{ _('Détermination du nombre de tirages depuis la dernière apparition de chaque numéro et de chaque étoile.') }}</p>
 
                 <h3>{{ _('3. Pondération temporelle') }}</h3>
-                <p>{{ _('Application de coefficients de pondération privilégiant les 2 dernières années (méthodologie « 5 ans + 2 »).') }}</p>
+                <p>{{ _('Combinaison des trois fenêtres d\'analyse : les tirages récents, présents dans les trois, pèsent davantage (méthodologie « 5 ans + 2 »).') }}</p>
 
                 <h3>{{ _('4. Scoring multicritère') }}</h3>
                 <p>{{ _('Évaluation de chaque grille candidate selon :') }}</p>
@@ -185,15 +185,15 @@
                     <tbody>
                         <tr>
                             <td style="padding: 12px; border-bottom: 1px solid var(--border-color);"><code>conservative</code></td>
-                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">{{ _('Privilégie les numéros fréquents (chauds)') }}</td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">{{ _('Privilégie l\'historique long terme. Idéal si vous préférez des numéros qui ont fait leurs preuves sur la durée.') }}</td>
                         </tr>
                         <tr>
                             <td style="padding: 12px; border-bottom: 1px solid var(--border-color);"><code>balanced</code></td>
-                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">{{ _('Équilibre entre fréquences et retards') }}</td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">{{ _('Répartition harmonieuse entre les 3 périodes. C\'est le mode par défaut, utilisé par le générateur du site ; les deux autres modes peuvent être demandés au chatbot HYBRIDE.') }}</td>
                         </tr>
                         <tr>
                             <td style="padding: 12px; border-bottom: 1px solid var(--border-color);"><code>recent</code></td>
-                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">{{ _('Pondération forte sur les tendances récentes') }}</td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">{{ _('Pour ceux qui veulent davantage de diversité dans les grilles proposées.') }}</td>
                         </tr>
                     </tbody>
                 </table>

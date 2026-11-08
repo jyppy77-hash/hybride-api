@@ -35,8 +35,9 @@ DEFAULT_THRESHOLDS = {
     "alert_memory_crit": "0.90",
     "alert_gemini_avg_warn": "3000",
     "alert_gemini_avg_crit": "5000",
-    "alert_cost_month_warn": "90",
-    "alert_cost_month_crit": "120",
+    # 1.6.067 — règle : coût mensuel attendu × 1,15 (warn) / × 1,40 (crit) ; attendu ≈ 143 € (facture oct. 2026)
+    "alert_cost_month_warn": "165",
+    "alert_cost_month_crit": "200",
 }
 
 ALERT_COOLDOWN = 900     # 15 minutes between same alert

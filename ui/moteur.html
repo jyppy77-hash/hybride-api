@@ -52,7 +52,7 @@
         "availability": "https://schema.org/InStock"
       },
       "featureList": [
-        "Analyse fréquentielle sur 5 ans",
+        "Analyse fréquentielle sur trois fenêtres (5 ans, 2 ans, historique complet)",
         "Pondération tendances récentes",
         "Analyse de conformité multicritère",
         "Génération de grilles optimisées",
@@ -169,13 +169,13 @@
                 <h2>Algorithmes</h2>
 
                 <h3>1. Analyse fréquentielle</h3>
-                <p>Calcul des fréquences d'apparition de chaque numéro (1-49) sur l'historique complet des tirages.</p>
+                <p>Calcul des fréquences d'apparition de chaque numéro (1-49) sur trois fenêtres : les 5 dernières années, les 2 dernières années et l'ensemble de l'historique disponible.</p>
 
                 <h3>2. Calcul des retards</h3>
                 <p>Détermination du nombre de tirages depuis la dernière apparition de chaque numéro.</p>
 
                 <h3>3. Pondération temporelle</h3>
-                <p>Application de coefficients de pondération privilégiant les 2 dernières années (méthodologie "5 ans + 2").</p>
+                <p>Combinaison des trois fenêtres d'analyse : les tirages récents, présents dans les trois, pèsent davantage (méthodologie "5 ans + 2").</p>
 
                 <h3>4. Scoring multicritère</h3>
                 <p>Évaluation de chaque grille candidate selon :</p>
@@ -216,15 +216,15 @@
                     <tbody>
                         <tr>
                             <td style="padding: 12px; border-bottom: 1px solid var(--border-color);"><code>conservative</code></td>
-                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">Privilégie les numéros fréquents (chauds)</td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">Privilégie l'historique long terme. Idéal si vous préférez des numéros qui ont fait leurs preuves sur la durée.</td>
                         </tr>
                         <tr>
                             <td style="padding: 12px; border-bottom: 1px solid var(--border-color);"><code>balanced</code></td>
-                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">Équilibre entre fréquences et retards</td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">Répartition harmonieuse entre les 3 périodes. C'est le mode par défaut, utilisé par le générateur du site ; les deux autres modes peuvent être demandés au chatbot HYBRIDE.</td>
                         </tr>
                         <tr>
                             <td style="padding: 12px; border-bottom: 1px solid var(--border-color);"><code>recent</code></td>
-                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">Pondération forte sur les tendances récentes</td>
+                            <td style="padding: 12px; border-bottom: 1px solid var(--border-color);">Pour ceux qui veulent davantage de diversité dans les grilles proposées.</td>
                         </tr>
                     </tbody>
                 </table>

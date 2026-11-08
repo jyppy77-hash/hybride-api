@@ -192,6 +192,26 @@ def _track_error(t0: float, call_type: str, lang: str) -> None:
         pass
 
 
+def _track_usage(t0: float, response, call_type: str, lang: str) -> None:
+    """1.6.067 — tracking succès Vertex (tokens de usage_metadata), fire-and-forget.
+
+    Utilisé par les 4 sites qui n'étaient pas tracés : chat non streamé, pitch, SQL Loto, SQL EM.
+    """
+    _dur_ms = (time.monotonic() - t0) * 1000
+    _um = getattr(response, "usage_metadata", None)
+    try:
+        _tin = int(getattr(_um, "prompt_token_count", 0) or 0) if _um else 0
+        _tout = int(getattr(_um, "candidates_token_count", 0) or 0) if _um else 0
+    except (TypeError, ValueError):
+        _tin, _tout = 0, 0
+    try:
+        from services.gcp_monitoring import track_gemini_call
+        _track_task(asyncio.ensure_future(track_gemini_call(
+            _dur_ms, _tin, _tout, call_type=call_type, lang=lang)))
+    except Exception:
+        pass
+
+
 async def enrich_analysis_base(
     analysis_local: str,
     prompt: str,

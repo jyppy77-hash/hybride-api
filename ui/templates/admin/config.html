@@ -150,16 +150,65 @@
         </div>
         <div class="form-row">
             <div class="form-group">
-                <label>Cout mensuel — warning (EUR)</label>
+                <label>Coût mensuel — warning (EUR) — règle : coût mensuel attendu × 1,15</label>
                 <input type="number" step="1" name="alert_cost_month_warn" value="{{ alert_cfg.alert_cost_month_warn }}">
             </div>
             <div class="form-group">
-                <label>Cout mensuel — critical (EUR)</label>
+                <label>Coût mensuel — critical (EUR) — règle : coût mensuel attendu × 1,40</label>
                 <input type="number" step="1" name="alert_cost_month_crit" value="{{ alert_cfg.alert_cost_month_crit }}">
             </div>
         </div>
         <div class="form-actions">
             <button type="submit" class="btn btn-action">Enregistrer les seuils</button>
+        </div>
+    </form>
+
+    {# 1.6.067 — Modèle de coûts de la console Monitoring (clés admin_config cost_*) #}
+    {% set cc = cost_cfg or {} %}
+    <h2 style="margin-top:2.5rem;">Modèle de coûts (console Monitoring)</h2>
+    {% if cost_success %}
+    <div class="alert-success">Modèle de coûts enregistré.</div>
+    {% endif %}
+    <p style="opacity:.75;font-size:.85rem;">Valeurs par défaut calibrées sur la facture d'octobre 2026. Coût mensuel attendu ≈ (Cloud Run + Cloud SQL + autres + Gemini) × 30.</p>
+    <form method="POST" action="/admin/config/costs" class="admin-form" onsubmit="return confirm('Enregistrer le modèle de coûts ?')">
+        <div class="form-row">
+            <div class="form-group">
+                <label>Cloud Run — forfait journalier (EUR)</label>
+                <input type="number" step="0.01" min="0" name="cost_cloud_run_daily_eur" value="{{ cc.cloud_run_daily_eur }}">
+            </div>
+            <div class="form-group">
+                <label>Cloud SQL — coût journalier (EUR) — à modifier au changement de tier</label>
+                <input type="number" step="0.01" min="0" name="cost_cloud_sql_daily_eur" value="{{ cc.cloud_sql_daily_eur }}">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Autres postes (Artifact Registry, divers) — EUR/jour</label>
+                <input type="number" step="0.01" min="0" name="cost_other_daily_eur" value="{{ cc.other_daily_eur }}">
+            </div>
+            <div class="form-group">
+                <label>Taux de conversion USD → EUR</label>
+                <input type="number" step="0.001" min="0" name="cost_usd_to_eur" value="{{ cc.usd_to_eur }}">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Gemini 2.5 Flash — entrée (USD / million de tokens)</label>
+                <input type="number" step="0.01" min="0" name="cost_gemini_input_per_1m_usd" value="{{ cc.gemini_input_per_1m_usd }}">
+            </div>
+            <div class="form-group">
+                <label>Gemini 2.5 Flash — sortie (USD / million de tokens)</label>
+                <input type="number" step="0.01" min="0" name="cost_gemini_output_per_1m_usd" value="{{ cc.gemini_output_per_1m_usd }}">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Source et date du calibrage</label>
+                <input type="text" maxlength="100" name="cost_calibration_label" value="{{ cc.calibration_label }}">
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="submit" class="btn btn-action">Enregistrer le modèle de coûts</button>
         </div>
     </form>
 {% endblock %}

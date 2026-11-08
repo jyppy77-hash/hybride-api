@@ -402,11 +402,10 @@ msgstr ""
 
 #: ui/templates/em/a-propos.html:143
 msgid ""
-"Notre chatbot intelligent est alimenté par <strong>Gemini</strong> "
-"(Google DeepMind) en mode « Grounded » : il est connecté en temps réel à "
-"nos bases de données de tirages officiels. Résultat : <strong>zéro "
-"hallucination</strong>. Chaque réponse est ancrée sur des données réelles"
-" et vérifiables."
+"Notre chatbot intelligent est alimenté par <strong>Gemini</strong> (Google "
+"DeepMind) en mode « Grounded » : il est connecté en temps réel à nos "
+"bases de données de tirages officiels. Chaque réponse est ancrée sur des "
+"données réelles et vérifiables."
 msgstr ""
 
 #: ui/templates/em/a-propos.html:145 ui/templates/em/moteur.html:109
@@ -802,8 +801,8 @@ msgstr ""
 msgid ""
 "ChatGPT est un modèle de langage génératif qui n'a pas accès aux données "
 "réelles des tirages. Il invente des numéros sans fondement statistique. "
-"LotoIA utilise une IA Grounded connectée aux %(total)s+ tirages officiels"
-" EuroMillions, sans hallucination."
+"LotoIA utilise une IA Grounded connectée aux %(total)s+ tirages officiels "
+"EuroMillions : ses réponses s'appuient sur ces données réelles."
 msgstr ""
 
 #: ui/templates/em/euromillions-ia.html:90
@@ -1002,8 +1001,9 @@ msgstr ""
 #: ui/templates/em/euromillions-ia.html:173
 msgid ""
 "<strong>Analyse fréquentielle</strong> — Calcul des fréquences "
-"d'apparition de chaque numéro (1-50) et de chaque étoile (1-12) sur "
-"l'historique complet des tirages."
+"d'apparition de chaque numéro (1-50) et de chaque étoile (1-12) sur trois "
+"fenêtres : les 5 dernières années, les 2 dernières années et l'ensemble de "
+"l'historique disponible."
 msgstr ""
 
 #: ui/templates/em/euromillions-ia.html:174
@@ -1015,8 +1015,8 @@ msgstr ""
 #: ui/templates/em/euromillions-ia.html:175
 #, python-format
 msgid ""
-"<strong>Pondération temporelle</strong> — Application de coefficients "
-"privilégiant les 2 dernières années (<a "
+"<strong>Pondération temporelle</strong> — Combinaison des trois fenêtres : "
+"les tirages récents, présents dans les trois, pèsent davantage (<a "
 "href=\"%(methodo_url)s\">méthodologie « 5 ans + 2 »</a>)."
 msgstr ""
 
@@ -1040,10 +1040,11 @@ msgstr ""
 
 #: ui/templates/em/euromillions-ia.html:181
 msgid ""
-"Le moteur combine deux horizons temporels : <strong>5 ans</strong> "
-"d'historique pour la stabilité statistique, avec une <strong>pondération "
-"renforcée sur les 2 dernières années</strong> pour capter les tendances "
-"récentes. Cette approche équilibre profondeur et réactivité."
+"Le moteur combine trois fenêtres d'analyse : <strong>les 5 dernières "
+"années</strong>, <strong>les 2 dernières années</strong> et "
+"<strong>l'ensemble de l'historique disponible</strong>. Les tirages "
+"récents, présents dans les trois fenêtres, pèsent davantage : la méthode "
+"équilibre stabilité statistique et réactivité."
 msgstr ""
 
 #: ui/templates/em/euromillions-ia.html:183
@@ -1055,8 +1056,8 @@ msgid ""
 "LotoIA intègre un chatbot alimenté par <strong>Gemini</strong> (Google "
 "DeepMind) en mode « Grounded » : l'IA est connectée en temps réel à la "
 "base de données des tirages. Chaque réponse est ancrée sur des données "
-"vérifiées, sans hallucination. Vous pouvez lui poser des questions sur "
-"les statistiques, les fréquences ou demander une analyse personnalisée."
+"vérifiées. Vous pouvez lui poser des questions sur les statistiques, les "
+"fréquences ou demander une analyse personnalisée."
 msgstr ""
 
 #: ui/templates/em/euromillions-ia.html:189
@@ -1190,9 +1191,10 @@ msgstr ""
 
 #: ui/templates/em/euromillions-ia.html:229
 msgid ""
-"ChatGPT invente des numéros sans accès aux données réelles. LotoIA "
-"utilise une IA « Grounded » connectée aux tirages officiels EuroMillions "
-": zéro hallucination, uniquement des analyses factuelles."
+"ChatGPT invente des numéros sans accès aux données réelles. LotoIA utilise "
+"une IA « Grounded » connectée aux tirages officiels EuroMillions : ses "
+"réponses s'appuient sur les données réelles, pas sur des connaissances "
+"générales."
 msgstr ""
 
 #: ui/templates/em/euromillions-ia.html:232
@@ -2020,19 +2022,20 @@ msgstr ""
 #, python-format
 msgid ""
 "Assistant IA connecté en temps réel aux %(total)s+ tirages officiels "
-"EuroMillions. Zéro hallucination, uniquement des analyses factuelles."
+"EuroMillions. Analyses factuelles, avec contrôles automatiques des "
+"chiffres cités."
 msgstr ""
 
 #: ui/templates/em/hybride.html:22
 msgid ""
-"Assistant IA connecté aux tirages officiels EuroMillions. Zéro "
-"hallucination, uniquement des analyses factuelles."
+"Assistant IA connecté aux tirages officiels EuroMillions. Analyses "
+"factuelles, avec contrôles automatiques des chiffres cités."
 msgstr ""
 
 #: ui/templates/em/hybride.html:33
 msgid ""
-"Assistant IA conversationnel connecté en temps réel aux tirages officiels"
-" EuroMillions. Analyse factuelle, zéro hallucination."
+"Assistant IA conversationnel connecté en temps réel aux tirages officiels "
+"EuroMillions. Analyse factuelle fondée sur les tirages officiels."
 msgstr ""
 
 #: ui/templates/em/hybride.html:41
@@ -2053,7 +2056,7 @@ msgid "Statistiques numéros et étoiles chauds et froids"
 msgstr ""
 
 #: ui/templates/em/hybride.html:45
-msgid "Anti-hallucination par vérification systématique"
+msgid "Contrôles automatiques des chiffres cités"
 msgstr ""
 
 #: ui/templates/em/hybride.html:61
@@ -2067,10 +2070,11 @@ msgstr ""
 #: ui/templates/em/hybride.html:76
 #, python-format
 msgid ""
-"HYBRIDE utilise une architecture Grounded (RAG) : il interroge la base de"
-" données des %(total)s+ tirages officiels EuroMillions en temps réel, "
-"puis Gemini (Google DeepMind) formule une réponse factuelle à partir des "
-"données récupérées. Zéro hallucination."
+"HYBRIDE utilise une architecture Grounded (RAG) : il interroge la base de "
+"données des %(total)s+ tirages officiels EuroMillions en temps réel, puis "
+"Gemini (Google DeepMind) formule une réponse factuelle à partir des "
+"données récupérées. Des contrôles automatiques comparent ensuite la "
+"réponse aux données."
 msgstr ""
 
 #: ui/templates/em/hybride.html:81 ui/templates/em/hybride.html:428
@@ -2195,9 +2199,10 @@ msgstr ""
 msgid ""
 "En termes techniques, HYBRIDE utilise une architecture appelée "
 "<strong>RAG</strong> (Retrieval-Augmented Generation) : le modèle « "
-"récupère » d'abord les données pertinentes dans la base, puis « augmente "
-"» sa réponse avec ces données vérifiées. Le résultat : <strong>zéro "
-"hallucination</strong> sur les questions EuroMillions."
+"récupère » d'abord les données pertinentes dans la base, puis « augmente » "
+"sa réponse avec ces données vérifiées. Le résultat : des réponses ancrées "
+"sur les données réelles des tirages. Aucune IA n'est infaillible : en cas "
+"de doute, vérifiez sur l'historique officiel."
 msgstr ""
 
 #: ui/templates/em/hybride.html:259
@@ -2257,8 +2262,8 @@ msgstr ""
 
 #: ui/templates/em/hybride.html:275
 msgid ""
-"<strong>Vérification anti-hallucination</strong> : la réponse est ancrée "
-"exclusivement sur les données EuroMillions"
+"<strong>Contrôles anti-hallucination</strong> : les chiffres cités sont "
+"comparés aux données EuroMillions"
 msgstr ""
 
 #: ui/templates/em/hybride.html:276
@@ -2470,7 +2475,7 @@ msgid "Anti-hallucination"
 msgstr ""
 
 #: ui/templates/em/hybride.html:367
-msgid "Vérification systématique"
+msgid "Contrôles automatiques"
 msgstr ""
 
 #: ui/templates/em/hybride.html:368
@@ -2934,7 +2939,9 @@ msgid ""
 msgstr ""
 
 #: ui/templates/em/moteur.html:47
-msgid "Analyse fréquentielle sur 5 ans"
+msgid ""
+"Analyse fréquentielle sur trois fenêtres (5 ans, 2 ans, historique "
+"complet)"
 msgstr ""
 
 #: ui/templates/em/moteur.html:48
@@ -3053,7 +3060,8 @@ msgstr ""
 #: ui/templates/em/moteur.html:140
 msgid ""
 "Calcul des fréquences d'apparition de chaque numéro (1-50) et de chaque "
-"étoile (1-12) sur l'historique complet des tirages EuroMillions."
+"étoile (1-12) sur trois fenêtres : les 5 dernières années, les 2 dernières "
+"années et l'ensemble de l'historique disponible."
 msgstr ""
 
 #: ui/templates/em/moteur.html:142
@@ -3072,8 +3080,8 @@ msgstr ""
 
 #: ui/templates/em/moteur.html:146
 msgid ""
-"Application de coefficients de pondération privilégiant les 2 dernières "
-"années (méthodologie « 5 ans + 2 »)."
+"Combinaison des trois fenêtres d'analyse : les tirages récents, présents "
+"dans les trois, pèsent davantage (méthodologie « 5 ans + 2 »)."
 msgstr ""
 
 #: ui/templates/em/moteur.html:148
@@ -3129,15 +3137,21 @@ msgid "Description"
 msgstr ""
 
 #: ui/templates/em/moteur.html:188
-msgid "Privilégie les numéros fréquents (chauds)"
+msgid ""
+"Privilégie l'historique long terme. Idéal si vous préférez des numéros qui "
+"ont fait leurs preuves sur la durée."
 msgstr ""
 
 #: ui/templates/em/moteur.html:192
-msgid "Équilibre entre fréquences et retards"
+msgid ""
+"Répartition harmonieuse entre les 3 périodes. C'est le mode par défaut, "
+"utilisé par le générateur du site ; les deux autres modes peuvent être "
+"demandés au chatbot HYBRIDE."
 msgstr ""
 
 #: ui/templates/em/moteur.html:196
-msgid "Pondération forte sur les tendances récentes"
+msgid ""
+"Pour ceux qui veulent davantage de diversité dans les grilles proposées."
 msgstr ""
 
 #: ui/templates/em/moteur.html:205
@@ -3168,14 +3182,14 @@ msgstr ""
 #, python-format
 msgid ""
 "Actualités du module EuroMillions de LotoIA. Moteur HYBRIDE adapté 5+2, "
-"chatbot IA Gemini, 729 tirages historiques. 100% gratuit, sans "
+"chatbot IA Gemini, plus de 700 tirages historiques. 100% gratuit, sans "
 "inscription."
 msgstr ""
 
 #: ui/templates/em/news.html:20
 msgid ""
 "Actualités du module EuroMillions de LotoIA. Moteur HYBRIDE adapté 5+2, "
-"chatbot IA Gemini, 729 tirages européens."
+"chatbot IA Gemini, plus de 700 tirages européens."
 msgstr ""
 
 #: ui/templates/em/news.html:27
@@ -3496,8 +3510,8 @@ msgstr ""
 
 #: ui/templates/em/news.html:189
 msgid ""
-"<strong>729 tirages officiels analysés</strong> (2019-2026) — importés "
-"depuis les données officielles FDJ."
+"<strong>729 tirages officiels analysés</strong> (à cette date, période "
+"2019-2026) — importés depuis les données officielles FDJ."
 msgstr ""
 
 #: ui/templates/em/news.html:190
@@ -3572,15 +3586,15 @@ msgstr ""
 
 #: ui/templates/em/news.html:215
 msgid ""
-"<strong>729 tirages historiques</strong> en base de données sécurisée, "
-"alimentant l'ensemble des analyses du moteur EuroMillions."
+"<strong>729 tirages historiques</strong> (à cette date) en base de données "
+"sécurisée, alimentant l'ensemble des analyses du moteur EuroMillions."
 msgstr ""
 
 #: ui/templates/em/news.html:216
 msgid ""
 "<strong>Chatbot HYBRIDE dédié</strong> déployé en production : il "
-"interroge directement la base de données EuroMillions, conserve le fil de"
-" la conversation et empêche toute prédiction ou hallucination."
+"interroge directement la base de données EuroMillions, conserve le fil de "
+"la conversation et encadre ses réponses pour éviter toute prédiction."
 msgstr ""
 
 #: ui/templates/em/news.html:217
@@ -3640,8 +3654,8 @@ msgstr ""
 #: ui/templates/em/news.html:238
 msgid ""
 "<strong>Accès direct aux données EuroMillions</strong> : le chatbot "
-"interroge directement notre base de 729 tirages officiels pour vous "
-"donner des réponses précises et vérifiables."
+"interroge directement notre base de 729 tirages officiels (à cette date) "
+"pour vous donner des réponses précises et vérifiables."
 msgstr ""
 
 #: ui/templates/em/news.html:239
@@ -3812,7 +3826,7 @@ msgstr ""
 msgid ""
 "<strong>Base de données dédiée</strong> : table "
 "<code>tirages_euromillions</code> en Cloud SQL, indépendante de la base "
-"Loto, avec 729 tirages historiques."
+"Loto, avec 729 tirages historiques (à cette date)."
 msgstr ""
 
 #: ui/templates/em/news.html:304
@@ -3846,20 +3860,30 @@ msgstr ""
 #: ui/templates/em/news.html:318
 msgid ""
 "Le moteur HYBRIDE EuroMillions est le cœur algorithmique du module "
-"européen. Il explore les statistiques des tirages en combinant deux "
+"européen. Il explore les statistiques des tirages en combinant plusieurs "
 "approches complémentaires, adaptées au format 5+2 :"
 msgstr ""
 
 #: ui/templates/em/news.html:320
 msgid ""
-"<strong>Analyse historique (60%)</strong> : étude de la répartition des "
-"numéros et étoiles sur l'ensemble des tirages passés."
+"<strong>Trois fenêtres d'analyse</strong> : les 5 dernières années, les 2 "
+"dernières années et l'ensemble de l'historique disponible, pour les "
+"numéros comme pour les étoiles."
 msgstr ""
 
 #: ui/templates/em/news.html:321
 msgid ""
-"<strong>Analyse des tendances récentes (40%)</strong> : focus sur les 24 "
-"derniers mois pour capter les dynamiques en cours."
+"<strong>Poids des tirages récents</strong> : présents dans les trois "
+"fenêtres, ils pèsent davantage dans l'analyse."
+msgstr ""
+
+#: ui/templates/em/news.html:477
+#, python-format
+msgid ""
+"Mise à jour du 09/11/2026 : la première version de cet article décrivait, "
+"de façon imprécise, l'ancien modèle à deux périodes. Depuis mars 2026, le "
+"moteur HYBRIDE combine trois fenêtres d'analyse. Détails sur la page <a "
+"href=\"%(methodo_url)s\">Méthodologie</a>."
 msgstr ""
 
 #: ui/templates/em/news.html:322
@@ -4816,7 +4840,11 @@ msgstr ""
 msgid "Compteur du popup partenaires parfaitement aligné, empilement de la fenêtre du chatbot plus naturel, fenêtre de chat qui recouvre désormais la bulle quand elle est ouverte… Nous avons traqué chaque petite imperfection visuelle pour vous offrir un confort d'utilisation quotidien."
 msgstr ""
 
-msgid "Notre engagement reste le même : un outil transparent, sans hallucination, et toujours plus agréable à utiliser. Merci à toute la communauté qui nous fait remonter ces petits détails — chacun de vos retours compte."
+msgid ""
+"Notre engagement reste le même : un outil transparent, fondé sur les "
+"données réelles, et toujours plus agréable à utiliser. Merci à toute la "
+"communauté qui nous fait remonter ces petits détails — chacun de vos "
+"retours compte."
 msgstr ""
 
 msgid "L'équipe LotoIA"

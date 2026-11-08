@@ -591,6 +591,15 @@ async def admin_contrat_pdf(request: Request, contrat_id: int):
 # CONFIG ENTREPRISE
 # ══════════════════════════════════════════════════════════════════════════════
 
+async def _cost_cfg_safe() -> dict:
+    """1.6.067 — tarifs du modèle de coûts pour le formulaire /admin/config (défauts si erreur)."""
+    from services.gcp_monitoring import COST_CALIBRATION_LABEL, COST_CONFIG, get_cost_config
+    try:
+        return await get_cost_config()
+    except Exception:
+        return {**COST_CONFIG, "calibration_label": COST_CALIBRATION_LABEL}
+
+
 @router.get("/admin/config", response_class=HTMLResponse, include_in_schema=False)
 async def admin_config_page(request: Request):
     redir = _require_auth(request)
@@ -608,7 +617,8 @@ async def admin_config_page(request: Request):
         alert_cfg = dict(DEFAULT_THRESHOLDS)
     tpl = env.get_template("admin/config.html")
     return HTMLResponse(tpl.render(active="config", cfg=cfg, success=False,
-                                   alert_cfg=alert_cfg, alert_success=False))
+                                   alert_cfg=alert_cfg, alert_success=False,
+                                   cost_cfg=await _cost_cfg_safe()))
 
 
 @router.post("/admin/config", response_class=HTMLResponse, include_in_schema=False)
@@ -644,6 +654,7 @@ async def admin_config_save(request: Request):
             return HTMLResponse(tpl.render(
                 active="config", cfg=cfg, success=False,
                 alert_cfg=alert_cfg, alert_success=False,
+                cost_cfg=await _cost_cfg_safe(),
                 error=f"{forme_juridique} requiert : {', '.join(missing)}",
             ))
 
@@ -678,7 +689,8 @@ async def admin_config_save(request: Request):
         alert_cfg = dict(DEFAULT_THRESHOLDS)
     tpl = env.get_template("admin/config.html")
     return HTMLResponse(tpl.render(active="config", cfg=cfg, success=True,
-                                   alert_cfg=alert_cfg, alert_success=False))
+                                   alert_cfg=alert_cfg, alert_success=False,
+                                   cost_cfg=await _cost_cfg_safe()))
 
 
 @router.post("/admin/config/alerts", response_class=HTMLResponse, include_in_schema=False)
@@ -729,7 +741,72 @@ async def admin_config_alerts_save(request: Request):
         alert_cfg = dict(DEFAULT_THRESHOLDS)
     tpl = env.get_template("admin/config.html")
     return HTMLResponse(tpl.render(active="config", cfg=cfg, success=False,
-                                   alert_cfg=alert_cfg, alert_success=True))
+                                   alert_cfg=alert_cfg, alert_success=True,
+                                   cost_cfg=await _cost_cfg_safe()))
+
+
+# 1.6.067 — Modèle de coûts de la console /admin/monitoring (clés admin_config cost_*)
+_COST_NUMERIC_KEYS = (
+    "cost_cloud_run_daily_eur", "cost_cloud_sql_daily_eur", "cost_other_daily_eur",
+    "cost_gemini_input_per_1m_usd", "cost_gemini_output_per_1m_usd", "cost_usd_to_eur",
+)
+
+
+@router.post("/admin/config/costs", response_class=HTMLResponse, include_in_schema=False)
+async def admin_config_costs_save(request: Request):
+    redir = _require_auth(request)
+    if redir:
+        return redir
+
+    form = await request.form()
+    to_store = {}
+    for key in _COST_NUMERIC_KEYS:
+        raw = (form.get(key) or "").strip().replace(",", ".")
+        if not raw:
+            continue
+        try:
+            val = float(raw)
+        except ValueError:
+            continue
+        if val < 0 or (key == "cost_usd_to_eur" and val == 0):
+            continue
+        to_store[key] = str(val)
+    label = (form.get("cost_calibration_label") or "").strip()[:100]
+    if label:
+        to_store["cost_calibration_label"] = label
+    try:
+        for key, stored in to_store.items():
+            await db_cloudsql.async_query(
+                "INSERT INTO admin_config (config_key, config_value) VALUES (%s, %s) "
+                "ON DUPLICATE KEY UPDATE config_value = %s",
+                (key, stored, stored),
+            )
+        logger.info("[ADMIN_AUDIT] action=cost_config_save keys_updated=%d", len(to_store))
+    except Exception as e:
+        logger.error("[ADMIN] cost config save: %s", e)
+    # Effet immédiat : purge du cache local des tarifs et du payload monitoring (Redis 60 s)
+    try:
+        from services.gcp_monitoring import CACHE_KEY, invalidate_cost_config
+        from services.cache import cache_set
+        invalidate_cost_config()
+        await cache_set(CACHE_KEY, None, 1)  # valeur vide = cache manqué (get_gcp_metrics : `if cached:`)
+    except Exception as e:
+        logger.debug("[ADMIN] cost cache purge: %s", e)
+
+    cfg = {}
+    try:
+        cfg = await db_cloudsql.async_fetchone("SELECT * FROM fia_config_entreprise WHERE id = 1") or {}
+    except Exception:
+        pass
+    from services.alerting import DEFAULT_THRESHOLDS, get_alert_thresholds
+    try:
+        alert_cfg = await get_alert_thresholds()
+    except Exception:
+        alert_cfg = dict(DEFAULT_THRESHOLDS)
+    tpl = env.get_template("admin/config.html")
+    return HTMLResponse(tpl.render(active="config", cfg=cfg, success=False,
+                                   alert_cfg=alert_cfg, alert_success=False,
+                                   cost_cfg=await _cost_cfg_safe(), cost_success=True))
 
 
 # ══════════════════════════════════════════════════════════════════════════════

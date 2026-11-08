@@ -389,6 +389,7 @@
         <span class="mon-card-icon">💰</span>
         <span class="mon-card-value" id="v-cost-month">—</span>
         <span class="mon-card-label">Total / mois estime</span>
+        <span class="mon-card-label" id="v-cost-note" style="font-size:.7rem;opacity:.75">—</span>
     </div>
 </div>
 
@@ -644,7 +645,16 @@
         animateValue(document.getElementById('v-cost-sql'), fmtEur(c.cloud_sql_today_eur));
         animateValue(document.getElementById('v-cost-gem'), fmtEur(c.gemini_today_eur));
         animateValue(document.getElementById('v-cost-month'), fmtEurMonth(c.estimated_month_eur));
-        setCard('card-cost-month', c.estimated_month_eur >= 120 ? 'mon-cost-crit' : c.estimated_month_eur >= 90 ? 'mon-cost-warn' : 'mon-cost-ok');
+        // 1.6.067 — seuils lus dans le payload (admin_config alert_cost_month_*), plus de 90/120 en dur
+        var thr = c.thresholds || {};
+        var cWarn = +thr.warn || 165, cCrit = +thr.crit || 200;
+        setCard('card-cost-month', c.estimated_month_eur >= cCrit ? 'mon-cost-crit' : c.estimated_month_eur >= cWarn ? 'mon-cost-warn' : 'mon-cost-ok');
+        document.getElementById('v-cost-note').textContent =
+            'dont autres ' + fmtEur(c.other_today_eur) + '/j · calibrage : ' + (c.calibration_label || '—');
+        if (charts.costs && charts.costs.options && charts.costs.options.plugins && charts.costs.options.plugins.title) {
+            charts.costs.options.plugins.title.text = 'Couts (EUR/j) — hors autres : ' + fmtEur(c.other_today_eur) + '/j';
+            charts.costs.update('none');
+        }
 
         // Row 5 — Business (disabled until sponsor data available)
         animateValue(document.getElementById('v-biz-margin'), '—');
@@ -843,9 +853,14 @@
     var TYPE_LABELS = {
         chat_loto: 'Chat Loto',
         chat_em: 'Chat EM',
+        chat_loto_sync: 'Chat Loto (sync)',
+        chat_em_sync: 'Chat EM (sync)',
+        pitch_loto: 'Pitch Loto',
+        pitch_em: 'Pitch EM',
+        sql_loto: 'SQL Loto',
+        sql_em: 'SQL EM',
         enrichment_loto: 'Enrich Loto',
-        enrichment_em: 'Enrich EM',
-        meta_analyse: 'Meta Analyse'
+        enrichment_em: 'Enrich EM'
     };
 
     function fetchBreakdown() {

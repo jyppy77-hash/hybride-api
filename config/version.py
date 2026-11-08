@@ -5,6 +5,19 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# LOT 1.6.067 — Vérité HYBRIDE + coûts de la console (Release 1.6.067, 09/11/2026). Aucun cache-buster ?v=
+# touché (HTML, templates, .po, prompts, Python ; JS admin inline). A : pondération décrite qualitativement
+# partout (3 fenêtres 5 ans / 2 ans / historique disponible, tirages récents plus lourds), aucun pourcentage
+# public ; /moteur (Loto + EM) : modes = texte de la FAQ ; news archivées corrigées + note « Mise à jour du
+# 09/11/2026 », compteurs datés « (à cette date) », meta EM « plus de 700 » ; « zéro hallucination » retiré
+# des pages, des msgid et des 7 prompts actifs (consigne « zéro invention » conservée) ; note JSON-LD
+# /euromillions = toutes les sources EM (services/em_rating.py) ; 33 msgid EM, msgstr hors FR traduits au
+# prompt n° 2 ; LAST_NEWS_DATE 2026-11-09 (pages news modifiées). B : COST_CONFIG recalibré (facture
+# octobre 2026) et surchargé par admin_config cost_* (/admin/config), Cloud Run en forfait, poste « autres »,
+# seuils coût mensuel 165/200 (attendu × 1,15 / × 1,40) lus par la carte, 4 appels Vertex tracés
+# (chat_*_sync, pitch_*, sql_*), latence moyenne Gemini sur chat_* seulement. « depuis novembre 2019 »
+# inchangé (lot dédié avant le 28/11).
+
 # LOT 1.6.066 — Formats de date : JJ/MM/AAAA pour toute date numérique affichée (Release 1.6.066,
 # 05/11/2026). Cache-busters ?v= touchés : admin.js v=23, simulateur.js v=8, app.js v=14,
 # simulateur-em.js v=9 et app-em.js v=11 (défauts config/templates.py ET surcharges FR de
@@ -372,9 +385,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.066"
+APP_VERSION = "1.6.067"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-11-05"
+VERSION_DATE = "2026-11-09"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.
@@ -384,7 +397,8 @@ LAST_DEPLOY_DATE = os.getenv("DEPLOY_DATE", date.today().isoformat())
 # Date du dernier article news publié (FR + EM partagent le même rythme éditorial).
 # ⚠️ À bumper À LA MAIN à chaque nouvel article (sitemap <lastmod> des pages news).
 # Dernier article : « LotoIA renforce sa transparence » (1.6.046, 10/06/2026).
-LAST_NEWS_DATE = "2026-06-10"
+# 1.6.067 : bumpé au 09/11/2026 sans nouvel article (articles corrigés + note de mise à jour).
+LAST_NEWS_DATE = "2026-11-09"
 
 # Alias pour compatibilité avec engine/version.py
 __version__ = APP_VERSION

@@ -88,19 +88,19 @@ _EM_DYNAMIC_KEYS = frozenset({
 _EDITORIAL_LASTMOD = {
     "launcher":                         "2026-03-22",  # git edc4acd V53 launcher multilang
     # — Loto FR —
-    "/moteur":                          "2026-06-01",  # git a64407f Sprint SEO P1a breadcrumb
+    "/moteur":                          "2026-11-09",  # lot vérité HYBRIDE (1.6.067)
     "/methodologie":                    "2026-06-01",  # git a64407f
-    "/loto/intelligence-artificielle":  "2026-06-01",  # git a64407f
-    "/hybride":                         "2026-06-01",  # git a64407f
-    "/a-propos":                        "2026-11-02",  # lot mentions légales non pro (1.6.064)
-    "/faq":                             "2026-06-01",  # git a64407f
+    "/loto/intelligence-artificielle":  "2026-11-09",  # lot vérité HYBRIDE (1.6.067)
+    "/hybride":                         "2026-11-09",  # lot vérité HYBRIDE (1.6.067)
+    "/a-propos":                        "2026-11-09",  # lot vérité HYBRIDE (1.6.067)
+    "/faq":                             "2026-11-09",  # lot vérité HYBRIDE (1.6.067)
     # — EuroMillions (clé partagée 6 langues) —
     "faq":                              "2026-06-01",  # git e8f2279 (1.6.039 numéros d'aide)
-    "a_propos":                         "2026-11-02",  # lot mentions légales non pro (1.6.064)
-    "moteur":                           "2026-06-01",  # git a64407f
+    "a_propos":                         "2026-11-09",  # lot vérité HYBRIDE (1.6.067)
+    "moteur":                           "2026-11-09",  # lot vérité HYBRIDE (1.6.067)
     "methodologie":                     "2026-06-01",  # git a64407f
-    "ia":                               "2026-06-01",  # git a64407f
-    "hybride_page":                     "2026-06-01",  # git e305ff5 (1.6.037 meta descriptions)
+    "ia":                               "2026-11-09",  # lot vérité HYBRIDE (1.6.067)
+    "hybride_page":                     "2026-11-09",  # lot vérité HYBRIDE (1.6.067)
 }
 
 

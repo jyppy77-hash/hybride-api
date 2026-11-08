@@ -10,6 +10,7 @@ identique à enrich_analysis_base / call_gemini_and_respond / handle_pitch_commo
 
 import asyncio
 import logging
+import time
 from datetime import date, timedelta
 
 import aiomysql
@@ -24,6 +25,7 @@ from services.base_chat_sql import (
 )
 from services.gemini_shared import (
     _get_client, _is_rate_limit_error,
+    _track_error, _track_usage,  # 1.6.067 — traçage gemini_tracking (sql_em)
     _VERTEX_MODEL_NAME, _V131_E_SAFETY_SETTINGS_RELAX,
 )
 
@@ -170,6 +172,7 @@ async def _generate_sql_em(question: str, client, api_key: str, history: list = 
         thinking_config=types.ThinkingConfig(thinking_budget=0),
     )
 
+    _t0 = time.monotonic()  # 1.6.067 — gemini_tracking
     try:
         vertex_client = _get_client()
         response = await asyncio.wait_for(
@@ -186,6 +189,7 @@ async def _generate_sql_em(question: str, client, api_key: str, history: list = 
     except asyncio.TimeoutError:
         logger.warning("[EM TEXT-TO-SQL] Timeout Gemini Vertex (8s) — fallback")
         gemini_breaker_sql._record_failure()
+        _track_error(_t0, "sql_em", lang)
         return None
     except genai_errors.ClientError as e:
         if _is_rate_limit_error(e):
@@ -193,18 +197,24 @@ async def _generate_sql_em(question: str, client, api_key: str, history: list = 
         else:
             logger.warning("[EM TEXT-TO-SQL] Vertex ClientError %s: %s", getattr(e, 'code', '?'), e)
         gemini_breaker_sql._record_failure()
+        _track_error(_t0, "sql_em", lang)
         return None
     except genai_errors.ServerError as e:
         logger.warning("[EM TEXT-TO-SQL] Vertex ServerError %s: %s", getattr(e, 'code', '?'), e)
         gemini_breaker_sql._record_failure()
+        _track_error(_t0, "sql_em", lang)
         return None
     except genai_errors.APIError as e:
         logger.error("[EM TEXT-TO-SQL] Vertex APIError SDK: %s: %s", type(e).__name__, e)
         gemini_breaker_sql._record_failure()
+        _track_error(_t0, "sql_em", lang)
         return None
     except Exception as e:
         logger.exception("[EM TEXT-TO-SQL] Unexpected SQL generation error: %s", e)
+        _track_error(_t0, "sql_em", lang)
         return None
+
+    _track_usage(_t0, response, "sql_em", lang)  # 1.6.067
 
     # Parse réponse SDK B
     try:

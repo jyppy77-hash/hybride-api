@@ -141,7 +141,7 @@ class TestCheckAlertsBreach:
             alerts = await check_alerts(
                 _healthy_metrics(),
                 _healthy_gemini(),
-                {"estimated_month_eur": 150},  # > 120 crit
+                {"estimated_month_eur": 250},  # > 200 crit (1.6.067, était 150 > 120)
             )
             assert len(alerts) == 1
             assert alerts[0].metric_name == "cost_month"

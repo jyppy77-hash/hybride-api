@@ -102,11 +102,12 @@ class TestCostEstimation:
         expected_eur = round(expected_usd * COST_CONFIG["usd_to_eur"], 4)
         assert costs["gemini_today_eur"] == expected_eur
 
-    def test_cloud_run_cost_scales_with_instances(self):
+    def test_cloud_run_cost_is_flat(self):
+        """1.6.067 — Cloud Run = forfait paramétré, indépendant du nombre d'instances."""
         costs_1 = _estimate_costs({"active_instances": 1}, {"tokens_in": 0, "tokens_out": 0})
         costs_3 = _estimate_costs({"active_instances": 3}, {"tokens_in": 0, "tokens_out": 0})
-        assert costs_1["cloud_run_today_eur"] > 0
-        assert abs(costs_3["cloud_run_today_eur"] - costs_1["cloud_run_today_eur"] * 3) < 0.02
+        assert costs_1["cloud_run_today_eur"] == COST_CONFIG["cloud_run_daily_eur"]
+        assert costs_3["cloud_run_today_eur"] == costs_1["cloud_run_today_eur"]
 
     def test_monthly_estimate(self):
         costs = _estimate_costs({"active_instances": 1}, {"tokens_in": 0, "tokens_out": 0})
@@ -155,7 +156,9 @@ class TestGeminiCounters:
         with patch("services.gcp_monitoring.db_cloudsql") as mock_db:
             mock_db.async_fetchone = AsyncMock(return_value=None)
             counters = await _get_gemini_counters()
-            assert counters == {"calls": 0, "errors": 0, "tokens_in": 0, "tokens_out": 0, "total_ms": 0}
+            # 1.6.067 : + chat_calls / chat_ms (latence moyenne sur chat_* seulement)
+            assert counters == {"calls": 0, "errors": 0, "tokens_in": 0, "tokens_out": 0, "total_ms": 0,
+                                "chat_calls": 0, "chat_ms": 0}
 
     @pytest.mark.asyncio
     async def test_cached_60s(self):
@@ -266,6 +269,8 @@ class TestGetGcpMetrics:
             "tokens_in": 45200,
             "tokens_out": 12800,
             "total_ms": 187200,
+            "chat_calls": 156,  # 1.6.067 : latence moyenne calculée sur chat_* seulement
+            "chat_ms": 187200,
         }
         with (
             patch("services.gcp_monitoring.cache_get", AsyncMock(return_value=None)),
@@ -342,6 +347,8 @@ class TestGetGcpMetrics:
             expected_cost_keys = {
                 "cloud_run_today_eur", "cloud_sql_today_eur",
                 "gemini_today_eur", "total_today_eur", "estimated_month_eur",
+                # 1.6.067 : poste « autres », libellé de calibrage, seuils de la carte coût mensuel
+                "other_today_eur", "calibration_label", "thresholds",
             }
             assert set(result["costs"].keys()) == expected_cost_keys
 

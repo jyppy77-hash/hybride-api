@@ -27,6 +27,8 @@ from services.gemini import stream_gemini_chat, _GEMINI_CHAT_TEMPERATURE, _as_in
 from services.gemini_shared import (
     _get_client,
     _is_rate_limit_error,
+    _track_error,  # 1.6.067 — traçage gemini_tracking des appels non tracés
+    _track_usage,
     _VERTEX_MODEL_NAME,
     _V131_E_SAFETY_SETTINGS_RELAX,
 )
@@ -1283,6 +1285,8 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
         thinking_config=types.ThinkingConfig(thinking_budget=0),
     )
 
+    _ct = f"chat_{module}_sync"  # 1.6.067 — chemin non streamé, tracé séparément du flux SSE
+    _t0 = time.monotonic()
     try:
         client = _get_client()
         response = await asyncio.wait_for(
@@ -1298,6 +1302,7 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
     except asyncio.TimeoutError:
         logger.warning(f"{log_prefix} Timeout Gemini Vertex ({timeout}s) — fallback")
         _breaker._record_failure()
+        _track_error(_t0, _ct, lang)
         return _fallback_dict("timeout")
     except genai_errors.ClientError as e:
         if _is_rate_limit_error(e):
@@ -1305,18 +1310,24 @@ async def call_gemini_and_respond(ctx, fallback, log_prefix, module, lang,
         else:
             logger.warning(f"{log_prefix} Vertex ClientError {getattr(e, 'code', '?')}: {e}")
         _breaker._record_failure()
+        _track_error(_t0, _ct, lang)
         return _fallback_dict("error")
     except genai_errors.ServerError as e:
         logger.warning(f"{log_prefix} Vertex ServerError {getattr(e, 'code', '?')}: {e}")
         _breaker._record_failure()
+        _track_error(_t0, _ct, lang)
         return _fallback_dict("error")
     except genai_errors.APIError as e:
         logger.error(f"{log_prefix} Vertex APIError SDK: {type(e).__name__}: {e}")
         _breaker._record_failure()
+        _track_error(_t0, _ct, lang)
         return _fallback_dict("error")
     except Exception as e:
         logger.error(f"{log_prefix} Exception inattendue Vertex: {type(e).__name__}: {e}")
+        _track_error(_t0, _ct, lang)
         return _fallback_dict("error")
+
+    _track_usage(_t0, response, _ct, lang)  # 1.6.067 — tokens comptés dès la réponse Vertex
 
     # Parse réponse SDK B
     try:
@@ -1798,7 +1809,8 @@ async def handle_pitch_common(grilles_data, http_client, lang,
                               # dépasse 10s avec gemini-2.5-flash → timeout Vertex → 503).
                               # Cf. docs/DIAGNOSTIC_V131_A_2_503_PITCH.md
                               timeout_gemini=10,  # V129.1: 15→10
-                              max_retries: int = 0):
+                              max_retries: int = 0,
+                              call_type: str = "pitch"):  # 1.6.067 — pitch_loto / pitch_em (gemini_tracking)
     """
     Common pitch pipeline after validation.
     context_coro: awaitable that returns the stats context string.
@@ -1949,9 +1961,12 @@ async def handle_pitch_common(grilles_data, http_client, lang,
 
     # Si pas de response (exception ou cap retry) → fallback mapping
     if response_vertex is None:
+        _track_error(_retry_start, call_type, lang)  # 1.6.067 — 1 ligne par demande, 0 token
         if last_error == "timeout":
             return {"success": False, "data": None, "error": "Timeout Gemini", "status_code": 503}
         return {"success": False, "data": None, "error": "Erreur interne du serveur", "status_code": 500}
+
+    _track_usage(_retry_start, response_vertex, call_type, lang)  # 1.6.067 — durée relances comprises
 
     # Parse réponse SDK B
     try:
