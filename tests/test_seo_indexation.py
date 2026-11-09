@@ -1083,9 +1083,12 @@ class TestAppVersion:
         LOT 1.6.067 (09/11, Release 1.6.067) — vérité HYBRIDE : textes /moteur, /hybride, IA, FAQ, news,
         lastmod éditoriaux + LAST_NEWS_DATE au 09/11, dateModified des NewsArticle corrigés ;
         /accueil inchangé (golden T9) ; bump requis : ETag HTML lié à APP_VERSION.
+        LOT 1.6.068 (10/11, Release 1.6.068) — libellés IA / génération du corps de /accueil + og/twitter
+        description variante B ; title / meta description / JSON-LD inchangés (golden T9) ;
+        bump requis : ETag HTML lié à APP_VERSION.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.067"
+        assert APP_VERSION == "1.6.068"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

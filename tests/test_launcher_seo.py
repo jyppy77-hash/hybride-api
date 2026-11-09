@@ -227,5 +227,6 @@ class TestVersion:
         # LOT 1.6.059 bump : 1.6.058 → 1.6.059 (24/10/2026 — lot redirection : query conservée sur / et 11 redirections legacy, repli FR sans Accept-Language, x-default launcher → /fr, 302 private no-cache ; prompts chatbot sans formule ni poids ; aucun cache-buster touché)
         # LOT 1.6.066 bump : 1.6.065 → 1.6.066 (05/11/2026 — formats de date JJ/MM/AAAA admin + public, H1 prochain tirage, en.po 16 msgstr ; cache-busters admin.js v=23, simulateur.js v=8, app.js v=14, simulateur-em.js v=9, app-em.js v=11)
         # LOT 1.6.067 bump : 1.6.066 → 1.6.067 (09/11/2026 — vérité HYBRIDE : pondération qualitative, news corrigées, « zéro hallucination » retiré pages + .po + prompts, note JSON-LD EM toutes sources ; coûts console recalibrés + 4 appels Vertex tracés ; aucun cache-buster touché)
+        # LOT 1.6.068 bump : 1.6.067 → 1.6.068 (10/11/2026 — libellés IA / génération sur /accueil : puce moteur, encart EuroMillions, coquille « équilibre, équilibre », og/twitter:description variante B ; aucun cache-buster touché)
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.067"
+        assert APP_VERSION == "1.6.068"

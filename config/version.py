@@ -5,6 +5,14 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# LOT 1.6.068 — Libellés IA / génération sur /accueil (Release 1.6.068, 10/11/2026). Aucun cache-buster ?v=
+# touché (1 seul fichier de contenu : ui/accueil.html, page FR statique sans i18n). Puce « Génération de
+# grilles par IA » → « Exploration de grilles statistiquement équilibrées » ; encart EuroMillions « générateur
+# IA » → « exploration de grilles » ; coquille de la carte Analyse « équilibre, équilibre » → « équilibre »
+# (« conformité » NON restaurée, retrait délibéré du 13/02 6cb7f5c) ; og:description + twitter:description
+# variante B (« modélisation IA » retiré). <title>, meta description et JSON-LD inchangés (golden T9). Bump
+# requis : ETag HTML lié à APP_VERSION. Titre du générateur EM « … IA » hors lot.
+
 # LOT 1.6.067 — Vérité HYBRIDE + coûts de la console (Release 1.6.067, 09/11/2026). Aucun cache-buster ?v=
 # touché (HTML, templates, .po, prompts, Python ; JS admin inline). A : pondération décrite qualitativement
 # partout (3 fenêtres 5 ans / 2 ans / historique disponible, tirages récents plus lourds), aucun pourcentage
@@ -385,9 +393,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.067"
+APP_VERSION = "1.6.068"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-11-09"
+VERSION_DATE = "2026-11-10"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.
