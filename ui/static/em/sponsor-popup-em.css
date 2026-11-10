@@ -58,17 +58,7 @@ body.theme-day .sponsor-popup-overlay {
     box-shadow:
         0 25px 80px rgba(0, 0, 0, 0.5),
         0 0 40px rgba(0, 51, 153, 0.15),
-        0 0 0 1px rgba(255, 215, 0, 0.1) inset,
-        55px 72px 2px 0 rgba(255,215,0,0.4),
-        195px 145px 2px 0 rgba(255,215,0,0.3),
-        340px 88px 2px 0 rgba(255,215,0,0.4),
-        485px 132px 2px 0 rgba(255,215,0,0.3),
-        260px 42px 2px 0 rgba(255,215,0,0.4),
-        120px 258px 2px 0 rgba(255,215,0,0.3),
-        415px 195px 2px 0 rgba(255,215,0,0.4),
-        540px 282px 2px 0 rgba(255,215,0,0.3),
-        65px 155px 2px 0 rgba(255,215,0,0.4),
-        330px 305px 2px 0 rgba(255,215,0,0.3);
+        0 0 0 1px rgba(255, 215, 0, 0.1) inset;
     position: relative;
     color: #ffffff;
     overflow: hidden;

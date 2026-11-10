@@ -1086,9 +1086,12 @@ class TestAppVersion:
         LOT 1.6.068 (10/11, Release 1.6.068) — libellés IA / génération du corps de /accueil + og/twitter
         description variante B ; title / meta description / JSON-LD inchangés (golden T9) ;
         bump requis : ETag HTML lié à APP_VERSION.
+        LOT 1.6.069 (11/11, Release 1.6.069) — site propre : CSS des modales (EM 3 ombres, titre de console
+        Loto), règles inline de contraste nuit, version-inject /historique, pitch cap 14s → 503 ; aucun
+        changement SEO (title / meta / JSON-LD inchangés) ; bump requis : ETag HTML lié à APP_VERSION.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.068"
+        assert APP_VERSION == "1.6.069"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

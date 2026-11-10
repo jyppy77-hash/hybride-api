@@ -5,6 +5,15 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# LOT 1.6.069 — Site propre avant la salve presse (Release 1.6.069, 11/11/2026). A1 : modale EM (générateur +
+# simulateur), box-shadow de .sponsor-popup-modal ramené à 3 couches (10 copies dorées décalées supprimées),
+# sponsor-popup-em.css ?v=14→15. A2 : FAQ /loto/statistiques lisible en nuit (summary → --theme-text-primary)
+# + « depuis novembre 2019 » (repli JSON-LD 2019-11-06 inchangé, 1.6.070). B4 min. : version-inject.js sur
+# /historique. B6 : pastille de profondeur du générateur EM dégagée de la mascotte (padding-right ≥ 769 px).
+# B8a : titre des résultats lisible en nuit (Loto + EM, inline). B9 : titre de la console de la modale Loto en
+# blanc (sponsor-popup.css ?v=14→15). P : /api/pitch-grilles, sortie « cap total 14s » → 503 + échec compté
+# au disjoncteur (aligné sur la sortie sœur ; était 500). Bump requis : ETag HTML lié à APP_VERSION.
+
 # LOT 1.6.068 — Libellés IA / génération sur /accueil (Release 1.6.068, 10/11/2026). Aucun cache-buster ?v=
 # touché (1 seul fichier de contenu : ui/accueil.html, page FR statique sans i18n). Puce « Génération de
 # grilles par IA » → « Exploration de grilles statistiquement équilibrées » ; encart EuroMillions « générateur
@@ -393,9 +402,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.068"
+APP_VERSION = "1.6.069"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-11-10"
+VERSION_DATE = "2026-11-11"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

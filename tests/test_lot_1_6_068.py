@@ -147,6 +147,7 @@ def test_t4_meta_description_unchanged(page):
 # ── T5 ───────────────────────────────────────────────────────────────────────
 
 def test_t5_app_version():
+    # 1.6.069 : épinglage exact remplacé par un plancher (le lot reste couvert après les bumps suivants).
     from config.version import APP_VERSION, VERSION_DATE
-    assert APP_VERSION == "1.6.068"
-    assert VERSION_DATE == "2026-11-10"
+    assert tuple(int(p) for p in APP_VERSION.split(".")) >= (1, 6, 68)
+    assert VERSION_DATE >= "2026-11-10"

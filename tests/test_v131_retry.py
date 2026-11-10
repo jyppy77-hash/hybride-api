@@ -159,3 +159,48 @@ class TestV131PitchRetry:
         # Avec step 5s et cap 14s : break déclenché avant exhaustion complète
         # Nombre exact de tentatives dépend de l'implémentation, mais < max_retries+1=4
         assert vc.client.aio.models.generate_content.await_count <= 3
+
+    @pytest.mark.asyncio
+    async def test_retry_cap_14s_after_clamped_sleep_503_and_cb_failure(
+        self, mock_vertex_client, make_client_error,
+    ):
+        """1.6.069 — sortie « cap total » en tête de boucle (500 à 14,02 s en prod).
+
+        Horloge pilotée par les événements (pas par le nombre d'appels à monotonic) :
+        chaque 429 Vertex coûte 5 s, chaque sleep avance du backoff demandé.
+        t=0 → 429 (t=5) → sleep 2.5 (t=7.5) → 429 (t=12.5) → sleep rogné à
+        remaining=1.5 (t=14.0) → attempt 2 : cap atteint en tête de boucle.
+        Attendu : 503 « Timeout Gemini » (et non 500) + 1 échec compté au
+        disjoncteur, comme la sortie sœur « no budget left ».
+        """
+        from services.circuit_breaker import GeminiCircuitBreaker
+        breaker = GeminiCircuitBreaker(failure_threshold=10, open_timeout=60.0)
+        clock = [0.0]
+        err = make_client_error(429)
+
+        def _slow_429(*args, **kwargs):
+            clock[0] += 5.0
+            raise err
+
+        async def _advance(seconds):
+            clock[0] += seconds
+
+        with mock_vertex_client() as vc, \
+             patch("services.chat_pipeline_gemini.asyncio.sleep",
+                   new=AsyncMock(side_effect=_advance)) as mock_sleep, \
+             patch("services.chat_pipeline_gemini.random.uniform", return_value=0.5), \
+             patch("services.chat_pipeline_gemini.time.monotonic", side_effect=lambda: clock[0]):
+            vc.client.aio.models.generate_content = AsyncMock(side_effect=_slow_429)
+
+            result = await _handle_pitch_common_with_retry(max_retries=2, breaker=breaker)
+
+        assert result["success"] is False
+        assert result["status_code"] == 503
+        assert "Timeout Gemini" in result["error"]
+        # 2 tentatives seulement : la 3e est coupée par le cap en tête de boucle
+        assert vc.client.aio.models.generate_content.await_count == 2
+        # 2e sleep rogné au budget restant (4.5 demandé → 1.5)
+        assert mock_sleep.call_args_list == [call(2.5), call(1.5)]
+        assert clock[0] == 14.0
+        # Disjoncteur : 1 échec compté (0 avant 1.6.069)
+        assert breaker._failure_count == 1

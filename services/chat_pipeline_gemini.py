@@ -1893,6 +1893,8 @@ async def handle_pitch_common(grilles_data, http_client, lang,
         # V129.1 cap total 14s
         if attempt > 0 and time.monotonic() - _retry_start >= _V129_PITCH_RETRY_CAP_TOTAL:
             logger.info(f"{log_prefix} [V129_1_RETRY] cap total=14s exhausted before attempt={attempt}")
+            _breaker._record_failure()  # 1.6.069 — aligné sur la sortie sœur « no budget left »
+            last_error = "timeout"      # 1.6.069 — 503 « Timeout Gemini » au lieu de 500
             break
 
         try:
