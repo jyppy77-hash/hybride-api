@@ -229,5 +229,6 @@ class TestVersion:
         # LOT 1.6.067 bump : 1.6.066 → 1.6.067 (09/11/2026 — vérité HYBRIDE : pondération qualitative, news corrigées, « zéro hallucination » retiré pages + .po + prompts, note JSON-LD EM toutes sources ; coûts console recalibrés + 4 appels Vertex tracés ; aucun cache-buster touché)
         # LOT 1.6.068 bump : 1.6.067 → 1.6.068 (10/11/2026 — libellés IA / génération sur /accueil : puce moteur, encart EuroMillions, coquille « équilibre, équilibre », og/twitter:description variante B ; aucun cache-buster touché)
         # LOT 1.6.069 bump : 1.6.068 → 1.6.069 (11/11/2026 — site propre : modale EM 3 ombres, FAQ statistiques lisible en nuit, version-inject /historique, pastille EM, titres résultats nuit, titre console Loto, pitch cap 14s → 503 ; cache-busters sponsor-popup-em.css v=15, sponsor-popup.css v=15)
+        # LOT 1.6.070 bump : 1.6.069 → 1.6.070 (12/11/2026 — BOT_IPS : URL Google ipranges déplacées vers /static/crawling/ipranges/ (common-crawlers, special-crawlers), sources user_triggered retirées, échec liste blanche en ERROR ; aucun cache-buster touché)
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.069"
+        assert APP_VERSION == "1.6.070"

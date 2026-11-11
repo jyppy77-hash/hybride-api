@@ -5,6 +5,14 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# LOT 1.6.070 — BOT_IPS (Release 1.6.070, 12/11/2026). Fichiers ipranges de Google déplacés (301 depuis le
+# 08/07/2026, client httpx sans suivi des redirections → partie Google dynamique de la liste blanche vide, 4
+# WARNING par worker à chaque rafraîchissement) : googlebot → /static/crawling/ipranges/common-crawlers.json,
+# google_special → /static/crawling/ipranges/special-crawlers.json ; google_user_triggered(2) retirées des
+# sources et d'expected_sources (7 sources, non réactivées). Échec d'une source de la liste blanche journalisé
+# en ERROR (liste noire inchangée, WARNING). Aucun cache-buster ?v= ni gabarit touché. Bump requis : ETag HTML
+# lié à APP_VERSION.
+
 # LOT 1.6.069 — Site propre avant la salve presse (Release 1.6.069, 11/11/2026). A1 : modale EM (générateur +
 # simulateur), box-shadow de .sponsor-popup-modal ramené à 3 couches (10 copies dorées décalées supprimées),
 # sponsor-popup-em.css ?v=14→15. A2 : FAQ /loto/statistiques lisible en nuit (summary → --theme-text-primary)
@@ -402,9 +410,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.069"
+APP_VERSION = "1.6.070"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-11-11"
+VERSION_DATE = "2026-11-12"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

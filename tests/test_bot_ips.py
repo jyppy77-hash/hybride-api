@@ -411,7 +411,7 @@ class TestRefresh:
         async def side_effect(url, **kwargs):
             nonlocal call_count
             call_count += 1
-            if "googlebot" in url:
+            if "common-crawlers" in url:  # 1.6.070 : source « googlebot » = common-crawlers.json
                 raise Exception("timeout")
             resp = MagicMock()
             resp.status_code = 200

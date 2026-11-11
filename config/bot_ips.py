@@ -145,12 +145,14 @@ SUSPICIOUS_PATHS = frozenset([
 ])
 
 # ── Dynamic source URLs ──────────────────────────────────────────────────────
+# LOT 1.6.070 — Google a déplacé ses fichiers (301 depuis le 08/07/2026, client sans suivi des redirections) :
+# /static/search/apis/ipranges/ → /static/crawling/ipranges/, et googlebot.json → common-crawlers.json.
+# Clé « googlebot » conservée (historique bot_feed_refresh_log, widget). user-triggered-fetchers(-google)
+# retirées : non réactivées (décision 08/10/2026), la liste blanche court-circuite tout le middleware.
 
 WHITELIST_JSON_SOURCES = {
-    "googlebot": "https://developers.google.com/static/search/apis/ipranges/googlebot.json",
-    "google_special": "https://developers.google.com/static/search/apis/ipranges/special-crawlers.json",
-    "google_user_triggered": "https://developers.google.com/static/search/apis/ipranges/user-triggered-fetchers.json",
-    "google_user_triggered2": "https://developers.google.com/static/search/apis/ipranges/user-triggered-fetchers-google.json",
+    "googlebot": "https://developers.google.com/static/crawling/ipranges/common-crawlers.json",
+    "google_special": "https://developers.google.com/static/crawling/ipranges/special-crawlers.json",
     "bingbot": "https://www.bing.com/toolbox/bingbot.json",
     "applebot": "https://search.developer.apple.com/applebot.json",
 }
@@ -315,7 +317,7 @@ async def refresh_from_remote(httpx_client) -> dict:
             await log_refresh_result(name, "ok", len(cidrs))
         except Exception as e:
             errors.append(f"whitelist:{name}: {e}")
-            logger.warning("[BOT_IPS] Whitelist %s fetch failed: %s", name, e)
+            logger.error("[BOT_IPS] Whitelist %s fetch failed: %s", name, e)
             await log_refresh_result(name, "error", 0, str(e))
 
     # ── Blacklist JSON sources ──

@@ -69,10 +69,9 @@ async def get_feeds_status() -> dict:
       - orange: 12h <= age < 24h OR last status = error
       - red:    age >= 24h OR no refresh ever
     """
-    # 8 sources attendues — ordre stable pour l'UI admin
+    # 7 sources attendues — ordre stable pour l'UI admin (1.6.070 : fetchers déclenchés par l'utilisateur retirés)
     expected_sources = [
-        "googlebot", "google_special", "google_user_triggered",
-        "google_user_triggered2", "bingbot", "applebot",
+        "googlebot", "google_special", "bingbot", "applebot",
         "gptbot", "tor_exit", "ipsum_l3",
     ]
 

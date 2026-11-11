@@ -70,11 +70,11 @@ class TestGetFeedsStatus:
 
     @pytest.mark.asyncio
     async def test_empty_db_all_red(self):
-        """No refresh log rows → all 9 sources return red health."""
+        """No refresh log rows → all 7 sources return red health (1.6.070 : user_triggered retirées)."""
         with patch("db_cloudsql.async_fetchall", new=AsyncMock(return_value=[])):
             result = await get_feeds_status()
-            assert result["summary"]["total"] == 9
-            assert result["summary"]["red"] == 9
+            assert result["summary"]["total"] == 7
+            assert result["summary"]["red"] == 7
             assert result["summary"]["green"] == 0
             for f in result["feeds"]:
                 assert f["health"] == "red"
