@@ -6135,3 +6135,75 @@ msgstr "Erinnerung — verantwortungsvolles Spielen"
 #. News transparence + lexique (Release 1.6.046, 10/06/2026)
 msgid "LotoIA est un outil d'analyse statistique à vocation pédagogique. Il ne constitue en aucun cas une prédiction, une probabilité de gain ou un avantage sur le tirage. Le hasard d'un tirage de loterie est irréductible."
 msgstr "LotoIA ist ein statistisches Analysewerkzeug mit pädagogischem Zweck. Es stellt in keinem Fall eine Vorhersage, eine Gewinnwahrscheinlichkeit oder einen Vorteil gegenüber der Ziehung dar. Der Zufall einer Lotterieziehung ist nicht reduzierbar."
+
+#. News merci / audience (Release 1.6.071, 14/11/2026)
+msgid "14 novembre 2026"
+msgstr "14. November 2026"
+
+#. News merci / audience (Release 1.6.071, 14/11/2026)
+msgid "Merci"
+msgstr "Danke"
+
+#. News merci / audience (Release 1.6.071, 14/11/2026)
+msgid "Merci : LotoIA grandit grâce à vous"
+msgstr "Danke: LotoIA wächst dank Ihnen"
+
+#. News merci / audience (Release 1.6.071, 14/11/2026)
+msgid "Vous êtes de plus en plus nombreux à utiliser LotoIA. Avant tout, nous voulions simplement vous dire merci."
+msgstr "Immer mehr von Ihnen nutzen LotoIA. Zunächst einmal wollten wir Ihnen einfach Danke sagen."
+
+#. News merci / audience (Release 1.6.071, 14/11/2026)
+msgid "Quelques chiffres"
+msgstr "Ein paar Zahlen"
+
+#. News merci / audience (Release 1.6.071, 14/11/2026)
+msgid "Quelques repères, chacun avec sa source :"
+msgstr "Einige Anhaltspunkte, jeweils mit Quelle:"
+
+#. News merci / audience (Release 1.6.071, 14/11/2026)
+msgid "<strong>7&nbsp;821 clics</strong> depuis Google entre le 11 octobre et le 7 novembre 2026 (source : Google Search Console) ;"
+msgstr "<strong>7.821 Klicks</strong> über Google zwischen dem 11. Oktober und dem 7. November 2026 (Quelle: Google Search Console);"
+
+#. News merci / audience (Release 1.6.071, 14/11/2026)
+msgid "<strong>9&nbsp;015 visiteurs</strong> en octobre 2026 (source : Umami) ;"
+msgstr "<strong>9.015 Besucher</strong> im Oktober 2026 (Quelle: Umami);"
+
+#. News merci / audience (Release 1.6.071, 14/11/2026)
+msgid "une note moyenne de <strong>4,5/5</strong> donnée par les visiteurs sur LotoIA (243 avis au 12 novembre 2026)."
+msgstr "eine Durchschnittsbewertung von <strong>4,5/5</strong>, vergeben von den Besuchern auf LotoIA (243 Bewertungen, Stand 12. November 2026)."
+
+#. News merci / audience (Release 1.6.071, 14/11/2026)
+msgid "Derrière ces chiffres, il y a vous : vos visites et vos avis."
+msgstr "Hinter diesen Zahlen stehen Sie: Ihre Besuche und Ihre Bewertungen."
+
+#. News merci / audience (Release 1.6.071, 14/11/2026)
+msgid "Ce que nous avons amélioré pour vous"
+msgstr "Was wir für Sie verbessert haben"
+
+#. News merci / audience (Release 1.6.071, 14/11/2026)
+msgid "Nous avons amélioré le confort de lecture : la FAQ de la page Statistiques du Loto est désormais lisible en thème sombre, et l'affichage du générateur EuroMillions a été corrigé (plus d'effet de cascade pendant le calcul, titres et date du prochain tirage lisibles en thème sombre)."
+msgstr "Wir haben den Lesekomfort verbessert: Die FAQ der Loto-Statistikseite ist jetzt im dunklen Design lesbar, und die Anzeige des EuroMillions-Generators wurde korrigiert (kein Kaskadeneffekt mehr während der Berechnung, Titel und Datum der nächsten Ziehung im dunklen Design lesbar)."
+
+#. News merci / audience (Release 1.6.071, 14/11/2026)
+msgid "Ce que LotoIA est, et n'est pas"
+msgstr "Was LotoIA ist – und was nicht"
+
+#. News merci / audience (Release 1.6.071, 14/11/2026)
+msgid "LotoIA est un outil d'<strong>analyse statistique</strong>, pas un outil de prédiction. Le résultat d'un tirage de loterie reste totalement aléatoire : aucune méthode ne permet de le prévoir ni d'augmenter les chances de gain."
+msgstr "LotoIA ist ein Werkzeug zur <strong>statistischen Analyse</strong>, kein Vorhersagewerkzeug. Das Ergebnis einer Lotterieziehung bleibt vollkommen zufällig: Keine Methode kann es vorhersehen oder die Gewinnchancen erhöhen."
+
+#. News merci / audience (Release 1.6.071, 14/11/2026)
+msgid "La suite"
+msgstr "Wie es weitergeht"
+
+#. News merci / audience (Release 1.6.071, 14/11/2026)
+msgid "Nous continuons d'améliorer le site régulièrement. Le cap, lui, ne change pas : un outil gratuit, sans inscription, d'analyse, pas de prédiction."
+msgstr "Wir verbessern die Website weiterhin regelmäßig. Der Kurs bleibt jedoch derselbe: ein kostenloses Werkzeug, ohne Registrierung, zur Analyse, nicht zur Vorhersage."
+
+#. News merci / audience (Release 1.6.071, 14/11/2026)
+msgid "Une idée, une remarque, un souci ?"
+msgstr "Eine Idee, eine Anmerkung, ein Problem?"
+
+#. News merci / audience (Release 1.6.071, 14/11/2026)
+msgid "chacun de vos retours compte."
+msgstr "jede Rückmeldung zählt."

@@ -1091,9 +1091,12 @@ class TestAppVersion:
         changement SEO (title / meta / JSON-LD inchangés) ; bump requis : ETag HTML lié à APP_VERSION.
         LOT 1.6.070 (12/11, Release 1.6.070) — BOT_IPS : URL Google ipranges déplacées, sources user_triggered
         retirées, échec liste blanche en ERROR ; aucun changement SEO ; bump requis : ETag HTML lié à APP_VERSION.
+        LOT 1.6.071 (14/11, Release 1.6.071) — papier news « Merci » : nouvel article + NewsArticle en tête de
+        /news et des 6 pages news EM, LAST_NEWS_DATE 2026-11-14 ; title / meta / og / hreflang inchangés ;
+        bump requis : ETag HTML lié à APP_VERSION.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.070"
+        assert APP_VERSION == "1.6.071"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

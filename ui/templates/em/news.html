@@ -41,6 +41,15 @@
       "@graph": [
         {
           "@type": "NewsArticle",
+          "headline": {{ _('Merci : LotoIA grandit grâce à vous')|tojson }},
+          "datePublished": "2026-11-14", "dateModified": "2026-11-14",
+          "author": {"@type": "Person", "name": "Jean-Philippe Godard", "alternateName": "JyppY", "url": "{{ base_url }}/a-propos"},
+          "publisher": {"@type": "Organization", "name": "LotoIA", "url": "{{ base_url }}", "logo": {"@type": "ImageObject", "url": "{{ base_url }}/ui/static/og-image.jpg"}},
+          "image": "{{ base_url }}/ui/static/og-image.jpg",
+          "mainEntityOfPage": "{{ canonical_url }}"
+        },
+        {
+          "@type": "NewsArticle",
           "headline": {{ _('LotoIA renforce sa transparence : nouveaux outils d\'analyse et lexique pédagogique')|tojson }},
           "datePublished": "2026-06-10", "dateModified": "2026-06-10",
           "author": {"@type": "Person", "name": "Jean-Philippe Godard", "alternateName": "JyppY", "url": "{{ base_url }}/a-propos"},
@@ -136,6 +145,10 @@
     </script>
 {% endblock %}
 
+{% block extra_css %}
+    <style>.news-content a:not([class]):not([style]){color:inherit;text-decoration:underline}</style>
+{% endblock %}
+
 {% block body %}
     {% include "em/_hero.html" %}
 
@@ -144,6 +157,38 @@
         <section class="news-section">
 
             <article class="news-post featured">
+                <div class="news-meta">
+                    <span class="news-date">{{ _('14 novembre 2026') }}</span>
+                    <span class="news-tag news-tag-launch">{{ _('Merci') }}</span>
+                </div>
+                <h2 class="news-title"><span>&#128591;</span> {{ _('Merci : LotoIA grandit grâce à vous') }}</h2>
+                <div class="news-content">
+                    <p>{{ _('Vous êtes de plus en plus nombreux à utiliser LotoIA. Avant tout, nous voulions simplement vous dire merci.') }}</p>
+
+                    <h3>&#128200; {{ _('Quelques chiffres') }}</h3>
+                    <p>{{ _('Quelques repères, chacun avec sa source :') }}</p>
+                    <ul>
+                        <li>{{ _('<strong>7&nbsp;821 clics</strong> depuis Google entre le 11 octobre et le 7 novembre 2026 (source : Google Search Console) ;')|safe }}</li>
+                        <li>{{ _('<strong>9&nbsp;015 visiteurs</strong> en octobre 2026 (source : Umami) ;')|safe }}</li>
+                        <li>{{ _('une note moyenne de <strong>4,5/5</strong> donnée par les visiteurs sur LotoIA (243 avis au 12 novembre 2026).')|safe }}</li>
+                    </ul>
+                    <p>{{ _('Derrière ces chiffres, il y a vous : vos visites et vos avis.') }}</p>
+
+                    <h3>&#10024; {{ _('Ce que nous avons amélioré pour vous') }}</h3>
+                    <p>{{ _('Nous avons amélioré le confort de lecture : la FAQ de la page Statistiques du Loto est désormais lisible en thème sombre, et l\'affichage du générateur EuroMillions a été corrigé (plus d\'effet de cascade pendant le calcul, titres et date du prochain tirage lisibles en thème sombre).') }}</p>
+
+                    <h3>&#127891; {{ _('Ce que LotoIA est, et n\'est pas') }}</h3>
+                    <p>{{ _('LotoIA est un outil d\'<strong>analyse statistique</strong>, pas un outil de prédiction. Le résultat d\'un tirage de loterie reste totalement aléatoire : aucune méthode ne permet de le prévoir ni d\'augmenter les chances de gain.')|safe }}</p>
+
+                    <h3>&#129517; {{ _('La suite') }}</h3>
+                    <p>{{ _('Nous continuons d\'améliorer le site régulièrement. Le cap, lui, ne change pas : un outil gratuit, sans inscription, d\'analyse, pas de prédiction.') }}</p>
+                    <p>{{ _('Une idée, une remarque, un souci ?') }} <a href="#" style="color:inherit;text-decoration:underline;font-weight:600" onclick="event.preventDefault();if(window.LotoIAContact)LotoIAContact.openModal(window.location.pathname);">{{ _('Nous contacter') }}</a> &mdash; {{ _('chacun de vos retours compte.') }}</p>
+
+                    <p>&mdash; <strong>{{ _('L\'équipe LotoIA') }}</strong></p>
+                </div>
+            </article>
+
+            <article class="news-post">
                 <div class="news-meta">
                     <span class="news-date">{{ _('10 juin 2026') }}</span>
                     <span class="news-tag news-tag-tech">{{ _('Transparence') }}</span>
@@ -226,7 +271,7 @@
                     <h3>{{ _('Rappel statistique') }}</h3>
                     <p>{{ _('L\'EuroMillions reste un jeu de hasard. Chaque combinaison a exactement la même probabilité d\'être tirée. LotoIA est un outil d\'analyse statistique pédagogique : il ne prédit pas les résultats, il optimise la construction des grilles en s\'appuyant sur les mathématiques combinatoires et la théorie des jeux.') }}</p>
 
-                    <p><a href="{{ urls.generator }}" class="news-cta-btn">🚀 {{ _('Testez le nouveau moteur dès maintenant') }}</a></p>
+                    <p><a href="{{ urls.generateur }}" class="news-cta-btn">🚀 {{ _('Testez le nouveau moteur dès maintenant') }}</a></p>
                 </div>
             </article>
 

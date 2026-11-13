@@ -5,6 +5,14 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# LOT 1.6.071 — Papier news « Merci » (Release 1.6.071, 14/11/2026). Nouvel article en tête de /news (FR en dur)
+# et des 6 pages news EM (gettext, 18 msgid neufs × 6 .po + .pot, à la main) : 3 chiffres d'audience datés et
+# sourcés (Google Search Console, Umami, avis du site), confort de lecture (1.6.069 A2/A1/B8a + 1.6.063), phrase
+# « ce que LotoIA est » reprise mot pour mot du papier du 10/06 (msgstr copiés), lien contact = modale existante.
+# Classe featured déplacée du 10/06 vers le nouvel article ; NewsArticle en tête des @graph. LAST_NEWS_DATE
+# 2026-11-14. Aucun CSS, JS, cache-buster ?v=, meta/og/twitter ni hreflang touché. Bump requis : ETag HTML lié
+# à APP_VERSION.
+
 # LOT 1.6.070 — BOT_IPS (Release 1.6.070, 12/11/2026). Fichiers ipranges de Google déplacés (301 depuis le
 # 08/07/2026, client httpx sans suivi des redirections → partie Google dynamique de la liste blanche vide, 4
 # WARNING par worker à chaque rafraîchissement) : googlebot → /static/crawling/ipranges/common-crawlers.json,
@@ -410,9 +418,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.070"
+APP_VERSION = "1.6.071"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-11-12"
+VERSION_DATE = "2026-11-14"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.
@@ -423,7 +431,8 @@ LAST_DEPLOY_DATE = os.getenv("DEPLOY_DATE", date.today().isoformat())
 # ⚠️ À bumper À LA MAIN à chaque nouvel article (sitemap <lastmod> des pages news).
 # Dernier article : « LotoIA renforce sa transparence » (1.6.046, 10/06/2026).
 # 1.6.067 : bumpé au 09/11/2026 sans nouvel article (articles corrigés + note de mise à jour).
-LAST_NEWS_DATE = "2026-11-09"
+# 1.6.071 : article « Merci : LotoIA grandit grâce à vous » (14/11/2026).
+LAST_NEWS_DATE = "2026-11-14"
 
 # Alias pour compatibilité avec engine/version.py
 __version__ = APP_VERSION
