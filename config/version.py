@@ -5,6 +5,17 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# LOT 1.6.072 — Conformité RGPD / CNIL et transparence IA (Release 1.6.072, 16/11/2026). GA4 en Consent Mode de
+# base (gtag créé seulement après accord, purge des cookies _ga au retrait, file d'attente des événements) ;
+# bandeau et page cookies réécrits (6 langues), version du consentement 2.0 (tout choix antérieur redemandé) ;
+# politique de confidentialité Loto + EM 6 langues réécrite (données réelles, durées, prestataires, CNIL) ; mentions
+# légales (hébergeur, Vertex AI, article 50 de l'AI Act, adresse unique contact@) ; pages Avertissements (ligne AI
+# Act) ; FAQ /hybride et /faq, À propos, accroche /fr et prompts du chatbot alignés (D4, D8, Q/R données) ;
+# /hybride EM et page Numéros sans « automatique ». Mode nuit /hybride Loto + EM : questions d'exemple ambre, CTA
+# bleu, boutons du CTA EM corrigés dans les 2 thèmes ; liens --legal-link-color ambre en nuit.
+# Cache-busters cookie-consent.js ?v=7→8, analytics.js ?v=4→5, style.css ?v=15→16. Bump requis : ETag HTML lié à
+# APP_VERSION.
+
 # LOT 1.6.071 — Papier news « Merci » (Release 1.6.071, 14/11/2026). Nouvel article en tête de /news (FR en dur)
 # et des 6 pages news EM (gettext, 18 msgid neufs × 6 .po + .pot, à la main) : 3 chiffres d'audience datés et
 # sourcés (Google Search Console, Umami, avis du site), confort de lecture (1.6.069 A2/A1/B8a + 1.6.063), phrase
@@ -418,9 +429,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.071"
+APP_VERSION = "1.6.072"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-11-14"
+VERSION_DATE = "2026-11-16"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

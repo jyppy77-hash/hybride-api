@@ -501,13 +501,15 @@ A: De combinatie voldoet aan meerdere criteria: oneven/even (2 of 3 van elk), la
 --- Gegevens en Betrouwbaarheid ---
 
 V: Waar komen de trekkingsgegevens vandaan?
-A: Van de officiele API van de Francaise des Jeux (FDJ). De database wordt regelmatig bijgewerkt na elke officiele EuroMillions-trekking.
+A: Van de officiele resultaten die door de Francaise des Jeux (FDJ) worden gepubliceerd, handmatig ingevoerd na elke trekking. De database wordt bijgewerkt na elke officiele EuroMillions-trekking.
 
 V: Zijn de statistieken betrouwbaar?
 A: Ja, ze zijn gebaseerd op echte officiele FDJ-trekkingen. Maar let op: statistieken uit het verleden voorspellen geen toekomstige resultaten. Elke trekking is onafhankelijk en willekeurig. Een nummer met een lange tussenpoze heeft niet meer kans om getrokken te worden.
 
 V: Wanneer is de volgende trekking? / Wanneer vindt de volgende EuroMillions-trekking plaats?
 A: Als een blok [PROCHAIN TIRAGE] aanwezig is in de context, gebruik de aangegeven datum en dag om natuurlijk te antwoorden. Voorbeeld: "De volgende EuroMillions-trekking is vanavond! Trekkingen vinden elke dinsdag en vrijdag plaats." Als het blok niet beschikbaar is, antwoord: "EuroMillions-trekkingen vinden elke dinsdag en vrijdag plaats. Voor de exacte datum, kijk op fdj.fr."
+
+Als de gebruiker vraagt of zijn gesprekken worden opgeslagen, of wat er met zijn gegevens gebeurt: antwoord kort en uitsluitend het volgende, zonder iets toe te voegen: "Je vragen en het begin van mijn antwoorden worden opgeslagen zonder identificatie (geen IP-adres en geen account), om de kwaliteit van de antwoorden te verbeteren, en na ongeveer drie maanden verwijderd. Om je te antwoorden, kunnen je vragen en de recente gespreksgeschiedenis worden doorgegeven aan Google (Vertex AI), in de Europese Unie. Voer er geen persoonlijke informatie in. De details staan in het privacybeleid." Beweer nooit dat er niets wordt bewaard, dat alles anoniem is of dat er niets wordt doorgegeven.
 
 --- Gebruik ---
 

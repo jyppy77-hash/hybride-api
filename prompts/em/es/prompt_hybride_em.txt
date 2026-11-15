@@ -502,13 +502,15 @@ R: La combinación cumple varios criterios: par/impar (2 o 3 de cada), bajo/alto
 --- Datos y fiabilidad ---
 
 P: ¿De dónde provienen los datos de los sorteos?
-R: De la API oficial de la Française des Jeux (FDJ). Base de datos actualizada periódicamente después de cada sorteo oficial de EuroMillions.
+R: De los resultados oficiales publicados por la Française des Jeux (FDJ), introducidos manualmente después de cada sorteo. Base de datos actualizada después de cada sorteo oficial de EuroMillions.
 
 P: ¿Son fiables las estadísticas?
 R: Sí, se basan en sorteos oficiales reales de la FDJ. Pero cuidado: las estadísticas pasadas no predicen resultados futuros. Cada sorteo es independiente y aleatorio. Un número con una desviación larga no tiene más probabilidades de salir.
 
 P: ¿Cuándo es el próximo sorteo? / ¿Cuándo se celebra el próximo sorteo de EuroMillions?
 R: Si un bloque [PROCHAIN TIRAGE] está presente en el contexto, usa la fecha y el día indicados para responder de forma natural. Ejemplo: "¡El próximo sorteo de EuroMillions es esta noche! Los sorteos se celebran cada martes y viernes." Si el bloque no está disponible, responde: "Los sorteos de EuroMillions se celebran cada martes y viernes. Para la fecha exacta, consulta fdj.fr."
+
+Si el usuario pregunta si sus conversaciones se registran, o qué pasa con sus datos: responde brevemente y solo esto, sin añadir nada: «Tus preguntas y el comienzo de mis respuestas se registran sin ningún identificador (ni dirección IP, ni cuenta), para mejorar la calidad de las respuestas, y se eliminan al cabo de unos tres meses. Para responderte, tus preguntas y el historial reciente de la conversación pueden transmitirse a Google (Vertex AI), en la Unión Europea. Evita introducir información personal. El detalle está en la política de privacidad.» Nunca afirmes que no se conserva nada, que todo es anónimo o que no se transmite nada.
 
 --- Uso ---
 

@@ -1,12 +1,12 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════════
- * LOTOIA ANALYTICS MODULE v2.5.2 - PRODUCT ANALYTICS PREMIUM
+ * LOTOIA ANALYTICS MODULE v2.6.0 - PRODUCT ANALYTICS PREMIUM
  * ═══════════════════════════════════════════════════════════════════════════════
  *
  * Infrastructure analytics professionnelle pour SaaS LotoIA
- * - GA4 Integration avec Consent Mode v2 (RGPD/CNIL compliant)
- * - Baseline cookieless pour 100% des visiteurs
- * - Events enrichis après consentement analytics
+ * - GA4 en Consent Mode « de base » (1.6.072) : rien n'est chargé sans consentement
+ * - GA4 chargé uniquement après acceptation de la mesure d'audience
+ * - Umami Cloud (sans cookie) géré hors de ce module, inchangé
  * - Product Analytics Engine (v2.5+) pour tracking métier
  * - Events produit (moteur LotoIA)
  * - Events UX (parcours utilisateur)
@@ -14,26 +14,34 @@
  * - Architecture scalable multi-moteurs / multi-pays
  *
  * @author LotoIA Team
- * @version 2.5.2
+ * @version 2.6.0
  * @license Proprietary
  *
- * ARCHITECTURE CONSENT MODE v2 (CNIL/RGPD):
+ * CONSENT MODE « DE BASE » (1.6.072, CNIL/RGPD):
  * ┌─────────────────────────────────────────────────────────────────────────────┐
- * │ 0. bootGtagImmediately() - Charge gtag.js AU BOOT (indépendant consent)    │
- * │    → dataLayer + gtag() + consent:default denied + script injection        │
- * │ 1. baselineInit() - Configure GA4 + envoie 1 page_view baseline            │
- * │    → 1 page_view anonyme pour TOUS (cookieless, IP anonymisée)             │
- * │ 2. enableEnhanced() - Après consentement analytics                         │
- * │    → consent:update granted + event consent_granted (PAS de 2e page_view)  │
+ * │ Tant que la mesure d'audience n'est pas acceptée (choices.analytics true) : │
+ * │   aucun script gtag.js, pas de window.gtag, pas de window.dataLayer,        │
+ * │   aucun event GA4 (les events émis avant le consentement sont jetés).       │
+ * │ 0. isExcluded() - owner / bot IA / appareil marqué : testé AVANT le         │
+ * │    consentement, sur tous les chemins → GA4 jamais chargé.                  │
+ * │ 1. loadGA4IfConsented('boot') - acceptant connu : chargement au démarrage  │
+ * │    → consent default granted (ad_* denied) + script + config + 1 page_view │
+ * │ 2. loadGA4IfConsented('consent') - acceptation en cours de page            │
+ * │    → même chargement + 1 page_view de la page où l'on accepte              │
+ * │    → ré-acceptation après retrait : ga-disable false + consent update     │
+ * │      granted, pas de réinjection, 1 page_view                              │
+ * │ 3. Retrait / refus : consent update denied + ga-disable true + purge des   │
+ * │    cookies _ga / _ga_* (aussi au démarrage si un _ga* hérité subsiste)     │
  * └─────────────────────────────────────────────────────────────────────────────┘
  *
- * DEBUG: localStorage.setItem('debug_ga4', '1') pour logs basiques
+ * DEBUG (owner uniquement : __OWNER__ ou appareil marqué lotoia_internal) :
+ *        localStorage.setItem('debug_ga4', '1') pour logs basiques
  *        localStorage.setItem('debug_ga4', '2') pour logs détaillés
  *
  * USAGE:
- * 1. Inclure ce script dans le <head>
- * 2. Le baseline s'initialise automatiquement (cookieless)
- * 3. Après consentement, le mode enrichi s'active automatiquement
+ * 1. Inclure ce script dans le <head> (avant cookie-consent.js)
+ * 2. Rien n'est chargé tant que le visiteur n'a pas accepté la mesure d'audience
+ * 3. Après acceptation (Tout accepter, ou Personnaliser avec la case cochée), GA4 se charge
  * 4. Utiliser window.LotoIAAnalytics.track() pour les events custom
  *
  * PRODUCT ANALYTICS (v2.5+):
@@ -97,19 +105,18 @@
     const state = {
         initialized: false,
         consentGiven: false,
-        gtagBooted: false,            // Flag gtag.js boot immédiat (étape 0)
-        baselineReady: false,         // Flag anti-double baseline init
-        isEnhanced: false,            // Flag anti-double enhanced init
+        gtagBooted: false,            // 1.6.072 : chargement GA4 commencé (après consentement uniquement)
+        baselineReady: false,         // Flag config + page_view partis (anti-double)
+        isEnhanced: false,            // 1.6.072 : consentement mesure d'audience actif sur la page
         gtagLoadFailed: false,        // Flag adblock/network error (gtag.js)
         gtagScriptReady: false,       // Flag gtag.js script loaded and ready
-        cookieConsentBlocked: false,  // Flag adblock/network error (cookie-consent.js)
         scrollTrackingEnabled: false, // Flag anti-double scroll listener
         sessionId: null,
         pageLoadTime: Date.now(),
         scrollTracked: {},
         eventsQueue: [],
-        consentAtBoot: false,         // 1.6.054 : consentement analytics stocké lu au boot
-        consentPageViewSent: false,   // 1.6.054 : page_view unique après acceptation en cours de page
+        pageViewCategory: 'baseline', // 1.6.072 : baseline (boot) | consent_granted (acceptation en cours de page)
+        pageViewSent: false,          // 1.6.072 : page_view unique de la page, réarmé au retrait
 
         // Product Analytics (v2.5+)
         productContext: {
@@ -132,8 +139,10 @@
     /**
      * Niveau de debug (0=silence, 1=basique, 2=détaillé)
      * Configurable via: localStorage.setItem('debug_ga4', '1')
+     * 1.6.072 : effectif uniquement pour l'owner (__OWNER__ ou appareil marqué), sinon 0.
      */
     function getDebugLevel() {
+        if (!isDebugAllowed()) return 0;
         try {
             const level = parseInt(localStorage.getItem('debug_ga4') || '0', 10);
             return isNaN(level) ? 0 : Math.min(Math.max(level, 0), 2);
@@ -246,17 +255,34 @@
     // 1.6.054 — Marqueur d'appareil owner (posé au 1er passage avec __OWNER__)
     const INTERNAL_DEVICE_KEY = 'lotoia_internal';
 
+    // 1.6.072 — Version du consentement attendue. Doit rester égale à CONFIG.consentVersion
+    // de cookie-consent.js : la même règle de version est appliquée par les deux lecteurs.
+    const CONSENT_VERSION = '2.0';
+
     function isInternalDevice() {
         try { return localStorage.getItem(INTERNAL_DEVICE_KEY) === '1'; } catch (e) { return false; }
     }
 
+    // 1.6.072 — Exclusion owner / bot IA / appareil marqué. Testée AVANT toute lecture du consentement,
+    // sur tous les chemins (boot, onConsentChange, pageshow) : un owner qui accepte ne charge jamais GA4.
+    function isExcluded() {
+        return !!(window.__OWNER__ || window.__IS_AI_BOT__ || isInternalDevice());
+    }
+
+    // 1.6.072 — Debug GA4 réservé à l'owner (aucun log console pour les visiteurs).
+    function isDebugAllowed() {
+        return !!(window.__OWNER__ || isInternalDevice());
+    }
+
     // 1.6.054 — Consentement analytics stocké (même règle d'expiration que cookie-consent.js).
+    // 1.6.072 — Même règle de version : un consentement d'une autre version (dont '1.0') vaut absence.
     // Lu au boot : cookie-consent.js (defer) n'est pas encore chargé à ce stade.
     function readStoredAnalyticsConsent() {
         try {
             const stored = localStorage.getItem('lotoia_cookie_consent');
             if (!stored) return false;
             const data = JSON.parse(stored);
+            if (!data || data.version !== CONSENT_VERSION) return false;
             if (data.expires && new Date(data.expires) < new Date()) return false;
             return !!(data.choices && data.choices.analytics === true);
         } catch (e) {
@@ -265,68 +291,124 @@
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
-    // BOOT GTAG IMMÉDIAT (INDÉPENDANT DU CONSENTEMENT)
+    // COOKIES GA4 : PURGE (1.6.072)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    // Cookies posés par gtag.js : _ga et _ga_<conteneur> (ex. _ga_YYJ5LD1ZT3)
+    const GA_COOKIE_NAME_RE = /^_ga(_[A-Za-z0-9]+)?$/;
+
+    // gtag pose ses cookies sur le domaine racine (cookie_domain 'auto' → .lotoia.fr) ;
+    // la variante sans domain couvre un cookie hôte (www., staging).
+    const GA_COOKIE_DOMAINS = ['; domain=.lotoia.fr', '; domain=lotoia.fr', ''];
+
+    // Clé officielle de désactivation gtag pour la propriété (bloque tout hit de la page)
+    const GA_DISABLE_KEY = 'ga-disable-' + CONFIG.GA4_ID;
+
+    /**
+     * Liste les noms de cookies _ga / _ga_* visibles par la page.
+     * @returns {string[]}
+     */
+    function listGaCookies() {
+        try {
+            return document.cookie
+                .split(';')
+                .map(c => c.split('=')[0].trim())
+                .filter(name => GA_COOKIE_NAME_RE.test(name));
+        } catch (e) {
+            return [];
+        }
+    }
+
+    /**
+     * Efface les cookies _ga / _ga_* (Max-Age=0, path=/, 3 variantes de domaine),
+     * puis relit document.cookie pour vérifier l'effacement réel.
+     * Échec : console.warn uniquement si le debug owner est actif (aucune télémétrie).
+     * @returns {boolean} true si plus aucun _ga* n'est visible
+     */
+    function purgeGaCookies() {
+        const names = listGaCookies();
+        if (names.length === 0) return true;
+
+        names.forEach(name => {
+            GA_COOKIE_DOMAINS.forEach(domain => {
+                try {
+                    document.cookie = name + '=; Max-Age=0; path=/' + domain;
+                } catch (e) { /* ignore */ }
+            });
+        });
+
+        const left = listGaCookies();
+        if (left.length > 0) {
+            if (getDebugLevel() >= 1) {
+                console.warn('[LotoIA GA4] _ga cookies still present after purge: ' + left.join(', '));
+            }
+            return false;
+        }
+        log('GA cookies purged: ' + names.join(', '), 'info');
+        return true;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // CHARGEMENT GA4 APRÈS CONSENTEMENT UNIQUEMENT (1.6.072)
     // ═══════════════════════════════════════════════════════════════════════════
 
     /**
-     * Boot gtag.js IMMÉDIATEMENT au chargement du module.
-     * CRITIQUE: Cette fonction est appelée au tout début, AVANT toute logique consent.
-     * Elle garantit que gtag() est disponible même si CookieConsent est bloqué.
+     * Charge GA4 si — et seulement si — le visiteur n'est pas exclu ET a accepté la mesure d'audience
+     * (« Tout accepter » ou « Personnaliser » avec la case cochée : choices.analytics === true).
+     * Seul endroit du module qui crée window.dataLayer / window.gtag et injecte gtag.js.
      *
-     * Étapes:
-     * 1. Initialise dataLayer + window.gtag
-     * 2. Applique Consent Mode v2 par défaut (depuis le choix stocké, sinon denied)
-     * 3. Injecte le script gtag.js (fire-and-forget)
+     * @param {string} origin - 'boot' (acceptant connu, au démarrage) | 'consent' (acceptation en cours de page)
+     * @returns {boolean} true si GA4 est (ou reste) actif
      */
-    function bootGtagImmediately() {
-        // Anti-double boot
-        if (state.gtagBooted) return;
+    function loadGA4IfConsented(origin) {
+        // 1. Exclusion AVANT toute lecture du consentement
+        if (isExcluded()) {
+            log('GA4 not loaded (excluded: owner / AI bot / internal device)', 'info');
+            return false;
+        }
 
-        // Owner IP filter (window.__OWNER__) + V123 AI bot filter (window.__IS_AI_BOT__)
-        // Injected by OwnerFilterMiddleware in main.py (Extension A anti-pollution)
-        // 1.6.054 : marqueur d'appareil persistant → GA4 jamais chargé ensuite sur cet appareil,
-        // quel que soit le réseau (4G, IP inconnue). Pas de script, pas de dataLayer, aucun hit.
-        if (window.__OWNER__) {
-            try { localStorage.setItem(INTERNAL_DEVICE_KEY, '1'); } catch (e) { /* ignore */ }
+        // 2. Consentement mesure d'audience (au boot, cookie-consent.js n'est pas encore chargé)
+        const consented = origin === 'boot' ? readStoredAnalyticsConsent() : hasAnalyticsConsent();
+        if (!consented) {
+            log('GA4 not loaded (no analytics consent)', 'info');
+            return false;
         }
-        if (window.__OWNER__ || window.__IS_AI_BOT__ || isInternalDevice()) {
-            state.gtagBooted = true;
-            state.gtagLoadFailed = true;
-            state.gtagScriptReady = true;
-            return;
+
+        // 3. Déjà chargé : anti-double, ou ré-acceptation après un retrait dans la même page
+        if (state.gtagBooted) {
+            if (state.isEnhanced) return true;
+            reenableGA4();
+            return true;
         }
+
+        // 4. Premier chargement
+        state.gtagBooted = true;
+        state.isEnhanced = true;
+        state.consentGiven = true;
+        state.initialized = true; // Compatibilité avec l'ancien état
+        state.pageViewCategory = origin === 'boot' ? 'baseline' : 'consent_granted';
 
         try {
-            // 1. Initialiser dataLayer et gtag() SYNCHRONE
+            window[GA_DISABLE_KEY] = false;
             window.dataLayer = window.dataLayer || [];
             window.gtag = function() {
                 dataLayer.push(arguments);
             };
 
-            // 2. Consent Mode v2 - DEFAULT depuis le choix stocké (CNIL/RGPD)
-            // CRITIQUE: Doit être appelé AVANT l'injection du script
-            // 1.6.054 : un visiteur ayant déjà accepté part en 'granted' dès le page_view baseline
-            // (avant : page_view cookieless puis update granted → session non rattachable).
-            state.consentAtBoot = readStoredAnalyticsConsent();
+            // Consent Mode : analytics accepté, publicité toujours refusée (pas de remarketing)
             gtag('consent', 'default', {
                 'ad_storage': 'denied',
-                'analytics_storage': state.consentAtBoot ? 'granted' : 'denied',
+                'analytics_storage': 'granted',
                 'ad_user_data': 'denied',
                 'ad_personalization': 'denied'
             });
 
-            // 3. Injecter gtag.js avec callback ready
             const script = document.createElement('script');
             script.async = true;
             script.src = 'https://www.googletagmanager.com/gtag/js?id=' + CONFIG.GA4_ID;
             script.onload = function() {
                 state.gtagScriptReady = true;
-                // Log uniquement si debug activé
-                try {
-                    if (parseInt(localStorage.getItem('debug_ga4') || '0', 10) >= 2) {
-                        console.log('%c[LotoIA GA4] gtag.js script loaded', 'color: #4CAF50');
-                    }
-                } catch (e) { /* ignore */ }
+                log('gtag.js script loaded', 'success', null, 2);
             };
             script.onerror = function() {
                 state.gtagLoadFailed = true;
@@ -334,24 +416,103 @@
                 console.warn('[LotoIA GA4] gtag.js blocked (adblock/network)');
             };
             document.head.appendChild(script);
-
-            state.gtagBooted = true;
-            // Log uniquement si debug activé (getDebugLevel pas encore dispo à ce stade)
-            try {
-                if (parseInt(localStorage.getItem('debug_ga4') || '0', 10) >= 1) {
-                    console.log('%c[LotoIA GA4] gtag booted immediately (consent-independent)', 'color: #4CAF50');
-                }
-            } catch (e) { /* ignore */ }
-
+            log(`GA4 loading after consent (origin: ${origin})`, 'success');
         } catch (e) {
-            console.warn('[LotoIA GA4] Boot failed:', e.message);
+            state.gtagLoadFailed = true;
+            state.gtagScriptReady = true;
+            console.warn('[LotoIA GA4] Load failed:', e.message);
+            return false;
         }
+
+        // 5. Config + page_view unique (asynchrone : attend gtag.js, 3 s max)
+        baselineInit();
+        return true;
+    }
+
+    /**
+     * Ré-acceptation dans la même page après un retrait : pas de réinjection du script.
+     * ga-disable remis à false, consent update granted (ad_* denied), 1 page_view consent_granted.
+     */
+    function reenableGA4() {
+        window[GA_DISABLE_KEY] = false;
+        if (typeof window.gtag === 'function') {
+            gtag('consent', 'update', {
+                'analytics_storage': 'granted',
+                'ad_storage': 'denied',
+                'ad_user_data': 'denied',
+                'ad_personalization': 'denied'
+            });
+        }
+        state.isEnhanced = true;
+        state.consentGiven = true;
+        state.pageViewCategory = 'consent_granted';
+
+        // Config déjà partie : page_view maintenant ; sinon baselineInit() l'enverra (flag non consommé)
+        if (state.baselineReady) {
+            sendPageViewOnce();
+            sendConsentGrantedEvent();
+        }
+        log('GA4 re-enabled (consent granted again, no script reinjection)', 'success');
+    }
+
+    /**
+     * Retrait / refus : consent update denied + ga-disable + réarmement du page_view unique.
+     * Les events en file ou en tampon (non envoyés) sont jetés.
+     */
+    function disableGA4() {
+        if (state.gtagBooted && typeof window.gtag === 'function') {
+            gtag('consent', 'update', {
+                'analytics_storage': 'denied',
+                'ad_storage': 'denied',
+                'ad_user_data': 'denied',
+                'ad_personalization': 'denied'
+            });
+            window[GA_DISABLE_KEY] = true;
+            log('Consent revoked → analytics_storage: denied + ga-disable', 'warning');
+        }
+        state.isEnhanced = false;
+        state.consentGiven = false;
+        state.pageViewSent = false; // réarmé : une ré-acceptation renverra 1 page_view
+        state.eventsQueue = [];
+        state.productBuffer = [];
+    }
+
+    /**
+     * 1.6.072 (B1 bis) — Resynchronise un retrait fait ailleurs (autre page puis retour bfcache, autre onglet).
+     * Source fraîche uniquement : le consentement stocké (localStorage), jamais l'état mémoire de CookieConsent
+     * (périmé sur une page restaurée depuis le bfcache).
+     * Ne propage que le retrait : aucun chargement de GA4 ici.
+     * @returns {boolean} true si GA4 a été désactivé
+     */
+    function resyncConsentFromStorage() {
+        if (!isExcluded() && state.gtagBooted && state.isEnhanced && !readStoredAnalyticsConsent()) {
+            log('Consent withdrawn elsewhere (stored choice) → GA4 disabled, _ga cookies purged', 'info');
+            disableGA4();
+            purgeGaCookies();
+            return true;
+        }
+        return false;
     }
 
     // ══════════════════════════════════════════════════════════════════════════
-    // BOOT IMMÉDIAT - Exécuté maintenant, avant toute autre logique
+    // DÉMARRAGE - Exécuté maintenant
     // ══════════════════════════════════════════════════════════════════════════
-    bootGtagImmediately();
+
+    // Owner IP filter (window.__OWNER__) + V123 AI bot filter (window.__IS_AI_BOT__)
+    // Injected by OwnerFilterMiddleware in main.py (Extension A anti-pollution)
+    // 1.6.054 : marqueur d'appareil persistant → GA4 jamais chargé ensuite sur cet appareil,
+    // quel que soit le réseau (4G, IP inconnue). Pas de script, pas de dataLayer, aucun hit.
+    if (window.__OWNER__) {
+        try { localStorage.setItem(INTERNAL_DEVICE_KEY, '1'); } catch (e) { /* ignore */ }
+    }
+
+    // 1.6.072 : décision négative, expirée, absente ou d'une autre version + _ga* hérité → purge
+    if (!readStoredAnalyticsConsent() && listGaCookies().length > 0) {
+        purgeGaCookies();
+    }
+
+    // 1.6.072 : acceptant connu → chargement immédiat ; sinon rien (ni script, ni gtag, ni dataLayer)
+    loadGA4IfConsented('boot');
 
     // ══════════════════════════════════════════════════════════════════════════
     // ATTENTE GTAG.JS READY
@@ -397,60 +558,6 @@
     // ═══════════════════════════════════════════════════════════════════════════
 
     /**
-     * Charge le script gtag.js de maniere asynchrone
-     * Gère gracieusement les adblockers et erreurs réseau
-     * @deprecated Utilisé en fallback, gtag.js est déjà chargé par bootGtagImmediately()
-     */
-    function loadGtagScript(measurementId) {
-        return new Promise((resolve, reject) => {
-            // Verifier si deja charge
-            if (window.gtag) {
-                log('gtag already loaded', 'info');
-                resolve();
-                return;
-            }
-
-            // Si échec précédent (adblock), ne pas réessayer
-            if (state.gtagLoadFailed) {
-                reject(new Error('gtag blocked (cached)'));
-                return;
-            }
-
-            const script = document.createElement('script');
-            script.async = true;
-            script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
-
-            script.onload = () => {
-                log('gtag script loaded', 'success');
-                resolve();
-            };
-
-            script.onerror = () => {
-                state.gtagLoadFailed = true;
-                // Warning unique (pas de boucle)
-                console.warn('[LotoIA GA4] gtag.js blocked (adblock/network) - analytics disabled');
-                reject(new Error('gtag load failed'));
-            };
-
-            document.head.appendChild(script);
-        });
-    }
-
-    /**
-     * Initialise le dataLayer et la fonction gtag
-     * (séparé de la config pour Consent Mode v2)
-     */
-    function initDataLayer() {
-        if (window.gtag) return; // Déjà initialisé
-
-        window.dataLayer = window.dataLayer || [];
-        function gtag() {
-            dataLayer.push(arguments);
-        }
-        window.gtag = gtag;
-    }
-
-    /**
      * Envoie un page_view GA4 (1.6.054 : baseline, acceptation en cours de page, retour bfcache)
      * @param {string} category - baseline | consent_granted | bfcache_restore
      */
@@ -465,10 +572,31 @@
     }
 
     /**
+     * 1.6.072 : page_view unique de la page (anti-doublon par flag, réarmé au retrait).
+     * Catégorie : baseline (acceptant connu au boot) | consent_granted (acceptation en cours de page).
+     */
+    function sendPageViewOnce() {
+        if (state.pageViewSent) return;
+        state.pageViewSent = true;
+        sendPageView(state.pageViewCategory);
+    }
+
+    /**
+     * Event consent_granted (comportement 1.6.054 conservé : émis à chaque activation de GA4).
+     */
+    function sendConsentGrantedEvent() {
+        gtag('event', 'consent_granted', {
+            'event_category': 'consent',
+            'analytics_storage': 'granted',
+            'timestamp': Date.now()
+        });
+    }
+
+    /**
      * ═══════════════════════════════════════════════════════════════════════════
-     * BASELINE INIT - Consent Mode v2 (CNIL/RGPD)
+     * BASELINE INIT - appelé uniquement par loadGA4IfConsented() (1.6.072)
      * ═══════════════════════════════════════════════════════════════════════════
-     * Configure GA4 et envoie 1 page_view baseline (consent default = choix stocké).
+     * Configure GA4 et envoie 1 page_view (consentement déjà accepté).
      * ATTEND que gtag.js soit chargé pour garantir le traitement correct.
      *
      * @returns {Promise<boolean>} true si baseline OK, false si bloqué
@@ -480,9 +608,9 @@
             return true;
         }
 
-        // Vérifier que gtag a bien été booté
-        if (!window.gtag) {
-            log('gtag not available (boot failed?)', 'error');
+        // 1.6.072 : jamais sans chargement consenti (garde-fou)
+        if (!state.gtagBooted || !window.gtag) {
+            log('gtag not available (no consent / load failed)', 'error');
             return false;
         }
 
@@ -514,6 +642,9 @@
                 'form_submit': false,
                 'file_download': false,
 
+                // 1.6.072 : durée des cookies _ga = 395 jours (alignée sur la durée du consentement)
+                'cookie_expires': 34128000,
+
                 // Custom dimensions
                 'custom_map': {
                     'dimension1': 'engine',
@@ -527,16 +658,24 @@
             // (gardes !baselineReady dans sendGA4Event et flushProductBuffer)
             state.baselineReady = true;
 
-            // 4. Envoyer UN SEUL page_view baseline (Consent Mode v2)
-            sendPageView('baseline');
+            // 1.6.072 : retrait survenu pendant le chargement → ni page_view ni events
+            if (!state.isEnhanced) {
+                log('Consent withdrawn during load → no page_view', 'info');
+                return true;
+            }
+
+            // 4. Envoyer UN SEUL page_view (baseline au boot, consent_granted en cours de page)
+            sendPageViewOnce();
 
             // 5. 1.6.054 : vider dans l'ordre les events mis en file avant config + page_view
             processEventsQueue();
             flushProductBuffer();
 
-            // Log explicite du statut pour diagnostic
-            const consentStatus = hasAnalyticsConsent() ? 'granted' : 'denied';
-            log(`Baseline page_view sent (analytics_storage: ${consentStatus}, gtag_ready: ${gtagReady})`, 'success');
+            // 6. Event consent_granted + tracking avancé (ex-enableEnhanced)
+            sendConsentGrantedEvent();
+            setupScrollTracking();
+
+            log(`GA4 page_view sent (${state.pageViewCategory}, gtag_ready: ${gtagReady})`, 'success');
 
             return true;
 
@@ -547,128 +686,16 @@
     }
 
     /**
-     * ═══════════════════════════════════════════════════════════════════════════
-     * ENABLE ENHANCED - Après consentement analytics
-     * ═══════════════════════════════════════════════════════════════════════════
-     * Active le mode enrichi après consentement utilisateur.
-     * Met à jour le Consent Mode v2 avec analytics_storage:granted.
-     * 1.6.054 : consentement déjà stocké au boot → aucun page_view (le baseline est déjà 'granted').
-     * Acceptation EN COURS de page → 1 seul page_view, maintenant (le baseline est parti cookieless).
-     *
-     * @returns {boolean} true si enhanced activé, false sinon
-     */
-    function enableEnhanced() {
-        // Anti-double init
-        if (state.isEnhanced) {
-            log('Enhanced already enabled', 'warning');
-            return true;
-        }
-
-        // Vérifier le consentement (CRITIQUE: enhanced uniquement si accepté)
-        if (!hasAnalyticsConsent()) {
-            log('Enhanced skipped (analytics consent: denied)', 'info');
-            return false;
-        }
-
-        // Vérifier que gtag est disponible
-        if (!window.gtag) {
-            log('gtag not available for enhanced mode', 'error');
-            return false;
-        }
-
-        // 1. Consent Mode v2 - UPDATE GRANTED (analytics only)
-        // Note: ad_storage reste denied (pas de remarketing)
-        gtag('consent', 'update', {
-            'analytics_storage': 'granted',
-            'ad_storage': 'denied',
-            'ad_user_data': 'denied',
-            'ad_personalization': 'denied'
-        });
-
-        // 2. Marquer comme enhanced
-        state.isEnhanced = true;
-        state.consentGiven = true;
-        state.initialized = true; // Compatibilité avec l'ancien état
-
-        // 2b. 1.6.054 : page_view unique si acceptation en cours de page (anti-doublon par flag)
-        if (!state.consentAtBoot && !state.consentPageViewSent && state.baselineReady) {
-            state.consentPageViewSent = true;
-            sendPageView('consent_granted');
-        }
-
-        // 3. Envoyer event consent_granted
-        gtag('event', 'consent_granted', {
-            'event_category': 'consent',
-            'analytics_storage': 'granted',
-            'timestamp': Date.now()
-        });
-
-        // 4. Traiter la queue d'events en attente
-        processEventsQueue();
-
-        // 5. Activer le tracking avancé
-        setupScrollTracking();
-
-        log('Enhanced mode enabled (consent granted)', 'success');
-        return true;
-    }
-
-    /**
-     * Initialise GA4 avec la configuration RGPD (legacy - appelé par enableEnhanced indirectement)
-     * @deprecated Utiliser baselineInit() + enableEnhanced()
-     */
-    function initGA4(measurementId) {
-        // DataLayer
-        window.dataLayer = window.dataLayer || [];
-
-        function gtag() {
-            dataLayer.push(arguments);
-        }
-        window.gtag = gtag;
-
-        // Timestamp initial
-        gtag('js', new Date());
-
-        // Configuration GA4 avec options RGPD
-        gtag('config', measurementId, {
-            // CRITIQUE: Désactiver le page_view automatique (anti-double)
-            'send_page_view': false,
-
-            // Anonymisation IP (requis RGPD)
-            'anonymize_ip': true,
-
-            // Cookies securises
-            'cookie_flags': 'SameSite=None;Secure',
-
-            // Desactiver les signaux publicitaires (pas de remarketing)
-            'allow_google_signals': false,
-            'allow_ad_personalization_signals': false,
-
-            // Desactiver le suivi de formulaires automatique
-            'form_submit': false,
-
-            // Desactiver le tracking de fichiers telecharges
-            'file_download': false,
-
-            // Page path personnalise
-            'page_path': window.location.pathname,
-
-            // Custom dimensions
-            'custom_map': {
-                'dimension1': 'engine',
-                'dimension2': 'algorithm',
-                'dimension3': 'session_id'
-            }
-        });
-
-        log(`GA4 initialized with ID: ${measurementId}`, 'success');
-    }
-
-    /**
      * Envoie un event GA4
      * Gère gracieusement l'absence de gtag (adblock)
      */
     function sendGA4Event(eventName, params = {}) {
+        // 1.6.072 (Q8) : avant consentement (ou après retrait) → event jeté, ni file ni tampon
+        if (!state.gtagBooted || !state.isEnhanced) {
+            log(`Event dropped (no analytics consent): ${eventName}`, 'info', params, 2);
+            return false;
+        }
+
         // Si gtag bloqué définitivement, no-op silencieux
         if (state.gtagLoadFailed) {
             log(`Event dropped (gtag blocked): ${eventName}`, 'warning', params, 2);
@@ -677,6 +704,7 @@
 
         // 1.6.054 : file d'attente tant que config + page_view baseline ne sont pas partis
         // (aucun event avant gtag('config') ni avant le page_view → pas de session sans page d'entrée)
+        // 1.6.072 : ne couvre que le délai entre l'injection du script (après consentement) et baselineReady
         if (!state.baselineReady || !window.gtag) {
             log(`Event queued (baseline not ready): ${eventName}`, 'warning', params, 2);
             if (state.eventsQueue.length >= 50) state.eventsQueue.shift();
@@ -1231,6 +1259,12 @@
      * @param {Object} payload - Données de l'event
      */
     function bufferProductEvent(name, payload) {
+        // 1.6.072 (Q8) : avant consentement (ou après retrait) → event jeté, aucun tampon
+        if (!state.gtagBooted || !state.isEnhanced) {
+            log(`Product event dropped (no analytics consent): ${name}`, 'info', null, 2);
+            return;
+        }
+
         // Limite max 50 events en buffer
         if (state.productBuffer.length >= 50) {
             log('Product buffer full - dropping oldest event', 'warning');
@@ -1316,9 +1350,9 @@
                 ...sanitized
             };
 
-            // Mode enhanced : envoi direct
-            // Mode baseline : buffer
-            if (state.isEnhanced) {
+            // GA4 prêt (config + page_view partis) : envoi direct
+            // Chargement en cours : tampon ; sans consentement : jeté (bufferProductEvent, Q8)
+            if (state.isEnhanced && state.baselineReady) {
                 sendProductEvent(name, payload);
             } else {
                 bufferProductEvent(name, payload);
@@ -1362,9 +1396,20 @@
     // sans lui, les events suivants ouvrent une session sans page d'entrée (Unassigned).
     window.addEventListener('pageshow', function(event) {
         if (!event.persisted) return;
-        if (!state.baselineReady || state.gtagLoadFailed || typeof window.gtag !== 'function') return;
-        if (window.__OWNER__ || isInternalDevice() || !hasAnalyticsConsent()) return;
+        // 1.6.072 : exclusion testée avant le consentement
+        if (isExcluded()) return;
+        // 1.6.072 (B1 bis) : retrait fait sur une autre page pendant que celle-ci dormait dans le bfcache
+        if (resyncConsentFromStorage()) return;
+        if (!state.gtagBooted || !state.baselineReady || state.gtagLoadFailed || typeof window.gtag !== 'function') return;
+        if (!state.isEnhanced || !readStoredAnalyticsConsent()) return;
         sendPageView('bfcache_restore');
+    });
+
+    // 1.6.072 (B1 bis) : retrait fait dans un autre onglet → propagé ici (désactivation + purge).
+    // key null = localStorage.clear(). Une acceptation dans un autre onglet ne charge PAS GA4 ici.
+    window.addEventListener('storage', function(event) {
+        if (event.key !== 'lotoia_cookie_consent' && event.key !== null) return;
+        resyncConsentFromStorage();
     });
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -1428,11 +1473,6 @@
      * @returns {boolean} true si consentement explicite, false sinon
      */
     function hasAnalyticsConsent() {
-        // Si CookieConsent bloqué, TOUJOURS retourner false (baseline only)
-        if (state.cookieConsentBlocked) {
-            return false;
-        }
-
         // Verifier via CookieConsent si disponible
         try {
             if (isCookieConsentAvailable()) {
@@ -1452,29 +1492,22 @@
      * Appelé lors des events cookieConsentUpdated / CookieConsentUpdated
      */
     function onConsentChange(event) {
-        const choices = event.detail || {};
+        const choices = (event && event.detail) || {};
 
         log('Consent changed', 'info', choices);
 
-        // Cas 1: Analytics ACCEPTÉ → activer enhanced
-        if (choices.analytics === true && !state.isEnhanced) {
-            enableEnhanced();
+        // Cas 1: Analytics ACCEPTÉ (Tout accepter, ou Personnaliser coché) → chargement GA4
+        // (exclusion owner testée en premier dans loadGA4IfConsented ; gère aussi la ré-acceptation)
+        if (choices.analytics === true) {
+            loadGA4IfConsented('consent');
             return;
         }
 
-        // Cas 2: Analytics REFUSÉ → rester en baseline (log diagnostic)
+        // Cas 2: Analytics REFUSÉ / RETIRÉ → denied + ga-disable si chargé, purge des _ga* dans tous les cas
         if (choices.analytics === false) {
-            log('Analytics refused → baseline only (no cookies)', 'info');
-            // S'assurer que consent est bien denied (au cas où il était granted avant)
-            if (window.gtag && state.isEnhanced) {
-                gtag('consent', 'update', {
-                    'analytics_storage': 'denied',
-                    'ad_storage': 'denied',
-                    'ad_user_data': 'denied',
-                    'ad_personalization': 'denied'
-                });
-                log('Consent revoked → analytics_storage: denied', 'warning');
-            }
+            log('Analytics refused → GA4 disabled, _ga cookies purged', 'info');
+            disableGA4();
+            purgeGaCookies();
         }
     }
 
@@ -1498,80 +1531,20 @@
 
     /**
      * Initialise le module analytics (legacy - pour compatibilité API)
-     * Redirige vers enableEnhanced() si consentement présent
+     * 1.6.072 : charge GA4 seulement si non exclu ET consentement stocké (sinon rien)
      */
-    async function initialize() {
-        // Si baseline pas encore prêt, l'initialiser d'abord
-        if (!state.baselineReady) {
-            await baselineInit();
-        }
-
-        // Si consentement présent, activer enhanced
-        if (hasAnalyticsConsent() && !state.isEnhanced) {
-            enableEnhanced();
-        }
+    function initialize() {
+        return loadGA4IfConsented('boot');
     }
 
     /**
-     * Détecte si CookieConsent est bloqué par un adblock
-     * Marque le flag state.cookieConsentBlocked si nécessaire
+     * Point d'entrée automatique - Consent Mode « de base » (1.6.072)
+     * Le chargement d'un acceptant connu est déjà fait au démarrage (loadGA4IfConsented('boot')).
+     * Ici : listeners de consentement posés dans tous les cas (acceptation, retrait, ré-acceptation).
+     * Plus de repli « CookieConsent bloqué → baseline » : sans consentement, rien n'est chargé.
      */
-    function detectCookieConsentBlocked() {
-        if (!isCookieConsentAvailable()) {
-            state.cookieConsentBlocked = true;
-            log('CookieConsent missing or blocked (adblock?) → baseline only mode', 'warning');
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Point d'entrée automatique - Architecture Consent Mode v2
-     * 1. Lance le baseline immédiatement (cookieless)
-     * 2. Détecte si CookieConsent est bloqué
-     * 3. Configure les listeners pour le consentement
-     * 4. Active enhanced si consentement déjà présent
-     * 5. Fallback: vérifie le consentement après 500ms
-     */
-    async function autoInit() {
-        // 1. Baseline immédiat pour TOUS les visiteurs (TOUJOURS)
-        const baselineOk = await baselineInit();
-
-        if (!baselineOk) {
-            // gtag bloqué (adblock) - dégradation gracieuse
-            log('Running in degraded mode (no analytics)', 'warning');
-            return; // Rien à faire de plus si gtag est bloqué
-        }
-
-        // 2. Détecter si CookieConsent est bloqué
-        const consentBlocked = detectCookieConsentBlocked();
-
-        // 3. Configurer les listeners de consentement (même si bloqué, pour le cas où il charge tard)
+    function autoInit() {
         setupConsentListeners();
-
-        // 4. Si CookieConsent bloqué → rester en baseline only (RGPD safe)
-        if (consentBlocked) {
-            log('Baseline analytics forced (no consent module)', 'info');
-            return;
-        }
-
-        // 5. Vérifier si consentement déjà présent
-        if (hasAnalyticsConsent()) {
-            enableEnhanced();
-        } else {
-            // 6. Fallback: vérification unique après 500ms
-            // (pour les cas où l'event consent n'est pas dispatché)
-            setTimeout(() => {
-                // Re-vérifier si CookieConsent est apparu entre temps
-                if (detectCookieConsentBlocked()) {
-                    return; // Toujours bloqué
-                }
-                if (hasAnalyticsConsent() && !state.isEnhanced) {
-                    log('Consent detected via fallback check', 'info');
-                    enableEnhanced();
-                }
-            }, 500);
-        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -1583,7 +1556,7 @@
      */
     const PublicAPI = {
         // Version
-        version: '2.5.2',
+        version: '2.6.0',
 
         // Configuration (lecture seule)
         config: Object.freeze({ ...CONFIG }),
@@ -1645,12 +1618,12 @@
         // Initialisation manuelle (si necessaire)
         init: initialize,
 
-        // Nouvelles méthodes Consent Mode v2
-        baselineInit: baselineInit,
-        enableEnhanced: enableEnhanced,
+        // 1.6.072 : purge des cookies _ga / _ga_* (bouton « Effacer mes données LotoIA » des pages cookies)
+        purgeGaCookies: purgeGaCookies,
 
-        // Debug mode (via localStorage)
+        // Debug mode (via localStorage) — 1.6.072 : owner uniquement
         setDebug: function(level) {
+            if (!isDebugAllowed()) return;
             try {
                 localStorage.setItem('debug_ga4', String(level ? (level === true ? 1 : level) : 0));
                 log(`Debug level set to ${level}`, 'info');
@@ -1685,9 +1658,9 @@
             return state.isEnhanced;
         },
 
-        // État CookieConsent bloqué (adblock)
+        // État CookieConsent bloqué (adblock) — 1.6.072 : calculé (plus de mode « baseline » de repli)
         isCookieConsentBlocked: function() {
-            return state.cookieConsentBlocked;
+            return !isCookieConsentAvailable();
         },
 
         // Forcer l'envoi d'un pageview
@@ -1737,7 +1710,7 @@
 
     // Log de chargement (silencieux par défaut, sauf debug)
     if (getDebugLevel() >= 1) {
-        console.log('[LotoIA GA4] Module v2.5.2 loaded - Baseline timing fix');
+        console.log('[LotoIA GA4] Module v2.6.0 loaded - Consent Mode basic (GA4 after consent only)');
     }
 
 })(window, document);

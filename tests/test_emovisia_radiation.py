@@ -5,10 +5,12 @@ LotoIA est édité à titre non professionnel par Jean-Philippe Godard (EI Emovi
 effet 31/10/2026). Garde-fou :
   G1 — pages légales + À propos, Loto FR et EM 6 langues : aucun nom d'entreprise,
        identifiant, adresse postale ou téléphone personnel ; aucun cadrage « société » ;
-  G2 — dates de mise à jour au 2 novembre 2026 (mentions + confidentialité) ;
+  G2 — dates de mise à jour au 16 novembre 2026 : politique de confidentialité (lot 1.6.072, bloc c) et
+       mentions légales (lot 1.6.072, bloc d appliqué), Loto FR et EM 6 langues ;
   G3 — JSON-LD des pages À propos : pas de parentOrganization ni de sameAs emovisia.fr ;
   G4 — fichiers sources publics (ui/, prompts/, translations/) : aucun motif interdit ;
-  G5 — exercice des droits RGPD sur rgpd@lotoia.fr, plus de « DPO » / « délégué ».
+  G5 — plus de « DPO » / « délégué » ; droits exercés sur contact@lotoia.fr, plus aucune rgpd@lotoia.fr :
+       confidentialité EM 6 langues (lot 1.6.072, bloc c) et mentions légales Loto (bloc d appliqué).
 Back-office, migrations et fixtures admin exclus (hors périmètre public, décision D9).
 """
 import html
@@ -37,8 +39,13 @@ _COMPANY = re.compile(
     r"|Entreprise individuelle|repr.sentant l.gal|SIRET",
 )
 _DATES = {
-    "fr": "2 novembre 2026", "en": "2 November 2026", "es": "2 de noviembre de 2026",
-    "pt": "2 de novembro de 2026", "de": "2. November 2026", "nl": "2 november 2026",
+    "fr": "16 novembre 2026", "en": "16 November 2026", "es": "16 de noviembre de 2026",
+    "pt": "16 de novembro de 2026", "de": "16. November 2026", "nl": "16 november 2026",
+}
+_DATES_BY_PAGE = {"mentions": _DATES, "confidentialite": _DATES}
+_LOTO_DATES = {
+    "/mentions-legales": "Dernière mise à jour : 16 novembre 2026",
+    "/politique-confidentialite": "Dernière mise à jour : 16 novembre 2026",
 }
 _LOTO_PAGES = ("/mentions-legales", "/politique-confidentialite", "/a-propos")
 _EM_PAGES = ("mentions", "confidentialite", "a_propos")
@@ -105,12 +112,13 @@ def test_g1_no_company_identity(client, lang, path):
 @pytest.mark.parametrize("key", ("mentions", "confidentialite"))
 def test_g2_em_update_date(client, lang, key):
     body = html.unescape(_get(client, EM_URLS[lang][key]))
-    assert _DATES[lang] in body, f"{lang} {key}: date « {_DATES[lang]} » absente"
+    date = _DATES_BY_PAGE[key][lang]
+    assert date in body, f"{lang} {key}: date « {date} » absente"
 
 
 @pytest.mark.parametrize("path", ("/mentions-legales", "/politique-confidentialite"))
 def test_g2_loto_update_date(client, path):
-    assert "Dernière mise à jour : 2 novembre 2026" in html.unescape(_get(client, path))
+    assert _LOTO_DATES[path] in html.unescape(_get(client, path))
 
 
 # ── G3 ────────────────────────────────────────────────────────────────────────
@@ -154,14 +162,16 @@ def test_g4_public_sources_clean():
 
 # ── G5 ────────────────────────────────────────────────────────────────────────
 @pytest.mark.parametrize("lang", _LANGS)
-def test_g5_em_rights_on_rgpd(client, lang):
+def test_g5_em_rights_on_contact(client, lang):
     body = html.unescape(_get(client, EM_URLS[lang]["confidentialite"]))
     assert "(DPO)" not in body and "(DSB)" not in body, f"{lang}: DPO encore affiché"
-    assert "rgpd@lotoia.fr" in body
+    assert "contact@lotoia.fr" in body, f"{lang}: contact@lotoia.fr absente"
+    assert "rgpd@lotoia.fr" not in body, f"{lang}: rgpd@lotoia.fr encore affichée"
 
 
-def test_g5_loto_rights_on_rgpd(client):
+def test_g5_loto_rights_on_contact(client):
     body = html.unescape(_get(client, "/mentions-legales"))
     assert "délégué à la protection des données" not in body
     assert "médiateur de la consommation" not in body
-    assert body.count("rgpd@lotoia.fr") >= 2
+    assert "contact@lotoia.fr" in body, "mentions Loto : contact@lotoia.fr absente"
+    assert "rgpd@lotoia.fr" not in body, "mentions Loto : rgpd@lotoia.fr encore affichée"

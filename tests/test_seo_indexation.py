@@ -1094,9 +1094,14 @@ class TestAppVersion:
         LOT 1.6.071 (14/11, Release 1.6.071) — papier news « Merci » : nouvel article + NewsArticle en tête de
         /news et des 6 pages news EM, LAST_NEWS_DATE 2026-11-14 ; title / meta / og / hreflang inchangés ;
         bump requis : ETag HTML lié à APP_VERSION.
+        LOT 1.6.072 (16/11, Release 1.6.072) — conformité RGPD / CNIL et transparence IA : pages légales,
+        bandeau cookies, FAQ /hybride + /faq (JSON-LD FAQPage mis à jour), À propos, accroche /fr ; /hybride EM et
+        page Numéros sans « automatique » ; mode nuit /hybride Loto + EM (questions d'exemple ambre, CTA bleu,
+        boutons du CTA EM corrigés dans les 2 thèmes), liens --legal-link-color ambre en nuit ; cache-buster
+        style.css ?v=15→16 ; title / meta / og / hreflang inchangés ; bump requis : ETag HTML lié à APP_VERSION.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.071"
+        assert APP_VERSION == "1.6.072"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

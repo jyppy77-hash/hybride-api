@@ -3,7 +3,10 @@ Tests — Lot 1.6.067 (09/11/2026) : vérité HYBRIDE (partie A) + coûts de la 
 
 Partie A
   T1  G7 étendu — sources : aucune pondération chiffrée ni « 24 derniers mois » dans toutes les pages servies
-      (routes.pages.SEO_PAGES + tous les templates EM hors `_*.html`) ;
+      (routes.pages.SEO_PAGES + tous les templates EM hors `_*.html`) ; « 24 derniers mois » et ses équivalents
+      (last / últimos / letzten / laatste 24 …), pas les durées de 24 mois (conservation, lot 1.6.072) ;
+  T1 bis (lot 1.6.072) le motif de fenêtre détecte toujours les 6 phrases historiques retirées par 4dd9131 et ne
+      détecte pas les cellules « 24 mois » (durée de conservation) de la politique de confidentialité EM ;
   T2  G7 étendu — .po : tous les msgid et msgstr des 6 catalogues ;
   T3  G7 + promesses — rendu des pages modifiées (Loto FR + EM × 6 langues) ;
   T4  promesses (« zéro hallucination », « vérification systématique »…, 6 langues) : sources + .po ;
@@ -45,7 +48,8 @@ _LANGS = ("fr", "en", "es", "pt", "de", "nl")
 
 # ── Motifs ────────────────────────────────────────────────────────────────
 
-# G7 (repris de tests/test_lot_coherence_reduit.py) + « 24 derniers mois » 6 langues
+# G7 (repris de tests/test_lot_coherence_reduit.py) + « 24 derniers mois » 6 langues (ancienne fenêtre du moteur ;
+# contextuel dans toutes les langues pour ne pas viser les durées de conservation des pages légales)
 _FORBIDDEN_WEIGHTS = [
     r"\(\s*(?:60|40|70|30)\s?%\s*\)",
     r"\b\d{2}\s?%\s*/\s*\d{2}\s?%",
@@ -53,7 +57,7 @@ _FORBIDDEN_WEIGHTS = [
     r"\b(?:70|30)\s?% du score",
     r"\b(?:60|40)\s?% de pondération",
     r"\b50\s?% période",
-    r"24 derniers mois|24 (?:months|meses|Monate|maanden)\b",
+    r"24 derniers mois|(?:last|últimos|letzten|laatste)\s+24\s+(?:months|meses|Monate|maanden)\b",
 ]
 # Promesses d'infaillibilité (6 langues)
 _PROMISES = [
@@ -250,6 +254,39 @@ def test_served_sources_list_is_complete():
 def test_t1_sources_no_weights(rel):
     hit = _first_hit(_read(rel).replace("\\'", "'"), _FORBIDDEN_WEIGHTS)
     assert hit is None, f"{rel}: pondération chiffrée « {hit} »"
+
+
+# T1 bis — phrases historiques (une par langue) retirées par le commit 4dd9131 : msgid FR et msgstr EN/ES/PT/DE/NL
+# des catalogues au parent de 4dd9131, balises HTML retirées. Elles contiennent aussi « (40%) » (motif n° 1) :
+# le motif de fenêtre (dernier de la liste) doit les détecter à lui seul.
+_OLD_WINDOW_PHRASES = {
+    "fr": "Analyse des tendances récentes (40%) : focus sur les 24 derniers mois pour capter les dynamiques en cours.",
+    "en": "Recent trend analysis (40%): focus on the last 24 months to capture ongoing dynamics.",
+    "es": ("Análisis de tendencias recientes (40%): enfoque en los últimos 24 meses para captar las dinámicas en "
+           "curso."),
+    "pt": "Análise das tendências recentes (40%): foco nos últimos 24 meses para captar as dinâmicas em curso.",
+    "de": "Analyse aktueller Trends (40 %): Fokus auf die letzten 24 Monate, um laufende Dynamiken zu erfassen.",
+    "nl": "Analyse van recente trends (40%): focus op de laatste 24 maanden om lopende dynamieken vast te leggen.",
+}
+# Cellules « durée de conservation » de ui/templates/em/confidentialite.html (lot 1.6.072, bloc c) : à ne pas détecter
+_RETENTION_24_CELLS = {
+    "fr": "24 mois", "en": "24 months", "es": "24 meses", "pt": "24 meses", "de": "24 Monate", "nl": "24 maanden",
+}
+
+
+@pytest.mark.parametrize("lang", _LANGS)
+def test_t1_window_pattern_still_catches_old_wording(lang):
+    phrase = _OLD_WINDOW_PHRASES[lang]
+    assert _first_hit(phrase, _FORBIDDEN_WEIGHTS) is not None, lang
+    assert re.search(_FORBIDDEN_WEIGHTS[-1], phrase), f"{lang}: motif de fenêtre muet sur « {phrase} »"
+
+
+@pytest.mark.parametrize("lang", _LANGS)
+def test_t1_window_pattern_ignores_retention_cells(lang):
+    cell = _RETENTION_24_CELLS[lang]
+    src = _read("ui/templates/em/confidentialite.html")
+    assert f"<td>{cell}</td>" in src, f"{lang}: cellule « {cell} » absente du gabarit"
+    assert _first_hit(cell, _FORBIDDEN_WEIGHTS) is None, f"{lang}: « {cell} » détecté"
 
 
 @pytest.mark.parametrize("lang", _LANGS)

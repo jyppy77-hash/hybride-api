@@ -153,6 +153,7 @@
         body.theme-night .example-box {
             background: rgba(255,255,255,0.04);
         }
+        body.theme-night .example-box code { color: #fcd34d; }
         .example-box code {
             display: block;
             padding: 6px 0;
@@ -212,6 +213,21 @@
             background: rgba(255,255,255,0.1);
             transform: translateY(-2px);
         }
+        .subpage .legal-content .cta-try-links a.btn-white { color: #059669; }
+        .subpage .legal-content .cta-try-links a.btn-outline,
+        .subpage .legal-content .cta-try-links a.btn-outline-w { color: #fff; }
+        body.theme-night .cta-try {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border: 1px solid rgba(147, 197, 253, 0.4);
+        }
+        body.theme-night.subpage .legal-content .cta-try h3 { color: #fff; }
+        body.theme-night.subpage .legal-content .cta-try p { color: rgba(255, 255, 255, 0.92); }
+        body.theme-night.subpage .legal-content .cta-try-links a.btn-white { color: #1d4ed8; }
+        body.theme-night.subpage .legal-content .cta-try-links a.btn-white:hover { background: #eff6ff; color: #1d4ed8; }
+        body.theme-night.subpage .legal-content .cta-try-links a.btn-outline,
+        body.theme-night.subpage .legal-content .cta-try-links a.btn-outline-w { color: #fff; border-color: rgba(255, 255, 255, 0.6); }
+        body.theme-night.subpage .legal-content .cta-try-links a.btn-outline:hover,
+        body.theme-night.subpage .legal-content .cta-try-links a.btn-outline-w:hover { color: #fff; border-color: #fff; background: transparent; }
         @media (max-width: 600px) {
             .compare-table { font-size: 0.82rem; }
             .compare-table thead th,
@@ -262,7 +278,7 @@
 
                 <ul>
                     <li>{{ _('<strong>%(total)s+ tirages officiels EuroMillions</strong> (plusieurs années d\'historique)')|format(total=em_db_total)|safe }}</li>
-                    <li>{{ _('<strong>Synchronisation automatique</strong> après chaque tirage officiel (mardi et vendredi)')|safe }}</li>
+                    <li>{{ _('<strong>Mise à jour après chaque tirage officiel</strong> (mardi et vendredi)')|safe }}</li>
                     <li>{{ _('Base hébergée sur <strong>Google Cloud SQL</strong> pour la fiabilité et la rapidité')|safe }}</li>
                 </ul>
 

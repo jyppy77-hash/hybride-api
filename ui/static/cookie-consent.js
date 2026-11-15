@@ -17,7 +17,7 @@ const CookieConsent = (function() {
     const CONSENT_LABELS = {
         fr: {
             banner_title: 'Gestion des cookies',
-            banner_text: 'LotoIA.fr utilise des technologies de stockage local pour améliorer votre expérience. Ces données restent sur votre appareil et ne sont pas partagées avec des tiers.',
+            banner_text: "LotoIA.fr utilise des cookies et du stockage local nécessaires au fonctionnement du site. Google Analytics n'est activé que si vous l'acceptez : sans votre accord, aucun cookie Google n'est déposé. Une mesure d'audience sans cookie (Umami) reste active.",
             more: 'En savoir plus',
             accept_all: 'Tout accepter',
             reject_all: 'Tout refuser',
@@ -31,13 +31,13 @@ const CookieConsent = (function() {
             cat_necessary: 'Strictement nécessaires',
             cat_necessary_desc: 'Ces cookies sont indispensables au fonctionnement du site. Ils ne peuvent pas être désactivés.',
             cat_analytics: "Mesure d'audience",
-            cat_analytics_desc: "Ces cookies nous permettent de mesurer l'audience du site et d'améliorer nos services.",
+            cat_analytics_desc: "Google Analytics, activé seulement si vous l'acceptez, mesure la fréquentation du site. Ses cookies sont valables 13 mois, les données détaillées sont conservées 14 mois par Google, et rien n'est utilisé à des fins publicitaires.",
             cat_advertising: 'Publicité et partenaires',
-            cat_advertising_desc: "Ces cookies permettent d'afficher des publicités personnalisées et de mesurer leur efficacité."
+            cat_advertising_desc: "Aucun cookie publicitaire ou de partenaire n'est utilisé actuellement."
         },
         en: {
             banner_title: 'Cookie management',
-            banner_text: 'LotoIA.fr uses local storage technologies to improve your experience. This data stays on your device and is not shared with third parties.',
+            banner_text: 'LotoIA.fr uses cookies and local storage that are necessary for the site to work. Google Analytics is only activated if you accept it: without your consent, no Google cookie is set. Cookie-free audience measurement (Umami) remains active.',
             more: 'Learn more',
             accept_all: 'Accept all',
             reject_all: 'Decline all',
@@ -51,13 +51,13 @@ const CookieConsent = (function() {
             cat_necessary: 'Strictly necessary',
             cat_necessary_desc: 'These cookies are essential for the website to function. They cannot be disabled.',
             cat_analytics: 'Audience measurement',
-            cat_analytics_desc: 'These cookies allow us to measure website traffic and improve our services.',
+            cat_analytics_desc: 'Google Analytics, activated only if you accept it, measures traffic to the site. Its cookies are valid for 13 months, detailed data is kept for 14 months by Google, and nothing is used for advertising purposes.',
             cat_advertising: 'Advertising and partners',
-            cat_advertising_desc: 'These cookies enable personalised advertising and measure its effectiveness.'
+            cat_advertising_desc: 'No advertising or partner cookies are currently used.'
         },
         es: {
             banner_title: 'Gestión de cookies',
-            banner_text: 'LotoIA.fr utiliza tecnologías de almacenamiento local para mejorar su experiencia. Estos datos permanecen en su dispositivo y no se comparten con terceros.',
+            banner_text: 'LotoIA.fr utiliza cookies y almacenamiento local necesarios para el funcionamiento del sitio. Google Analytics solo se activa si usted lo acepta: sin su consentimiento, no se instala ninguna cookie de Google. Una medición de audiencia sin cookies (Umami) permanece activa.',
             more: 'Más información',
             accept_all: 'Aceptar todo',
             reject_all: 'Rechazar todo',
@@ -71,13 +71,13 @@ const CookieConsent = (function() {
             cat_necessary: 'Estrictamente necesarias',
             cat_necessary_desc: 'Estas cookies son indispensables para el funcionamiento del sitio. No se pueden desactivar.',
             cat_analytics: 'Medición de audiencia',
-            cat_analytics_desc: 'Estas cookies nos permiten medir el tráfico del sitio y mejorar nuestros servicios.',
+            cat_analytics_desc: 'Google Analytics, activado solo si usted lo acepta, mide el tráfico del sitio. Sus cookies son válidas durante 13 meses, Google conserva los datos detallados durante 14 meses y nada se utiliza con fines publicitarios.',
             cat_advertising: 'Publicidad y socios',
-            cat_advertising_desc: 'Estas cookies permiten mostrar publicidad personalizada y medir su eficacia.'
+            cat_advertising_desc: 'Actualmente no se utiliza ninguna cookie publicitaria ni de socios.'
         },
         pt: {
             banner_title: 'Gestão de cookies',
-            banner_text: 'O LotoIA.fr utiliza tecnologias de armazenamento local para melhorar a sua experiência. Estes dados permanecem no seu dispositivo e não são partilhados com terceiros.',
+            banner_text: 'O LotoIA.fr utiliza cookies e armazenamento local necessários ao funcionamento do site. O Google Analytics só é ativado se o aceitar: sem o seu consentimento, não é colocado nenhum cookie da Google. Uma medição de audiência sem cookies (Umami) permanece ativa.',
             more: 'Saber mais',
             accept_all: 'Aceitar tudo',
             reject_all: 'Recusar tudo',
@@ -91,13 +91,13 @@ const CookieConsent = (function() {
             cat_necessary: 'Estritamente necessários',
             cat_necessary_desc: 'Estes cookies são indispensáveis para o funcionamento do site. Não podem ser desativados.',
             cat_analytics: 'Medição de audiência',
-            cat_analytics_desc: 'Estes cookies permitem-nos medir o tráfego do site e melhorar os nossos serviços.',
+            cat_analytics_desc: 'O Google Analytics, ativado apenas se o aceitar, mede o tráfego do site. Os seus cookies são válidos durante 13 meses, os dados detalhados são conservados durante 14 meses pela Google e nada é utilizado para fins publicitários.',
             cat_advertising: 'Publicidade e parceiros',
-            cat_advertising_desc: 'Estes cookies permitem apresentar publicidade personalizada e medir a sua eficácia.'
+            cat_advertising_desc: 'Atualmente, não é utilizado nenhum cookie publicitário ou de parceiros.'
         },
         de: {
             banner_title: 'Cookie-Verwaltung',
-            banner_text: 'LotoIA.fr verwendet lokale Speichertechnologien, um Ihre Erfahrung zu verbessern. Diese Daten verbleiben auf Ihrem Gerät und werden nicht an Dritte weitergegeben.',
+            banner_text: 'LotoIA.fr verwendet Cookies und lokalen Speicher, die für den Betrieb der Website erforderlich sind. Google Analytics wird nur aktiviert, wenn Sie zustimmen: Ohne Ihre Einwilligung wird kein Google-Cookie gesetzt. Eine Reichweitenmessung ohne Cookies (Umami) bleibt aktiv.',
             more: 'Mehr erfahren',
             accept_all: 'Alle akzeptieren',
             reject_all: 'Alle ablehnen',
@@ -111,13 +111,13 @@ const CookieConsent = (function() {
             cat_necessary: 'Unbedingt erforderlich',
             cat_necessary_desc: 'Diese Cookies sind für die Funktion der Website unerlässlich. Sie können nicht deaktiviert werden.',
             cat_analytics: 'Reichweitenmessung',
-            cat_analytics_desc: 'Diese Cookies ermöglichen es uns, den Datenverkehr der Website zu messen und unsere Dienste zu verbessern.',
+            cat_analytics_desc: 'Google Analytics, nur mit Ihrer Zustimmung aktiviert, misst die Besucherzahlen der Website. Seine Cookies sind 13 Monate gültig, detaillierte Daten werden von Google 14 Monate lang gespeichert, und nichts wird zu Werbezwecken verwendet.',
             cat_advertising: 'Werbung und Partner',
-            cat_advertising_desc: 'Diese Cookies ermöglichen personalisierte Werbung und die Messung ihrer Wirksamkeit.'
+            cat_advertising_desc: 'Derzeit werden keine Werbe- oder Partner-Cookies verwendet.'
         },
         nl: {
             banner_title: 'Cookiebeheer',
-            banner_text: 'LotoIA.fr gebruikt lokale opslagtechnologieën om uw ervaring te verbeteren. Deze gegevens blijven op uw apparaat en worden niet gedeeld met derden.',
+            banner_text: 'LotoIA.fr gebruikt cookies en lokale opslag die nodig zijn voor de werking van de website. Google Analytics wordt alleen geactiveerd als u dit accepteert: zonder uw toestemming wordt er geen Google-cookie geplaatst. Een publieksmeting zonder cookies (Umami) blijft actief.',
             more: 'Meer informatie',
             accept_all: 'Alles accepteren',
             reject_all: 'Alles weigeren',
@@ -131,9 +131,9 @@ const CookieConsent = (function() {
             cat_necessary: 'Strikt noodzakelijk',
             cat_necessary_desc: 'Deze cookies zijn onmisbaar voor de werking van de website. Ze kunnen niet worden uitgeschakeld.',
             cat_analytics: 'Publieksmeting',
-            cat_analytics_desc: 'Deze cookies stellen ons in staat het websiteverkeer te meten en onze diensten te verbeteren.',
+            cat_analytics_desc: 'Google Analytics, alleen geactiveerd als u dit accepteert, meet het bezoek aan de website. De cookies zijn 13 maanden geldig, gedetailleerde gegevens worden 14 maanden door Google bewaard en niets wordt voor reclamedoeleinden gebruikt.',
             cat_advertising: 'Reclame en partners',
-            cat_advertising_desc: 'Deze cookies maken gepersonaliseerde reclame mogelijk en meten de doeltreffendheid ervan.'
+            cat_advertising_desc: 'Er worden momenteel geen reclame- of partnercookies gebruikt.'
         }
     };
 
@@ -175,6 +175,11 @@ const CookieConsent = (function() {
 
         // Durée de validité du consentement (13 mois en jours)
         consentDuration: 395,
+
+        // 1.6.072 : version du consentement. Toute autre version stockée (dont '1.0') est rejetée
+        // et le choix est redemandé une fois. À incrémenter à chaque ajout d'un cookie ou traceur
+        // soumis à consentement (politique cookies §7). Doit rester égale à CONSENT_VERSION (analytics.js).
+        consentVersion: '2.0',
 
         // Catégories de cookies (id, required, cookies list)
         categories: {
@@ -218,6 +223,12 @@ const CookieConsent = (function() {
 
             const data = JSON.parse(stored);
 
+            // 1.6.072 : autre version (dont '1.0', antérieure à la 072) → entrée supprimée, choix redemandé
+            if (!data || data.version !== CONFIG.consentVersion) {
+                localStorage.removeItem(CONFIG.storageKey);
+                return null;
+            }
+
             // Vérifier l'expiration
             if (data.expires && new Date(data.expires) < new Date()) {
                 localStorage.removeItem(CONFIG.storageKey);
@@ -239,7 +250,7 @@ const CookieConsent = (function() {
         expires.setDate(expires.getDate() + CONFIG.consentDuration);
 
         const data = {
-            version: '1.0',
+            version: CONFIG.consentVersion,
             date: new Date().toISOString(),
             expires: expires.toISOString(),
             choices: choices

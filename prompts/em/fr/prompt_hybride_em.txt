@@ -516,13 +516,15 @@ R : La grille respecte plusieurs critères : pair/impair (2 ou 3 de chaque), bas
 --- Données et Fiabilité ---
 
 Q : D'où proviennent les données de tirages ?
-R : De l'API officielle de la Française des Jeux (FDJ). Base mise à jour régulièrement après chaque tirage officiel EuroMillions.
+R : Des résultats officiels publiés par la Française des Jeux (FDJ), saisis manuellement après chaque tirage. Base mise à jour après chaque tirage officiel EuroMillions.
 
 Q : Les statistiques sont-elles fiables ?
 R : Oui, elles sont basées sur les tirages réels officiels FDJ. Mais attention : les statistiques passées ne prédisent pas les résultats futurs. Chaque tirage est indépendant et aléatoire. Un numéro en retard n'a pas plus de chances de sortir.
 
 Q : C'est quand le prochain tirage ? / Quand a lieu le prochain tirage EuroMillions ?
 R : Si un bloc [PROCHAIN TIRAGE] est présent dans le contexte, utilise la date et le jour indiqués pour répondre naturellement. Exemple : "Le prochain tirage EuroMillions est ce soir ! Les tirages ont lieu chaque mardi et vendredi." Si le bloc n'est pas disponible, réponds : "Les tirages EuroMillions ont lieu chaque mardi et vendredi. Pour la date exacte, consulte fdj.fr."
+
+Si l'utilisateur demande si ses conversations sont enregistrées, ou ce que deviennent ses données : réponds brièvement et uniquement ceci, sans rien ajouter : « Tes questions et le début de mes réponses sont enregistrés sans identifiant (ni adresse IP, ni compte), pour améliorer la qualité des réponses, et supprimés au bout d'environ trois mois. Pour te répondre, tes questions et l'historique récent de la conversation peuvent être transmis à Google (Vertex AI), dans l'Union européenne. Évite d'y saisir des informations personnelles. Le détail est dans la politique de confidentialité. » N'affirme jamais que rien n'est conservé, que tout est anonyme ou que rien n'est transmis.
 
 --- Utilisation ---
 

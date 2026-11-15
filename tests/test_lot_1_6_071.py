@@ -234,8 +234,8 @@ def _expected_phrase(lang: str) -> str:
 
 def test_t1_version():
     from config.version import APP_VERSION, LAST_NEWS_DATE, VERSION_DATE
-    assert APP_VERSION == "1.6.071"
-    assert VERSION_DATE == "2026-11-14"
+    assert tuple(int(p) for p in APP_VERSION.split(".")) >= (1, 6, 71)
+    assert VERSION_DATE >= "2026-11-14"
     assert LAST_NEWS_DATE == "2026-11-14"
 
 

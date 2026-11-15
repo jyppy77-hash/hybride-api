@@ -9,6 +9,9 @@ C consent default depuis le choix stocké + page_view unique après acceptation,
 avant config/page_view (C1 ordre baselineInit, C2 vidage sans envoi si gtag bloqué), E tampon
 produit > 30 min jeté, F page_view bfcache, G rating-popup visible, H sponsor visible,
 I cache-busters cohérents sur les pages servies, et la règle d'or /accueil (MD5 inchangés).
+
+1.6.072 (Consent Mode « de base ») : B, C, D, F et I adaptés au chargement après consentement
+uniquement (loadGA4IfConsented) ; les cas propres au lot sont dans tests/test_lot_1_6_072.py.
 """
 
 import glob
@@ -49,7 +52,8 @@ _LEGACY_301 = [
 
 # Cache-busters attendus (1.6.054) — une seule version partout sur les fichiers servis
 _EXPECTED_VERSIONS = {
-    "analytics.js": "4",
+    "analytics.js": "5",
+    "cookie-consent.js": "8",
     "rating-popup.js": "10",
     "sponsor-popup.js": "11",
     "sponsor-popup75.js": "19",
@@ -60,6 +64,7 @@ _EXPECTED_VERSIONS = {
 # Nombre minimal de références attendues (garde-fou contre un scan vide)
 _EXPECTED_MIN_REFS = {
     "analytics.js": 21,
+    "cookie-consent.js": 21,
     "rating-popup.js": 19,
     "sponsor-popup.js": 2,
     "sponsor-popup75.js": 1,
@@ -143,13 +148,19 @@ def test_ga4_pagehide_buffer_flush_kept():
 # ================================================================
 
 def test_ga4_internal_marker_read_before_gtag_load():
+    """1.6.072 : exclusion (owner / bot IA / appareil marqué) testée avant dataLayer et avant le script,
+    et le marqueur owner est posé au démarrage avant le chargement."""
     src = _read(_ANALYTICS_JS)
-    boot = _body(src, "function bootGtagImmediately()", "bootGtagImmediately();")
-    assert "localStorage.setItem(INTERNAL_DEVICE_KEY, '1')" in boot
-    i_guard = boot.index("window.__OWNER__ || window.__IS_AI_BOT__ || isInternalDevice()")
-    i_datalayer = boot.index("window.dataLayer = window.dataLayer || []")
-    i_script = boot.index("googletagmanager.com/gtag/js")
+    excl = _body(src, "function isExcluded()", "function isDebugAllowed()")
+    assert "window.__OWNER__ || window.__IS_AI_BOT__ || isInternalDevice()" in excl
+    load = _body(src, "function loadGA4IfConsented(origin)", "function reenableGA4()")
+    i_guard = load.index("if (isExcluded())")
+    i_datalayer = load.index("window.dataLayer = window.dataLayer || []")
+    i_script = load.index("googletagmanager.com/gtag/js")
     assert i_guard < i_datalayer < i_script
+    i_marker = src.index("localStorage.setItem(INTERNAL_DEVICE_KEY, '1')")
+    i_boot = src.index("loadGA4IfConsented('boot');")
+    assert i_marker < i_boot
 
 
 def test_ga4_internal_marker_key_and_owner_set():
@@ -163,9 +174,12 @@ def test_ga4_internal_marker_key_and_owner_set():
 # ================================================================
 
 def test_ga4_consent_default_from_stored_choice():
+    """1.6.072 : au boot, le choix stocké décide du chargement ; chargé = accepté → default granted."""
     src = _read(_ANALYTICS_JS)
-    assert "state.consentAtBoot = readStoredAnalyticsConsent();" in src
-    assert "'analytics_storage': state.consentAtBoot ? 'granted' : 'denied'," in src
+    load = _body(src, "function loadGA4IfConsented(origin)", "function reenableGA4()")
+    assert "origin === 'boot' ? readStoredAnalyticsConsent() : hasAnalyticsConsent()" in load
+    assert "'analytics_storage': 'granted'," in load
+    assert "state.consentAtBoot" not in src
 
 
 def test_ga4_stored_consent_respects_expiry():
@@ -178,13 +192,17 @@ def test_ga4_stored_consent_respects_expiry():
 
 
 def test_ga4_single_page_view_on_mid_page_consent():
+    """1.6.072 : page_view unique par flag (posé avant l'envoi), catégorie consent_granted en cours de page."""
     src = _read(_ANALYTICS_JS)
-    fn = _body(src, "function enableEnhanced()", "function initGA4")
-    assert "!state.consentAtBoot && !state.consentPageViewSent && state.baselineReady" in fn
+    fn = _body(src, "function sendPageViewOnce()", "function sendConsentGrantedEvent()")
+    assert "if (state.pageViewSent) return;" in fn
     assert fn.count("sendPageView(") == 1
-    i_flag = fn.index("state.consentPageViewSent = true;")
-    i_pv = fn.index("sendPageView('consent_granted');")
-    assert i_flag < i_pv
+    assert fn.index("state.pageViewSent = true;") < fn.index("sendPageView(state.pageViewCategory);")
+    load = _body(src, "function loadGA4IfConsented(origin)", "function reenableGA4()")
+    assert "state.pageViewCategory = origin === 'boot' ? 'baseline' : 'consent_granted';" in load
+    base = _body(src, "async function baselineInit()", "function sendGA4Event(")
+    assert base.count("sendPageViewOnce();") == 1
+    assert "sendPageView(" not in base.replace("sendPageViewOnce(", "")
 
 
 # ================================================================
@@ -194,19 +212,22 @@ def test_ga4_single_page_view_on_mid_page_consent():
 def test_ga4_baseline_ready_precedes_queue_and_buffer_flush():
     """C1 : baselineReady = true AVANT processEventsQueue / flushProductBuffer (sinon jamais vidés)."""
     src = _read(_ANALYTICS_JS)
-    fn = _body(src, "async function baselineInit()", "function enableEnhanced()")
+    fn = _body(src, "async function baselineInit()", "function sendGA4Event(")
     i_config = fn.index("gtag('config', CONFIG.GA4_ID")
     i_ready = fn.index("state.baselineReady = true;")
-    i_pv = fn.index("sendPageView('baseline');")
+    i_pv = fn.index("sendPageViewOnce();")
     i_queue = fn.index("processEventsQueue();")
     i_buffer = fn.index("flushProductBuffer();")
     assert i_config < i_ready < i_pv < i_queue < i_buffer
 
 
 def test_ga4_send_event_queued_until_baseline_ready():
+    """1.6.072 (Q8) : sans consentement → jeté avant tout ; la file ne couvre que injection → baselineReady."""
     src = _read(_ANALYTICS_JS)
     fn = _body(src, "function sendGA4Event(", "function processEventsQueue()")
+    i_noconsent = fn.index("if (!state.gtagBooted || !state.isEnhanced)")
     i_blocked = fn.index("if (state.gtagLoadFailed)")
+    assert i_noconsent < i_blocked
     i_queue = fn.index("if (!state.baselineReady || !window.gtag)")
     i_send = fn.index("gtag('event', eventName, enrichedParams)")
     assert i_blocked < i_queue < i_send
@@ -257,8 +278,11 @@ def test_ga4_pageshow_persisted_sends_page_view():
     body = m.group(1)
     assert "if (!event.persisted) return;" in body
     assert "state.gtagLoadFailed" in body
-    assert "isInternalDevice()" in body
-    assert "!hasAnalyticsConsent()" in body
+    # 1.6.072 : exclusion (owner / bot IA / appareil marqué) testée avant le consentement ;
+    # B1 bis : consentement relu dans le stockage (source fraîche), pas l'état mémoire de CookieConsent
+    assert body.index("isExcluded()") < body.index("!readStoredAnalyticsConsent()")
+    assert "hasAnalyticsConsent()" not in body
+    assert "state.gtagBooted" in body
     assert "sendPageView('bfcache_restore');" in body
 
 
@@ -361,4 +385,4 @@ def test_accueil_seo_head_md5_unchanged():
     assert _md5(meta) == _ACCUEIL_META_MD5
     assert [_md5(b) for b in jsonld] == _ACCUEIL_JSONLD_MD5
     # Seul le cache-buster analytics du head a changé
-    assert '<script src="/ui/static/analytics.js?v=4" defer></script>' in src
+    assert '<script src="/ui/static/analytics.js?v=5" defer></script>' in src

@@ -102,7 +102,7 @@ def _page(client, lang: str, page: str) -> str:
 def test_cookies_fr_accented(client):
     raw = _page(client, "fr", "cookies")
     body = html.unescape(raw)
-    for expected in ("Dernière mise à jour : 1 mars 2026", "Politique de confidentialité",
+    for expected in ("Dernière mise à jour : 16 novembre 2026", "Politique de confidentialité",
                      "déposés par le site visité", "Gérer mes préférences cookies",
                      "délibération n°2020-091", "Au-delà de cette période"):
         assert expected in body, f"cookies FR : « {expected} » absent"
@@ -115,7 +115,7 @@ def test_cookies_fr_accented(client):
 
 def test_disclaimer_fr_accented(client):
     body = html.unescape(_page(client, "fr", "disclaimer"))
-    for expected in ("Avertissements Légaux", "Dernière mise à jour : 1 mars 2026",
+    for expected in ("Avertissements Légaux", "Dernière mise à jour : 16 novembre 2026",
                      "JOUER COMPORTE DES RISQUES : ENDETTEMENT, ISOLEMENT, DÉPENDANCE.",
                      "Pondération temporelle", "EN L'ÉTAT", "(appel non surtaxé)",
                      "Chaque combinaison a <strong>exactement la même probabilité</strong>"):

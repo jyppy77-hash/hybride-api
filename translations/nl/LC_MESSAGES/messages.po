@@ -120,8 +120,8 @@ msgid "Technologie IA Grounded"
 msgstr "Grounded AI-technologie"
 
 #: ui/templates/launcher.html:450
-msgid "IA connectée en temps réel aux tirages officiels"
-msgstr "AI in realtime verbonden met officiële trekkingen"
+msgid "IA connectée aux résultats officiels, mis à jour après chaque tirage"
+msgstr "AI verbonden met de officiële resultaten, bijgewerkt na elke trekking"
 
 #: ui/templates/launcher.html:460 ui/templates/launcher.html:481
 msgid "Tirages lundi, mercredi, samedi"
@@ -485,13 +485,13 @@ msgstr "Infrastructuur"
 msgid ""
 "LotoIA est hébergé sur <strong>Google Cloud Run</strong> avec une base de"
 " données <strong>Cloud SQL</strong>. Cette architecture garantit la "
-"disponibilité, la sécurité et la mise à jour automatique des données "
-"après chaque tirage officiel."
+"disponibilité et la sécurité du site. Les données sont mises à jour après "
+"chaque tirage officiel."
 msgstr ""
 "LotoIA wordt gehost op <strong>Google Cloud Run</strong> met een "
 "<strong>Cloud SQL</strong>-database. Deze architectuur garandeert de "
-"beschikbaarheid, de veiligheid en de automatische bijwerking van de "
-"gegevens na elke officiële trekking."
+"beschikbaarheid en de veiligheid van de website. De gegevens worden na "
+"elke officiële trekking bijgewerkt."
 
 #: ui/templates/em/a-propos.html:151
 msgid "Nos données"
@@ -531,12 +531,12 @@ msgstr ""
 
 #: ui/templates/em/a-propos.html:159
 msgid ""
-"Toutes les données proviennent des sources officielles. Elles sont mises "
-"à jour automatiquement après chaque tirage. Aucune donnée n'est inventée "
-"ou approximée."
+"Toutes les données proviennent des sources officielles. Elles sont "
+"saisies manuellement après chaque tirage. Aucune donnée n'est inventée ou"
+" approximée."
 msgstr ""
-"Alle gegevens zijn afkomstig uit officiële bronnen. Ze worden automatisch"
-" bijgewerkt na elke trekking. Geen enkel gegeven is verzonnen of geschat."
+"Alle gegevens zijn afkomstig uit officiële bronnen. Ze worden na elke "
+"trekking handmatig ingevoerd. Geen enkel gegeven is verzonnen of geschat."
 
 #: ui/templates/em/a-propos.html:164
 msgid "Notre engagement pour le jeu responsable"
@@ -2688,11 +2688,11 @@ msgstr ""
 
 #: ui/templates/em/hybride.html:265
 msgid ""
-"<strong>Synchronisation automatique</strong> après chaque tirage officiel"
-" (mardi et vendredi)"
+"<strong>Mise à jour après chaque tirage officiel</strong> (mardi et "
+"vendredi)"
 msgstr ""
-"<strong>Automatische synchronisatie</strong> na elke officiële trekking "
-"(dinsdag en vrijdag)"
+"<strong>Bijgewerkt na elke officiële trekking</strong> (dinsdag en "
+"vrijdag)"
 
 #: ui/templates/em/hybride.html:266
 msgid ""

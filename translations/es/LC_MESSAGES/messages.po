@@ -120,8 +120,8 @@ msgid "Technologie IA Grounded"
 msgstr "Tecnología IA Grounded"
 
 #: ui/templates/launcher.html:450
-msgid "IA connectée en temps réel aux tirages officiels"
-msgstr "IA conectada en tiempo real a los sorteos oficiales"
+msgid "IA connectée aux résultats officiels, mis à jour après chaque tirage"
+msgstr "IA conectada a los resultados oficiales, actualizados después de cada sorteo"
 
 #: ui/templates/launcher.html:460 ui/templates/launcher.html:481
 msgid "Tirages lundi, mercredi, samedi"
@@ -492,13 +492,13 @@ msgstr "Infraestructura"
 msgid ""
 "LotoIA est hébergé sur <strong>Google Cloud Run</strong> avec une base de"
 " données <strong>Cloud SQL</strong>. Cette architecture garantit la "
-"disponibilité, la sécurité et la mise à jour automatique des données "
-"après chaque tirage officiel."
+"disponibilité et la sécurité du site. Les données sont mises à jour après "
+"chaque tirage officiel."
 msgstr ""
 "LotoIA está alojado en <strong>Google Cloud Run</strong> con una base de "
 "datos <strong>Cloud SQL</strong>. Esta arquitectura garantiza la "
-"disponibilidad, la seguridad y la actualización automática de los datos "
-"después de cada sorteo oficial."
+"disponibilidad y la seguridad del sitio. Los datos se actualizan después "
+"de cada sorteo oficial."
 
 #: ui/templates/em/a-propos.html:151
 msgid "Nos données"
@@ -538,13 +538,12 @@ msgstr ""
 
 #: ui/templates/em/a-propos.html:159
 msgid ""
-"Toutes les données proviennent des sources officielles. Elles sont mises "
-"à jour automatiquement après chaque tirage. Aucune donnée n'est inventée "
-"ou approximée."
+"Toutes les données proviennent des sources officielles. Elles sont "
+"saisies manuellement après chaque tirage. Aucune donnée n'est inventée ou"
+" approximée."
 msgstr ""
-"Todos los datos proceden de fuentes oficiales. Se actualizan "
-"automáticamente después de cada sorteo. Ningún dato es inventado ni "
-"aproximado."
+"Todos los datos proceden de fuentes oficiales. Se introducen manualmente "
+"después de cada sorteo. Ningún dato es inventado ni aproximado."
 
 #: ui/templates/em/a-propos.html:164
 msgid "Notre engagement pour le jeu responsable"
@@ -2709,11 +2708,11 @@ msgstr ""
 
 #: ui/templates/em/hybride.html:265
 msgid ""
-"<strong>Synchronisation automatique</strong> après chaque tirage officiel"
-" (mardi et vendredi)"
+"<strong>Mise à jour après chaque tirage officiel</strong> (mardi et "
+"vendredi)"
 msgstr ""
-"<strong>Sincronización automática</strong> después de cada sorteo oficial"
-" (martes y viernes)"
+"<strong>Actualización después de cada sorteo oficial</strong> (martes y "
+"viernes)"
 
 #: ui/templates/em/hybride.html:266
 msgid ""

@@ -503,13 +503,15 @@ A: The grid meets several criteria: odd/even (2 or 3 of each), low/high (2-3 num
 --- Data and Reliability ---
 
 Q: Where do the draw data come from?
-A: From the official Française des Jeux (FDJ) API. Database updated regularly after each official EuroMillions draw.
+A: From the official results published by the Française des Jeux (FDJ), entered manually after each draw. Database updated after each official EuroMillions draw.
 
 Q: Are the statistics reliable?
 A: Yes, they are based on real official FDJ draws. But beware: past statistics do not predict future results. Every draw is independent and random. A number with a long gap is no more likely to come out.
 
 Q: When is the next draw? / When does the next EuroMillions draw take place?
 A: If a [PROCHAIN TIRAGE] block is present in the context, use the date and day indicated to respond naturally. Example: "The next EuroMillions draw is tonight! Draws take place every Tuesday and Friday." If the block isn't available, respond: "EuroMillions draws take place every Tuesday and Friday. For the exact date, check fdj.fr."
+
+If the user asks whether their conversations are recorded, or what happens to their data: answer briefly and only with this, adding nothing: "Your questions and the beginning of my answers are recorded without any identifier (neither IP address nor account), to improve the quality of the answers, and deleted after about three months. To answer you, your questions and the recent history of the conversation may be sent to Google (Vertex AI), in the European Union. Avoid entering personal information. Details are in the privacy policy." Never claim that nothing is kept, that everything is anonymous or that nothing is transmitted.
 
 --- Usage ---
 

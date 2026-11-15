@@ -36,15 +36,15 @@
     </style>
 
     {# ── Common CSS (non-blocking) ── #}
-    <link rel="stylesheet" href="/ui/static/style.css?v=15" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="/ui/static/style.css?v=15"></noscript>
+    <link rel="stylesheet" href="/ui/static/style.css?v=16" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/ui/static/style.css?v=16"></noscript>
     <link rel="stylesheet" href="/ui/static/style-em.css?v=14" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="/ui/static/style-em.css?v=14"></noscript>
     {% block extra_css %}{% endblock %}
 
     {# ── Theme + Analytics ── #}
     <script src="/ui/static/theme.js?v=1"></script>
-    <script src="/ui/static/analytics.js?v=4" defer></script>
+    <script src="/ui/static/analytics.js?v=5" defer></script>
     <script src="/ui/static/tracker.js?v=5" defer></script>
     <script>function umamiBeforeSend(type,payload){if(window.__OWNER__||window.__IS_AI_BOT__)return false;return payload;}</script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="e6add519-5d39-42cd-b4bf-b795f4408dcc" data-before-send="umamiBeforeSend"></script>
@@ -133,7 +133,7 @@
     {% if include_nav_scroll %}<script defer src="/ui/static/nav-scroll.js?v=1"></script>{% endif %}
     <link rel="stylesheet" href="/ui/static/legal.css?v=15" media="print" onload="this.media='all'">
     <noscript><link rel="stylesheet" href="/ui/static/legal.css?v=15"></noscript>
-    <script defer src="/ui/static/cookie-consent.js?v=7"></script>
+    <script defer src="/ui/static/cookie-consent.js?v=8"></script>
 
     {# ── Chatbot widget ── #}
     <link rel="stylesheet" href="/ui/static/hybride-chatbot.css?v=14" media="print" onload="this.media='all'">

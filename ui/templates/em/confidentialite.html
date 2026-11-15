@@ -21,7 +21,66 @@
 
       {# ── Update date ── #}
       <div class="legal-update">
-        {% if lang == "fr" %}Derni&egrave;re mise &agrave; jour : 2 novembre 2026{% elif lang == "en" %}Last updated: 2 November 2026{% elif lang == "es" %}&Uacute;ltima actualizaci&oacute;n: 2 de noviembre de 2026{% elif lang == "pt" %}&Uacute;ltima atualiza&ccedil;&atilde;o: 2 de novembro de 2026{% elif lang == "de" %}Letzte Aktualisierung: 2. November 2026{% elif lang == "nl" %}Laatst bijgewerkt: 2 november 2026{% endif %}
+        {% if lang == "fr" %}Derni&egrave;re mise &agrave; jour : 16 novembre 2026{% elif lang == "en" %}Last updated: 16 November 2026{% elif lang == "es" %}&Uacute;ltima actualizaci&oacute;n: 16 de noviembre de 2026{% elif lang == "pt" %}&Uacute;ltima atualiza&ccedil;&atilde;o: 16 de novembro de 2026{% elif lang == "de" %}Letzte Aktualisierung: 16. November 2026{% elif lang == "nl" %}Laatst bijgewerkt: 16 november 2026{% endif %}
+      </div>
+
+      {# ── Summary ── #}
+      <div class="legal-highlight">
+        {% if lang == "fr" %}
+        <strong>En r&eacute;sum&eacute; :</strong>
+        <ul>
+          <li>Aucun compte n'est n&eacute;cessaire pour utiliser LotoIA.fr. Vos donn&eacute;es ne sont jamais vendues et ne servent &agrave; aucune publicit&eacute; cibl&eacute;e.</li>
+          <li>Le site est h&eacute;berg&eacute; par Google Cloud dans l'Union europ&eacute;enne (Belgique).</li>
+          <li>Google Analytics n'est activ&eacute; que si vous l'acceptez. La mesure d'audience Umami et notre mesure interne fonctionnent sans cookie.</li>
+          <li>Vos questions au chatbot sont enregistr&eacute;es sans identifiant technique (ni adresse IP, ni identifiant de session) et supprim&eacute;es au bout d'environ trois mois.</li>
+          <li>Pour toute question ou demande sur vos donn&eacute;es : contact@lotoia.fr.</li>
+        </ul>
+        {% elif lang == "en" %}
+        <strong>In short:</strong>
+        <ul>
+          <li>No account is needed to use LotoIA.fr. Your data is never sold and is never used for targeted advertising.</li>
+          <li>The site is hosted by Google Cloud in the European Union (Belgium).</li>
+          <li>Google Analytics is only activated if you accept it. Umami audience measurement and our internal measurement work without cookies.</li>
+          <li>Your questions to the chatbot are recorded without any technical identifier (neither IP address nor session identifier) and deleted after about three months.</li>
+          <li>For any question or request about your data: contact@lotoia.fr.</li>
+        </ul>
+        {% elif lang == "es" %}
+        <strong>En resumen:</strong>
+        <ul>
+          <li>No se necesita ninguna cuenta para utilizar LotoIA.fr. Sus datos nunca se venden y no se utilizan para ninguna publicidad dirigida.</li>
+          <li>El sitio est&aacute; alojado por Google Cloud en la Uni&oacute;n Europea (B&eacute;lgica).</li>
+          <li>Google Analytics solo se activa si usted lo acepta. La medici&oacute;n de audiencia Umami y nuestra medici&oacute;n interna funcionan sin cookies.</li>
+          <li>Sus preguntas al chatbot se registran sin ning&uacute;n identificador t&eacute;cnico (ni direcci&oacute;n IP, ni identificador de sesi&oacute;n) y se eliminan al cabo de unos tres meses.</li>
+          <li>Para cualquier pregunta o solicitud sobre sus datos: contact@lotoia.fr.</li>
+        </ul>
+        {% elif lang == "pt" %}
+        <strong>Em resumo:</strong>
+        <ul>
+          <li>N&atilde;o &eacute; necess&aacute;ria nenhuma conta para utilizar o LotoIA.fr. Os seus dados nunca s&atilde;o vendidos e n&atilde;o servem para qualquer publicidade direcionada.</li>
+          <li>O site &eacute; alojado pela Google Cloud na Uni&atilde;o Europeia (B&eacute;lgica).</li>
+          <li>O Google Analytics s&oacute; &eacute; ativado se o aceitar. A medi&ccedil;&atilde;o de audi&ecirc;ncia Umami e a nossa medi&ccedil;&atilde;o interna funcionam sem cookies.</li>
+          <li>As suas perguntas ao chatbot s&atilde;o registadas sem qualquer identificador t&eacute;cnico (nem endere&ccedil;o IP, nem identificador de sess&atilde;o) e eliminadas ao fim de cerca de tr&ecirc;s meses.</li>
+          <li>Para qualquer quest&atilde;o ou pedido sobre os seus dados: contact@lotoia.fr.</li>
+        </ul>
+        {% elif lang == "de" %}
+        <strong>Kurz gesagt:</strong>
+        <ul>
+          <li>F&uuml;r die Nutzung von LotoIA.fr ist kein Konto erforderlich. Ihre Daten werden niemals verkauft und nicht f&uuml;r gezielte Werbung verwendet.</li>
+          <li>Die Website wird von Google Cloud in der Europ&auml;ischen Union (Belgien) gehostet.</li>
+          <li>Google Analytics wird nur aktiviert, wenn Sie zustimmen. Die Reichweitenmessung mit Umami und unsere interne Messung funktionieren ohne Cookies.</li>
+          <li>Ihre Fragen an den Chatbot werden ohne technische Kennung (weder IP-Adresse noch Sitzungskennung) gespeichert und nach etwa drei Monaten gel&ouml;scht.</li>
+          <li>Bei Fragen oder Anliegen zu Ihren Daten: contact@lotoia.fr.</li>
+        </ul>
+        {% elif lang == "nl" %}
+        <strong>Samengevat:</strong>
+        <ul>
+          <li>Er is geen account nodig om LotoIA.fr te gebruiken. Uw gegevens worden nooit verkocht en worden niet gebruikt voor gerichte reclame.</li>
+          <li>De website wordt gehost door Google Cloud in de Europese Unie (Belgi&euml;).</li>
+          <li>Google Analytics wordt alleen geactiveerd als u dit accepteert. De publieksmeting met Umami en onze interne meting werken zonder cookies.</li>
+          <li>Uw vragen aan de chatbot worden opgeslagen zonder technische identificatie (geen IP-adres en geen sessie-ID) en na ongeveer drie maanden verwijderd.</li>
+          <li>Voor elke vraag of elk verzoek over uw gegevens: contact@lotoia.fr.</li>
+        </ul>
+        {% endif %}
       </div>
 
       {# ══════════════════════════════════════════════════════════════════════
@@ -37,7 +96,7 @@
           <li><a href="#base-legale">Base l&eacute;gale</a></li>
           <li><a href="#conservation">Dur&eacute;es de conservation</a></li>
           <li><a href="#destinataires">Destinataires des donn&eacute;es</a></li>
-          <li><a href="#transferts">Transferts hors UE</a></li>
+          <li><a href="#transferts">Localisation et transferts hors UE</a></li>
           <li><a href="#droits">Vos droits</a></li>
           <li><a href="#cookies">Cookies</a></li>
           <li><a href="#securite">S&eacute;curit&eacute;</a></li>
@@ -50,7 +109,7 @@
           <li><a href="#base-legale">Legal Basis</a></li>
           <li><a href="#conservation">Retention Periods</a></li>
           <li><a href="#destinataires">Data Recipients</a></li>
-          <li><a href="#transferts">Transfers Outside the EU</a></li>
+          <li><a href="#transferts">Location and Transfers Outside the EU</a></li>
           <li><a href="#droits">Your Rights</a></li>
           <li><a href="#cookies">Cookies</a></li>
           <li><a href="#securite">Security</a></li>
@@ -63,7 +122,7 @@
           <li><a href="#base-legale">Base jur&iacute;dica</a></li>
           <li><a href="#conservation">Plazos de conservaci&oacute;n</a></li>
           <li><a href="#destinataires">Destinatarios de los datos</a></li>
-          <li><a href="#transferts">Transferencias fuera de la UE</a></li>
+          <li><a href="#transferts">Ubicaci&oacute;n y transferencias fuera de la UE</a></li>
           <li><a href="#droits">Sus derechos</a></li>
           <li><a href="#cookies">Cookies</a></li>
           <li><a href="#securite">Seguridad</a></li>
@@ -76,7 +135,7 @@
           <li><a href="#base-legale">Base jur&iacute;dica</a></li>
           <li><a href="#conservation">Prazos de conserva&ccedil;&atilde;o</a></li>
           <li><a href="#destinataires">Destinat&aacute;rios dos dados</a></li>
-          <li><a href="#transferts">Transfer&ecirc;ncias para fora da UE</a></li>
+          <li><a href="#transferts">Localiza&ccedil;&atilde;o e transfer&ecirc;ncias para fora da UE</a></li>
           <li><a href="#droits">Os seus direitos</a></li>
           <li><a href="#cookies">Cookies</a></li>
           <li><a href="#securite">Seguran&ccedil;a</a></li>
@@ -89,7 +148,7 @@
           <li><a href="#base-legale">Rechtsgrundlage</a></li>
           <li><a href="#conservation">Speicherdauer</a></li>
           <li><a href="#destinataires">Empf&auml;nger der Daten</a></li>
-          <li><a href="#transferts">&Uuml;bermittlungen au&szlig;erhalb der EU</a></li>
+          <li><a href="#transferts">Speicherort und &Uuml;bermittlungen au&szlig;erhalb der EU</a></li>
           <li><a href="#droits">Ihre Rechte</a></li>
           <li><a href="#cookies">Cookies</a></li>
           <li><a href="#securite">Sicherheit</a></li>
@@ -102,7 +161,7 @@
           <li><a href="#base-legale">Rechtsgrondslag</a></li>
           <li><a href="#conservation">Bewaartermijnen</a></li>
           <li><a href="#destinataires">Ontvangers van de gegevens</a></li>
-          <li><a href="#transferts">Doorgifte buiten de EU</a></li>
+          <li><a href="#transferts">Locatie en doorgifte buiten de EU</a></li>
           <li><a href="#droits">Uw rechten</a></li>
           <li><a href="#cookies">Cookies</a></li>
           <li><a href="#securite">Beveiliging</a></li>
@@ -119,23 +178,37 @@
         <h2>{% if lang == "fr" %}1. Responsable du traitement{% elif lang == "en" %}1. Data Controller{% elif lang == "es" %}1. Responsable del tratamiento{% elif lang == "pt" %}1. Respons&aacute;vel pelo tratamento{% elif lang == "de" %}1. Verantwortlicher{% elif lang == "nl" %}1. Verwerkingsverantwoordelijke{% endif %}</h2>
 
         {% if lang == "fr" %}
-        <p>Le responsable du traitement des donn&eacute;es personnelles collect&eacute;es sur le site LotoIA est :</p>
+        <p>Le responsable du traitement des donn&eacute;es personnelles trait&eacute;es sur le site LotoIA.fr est Jean-Philippe Godard, qui &eacute;dite le site &agrave; titre non professionnel.</p>
         {% elif lang == "en" %}
-        <p>The data controller for personal data collected on the LotoIA website is:</p>
+        <p>The data controller for personal data processed on the LotoIA.fr website is Jean-Philippe Godard, who publishes the site on a non-professional basis.</p>
         {% elif lang == "es" %}
-        <p>El responsable del tratamiento de los datos personales recopilados en el sitio LotoIA es:</p>
+        <p>El responsable del tratamiento de los datos personales tratados en el sitio LotoIA.fr es Jean-Philippe Godard, que edita el sitio a t&iacute;tulo no profesional.</p>
         {% elif lang == "pt" %}
-        <p>O respons&aacute;vel pelo tratamento dos dados pessoais recolhidos no site LotoIA &eacute;:</p>
+        <p>O respons&aacute;vel pelo tratamento dos dados pessoais tratados no site LotoIA.fr &eacute; Jean-Philippe Godard, que edita o site a t&iacute;tulo n&atilde;o profissional.</p>
         {% elif lang == "de" %}
-        <p>Verantwortlicher f&uuml;r die Verarbeitung der auf der Website LotoIA erhobenen personenbezogenen Daten ist:</p>
+        <p>Verantwortlicher f&uuml;r die Verarbeitung der auf der Website LotoIA.fr verarbeiteten personenbezogenen Daten ist Jean-Philippe Godard, der die Website als Privatperson und nicht gesch&auml;ftsm&auml;&szlig;ig betreibt.</p>
         {% elif lang == "nl" %}
-        <p>De verwerkingsverantwoordelijke voor de persoonsgegevens die op de website LotoIA worden verzameld, is:</p>
+        <p>De verwerkingsverantwoordelijke voor de persoonsgegevens die op de website LotoIA.fr worden verwerkt, is Jean-Philippe Godard, die de website op niet-professionele basis uitgeeft.</p>
         {% endif %}
 
         <div class="legal-info-block">
-          <p><strong>Jean-Philippe Godard</strong></p>
-          <p>{% if lang == "fr" %}E-mail{% elif lang == "en" %}Email{% elif lang == "es" %}Correo electr&oacute;nico{% elif lang == "pt" %}E-mail{% elif lang == "de" %}E-Mail{% elif lang == "nl" %}E-mail{% endif %} : <a href="mailto:rgpd@lotoia.fr">rgpd@lotoia.fr</a></p>
+          <p><strong>{% if lang == "fr" %}Identit&eacute; :{% elif lang == "en" %}Identity:{% elif lang == "es" %}Identidad:{% elif lang == "pt" %}Identidade:{% elif lang == "de" %}Identit&auml;t:{% elif lang == "nl" %}Identiteit:{% endif %}</strong> Jean-Philippe Godard</p>
+          <p><strong>{% if lang == "fr" %}Contact :{% elif lang == "en" %}Contact:{% elif lang == "es" %}Contacto:{% elif lang == "pt" %}Contacto:{% elif lang == "de" %}Kontakt:{% elif lang == "nl" %}Contact:{% endif %}</strong> <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a></p>
         </div>
+
+        {% if lang == "fr" %}
+        <p>Pour toute question relative &agrave; vos donn&eacute;es personnelles, ou pour exercer vos droits (section 8), &eacute;crivez &agrave; contact@lotoia.fr.</p>
+        {% elif lang == "en" %}
+        <p>For any question about your personal data, or to exercise your rights (section 8), write to contact@lotoia.fr.</p>
+        {% elif lang == "es" %}
+        <p>Para cualquier pregunta relativa a sus datos personales, o para ejercer sus derechos (secci&oacute;n 8), escriba a contact@lotoia.fr.</p>
+        {% elif lang == "pt" %}
+        <p>Para qualquer quest&atilde;o relativa aos seus dados pessoais, ou para exercer os seus direitos (sec&ccedil;&atilde;o 8), escreva para contact@lotoia.fr.</p>
+        {% elif lang == "de" %}
+        <p>F&uuml;r Fragen zu Ihren personenbezogenen Daten oder zur Aus&uuml;bung Ihrer Rechte (Abschnitt 8) schreiben Sie an contact@lotoia.fr.</p>
+        {% elif lang == "nl" %}
+        <p>Voor elke vraag over uw persoonsgegevens, of om uw rechten uit te oefenen (sectie 8), schrijft u naar contact@lotoia.fr.</p>
+        {% endif %}
       </section>
 
       {# ══════════════════════════════════════════════════════════════════════
@@ -144,121 +217,300 @@
       <section class="legal-section" id="donnees-collectees">
         <h2>{% if lang == "fr" %}2. Donn&eacute;es collect&eacute;es{% elif lang == "en" %}2. Data Collected{% elif lang == "es" %}2. Datos recopilados{% elif lang == "pt" %}2. Dados recolhidos{% elif lang == "de" %}2. Erhobene Daten{% elif lang == "nl" %}2. Verzamelde gegevens{% endif %}</h2>
 
-        <h3>{% if lang == "fr" %}Donn&eacute;es collect&eacute;es automatiquement{% elif lang == "en" %}Automatically collected data{% elif lang == "es" %}Datos recopilados autom&aacute;ticamente{% elif lang == "pt" %}Dados recolhidos automaticamente{% elif lang == "de" %}Automatisch erhobene Daten{% elif lang == "nl" %}Automatisch verzamelde gegevens{% endif %}</h3>
+        {% if lang == "fr" %}
+        <p>LotoIA.fr limite les donn&eacute;es trait&eacute;es au n&eacute;cessaire. Aucune inscription n'est requise. Voici ce qui est trait&eacute;, selon ce que vous faites sur le site.</p>
 
+        <h3>Lors de votre visite</h3>
         <table class="legal-table">
           <thead>
-            <tr>
-              <th>{% if lang == "fr" %}Donn&eacute;e{% elif lang == "en" %}Data{% elif lang == "es" %}Dato{% elif lang == "pt" %}Dado{% elif lang == "de" %}Daten{% elif lang == "nl" %}Gegeven{% endif %}</th>
-              <th>{% if lang == "fr" %}Type{% elif lang == "en" %}Type{% elif lang == "es" %}Tipo{% elif lang == "pt" %}Tipo{% elif lang == "de" %}Typ{% elif lang == "nl" %}Type{% endif %}</th>
-              <th>{% if lang == "fr" %}Stockage{% elif lang == "en" %}Storage{% elif lang == "es" %}Almacenamiento{% elif lang == "pt" %}Armazenamento{% elif lang == "de" %}Speicherung{% elif lang == "nl" %}Opslag{% endif %}</th>
-            </tr>
+            <tr><th>Traitement</th><th>Donn&eacute;es</th><th>Lien avec vous</th></tr>
           </thead>
           <tbody>
-            <tr>
-              <td>{% if lang == "fr" %}Identifiant de session{% elif lang == "en" %}Session ID{% elif lang == "es" %}Identificador de sesi&oacute;n{% elif lang == "pt" %}Identificador de sess&atilde;o{% elif lang == "de" %}Sitzungs-ID{% elif lang == "nl" %}Sessie-ID{% endif %}</td>
-              <td>UUID v4</td>
-              <td>sessionStorage</td>
-            </tr>
-            <tr>
-              <td>{% if lang == "fr" %}Pr&eacute;f&eacute;rence de th&egrave;me{% elif lang == "en" %}Theme preference{% elif lang == "es" %}Preferencia de tema{% elif lang == "pt" %}Prefer&ecirc;ncia de tema{% elif lang == "de" %}Theme-Einstellung{% elif lang == "nl" %}Themavoorkeur{% endif %}</td>
-              <td>{% if lang == "fr" %}Clair / Sombre{% elif lang == "en" %}Light / Dark{% elif lang == "es" %}Claro / Oscuro{% elif lang == "pt" %}Claro / Escuro{% elif lang == "de" %}Hell / Dunkel{% elif lang == "nl" %}Licht / Donker{% endif %}</td>
-              <td>localStorage</td>
-            </tr>
-            <tr>
-              <td>{% if lang == "fr" %}Donn&eacute;es d'utilisation{% elif lang == "en" %}Usage data{% elif lang == "es" %}Datos de uso{% elif lang == "pt" %}Dados de utiliza&ccedil;&atilde;o{% elif lang == "de" %}Nutzungsdaten{% elif lang == "nl" %}Gebruiksgegevens{% endif %}</td>
-              <td>{% if lang == "fr" %}Journaux serveur{% elif lang == "en" %}Server logs{% elif lang == "es" %}Registros del servidor{% elif lang == "pt" %}Registos do servidor{% elif lang == "de" %}Server-Protokolle{% elif lang == "nl" %}Serverlogboeken{% endif %}</td>
-              <td>{% if lang == "fr" %}30 jours{% elif lang == "en" %}30 days{% elif lang == "es" %}30 d&iacute;as{% elif lang == "pt" %}30 dias{% elif lang == "de" %}30 Tage{% elif lang == "nl" %}30 dagen{% endif %}</td>
-            </tr>
+            <tr><td>Journaux techniques du serveur</td><td>Adresse IP, date et heure, page demand&eacute;e (adresse compl&egrave;te), page d'origine, navigateur utilis&eacute; (user-agent), code de r&eacute;ponse. Certains journaux contiennent aussi des extraits de ce que vous saisissez sur le site : extraits de questions pos&eacute;es au chatbot, nom et sujet indiqu&eacute;s dans le formulaire de contact, ou adresse e-mail mal form&eacute;e en cas d'erreur de saisie.</td><td>Adresse IP en clair</td></tr>
+            <tr><td>Mesure d'audience interne</td><td>Type d'&eacute;v&eacute;nement (par exemple : ouverture du chatbot, grille g&eacute;n&eacute;r&eacute;e, vote envoy&eacute;), page (chemin, sans param&egrave;tres), langue de la page, type d'appareil (mobile, tablette, ordinateur), module concern&eacute; (Loto ou EuroMillions), pays d&eacute;duit de la langue de votre navigateur. Rien n'est d&eacute;pos&eacute; sur votre appareil.</td><td>Identifiant quotidien hach&eacute; (pseudonymis&eacute;), calcul&eacute; &agrave; partir de l'adresse IP, du navigateur et de la date ; il change chaque jour</td></tr>
+            <tr><td>Mesure d'audience Umami</td><td>Pages vues et &eacute;v&eacute;nements, sans cookie (d&eacute;tail dans la <a href="{{ urls.cookies }}">Politique des cookies</a>).</td><td>Aucun cookie ; voir la <a href="{{ urls.cookies }}">Politique des cookies</a></td></tr>
+            <tr><td>Affichages et clics des espaces partenaires</td><td>Type d'&eacute;v&eacute;nement (affichage, clic, vid&eacute;o lue), partenaire concern&eacute;, page, langue de la page, type d'appareil, pays d&eacute;duit de la langue de votre navigateur.</td><td>Identifiant quotidien hach&eacute; (pseudonymis&eacute;) et identification du navigateur (user-agent) sous forme hach&eacute;e</td></tr>
+            <tr><td>Protection contre les abus</td><td>Adresse IP, motif et date du blocage, lorsqu'une adresse est bloqu&eacute;e pour un nombre anormal de requ&ecirc;tes.</td><td>Adresse IP en clair</td></tr>
+            <tr><td>Google Analytics (seulement si vous l'acceptez)</td><td>Pages vues, &eacute;v&eacute;nements d'utilisation, page d'origine, identifiant de session de l'onglet.</td><td>Cookies Google Analytics ; voir la <a href="{{ urls.cookies }}">Politique des cookies</a></td></tr>
+            <tr><td>Stockage dans votre navigateur</td><td>Pr&eacute;f&eacute;rence de th&egrave;me (jour/nuit), choix relatif aux cookies, identifiant al&eacute;atoire de session propre &agrave; l'onglet (supprim&eacute; &agrave; sa fermeture ; transmis &agrave; Google Analytics seulement si vous l'avez accept&eacute;), historique de conversation du chatbot.</td><td>Reste sur votre appareil, sauf ce qui est indiqu&eacute;</td></tr>
           </tbody>
         </table>
+
+        <h3>Ce que vous nous transmettez</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Traitement</th><th>Donn&eacute;es</th><th>Lien avec vous</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Questions pos&eacute;es au chatbot HYBRIDE</td><td>Votre question telle que vous l'avez saisie (2 000 caract&egrave;res au plus), le d&eacute;but de la r&eacute;ponse (500 premiers caract&egrave;res), la langue et des donn&eacute;es techniques (requ&ecirc;te statistique g&eacute;n&eacute;r&eacute;e, dur&eacute;e, volume trait&eacute;).</td><td>Aucun identifiant technique (ni adresse IP, ni identifiant de session) n'est conserv&eacute; avec les conversations</td></tr>
+            <tr><td>Votes (note et commentaire)</td><td>Note de 1 &agrave; 5, commentaire facultatif (500 caract&egrave;res au plus), page, navigateur utilis&eacute; (user-agent), date.</td><td>Adresse IP hach&eacute;e (pseudonymis&eacute;e) et identifiant al&eacute;atoire de session du navigateur ; aucun nom</td></tr>
+            <tr><td>Formulaire de contact</td><td>Nom (facultatif), adresse e-mail (facultative), sujet, message (2 000 caract&egrave;res au plus), page d'origine, langue, date.</td><td>Adresse IP hach&eacute;e (pseudonymis&eacute;e)</td></tr>
+          </tbody>
+        </table>
+
+        <div class="legal-info-block">
+          <p><strong>&Agrave; propos du chatbot.</strong> Pour produire une r&eacute;ponse, vos questions et l'historique r&eacute;cent de la conversation peuvent &ecirc;tre transmis &agrave; Google (Vertex AI), dans l'Union europ&eacute;enne (Belgique). L'historique est conserv&eacute; dans votre navigateur le temps de l'onglet ; il n'est pas enregistr&eacute; sur nos serveurs. Votre question est conserv&eacute;e telle que vous l'avez tap&eacute;e : &eacute;vitez d'y saisir des informations personnelles. Les questions enregistr&eacute;es peuvent &ecirc;tre relues par l'&eacute;diteur afin d'am&eacute;liorer la qualit&eacute; des r&eacute;ponses.</p>
+        </div>
+        <div class="legal-info-block">
+          <p><strong>&Agrave; propos du formulaire de contact.</strong> Les messages ne sont pas transf&eacute;r&eacute;s par e-mail : ils sont consult&eacute;s uniquement dans l'espace d'administration du site.</p>
+        </div>
+        {% elif lang == "en" %}
+        <p>LotoIA.fr limits the data processed to what is necessary. No registration is required. Here is what is processed, depending on what you do on the site.</p>
+
+        <h3>During your visit</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Processing</th><th>Data</th><th>Link to you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Server technical logs</td><td>IP address, date and time, page requested (full address), referring page, browser used (user-agent), response code. Some logs also contain extracts of what you enter on the site: extracts of questions asked to the chatbot, name and subject given in the contact form, or a malformed email address in case of an input error.</td><td>IP address in plain text</td></tr>
+            <tr><td>Internal audience measurement</td><td>Event type (for example: chatbot opened, combination generated, rating sent), page (path, without parameters), page language, device type (mobile, tablet, computer), module concerned (Loto or EuroMillions), country inferred from your browser's language. Nothing is stored on your device.</td><td>Hashed daily identifier (pseudonymised), calculated from the IP address, the browser and the date; it changes every day</td></tr>
+            <tr><td>Umami audience measurement</td><td>Page views and events, without cookies (details in the <a href="{{ urls.cookies }}">Cookie Policy</a>).</td><td>No cookies; see the <a href="{{ urls.cookies }}">Cookie Policy</a></td></tr>
+            <tr><td>Partner space displays and clicks</td><td>Event type (display, click, video played), partner concerned, page, page language, device type, country inferred from your browser's language.</td><td>Hashed daily identifier (pseudonymised) and browser identification (user-agent) in hashed form</td></tr>
+            <tr><td>Protection against abuse</td><td>IP address, reason and date of the block, when an address is blocked for an abnormal number of requests.</td><td>IP address in plain text</td></tr>
+            <tr><td>Google Analytics (only if you accept it)</td><td>Page views, usage events, referring page, tab session identifier.</td><td>Google Analytics cookies; see the <a href="{{ urls.cookies }}">Cookie Policy</a></td></tr>
+            <tr><td>Storage in your browser</td><td>Theme preference (day/night), choice regarding cookies, random session identifier specific to the tab (deleted when the tab is closed; sent to Google Analytics only if you have accepted it), chatbot conversation history.</td><td>Stays on your device, except as indicated</td></tr>
+          </tbody>
+        </table>
+
+        <h3>What you send us</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Processing</th><th>Data</th><th>Link to you</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Questions asked to the HYBRIDE chatbot</td><td>Your question as you typed it (up to 2,000 characters), the beginning of the answer (first 500 characters), the language and technical data (statistical query generated, duration, volume processed).</td><td>No technical identifier (neither IP address nor session identifier) is kept with the conversations</td></tr>
+            <tr><td>Ratings (score and comment)</td><td>Score from 1 to 5, optional comment (up to 500 characters), page, browser used (user-agent), date.</td><td>Hashed IP address (pseudonymised) and random browser session identifier; no name</td></tr>
+            <tr><td>Contact form</td><td>Name (optional), email address (optional), subject, message (up to 2,000 characters), referring page, language, date.</td><td>Hashed IP address (pseudonymised)</td></tr>
+          </tbody>
+        </table>
+
+        <div class="legal-info-block">
+          <p><strong>About the chatbot.</strong> To produce an answer, your questions and the recent history of the conversation may be sent to Google (Vertex AI), in the European Union (Belgium). The history is kept in your browser for as long as the tab is open; it is not recorded on our servers. Your question is kept exactly as you typed it: avoid entering personal information in it. Recorded questions may be reviewed by the publisher in order to improve the quality of the answers.</p>
+        </div>
+        <div class="legal-info-block">
+          <p><strong>About the contact form.</strong> Messages are not forwarded by email: they are read only in the site's administration area.</p>
+        </div>
+        {% elif lang == "es" %}
+        <p>LotoIA.fr limita los datos tratados a lo necesario. No se requiere ning&uacute;n registro. Esto es lo que se trata, seg&uacute;n lo que usted haga en el sitio.</p>
+
+        <h3>Durante su visita</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Tratamiento</th><th>Datos</th><th>V&iacute;nculo con usted</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Registros t&eacute;cnicos del servidor</td><td>Direcci&oacute;n IP, fecha y hora, p&aacute;gina solicitada (direcci&oacute;n completa), p&aacute;gina de origen, navegador utilizado (user-agent), c&oacute;digo de respuesta. Algunos registros contienen tambi&eacute;n extractos de lo que usted introduce en el sitio: extractos de preguntas formuladas al chatbot, nombre y asunto indicados en el formulario de contacto, o una direcci&oacute;n de correo electr&oacute;nico mal formada en caso de error de introducci&oacute;n.</td><td>Direcci&oacute;n IP en claro</td></tr>
+            <tr><td>Medici&oacute;n de audiencia interna</td><td>Tipo de evento (por ejemplo: apertura del chatbot, combinaci&oacute;n generada, valoraci&oacute;n enviada), p&aacute;gina (ruta, sin par&aacute;metros), idioma de la p&aacute;gina, tipo de dispositivo (m&oacute;vil, tableta, ordenador), m&oacute;dulo correspondiente (Loto o EuroMillions), pa&iacute;s deducido del idioma de su navegador. No se almacena nada en su dispositivo.</td><td>Identificador diario con hash (seudonimizado), calculado a partir de la direcci&oacute;n IP, del navegador y de la fecha; cambia cada d&iacute;a</td></tr>
+            <tr><td>Medici&oacute;n de audiencia Umami</td><td>P&aacute;ginas vistas y eventos, sin cookies (detalle en la <a href="{{ urls.cookies }}">Pol&iacute;tica de cookies</a>).</td><td>Sin cookies; v&eacute;ase la <a href="{{ urls.cookies }}">Pol&iacute;tica de cookies</a></td></tr>
+            <tr><td>Visualizaciones y clics de los espacios de socios</td><td>Tipo de evento (visualizaci&oacute;n, clic, v&iacute;deo reproducido), socio correspondiente, p&aacute;gina, idioma de la p&aacute;gina, tipo de dispositivo, pa&iacute;s deducido del idioma de su navegador.</td><td>Identificador diario con hash (seudonimizado) e identificaci&oacute;n del navegador (user-agent) en forma de hash</td></tr>
+            <tr><td>Protecci&oacute;n contra abusos</td><td>Direcci&oacute;n IP, motivo y fecha del bloqueo, cuando una direcci&oacute;n se bloquea por un n&uacute;mero anormal de solicitudes.</td><td>Direcci&oacute;n IP en claro</td></tr>
+            <tr><td>Google Analytics (solo si usted lo acepta)</td><td>P&aacute;ginas vistas, eventos de uso, p&aacute;gina de origen, identificador de sesi&oacute;n de la pesta&ntilde;a.</td><td>Cookies de Google Analytics; v&eacute;ase la <a href="{{ urls.cookies }}">Pol&iacute;tica de cookies</a></td></tr>
+            <tr><td>Almacenamiento en su navegador</td><td>Preferencia de tema (d&iacute;a/noche), elecci&oacute;n relativa a las cookies, identificador aleatorio de sesi&oacute;n propio de la pesta&ntilde;a (se elimina al cerrarla; se transmite a Google Analytics solo si usted lo ha aceptado), historial de conversaci&oacute;n del chatbot.</td><td>Permanece en su dispositivo, salvo lo indicado</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Lo que usted nos transmite</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Tratamiento</th><th>Datos</th><th>V&iacute;nculo con usted</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Preguntas formuladas al chatbot HYBRIDE</td><td>Su pregunta tal como la escribi&oacute; (2000 caracteres como m&aacute;ximo), el comienzo de la respuesta (500 primeros caracteres), el idioma y datos t&eacute;cnicos (consulta estad&iacute;stica generada, duraci&oacute;n, volumen tratado).</td><td>No se conserva ning&uacute;n identificador t&eacute;cnico (ni direcci&oacute;n IP, ni identificador de sesi&oacute;n) con las conversaciones</td></tr>
+            <tr><td>Valoraciones (nota y comentario)</td><td>Nota de 1 a 5, comentario opcional (500 caracteres como m&aacute;ximo), p&aacute;gina, navegador utilizado (user-agent), fecha.</td><td>Direcci&oacute;n IP con hash (seudonimizada) e identificador aleatorio de sesi&oacute;n del navegador; ning&uacute;n nombre</td></tr>
+            <tr><td>Formulario de contacto</td><td>Nombre (opcional), direcci&oacute;n de correo electr&oacute;nico (opcional), asunto, mensaje (2000 caracteres como m&aacute;ximo), p&aacute;gina de origen, idioma, fecha.</td><td>Direcci&oacute;n IP con hash (seudonimizada)</td></tr>
+          </tbody>
+        </table>
+
+        <div class="legal-info-block">
+          <p><strong>Acerca del chatbot.</strong> Para elaborar una respuesta, sus preguntas y el historial reciente de la conversaci&oacute;n pueden transmitirse a Google (Vertex AI), en la Uni&oacute;n Europea (B&eacute;lgica). El historial se conserva en su navegador mientras la pesta&ntilde;a est&eacute; abierta; no se registra en nuestros servidores. Su pregunta se conserva tal como la escribi&oacute;: evite introducir en ella informaci&oacute;n personal. Las preguntas registradas pueden ser revisadas por el editor con el fin de mejorar la calidad de las respuestas.</p>
+        </div>
+        <div class="legal-info-block">
+          <p><strong>Acerca del formulario de contacto.</strong> Los mensajes no se reenv&iacute;an por correo electr&oacute;nico: solo se consultan en el &aacute;rea de administraci&oacute;n del sitio.</p>
+        </div>
+        {% elif lang == "pt" %}
+        <p>O LotoIA.fr limita os dados tratados ao necess&aacute;rio. N&atilde;o &eacute; necess&aacute;rio qualquer registo. Eis o que &eacute; tratado, consoante o que faz no site.</p>
+
+        <h3>Durante a sua visita</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Tratamento</th><th>Dados</th><th>Liga&ccedil;&atilde;o consigo</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Registos t&eacute;cnicos do servidor</td><td>Endere&ccedil;o IP, data e hora, p&aacute;gina pedida (endere&ccedil;o completo), p&aacute;gina de origem, navegador utilizado (user-agent), c&oacute;digo de resposta. Alguns registos cont&ecirc;m tamb&eacute;m excertos do que introduz no site: excertos de perguntas feitas ao chatbot, nome e assunto indicados no formul&aacute;rio de contacto, ou endere&ccedil;o de e-mail mal formado em caso de erro de introdu&ccedil;&atilde;o.</td><td>Endere&ccedil;o IP em claro</td></tr>
+            <tr><td>Medi&ccedil;&atilde;o de audi&ecirc;ncia interna</td><td>Tipo de evento (por exemplo: abertura do chatbot, grelha gerada, avalia&ccedil;&atilde;o enviada), p&aacute;gina (caminho, sem par&acirc;metros), l&iacute;ngua da p&aacute;gina, tipo de dispositivo (telem&oacute;vel, tablet, computador), m&oacute;dulo em causa (Loto ou EuroMillions), pa&iacute;s deduzido da l&iacute;ngua do seu navegador. Nada &eacute; armazenado no seu dispositivo.</td><td>Identificador di&aacute;rio com hash (pseudonimizado), calculado a partir do endere&ccedil;o IP, do navegador e da data; muda todos os dias</td></tr>
+            <tr><td>Medi&ccedil;&atilde;o de audi&ecirc;ncia Umami</td><td>P&aacute;ginas vistas e eventos, sem cookies (pormenores na <a href="{{ urls.cookies }}">Pol&iacute;tica de cookies</a>).</td><td>Sem cookies; consulte a <a href="{{ urls.cookies }}">Pol&iacute;tica de cookies</a></td></tr>
+            <tr><td>Visualiza&ccedil;&otilde;es e cliques dos espa&ccedil;os de parceiros</td><td>Tipo de evento (visualiza&ccedil;&atilde;o, clique, v&iacute;deo reproduzido), parceiro em causa, p&aacute;gina, l&iacute;ngua da p&aacute;gina, tipo de dispositivo, pa&iacute;s deduzido da l&iacute;ngua do seu navegador.</td><td>Identificador di&aacute;rio com hash (pseudonimizado) e identifica&ccedil;&atilde;o do navegador (user-agent) sob forma de hash</td></tr>
+            <tr><td>Prote&ccedil;&atilde;o contra abusos</td><td>Endere&ccedil;o IP, motivo e data do bloqueio, quando um endere&ccedil;o &eacute; bloqueado por um n&uacute;mero anormal de pedidos.</td><td>Endere&ccedil;o IP em claro</td></tr>
+            <tr><td>Google Analytics (apenas se o aceitar)</td><td>P&aacute;ginas vistas, eventos de utiliza&ccedil;&atilde;o, p&aacute;gina de origem, identificador de sess&atilde;o do separador.</td><td>Cookies do Google Analytics; consulte a <a href="{{ urls.cookies }}">Pol&iacute;tica de cookies</a></td></tr>
+            <tr><td>Armazenamento no seu navegador</td><td>Prefer&ecirc;ncia de tema (dia/noite), escolha relativa aos cookies, identificador aleat&oacute;rio de sess&atilde;o pr&oacute;prio do separador (eliminado quando este &eacute; fechado; transmitido ao Google Analytics apenas se o tiver aceitado), hist&oacute;rico de conversa do chatbot.</td><td>Permanece no seu dispositivo, exceto o que &eacute; indicado</td></tr>
+          </tbody>
+        </table>
+
+        <h3>O que nos transmite</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Tratamento</th><th>Dados</th><th>Liga&ccedil;&atilde;o consigo</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Perguntas feitas ao chatbot HYBRIDE</td><td>A sua pergunta tal como a escreveu (2000 caracteres no m&aacute;ximo), o in&iacute;cio da resposta (primeiros 500 caracteres), a l&iacute;ngua e dados t&eacute;cnicos (consulta estat&iacute;stica gerada, dura&ccedil;&atilde;o, volume tratado).</td><td>Nenhum identificador t&eacute;cnico (nem endere&ccedil;o IP, nem identificador de sess&atilde;o) &eacute; conservado com as conversas</td></tr>
+            <tr><td>Avalia&ccedil;&otilde;es (nota e coment&aacute;rio)</td><td>Nota de 1 a 5, coment&aacute;rio facultativo (500 caracteres no m&aacute;ximo), p&aacute;gina, navegador utilizado (user-agent), data.</td><td>Endere&ccedil;o IP com hash (pseudonimizado) e identificador aleat&oacute;rio de sess&atilde;o do navegador; nenhum nome</td></tr>
+            <tr><td>Formul&aacute;rio de contacto</td><td>Nome (facultativo), endere&ccedil;o de e-mail (facultativo), assunto, mensagem (2000 caracteres no m&aacute;ximo), p&aacute;gina de origem, l&iacute;ngua, data.</td><td>Endere&ccedil;o IP com hash (pseudonimizado)</td></tr>
+          </tbody>
+        </table>
+
+        <div class="legal-info-block">
+          <p><strong>Sobre o chatbot.</strong> Para produzir uma resposta, as suas perguntas e o hist&oacute;rico recente da conversa podem ser transmitidos &agrave; Google (Vertex AI), na Uni&atilde;o Europeia (B&eacute;lgica). O hist&oacute;rico &eacute; conservado no seu navegador enquanto o separador estiver aberto; n&atilde;o &eacute; registado nos nossos servidores. A sua pergunta &eacute; conservada tal como a escreveu: evite introduzir nela informa&ccedil;&otilde;es pessoais. As perguntas registadas podem ser relidas pelo editor a fim de melhorar a qualidade das respostas.</p>
+        </div>
+        <div class="legal-info-block">
+          <p><strong>Sobre o formul&aacute;rio de contacto.</strong> As mensagens n&atilde;o s&atilde;o reencaminhadas por e-mail: s&atilde;o consultadas apenas na &aacute;rea de administra&ccedil;&atilde;o do site.</p>
+        </div>
+        {% elif lang == "de" %}
+        <p>LotoIA.fr beschr&auml;nkt die verarbeiteten Daten auf das Notwendige. Eine Registrierung ist nicht erforderlich. Im Folgenden sehen Sie, was verarbeitet wird &ndash; je nachdem, was Sie auf der Website tun.</p>
+
+        <h3>Bei Ihrem Besuch</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Verarbeitung</th><th>Daten</th><th>Bezug zu Ihnen</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Technische Server-Protokolle</td><td>IP-Adresse, Datum und Uhrzeit, aufgerufene Seite (vollst&auml;ndige Adresse), Herkunftsseite, verwendeter Browser (user-agent), Antwortcode. Einige Protokolle enthalten au&szlig;erdem Ausz&uuml;ge aus Ihren Eingaben auf der Website: Ausz&uuml;ge aus Fragen an den Chatbot, im Kontaktformular angegebener Name und Betreff oder eine fehlerhaft formatierte E-Mail-Adresse bei einem Eingabefehler.</td><td>IP-Adresse im Klartext</td></tr>
+            <tr><td>Interne Reichweitenmessung</td><td>Ereignistyp (zum Beispiel: &Ouml;ffnen des Chatbots, generierte Kombination, gesendete Bewertung), Seite (Pfad, ohne Parameter), Sprache der Seite, Ger&auml;tetyp (Mobilger&auml;t, Tablet, Computer), betroffenes Modul (Loto oder EuroMillions), aus der Sprache Ihres Browsers abgeleitetes Land. Auf Ihrem Ger&auml;t wird nichts gespeichert.</td><td>Gehashte t&auml;gliche Kennung (pseudonymisiert), berechnet aus IP-Adresse, Browser und Datum; sie &auml;ndert sich t&auml;glich</td></tr>
+            <tr><td>Reichweitenmessung mit Umami</td><td>Seitenaufrufe und Ereignisse, ohne Cookies (Einzelheiten in der <a href="{{ urls.cookies }}">Cookie-Richtlinie</a>).</td><td>Keine Cookies; siehe <a href="{{ urls.cookies }}">Cookie-Richtlinie</a></td></tr>
+            <tr><td>Einblendungen und Klicks der Partnerfl&auml;chen</td><td>Ereignistyp (Einblendung, Klick, abgespieltes Video), betroffener Partner, Seite, Sprache der Seite, Ger&auml;tetyp, aus der Sprache Ihres Browsers abgeleitetes Land.</td><td>Gehashte t&auml;gliche Kennung (pseudonymisiert) und Browserkennung (user-agent) in gehashter Form</td></tr>
+            <tr><td>Schutz vor Missbrauch</td><td>IP-Adresse, Grund und Datum der Sperre, wenn eine Adresse wegen einer ungew&ouml;hnlich hohen Zahl von Anfragen gesperrt wird.</td><td>IP-Adresse im Klartext</td></tr>
+            <tr><td>Google Analytics (nur wenn Sie zustimmen)</td><td>Seitenaufrufe, Nutzungsereignisse, Herkunftsseite, Sitzungskennung des Tabs.</td><td>Google-Analytics-Cookies; siehe <a href="{{ urls.cookies }}">Cookie-Richtlinie</a></td></tr>
+            <tr><td>Speicherung in Ihrem Browser</td><td>Theme-Einstellung (Tag/Nacht), Auswahl zu Cookies, zuf&auml;llige Sitzungskennung des jeweiligen Tabs (beim Schlie&szlig;en gel&ouml;scht; nur an Google Analytics &uuml;bermittelt, wenn Sie zugestimmt haben), Gespr&auml;chsverlauf des Chatbots.</td><td>Bleibt auf Ihrem Ger&auml;t, au&szlig;er wie angegeben</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Was Sie uns &uuml;bermitteln</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Verarbeitung</th><th>Daten</th><th>Bezug zu Ihnen</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Fragen an den HYBRIDE-Chatbot</td><td>Ihre Frage so, wie Sie sie eingegeben haben (h&ouml;chstens 2.000 Zeichen), der Anfang der Antwort (die ersten 500 Zeichen), die Sprache und technische Daten (generierte statistische Abfrage, Dauer, verarbeitete Datenmenge).</td><td>Mit den Gespr&auml;chen wird keine technische Kennung (weder IP-Adresse noch Sitzungskennung) gespeichert</td></tr>
+            <tr><td>Bewertungen (Note und Kommentar)</td><td>Note von 1 bis 5, optionaler Kommentar (h&ouml;chstens 500 Zeichen), Seite, verwendeter Browser (user-agent), Datum.</td><td>Gehashte IP-Adresse (pseudonymisiert) und zuf&auml;llige Sitzungskennung des Browsers; kein Name</td></tr>
+            <tr><td>Kontaktformular</td><td>Name (optional), E-Mail-Adresse (optional), Betreff, Nachricht (h&ouml;chstens 2.000 Zeichen), Herkunftsseite, Sprache, Datum.</td><td>Gehashte IP-Adresse (pseudonymisiert)</td></tr>
+          </tbody>
+        </table>
+
+        <div class="legal-info-block">
+          <p><strong>Zum Chatbot.</strong> Um eine Antwort zu erstellen, k&ouml;nnen Ihre Fragen und der j&uuml;ngste Gespr&auml;chsverlauf an Google (Vertex AI) in der Europ&auml;ischen Union (Belgien) &uuml;bermittelt werden. Der Verlauf wird in Ihrem Browser gespeichert, solange der Tab ge&ouml;ffnet ist; er wird nicht auf unseren Servern gespeichert. Ihre Frage wird so gespeichert, wie Sie sie eingegeben haben: Geben Sie darin keine pers&ouml;nlichen Informationen ein. Die gespeicherten Fragen k&ouml;nnen vom Herausgeber gelesen werden, um die Qualit&auml;t der Antworten zu verbessern.</p>
+        </div>
+        <div class="legal-info-block">
+          <p><strong>Zum Kontaktformular.</strong> Nachrichten werden nicht per E-Mail weitergeleitet: Sie werden ausschlie&szlig;lich im Verwaltungsbereich der Website gelesen.</p>
+        </div>
+        {% elif lang == "nl" %}
+        <p>LotoIA.fr beperkt de verwerkte gegevens tot het noodzakelijke. Registratie is niet vereist. Hieronder ziet u wat er wordt verwerkt, afhankelijk van wat u op de website doet.</p>
+
+        <h3>Tijdens uw bezoek</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Verwerking</th><th>Gegevens</th><th>Koppeling met u</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Technische serverlogboeken</td><td>IP-adres, datum en tijd, opgevraagde pagina (volledig adres), herkomstpagina, gebruikte browser (user-agent), responscode. Sommige logboeken bevatten ook fragmenten van wat u op de website invoert: fragmenten van vragen aan de chatbot, naam en onderwerp opgegeven in het contactformulier, of een onjuist opgemaakt e-mailadres bij een invoerfout.</td><td>IP-adres in leesbare vorm</td></tr>
+            <tr><td>Interne publieksmeting</td><td>Type gebeurtenis (bijvoorbeeld: chatbot geopend, combinatie gegenereerd, beoordeling verzonden), pagina (pad, zonder parameters), taal van de pagina, type apparaat (mobiel, tablet, computer), betrokken module (Loto of EuroMillions), land afgeleid uit de taal van uw browser. Er wordt niets op uw apparaat opgeslagen.</td><td>Gehashte dagelijkse identificatie (gepseudonimiseerd), berekend op basis van het IP-adres, de browser en de datum; deze verandert elke dag</td></tr>
+            <tr><td>Publieksmeting met Umami</td><td>Paginaweergaven en gebeurtenissen, zonder cookies (details in het <a href="{{ urls.cookies }}">Cookiebeleid</a>).</td><td>Geen cookies; zie het <a href="{{ urls.cookies }}">Cookiebeleid</a></td></tr>
+            <tr><td>Weergaven en klikken van partnerruimtes</td><td>Type gebeurtenis (weergave, klik, afgespeelde video), betrokken partner, pagina, taal van de pagina, type apparaat, land afgeleid uit de taal van uw browser.</td><td>Gehashte dagelijkse identificatie (gepseudonimiseerd) en identificatie van de browser (user-agent) in gehashte vorm</td></tr>
+            <tr><td>Bescherming tegen misbruik</td><td>IP-adres, reden en datum van de blokkering, wanneer een adres wordt geblokkeerd vanwege een abnormaal aantal verzoeken.</td><td>IP-adres in leesbare vorm</td></tr>
+            <tr><td>Google Analytics (alleen als u dit accepteert)</td><td>Paginaweergaven, gebruiksgebeurtenissen, herkomstpagina, sessie-ID van het tabblad.</td><td>Google Analytics-cookies; zie het <a href="{{ urls.cookies }}">Cookiebeleid</a></td></tr>
+            <tr><td>Opslag in uw browser</td><td>Themavoorkeur (dag/nacht), keuze met betrekking tot cookies, willekeurige sessie-ID per tabblad (verwijderd bij het sluiten; alleen naar Google Analytics verzonden als u dit hebt geaccepteerd), gespreksgeschiedenis van de chatbot.</td><td>Blijft op uw apparaat, behalve zoals aangegeven</td></tr>
+          </tbody>
+        </table>
+
+        <h3>Wat u ons doorgeeft</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Verwerking</th><th>Gegevens</th><th>Koppeling met u</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Vragen aan de HYBRIDE-chatbot</td><td>Uw vraag zoals u die hebt ingetypt (maximaal 2.000 tekens), het begin van het antwoord (eerste 500 tekens), de taal en technische gegevens (gegenereerde statistische zoekopdracht, duur, verwerkt volume).</td><td>Er wordt geen technische identificatie (geen IP-adres en geen sessie-ID) bij de gesprekken bewaard</td></tr>
+            <tr><td>Beoordelingen (score en opmerking)</td><td>Score van 1 tot 5, optionele opmerking (maximaal 500 tekens), pagina, gebruikte browser (user-agent), datum.</td><td>Gehasht IP-adres (gepseudonimiseerd) en willekeurige sessie-ID van de browser; geen naam</td></tr>
+            <tr><td>Contactformulier</td><td>Naam (optioneel), e-mailadres (optioneel), onderwerp, bericht (maximaal 2.000 tekens), herkomstpagina, taal, datum.</td><td>Gehasht IP-adres (gepseudonimiseerd)</td></tr>
+          </tbody>
+        </table>
+
+        <div class="legal-info-block">
+          <p><strong>Over de chatbot.</strong> Om een antwoord te formuleren, kunnen uw vragen en de recente gespreksgeschiedenis worden doorgegeven aan Google (Vertex AI), in de Europese Unie (Belgi&euml;). De geschiedenis wordt in uw browser bewaard zolang het tabblad open is; ze wordt niet op onze servers opgeslagen. Uw vraag wordt bewaard zoals u die hebt ingetypt: vermijd daarin persoonlijke informatie in te voeren. De opgeslagen vragen kunnen door de uitgever worden nagelezen om de kwaliteit van de antwoorden te verbeteren.</p>
+        </div>
+        <div class="legal-info-block">
+          <p><strong>Over het contactformulier.</strong> Berichten worden niet per e-mail doorgestuurd: ze worden uitsluitend in de beheeromgeving van de website ingezien.</p>
+        </div>
+        {% endif %}
 
         <h3>{% if lang == "fr" %}Donn&eacute;es NON collect&eacute;es{% elif lang == "en" %}Data NOT collected{% elif lang == "es" %}Datos NO recopilados{% elif lang == "pt" %}Dados N&Atilde;O recolhidos{% elif lang == "de" %}NICHT erhobene Daten{% elif lang == "nl" %}NIET verzamelde gegevens{% endif %}</h3>
 
         <div class="legal-highlight">
           {% if lang == "fr" %}
-          <p>LotoIA <strong>ne collecte pas</strong> les donn&eacute;es suivantes :</p>
+          <p>LotoIA.fr <strong>ne collecte pas</strong> :</p>
           {% elif lang == "en" %}
-          <p>LotoIA <strong>does not collect</strong> the following data:</p>
+          <p>LotoIA.fr <strong>does not collect</strong>:</p>
           {% elif lang == "es" %}
-          <p>LotoIA <strong>no recopila</strong> los siguientes datos:</p>
+          <p>LotoIA.fr <strong>no recopila</strong>:</p>
           {% elif lang == "pt" %}
-          <p>LotoIA <strong>n&atilde;o recolhe</strong> os seguintes dados:</p>
+          <p>O LotoIA.fr <strong>n&atilde;o recolhe</strong>:</p>
           {% elif lang == "de" %}
-          <p>LotoIA erhebt <strong>keine</strong> der folgenden Daten:</p>
+          <p>LotoIA.fr erhebt <strong>nicht</strong>:</p>
           {% elif lang == "nl" %}
-          <p>LotoIA verzamelt <strong>niet</strong> de volgende gegevens:</p>
+          <p>LotoIA.fr verzamelt <strong>niet</strong>:</p>
           {% endif %}
           <ul>
             {% if lang == "fr" %}
-            <li>Nom, pr&eacute;nom, adresse postale</li>
-            <li>Adresse e-mail (sauf envoi volontaire de votre part)</li>
-            <li>Num&eacute;ro de t&eacute;l&eacute;phone</li>
-            <li>Donn&eacute;es de paiement</li>
-            <li>G&eacute;olocalisation pr&eacute;cise</li>
-            <li>Donn&eacute;es biom&eacute;triques</li>
-            <li>Donn&eacute;es de sant&eacute;</li>
+            <li>votre nom ou votre adresse postale (sauf le nom que vous choisissez d'indiquer dans le formulaire de contact) ;</li>
+            <li>votre adresse e-mail (sauf si vous l'indiquez dans le formulaire de contact) ;</li>
+            <li>votre num&eacute;ro de t&eacute;l&eacute;phone ;</li>
+            <li>de donn&eacute;es de paiement ou bancaires ;</li>
+            <li>votre g&eacute;olocalisation pr&eacute;cise ;</li>
+            <li>de donn&eacute;es biom&eacute;triques ;</li>
+            <li>de donn&eacute;es de sant&eacute;.</li>
             {% elif lang == "en" %}
-            <li>Name, surname, postal address</li>
-            <li>Email address (unless voluntarily provided by you)</li>
-            <li>Phone number</li>
-            <li>Payment data</li>
-            <li>Precise geolocation</li>
-            <li>Biometric data</li>
-            <li>Health data</li>
+            <li>your name or postal address (except the name you choose to give in the contact form);</li>
+            <li>your email address (unless you give it in the contact form);</li>
+            <li>your phone number;</li>
+            <li>payment or banking data;</li>
+            <li>your precise geolocation;</li>
+            <li>biometric data;</li>
+            <li>health data.</li>
             {% elif lang == "es" %}
-            <li>Nombre, apellidos, direcci&oacute;n postal</li>
-            <li>Direcci&oacute;n de correo electr&oacute;nico (salvo env&iacute;o voluntario por su parte)</li>
-            <li>N&uacute;mero de tel&eacute;fono</li>
-            <li>Datos de pago</li>
-            <li>Geolocalizaci&oacute;n precisa</li>
-            <li>Datos biom&eacute;tricos</li>
-            <li>Datos de salud</li>
+            <li>su nombre ni su direcci&oacute;n postal (salvo el nombre que decida indicar en el formulario de contacto);</li>
+            <li>su direcci&oacute;n de correo electr&oacute;nico (salvo si la indica en el formulario de contacto);</li>
+            <li>su n&uacute;mero de tel&eacute;fono;</li>
+            <li>datos de pago o bancarios;</li>
+            <li>su geolocalizaci&oacute;n precisa;</li>
+            <li>datos biom&eacute;tricos;</li>
+            <li>datos de salud.</li>
             {% elif lang == "pt" %}
-            <li>Nome, apelido, morada</li>
-            <li>Endere&ccedil;o de e-mail (salvo envio volunt&aacute;rio da sua parte)</li>
-            <li>N&uacute;mero de telefone</li>
-            <li>Dados de pagamento</li>
-            <li>Geolocaliza&ccedil;&atilde;o precisa</li>
-            <li>Dados biom&eacute;tricos</li>
-            <li>Dados de sa&uacute;de</li>
+            <li>o seu nome nem a sua morada (exceto o nome que decida indicar no formul&aacute;rio de contacto);</li>
+            <li>o seu endere&ccedil;o de e-mail (exceto se o indicar no formul&aacute;rio de contacto);</li>
+            <li>o seu n&uacute;mero de telefone;</li>
+            <li>dados de pagamento ou banc&aacute;rios;</li>
+            <li>a sua geolocaliza&ccedil;&atilde;o precisa;</li>
+            <li>dados biom&eacute;tricos;</li>
+            <li>dados de sa&uacute;de.</li>
             {% elif lang == "de" %}
-            <li>Name, Vorname, Postanschrift</li>
-            <li>E-Mail-Adresse (es sei denn, Sie senden uns freiwillig eine Nachricht)</li>
-            <li>Telefonnummer</li>
-            <li>Zahlungsdaten</li>
-            <li>Pr&auml;zise Geolokalisierung</li>
-            <li>Biometrische Daten</li>
-            <li>Gesundheitsdaten</li>
+            <li>Ihren Namen oder Ihre Postanschrift (au&szlig;er dem Namen, den Sie im Kontaktformular angeben m&ouml;chten);</li>
+            <li>Ihre E-Mail-Adresse (au&szlig;er wenn Sie sie im Kontaktformular angeben);</li>
+            <li>Ihre Telefonnummer;</li>
+            <li>Zahlungs- oder Bankdaten;</li>
+            <li>Ihre genaue Geolokalisierung;</li>
+            <li>biometrische Daten;</li>
+            <li>Gesundheitsdaten.</li>
             {% elif lang == "nl" %}
-            <li>Naam, voornaam, postadres</li>
-            <li>E-mailadres (tenzij u ons vrijwillig een bericht stuurt)</li>
-            <li>Telefoonnummer</li>
-            <li>Betalingsgegevens</li>
-            <li>Nauwkeurige geolocatie</li>
-            <li>Biometrische gegevens</li>
-            <li>Gezondheidsgegevens</li>
+            <li>uw naam of postadres (behalve de naam die u ervoor kiest op te geven in het contactformulier);</li>
+            <li>uw e-mailadres (tenzij u het opgeeft in het contactformulier);</li>
+            <li>uw telefoonnummer;</li>
+            <li>betalings- of bankgegevens;</li>
+            <li>uw nauwkeurige geolocatie;</li>
+            <li>biometrische gegevens;</li>
+            <li>gezondheidsgegevens.</li>
             {% endif %}
           </ul>
         </div>
 
-        <h3>{% if lang == "fr" %}Conversations avec le chatbot HYBRIDE{% elif lang == "en" %}Conversations with the HYBRIDE chatbot{% elif lang == "es" %}Conversaciones con el chatbot HYBRIDE{% elif lang == "pt" %}Conversas com o chatbot HYBRIDE{% elif lang == "de" %}Gespr&auml;che mit dem HYBRIDE-Chatbot{% elif lang == "nl" %}Gesprekken met de HYBRIDE-chatbot{% endif %}</h3>
-
-        {% if lang == "fr" %}
-        <p>Lorsque vous utilisez le chatbot HYBRIDE, vos &eacute;changes (questions pos&eacute;es et r&eacute;ponses g&eacute;n&eacute;r&eacute;es) sont enregistr&eacute;s de mani&egrave;re anonyme &agrave; des fins d'am&eacute;lioration du service. Aucune donn&eacute;e personnelle directement identifiante n'est conserv&eacute;e&nbsp;: votre adresse IP est transform&eacute;e par un proc&eacute;d&eacute; de hachage irr&eacute;versible (SHA-256) et aucun nom, email ou identifiant n'est associ&eacute; aux conversations. Ces donn&eacute;es sont conserv&eacute;es pendant une dur&eacute;e maximale de 90&nbsp;jours, apr&egrave;s quoi elles sont automatiquement supprim&eacute;es. La base l&eacute;gale de ce traitement est l'int&eacute;r&ecirc;t l&eacute;gitime (article 6.1.f du RGPD) visant &agrave; am&eacute;liorer la qualit&eacute; des r&eacute;ponses et la fiabilit&eacute; du service. Vous pouvez exercer vos droits d'acc&egrave;s, de rectification et de suppression en nous contactant &agrave; rgpd@lotoia.fr.</p>
-        {% elif lang == "en" %}
-        <p>When you use the HYBRIDE chatbot, your exchanges (questions asked and responses generated) are recorded anonymously to improve the service. No directly identifying personal data is retained: your IP address is transformed using an irreversible hashing process (SHA-256) and no name, email or identifier is associated with conversations. This data is retained for a maximum of 90&nbsp;days, after which it is automatically deleted. The legal basis for this processing is legitimate interest (Article 6.1.f GDPR) aimed at improving response quality and service reliability. You may exercise your rights of access, rectification and deletion by contacting us at rgpd@lotoia.fr.</p>
-        {% elif lang == "es" %}
-        <p>Cuando utiliza el chatbot HYBRIDE, sus intercambios (preguntas realizadas y respuestas generadas) se registran de forma an&oacute;nima con el fin de mejorar el servicio. No se conserva ning&uacute;n dato personal directamente identificativo: su direcci&oacute;n IP se transforma mediante un proceso de hash irreversible (SHA-256) y ning&uacute;n nombre, correo electr&oacute;nico o identificador se asocia a las conversaciones. Estos datos se conservan durante un m&aacute;ximo de 90&nbsp;d&iacute;as, tras los cuales se eliminan autom&aacute;ticamente. La base jur&iacute;dica de este tratamiento es el inter&eacute;s leg&iacute;timo (art&iacute;culo 6.1.f del RGPD) destinado a mejorar la calidad de las respuestas y la fiabilidad del servicio. Puede ejercer sus derechos de acceso, rectificaci&oacute;n y supresi&oacute;n contact&aacute;ndonos en rgpd@lotoia.fr.</p>
-        {% elif lang == "pt" %}
-        <p>Quando utiliza o chatbot HYBRIDE, as suas intera&ccedil;&otilde;es (perguntas colocadas e respostas geradas) s&atilde;o registadas de forma an&oacute;nima para melhoria do servi&ccedil;o. Nenhum dado pessoal diretamente identific&aacute;vel &eacute; conservado: o seu endere&ccedil;o IP &eacute; transformado por um processo de hash irrevers&iacute;vel (SHA-256) e nenhum nome, email ou identificador &eacute; associado &agrave;s conversas. Estes dados s&atilde;o conservados durante um per&iacute;odo m&aacute;ximo de 90&nbsp;dias, ap&oacute;s o qual s&atilde;o automaticamente eliminados. A base legal deste tratamento &eacute; o interesse leg&iacute;timo (artigo 6.&ordm;, n.&ordm; 1, al&iacute;nea f) do RGPD) visando melhorar a qualidade das respostas e a fiabilidade do servi&ccedil;o. Pode exercer os seus direitos de acesso, retifica&ccedil;&atilde;o e elimina&ccedil;&atilde;o contactando-nos em rgpd@lotoia.fr.</p>
-        {% elif lang == "de" %}
-        <p>Wenn Sie den HYBRIDE-Chatbot nutzen, werden Ihre Interaktionen (gestellte Fragen und generierte Antworten) anonym aufgezeichnet, um den Service zu verbessern. Es werden keine direkt identifizierenden personenbezogenen Daten gespeichert: Ihre IP-Adresse wird durch ein irreversibles Hash-Verfahren (SHA-256) umgewandelt und kein Name, keine E-Mail-Adresse oder Kennung wird mit den Gespr&auml;chen verkn&uuml;pft. Diese Daten werden maximal 90&nbsp;Tage aufbewahrt und danach automatisch gel&ouml;scht. Die Rechtsgrundlage dieser Verarbeitung ist das berechtigte Interesse (Artikel 6 Absatz 1 Buchstabe f DSGVO) zur Verbesserung der Antwortqualit&auml;t und Zuverl&auml;ssigkeit des Dienstes. Sie k&ouml;nnen Ihre Rechte auf Auskunft, Berichtigung und L&ouml;schung aus&uuml;ben, indem Sie uns unter rgpd@lotoia.fr kontaktieren.</p>
-        {% elif lang == "nl" %}
-        <p>Wanneer u de HYBRIDE-chatbot gebruikt, worden uw uitwisselingen (gestelde vragen en gegenereerde antwoorden) anoniem geregistreerd om de dienst te verbeteren. Er worden geen direct identificeerbare persoonsgegevens bewaard: uw IP-adres wordt omgezet via een onomkeerbaar hashproces (SHA-256) en er wordt geen naam, e-mailadres of identificatiemiddel aan de gesprekken gekoppeld. Deze gegevens worden maximaal 90&nbsp;dagen bewaard, waarna ze automatisch worden verwijderd. De rechtsgrond voor deze verwerking is het gerechtvaardigd belang (artikel 6, lid 1, onder f), AVG) gericht op het verbeteren van de antwoordkwaliteit en de betrouwbaarheid van de dienst. U kunt uw rechten van inzage, rectificatie en wissing uitoefenen door contact met ons op te nemen via rgpd@lotoia.fr.</p>
-        {% endif %}
-
-        <p>{% if lang == "fr" %}Aucune inscription n'est requise pour utiliser LotoIA.{% elif lang == "en" %}No registration is required to use LotoIA.{% elif lang == "es" %}No se requiere registro para utilizar LotoIA.{% elif lang == "pt" %}N&atilde;o &eacute; necess&aacute;rio qualquer registo para utilizar o LotoIA.{% elif lang == "de" %}F&uuml;r die Nutzung von LotoIA ist keine Registrierung erforderlich.{% elif lang == "nl" %}Er is geen registratie vereist om LotoIA te gebruiken.{% endif %}</p>
+        <p>{% if lang == "fr" %}<strong>Aucune inscription n'est requise</strong> pour utiliser LotoIA.fr. Le service est accessible sans cr&eacute;ation de compte.{% elif lang == "en" %}<strong>No registration is required</strong> to use LotoIA.fr. The service is accessible without creating an account.{% elif lang == "es" %}<strong>No se requiere ning&uacute;n registro</strong> para utilizar LotoIA.fr. El servicio es accesible sin crear una cuenta.{% elif lang == "pt" %}<strong>N&atilde;o &eacute; necess&aacute;rio qualquer registo</strong> para utilizar o LotoIA.fr. O servi&ccedil;o est&aacute; acess&iacute;vel sem cria&ccedil;&atilde;o de conta.{% elif lang == "de" %}<strong>F&uuml;r die Nutzung von LotoIA.fr ist keine Registrierung erforderlich.</strong> Der Dienst ist ohne Erstellung eines Kontos zug&auml;nglich.{% elif lang == "nl" %}<strong>Er is geen registratie vereist</strong> om LotoIA.fr te gebruiken. De dienst is toegankelijk zonder een account aan te maken.{% endif %}</p>
       </section>
 
       {# ══════════════════════════════════════════════════════════════════════
@@ -268,107 +520,151 @@
         <h2>{% if lang == "fr" %}3. Finalit&eacute;s du traitement{% elif lang == "en" %}3. Purposes of Processing{% elif lang == "es" %}3. Finalidades del tratamiento{% elif lang == "pt" %}3. Finalidades do tratamento{% elif lang == "de" %}3. Zwecke der Verarbeitung{% elif lang == "nl" %}3. Doeleinden van de verwerking{% endif %}</h2>
 
         {% if lang == "fr" %}
-        <p>Les donn&eacute;es sont utilis&eacute;es pour :</p>
+        <p>Les donn&eacute;es sont utilis&eacute;es pour les finalit&eacute;s suivantes :</p>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Finalit&eacute;</th><th>Description</th><th>Base juridique</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Fonctionnement du service</strong></td><td>Afficher les pages, g&eacute;n&eacute;rer les grilles et les analyses, r&eacute;pondre &agrave; vos questions via le chatbot, m&eacute;moriser vos pr&eacute;f&eacute;rences d'affichage</td><td>Int&eacute;r&ecirc;t l&eacute;gitime</td></tr>
+            <tr><td><strong>S&eacute;curit&eacute;</strong></td><td>D&eacute;tecter et bloquer les abus et les attaques, diagnostiquer les erreurs (journaux techniques, blocage d'adresses IP)</td><td>Int&eacute;r&ecirc;t l&eacute;gitime</td></tr>
+            <tr><td><strong>Mesure d'audience sans cookie</strong></td><td>Statistiques de fr&eacute;quentation (Umami) et d'utilisation des fonctions du site (mesure interne)</td><td>Int&eacute;r&ecirc;t l&eacute;gitime</td></tr>
+            <tr><td><strong>Mesure d'audience Google Analytics</strong></td><td>Statistiques de fr&eacute;quentation d&eacute;taill&eacute;es</td><td>Consentement</td></tr>
+            <tr><td><strong>Am&eacute;lioration du chatbot</strong></td><td>Analyser la qualit&eacute; des r&eacute;ponses &agrave; partir des questions enregistr&eacute;es</td><td>Int&eacute;r&ecirc;t l&eacute;gitime</td></tr>
+            <tr><td><strong>Espaces partenaires</strong></td><td>Compter les affichages et les clics des espaces partenaires</td><td>Int&eacute;r&ecirc;t l&eacute;gitime</td></tr>
+            <tr><td><strong>Vos messages et vos votes</strong></td><td>Lire et traiter les messages du formulaire de contact, prendre en compte vos notes</td><td>Int&eacute;r&ecirc;t l&eacute;gitime</td></tr>
+          </tbody>
+        </table>
         {% elif lang == "en" %}
-        <p>Data is used for:</p>
+        <p>Data is used for the following purposes:</p>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Purpose</th><th>Description</th><th>Legal basis</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Service operation</strong></td><td>Displaying pages, generating combinations and analyses, answering your questions via the chatbot, remembering your display preferences</td><td>Legitimate interest</td></tr>
+            <tr><td><strong>Security</strong></td><td>Detecting and blocking abuse and attacks, diagnosing errors (technical logs, blocking of IP addresses)</td><td>Legitimate interest</td></tr>
+            <tr><td><strong>Cookie-free audience measurement</strong></td><td>Traffic statistics (Umami) and statistics on the use of the site's features (internal measurement)</td><td>Legitimate interest</td></tr>
+            <tr><td><strong>Google Analytics audience measurement</strong></td><td>Detailed traffic statistics</td><td>Consent</td></tr>
+            <tr><td><strong>Chatbot improvement</strong></td><td>Analysing the quality of answers based on recorded questions</td><td>Legitimate interest</td></tr>
+            <tr><td><strong>Partner spaces</strong></td><td>Counting displays and clicks of partner spaces</td><td>Legitimate interest</td></tr>
+            <tr><td><strong>Your messages and ratings</strong></td><td>Reading and handling contact form messages, taking your ratings into account</td><td>Legitimate interest</td></tr>
+          </tbody>
+        </table>
         {% elif lang == "es" %}
-        <p>Los datos se utilizan para:</p>
+        <p>Los datos se utilizan para las siguientes finalidades:</p>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Finalidad</th><th>Descripci&oacute;n</th><th>Base jur&iacute;dica</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Funcionamiento del servicio</strong></td><td>Mostrar las p&aacute;ginas, generar las combinaciones y los an&aacute;lisis, responder a sus preguntas a trav&eacute;s del chatbot, memorizar sus preferencias de visualizaci&oacute;n</td><td>Inter&eacute;s leg&iacute;timo</td></tr>
+            <tr><td><strong>Seguridad</strong></td><td>Detectar y bloquear abusos y ataques, diagnosticar errores (registros t&eacute;cnicos, bloqueo de direcciones IP)</td><td>Inter&eacute;s leg&iacute;timo</td></tr>
+            <tr><td><strong>Medici&oacute;n de audiencia sin cookies</strong></td><td>Estad&iacute;sticas de visitas (Umami) y de uso de las funciones del sitio (medici&oacute;n interna)</td><td>Inter&eacute;s leg&iacute;timo</td></tr>
+            <tr><td><strong>Medici&oacute;n de audiencia Google Analytics</strong></td><td>Estad&iacute;sticas de visitas detalladas</td><td>Consentimiento</td></tr>
+            <tr><td><strong>Mejora del chatbot</strong></td><td>Analizar la calidad de las respuestas a partir de las preguntas registradas</td><td>Inter&eacute;s leg&iacute;timo</td></tr>
+            <tr><td><strong>Espacios de socios</strong></td><td>Contar las visualizaciones y los clics de los espacios de socios</td><td>Inter&eacute;s leg&iacute;timo</td></tr>
+            <tr><td><strong>Sus mensajes y sus valoraciones</strong></td><td>Leer y tratar los mensajes del formulario de contacto, tener en cuenta sus notas</td><td>Inter&eacute;s leg&iacute;timo</td></tr>
+          </tbody>
+        </table>
         {% elif lang == "pt" %}
-        <p>Os dados s&atilde;o utilizados para:</p>
+        <p>Os dados s&atilde;o utilizados para as seguintes finalidades:</p>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Finalidade</th><th>Descri&ccedil;&atilde;o</th><th>Base jur&iacute;dica</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Funcionamento do servi&ccedil;o</strong></td><td>Apresentar as p&aacute;ginas, gerar as grelhas e as an&aacute;lises, responder &agrave;s suas perguntas atrav&eacute;s do chatbot, memorizar as suas prefer&ecirc;ncias de visualiza&ccedil;&atilde;o</td><td>Interesse leg&iacute;timo</td></tr>
+            <tr><td><strong>Seguran&ccedil;a</strong></td><td>Detetar e bloquear abusos e ataques, diagnosticar erros (registos t&eacute;cnicos, bloqueio de endere&ccedil;os IP)</td><td>Interesse leg&iacute;timo</td></tr>
+            <tr><td><strong>Medi&ccedil;&atilde;o de audi&ecirc;ncia sem cookies</strong></td><td>Estat&iacute;sticas de visitas (Umami) e de utiliza&ccedil;&atilde;o das funcionalidades do site (medi&ccedil;&atilde;o interna)</td><td>Interesse leg&iacute;timo</td></tr>
+            <tr><td><strong>Medi&ccedil;&atilde;o de audi&ecirc;ncia Google Analytics</strong></td><td>Estat&iacute;sticas de visitas detalhadas</td><td>Consentimento</td></tr>
+            <tr><td><strong>Melhoria do chatbot</strong></td><td>Analisar a qualidade das respostas a partir das perguntas registadas</td><td>Interesse leg&iacute;timo</td></tr>
+            <tr><td><strong>Espa&ccedil;os de parceiros</strong></td><td>Contar as visualiza&ccedil;&otilde;es e os cliques dos espa&ccedil;os de parceiros</td><td>Interesse leg&iacute;timo</td></tr>
+            <tr><td><strong>As suas mensagens e as suas avalia&ccedil;&otilde;es</strong></td><td>Ler e tratar as mensagens do formul&aacute;rio de contacto, ter em conta as suas notas</td><td>Interesse leg&iacute;timo</td></tr>
+          </tbody>
+        </table>
         {% elif lang == "de" %}
         <p>Die Daten werden f&uuml;r folgende Zwecke verwendet:</p>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Zweck</th><th>Beschreibung</th><th>Rechtsgrundlage</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Betrieb des Dienstes</strong></td><td>Seiten anzeigen, Kombinationen und Analysen generieren, Ihre Fragen &uuml;ber den Chatbot beantworten, Ihre Anzeigeeinstellungen speichern</td><td>Berechtigtes Interesse</td></tr>
+            <tr><td><strong>Sicherheit</strong></td><td>Missbrauch und Angriffe erkennen und blockieren, Fehler diagnostizieren (technische Protokolle, Sperrung von IP-Adressen)</td><td>Berechtigtes Interesse</td></tr>
+            <tr><td><strong>Reichweitenmessung ohne Cookies</strong></td><td>Besucherstatistiken (Umami) und Statistiken zur Nutzung der Funktionen der Website (interne Messung)</td><td>Berechtigtes Interesse</td></tr>
+            <tr><td><strong>Reichweitenmessung mit Google Analytics</strong></td><td>Detaillierte Besucherstatistiken</td><td>Einwilligung</td></tr>
+            <tr><td><strong>Verbesserung des Chatbots</strong></td><td>Die Qualit&auml;t der Antworten anhand der gespeicherten Fragen analysieren</td><td>Berechtigtes Interesse</td></tr>
+            <tr><td><strong>Partnerfl&auml;chen</strong></td><td>Einblendungen und Klicks der Partnerfl&auml;chen z&auml;hlen</td><td>Berechtigtes Interesse</td></tr>
+            <tr><td><strong>Ihre Nachrichten und Bewertungen</strong></td><td>Nachrichten aus dem Kontaktformular lesen und bearbeiten, Ihre Bewertungen ber&uuml;cksichtigen</td><td>Berechtigtes Interesse</td></tr>
+          </tbody>
+        </table>
         {% elif lang == "nl" %}
-        <p>De gegevens worden gebruikt voor:</p>
+        <p>De gegevens worden gebruikt voor de volgende doeleinden:</p>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Doel</th><th>Beschrijving</th><th>Rechtsgrondslag</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Werking van de dienst</strong></td><td>Pagina's weergeven, combinaties en analyses genereren, uw vragen via de chatbot beantwoorden, uw weergavevoorkeuren onthouden</td><td>Gerechtvaardigd belang</td></tr>
+            <tr><td><strong>Beveiliging</strong></td><td>Misbruik en aanvallen detecteren en blokkeren, fouten diagnosticeren (technische logboeken, blokkering van IP-adressen)</td><td>Gerechtvaardigd belang</td></tr>
+            <tr><td><strong>Publieksmeting zonder cookies</strong></td><td>Bezoekersstatistieken (Umami) en statistieken over het gebruik van de functies van de website (interne meting)</td><td>Gerechtvaardigd belang</td></tr>
+            <tr><td><strong>Publieksmeting met Google Analytics</strong></td><td>Gedetailleerde bezoekersstatistieken</td><td>Toestemming</td></tr>
+            <tr><td><strong>Verbetering van de chatbot</strong></td><td>De kwaliteit van de antwoorden analyseren op basis van de opgeslagen vragen</td><td>Gerechtvaardigd belang</td></tr>
+            <tr><td><strong>Partnerruimtes</strong></td><td>Weergaven en klikken van de partnerruimtes tellen</td><td>Gerechtvaardigd belang</td></tr>
+            <tr><td><strong>Uw berichten en beoordelingen</strong></td><td>Berichten uit het contactformulier lezen en behandelen, rekening houden met uw beoordelingen</td><td>Gerechtvaardigd belang</td></tr>
+          </tbody>
+        </table>
         {% endif %}
-
-        <ul>
-          {% if lang == "fr" %}
-          <li><strong>Fonctionnement du service</strong> : gestion des sessions, conservation des pr&eacute;f&eacute;rences utilisateur</li>
-          <li><strong>Personnalisation</strong> : m&eacute;morisation du th&egrave;me visuel choisi</li>
-          <li><strong>Statistiques d'utilisation</strong> : analyse agr&eacute;g&eacute;e et anonymis&eacute;e de la fr&eacute;quentation</li>
-          <li><strong>Am&eacute;lioration</strong> : optimisation des performances et de l'exp&eacute;rience utilisateur</li>
-          <li><strong>S&eacute;curit&eacute;</strong> : d&eacute;tection et pr&eacute;vention des abus</li>
-          {% elif lang == "en" %}
-          <li><strong>Service operation</strong>: session management, user preference retention</li>
-          <li><strong>Personalisation</strong>: remembering your chosen visual theme</li>
-          <li><strong>Usage statistics</strong>: aggregated and anonymised traffic analysis</li>
-          <li><strong>Improvement</strong>: performance optimisation and user experience enhancement</li>
-          <li><strong>Security</strong>: abuse detection and prevention</li>
-          {% elif lang == "es" %}
-          <li><strong>Funcionamiento del servicio</strong>: gesti&oacute;n de sesiones, conservaci&oacute;n de preferencias del usuario</li>
-          <li><strong>Personalizaci&oacute;n</strong>: memorizaci&oacute;n del tema visual elegido</li>
-          <li><strong>Estad&iacute;sticas de uso</strong>: an&aacute;lisis agregado y anonimizado del tr&aacute;fico</li>
-          <li><strong>Mejora</strong>: optimizaci&oacute;n del rendimiento y de la experiencia del usuario</li>
-          <li><strong>Seguridad</strong>: detecci&oacute;n y prevenci&oacute;n de abusos</li>
-          {% elif lang == "pt" %}
-          <li><strong>Funcionamento do servi&ccedil;o</strong>: gest&atilde;o de sess&otilde;es, conserva&ccedil;&atilde;o das prefer&ecirc;ncias do utilizador</li>
-          <li><strong>Personaliza&ccedil;&atilde;o</strong>: memoriza&ccedil;&atilde;o do tema visual escolhido</li>
-          <li><strong>Estat&iacute;sticas de utiliza&ccedil;&atilde;o</strong>: an&aacute;lise agregada e anonimizada do tr&aacute;fego</li>
-          <li><strong>Melhoria</strong>: otimiza&ccedil;&atilde;o do desempenho e da experi&ecirc;ncia do utilizador</li>
-          <li><strong>Seguran&ccedil;a</strong>: dete&ccedil;&atilde;o e preven&ccedil;&atilde;o de abusos</li>
-          {% elif lang == "de" %}
-          <li><strong>Betrieb des Dienstes</strong>: Sitzungsverwaltung, Speicherung der Benutzereinstellungen</li>
-          <li><strong>Personalisierung</strong>: Speicherung des gew&auml;hlten visuellen Themas</li>
-          <li><strong>Nutzungsstatistiken</strong>: aggregierte und anonymisierte Besucheranalyse</li>
-          <li><strong>Verbesserung</strong>: Optimierung der Leistung und des Benutzererlebnisses</li>
-          <li><strong>Sicherheit</strong>: Erkennung und Verhinderung von Missbrauch</li>
-          {% elif lang == "nl" %}
-          <li><strong>Werking van de dienst</strong>: sessiebeheer, bewaring van gebruikersvoorkeuren</li>
-          <li><strong>Personalisatie</strong>: onthouden van het gekozen visuele thema</li>
-          <li><strong>Gebruiksstatistieken</strong>: geaggregeerde en geanonimiseerde verkeersanalyse</li>
-          <li><strong>Verbetering</strong>: optimalisatie van prestaties en gebruikerservaring</li>
-          <li><strong>Beveiliging</strong>: detectie en preventie van misbruik</li>
-          {% endif %}
-        </ul>
 
         <div class="legal-highlight">
           {% if lang == "fr" %}
-          <p><strong>Vos donn&eacute;es ne sont jamais utilis&eacute;es pour :</strong></p>
+          <p>Les donn&eacute;es <strong>ne sont jamais utilis&eacute;es</strong> pour :</p>
           <ul>
-            <li>Le profilage comportemental</li>
-            <li>La publicit&eacute; cibl&eacute;e</li>
-            <li>La revente &agrave; des tiers</li>
-            <li>Des d&eacute;cisions automatis&eacute;es vous concernant</li>
+            <li>du profilage &agrave; des fins de marketing ;</li>
+            <li>de la publicit&eacute; cibl&eacute;e ;</li>
+            <li>la revente &agrave; des tiers ;</li>
+            <li>des d&eacute;cisions automatis&eacute;es produisant des effets juridiques &agrave; votre &eacute;gard.</li>
           </ul>
           {% elif lang == "en" %}
-          <p><strong>Your data is never used for:</strong></p>
+          <p>Data is <strong>never used</strong> for:</p>
           <ul>
-            <li>Behavioural profiling</li>
-            <li>Targeted advertising</li>
-            <li>Resale to third parties</li>
-            <li>Automated decisions concerning you</li>
+            <li>profiling for marketing purposes;</li>
+            <li>targeted advertising;</li>
+            <li>resale to third parties;</li>
+            <li>automated decisions producing legal effects concerning you.</li>
           </ul>
           {% elif lang == "es" %}
-          <p><strong>Sus datos nunca se utilizan para:</strong></p>
+          <p>Los datos <strong>nunca se utilizan</strong> para:</p>
           <ul>
-            <li>Perfilado comportamental</li>
-            <li>Publicidad dirigida</li>
-            <li>Reventa a terceros</li>
-            <li>Decisiones automatizadas sobre usted</li>
+            <li>la elaboraci&oacute;n de perfiles con fines de marketing;</li>
+            <li>la publicidad dirigida;</li>
+            <li>la reventa a terceros;</li>
+            <li>decisiones automatizadas que produzcan efectos jur&iacute;dicos sobre usted.</li>
           </ul>
           {% elif lang == "pt" %}
-          <p><strong>Os seus dados nunca s&atilde;o utilizados para:</strong></p>
+          <p>Os dados <strong>nunca s&atilde;o utilizados</strong> para:</p>
           <ul>
-            <li>Perfis comportamentais</li>
-            <li>Publicidade direcionada</li>
-            <li>Revenda a terceiros</li>
-            <li>Decis&otilde;es automatizadas que lhe digam respeito</li>
+            <li>a defini&ccedil;&atilde;o de perfis para fins de marketing;</li>
+            <li>publicidade direcionada;</li>
+            <li>a revenda a terceiros;</li>
+            <li>decis&otilde;es automatizadas que produzam efeitos jur&iacute;dicos que lhe digam respeito.</li>
           </ul>
           {% elif lang == "de" %}
-          <p><strong>Ihre Daten werden niemals verwendet f&uuml;r:</strong></p>
+          <p>Die Daten werden <strong>niemals verwendet</strong> f&uuml;r:</p>
           <ul>
-            <li>Verhaltensbasiertes Profiling</li>
-            <li>Gezielte Werbung</li>
-            <li>Weiterverkauf an Dritte</li>
-            <li>Automatisierte Entscheidungen, die Sie betreffen</li>
+            <li>Profiling zu Marketingzwecken;</li>
+            <li>gezielte Werbung;</li>
+            <li>den Weiterverkauf an Dritte;</li>
+            <li>automatisierte Entscheidungen, die Ihnen gegen&uuml;ber rechtliche Wirkung entfalten.</li>
           </ul>
           {% elif lang == "nl" %}
-          <p><strong>Uw gegevens worden nooit gebruikt voor:</strong></p>
+          <p>De gegevens worden <strong>nooit gebruikt</strong> voor:</p>
           <ul>
-            <li>Gedragsprofilering</li>
-            <li>Gerichte reclame</li>
-            <li>Doorverkoop aan derden</li>
-            <li>Geautomatiseerde beslissingen die u betreffen</li>
+            <li>profilering voor marketingdoeleinden;</li>
+            <li>gerichte reclame;</li>
+            <li>doorverkoop aan derden;</li>
+            <li>geautomatiseerde besluiten met rechtsgevolgen voor u.</li>
           </ul>
           {% endif %}
         </div>
@@ -394,32 +690,49 @@
         <p>Overeenkomstig artikel 6 van de Algemene Verordening Gegevensbescherming (AVG) berust de verwerking op:</p>
         {% endif %}
 
-        <table class="legal-table">
-          <thead>
-            <tr>
-              <th>{% if lang == "fr" %}Base l&eacute;gale{% elif lang == "en" %}Legal basis{% elif lang == "es" %}Base jur&iacute;dica{% elif lang == "pt" %}Base jur&iacute;dica{% elif lang == "de" %}Rechtsgrundlage{% elif lang == "nl" %}Rechtsgrondslag{% endif %}</th>
-              <th>{% if lang == "fr" %}Article{% elif lang == "en" %}Article{% elif lang == "es" %}Art&iacute;culo{% elif lang == "pt" %}Artigo{% elif lang == "de" %}Artikel{% elif lang == "nl" %}Artikel{% endif %}</th>
-              <th>{% if lang == "fr" %}Application{% elif lang == "en" %}Application{% elif lang == "es" %}Aplicaci&oacute;n{% elif lang == "pt" %}Aplica&ccedil;&atilde;o{% elif lang == "de" %}Anwendung{% elif lang == "nl" %}Toepassing{% endif %}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{% if lang == "fr" %}Int&eacute;r&ecirc;t l&eacute;gitime{% elif lang == "en" %}Legitimate interest{% elif lang == "es" %}Inter&eacute;s leg&iacute;timo{% elif lang == "pt" %}Interesse leg&iacute;timo{% elif lang == "de" %}Berechtigtes Interesse{% elif lang == "nl" %}Gerechtvaardigd belang{% endif %}</td>
-              <td>6.1.f</td>
-              <td>{% if lang == "fr" %}Fonctionnement, statistiques, s&eacute;curit&eacute;{% elif lang == "en" %}Operation, statistics, security{% elif lang == "es" %}Funcionamiento, estad&iacute;sticas, seguridad{% elif lang == "pt" %}Funcionamento, estat&iacute;sticas, seguran&ccedil;a{% elif lang == "de" %}Betrieb, Statistiken, Sicherheit{% elif lang == "nl" %}Werking, statistieken, beveiliging{% endif %}</td>
-            </tr>
-            <tr>
-              <td>{% if lang == "fr" %}Consentement{% elif lang == "en" %}Consent{% elif lang == "es" %}Consentimiento{% elif lang == "pt" %}Consentimento{% elif lang == "de" %}Einwilligung{% elif lang == "nl" %}Toestemming{% endif %}</td>
-              <td>6.1.a</td>
-              <td>{% if lang == "fr" %}Cookies non essentiels{% elif lang == "en" %}Non-essential cookies{% elif lang == "es" %}Cookies no esenciales{% elif lang == "pt" %}Cookies n&atilde;o essenciais{% elif lang == "de" %}Nicht notwendige Cookies{% elif lang == "nl" %}Niet-essenti&euml;le cookies{% endif %}</td>
-            </tr>
-            <tr>
-              <td>{% if lang == "fr" %}Obligation l&eacute;gale{% elif lang == "en" %}Legal obligation{% elif lang == "es" %}Obligaci&oacute;n legal{% elif lang == "pt" %}Obriga&ccedil;&atilde;o legal{% elif lang == "de" %}Rechtliche Verpflichtung{% elif lang == "nl" %}Wettelijke verplichting{% endif %}</td>
-              <td>6.1.c</td>
-              <td>{% if lang == "fr" %}Conformit&eacute; r&eacute;glementaire{% elif lang == "en" %}Regulatory compliance{% elif lang == "es" %}Cumplimiento normativo{% elif lang == "pt" %}Conformidade regulamentar{% elif lang == "de" %}Regulatorische Einhaltung{% elif lang == "nl" %}Naleving van de regelgeving{% endif %}</td>
-            </tr>
-          </tbody>
-        </table>
+        {% if lang == "fr" %}
+        <h4>Int&eacute;r&ecirc;t l&eacute;gitime (article 6.1.f du RGPD)</h4>
+        <p>La plupart des traitements reposent sur l'int&eacute;r&ecirc;t l&eacute;gitime de l'&eacute;diteur &agrave; fournir un service qui fonctionne, &agrave; en assurer la s&eacute;curit&eacute;, &agrave; mesurer sa fr&eacute;quentation sans cookie et &agrave; am&eacute;liorer la qualit&eacute; des r&eacute;ponses du chatbot. Les donn&eacute;es sont limit&eacute;es au n&eacute;cessaire et conserv&eacute;es pour des dur&eacute;es courtes (section 5). Vous pouvez vous opposer &agrave; ces traitements (section 8).</p>
+        <h4>Consentement (article 6.1.a du RGPD)</h4>
+        <p>Votre consentement est requis pour Google Analytics. Vous pouvez le retirer &agrave; tout moment depuis la <a href="{{ urls.cookies }}">Politique des cookies</a> ; le retrait ne remet pas en cause les traitements effectu&eacute;s avant.</p>
+        <h4>Obligation l&eacute;gale (article 6.1.c du RGPD)</h4>
+        <p>Certaines donn&eacute;es peuvent devoir &ecirc;tre communiqu&eacute;es pour r&eacute;pondre &agrave; la r&eacute;quisition d'une autorit&eacute; judiciaire ou administrative.</p>
+        {% elif lang == "en" %}
+        <h4>Legitimate interest (Article 6.1.f GDPR)</h4>
+        <p>Most processing is based on the publisher's legitimate interest in providing a service that works, keeping it secure, measuring its traffic without cookies and improving the quality of the chatbot's answers. Data is limited to what is necessary and kept for short periods (section 5). You may object to this processing (section 8).</p>
+        <h4>Consent (Article 6.1.a GDPR)</h4>
+        <p>Your consent is required for Google Analytics. You may withdraw it at any time from the <a href="{{ urls.cookies }}">Cookie Policy</a>; withdrawal does not affect processing carried out before.</p>
+        <h4>Legal obligation (Article 6.1.c GDPR)</h4>
+        <p>Some data may have to be disclosed in response to a request from a judicial or administrative authority.</p>
+        {% elif lang == "es" %}
+        <h4>Inter&eacute;s leg&iacute;timo (art&iacute;culo 6.1.f del RGPD)</h4>
+        <p>La mayor&iacute;a de los tratamientos se basan en el inter&eacute;s leg&iacute;timo del editor en ofrecer un servicio que funcione, garantizar su seguridad, medir sus visitas sin cookies y mejorar la calidad de las respuestas del chatbot. Los datos se limitan a lo necesario y se conservan durante plazos cortos (secci&oacute;n 5). Puede oponerse a estos tratamientos (secci&oacute;n 8).</p>
+        <h4>Consentimiento (art&iacute;culo 6.1.a del RGPD)</h4>
+        <p>Su consentimiento es necesario para Google Analytics. Puede retirarlo en cualquier momento desde la <a href="{{ urls.cookies }}">Pol&iacute;tica de cookies</a>; la retirada no afecta a los tratamientos realizados con anterioridad.</p>
+        <h4>Obligaci&oacute;n legal (art&iacute;culo 6.1.c del RGPD)</h4>
+        <p>Es posible que ciertos datos deban comunicarse para responder al requerimiento de una autoridad judicial o administrativa.</p>
+        {% elif lang == "pt" %}
+        <h4>Interesse leg&iacute;timo (artigo 6.&ordm;, n.&ordm; 1, al&iacute;nea f), do RGPD)</h4>
+        <p>A maioria dos tratamentos baseia-se no interesse leg&iacute;timo do editor em fornecer um servi&ccedil;o que funcione, garantir a sua seguran&ccedil;a, medir as suas visitas sem cookies e melhorar a qualidade das respostas do chatbot. Os dados limitam-se ao necess&aacute;rio e s&atilde;o conservados durante prazos curtos (sec&ccedil;&atilde;o 5). Pode opor-se a estes tratamentos (sec&ccedil;&atilde;o 8).</p>
+        <h4>Consentimento (artigo 6.&ordm;, n.&ordm; 1, al&iacute;nea a), do RGPD)</h4>
+        <p>O seu consentimento &eacute; necess&aacute;rio para o Google Analytics. Pode retir&aacute;-lo a qualquer momento a partir da <a href="{{ urls.cookies }}">Pol&iacute;tica de cookies</a>; a retirada n&atilde;o p&otilde;e em causa os tratamentos efetuados anteriormente.</p>
+        <h4>Obriga&ccedil;&atilde;o legal (artigo 6.&ordm;, n.&ordm; 1, al&iacute;nea c), do RGPD)</h4>
+        <p>Certos dados podem ter de ser comunicados para responder a um pedido de uma autoridade judicial ou administrativa.</p>
+        {% elif lang == "de" %}
+        <h4>Berechtigtes Interesse (Artikel 6 Absatz 1 Buchstabe f DSGVO)</h4>
+        <p>Die meisten Verarbeitungen beruhen auf dem berechtigten Interesse des Herausgebers, einen funktionierenden Dienst bereitzustellen, seine Sicherheit zu gew&auml;hrleisten, seine Besucherzahlen ohne Cookies zu messen und die Qualit&auml;t der Antworten des Chatbots zu verbessern. Die Daten sind auf das Notwendige beschr&auml;nkt und werden nur kurz gespeichert (Abschnitt 5). Sie k&ouml;nnen diesen Verarbeitungen widersprechen (Abschnitt 8).</p>
+        <h4>Einwilligung (Artikel 6 Absatz 1 Buchstabe a DSGVO)</h4>
+        <p>F&uuml;r Google Analytics ist Ihre Einwilligung erforderlich. Sie k&ouml;nnen sie jederzeit &uuml;ber die <a href="{{ urls.cookies }}">Cookie-Richtlinie</a> widerrufen; der Widerruf ber&uuml;hrt nicht die zuvor erfolgten Verarbeitungen.</p>
+        <h4>Rechtliche Verpflichtung (Artikel 6 Absatz 1 Buchstabe c DSGVO)</h4>
+        <p>Bestimmte Daten m&uuml;ssen m&ouml;glicherweise auf Anordnung einer Justiz- oder Verwaltungsbeh&ouml;rde herausgegeben werden.</p>
+        {% elif lang == "nl" %}
+        <h4>Gerechtvaardigd belang (artikel 6, lid 1, onder f), AVG)</h4>
+        <p>De meeste verwerkingen berusten op het gerechtvaardigd belang van de uitgever om een goed werkende dienst te leveren, de beveiliging ervan te waarborgen, het bezoek zonder cookies te meten en de kwaliteit van de antwoorden van de chatbot te verbeteren. De gegevens worden beperkt tot het noodzakelijke en kort bewaard (sectie 5). U kunt bezwaar maken tegen deze verwerkingen (sectie 8).</p>
+        <h4>Toestemming (artikel 6, lid 1, onder a), AVG)</h4>
+        <p>Voor Google Analytics is uw toestemming vereist. U kunt deze op elk moment intrekken via het <a href="{{ urls.cookies }}">Cookiebeleid</a>; de intrekking doet geen afbreuk aan de verwerkingen die daarvoor zijn uitgevoerd.</p>
+        <h4>Wettelijke verplichting (artikel 6, lid 1, onder c), AVG)</h4>
+        <p>Bepaalde gegevens moeten mogelijk worden verstrekt op vordering van een gerechtelijke of bestuurlijke autoriteit.</p>
+        {% endif %}
       </section>
 
       {# ══════════════════════════════════════════════════════════════════════
@@ -428,36 +741,145 @@
       <section class="legal-section" id="conservation">
         <h2>{% if lang == "fr" %}5. Dur&eacute;es de conservation{% elif lang == "en" %}5. Retention Periods{% elif lang == "es" %}5. Plazos de conservaci&oacute;n{% elif lang == "pt" %}5. Prazos de conserva&ccedil;&atilde;o{% elif lang == "de" %}5. Speicherdauer{% elif lang == "nl" %}5. Bewaartermijnen{% endif %}</h2>
 
+        {% if lang == "fr" %}
+        <p>Les donn&eacute;es sont conserv&eacute;es pour une dur&eacute;e limit&eacute;e, proportionn&eacute;e &agrave; la finalit&eacute; :</p>
         <table class="legal-table">
           <thead>
-            <tr>
-              <th>{% if lang == "fr" %}Donn&eacute;e{% elif lang == "en" %}Data{% elif lang == "es" %}Dato{% elif lang == "pt" %}Dado{% elif lang == "de" %}Daten{% elif lang == "nl" %}Gegeven{% endif %}</th>
-              <th>{% if lang == "fr" %}Dur&eacute;e{% elif lang == "en" %}Duration{% elif lang == "es" %}Duraci&oacute;n{% elif lang == "pt" %}Dura&ccedil;&atilde;o{% elif lang == "de" %}Dauer{% elif lang == "nl" %}Duur{% endif %}</th>
-            </tr>
+            <tr><th>Donn&eacute;e</th><th>Dur&eacute;e</th><th>&Agrave; compter de</th></tr>
           </thead>
           <tbody>
-            <tr>
-              <td>{% if lang == "fr" %}Identifiant de session{% elif lang == "en" %}Session ID{% elif lang == "es" %}Identificador de sesi&oacute;n{% elif lang == "pt" %}Identificador de sess&atilde;o{% elif lang == "de" %}Sitzungs-ID{% elif lang == "nl" %}Sessie-ID{% endif %}</td>
-              <td>{% if lang == "fr" %}Dur&eacute;e de la session navigateur{% elif lang == "en" %}Duration of the browser session{% elif lang == "es" %}Duraci&oacute;n de la sesi&oacute;n del navegador{% elif lang == "pt" %}Dura&ccedil;&atilde;o da sess&atilde;o do navegador{% elif lang == "de" %}Dauer der Browser-Sitzung{% elif lang == "nl" %}Duur van de browsersessie{% endif %}</td>
-            </tr>
-            <tr>
-              <td>{% if lang == "fr" %}Pr&eacute;f&eacute;rence de th&egrave;me{% elif lang == "en" %}Theme preference{% elif lang == "es" %}Preferencia de tema{% elif lang == "pt" %}Prefer&ecirc;ncia de tema{% elif lang == "de" %}Theme-Einstellung{% elif lang == "nl" %}Themavoorkeur{% endif %}</td>
-              <td>{% if lang == "fr" %}Jusqu'&agrave; suppression par l'utilisateur{% elif lang == "en" %}Until deleted by the user{% elif lang == "es" %}Hasta que el usuario lo elimine{% elif lang == "pt" %}At&eacute; &agrave; elimina&ccedil;&atilde;o pelo utilizador{% elif lang == "de" %}Bis zur L&ouml;schung durch den Benutzer{% elif lang == "nl" %}Tot verwijdering door de gebruiker{% endif %}</td>
-            </tr>
-            <tr>
-              <td>{% if lang == "fr" %}Journaux serveur{% elif lang == "en" %}Server logs{% elif lang == "es" %}Registros del servidor{% elif lang == "pt" %}Registos do servidor{% elif lang == "de" %}Server-Protokolle{% elif lang == "nl" %}Serverlogboeken{% endif %}</td>
-              <td>{% if lang == "fr" %}30 jours{% elif lang == "en" %}30 days{% elif lang == "es" %}30 d&iacute;as{% elif lang == "pt" %}30 dias{% elif lang == "de" %}30 Tage{% elif lang == "nl" %}30 dagen{% endif %}</td>
-            </tr>
-            <tr>
-              <td>{% if lang == "fr" %}E-mails de contact{% elif lang == "en" %}Contact emails{% elif lang == "es" %}Correos de contacto{% elif lang == "pt" %}E-mails de contacto{% elif lang == "de" %}Kontakt-E-Mails{% elif lang == "nl" %}Contacte-mails{% endif %}</td>
-              <td>{% if lang == "fr" %}3 ans{% elif lang == "en" %}3 years{% elif lang == "es" %}3 a&ntilde;os{% elif lang == "pt" %}3 anos{% elif lang == "de" %}3 Jahre{% elif lang == "nl" %}3 jaar{% endif %}</td>
-            </tr>
-            <tr>
-              <td>{% if lang == "fr" %}Cookies de consentement{% elif lang == "en" %}Consent cookies{% elif lang == "es" %}Cookies de consentimiento{% elif lang == "pt" %}Cookies de consentimento{% elif lang == "de" %}Einwilligungs-Cookies{% elif lang == "nl" %}Toestemmingscookies{% endif %}</td>
-              <td>{% if lang == "fr" %}13 mois{% elif lang == "en" %}13 months{% elif lang == "es" %}13 meses{% elif lang == "pt" %}13 meses{% elif lang == "de" %}13 Monate{% elif lang == "nl" %}13 maanden{% endif %}</td>
-            </tr>
+            <tr><td>Journaux techniques du serveur</td><td>30 jours</td><td>leur enregistrement</td></tr>
+            <tr><td>Questions au chatbot et d&eacute;but des r&eacute;ponses</td><td>environ trois mois</td><td>la question</td></tr>
+            <tr><td>Mesure d'audience interne</td><td>environ trois mois</td><td>l'&eacute;v&eacute;nement</td></tr>
+            <tr><td>Votes (note et commentaire)</td><td>12 mois</td><td>votre dernier vote</td></tr>
+            <tr><td>Messages du formulaire de contact</td><td>3 ans</td><td>la r&eacute;ception du message</td></tr>
+            <tr><td>Adresses IP bloqu&eacute;es</td><td>12 mois</td><td>le blocage</td></tr>
+            <tr><td>Affichages et clics des espaces partenaires</td><td>24 mois</td><td>l'&eacute;v&eacute;nement</td></tr>
+            <tr><td>Google Analytics (si vous l'avez accept&eacute;)</td><td>cookies : 13 mois ; donn&eacute;es d&eacute;taill&eacute;es : 14 mois, conserv&eacute;es par Google</td><td>le d&eacute;p&ocirc;t du cookie ; la collecte</td></tr>
+            <tr><td>Umami</td><td>2 ans</td><td>la collecte</td></tr>
+            <tr><td>Choix relatif aux cookies</td><td>13 mois</td><td>votre choix</td></tr>
+            <tr><td>Pr&eacute;f&eacute;rence de th&egrave;me</td><td>jusqu'&agrave; ce que vous la supprimiez</td><td>&mdash;</td></tr>
+            <tr><td>Identifiant de session de l'onglet, historique du chatbot</td><td>jusqu'&agrave; la fermeture de l'onglet</td><td>&mdash;</td></tr>
           </tbody>
         </table>
+        <p>&Agrave; l'issue de ces dur&eacute;es, les donn&eacute;es sont supprim&eacute;es.</p>
+        <p>La base de donn&eacute;es fait l'objet de sauvegardes automatiques quotidiennes, conserv&eacute;es 7 jours dans l'Union europ&eacute;enne. Des sauvegardes ponctuelles peuvent en outre &ecirc;tre r&eacute;alis&eacute;es avant une intervention technique ; elles sont conserv&eacute;es le temps de valider l'intervention, au plus six semaines, puis supprim&eacute;es. Une donn&eacute;e supprim&eacute;e peut donc subsister dans une sauvegarde jusqu'&agrave; la suppression de celle-ci.</p>
+        {% elif lang == "en" %}
+        <p>Data is kept for a limited period, proportionate to the purpose:</p>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Data</th><th>Duration</th><th>Starting from</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Server technical logs</td><td>30 days</td><td>their recording</td></tr>
+            <tr><td>Chatbot questions and beginning of answers</td><td>about three months</td><td>the question</td></tr>
+            <tr><td>Internal audience measurement</td><td>about three months</td><td>the event</td></tr>
+            <tr><td>Ratings (score and comment)</td><td>12 months</td><td>your last rating</td></tr>
+            <tr><td>Contact form messages</td><td>3 years</td><td>receipt of the message</td></tr>
+            <tr><td>Blocked IP addresses</td><td>12 months</td><td>the block</td></tr>
+            <tr><td>Partner space displays and clicks</td><td>24 months</td><td>the event</td></tr>
+            <tr><td>Google Analytics (if you have accepted it)</td><td>cookies: 13 months; detailed data: 14 months, kept by Google</td><td>the cookie being set; collection</td></tr>
+            <tr><td>Umami</td><td>2 years</td><td>collection</td></tr>
+            <tr><td>Choice regarding cookies</td><td>13 months</td><td>your choice</td></tr>
+            <tr><td>Theme preference</td><td>until you delete it</td><td>&mdash;</td></tr>
+            <tr><td>Tab session identifier, chatbot history</td><td>until the tab is closed</td><td>&mdash;</td></tr>
+          </tbody>
+        </table>
+        <p>At the end of these periods, the data is deleted.</p>
+        <p>The database is backed up automatically every day, and backups are kept for 7 days in the European Union. Additional one-off backups may also be made before a technical intervention; they are kept until the intervention has been validated, for no more than six weeks, and then deleted. Deleted data may therefore remain in a backup until that backup is deleted.</p>
+        {% elif lang == "es" %}
+        <p>Los datos se conservan durante un plazo limitado, proporcionado a la finalidad:</p>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Dato</th><th>Duraci&oacute;n</th><th>A partir de</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Registros t&eacute;cnicos del servidor</td><td>30 d&iacute;as</td><td>su registro</td></tr>
+            <tr><td>Preguntas al chatbot y comienzo de las respuestas</td><td>unos tres meses</td><td>la pregunta</td></tr>
+            <tr><td>Medici&oacute;n de audiencia interna</td><td>unos tres meses</td><td>el evento</td></tr>
+            <tr><td>Valoraciones (nota y comentario)</td><td>12 meses</td><td>su &uacute;ltima valoraci&oacute;n</td></tr>
+            <tr><td>Mensajes del formulario de contacto</td><td>3 a&ntilde;os</td><td>la recepci&oacute;n del mensaje</td></tr>
+            <tr><td>Direcciones IP bloqueadas</td><td>12 meses</td><td>el bloqueo</td></tr>
+            <tr><td>Visualizaciones y clics de los espacios de socios</td><td>24 meses</td><td>el evento</td></tr>
+            <tr><td>Google Analytics (si usted lo ha aceptado)</td><td>cookies: 13 meses; datos detallados: 14 meses, conservados por Google</td><td>la instalaci&oacute;n de la cookie; la recogida</td></tr>
+            <tr><td>Umami</td><td>2 a&ntilde;os</td><td>la recogida</td></tr>
+            <tr><td>Elecci&oacute;n relativa a las cookies</td><td>13 meses</td><td>su elecci&oacute;n</td></tr>
+            <tr><td>Preferencia de tema</td><td>hasta que usted la elimine</td><td>&mdash;</td></tr>
+            <tr><td>Identificador de sesi&oacute;n de la pesta&ntilde;a, historial del chatbot</td><td>hasta el cierre de la pesta&ntilde;a</td><td>&mdash;</td></tr>
+          </tbody>
+        </table>
+        <p>Al t&eacute;rmino de estos plazos, los datos se eliminan.</p>
+        <p>La base de datos es objeto de copias de seguridad autom&aacute;ticas diarias, conservadas 7 d&iacute;as en la Uni&oacute;n Europea. Adem&aacute;s, pueden realizarse copias de seguridad puntuales antes de una intervenci&oacute;n t&eacute;cnica; se conservan el tiempo necesario para validar la intervenci&oacute;n, seis semanas como m&aacute;ximo, y despu&eacute;s se eliminan. Por tanto, un dato eliminado puede subsistir en una copia de seguridad hasta que esta se elimine.</p>
+        {% elif lang == "pt" %}
+        <p>Os dados s&atilde;o conservados durante um per&iacute;odo limitado, proporcional &agrave; finalidade:</p>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Dado</th><th>Dura&ccedil;&atilde;o</th><th>A contar de</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Registos t&eacute;cnicos do servidor</td><td>30 dias</td><td>o seu registo</td></tr>
+            <tr><td>Perguntas ao chatbot e in&iacute;cio das respostas</td><td>cerca de tr&ecirc;s meses</td><td>a pergunta</td></tr>
+            <tr><td>Medi&ccedil;&atilde;o de audi&ecirc;ncia interna</td><td>cerca de tr&ecirc;s meses</td><td>o evento</td></tr>
+            <tr><td>Avalia&ccedil;&otilde;es (nota e coment&aacute;rio)</td><td>12 meses</td><td>a sua &uacute;ltima avalia&ccedil;&atilde;o</td></tr>
+            <tr><td>Mensagens do formul&aacute;rio de contacto</td><td>3 anos</td><td>a rece&ccedil;&atilde;o da mensagem</td></tr>
+            <tr><td>Endere&ccedil;os IP bloqueados</td><td>12 meses</td><td>o bloqueio</td></tr>
+            <tr><td>Visualiza&ccedil;&otilde;es e cliques dos espa&ccedil;os de parceiros</td><td>24 meses</td><td>o evento</td></tr>
+            <tr><td>Google Analytics (se o tiver aceitado)</td><td>cookies: 13 meses; dados detalhados: 14 meses, conservados pela Google</td><td>a coloca&ccedil;&atilde;o do cookie; a recolha</td></tr>
+            <tr><td>Umami</td><td>2 anos</td><td>a recolha</td></tr>
+            <tr><td>Escolha relativa aos cookies</td><td>13 meses</td><td>a sua escolha</td></tr>
+            <tr><td>Prefer&ecirc;ncia de tema</td><td>at&eacute; que a elimine</td><td>&mdash;</td></tr>
+            <tr><td>Identificador de sess&atilde;o do separador, hist&oacute;rico do chatbot</td><td>at&eacute; ao fecho do separador</td><td>&mdash;</td></tr>
+          </tbody>
+        </table>
+        <p>No termo destes prazos, os dados s&atilde;o eliminados.</p>
+        <p>A base de dados &eacute; objeto de c&oacute;pias de seguran&ccedil;a autom&aacute;ticas di&aacute;rias, conservadas durante 7 dias na Uni&atilde;o Europeia. Podem ainda ser feitas c&oacute;pias de seguran&ccedil;a pontuais antes de uma interven&ccedil;&atilde;o t&eacute;cnica; s&atilde;o conservadas o tempo necess&aacute;rio para validar a interven&ccedil;&atilde;o, no m&aacute;ximo seis semanas, e depois eliminadas. Um dado eliminado pode, portanto, subsistir numa c&oacute;pia de seguran&ccedil;a at&eacute; &agrave; elimina&ccedil;&atilde;o desta.</p>
+        {% elif lang == "de" %}
+        <p>Die Daten werden f&uuml;r einen begrenzten, dem Zweck angemessenen Zeitraum gespeichert:</p>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Daten</th><th>Dauer</th><th>Ab</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Technische Server-Protokolle</td><td>30 Tage</td><td>ihrer Aufzeichnung</td></tr>
+            <tr><td>Fragen an den Chatbot und Anfang der Antworten</td><td>etwa drei Monate</td><td>der Frage</td></tr>
+            <tr><td>Interne Reichweitenmessung</td><td>etwa drei Monate</td><td>dem Ereignis</td></tr>
+            <tr><td>Bewertungen (Note und Kommentar)</td><td>12 Monate</td><td>Ihrer letzten Bewertung</td></tr>
+            <tr><td>Nachrichten aus dem Kontaktformular</td><td>3 Jahre</td><td>dem Eingang der Nachricht</td></tr>
+            <tr><td>Gesperrte IP-Adressen</td><td>12 Monate</td><td>der Sperrung</td></tr>
+            <tr><td>Einblendungen und Klicks der Partnerfl&auml;chen</td><td>24 Monate</td><td>dem Ereignis</td></tr>
+            <tr><td>Google Analytics (wenn Sie zugestimmt haben)</td><td>Cookies: 13 Monate; detaillierte Daten: 14 Monate, gespeichert von Google</td><td>dem Setzen des Cookies; der Erhebung</td></tr>
+            <tr><td>Umami</td><td>2 Jahre</td><td>der Erhebung</td></tr>
+            <tr><td>Auswahl zu Cookies</td><td>13 Monate</td><td>Ihrer Auswahl</td></tr>
+            <tr><td>Theme-Einstellung</td><td>bis Sie sie l&ouml;schen</td><td>&mdash;</td></tr>
+            <tr><td>Sitzungskennung des Tabs, Chatbot-Verlauf</td><td>bis zum Schlie&szlig;en des Tabs</td><td>&mdash;</td></tr>
+          </tbody>
+        </table>
+        <p>Nach Ablauf dieser Fristen werden die Daten gel&ouml;scht.</p>
+        <p>Die Datenbank wird t&auml;glich automatisch gesichert; die Sicherungen werden 7 Tage lang in der Europ&auml;ischen Union aufbewahrt. Vor einem technischen Eingriff k&ouml;nnen au&szlig;erdem einmalige Sicherungen erstellt werden; sie werden aufbewahrt, bis der Eingriff abgenommen ist, h&ouml;chstens sechs Wochen, und anschlie&szlig;end gel&ouml;scht. Gel&ouml;schte Daten k&ouml;nnen daher in einer Sicherung verbleiben, bis diese gel&ouml;scht wird.</p>
+        {% elif lang == "nl" %}
+        <p>De gegevens worden gedurende een beperkte periode bewaard, in verhouding tot het doel:</p>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Gegeven</th><th>Duur</th><th>Vanaf</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Technische serverlogboeken</td><td>30 dagen</td><td>de registratie ervan</td></tr>
+            <tr><td>Vragen aan de chatbot en begin van de antwoorden</td><td>ongeveer drie maanden</td><td>de vraag</td></tr>
+            <tr><td>Interne publieksmeting</td><td>ongeveer drie maanden</td><td>de gebeurtenis</td></tr>
+            <tr><td>Beoordelingen (score en opmerking)</td><td>12 maanden</td><td>uw laatste beoordeling</td></tr>
+            <tr><td>Berichten uit het contactformulier</td><td>3 jaar</td><td>de ontvangst van het bericht</td></tr>
+            <tr><td>Geblokkeerde IP-adressen</td><td>12 maanden</td><td>de blokkering</td></tr>
+            <tr><td>Weergaven en klikken van partnerruimtes</td><td>24 maanden</td><td>de gebeurtenis</td></tr>
+            <tr><td>Google Analytics (als u dit hebt geaccepteerd)</td><td>cookies: 13 maanden; gedetailleerde gegevens: 14 maanden, bewaard door Google</td><td>het plaatsen van de cookie; de verzameling</td></tr>
+            <tr><td>Umami</td><td>2 jaar</td><td>de verzameling</td></tr>
+            <tr><td>Keuze met betrekking tot cookies</td><td>13 maanden</td><td>uw keuze</td></tr>
+            <tr><td>Themavoorkeur</td><td>totdat u deze verwijdert</td><td>&mdash;</td></tr>
+            <tr><td>Sessie-ID van het tabblad, chatbotgeschiedenis</td><td>tot het sluiten van het tabblad</td><td>&mdash;</td></tr>
+          </tbody>
+        </table>
+        <p>Na afloop van deze termijnen worden de gegevens verwijderd.</p>
+        <p>Van de database worden dagelijks automatisch back-ups gemaakt, die 7 dagen in de Europese Unie worden bewaard. Daarnaast kunnen v&oacute;&oacute;r een technische ingreep eenmalige back-ups worden gemaakt; deze worden bewaard totdat de ingreep is gevalideerd, maximaal zes weken, en daarna verwijderd. Verwijderde gegevens kunnen dus in een back-up blijven bestaan totdat die back-up wordt verwijderd.</p>
+        {% endif %}
       </section>
 
       {# ══════════════════════════════════════════════════════════════════════
@@ -467,72 +889,230 @@
         <h2>{% if lang == "fr" %}6. Destinataires des donn&eacute;es{% elif lang == "en" %}6. Data Recipients{% elif lang == "es" %}6. Destinatarios de los datos{% elif lang == "pt" %}6. Destinat&aacute;rios dos dados{% elif lang == "de" %}6. Empf&auml;nger der Daten{% elif lang == "nl" %}6. Ontvangers van de gegevens{% endif %}</h2>
 
         {% if lang == "fr" %}
-        <p>Les donn&eacute;es collect&eacute;es sont trait&eacute;es exclusivement en interne et par notre h&eacute;bergeur :</p>
-        {% elif lang == "en" %}
-        <p>Collected data is processed exclusively internally and by our hosting provider:</p>
-        {% elif lang == "es" %}
-        <p>Los datos recopilados son tratados exclusivamente de forma interna y por nuestro proveedor de alojamiento:</p>
-        {% elif lang == "pt" %}
-        <p>Os dados recolhidos s&atilde;o tratados exclusivamente internamente e pelo nosso fornecedor de alojamento:</p>
-        {% elif lang == "de" %}
-        <p>Die erhobenen Daten werden ausschlie&szlig;lich intern und von unserem Hosting-Anbieter verarbeitet:</p>
-        {% elif lang == "nl" %}
-        <p>De verzamelde gegevens worden uitsluitend intern en door onze hostingprovider verwerkt:</p>
-        {% endif %}
-
-        <div class="legal-info-block">
-          <p><strong>Google Cloud Platform</strong></p>
-          <p>{% if lang == "fr" %}H&eacute;bergement UE (r&eacute;gion europe-west1){% elif lang == "en" %}EU hosting (europe-west1 region){% elif lang == "es" %}Alojamiento UE (regi&oacute;n europe-west1){% elif lang == "pt" %}Alojamento UE (regi&atilde;o europe-west1){% elif lang == "de" %}EU-Hosting (Region europe-west1){% elif lang == "nl" %}EU-hosting (regio europe-west1){% endif %}</p>
-          <p>{% if lang == "fr" %}Certifications{% elif lang == "en" %}Certifications{% elif lang == "es" %}Certificaciones{% elif lang == "pt" %}Certifica&ccedil;&otilde;es{% elif lang == "de" %}Zertifizierungen{% elif lang == "nl" %}Certificeringen{% endif %} : ISO 27001, SOC 2</p>
-        </div>
-
+        <h3>Acc&egrave;s interne</h3>
+        <p>Les donn&eacute;es ne sont accessibles qu'&agrave; l'&eacute;diteur du site, depuis un espace d'administration prot&eacute;g&eacute; (section 10).</p>
+        <h3>Prestataires (sous-traitants)</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Prestataire</th><th>Service</th><th>Donn&eacute;es concern&eacute;es</th><th>Localisation</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Google Ireland Limited (Google Cloud)</td><td>H&eacute;bergement du site et de la base de donn&eacute;es (Cloud Run, Cloud SQL), journaux techniques (Cloud Logging)</td><td>Les donn&eacute;es d&eacute;crites en section 2, sauf Google Analytics et Umami</td><td>Site et base de donn&eacute;es : Union europ&eacute;enne (Belgique) ; journaux techniques : stockage mondial, sans garantie de localisation dans l'Union europ&eacute;enne</td></tr>
+            <tr><td>Google Ireland Limited (Vertex AI, Google Cloud)</td><td>Production des r&eacute;ponses du chatbot (mod&egrave;le Gemini)</td><td>Vos questions et l'historique r&eacute;cent de la conversation</td><td>Union europ&eacute;enne (Belgique)</td></tr>
+            <tr><td>Google (Google Analytics) &mdash; seulement si vous l'acceptez</td><td>Mesure d'audience</td><td>Donn&eacute;es Google Analytics (section 2)</td><td>Voir section 7</td></tr>
+            <tr><td>Umami Software, Inc. (Umami Cloud)</td><td>Mesure d'audience sans cookie</td><td>Pages vues et &eacute;v&eacute;nements</td><td>Donn&eacute;es h&eacute;berg&eacute;es dans l'Union europ&eacute;enne (Francfort, Allemagne) ; soci&eacute;t&eacute; &eacute;tablie aux &Eacute;tats-Unis</td></tr>
+          </tbody>
+        </table>
+        <h3>Absence de revente</h3>
         <div class="legal-highlight">
-          <p><strong>{% if lang == "fr" %}Vos donn&eacute;es ne sont jamais vendues &agrave; des tiers.{% elif lang == "en" %}Your data is never sold to third parties.{% elif lang == "es" %}Sus datos nunca se venden a terceros.{% elif lang == "pt" %}Os seus dados nunca s&atilde;o vendidos a terceiros.{% elif lang == "de" %}Ihre Daten werden niemals an Dritte verkauft.{% elif lang == "nl" %}Uw gegevens worden nooit aan derden verkocht.{% endif %}</strong></p>
+          <p><strong>Vos donn&eacute;es ne sont jamais vendues, lou&eacute;es ou &eacute;chang&eacute;es &agrave; des fins commerciales.</strong> Les partenaires dont les espaces sont affich&eacute;s sur le site ne re&ccedil;oivent que des chiffres globaux (nombre d'affichages et de clics), jamais de donn&eacute;es vous concernant.</p>
         </div>
+        <h3>Autorit&eacute;s</h3>
+        <p>Les donn&eacute;es peuvent &ecirc;tre communiqu&eacute;es aux autorit&eacute;s comp&eacute;tentes sur r&eacute;quisition judiciaire ou dans le cadre d'une obligation l&eacute;gale.</p>
+        {% elif lang == "en" %}
+        <h3>Internal access</h3>
+        <p>Data is accessible only to the site's publisher, from a protected administration area (section 10).</p>
+        <h3>Service providers (processors)</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Provider</th><th>Service</th><th>Data concerned</th><th>Location</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Google Ireland Limited (Google Cloud)</td><td>Hosting of the site and the database (Cloud Run, Cloud SQL), technical logs (Cloud Logging)</td><td>The data described in section 2, except Google Analytics and Umami</td><td>Site and database: European Union (Belgium); technical logs: global storage, with no guarantee of location in the European Union</td></tr>
+            <tr><td>Google Ireland Limited (Vertex AI, Google Cloud)</td><td>Producing the chatbot's answers (Gemini model)</td><td>Your questions and the recent history of the conversation</td><td>European Union (Belgium)</td></tr>
+            <tr><td>Google (Google Analytics) &mdash; only if you accept it</td><td>Audience measurement</td><td>Google Analytics data (section 2)</td><td>See section 7</td></tr>
+            <tr><td>Umami Software, Inc. (Umami Cloud)</td><td>Cookie-free audience measurement</td><td>Page views and events</td><td>Data hosted in the European Union (Frankfurt, Germany); company established in the United States</td></tr>
+          </tbody>
+        </table>
+        <h3>No resale</h3>
+        <div class="legal-highlight">
+          <p><strong>Your data is never sold, rented or exchanged for commercial purposes.</strong> Partners whose spaces are displayed on the site only receive overall figures (number of displays and clicks), never data about you.</p>
+        </div>
+        <h3>Authorities</h3>
+        <p>Data may be disclosed to the competent authorities upon a judicial request or under a legal obligation.</p>
+        {% elif lang == "es" %}
+        <h3>Acceso interno</h3>
+        <p>Los datos solo son accesibles para el editor del sitio, desde un &aacute;rea de administraci&oacute;n protegida (secci&oacute;n 10).</p>
+        <h3>Proveedores (encargados del tratamiento)</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Proveedor</th><th>Servicio</th><th>Datos afectados</th><th>Ubicaci&oacute;n</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Google Ireland Limited (Google Cloud)</td><td>Alojamiento del sitio y de la base de datos (Cloud Run, Cloud SQL), registros t&eacute;cnicos (Cloud Logging)</td><td>Los datos descritos en la secci&oacute;n 2, salvo Google Analytics y Umami</td><td>Sitio y base de datos: Uni&oacute;n Europea (B&eacute;lgica); registros t&eacute;cnicos: almacenamiento mundial, sin garant&iacute;a de ubicaci&oacute;n en la Uni&oacute;n Europea</td></tr>
+            <tr><td>Google Ireland Limited (Vertex AI, Google Cloud)</td><td>Elaboraci&oacute;n de las respuestas del chatbot (modelo Gemini)</td><td>Sus preguntas y el historial reciente de la conversaci&oacute;n</td><td>Uni&oacute;n Europea (B&eacute;lgica)</td></tr>
+            <tr><td>Google (Google Analytics) &mdash; solo si usted lo acepta</td><td>Medici&oacute;n de audiencia</td><td>Datos de Google Analytics (secci&oacute;n 2)</td><td>V&eacute;ase la secci&oacute;n 7</td></tr>
+            <tr><td>Umami Software, Inc. (Umami Cloud)</td><td>Medici&oacute;n de audiencia sin cookies</td><td>P&aacute;ginas vistas y eventos</td><td>Datos alojados en la Uni&oacute;n Europea (Fr&aacute;ncfort, Alemania); empresa establecida en Estados Unidos</td></tr>
+          </tbody>
+        </table>
+        <h3>Ausencia de reventa</h3>
+        <div class="legal-highlight">
+          <p><strong>Sus datos nunca se venden, alquilan ni intercambian con fines comerciales.</strong> Los socios cuyos espacios se muestran en el sitio solo reciben cifras globales (n&uacute;mero de visualizaciones y de clics), nunca datos que le conciernan.</p>
+        </div>
+        <h3>Autoridades</h3>
+        <p>Los datos pueden comunicarse a las autoridades competentes por requerimiento judicial o en el marco de una obligaci&oacute;n legal.</p>
+        {% elif lang == "pt" %}
+        <h3>Acesso interno</h3>
+        <p>Os dados s&oacute; s&atilde;o acess&iacute;veis ao editor do site, a partir de uma &aacute;rea de administra&ccedil;&atilde;o protegida (sec&ccedil;&atilde;o 10).</p>
+        <h3>Prestadores de servi&ccedil;os (subcontratantes)</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Prestador</th><th>Servi&ccedil;o</th><th>Dados em causa</th><th>Localiza&ccedil;&atilde;o</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Google Ireland Limited (Google Cloud)</td><td>Alojamento do site e da base de dados (Cloud Run, Cloud SQL), registos t&eacute;cnicos (Cloud Logging)</td><td>Os dados descritos na sec&ccedil;&atilde;o 2, exceto Google Analytics e Umami</td><td>Site e base de dados: Uni&atilde;o Europeia (B&eacute;lgica); registos t&eacute;cnicos: armazenamento mundial, sem garantia de localiza&ccedil;&atilde;o na Uni&atilde;o Europeia</td></tr>
+            <tr><td>Google Ireland Limited (Vertex AI, Google Cloud)</td><td>Produ&ccedil;&atilde;o das respostas do chatbot (modelo Gemini)</td><td>As suas perguntas e o hist&oacute;rico recente da conversa</td><td>Uni&atilde;o Europeia (B&eacute;lgica)</td></tr>
+            <tr><td>Google (Google Analytics) &mdash; apenas se o aceitar</td><td>Medi&ccedil;&atilde;o de audi&ecirc;ncia</td><td>Dados do Google Analytics (sec&ccedil;&atilde;o 2)</td><td>Ver sec&ccedil;&atilde;o 7</td></tr>
+            <tr><td>Umami Software, Inc. (Umami Cloud)</td><td>Medi&ccedil;&atilde;o de audi&ecirc;ncia sem cookies</td><td>P&aacute;ginas vistas e eventos</td><td>Dados alojados na Uni&atilde;o Europeia (Frankfurt, Alemanha); empresa estabelecida nos Estados Unidos</td></tr>
+          </tbody>
+        </table>
+        <h3>Aus&ecirc;ncia de revenda</h3>
+        <div class="legal-highlight">
+          <p><strong>Os seus dados nunca s&atilde;o vendidos, alugados ou trocados para fins comerciais.</strong> Os parceiros cujos espa&ccedil;os s&atilde;o apresentados no site s&oacute; recebem n&uacute;meros globais (n&uacute;mero de visualiza&ccedil;&otilde;es e de cliques), nunca dados que lhe digam respeito.</p>
+        </div>
+        <h3>Autoridades</h3>
+        <p>Os dados podem ser comunicados &agrave;s autoridades competentes mediante pedido judicial ou no &acirc;mbito de uma obriga&ccedil;&atilde;o legal.</p>
+        {% elif lang == "de" %}
+        <h3>Interner Zugriff</h3>
+        <p>Die Daten sind ausschlie&szlig;lich f&uuml;r den Herausgeber der Website &uuml;ber einen gesch&uuml;tzten Verwaltungsbereich zug&auml;nglich (Abschnitt 10).</p>
+        <h3>Dienstleister (Auftragsverarbeiter)</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Dienstleister</th><th>Dienst</th><th>Betroffene Daten</th><th>Standort</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Google Ireland Limited (Google Cloud)</td><td>Hosting der Website und der Datenbank (Cloud Run, Cloud SQL), technische Protokolle (Cloud Logging)</td><td>Die in Abschnitt 2 beschriebenen Daten, au&szlig;er Google Analytics und Umami</td><td>Website und Datenbank: Europ&auml;ische Union (Belgien); technische Protokolle: weltweite Speicherung, ohne Garantie eines Standorts in der Europ&auml;ischen Union</td></tr>
+            <tr><td>Google Ireland Limited (Vertex AI, Google Cloud)</td><td>Erstellung der Antworten des Chatbots (Gemini-Modell)</td><td>Ihre Fragen und der j&uuml;ngste Gespr&auml;chsverlauf</td><td>Europ&auml;ische Union (Belgien)</td></tr>
+            <tr><td>Google (Google Analytics) &mdash; nur wenn Sie zustimmen</td><td>Reichweitenmessung</td><td>Google-Analytics-Daten (Abschnitt 2)</td><td>Siehe Abschnitt 7</td></tr>
+            <tr><td>Umami Software, Inc. (Umami Cloud)</td><td>Reichweitenmessung ohne Cookies</td><td>Seitenaufrufe und Ereignisse</td><td>Daten in der Europ&auml;ischen Union gehostet (Frankfurt, Deutschland); Unternehmen mit Sitz in den Vereinigten Staaten</td></tr>
+          </tbody>
+        </table>
+        <h3>Kein Weiterverkauf</h3>
+        <div class="legal-highlight">
+          <p><strong>Ihre Daten werden niemals verkauft, vermietet oder zu kommerziellen Zwecken getauscht.</strong> Partner, deren Fl&auml;chen auf der Website angezeigt werden, erhalten nur Gesamtzahlen (Anzahl der Einblendungen und Klicks), niemals Daten, die Sie betreffen.</p>
+        </div>
+        <h3>Beh&ouml;rden</h3>
+        <p>Die Daten k&ouml;nnen den zust&auml;ndigen Beh&ouml;rden auf gerichtliche Anordnung oder im Rahmen einer gesetzlichen Verpflichtung &uuml;bermittelt werden.</p>
+        {% elif lang == "nl" %}
+        <h3>Interne toegang</h3>
+        <p>De gegevens zijn uitsluitend toegankelijk voor de uitgever van de website, via een beveiligde beheeromgeving (sectie 10).</p>
+        <h3>Dienstverleners (verwerkers)</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Dienstverlener</th><th>Dienst</th><th>Betrokken gegevens</th><th>Locatie</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Google Ireland Limited (Google Cloud)</td><td>Hosting van de website en de database (Cloud Run, Cloud SQL), technische logboeken (Cloud Logging)</td><td>De in sectie 2 beschreven gegevens, behalve Google Analytics en Umami</td><td>Website en database: Europese Unie (Belgi&euml;); technische logboeken: wereldwijde opslag, zonder garantie van locatie in de Europese Unie</td></tr>
+            <tr><td>Google Ireland Limited (Vertex AI, Google Cloud)</td><td>Formuleren van de antwoorden van de chatbot (Gemini-model)</td><td>Uw vragen en de recente gespreksgeschiedenis</td><td>Europese Unie (Belgi&euml;)</td></tr>
+            <tr><td>Google (Google Analytics) &mdash; alleen als u dit accepteert</td><td>Publieksmeting</td><td>Google Analytics-gegevens (sectie 2)</td><td>Zie sectie 7</td></tr>
+            <tr><td>Umami Software, Inc. (Umami Cloud)</td><td>Publieksmeting zonder cookies</td><td>Paginaweergaven en gebeurtenissen</td><td>Gegevens gehost in de Europese Unie (Frankfurt, Duitsland); bedrijf gevestigd in de Verenigde Staten</td></tr>
+          </tbody>
+        </table>
+        <h3>Geen doorverkoop</h3>
+        <div class="legal-highlight">
+          <p><strong>Uw gegevens worden nooit verkocht, verhuurd of uitgewisseld voor commerci&euml;le doeleinden.</strong> Partners van wie de ruimtes op de website worden getoond, ontvangen alleen totaalcijfers (aantal weergaven en klikken), nooit gegevens over u.</p>
+        </div>
+        <h3>Autoriteiten</h3>
+        <p>De gegevens kunnen op gerechtelijk bevel of in het kader van een wettelijke verplichting aan de bevoegde autoriteiten worden verstrekt.</p>
+        {% endif %}
       </section>
 
       {# ══════════════════════════════════════════════════════════════════════
          7. TRANSFERS OUTSIDE EU
          ══════════════════════════════════════════════════════════════════════ #}
       <section class="legal-section" id="transferts">
-        <h2>{% if lang == "fr" %}7. Transferts hors UE{% elif lang == "en" %}7. Transfers Outside the EU{% elif lang == "es" %}7. Transferencias fuera de la UE{% elif lang == "pt" %}7. Transfer&ecirc;ncias para fora da UE{% elif lang == "de" %}7. &Uuml;bermittlungen au&szlig;erhalb der EU{% elif lang == "nl" %}7. Doorgifte buiten de EU{% endif %}</h2>
+        <h2>{% if lang == "fr" %}7. Localisation et transferts hors UE{% elif lang == "en" %}7. Location and Transfers Outside the EU{% elif lang == "es" %}7. Ubicaci&oacute;n y transferencias fuera de la UE{% elif lang == "pt" %}7. Localiza&ccedil;&atilde;o e transfer&ecirc;ncias para fora da UE{% elif lang == "de" %}7. Speicherort und &Uuml;bermittlungen au&szlig;erhalb der EU{% elif lang == "nl" %}7. Locatie en doorgifte buiten de EU{% endif %}</h2>
 
         {% if lang == "fr" %}
-        <p>Les donn&eacute;es sont h&eacute;berg&eacute;es principalement dans l'Union europ&eacute;enne. Dans le cas o&ugrave; certaines donn&eacute;es seraient transf&eacute;r&eacute;es vers les &Eacute;tats-Unis (services Google Cloud), ces transferts sont encadr&eacute;s par :</p>
-        <ul>
-          <li><strong>Clauses Contractuelles Types (CCT)</strong> approuv&eacute;es par la Commission europ&eacute;enne</li>
-          <li><strong>EU-US Data Privacy Framework</strong> (d&eacute;cision d'ad&eacute;quation du 10 juillet 2023)</li>
-        </ul>
+        <h3>H&eacute;bergement dans l'Union europ&eacute;enne</h3>
+        <p>Le site et sa base de donn&eacute;es sont h&eacute;berg&eacute;s par Google Cloud dans la r&eacute;gion europe-west1 (Belgique), et les sauvegardes automatiques de la base sont stock&eacute;es dans l'Union europ&eacute;enne. Les r&eacute;ponses du chatbot sont produites par Vertex AI dans la m&ecirc;me r&eacute;gion. Seuls les journaux techniques du serveur (30 jours) sont stock&eacute;s par Google Cloud sans garantie de localisation dans l'Union europ&eacute;enne (voir ci-dessous).</p>
+        <h3>Transferts hors de l'Union europ&eacute;enne</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Prestataire</th><th>Pays</th><th>Garantie</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Google LLC (Google Analytics, seulement si vous l'acceptez)</td><td>&Eacute;tats-Unis</td><td>Data Privacy Framework UE&ndash;&Eacute;tats-Unis (certification active) et clauses contractuelles types de la Commission europ&eacute;enne</td></tr>
+            <tr><td>Umami Software, Inc. (Umami Cloud)</td><td>Donn&eacute;es h&eacute;berg&eacute;es dans l'UE ; soci&eacute;t&eacute; &eacute;tablie aux &Eacute;tats-Unis</td><td>Clauses contractuelles types de la Commission europ&eacute;enne</td></tr>
+            <tr><td>Google Cloud (journaux techniques du serveur)</td><td>Stockage mondial</td><td>Conditions de traitement des donn&eacute;es de Google Cloud et clauses contractuelles types de la Commission europ&eacute;enne</td></tr>
+          </tbody>
+        </table>
+        <p>Pour plus d'informations sur les garanties de Google : <a href="https://cloud.google.com/privacy" target="_blank" rel="noopener">cloud.google.com/privacy</a></p>
         {% elif lang == "en" %}
-        <p>Data is primarily hosted within the European Union. Should any data be transferred to the United States (Google Cloud services), such transfers are governed by:</p>
-        <ul>
-          <li><strong>Standard Contractual Clauses (SCCs)</strong> approved by the European Commission</li>
-          <li><strong>EU-US Data Privacy Framework</strong> (adequacy decision of 10 July 2023)</li>
-        </ul>
+        <h3>Hosting in the European Union</h3>
+        <p>The site and its database are hosted by Google Cloud in the europe-west1 region (Belgium), and the automatic database backups are stored in the European Union. The chatbot's answers are produced by Vertex AI in the same region. Only the server technical logs (30 days) are stored by Google Cloud with no guarantee of location in the European Union (see below).</p>
+        <h3>Transfers outside the European Union</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Provider</th><th>Country</th><th>Safeguard</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Google LLC (Google Analytics, only if you accept it)</td><td>United States</td><td>EU-U.S. Data Privacy Framework (active certification) and the European Commission's Standard Contractual Clauses</td></tr>
+            <tr><td>Umami Software, Inc. (Umami Cloud)</td><td>Data hosted in the EU; company established in the United States</td><td>The European Commission's Standard Contractual Clauses</td></tr>
+            <tr><td>Google Cloud (server technical logs)</td><td>Global storage</td><td>Google Cloud data processing terms and the European Commission's Standard Contractual Clauses</td></tr>
+          </tbody>
+        </table>
+        <p>For more information on Google's safeguards: <a href="https://cloud.google.com/privacy" target="_blank" rel="noopener">cloud.google.com/privacy</a></p>
         {% elif lang == "es" %}
-        <p>Los datos se alojan principalmente en la Uni&oacute;n Europea. En caso de que algunos datos se transfieran a Estados Unidos (servicios de Google Cloud), dichas transferencias est&aacute;n reguladas por:</p>
-        <ul>
-          <li><strong>Cl&aacute;usulas Contractuales Tipo (CCT)</strong> aprobadas por la Comisi&oacute;n Europea</li>
-          <li><strong>EU-US Data Privacy Framework</strong> (decisi&oacute;n de adecuaci&oacute;n del 10 de julio de 2023)</li>
-        </ul>
+        <h3>Alojamiento en la Uni&oacute;n Europea</h3>
+        <p>El sitio y su base de datos est&aacute;n alojados por Google Cloud en la regi&oacute;n europe-west1 (B&eacute;lgica), y las copias de seguridad autom&aacute;ticas de la base se almacenan en la Uni&oacute;n Europea. Las respuestas del chatbot las produce Vertex AI en la misma regi&oacute;n. Solo los registros t&eacute;cnicos del servidor (30 d&iacute;as) son almacenados por Google Cloud sin garant&iacute;a de ubicaci&oacute;n en la Uni&oacute;n Europea (v&eacute;ase m&aacute;s abajo).</p>
+        <h3>Transferencias fuera de la Uni&oacute;n Europea</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Proveedor</th><th>Pa&iacute;s</th><th>Garant&iacute;a</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Google LLC (Google Analytics, solo si usted lo acepta)</td><td>Estados Unidos</td><td>EU-U.S. Data Privacy Framework (certificaci&oacute;n activa) y cl&aacute;usulas contractuales tipo de la Comisi&oacute;n Europea</td></tr>
+            <tr><td>Umami Software, Inc. (Umami Cloud)</td><td>Datos alojados en la UE; empresa establecida en Estados Unidos</td><td>Cl&aacute;usulas contractuales tipo de la Comisi&oacute;n Europea</td></tr>
+            <tr><td>Google Cloud (registros t&eacute;cnicos del servidor)</td><td>Almacenamiento mundial</td><td>Condiciones de tratamiento de datos de Google Cloud y cl&aacute;usulas contractuales tipo de la Comisi&oacute;n Europea</td></tr>
+          </tbody>
+        </table>
+        <p>Para m&aacute;s informaci&oacute;n sobre las garant&iacute;as de Google: <a href="https://cloud.google.com/privacy" target="_blank" rel="noopener">cloud.google.com/privacy</a></p>
         {% elif lang == "pt" %}
-        <p>Os dados s&atilde;o alojados principalmente na Uni&atilde;o Europeia. Caso alguns dados sejam transferidos para os Estados Unidos (servi&ccedil;os Google Cloud), essas transfer&ecirc;ncias s&atilde;o enquadradas por:</p>
-        <ul>
-          <li><strong>Cl&aacute;usulas Contratuais-Tipo (CCT)</strong> aprovadas pela Comiss&atilde;o Europeia</li>
-          <li><strong>EU-US Data Privacy Framework</strong> (decis&atilde;o de adequa&ccedil;&atilde;o de 10 de julho de 2023)</li>
-        </ul>
+        <h3>Alojamento na Uni&atilde;o Europeia</h3>
+        <p>O site e a sua base de dados s&atilde;o alojados pela Google Cloud na regi&atilde;o europe-west1 (B&eacute;lgica), e as c&oacute;pias de seguran&ccedil;a autom&aacute;ticas da base s&atilde;o armazenadas na Uni&atilde;o Europeia. As respostas do chatbot s&atilde;o produzidas pelo Vertex AI na mesma regi&atilde;o. Apenas os registos t&eacute;cnicos do servidor (30 dias) s&atilde;o armazenados pela Google Cloud sem garantia de localiza&ccedil;&atilde;o na Uni&atilde;o Europeia (ver abaixo).</p>
+        <h3>Transfer&ecirc;ncias para fora da Uni&atilde;o Europeia</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Prestador</th><th>Pa&iacute;s</th><th>Garantia</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Google LLC (Google Analytics, apenas se o aceitar)</td><td>Estados Unidos</td><td>EU-U.S. Data Privacy Framework (certifica&ccedil;&atilde;o ativa) e cl&aacute;usulas contratuais-tipo da Comiss&atilde;o Europeia</td></tr>
+            <tr><td>Umami Software, Inc. (Umami Cloud)</td><td>Dados alojados na UE; empresa estabelecida nos Estados Unidos</td><td>Cl&aacute;usulas contratuais-tipo da Comiss&atilde;o Europeia</td></tr>
+            <tr><td>Google Cloud (registos t&eacute;cnicos do servidor)</td><td>Armazenamento mundial</td><td>Condi&ccedil;&otilde;es de tratamento de dados da Google Cloud e cl&aacute;usulas contratuais-tipo da Comiss&atilde;o Europeia</td></tr>
+          </tbody>
+        </table>
+        <p>Para mais informa&ccedil;&otilde;es sobre as garantias da Google: <a href="https://cloud.google.com/privacy" target="_blank" rel="noopener">cloud.google.com/privacy</a></p>
         {% elif lang == "de" %}
-        <p>Die Daten werden haupts&auml;chlich in der Europ&auml;ischen Union gehostet. Sollten Daten in die Vereinigten Staaten &uuml;bermittelt werden (Google-Cloud-Dienste), werden diese &Uuml;bermittlungen abgesichert durch:</p>
-        <ul>
-          <li><strong>Standardvertragsklauseln (SVK)</strong>, genehmigt von der Europ&auml;ischen Kommission</li>
-          <li><strong>EU-US Data Privacy Framework</strong> (Angemessenheitsbeschluss vom 10. Juli 2023)</li>
-        </ul>
+        <h3>Hosting in der Europ&auml;ischen Union</h3>
+        <p>Die Website und ihre Datenbank werden von Google Cloud in der Region europe-west1 (Belgien) gehostet, und die automatischen Sicherungen der Datenbank werden in der Europ&auml;ischen Union gespeichert. Die Antworten des Chatbots werden von Vertex AI in derselben Region erstellt. Nur die technischen Server-Protokolle (30 Tage) werden von Google Cloud ohne Garantie eines Standorts in der Europ&auml;ischen Union gespeichert (siehe unten).</p>
+        <h3>&Uuml;bermittlungen au&szlig;erhalb der Europ&auml;ischen Union</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Dienstleister</th><th>Land</th><th>Garantie</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Google LLC (Google Analytics, nur wenn Sie zustimmen)</td><td>Vereinigte Staaten</td><td>EU-U.S. Data Privacy Framework (aktive Zertifizierung) und Standardvertragsklauseln der Europ&auml;ischen Kommission</td></tr>
+            <tr><td>Umami Software, Inc. (Umami Cloud)</td><td>In der EU gehostete Daten; Unternehmen mit Sitz in den Vereinigten Staaten</td><td>Standardvertragsklauseln der Europ&auml;ischen Kommission</td></tr>
+            <tr><td>Google Cloud (technische Server-Protokolle)</td><td>Weltweite Speicherung</td><td>Datenverarbeitungsbedingungen von Google Cloud und Standardvertragsklauseln der Europ&auml;ischen Kommission</td></tr>
+          </tbody>
+        </table>
+        <p>Weitere Informationen zu den Garantien von Google: <a href="https://cloud.google.com/privacy" target="_blank" rel="noopener">cloud.google.com/privacy</a></p>
         {% elif lang == "nl" %}
-        <p>De gegevens worden voornamelijk in de Europese Unie gehost. Indien bepaalde gegevens naar de Verenigde Staten worden doorgegeven (Google Cloud-diensten), worden deze doorgiften beschermd door:</p>
-        <ul>
-          <li><strong>Standaardcontractbepalingen (SCB's)</strong> goedgekeurd door de Europese Commissie</li>
-          <li><strong>EU-US Data Privacy Framework</strong> (adequaatheidsbesluit van 10 juli 2023)</li>
-        </ul>
+        <h3>Hosting in de Europese Unie</h3>
+        <p>De website en de database worden gehost door Google Cloud in de regio europe-west1 (Belgi&euml;), en de automatische back-ups van de database worden in de Europese Unie opgeslagen. De antwoorden van de chatbot worden door Vertex AI in dezelfde regio geformuleerd. Alleen de technische serverlogboeken (30 dagen) worden door Google Cloud opgeslagen zonder garantie van locatie in de Europese Unie (zie hieronder).</p>
+        <h3>Doorgifte buiten de Europese Unie</h3>
+        <table class="legal-table">
+          <thead>
+            <tr><th>Dienstverlener</th><th>Land</th><th>Waarborg</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Google LLC (Google Analytics, alleen als u dit accepteert)</td><td>Verenigde Staten</td><td>EU-U.S. Data Privacy Framework (actieve certificering) en modelcontractbepalingen van de Europese Commissie</td></tr>
+            <tr><td>Umami Software, Inc. (Umami Cloud)</td><td>Gegevens gehost in de EU; bedrijf gevestigd in de Verenigde Staten</td><td>Modelcontractbepalingen van de Europese Commissie</td></tr>
+            <tr><td>Google Cloud (technische serverlogboeken)</td><td>Wereldwijde opslag</td><td>Gegevensverwerkingsvoorwaarden van Google Cloud en modelcontractbepalingen van de Europese Commissie</td></tr>
+          </tbody>
+        </table>
+        <p>Meer informatie over de waarborgen van Google: <a href="https://cloud.google.com/privacy" target="_blank" rel="noopener">cloud.google.com/privacy</a></p>
         {% endif %}
       </section>
 
@@ -594,56 +1174,110 @@
         <div class="contact-box">
           <h4>{% if lang == "fr" %}Exercer vos droits{% elif lang == "en" %}Exercise your rights{% elif lang == "es" %}Ejercer sus derechos{% elif lang == "pt" %}Exercer os seus direitos{% elif lang == "de" %}Ihre Rechte aus&uuml;ben{% elif lang == "nl" %}Uw rechten uitoefenen{% endif %}</h4>
           {% if lang == "fr" %}
-          <p>Contactez-nous &agrave; l'adresse <a href="mailto:rgpd@lotoia.fr">rgpd@lotoia.fr</a>. Nous vous r&eacute;pondrons dans un d&eacute;lai d'<strong>un mois</strong>.</p>
+          <p>Pour exercer ces droits, &eacute;crivez &agrave; <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a>. Nous r&eacute;pondons dans un d&eacute;lai d'un mois &agrave; compter de la r&eacute;ception de votre demande ; ce d&eacute;lai peut &ecirc;tre prolong&eacute; de deux mois si la demande est complexe.</p>
+          <p>Pour que nous puissions retrouver vos donn&eacute;es :</p>
+          <ul>
+            <li><strong>message de contact</strong> : indiquez l'adresse e-mail utilis&eacute;e (&eacute;crivez de pr&eacute;f&eacute;rence depuis cette adresse) ou, &agrave; d&eacute;faut, la date et le sujet du message ;</li>
+            <li><strong>vote</strong> : indiquez sa date approximative et, si vous avez laiss&eacute; un commentaire, son texte. Un vote sans commentaire n'est rattach&eacute; &agrave; aucun &eacute;l&eacute;ment permettant de vous identifier : nous ne pouvons pas le retrouver ;</li>
+            <li><strong>conversations avec le chatbot</strong> : elles ne sont rattach&eacute;es &agrave; aucun identifiant. Nous ne pouvons les retrouver que si vous nous indiquez le texte exact de votre question et sa date approximative ;</li>
+            <li><strong>journaux techniques</strong> : ils sont supprim&eacute;s automatiquement au bout de 30 jours.</li>
+          </ul>
+          <p>Un justificatif pourra &ecirc;tre demand&eacute; en cas de doute raisonnable sur votre identit&eacute;.</p>
           {% elif lang == "en" %}
-          <p>Contact us at <a href="mailto:rgpd@lotoia.fr">rgpd@lotoia.fr</a>. We will respond within <strong>one month</strong>.</p>
+          <p>To exercise these rights, write to <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a>. We respond within one month of receiving your request; this period may be extended by two months if the request is complex.</p>
+          <p>So that we can find your data:</p>
+          <ul>
+            <li><strong>contact message</strong>: give the email address used (preferably write from that address) or, failing that, the date and subject of the message;</li>
+            <li><strong>rating</strong>: give its approximate date and, if you left a comment, its text. A rating without a comment is not linked to anything that could identify you: we cannot find it;</li>
+            <li><strong>conversations with the chatbot</strong>: they are not linked to any identifier. We can only find them if you give us the exact text of your question and its approximate date;</li>
+            <li><strong>technical logs</strong>: they are deleted automatically after 30 days.</li>
+          </ul>
+          <p>Proof of identity may be requested if there is reasonable doubt about your identity.</p>
           {% elif lang == "es" %}
-          <p>Cont&aacute;ctenos en <a href="mailto:rgpd@lotoia.fr">rgpd@lotoia.fr</a>. Le responderemos en un plazo de <strong>un mes</strong>.</p>
+          <p>Para ejercer estos derechos, escriba a <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a>. Respondemos en el plazo de un mes a partir de la recepci&oacute;n de su solicitud; este plazo puede prorrogarse dos meses si la solicitud es compleja.</p>
+          <p>Para que podamos encontrar sus datos:</p>
+          <ul>
+            <li><strong>mensaje de contacto</strong>: indique la direcci&oacute;n de correo electr&oacute;nico utilizada (escriba preferentemente desde esa direcci&oacute;n) o, en su defecto, la fecha y el asunto del mensaje;</li>
+            <li><strong>valoraci&oacute;n</strong>: indique su fecha aproximada y, si dej&oacute; un comentario, su texto. Una valoraci&oacute;n sin comentario no est&aacute; vinculada a ning&uacute;n elemento que permita identificarle: no podemos encontrarla;</li>
+            <li><strong>conversaciones con el chatbot</strong>: no est&aacute;n vinculadas a ning&uacute;n identificador. Solo podemos encontrarlas si nos indica el texto exacto de su pregunta y su fecha aproximada;</li>
+            <li><strong>registros t&eacute;cnicos</strong>: se eliminan autom&aacute;ticamente al cabo de 30 d&iacute;as.</li>
+          </ul>
+          <p>Podr&aacute; solicitarse un justificante en caso de duda razonable sobre su identidad.</p>
           {% elif lang == "pt" %}
-          <p>Contacte-nos em <a href="mailto:rgpd@lotoia.fr">rgpd@lotoia.fr</a>. Responderemos no prazo de <strong>um m&ecirc;s</strong>.</p>
+          <p>Para exercer estes direitos, escreva para <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a>. Respondemos no prazo de um m&ecirc;s a contar da rece&ccedil;&atilde;o do seu pedido; este prazo pode ser prorrogado por dois meses se o pedido for complexo.</p>
+          <p>Para que possamos encontrar os seus dados:</p>
+          <ul>
+            <li><strong>mensagem de contacto</strong>: indique o endere&ccedil;o de e-mail utilizado (escreva de prefer&ecirc;ncia a partir desse endere&ccedil;o) ou, na sua falta, a data e o assunto da mensagem;</li>
+            <li><strong>avalia&ccedil;&atilde;o</strong>: indique a sua data aproximada e, se deixou um coment&aacute;rio, o respetivo texto. Uma avalia&ccedil;&atilde;o sem coment&aacute;rio n&atilde;o est&aacute; associada a nenhum elemento que permita identific&aacute;-lo: n&atilde;o a podemos encontrar;</li>
+            <li><strong>conversas com o chatbot</strong>: n&atilde;o est&atilde;o associadas a nenhum identificador. S&oacute; as podemos encontrar se nos indicar o texto exato da sua pergunta e a sua data aproximada;</li>
+            <li><strong>registos t&eacute;cnicos</strong>: s&atilde;o eliminados automaticamente ao fim de 30 dias.</li>
+          </ul>
+          <p>Poder&aacute; ser pedido um comprovativo em caso de d&uacute;vida razo&aacute;vel sobre a sua identidade.</p>
           {% elif lang == "de" %}
-          <p>Kontaktieren Sie uns unter <a href="mailto:rgpd@lotoia.fr">rgpd@lotoia.fr</a>. Wir antworten Ihnen innerhalb von <strong>einem Monat</strong>.</p>
+          <p>Um diese Rechte auszu&uuml;ben, schreiben Sie an <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a>. Wir antworten innerhalb eines Monats nach Eingang Ihres Antrags; diese Frist kann bei komplexen Antr&auml;gen um zwei Monate verl&auml;ngert werden.</p>
+          <p>Damit wir Ihre Daten finden k&ouml;nnen:</p>
+          <ul>
+            <li><strong>Kontaktnachricht</strong>: Geben Sie die verwendete E-Mail-Adresse an (schreiben Sie m&ouml;glichst von dieser Adresse aus) oder andernfalls Datum und Betreff der Nachricht;</li>
+            <li><strong>Bewertung</strong>: Geben Sie das ungef&auml;hre Datum und, falls Sie einen Kommentar hinterlassen haben, dessen Text an. Eine Bewertung ohne Kommentar ist mit keinem Element verkn&uuml;pft, das Sie identifizieren k&ouml;nnte: Wir k&ouml;nnen sie nicht finden;</li>
+            <li><strong>Gespr&auml;che mit dem Chatbot</strong>: Sie sind mit keiner Kennung verkn&uuml;pft. Wir k&ouml;nnen sie nur finden, wenn Sie uns den genauen Text Ihrer Frage und ihr ungef&auml;hres Datum mitteilen;</li>
+            <li><strong>technische Protokolle</strong>: Sie werden nach 30 Tagen automatisch gel&ouml;scht.</li>
+          </ul>
+          <p>Bei begr&uuml;ndeten Zweifeln an Ihrer Identit&auml;t kann ein Nachweis verlangt werden.</p>
           {% elif lang == "nl" %}
-          <p>Neem contact met ons op via <a href="mailto:rgpd@lotoia.fr">rgpd@lotoia.fr</a>. Wij antwoorden u binnen <strong>&eacute;&eacute;n maand</strong>.</p>
+          <p>Om deze rechten uit te oefenen, schrijft u naar <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a>. Wij antwoorden binnen een maand na ontvangst van uw verzoek; deze termijn kan met twee maanden worden verlengd als het verzoek complex is.</p>
+          <p>Zodat wij uw gegevens kunnen terugvinden:</p>
+          <ul>
+            <li><strong>contactbericht</strong>: vermeld het gebruikte e-mailadres (schrijf bij voorkeur vanaf dat adres) of, als dat niet kan, de datum en het onderwerp van het bericht;</li>
+            <li><strong>beoordeling</strong>: vermeld de geschatte datum en, als u een opmerking hebt achtergelaten, de tekst ervan. Een beoordeling zonder opmerking is niet gekoppeld aan enig gegeven waarmee u kunt worden ge&iuml;dentificeerd: wij kunnen deze niet terugvinden;</li>
+            <li><strong>gesprekken met de chatbot</strong>: deze zijn niet aan een identificatie gekoppeld. Wij kunnen ze alleen terugvinden als u ons de exacte tekst van uw vraag en de geschatte datum ervan doorgeeft;</li>
+            <li><strong>technische logboeken</strong>: deze worden na 30 dagen automatisch verwijderd.</li>
+          </ul>
+          <p>Bij redelijke twijfel over uw identiteit kan om een bewijsstuk worden gevraagd.</p>
           {% endif %}
         </div>
 
         {% if lang == "fr" %}
-        <p>En cas de litige, vous pouvez introduire une r&eacute;clamation aupr&egrave;s de l'autorit&eacute; de contr&ocirc;le comp&eacute;tente :</p>
-        <div class="legal-info-block">
-          <p><strong>CNIL</strong> (Commission Nationale de l'Informatique et des Libert&eacute;s)</p>
-          <p>Site web : <a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a></p>
-        </div>
+        <h3>R&eacute;clamation</h3>
+        <p>Si vous estimez que vos droits ne sont pas respect&eacute;s, vous pouvez introduire une r&eacute;clamation aupr&egrave;s de la CNIL (Commission nationale de l'informatique et des libert&eacute;s), ou aupr&egrave;s de l'autorit&eacute; de protection des donn&eacute;es de votre pays de r&eacute;sidence dans l'Union europ&eacute;enne :</p>
+        <ul>
+          <li><strong>En ligne :</strong> <a href="https://www.cnil.fr/fr/plaintes" target="_blank" rel="noopener">www.cnil.fr/fr/plaintes</a></li>
+          <li><strong>Par courrier :</strong> CNIL - 3 Place de Fontenoy - TSA 80715 - 75334 PARIS CEDEX 07</li>
+        </ul>
         {% elif lang == "en" %}
-        <p>In case of a dispute, you may lodge a complaint with the competent supervisory authority:</p>
-        <div class="legal-info-block">
-          <p><strong>ICO</strong> (Information Commissioner's Office)</p>
-          <p>Website: <a href="https://www.ico.org.uk" target="_blank" rel="noopener">www.ico.org.uk</a></p>
-        </div>
+        <h3>Complaint</h3>
+        <p>If you believe that your rights are not being respected, you may lodge a complaint with the CNIL (Commission nationale de l'informatique et des libert&eacute;s, the French data protection authority), or with the data protection authority of your country of residence in the European Union:</p>
+        <ul>
+          <li><strong>Online:</strong> <a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a></li>
+          <li><strong>By post:</strong> CNIL - 3 Place de Fontenoy - TSA 80715 - 75334 PARIS CEDEX 07, France</li>
+        </ul>
         {% elif lang == "es" %}
-        <p>En caso de litigio, puede presentar una reclamaci&oacute;n ante la autoridad de control competente:</p>
-        <div class="legal-info-block">
-          <p><strong>AEPD</strong> (Agencia Espa&ntilde;ola de Protecci&oacute;n de Datos)</p>
-          <p>Sitio web: <a href="https://www.aepd.es" target="_blank" rel="noopener">www.aepd.es</a></p>
-        </div>
+        <h3>Reclamaci&oacute;n</h3>
+        <p>Si considera que sus derechos no se respetan, puede presentar una reclamaci&oacute;n ante la CNIL (Commission nationale de l'informatique et des libert&eacute;s, la autoridad francesa de protecci&oacute;n de datos), o ante la autoridad de protecci&oacute;n de datos de su pa&iacute;s de residencia en la Uni&oacute;n Europea:</p>
+        <ul>
+          <li><strong>En l&iacute;nea:</strong> <a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a></li>
+          <li><strong>Por correo postal:</strong> CNIL - 3 Place de Fontenoy - TSA 80715 - 75334 PARIS CEDEX 07, Francia</li>
+        </ul>
         {% elif lang == "pt" %}
-        <p>Em caso de lit&iacute;gio, pode apresentar uma reclama&ccedil;&atilde;o junto da autoridade de controlo competente:</p>
-        <div class="legal-info-block">
-          <p><strong>CNPD</strong> (Comiss&atilde;o Nacional de Prote&ccedil;&atilde;o de Dados)</p>
-          <p>Site web: <a href="https://www.cnpd.pt" target="_blank" rel="noopener">www.cnpd.pt</a></p>
-        </div>
+        <h3>Reclama&ccedil;&atilde;o</h3>
+        <p>Se considerar que os seus direitos n&atilde;o s&atilde;o respeitados, pode apresentar uma reclama&ccedil;&atilde;o junto da CNIL (Commission nationale de l'informatique et des libert&eacute;s, a autoridade francesa de prote&ccedil;&atilde;o de dados), ou junto da autoridade de prote&ccedil;&atilde;o de dados do seu pa&iacute;s de resid&ecirc;ncia na Uni&atilde;o Europeia:</p>
+        <ul>
+          <li><strong>Online:</strong> <a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a></li>
+          <li><strong>Por correio:</strong> CNIL - 3 Place de Fontenoy - TSA 80715 - 75334 PARIS CEDEX 07, Fran&ccedil;a</li>
+        </ul>
         {% elif lang == "de" %}
-        <p>Im Streitfall k&ouml;nnen Sie eine Beschwerde bei der zust&auml;ndigen Aufsichtsbeh&ouml;rde einreichen:</p>
-        <div class="legal-info-block">
-          <p><strong>BfDI</strong> (Der Bundesbeauftragte f&uuml;r den Datenschutz und die Informationsfreiheit)</p>
-          <p>Website: <a href="https://www.bfdi.bund.de" target="_blank" rel="noopener">www.bfdi.bund.de</a></p>
-        </div>
+        <h3>Beschwerde</h3>
+        <p>Wenn Sie der Ansicht sind, dass Ihre Rechte nicht gewahrt werden, k&ouml;nnen Sie Beschwerde bei der CNIL (Commission nationale de l'informatique et des libert&eacute;s, die franz&ouml;sische Datenschutzaufsichtsbeh&ouml;rde) oder bei der Datenschutzaufsichtsbeh&ouml;rde Ihres Wohnsitzlandes in der Europ&auml;ischen Union einlegen:</p>
+        <ul>
+          <li><strong>Online:</strong> <a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a></li>
+          <li><strong>Per Post:</strong> CNIL - 3 Place de Fontenoy - TSA 80715 - 75334 PARIS CEDEX 07, Frankreich</li>
+        </ul>
         {% elif lang == "nl" %}
-        <p>In geval van een geschil kunt u een klacht indienen bij de bevoegde toezichthoudende autoriteit:</p>
-        <div class="legal-info-block">
-          <p><strong>AP</strong> (Autoriteit Persoonsgegevens)</p>
-          <p>Website: <a href="https://www.autoriteitpersoonsgegevens.nl" target="_blank" rel="noopener">www.autoriteitpersoonsgegevens.nl</a></p>
-        </div>
+        <h3>Klacht</h3>
+        <p>Als u van mening bent dat uw rechten niet worden gerespecteerd, kunt u een klacht indienen bij de CNIL (Commission nationale de l'informatique et des libert&eacute;s, de Franse toezichthouder voor gegevensbescherming), of bij de gegevensbeschermingsautoriteit van uw land van verblijf in de Europese Unie:</p>
+        <ul>
+          <li><strong>Online:</strong> <a href="https://www.cnil.fr" target="_blank" rel="noopener">www.cnil.fr</a></li>
+          <li><strong>Per post:</strong> CNIL - 3 Place de Fontenoy - TSA 80715 - 75334 PARIS CEDEX 07, Frankrijk</li>
+        </ul>
         {% endif %}
       </section>
 
@@ -654,17 +1288,29 @@
         <h2>9. Cookies</h2>
 
         {% if lang == "fr" %}
-        <p>LotoIA utilise un nombre tr&egrave;s limit&eacute; de cookies, principalement techniques. Pour une information d&eacute;taill&eacute;e sur les cookies utilis&eacute;s, leur finalit&eacute; et leur dur&eacute;e, veuillez consulter notre <a href="{{ urls.cookies }}">Politique des cookies</a>.</p>
+        <p>Pour le d&eacute;tail des cookies et du stockage local utilis&eacute;s par LotoIA.fr, consultez notre <a href="{{ urls.cookies }}">Politique des cookies</a>.</p>
+        <h3>En r&eacute;sum&eacute;</h3>
+        <p>LotoIA.fr utilise du stockage local n&eacute;cessaire au fonctionnement du site (pr&eacute;f&eacute;rence de th&egrave;me, choix relatif aux cookies, identifiant de session de l'onglet, historique du chatbot). Google Analytics n'est activ&eacute; que si vous l'acceptez : sans votre accord, aucun cookie Google n'est d&eacute;pos&eacute;. La mesure d'audience Umami et la mesure interne fonctionnent sans cookie.</p>
         {% elif lang == "en" %}
-        <p>LotoIA uses a very limited number of cookies, mainly technical. For detailed information about the cookies used, their purpose and duration, please see our <a href="{{ urls.cookies }}">Cookie Policy</a>.</p>
+        <p>For details of the cookies and local storage used by LotoIA.fr, see our <a href="{{ urls.cookies }}">Cookie Policy</a>.</p>
+        <h3>In short</h3>
+        <p>LotoIA.fr uses local storage that is necessary for the site to work (theme preference, choice regarding cookies, tab session identifier, chatbot history). Google Analytics is only activated if you accept it: without your consent, no Google cookie is set. Umami audience measurement and internal measurement work without cookies.</p>
         {% elif lang == "es" %}
-        <p>LotoIA utiliza un n&uacute;mero muy limitado de cookies, principalmente t&eacute;cnicas. Para informaci&oacute;n detallada sobre las cookies utilizadas, su finalidad y duraci&oacute;n, consulte nuestra <a href="{{ urls.cookies }}">Pol&iacute;tica de cookies</a>.</p>
+        <p>Para el detalle de las cookies y del almacenamiento local utilizados por LotoIA.fr, consulte nuestra <a href="{{ urls.cookies }}">Pol&iacute;tica de cookies</a>.</p>
+        <h3>En resumen</h3>
+        <p>LotoIA.fr utiliza almacenamiento local necesario para el funcionamiento del sitio (preferencia de tema, elecci&oacute;n relativa a las cookies, identificador de sesi&oacute;n de la pesta&ntilde;a, historial del chatbot). Google Analytics solo se activa si usted lo acepta: sin su consentimiento, no se instala ninguna cookie de Google. La medici&oacute;n de audiencia Umami y la medici&oacute;n interna funcionan sin cookies.</p>
         {% elif lang == "pt" %}
-        <p>O LotoIA utiliza um n&uacute;mero muito limitado de cookies, principalmente t&eacute;cnicos. Para informa&ccedil;&atilde;o detalhada sobre os cookies utilizados, a sua finalidade e dura&ccedil;&atilde;o, consulte a nossa <a href="{{ urls.cookies }}">Pol&iacute;tica de cookies</a>.</p>
+        <p>Para o detalhe dos cookies e do armazenamento local utilizados pelo LotoIA.fr, consulte a nossa <a href="{{ urls.cookies }}">Pol&iacute;tica de cookies</a>.</p>
+        <h3>Em resumo</h3>
+        <p>O LotoIA.fr utiliza armazenamento local necess&aacute;rio ao funcionamento do site (prefer&ecirc;ncia de tema, escolha relativa aos cookies, identificador de sess&atilde;o do separador, hist&oacute;rico do chatbot). O Google Analytics s&oacute; &eacute; ativado se o aceitar: sem o seu consentimento, n&atilde;o &eacute; colocado nenhum cookie da Google. A medi&ccedil;&atilde;o de audi&ecirc;ncia Umami e a medi&ccedil;&atilde;o interna funcionam sem cookies.</p>
         {% elif lang == "de" %}
-        <p>LotoIA verwendet eine sehr begrenzte Anzahl von Cookies, haupts&auml;chlich technischer Art. Ausf&uuml;hrliche Informationen &uuml;ber die verwendeten Cookies, ihren Zweck und ihre Dauer finden Sie in unserer <a href="{{ urls.cookies }}">Cookie-Richtlinie</a>.</p>
+        <p>Einzelheiten zu den von LotoIA.fr verwendeten Cookies und zum lokalen Speicher finden Sie in unserer <a href="{{ urls.cookies }}">Cookie-Richtlinie</a>.</p>
+        <h3>Kurz gesagt</h3>
+        <p>LotoIA.fr verwendet lokalen Speicher, der f&uuml;r den Betrieb der Website erforderlich ist (Theme-Einstellung, Auswahl zu Cookies, Sitzungskennung des Tabs, Chatbot-Verlauf). Google Analytics wird nur aktiviert, wenn Sie zustimmen: Ohne Ihre Einwilligung wird kein Google-Cookie gesetzt. Die Reichweitenmessung mit Umami und die interne Messung funktionieren ohne Cookies.</p>
         {% elif lang == "nl" %}
-        <p>LotoIA gebruikt een zeer beperkt aantal cookies, voornamelijk technische. Voor gedetailleerde informatie over de gebruikte cookies, hun doel en duur, raadpleeg ons <a href="{{ urls.cookies }}">Cookiebeleid</a>.</p>
+        <p>Voor details over de cookies en de lokale opslag die LotoIA.fr gebruikt, raadpleeg ons <a href="{{ urls.cookies }}">Cookiebeleid</a>.</p>
+        <h3>Samengevat</h3>
+        <p>LotoIA.fr gebruikt lokale opslag die nodig is voor de werking van de website (themavoorkeur, keuze met betrekking tot cookies, sessie-ID van het tabblad, chatbotgeschiedenis). Google Analytics wordt alleen geactiveerd als u dit accepteert: zonder uw toestemming wordt er geen Google-cookie geplaatst. De publieksmeting met Umami en de interne meting werken zonder cookies.</p>
         {% endif %}
       </section>
 
@@ -675,7 +1321,7 @@
         <h2>{% if lang == "fr" %}10. S&eacute;curit&eacute;{% elif lang == "en" %}10. Security{% elif lang == "es" %}10. Seguridad{% elif lang == "pt" %}10. Seguran&ccedil;a{% elif lang == "de" %}10. Sicherheit{% elif lang == "nl" %}10. Beveiliging{% endif %}</h2>
 
         {% if lang == "fr" %}
-        <p>Nous mettons en &oelig;uvre des mesures techniques et organisationnelles appropri&eacute;es pour prot&eacute;ger vos donn&eacute;es :</p>
+        <p>Nous mettons en &oelig;uvre des mesures techniques et organisationnelles adapt&eacute;es pour prot&eacute;ger vos donn&eacute;es :</p>
         {% elif lang == "en" %}
         <p>We implement appropriate technical and organisational measures to protect your data:</p>
         {% elif lang == "es" %}
@@ -688,51 +1334,91 @@
         <p>Wij treffen passende technische en organisatorische maatregelen om uw gegevens te beschermen:</p>
         {% endif %}
 
+        {% if lang == "fr" %}
+        <h3>Mesures techniques</h3>
         <ul>
-          {% if lang == "fr" %}
-          <li><strong>Chiffrement HTTPS/TLS</strong> pour toutes les communications</li>
-          <li><strong>Certifications Google Cloud</strong> (ISO 27001, SOC 2)</li>
-          <li><strong>Mises &agrave; jour r&eacute;guli&egrave;res</strong> des d&eacute;pendances et du syst&egrave;me</li>
-          <li><strong>Acc&egrave;s restreint</strong> aux donn&eacute;es (principe du moindre privil&egrave;ge)</li>
-          <li><strong>Minimisation des donn&eacute;es</strong> : seules les donn&eacute;es strictement n&eacute;cessaires sont collect&eacute;es</li>
-          <li><strong>Pseudonymisation</strong> : les identifiants de session sont des UUID al&eacute;atoires sans lien avec votre identit&eacute;</li>
-          {% elif lang == "en" %}
-          <li><strong>HTTPS/TLS encryption</strong> for all communications</li>
-          <li><strong>Google Cloud certifications</strong> (ISO 27001, SOC 2)</li>
-          <li><strong>Regular updates</strong> of dependencies and system</li>
-          <li><strong>Restricted access</strong> to data (principle of least privilege)</li>
-          <li><strong>Data minimisation</strong>: only strictly necessary data is collected</li>
-          <li><strong>Pseudonymisation</strong>: session identifiers are random UUIDs with no link to your identity</li>
-          {% elif lang == "es" %}
-          <li><strong>Cifrado HTTPS/TLS</strong> para todas las comunicaciones</li>
-          <li><strong>Certificaciones de Google Cloud</strong> (ISO 27001, SOC 2)</li>
-          <li><strong>Actualizaciones regulares</strong> de las dependencias y del sistema</li>
-          <li><strong>Acceso restringido</strong> a los datos (principio de m&iacute;nimo privilegio)</li>
-          <li><strong>Minimizaci&oacute;n de datos</strong>: solo se recopilan los datos estrictamente necesarios</li>
-          <li><strong>Seudonimizaci&oacute;n</strong>: los identificadores de sesi&oacute;n son UUID aleatorios sin v&iacute;nculo con su identidad</li>
-          {% elif lang == "pt" %}
-          <li><strong>Encripta&ccedil;&atilde;o HTTPS/TLS</strong> para todas as comunica&ccedil;&otilde;es</li>
-          <li><strong>Certifica&ccedil;&otilde;es Google Cloud</strong> (ISO 27001, SOC 2)</li>
-          <li><strong>Atualiza&ccedil;&otilde;es regulares</strong> das depend&ecirc;ncias e do sistema</li>
-          <li><strong>Acesso restrito</strong> aos dados (princ&iacute;pio do privil&eacute;gio m&iacute;nimo)</li>
-          <li><strong>Minimiza&ccedil;&atilde;o de dados</strong>: apenas os dados estritamente necess&aacute;rios s&atilde;o recolhidos</li>
-          <li><strong>Pseudonimiza&ccedil;&atilde;o</strong>: os identificadores de sess&atilde;o s&atilde;o UUID aleat&oacute;rios sem liga&ccedil;&atilde;o com a sua identidade</li>
-          {% elif lang == "de" %}
-          <li><strong>HTTPS/TLS-Verschl&uuml;sselung</strong> f&uuml;r die gesamte Kommunikation</li>
-          <li><strong>Google-Cloud-Zertifizierungen</strong> (ISO 27001, SOC 2)</li>
-          <li><strong>Regelm&auml;&szlig;ige Aktualisierungen</strong> der Abh&auml;ngigkeiten und des Systems</li>
-          <li><strong>Eingeschr&auml;nkter Zugang</strong> zu den Daten (Prinzip der geringsten Berechtigung)</li>
-          <li><strong>Datenminimierung</strong>: Es werden nur die unbedingt erforderlichen Daten erhoben</li>
-          <li><strong>Pseudonymisierung</strong>: Sitzungskennungen sind zuf&auml;llige UUIDs ohne Bezug zu Ihrer Identit&auml;t</li>
-          {% elif lang == "nl" %}
-          <li><strong>HTTPS/TLS-versleuteling</strong> voor alle communicatie</li>
-          <li><strong>Google Cloud-certificeringen</strong> (ISO 27001, SOC 2)</li>
-          <li><strong>Regelmatige updates</strong> van afhankelijkheden en het systeem</li>
-          <li><strong>Beperkte toegang</strong> tot gegevens (principe van minimale rechten)</li>
-          <li><strong>Gegevensminimalisatie</strong>: alleen strikt noodzakelijke gegevens worden verzameld</li>
-          <li><strong>Pseudonimisering</strong>: sessie-ID's zijn willekeurige UUID's zonder verband met uw identiteit</li>
-          {% endif %}
+          <li><strong>Chiffrement HTTPS/TLS</strong> : toutes les communications sont chiffr&eacute;es ;</li>
+          <li><strong>H&eacute;bergement</strong> : Google Cloud Platform (certifications ISO 27001, SOC 2) ;</li>
+          <li><strong>Acc&egrave;s d'administration</strong> r&eacute;serv&eacute; &agrave; l'&eacute;diteur (restriction par adresse IP et mot de passe) ;</li>
+          <li><strong>Audits de s&eacute;curit&eacute;</strong> : le code et ses d&eacute;pendances sont audit&eacute;s r&eacute;guli&egrave;rement et les correctifs n&eacute;cessaires sont appliqu&eacute;s.</li>
         </ul>
+        <h3>Mesures organisationnelles</h3>
+        <ul>
+          <li>Collecte limit&eacute;e aux donn&eacute;es n&eacute;cessaires ;</li>
+          <li>Adresses IP hach&eacute;es (pseudonymis&eacute;es) pour les votes et les messages de contact ; identifiant quotidien hach&eacute; pour la mesure interne ;</li>
+          <li>Dur&eacute;es de conservation limit&eacute;es (section 5).</li>
+        </ul>
+        {% elif lang == "en" %}
+        <h3>Technical measures</h3>
+        <ul>
+          <li><strong>HTTPS/TLS encryption</strong>: all communications are encrypted;</li>
+          <li><strong>Hosting</strong>: Google Cloud Platform (ISO 27001, SOC 2 certifications);</li>
+          <li><strong>Administration access</strong> restricted to the publisher (IP address restriction and password);</li>
+          <li><strong>Security audits</strong>: the code and its dependencies are audited regularly and the necessary fixes are applied.</li>
+        </ul>
+        <h3>Organisational measures</h3>
+        <ul>
+          <li>Collection limited to the necessary data;</li>
+          <li>Hashed IP addresses (pseudonymised) for ratings and contact messages; hashed daily identifier for internal measurement;</li>
+          <li>Limited retention periods (section 5).</li>
+        </ul>
+        {% elif lang == "es" %}
+        <h3>Medidas t&eacute;cnicas</h3>
+        <ul>
+          <li><strong>Cifrado HTTPS/TLS</strong>: todas las comunicaciones est&aacute;n cifradas;</li>
+          <li><strong>Alojamiento</strong>: Google Cloud Platform (certificaciones ISO 27001, SOC 2);</li>
+          <li><strong>Acceso de administraci&oacute;n</strong> reservado al editor (restricci&oacute;n por direcci&oacute;n IP y contrase&ntilde;a);</li>
+          <li><strong>Auditor&iacute;as de seguridad</strong>: el c&oacute;digo y sus dependencias se auditan con regularidad y se aplican las correcciones necesarias.</li>
+        </ul>
+        <h3>Medidas organizativas</h3>
+        <ul>
+          <li>Recogida limitada a los datos necesarios;</li>
+          <li>Direcciones IP con hash (seudonimizadas) para las valoraciones y los mensajes de contacto; identificador diario con hash para la medici&oacute;n interna;</li>
+          <li>Plazos de conservaci&oacute;n limitados (secci&oacute;n 5).</li>
+        </ul>
+        {% elif lang == "pt" %}
+        <h3>Medidas t&eacute;cnicas</h3>
+        <ul>
+          <li><strong>Encripta&ccedil;&atilde;o HTTPS/TLS</strong>: todas as comunica&ccedil;&otilde;es s&atilde;o encriptadas;</li>
+          <li><strong>Alojamento</strong>: Google Cloud Platform (certifica&ccedil;&otilde;es ISO 27001, SOC 2);</li>
+          <li><strong>Acesso de administra&ccedil;&atilde;o</strong> reservado ao editor (restri&ccedil;&atilde;o por endere&ccedil;o IP e palavra-passe);</li>
+          <li><strong>Auditorias de seguran&ccedil;a</strong>: o c&oacute;digo e as suas depend&ecirc;ncias s&atilde;o auditados regularmente e as corre&ccedil;&otilde;es necess&aacute;rias s&atilde;o aplicadas.</li>
+        </ul>
+        <h3>Medidas organizativas</h3>
+        <ul>
+          <li>Recolha limitada aos dados necess&aacute;rios;</li>
+          <li>Endere&ccedil;os IP com hash (pseudonimizados) para as avalia&ccedil;&otilde;es e as mensagens de contacto; identificador di&aacute;rio com hash para a medi&ccedil;&atilde;o interna;</li>
+          <li>Prazos de conserva&ccedil;&atilde;o limitados (sec&ccedil;&atilde;o 5).</li>
+        </ul>
+        {% elif lang == "de" %}
+        <h3>Technische Ma&szlig;nahmen</h3>
+        <ul>
+          <li><strong>HTTPS/TLS-Verschl&uuml;sselung</strong>: Die gesamte Kommunikation ist verschl&uuml;sselt;</li>
+          <li><strong>Hosting</strong>: Google Cloud Platform (Zertifizierungen ISO 27001, SOC 2);</li>
+          <li><strong>Verwaltungszugang</strong> dem Herausgeber vorbehalten (Beschr&auml;nkung nach IP-Adresse und Passwort);</li>
+          <li><strong>Sicherheitsaudits</strong>: Der Code und seine Abh&auml;ngigkeiten werden regelm&auml;&szlig;ig gepr&uuml;ft und die erforderlichen Korrekturen angewendet.</li>
+        </ul>
+        <h3>Organisatorische Ma&szlig;nahmen</h3>
+        <ul>
+          <li>Erhebung auf die notwendigen Daten beschr&auml;nkt;</li>
+          <li>Gehashte IP-Adressen (pseudonymisiert) f&uuml;r Bewertungen und Kontaktnachrichten; gehashte t&auml;gliche Kennung f&uuml;r die interne Messung;</li>
+          <li>Begrenzte Speicherfristen (Abschnitt 5).</li>
+        </ul>
+        {% elif lang == "nl" %}
+        <h3>Technische maatregelen</h3>
+        <ul>
+          <li><strong>HTTPS/TLS-versleuteling</strong>: alle communicatie is versleuteld;</li>
+          <li><strong>Hosting</strong>: Google Cloud Platform (certificeringen ISO 27001, SOC 2);</li>
+          <li><strong>Beheertoegang</strong> voorbehouden aan de uitgever (beperking op IP-adres en wachtwoord);</li>
+          <li><strong>Beveiligingsaudits</strong>: de code en de afhankelijkheden ervan worden regelmatig geaudit en de nodige correcties worden toegepast.</li>
+        </ul>
+        <h3>Organisatorische maatregelen</h3>
+        <ul>
+          <li>Verzameling beperkt tot de noodzakelijke gegevens;</li>
+          <li>Gehashte IP-adressen (gepseudonimiseerd) voor beoordelingen en contactberichten; gehashte dagelijkse identificatie voor de interne meting;</li>
+          <li>Beperkte bewaartermijnen (sectie 5).</li>
+        </ul>
+        {% endif %}
       </section>
 
       {# ══════════════════════════════════════════════════════════════════════
@@ -742,23 +1428,23 @@
         <h2>{% if lang == "fr" %}11. Modifications{% elif lang == "en" %}11. Modifications{% elif lang == "es" %}11. Modificaciones{% elif lang == "pt" %}11. Modifica&ccedil;&otilde;es{% elif lang == "de" %}11. &Auml;nderungen{% elif lang == "nl" %}11. Wijzigingen{% endif %}</h2>
 
         {% if lang == "fr" %}
-        <p>La pr&eacute;sente politique de confidentialit&eacute; peut &ecirc;tre mise &agrave; jour afin de refl&eacute;ter les &eacute;volutions l&eacute;gales ou r&eacute;glementaires, ou les modifications apport&eacute;es au service.</p>
-        <p>En cas de modification substantielle, un avis sera publi&eacute; sur le site. La date de derni&egrave;re mise &agrave; jour figure en haut de cette page.</p>
+        <p>Cette politique de confidentialit&eacute; peut &ecirc;tre mise &agrave; jour pour tenir compte des &eacute;volutions l&eacute;gales ou des changements apport&eacute;s au site. La date de derni&egrave;re mise &agrave; jour figure en haut de cette page. Si une modification concerne les cookies soumis &agrave; votre accord, votre choix vous est redemand&eacute;.</p>
+        <p>Nous vous encourageons &agrave; consulter r&eacute;guli&egrave;rement cette page.</p>
         {% elif lang == "en" %}
-        <p>This privacy policy may be updated to reflect legal or regulatory developments, or changes to the service.</p>
-        <p>In case of a substantial modification, a notice will be published on the site. The date of the last update is shown at the top of this page.</p>
+        <p>This privacy policy may be updated to take account of legal developments or changes made to the site. The date of the last update is shown at the top of this page. If a change concerns cookies that require your consent, you are asked for your choice again.</p>
+        <p>We encourage you to consult this page regularly.</p>
         {% elif lang == "es" %}
-        <p>La presente pol&iacute;tica de privacidad puede actualizarse para reflejar las evoluciones legales o reglamentarias, o las modificaciones introducidas en el servicio.</p>
-        <p>En caso de modificaci&oacute;n sustancial, se publicar&aacute; un aviso en el sitio. La fecha de la &uacute;ltima actualizaci&oacute;n figura en la parte superior de esta p&aacute;gina.</p>
+        <p>Esta pol&iacute;tica de privacidad puede actualizarse para tener en cuenta las evoluciones legales o los cambios introducidos en el sitio. La fecha de la &uacute;ltima actualizaci&oacute;n figura en la parte superior de esta p&aacute;gina. Si una modificaci&oacute;n afecta a las cookies sujetas a su consentimiento, se le vuelve a pedir su elecci&oacute;n.</p>
+        <p>Le animamos a consultar esta p&aacute;gina con regularidad.</p>
         {% elif lang == "pt" %}
-        <p>A presente pol&iacute;tica de privacidade pode ser atualizada para refletir as evolu&ccedil;&otilde;es legais ou regulamentares, ou as modifica&ccedil;&otilde;es introduzidas no servi&ccedil;o.</p>
-        <p>Em caso de modifica&ccedil;&atilde;o substancial, ser&aacute; publicado um aviso no site. A data da &uacute;ltima atualiza&ccedil;&atilde;o consta no topo desta p&aacute;gina.</p>
+        <p>Esta pol&iacute;tica de privacidade pode ser atualizada para ter em conta as evolu&ccedil;&otilde;es legais ou as altera&ccedil;&otilde;es introduzidas no site. A data da &uacute;ltima atualiza&ccedil;&atilde;o consta no topo desta p&aacute;gina. Se uma altera&ccedil;&atilde;o disser respeito aos cookies sujeitos ao seu consentimento, a sua escolha &eacute;-lhe pedida novamente.</p>
+        <p>Recomendamos que consulte regularmente esta p&aacute;gina.</p>
         {% elif lang == "de" %}
-        <p>Diese Datenschutzerkl&auml;rung kann aktualisiert werden, um rechtlichen oder regulatorischen Entwicklungen oder &Auml;nderungen am Dienst Rechnung zu tragen.</p>
-        <p>Bei wesentlichen &Auml;nderungen wird ein Hinweis auf der Website ver&ouml;ffentlicht. Das Datum der letzten Aktualisierung steht oben auf dieser Seite.</p>
+        <p>Diese Datenschutzerkl&auml;rung kann aktualisiert werden, um rechtlichen Entwicklungen oder &Auml;nderungen an der Website Rechnung zu tragen. Das Datum der letzten Aktualisierung steht oben auf dieser Seite. Betrifft eine &Auml;nderung einwilligungspflichtige Cookies, werden Sie erneut um Ihre Auswahl gebeten.</p>
+        <p>Wir empfehlen Ihnen, diese Seite regelm&auml;&szlig;ig aufzurufen.</p>
         {% elif lang == "nl" %}
-        <p>Dit privacybeleid kan worden bijgewerkt om wettelijke of regelgevende ontwikkelingen of wijzigingen in de dienst weer te geven.</p>
-        <p>Bij een substantiële wijziging wordt een kennisgeving op de site gepubliceerd. De datum van de laatste update staat bovenaan deze pagina.</p>
+        <p>Dit privacybeleid kan worden bijgewerkt om rekening te houden met wettelijke ontwikkelingen of wijzigingen aan de website. De datum van de laatste update staat bovenaan deze pagina. Als een wijziging betrekking heeft op cookies waarvoor uw toestemming nodig is, wordt u opnieuw om uw keuze gevraagd.</p>
+        <p>Wij raden u aan deze pagina regelmatig te raadplegen.</p>
         {% endif %}
       </section>
 
@@ -769,34 +1455,25 @@
         <h2>12. Contact</h2>
 
         {% if lang == "fr" %}
-        <p>Pour toute question relative &agrave; la protection de vos donn&eacute;es personnelles, vous pouvez nous contacter :</p>
+        <p>Pour toute question relative &agrave; cette politique ou &agrave; vos donn&eacute;es personnelles :</p>
         {% elif lang == "en" %}
-        <p>For any question regarding the protection of your personal data, you may contact us:</p>
+        <p>For any question about this policy or your personal data:</p>
         {% elif lang == "es" %}
-        <p>Para cualquier consulta relativa a la protecci&oacute;n de sus datos personales, puede contactarnos:</p>
+        <p>Para cualquier pregunta relativa a esta pol&iacute;tica o a sus datos personales:</p>
         {% elif lang == "pt" %}
-        <p>Para qualquer quest&atilde;o relativa &agrave; prote&ccedil;&atilde;o dos seus dados pessoais, pode contactar-nos:</p>
+        <p>Para qualquer quest&atilde;o relativa a esta pol&iacute;tica ou aos seus dados pessoais:</p>
         {% elif lang == "de" %}
-        <p>F&uuml;r jegliche Fragen zum Schutz Ihrer personenbezogenen Daten k&ouml;nnen Sie uns kontaktieren:</p>
+        <p>Bei Fragen zu dieser Datenschutzerkl&auml;rung oder zu Ihren personenbezogenen Daten:</p>
         {% elif lang == "nl" %}
-        <p>Voor elke vraag over de bescherming van uw persoonsgegevens kunt u contact met ons opnemen:</p>
+        <p>Voor elke vraag over dit beleid of over uw persoonsgegevens:</p>
         {% endif %}
 
         <div class="contact-box">
-          <h4>{% if lang == "fr" %}Donn&eacute;es personnelles (RGPD){% elif lang == "en" %}Personal data (GDPR){% elif lang == "es" %}Datos personales (RGPD){% elif lang == "pt" %}Dados pessoais (RGPD){% elif lang == "de" %}Personenbezogene Daten (DSGVO){% elif lang == "nl" %}Persoonsgegevens (AVG){% endif %}</h4>
           <ul>
-            <li>{% if lang == "fr" %}E-mail{% elif lang == "en" %}Email{% elif lang == "es" %}Correo electr&oacute;nico{% elif lang == "pt" %}E-mail{% elif lang == "de" %}E-Mail{% elif lang == "nl" %}E-mail{% endif %} : <a href="mailto:rgpd@lotoia.fr">rgpd@lotoia.fr</a></li>
+            <li>{% if lang == "fr" %}E-mail :{% elif lang == "en" %}Email:{% elif lang == "es" %}Correo electr&oacute;nico:{% elif lang == "pt" %}E-mail:{% elif lang == "de" %}E-Mail:{% elif lang == "nl" %}E-mail:{% endif %} <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a></li>
+            <li>{% if lang == "fr" %}D&eacute;lai de r&eacute;ponse : <strong>un mois au plus</strong>{% elif lang == "en" %}Response time: <strong>one month at most</strong>{% elif lang == "es" %}Plazo de respuesta: <strong>un mes como m&aacute;ximo</strong>{% elif lang == "pt" %}Prazo de resposta: <strong>um m&ecirc;s no m&aacute;ximo</strong>{% elif lang == "de" %}Antwortfrist: <strong>h&ouml;chstens ein Monat</strong>{% elif lang == "nl" %}Antwoordtermijn: <strong>maximaal &eacute;&eacute;n maand</strong>{% endif %}</li>
           </ul>
         </div>
-
-        <div class="contact-box">
-          <h4>{% if lang == "fr" %}Contact g&eacute;n&eacute;ral{% elif lang == "en" %}General contact{% elif lang == "es" %}Contacto general{% elif lang == "pt" %}Contacto geral{% elif lang == "de" %}Allgemeiner Kontakt{% elif lang == "nl" %}Algemeen contact{% endif %}</h4>
-          <ul>
-            <li>{% if lang == "fr" %}E-mail{% elif lang == "en" %}Email{% elif lang == "es" %}Correo electr&oacute;nico{% elif lang == "pt" %}E-mail{% elif lang == "de" %}E-Mail{% elif lang == "nl" %}E-mail{% endif %} : <a href="mailto:contact@lotoia.fr">contact@lotoia.fr</a></li>
-          </ul>
-        </div>
-
-        <p>{% if lang == "fr" %}D&eacute;lai de r&eacute;ponse : <strong>1 mois maximum</strong> conform&eacute;ment au RGPD.{% elif lang == "en" %}Response time: <strong>1 month maximum</strong> in accordance with the GDPR.{% elif lang == "es" %}Plazo de respuesta: <strong>1 mes m&aacute;ximo</strong> conforme al RGPD.{% elif lang == "pt" %}Prazo de resposta: <strong>1 m&ecirc;s no m&aacute;ximo</strong> em conformidade com o RGPD.{% elif lang == "de" %}Antwortfrist: <strong>maximal 1 Monat</strong> gem&auml;&szlig; DSGVO.{% elif lang == "nl" %}Antwoordtermijn: <strong>maximaal 1 maand</strong> overeenkomstig de AVG.{% endif %}</p>
       </section>
 
     </article>

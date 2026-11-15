@@ -14,12 +14,12 @@
     *{margin:0;padding:0;box-sizing:border-box}:root{--app-max-width:1140px;--app-padding-x:24px;--app-padding-y:40px;--primary:#1a73e8;--radius-sm:8px;--radius-md:12px;--radius-lg:16px;--theme-bg-main:linear-gradient(180deg,#0a0f1a 0%,#0f172a 50%,#1e1b4b 100%);--theme-bg-nav:linear-gradient(180deg,#0f172a 0%,#1e1b4b 100%);--theme-bg-header:linear-gradient(180deg,#0f172a 0%,#1e1b4b 100%);--theme-bg-card:#ffffff;--theme-text-primary:#1f2937;--theme-text-secondary:#6b7280;--theme-text-on-dark:rgba(255,255,255,.95);--theme-border:#e5e7eb;--theme-border-light:rgba(255,255,255,.1);--theme-shadow:0 2px 8px rgba(0,0,0,.1)}body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,sans-serif;line-height:1.6;color:var(--theme-text-primary);min-height:100vh;font-size:16px;background:var(--theme-bg-main)}body.theme-night{--theme-bg-main:linear-gradient(180deg,#0a0f1a 0%,#0f172a 50%,#1e1b4b 100%);--theme-bg-nav:linear-gradient(180deg,#0f172a 0%,#1e1b4b 100%);--theme-bg-card:#1e293b;--theme-text-primary:#e2e8f0;--theme-text-secondary:#94a3b8;--theme-border:rgba(255,255,255,.1)}body.theme-day{--theme-bg-main:linear-gradient(180deg,#f0f4f8 0%,#e2e8f0 50%,#cbd5e1 100%);--theme-bg-nav:linear-gradient(180deg,#1e293b 0%,#334155 100%);--theme-bg-card:#ffffff;--theme-text-primary:#0f172a;--theme-text-secondary:#475569;--theme-border:#e2e8f0}.engine-nav-subpage{display:flex;justify-content:space-between;align-items:center;padding:12px 20px;background:var(--theme-bg-nav);position:relative;z-index:100}.engine-nav-subpage .engine-nav-right{display:flex;align-items:center;gap:12px}.container,.stats-container,.loto-container{max-width:var(--app-max-width);width:100%;margin:0 auto;padding:var(--app-padding-y) var(--app-padding-x);box-sizing:border-box}.engine-nav-btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;background:rgba(255,255,255,.08);color:var(--theme-text-on-dark);border-radius:var(--radius-sm);text-decoration:none;font-size:.88rem;font-weight:500}.engine-badge{display:inline-block;padding:4px 12px;background:rgba(16,185,129,.15);border:1px solid rgba(16,185,129,.4);color:#10b981;border-radius:20px;font-size:.75rem;font-weight:600}.page-header{background:var(--theme-bg-header);color:var(--theme-text-on-dark);padding:30px 20px 60px;text-align:center;position:relative;overflow:hidden}.theme-switch{display:flex;align-items:center;justify-content:center;width:40px;height:40px;padding:0;background:var(--theme-border-light);border:1px solid var(--theme-border-light);border-radius:50%;color:var(--theme-text-on-dark);cursor:pointer;font-size:1.2rem}
     /* V133 — Anti-FOUC scroll-to-top */.scroll-to-top{position:fixed;bottom:80px;right:20px;width:48px;height:48px;opacity:0;visibility:hidden;pointer-events:none}
     </style>
-    <link rel="stylesheet" href="/ui/static/style.css?v=15" media="print" onload="this.media='all'">
-    <noscript><link rel="stylesheet" href="/ui/static/style.css?v=15"></noscript>
+    <link rel="stylesheet" href="/ui/static/style.css?v=16" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/ui/static/style.css?v=16"></noscript>
     <link rel="stylesheet" href="/ui/static/legal.css">
     <script src="/ui/static/theme.js"></script>
     <!-- Analytics (charge apres consentement RGPD) -->
-    <script src="/ui/static/analytics.js?v=4" defer></script>
+    <script src="/ui/static/analytics.js?v=5" defer></script>
     <script src="/ui/static/tracker.js?v=5" defer></script>
 </head>
 <body class="subpage legal-page">
@@ -50,7 +50,7 @@
         <article class="legal-content">
 
             <!-- Date de mise à jour -->
-            <p class="legal-update">Dernière mise à jour : 23 janvier 2026</p>
+            <p class="legal-update">Dernière mise à jour : 16 novembre 2026</p>
 
             <!-- ══════════════════════════════════════════════════════════════════
                  SECTION 1 : QU'EST-CE QU'UN COOKIE ?
@@ -84,11 +84,11 @@
                 <h2>2. Technologies utilisées par LotoIA.fr</h2>
 
                 <div class="legal-highlight">
-                    <strong>Bonne nouvelle :</strong> LotoIA.fr n'utilise PAS de cookies HTTP traditionnels. Nous utilisons uniquement des technologies de stockage local (sessionStorage et localStorage) qui restent dans votre navigateur et ne sont pas transmises à des serveurs tiers.
+                    <strong>En résumé :</strong> LotoIA.fr utilise du stockage local (sessionStorage et localStorage) pour faire fonctionner le site, sans consentement. Google Analytics, qui dépose des cookies et transmet des données à Google, n'est activé que si vous l'acceptez. Une mesure d'audience sans cookie (Umami) est active sans acceptation. Aucun cookie publicitaire ou de partenaire n'est utilisé actuellement.
                 </div>
 
-                <h3>2.1 Stockage strictement nécessaire</h3>
-                <p>Ces éléments sont indispensables au fonctionnement du site et <strong>ne requièrent pas votre consentement</strong> (exemption CNIL).</p>
+                <h3>2.1 Stockage nécessaire au fonctionnement du site</h3>
+                <p>Ces éléments servent au fonctionnement du site et des fonctions que vous utilisez (thème, chatbot, notation). Ils sont enregistrés dans votre navigateur et <strong>ne requièrent pas votre consentement</strong> (exemption CNIL). Sauf mention contraire dans le tableau, ils ne sont transmis à personne.</p>
 
                 <table class="cookie-table">
                     <thead>
@@ -102,30 +102,95 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td><code>lotoia_session</code></td>
-                            <td>sessionStorage</td>
-                            <td>Identifiant de session anonyme pour le suivi des interactions durant la visite</td>
-                            <td>Session (supprimé à la fermeture du navigateur)</td>
-                            <td>UUID v4 aléatoire</td>
+                            <td><code>lotoia_cookie_consent</code></td>
+                            <td>localStorage</td>
+                            <td>Mémoriser votre choix concernant les cookies</td>
+                            <td>13 mois</td>
+                            <td>Version, date du choix, date d'échéance et choix par catégorie</td>
                         </tr>
                         <tr>
                             <td><code>lotoia-theme</code></td>
                             <td>localStorage</td>
-                            <td>Sauvegarde de votre préférence d'affichage (mode jour/nuit)</td>
-                            <td>Persistant (jusqu'à suppression manuelle)</td>
+                            <td>Mémoriser le mode jour ou nuit, si vous le changez</td>
+                            <td>Jusqu'à effacement</td>
                             <td>"day" ou "night"</td>
                         </tr>
                         <tr>
-                            <td><code>lotoia_cookie_consent</code></td>
-                            <td>localStorage</td>
-                            <td>Mémorisation de vos choix concernant les cookies</td>
+                            <td><code>hybride-history</code>, <code>hybride-history-em</code>, <code>hybride-history-em-en</code>, <code>-es</code>, <code>-pt</code>, <code>-de</code>, <code>-nl</code></td>
+                            <td>sessionStorage</td>
+                            <td>Réafficher votre conversation avec le chatbot HYBRIDE si vous rechargez la page</td>
+                            <td>Session (onglet) ; effacé aussi quand vous effacez la conversation</td>
+                            <td>Les 50 derniers messages (vos questions et les réponses)</td>
+                        </tr>
+                        <tr>
+                            <td><code>hybride_session_id</code></td>
+                            <td>sessionStorage</td>
+                            <td>Identifier la session au moment d'un vote (note du chatbot ou du site)</td>
+                            <td>Session (onglet)</td>
+                            <td>Identifiant aléatoire, <strong>envoyé à LotoIA avec votre vote</strong></td>
+                        </tr>
+                        <tr>
+                            <td><code>lotoia_rated_*</code> (ex. <code>lotoia_rated_chatbot_loto</code>, <code>lotoia_rated_popup_accueil</code>), <code>lotoia_dismissed_rating</code>, <code>lotoia_rating_banner_shown</code>, <code>lotoia_session_start</code></td>
+                            <td>sessionStorage</td>
+                            <td>Ne pas vous redemander de noter le site après un vote ou la fermeture du bandeau de notation, et choisir le moment de son affichage</td>
+                            <td>Session (onglet)</td>
+                            <td>Indicateurs ("true", "1") et heure de début de visite</td>
+                        </tr>
+                        <tr>
+                            <td><code>lotoia_intro_seen</code></td>
+                            <td>sessionStorage</td>
+                            <td>Ne pas rejouer l'animation d'accueil</td>
+                            <td>Session (onglet)</td>
+                            <td>"1"</td>
+                        </tr>
+                        <tr>
+                            <td><code>lotoia_session</code></td>
+                            <td>sessionStorage</td>
+                            <td>Sur la page Loto, un identifiant de session est créé au chargement ; il n'est ni relu ni envoyé. <strong>Si vous avez accepté Google Analytics</strong>, un identifiant de session est joint aux événements envoyés à Google Analytics (voir 2.3)</td>
+                            <td>Session (onglet)</td>
+                            <td>Identifiant aléatoire</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p>D'autres clés (<code>lotoia_internal</code>, <code>debug_ga4</code> et les cookies de la console d'administration) ne servent qu'à l'éditeur du site, sur ses propres appareils. Elles ne sont jamais posées chez les visiteurs.</p>
+
+                <h3>2.2 Mesure d'audience sans cookie (Umami)</h3>
+                <p>LotoIA.fr mesure sa fréquentation avec Umami Cloud. Cet outil ne dépose aucun cookie et n'utilise pas le stockage de votre navigateur. Il est actif sans acceptation de votre part. Il reçoit la page consultée, la page d'origine et des informations techniques sur votre navigateur (langue, taille d'écran). Les données sont hébergées dans l'Union européenne (Francfort). Les visites de l'éditeur du site et des robots d'intelligence artificielle identifiés sont exclues. Le prestataire et l'encadrement des transferts sont décrits dans notre <a href="/politique-confidentialite">politique de confidentialité</a>.</p>
+                <p>LotoIA.fr utilise aussi une mesure interne, qui ne dépose rien sur votre appareil et n'utilise pas le stockage de votre navigateur. Elle est active sans acceptation de votre part. Elle enregistre l'utilisation des fonctions du site (par exemple : ouverture du chatbot, grille générée, vote envoyé), avec la page (chemin, sans paramètres), la langue de la page, le type d'appareil, le module concerné (Loto ou EuroMillions) et le pays déduit de la langue de votre navigateur. Ces données sont associées à un identifiant quotidien haché (pseudonymisé), calculé à partir de l'adresse IP, du navigateur et de la date, qui change chaque jour. Elles sont conservées environ trois mois dans notre base de données, hébergée dans l'Union européenne. Certains événements sont aussi transmis à Umami. Le détail figure dans notre <a href="/politique-confidentialite">politique de confidentialité</a>.</p>
+
+                <h3>2.3 Cookies de mesure d'audience Google Analytics (optionnels)</h3>
+                <p>Ces cookies ne sont déposés que si vous acceptez la mesure d'audience, avec « Tout accepter » ou avec « Personnaliser » et la case cochée. Sans votre accord, aucun cookie Google n'est déposé, et ceux qui resteraient d'une visite antérieure sont supprimés.</p>
+
+                <table class="cookie-table">
+                    <thead>
+                        <tr>
+                            <th>Nom</th>
+                            <th>Fournisseur</th>
+                            <th>Finalité</th>
+                            <th>Durée</th>
+                            <th>Consentement</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>_ga</code></td>
+                            <td>Google (Google Analytics)</td>
+                            <td>Distinguer les visiteurs pour mesurer la fréquentation</td>
                             <td>13 mois</td>
-                            <td>Préférences de consentement</td>
+                            <td>Requis</td>
+                        </tr>
+                        <tr>
+                            <td><code>_ga_YYJ5LD1ZT3</code></td>
+                            <td>Google (Google Analytics)</td>
+                            <td>Conserver l'état de la session de mesure</td>
+                            <td>13 mois</td>
+                            <td>Requis</td>
                         </tr>
                     </tbody>
                 </table>
+                <p>Google Analytics est configuré sans signaux Google, sans personnalisation des annonces et sans collecte de données précises sur l'appareil ou la localisation. Il n'est associé à aucun service publicitaire. Les données détaillées (au niveau de l'événement et de l'utilisateur) sont conservées 14 mois par Google ; les rapports statistiques agrégés ne dépendent pas de cette durée. Si vous avez accepté, l'identifiant de session <code>lotoia_session</code> (voir 2.1) est joint aux événements envoyés. Les données sont transmises à Google LLC (États-Unis) : voir notre <a href="/politique-confidentialite">politique de confidentialité</a>.</p>
 
-                <h3>2.2 Cookies d'analyse et de mesure d'audience (optionnels)</h3>
+                <h3>2.4 Cookies publicitaires (optionnels)</h3>
                 <p>Ces traceurs sont soumis à votre <strong>consentement préalable</strong>.</p>
 
                 <table class="cookie-table">
@@ -141,31 +206,8 @@
                     <tbody>
                         <tr>
                             <td colspan="5" class="cookie-none">
-                                <em>Aucun cookie d'analyse tiers n'est actuellement utilisé.</em><br>
-                                LotoIA.fr réalise des mesures d'audience via des logs serveur internes uniquement.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <h3>2.3 Cookies publicitaires (optionnels)</h3>
-                <p>Ces traceurs sont soumis à votre <strong>consentement préalable</strong>.</p>
-
-                <table class="cookie-table">
-                    <thead>
-                        <tr>
-                            <th>Nom</th>
-                            <th>Fournisseur</th>
-                            <th>Finalité</th>
-                            <th>Durée</th>
-                            <th>Consentement</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="5" class="cookie-none">
-                                <em>Aucun cookie publicitaire tiers n'est actuellement utilisé.</em><br>
-                                Les partenariats sont gérés via un système interne sans traceur externe.
+                                <em>Aucun cookie publicitaire ou de partenaire n'est utilisé actuellement.</em><br>
+                                Les partenariats sont gérés par un système interne, sans traceur externe.
                             </td>
                         </tr>
                     </tbody>
@@ -187,8 +229,8 @@
                     <li>Cookies de session (authentification, panier, etc.)</li>
                     <li>Cookies de personnalisation de l'interface (langue, thème)</li>
                     <li>Cookies de mémorisation du consentement</li>
-                    <li>Cookies de mesure d'audience respectant les conditions de la CNIL</li>
                 </ul>
+                <p>Google Analytics ne fait pas partie de ces exceptions : il n'est activé qu'avec votre accord.</p>
 
                 <h3>3.3 Gérer vos préférences</h3>
                 <p>Vous pouvez à tout moment modifier vos choix concernant les cookies :</p>
@@ -241,16 +283,18 @@
             <section class="legal-section">
                 <h2>5. Supprimer les données stockées par LotoIA</h2>
 
-                <p>Pour supprimer toutes les données stockées localement par LotoIA.fr :</p>
+                <p>Pour supprimer les données enregistrées par LotoIA.fr dans votre navigateur :</p>
 
                 <div class="clear-data-box">
-                    <button id="clear-lotoia-data" class="btn btn-danger">Effacer toutes mes données LotoIA</button>
+                    <button id="clear-lotoia-data" class="btn btn-danger">Effacer mes données LotoIA</button>
                     <p>Cette action supprimera :</p>
                     <ul>
-                        <li>Votre identifiant de session</li>
-                        <li>Vos préférences de thème</li>
-                        <li>Vos choix de consentement cookies</li>
+                        <li>Votre identifiant de session (<code>lotoia_session</code>)</li>
+                        <li>Votre préférence de thème</li>
+                        <li>Votre choix de consentement aux cookies</li>
+                        <li>Les cookies Google Analytics (<code>_ga</code>, <code>_ga_*</code>), s'ils existent</li>
                     </ul>
+                    <p>Les autres éléments, conservés le temps de la session, disparaissent à la fermeture de l'onglet.</p>
                 </div>
 
                 <p>Vous pouvez également utiliser les outils de développement de votre navigateur (F12) pour accéder au stockage local et supprimer manuellement les entrées.</p>
@@ -278,7 +322,7 @@
 
                 <p>Cette politique cookies peut être mise à jour pour refléter les évolutions de nos pratiques ou de la réglementation. La date de dernière mise à jour figure en haut de ce document.</p>
 
-                <p>En cas d'ajout de nouveaux cookies non essentiels, votre consentement vous sera redemandé.</p>
+                <p>En cas d'ajout d'un nouveau cookie ou traceur soumis à consentement, votre choix vous sera redemandé. C'est le cas avec la mise à jour du 16 novembre 2026 : votre choix vous est redemandé une fois.</p>
             </section>
 
             <!-- ══════════════════════════════════════════════════════════════════
@@ -289,7 +333,7 @@
 
                 <p>Pour toute question relative aux cookies :</p>
                 <ul>
-                    <li><strong>Email :</strong> rgpd@lotoia.fr</li>
+                    <li><strong>Email :</strong> contact@lotoia.fr</li>
                 </ul>
 
                 <p>Pour en savoir plus sur les cookies : <a href="https://www.cnil.fr/fr/cookies-et-autres-traceurs" target="_blank" rel="noopener">Site de la CNIL</a></p>
@@ -368,7 +412,7 @@
         </footer>
     </div>
 
-    <script defer src="/ui/static/cookie-consent.js?v=7"></script>
+    <script defer src="/ui/static/cookie-consent.js?v=8"></script>
     <script>
         // Bouton pour ouvrir les paramètres cookies
         document.getElementById('open-cookie-settings')?.addEventListener('click', function() {
@@ -381,11 +425,15 @@
 
         // Bouton pour effacer les données LotoIA
         document.getElementById('clear-lotoia-data')?.addEventListener('click', function() {
-            if (confirm('Voulez-vous vraiment effacer toutes vos données LotoIA ?')) {
+            if (confirm('Voulez-vous vraiment effacer vos données LotoIA ?')) {
                 localStorage.removeItem('lotoia-theme');
                 localStorage.removeItem('lotoia_cookie_consent');
                 sessionStorage.removeItem('lotoia_session');
-                alert('Toutes vos données LotoIA ont été effacées.');
+                // 1.6.072 : purge des cookies Google Analytics (_ga, _ga_*)
+                if (window.LotoIAAnalytics && typeof window.LotoIAAnalytics.purgeGaCookies === 'function') {
+                    window.LotoIAAnalytics.purgeGaCookies();
+                }
+                alert('Vos données LotoIA ont été effacées.');
                 location.reload();
             }
         });

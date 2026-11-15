@@ -231,5 +231,6 @@ class TestVersion:
         # LOT 1.6.069 bump : 1.6.068 → 1.6.069 (11/11/2026 — site propre : modale EM 3 ombres, FAQ statistiques lisible en nuit, version-inject /historique, pastille EM, titres résultats nuit, titre console Loto, pitch cap 14s → 503 ; cache-busters sponsor-popup-em.css v=15, sponsor-popup.css v=15)
         # LOT 1.6.070 bump : 1.6.069 → 1.6.070 (12/11/2026 — BOT_IPS : URL Google ipranges déplacées vers /static/crawling/ipranges/ (common-crawlers, special-crawlers), sources user_triggered retirées, échec liste blanche en ERROR ; aucun cache-buster touché)
         # LOT 1.6.071 bump : 1.6.070 → 1.6.071 (14/11/2026 — papier news « Merci : LotoIA grandit grâce à vous » en tête de /news + 6 pages news EM, featured déplacé, NewsArticle en tête, LAST_NEWS_DATE 2026-11-14 ; aucun cache-buster touché)
+        # LOT 1.6.072 bump : 1.6.071 → 1.6.072 (16/11/2026 — conformité RGPD / CNIL et transparence IA : GA4 Consent Mode de base, bandeau + page cookies, consentement v2.0, confidentialité, mentions légales, avertissements, FAQ /hybride + /faq, À propos, accroche /fr, prompts, /hybride EM et page Numéros sans « automatique », mode nuit /hybride Loto + EM (questions d'exemple ambre, CTA bleu, boutons du CTA EM corrigés dans les 2 thèmes), liens --legal-link-color ambre en nuit ; cache-busters cookie-consent.js v=8, analytics.js v=5, style.css v=16)
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.071"
+        assert APP_VERSION == "1.6.072"
