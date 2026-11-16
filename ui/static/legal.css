@@ -683,7 +683,11 @@ body.theme-night .legal-page {
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.6);
-    z-index: var(--z-cookies-layer-2);
+    /* Micro-fix 1.6.072 (16/11) — fallback explicite 10004 : style.css n'est
+       pas chargé sur le launcher, var(--z-cookies-layer-2) y valait auto et
+       le héros (.launcher-container, z-index 10) recouvrait le panneau
+       « Personnaliser ». Même famille que V139.B Bug #3 ; 10004 = style.css :root. */
+    z-index: var(--z-cookies-layer-2, 10004);
     display: flex;
     align-items: center;
     justify-content: center;
