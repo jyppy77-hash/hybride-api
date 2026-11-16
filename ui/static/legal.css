@@ -704,6 +704,10 @@ body.theme-night .legal-page {
 
 .cookie-settings-panel {
     background: #fff;
+    /* Micro-fix V2 1.6.072 (16/11) — le launcher n'a pas de crochet de thème et son body
+       est en color: white : titres h3/h4 et croix héritaient du blanc sur ce panneau blanc.
+       --text-primary (style.css) garde l'héritage des pages modules ; nuit = règle ci-dessous. */
+    color: var(--text-primary, #1f2937);
     border-radius: 0.75rem;
     max-width: 600px;
     width: 100%;
