@@ -37,6 +37,7 @@ from services.base_chat_sql import _SQL_UNAVAILABLE_GUARD, _SQL_UNAVAILABLE_MESS
 from db_cloudsql import ReadonlyPoolUnavailable
 from services.base_chat_detect_temporal import _is_relative_weekday  # V141 A.4 Patch V131.G-bis
 from services.base_chat_detect_temporal import _has_tirage_keyword  # Lot Gemini 1 G12a
+from services.base_chat_detect_temporal import _mask_dates  # Lot 1.6.073 — garde « question sur un numéro »
 from services.chat_utils import _format_date_fr
 from services.base_chat_utils import _format_last_draw_context
 from services.stats_analysis import should_inject_pedagogical_context, PEDAGOGICAL_CONTEXT
@@ -651,6 +652,58 @@ _TIMEOUTS = {
 # ═══════════════════════════════════════════════════════
 # F03 V74: shared config base — DRY for _build_loto_config / _build_em_config
 # ═══════════════════════════════════════════════════════
+
+# ═══════════════════════════════════════════════════════
+# Lot 1.6.073 — garde « question sur un numéro » (audit étoiles / numéros 18/11, CE-1 et CE-2)
+# ═══════════════════════════════════════════════════════
+#
+# La Phase 0-bis (prochain tirage) et la Phase T `latest` (dernier tirage) posent un bloc qui
+# ne contient AUCUNE statistique de numéro ; posé, ce bloc fait sauter la Phase 1 et la Phase SQL.
+# Quand la question vise un numéro, ces deux phases cèdent la main : Phase 1 (get_numero_stats)
+# ou Phase SQL (has_data_signal). Fonction pure : ni base, ni réseau.
+#
+# Mot explicite de prochain tirage (6 langues) : la Phase 0-bis garde la main même si un numéro
+# est cité. `_NEXT_KW_RE` (base_chat_detect_temporal.py:159-161) ne couvre ni « prochaine »,
+# ni « próxima », ni « nächsten / nächster », ni « volgend » (\b après le radical) : motif dédié.
+_NEXT_DRAW_KW_RE = re.compile(
+    r"\b(?:prochaine?s?|next|pr[oó]xim[oa]s?|n[aä]chste[nrs]?|volgende?)\b", re.IGNORECASE)
+
+# Mots de sortie / de statistique (6 langues) — critère (b), indispensable car detect_numero
+# ne reconnaît que les formulations françaises (CE-3, hors lot).
+_NUMBER_STAT_WORD_RE = re.compile(
+    r"\b(?:"
+    r"sortie?s?|derni[eè]re\s+fois"                    # FR
+    r"|drawn|last\s+time|c[oa]me\s+out"                # EN
+    r"|sali[oó]|salieron|[uú]ltima\s+vez"              # ES (+ PT « última vez »)
+    r"|saiu|sa[ií]ram"                                 # PT
+    r"|gezogen|zuletzt"                                # DE
+    r"|getrokken|laatst"                               # NL
+    r")\b",
+    re.IGNORECASE,
+)
+_NUMBER_TOKEN_RE = re.compile(r"(?<![\d.,/:-])\b(\d{1,2})\b(?![.,/:-]?\d)")
+
+
+def _number_question_guard(message: str, detect_numero_fn) -> str | None:
+    """Lot 1.6.073 — la question vise-t-elle un numéro ?
+
+    Retourne "a" si `detect_numero_fn(message)` renvoie un numéro, "b" si le message, dates
+    masquées (`_mask_dates`), contient un mot de sortie / statistique ET un nombre de 1 à 50
+    hors date, sinon None.
+    """
+    try:
+        numero, _type = detect_numero_fn(message)
+    except Exception:  # détecteur défaillant : on retombe sur le critère (b)
+        numero = None
+    if numero is not None:
+        return "a"
+    masked = _mask_dates(message or "")
+    if not _NUMBER_STAT_WORD_RE.search(masked):
+        return None
+    if any(1 <= int(n) <= 50 for n in _NUMBER_TOKEN_RE.findall(masked)):
+        return "b"
+    return None
+
 
 # ═══════════════════════════════════════════════════════
 # Lot 1.6.065 — grille de l'historique (EVAL_H) et stats par numéro (bloc A)
@@ -1496,7 +1549,15 @@ async def _prepare_chat_context_base(
                 logger.warning(f"{_lp} Phase {_phase} erreur: {e}")
 
     # Phase 0-bis : prochain tirage
-    if not _continuation_mode and cfg["detect_prochain_tirage"](message):
+    # Lot 1.6.073 — question sur un numéro (sans mot « prochain ») : 0-bis cède la main
+    # (Phase 1 ou Phase SQL), son bloc ne contient aucune statistique de numéro (CE-1).
+    _zero_bis = not _continuation_mode and cfg["detect_prochain_tirage"](message)
+    if _zero_bis and not _NEXT_DRAW_KW_RE.search(message):
+        _guard = _number_question_guard(message, cfg["detect_numero"])
+        if _guard:
+            _zero_bis = False
+            logger.info(f"{_lp} Lot 1.6.073 garde numero : Phase 0-bis neutralisee (critere {_guard})")
+    if _zero_bis:
         _phase = "0-bis"
         try:
             tirage_ctx = await asyncio.wait_for(cfg["get_prochain_tirage"](), timeout=_TIMEOUTS["stats_analysis"])
@@ -1529,6 +1590,14 @@ async def _prepare_chat_context_base(
     # Phase T — Tirage spécifique / requête temporelle complexe
     if not _continuation_mode and not enrichment_context and not _skip_phase_t_for_gen_intent:
         tirage_target = cfg["detect_tirage"](message)
+        # Lot 1.6.073 — cible `latest` + question sur un numéro (« dernière sortie du 4 »,
+        # « last drawn ») : le bloc du dernier tirage ne contient pas les statistiques du numéro
+        # (CE-2). Une cible datée n'est jamais neutralisée.
+        if tirage_target == "latest":
+            _guard = _number_question_guard(message, cfg["detect_numero"])
+            if _guard:
+                tirage_target = None
+                logger.info(f"{_lp} Lot 1.6.073 garde numero : Phase T latest neutralisee (critere {_guard})")
         if tirage_target is not None:
             _phase = "T"
             try:

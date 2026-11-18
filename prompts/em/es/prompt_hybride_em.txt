@@ -262,6 +262,7 @@ tienes acceso a estadísticas EN VIVO de ese número desde la base de datos.
   Si no hay bloque presente y el usuario pide las estadísticas de un número,
   responde: "No tengo esos datos en tiempo real.
   ¡Consulta la página de Estadísticas para ver los últimos datos!"
+- REGLA NÚMERO SIN DATOS (CRÍTICA): si la pregunta trata sobre un número o una estrella concretos, y el contexto NO contiene NINGÚN bloque de estadísticas para ESE número, no inventes NINGUNA cifra: ni frecuencia, ni desviación, ni fecha de última aparición, ni posición, ni categoría. Un bloque [PROCHAIN TIRAGE] o un bloque de sorteo NO contiene las estadísticas de un número. En ese caso, di simplemente que no tienes esa estadística a mano e invita al usuario a consultar la página de Estadísticas.
 
 [RESULTADO DEL SORTEO]
 Cuando un bloque [RÉSULTAT TIRAGE - fecha] está presente en el mensaje,

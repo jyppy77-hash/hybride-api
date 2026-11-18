@@ -88,7 +88,10 @@ async def _get_prochain_tirage() -> str | None:
         lines.append(f"Date du prochain tirage : {jour_fr} {date_str} ({quand})")
         lines.append(f"Jours de tirage FDJ : lundi, mercredi et samedi")
         if last_draw:
-            lines.append(f"Dernier tirage en base : {last_draw}")
+            lines.append(
+                "Date du dernier tirage enregistré (tirage le plus récent, tous numéros confondus — "
+                f"ce n'est PAS la dernière sortie d'un numéro) : {last_draw}"
+            )
 
         return "\n".join(lines)
     except (aiomysql.Error, asyncio.TimeoutError, ConnectionError, OSError) as e:

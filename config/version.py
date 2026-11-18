@@ -5,6 +5,13 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# LOT 1.6.073 — Fix chatbot : routage des questions sur un numéro (Release 1.6.073, 18/11/2026 ; audit étoiles /
+# numéros du 18/11). Garde « question sur un numéro » (chat_pipeline_shared._number_question_guard) : la Phase 0-bis
+# (sans mot « prochain ») et la Phase T `latest` cèdent la main à la Phase 1 ou à la Phase SQL (CE-1, CE-2) ;
+# libellé « Date du dernier tirage enregistré (… ce n'est PAS la dernière sortie d'un numéro) » dans le bloc
+# [PROCHAIN TIRAGE] Loto + EM ; règle « numéro sans données » dans les 7 prompts chatbot (CE-6). Aucun CSS / JS,
+# aucun cache-buster. Bump requis : ETag HTML lié à APP_VERSION.
+
 # LOT 1.6.072 — Conformité RGPD / CNIL et transparence IA (Release 1.6.072, 16/11/2026). GA4 en Consent Mode de
 # base (gtag créé seulement après accord, purge des cookies _ga au retrait, file d'attente des événements) ;
 # bandeau et page cookies réécrits (6 langues), version du consentement 2.0 (tout choix antérieur redemandé) ;
@@ -429,9 +436,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.072"
+APP_VERSION = "1.6.073"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-11-16"
+VERSION_DATE = "2026-11-18"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

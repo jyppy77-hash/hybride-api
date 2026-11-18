@@ -85,7 +85,10 @@ async def _get_prochain_tirage_em() -> str | None:
         lines.append(f"Date du prochain tirage : {jour_fr} {date_str} ({quand})")
         lines.append("Jours de tirage EuroMillions : mardi et vendredi")
         if last_draw:
-            lines.append(f"Dernier tirage en base : {last_draw}")
+            lines.append(
+                "Date du dernier tirage enregistré (tirage le plus récent, tous numéros confondus — "
+                f"ce n'est PAS la dernière sortie d'un numéro) : {last_draw}"
+            )
 
         return "\n".join(lines)
     except (aiomysql.Error, asyncio.TimeoutError, ConnectionError, OSError) as e:

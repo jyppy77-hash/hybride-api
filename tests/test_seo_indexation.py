@@ -1099,9 +1099,12 @@ class TestAppVersion:
         page Numéros sans « automatique » ; mode nuit /hybride Loto + EM (questions d'exemple ambre, CTA bleu,
         boutons du CTA EM corrigés dans les 2 thèmes), liens --legal-link-color ambre en nuit ; cache-buster
         style.css ?v=15→16 ; title / meta / og / hreflang inchangés ; bump requis : ETag HTML lié à APP_VERSION.
+        LOT 1.6.073 (18/11, Release 1.6.073) — fix chatbot : routage des questions sur un numéro (garde Phase 0-bis /
+        Phase T latest, libellé [PROCHAIN TIRAGE], règle « numéro sans données » des prompts) ; aucune page ni
+        cache-buster touché ; title / meta / og / hreflang inchangés ; bump requis : ETag HTML lié à APP_VERSION.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.072"
+        assert APP_VERSION == "1.6.073"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

@@ -1917,8 +1917,8 @@ _CB_REF = re.compile(r"(cookie-consent|analytics)\.js(?:\?v=([0-9A-Za-z._-]+))?"
 
 def test_lot_1_6_072_bump_version():
     from config.version import APP_VERSION, LAST_NEWS_DATE, VERSION_DATE
-    assert APP_VERSION == "1.6.072"
-    assert VERSION_DATE == "2026-11-16"
+    assert tuple(int(p) for p in APP_VERSION.split(".")) >= (1, 6, 72)  # plancher (lot 1.6.073)
+    assert VERSION_DATE >= "2026-11-16"
     assert LAST_NEWS_DATE == "2026-11-14"
 
 
