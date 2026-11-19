@@ -436,17 +436,83 @@ def _format_periode_fr(periode: str) -> str:
 # Shared formatting — pairs / triplets / complex
 # ────────────────────────────────────────────
 
+# Lot 1.6.074 D3 — Phase P : ex aequo du 5e rang transmis à Gemini
+_P_TIES_TOP = 5        # lignes toujours gardées
+_P_TIES_CAP = 10       # plafond total de lignes listées
+_P_TIES_FETCH = 50     # lignes demandées à la fonction de stats (maximum déjà admis par l'API)
+_P_TIES_NOTE = (
+    "Ex aequo : les lignes de même compte partagent le même rang. "
+    "Cite-les toutes comme ex aequo, sans en privilégier une."
+)
+
+
+def _select_top_with_ties(data: dict, key: str, fetched_limit: int = _P_TIES_FETCH,
+                          top: int = _P_TIES_TOP, cap: int = _P_TIES_CAP) -> dict:
+    """Lot 1.6.074 D3 — garde les `top` premières lignes + les ex aequo du `top`-ième compte (plafond `cap`).
+
+    `data[key]` : lignes triées par compte décroissant (get_pair_correlations, get_star_pair_correlations,
+    get_triplet_correlations, appelées avec top_n=`fetched_limit`). Ne modifie ni `data` ni ses lignes
+    (objets éventuellement partagés avec le cache) : renvoie une copie.
+    Ajouts : par ligne `rank_competition` (1 + lignes de compte strictement supérieur) et `ex_aequo`
+    (compte partagé) ; au niveau du dict `ex_aequo_hidden` (ex aequo du dernier compte non listés),
+    `ex_aequo_hidden_count` (ce compte), `ex_aequo_at_least` (la dernière ligne récupérée a encore ce compte).
+    """
+    rows = list(data.get(key) or [])
+    out = dict(data)
+    counts = [r["count"] for r in rows]
+    selected = rows[:top]
+    hidden = 0
+    cut = None
+    if len(rows) > top:
+        cut = counts[top - 1]
+        for r in rows[top:]:
+            if r["count"] != cut:
+                break
+            if len(selected) < cap:
+                selected.append(r)
+            else:
+                hidden += 1
+    out[key] = [
+        dict(r, rank_competition=1 + sum(1 for c in counts if c > r["count"]),
+             ex_aequo=counts.count(r["count"]) > 1)
+        for r in selected
+    ]
+    out["ex_aequo_hidden"] = hidden
+    out["ex_aequo_hidden_count"] = cut if hidden else None
+    out["ex_aequo_at_least"] = bool(hidden) and len(rows) >= fetched_limit and counts[-1] == cut
+    return out
+
+
+def _ties_tail_lines(data: dict, items: list, singular: str, plural: str, listed: str) -> list:
+    """Lot 1.6.074 D3 — lignes de fin de bloc : ex aequo non listés + consigne (vide sans ex aequo)."""
+    lines = []
+    hidden = data.get("ex_aequo_hidden") or 0
+    if hidden:
+        at_least = "au moins " if data.get("ex_aequo_at_least") else ""
+        noun = f"autre {singular}" if hidden == 1 else f"autres {plural}"
+        lines.append(
+            f"Et {at_least}{hidden} {noun} à {data['ex_aequo_hidden_count']} fois "
+            f"(ex aequo, {listed})."
+        )
+    if hidden or any(it.get("ex_aequo") for it in items):
+        lines.append(_P_TIES_NOTE)
+    return lines
+
+
 def _format_pairs_context_base(pairs_data: dict, header: str) -> str:
     """Formate les correlations de paires en contexte pour Gemini."""
+    pairs_data = _select_top_with_ties(pairs_data, "pairs")  # Lot 1.6.074 D3
     lines = [f"[CORRÉLATIONS DE PAIRES — {header}]"]
     lines.append(f"Total tirages analysés : {pairs_data['total_draws']}")
     if pairs_data.get("window"):
         lines.append(f"Fenêtre : {pairs_data['window']}")
     for i, p in enumerate(pairs_data["pairs"], 1):
         lines.append(
-            f"{i}. {p['num_a']} + {p['num_b']} "
+            f"{p.get('rank_competition', i)}. {p['num_a']} + {p['num_b']} "
             f"\u2192 {p['count']} fois ({p['percentage']}%)"
+            + (" (ex aequo)" if p.get("ex_aequo") else "")
         )
+    lines += _ties_tail_lines(pairs_data, pairs_data["pairs"], "paire", "paires", "non listées")
     lines.append(
         "IMPORTANT : Le hasard reste souverain. "
         "Ces corrélations sont purement statistiques."
@@ -484,15 +550,18 @@ def _format_single_pair_context_base(pair: dict, header: str, scope: str) -> str
 
 def _format_triplets_context_base(triplets_data: dict, header: str) -> str:
     """Formate les correlations de triplets en contexte pour Gemini."""
+    triplets_data = _select_top_with_ties(triplets_data, "triplets")  # Lot 1.6.074 D3
     lines = [f"[CORRÉLATIONS DE TRIPLETS — {header}]"]
     lines.append(f"Total tirages analysés : {triplets_data['total_draws']}")
     if triplets_data.get("window"):
         lines.append(f"Fenêtre : {triplets_data['window']}")
     for i, t in enumerate(triplets_data["triplets"], 1):
         lines.append(
-            f"{i}. {t['num_a']} + {t['num_b']} + {t['num_c']} "
+            f"{t.get('rank_competition', i)}. {t['num_a']} + {t['num_b']} + {t['num_c']} "
             f"\u2192 {t['count']} fois ({t['percentage']}%)"
+            + (" (ex aequo)" if t.get("ex_aequo") else "")
         )
+    lines += _ties_tail_lines(triplets_data, triplets_data["triplets"], "triplet", "triplets", "non list\u00e9s")
     lines.append(
         "IMPORTANT : Le hasard reste souverain. "
         "Ces corrélations sont purement statistiques."

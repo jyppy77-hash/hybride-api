@@ -12,6 +12,8 @@ from datetime import date
 # sortie : noms de blocs traduits des prompts EM + lignes « Datum / Dag / Tijd… » en tête ; CF-3 « top N des
 # paires / triplets » en Phase P. Aucun prompt, aucune chaîne d'interface, aucun cache-buster. Bump requis : ETag
 # HTML lié à APP_VERSION.
+# D3 : tri déterministe des paires, paires d'étoiles et triplets (compte puis numéros) ; Phase P : ex aequo du 5e
+# rang transmis à Gemini (plafond 10, rang de compétition, mention ex aequo).
 
 # LOT 1.6.073 — Fix chatbot : routage des questions sur un numéro (Release 1.6.073, 18/11/2026 ; audit étoiles /
 # numéros du 18/11). Garde « question sur un numéro » (chat_pipeline_shared._number_question_guard) : la Phase 0-bis

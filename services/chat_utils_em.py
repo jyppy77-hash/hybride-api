@@ -17,6 +17,7 @@ from services.base_chat_utils import (  # noqa: F401
     _format_stats_context_base, _format_grille_context_base,
     _build_session_context_base,
     _format_numbers_stats_context_base, _extract_grids_from_text,  # Lot 1.6.065
+    _select_top_with_ties, _ties_tail_lines,  # Lot 1.6.074 D3
 )
 
 FALLBACK_RESPONSE_EM = (
@@ -91,13 +92,16 @@ def _format_pairs_context_em(pairs_data: dict) -> str:
 
 def _format_star_pairs_context_em(star_data: dict) -> str:
     """Formate les paires d'etoiles EM en contexte pour Gemini."""
+    star_data = _select_top_with_ties(star_data, "pairs")  # Lot 1.6.074 D3
     lines = ["[CORRÉLATIONS DE PAIRES — Étoiles]"]
     lines.append(f"Total tirages analysés : {star_data['total_draws']}")
     for i, p in enumerate(star_data["pairs"], 1):
         lines.append(
-            f"{i}. \u2b50{p['num_a']} + \u2b50{p['num_b']} "
+            f"{p.get('rank_competition', i)}. \u2b50{p['num_a']} + \u2b50{p['num_b']} "
             f"\u2192 {p['count']} fois ({p['percentage']}%)"
+            + (" (ex aequo)" if p.get("ex_aequo") else "")
         )
+    lines += _ties_tail_lines(star_data, star_data["pairs"], "paire", "paires", "non list\u00e9es")  # Lot 1.6.074 D3
     return "\n".join(lines)
 
 

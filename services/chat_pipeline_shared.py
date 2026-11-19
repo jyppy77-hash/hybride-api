@@ -40,6 +40,7 @@ from services.base_chat_detect_temporal import _has_tirage_keyword  # Lot Gemini
 from services.base_chat_detect_temporal import _mask_dates  # Lot 1.6.073 — garde « question sur un numéro »
 from services.chat_utils import _format_date_fr
 from services.base_chat_utils import _format_last_draw_context
+from services.base_chat_utils import _P_TIES_FETCH  # Lot 1.6.074 D3
 from services.stats_analysis import should_inject_pedagogical_context, PEDAGOGICAL_CONTEXT
 from services.decay_state import get_decay_state
 from config.engine import STRICT_HALLUCINATION_BLOCK_ENABLED  # V131.G
@@ -1819,9 +1820,10 @@ async def _prepare_chat_context_base(
             _phase = "P"
             try:
                 triplets_data = await asyncio.wait_for(
-                    cfg["get_triplet_correlations"](top_n=5), timeout=_TIMEOUTS["stats_analysis"]
+                    cfg["get_triplet_correlations"](top_n=_P_TIES_FETCH), timeout=_TIMEOUTS["stats_analysis"]
                 )
                 if triplets_data:
+                    # Lot 1.6.074 D3 : le formateur garde 5 lignes + ex aequo du 5e (plafond 10)
                     enrichment_context = cfg["format_triplets_context"](triplets_data)
                     if cfg["has_temporal_filter"](message):  # Lot phase P Q15
                         enrichment_context += _P_GENERAL_PERIOD_NOTE
@@ -1835,14 +1837,17 @@ async def _prepare_chat_context_base(
             _phase = "P"
             try:
                 pairs_data = await asyncio.wait_for(
-                    cfg["get_pair_correlations"](top_n=5), timeout=_TIMEOUTS["stats_analysis"]
+                    cfg["get_pair_correlations"](top_n=_P_TIES_FETCH), timeout=_TIMEOUTS["stats_analysis"]
                 )
                 if pairs_data:
+                    # Lot 1.6.074 D3 : le formateur garde 5 lignes + ex aequo du 5e (plafond 10)
                     enrichment_context = cfg["format_pairs_context"](pairs_data)
                     # EM: star pairs
                     _get_star_pairs = cfg.get("get_star_pair_correlations")
                     if _get_star_pairs:
-                        star_data = await asyncio.wait_for(_get_star_pairs(top_n=5), timeout=_TIMEOUTS["stats_analysis"])
+                        star_data = await asyncio.wait_for(
+                            _get_star_pairs(top_n=_P_TIES_FETCH), timeout=_TIMEOUTS["stats_analysis"]
+                        )
                         if star_data:
                             enrichment_context += "\n\n" + cfg["format_star_pairs_context"](star_data)
                     if cfg["has_temporal_filter"](message):  # Lot phase P Q15

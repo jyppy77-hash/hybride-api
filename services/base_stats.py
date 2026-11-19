@@ -1230,11 +1230,12 @@ class BaseStatsService:
                 all_params.extend(params_per_union)
 
             sort_dir = "ASC" if order == "cold" else "DESC"
+            # Lot 1.6.074 D3 : critère secondaire déterministe (ex aequo → numéros croissants)
             sql = (
                 f"SELECT num_a, num_b, COUNT(*) AS pair_count FROM ("
                 f"{' UNION ALL '.join(unions)}"
                 f") AS pairs GROUP BY num_a, num_b "
-                f"ORDER BY pair_count {sort_dir} LIMIT %s"
+                f"ORDER BY pair_count {sort_dir}, num_a ASC, num_b ASC LIMIT %s"
             )
             all_params.append(top_n)
 
@@ -1421,11 +1422,12 @@ class BaseStatsService:
                 )
                 all_params.extend(params_per_union)
 
+            # Lot 1.6.074 D3 : critère secondaire déterministe (ex aequo → numéros croissants)
             sql = (
                 f"SELECT num_a, num_b, num_c, COUNT(*) AS triplet_count FROM ("
                 f"{' UNION ALL '.join(unions)}"
                 f") AS triplets GROUP BY num_a, num_b, num_c "
-                f"ORDER BY triplet_count DESC LIMIT %s"
+                f"ORDER BY triplet_count DESC, num_a ASC, num_b ASC, num_c ASC LIMIT %s"
             )
             all_params.append(top_n)
 
@@ -1503,13 +1505,14 @@ class BaseStatsService:
             total_draws = (await cursor.fetchone())['total']
 
             sort_dir = "ASC" if order == "cold" else "DESC"
+            # Lot 1.6.074 D3 : critère secondaire déterministe (ex aequo → numéros croissants)
             sql = (
                 f"SELECT LEAST({col_a}, {col_b}) AS num_a, "
                 f"GREATEST({col_a}, {col_b}) AS num_b, "
                 f"COUNT(*) AS pair_count "
                 f"FROM {self.cfg.table} {date_filter} "
                 f"GROUP BY num_a, num_b "
-                f"ORDER BY pair_count {sort_dir} LIMIT %s"
+                f"ORDER BY pair_count {sort_dir}, num_a ASC, num_b ASC LIMIT %s"
             )
             params.append(top_n)
             await cursor.execute(sql, params)

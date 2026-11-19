@@ -13,6 +13,9 @@ T4  CF-5 : 0-bis EM 6 langues, pas de capture des questions de dernier tirage / 
     _NEXT_KW_RE fléchi sans « prochaine ».
 T5  CF-3 : « top N des paires / triplets » en Phase P (Loto + EM), témoins en Phase 3.
 T6  Version 1.6.074 / VERSION_DATE 2026-11-19 (config + /api/version).
+T7  D3 (ex aequo des paires) : O1 tri SQL déterministe (paires, paires d'étoiles, triplets ; hot / cold) ;
+    O2 Phase P : 5 lignes + ex aequo du 5e (plafond 10), rang de compétition, mention et consigne ex aequo ;
+    bloc identique à 1.6.074 initial sans ex aequo ; pipeline réel (top_n=50).
 
 Aucun accès base, réseau ou Gemini (garde autouse tests/conftest.py).
 """
@@ -558,3 +561,263 @@ def test_t6_api_version():
     body = resp.json()
     assert body["version"] == "1.6.074"
     assert body["date"] == "2026-11-19"
+
+
+# ═══════════════════════════════════════════════════════
+# T7 — D3 : ex aequo des paires / paires d'étoiles / triplets
+# ═══════════════════════════════════════════════════════
+
+_TIE_NOTE = ("Ex aequo : les lignes de même compte partagent le même rang. "
+             "Cite-les toutes comme ex aequo, sans en privilégier une.")
+_IMPORTANT = "IMPORTANT : Le hasard reste souverain. Ces corrélations sont purement statistiques."
+
+
+def _svc_capture(cfg, rows):
+    """BaseStatsService à connexion mockée ; renvoie (svc, cursor) pour lire le SQL exécuté."""
+    from services.base_stats import BaseStatsService
+    svc = BaseStatsService(cfg)
+    cursor = AsyncMock()
+    cursor.fetchone = AsyncMock(return_value={"total": 100})
+    cursor.fetchall = AsyncMock(return_value=rows)
+    cursor.execute = AsyncMock()
+    conn = MagicMock()
+    conn.cursor = AsyncMock(return_value=cursor)
+    ctx = AsyncMock()
+    ctx.__aenter__ = AsyncMock(return_value=conn)
+    ctx.__aexit__ = AsyncMock(return_value=False)
+    svc._get_connection = MagicMock(return_value=ctx)
+    return svc, cursor
+
+
+def _order_by(cursor):
+    sql = cursor.execute.call_args_list[-1].args[0]
+    return sql[sql.index("ORDER BY"):]
+
+
+# ── O1 : SQL exécuté ──
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("game,fn,order,expected", [
+    ("loto", "get_pair_correlations", "hot", "ORDER BY pair_count DESC, num_a ASC, num_b ASC LIMIT %s"),
+    ("loto", "get_pair_correlations", "cold", "ORDER BY pair_count ASC, num_a ASC, num_b ASC LIMIT %s"),
+    ("em", "get_pair_correlations", "hot", "ORDER BY pair_count DESC, num_a ASC, num_b ASC LIMIT %s"),
+    ("em", "get_pair_correlations", "cold", "ORDER BY pair_count ASC, num_a ASC, num_b ASC LIMIT %s"),
+    ("em", "get_star_pair_correlations", "hot", "ORDER BY pair_count DESC, num_a ASC, num_b ASC LIMIT %s"),
+    ("em", "get_star_pair_correlations", "cold", "ORDER BY pair_count ASC, num_a ASC, num_b ASC LIMIT %s"),
+    ("loto", "get_triplet_correlations", None,
+     "ORDER BY triplet_count DESC, num_a ASC, num_b ASC, num_c ASC LIMIT %s"),
+    ("em", "get_triplet_correlations", None,
+     "ORDER BY triplet_count DESC, num_a ASC, num_b ASC, num_c ASC LIMIT %s"),
+])
+async def test_t7_o1_sql_order_by(game, fn, order, expected):
+    from services.em_stats_service import EM_CONFIG
+    from services.stats_service import LOTO_CONFIG
+    svc, cursor = _svc_capture(LOTO_CONFIG if game == "loto" else EM_CONFIG, [])
+    kw = {"top_n": 50} if order is None else {"top_n": 50, "order": order}
+    with patch("services.base_stats.cache_get", new_callable=AsyncMock, return_value=None), \
+         patch("services.base_stats.cache_set", new_callable=AsyncMock):
+        result = await getattr(svc, fn)(**kw)
+    assert result is not None
+    assert _order_by(cursor) == expected
+    assert cursor.execute.call_args_list[-1].args[1][-1] == 50
+
+
+@pytest.mark.asyncio
+async def test_t7_o1_rank_field_still_position():
+    from services.stats_service import LOTO_CONFIG
+    rows = [{"num_a": 4, "num_b": 22, "pair_count": 20}, {"num_a": 17, "num_b": 30, "pair_count": 20},
+            {"num_a": 7, "num_b": 11, "pair_count": 19}]
+    svc, _ = _svc_capture(LOTO_CONFIG, rows)
+    with patch("services.base_stats.cache_get", new_callable=AsyncMock, return_value=None), \
+         patch("services.base_stats.cache_set", new_callable=AsyncMock):
+        result = await svc.get_pair_correlations(top_n=3)
+    assert [p["rank"] for p in result["pairs"]] == [1, 2, 3]
+
+
+# ── O2 : sélection et format ──
+
+def _pairs(spec, total=980):
+    return {"total_draws": total, "window": None,
+            "pairs": [{"num_a": a, "num_b": b, "count": c, "percentage": p, "rank": i}
+                      for i, (a, b, c, p) in enumerate(spec, 1)]}
+
+
+_NO_TIE = [(4, 22, 20, 2.0), (17, 30, 19, 1.9), (7, 11, 18, 1.8), (26, 42, 17, 1.7), (31, 40, 16, 1.6)]
+
+# Blocs de 1.6.074 initial (commit 4ee4a9b), figés : sans ex aequo, le bloc ne doit pas bouger d'un octet.
+_V0_PAIRS_LOTO = (
+    "[CORRÉLATIONS DE PAIRES — Numéros principaux]\n"
+    "Total tirages analysés : 980\n"
+    "1. 4 + 22 → 20 fois (2.0%)\n"
+    "2. 17 + 30 → 19 fois (1.9%)\n"
+    "3. 7 + 11 → 18 fois (1.8%)\n"
+    "4. 26 + 42 → 17 fois (1.7%)\n"
+    "5. 31 + 40 → 16 fois (1.6%)\n"
+    + _IMPORTANT
+)
+_V0_STARS = (
+    "[CORRÉLATIONS DE PAIRES — Étoiles]\n"
+    "Total tirages analysés : 980\n"
+    "1. ⭐4 + ⭐22 → 20 fois (2.0%)\n"
+    "2. ⭐17 + ⭐30 → 19 fois (1.9%)\n"
+    "3. ⭐7 + ⭐11 → 18 fois (1.8%)\n"
+    "4. ⭐26 + ⭐42 → 17 fois (1.7%)\n"
+    "5. ⭐31 + ⭐40 → 16 fois (1.6%)"
+)
+_V0_TRIPLETS_EM = (
+    "[CORRÉLATIONS DE TRIPLETS — Boules EuroMillions]\n"
+    "Total tirages analysés : 980\n"
+    "1. 1 + 2 + 3 → 9 fois (0.9%)\n"
+    "2. 4 + 5 + 6 → 8 fois (0.8%)\n"
+    "3. 7 + 8 + 9 → 7 fois (0.7%)\n"
+    "4. 10 + 11 + 12 → 6 fois (0.6%)\n"
+    "5. 13 + 14 + 15 → 5 fois (0.5%)\n"
+    + _IMPORTANT
+)
+
+
+def _triplets(counts):
+    return {"total_draws": 980, "window": None,
+            "triplets": [{"num_a": 3 * i + 1, "num_b": 3 * i + 2, "num_c": 3 * i + 3, "count": c,
+                          "percentage": c / 10, "rank": i + 1} for i, c in enumerate(counts)]}
+
+
+@pytest.mark.parametrize("extra", [0, 2, 45])
+def test_t7_o2a_no_tie_block_identical(extra):
+    """(a) aucun ex aequo au 5e rang : 5 lignes, bloc octet pour octet identique à 1.6.074 initial."""
+    from services.chat_utils import _format_pairs_context
+    from services.chat_utils_em import _format_star_pairs_context_em, _format_triplets_context_em
+    spec = _NO_TIE + [(1, 2 + i, 15 - (i // 10), 0.5) for i in range(extra)]
+    data = _pairs(spec)
+    assert _format_pairs_context(data) == _V0_PAIRS_LOTO
+    assert _format_star_pairs_context_em(data) == _V0_STARS
+    assert _format_triplets_context_em(_triplets([9, 8, 7, 6, 5] + [4] * extra)) == _V0_TRIPLETS_EM
+    assert _TIE_NOTE not in _format_pairs_context(data)
+
+
+_D3_LOTO = [(4, 22, 20, 2.0), (17, 30, 20, 2.0), (7, 11, 19, 1.9), (13, 31, 18, 1.8), (26, 42, 18, 1.8),
+            (31, 40, 18, 1.8), (1, 2, 17, 1.7), (3, 5, 17, 1.7)]
+
+
+def test_t7_o2b_d3_loto():
+    """(b) cas D3 Loto : 20, 20, 19, 18, 18, 18, 17… → 6 lignes, rangs 1, 1, 3, 4, 4, 4."""
+    from services.chat_utils import _format_pairs_context
+    block = _format_pairs_context(_pairs(_D3_LOTO))
+    assert block == (
+        "[CORRÉLATIONS DE PAIRES — Numéros principaux]\n"
+        "Total tirages analysés : 980\n"
+        "1. 4 + 22 → 20 fois (2.0%) (ex aequo)\n"
+        "1. 17 + 30 → 20 fois (2.0%) (ex aequo)\n"
+        "3. 7 + 11 → 19 fois (1.9%)\n"
+        "4. 13 + 31 → 18 fois (1.8%) (ex aequo)\n"
+        "4. 26 + 42 → 18 fois (1.8%) (ex aequo)\n"
+        "4. 31 + 40 → 18 fois (1.8%) (ex aequo)\n"
+        + _TIE_NOTE + "\n"
+        + _IMPORTANT
+    )
+
+
+def test_t7_o2c_stars_smoke():
+    """(c) étoiles du smoke : 20, 18, 17 ×5, 16… → 7 lignes, rangs 1, 2, 3, 3, 3, 3, 3 ; consigne en fin."""
+    from services.chat_utils_em import _format_star_pairs_context_em
+    spec = [(2, 10, 20, 2.7), (2, 8, 18, 2.5), (1, 10, 17, 2.3), (2, 6, 17, 2.3), (3, 9, 17, 2.3),
+            (4, 12, 17, 2.3), (7, 11, 17, 2.3), (1, 2, 16, 2.2), (5, 6, 15, 2.0)]
+    block = _format_star_pairs_context_em(_pairs(spec, total=732))
+    assert block == (
+        "[CORRÉLATIONS DE PAIRES — Étoiles]\n"
+        "Total tirages analysés : 732\n"
+        "1. ⭐2 + ⭐10 → 20 fois (2.7%)\n"
+        "2. ⭐2 + ⭐8 → 18 fois (2.5%)\n"
+        "3. ⭐1 + ⭐10 → 17 fois (2.3%) (ex aequo)\n"
+        "3. ⭐2 + ⭐6 → 17 fois (2.3%) (ex aequo)\n"
+        "3. ⭐3 + ⭐9 → 17 fois (2.3%) (ex aequo)\n"
+        "3. ⭐4 + ⭐12 → 17 fois (2.3%) (ex aequo)\n"
+        "3. ⭐7 + ⭐11 → 17 fois (2.3%) (ex aequo)\n"
+        + _TIE_NOTE
+    )
+
+
+def test_t7_o2d_cap():
+    """(d) 3 lignes à 9 puis 12 à 5 : 10 lignes listées + « Et 5 autres paires à 5 fois »."""
+    from services.chat_utils import _format_pairs_context
+    spec = [(1, 2 + i, 9, 0.9) for i in range(3)] + [(10, 11 + i, 5, 0.5) for i in range(12)] + [(30, 31, 4, 0.4)]
+    lines = _format_pairs_context(_pairs(spec)).split("\n")
+    listed = [ln for ln in lines if "→" in ln]
+    assert len(listed) == 10
+    assert [ln.split(".")[0] for ln in listed] == ["1"] * 3 + ["4"] * 7
+    assert all(ln.endswith(" (ex aequo)") for ln in listed)
+    assert lines[-3:] == ["Et 5 autres paires à 5 fois (ex aequo, non listées).", _TIE_NOTE, _IMPORTANT]
+
+
+def test_t7_o2e_at_least():
+    """(e) 50 lignes toutes au compte de la 5e : « au moins »."""
+    from services.chat_utils import _format_pairs_context
+    spec = [(1 + i // 49, 2 + i % 49, 7, 0.7) for i in range(50)]
+    lines = _format_pairs_context(_pairs(spec)).split("\n")
+    assert len([ln for ln in lines if "→" in ln]) == 10
+    assert "Et au moins 40 autres paires à 7 fois (ex aequo, non listées)." in lines
+
+
+def test_t7_o2_singular_and_triplets_wording():
+    from services.chat_utils import _format_pairs_context, _format_triplets_context
+    spec = [(1, 2 + i, 9 - i, 0.9) for i in range(4)] + [(20, 21 + i, 3, 0.3) for i in range(7)]
+    assert "Et 1 autre paire à 3 fois (ex aequo, non listées)." in _format_pairs_context(_pairs(spec))
+    block = _format_triplets_context(_triplets([9, 9, 8, 7, 6, 6, 6]))
+    assert "1. 1 + 2 + 3 → 9 fois (0.9%) (ex aequo)" in block
+    assert "5. 13 + 14 + 15 → 6 fois (0.6%) (ex aequo)" in block
+    assert "5. 19 + 20 + 21 → 6 fois (0.6%) (ex aequo)" in block
+    assert _TIE_NOTE + "\n" + _IMPORTANT in block
+    many = _format_triplets_context(_triplets([9] * 13))
+    assert "Et 3 autres triplets à 9 fois (ex aequo, non listés)." in many
+
+
+def test_t7_o2_input_not_mutated():
+    """Les données (partagées avec le cache) ne sont pas modifiées par le formateur."""
+    import copy
+    from services.chat_utils import _format_pairs_context
+    data = _pairs(_D3_LOTO)
+    before = copy.deepcopy(data)
+    _format_pairs_context(data)
+    assert data == before
+
+
+# ── O2 : pipeline réel (base et Gemini mockés) ──
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("game,lang,msg", [
+    ("loto", None, "top 5 des paires"),
+    ("em", "en", "top 5 pairs"),
+])
+async def test_t7_pipeline_pairs_with_ties(monkeypatch, game, lang, msg):
+    monkeypatch.setitem(_DATA, "get_pair_correlations", _pairs(_D3_LOTO))
+    stars = [(2, 10, 20, 2.7), (2, 8, 18, 2.5), (1, 10, 17, 2.3), (2, 6, 17, 2.3), (3, 9, 17, 2.3),
+             (4, 12, 17, 2.3), (7, 11, 17, 2.3), (1, 2, 16, 2.2)]
+    monkeypatch.setitem(_DATA, "get_star_pair_correlations", _pairs(stars, total=732))
+    meta, mocks = await _run(game, msg, lang)
+    assert meta["phase"] == "P"
+    ctx = meta["enrichment_context"]
+    mocks["get_pair_correlations"].assert_awaited_once_with(top_n=50)
+    assert "1. 17 + 30 → 20 fois (2.0%) (ex aequo)" in ctx
+    assert "3. 7 + 11 → 19 fois (1.9%)\n" in ctx
+    assert "4. 31 + 40 → 18 fois (1.8%) (ex aequo)" in ctx
+    assert "1 + 2 → 17" not in ctx
+    assert _TIE_NOTE + "\n" + _IMPORTANT in ctx
+    if game == "em":
+        mocks["get_star_pair_correlations"].assert_awaited_once_with(top_n=50)
+        assert "3. ⭐7 + ⭐11 → 17 fois (2.3%) (ex aequo)" in ctx
+        assert ctx.endswith(_TIE_NOTE)
+        assert "⭐1 + ⭐2" not in ctx
+
+
+@pytest.mark.asyncio
+async def test_t7_pipeline_triplets_with_ties(monkeypatch):
+    monkeypatch.setitem(_DATA, "get_triplet_correlations", _triplets([9, 8, 7, 6, 5, 5, 4]))
+    meta, mocks = await _run("loto", "top 3 des triplets")
+    assert meta["phase"] == "P"
+    mocks["get_triplet_correlations"].assert_awaited_once_with(top_n=50)
+    ctx = meta["enrichment_context"]
+    assert "5. 13 + 14 + 15 → 5 fois (0.5%) (ex aequo)" in ctx
+    assert "5. 16 + 17 + 18 → 5 fois (0.5%) (ex aequo)" in ctx
+    assert "4. 10 + 11 + 12 → 6 fois (0.6%)\n" in ctx
+    assert "19 + 20 + 21" not in ctx
+    assert _TIE_NOTE + "\n" + _IMPORTANT in ctx
