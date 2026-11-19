@@ -1102,9 +1102,12 @@ class TestAppVersion:
         LOT 1.6.073 (18/11, Release 1.6.073) — fix chatbot : routage des questions sur un numéro (garde Phase 0-bis /
         Phase T latest, libellé [PROCHAIN TIRAGE], règle « numéro sans données » des prompts) ; aucune page ni
         cache-buster touché ; title / meta / og / hreflang inchangés ; bump requis : ETag HTML lié à APP_VERSION.
+        LOT 1.6.074 (19/11, Release 1.6.074) — fix chatbot : étoiles à deux chiffres (contrôle 2), numéro EM hors FR,
+        prochain tirage EM 6 langues, filtres de sortie traduits, top N des paires ; aucune page ni cache-buster
+        touché ; title / meta / og / hreflang inchangés ; bump requis : ETag HTML lié à APP_VERSION.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.073"
+        assert APP_VERSION == "1.6.074"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

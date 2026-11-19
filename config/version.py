@@ -5,6 +5,14 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# LOT 1.6.074 — Fix chatbot : étoiles, numéros et prochain tirage hors FR (Release 1.6.074, 19/11/2026 ; audit RO
+# 074 du 19/11). CF-1 contrôle 2 : une étoile à deux chiffres n'est plus coupée (« étoile 12 » ≠ {1, 2}), paire lue
+# après la suite citée ; CF-4 Phase 1 EM hors FR : « number / número / Nummer / Zahl / nummer N » (lang ≠ fr seulement) ;
+# CF-5 Phase 0-bis EM dans les 6 langues + formes fléchies de _NEXT_KW_RE (sans « prochaine ») ; CF-7 filtre de
+# sortie : noms de blocs traduits des prompts EM + lignes « Datum / Dag / Tijd… » en tête ; CF-3 « top N des
+# paires / triplets » en Phase P. Aucun prompt, aucune chaîne d'interface, aucun cache-buster. Bump requis : ETag
+# HTML lié à APP_VERSION.
+
 # LOT 1.6.073 — Fix chatbot : routage des questions sur un numéro (Release 1.6.073, 18/11/2026 ; audit étoiles /
 # numéros du 18/11). Garde « question sur un numéro » (chat_pipeline_shared._number_question_guard) : la Phase 0-bis
 # (sans mot « prochain ») et la Phase T `latest` cèdent la main à la Phase 1 ou à la Phase SQL (CE-1, CE-2) ;
@@ -436,9 +444,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.073"
+APP_VERSION = "1.6.074"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-11-18"
+VERSION_DATE = "2026-11-19"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

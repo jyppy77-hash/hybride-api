@@ -254,6 +254,33 @@ _INTERNAL_TAGS_PATTERNS = (
     r'\[/[A-Za-zÀ-Üà-ÿ0-9 _\-—.À-ſ]+\]',
 )
 
+# Lot 1.6.074 CF-7 — noms TRADUITS des blocs, tels que les nomment les 6 prompts EM (sections
+# « format de réponse » EN / ES / DE / NL ; PT : titres de section, sa liste reprenant les noms FR).
+# Gemini les recopie en en-tête inventé (T1-NL « [REALTIMEGEGEVENS - Numéro 31] … »). En-tête seul,
+# insensible à la casse ; les motifs FR ci-dessus sont inchangés. Jamais un marqueur [N], [D]… :
+# chaque nom est un libellé de bloc complet suivi de « ] », d'un séparateur ou de « : ».
+_INTERNAL_TAGS_TRANSLATED = (
+    # EN
+    "REAL-TIME DATA", "DRAW RESULT", "SQL RESULT", "GRID ANALYSIS", "RANKING", "COMPARISON",
+    "HOT/COLD NUMBERS", "User question",
+    # ES
+    "DATOS EN TIEMPO REAL", "RESULTADO DEL SORTEO", "RESULTADO SQL", "ANÁLISIS DE COMBINACIÓN",
+    "CLASIFICACIÓN", "COMPARACIÓN", "NÚMEROS CALIENTES/FRÍOS", "Página:", "Pregunta del usuario",
+    # PT (titres de section)
+    "DADOS EM TEMPO REAL", "RESULTADO DO SORTEIO", "Pergunta do utilizador",
+    # DE
+    "ECHTZEITDATEN", "ZIEHUNGSERGEBNIS", "SQL-ERGEBNIS", "KOMBINATIONSANALYSE", "RANGLISTE",
+    "VERGLEICH", "HEISSE/KALTE ZAHLEN", "Seite:", "Nutzerfrage",
+    # NL
+    "REALTIMEGEGEVENS", "TREKKINGSRESULTAAT", "SQL-RESULTAAT", "COMBINATIEANALYSE", "RANGSCHIKKING",
+    "VERGELIJKING", "HETE/KOUDE NUMMERS", "Pagina:", "Gebruikersvraag",
+)
+_INTERNAL_TAGS_TRANSLATED_RE = re.compile(
+    r'\[\s*(?:' + '|'.join(re.escape(t) for t in sorted(_INTERNAL_TAGS_TRANSLATED, key=len, reverse=True))
+    + r')(?:(?<=:)|(?=[\s\]—\-:]))[^\]\n]*\]',
+    re.IGNORECASE,
+)
+
 
 def _clean_response(text: str, lang: str = "fr", *, strip_edges: bool = True) -> str:
     """Supprime les tags internes et blocs de code qui ne doivent pas etre vus par l'utilisateur.
@@ -268,6 +295,7 @@ def _clean_response(text: str, lang: str = "fr", *, strip_edges: bool = True) ->
         text = _RE_CODE_BLOCK.sub('', text)
     for tag in _INTERNAL_TAGS_PATTERNS:
         text = re.sub(tag, '', text)
+    text = _INTERNAL_TAGS_TRANSLATED_RE.sub('', text)  # Lot 1.6.074 CF-7 — noms de blocs traduits
     # Supprimer les caracteres CJK/non-latin injectes par Gemini
     text = _strip_non_latin(text)
     # F14 V83: strip Gemini auto-introductions (defense-in-depth, 6 langs)

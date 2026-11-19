@@ -86,7 +86,8 @@ MATRIX = [
     (2, "em", "fr", "Quand le numéro 4 est-il sorti pour la dernière fois à l'EuroMillions ?", "1", (4, "boule"), False),
     (3, "em", "en", "How many times was number 19 drawn in 2025?", "SQL", None, True),
     (4, "em", "es", "¿Qué números salieron en el sorteo del 20 de diciembre de 2022?", "T", None, False),
-    (5, "em", "pt", "Quando foi a última vez que o número 17 saiu no Euromilhões?", "SQL", None, True),
+    (5, "em", "pt", "Quando foi a última vez que o número 17 saiu no Euromilhões?", "1", (17, "boule"),
+     False),  # 1.6.074 CF-4
     (6, "em", "de", "Wie oft wurde die Zahl 44 im Jahr 2025 gezogen?", "SQL", None, True),
     (7, "em", "nl", "Welke nummers zijn er getrokken bij de trekking van 14 september 2021?", "T", None, False),
     (8, "loto", "fr", "Quand le numéro 7 est-il sorti pour la dernière fois au Loto ?", "1", (7, "principal"), False),
@@ -97,19 +98,22 @@ MATRIX = [
      False),
     (13, "em", "fr", "Dernière sortie de l'étoile 4", "1", (4, "etoile"), False),
     (14, "em", "fr", "Date de la dernière sortie du 4 au tirage EuroMillions", "1", (4, "boule"), False),
-    (15, "em", "en", "When was number 4 last drawn?", "SQL", None, True),
-    (16, "em", "en", "When was number 4 last drawn in EuroMillions?", "SQL", None, True),
-    (17, "em", "es", "¿Cuándo salió por última vez el número 4 en el EuroMillones?", "SQL", None, True),
+    (15, "em", "en", "When was number 4 last drawn?", "1", (4, "boule"), False),  # 1.6.074 CF-4
+    (16, "em", "en", "When was number 4 last drawn in EuroMillions?", "1", (4, "boule"), False),  # 1.6.074 CF-4
+    (17, "em", "es", "¿Cuándo salió por última vez el número 4 en el EuroMillones?", "1", (4, "boule"),
+     False),  # 1.6.074 CF-4
     (18, "em", "pt", "Quando saiu pela última vez a estrela 4?", "1", (4, "etoile"), False),
-    (19, "em", "de", "Wann wurde die Zahl 4 zuletzt bei EuroMillions gezogen?", "SQL", None, True),
-    (20, "em", "nl", "Wanneer is nummer 4 voor het laatst getrokken bij EuroMillions?", "SQL", None, True),
+    (19, "em", "de", "Wann wurde die Zahl 4 zuletzt bei EuroMillions gezogen?", "1", (4, "boule"),
+     False),  # 1.6.074 CF-4
+    (20, "em", "nl", "Wanneer is nummer 4 voor het laatst getrokken bij EuroMillions?", "1", (4, "boule"),
+     False),  # 1.6.074 CF-4
     (21, "loto", "fr", "Quand est sorti le numéro chance 4 pour la dernière fois au Loto ?", "1", (4, "chance"),
      False),
     (22, "loto", "fr", "Dernière sortie du numéro chance 4", "1", (4, "chance"), False),
     (23, "loto", "fr", "Quand le numéro 4 est-il sorti pour la dernière fois ?", "1", (4, "principal"), False),
     (24, "em", "fr", "C'est quand le prochain tirage EuroMillions ?", "0-bis", None, False),
     (25, "em", "fr", "Quand a lieu le prochain tirage ?", "0-bis", None, False),
-    (26, "em", "en", "When is the next EuroMillions draw?", "SQL", None, True),  # CE-7 hors lot
+    (26, "em", "en", "When is the next EuroMillions draw?", "0-bis", None, False),  # 1.6.074 CF-5
     (27, "loto", "fr", "C'est quand le prochain tirage du Loto ?", "0-bis", None, False),
     (28, "em", "fr", "Quel est le dernier tirage ?", "T", None, False),
 ]
@@ -172,10 +176,14 @@ async def test_t2_iv_latest_draw_keyword_keeps_t():
 async def test_t2_guard_logs_neutralisation(caplog):
     with caplog.at_level(logging.INFO):
         await _run("em", "Quand le numéro 4 est-il sorti pour la dernière fois à l'EuroMillions ?")
-        await _run("em", "When was number 4 last drawn?", lang="en")
+        await _run("em", "When was 4 last drawn?", lang="en")  # 1.6.074 : sans « number » → critère b
     text = caplog.text
     assert "Lot 1.6.073 garde numero : Phase 0-bis neutralisee (critere a)" in text
     assert "Lot 1.6.073 garde numero : Phase T latest neutralisee (critere b)" in text
+    caplog.clear()
+    with caplog.at_level(logging.INFO):
+        await _run("em", "When was number 4 last drawn?", lang="en")  # 1.6.074 CF-4 : « number 4 » → critère a
+    assert "Lot 1.6.073 garde numero : Phase T latest neutralisee (critere a)" in caplog.text
 
 
 # ── T2b — fonction pure ──────────────────────────────────────────────────
@@ -383,8 +391,8 @@ def test_t4_rule_matches_game(key):
 
 def test_t5_version_config():
     from config.version import APP_VERSION, VERSION_DATE
-    assert APP_VERSION == "1.6.073"
-    assert VERSION_DATE == "2026-11-18"
+    assert tuple(int(p) for p in APP_VERSION.split(".")) >= (1, 6, 73)  # plancher (lot 1.6.074)
+    assert VERSION_DATE >= "2026-11-18"
 
 
 def test_t5_api_version():
@@ -403,5 +411,5 @@ def test_t5_api_version():
         resp = TestClient(main_mod.app, raise_server_exceptions=False).get("/api/version")
     assert resp.status_code == 200
     body = resp.json()
-    assert body["version"] == "1.6.073"
-    assert body["date"] == "2026-11-18"
+    assert tuple(int(p) for p in body["version"].split(".")) >= (1, 6, 73)  # plancher (lot 1.6.074)
+    assert body["date"] >= "2026-11-18"

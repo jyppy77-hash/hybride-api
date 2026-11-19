@@ -580,13 +580,44 @@ _DATE_RE_DMY_WORD = re.compile(
 #   ES : "estrellas 3 y 8"     PT : "estrelas 3 e 8"
 #   DE : "Sterne 3 und 8"      NL : "sterren 3 en 8"
 # Le mot-clé étoile peut être répété entre les 2 chiffres ("star 3, star 8").
+# Lot 1.6.074 CF-1 — un nombre n'est jamais coupé : (?<!\d) / (?!\d) autour de chaque groupe
+# (« étoile 12 » était lu {1, 2} → faux PHASE0_DRAW_MISMATCH, prod 19/11 06:23 et 06:29 UTC).
+# Lecture d'une paire : voir `_extract_cited_stars` (bornes 1-12, mot singulier encadré).
 _STAR_WORDS = r'(?:[ée]toiles?|stars?|estrellas?|estrelas?|sterne?n?|sterren|[★☆⭐])'
 _EM_STARS_RE = re.compile(
-    _STAR_WORDS + r'\s*[:\-]?\s*(\d{1,2})\s*[-–—,]?\s*'
+    _STAR_WORDS + r'\s*[:\-]?\s*(?<!\d)(\d{1,2})(?!\d)\s*[-–—,/]?\s*'
     r'(?:(?:et|and|y|e|und|en)\s+)?'
-    + _STAR_WORDS + r'?\s*(\d{1,2})',
+    + _STAR_WORDS + r'?\s*(?<!\d)(\d{1,2})(?!\d)',
     re.IGNORECASE,
 )
+# Lot 1.6.074 CF-1 — mot étoile au singulier (« l'étoile 12 », « star 12 », « Stern 12 ») : la
+# suite « , 1 tirage » n'est pas une 2e étoile. Après un singulier, la paire exige un 2e mot
+# étoile (« star 3, star 8 ») ou une conjonction (« étoile 3 et 8 »).
+_STAR_WORD_SINGULAR_RE = re.compile(r'(?:[ée]toile|star|estrella|estrela|stern)$', re.IGNORECASE)
+_STAR_PAIR_LINK_RE = re.compile(
+    r'(?:\b(?:et|and|y|e|und|en)\b|' + _STAR_WORDS + r')', re.IGNORECASE)
+
+
+def _extract_cited_stars(text: str) -> tuple[str, str] | None:
+    """Lot 1.6.074 CF-1 — 1re paire d'étoiles citée dans `text` (nombres complets, 1 à 12).
+
+    Une correspondance écartée (hors bornes, singulier sans lien) ne masque pas la suivante :
+    la recherche reprend au caractère suivant son début.
+    """
+    pos = 0
+    while True:
+        m = _EM_STARS_RE.search(text or "", pos)
+        if not m:
+            return None
+        s1, s2 = m.group(1), m.group(2)
+        ok = 1 <= int(s1) <= 12 and 1 <= int(s2) <= 12
+        if ok:
+            word = text[m.start():m.start(1)].rstrip(" \t:-")
+            if _STAR_WORD_SINGULAR_RE.search(word):
+                ok = bool(_STAR_PAIR_LINK_RE.search(text[m.end(1):m.start(2)]))
+        if ok:
+            return s1, s2
+        pos = m.start() + 1
 
 # 1.6.056 P0-1 — Phase 2 : appariement date ↔ suite par ligne (cas chat_log 8011).
 # En-tête du bloc d'analyse : `[ANALYSE DE GRILLE - 14 24 25 39 45 (chance: 3)]`
@@ -810,13 +841,15 @@ def _pair_phase2_draw_citations(
 async def _verify_cited_draw(
     parsed_date: date, seq_match: re.Match, stars_text: str,
     lang: str, log_prefix: str, get_tirage_fn, game: str,
+    stars_fallback_text: str = "",
 ) -> str | None:
     """Compare un tirage cité (date + 5 boules, + étoiles EM) au vrai tirage en base.
 
     1.6.056 P0-1 : corps extrait tel quel de `_recheck_phase0_draw_accuracy` (timeout 1s
     V127, logs et messages inchangés) pour servir aussi l'appariement Phase 2.
-    `stars_text` : texte où chercher les étoiles EM (réponse entière hors Phase 2,
-    segment qui suit la suite retenue en Phase 2).
+    `stars_text` : texte où chercher les étoiles EM (Lot 1.6.074 CF-1 : texte qui suit la
+    suite retenue, hors Phase 2 comme en Phase 2). `stars_fallback_text` : repli si aucune
+    paire n'y figure (réponse entière hors Phase 2 ; vide en Phase 2, comportement inchangé).
     """
     # V127 — timeout réduit 3s → 1s (audit V126.1 décision 4 Option C).
     # Garde le bloquant pour préserver la défense anti-hallucination V126,
@@ -855,9 +888,13 @@ async def _verify_cited_draw(
     cited_stars: set[str] = set()
     real_stars: set[str] = set()
     if game == "em" and tirage.get("etoiles"):
-        stars_match = _EM_STARS_RE.search(stars_text)
-        if stars_match:
-            cited_stars = {stars_match.group(1), stars_match.group(2)}
+        # Lot 1.6.074 CF-1 — paire lue d'abord dans `stars_text` (texte qui suit la suite citée),
+        # puis, à défaut, dans `stars_fallback_text` (réponse entière, hors Phase 2).
+        stars_pair = _extract_cited_stars(stars_text)
+        if stars_pair is None and stars_fallback_text:
+            stars_pair = _extract_cited_stars(stars_fallback_text)
+        if stars_pair:
+            cited_stars = {str(int(s)) for s in stars_pair}
             real_stars = {str(s) for s in tirage["etoiles"]}
             if cited_stars != real_stars:
                 stars_mismatch = True
@@ -1024,8 +1061,11 @@ async def _recheck_phase0_draw_accuracy(
     parsed_date = _parse_draw_date_multilang(response)
     if not parsed_date:
         return None
+    # Lot 1.6.074 CF-1 — étoiles lues après la suite citée (format « b1 - … - b5 | Étoiles : e1 - e2 »),
+    # repli sur la réponse entière si aucune paire n'y figure.
     return await _verify_cited_draw(
-        parsed_date, seq_match, response, lang, log_prefix, get_tirage_fn, game,
+        parsed_date, seq_match, response[seq_match.end():], lang, log_prefix, get_tirage_fn, game,
+        stars_fallback_text=response,
     )
 
 
@@ -1135,6 +1175,16 @@ _TEMPORAL_ANCHOR_REFORMULATED_RE = re.compile(
     r'(?:(?:' + _FR_JOURS + r')\b\s*-*|[^\n]*?(?:-{2,}|\n))',
     re.IGNORECASE,
 )
+# (e) Lot 1.6.074 CF-7 — lignes « <étiquette> : <valeur> » en TÊTE (3 au plus), étiquette prise dans
+#     une liste fermée de libellés date / jour / heure en 6 langues (fuites T4-NL « Datum / Jour »,
+#     « Dag / Datum / Tijd », T7-PT « Date » puis « Jour » sur 2 lignes). Ligne entière, terminée par
+#     un saut de ligne, valeur courte (≤ 40 caractères) : une date dite en phrase n'est jamais touchée.
+_ANCHOR_LABELS = r'date|jour|day|time|fecha|d[ií]a|hora|data|dia|datum|tag|uhrzeit|dag|tijd'
+_TEMPORAL_ANCHOR_LABEL_LINE_RE = re.compile(
+    r'^[ \t]*\[?[ \t]*(?:' + _ANCHOR_LABELS + r')[ \t]*:[ \t]*[^\n!?]{1,40}?[ \t]*\]?[ \t]*\r?\n',
+    re.IGNORECASE,
+)
+_ANCHOR_LABEL_LINES_MAX = 3
 
 
 def _strip_temporal_anchor_leak(text: str) -> str:
@@ -1144,7 +1194,9 @@ def _strip_temporal_anchor_leak(text: str) -> str:
       - la balise interne [CONTEXTE TEMPOREL …] (partout) ;
       - en TÊTE : la ligne "Date du jour réelle : …", la phrase "Utilise
         EXCLUSIVEMENT cette date …", et la reformulation "Date : <date>
-        Jour : <jour FR>[---]".
+        Jour : <jour FR>[---]" ;
+      - en TÊTE (Lot 1.6.074 CF-7) : jusqu'à 3 lignes « <étiquette> : <valeur> » dont
+        l'étiquette est un libellé date / jour / heure des 6 langues (Datum, Dag, Tijd, Fecha…).
     NE touche PAS une date dite naturellement ("On est mardi 26 mai 2026 !").
     Jamais d'exception ; si rien ne matche, retourne `text` inchangé (byte-identique,
     le lstrip n'est appliqué que si un strip a effectivement eu lieu).
@@ -1156,6 +1208,16 @@ def _strip_temporal_anchor_leak(text: str) -> str:
         out = _TEMPORAL_ANCHOR_EXACT_LINE_RE.sub('', out, count=1)
         out = _TEMPORAL_ANCHOR_INSTRUCTION_RE.sub('', out, count=1)
         out = _TEMPORAL_ANCHOR_REFORMULATED_RE.sub('', out, count=1)
+        # (e) Lot 1.6.074 CF-7 — lignes « étiquette : valeur » en tête (3 au plus), jamais tout le texte
+        head = out
+        for _ in range(_ANCHOR_LABEL_LINES_MAX):
+            _s = head.lstrip('\r\n')
+            _m = _TEMPORAL_ANCHOR_LABEL_LINE_RE.match(_s)
+            if not _m:
+                break
+            head = _s[_m.end():]
+        if head is not out and head.strip():
+            out = head
         return out.lstrip('\n\r ') if out != text else out
     except Exception as _e:  # pragma: no cover — défensif, jamais de réponse cassée
         logger.warning("_strip_temporal_anchor_leak failed: %s", _e)

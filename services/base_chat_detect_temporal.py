@@ -156,8 +156,10 @@ _STAT_NEUTRALIZE_RE = re.compile(
 )
 
 
+# Lot 1.6.074 CF-5 — formes fléchies hors FR seulement (próxima, nächsten, nächster, volgend) ;
+# « prochaine » volontairement absente (changerait le routage Loto FR).
 _NEXT_KW_RE = re.compile(
-    r'\b(?:prochain|next|pr[oó]ximo|n[aä]chste|volgende)\b', re.IGNORECASE
+    r'\b(?:prochain|next|pr[oó]xim[oa]|n[aä]chste[nr]?|volgende?)\b', re.IGNORECASE
 )
 
 _LATEST_KW_RE = re.compile(

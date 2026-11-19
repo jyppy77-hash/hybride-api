@@ -1677,6 +1677,13 @@ async def _prepare_chat_context_base(
     # Phase 3 : requete complexe
     if not _continuation_mode and not force_sql and not enrichment_context:
         intent = cfg["detect_requete_complexe"](message)
+        # Lot 1.6.074 CF-3 — « top 5 des paires » : un classement qui porte sur des paires ou des
+        # triplets cède la main à la Phase P (ou P-exact), Loto et EM. Comparaison et catégorie inchangées.
+        if intent and intent["type"] == "classement" and (
+            cfg["detect_paires"](message) or cfg["detect_triplets"](message)
+        ):
+            logger.info(f"{_lp} Lot 1.6.074 Phase 3 classement cede a la Phase P (paires / triplets)")
+            intent = None
         if intent:
             _phase = "3"
             try:

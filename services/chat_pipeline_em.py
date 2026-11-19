@@ -45,6 +45,7 @@ from services.chat_detectors_em import (
     _detect_country_em, _get_country_context_em,
     _wants_both_boules_and_stars,
 )
+from services.chat_detectors_em_intent import _detect_numero_em_hors_fr  # Lot 1.6.074 CF-4
 from services.chat_responses_em_multilang import (
     get_insult_response, get_insult_short, get_menace_response,
     get_compliment_response, get_oor_response, get_fallback,
@@ -247,9 +248,17 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
     Phases I-SQL EM : prepare le contexte pour l'appel Gemini.
     Retourne (early_return_or_None, ctx_dict_or_None).
     Delegates to _prepare_chat_context_base with EM config.
+
+    Lot 1.6.074 CF-4 — hors FR (lang ≠ "fr"), la détection du numéro lit aussi « number N »,
+    « número N », « Nummer N », « Zahl N », « nummer N » (`_detect_numero_em_hors_fr`), en gardant
+    la détection de la config (étoile prioritaire) en premier. En FR, la config est inchangée.
     """
+    cfg = _build_em_config()
+    if lang != "fr":
+        _base_detect = cfg["detect_numero"]
+        cfg["detect_numero"] = lambda m, _b=_base_detect: _detect_numero_em_hors_fr(m, _b)
     return await _prepare_chat_context_base(
-        message, history, page, http_client, lang, _build_em_config(),
+        message, history, page, http_client, lang, cfg,
     )
 
 

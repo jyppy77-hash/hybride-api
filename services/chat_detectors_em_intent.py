@@ -200,13 +200,25 @@ _ECART_ASC_RE = [
 ]
 
 # Prochain tirage EM
+# Lot 1.6.074 CF-5 — mot de tirage hors FR (draw ; sorteo / extracción ; sorteio ; Ziehung ; trekking)
+# ou EuroMillions et ses variantes (Euromillones, Euromilhões…), y compris en mot composé
+# (« EuroMillions-Ziehung », « EuroMillions-trekking »).
+_EM_DRAW_WORD = (
+    r'(?:draws?\b|sorteos?\b|extracci[oó]n|sorteios?\b|ziehung|trekking|'
+    r'euro\s*-?\s*mil\w*)'
+)
 _PROCHAIN_TIRAGE_EM_RE = re.compile(
     r'(?:prochain|prochaine|quand|date)\s+.*(?:tirage|euromillions|draw)'
     r'|(?:tirage|euromillions)\s+.*(?:prochain|prochaine|quand|date)'
     r'|c.est\s+quand\s+(?:le\s+)?(?:prochain\s+)?(?:tirage|euromillions)'
     r'|(?:il\s+(?:y\s+a|est)\s+(?:un\s+)?tirage\s+quand)'
     r'|(?:quand\s+(?:est|a)\s+lieu)'
-    r'|(?:prochain\s+(?:tirage|euromillions))',
+    r'|(?:prochain\s+(?:tirage|euromillions))'
+    # Lot 1.6.074 CF-5 — mot « prochain » des 5 autres langues, suivi ou précédé (≤ 40 caractères,
+    # même phrase) du mot de tirage ou d'EuroMillions et ses variantes (T4 de Muse, 6 langues).
+    # Aucun mot de « dernier » : T1 / T2 / T3 (dernière sortie, dernier tirage) restent hors 0-bis.
+    r'|\b(?:next|pr[oó]xim[oa]s?|n(?:ä|ae|a)chste[nrs]?|volgende?)\b[^.?!\n]{0,40}?' + _EM_DRAW_WORD
+    + r'|' + _EM_DRAW_WORD + r'[^.?!\n]{0,40}?\b(?:next|pr[oó]xim[oa]s?|n(?:ä|ae|a)chste[nrs]?|volgende?)\b',
     re.I,
 )
 
@@ -275,6 +287,41 @@ def _detect_numero_em(message: str):
             if 1 <= num <= 50:
                 return num, "boule"
 
+    return None, None
+
+
+# Lot 1.6.074 CF-4 — numéro principal EM hors FR : formes explicites « mot + N », au singulier.
+# EN number ; ES / PT número, numero ; DE Nummer, Zahl ; NL nummer. Actif SEULEMENT si lang ≠ fr
+# (branché par chat_pipeline_em._prepare_chat_context_em) : la détection FR est inchangée.
+_NUMERO_HORS_FR_RE = re.compile(r'\b(?:number|n[uú]mero|nummer|zahl)\s+(\d{1,2})\b', re.IGNORECASE)
+_ANY_NUMBER_RE = re.compile(r'\b(\d{1,2})\b')
+
+
+def _detect_numero_em_hors_fr(message: str, base_fn=None):
+    """Lot 1.6.074 CF-4 — `_detect_numero_em` (prioritaire, étoile comprise), puis « mot + N » hors FR.
+
+    Garde-fous (non-bascule en Phase 1) : demande de génération → rien de neuf (la Phase G garde la
+    main) ; mot étoile dans le message → rien de neuf (pas de boule à la place d'une étoile) ; une seule forme « mot + N » et un seul nombre de 1 à 50 dans le message, dates masquées
+    (« number 7 vs number 12 », « compare number 7 and 12 », « top 5 … number 3 » → rien de neuf).
+    Returns: (numero, "boule") ou le résultat de `base_fn`.
+    """
+    numero, type_num = (base_fn or _detect_numero_em)(message)
+    if numero is not None:
+        return numero, type_num
+    if _detect_generation(message):
+        return None, None
+    # Mot étoile présent (« star number 12 », « estrella número 12 », « Stern Nummer 12 ») : la forme
+    # « mot + N » désignerait l'étoile, pas une boule → rien de neuf (routage antérieur conservé).
+    if _is_star_query((message or "").lower()):
+        return None, None
+    lower = _mask_dates((message or "").lower())
+    found = _NUMERO_HORS_FR_RE.findall(lower)
+    nums = {int(n) for n in _ANY_NUMBER_RE.findall(lower) if 1 <= int(n) <= 50}
+    if len(found) != 1 or len(nums) != 1:
+        return None, None
+    num = int(found[0])
+    if 1 <= num <= 50:
+        return num, "boule"
     return None, None
 
 
