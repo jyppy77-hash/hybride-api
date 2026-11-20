@@ -166,7 +166,8 @@ def test_t3_stats_faq_summary_color():
 def test_t3_stats_faq_date_wording():
     src = _read(_STATS)
     assert "6 novembre 2019" not in src
-    assert "tirages officiels du Loto FDJ depuis novembre 2019 (lundi, mercredi et samedi)" in src
+    # 1.6.075 (E) : « depuis novembre 2019 » → « sur les 7 dernières années » (attendu mis à jour)
+    assert "tirages officiels du Loto FDJ sur les 7 dernières années (lundi, mercredi et samedi)" in src
 
 
 def test_t3_temporal_coverage_fallback_kept():
@@ -225,7 +226,7 @@ def test_t7_em_simulator_rendered(client, path):
 @pytest.mark.parametrize("path, expected", [
     ("/loto", [_LOTO_CSS_V15, _RESULT_TITLE_RULE]),
     ("/loto/analyse", [_LOTO_CSS_V15]),
-    ("/loto/statistiques", [_SUMMARY_RULE, "depuis novembre 2019 (lundi"]),
+    ("/loto/statistiques", [_SUMMARY_RULE, "sur les 7 dernières années (lundi"]),  # 1.6.075 (E)
     ("/historique", [_VERSION_INJECT]),
 ])
 def test_t7_loto_pages_rendered(client, path, expected):

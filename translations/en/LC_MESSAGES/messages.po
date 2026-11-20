@@ -109,8 +109,8 @@ msgid "Analyse statistique"
 msgstr "Statistical analysis"
 
 #: ui/templates/launcher.html:449
-msgid "Technologie IA Grounded"
-msgstr "Grounded AI Technology"
+msgid "Réponses ancrées sur les tirages officiels"
+msgstr "Answers anchored in the official draws"
 
 #: ui/templates/launcher.html:450
 msgid "IA connectée aux résultats officiels, mis à jour après chaque tirage"
@@ -452,20 +452,12 @@ msgstr ""
 "methodology is fully documented and transparent."
 
 #: ui/templates/em/a-propos.html:142
-msgid "L'IA Grounded"
-msgstr "Grounded AI"
+msgid "Une IA ancrée sur les tirages officiels"
+msgstr "An AI anchored in the official draws"
 
 #: ui/templates/em/a-propos.html:143
-msgid ""
-"Notre chatbot intelligent est alimenté par <strong>Gemini</strong> (Google "
-"DeepMind) en mode « Grounded » : il est connecté en temps réel à nos "
-"bases de données de tirages officiels. Chaque réponse est ancrée sur des "
-"données réelles et vérifiables."
-msgstr ""
-"Our intelligent chatbot is powered by <strong>Gemini</strong> (Google "
-"DeepMind) in \"Grounded\" mode: it is connected in real time to our "
-"official draw databases. Every answer is grounded in real, verifiable "
-"data."
+msgid "Notre chatbot intelligent est alimenté par <strong>Gemini</strong> (Google DeepMind). Ses réponses sont ancrées sur la base officielle des tirages, mise à jour après chaque tirage, et s'appuient sur des données réelles et vérifiables."
+msgstr "Our intelligent chatbot is powered by <strong>Gemini</strong> (Google DeepMind). Its answers are anchored in the official draw database, updated after every draw, and rely on real, verifiable data."
 
 #: ui/templates/em/a-propos.html:145 ui/templates/em/moteur.html:109
 msgid "Infrastructure"
@@ -508,15 +500,8 @@ msgid "Loto France"
 msgstr "Loto France"
 
 #: ui/templates/em/a-propos.html:157
-msgid ""
-"Notre base couvre <strong>plus de 1 000 tirages officiels du Loto "
-"français</strong> depuis novembre 2019. Le Loto se joue avec 5 numéros "
-"(1-49) et 1 numéro Chance (1-10). Les tirages ont lieu les lundis, "
-"mercredis et samedis."
-msgstr ""
-"Our database covers <strong>over 1,000 official French Loto draws</strong> "
-"since November 2019. The Loto is played with 5 numbers (1-49) and 1 Lucky"
-" number (1-10). Draws take place on Mondays, Wednesdays and Saturdays."
+msgid "Notre base couvre <strong>plus de 1 000 tirages officiels du Loto français</strong> sur les 7 dernières années. Le Loto se joue avec 5 numéros (1-49) et 1 numéro Chance (1-10). Les tirages ont lieu les lundis, mercredis et samedis."
+msgstr "Our database covers <strong>over 1,000 official French Loto draws</strong> over the last 7 years. The Loto is played with 5 numbers (1-49) and 1 Lucky number (1-10). Draws take place on Mondays, Wednesdays and Saturdays."
 
 #: ui/templates/em/a-propos.html:159
 msgid ""
@@ -936,16 +921,8 @@ msgstr "What is the difference between LotoIA and ChatGPT for EuroMillions?"
 
 #: ui/templates/em/euromillions-ia.html:85
 #, python-format
-msgid ""
-"ChatGPT est un modèle de langage génératif qui n'a pas accès aux données "
-"réelles des tirages. Il invente des numéros sans fondement statistique. "
-"LotoIA utilise une IA Grounded connectée aux %(total)s+ tirages officiels "
-"EuroMillions : ses réponses s'appuient sur ces données réelles."
-msgstr ""
-"ChatGPT is a generative language model with no access to real draw data. "
-"It invents numbers with no statistical basis. LotoIA uses a Grounded AI "
-"connected to %(total)s+ official EuroMillions draws: its answers rely on "
-"this real data."
+msgid "ChatGPT est un modèle de langage génératif qui n'a pas accès aux données réelles des tirages. Il invente des numéros sans fondement statistique. Les réponses de LotoIA sont ancrées sur la base officielle des tirages (%(total)s+ tirages officiels EuroMillions), mise à jour après chaque tirage : elles s'appuient sur ces données réelles."
+msgstr "ChatGPT is a generative language model with no access to real draw data. It invents numbers with no statistical basis. LotoIA's answers are anchored in the official draw database (%(total)s+ official EuroMillions draws), updated after every draw: they rely on this real data."
 
 #: ui/templates/em/euromillions-ia.html:90
 #: ui/templates/em/euromillions-ia.html:231
@@ -1258,18 +1235,8 @@ msgid "L'assistant IA conversationnel"
 msgstr "The conversational AI assistant"
 
 #: ui/templates/em/euromillions-ia.html:184
-msgid ""
-"LotoIA intègre un chatbot alimenté par <strong>Gemini</strong> (Google "
-"DeepMind) en mode « Grounded » : l'IA est connectée en temps réel à la "
-"base de données des tirages. Chaque réponse est ancrée sur des données "
-"vérifiées. Vous pouvez lui poser des questions sur les statistiques, les "
-"fréquences ou demander une analyse personnalisée."
-msgstr ""
-"LotoIA includes a chatbot powered by <strong>Gemini</strong> (Google "
-"DeepMind) in \"Grounded\" mode: the AI is connected in real time to the "
-"draw database. Every answer is grounded in verified data. You can ask it "
-"questions about statistics, frequencies or request a personalised "
-"analysis."
+msgid "LotoIA intègre un chatbot alimenté par <strong>Gemini</strong> (Google DeepMind). Ses réponses sont ancrées sur la base officielle des tirages, mise à jour après chaque tirage. Vous pouvez lui poser des questions sur les statistiques, les fréquences ou demander une analyse personnalisée."
+msgstr "LotoIA includes a chatbot powered by <strong>Gemini</strong> (Google DeepMind). Its answers are anchored in the official draw database, updated after every draw. You can ask it questions about statistics, frequencies or request a personalised analysis."
 
 #: ui/templates/em/euromillions-ia.html:189
 msgid "L'état de la recherche — Études et exemples concrets"
@@ -1383,15 +1350,15 @@ msgid ""
 "Quand vous leur demandez des numéros d'EuroMillions, ils "
 "<strong>inventent</strong> — littéralement. Ils n'ont pas accès aux "
 "données réelles des tirages et produisent des réponses plausibles mais "
-"sans fondement statistique. LotoIA utilise une IA <strong>« Grounded "
-"»</strong> (ancrée) : chaque analyse est calculée à partir des %(total)s+"
+"sans fondement statistique. Les réponses de LotoIA sont <strong>ancrées</strong> sur la base officielle des "
+"tirages, mise à jour après chaque tirage : chaque analyse est calculée à partir des %(total)s+"
 " tirages officiels stockés dans notre base de données Cloud SQL."
 msgstr ""
 "ChatGPT, Claude or Gemini (in free mode) are language models. When you "
 "ask them for EuroMillions numbers, they <strong>invent</strong> — "
 "literally. They have no access to real draw data and produce plausible "
-"but statistically unfounded answers. LotoIA uses a "
-"<strong>\"Grounded\"</strong> AI: every analysis is calculated from the "
+"but statistically unfounded answers. LotoIA's answers are "
+"<strong>anchored</strong> in the official draw database, updated after every draw: every analysis is calculated from the "
 "%(total)s+ official draws stored in our Cloud SQL database."
 
 #: ui/templates/em/euromillions-ia.html:214
@@ -1435,15 +1402,8 @@ msgid ""
 msgstr ""
 
 #: ui/templates/em/euromillions-ia.html:229
-msgid ""
-"ChatGPT invente des numéros sans accès aux données réelles. LotoIA utilise "
-"une IA « Grounded » connectée aux tirages officiels EuroMillions : ses "
-"réponses s'appuient sur les données réelles, pas sur des connaissances "
-"générales."
-msgstr ""
-"ChatGPT invents numbers with no access to real data. LotoIA uses a "
-"\"Grounded\" AI connected to official EuroMillions draws: its answers rely "
-"on real data, not on general knowledge."
+msgid "ChatGPT invente des numéros sans accès aux données réelles. Les réponses de LotoIA sont ancrées sur la base officielle des tirages EuroMillions, mise à jour après chaque tirage : elles s'appuient sur les données réelles, pas sur des connaissances générales."
+msgstr "ChatGPT invents numbers with no access to real data. LotoIA's answers are anchored in the official EuroMillions draw database, updated after every draw: they rely on real data, not on general knowledge."
 
 #: ui/templates/em/euromillions-ia.html:232
 msgid ""
@@ -2228,12 +2188,8 @@ msgstr "Discover the HYBRIDE chatbot"
 
 #: ui/templates/em/generateur.html:343 ui/templates/em/simulateur.html:161
 #: ui/templates/em/statistiques.html:734
-msgid ""
-"Notre chatbot intelligent analyse les tirages EuroMillions en temps réel "
-"grâce à l'IA Grounded. Posez vos questions sur les statistiques."
-msgstr ""
-"Our intelligent chatbot analyses EuroMillions draws in real time using "
-"Grounded AI. Ask your questions about the statistics."
+msgid "Notre chatbot intelligent répond à vos questions sur les statistiques de l'EuroMillions. Ses réponses sont ancrées sur la base officielle des tirages, mise à jour après chaque tirage."
+msgstr "Our intelligent chatbot answers your questions about EuroMillions statistics. Its answers are anchored in the official draw database, updated after every draw."
 
 #: ui/templates/em/generateur.html:344 ui/templates/em/simulateur.html:162
 #: ui/templates/em/statistiques.html:735
@@ -2336,8 +2292,8 @@ msgid "Erreur de connexion au serveur."
 msgstr "Connection error."
 
 #: ui/templates/em/hybride.html:4
-msgid "HYBRIDE — Chatbot IA Grounded pour l'EuroMillions | LotoIA"
-msgstr "HYBRIDE — Grounded AI Chatbot for EuroMillions | LotoIA"
+msgid "HYBRIDE — Chatbot IA pour l'EuroMillions | LotoIA"
+msgstr "HYBRIDE — AI Chatbot for EuroMillions | LotoIA"
 
 #: ui/templates/em/hybride.html:5
 #, python-format
@@ -2345,18 +2301,13 @@ msgid "HYBRIDE, l'assistant IA de LotoIA connecté aux %(total)s+ tirages offici
 msgstr "HYBRIDE, LotoIA's AI assistant connected to %(total)s+ official EuroMillions draws. Ask your questions about numbers, stars and statistics."
 
 #: ui/templates/em/hybride.html:11 ui/templates/em/hybride.html:21
-msgid "HYBRIDE — Chatbot IA Grounded EuroMillions | LotoIA"
-msgstr "HYBRIDE — Grounded AI Chatbot EuroMillions | LotoIA"
+msgid "HYBRIDE — Chatbot IA EuroMillions | LotoIA"
+msgstr "HYBRIDE — AI Chatbot EuroMillions | LotoIA"
 
 #: ui/templates/em/hybride.html:12
 #, python-format
-msgid ""
-"Assistant IA connecté en temps réel aux %(total)s+ tirages officiels "
-"EuroMillions. Analyses factuelles, avec contrôles automatiques des "
-"chiffres cités."
-msgstr ""
-"AI assistant connected in real time to %(total)s+ official EuroMillions "
-"draws. Factual analyses, with automatic checks of the figures quoted."
+msgid "Assistant IA connecté aux %(total)s+ tirages officiels EuroMillions. Analyses factuelles, avec contrôles automatiques des chiffres cités."
+msgstr "AI assistant connected to %(total)s+ official EuroMillions draws. Factual analyses, with automatic checks of the figures quoted."
 
 #: ui/templates/em/hybride.html:22
 msgid ""
@@ -2367,17 +2318,13 @@ msgstr ""
 "with automatic checks of the figures quoted."
 
 #: ui/templates/em/hybride.html:33
-msgid ""
-"Assistant IA conversationnel connecté en temps réel aux tirages officiels "
-"EuroMillions. Analyse factuelle fondée sur les tirages officiels."
-msgstr ""
-"Conversational AI assistant connected in real time to official "
-"EuroMillions draws. Factual analysis based on official draws."
+msgid "Assistant IA conversationnel connecté aux tirages officiels EuroMillions. Analyse factuelle fondée sur les tirages officiels."
+msgstr "Conversational AI assistant connected to official EuroMillions draws. Factual analysis based on official draws."
 
 #: ui/templates/em/hybride.html:41
 #, python-format
-msgid "Connexion temps réel aux %(total)s+ tirages officiels EuroMillions"
-msgstr "Real-time connection to %(total)s+ official EuroMillions draws"
+msgid "Réponses ancrées sur les %(total)s+ tirages officiels EuroMillions, base mise à jour après chaque tirage"
+msgstr "Answers anchored in %(total)s+ official EuroMillions draws, database updated after every draw"
 
 #: ui/templates/em/hybride.html:42
 msgid "Analyse de fréquences par numéro (1-50) et par étoile (1-12)"
@@ -2405,32 +2352,16 @@ msgstr "How does the HYBRIDE chatbot work for EuroMillions?"
 
 #: ui/templates/em/hybride.html:76
 #, python-format
-msgid ""
-"HYBRIDE utilise une architecture Grounded (RAG) : il interroge la base de "
-"données des %(total)s+ tirages officiels EuroMillions en temps réel, puis "
-"Gemini (Google DeepMind) formule une réponse factuelle à partir des "
-"données récupérées. Des contrôles automatiques comparent ensuite la "
-"réponse aux données."
-msgstr ""
-"HYBRIDE uses a Grounded (RAG) architecture: it queries the database of "
-"%(total)s+ official EuroMillions draws in real time, then Gemini (Google "
-"DeepMind) formulates a factual answer from the retrieved data. Automatic "
-"checks then compare the answer with the data."
+msgid "HYBRIDE utilise une architecture RAG : il interroge la base de données des %(total)s+ tirages officiels EuroMillions, puis Gemini (Google DeepMind) formule une réponse factuelle à partir des données récupérées. Des contrôles automatiques comparent ensuite la réponse aux données."
+msgstr "HYBRIDE uses a RAG architecture: it queries the database of %(total)s+ official EuroMillions draws, then Gemini (Google DeepMind) formulates a factual answer from the retrieved data. Automatic checks then compare the answer with the data."
 
 #: ui/templates/em/hybride.html:81 ui/templates/em/hybride.html:428
-msgid "Le chatbot peut-il prédire les résultats EuroMillions ?"
-msgstr "Can the chatbot predict EuroMillions results?"
+msgid "HYBRIDE peut-il me donner des numéros gagnants ?"
+msgstr "Can HYBRIDE give me winning numbers?"
 
 #: ui/templates/em/hybride.html:84
-msgid ""
-"Non. L'EuroMillions est un jeu de hasard pur et personne — aucune IA, "
-"aucun algorithme — ne peut prédire les résultats. HYBRIDE analyse les "
-"données passées pour fournir des statistiques factuelles, il ne prédit "
-"pas l'avenir."
-msgstr ""
-"No. EuroMillions is a pure game of chance and nobody — no AI, no "
-"algorithm — can predict the results. HYBRIDE analyses past data to "
-"provide factual statistics; it does not predict the future."
+msgid "Non. Personne ne peut prédire un tirage : chaque combinaison a exactement la même probabilité de sortir (1 sur 139 838 160 à l'EuroMillions). HYBRIDE peut générer des grilles à votre demande : le moteur les construit à partir des statistiques des tirages passés (fréquences, écarts, équilibre de la grille). Ce sont des grilles générées, pas des pronostics : elles n'ont pas plus de chances de gagner qu'une grille choisie au hasard. Le score sur 100 affiché avec une grille indique seulement à quel point elle respecte les critères statistiques du moteur ; ce n'est pas une probabilité de gain."
+msgstr "No. Nobody can predict a draw: every combination has exactly the same probability of being drawn (1 in 139,838,160 for EuroMillions). HYBRIDE can generate grids on request: the engine builds them from the statistics of past draws (frequencies, gaps, grid balance). These are generated grids, not predictions: they are no more likely to win than a randomly chosen grid. The score out of 100 shown with a grid only indicates how well it meets the engine's statistical criteria; it is not a probability of winning."
 
 #: ui/templates/em/hybride.html:89 ui/templates/em/hybride.html:431
 msgid "En quoi HYBRIDE est différent de ChatGPT pour l'EuroMillions ?"
@@ -2438,15 +2369,8 @@ msgstr "How is HYBRIDE different from ChatGPT for EuroMillions?"
 
 #: ui/templates/em/hybride.html:92
 #, python-format
-msgid ""
-"ChatGPT est un modèle de langage généraliste sans accès aux données "
-"réelles des tirages. HYBRIDE est une IA Grounded connectée aux %(total)s+"
-" tirages officiels EuroMillions stockés dans Cloud SQL. Chaque réponse "
-"est vérifiée, pas inventée."
-msgstr ""
-"ChatGPT is a generalist language model with no access to real draw data. "
-"HYBRIDE is a Grounded AI connected to %(total)s+ official EuroMillions "
-"draws stored in Cloud SQL. Every answer is verified, not invented."
+msgid "ChatGPT est un modèle de langage généraliste sans accès aux données réelles des tirages. Les réponses de HYBRIDE sont ancrées sur les %(total)s+ tirages officiels EuroMillions stockés dans Cloud SQL, base mise à jour après chaque tirage. Chaque réponse est vérifiée, pas inventée."
+msgstr "ChatGPT is a generalist language model with no access to real draw data. HYBRIDE's answers are anchored in %(total)s+ official EuroMillions draws stored in Cloud SQL, database updated after every draw. Every answer is verified, not invented."
 
 #: ui/templates/em/hybride.html:97 ui/templates/em/hybride.html:434
 msgid "Le chatbot est-il disponible dans ma langue ?"
@@ -2480,18 +2404,8 @@ msgstr ""
 
 #: ui/templates/em/hybride.html:232
 #, python-format
-msgid ""
-"<strong>HYBRIDE</strong> est le chatbot IA intégré à LotoIA. Il est "
-"connecté en temps réel aux <strong>%(total)s+ tirages officiels</strong> "
-"de l'EuroMillions. Contrairement à ChatGPT ou d'autres IA génératives, "
-"HYBRIDE ne devine pas : il interroge les données réelles et vous répond "
-"avec des <strong>faits vérifiables</strong>."
-msgstr ""
-"<strong>HYBRIDE</strong> is the AI chatbot integrated into LotoIA. It is "
-"connected in real time to <strong>%(total)s+ official draws</strong> from"
-" the EuroMillions. Unlike ChatGPT or other generative AIs, HYBRIDE does "
-"not guess: it queries real data and responds with <strong>verifiable "
-"facts</strong>."
+msgid "<strong>HYBRIDE</strong> est le chatbot IA intégré à LotoIA. Ses réponses sont ancrées sur la base officielle des tirages (<strong>%(total)s+ tirages officiels</strong> de l'EuroMillions), mise à jour après chaque tirage. Contrairement à ChatGPT ou d'autres IA génératives, HYBRIDE ne devine pas : il interroge les données réelles et vous répond avec des <strong>faits vérifiables</strong>."
+msgstr "<strong>HYBRIDE</strong> is the AI chatbot integrated into LotoIA. Its answers are anchored in the official draw database (<strong>%(total)s+ official draws</strong> from the EuroMillions), updated after every draw. Unlike ChatGPT or other generative AIs, HYBRIDE does not guess: it queries real data and responds with <strong>verifiable facts</strong>."
 
 #: ui/templates/em/hybride.html:233
 msgid ""
@@ -2506,18 +2420,12 @@ msgstr ""
 "try it."
 
 #: ui/templates/em/hybride.html:238
-msgid "Qu'est-ce qu'une IA « Grounded » ?"
-msgstr "What is a \"Grounded\" AI?"
+msgid "Des réponses ancrées sur les données officielles"
+msgstr "Answers anchored in official data"
 
 #: ui/templates/em/hybride.html:240
-msgid ""
-"Le terme <strong>« Grounded »</strong> (ancré) désigne une IA dont les "
-"réponses sont fondées sur des données vérifiées, et non sur l'imagination"
-" ou des probabilités linguistiques."
-msgstr ""
-"The term <strong>\"Grounded\"</strong> refers to an AI whose answers are "
-"based on verified data, rather than on imagination or linguistic "
-"probabilities."
+msgid "Les réponses de HYBRIDE sont ancrées sur la base officielle des tirages, mise à jour après chaque tirage : elles sont fondées sur des données vérifiées, et non sur l'imagination ou des probabilités linguistiques."
+msgstr "HYBRIDE's answers are anchored in the official draw database, updated after every draw: they are based on verified data, rather than on imagination or linguistic probabilities."
 
 #: ui/templates/em/hybride.html:242
 msgid ""
@@ -2540,12 +2448,9 @@ msgstr ""
 "<strong>hallucination</strong>."
 
 #: ui/templates/em/hybride.html:245
-msgid ""
-"Une <strong>IA Grounded</strong> comme HYBRIDE interroge d'abord sa base "
-"de données, récupère les faits pertinents, puis formule sa réponse à "
-"partir de ces données vérifiées. Pas de place pour l'invention."
+msgid "Un <strong>assistant ancré sur les données</strong> comme HYBRIDE interroge d'abord sa base de données, récupère les faits pertinents, puis formule sa réponse à partir de ces données vérifiées. Pas de place pour l'invention."
 msgstr ""
-"A <strong>Grounded AI</strong> like HYBRIDE first queries its database, "
+"An <strong>assistant anchored in data</strong> like HYBRIDE first queries its database, "
 "retrieves the relevant facts, then formulates its answer from this "
 "verified data. No room for invention."
 
@@ -2570,23 +2475,12 @@ msgstr ""
 "slower, but always factual."
 
 #: ui/templates/em/hybride.html:254
-msgid ""
-"En termes techniques, HYBRIDE utilise une architecture appelée "
-"<strong>RAG</strong> (Retrieval-Augmented Generation) : le modèle « "
-"récupère » d'abord les données pertinentes dans la base, puis « augmente » "
-"sa réponse avec ces données vérifiées. Le résultat : des réponses ancrées "
-"sur les données réelles des tirages. Aucune IA n'est infaillible : en cas "
-"de doute, vérifiez sur l'historique officiel."
-msgstr ""
-"In technical terms, HYBRIDE uses an architecture called "
-"<strong>RAG</strong> (Retrieval-Augmented Generation): the model first "
-"\"retrieves\" relevant data from the database, then \"augments\" its "
-"answer with this verified data. The result: answers grounded in real draw "
-"data. No AI is infallible: if in doubt, check the official draw history."
+msgid "En termes techniques, HYBRIDE utilise une architecture appelée <strong>RAG</strong> (Retrieval-Augmented Generation) : le serveur récupère d'abord les données pertinentes dans la base, puis le modèle rédige sa réponse à partir de ces données vérifiées. Le résultat : des réponses ancrées sur les données réelles des tirages. Aucune IA n'est infaillible : en cas de doute, vérifiez sur l'historique officiel."
+msgstr "In technical terms, HYBRIDE uses an architecture called <strong>RAG</strong> (Retrieval-Augmented Generation): the server first retrieves the relevant data from the database, then the model writes its answer from this verified data. The result: answers anchored in real draw data. No AI is infallible: if in doubt, check the official draw history."
 
 #: ui/templates/em/hybride.html:259
-msgid "Comment HYBRIDE accède aux données en temps réel"
-msgstr "How HYBRIDE accesses data in real time"
+msgid "Comment HYBRIDE accède aux données"
+msgstr "How HYBRIDE accesses data"
 
 #: ui/templates/em/hybride.html:261
 #, python-format
@@ -2637,8 +2531,8 @@ msgstr ""
 " data"
 
 #: ui/templates/em/hybride.html:273
-msgid "<strong>Il interroge la base de données</strong> Cloud SQL en temps réel"
-msgstr "<strong>It queries the database</strong> Cloud SQL in real time"
+msgid "<strong>Il interroge la base de données</strong> Cloud SQL"
+msgstr "<strong>It queries the database</strong> Cloud SQL"
 
 #: ui/templates/em/hybride.html:274
 msgid ""
@@ -2808,12 +2702,8 @@ msgstr ""
 " win at EuroMillions"
 
 #: ui/templates/em/hybride.html:332
-msgid ""
-"Il <strong>ne donne PAS</strong> de « numéros magiques » ou de « "
-"combinaisons gagnantes »"
-msgstr ""
-"It does <strong>NOT give</strong> \"magic numbers\" or \"winning "
-"combinations\""
+msgid "Il <strong>ne donne PAS</strong> de « numéros magiques » : les grilles qu'il génère ne sont pas des pronostics"
+msgstr "It does <strong>NOT give</strong> \"magic numbers\": the grids it generates are not predictions"
 
 #: ui/templates/em/hybride.html:333
 msgid ""
@@ -2933,13 +2823,13 @@ msgid ""
 "Quand vous demandez à ChatGPT <em>« Quel numéro sort le plus à "
 "l'EuroMillions ? »</em>, il génère une réponse plausible basée sur des "
 "connaissances générales — souvent inexacte ou datée. Quand vous posez la "
-"même question à HYBRIDE, il interroge la base de données en temps réel et"
-" vous donne la <strong>vraie réponse</strong>, à jour du dernier tirage."
+"même question à HYBRIDE, il interroge la base de données et vous donne la "
+"<strong>vraie réponse</strong>, à jour du dernier tirage."
 msgstr ""
 "When you ask ChatGPT <em>\"Which number is drawn the most in "
 "EuroMillions?\"</em>, it generates a plausible answer based on general "
 "knowledge — often inaccurate or outdated. When you ask the same question "
-"to HYBRIDE, it queries the database in real time and gives you the "
+"to HYBRIDE, it queries the database and gives you the "
 "<strong>real answer</strong>, up to date with the latest draw."
 
 #: ui/templates/em/hybride.html:393
@@ -3027,19 +2917,8 @@ msgstr "Frequently asked questions about HYBRIDE"
 
 #: ui/templates/em/hybride.html:426
 #, python-format
-msgid ""
-"HYBRIDE utilise une architecture <strong>Grounded (RAG)</strong> : il "
-"interroge la base de données des %(total)s+ tirages officiels "
-"EuroMillions en temps réel, puis <strong>Gemini</strong> (Google "
-"DeepMind) formule une réponse factuelle à partir des données récupérées. "
-"Si HYBRIDE ne trouve pas l'information dans la base, il le dit — plutôt "
-"que d'inventer."
-msgstr ""
-"HYBRIDE uses a <strong>Grounded (RAG)</strong> architecture: it queries "
-"the database of %(total)s+ official EuroMillions draws in real time, then"
-" <strong>Gemini</strong> (Google DeepMind) formulates a factual answer "
-"from the retrieved data. If HYBRIDE cannot find the information in the "
-"database, it says so — rather than inventing."
+msgid "HYBRIDE utilise une architecture <strong>RAG</strong> : il interroge la base de données des %(total)s+ tirages officiels EuroMillions, puis <strong>Gemini</strong> (Google DeepMind) formule une réponse factuelle à partir des données récupérées. Si HYBRIDE ne trouve pas l'information dans la base, il le dit — plutôt que d'inventer."
+msgstr "HYBRIDE uses a <strong>RAG</strong> architecture: it queries the database of %(total)s+ official EuroMillions draws, then <strong>Gemini</strong> (Google DeepMind) formulates a factual answer from the retrieved data. If HYBRIDE cannot find the information in the database, it says so — rather than inventing."
 
 #: ui/templates/em/hybride.html:429
 msgid ""
@@ -3056,17 +2935,8 @@ msgstr ""
 
 #: ui/templates/em/hybride.html:432
 #, python-format
-msgid ""
-"ChatGPT est un modèle de langage <strong>généraliste</strong> sans accès "
-"aux données réelles des tirages. HYBRIDE est une IA "
-"<strong>Grounded</strong> connectée aux %(total)s+ tirages officiels "
-"EuroMillions stockés dans Cloud SQL. Chaque réponse est vérifiée, pas "
-"inventée."
-msgstr ""
-"ChatGPT is a <strong>generalist</strong> language model with no access to"
-" real draw data. HYBRIDE is a <strong>Grounded</strong> AI connected to "
-"%(total)s+ official EuroMillions draws stored in Cloud SQL. Every answer "
-"is verified, not invented."
+msgid "ChatGPT est un modèle de langage <strong>généraliste</strong> sans accès aux données réelles des tirages. Les réponses de HYBRIDE sont <strong>ancrées</strong> sur les %(total)s+ tirages officiels EuroMillions stockés dans Cloud SQL, base mise à jour après chaque tirage. Chaque réponse est vérifiée, pas inventée."
+msgstr "ChatGPT is a <strong>generalist</strong> language model with no access to real draw data. HYBRIDE's answers are <strong>anchored</strong> in %(total)s+ official EuroMillions draws stored in Cloud SQL, database updated after every draw. Every answer is verified, not invented."
 
 #: ui/templates/em/hybride.html:435
 msgid ""
@@ -3960,16 +3830,16 @@ msgstr ""
 #: ui/templates/em/news.html:146
 msgid ""
 "Au cœur de cette nouveauté : <strong>HYBRIDE</strong>, le premier chatbot"
-" EuroMillions ancré sur données réelles, connecté en temps réel à une "
-"base de données de plus de 730 tirages depuis 2019. Posez-lui vos "
+" EuroMillions ancré sur données réelles, s'appuyant sur une "
+"base de données de plus de 730 tirages depuis 2019, mise à jour après chaque tirage. Posez-lui vos "
 "questions en français, anglais, espagnol, portugais, allemand ou "
 "néerlandais — il analyse les données et vous répond instantanément. Pas "
 "de réponses génériques : chaque réponse est calculée à partir des vrais "
 "résultats officiels."
 msgstr ""
 "At the heart of this new feature: <strong>HYBRIDE</strong>, the first "
-"EuroMillions chatbot grounded in real data, connected in real time to a "
-"database of over 730 draws since 2019. Ask your questions in French, "
+"EuroMillions chatbot anchored in real data, relying on a "
+"database of over 730 draws since 2019, updated after every draw. Ask your questions in French, "
 "English, Spanish, Portuguese, German or Dutch — it analyses the data and "
 "responds instantly. No generic answers: every response is calculated from"
 " actual official results."
@@ -4086,6 +3956,10 @@ msgstr "14 February 2026"
 msgid "EuroMillions arrive sur LotoIA — 15 mars 2026"
 msgstr "EuroMillions arrives on LotoIA — 15 March 2026"
 
+#: ui/templates/em/news.html:383
+msgid "Article mis à jour le 21 novembre 2026."
+msgstr "Article updated on 21 November 2026."
+
 #: ui/templates/em/news.html:186
 msgid ""
 "<strong>LotoIA s'agrandit !</strong> Le module EuroMillions débarque le "
@@ -4097,12 +3971,8 @@ msgstr ""
 "analysis, built with the same rigour as the Loto France module."
 
 #: ui/templates/em/news.html:189
-msgid ""
-"<strong>729 tirages officiels analysés</strong> (à cette date, période "
-"2019-2026) — importés depuis les données officielles FDJ."
-msgstr ""
-"<strong>729 official draws analysed</strong> (at that date, period "
-"2019-2026) — imported from official FDJ data."
+msgid "<strong>L'historique officiel des tirages EuroMillions analysé</strong> (période 2019-2026) — importé depuis les données officielles FDJ."
+msgstr "<strong>The official EuroMillions draw history analysed</strong> (period 2019-2026) — imported from official FDJ data."
 
 #: ui/templates/em/news.html:190
 msgid ""
@@ -4172,12 +4042,12 @@ msgstr "EuroMillions Module v1.5.0 — The engine is officially in production"
 #, python-format
 msgid ""
 "C'est fait. <strong>Le module EuroMillions passe en version "
-"1.001</strong> — la première version officielle d'un moteur d'exploration"
+"1.5.0</strong> — la première version officielle d'un moteur d'exploration"
 " statistique dédié aux tirages européens. Pas un prototype. Un produit "
 "complet, en production, 100% gratuit et sans inscription."
 msgstr ""
 "It's done. <strong>The EuroMillions module moves to version "
-"1.001</strong> — the first official release of a statistical exploration "
+"1.5.0</strong> — the first official release of a statistical exploration "
 "engine dedicated to European draws. Not a prototype. A complete product, "
 "in production, 100% free with no registration required."
 
@@ -4196,12 +4066,8 @@ msgstr ""
 "based weighting."
 
 #: ui/templates/em/news.html:215
-msgid ""
-"<strong>729 tirages historiques</strong> (à cette date) en base de données "
-"sécurisée, alimentant l'ensemble des analyses du moteur EuroMillions."
-msgstr ""
-"<strong>729 historical draws</strong> (at that date) in a secure database, "
-"powering all analyses within the EuroMillions engine."
+msgid "<strong>L'historique officiel des tirages</strong> en base de données sécurisée, alimentant l'ensemble des analyses du moteur EuroMillions."
+msgstr "<strong>The official draw history</strong> in a secure database, powering all analyses within the EuroMillions engine."
 
 #: ui/templates/em/news.html:216
 msgid ""
@@ -4284,14 +4150,8 @@ msgstr ""
 "artificial intelligence</strong>, dedicated to European draws."
 
 #: ui/templates/em/news.html:238
-msgid ""
-"<strong>Accès direct aux données EuroMillions</strong> : le chatbot "
-"interroge directement notre base de 729 tirages officiels (à cette date) "
-"pour vous donner des réponses précises et vérifiables."
-msgstr ""
-"<strong>Direct access to EuroMillions data</strong>: the chatbot queries "
-"our database of 729 official draws (at that date) directly to provide "
-"precise, verifiable answers."
+msgid "<strong>Accès direct aux données EuroMillions</strong> : le chatbot interroge directement notre base des tirages officiels pour vous donner des réponses précises et vérifiables."
+msgstr "<strong>Direct access to EuroMillions data</strong>: the chatbot queries our database of official draws directly to provide precise, verifiable answers."
 
 #: ui/templates/em/news.html:239
 msgid ""
@@ -4504,14 +4364,8 @@ msgstr ""
 " and advanced security protections."
 
 #: ui/templates/em/news.html:303
-msgid ""
-"<strong>Base de données dédiée</strong> : table "
-"<code>tirages_euromillions</code> en Cloud SQL, indépendante de la base "
-"Loto, avec 729 tirages historiques (à cette date)."
-msgstr ""
-"<strong>Dedicated database</strong>: <code>tirages_euromillions</code> "
-"table in Cloud SQL, independent from the Loto database, with 729 "
-"historical draws (at that date)."
+msgid "<strong>Base de données dédiée</strong> : table <code>tirages_euromillions</code> en Cloud SQL, indépendante de la base Loto, avec l'historique des tirages officiels."
+msgstr "<strong>Dedicated database</strong>: <code>tirages_euromillions</code> table in Cloud SQL, independent from the Loto database, with the history of official draws."
 
 #: ui/templates/em/news.html:304
 msgid ""
@@ -4692,8 +4546,8 @@ msgid "Lancer l'exploration statistique EuroMillions"
 msgstr "Launch EuroMillions Statistical Exploration"
 
 #: ui/templates/em/news.html:360
-msgid "Explorez l'espace combinatoire avec le moteur HYBRIDE — LotoIA v1.5.0."
-msgstr "Explore the combinatorial space with the HYBRIDE engine — LotoIA v1.5.0."
+msgid "Explorez l'espace combinatoire avec le moteur HYBRIDE de LotoIA."
+msgstr "Explore the combinatorial space with LotoIA's HYBRIDE engine."
 
 #: ui/templates/em/news.html:363
 msgid "Accéder au moteur"
@@ -5648,12 +5502,12 @@ msgid "Un numéro ou une étoile « chaud » est sorti fréquemment sur la péri
 msgstr "A \"hot\" number or star is one drawn frequently over the period analysed; a \"cold\" one is rarely drawn. LotoIA computes these frequencies over the 50 numbers and 12 stars from the official draws. This is purely descriptive: a past frequency neither increases nor decreases the probability of a future draw, as each draw is independent."
 
 #: ui/templates/em/faq.html
-msgid "Qu'est-ce que la technologie « IA Grounded » de LotoIA ?"
-msgstr "What is LotoIA's \"Grounded AI\" technology?"
+msgid "Sur quelles données s'appuient les réponses de LotoIA ?"
+msgstr "What data are LotoIA's answers based on?"
 
 #: ui/templates/em/faq.html
-msgid "« Grounded » signifie que les réponses de LotoIA sont ancrées sur des données réelles : le chatbot HYBRIDE et les analyses s'appuient exclusivement sur l'historique des tirages officiels EuroMillions, et non sur des suppositions. L'objectif est d'éviter les approximations et de ne fournir que des faits statistiques vérifiables."
-msgstr "\"Grounded\" means LotoIA's answers are anchored in real data: the HYBRIDE chatbot and the analyses rely exclusively on the history of official EuroMillions draws, not on guesswork. The goal is to avoid approximations and to provide only verifiable statistical facts."
+msgid "Les réponses de LotoIA sont ancrées sur la base officielle des tirages, mise à jour après chaque tirage : le chatbot HYBRIDE et les analyses s'appuient exclusivement sur l'historique des tirages officiels EuroMillions, et non sur des suppositions. L'objectif est d'éviter les approximations et de ne fournir que des faits statistiques vérifiables."
+msgstr "LotoIA's answers are anchored in the official draw database, updated after every draw: the HYBRIDE chatbot and the analyses rely exclusively on the history of official EuroMillions draws, not on guesswork. The goal is to avoid approximations and to provide only verifiable statistical facts."
 
 #: ui/templates/em/faq.html
 msgid "L'intelligence artificielle peut-elle prédire l'EuroMillions ?"
@@ -5708,8 +5562,8 @@ msgid "En quoi LotoIA est-il différent d'un assistant IA généraliste ?"
 msgstr "How is LotoIA different from a general-purpose AI assistant?"
 
 #: ui/templates/em/faq.html
-msgid "LotoIA est dédié à l'analyse de l'EuroMillions et connecté à l'historique des tirages officiels : ses réponses sont ancrées sur ces données (« grounding »), ce qui vise une fiabilité statistique sans approximation. Des assistants généralistes comme ChatGPT, Gemini ou Claude ne sont pas connectés en temps réel à cet historique officiel des tirages : ils ne sont pas conçus pour fournir des statistiques EuroMillions vérifiées et à jour de la même manière."
-msgstr "LotoIA is dedicated to EuroMillions analysis and connected to the history of the official draws: its answers are anchored in this data (\"grounding\"), aiming for statistical reliability without approximation. General-purpose assistants such as ChatGPT, Gemini, or Claude are not connected in real time to this official draw history: they are not designed to provide verified, up-to-date EuroMillions statistics in the same way."
+msgid "LotoIA est dédié à l'analyse de l'EuroMillions et connecté à l'historique des tirages officiels : ses réponses sont ancrées sur ces données, ce qui vise une fiabilité statistique sans approximation. Des assistants généralistes comme ChatGPT, Gemini ou Claude ne sont pas connectés à cet historique officiel des tirages : ils ne sont pas conçus pour fournir des statistiques EuroMillions vérifiées et à jour de la même manière."
+msgstr "LotoIA is dedicated to EuroMillions analysis and connected to the history of the official draws: its answers are anchored in this data, aiming for statistical reliability without approximation. General-purpose assistants such as ChatGPT, Gemini, or Claude are not connected to this official draw history: they are not designed to provide verified, up-to-date EuroMillions statistics in the same way."
 
 #: ui/templates/em/faq.html
 msgid "Comment mes données personnelles sont-elles protégées ?"

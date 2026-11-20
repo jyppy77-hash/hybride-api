@@ -1919,7 +1919,7 @@ def test_lot_1_6_072_bump_version():
     from config.version import APP_VERSION, LAST_NEWS_DATE, VERSION_DATE
     assert tuple(int(p) for p in APP_VERSION.split(".")) >= (1, 6, 72)  # plancher (lot 1.6.073)
     assert VERSION_DATE >= "2026-11-16"
-    assert LAST_NEWS_DATE == "2026-11-14"
+    assert LAST_NEWS_DATE >= "2026-11-14"  # plancher (lot 1.6.075 : LAST_NEWS_DATE 2026-11-21)
 
 
 def test_lot_1_6_072_bump_cache_busters_served():

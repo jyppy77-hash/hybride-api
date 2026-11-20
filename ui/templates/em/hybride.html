@@ -1,15 +1,15 @@
 {% extends "em/_base.html" %}
 
 {% block head %}
-    <title>{{ _('HYBRIDE — Chatbot IA Grounded pour l\'EuroMillions | LotoIA') }}</title>
+    <title>{{ _('HYBRIDE — Chatbot IA pour l\'EuroMillions | LotoIA') }}</title>
     <meta name="description" content="{{ _('HYBRIDE, l\'assistant IA de LotoIA connecté aux %(total)s+ tirages officiels EuroMillions. Posez vos questions sur les numéros, étoiles et statistiques.')|format(total=em_db_total) }}">
     <link rel="canonical" href="{{ canonical_url }}">
     <!-- Open Graph -->
     <meta property="og:type" content="article">
     <meta property="og:site_name" content="LotoIA">
     <meta property="og:locale" content="{{ og_locale }}">
-    <meta property="og:title" content="{{ _('HYBRIDE — Chatbot IA Grounded EuroMillions | LotoIA') }}">
-    <meta property="og:description" content="{{ _('Assistant IA connecté en temps réel aux %(total)s+ tirages officiels EuroMillions. Analyses factuelles, avec contrôles automatiques des chiffres cités.')|format(total=em_db_total) }}">
+    <meta property="og:title" content="{{ _('HYBRIDE — Chatbot IA EuroMillions | LotoIA') }}">
+    <meta property="og:description" content="{{ _('Assistant IA connecté aux %(total)s+ tirages officiels EuroMillions. Analyses factuelles, avec contrôles automatiques des chiffres cités.')|format(total=em_db_total) }}">
     <meta property="og:url" content="{{ canonical_url }}">
     <meta property="og:image" content="{{ base_url }}/static/og-image.jpg">
     <meta property="og:image:secure_url" content="{{ base_url }}/static/og-image.jpg">
@@ -18,7 +18,7 @@
     <meta property="og:image:height" content="630">
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ _('HYBRIDE — Chatbot IA Grounded EuroMillions | LotoIA') }}">
+    <meta name="twitter:title" content="{{ _('HYBRIDE — Chatbot IA EuroMillions | LotoIA') }}">
     <meta name="twitter:description" content="{{ _('Assistant IA connecté aux tirages officiels EuroMillions. Analyses factuelles, avec contrôles automatiques des chiffres cités.') }}">
     <meta name="twitter:image" content="{{ base_url }}/static/og-image.jpg">
     <!-- JSON-LD SoftwareApplication -->
@@ -30,7 +30,7 @@
       "applicationCategory": "ChatbotApplication",
       "operatingSystem": "Web Browser",
       "url": {{ canonical_url|tojson }},
-      "description": {{ _('Assistant IA conversationnel connecté en temps réel aux tirages officiels EuroMillions. Analyse factuelle fondée sur les tirages officiels.')|tojson }},
+      "description": {{ _('Assistant IA conversationnel connecté aux tirages officiels EuroMillions. Analyse factuelle fondée sur les tirages officiels.')|tojson }},
       "isAccessibleForFree": true,
       "offers": {
         "@type": "Offer",
@@ -38,7 +38,7 @@
         "priceCurrency": "EUR"
       },
       "featureList": [
-        {{ _('Connexion temps réel aux %(total)s+ tirages officiels EuroMillions')|format(total=em_db_total)|tojson }},
+        {{ _('Réponses ancrées sur les %(total)s+ tirages officiels EuroMillions, base mise à jour après chaque tirage')|format(total=em_db_total)|tojson }},
         {{ _('Analyse de fréquences par numéro (1-50) et par étoile (1-12)')|tojson }},
         {{ _('Recherche de tirages par date')|tojson }},
         {{ _('Statistiques numéros et étoiles chauds et froids')|tojson }},
@@ -73,15 +73,15 @@
           "name": {{ _('Comment fonctionne le chatbot HYBRIDE pour l\'EuroMillions ?')|tojson }},
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": {{ _('HYBRIDE utilise une architecture Grounded (RAG) : il interroge la base de données des %(total)s+ tirages officiels EuroMillions en temps réel, puis Gemini (Google DeepMind) formule une réponse factuelle à partir des données récupérées. Des contrôles automatiques comparent ensuite la réponse aux données.')|format(total=em_db_total)|tojson }}
+            "text": {{ _('HYBRIDE utilise une architecture RAG : il interroge la base de données des %(total)s+ tirages officiels EuroMillions, puis Gemini (Google DeepMind) formule une réponse factuelle à partir des données récupérées. Des contrôles automatiques comparent ensuite la réponse aux données.')|format(total=em_db_total)|tojson }}
           }
         },
         {
           "@type": "Question",
-          "name": {{ _('Le chatbot peut-il prédire les résultats EuroMillions ?')|tojson }},
+          "name": {{ _('HYBRIDE peut-il me donner des numéros gagnants ?')|tojson }},
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": {{ _('Non. L\'EuroMillions est un jeu de hasard pur et personne — aucune IA, aucun algorithme — ne peut prédire les résultats. HYBRIDE analyse les données passées pour fournir des statistiques factuelles, il ne prédit pas l\'avenir.')|tojson }}
+            "text": {{ _('Non. Personne ne peut prédire un tirage : chaque combinaison a exactement la même probabilité de sortir (1 sur 139 838 160 à l\'EuroMillions). HYBRIDE peut générer des grilles à votre demande : le moteur les construit à partir des statistiques des tirages passés (fréquences, écarts, équilibre de la grille). Ce sont des grilles générées, pas des pronostics : elles n\'ont pas plus de chances de gagner qu\'une grille choisie au hasard. Le score sur 100 affiché avec une grille indique seulement à quel point elle respecte les critères statistiques du moteur ; ce n\'est pas une probabilité de gain.')|tojson }}
           }
         },
         {
@@ -89,7 +89,7 @@
           "name": {{ _('En quoi HYBRIDE est différent de ChatGPT pour l\'EuroMillions ?')|tojson }},
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": {{ _('ChatGPT est un modèle de langage généraliste sans accès aux données réelles des tirages. HYBRIDE est une IA Grounded connectée aux %(total)s+ tirages officiels EuroMillions stockés dans Cloud SQL. Chaque réponse est vérifiée, pas inventée.')|format(total=em_db_total)|tojson }}
+            "text": {{ _('ChatGPT est un modèle de langage généraliste sans accès aux données réelles des tirages. Les réponses de HYBRIDE sont ancrées sur les %(total)s+ tirages officiels EuroMillions stockés dans Cloud SQL, base mise à jour après chaque tirage. Chaque réponse est vérifiée, pas inventée.')|format(total=em_db_total)|tojson }}
           }
         },
         {
@@ -245,20 +245,20 @@
 
             {# ── Introduction ── #}
             <section class="legal-section">
-                <p>{{ _('<strong>HYBRIDE</strong> est le chatbot IA intégré à LotoIA. Il est connecté en temps réel aux <strong>%(total)s+ tirages officiels</strong> de l\'EuroMillions. Contrairement à ChatGPT ou d\'autres IA génératives, HYBRIDE ne devine pas : il interroge les données réelles et vous répond avec des <strong>faits vérifiables</strong>.')|format(total=em_db_total)|safe }}</p>
+                <p>{{ _('<strong>HYBRIDE</strong> est le chatbot IA intégré à LotoIA. Ses réponses sont ancrées sur la base officielle des tirages (<strong>%(total)s+ tirages officiels</strong> de l\'EuroMillions), mise à jour après chaque tirage. Contrairement à ChatGPT ou d\'autres IA génératives, HYBRIDE ne devine pas : il interroge les données réelles et vous répond avec des <strong>faits vérifiables</strong>.')|format(total=em_db_total)|safe }}</p>
                 <p>{{ _('Vous pouvez lui poser des questions sur les numéros (1-50), les étoiles (1-12), les tirages, les fréquences ou le fonctionnement du moteur. Il est disponible gratuitement sur toutes les pages EuroMillions de LotoIA — cliquez sur l\'icône en bas à droite pour essayer.')|safe }}</p>
             </section>
 
-            {# ── Qu'est-ce qu'une IA Grounded ? ── #}
+            {# ── Des réponses ancrées sur les données officielles ── #}
             <section class="legal-section">
-                <h2>{{ _('Qu\'est-ce qu\'une IA « Grounded » ?') }}</h2>
+                <h2>{{ _('Des réponses ancrées sur les données officielles') }}</h2>
 
-                <p>{{ _('Le terme <strong>« Grounded »</strong> (ancré) désigne une IA dont les réponses sont fondées sur des données vérifiées, et non sur l\'imagination ou des probabilités linguistiques.')|safe }}</p>
+                <p>{{ _('Les réponses de HYBRIDE sont ancrées sur la base officielle des tirages, mise à jour après chaque tirage : elles sont fondées sur des données vérifiées, et non sur l\'imagination ou des probabilités linguistiques.')|safe }}</p>
 
                 <p>{{ _('La différence fondamentale avec les modèles de langage classiques (ChatGPT, Gemini en mode libre, Claude) est cruciale :') }}</p>
                 <ul>
                     <li>{{ _('Un <strong>LLM classique</strong> génère une réponse qui « semble correcte » à partir de ses connaissances d\'entraînement. Il peut inventer des faits, confondre des données ou produire des réponses plausibles mais fausses — c\'est ce qu\'on appelle l\'<strong>hallucination</strong>.')|safe }}</li>
-                    <li>{{ _('Une <strong>IA Grounded</strong> comme HYBRIDE interroge d\'abord sa base de données, récupère les faits pertinents, puis formule sa réponse à partir de ces données vérifiées. Pas de place pour l\'invention.')|safe }}</li>
+                    <li>{{ _('Un <strong>assistant ancré sur les données</strong> comme HYBRIDE interroge d\'abord sa base de données, récupère les faits pertinents, puis formule sa réponse à partir de ces données vérifiées. Pas de place pour l\'invention.')|safe }}</li>
                 </ul>
 
                 <div class="info-box" style="background: #f0fdf4; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #10b981;">
@@ -267,12 +267,12 @@
                     <p><strong>HYBRIDE</strong> = {{ _('un bibliothécaire qui va chercher dans les archives avant de répondre. Plus lent d\'une seconde, mais toujours factuel.') }}</p>
                 </div>
 
-                <p>{{ _('En termes techniques, HYBRIDE utilise une architecture appelée <strong>RAG</strong> (Retrieval-Augmented Generation) : le modèle « récupère » d\'abord les données pertinentes dans la base, puis « augmente » sa réponse avec ces données vérifiées. Le résultat : des réponses ancrées sur les données réelles des tirages. Aucune IA n\'est infaillible : en cas de doute, vérifiez sur l\'historique officiel.')|safe }}</p>
+                <p>{{ _('En termes techniques, HYBRIDE utilise une architecture appelée <strong>RAG</strong> (Retrieval-Augmented Generation) : le serveur récupère d\'abord les données pertinentes dans la base, puis le modèle rédige sa réponse à partir de ces données vérifiées. Le résultat : des réponses ancrées sur les données réelles des tirages. Aucune IA n\'est infaillible : en cas de doute, vérifiez sur l\'historique officiel.')|safe }}</p>
             </section>
 
             {# ── Comment HYBRIDE accède aux données ── #}
             <section class="legal-section">
-                <h2>{{ _('Comment HYBRIDE accède aux données en temps réel') }}</h2>
+                <h2>{{ _('Comment HYBRIDE accède aux données') }}</h2>
 
                 <p>{{ _('HYBRIDE n\'est pas un chatbot décoratif. Il est connecté à la même base de données que le <a href="%(moteur_url)s">moteur d\'exploration</a> et les <a href="%(stats_url)s">statistiques</a> de LotoIA :')|format(moteur_url=urls.moteur, stats_url=urls.statistiques)|safe }}</p>
 
@@ -286,7 +286,7 @@
                 <ol>
                     <li>{{ _('<strong>Vous posez votre question</strong> dans le chatbot (texte libre)')|safe }}</li>
                     <li>{{ _('<strong>HYBRIDE analyse votre intention</strong> et identifie les données nécessaires')|safe }}</li>
-                    <li>{{ _('<strong>Il interroge la base de données</strong> Cloud SQL en temps réel')|safe }}</li>
+                    <li>{{ _('<strong>Il interroge la base de données</strong> Cloud SQL')|safe }}</li>
                     <li>{{ _('<strong>Gemini (Google DeepMind)</strong> formule une réponse claire à partir des données récupérées')|safe }}</li>
                     <li>{{ _('<strong>Contrôles anti-hallucination</strong> : les chiffres cités sont comparés aux données EuroMillions')|safe }}</li>
                     <li>{{ _('<strong>Vous recevez une réponse factuelle</strong>, généralement en moins de 3 secondes')|safe }}</li>
@@ -345,7 +345,7 @@
                 <ul>
                     <li>{{ _('Il <strong>ne prédit PAS</strong> les résultats futurs — l\'EuroMillions est un jeu de hasard pur')|safe }}</li>
                     <li>{{ _('Il <strong>ne promet PAS</strong> de gains — aucune méthode ne peut garantir un gain à l\'EuroMillions')|safe }}</li>
-                    <li>{{ _('Il <strong>ne donne PAS</strong> de « numéros magiques » ou de « combinaisons gagnantes »')|safe }}</li>
+                    <li>{{ _('Il <strong>ne donne PAS</strong> de « numéros magiques » : les grilles qu\'il génère ne sont pas des pronostics')|safe }}</li>
                     <li>{{ _('Il <strong>refuse les questions hors-sujet</strong> (politique, médecine, cuisine\u2026)')|safe }}</li>
                     <li>{{ _('Il <strong>rappelle systématiquement</strong> que l\'EuroMillions est un jeu de hasard et que jouer comporte des risques')|safe }}</li>
                 </ul>
@@ -401,7 +401,7 @@
                     </tbody>
                 </table>
 
-                <p>{{ _('Quand vous demandez à ChatGPT <em>« Quel numéro sort le plus à l\'EuroMillions ? »</em>, il génère une réponse plausible basée sur des connaissances générales — souvent inexacte ou datée. Quand vous posez la même question à HYBRIDE, il interroge la base de données en temps réel et vous donne la <strong>vraie réponse</strong>, à jour du dernier tirage.')|safe }}</p>
+                <p>{{ _('Quand vous demandez à ChatGPT <em>« Quel numéro sort le plus à l\'EuroMillions ? »</em>, il génère une réponse plausible basée sur des connaissances générales — souvent inexacte ou datée. Quand vous posez la même question à HYBRIDE, il interroge la base de données et vous donne la <strong>vraie réponse</strong>, à jour du dernier tirage.')|safe }}</p>
             </section>
 
             {# ── La personnalité HYBRIDE ── #}
@@ -439,13 +439,13 @@
                 <h2>{{ _('Questions fréquentes sur HYBRIDE') }}</h2>
 
                 <h3>{{ _('Comment fonctionne le chatbot HYBRIDE pour l\'EuroMillions ?') }}</h3>
-                <p>{{ _('HYBRIDE utilise une architecture <strong>Grounded (RAG)</strong> : il interroge la base de données des %(total)s+ tirages officiels EuroMillions en temps réel, puis <strong>Gemini</strong> (Google DeepMind) formule une réponse factuelle à partir des données récupérées. Si HYBRIDE ne trouve pas l\'information dans la base, il le dit — plutôt que d\'inventer.')|format(total=em_db_total)|safe }}</p>
+                <p>{{ _('HYBRIDE utilise une architecture <strong>RAG</strong> : il interroge la base de données des %(total)s+ tirages officiels EuroMillions, puis <strong>Gemini</strong> (Google DeepMind) formule une réponse factuelle à partir des données récupérées. Si HYBRIDE ne trouve pas l\'information dans la base, il le dit — plutôt que d\'inventer.')|format(total=em_db_total)|safe }}</p>
 
-                <h3>{{ _('Le chatbot peut-il prédire les résultats EuroMillions ?') }}</h3>
-                <p>{{ _('<strong>Non.</strong> L\'EuroMillions est un jeu de hasard pur et <strong>personne</strong> — aucune IA, aucun algorithme, aucun « système » — ne peut prédire les résultats. HYBRIDE analyse les données passées pour vous donner des statistiques factuelles. Il ne prédit pas l\'avenir, et il le dit clairement.')|safe }}</p>
+                <h3>{{ _('HYBRIDE peut-il me donner des numéros gagnants ?') }}</h3>
+                <p>{{ _('Non. Personne ne peut prédire un tirage : chaque combinaison a exactement la même probabilité de sortir (1 sur 139 838 160 à l\'EuroMillions). HYBRIDE peut générer des grilles à votre demande : le moteur les construit à partir des statistiques des tirages passés (fréquences, écarts, équilibre de la grille). Ce sont des grilles générées, pas des pronostics : elles n\'ont pas plus de chances de gagner qu\'une grille choisie au hasard. Le score sur 100 affiché avec une grille indique seulement à quel point elle respecte les critères statistiques du moteur ; ce n\'est pas une probabilité de gain.') }}</p>
 
                 <h3>{{ _('En quoi HYBRIDE est différent de ChatGPT pour l\'EuroMillions ?') }}</h3>
-                <p>{{ _('ChatGPT est un modèle de langage <strong>généraliste</strong> sans accès aux données réelles des tirages. HYBRIDE est une IA <strong>Grounded</strong> connectée aux %(total)s+ tirages officiels EuroMillions stockés dans Cloud SQL. Chaque réponse est vérifiée, pas inventée.')|format(total=em_db_total)|safe }}</p>
+                <p>{{ _('ChatGPT est un modèle de langage <strong>généraliste</strong> sans accès aux données réelles des tirages. Les réponses de HYBRIDE sont <strong>ancrées</strong> sur les %(total)s+ tirages officiels EuroMillions stockés dans Cloud SQL, base mise à jour après chaque tirage. Chaque réponse est vérifiée, pas inventée.')|format(total=em_db_total)|safe }}</p>
 
                 <h3>{{ _('Le chatbot est-il disponible dans ma langue ?') }}</h3>
                 <p>{{ _('HYBRIDE est disponible en <strong>6 langues</strong> : français, anglais, espagnol, portugais, allemand et néerlandais. L\'interface et les réponses s\'adaptent automatiquement à la langue de la page que vous consultez.')|safe }}</p>

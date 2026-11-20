@@ -99,11 +99,11 @@ _NEW_MSGID_FRAGMENTS = [
     "plus de 700 tirages historiques. 100% gratuit",
     "plus de 700 tirages européens.",
     "un outil transparent, fondé sur les données réelles",
-    "(à cette date, période 2019-2026)",
-    "<strong>729 tirages historiques</strong> (à cette date)",
+    "(période 2019-2026) — importé",  # 1.6.075 (D1) : chiffre daté retiré, « l'historique officiel » à la place
+    "<strong>L'historique officiel des tirages</strong> en base",  # 1.6.075 (D1) : idem
     "encadre ses réponses pour éviter toute prédiction.",
-    "notre base de 729 tirages officiels (à cette date)",
-    "avec 729 tirages historiques (à cette date).",
+    "notre base des tirages officiels pour vous",  # 1.6.075 (D1) : idem
+    "avec l'historique des tirages officiels.",  # 1.6.075 (D1) : idem
     "en combinant plusieurs approches complémentaires, adaptées",
     "<strong>Trois fenêtres d'analyse</strong> : les 5 dernières années",
     "<strong>Poids des tirages récents</strong>",
@@ -113,7 +113,7 @@ _NEW_MSGID_FRAGMENTS = [
     "Privilégie l'historique long terme. Idéal si vous préférez",
     "Répartition harmonieuse entre les 3 périodes. C'est le mode par défaut",
     "Pour ceux qui veulent davantage de diversité dans les grilles proposées.",
-    "EuroMillions : ses réponses s'appuient sur ces données réelles.",
+    "mise à jour après chaque tirage : elles s'appuient sur ces données réelles.",  # 1.6.075 (D6) : fin du msgid « ia » reformulée
     "— Combinaison des trois fenêtres : les tirages récents",
     "Le moteur combine trois fenêtres d'analyse : <strong>les 5 dernières",
     "Analyses factuelles, avec contrôles automatiques des chiffres cités.",
@@ -418,11 +418,12 @@ _LOT_MSGIDS = (
     ('news', 'Actualités du module EuroMillions de LotoIA. Moteur HYBRIDE adapté 5+2, chatbot IA Gemini, plus de 700 tirages historiques. 100% gratuit, sans inscription.'),
     ('news', 'Actualités du module EuroMillions de LotoIA. Moteur HYBRIDE adapté 5+2, chatbot IA Gemini, plus de 700 tirages européens.'),
     ('news', 'Notre engagement reste le même : un outil transparent, fondé sur les données réelles, et toujours plus agréable à utiliser. Merci à toute la communauté qui nous fait remonter ces petits détails — chacun de vos retours compte.'),
-    ('news', '<strong>729 tirages officiels analysés</strong> (à cette date, période 2019-2026) — importés depuis les données officielles FDJ.'),
-    ('news', "<strong>729 tirages historiques</strong> (à cette date) en base de données sécurisée, alimentant l'ensemble des analyses du moteur EuroMillions."),
+    # 1.6.075 (D1) : 4 msgid news renommés (chiffres « 729 … (à cette date) » retirés) → attendus mis à jour
+    ('news', "<strong>L'historique officiel des tirages EuroMillions analysé</strong> (période 2019-2026) — importé depuis les données officielles FDJ."),
+    ('news', "<strong>L'historique officiel des tirages</strong> en base de données sécurisée, alimentant l'ensemble des analyses du moteur EuroMillions."),
     ('news', '<strong>Chatbot HYBRIDE dédié</strong> déployé en production : il interroge directement la base de données EuroMillions, conserve le fil de la conversation et encadre ses réponses pour éviter toute prédiction.'),
-    ('news', '<strong>Accès direct aux données EuroMillions</strong> : le chatbot interroge directement notre base de 729 tirages officiels (à cette date) pour vous donner des réponses précises et vérifiables.'),
-    ('news', '<strong>Base de données dédiée</strong> : table <code>tirages_euromillions</code> en Cloud SQL, indépendante de la base Loto, avec 729 tirages historiques (à cette date).'),
+    ('news', '<strong>Accès direct aux données EuroMillions</strong> : le chatbot interroge directement notre base des tirages officiels pour vous donner des réponses précises et vérifiables.'),
+    ('news', "<strong>Base de données dédiée</strong> : table <code>tirages_euromillions</code> en Cloud SQL, indépendante de la base Loto, avec l'historique des tirages officiels."),
     ('news', 'Le moteur HYBRIDE EuroMillions est le cœur algorithmique du module européen. Il explore les statistiques des tirages en combinant plusieurs approches complémentaires, adaptées au format 5+2 :'),
     ('news', "<strong>Trois fenêtres d'analyse</strong> : les 5 dernières années, les 2 dernières années et l'ensemble de l'historique disponible, pour les numéros comme pour les étoiles."),
     ('news', "<strong>Poids des tirages récents</strong> : présents dans les trois fenêtres, ils pèsent davantage dans l'analyse."),
@@ -433,21 +434,25 @@ _LOT_MSGIDS = (
     ('moteur', "Privilégie l'historique long terme. Idéal si vous préférez des numéros qui ont fait leurs preuves sur la durée."),
     ('moteur', "Répartition harmonieuse entre les 3 périodes. C'est le mode par défaut, utilisé par le générateur du site ; les deux autres modes peuvent être demandés au chatbot HYBRIDE."),
     ('moteur', 'Pour ceux qui veulent davantage de diversité dans les grilles proposées.'),
-    ('ia', "ChatGPT est un modèle de langage génératif qui n'a pas accès aux données réelles des tirages. Il invente des numéros sans fondement statistique. LotoIA utilise une IA Grounded connectée aux %(total)s+ tirages officiels EuroMillions : ses réponses s'appuient sur ces données réelles."),
+    # 1.6.075 (D6) : 3 msgid « ia » renommés (« Grounded » / « temps réel » retirés) → attendus mis à jour
+    ('ia', "ChatGPT est un modèle de langage génératif qui n'a pas accès aux données réelles des tirages. Il invente des numéros sans fondement statistique. Les réponses de LotoIA sont ancrées sur la base officielle des tirages (%(total)s+ tirages officiels EuroMillions), mise à jour après chaque tirage : elles s'appuient sur ces données réelles."),
     ('ia', "<strong>Analyse fréquentielle</strong> — Calcul des fréquences d'apparition de chaque numéro (1-50) et de chaque étoile (1-12) sur trois fenêtres : les 5 dernières années, les 2 dernières années et l'ensemble de l'historique disponible."),
     ('ia', '<strong>Pondération temporelle</strong> — Combinaison des trois fenêtres : les tirages récents, présents dans les trois, pèsent davantage (<a href="%(methodo_url)s">méthodologie « 5 ans + 2 »</a>).'),
     ('ia', "Le moteur combine trois fenêtres d'analyse : <strong>les 5 dernières années</strong>, <strong>les 2 dernières années</strong> et <strong>l'ensemble de l'historique disponible</strong>. Les tirages récents, présents dans les trois fenêtres, pèsent davantage : la méthode équilibre stabilité statistique et réactivité."),
-    ('ia', "LotoIA intègre un chatbot alimenté par <strong>Gemini</strong> (Google DeepMind) en mode « Grounded » : l'IA est connectée en temps réel à la base de données des tirages. Chaque réponse est ancrée sur des données vérifiées. Vous pouvez lui poser des questions sur les statistiques, les fréquences ou demander une analyse personnalisée."),
-    ('ia', "ChatGPT invente des numéros sans accès aux données réelles. LotoIA utilise une IA « Grounded » connectée aux tirages officiels EuroMillions : ses réponses s'appuient sur les données réelles, pas sur des connaissances générales."),
-    ('hybride_page', 'Assistant IA connecté en temps réel aux %(total)s+ tirages officiels EuroMillions. Analyses factuelles, avec contrôles automatiques des chiffres cités.'),
+    ('ia', "LotoIA intègre un chatbot alimenté par <strong>Gemini</strong> (Google DeepMind). Ses réponses sont ancrées sur la base officielle des tirages, mise à jour après chaque tirage. Vous pouvez lui poser des questions sur les statistiques, les fréquences ou demander une analyse personnalisée."),
+    ('ia', "ChatGPT invente des numéros sans accès aux données réelles. Les réponses de LotoIA sont ancrées sur la base officielle des tirages EuroMillions, mise à jour après chaque tirage : elles s'appuient sur les données réelles, pas sur des connaissances générales."),
+    # 1.6.075 (F) : 4 msgid de ce lot renommés sur place (« Grounded » / « temps réel » retirés) → attendu mis à jour
+    ('hybride_page', 'Assistant IA connecté aux %(total)s+ tirages officiels EuroMillions. Analyses factuelles, avec contrôles automatiques des chiffres cités.'),
     ('hybride_page', 'Assistant IA connecté aux tirages officiels EuroMillions. Analyses factuelles, avec contrôles automatiques des chiffres cités.'),
-    ('hybride_page', 'Assistant IA conversationnel connecté en temps réel aux tirages officiels EuroMillions. Analyse factuelle fondée sur les tirages officiels.'),
+    ('hybride_page', 'Assistant IA conversationnel connecté aux tirages officiels EuroMillions. Analyse factuelle fondée sur les tirages officiels.'),
     ('hybride_page', 'Contrôles automatiques des chiffres cités'),
-    ('hybride_page', 'HYBRIDE utilise une architecture Grounded (RAG) : il interroge la base de données des %(total)s+ tirages officiels EuroMillions en temps réel, puis Gemini (Google DeepMind) formule une réponse factuelle à partir des données récupérées. Des contrôles automatiques comparent ensuite la réponse aux données.'),
-    ('hybride_page', "En termes techniques, HYBRIDE utilise une architecture appelée <strong>RAG</strong> (Retrieval-Augmented Generation) : le modèle « récupère » d'abord les données pertinentes dans la base, puis « augmente » sa réponse avec ces données vérifiées. Le résultat : des réponses ancrées sur les données réelles des tirages. Aucune IA n'est infaillible : en cas de doute, vérifiez sur l'historique officiel."),
+    ('hybride_page', 'HYBRIDE utilise une architecture RAG : il interroge la base de données des %(total)s+ tirages officiels EuroMillions, puis Gemini (Google DeepMind) formule une réponse factuelle à partir des données récupérées. Des contrôles automatiques comparent ensuite la réponse aux données.'),
+    # 1.6.075 (D5) : rôle du serveur et du modèle précisés → attendu mis à jour
+    ('hybride_page', "En termes techniques, HYBRIDE utilise une architecture appelée <strong>RAG</strong> (Retrieval-Augmented Generation) : le serveur récupère d'abord les données pertinentes dans la base, puis le modèle rédige sa réponse à partir de ces données vérifiées. Le résultat : des réponses ancrées sur les données réelles des tirages. Aucune IA n'est infaillible : en cas de doute, vérifiez sur l'historique officiel."),
     ('hybride_page', '<strong>Contrôles anti-hallucination</strong> : les chiffres cités sont comparés aux données EuroMillions'),
     ('hybride_page', 'Contrôles automatiques'),
-    ('a_propos', 'Notre chatbot intelligent est alimenté par <strong>Gemini</strong> (Google DeepMind) en mode « Grounded » : il est connecté en temps réel à nos bases de données de tirages officiels. Chaque réponse est ancrée sur des données réelles et vérifiables.'),
+    # 1.6.075 (D4 R2-EM) : phrase à sujet explicite → attendu mis à jour
+    ('a_propos', "Notre chatbot intelligent est alimenté par <strong>Gemini</strong> (Google DeepMind). Ses réponses sont ancrées sur la base officielle des tirages, mise à jour après chaque tirage, et s'appuient sur des données réelles et vérifiables."),
 )
 _PLACEHOLDER = re.compile(r"%\([a-z_]+\)s")
 _TAG = re.compile(r"<[^>]+>")
@@ -569,9 +574,9 @@ def test_t9_loto_news_dated():
     text = _read("ui/news.html")
     assert "Mise à jour du 09/11/2026" in text
     assert '<a href="/methodologie">Méthodologie</a>' in text
-    for m in re.finditer(r"\b(981|729) tirages", text):
-        tail = text[m.end():m.end() + 80]
-        assert "(à cette date" in tail, f"compteur non daté : {text[m.start():m.end() + 40]}"
+    # 1.6.075 (D1) : plus aucun compteur 981 / 729 ni « (à cette date) » (chiffres retirés au lieu d'être datés)
+    assert not re.search(r"\b(981|729) tirages", text)
+    assert "(à cette date" not in text
 
 
 def test_t9_em_news_template_dated():
@@ -579,9 +584,9 @@ def test_t9_em_news_template_dated():
     assert "Mise à jour du 09/11/2026" in text
     assert "|format(methodo_url=urls.methodologie)" in text
     assert "729 tirages historiques. 100%" not in text and "729 tirages européens" not in text
-    for m in re.finditer(r"\b729 tirages", text):
-        tail = text[m.end():m.end() + 80]
-        assert "(à cette date" in tail, text[m.start():m.end() + 40]
+    # 1.6.075 (D1) : plus aucun compteur 729 ni « (à cette date) » (chiffres retirés au lieu d'être datés)
+    assert not re.search(r"\b729 tirages", text)
+    assert "(à cette date" not in text
 
 
 def test_t9_em_news_meta_rendered(client):
@@ -601,17 +606,23 @@ def test_t10_loto_news_date_modified():
     blocks = re.findall(r'<script type="application/ld\+json">(.*?)</script>', text, re.S)
     for raw in blocks:
         json.loads(raw)  # JSON-LD toujours valide
-    for pub in ("2026-04-27", "2026-02-14", "2026-02-11"):
+    for pub in ("2026-04-27",):
         assert re.search(rf'"datePublished": "{pub}",\s*"dateModified": "2026-11-09"', text), pub
-    for pub in ("2026-06-10", "2026-03-30", "2026-03-25", "2026-03-15", "2026-03-11"):
+    # 1.6.075 (D2) : articles retouchés par le lot → dateModified 2026-11-21
+    for pub in ("2026-03-15", "2026-02-14", "2026-02-11"):
+        assert re.search(rf'"datePublished": "{pub}",\s*"dateModified": "2026-11-21"', text), pub
+    for pub in ("2026-06-10", "2026-03-30", "2026-03-25", "2026-03-11"):
         assert re.search(rf'"datePublished": "{pub}",\s*"dateModified": "{pub}"', text), pub
 
 
 def test_t10_em_news_date_modified():
     text = _read("ui/templates/em/news.html")
-    for pub in ("2026-04-27", "2026-02-14", "2026-02-11", "2026-02-10"):
+    for pub in ("2026-04-27",):
         assert f'"datePublished": "{pub}", "dateModified": "2026-11-09",' in text, pub
-    for pub in ("2026-06-10", "2026-04-13", "2026-03-30", "2026-03-25", "2026-03-15"):
+    # 1.6.075 (D2) : articles retouchés par le lot → dateModified 2026-11-21
+    for pub in ("2026-03-15", "2026-02-14", "2026-02-11", "2026-02-10"):
+        assert f'"datePublished": "{pub}", "dateModified": "2026-11-21",' in text, pub
+    for pub in ("2026-06-10", "2026-04-13", "2026-03-30", "2026-03-25"):
         assert f'"datePublished": "{pub}", "dateModified": "{pub}",' in text, pub
 
 

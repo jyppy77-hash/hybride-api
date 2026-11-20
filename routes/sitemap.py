@@ -86,21 +86,21 @@ _EM_DYNAMIC_KEYS = frozenset({
 # Dates = dernière modif réelle du fichier (git), pas le JSON-LD obsolète
 # (décision Jyppy 11/06). ⚠️ À bumper À LA MAIN quand un lot modifie le contenu.
 _EDITORIAL_LASTMOD = {
-    "launcher":                         "2026-03-22",  # git edc4acd V53 launcher multilang
+    "launcher":                         "2026-11-21",  # lot audit journaliste (1.6.075)
     # — Loto FR —
     "/moteur":                          "2026-11-09",  # lot vérité HYBRIDE (1.6.067)
-    "/methodologie":                    "2026-06-01",  # git a64407f
-    "/loto/intelligence-artificielle":  "2026-11-09",  # lot vérité HYBRIDE (1.6.067)
-    "/hybride":                         "2026-11-09",  # lot vérité HYBRIDE (1.6.067)
-    "/a-propos":                        "2026-11-09",  # lot vérité HYBRIDE (1.6.067)
-    "/faq":                             "2026-11-09",  # lot vérité HYBRIDE (1.6.067)
+    "/methodologie":                    "2026-11-21",  # lot audit journaliste (1.6.075)
+    "/loto/intelligence-artificielle":  "2026-11-21",  # lot audit journaliste (1.6.075)
+    "/hybride":                         "2026-11-21",  # lot audit journaliste (1.6.075)
+    "/a-propos":                        "2026-11-21",  # lot audit journaliste (1.6.075)
+    "/faq":                             "2026-11-21",  # lot audit journaliste (1.6.075)
     # — EuroMillions (clé partagée 6 langues) —
-    "faq":                              "2026-06-01",  # git e8f2279 (1.6.039 numéros d'aide)
-    "a_propos":                         "2026-11-09",  # lot vérité HYBRIDE (1.6.067)
+    "faq":                              "2026-11-21",  # lot audit journaliste (1.6.075)
+    "a_propos":                         "2026-11-21",  # lot audit journaliste (1.6.075)
     "moteur":                           "2026-11-09",  # lot vérité HYBRIDE (1.6.067)
     "methodologie":                     "2026-06-01",  # git a64407f
-    "ia":                               "2026-11-09",  # lot vérité HYBRIDE (1.6.067)
-    "hybride_page":                     "2026-11-09",  # lot vérité HYBRIDE (1.6.067)
+    "ia":                               "2026-11-21",  # lot audit journaliste (1.6.075)
+    "hybride_page":                     "2026-11-21",  # lot audit journaliste (1.6.075)
 }
 
 

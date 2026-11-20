@@ -1105,9 +1105,14 @@ class TestAppVersion:
         LOT 1.6.074 (19/11, Release 1.6.074) — fix chatbot : étoiles à deux chiffres (contrôle 2), numéro EM hors FR,
         prochain tirage EM 6 langues, filtres de sortie traduits, top N des paires ; aucune page ni cache-buster
         touché ; title / meta / og / hreflang inchangés ; bump requis : ETag HTML lié à APP_VERSION.
+        LOT 1.6.075 (21/11, Release 1.6.075) — audit journaliste : FAQ /hybride numéros gagnants, versions
+        affichées, « sur les 7 dernières années », « Grounded » / « temps réel » retirés des pages servies (FAQ,
+        À propos, HYBRIDE, loto-ia / euromillions-ia, accroches chatbot, news, launcher ; title / og / twitter
+        /hybride modifiés), news sans chiffres datés + dateModified 2026-11-21, LAST_NEWS_DATE 2026-11-21,
+        _EDITORIAL_LASTMOD des pages modifiées ; aucun cache-buster ; bump requis : ETag HTML.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.074"
+        assert APP_VERSION == "1.6.075"
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

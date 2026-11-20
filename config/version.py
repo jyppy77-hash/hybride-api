@@ -5,6 +5,22 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# LOT 1.6.075 — Audit journaliste (Release 1.6.075, 21/11/2026). A : FAQ /hybride Loto + EM « HYBRIDE peut-il me
+# donner des numéros gagnants ? » (grilles générées ≠ pronostics, score /100 ≠ probabilité de gain), HTML = JSON-LD.
+# B : news Loto + EM, chiffres datés « 729 / 981 tirages (à cette date) » remplacés par « l'historique officiel des
+# tirages » (8 occurrences), mention « Article mis à jour le 21 novembre 2026. » sur l'article « EuroMillions arrive
+# sur LotoIA », dateModified 2026-11-21 des articles modifiés présents dans le JSON-LD, LAST_NEWS_DATE 2026-11-21.
+# C : pied de page app-version v1.5.004 → v1.6.075 en dur (pages Loto statiques + em/_footer.html, garde de test),
+# « 1.001 » → « 1.5.0 » (news Loto + EM), CTA news « … moteur HYBRIDE de LotoIA. » (sans version).
+# E : « depuis novembre 2019 » → « sur les 7 dernières années » (pages servies + .po).
+# F : « Grounded », « grounding » et « (en) temps réel » qualifiant le chatbot retirés des pages servies (FAQ, À
+# propos, HYBRIDE, loto-ia / euromillions-ia, accroches chatbot Loto + EM, news du 15/03, launcher ; JSON-LD et
+# meta compris ; classes CSS .grounded-* conservées) ; phrases à sujet explicite « Les réponses de … sont ancrées
+# sur la base officielle des tirages, mise à jour après chaque tirage ». RAG : « le serveur récupère … puis le
+# modèle rédige … ». /hybride : « ne donne PAS de "numéros magiques" : les grilles qu'il génère ne sont pas des
+# pronostics ». Sitemap : _EDITORIAL_LASTMOD 2026-11-21 des pages modifiées. Aucun prompt, aucun Python de
+# pipeline, aucun JS/CSS, aucun cache-buster. Bump requis : ETag HTML lié à APP_VERSION.
+
 # LOT 1.6.074 — Fix chatbot : étoiles, numéros et prochain tirage hors FR (Release 1.6.074, 19/11/2026 ; audit RO
 # 074 du 19/11). CF-1 contrôle 2 : une étoile à deux chiffres n'est plus coupée (« étoile 12 » ≠ {1, 2}), paire lue
 # après la suite citée ; CF-4 Phase 1 EM hors FR : « number / número / Nummer / Zahl / nummer N » (lang ≠ fr seulement) ;
@@ -446,9 +462,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.074"
+APP_VERSION = "1.6.075"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-11-19"
+VERSION_DATE = "2026-11-21"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.
@@ -460,7 +476,8 @@ LAST_DEPLOY_DATE = os.getenv("DEPLOY_DATE", date.today().isoformat())
 # Dernier article : « LotoIA renforce sa transparence » (1.6.046, 10/06/2026).
 # 1.6.067 : bumpé au 09/11/2026 sans nouvel article (articles corrigés + note de mise à jour).
 # 1.6.071 : article « Merci : LotoIA grandit grâce à vous » (14/11/2026).
-LAST_NEWS_DATE = "2026-11-14"
+# 1.6.075 : bumpé au 21/11/2026 sans nouvel article (articles corrigés, mention de mise à jour).
+LAST_NEWS_DATE = "2026-11-21"
 
 # Alias pour compatibilité avec engine/version.py
 __version__ = APP_VERSION

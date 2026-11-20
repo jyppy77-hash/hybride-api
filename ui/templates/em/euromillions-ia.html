@@ -82,7 +82,7 @@
           "name": {{ _('Quelle est la différence entre LotoIA et ChatGPT pour l\'EuroMillions ?')|tojson }},
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": {{ _('ChatGPT est un modèle de langage génératif qui n\'a pas accès aux données réelles des tirages. Il invente des numéros sans fondement statistique. LotoIA utilise une IA Grounded connectée aux %(total)s+ tirages officiels EuroMillions : ses réponses s\'appuient sur ces données réelles.')|format(total=em_db_total)|tojson }}
+            "text": {{ _('ChatGPT est un modèle de langage génératif qui n\'a pas accès aux données réelles des tirages. Il invente des numéros sans fondement statistique. Les réponses de LotoIA sont ancrées sur la base officielle des tirages (%(total)s+ tirages officiels EuroMillions), mise à jour après chaque tirage : elles s\'appuient sur ces données réelles.')|format(total=em_db_total)|tojson }}
           }
         },
         {
@@ -181,7 +181,7 @@
                 <p>{{ _('Le moteur combine trois fenêtres d\'analyse : <strong>les 5 dernières années</strong>, <strong>les 2 dernières années</strong> et <strong>l\'ensemble de l\'historique disponible</strong>. Les tirages récents, présents dans les trois fenêtres, pèsent davantage : la méthode équilibre stabilité statistique et réactivité.')|safe }}</p>
 
                 <h3>{{ _('L\'assistant IA conversationnel') }}</h3>
-                <p>{{ _('LotoIA intègre un chatbot alimenté par <strong>Gemini</strong> (Google DeepMind) en mode « Grounded » : l\'IA est connectée en temps réel à la base de données des tirages. Chaque réponse est ancrée sur des données vérifiées. Vous pouvez lui poser des questions sur les statistiques, les fréquences ou demander une analyse personnalisée.')|safe }}</p>
+                <p>{{ _('LotoIA intègre un chatbot alimenté par <strong>Gemini</strong> (Google DeepMind). Ses réponses sont ancrées sur la base officielle des tirages, mise à jour après chaque tirage. Vous pouvez lui poser des questions sur les statistiques, les fréquences ou demander une analyse personnalisée.')|safe }}</p>
             </section>
 
             {# ── 4. État de la recherche ── #}
@@ -209,7 +209,7 @@
                 <p>{{ _('Un simulateur aléatoire simple produit des numéros sans aucune analyse. C\'est honnête, mais c\'est aussi aveugle. LotoIA génère des grilles qui sont <strong>à la fois aléatoires et statistiquement équilibrées</strong> : bonne répartition pair/impair, bonne dispersion, numéros et étoiles diversifiés. Le résultat est une grille qui a autant de chances d\'être tirée qu\'une autre, mais moins de chances d\'être partagée en cas de correspondance.')|safe }}</p>
 
                 <h3>{{ _('Vs ChatGPT et les IA génératives') }}</h3>
-                <p>{{ _('ChatGPT, Claude ou Gemini (en mode libre) sont des modèles de langage. Quand vous leur demandez des numéros d\'EuroMillions, ils <strong>inventent</strong> — littéralement. Ils n\'ont pas accès aux données réelles des tirages et produisent des réponses plausibles mais sans fondement statistique. LotoIA utilise une IA <strong>« Grounded »</strong> (ancrée) : chaque analyse est calculée à partir des %(total)s+ tirages officiels stockés dans notre base de données Cloud SQL.')|format(total=em_db_total)|safe }}</p>
+                <p>{{ _('ChatGPT, Claude ou Gemini (en mode libre) sont des modèles de langage. Quand vous leur demandez des numéros d\'EuroMillions, ils <strong>inventent</strong> — littéralement. Ils n\'ont pas accès aux données réelles des tirages et produisent des réponses plausibles mais sans fondement statistique. Les réponses de LotoIA sont <strong>ancrées</strong> sur la base officielle des tirages, mise à jour après chaque tirage : chaque analyse est calculée à partir des %(total)s+ tirages officiels stockés dans notre base de données Cloud SQL.')|format(total=em_db_total)|safe }}</p>
 
                 <h3>{{ _('L\'avantage d\'une plateforme spécialisée') }}</h3>
                 <p>{{ _('LotoIA est un outil dédié, construit pour l\'analyse des tirages EuroMillions et Loto. Notre base couvre %(total)s+ tirages officiels EuroMillions, mis à jour après chaque tirage (mardis et vendredis). Le <a href="%(moteur_url)s">moteur HYBRIDE</a> a été conçu spécifiquement pour ce domaine, avec une <a href="%(methodo_url)s">méthodologie documentée</a> et transparente. C\'est cette spécialisation qui fait la différence.')|format(total=em_db_total, moteur_url=urls.moteur, methodo_url=urls.methodologie)|safe }}</p>
@@ -226,7 +226,7 @@
                 <p>{{ _('Le moteur HYBRIDE combine 5 algorithmes (analyse fréquentielle, retards, pondération temporelle, scoring multicritère et sélection optimale) appliqués aux %(total)s+ tirages officiels EuroMillions. Découvrez les détails sur la page <a href="%(moteur_url)s">Moteur HYBRIDE</a>.')|format(total=em_db_total, moteur_url=urls.moteur)|safe }}</p>
 
                 <h3>{{ _('Quelle est la différence entre LotoIA et ChatGPT pour l\'EuroMillions ?') }}</h3>
-                <p>{{ _('ChatGPT invente des numéros sans accès aux données réelles. LotoIA utilise une IA « Grounded » connectée aux tirages officiels EuroMillions : ses réponses s\'appuient sur les données réelles, pas sur des connaissances générales.')|safe }}</p>
+                <p>{{ _('ChatGPT invente des numéros sans accès aux données réelles. Les réponses de LotoIA sont ancrées sur la base officielle des tirages EuroMillions, mise à jour après chaque tirage : elles s\'appuient sur les données réelles, pas sur des connaissances générales.')|safe }}</p>
 
                 <h3>{{ _('Les « systèmes gagnants » EuroMillions fonctionnent-ils ?') }}</h3>
                 <p>{{ _('Non. Tout système prétendant garantir des gains à l\'EuroMillions est une arnaque. La probabilité de gagner le jackpot est de 1 sur 139 838 160, identique pour chaque combinaison.')|safe }}</p>

@@ -539,8 +539,8 @@ async def test_t5_number_rankings_stay_phase_3(game, lang, msg):
 
 def test_t6_version_config():
     from config.version import APP_VERSION, VERSION_DATE
-    assert APP_VERSION == "1.6.074"
-    assert VERSION_DATE == "2026-11-19"
+    assert tuple(int(p) for p in APP_VERSION.split(".")) >= (1, 6, 74)  # plancher (lot 1.6.075)
+    assert VERSION_DATE >= "2026-11-19"
 
 
 def test_t6_api_version():
@@ -559,8 +559,8 @@ def test_t6_api_version():
         resp = TestClient(main_mod.app, raise_server_exceptions=False).get("/api/version")
     assert resp.status_code == 200
     body = resp.json()
-    assert body["version"] == "1.6.074"
-    assert body["date"] == "2026-11-19"
+    assert tuple(int(p) for p in body["version"].split(".")) >= (1, 6, 74)  # plancher (lot 1.6.075)
+    assert body["date"] >= "2026-11-19"
 
 
 # ═══════════════════════════════════════════════════════

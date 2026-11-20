@@ -236,7 +236,7 @@ def test_t1_version():
     from config.version import APP_VERSION, LAST_NEWS_DATE, VERSION_DATE
     assert tuple(int(p) for p in APP_VERSION.split(".")) >= (1, 6, 71)
     assert VERSION_DATE >= "2026-11-14"
-    assert LAST_NEWS_DATE == "2026-11-14"
+    assert LAST_NEWS_DATE >= "2026-11-14"  # plancher (lot 1.6.075 : LAST_NEWS_DATE 2026-11-21)
 
 
 # ── T2 — position, featured, 10/06 conservé, contact ─────────────────────
@@ -432,8 +432,9 @@ def test_t8_sitemap_news_lastmod():
     root = ElementTree.fromstring(resp.content)
     lastmods = {u.findtext("sm:loc", namespaces=ns): u.findtext("sm:lastmod", namespaces=ns)
                 for u in root.findall("sm:url", ns)}
+    from config.version import LAST_NEWS_DATE  # 1.6.075 : lastmod des news = LAST_NEWS_DATE (2026-11-21)
     for path in PAGES.values():
-        assert lastmods[f"https://lotoia.fr{path}"] == "2026-11-14", path
+        assert lastmods[f"https://lotoia.fr{path}"] == LAST_NEWS_DATE >= "2026-11-14", path
 
 
 # ── T9 — catalogues ───────────────────────────────────────────────────────
