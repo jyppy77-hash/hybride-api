@@ -74,7 +74,9 @@ EXPECTED_CHANCE5 = [2, 9, 7, 4, 3]
 # Golden capturés AVANT modification (fichier ui/numeros-les-plus-sortis.html de acd5e40, 1.6.052)
 # 1.6.054 : squelette recalculé sur ce MÊME fichier acd5e40 avec cache-busters ?v=N neutralisés
 # (_norm_attrs) — l'ancien golden 068ffbb3… hashait les ?v= et cassait à chaque bump de JS.
-GOLDEN_SKELETON_MD5 = "78d9654a1462fda096ae2e5ae2a20818"
+# 1.6.075 (phase D, R-4) : <link legal.css> passe de « legal.css » (sans paramètre) à « legal.css?v=16 » → attribut
+# normalisé « ?v=* » ; seule ligne modifiée (squelette avec cette référence neutralisée = ancien golden 78d9654a…).
+GOLDEN_SKELETON_MD5 = "3cede99bcd147e0029110eae9a63dfa2"
 GOLDEN_SKELETON_LEN = 686
 GOLDEN_HEAD_SEGMENT_MD5 = "58d81a3338fd9e1ab066f79ebbc8bfc5"
 GOLDEN_TITLE = "<title>Numéros Loto les Plus Sortis depuis 2019 | LotoIA</title>"

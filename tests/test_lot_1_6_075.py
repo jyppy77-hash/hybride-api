@@ -20,7 +20,12 @@ Couvre :
       traduits en EN, boutons « Voir tous les numéros / toutes les étoiles » des statistiques EM et libellés JS
       « Voir moins / Voir les dates / Masquer les dates » (statistiques, paires) traduits (5 langues),
       contrôle « page entière » (nœuds de texte visibles identiques à la page FR) sur euromillions-ia, hybride,
-      statistiques et paires × 5 langues (20 pages), sans exception.
+      statistiques et paires × 5 langues (20 pages), sans exception ;
+  D   audit journaliste du 21/11 : R-4 « Tout refuser » lisible dans le panneau et le bandeau de consentement
+      (règle CSS dédiée, ratios WCAG calculés, cache-buster legal.css unique ?v=16 sur toutes les références
+      servies) ; R-5 phrase « 2089 tests automatiques … Zéro régression possible » remplacée (Loto + EM 6 langues) ;
+      R-6 « premier chatbot » retiré (titre, headline JSON-LD = titre visible, corps, .po) ; R-10 pied EM (lien
+      disclaimer identique dans les 6 langues, libellé DE « Haftungsausschluss », pied DE sans texte FR) ; ZÉRO FR sur les pages news EM.
 
 Hors assertions : classes CSS .grounded-* et commentaire CSS du launcher (non visibles), prompts du chatbot,
 textes générés par services/loto_key_figures.py et loto_top_numbers.py.
@@ -370,7 +375,8 @@ def test_t4_em_templates_present():
 def test_t4_news_dates():
     """D2 : dateModified 2026-11-21 des articles modifiés présents dans le JSON-LD ; publication inchangée."""
     loto = _read(UI / "news.html")
-    for pub in ("2026-03-15", "2026-02-14", "2026-02-11"):
+    # phase D (R-5) : + article Release 1.5.0 du 11/03 (Loto ; absent du JSON-LD EM)
+    for pub in ("2026-03-15", "2026-02-14", "2026-02-11", "2026-03-11"):
         assert re.search(rf'"datePublished": "{pub}",\s*"dateModified": "2026-11-21"', loto), pub
     em = _read(EM_TPL / "news.html")
     for pub in ("2026-03-15", "2026-02-14", "2026-02-11", "2026-02-10"):
@@ -641,3 +647,262 @@ def test_c4_po_entries(lang):
         msg = cat.get(fr)
         assert not msg.fuzzy
         assert msg.string == ("" if lang == "fr" else tr[lang]), (lang, fr)
+
+
+# ═══════════════════════════════════════════════════════
+# D — audit journaliste du 21/11 (Muse)
+#   R-4  « Tout refuser » : blanc sur blanc dans le panneau « Personnaliser » (1,00:1) ; contour du bandeau 2,72:1.
+#   R-5  « 2089 tests automatiques … Zéro régression possible » (article Release 1.5.0 du 11/03) remplacée.
+#   R-6  « premier chatbot » (article du 15/03 : titre, headline JSON-LD, corps) retiré.
+#   R-10 pied EM DE : le lien disclaimer est présent ; phase D-B (option a) : msgstr DE de « Avertissements »
+#        « Hinweise » → « Haftungsausschluss » (slug et titre de la page). 3 ou 4 liens selon la page dans les
+#        6 langues (drapeau show_disclaimer_link) : inchangé (option b reportée au 076).
+# ═══════════════════════════════════════════════════════
+
+LEGAL_CSS = UI / "static" / "legal.css"
+_D_CSS_VERSION = "?v=16"
+
+_D_TITLE = {"fr": "LotoIA lance son chatbot EuroMillions intelligent et gratuit",
+            "en": "LotoIA launches its intelligent and free EuroMillions chatbot",
+            "es": "LotoIA lanza su chatbot EuroMillions inteligente y gratuito",
+            "pt": "LotoIA lança o seu chatbot EuroMillions inteligente e gratuito",
+            "de": "LotoIA startet seinen intelligenten und kostenlosen EuroMillions-Chatbot",
+            "nl": "LotoIA lanceert zijn intelligente en gratis EuroMillions-chatbot"}
+_D_BODY = {"fr": "un chatbot EuroMillions ancré sur données réelles",
+           "en": "a EuroMillions chatbot anchored in real data",
+           "es": "un chatbot de EuroMillions basado en datos reales",
+           "pt": "um chatbot EuroMillions baseado em dados reais",
+           "de": "ein EuroMillions-Chatbot auf Basis realer Daten",
+           "nl": "een EuroMillions-chatbot gebaseerd op echte data"}
+_D_R5 = {"fr": "Une suite de <strong>tests automatisés</strong> vérifie chaque version avant sa mise en ligne.",
+         "en": "A suite of <strong>automated tests</strong> checks every version before it goes live.",
+         "es": "Un conjunto de <strong>tests automatizados</strong> verifica cada versión antes de su puesta en línea.",
+         "pt": "Um conjunto de <strong>testes automatizados</strong> verifica cada versão antes de ser colocada online.",
+         "de": "Eine Reihe <strong>automatisierter Tests</strong> prüft jede Version vor ihrer Veröffentlichung.",
+         "nl": "Een reeks <strong>geautomatiseerde tests</strong> controleert elke versie voordat deze online gaat."}
+_D_BODY_MSGID = ("Au cœur de cette nouveauté : <strong>HYBRIDE</strong>, un chatbot EuroMillions ancré sur données "
+                 "réelles, s'appuyant sur une base de données de plus de 730 tirages depuis 2019, mise à jour après "
+                 "chaque tirage. Posez-lui vos questions en français, anglais, espagnol, portugais, allemand ou "
+                 "néerlandais — il analyse les données et vous répond instantanément. Pas de réponses génériques : "
+                 "chaque réponse est calculée à partir des vrais résultats officiels.")
+_D_OLD_MSGIDS = [
+    "LotoIA lance le premier chatbot EuroMillions intelligent et gratuit",
+    _D_BODY_MSGID.replace(", un chatbot", ", le premier chatbot"),
+    "Chaque mise en production est précédée de <strong>2089 tests automatiques</strong> dans le pipeline cloud. "
+    "Si le moindre test échoue, le déploiement est bloqué. Zéro régression possible en production.",
+]
+# Formes interdites (FR et traductions relevées à l'inventaire de la phase D)
+_D_BANNED = [re.compile(p) for p in (
+    r"premier chatbot", r"\bfirst\b[^.<\n]{0,40}chatbot", r"\bprimer\b[^.<\n]{0,20}chatbot",
+    r"\bprimeiro\b[^.<\n]{0,20}chatbot", r"\berste[nrs]?\b[^.<\n]{0,40}[Cc]hatbot", r"\beerste\b[^.<\n]{0,40}chatbot",
+    r"\b2[ ,.  ]?089\b", r"Zéro régression", r"Zero regress", r"Cero regresi", r"Null Regression",
+    r"Nul regressie")]
+# Nœuds identiques légitimes des pages news (numéros de version, adresse e-mail, marque, nom de table, chemin
+# d'API, nom du produit)
+_D_NEWS_WL_RE = (re.compile(r"^Release \d+\.\d+\.\d+$"), re.compile(r"^\S+@\S+\.\S+$"))
+_D_NEWS_WHITELIST = {"Google for Startups", "tirages_euromillions", "/api/euromillions/*",
+                     "chatbot HYBRIDE EuroMillions", "✅ Chatbot HYBRIDE EuroMillions"}
+
+
+def _d_css_rule(css: str, selector: str) -> dict:
+    """Déclarations de la règle dont la liste de sélecteurs contient exactement `selector`."""
+    for sel, body in re.findall(r"([^{}]+)\{([^{}]*)\}", re.sub(r"/\*.*?\*/", "", css, flags=re.S)):
+        if selector in [s.strip() for s in sel.split(",")]:
+            return {k.strip(): v.strip() for k, v in re.findall(r"([\w-]+)\s*:\s*([^;]+);", body)}
+    raise AssertionError(f"règle absente : {selector}")
+
+
+def _d_lum(hexc: str) -> float:
+    r, g, b = (int(hexc.lstrip("#")[i:i + 2], 16) / 255 for i in (0, 2, 4))
+    f = (lambda c: c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4)
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b)
+
+
+def _d_ratio(a: str, b: str) -> float:
+    x, y = sorted((_d_lum(a), _d_lum(b)), reverse=True)
+    return (x + 0.05) / (y + 0.05)
+
+
+def _d_color(value: str) -> str:
+    """Première couleur hexadécimale de la valeur, normalisée en #rrggbb."""
+    m = re.search(r"#([0-9a-fA-F]{6}|[0-9a-fA-F]{3})\b", value)
+    assert m, value
+    h = m.group(1).lower()
+    return "#" + ("".join(c * 2 for c in h) if len(h) == 3 else h)
+
+
+def _d_border_color(decl: dict) -> str:
+    return _d_color(decl.get("border-color") or decl["border"])
+
+
+_NIGHT = ('body.night', 'body[data-theme="night"]', 'body.theme-night')
+
+
+def test_d_r4_panel_reject_readable():
+    css = _read(LEGAL_CSS)
+    panel_bg = _d_color(_d_css_rule(css, ".cookie-settings-panel")["background"])
+    assert panel_bg == "#ffffff"
+    rule = _d_css_rule(css, ".cookie-settings-panel .cookie-btn-reject")
+    fg = _d_color(rule["color"])
+    assert fg != panel_bg
+    assert _d_ratio(fg, panel_bg) >= 4.5
+    assert _d_ratio(_d_border_color(rule), panel_bg) >= 3          # contour visible (non-texte)
+    hover = _d_css_rule(css, ".cookie-settings-panel .cookie-btn-reject:hover")
+    assert _d_ratio(fg, _d_color(hover["background"])) >= 4.5
+    # nuit : même trois sélecteurs que le fond du panneau
+    for night in _NIGHT:
+        bg = _d_color(_d_css_rule(css, f"{night} .cookie-settings-panel")["background"])
+        r = _d_css_rule(css, f"{night} .cookie-settings-panel .cookie-btn-reject")
+        assert _d_ratio(_d_color(r["color"]), bg) >= 4.5, night
+        assert _d_ratio(_d_border_color(r), bg) >= 3, night
+
+
+def test_d_r4_banner_reject_readable():
+    css = _read(LEGAL_CSS)
+    bg = _d_color(_d_css_rule(css, ".cookie-banner")["background"])
+    fg = _d_color(_d_css_rule(css, ".cookie-btn-reject")["color"])
+    assert fg != bg
+    assert _d_ratio(fg, bg) >= 4.5
+    assert _d_ratio(_d_border_color(_d_css_rule(css, ".cookie-banner .cookie-btn-reject")), bg) >= 3
+
+
+def test_d_r4_same_size_as_accept():
+    """Présence équivalente : les règles dédiées ne changent ni taille, ni marge, ni police (même .cookie-btn)."""
+    css = _read(LEGAL_CSS)
+    sels = [".cookie-settings-panel .cookie-btn-reject", ".cookie-settings-panel .cookie-btn-reject:hover",
+            ".cookie-banner .cookie-btn-reject"] + [f"{n} .cookie-settings-panel .cookie-btn-reject" for n in _NIGHT]
+    for sel in sels:
+        decl = _d_css_rule(css, sel)
+        assert not {"padding", "font-size", "width", "height", "font-weight", "display"} & set(decl), sel
+    js = _read(UI / "static" / "cookie-consent.js")
+    assert js.count('class="cookie-btn cookie-btn-reject"') == 2      # bandeau + panneau
+    assert js.count('class="cookie-btn cookie-btn-accept"') == 2
+
+
+def test_d_r4_legal_css_cache_buster():
+    refs = []
+    for p in LOTO_SERVED + EM_SERVED + [LAUNCHER]:
+        refs += [(p.name, v) for v in re.findall(r'/ui/static/legal\.css(\?v=\d+)?"', _read(p))]
+    assert len(refs) == 26, refs
+    assert {v for _, v in refs} == {_D_CSS_VERSION}, sorted(set(refs))
+
+
+def _d_news_paths() -> list[tuple[str, str]]:
+    return [("fr", "/news")] + [(lg, EM_PATHS["news"][lg]) for lg in LANGS]
+
+
+@pytest.mark.parametrize("lang,path", _d_news_paths())
+def test_d_r5_r6_news_pages(client, lang, path):
+    page = _page(client, path)
+    visible = _visible(page)
+    raw = html.unescape(page)
+    for rx in _D_BANNED:
+        assert not rx.search(visible), (path, rx.pattern)
+        assert not rx.search(raw), (path, rx.pattern, "source (JSON-LD, meta)")
+    tr = "fr" if lang == "fr" else lang
+    assert _strip(_D_R5[tr]) in visible, path
+    assert _D_BODY[tr] in visible, path
+    assert _D_TITLE[tr] in visible, path
+
+
+@pytest.mark.parametrize("lang,path", _d_news_paths())
+def test_d_r6_headline_equals_visible_title(client, lang, path):
+    page = _page(client, path)
+    titles = [_strip(h).replace("\U0001f680", "").strip()
+              for h in re.findall(r'<h2 class="news-title">(.*?)</h2>', page, re.S)]
+    arts = []
+    for block in re.findall(r'<script type="application/ld\+json">(.*?)</script>', page, re.S):
+        arts += [a for a in json.loads(block).get("@graph", []) if a.get("@type") == "NewsArticle"]
+    launch = [a for a in arts if a["datePublished"] == "2026-03-15"]
+    assert len(launch) == 1, path
+    assert launch[0]["headline"] == _D_TITLE["fr" if lang == "fr" else lang], path
+    assert launch[0]["headline"] in titles, path
+    assert launch[0]["dateModified"] == "2026-11-21"
+    if path == "/news":  # article R-5 (Release 1.5.0) : présent dans le JSON-LD Loto seulement
+        rel = [a for a in arts if a["datePublished"] == "2026-03-11"]
+        assert len(rel) == 1 and rel[0]["dateModified"] == "2026-11-21"
+
+
+def test_d_r5_r6_sources():
+    """Gabarits et pages servis (Loto, EM, launcher) : aucune forme interdite, y compris JSON-LD et meta."""
+    for p in LOTO_SERVED + EM_SERVED + [LAUNCHER]:
+        text = _unesc(_read(p))
+        for rx in _D_BANNED:
+            assert not rx.search(text), (p.name, rx.pattern)
+    loto = _read(UI / "news.html")
+    assert '"headline": "LotoIA lance son chatbot EuroMillions intelligent et gratuit"' in loto
+    assert _D_R5["fr"] in loto
+
+
+@pytest.mark.parametrize("lang", LANGS)
+def test_d_po_entries(lang):
+    cat = _po(lang)
+    ids = [m.id for m in _active(cat)]
+    for mid, tr in ((_D_TITLE["fr"], _D_TITLE), (_D_R5["fr"], _D_R5), (_D_BODY_MSGID, _D_BODY)):
+        assert ids.count(mid) == 1, (lang, mid[:50])
+        msg = cat.get(mid)
+        assert not msg.fuzzy, (lang, mid[:50])
+        if lang == "fr":
+            assert msg.string == ""
+        else:
+            assert msg.string, (lang, mid[:50])
+            assert (tr[lang] == msg.string) if tr is not _D_BODY else (tr[lang] in msg.string), (lang, msg.string)
+            assert msg.string.count("<strong>") == mid.count("<strong>"), (lang, mid[:50])
+            assert msg.string.count("</strong>") == mid.count("</strong>"), (lang, mid[:50])
+    # R-10 (phase D-B, option a) : libellé du lien disclaimer du pied EM
+    disc = cat.get("Avertissements")
+    assert ids.count("Avertissements") == 1 and not disc.fuzzy, lang
+    if lang == "de":
+        assert disc.string == "Haftungsausschluss"
+    for old in _D_OLD_MSGIDS:
+        assert old not in ids, (lang, old[:50])
+    for m in _active(cat):
+        for rx in _D_BANNED:
+            assert not rx.search(m.id) and not rx.search(m.string or ""), (lang, rx.pattern, m.id[:60])
+
+
+@pytest.mark.parametrize("lang", NON_FR)
+def test_d_news_whole_page_no_fr_text_node(client, lang):
+    fr_nodes = set(_c_text_nodes(_page(client, EM_PATHS["news"]["fr"])))
+    left = []
+    for t in _c_text_nodes(_page(client, EM_PATHS["news"][lang])):
+        if (len(t) >= _C_MIN_LEN and t in fr_nodes and t not in _C_WHITELIST and t not in _D_NEWS_WHITELIST
+                and not any(r.match(t) for r in _D_NEWS_WL_RE + _C_WL_RE)):
+            left.append(t)
+    assert left == [], f"{lang} news : {left}"
+
+
+def _d_legal_links(page: str) -> list[tuple[str, str]]:
+    m = re.search(r'<div class="footer-legal">(.*?)</div>', page, re.S)
+    assert m, "footer-legal absent"
+    return [(h, _strip(t)) for h, t in re.findall(r'<a href="([^"]*)"[^>]*>(.*?)</a>', m.group(1), re.S) if h != "#"]
+
+
+@pytest.mark.parametrize("page_key", ("accueil", "generateur", "statistiques", "mentions", "confidentialite",
+                                      "cookies", "disclaimer"))
+def test_d_r10_footer_disclaimer_link_6_langs(client, page_key):
+    """Constat R-10 : sur les pages à lien disclaimer, 4 liens légaux dans les 6 langues, même route localisée."""
+    from config.templates import EM_URLS
+    for lang in LANGS:
+        links = _d_legal_links(_page(client, EM_URLS[lang][page_key]))
+        assert [h for h, _ in links] == [EM_URLS[lang][k] for k in ("mentions", "confidentialite", "cookies",
+                                                                     "disclaimer")], (lang, page_key, links)
+    # phase D-B (R-10, option a) : libellé DE « Hinweise » → « Haftungsausschluss »
+    assert _d_legal_links(_page(client, EM_URLS["de"]["accueil"]))[3] == ("/de/euromillions/haftungsausschluss",
+                                                                           "Haftungsausschluss")
+    assert "Hinweise" not in [t for _, t in _d_legal_links(_page(client, EM_URLS["de"][page_key]))]
+
+
+@pytest.mark.parametrize("page_key", ("accueil", "news", "simulateur", "historique", "faq", "a_propos", "moteur",
+                                      "methodologie", "ia", "hybride_page", "statistiques", "disclaimer"))
+def test_d_r10_de_footer_no_fr_text_node(client, page_key):
+    from config.templates import EM_URLS
+
+    def _footer_nodes(path):
+        m = re.search(r'<footer class="footer".*?</footer>', _page(client, path), re.S)
+        assert m, path
+        return _c_text_nodes(m.group(0))
+    fr = set(_footer_nodes(EM_URLS["fr"][page_key]))
+    left = [t for t in _footer_nodes(EM_URLS["de"][page_key])
+            if len(t) >= _C_MIN_LEN and t in fr and t not in _C_WHITELIST and not any(r.match(t) for r in _C_WL_RE)]
+    assert left == [], (page_key, left)

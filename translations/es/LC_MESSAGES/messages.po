@@ -3949,8 +3949,8 @@ msgid "LANCEMENT"
 msgstr "LANZAMIENTO"
 
 #: ui/templates/em/news.html:142
-msgid "LotoIA lance le premier chatbot EuroMillions intelligent et gratuit"
-msgstr "LotoIA lanza el primer chatbot EuroMillions inteligente y gratuito"
+msgid "LotoIA lance son chatbot EuroMillions intelligent et gratuit"
+msgstr "LotoIA lanza su chatbot EuroMillions inteligente y gratuito"
 
 #: ui/templates/em/news.html:144
 msgid ""
@@ -3965,7 +3965,7 @@ msgstr ""
 
 #: ui/templates/em/news.html:146
 msgid ""
-"Au cœur de cette nouveauté : <strong>HYBRIDE</strong>, le premier chatbot"
+"Au cœur de cette nouveauté : <strong>HYBRIDE</strong>, un chatbot"
 " EuroMillions ancré sur données réelles, s'appuyant sur une "
 "base de données de plus de 730 tirages depuis 2019, mise à jour après chaque tirage. Posez-lui vos "
 "questions en français, anglais, espagnol, portugais, allemand ou "
@@ -3973,7 +3973,7 @@ msgid ""
 "de réponses génériques : chaque réponse est calculée à partir des vrais "
 "résultats officiels."
 msgstr ""
-"En el corazón de esta novedad: <strong>HYBRIDE</strong>, el primer "
+"En el corazón de esta novedad: <strong>HYBRIDE</strong>, un "
 "chatbot de EuroMillions basado en datos reales, apoyado en "
 "una base de datos de más de 730 sorteos desde 2019, actualizada después de cada sorteo. Formule sus "
 "preguntas en francés, inglés, español, portugués, alemán u holandés — "
@@ -4049,14 +4049,8 @@ msgid "Des déploiements 100%% sécurisés"
 msgstr "Despliegues 100% seguros"
 
 #: ui/templates/em/news.html:169
-msgid ""
-"Chaque mise en production est précédée de <strong>2089 tests "
-"automatiques</strong> dans le pipeline cloud. Si le moindre test échoue, "
-"le déploiement est bloqué. Zéro régression possible en production."
-msgstr ""
-"Cada despliegue en producción va precedido de <strong>2089 tests "
-"automáticos</strong> en el pipeline cloud. Si un solo test falla, el "
-"despliegue se bloquea. Cero regresiones posibles en producción."
+msgid "Une suite de <strong>tests automatisés</strong> vérifie chaque version avant sa mise en ligne."
+msgstr "Un conjunto de <strong>tests automatizados</strong> verifica cada versión antes de su puesta en línea."
 
 #: ui/templates/em/news.html:171
 msgid "Optimisations techniques"

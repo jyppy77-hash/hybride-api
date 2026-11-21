@@ -3311,7 +3311,7 @@ msgid "LANCEMENT"
 msgstr ""
 
 #: ui/templates/em/news.html:142
-msgid "LotoIA lance le premier chatbot EuroMillions intelligent et gratuit"
+msgid "LotoIA lance son chatbot EuroMillions intelligent et gratuit"
 msgstr ""
 
 #: ui/templates/em/news.html:144
@@ -3323,7 +3323,7 @@ msgid ""
 msgstr ""
 
 #: ui/templates/em/news.html:146
-msgid "Au cœur de cette nouveauté : <strong>HYBRIDE</strong>, le premier chatbot EuroMillions ancré sur données réelles, s'appuyant sur une base de données de plus de 730 tirages depuis 2019, mise à jour après chaque tirage. Posez-lui vos questions en français, anglais, espagnol, portugais, allemand ou néerlandais — il analyse les données et vous répond instantanément. Pas de réponses génériques : chaque réponse est calculée à partir des vrais résultats officiels."
+msgid "Au cœur de cette nouveauté : <strong>HYBRIDE</strong>, un chatbot EuroMillions ancré sur données réelles, s'appuyant sur une base de données de plus de 730 tirages depuis 2019, mise à jour après chaque tirage. Posez-lui vos questions en français, anglais, espagnol, portugais, allemand ou néerlandais — il analyse les données et vous répond instantanément. Pas de réponses génériques : chaque réponse est calculée à partir des vrais résultats officiels."
 msgstr ""
 
 #: ui/templates/em/news.html:148
@@ -3380,10 +3380,7 @@ msgid "Des déploiements 100%% sécurisés"
 msgstr "Des déploiements 100% sécurisés"
 
 #: ui/templates/em/news.html:169
-msgid ""
-"Chaque mise en production est précédée de <strong>2089 tests "
-"automatiques</strong> dans le pipeline cloud. Si le moindre test échoue, "
-"le déploiement est bloqué. Zéro régression possible en production."
+msgid "Une suite de <strong>tests automatisés</strong> vérifie chaque version avant sa mise en ligne."
 msgstr ""
 
 #: ui/templates/em/news.html:171

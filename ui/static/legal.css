@@ -724,6 +724,38 @@ body.theme-night .cookie-settings-panel {
     color: #e5e7eb;
 }
 
+/* 1.6.075 (R-4, 21/11) — « Tout refuser » aussi visible que « Tout accepter ». Dans le panneau (fond blanc),
+   .cookie-btn-reject gardait le texte blanc du bandeau : blanc sur blanc (1,00:1). Même .cookie-btn (taille et zone
+   cliquable), style secondaire à contour. Couleurs déjà présentes dans cette feuille : texte du panneau #1f2937,
+   --legal-accent #3b82f6, --legal-bg-highlight #eff6ff ; nuit : #e5e7eb, lien nuit #60a5fa.
+   Ratios texte/fond : jour 14,68:1, nuit 11,86:1 ; contour : jour 3,68:1, nuit 5,77:1, bandeau 6,71:1. */
+.cookie-settings-panel .cookie-btn-reject {
+    color: #1f2937;
+    border: 1px solid #3b82f6;
+}
+
+.cookie-settings-panel .cookie-btn-reject:hover {
+    background: #eff6ff;
+}
+
+body.night .cookie-settings-panel .cookie-btn-reject,
+body[data-theme="night"] .cookie-settings-panel .cookie-btn-reject,
+body.theme-night .cookie-settings-panel .cookie-btn-reject {
+    color: #e5e7eb;
+    border-color: #60a5fa;
+}
+
+body.night .cookie-settings-panel .cookie-btn-reject:hover,
+body[data-theme="night"] .cookie-settings-panel .cookie-btn-reject:hover,
+body.theme-night .cookie-settings-panel .cookie-btn-reject:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Bandeau (fond #1a1a2e) : texte déjà lisible (17,06:1) ; contour rgba(255,255,255,.3) à 2,72:1 (< 3:1) */
+.cookie-banner .cookie-btn-reject {
+    border-color: #60a5fa;
+}
+
 .cookie-settings-header {
     display: flex;
     align-items: center;

@@ -609,9 +609,10 @@ def test_t10_loto_news_date_modified():
     for pub in ("2026-04-27",):
         assert re.search(rf'"datePublished": "{pub}",\s*"dateModified": "2026-11-09"', text), pub
     # 1.6.075 (D2) : articles retouchés par le lot → dateModified 2026-11-21
-    for pub in ("2026-03-15", "2026-02-14", "2026-02-11"):
+    # 1.6.075 (phase D, R-5) : l'article Release 1.5.0 du 11/03 est retouché (phrase « 2089 tests… ») → 2026-11-21
+    for pub in ("2026-03-15", "2026-02-14", "2026-02-11", "2026-03-11"):
         assert re.search(rf'"datePublished": "{pub}",\s*"dateModified": "2026-11-21"', text), pub
-    for pub in ("2026-06-10", "2026-03-30", "2026-03-25", "2026-03-11"):
+    for pub in ("2026-06-10", "2026-03-30", "2026-03-25"):
         assert re.search(rf'"datePublished": "{pub}",\s*"dateModified": "{pub}"', text), pub
 
 

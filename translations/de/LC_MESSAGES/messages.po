@@ -281,7 +281,7 @@ msgstr "Über uns"
 
 #: ui/templates/em/_footer.html:37
 msgid "Avertissements"
-msgstr "Hinweise"
+msgstr "Haftungsausschluss"
 
 #: ui/templates/em/_footer.html:44
 msgid "Voir aussi"
@@ -3953,10 +3953,8 @@ msgid "LANCEMENT"
 msgstr "EINFÜHRUNG"
 
 #: ui/templates/em/news.html:142
-msgid "LotoIA lance le premier chatbot EuroMillions intelligent et gratuit"
-msgstr ""
-"LotoIA startet den ersten intelligenten und kostenlosen EuroMillions-"
-"Chatbot"
+msgid "LotoIA lance son chatbot EuroMillions intelligent et gratuit"
+msgstr "LotoIA startet seinen intelligenten und kostenlosen EuroMillions-Chatbot"
 
 #: ui/templates/em/news.html:144
 msgid ""
@@ -3972,7 +3970,7 @@ msgstr ""
 
 #: ui/templates/em/news.html:146
 msgid ""
-"Au cœur de cette nouveauté : <strong>HYBRIDE</strong>, le premier chatbot"
+"Au cœur de cette nouveauté : <strong>HYBRIDE</strong>, un chatbot"
 " EuroMillions ancré sur données réelles, s'appuyant sur une "
 "base de données de plus de 730 tirages depuis 2019, mise à jour après chaque tirage. Posez-lui vos "
 "questions en français, anglais, espagnol, portugais, allemand ou "
@@ -3980,7 +3978,7 @@ msgid ""
 "de réponses génériques : chaque réponse est calculée à partir des vrais "
 "résultats officiels."
 msgstr ""
-"Im Mittelpunkt dieser Neuerung: <strong>HYBRIDE</strong>, der erste "
+"Im Mittelpunkt dieser Neuerung: <strong>HYBRIDE</strong>, ein "
 "EuroMillions-Chatbot auf Basis realer Daten, gestützt auf eine "
 "Datenbank von über 730 Ziehungen seit 2019, die nach jeder Ziehung aktualisiert wird. Stellen Sie Ihre "
 "Fragen auf Französisch, Englisch, Spanisch, Portugiesisch, Deutsch oder "
@@ -4057,14 +4055,8 @@ msgid "Des déploiements 100%% sécurisés"
 msgstr "100% sichere Deployments"
 
 #: ui/templates/em/news.html:169
-msgid ""
-"Chaque mise en production est précédée de <strong>2089 tests "
-"automatiques</strong> dans le pipeline cloud. Si le moindre test échoue, "
-"le déploiement est bloqué. Zéro régression possible en production."
-msgstr ""
-"Jedem Produktions-Deployment gehen <strong>2.089 automatische "
-"Tests</strong> in der Cloud-Pipeline voraus. Schlägt auch nur ein Test "
-"fehl, wird das Deployment blockiert. Null Regressionen in der Produktion."
+msgid "Une suite de <strong>tests automatisés</strong> vérifie chaque version avant sa mise en ligne."
+msgstr "Eine Reihe <strong>automatisierter Tests</strong> prüft jede Version vor ihrer Veröffentlichung."
 
 #: ui/templates/em/news.html:171
 msgid "Optimisations techniques"
