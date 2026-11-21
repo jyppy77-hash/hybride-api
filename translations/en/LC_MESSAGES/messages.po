@@ -993,7 +993,7 @@ msgid ""
 "et ne peut pas — faire pour les amateurs d'EuroMillions, en s'appuyant "
 "sur la science, les mathématiques et l'expérience concrète du <a "
 "href=\"%(moteur_url)s\">moteur HYBRIDE</a> développé par LotoIA."
-msgstr ""
+msgstr "This article looks at what artificial intelligence can — and cannot — do for EuroMillions enthusiasts, drawing on science, mathematics and the hands-on experience of the <a href=\"%(moteur_url)s\">HYBRIDE engine</a> developed by LotoIA."
 
 #: ui/templates/em/euromillions-ia.html:131
 msgid "L'IA peut-elle prédire l'EuroMillions ?"
@@ -1094,7 +1094,7 @@ msgid ""
 "Elles ne prédisent pas l'avenir, mais elles décrivent précisément le "
 "passé. Consultez nos <a href=\"%(stats_url)s\">statistiques "
 "détaillées</a>."
-msgstr ""
+msgstr "By analysing the <strong>%(total)s+ official EuroMillions draws</strong>, AI identifies which numbers (1-50) and which stars (1-12) have been drawn most often (\"hot\") and which are overdue (\"cold\"). These statistics are factual and verifiable. They do not predict the future, but they describe the past precisely. See our <a href=\"%(stats_url)s\">detailed statistics</a>."
 
 #: ui/templates/em/euromillions-ia.html:155
 msgid "Détection des biais cognitifs"
@@ -1145,7 +1145,7 @@ msgid ""
 "répartition bas/haut (1-25 vs 26-50), dispersion, somme totale et "
 "présence de suites. Les étoiles (1-12) sont évaluées séparément. Ce n'est"
 " pas de la prédiction, c'est de l'audit statistique."
-msgstr ""
+msgstr "Our <a href=\"%(sim_url)s\">grid analysis simulator</a> evaluates your selection against objective criteria: odd/even balance, low/high distribution (1-25 vs 26-50), dispersion, total sum and presence of sequences. Stars (1-12) are evaluated separately. This is not prediction, it is a statistical audit."
 
 #: ui/templates/em/euromillions-ia.html:167
 msgid "Comment fonctionne le moteur HYBRIDE de LotoIA"
@@ -1157,7 +1157,7 @@ msgid ""
 "Le <a href=\"%(moteur_url)s\">moteur HYBRIDE</a> est le cœur "
 "algorithmique de LotoIA. Son approche se résume en une phrase : <strong>«"
 " Analyser, pas prédire »</strong>."
-msgstr ""
+msgstr "The <a href=\"%(moteur_url)s\">HYBRIDE engine</a> is LotoIA's algorithmic core. Its approach can be summed up in one sentence: <strong>\"Analyse, don't predict\"</strong>."
 
 #: ui/templates/em/euromillions-ia.html:171
 msgid "Les 5 algorithmes du moteur"
@@ -1375,7 +1375,7 @@ msgid ""
 "pour ce domaine, avec une <a href=\"%(methodo_url)s\">méthodologie "
 "documentée</a> et transparente. C'est cette spécialisation qui fait la "
 "différence."
-msgstr ""
+msgstr "LotoIA is a dedicated tool, built for analysing EuroMillions and Loto draws. Our database covers %(total)s+ official EuroMillions draws, updated after every draw (Tuesdays and Fridays). The <a href=\"%(moteur_url)s\">HYBRIDE engine</a> was designed specifically for this field, with a <a href=\"%(methodo_url)s\">documented methodology</a> and full transparency. It is this specialisation that makes the difference."
 
 #: ui/templates/em/euromillions-ia.html:220 ui/templates/em/generateur.html:289
 msgid "Questions fréquentes"
@@ -1399,7 +1399,7 @@ msgid ""
 "pondération temporelle, scoring multicritère et sélection optimale) "
 "appliqués aux %(total)s+ tirages officiels EuroMillions. Découvrez les "
 "détails sur la page <a href=\"%(moteur_url)s\">Moteur HYBRIDE</a>."
-msgstr ""
+msgstr "The HYBRIDE engine combines 5 algorithms (frequency analysis, gaps, time weighting, multi-criteria scoring and optimal selection) applied to the %(total)s+ official EuroMillions draws. Find out more on the <a href=\"%(moteur_url)s\">HYBRIDE Engine</a> page."
 
 #: ui/templates/em/euromillions-ia.html:229
 msgid "ChatGPT invente des numéros sans accès aux données réelles. Les réponses de LotoIA sont ancrées sur la base officielle des tirages EuroMillions, mise à jour après chaque tirage : elles s'appuient sur les données réelles, pas sur des connaissances générales."
@@ -1423,7 +1423,7 @@ msgid ""
 " inscription : <a href=\"%(gen_url)s\">exploration de grilles</a>, <a "
 "href=\"%(sim_url)s\">analyse de grille</a>, <a "
 "href=\"%(stats_url)s\">statistiques</a> et chatbot IA."
-msgstr ""
+msgstr "LotoIA is an independent project whose mission is to make statistics accessible. All features are free, with no registration: <a href=\"%(gen_url)s\">grid exploration</a>, <a href=\"%(sim_url)s\">grid analysis</a>, <a href=\"%(stats_url)s\">statistics</a> and AI chatbot."
 
 #: ui/templates/em/euromillions-ia.html:244 ui/templates/em/hybride.html:441
 msgid "Jeu responsable"
@@ -2488,7 +2488,7 @@ msgid ""
 "HYBRIDE n'est pas un chatbot décoratif. Il est connecté à la même base de"
 " données que le <a href=\"%(moteur_url)s\">moteur d'exploration</a> et "
 "les <a href=\"%(stats_url)s\">statistiques</a> de LotoIA :"
-msgstr ""
+msgstr "HYBRIDE is not a decorative chatbot. It is connected to the same database as LotoIA's <a href=\"%(moteur_url)s\">exploration engine</a> and <a href=\"%(stats_url)s\">statistics</a>:"
 
 #: ui/templates/em/hybride.html:264
 #, python-format
@@ -2565,7 +2565,7 @@ msgid ""
 "mêmes</strong> que celles affichées dans la page <a "
 "href=\"%(stats_url)s\">Statistiques</a>. Pas de base alternative, pas de "
 "données approximatives."
-msgstr ""
+msgstr "The data used by HYBRIDE is <strong>exactly the same</strong> as the data shown on the <a href=\"%(stats_url)s\">Statistics</a> page. No alternative database, no approximate data."
 
 #: ui/templates/em/hybride.html:284
 msgid "Ce que vous pouvez demander à HYBRIDE"
@@ -2729,7 +2729,7 @@ msgid ""
 "pullulent, HYBRIDE choisit la transparence et l'intégrité. Pour en savoir"
 " plus, consultez notre article <a href=\"%(ia_url)s\">EuroMillions et "
 "Intelligence Artificielle</a>."
-msgstr ""
+msgstr "This honesty is not a limitation — it is a <strong>strength</strong>. In a world where \"prediction\" sites are everywhere, HYBRIDE chooses transparency and integrity. To learn more, read our article <a href=\"%(ia_url)s\">EuroMillions and Artificial Intelligence</a>."
 
 #: ui/templates/em/hybride.html:342
 msgid "HYBRIDE vs ChatGPT — Le comparatif"
@@ -5092,6 +5092,30 @@ msgstr "Most drawn stars"
 #: ui/templates/em/statistiques.html:665
 msgid "Étoiles les moins sorties"
 msgstr "Least drawn stars"
+
+#: ui/templates/em/statistiques.html:657 ui/templates/em/statistiques.html:663
+#: ui/templates/em/statistiques.html:789
+msgid "Voir tous les numéros"
+msgstr "View all numbers"
+
+#: ui/templates/em/statistiques.html:674 ui/templates/em/statistiques.html:680
+#: ui/templates/em/statistiques.html:790
+msgid "Voir toutes les étoiles"
+msgstr "View all stars"
+
+#: ui/templates/em/statistiques.html:791
+msgid "Voir moins"
+msgstr "Show less"
+
+#: ui/templates/em/paires.html:245 ui/templates/em/statistiques.html:792
+#: ui/templates/em/statistiques.html:1105
+msgid "Voir les dates"
+msgstr "Show dates"
+
+#: ui/templates/em/paires.html:246 ui/templates/em/statistiques.html:793
+#: ui/templates/em/statistiques.html:1106
+msgid "Masquer les dates"
+msgstr "Hide dates"
 
 #: ui/templates/em/statistiques.html:671
 msgid "À propos de ces données :"

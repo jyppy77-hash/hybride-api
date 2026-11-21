@@ -5199,6 +5199,30 @@ msgstr "Estrelas mais sorteadas"
 msgid "Étoiles les moins sorties"
 msgstr "Estrelas menos sorteadas"
 
+#: ui/templates/em/statistiques.html:657 ui/templates/em/statistiques.html:663
+#: ui/templates/em/statistiques.html:789
+msgid "Voir tous les numéros"
+msgstr "Ver todos os números"
+
+#: ui/templates/em/statistiques.html:674 ui/templates/em/statistiques.html:680
+#: ui/templates/em/statistiques.html:790
+msgid "Voir toutes les étoiles"
+msgstr "Ver todas as estrelas"
+
+#: ui/templates/em/statistiques.html:791
+msgid "Voir moins"
+msgstr "Ver menos"
+
+#: ui/templates/em/paires.html:245 ui/templates/em/statistiques.html:792
+#: ui/templates/em/statistiques.html:1105
+msgid "Voir les dates"
+msgstr "Ver as datas"
+
+#: ui/templates/em/paires.html:246 ui/templates/em/statistiques.html:793
+#: ui/templates/em/statistiques.html:1106
+msgid "Masquer les dates"
+msgstr "Ocultar as datas"
+
 #: ui/templates/em/statistiques.html:671
 msgid "À propos de ces données :"
 msgstr "Sobre estes dados:"

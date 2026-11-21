@@ -5263,6 +5263,30 @@ msgstr "Am häufigsten gezogene Sterne"
 msgid "Étoiles les moins sorties"
 msgstr "Am seltensten gezogene Sterne"
 
+#: ui/templates/em/statistiques.html:657 ui/templates/em/statistiques.html:663
+#: ui/templates/em/statistiques.html:789
+msgid "Voir tous les numéros"
+msgstr "Alle Zahlen anzeigen"
+
+#: ui/templates/em/statistiques.html:674 ui/templates/em/statistiques.html:680
+#: ui/templates/em/statistiques.html:790
+msgid "Voir toutes les étoiles"
+msgstr "Alle Sterne anzeigen"
+
+#: ui/templates/em/statistiques.html:791
+msgid "Voir moins"
+msgstr "Weniger anzeigen"
+
+#: ui/templates/em/paires.html:245 ui/templates/em/statistiques.html:792
+#: ui/templates/em/statistiques.html:1105
+msgid "Voir les dates"
+msgstr "Daten anzeigen"
+
+#: ui/templates/em/paires.html:246 ui/templates/em/statistiques.html:793
+#: ui/templates/em/statistiques.html:1106
+msgid "Masquer les dates"
+msgstr "Daten ausblenden"
+
 #: ui/templates/em/statistiques.html:671
 msgid "À propos de ces données :"
 msgstr "Über diese Daten:"

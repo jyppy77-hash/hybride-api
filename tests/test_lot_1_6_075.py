@@ -15,7 +15,12 @@ Couvre :
   T6  ZÉRO string FR visible : chaînes FR du lot absentes des pages EM rendues (EN/ES/PT/DE/NL), pages hybride,
       faq, à-propos, news, euromillions-ia, générateur, simulateur, statistiques ;
   T7  aucune pondération du score (40 / 35 / 25 %) dans les pages HYBRIDE, FAQ, Méthodologie, Moteur ;
-  T8  .po : msgid du lot présents une fois, msgstr remplis hors FR, aucun fuzzy, anciens msgid absents.
+  T8  .po : msgid du lot présents une fois, msgstr remplis hors FR, aucun fuzzy, anciens msgid absents ;
+  C   dette i18n préexistante (phases C-A et C-B) : passages A1-A7 (euromillions-ia) et B1-B3 (hybride)
+      traduits en EN, boutons « Voir tous les numéros / toutes les étoiles » des statistiques EM et libellés JS
+      « Voir moins / Voir les dates / Masquer les dates » (statistiques, paires) traduits (5 langues),
+      contrôle « page entière » (nœuds de texte visibles identiques à la page FR) sur euromillions-ia, hybride,
+      statistiques et paires × 5 langues (20 pages), sans exception.
 
 Hors assertions : classes CSS .grounded-* et commentaire CSS du launcher (non visibles), prompts du chatbot,
 textes générés par services/loto_key_figures.py et loto_top_numbers.py.
@@ -461,3 +466,178 @@ def test_t8_po_catalogs(lang):
             assert "Grounded" not in msg.string and "grounding" not in msg.string.lower()
     for mid in OLD_MSGIDS:
         assert mid not in ids, (lang, mid)
+
+
+# ═══════════════════════════════════════════════════════
+# C — dette i18n préexistante (présente en prod 1.6.074) : msgstr EN vides (A1-A6 euromillions-ia,
+# B1-B3 hybride) et msgid absents des 6 .po (C : boutons « Voir tous les numéros / toutes les étoiles »
+# des statistiques EM, aussi repris par l'objet i18n JS de la page via |tojson).
+# Phase C-B : A7 (euromillions-ia.html:169, msgstr EN vide) ; libellés JS « Voir moins », « Voir les dates »,
+# « Masquer les dates » (objets i18n inline de statistiques.html et paires.html, msgid absents des 6 .po).
+# ═══════════════════════════════════════════════════════
+
+_C_TPL = {  # code -> (gabarit, ligne du _('…'))
+    "A1": ("euromillions-ia.html", 126), "A2": ("euromillions-ia.html", 153), "A3": ("euromillions-ia.html", 162),
+    "A4": ("euromillions-ia.html", 215), "A5": ("euromillions-ia.html", 226), "A6": ("euromillions-ia.html", 235),
+    "A7": ("euromillions-ia.html", 169),
+    "B1": ("hybride.html", 277), "B2": ("hybride.html", 295), "B3": ("hybride.html", 353),
+}
+_C_EN = {  # extraits des msgstr EN ajoutés
+    "A1": "This article looks at what artificial intelligence can",
+    "A2": "AI identifies which numbers (1-50) and which stars (1-12)",
+    "A3": "evaluates your selection against objective criteria",
+    "A4": "LotoIA is a dedicated tool, built for analysing EuroMillions and Loto draws",
+    "A5": "Find out more on the",
+    "A6": "LotoIA is an independent project whose mission is to make statistics accessible",
+    "A7": "is LotoIA's algorithmic core",
+    "B1": "HYBRIDE is not a decorative chatbot",
+    "B2": "as the data shown on the",
+    "B3": "This honesty is not a limitation",
+}
+_C_LABELS = {"Voir tous les numéros": {"en": "View all numbers", "es": "Ver todos los números",
+                                       "pt": "Ver todos os números", "de": "Alle Zahlen anzeigen",
+                                       "nl": "Alle nummers bekijken"},
+             "Voir toutes les étoiles": {"en": "View all stars", "es": "Ver todas las estrellas",
+                                         "pt": "Ver todas as estrelas", "de": "Alle Sterne anzeigen",
+                                         "nl": "Alle sterren bekijken"}}
+# Libellés posés par le JS inline (objets STRINGS / PS, |tojson), visibles après interaction
+_C_JS_LABELS = {"Voir moins": {"en": "Show less", "es": "Ver menos", "pt": "Ver menos", "de": "Weniger anzeigen",
+                               "nl": "Minder bekijken"},
+                "Voir les dates": {"en": "Show dates", "es": "Ver las fechas", "pt": "Ver as datas",
+                                   "de": "Daten anzeigen", "nl": "Datums bekijken"},
+                "Masquer les dates": {"en": "Hide dates", "es": "Ocultar las fechas", "pt": "Ocultar as datas",
+                                      "de": "Daten ausblenden", "nl": "Datums verbergen"}}
+_C_PATHS = {**EM_PATHS,
+            "paires": {"fr": "/euromillions/paires", "en": "/en/euromillions/pairs", "es": "/es/euromillions/pares",
+                       "pt": "/pt/euromillions/pares", "de": "/de/euromillions/paare",
+                       "nl": "/nl/euromillions/paren"}}
+_C_TAG_OR_PH = re.compile(r"%\(\w+\)s|<[^>]+>")
+
+
+def _c_msgid(code: str) -> str:
+    name, line = _C_TPL[code]
+    src = _read(EM_TPL / name).splitlines()[line - 1]
+    m = re.search(r"_\('((?:[^'\\]|\\.)*)'\)", src)
+    assert m, (code, name, line)
+    return _unesc(m.group(1))
+
+
+def _c_fr_fragment(code: str) -> str:
+    """40 premiers caractères du plus long segment du msgid sans balise ni placeholder."""
+    seg = max(_C_TAG_OR_PH.split(_c_msgid(code)), key=len)
+    return " ".join(seg.split())[:40]
+
+
+@pytest.mark.parametrize("code", list(_C_TPL))
+def test_c1_en_fr_passages_translated(client, code):
+    key = "ia" if code.startswith("A") else "hybride"
+    visible = _visible(_page(client, EM_PATHS[key]["en"]))
+    frag = _c_fr_fragment(code)
+    assert len(frag) == 40
+    assert frag not in visible, f"{code} : « {frag} »"
+    assert _C_EN[code] in visible, code
+    # la page FR garde le texte source
+    assert frag in _visible(_page(client, EM_PATHS[key]["fr"])), code
+
+
+@pytest.mark.parametrize("lang", NON_FR)
+def test_c2_stats_buttons_translated(client, lang):
+    page = _page(client, EM_PATHS["statistiques"][lang])
+    full = html.unescape(page)
+    for fr, tr in _C_LABELS.items():
+        assert fr not in full, (lang, fr)
+        assert json.dumps(fr)[1:-1] not in page, (lang, fr, "objet i18n JS")
+        assert full.count(tr[lang]) >= 2, (lang, tr[lang])        # 2 boutons
+        assert json.dumps(tr[lang])[1:-1] in page, (lang, tr[lang], "objet i18n JS")
+    fr_page = html.unescape(_page(client, EM_PATHS["statistiques"]["fr"]))
+    for fr in _C_LABELS:
+        assert fr_page.count(fr) >= 2, fr
+    # libellés JS (objet STRINGS) : forme |tojson traduite présente, forme FR absente
+    raw_fr = _page(client, EM_PATHS["statistiques"]["fr"])
+    for fr, tr in _C_JS_LABELS.items():
+        assert json.dumps(fr) not in page, (lang, fr, "objet i18n JS")
+        assert json.dumps(tr[lang]) in page, (lang, tr[lang], "objet i18n JS")
+        assert json.dumps(fr) in raw_fr, fr
+
+
+@pytest.mark.parametrize("lang", NON_FR)
+def test_c2_pairs_js_labels_translated(client, lang):
+    page = _page(client, _C_PATHS["paires"][lang])
+    raw_fr = _page(client, _C_PATHS["paires"]["fr"])
+    for fr in ("Voir les dates", "Masquer les dates"):
+        tr = _C_JS_LABELS[fr][lang]
+        assert json.dumps(fr) not in page, (lang, fr)
+        assert json.dumps(tr) in page, (lang, tr)
+        assert json.dumps(fr) in raw_fr, fr
+
+
+# Contrôle « page entière » : nœuds de texte visibles (hors <head>, <script>, <style>, <template>, <noscript>,
+# donc hors JSON-LD) de >= 15 caractères, identiques à un nœud de la page FR.
+_C_MIN_LEN = 15
+_C_WL_RE = (re.compile(r"^[\d\s.,:;/+\-–—%()×x]+$"), re.compile(r"^(https?://|www\.)\S+$"))
+_C_WHITELIST = {
+    # noms propres seuls
+    "Google Cloud SQL", "Gemini (Google DeepMind)", "HYBRIDE (LotoIA)",
+    # identiques par choix de traduction (msgstr rempli = texte FR) : es/pt, nl, en
+    "Chatbot HYBRIDE", "HYBRIDE — Chatbot IA", "Chatbot HYBRIDE EuroMillions", "Analyse Loto France",
+    "Anti-hallucination",
+}
+
+
+def _c_text_nodes(page: str) -> list[str]:
+    from html.parser import HTMLParser
+
+    class _P(HTMLParser):
+        def __init__(self):
+            super().__init__(convert_charrefs=True)
+            self.depth, self.nodes = 0, []
+
+        def handle_starttag(self, tag, attrs):
+            if tag in ("script", "style", "head", "template", "noscript"):
+                self.depth += 1
+
+        def handle_endtag(self, tag):
+            if tag in ("script", "style", "head", "template", "noscript") and self.depth:
+                self.depth -= 1
+
+        def handle_data(self, data):
+            t = " ".join(data.split())
+            if t and not self.depth:
+                self.nodes.append(t)
+
+    p = _P()
+    p.feed(page)
+    return p.nodes
+
+
+@pytest.mark.parametrize("page_key", ("ia", "hybride", "statistiques", "paires"))
+@pytest.mark.parametrize("lang", NON_FR)
+def test_c3_whole_page_no_fr_text_node(client, lang, page_key):
+    fr_nodes = set(_c_text_nodes(_page(client, _C_PATHS[page_key]["fr"])))
+    left = []
+    for t in _c_text_nodes(_page(client, _C_PATHS[page_key][lang])):
+        if (len(t) >= _C_MIN_LEN and t in fr_nodes and t not in _C_WHITELIST
+                and not any(r.match(t) for r in _C_WL_RE)):
+            left.append(t)
+    assert left == [], f"{lang} {page_key} : {left}"
+
+
+@pytest.mark.parametrize("lang", LANGS)
+def test_c4_po_entries(lang):
+    cat = _po(lang)
+    ids = [m.id for m in _active(cat)]
+    for code in _C_TPL:
+        mid = _c_msgid(code)
+        assert ids.count(mid) == 1, (lang, code)
+        msg = cat.get(mid)
+        assert not msg.fuzzy, (lang, code)
+        if lang != "fr":
+            assert msg.string, (lang, code)
+            assert sorted(re.findall(r"%\(\w+\)s", mid)) == sorted(re.findall(r"%\(\w+\)s", msg.string))
+            assert re.findall(r'href="([^"]*)"', mid) == re.findall(r'href="([^"]*)"', msg.string)
+            assert "Grounded" not in msg.string
+    for fr, tr in {**_C_LABELS, **_C_JS_LABELS}.items():
+        assert ids.count(fr) == 1, (lang, fr)
+        msg = cat.get(fr)
+        assert not msg.fuzzy
+        assert msg.string == ("" if lang == "fr" else tr[lang]), (lang, fr)
