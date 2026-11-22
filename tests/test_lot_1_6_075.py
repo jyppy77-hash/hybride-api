@@ -259,8 +259,8 @@ def _visible_qa(page: str, question: str) -> str:
 
 def test_t1_version_config():
     from config.version import APP_VERSION, VERSION_DATE
-    assert APP_VERSION == "1.6.075"
-    assert VERSION_DATE == "2026-11-21"
+    assert tuple(int(p) for p in APP_VERSION.split(".")) >= (1, 6, 75)  # plancher (lot 1.6.076)
+    assert VERSION_DATE >= "2026-11-21"
 
 
 # ═══════════════════════════════════════════════════════

@@ -243,7 +243,7 @@ class TestDataSourceInPrompts:
     def test_loto_prompt_since_2019(self):
         with open("prompts/chatbot/prompt_hybride.txt", encoding="utf-8") as f:
             content = f.read()
-        assert "depuis 2019" in content
+        assert "7 dernières années" in content  # 1.6.076 (T5) : « depuis 2019 » → fenêtre glissante
         assert "{DRAW_COUNT} tirages" in content  # F02: dynamic placeholder
 
     def test_loto_prompt_data_source_section(self):

@@ -67,14 +67,15 @@ _PROMISES = [
     r"(?i)vérification systématique(?! des données)", r"(?i)vérifie systématiquement",
 ]
 
+# 1.6.076 (T1) : « Zéro invention » → consigne « N'invente jamais un chiffre » (et traductions)
 _ACTIVE_PROMPTS = {
-    "loto_fr": ("prompts/chatbot/prompt_hybride.txt", "Zéro invention."),
-    "em_fr": ("prompts/em/fr/prompt_hybride_em.txt", "Zéro invention."),
-    "em_en": ("prompts/em/en/prompt_hybride_em.txt", "Zero invention."),
-    "em_es": ("prompts/em/es/prompt_hybride_em.txt", "Cero invenciones."),
-    "em_pt": ("prompts/em/pt/prompt_hybride_em.txt", "Zero invenções."),
-    "em_de": ("prompts/em/de/prompt_hybride_em.txt", "Null Erfindungen."),
-    "em_nl": ("prompts/em/nl/prompt_hybride_em.txt", "Nul verzinsels."),
+    "loto_fr": ("prompts/chatbot/prompt_hybride.txt", "N'invente jamais un chiffre"),
+    "em_fr": ("prompts/em/fr/prompt_hybride_em.txt", "N'invente jamais un chiffre"),
+    "em_en": ("prompts/em/en/prompt_hybride_em.txt", "Never invent a figure"),
+    "em_es": ("prompts/em/es/prompt_hybride_em.txt", "No inventes nunca una cifra"),
+    "em_pt": ("prompts/em/pt/prompt_hybride_em.txt", "Nunca inventes um valor"),
+    "em_de": ("prompts/em/de/prompt_hybride_em.txt", "Erfinde niemals einen Wert"),
+    "em_nl": ("prompts/em/nl/prompt_hybride_em.txt", "Verzin nooit een waarde"),
 }
 
 # Anciens msgid (fragments) supprimés par le lot

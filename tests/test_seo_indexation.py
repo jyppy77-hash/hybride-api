@@ -1110,9 +1110,13 @@ class TestAppVersion:
         À propos, HYBRIDE, loto-ia / euromillions-ia, accroches chatbot, news, launcher ; title / og / twitter
         /hybride modifiés), news sans chiffres datés + dateModified 2026-11-21, LAST_NEWS_DATE 2026-11-21,
         _EDITORIAL_LASTMOD des pages modifiées ; aucun cache-buster ; bump requis : ETag HTML.
+        LOT 1.6.076 (22/11, Release 1.6.076) — presse : textes du chatbot (prompts, réponses toutes faites), hero EN
+        /en/euromillions/hybride, meta / og / twitter du launcher (« statistiques mises à jour après chaque
+        tirage »), widgets EM ES/PT/DE/NL (aria-label traduits, cache-busters v=1.4) ; LAST_NEWS_DATE et
+        _EDITORIAL_LASTMOD inchangés ; bump requis : ETag HTML. Assertion passée en plancher.
         """
         from config.version import APP_VERSION
-        assert APP_VERSION == "1.6.075"
+        assert tuple(int(p) for p in APP_VERSION.split(".")) >= (1, 6, 76)  # plancher (lot 1.6.076)
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

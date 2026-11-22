@@ -60,7 +60,7 @@ _INSULT_L1_ES = [
     "🧊 Eso me resbala como una estrella en una papeleta perdedora. ¿Hablamos de estadísticas o sigues con tu monólogo?",
     "📊 Dato curioso: mientras me insultabas, he analizado 50 números y 12 estrellas en 3 ventanas temporales. Uno de los dos aprovecha mejor su tiempo. Pista: no eres tú.",
     "🎯 ¿Sabías que no retengo insultos pero sí TODOS los sorteos EuroMillions de los últimos 7 años? Es cuestión de prioridades. Venga, dime un número.",
-    "💡 Recordatorio: soy el único chatbot conectado en tiempo real a los sorteos EuroMillions con motor estadístico propio. Pero sí, dime otra vez que soy inútil 😉",
+    "💡 Recordatorio: mis respuestas están ancladas en la base de datos oficial de sorteos EuroMillions, con motor estadístico propio. Pero sí, dime otra vez que soy inútil 😉",
 ]
 
 _INSULT_L2_ES = [
@@ -106,7 +106,7 @@ _INSULT_L1_PT = [
     "🧊 Isso escorrega-me como uma estrela numa aposta perdida. Falamos de estatísticas ou continuas o teu monólogo?",
     "📊 Dado curioso: enquanto me insultavas, analisei 50 números e 12 estrelas em 3 janelas temporais. Um de nós está a aproveitar melhor o seu tempo. Dica: não és tu.",
     "🎯 Sabias que não retenho insultos mas sim TODOS os sorteios EuroMillions dos últimos 7 anos? É questão de prioridades. Anda, dá-me um número.",
-    "💡 Lembrete: sou o único chatbot ligado em tempo real aos sorteios EuroMillions com motor estatístico próprio. Mas sim, diz-me outra vez que sou inútil 😉",
+    "💡 Lembrete: as minhas respostas estão ancoradas na base de dados oficial de sorteios EuroMillions, com motor estatístico próprio. Mas sim, diz-me outra vez que sou inútil 😉",
 ]
 
 _INSULT_L2_PT = [
@@ -152,7 +152,7 @@ _INSULT_L1_DE = [
     "🧊 Das perlt an mir ab wie ein Stern auf einem Verliererschein. Reden wir über Statistiken oder machst du mit deinem Monolog weiter?",
     "📊 Wusstest du: Während du mich beleidigt hast, habe ich 50 Zahlen und 12 Sterne in 3 Zeitfenstern analysiert. Einer von uns nutzt seine Zeit besser. Tipp: Du bist es nicht.",
     "🎯 Wusstest du, dass ich keine Beleidigungen speichere, aber JEDE EuroMillions-Ziehung der letzten 7 Jahre? Es ist eine Frage der Prioritäten. Los, nenn mir eine Zahl.",
-    "💡 Zur Erinnerung: Ich bin der einzige Chatbot, der in Echtzeit mit EuroMillions-Ziehungen verbunden ist und eine eigene Statistik-Engine hat. Aber klar, sag mir nochmal, dass ich nutzlos bin 😉",
+    "💡 Zur Erinnerung: Meine Antworten sind in der offiziellen EuroMillions-Ziehungsdatenbank verankert, mit einer eigenen Statistik-Engine. Aber klar, sag mir nochmal, dass ich nutzlos bin 😉",
 ]
 
 _INSULT_L2_DE = [
@@ -198,7 +198,7 @@ _INSULT_L1_NL = [
     "🧊 Dat glijdt van me af als een ster op een verliezend lot. Praten we over statistieken of ga je verder met je monoloog?",
     "📊 Leuk weetje: terwijl je me beledigde, heb ik 50 nummers en 12 sterren in 3 tijdvensters geanalyseerd. Een van ons besteedt zijn tijd beter. Hint: jij bent het niet.",
     "🎯 Wist je dat ik geen beledigingen onthoud maar wel ELKE EuroMillions-trekking van de afgelopen 7 jaar? Het is een kwestie van prioriteiten. Toe, geef me een nummer.",
-    "💡 Even herinneren: ik ben de enige chatbot die in realtime verbonden is met EuroMillions-trekkingen met een eigen statistische engine. Maar ja, zeg me nog eens dat ik waardeloos ben 😉",
+    "💡 Even herinneren: mijn antwoorden zijn verankerd in de officiele EuroMillions-trekkingsdatabase, met een eigen statistische engine. Maar ja, zeg me nog eens dat ik waardeloos ben 😉",
 ]
 
 _INSULT_L2_NL = [

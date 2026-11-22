@@ -148,7 +148,7 @@ async def en_em_hybride_page(request: Request):
         include_nav_scroll=True,
         hero_icon="\U0001f916",
         hero_title="HYBRIDE Chatbot EuroMillions",
-        hero_subtitle="Conversational AI grounded in real data",
+        hero_subtitle="Conversational AI based on real data",
         em_db_total=total,
     )
 

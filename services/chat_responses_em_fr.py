@@ -20,7 +20,7 @@ _INSULT_L1_EM = [
     "😎 Je note que tu es frustré. Moi je suis une IA, la frustration c'est pas dans mon code. Par contre les statistiques de l'EuroMillions, ça oui. On s'y remet ?",
     "📊 Fun fact : pendant que tu m'insultais, j'ai analysé 50 numéros et 12 étoiles sur 3 fenêtres temporelles. L'un de nous deux utilise mieux son temps. Un indice : c'est pas toi.",
     "🎯 Tu sais que je ne retiens pas les insultes mais que je retiens TOUS les tirages EuroMillions des 7 dernières années ? Question de priorités. Allez, un numéro ?",
-    "💡 Petit rappel : je suis le seul chatbot en France connecté en temps réel aux tirages EuroMillions avec un moteur statistique propriétaire. Mais oui, dis-moi encore que je suis nul 😉",
+    "💡 Petit rappel : mes réponses sont ancrées sur la base officielle des tirages EuroMillions, avec un moteur statistique propriétaire. Mais oui, dis-moi encore que je suis nul 😉",
 ]
 
 _INSULT_L2_EM = [

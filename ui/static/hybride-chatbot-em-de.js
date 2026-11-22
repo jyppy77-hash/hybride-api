@@ -37,13 +37,13 @@
                 '<span class="hybride-header-title">\uD83E\uDD16 HYBRIDE \u2014 EuroMillions</span>' +
                 '<div class="hybride-header-actions">' +
                     '<button class="hybride-header-clear" aria-label="' + (LI.chatbot_clear_title || 'Neues Gespr\u00e4ch') + '" title="' + (LI.chatbot_clear_title || 'Neues Gespr\u00e4ch') + '">\uD83D\uDDD1\uFE0F</button>' +
-                    '<button class="hybride-header-close" aria-label="Close">\u2715</button>' +
+                    '<button class="hybride-header-close" aria-label="' + (LI.chatbot_close_label || 'Schlie\u00dfen') + '">\u2715</button>' +
                 '</div>' +
             '</div>' +
             '<div class="hybride-messages"></div>' +
             '<div class="hybride-input-area">' +
                 '<input class="hybride-input" type="text" placeholder="' + (LI.chatbot_placeholder || 'Stelle deine EuroMillions-Frage...') + '" autocomplete="off">' +
-                '<button class="hybride-send" aria-label="Send">\u27A4</button>' +
+                '<button class="hybride-send" aria-label="' + (LI.chatbot_send_label || 'Senden') + '">\u27A4</button>' +
             '</div>';
 
         root.appendChild(bubble);

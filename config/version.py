@@ -5,6 +5,24 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# LOT 1.6.076 — Presse : textes du chatbot (Release 1.6.076, 22/11/2026 ; inventaire RO du 22/11). Lot de textes :
+# aucun routage, détecteur, garde-fou ni filtre de sortie touché ; balises internes des prompts inchangées.
+# T1 : bloc « IA Grounded » des 7 prompts chatbot → bloc « ancrage sur la base des tirages » (serveur récupère, modèle
+# rédige ; « grounded » cité une fois entre guillemets ; « temps réel » proscrit pour se décrire).
+# T2 : FAQ des prompts « Comment HYBRIDE obtient-il ses données ? » (option A : l'IA générative peut se tromper).
+# T3 : repli « Je n'ai pas ces données en temps réel » → « Je n'ai pas cette statistique sous la main » (6 langues).
+# T4 : « statistiques LIVE » → « statistiques à jour » (Loto + EM 6 langues ; PT « EM DIRETO »).
+# T5 : prompt Loto « depuis 2019 » → « des 7 dernières années » (fenêtre glissante).
+# T6 : prompt Loto, FAQ source des données : « Base mise à jour depuis novembre 2019 » → 7 dernières années.
+# T7 : prompt Loto, FAQ « année 2019 » : début 6/11/2019 et « 24 tirages » retirés, fenêtre glissante expliquée.
+# T8 : prompt Loto, simulateur « tous les tirages de la base (7 dernières années) ».
+# T9 : exemple « est ce soir ! » → « a lieu [jour] [date] » + « ce soir » seulement si le bloc l'indique.
+# T10 : réponses toutes faites (insultes L1, Loto + EM 6 langues) sans « seul chatbot … en temps réel ».
+# T11 : hero EN /en/euromillions/hybride « grounded in real data » → « based on real data ».
+# T12 : launcher meta / og / twitter « statistiques en temps réel » → « mises à jour après chaque tirage » (+ 6 .po).
+# R-9 : widgets chatbot EM ES/PT/DE/NL : aria-label Close / Send → clés chatbot_close_label / chatbot_send_label
+# (motif du widget FR), cache-busters ?v=1.3 → 1.4. Bump requis : ETag HTML lié à APP_VERSION.
+
 # LOT 1.6.075 — Audit journaliste (Release 1.6.075, 21/11/2026). A : FAQ /hybride Loto + EM « HYBRIDE peut-il me
 # donner des numéros gagnants ? » (grilles générées ≠ pronostics, score /100 ≠ probabilité de gain), HTML = JSON-LD.
 # B : news Loto + EM, chiffres datés « 729 / 981 tirages (à cette date) » remplacés par « l'historique officiel des
@@ -462,9 +480,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.075"
+APP_VERSION = "1.6.076"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-11-21"
+VERSION_DATE = "2026-11-22"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

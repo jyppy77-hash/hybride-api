@@ -85,10 +85,11 @@ msgstr "LotoIA — Lottery and EuroMillions AI Analysis | Free"
 #: ui/templates/launcher.html:10
 msgid ""
 "LotoIA : analyse statistique gratuite du Loto et de l'EuroMillions par "
-"intelligence artificielle. Chatbot IA, statistiques en temps réel."
+"intelligence artificielle. Chatbot IA, statistiques mises à jour après "
+"chaque tirage."
 msgstr ""
 "LotoIA: free AI-powered statistical analysis of Lottery and EuroMillions."
-" HYBRIDE engine, AI chatbot, real-time statistics."
+" HYBRIDE engine, AI chatbot, statistics updated after each draw."
 
 #: ui/templates/launcher.html:414
 msgid ""
