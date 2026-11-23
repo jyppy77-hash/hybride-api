@@ -12,7 +12,7 @@ from em_schemas import EMChatRequest, EMChatResponse, EMPitchGrillesRequest
 from rate_limit import limiter
 from services.chat_pipeline_em import handle_chat_em, handle_pitch_em, handle_chat_stream_em
 from services.chat_rate_limit import check_chat_rate, get_rate_limit_message
-from utils import get_client_ip
+from utils import classify_traffic_source, get_client_ip
 
 # Re-exports pour compatibilite (tests et imports existants)
 from services.chat_detectors_em import (  # noqa: F401
@@ -71,6 +71,7 @@ async def api_hybride_chat_em(request: Request, payload: EMChatRequest):
             payload.page,
             request.app.state.httpx_client,
             lang=payload.lang,
+            traffic_source=classify_traffic_source(request),  # 1.6.077 — étiquette seule, jamais l'IP
         ),
         media_type="text/event-stream",
         headers=SSE_HEADERS,

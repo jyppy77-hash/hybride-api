@@ -173,6 +173,23 @@ def get_client_ip(request: Request) -> str:
     return _select_client_ip(xff, client_host or "")
 
 
+def classify_traffic_source(request: Request) -> str:
+    """1.6.077 — étiquette non identifiante d'un échange chatbot (colonne chat_log.traffic_source).
+
+    En-tête X-LotoIA-Smoke = "1" → "test" ; sinon IP client owner (is_owner_ip) → "owner" ;
+    sinon "public" (IP vide ou invalide comprise). Ne renvoie jamais l'IP ; aucune exception ne remonte.
+    """
+    try:
+        if request.headers.get("x-lotoia-smoke", "").strip() == "1":
+            return "test"
+        ip = get_client_ip(request)
+        if ip and is_owner_ip(ip):
+            return "owner"
+    except Exception:
+        return "public"
+    return "public"
+
+
 def detect_country(request: Request) -> str | None:
     """Detect visitor country from CF-IPCountry header with Accept-Language fallback.
 

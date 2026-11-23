@@ -2,6 +2,10 @@
 Chat Logger — async INSERT into chat_log for Chatbot Monitor (V44).
 
 Fire-and-forget pattern identical to track_gemini_call() in gcp_monitoring.py.
+
+1.6.077 — colonne traffic_source ('public' | 'owner' | 'test', migration 029) : étiquette non
+identifiante calculée par la route (utils.classify_traffic_source). ip_hash / session_hash ne sont
+jamais remplis (décision du 23/11/2026, promesse de confidentialité 1.6.072).
 """
 
 import asyncio
@@ -11,14 +15,21 @@ import db_cloudsql
 
 logger = logging.getLogger(__name__)
 
+TRAFFIC_SOURCES = frozenset({"public", "owner", "test"})
+
 _INSERT_SQL = (
     "INSERT INTO chat_log "
     "(module, lang, question, response_preview, phase_detected, "
     "sql_generated, sql_status, duration_ms, ip_hash, session_hash, "
     "grid_count, has_exclusions, is_error, error_detail, "
-    "gemini_tokens_in, gemini_tokens_out) "
-    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+    "gemini_tokens_in, gemini_tokens_out, traffic_source) "
+    "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
 )
+
+
+def normalize_traffic_source(value) -> str:
+    """1.6.077 — valeur hors {'public', 'owner', 'test'} → 'public'."""
+    return value if value in TRAFFIC_SOURCES else "public"
 
 
 async def _do_insert(
@@ -28,6 +39,7 @@ async def _do_insert(
     grid_count: int, has_exclusions: bool, is_error: bool,
     error_detail: str | None,
     gemini_tokens_in: int, gemini_tokens_out: int,
+    traffic_source: str = "public",
 ) -> None:
     """Fire-and-forget DB insert. Errors are logged, never raised."""
     try:
@@ -40,6 +52,7 @@ async def _do_insert(
                 grid_count, int(has_exclusions), int(is_error),
                 (error_detail or "")[:255] if error_detail else None,
                 gemini_tokens_in, gemini_tokens_out,
+                normalize_traffic_source(traffic_source),
             ),
         )
     except Exception as e:
@@ -63,6 +76,7 @@ def log_chat_exchange(
     error_detail: str | None = None,
     gemini_tokens_in: int = 0,
     gemini_tokens_out: int = 0,
+    traffic_source: str = "public",
 ) -> None:
     """Non-blocking INSERT into chat_log. Fire-and-forget via asyncio.create_task."""
     try:
@@ -73,6 +87,7 @@ def log_chat_exchange(
                 duration_ms, ip_hash, session_hash,
                 grid_count, has_exclusions, is_error, error_detail,
                 gemini_tokens_in, gemini_tokens_out,
+                normalize_traffic_source(traffic_source),
             )
         )
     except RuntimeError:

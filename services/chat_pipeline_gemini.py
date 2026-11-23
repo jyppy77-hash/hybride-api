@@ -1101,6 +1101,7 @@ def log_from_meta(meta, module, lang, message, response_preview="",
         has_exclusions=meta.get("has_exclusions", False),
         is_error=is_error, error_detail=error_detail,
         gemini_tokens_in=tokens_in, gemini_tokens_out=tokens_out,
+        traffic_source=meta.get("traffic_source", "public"),  # 1.6.077
     )
 
 

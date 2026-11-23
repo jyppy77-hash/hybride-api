@@ -1114,9 +1114,12 @@ class TestAppVersion:
         /en/euromillions/hybride, meta / og / twitter du launcher (« statistiques mises à jour après chaque
         tirage »), widgets EM ES/PT/DE/NL (aria-label traduits, cache-busters v=1.4) ; LAST_NEWS_DATE et
         _EDITORIAL_LASTMOD inchangés ; bump requis : ETag HTML. Assertion passée en plancher.
+        LOT 1.6.077 (23/11, Release 1.6.077) — chat_log.traffic_source, compteurs admin, export CSV technique ;
+        aucune modification des réponses du chatbot ; LAST_NEWS_DATE et _EDITORIAL_LASTMOD inchangés ; bump
+        requis : ETag HTML.
         """
         from config.version import APP_VERSION
-        assert tuple(int(p) for p in APP_VERSION.split(".")) >= (1, 6, 76)  # plancher (lot 1.6.076)
+        assert tuple(int(p) for p in APP_VERSION.split(".")) >= (1, 6, 77)  # plancher (lot 1.6.077)
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""

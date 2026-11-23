@@ -12,7 +12,7 @@ from schemas import HybrideChatRequest, HybrideChatResponse, PitchGrillesRequest
 from rate_limit import limiter
 from services.chat_pipeline import handle_chat, handle_pitch, handle_chat_stream
 from services.chat_rate_limit import check_chat_rate, get_rate_limit_message
-from utils import get_client_ip
+from utils import classify_traffic_source, get_client_ip
 
 # Re-exports pour api_chat_em.py et les tests
 # (preserve la surface publique existante)
@@ -79,6 +79,7 @@ async def api_hybride_chat(request: Request, payload: HybrideChatRequest):
             payload.page,
             request.app.state.httpx_client,
             lang=payload.lang,
+            traffic_source=classify_traffic_source(request),  # 1.6.077 — étiquette seule, jamais l'IP
         ),
         media_type="text/event-stream",
         headers=SSE_HEADERS,

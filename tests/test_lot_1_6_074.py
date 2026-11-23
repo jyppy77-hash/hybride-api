@@ -75,9 +75,9 @@ async def _run(game, msg, lang=None, spy_cfg=None):
             import services.chat_pipeline_shared as shared
             orig = shared._prepare_chat_context_base
 
-            async def _spy(message, history, page, http_client, lang_, cfg):
+            async def _spy(message, history, page, http_client, lang_, cfg, **kw):  # 1.6.077 : traffic_source
                 spy_cfg["cfg"] = cfg
-                return await orig(message, history, page, http_client, lang_, cfg)
+                return await orig(message, history, page, http_client, lang_, cfg, **kw)
             st.enter_context(patch(f"{mod}._prepare_chat_context_base", side_effect=_spy))
         st.enter_context(patch("services.chat_pipeline._get_draw_count", new_callable=AsyncMock, return_value=1000))
         st.enter_context(patch(f"{mod}.{names['prompt']}", return_value="sys"))

@@ -83,19 +83,19 @@ async def admin_api_calendar_data(
     # ──────────────────────────────────────────────────────────────────
     # MÉTHODOLOGIE VISITEURS (V92 S09)
     # ──────────────────────────────────────────────────────────────────
-    # Les visiteurs uniques sont comptés via UNION (dedup) de 3 tables :
+    # Les visiteurs uniques sont comptés via UNION (dedup) de 2 tables :
     #   - event_log.session_hash : SHA-256(ip|ua|date) du visiteur
     #   - sponsor_impressions.session_hash : SHA-256(ip|ua|date)
-    #   - chat_log.ip_hash : SHA-256(ip)
+    # chat_log ne contient aucun identifiant de visiteur, décision du 23/11
+    # (1.6.077 : retiré de l'UNION ; son ip_hash vide comptait un visiteur
+    # fantôme '' par jour).
     #
-    # LIMITATION : un même visiteur peut être compté 2-3× car les
-    # identifiants diffèrent structurellement entre tables (hash IP
-    # vs hash session). Le UNION déduplique les doublons intra-table
-    # mais pas les doublons cross-table.
+    # LIMITATION : un même visiteur peut être compté 2× car le UNION
+    # déduplique les doublons intra-table mais pas les doublons cross-table.
     #
     # COLLATION : sponsor_impressions utilise utf8mb4_unicode_ci
-    # (migration 002) tandis que event_log/chat_log utilisent
-    # utf8mb4_general_ci. Sans COLLATE explicite, le UNION échoue
+    # (migration 002) tandis que event_log utilise utf8mb4_general_ci.
+    # Sans COLLATE explicite, le UNION échoue
     # avec ERROR 1271 "Illegal mix of collations".
     #
     # IMPACT : sur-estimation estimée ~10-20% sur les jours à fort
@@ -113,11 +113,8 @@ async def admin_api_calendar_data(
                 f"  UNION"
                 f"  SELECT DAY({_TZ}) AS day, session_hash COLLATE utf8mb4_general_ci AS visitor_id"
                 f"  FROM sponsor_impressions WHERE {where_tz}"
-                f"  UNION"
-                f"  SELECT DAY({_TZ}) AS day, ip_hash COLLATE utf8mb4_general_ci AS visitor_id"
-                f"  FROM chat_log WHERE {where_tz}"
                 f") AS all_ips GROUP BY day",
-                params * 3,
+                params * 2,
             )
             rows = await cur.fetchall()
         for r in rows:

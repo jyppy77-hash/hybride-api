@@ -243,7 +243,8 @@ def _build_em_config():
     })
 
 
-async def _prepare_chat_context_em(message: str, history: list, page: str, http_client, lang: str = "fr"):
+async def _prepare_chat_context_em(message: str, history: list, page: str, http_client, lang: str = "fr",
+                                   *, traffic_source: str = "public"):
     """
     Phases I-SQL EM : prepare le contexte pour l'appel Gemini.
     Retourne (early_return_or_None, ctx_dict_or_None).
@@ -259,6 +260,7 @@ async def _prepare_chat_context_em(message: str, history: list, page: str, http_
         cfg["detect_numero"] = lambda m, _b=_base_detect: _detect_numero_em_hors_fr(m, _b)
     return await _prepare_chat_context_base(
         message, history, page, http_client, lang, cfg,
+        traffic_source=traffic_source,
     )
 
 
@@ -269,7 +271,8 @@ def _log_from_meta_em(meta, message, response_preview="",
                           message, response_preview, is_error=is_error, error_detail=error_detail)
 
 
-async def handle_chat_em(message: str, history: list, page: str, http_client, lang: str = "fr") -> dict:
+async def handle_chat_em(message: str, history: list, page: str, http_client, lang: str = "fr",
+                         *, traffic_source: str = "public") -> dict:
     """Pipeline 12 phases du chatbot HYBRIDE EuroMillions. Retourne dict(response, source, mode)."""
     return await handle_chat_common(
         message, history, page, http_client, lang,
@@ -278,6 +281,7 @@ async def handle_chat_em(message: str, history: list, page: str, http_client, la
         log_prefix="[EM CHAT]", module="em",
         breaker=gemini_breaker,
         sponsor_kwargs={"lang": lang, "module": "em"},
+        traffic_source=traffic_source,
     )
 
 
@@ -286,7 +290,8 @@ def _sse_event_em(data):
     return _sse_event_shared(data)
 
 
-async def handle_chat_stream_em(message: str, history: list, page: str, http_client, lang: str = "fr"):
+async def handle_chat_stream_em(message: str, history: list, page: str, http_client, lang: str = "fr",
+                                *, traffic_source: str = "public"):
     """Async generator — SSE streaming du chatbot HYBRIDE EuroMillions. Yields SSE event strings."""
     async for event in handle_stream_common(
         message, history, page, http_client, lang,
@@ -296,6 +301,7 @@ async def handle_chat_stream_em(message: str, history: list, page: str, http_cli
         call_type="chat_em",
         stream_fn=stream_gemini_chat, breaker=gemini_breaker,
         sponsor_kwargs={"lang": lang, "module": "em"},
+        traffic_source=traffic_source,
     ):
         yield event
 

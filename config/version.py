@@ -5,6 +5,19 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# LOT 1.6.077 — traffic_source, compteurs admin, export CSV technique (Release 1.6.077, 23/11/2026 ; audit RO
+# chat_log du 23/11, option A). Aucune modification des réponses du chatbot (routage, détecteurs, garde-fous,
+# filtres de sortie, prompts inchangés). ip_hash / session_hash de chat_log ne seront jamais remplis (promesse
+# de confidentialité 1.6.072, textes inchangés).
+# A : migration 029 (028 réservé au lot ip_ban) — chat_log.traffic_source VARCHAR(8) NOT NULL DEFAULT 'public'.
+# B : utils.classify_traffic_source(request) : X-LotoIA-Smoke = 1 → test, IP owner (is_owner_ip) → owner, sinon
+# public ; les 3 routes chat ne passent que l'étiquette ; rangée dans _chat_meta (_meta() et ctx) → log_from_meta
+# → log_chat_exchange (valeur hors liste → public).
+# C : admin Chatbot Monitor : KPI « Visiteurs uniques » (session_hash vide → 1) remplacé par « Échanges publics » ;
+# calendrier : chat_log retiré de l'UNION visiteurs ; cache-buster admin.js v=23 → 24.
+# D : export CSV technique (15 colonnes, sans question / response_preview / ip_hash / session_hash), from / to,
+# filtre traffic_source, 400 sur paramètre invalide. Bump requis : ETag HTML lié à APP_VERSION.
+
 # LOT 1.6.076 — Presse : textes du chatbot (Release 1.6.076, 22/11/2026 ; inventaire RO du 22/11). Lot de textes :
 # aucun routage, détecteur, garde-fou ni filtre de sortie touché ; balises internes des prompts inchangées.
 # T1 : bloc « IA Grounded » des 7 prompts chatbot → bloc « ancrage sur la base des tirages » (serveur récupère, modèle
@@ -480,9 +493,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.076"
+APP_VERSION = "1.6.077"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-11-22"
+VERSION_DATE = "2026-11-23"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

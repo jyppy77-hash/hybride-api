@@ -13,7 +13,7 @@ from config.games import ValidGame, get_config, get_chat_pipeline
 from schemas import HybrideChatRequest, HybrideChatResponse, PitchGrillesRequest
 from em_schemas import EMChatRequest, EMChatResponse, EMPitchGrillesRequest
 from services.chat_rate_limit import check_chat_rate, get_rate_limit_message
-from utils import get_client_ip
+from utils import classify_traffic_source, get_client_ip
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +47,8 @@ async def unified_hybride_chat(request: Request, game: ValidGame):
             "retry_after_seconds": retry_after,
         })
 
+    traffic_source = classify_traffic_source(request)  # 1.6.077 — étiquette seule, jamais l'IP
+
     if game == ValidGame.loto:
         payload = HybrideChatRequest(**body)
         return StreamingResponse(
@@ -56,6 +58,7 @@ async def unified_hybride_chat(request: Request, game: ValidGame):
                 payload.page,
                 request.app.state.httpx_client,
                 lang=payload.lang,  # F01: propagation lang comme EM
+                traffic_source=traffic_source,
             ),
             media_type="text/event-stream",
             headers=SSE_HEADERS,
@@ -69,6 +72,7 @@ async def unified_hybride_chat(request: Request, game: ValidGame):
                 payload.page,
                 request.app.state.httpx_client,
                 lang=payload.lang,
+                traffic_source=traffic_source,
             ),
             media_type="text/event-stream",
             headers=SSE_HEADERS,

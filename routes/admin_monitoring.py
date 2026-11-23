@@ -7,6 +7,7 @@ Split from routes/admin.py (Phase 2 refacto V88).
 import csv
 import io
 import logging
+from datetime import date, timedelta
 
 from fastapi import APIRouter, Request, Query
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
@@ -924,8 +925,9 @@ async def admin_api_chatbot_log(
 
     w = " AND ".join(where) if where else "1=1"
 
-    # KPI
-    kpi = {"total": 0, "rejected_pct": 0, "error_pct": 0, "avg_duration": 0, "unique_sessions": 0, "sql_count": 0}
+    # KPI — 1.6.077 : « sessions » (COUNT DISTINCT session_hash, colonne jamais remplie → toujours 1)
+    # supprimé, remplacé par public_count = échanges traffic_source = 'public' sur la même période.
+    kpi = {"total": 0, "rejected_pct": 0, "error_pct": 0, "avg_duration": 0, "public_count": 0, "sql_count": 0}
     try:
         row = await db_cloudsql.async_fetchone(
             f"SELECT COUNT(*) AS total, "
@@ -933,7 +935,7 @@ async def admin_api_chatbot_log(
             f"SUM(CASE WHEN sql_status NOT IN ('N/A') THEN 1 ELSE 0 END) AS sql_total, "
             f"SUM(CASE WHEN is_error = 1 THEN 1 ELSE 0 END) AS errors, "
             f"AVG(duration_ms) AS avg_dur, "
-            f"COUNT(DISTINCT session_hash) AS sessions, "
+            f"SUM(CASE WHEN traffic_source = 'public' THEN 1 ELSE 0 END) AS public_count, "
             f"SUM(CASE WHEN phase_detected = 'SQL' THEN 1 ELSE 0 END) AS sql_count "
             f"FROM chat_log WHERE {w}",
             tuple(params),
@@ -945,7 +947,7 @@ async def admin_api_chatbot_log(
             kpi["rejected_pct"] = round((_dec(row["rejected"]) or 0) / sql_total * 100, 1) if sql_total > 0 else 0
             kpi["error_pct"] = round((_dec(row["errors"]) or 0) / total * 100, 1) if total > 0 else 0
             kpi["avg_duration"] = int(_dec(row["avg_dur"]) or 0)
-            kpi["unique_sessions"] = _dec(row["sessions"]) or 0
+            kpi["public_count"] = _dec(row["public_count"]) or 0
             kpi["sql_count"] = _dec(row["sql_count"]) or 0
     except Exception as e:
         logger.error("[ADMIN API] chatbot-log KPI failed: %s", e)
@@ -988,6 +990,30 @@ async def admin_api_chatbot_log(
     return JSONResponse({"kpi": kpi, "exchanges": exchanges})
 
 
+# 1.6.077 — export CSV TECHNIQUE : ni question, ni response_preview, ni ip_hash, ni session_hash
+# (aucun paramètre ne permet de les réobtenir). Noms = noms des colonnes de chat_log, dans cet ordre.
+_CSV_TECH_COLUMNS = (
+    "id", "created_at", "module", "lang", "phase_detected", "sql_generated", "sql_status",
+    "duration_ms", "grid_count", "has_exclusions", "is_error", "error_detail",
+    "gemini_tokens_in", "gemini_tokens_out", "traffic_source",
+)
+_CSV_TRAFFIC_SOURCES = ("public", "owner", "test")
+
+
+def _csv_day(value: str | None) -> date | None:
+    """'AAAA-MM-JJ' → date ; None / '' → None ; autre format → ValueError."""
+    if not value:
+        return None
+    if len(value) != 10:
+        raise ValueError(value)
+    return date.fromisoformat(value)
+
+
+def _csv_cell(value):
+    """NULL → champ vide."""
+    return "" if value is None else value
+
+
 @router.get("/admin/export/chatbot-log/csv", include_in_schema=False)
 @limiter.limit("30/minute")  # S15 V94
 async def admin_export_chatbot_log_csv(
@@ -998,15 +1024,39 @@ async def admin_export_chatbot_log_csv(
     status: str = Query("all"),
     lang: str = Query("all"),
     errors_only: bool = Query(False),
+    date_from: str | None = Query(None, alias="from"),
+    date_to: str | None = Query(None, alias="to"),
+    traffic_source: str | None = Query(None),
 ):
     redir = _require_auth(request)
     if redir:
         return redir
 
+    # 1.6.077 — from / to (UTC, journées entières incluses) ; paramètre invalide → 400
+    try:
+        day_from = _csv_day(date_from)
+        day_to = _csv_day(date_to)
+    except ValueError:
+        return JSONResponse({"error": "from / to : format AAAA-MM-JJ attendu"}, status_code=400)
+    if day_from and day_to and day_from > day_to:
+        return JSONResponse({"error": "from postérieur à to"}, status_code=400)
+    if traffic_source and traffic_source not in _CSV_TRAFFIC_SOURCES:
+        return JSONResponse({"error": "traffic_source : public, owner ou test"}, status_code=400)
+
     where = []
     params: list = []
-    period_clause = _CM_PERIOD_SQL.get(period, _CM_PERIOD_SQL["24h"])
-    where.append(period_clause)
+    if day_from or day_to:
+        if day_from:
+            where.append("created_at >= %s")
+            params.append(f"{day_from.isoformat()} 00:00:00")
+        if day_to:
+            where.append("created_at < %s")
+            params.append(f"{(day_to + timedelta(days=1)).isoformat()} 00:00:00")
+    else:
+        where.append(_CM_PERIOD_SQL.get(period, _CM_PERIOD_SQL["24h"]))
+    if traffic_source:
+        where.append("traffic_source = %s")
+        params.append(traffic_source)
     if module in ("loto", "em"):
         where.append("module = %s")
         params.append(module)
@@ -1025,38 +1075,42 @@ async def admin_export_chatbot_log_csv(
 
     try:
         rows = await db_cloudsql.async_fetchall(
-            f"SELECT id, created_at, module, lang, question, response_preview, "
-            f"phase_detected, sql_generated, sql_status, duration_ms, "
-            f"grid_count, has_exclusions, is_error, error_detail, "
-            f"gemini_tokens_in, gemini_tokens_out, ip_hash, session_hash "
+            f"SELECT {', '.join(_CSV_TECH_COLUMNS)} "
             f"FROM chat_log WHERE {w} ORDER BY created_at DESC LIMIT 5000",
             tuple(params),
         )
         buf = io.StringIO()
         writer = csv.writer(buf)
-        writer.writerow([
-            "id", "created_at", "module", "lang", "question", "response_preview",
-            "phase", "sql", "sql_status", "duration_ms",
-            "grid_count", "has_exclusions", "is_error", "error_detail",
-            "tokens_in", "tokens_out", "ip_hash", "session_hash",
-        ])
+        writer.writerow(_CSV_TECH_COLUMNS)
         for r in rows:
+            created = r.get("created_at")
+            err = r.get("error_detail")
+            if err is not None:
+                err = " ".join(str(err).splitlines())[:500]
             writer.writerow([
-                r["id"],
-                r["created_at"].strftime("%Y-%m-%d %H:%M:%S") if r.get("created_at") else "",
-                r["module"], r["lang"], r["question"] or "",
-                r["response_preview"] or "",
-                r["phase_detected"], (r["sql_generated"] or "")[:500],
-                r["sql_status"], _dec(r["duration_ms"]) or 0,
-                _dec(r["grid_count"]) or 0, int(r["has_exclusions"]),
-                int(r["is_error"]), r["error_detail"] or "",
-                _dec(r["gemini_tokens_in"]) or 0, _dec(r["gemini_tokens_out"]) or 0,
-                (r["ip_hash"] or "")[:12], (r["session_hash"] or "")[:12],
+                _csv_cell(r.get("id")),
+                created.strftime("%Y-%m-%dT%H:%M:%SZ") if created else "",
+                _csv_cell(r.get("module")), _csv_cell(r.get("lang")),
+                _csv_cell(r.get("phase_detected")),
+                (r.get("sql_generated") or "")[:500],
+                _csv_cell(r.get("sql_status")),
+                _csv_cell(_dec(r.get("duration_ms"))),
+                _csv_cell(_dec(r.get("grid_count"))),
+                "" if r.get("has_exclusions") is None else int(r["has_exclusions"]),
+                "" if r.get("is_error") is None else int(r["is_error"]),
+                _csv_cell(err),
+                _csv_cell(_dec(r.get("gemini_tokens_in"))),
+                _csv_cell(_dec(r.get("gemini_tokens_out"))),
+                _csv_cell(r.get("traffic_source")),
             ])
+        if day_from or day_to:
+            label = f"{day_from or 'debut'}_{day_to or 'fin'}"
+        else:
+            label = period if period in _CM_PERIOD_SQL else "24h"
         return StreamingResponse(
-            iter([buf.getvalue()]),
-            media_type="text/csv",
-            headers={"Content-Disposition": f"attachment; filename=chatbot_log_{period}.csv"},
+            iter([buf.getvalue()]),  # str → UTF-8 sans BOM
+            media_type="text/csv; charset=utf-8",
+            headers={"Content-Disposition": f"attachment; filename=chatbot_log_{label}.csv"},
         )
     except Exception as e:
         logger.error("[ADMIN] chatbot-log CSV: %s", e)

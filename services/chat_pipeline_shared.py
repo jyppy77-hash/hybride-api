@@ -837,16 +837,18 @@ def _build_config_base(overrides: dict) -> dict:
 async def handle_chat_common(
     message: str, history: list, page: str, http_client, lang: str,
     prepare_context_fn, default_fallback: str, log_prefix: str, module: str,
-    breaker, sponsor_kwargs: dict | None = None,
+    breaker, sponsor_kwargs: dict | None = None, *, traffic_source: str = "public",
 ) -> dict:
     """Shared handler for Loto and EM chat — returns dict(response, source, mode).
 
     F07 V98: factorises handle_chat / handle_chat_em into a single function.
-    ``prepare_context_fn`` must accept (message, history, page, http_client, lang=lang).
+    ``prepare_context_fn`` must accept (message, history, page, http_client, lang=lang,
+    traffic_source=...) — 1.6.077 : étiquette rangée dans _chat_meta par _prepare_chat_context_base.
     Fallback is taken from ctx["fallback"] if present, else *default_fallback*.
     ``breaker`` is the circuit breaker instance (passed from caller for test patching).
     """
-    early, ctx = await prepare_context_fn(message, history, page, http_client, lang=lang)
+    early, ctx = await prepare_context_fn(message, history, page, http_client, lang=lang,
+                                          traffic_source=traffic_source)
     if early:
         log_from_meta(early.get("_chat_meta"), module, lang, message,
                       early.get("response", ""))
@@ -863,13 +865,16 @@ async def handle_stream_common(
     message: str, history: list, page: str, http_client, lang: str,
     prepare_context_fn, default_fallback: str, log_prefix: str, module: str,
     call_type: str, stream_fn, breaker, sponsor_kwargs: dict | None = None,
+    *, traffic_source: str = "public",
 ) -> AsyncGenerator[str, None]:
     """Shared SSE streaming handler for Loto and EM chat — yields SSE event strings.
 
     F07 V98: factorises handle_chat_stream / handle_chat_stream_em.
     ``stream_fn`` and ``breaker`` are passed from caller for test patching.
+    1.6.077 : traffic_source transmis à prepare_context_fn (rangé dans _chat_meta).
     """
-    early, ctx = await prepare_context_fn(message, history, page, http_client, lang=lang)
+    early, ctx = await prepare_context_fn(message, history, page, http_client, lang=lang,
+                                          traffic_source=traffic_source)
     if early:
         log_from_meta(early.get("_chat_meta"), module, lang, message,
                       early.get("response", ""))
@@ -1059,6 +1064,7 @@ def _build_temporal_anchor(today=None) -> str:
 
 async def _prepare_chat_context_base(
     message: str, history: list, page: str, http_client, lang: str, cfg: dict,
+    *, traffic_source: str = "public",
 ) -> tuple[dict, dict | None]:
     """
     Orchestration paramétrique des 21 phases chatbot.
@@ -1162,7 +1168,8 @@ async def _prepare_chat_context_base(
         history, message, cfg["detect_insulte"], fallback_texts=(_fallback,))
 
     def _meta(**extra):
-        return {"phase": _phase, "t0": _t0, "lang": lang, **extra}
+        # 1.6.077 — traffic_source : étiquette non identifiante posée par la route (jamais l'IP)
+        return {"phase": _phase, "t0": _t0, "lang": lang, "traffic_source": traffic_source, **extra}
 
     def _early(response, source, **extra_meta):
         return {"response": response, "source": source, "mode": mode,
@@ -2038,6 +2045,7 @@ async def _prepare_chat_context_base(
         "_grid_fallback": _grid_fallback,
         "_chat_meta": {
             "phase": _phase, "t0": _t0, "lang": lang,
+            "traffic_source": traffic_source,  # 1.6.077 — étiquette seule, jamais l'IP
             "sql_query": _sql_query, "sql_status": _sql_status,
             "grid_count": _grid_count, "has_exclusions": _has_exclusions,
             "enrichment_context": enrichment_context,

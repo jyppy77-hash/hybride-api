@@ -461,7 +461,7 @@ def test_h1_next_draw_date_after_midnight_paris(tmp_path, rel, expected):
 # ═══════════════════════════════════════════════════════════════════════
 
 def test_cache_busters_bumped():
-    assert "/static/admin.js?v=23" in _read("ui/templates/admin/_base.html")
+    assert "/static/admin.js?v=24" in _read("ui/templates/admin/_base.html")  # 1.6.077 : v23 → v24
     assert "/ui/static/simulateur.js?v=8" in _read("ui/simulateur.html")
     assert "/ui/static/app.js?v=14" in _read("ui/loto.html")
 

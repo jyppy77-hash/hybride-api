@@ -75,7 +75,7 @@ class TestChatbotMonitorPage:
         assert "cm-period" in resp.text
         assert "cm-module" in resp.text
         assert "cm-phase" in resp.text
-        assert "admin.js?v=23" in resp.text  # F08 V117: v15 → ... → V137.D: v22 → 1.6.066: v23 (dates JJ/MM/AAAA)
+        assert "admin.js?v=24" in resp.text  # F08 V117: v15 → ... → 1.6.066: v23 → 1.6.077: v24 (KPI Échanges publics)
 
     def test_nav_contains_chatbot_link(self):
         client = _authed_client()
@@ -93,7 +93,7 @@ class TestChatbotMonitorAPI:
             mock_db.async_fetchone = AsyncMock(return_value={
                 "total": Decimal(5), "rejected": Decimal(1),
                 "sql_total": Decimal(3), "errors": Decimal(0),
-                "avg_dur": Decimal(250), "sessions": Decimal(2),
+                "avg_dur": Decimal(250), "public_count": Decimal(2),
                 "sql_count": Decimal(3),
             })
             mock_db.async_fetchall = AsyncMock(return_value=[])
@@ -103,7 +103,7 @@ class TestChatbotMonitorAPI:
         assert "kpi" in data
         assert "exchanges" in data
         assert data["kpi"]["total"] == 5
-        assert data["kpi"]["unique_sessions"] == 2
+        assert data["kpi"]["public_count"] == 2  # 1.6.077 : KPI sessions supprimé
 
     def test_api_chatbot_log_with_filters(self):
         client = _authed_client()
@@ -111,7 +111,7 @@ class TestChatbotMonitorAPI:
             mock_db.async_fetchone = AsyncMock(return_value={
                 "total": Decimal(2), "rejected": Decimal(0),
                 "sql_total": Decimal(0), "errors": Decimal(0),
-                "avg_dur": Decimal(100), "sessions": Decimal(1),
+                "avg_dur": Decimal(100), "public_count": Decimal(1),
                 "sql_count": Decimal(0),
             })
             mock_db.async_fetchall = AsyncMock(return_value=[])
@@ -126,7 +126,7 @@ class TestChatbotMonitorAPI:
             mock_db.async_fetchone = AsyncMock(return_value={
                 "total": Decimal(100), "rejected": Decimal(5),
                 "sql_total": Decimal(20), "errors": Decimal(3),
-                "avg_dur": Decimal(350), "sessions": Decimal(15),
+                "avg_dur": Decimal(350), "public_count": Decimal(15),
                 "sql_count": Decimal(20),
             })
             mock_db.async_fetchall = AsyncMock(return_value=[])
@@ -137,7 +137,7 @@ class TestChatbotMonitorAPI:
         assert kpi["rejected_pct"] == 25.0   # 5/20 * 100
         assert kpi["error_pct"] == 3.0       # 3/100 * 100
         assert kpi["avg_duration"] == 350
-        assert kpi["unique_sessions"] == 15
+        assert kpi["public_count"] == 15
         assert kpi["sql_count"] == 20
 
     def test_api_chatbot_log_table_data(self):
@@ -166,7 +166,7 @@ class TestChatbotMonitorAPI:
             mock_db.async_fetchone = AsyncMock(return_value={
                 "total": Decimal(1), "rejected": Decimal(0),
                 "sql_total": Decimal(1), "errors": Decimal(0),
-                "avg_dur": Decimal(234), "sessions": Decimal(1),
+                "avg_dur": Decimal(234), "public_count": Decimal(1),
                 "sql_count": Decimal(1),
             })
             mock_db.async_fetchall = AsyncMock(return_value=[mock_row])
@@ -223,13 +223,14 @@ class TestChatbotMonitorExport:
         assert len(lines) == 2  # header + 1 row
         header = lines[0]
         assert "created_at" in header
-        assert "response_preview" in header
+        assert "response_preview" not in header  # 1.6.077 : export CSV technique
         assert "tokens_in" in header
         assert "tokens_out" in header
-        assert "ip_hash" in header
-        assert "session_hash" in header
-        # Verify data row contains response
-        assert "Voici la réponse" in lines[1]
+        assert "ip_hash" not in header
+        assert "session_hash" not in header
+        # 1.6.077 : ni question ni début de réponse dans l'export
+        assert "Voici la réponse" not in lines[1]
+        assert "test question" not in lines[1]
 
     def test_export_csv_with_filters(self):
         client = _authed_client()

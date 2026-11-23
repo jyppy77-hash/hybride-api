@@ -246,7 +246,8 @@ def _build_loto_config():
     })
 
 
-async def _prepare_chat_context(message: str, history: list, page: str, http_client, lang: str = "fr"):
+async def _prepare_chat_context(message: str, history: list, page: str, http_client, lang: str = "fr",
+                                *, traffic_source: str = "public"):
     """
     Phases I-SQL : prepare le contexte pour l'appel Gemini.
     Retourne (early_return_or_None, ctx_dict_or_None).
@@ -256,6 +257,7 @@ async def _prepare_chat_context(message: str, history: list, page: str, http_cli
     """
     return await _prepare_chat_context_base(
         message, history, page, http_client, lang, _build_loto_config(),
+        traffic_source=traffic_source,
     )
 
 
@@ -266,7 +268,8 @@ def _log_from_meta(meta, module, lang, message, response_preview="",
                           is_error=is_error, error_detail=error_detail)
 
 
-async def handle_chat(message: str, history: list, page: str, http_client, lang: str = "fr") -> dict:
+async def handle_chat(message: str, history: list, page: str, http_client, lang: str = "fr",
+                      *, traffic_source: str = "public") -> dict:
     """Pipeline 12 phases du chatbot HYBRIDE. Retourne dict(response, source, mode)."""
     return await handle_chat_common(
         message, history, page, http_client, lang,
@@ -274,6 +277,7 @@ async def handle_chat(message: str, history: list, page: str, http_client, lang:
         default_fallback=FALLBACK_RESPONSE,
         log_prefix="[HYBRIDE CHAT]", module="loto",
         breaker=gemini_breaker,
+        traffic_source=traffic_source,
     )
 
 
@@ -282,7 +286,8 @@ def _sse_event(data):
     return _sse_event_shared(data)
 
 
-async def handle_chat_stream(message: str, history: list, page: str, http_client, lang: str = "fr"):
+async def handle_chat_stream(message: str, history: list, page: str, http_client, lang: str = "fr",
+                             *, traffic_source: str = "public"):
     """Async generator — SSE streaming du chatbot HYBRIDE. Yields SSE event strings."""
     async for event in handle_stream_common(
         message, history, page, http_client, lang,
@@ -291,6 +296,7 @@ async def handle_chat_stream(message: str, history: list, page: str, http_client
         log_prefix="[HYBRIDE CHAT]", module="loto",
         call_type="chat_loto",
         stream_fn=stream_gemini_chat, breaker=gemini_breaker,
+        traffic_source=traffic_source,
     ):
         yield event
 

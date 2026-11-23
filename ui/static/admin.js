@@ -916,7 +916,7 @@ var LotoAdmin = (function() {
         qs('#cm-kpi-rejected').textContent = (kpi.rejected_pct || 0) + '%';
         qs('#cm-kpi-errors').textContent = (kpi.error_pct || 0) + '%';
         qs('#cm-kpi-duration').textContent = kpi.avg_duration || 0;
-        qs('#cm-kpi-sessions').textContent = kpi.unique_sessions || 0;
+        qs('#cm-kpi-public').textContent = kpi.public_count || 0;
         qs('#cm-kpi-sql').textContent = kpi.sql_count || 0;
     }
 
