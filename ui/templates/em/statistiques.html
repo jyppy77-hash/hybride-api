@@ -1106,6 +1106,21 @@
             hideDates: {{ _('Masquer les dates')|tojson }},
             stars: {{ _('Étoiles')|tojson }}
         };
+        // Lot 1.6.078 (R-3) — ordinal du rang et séparateur de milliers dans la langue de la page
+        var PS_LANG = window.LotoIA_lang || {{ lang|tojson }};
+        var PS_LOCALE = {fr: 'fr-FR', en: 'en-GB', es: 'es-ES', pt: 'pt-PT', de: 'de-DE', nl: 'nl-NL'}[PS_LANG] || 'fr-FR';
+        function psRankOrdinal(n) {
+            if (PS_LANG === 'en') {
+                var m100 = n % 100, m10 = n % 10;
+                var suf = (m100 >= 11 && m100 <= 13) ? 'th' : m10 === 1 ? 'st' : m10 === 2 ? 'nd' : m10 === 3 ? 'rd' : 'th';
+                return n + '<sup>' + suf + '</sup>';
+            }
+            if (PS_LANG === 'es') return n + '.º';
+            if (PS_LANG === 'pt') return n + '.ª';
+            if (PS_LANG === 'de') return n + '.';
+            if (PS_LANG === 'nl') return n + 'e';
+            return n === 1 ? '1<sup>er</sup>' : n + '<sup>e</sup>';  // fr et langue inconnue
+        }
 
         function loadPairs() {
             Promise.all([
@@ -1115,18 +1130,18 @@
                 var hot = results[0], cold = results[1];
                 if (hot.success) {
                     renderPairsTable('pairs-hot', hot.pairs, 'hot', hot.total_draws);
-                    document.getElementById('pairs-subtitle-hot').textContent = PS.on + ' ' + hot.total_draws.toLocaleString() + ' ' + PS.draws;
+                    document.getElementById('pairs-subtitle-hot').textContent = PS.on + ' ' + hot.total_draws.toLocaleString(PS_LOCALE) + ' ' + PS.draws;
                     if (hot.star_pairs) {
                         renderPairsTable('pairs-stars-hot', hot.star_pairs, 'star-hot', hot.total_draws);
-                        document.getElementById('pairs-subtitle-stars-hot').textContent = PS.on + ' ' + hot.total_draws.toLocaleString() + ' ' + PS.draws;
+                        document.getElementById('pairs-subtitle-stars-hot').textContent = PS.on + ' ' + hot.total_draws.toLocaleString(PS_LOCALE) + ' ' + PS.draws;
                     }
                 }
                 if (cold.success) {
                     renderPairsTable('pairs-cold', cold.pairs, 'cold', cold.total_draws);
-                    document.getElementById('pairs-subtitle-cold').textContent = PS.on + ' ' + cold.total_draws.toLocaleString() + ' ' + PS.draws;
+                    document.getElementById('pairs-subtitle-cold').textContent = PS.on + ' ' + cold.total_draws.toLocaleString(PS_LOCALE) + ' ' + PS.draws;
                     if (cold.star_pairs) {
                         renderPairsTable('pairs-stars-cold', cold.star_pairs, 'star-cold', cold.total_draws);
-                        document.getElementById('pairs-subtitle-stars-cold').textContent = PS.on + ' ' + cold.total_draws.toLocaleString() + ' ' + PS.draws;
+                        document.getElementById('pairs-subtitle-stars-cold').textContent = PS.on + ' ' + cold.total_draws.toLocaleString(PS_LOCALE) + ' ' + PS.draws;
                     }
                 }
                 pairsLoaded = true;
@@ -1261,16 +1276,16 @@
             var ballClass = isStar ? 'star' : (pctRank >= 90 ? 'warm' : pctRank <= 10 ? 'cold' : 'neutral');
             var fillColor = isStar ? '#eab308' : (pctRank >= 90 ? '#ef4444' : pctRank <= 10 ? '#3b82f6' : 'var(--primary,#667eea)');
             var barWidth = Math.max(Math.round(d.percentage / 3 * 100), 3);
-            var rankLabel = d.rank === 1 ? '1<sup>re</sup>' : d.rank + '<sup>e</sup>';
+            var rankLabel = psRankOrdinal(d.rank);  // 1.6.078 (R-3)
             var resultClass = isStar ? ' result-star' : (pctRank >= 90 ? ' result-warm' : pctRank <= 10 ? ' result-cold' : '');
             var btnId = isStar ? 'btn-dates-star' : 'btn-dates-ball';
             var datesId = isStar ? 'dates-star-list' : 'dates-ball-list';
             el.className = 'pairs-result' + resultClass;
             el.innerHTML =
                 '<div class="pairs-result-balls"><span class="pairs-result-ball ' + ballClass + '">' + d[k1] + '</span><span class="pairs-result-ball ' + ballClass + '">' + d[k2] + '</span></div>' +
-                '<p class="pairs-result-stat">' + PS.together + ' <strong>' + d.count + ' ' + PS.times + '</strong> ' + PS.on + ' ' + d.total_draws.toLocaleString() + ' ' + PS.draws + '</p>' +
+                '<p class="pairs-result-stat">' + PS.together + ' <strong>' + d.count + ' ' + PS.times + '</strong> ' + PS.on + ' ' + d.total_draws.toLocaleString(PS_LOCALE) + ' ' + PS.draws + '</p>' +
                 '<p class="pairs-result-stat">' + PS.frequency + ' : <strong>' + d.percentage.toFixed(1) + '%</strong></p>' +
-                '<p class="pairs-result-stat">' + PS.rank + ' : <strong>' + rankLabel + '</strong> ' + PS.on + ' ' + d.total_pairs.toLocaleString() + ' ' + PS.possible + '</p>' +
+                '<p class="pairs-result-stat">' + PS.rank + ' : <strong>' + rankLabel + '</strong> ' + PS.on + ' ' + d.total_pairs.toLocaleString(PS_LOCALE) + ' ' + PS.possible + '</p>' +
                 '<div class="pairs-result-bar"><div class="pairs-result-track"><div class="pairs-result-fill" style="width:' + barWidth + '%;background:' + fillColor + ';"></div></div></div>' +
                 (d.count > 0 ? '<button id="' + btnId + '" class="btn-dates-toggle" onclick="togglePairDates(\'' + type + '\',' + d[k1] + ',' + d[k2] + ',' + d.count + ')">&#128197; ' + STRINGS.showDates + ' (' + d.count + ')</button>' +
                 '<div id="' + datesId + '" class="dates-list" style="display:none;"></div>' : '');

@@ -1068,7 +1068,7 @@
                 <span class="footer-sep">&bull;</span>
                 <a href="/euromillions/generateur">Générateur EM</a>
             </div>
-            <p class="footer-brand">LotoIA.fr <span class="app-version">v1.6.077</span></p>
+            <p class="footer-brand">LotoIA.fr <span class="app-version">v1.6.078</span></p>
             <p class="footer-disclaimer">Jouer comporte des risques : endettement, isolement, dépendance. Appelez le 09 74 75 13 13 (appel non surtaxé).</p>
             <p class="footer-help">Interdiction de jeu aux mineurs. <a href="https://www.joueurs-info-service.fr" target="_blank" rel="noopener">Joueurs Info Service</a></p>
             <div class="credits">
@@ -1470,7 +1470,7 @@
                     var ballClass = pctRank >= 90 ? 'warm' : pctRank <= 10 ? 'cold' : 'neutral';
                     var fillColor = pctRank >= 90 ? '#ef4444' : pctRank <= 10 ? '#3b82f6' : 'var(--primary)';
                     var barWidth = Math.max(Math.round(data.percentage / 3 * 100), 3);
-                    var rankLabel = data.rank === 1 ? '1<sup>re</sup>' : data.rank + '<sup>e</sup>';
+                    var rankLabel = data.rank === 1 ? '1<sup>er</sup>' : data.rank + '<sup>e</sup>';
                     var resultClass = pctRank >= 90 ? ' result-warm' : pctRank <= 10 ? ' result-cold' : '';
                     resultDiv.className = 'pairs-result' + resultClass;
                     resultDiv.innerHTML =

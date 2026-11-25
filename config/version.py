@@ -5,6 +5,20 @@ Tous les fichiers du projet DOIVENT importer depuis ce module.
 import os
 from datetime import date
 
+# LOT 1.6.078 — Troncature anti-réintro en flux, relance 429 SQL, ordinaux (Release 1.6.078, 26/11/2026 ; audit P1
+# du 24/11, décisions D1-D10). Aucun prompt, aucun .po, aucun cache-buster.
+# A (D1-D3) : l'anti-réintro F14 n'est plus appliqué par morceau dans StreamBuffer (le `^` du motif valait au
+# début de chaque morceau : phrases tronquées ou effacées) mais par début de ligne réel, sur le texte sans tags /
+# CF-7 / CJK, puis compaction (ordre de _clean_response) ; rétention seulement si la ligne peut commencer par un
+# des 7 verbes, plafond 200 caractères (libération sans anti-réintro). Flux == _clean_response(texte entier),
+# modes normal et strict ; motif _REINTRO_RE et signature de _clean_response inchangés.
+# B (D4-D6) : génération SQL Loto + EM : 1 relance sur 429 seulement (2 s + U(0,1 s), tentative min(8 s, restant
+# − 0,5 s), pas de relance si restant < 3 s) dans le plafond existant de 10 s ; un seul échec au disjoncteur sql ;
+# chat_log.error_detail = "SqlVertex429" si l'échec final est un 429 (is_error inchangé).
+# C (D7-D9) : ordinaux du rang par langue sur /em/statistiques et /em/paires (fr 1er, en 1st/2nd/3rd/th, es 1.º,
+# pt 1.ª, de 1., nl 1e), « 1er » sur les 2 pages Loto, toLocaleString avec la locale de la page.
+# Bump requis : ETag HTML lié à APP_VERSION.
+
 # LOT 1.6.077 — traffic_source, compteurs admin, export CSV technique (Release 1.6.077, 23/11/2026 ; audit RO
 # chat_log du 23/11, option A). Aucune modification des réponses du chatbot (routage, détecteurs, garde-fous,
 # filtres de sortie, prompts inchangés). ip_hash / session_hash de chat_log ne seront jamais remplis (promesse
@@ -493,9 +507,9 @@ from datetime import date
 # V141 A.4 UX Fixes (Release 1.6.029, 13/05/2026) — rappel :
 #   Fix 1 rating popup 3 tiers (low 1-2 obligatoire / mid / high optionnels) sur 7 widgets +
 #   Fix 2 Phase OUT_OF_SCOPE_LOTTERY 25 patterns + cross-sell EM↔Loto + defense-in-depth Phase A.
-APP_VERSION = "1.6.077"
+APP_VERSION = "1.6.078"
 APP_NAME = "LotoIA"
-VERSION_DATE = "2026-11-23"
+VERSION_DATE = "2026-11-26"
 
 # Sitemap lastmod — auto-generated at import time (= deploy time on Cloud Run).
 # Override via DEPLOY_DATE env var in CI/CD if needed.

@@ -488,7 +488,7 @@
                     var ballClass = pctRank >= 90 ? 'warm' : pctRank <= 10 ? 'cold' : 'neutral';
                     var fillColor = pctRank >= 90 ? '#ef4444' : pctRank <= 10 ? '#3b82f6' : 'var(--primary)';
                     var barWidth = Math.max(Math.round(data.percentage / 3 * 100), 3);
-                    var rankLabel = data.rank === 1 ? '1<sup>re</sup>' : data.rank + '<sup>e</sup>';
+                    var rankLabel = data.rank === 1 ? '1<sup>er</sup>' : data.rank + '<sup>e</sup>';
                     var resultClass = pctRank >= 90 ? ' result-warm' : pctRank <= 10 ? ' result-cold' : '';
                     resultDiv.className = 'pairs-result' + resultClass;
                     resultDiv.innerHTML =

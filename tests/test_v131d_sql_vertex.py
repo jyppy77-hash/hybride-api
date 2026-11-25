@@ -9,7 +9,7 @@ gemini-2.0-flash, avec gestion d'erreurs identique au pattern V131.A
 Réutilise la fixture mock_vertex_client de tests/conftest.py:251-385.
 """
 
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -79,16 +79,22 @@ class TestGenerateSqlVertexMigration:
     async def test_generate_sql_429_records_failure_and_returns_none(
         self, mock_vertex_client, make_client_error, caplog,
     ):
-        """V131.D — 429 ResourceExhausted → _record_failure + retour None + log warning."""
+        """V131.D — 429 ResourceExhausted → _record_failure + retour None + log warning.
+
+        1.6.078 — une relance sur 429 : « 429 puis 429 » garde +1 échec (attente neutralisée).
+        """
         before = gemini_breaker_sql._failure_count
 
         with mock_vertex_client() as vc, \
-             patch("services.chat_sql.load_prompt", return_value="prompt"):
-            vc.set_error(make_client_error(429, "RESOURCE_EXHAUSTED"))
+             patch("services.chat_sql.load_prompt", return_value="prompt"), \
+             patch("services.base_chat_sql.asyncio.sleep", new_callable=AsyncMock):
+            vc.client.aio.models.generate_content = AsyncMock(
+                side_effect=[make_client_error(429, "RESOURCE_EXHAUSTED")] * 2)
             with caplog.at_level("WARNING"):
                 result = await _generate_sql("question", None, None, None)
 
         assert result is None
+        assert vc.client.aio.models.generate_content.call_count == 2
         assert gemini_breaker_sql._failure_count == before + 1
         # Vérifier log warning explicite 429
         assert any(
@@ -212,16 +218,22 @@ class TestGenerateSqlEmErrorBranches:
     async def test_generate_sql_em_429_records_failure_and_returns_none(
         self, mock_vertex_client, make_client_error, caplog,
     ):
-        """V131.D — _generate_sql_em : 429 → _record_failure + None."""
+        """V131.D — _generate_sql_em : 429 → _record_failure + None.
+
+        1.6.078 — une relance sur 429 : « 429 puis 429 » garde +1 échec (attente neutralisée).
+        """
         before = gemini_breaker_sql._failure_count
 
         with mock_vertex_client() as vc, \
-             patch("services.chat_sql_em.load_prompt_em", return_value="prompt"):
-            vc.set_error(make_client_error(429, "RESOURCE_EXHAUSTED"))
+             patch("services.chat_sql_em.load_prompt_em", return_value="prompt"), \
+             patch("services.base_chat_sql.asyncio.sleep", new_callable=AsyncMock):
+            vc.client.aio.models.generate_content = AsyncMock(
+                side_effect=[make_client_error(429, "RESOURCE_EXHAUSTED")] * 2)
             with caplog.at_level("WARNING"):
                 result = await _generate_sql_em("question", None, None, None, lang="fr")
 
         assert result is None
+        assert vc.client.aio.models.generate_content.call_count == 2
         assert gemini_breaker_sql._failure_count == before + 1
         assert any(
             "[EM TEXT-TO-SQL] Vertex 429 ResourceExhausted" in rec.getMessage()

@@ -99,6 +99,74 @@ _REINTRO_RE = re.compile(
     re.IGNORECASE | re.MULTILINE
 )
 
+# Lot 1.6.078 (D1-D3) — formes de _REINTRO_RE, recopiées telles quelles (7 verbes, 8 sujets :
+# apostrophe ASCII seule pour « I'm », ASCII ou typographique pour « l'assistant », comme le motif).
+# Servent UNIQUEMENT à StreamBuffer pour savoir si un début de ligne PEUT encore devenir une
+# auto-présentation ; la décision (retrait ou non) reste celle de _REINTRO_RE. Motif ↔ listes :
+# cohérence vérifiée par tests/test_lot_1_6_078.py.
+_REINTRO_VERBS = ("Je suis", "I am", "I'm", "Soy", "Sou", "Ich bin", "Ik ben")
+_REINTRO_SUBJECTS = (
+    "HYBRIDE", "l'assistant", "l’assistant", "the assistant", "el asistente",
+    "o assistente", "der Assistent", "de assistent",
+)
+
+
+def _prefix_alternation(words) -> str:
+    """Regex de tous les préfixes (chaîne vide comprise) des mots donnés : 'ab' → (?:a(?:b)?)?."""
+    alts = []
+    for w in words:
+        out = ""
+        for ch in reversed(w):
+            out = "(?:" + re.escape(ch) + out + ")?"
+        alts.append(out)
+    return "(?:" + "|".join(alts) + ")"
+
+
+# Tête « encore possible » d'une auto-présentation, SANS l'ancre : préfixe d'un verbe, ou verbe
+# complet + blancs (\s+ du motif, \n compris) + préfixe d'un sujet. Mêmes drapeaux que le motif.
+_REINTRO_HEAD_PARTIAL_RE = re.compile(
+    _prefix_alternation(_REINTRO_VERBS)
+    + "|(?:" + "|".join(re.escape(v) for v in _REINTRO_VERBS) + r")\s+"
+    + _prefix_alternation(_REINTRO_SUBJECTS),
+    re.IGNORECASE,
+)
+
+# Lot 1.6.078 (D3, risque 2) — plafond de rétention d'une ligne (aligné sur _ANCHOR_HEAD_CAP).
+_REINTRO_HOLD_CAP = 200
+
+
+def _reintro_open_at(s: str, k: int) -> bool:
+    """Vrai si une correspondance de _REINTRO_RE commençant en `k` reste POSSIBLE avec la suite.
+
+    Candidats du motif (1.0 a) : `^` (k = début de chaîne ou suit un \\n) puis le verbe ; ou
+    `\\n\\n?` (s[k] = \\n) puis le verbe. Appelée seulement là où le motif ne correspond pas
+    (encore) : « ouvert » = le texte s'arrête avant que l'échec soit certain.
+    """
+    if (k == 0 or s[k - 1] == "\n") and _REINTRO_HEAD_PARTIAL_RE.fullmatch(s, k):
+        return True
+    if s.startswith("\n", k):
+        if _REINTRO_HEAD_PARTIAL_RE.fullmatch(s, k + 1):
+            return True
+        if s.startswith("\n", k + 1) and _REINTRO_HEAD_PARTIAL_RE.fullmatch(s, k + 2):
+            return True
+    return False
+
+
+def _reintro_first_open(s: str, pos: int, limit: int) -> int | None:
+    """Premier candidat ouvert dans [pos, limit) : début de ligne réel ou \\n (seuls points où
+    le motif peut commencer). Hors de ces points, aucune rétention."""
+    k = pos
+    while k < limit:
+        if _reintro_open_at(s, k):
+            return k
+        if s[k] == "\n":
+            k += 1  # la position suivante est un début de ligne réel : candidat
+            continue
+        k = s.find("\n", k + 1, limit)
+        if k == -1:
+            return None
+    return None
+
 
 # ────────────────────────────────────────────
 # S06 V94: Sanitize history messages before enrichment
@@ -282,12 +350,10 @@ _INTERNAL_TAGS_TRANSLATED_RE = re.compile(
 )
 
 
-def _clean_response(text: str, lang: str = "fr", *, strip_edges: bool = True) -> str:
-    """Supprime les tags internes et blocs de code qui ne doivent pas etre vus par l'utilisateur.
-
-    strip_edges=False (1.6.055) : garde les \\n de bord — en flux, StreamBuffer fait le
-    strip une seule fois pour toute la reponse (sinon les \\n entre morceaux sont perdus).
-    """
+def _strip_markup(text: str) -> tuple[str, bool]:
+    """1re étape de _clean_response (1.6.078 : extraite telle quelle, ordre inchangé) :
+    blocs de code, tags internes FR, noms de blocs traduits (CF-7), caractères non latins.
+    Renvoie (texte, bloc_de_code_retiré)."""
     # F05 V86: supprimer les blocs ```tool_code / ```python hallucines par Gemini
     _had_code_block = bool(_RE_CODE_BLOCK.search(text))
     if _had_code_block:
@@ -298,14 +364,30 @@ def _clean_response(text: str, lang: str = "fr", *, strip_edges: bool = True) ->
     text = _INTERNAL_TAGS_TRANSLATED_RE.sub('', text)  # Lot 1.6.074 CF-7 — noms de blocs traduits
     # Supprimer les caracteres CJK/non-latin injectes par Gemini
     text = _strip_non_latin(text)
+    return text, _had_code_block
+
+
+def _compact_whitespace(text: str) -> str:
+    """Étape de compaction de _clean_response (1.6.078 : extraite telle quelle)."""
+    # Nettoyer les espaces multiples et lignes vides resultants
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    return re.sub(r'  +', ' ', text)
+
+
+def _clean_response(text: str, lang: str = "fr", *, strip_edges: bool = True) -> str:
+    """Supprime les tags internes et blocs de code qui ne doivent pas etre vus par l'utilisateur.
+
+    strip_edges=False (1.6.055) : garde les \\n de bord — en flux, StreamBuffer fait le
+    strip une seule fois pour toute la reponse (sinon les \\n entre morceaux sont perdus).
+    Ordre (1.6.078) : _strip_markup → anti-réintro → _compact_whitespace → bords → repli code.
+    """
+    text, _had_code_block = _strip_markup(text)
     # F14 V83: strip Gemini auto-introductions (defense-in-depth, 6 langs)
     _reintro_match = _REINTRO_RE.search(text)
     if _reintro_match:
         logger.warning("Anti-reintro stripped: %s", _reintro_match.group().strip()[:80])
         text = _REINTRO_RE.sub('', text)
-    # Nettoyer les espaces multiples et lignes vides resultants
-    text = re.sub(r'\n{3,}', '\n\n', text)
-    text = re.sub(r'  +', ' ', text)
+    text = _compact_whitespace(text)
     # strip(\n\r) only — preserver les espaces aux bords des chunks SSE
     # pour eviter le collage de mots ("Jene peux pas") lors de la concatenation JS
     if strip_edges:  # 1.6.055 — en flux, le strip des bords est fait UNE fois par StreamBuffer
@@ -327,6 +409,18 @@ class StreamBuffer:
     decoupes sur plusieurs chunks SSE. Ce buffer retient le texte quand
     un '[' est detecte sans ']' correspondant, puis nettoie le tag complet
     avant de flusher.
+
+    1.6.078 (D1-D3) — l'anti-réintro F14 n'est plus appliqué par morceau (cause de la troncature :
+    `^` du motif vrai au début de CHAQUE morceau). Il est appliqué par début de ligne réel, sur le
+    texte déjà débarrassé des tags / CF-7 / CJK, dans l'ordre de _clean_response :
+      1. _strip_markup (morceau sûr : aucun `[` ouvert) ;
+      2. _reintro_lines : retient, à partir d'un début de ligne réel ou des \\n qui le précèdent,
+         seulement ce qui PEUT encore devenir une correspondance de _REINTRO_RE, et libère dès
+         que l'issue est certaine (correspondance terminée par un non-blanc, échec, ou fin du flux).
+         Une ligne qui ne commence pas par un préfixe des 7 verbes est libérée sans attendre ;
+      3. _emit_clean : compaction + \\n et espaces de bord (1.6.055, inchangé).
+    Invariant : la concaténation du flux == _clean_response(texte entier), pour tout découpage,
+    sauf au plafond _REINTRO_HOLD_CAP (voir _reintro_lines).
     """
 
     def __init__(self):
@@ -334,16 +428,81 @@ class StreamBuffer:
         self._pending_nl = ""   # 1.6.055 — \n de fin de morceau retenus jusqu'au texte suivant
         self._started = False   # 1.6.055 — debut de reponse deja emis ?
         self._last_char = ""    # 1.6.055 — dernier caractere emis (dedoublonnage espace de bord)
+        self._ri_hold = ""      # 1.6.078 — texte nettoyé retenu (auto-présentation encore possible)
+        self._ri_prev = ""      # 1.6.078 — caractère nettoyé juste avant _ri_hold ("" = début de réponse)
 
-    def _emit(self, raw: str) -> str:
+    def _reintro_lines(self, text: str, *, final: bool) -> str:
+        """1.6.078 — anti-réintro par début de ligne réel (texte après _strip_markup).
+
+        `s = prev + retenu + nouveau` : le caractère `prev` donne au `^` du motif (re.MULTILINE,
+        recherche à partir de `pos`) le même sens que sur le texte entier. Boucle :
+        - correspondance terminée (suivie d'un non-blanc, ou fin du flux si `final`) : texte avant
+          émis, correspondance retirée (journalisée), reprise après elle ;
+        - candidat encore ouvert (préfixe possible), ou correspondance dont la fin n'est pas encore
+          connue (`[^.!?\\n]*` ou `\\s*` arrêtés par la fin du texte reçu) : texte avant émis, le reste
+          retenu (les \\n d'ancre `\\n\\n?` compris, jamais émis avant la décision) ;
+        - plafond (risque 2) : si la rétention atteint _REINTRO_HOLD_CAP caractères, ou si une
+          correspondance en compte au moins autant, _REINTRO_HOLD_CAP caractères sont libérés SANS
+          anti-réintro (divergence assumée avec le texte entier, dans ce seul cas) et l'analyse
+          reprend après eux, en milieu de ligne. Règle indépendante du découpage.
+        """
+        prev = self._ri_prev
+        s = prev + self._ri_hold + text
+        pos = len(prev)
+        out = []
+        cap = _REINTRO_HOLD_CAP
+        while True:
+            m = _REINTRO_RE.search(s, pos)
+            j = None if final else _reintro_first_open(s, pos, m.start() if m else len(s))
+            if j is None and m is not None and not final and m.end() == len(s):
+                j = m.start()  # correspondance dont la fin dépend de la suite
+            if j is not None:
+                if len(s) - j >= cap:  # plafond : libération sans anti-réintro
+                    out.append(s[pos:j + cap])
+                    pos = j + cap
+                    continue
+                out.append(s[pos:j])
+                self._ri_hold = s[j:]
+                self._ri_prev = s[j - 1] if j > 0 else ""
+                return "".join(out)
+            if m is None:
+                break
+            if m.end() - m.start() >= cap:  # plafond : libération sans anti-réintro
+                out.append(s[pos:m.start() + cap])
+                pos = m.start() + cap
+                continue
+            out.append(s[pos:m.start()])
+            logger.warning("Anti-reintro stripped: %s", m.group().strip()[:80])
+            pos = m.end()
+        out.append(s[pos:])
+        self._ri_hold = ""
+        self._ri_prev = s[-1] if s else ""
+        return "".join(out)
+
+    def _emit(self, raw: str, *, final: bool = False) -> str:
+        """1.6.078 — morceau sûr → _strip_markup → _reintro_lines → _emit_clean.
+
+        Mêmes étapes, dans le même ordre, que _clean_response(texte entier) ; l'anti-réintro est
+        appliqué par _reintro_lines (début de ligne réel) et non par morceau.
+        """
+        text, had_code_block = _strip_markup(raw)
+        if had_code_block:
+            # F05 — repli par morceau, comme avant 1.6.078 (_clean_response, langue par défaut)
+            compact = _compact_whitespace(text)
+            if not compact or len(compact.strip()) < 10:
+                text = _CODE_FALLBACK["fr"]
+        return self._emit_clean(self._reintro_lines(text, final=final))
+
+    def _emit_clean(self, text: str) -> str:
         """1.6.055 — Nettoie un morceau sans perdre les \\n de bord.
 
         Equivalent a un nettoyage unique de la reponse complete : \\n de tete jetes,
         \\n de fin retenus (emis devant le texte suivant, jetes au flush), runs de
         \\n et d'espaces a cheval sur deux morceaux reduits comme dans _clean_response.
         Les espaces de bord sont conserves (pas de collage "Jene").
+        1.6.078 : reçoit un texte déjà passé par _strip_markup et _reintro_lines.
         """
-        cleaned = _clean_response(raw, strip_edges=False)
+        cleaned = _compact_whitespace(text)
         body = cleaned.rstrip("\n\r")
         tail = cleaned[len(body):]
         if not self._started:
@@ -380,8 +539,11 @@ class StreamBuffer:
         return cleaned
 
     def flush(self) -> str:
-        """Flush le reste du buffer a la fin du stream (\\n finaux jetes ≡ strip de fin)."""
-        cleaned = self._emit(self.buffer) if self.buffer else ""
+        """Flush le reste du buffer a la fin du stream (\\n finaux jetes ≡ strip de fin).
+
+        1.6.078 : libère aussi le texte retenu par _reintro_lines (fin du flux = issue certaine).
+        """
+        cleaned = self._emit(self.buffer, final=True)
         self.buffer = ""
         self._pending_nl = ""
         return cleaned

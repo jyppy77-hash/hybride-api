@@ -903,11 +903,16 @@ async def run_text_to_sql(message, http_client, gem_api_key, history,
                           execute_sql_fn, format_result_fn, max_per_session,
                           log_prefix, force_sql, has_data_signal_fn,
                           continuation_mode, enrichment_context,
-                          lang="fr", sql_gen_kwargs=None) -> tuple[str, str | None, str]:
+                          lang="fr", sql_gen_kwargs=None, *,
+                          failure_box: dict | None = None) -> tuple[str, str | None, str]:
     """
     Phase SQL block. Returns (enrichment_context, sql_query, sql_status).
     sql_gen_kwargs: extra kwargs for generate_sql_fn (e.g. lang for EM).
+    failure_box (1.6.078, D6) : transmis à generate_sql_fn, qui y pose la cause d'un échec final
+    sur 429 ("SqlVertex429") ; l'appelant la range dans _chat_meta (sql_error_cause).
     """
+    if failure_box is None:
+        failure_box = {}
     _sql_query = None
     _sql_status = "N/A"
 
@@ -937,7 +942,11 @@ async def run_text_to_sql(message, http_client, gem_api_key, history,
         kwargs = {"history": history}
         if sql_gen_kwargs:
             kwargs.update(sql_gen_kwargs)
+        kwargs["failure_box"] = failure_box  # 1.6.078 (D6)
         sql_input = message[:_MAX_SQL_INPUT_LENGTH]
+        # 1.6.078 (D4) — instant de départ du budget de relance 429 = celui du wait_for ci-dessous
+        # (qui enveloppe TOUTE la génération : prompt, contexte, disjoncteur, appel(s) Vertex)
+        kwargs["started_at"] = time.monotonic()
         sql = await asyncio.wait_for(
             generate_sql_fn(sql_input, http_client, gem_api_key, **kwargs),
             timeout=_TIMEOUTS["sql_generate"],
@@ -1941,6 +1950,8 @@ async def _prepare_chat_context_base(
     _sql_kw = {}
     if _sql_gen_kwargs_fn:
         _sql_kw["sql_gen_kwargs"] = _sql_gen_kwargs_fn(lang)
+    _sql_failure_box = {}  # 1.6.078 (D6) — cause d'échec final de la génération SQL
+    _sql_kw["failure_box"] = _sql_failure_box
     if _g_forced_only:
         _sql_query, _sql_status = None, "N/A"
     else:
@@ -2047,6 +2058,7 @@ async def _prepare_chat_context_base(
             "phase": _phase, "t0": _t0, "lang": lang,
             "traffic_source": traffic_source,  # 1.6.077 — étiquette seule, jamais l'IP
             "sql_query": _sql_query, "sql_status": _sql_status,
+            "sql_error_cause": _sql_failure_box.get("cause"),  # 1.6.078 (D6) — "SqlVertex429" ou None
             "grid_count": _grid_count, "has_exclusions": _has_exclusions,
             "enrichment_context": enrichment_context,
         },

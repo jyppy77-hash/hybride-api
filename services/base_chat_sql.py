@@ -4,16 +4,90 @@ Game-specific SQL generation, DB queries, and prompts stay in wrappers.
 """
 
 import asyncio
+import random
 import re
 import logging
+import time
 
 import aiomysql
+from google.genai import errors as genai_errors
 
 import db_cloudsql
 from db_cloudsql import ReadonlyPoolUnavailable
 from services.base_chat_utils import _format_date_fr
+from services.gemini_shared import _is_rate_limit_error
 
 logger = logging.getLogger(__name__)
+
+
+# ────────────────────────────────────────────
+# Lot 1.6.078 (D4) — relance 429 de la génération SQL (Loto + EM)
+# ────────────────────────────────────────────
+# Une seule relance, sur 429 seulement, DANS le plafond existant de la génération
+# (_TIMEOUTS["sql_generate"] = 10 s, chat_pipeline_shared.py — non importable ici : import
+# circulaire ; égalité épinglée par tests/test_lot_1_6_078.py). Pattern V129.1 / V143 :
+# relance silencieuse, disjoncteur vérifié avant la relance, un seul _record_failure à l'échec
+# final (fait par l'appelant, dans ses handlers existants).
+_SQL_GENERATE_BUDGET = 10.0       # = _TIMEOUTS["sql_generate"], inchangé
+_SQL_MAX_RETRIES_429 = 1
+_SQL_RETRY_BACKOFF_BASE = 2.0     # attente = 2 s + U(0, 1 s)
+_SQL_RETRY_JITTER_MAX = 1.0
+_SQL_RETRY_MIN_REMAINING = 3.0    # pas de relance si le temps restant est < 3 s
+_SQL_ATTEMPT_MARGIN = 0.5         # 2e tentative : min(8 s, restant − 0,5 s)
+_SQL_ATTEMPT_MAX = 8.0            # délai d'une tentative (1re tentative : 8 s, comme avant)
+
+
+class SqlRetryCircuitOpen(Exception):
+    """Disjoncteur OPEN constaté juste avant la relance, après un 1er 429 (porte ce 429)."""
+
+    def __init__(self, error: Exception):
+        super().__init__(str(error))
+        self.error = error
+
+
+def _sql_clock() -> float:
+    """Horloge de la relance (fonction dédiée : figée par les tests sans toucher asyncio)."""
+    return time.monotonic()
+
+
+async def generate_sql_with_429_retry(call, *, breaker, log_prefix: str, started_at: float | None = None):
+    """Appel Vertex de la génération SQL avec au plus UNE relance sur 429.
+
+    `call()` renvoie la coroutine Vertex (une nouvelle par tentative). `started_at` : instant
+    du `wait_for` externe de run_text_to_sql (pris par l'appelant) ; à défaut, l'entrée ici.
+    Renvoie la réponse, ou lève l'erreur finale, traitée par les handlers existants de
+    l'appelant (un seul _record_failure / _track_error). Cas particulier : disjoncteur OPEN
+    constaté avant la relance → SqlRetryCircuitOpen (aucun appel, aucun échec en plus).
+    Une annulation (CancelledError du wait_for externe) n'est jamais interceptée.
+    """
+    start = _sql_clock() if started_at is None else started_at
+    attempt = 0
+    timeout = _SQL_ATTEMPT_MAX
+    while True:
+        try:
+            return await asyncio.wait_for(call(), timeout=timeout)
+        except asyncio.TimeoutError as e:
+            e.sql_attempt_timeout = timeout  # délai réel de la tentative expirée (libellé du handler)
+            raise
+        except genai_errors.ClientError as e:
+            if not _is_rate_limit_error(e) or attempt >= _SQL_MAX_RETRIES_429:
+                raise
+            remaining = _SQL_GENERATE_BUDGET - (_sql_clock() - start)
+            if remaining < _SQL_RETRY_MIN_REMAINING:
+                logger.warning("%s [V129_1_RETRY] 429, no budget left (%.1fs) — no retry",
+                               log_prefix, remaining)
+                raise
+            backoff = _SQL_RETRY_BACKOFF_BASE * (2 ** attempt) + random.uniform(0, _SQL_RETRY_JITTER_MAX)
+            attempt += 1
+            logger.warning("%s [V129_1_RETRY] attempt=%d/%d 429, backoff=%.1fs",
+                           log_prefix, attempt, _SQL_MAX_RETRIES_429, backoff)
+            await asyncio.sleep(backoff)
+            if breaker.state == breaker.OPEN:
+                raise SqlRetryCircuitOpen(e) from e
+            timeout = min(_SQL_ATTEMPT_MAX, _SQL_GENERATE_BUDGET - (_sql_clock() - start) - _SQL_ATTEMPT_MARGIN)
+            if timeout <= 0:
+                logger.warning("%s [V129_1_RETRY] no time left after backoff — no attempt", log_prefix)
+                raise e  # échec final sur 429 (handler 429 de l'appelant)
 
 
 # ────────────────────────────────────────────

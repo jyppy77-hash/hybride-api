@@ -1087,9 +1087,12 @@ def log_from_meta(meta, module, lang, message, response_preview="",
     """Call log_chat_exchange from _chat_meta dict.
 
     1.6.055 — tokens_in/out : tokens Gemini de la réponse finale (pas la génération SQL).
+    1.6.078 (D6) — si la réponse finale n'est pas une erreur, error_detail hérite de meta["sql_error_cause"].
     """
     if not meta:
         return
+    if not is_error:
+        error_detail = error_detail or meta.get("sql_error_cause")
     log_chat_exchange(
         module=module, lang=meta.get("lang", lang), question=message,
         response_preview=response_preview,

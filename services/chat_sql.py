@@ -22,6 +22,7 @@ from services.circuit_breaker import gemini_breaker_sql, CircuitOpenError
 from services.chat_detectors import _JOURS_TIRAGE
 from services.base_chat_sql import (
     _JOURS_FR, _clean_gemini_sql, _build_gemini_sql_contents, _guard_non_sql,
+    generate_sql_with_429_retry, SqlRetryCircuitOpen,  # 1.6.078 — relance 429 (D4)
 )
 from services.gemini_shared import (
     _get_client, _is_rate_limit_error,
@@ -148,7 +149,8 @@ async def _get_tirage_data(target) -> dict | None:
 # Text-to-SQL : Gemini Vertex genere le SQL, Python l'execute
 # ────────────────────────────────────────────
 
-async def _generate_sql(question: str, client, api_key: str, history: list = None) -> str | None:
+async def _generate_sql(question: str, client, api_key: str, history: list = None, *,
+                        started_at: float | None = None, failure_box: dict | None = None) -> str | None:
     """Appelle Gemini Vertex AI pour convertir une question en SQL (avec contexte conversationnel).
 
     V131.D — Migration AI Studio httpx → google-genai SDK (Vertex AI). ADC auth.
@@ -156,6 +158,8 @@ async def _generate_sql(question: str, client, api_key: str, history: list = Non
     signature (appelant `chat_pipeline_shared.py:432` via
     `generate_sql_fn(sql_input, http_client, gem_api_key, **kwargs)`)
     mais IGNORÉS côté implémentation.
+    1.6.078 — une relance sur 429 (generate_sql_with_429_retry) ; `started_at` = instant du
+    wait_for externe ; `failure_box["cause"] = "SqlVertex429"` si l'échec final est un 429.
     """
     _ = client, api_key  # noqa: F841  # V131.D DEPRECATED — paramètres ignorés
 
@@ -188,25 +192,35 @@ async def _generate_sql(question: str, client, api_key: str, history: list = Non
     _t0 = time.monotonic()  # 1.6.067 — gemini_tracking
     try:
         vertex_client = _get_client()
-        response = await asyncio.wait_for(
-            vertex_client.aio.models.generate_content(
+        response = await generate_sql_with_429_retry(  # 1.6.078 — 1 relance 429 (D4), 8 s par tentative
+            lambda: vertex_client.aio.models.generate_content(
                 model=_VERTEX_MODEL_NAME,
                 contents=sql_contents,
                 config=config,
             ),
-            timeout=8.0,
+            breaker=gemini_breaker_sql, log_prefix="[TEXT-TO-SQL]", started_at=started_at,
         )
     except CircuitOpenError:
         # Race : state flipped entre check et appel — fallback
         return None
-    except asyncio.TimeoutError:
-        logger.warning("[TEXT-TO-SQL] Timeout Gemini Vertex (8s) — fallback")
+    except SqlRetryCircuitOpen as e:
+        # 1.6.078 — disjoncteur OPEN avant la relance : pas d'échec en plus, mais la requête a échoué sur 429
+        logger.warning("[TEXT-TO-SQL] Circuit breaker ouvert avant la relance 429 — fallback: %s", e.error)
+        if failure_box is not None:
+            failure_box["cause"] = "SqlVertex429"
+        _track_error(_t0, "sql_loto", "fr")
+        return None
+    except asyncio.TimeoutError as e:
+        logger.warning("[TEXT-TO-SQL] Timeout Gemini Vertex (%.1fs) — fallback",  # 1.6.078 : délai réel
+                       getattr(e, "sql_attempt_timeout", 8.0))
         gemini_breaker_sql._record_failure()
         _track_error(_t0, "sql_loto", "fr")
         return None
     except genai_errors.ClientError as e:
         if _is_rate_limit_error(e):
             logger.warning("[TEXT-TO-SQL] Vertex 429 ResourceExhausted — fallback: %s", e)  # V143 #3
+            if failure_box is not None:
+                failure_box["cause"] = "SqlVertex429"  # 1.6.078 (D6) — échec final sur 429
         else:
             logger.warning("[TEXT-TO-SQL] Vertex ClientError %s: %s", getattr(e, 'code', '?'), e)
         gemini_breaker_sql._record_failure()

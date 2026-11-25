@@ -1117,9 +1117,12 @@ class TestAppVersion:
         LOT 1.6.077 (23/11, Release 1.6.077) — chat_log.traffic_source, compteurs admin, export CSV technique ;
         aucune modification des réponses du chatbot ; LAST_NEWS_DATE et _EDITORIAL_LASTMOD inchangés ; bump
         requis : ETag HTML.
+        LOT 1.6.078 (26/11, Release 1.6.078) — anti-réintro par début de ligne en flux, relance 429 SQL,
+        ordinaux et séparateurs EM statistiques / paires, « 1er » Loto ; aucun cache-buster ; LAST_NEWS_DATE et
+        _EDITORIAL_LASTMOD inchangés ; bump requis : ETag HTML.
         """
         from config.version import APP_VERSION
-        assert tuple(int(p) for p in APP_VERSION.split(".")) >= (1, 6, 77)  # plancher (lot 1.6.077)
+        assert tuple(int(p) for p in APP_VERSION.split(".")) >= (1, 6, 78)  # plancher (lot 1.6.078)
 
     def test_last_deploy_date_is_recent(self):
         """LAST_DEPLOY_DATE is within the last 7 days."""
